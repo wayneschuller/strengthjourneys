@@ -3,9 +3,11 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
+import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import {
   getConsecutiveWorkoutGroups,
   LiftStrengthLevel,
@@ -31,7 +33,9 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   Plus,
+  PlayCircle,
   Trash2,
   Dumbbell,
   Check,
@@ -46,6 +50,11 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 // --- Big Four lifts with SVG icons ---
 
@@ -57,6 +66,134 @@ const BIG_FOUR = [
 ];
 
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
+
+function isEarlyDashboardStage(dashboardStage) {
+  return (
+    dashboardStage === "starter_sample" ||
+    dashboardStage === "first_real_week" ||
+    dashboardStage === "first_month"
+  );
+}
+
+function getBigFourVideoAssist(liftType) {
+  const match = bigFourLiftInsightData.find((item) => item.liftType === liftType);
+  if (!match?.videos?.length || !match?.slug) return null;
+  return {
+    slug: match.slug,
+    videos: match.videos,
+    prompt: `Need a quick ${liftType} form check?`,
+    label: `${match.videos.length} short video guides`,
+  };
+}
+
+function getYouTubeWatchHref(videoUrl) {
+  if (typeof videoUrl !== "string") return null;
+  const embedPrefix = "https://www.youtube.com/embed/";
+  if (videoUrl.startsWith(embedPrefix)) {
+    return `https://www.youtube.com/watch?v=${videoUrl.slice(embedPrefix.length)}`;
+  }
+  return videoUrl;
+}
+
+function getFirstTimeEmptyButtons({ liftType, barWeight, minIncrement, unitType }) {
+  const lightJumpWeight =
+    liftType === "Deadlift" ? barWeight + minIncrement * 2 : barWeight + minIncrement;
+
+  if (liftType === "Deadlift") {
+    return [
+      {
+        label: `5@${barWeight}${unitType}`,
+        sublabel: "bar only",
+        reps: 5,
+        weight: barWeight,
+        unitType,
+        variant: "primary",
+      },
+      {
+        label: `5@${barWeight + minIncrement}${unitType}`,
+        sublabel: "small jump",
+        reps: 5,
+        weight: barWeight + minIncrement,
+        unitType,
+        variant: "secondary",
+      },
+      {
+        label: `5@${lightJumpWeight}${unitType}`,
+        sublabel: "light starter",
+        reps: 5,
+        weight: lightJumpWeight,
+        unitType,
+        variant: "outline",
+      },
+    ];
+  }
+
+  return [
+    {
+      label: `10@${barWeight}${unitType}`,
+      sublabel: "empty bar",
+      reps: 10,
+      weight: barWeight,
+      unitType,
+      variant: "primary",
+    },
+    {
+      label: `5@${barWeight}${unitType}`,
+      sublabel: "groove reps",
+      reps: 5,
+      weight: barWeight,
+      unitType,
+      variant: "secondary",
+    },
+    {
+      label: `5@${lightJumpWeight}${unitType}`,
+      sublabel: "light starter",
+      reps: 5,
+      weight: lightJumpWeight,
+      unitType,
+      variant: "outline",
+    },
+  ];
+}
+
+function getFirstTimeCoachingCopy({ mode, dashboardStage, liftType, minIncrement, unitType }) {
+  const earlyStage = isEarlyDashboardStage(dashboardStage);
+
+  if (mode === "first_lift_session_empty") {
+    return earlyStage
+      ? {
+          eyebrow: "First lift",
+          title: `First time logging ${liftType}?`,
+          body: "Start with an empty bar and work up to a moderate weight.",
+          effortCue:
+            "Keep the weight easy enough that technique stays clean. You should finish with 2-3 reps left if needed.",
+        }
+      : {
+          eyebrow: "New lift",
+          title: `${liftType} starts lighter than you think`,
+          body: "Use the first set to find the groove, not to impress the logbook.",
+          effortCue: "Add only small jumps while the reps stay crisp.",
+        };
+  }
+
+  if (mode === "first_lift_session_in_progress") {
+    return earlyStage
+      ? {
+          eyebrow: "Next set",
+          title: "Build the session one small jump at a time",
+          body: `Repeat the same weight or add ${minIncrement}${unitType} if the last set moved cleanly.`,
+          effortCue: "If the last rep slowed down hard, repeat instead of forcing the jump.",
+        }
+      : {
+          eyebrow: "New lift",
+          title: "Keep the jumps small",
+          body: `Stay patient and move in ${minIncrement}${unitType} steps while the bar speed stays honest.`,
+          effortCue: "Clean reps beat a desperate grind.",
+        };
+  }
+
+  return null;
+}
 
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
@@ -307,6 +444,15 @@ export default function LogSessionPage() {
   }, [sessionDate, sessionLiftsWithPending, sessionTonnageLookup]);
   const isToday = sessionDate === todayIso;
   const effectiveSsid = sheetInfo?.ssid ?? persistedSheetInfo?.ssid ?? null;
+  const { dashboardStage, sessionCount } = useMemo(
+    () =>
+      getDashboardStage({
+        parsedData,
+        rawRows,
+        sheetInfo: sheetInfo ?? persistedSheetInfo,
+      }),
+    [parsedData, rawRows, sheetInfo, persistedSheetInfo],
+  );
   const showSessionBootstrap =
     !isClient ||
     authStatus === "loading" ||
@@ -995,6 +1141,8 @@ export default function LogSessionPage() {
               topLiftsByTypeAndReps={topLiftsByTypeAndReps}
               topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
               tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
+              dashboardStage={dashboardStage}
+              sessionCount={sessionCount}
               isPastSession={!isToday}
               onUpdateSet={updateSet}
               onDeleteSet={deleteSet}
@@ -1359,7 +1507,7 @@ function SyncIndicator({ state }) {
 
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, isPastSession, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, dashboardStage, sessionCount = 0, isPastSession, onUpdateSet, onDeleteSet, onAddSet }) {
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const e1rmFormula =
@@ -1394,19 +1542,88 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       initializeWithValue: false,
     }) ?? "blue";
 
-  // Smart set suggestions: generate warmup progression from last session's top set
-  const suggestions = useMemo(() => {
+  const coachState = useMemo(() => {
     if (!parsedData) return null;
 
     const unitType = isMetric ? "kg" : "lb";
     const barWeight = storedBarType === "womens" ? (isMetric ? 15 : 35) : (isMetric ? 20 : 45);
     const minIncrement = isMetric ? 2.5 : 5;
+    const videoAssist = getBigFourVideoAssist(liftType);
 
     // Find last session's sets for this lift (same logic as LiftSuggestions)
     const prior = parsedData.filter(
       (e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal,
     );
-    if (!prior.length) return null;
+    if (!prior.length) {
+      if (realSets.length === 0) {
+        return {
+          mode: "first_lift_session_empty",
+          buttons: getFirstTimeEmptyButtons({
+            liftType,
+            barWeight,
+            minIncrement,
+            unitType,
+          }),
+          coaching: getFirstTimeCoachingCopy({
+            mode: "first_lift_session_empty",
+            dashboardStage,
+            liftType,
+            minIncrement,
+            unitType,
+          }),
+          videoAssist: videoAssist && isEarlyDashboardStage(dashboardStage)
+            ? { ...videoAssist, defaultOpen: true }
+            : videoAssist,
+        };
+      }
+
+      const lastLoggedWeight = lastRealSet
+        ? getDisplayWeight(lastRealSet, isMetric).value
+        : barWeight;
+      const lastLoggedReps = lastRealSet?.reps ?? 5;
+      const nextWeight = lastLoggedWeight + minIncrement;
+      const secondJumpWeight = lastLoggedWeight + minIncrement * 2;
+      const isBarOnlyIntro = lastLoggedWeight <= barWeight && lastLoggedReps >= 8;
+
+      return {
+        mode: "first_lift_session_in_progress",
+        buttons: [
+          {
+            label: `${isBarOnlyIntro ? 5 : lastLoggedReps}@${nextWeight}${unitType}`,
+            sublabel: isBarOnlyIntro ? "first loaded set" : `+${minIncrement}${unitType}`,
+            reps: isBarOnlyIntro ? 5 : lastLoggedReps,
+            weight: nextWeight,
+            unitType,
+            variant: "primary",
+          },
+          {
+            label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
+            sublabel: "repeat",
+            reps: lastLoggedReps,
+            weight: lastLoggedWeight,
+            unitType,
+            variant: "secondary",
+          },
+          {
+            label: `${lastLoggedReps}@${secondJumpWeight}${unitType}`,
+            sublabel: `+${minIncrement * 2}${unitType}`,
+            reps: lastLoggedReps,
+            weight: secondJumpWeight,
+            unitType,
+            variant: "outline",
+          },
+        ],
+        coaching: getFirstTimeCoachingCopy({
+          mode: "first_lift_session_in_progress",
+          dashboardStage,
+          liftType,
+          minIncrement,
+          unitType,
+        }),
+        videoAssist: isEarlyDashboardStage(dashboardStage) ? videoAssist : null,
+      };
+    }
+
     const lastDate = prior[prior.length - 1].date;
     const lastSets = prior.filter((e) => e.date === lastDate);
 
@@ -1436,7 +1653,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     );
 
     // Determine where the lifter is based on already-logged sets
-    const loggedWeights = sets.filter((s) => !s._pending && s.weight > 0)
+    const loggedWeights = realSets.filter((s) => s.weight > 0)
       .map((s) => {
         const { value } = getDisplayWeight(s, isMetric);
         return value;
@@ -1454,11 +1671,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
     const atOrPastTop = nextWarmupIdx >= progression.length;
     const maxLogged = loggedWeights.length > 0 ? Math.max(...loggedWeights) : 0;
-    const lastRealSets = sets.filter((s) => !s._pending && s.weight > 0);
-    const lastLoggedWeight = lastRealSets.length > 0
-      ? getDisplayWeight(lastRealSets[lastRealSets.length - 1], isMetric).value
+    const lastLoggedSets = realSets.filter((s) => s.weight > 0);
+    const lastLoggedWeight = lastLoggedSets.length > 0
+      ? getDisplayWeight(lastLoggedSets[lastLoggedSets.length - 1], isMetric).value
       : 0;
-    const lastLoggedReps = lastRealSets[lastRealSets.length - 1]?.reps ?? topReps;
+    const lastLoggedReps = lastLoggedSets[lastLoggedSets.length - 1]?.reps ?? topReps;
 
     // Detect drop set mode: last logged weight is below the session's peak
     const inDropSetMode = atOrPastTop && lastLoggedWeight < maxLogged;
@@ -1476,13 +1693,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       return meta?.best ?? null;
     };
 
-    const result = [];
+    const buttons = [];
 
     if (!atOrPastTop) {
       // Warmup phase: suggest next warmup set
       const nextSet = progression[nextWarmupIdx];
       const rankingMeta = getSuggestionRankingMeta(nextSet.reps, nextSet.weight);
-      result.push({
+      buttons.push({
         label: `${nextSet.reps}@${nextSet.weight}${unitType}`,
         sublabel: nextSet.isTopSet ? "top set" : "warmup",
         rankingMessage: rankingMeta?.message ?? null,
@@ -1497,7 +1714,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       if (!nextSet.isTopSet) {
         const topProgSet = progression[progression.length - 1];
         const topRankingMeta = getSuggestionRankingMeta(topProgSet.reps, topProgSet.weight);
-        result.push({
+        buttons.push({
           label: `${topProgSet.reps}@${topProgSet.weight}${unitType}`,
           sublabel: "top set",
           rankingMessage: topRankingMeta?.message ?? null,
@@ -1511,7 +1728,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     } else if (inDropSetMode) {
       // Drop set mode: weight is descending — only offer repeat at current drop weight
       const dropRankingMeta = getSuggestionRankingMeta(lastLoggedReps, lastLoggedWeight);
-      result.push({
+      buttons.push({
         label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
         sublabel: "drop set",
         rankingMessage: dropRankingMeta?.message ?? null,
@@ -1524,7 +1741,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     } else {
       // Working phase: suggest repeat, increment, and drop set
       const repeatRankingMeta = getSuggestionRankingMeta(lastLoggedReps, lastLoggedWeight);
-      result.push({
+      buttons.push({
         label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
         sublabel: "repeat",
         rankingMessage: repeatRankingMeta?.message ?? null,
@@ -1536,7 +1753,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       });
       const incrWeight = lastLoggedWeight + minIncrement;
       const incrRankingMeta = getSuggestionRankingMeta(lastLoggedReps, incrWeight);
-      result.push({
+      buttons.push({
         label: `${lastLoggedReps}@${incrWeight}${unitType}`,
         sublabel: `+${minIncrement}`,
         rankingMessage: incrRankingMeta?.message ?? null,
@@ -1550,7 +1767,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       const dropWeight = Math.round((lastLoggedWeight * 0.8) / minIncrement) * minIncrement;
       if (dropWeight >= barWeight && dropWeight < lastLoggedWeight) {
         const dropRankingMeta = getSuggestionRankingMeta(lastLoggedReps, dropWeight);
-        result.push({
+        buttons.push({
           label: `${lastLoggedReps}@${dropWeight}${unitType}`,
           sublabel: "drop set",
           rankingMessage: dropRankingMeta?.message ?? null,
@@ -1563,8 +1780,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       }
     }
 
-    return result;
-  }, [parsedData, liftType, sessionDate, isMetric, sets, storedBarType, storedPlatePreference, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
+    return {
+      mode: "history",
+      buttons,
+      coaching: null,
+      videoAssist: null,
+    };
+  }, [parsedData, isMetric, storedBarType, storedPlatePreference, liftType, sessionDate, realSets, lastRealSet, dashboardStage, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
   // Find the set index with the heaviest e1RM for the strength badge
   const canShowStrength = authStatus === "authenticated" && hasBioData;
@@ -1613,6 +1835,25 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       return { status: null, message: null, scope: null };
     });
   }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
+
+  const shouldShowTonnage = useMemo(() => {
+    if (!tonnageStats) return false;
+    if (sessionCount >= 10) return true;
+    if (!hasBioData || !topLiftsByTypeAndReps?.[liftType]) return false;
+
+    const { strengthRating } = getTopLiftStats(
+      topLiftsByTypeAndReps[liftType],
+      liftType,
+      standards,
+      e1rmFormula,
+    );
+
+    return (
+      strengthRating === "Intermediate" ||
+      strengthRating === "Advanced" ||
+      strengthRating === "Elite"
+    );
+  }, [tonnageStats, sessionCount, hasBioData, topLiftsByTypeAndReps, liftType, standards, e1rmFormula]);
 
   return (
     <div className="relative rounded-xl border bg-card shadow-sm">
@@ -1683,7 +1924,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         ))}
 
       </div>
-      {tonnageStats && (
+      {shouldShowTonnage && (
         <div className="mx-4 mt-3 md:ml-24">
           <LiftTonnageRow
             liftType={liftType}
@@ -1695,11 +1936,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
       {/* Add-set buttons — card footer */}
       <SmartAddButtons
-        suggestions={suggestions}
+        coachState={coachState}
         lastRealSet={lastRealSet}
         liftType={liftType}
         onAddSet={onAddSet}
         showHint={showSuggestionHint}
+        hasBigFourIcon={Boolean(bigFourEntry)}
         isPastSession={isPastSession}
       />
     </div>
@@ -2017,16 +2259,110 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 }
 
 // --- Smart add-set buttons ---
-// Shows contextual suggestions based on where the lifter is in their session:
-// - Warmup phase: next warmup weight from generateSessionSets() + skip-to-top-set
-// - Working phase: repeat last set + increment (+2.5kg/+5lb)
-// - No prior data: plain "Add set" fallback
+// The footer can render one of three states:
+// - history-based smart suggestions for returning lifts
+// - first-time lift coaching with starter buttons
+// - a plain fallback when nothing smarter is available
 
-function SmartAddButtonGrid({ suggestions, onAddSet, showHint }) {
+function LiftCoachCopy({ coaching, videoAssist, alignClass = "" }) {
+  if (!coaching && !videoAssist) return null;
+
+  return (
+    <div className={`space-y-3 border-b border-border/40 px-4 py-3 ${alignClass}`}>
+      {coaching && (
+        <div className="space-y-1.5">
+          {coaching.eyebrow && (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
+              {coaching.eyebrow}
+            </p>
+          )}
+          {coaching.title && (
+            <p className="text-sm font-semibold text-foreground">
+              {coaching.title}
+            </p>
+          )}
+          {coaching.body && (
+            <p className="text-sm text-muted-foreground">
+              {coaching.body}
+            </p>
+          )}
+          {coaching.effortCue && (
+            <p className="text-xs italic text-muted-foreground/75">
+              {coaching.effortCue}
+            </p>
+          )}
+        </div>
+      )}
+      {videoAssist && <LiftCoachVideoAssist videoAssist={videoAssist} />}
+    </div>
+  );
+}
+
+function LiftCoachVideoAssist({ videoAssist }) {
+  const [isOpen, setIsOpen] = useState(Boolean(videoAssist.defaultOpen));
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className="rounded-lg border border-border/60 bg-background/70">
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-accent/30"
+          >
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                {videoAssist.prompt}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {videoAssist.label}
+              </p>
+            </div>
+            <ChevronRight
+              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                isOpen ? "rotate-90" : ""
+              }`}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="border-t border-border/50 px-3 py-3">
+          <div className="grid gap-2 sm:grid-cols-3">
+            {videoAssist.videos.map((videoUrl, index) => {
+              const href = getYouTubeWatchHref(videoUrl);
+              return (
+                <a
+                  key={videoUrl}
+                  href={href ?? videoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent/30"
+                >
+                  <span>Guide {index + 1}</span>
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                </a>
+              );
+            })}
+          </div>
+          <div className="mt-3">
+            <Link
+              href={`/${videoAssist.slug}`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              Open the full lift guide
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
+function SmartAddButtonGrid({ buttons, onAddSet, showHint }) {
   return (
     <>
       <div className="flex items-stretch divide-x divide-border/40">
-        {suggestions.map((s, i) => (
+        {buttons.map((s, i) => (
           <button
             key={i}
             className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3.5 text-sm transition-colors hover:bg-accent/50 ${
@@ -2055,15 +2391,15 @@ function SmartAddButtonGrid({ suggestions, onAddSet, showHint }) {
       </div>
       {showHint && (
         <p className="pb-2 pt-1 text-center text-[11px] italic text-muted-foreground/60">
-          Tap to add, then edit the weight to match your plates
+          Want something different? Add a set, then edit any reps or weight.
         </p>
       )}
     </>
   );
 }
 
-function SmartAddButtons({ suggestions, lastRealSet, liftType, onAddSet, showHint, isPastSession = false }) {
-  if (!suggestions || suggestions.length === 0) {
+function SmartAddButtons({ coachState, lastRealSet, liftType, onAddSet, showHint, hasBigFourIcon = false, isPastSession = false }) {
+  if (!coachState?.buttons?.length) {
     // Fallback: no prior session data — plain add button
     return (
       <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
@@ -2078,11 +2414,11 @@ function SmartAddButtons({ suggestions, lastRealSet, liftType, onAddSet, showHin
     );
   }
 
-  if (isPastSession) {
+  if (isPastSession && coachState.mode === "history") {
     return (
       <PastSessionSmartAddButtons
         liftType={liftType}
-        suggestions={suggestions}
+        buttons={coachState.buttons}
         onAddSet={onAddSet}
         showHint={showHint}
       />
@@ -2091,8 +2427,13 @@ function SmartAddButtons({ suggestions, lastRealSet, liftType, onAddSet, showHin
 
   return (
     <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
+      <LiftCoachCopy
+        coaching={coachState.coaching}
+        videoAssist={coachState.videoAssist}
+        alignClass={hasBigFourIcon ? "md:pl-24" : ""}
+      />
       <SmartAddButtonGrid
-        suggestions={suggestions}
+        buttons={coachState.buttons}
         onAddSet={onAddSet}
         showHint={showHint}
       />
@@ -2100,7 +2441,7 @@ function SmartAddButtons({ suggestions, lastRealSet, liftType, onAddSet, showHin
   );
 }
 
-function PastSessionSmartAddButtons({ liftType, suggestions, onAddSet, showHint }) {
+function PastSessionSmartAddButtons({ liftType, buttons, onAddSet, showHint }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const transition = prefersReducedMotion
@@ -2149,7 +2490,7 @@ function PastSessionSmartAddButtons({ liftType, suggestions, onAddSet, showHint 
             className="overflow-hidden border-t border-border/40 bg-muted/30"
           >
             <SmartAddButtonGrid
-              suggestions={suggestions}
+              buttons={buttons}
               onAddSet={onAddSet}
               showHint={showHint}
             />

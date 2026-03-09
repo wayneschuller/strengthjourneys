@@ -1548,7 +1548,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
   return (
-    <div className="relative space-y-1 rounded-xl border bg-card p-4 shadow-sm md:pl-24">
+    <div className="relative rounded-xl border bg-card shadow-sm">
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
         <div className="absolute left-4 top-4 hidden md:block">
@@ -1558,35 +1558,37 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center gap-2 pb-1">
-        {/* Mobile: inline icon (3× = 48px) */}
+      {/* Mobile: icon + content side by side; Desktop: content only (icon in gutter) */}
+      <div className="flex gap-3 p-4 pb-0 md:pl-24">
         {bigFourEntry && (
-          <Link href={`/${bigFourEntry.slug}`}>
-            <Image src={bigFourEntry.icon} alt="" width={48} height={48} className="md:hidden" />
+          <Link href={`/${bigFourEntry.slug}`} className="shrink-0 self-start md:hidden">
+            <Image src={bigFourEntry.icon} alt="" width={48} height={48} />
           </Link>
         )}
-        {bigFourEntry ? (
-          <Link href={`/${bigFourEntry.slug}`} className="text-base font-semibold text-foreground hover:underline">
-            {liftType}
-          </Link>
-        ) : (
-          <h2 className="text-base font-semibold text-foreground">
-            {liftType}
-          </h2>
-        )}
-      </div>
+        <div className="min-w-0 flex-1">
+          {/* Header */}
+          <div className="pb-1">
+            {bigFourEntry ? (
+              <Link href={`/${bigFourEntry.slug}`} className="text-base font-semibold text-foreground hover:underline">
+                {liftType}
+              </Link>
+            ) : (
+              <h2 className="text-base font-semibold text-foreground">
+                {liftType}
+              </h2>
+            )}
+          </div>
 
-      {/* Last session suggestion */}
-      <LiftSuggestions
-        liftType={liftType}
-        sessionDate={sessionDate}
-        parsedData={parsedData}
-        isMetric={isMetric}
-      />
+          {/* Last session suggestion */}
+          <LiftSuggestions
+            liftType={liftType}
+            sessionDate={sessionDate}
+            parsedData={parsedData}
+            isMetric={isMetric}
+          />
 
-      {/* Set rows — clean horizontal line above first row, dividers between */}
-      <div className="mt-1 divide-y divide-border/40 border-t border-border/40">
+          {/* Set rows — dividers between */}
+          <div className="mt-1 divide-y divide-border/40 border-t border-border/40">
         {sets.map((set, idx) => (
           <SetRow
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
@@ -1622,6 +1624,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           onAddSet={onAddSet}
           showHint={showSuggestionHint}
         />
+          </div>
+        </div>
       </div>
 
     </div>
@@ -1764,13 +1768,13 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
   return (
     <div className="group flex items-center gap-4 py-3">
       {/* Reps @ Weight unit — tight visual unit.
-          Reps right-aligned in fixed w-12, weight auto-width so it sits tight against unit label. */}
+          Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
       <div className="flex items-center">
-        <div className="w-12">
+        <div className="w-7">
           {editingReps ? (
             <input
               type="number"
-              className="w-full rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+              className="w-10 rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
               value={draftReps}
               onChange={(e) => setDraftReps(e.target.value)}
               onBlur={commitReps}

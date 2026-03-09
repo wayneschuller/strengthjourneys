@@ -600,7 +600,7 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
   return (
     <div className={`flex flex-wrap items-center gap-2 ${textClass}`}>
       <span className="text-muted-foreground">
-        {liftType}: {Math.round(currentDisplay).toLocaleString()}
+        {liftType} tonnage: {Math.round(currentDisplay).toLocaleString()}
         {displayUnit} vs {Math.round(avgDisplay).toLocaleString()}
         {displayUnit} 12-mo avg
       </span>

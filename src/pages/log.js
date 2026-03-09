@@ -65,6 +65,29 @@ const BIG_FOUR = [
   { name: "Strict Press", icon: "/strict_press.svg", slug: "barbell-strict-press-insights" },
 ];
 
+const BIG_FOUR_FORM_CUES = {
+  "Back Squat": [
+    "Root your whole foot and brace hard before every rep.",
+    "Sit between your hips while the bar stays balanced over mid-foot.",
+    "Drive straight up out of the hole and finish tall.",
+  ],
+  "Bench Press": [
+    "Set your shoulder blades first, then keep the upper back pinned tight.",
+    "Plant your feet and stay tight from the handoff to lockout.",
+    "Touch the bar low on the chest and press back toward the shoulders.",
+  ],
+  "Deadlift": [
+    "Start with the bar over mid-foot and bring your shins in only after you hinge down.",
+    "Brace, squeeze the bar, and pull the slack out before the floor breaks.",
+    "Keep the bar close up the legs and finish tall without leaning back.",
+  ],
+  "Strict Press": [
+    "Squeeze glutes and abs so the ribs stay down before the press starts.",
+    "Stack wrists over elbows and begin with forearms close to vertical.",
+    "Move your head back to clear the bar, then punch through to lockout.",
+  ],
+};
+
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
 function isEarlyDashboardStage(dashboardStage) {
@@ -83,6 +106,18 @@ function getBigFourVideoAssist(liftType) {
     videos: match.videos,
     prompt: `Need a quick ${liftType} form check?`,
     label: `${match.videos.length} short video guides`,
+  };
+}
+
+function getBigFourTechniqueAssist(liftType) {
+  const cues = BIG_FOUR_FORM_CUES[liftType] ?? [];
+  const videoAssist = getBigFourVideoAssist(liftType);
+
+  if (!cues.length && !videoAssist) return null;
+
+  return {
+    cues,
+    videoAssist,
   };
 }
 
@@ -1406,7 +1441,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     const unitType = isMetric ? "kg" : "lb";
     const barWeight = storedBarType === "womens" ? (isMetric ? 15 : 35) : (isMetric ? 20 : 45);
     const minIncrement = isMetric ? 2.5 : 5;
-    const videoAssist = getBigFourVideoAssist(liftType);
+    const techniqueAssist = getBigFourTechniqueAssist(liftType);
 
     // Find last session's sets for this lift (same logic as LiftSuggestions)
     const prior = parsedData.filter(
@@ -1429,9 +1464,17 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             minIncrement,
             unitType,
           }),
-          videoAssist: videoAssist && isEarlyDashboardStage(dashboardStage)
-            ? { ...videoAssist, defaultOpen: true }
-            : videoAssist,
+          techniqueAssist: techniqueAssist
+            ? {
+                ...techniqueAssist,
+                videoAssist: techniqueAssist.videoAssist
+                  ? {
+                      ...techniqueAssist.videoAssist,
+                      defaultOpen: isEarlyDashboardStage(dashboardStage),
+                    }
+                  : null,
+              }
+            : null,
         };
       }
 
@@ -1478,7 +1521,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           minIncrement,
           unitType,
         }),
-        videoAssist: isEarlyDashboardStage(dashboardStage) ? videoAssist : null,
+        techniqueAssist,
       };
     }
 
@@ -1642,7 +1685,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       mode: "history",
       buttons,
       coaching: null,
-      videoAssist: null,
+      techniqueAssist: null,
     };
   }, [parsedData, isMetric, storedBarType, storedPlatePreference, liftType, sessionDate, realSets, lastRealSet, dashboardStage, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
@@ -1751,6 +1794,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           />
         </div>
       </div>
+
+      <LiftTechniqueAssist
+        techniqueAssist={coachState?.techniqueAssist}
+        hasBigFourIcon={Boolean(bigFourEntry)}
+      />
 
       {/* Set rows — border-t inset on desktop to clear the icon gutter */}
       <div className="mx-4 mt-1 divide-y divide-border/40 border-t border-border/40 md:ml-24">
@@ -2122,36 +2170,62 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 // - first-time lift coaching with starter buttons
 // - a plain fallback when nothing smarter is available
 
-function LiftCoachCopy({ coaching, videoAssist, alignClass = "" }) {
-  if (!coaching && !videoAssist) return null;
+function LiftTechniqueAssist({ techniqueAssist, hasBigFourIcon = false }) {
+  if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist) return null;
 
   return (
-    <div className={`space-y-3 border-b border-border/40 px-4 py-3 ${alignClass}`}>
-      {coaching && (
-        <div className="space-y-1.5">
-          {coaching.eyebrow && (
+    <div className={`mx-4 mt-2 rounded-lg border border-border/50 bg-muted/20 p-3 ${hasBigFourIcon ? "md:ml-24" : ""}`}>
+      <div className="space-y-3">
+        {techniqueAssist?.cues?.length > 0 && (
+          <div className="space-y-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-              {coaching.eyebrow}
+              Form cues
             </p>
-          )}
-          {coaching.title && (
-            <p className="text-sm font-semibold text-foreground">
-              {coaching.title}
-            </p>
-          )}
-          {coaching.body && (
-            <p className="text-sm text-muted-foreground">
-              {coaching.body}
-            </p>
-          )}
-          {coaching.effortCue && (
-            <p className="text-xs italic text-muted-foreground/75">
-              {coaching.effortCue}
-            </p>
-          )}
-        </div>
-      )}
-      {videoAssist && <LiftCoachVideoAssist videoAssist={videoAssist} />}
+            <ul className="space-y-1.5">
+              {techniqueAssist.cues.map((cue) => (
+                <li key={cue} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
+                  <span>{cue}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {techniqueAssist?.videoAssist && (
+          <LiftCoachVideoAssist videoAssist={techniqueAssist.videoAssist} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LiftCoachCopy({ coaching, alignClass = "" }) {
+  if (!coaching) return null;
+
+  return (
+    <div className={`border-b border-border/40 px-4 py-3 ${alignClass}`}>
+      <div className="space-y-1.5">
+        {coaching.eyebrow && (
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
+            {coaching.eyebrow}
+          </p>
+        )}
+        {coaching.title && (
+          <p className="text-sm font-semibold text-foreground">
+            {coaching.title}
+          </p>
+        )}
+        {coaching.body && (
+          <p className="text-sm text-muted-foreground">
+            {coaching.body}
+          </p>
+        )}
+        {coaching.effortCue && (
+          <p className="text-xs italic text-muted-foreground/75">
+            {coaching.effortCue}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -2287,7 +2361,6 @@ function SmartAddButtons({ coachState, lastRealSet, liftType, onAddSet, showHint
     <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
       <LiftCoachCopy
         coaching={coachState.coaching}
-        videoAssist={coachState.videoAssist}
         alignClass={hasBigFourIcon ? "md:pl-24" : ""}
       />
       <SmartAddButtonGrid

@@ -465,13 +465,17 @@ export default function LogSessionPage() {
       // the in-flight → confirmed transition (avoiding a remount/flash).
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+      // Auto-timestamp: 24h clock in the notes column (e.g. "14:35 ")
+      const timeStamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      const notes = `${timeStamp} `;
+
       // Show optimistic row immediately (in-flight)
       addLogEntry({ type: "action", label: "addSet", detail: `${liftType} · ${reps}×${weight}${unitType} · after row ${insertAfterRowIndex}` });
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
           ...(prev[liftType] ?? []),
-          { date: sessionDate, liftType, reps, weight, unitType, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
+          { date: sessionDate, liftType, reps, weight, unitType, notes, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
         ],
       }));
       markSaving();
@@ -485,7 +489,7 @@ export default function LogSessionPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ssid: sheetInfo.ssid,
-            rows: [["", "", String(reps), `${weight}${unitType}`, "", ""]],
+            rows: [["", "", String(reps), `${weight}${unitType}`, notes, ""]],
             insertAfterRowIndex,
           }),
         });
@@ -549,13 +553,17 @@ export default function LogSessionPage() {
 
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+      // Auto-timestamp: 24h clock in the notes column (e.g. "14:35 ")
+      const timeStamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      const notes = `${timeStamp} `;
+
       // Show optimistic lift block immediately (in-flight)
       addLogEntry({ type: "action", label: "addLift", detail: `${liftType} · ${reps}×${weight}${unitType} · after row ${insertAfterRowIndex} · ${hasExistingSession ? "existing session" : "new session"}` });
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
           ...(prev[liftType] ?? []),
-          { date: sessionDate, liftType, reps, weight, unitType, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
+          { date: sessionDate, liftType, reps, weight, unitType, notes, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
         ],
       }));
       markSaving();
@@ -567,7 +575,7 @@ export default function LogSessionPage() {
         liftType,
         String(reps),
         `${weight}${unitType}`,
-        "",
+        notes,
         "",
       ];
 
@@ -1339,6 +1347,28 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
   const [pendingReps, setPendingReps] = useState(null);
   const [pendingWeight, setPendingWeight] = useState(null);
 
+  // Debounced update: coalesce rapid changes (spinner arrows, keyboard arrows)
+  // into a single API call. The timer ref holds the latest pending fields so
+  // only the final value is sent after 800ms of inactivity.
+  const updateTimerRef = useRef(null);
+  const debouncedUpdate = useCallback(
+    (fields) => {
+      if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
+      updateTimerRef.current = setTimeout(() => {
+        updateTimerRef.current = null;
+        onUpdate(fields);
+      }, 800);
+    },
+    [onUpdate],
+  );
+  // Flush any pending debounced update on unmount
+  useEffect(() => () => {
+    if (updateTimerRef.current) {
+      clearTimeout(updateTimerRef.current);
+      updateTimerRef.current = null;
+    }
+  }, []);
+
   // Keep drafts in sync if SWR refreshes parsedData
   useEffect(() => { setDraftReps(String(set.reps ?? "")); }, [set.reps]);
   useEffect(() => { setDraftWeight(String(set.weight ?? "")); }, [set.weight]);
@@ -1360,7 +1390,7 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
     const parsed = parseInt(draftReps, 10);
     if (!isNaN(parsed) && parsed !== set.reps) {
       setPendingReps(parsed);
-      onUpdate({ reps: parsed, weight: `${set.weight}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
+      debouncedUpdate({ reps: parsed, weight: `${set.weight}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
     }
   }
 
@@ -1369,7 +1399,7 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
     const num = parseFloat(draftWeight);
     if (!isNaN(num) && num !== set.weight) {
       setPendingWeight(num);
-      onUpdate({ reps: set.reps, weight: `${num}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
+      debouncedUpdate({ reps: set.reps, weight: `${num}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
     }
   }
 

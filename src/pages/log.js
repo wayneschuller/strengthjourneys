@@ -341,8 +341,8 @@ function getFirstTimeCoachingCopy({
         return {
           eyebrow: null,
           title: null,
-          body: "That is enough work for this lift today.",
-          effortCue: "You can stop here and move on to the next lift.",
+          body: `You can stop doing ${liftType} now.`,
+          effortCue: "Feel free to go do some curls in the squat rack or hit your local fast food franchise.",
         };
       }
 

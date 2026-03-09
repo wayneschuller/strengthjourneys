@@ -1692,6 +1692,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       <SmartAddButtons
         suggestions={suggestions}
         lastRealSet={lastRealSet}
+        liftType={liftType}
         onAddSet={onAddSet}
         showHint={showSuggestionHint}
         isPastSession={isPastSession}
@@ -2056,7 +2057,7 @@ function SmartAddButtonGrid({ suggestions, onAddSet, showHint }) {
   );
 }
 
-function SmartAddButtons({ suggestions, lastRealSet, onAddSet, showHint, isPastSession = false }) {
+function SmartAddButtons({ suggestions, lastRealSet, liftType, onAddSet, showHint, isPastSession = false }) {
   if (!suggestions || suggestions.length === 0) {
     // Fallback: no prior session data — plain add button
     return (
@@ -2075,6 +2076,7 @@ function SmartAddButtons({ suggestions, lastRealSet, onAddSet, showHint, isPastS
   if (isPastSession) {
     return (
       <PastSessionSmartAddButtons
+        liftType={liftType}
         suggestions={suggestions}
         onAddSet={onAddSet}
         showHint={showHint}
@@ -2093,7 +2095,7 @@ function SmartAddButtons({ suggestions, lastRealSet, onAddSet, showHint, isPastS
   );
 }
 
-function PastSessionSmartAddButtons({ suggestions, onAddSet, showHint }) {
+function PastSessionSmartAddButtons({ liftType, suggestions, onAddSet, showHint }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const transition = prefersReducedMotion
@@ -2120,7 +2122,7 @@ function PastSessionSmartAddButtons({ suggestions, onAddSet, showHint }) {
       >
         <span className="flex items-center gap-2">
           <Plus className="h-3.5 w-3.5" />
-          Add another set for this lift
+          {`Add another ${liftType} set`}
         </span>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
           <motion.span

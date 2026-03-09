@@ -68,8 +68,6 @@ import {
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
-const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
-
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
   const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
@@ -155,62 +153,6 @@ const FORMULA_GUIDE_LINKS = [
     description: "A conservative option that tends to estimate slightly lower than Epley.",
   },
 ];
-
-function renderAnswer(answer) {
-  if (typeof answer === "string") return answer;
-  return answer.map((seg, i) =>
-    typeof seg === "string" ? seg : (
-      <Link key={i} href={seg.href}
-        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
-        {seg.text}
-      </Link>
-    )
-  );
-}
-
-function flattenAnswer(answer) {
-  if (typeof answer === "string") return answer;
-  return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
-}
-
-function FormulaSupportPanel({ formulaSupport }) {
-  if (!formulaSupport) return null;
-
-  return (
-    <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>{formulaSupport.summary}</p>
-          <ul className="space-y-2">
-            <li><strong className="text-foreground">Best for:</strong> {formulaSupport.bestFor}</li>
-            <li><strong className="text-foreground">Rep range:</strong> {formulaSupport.repRange}</li>
-            <li><strong className="text-foreground">Worked example:</strong> {formulaSupport.example}</li>
-          </ul>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Compare 1RM Methods</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {formulaSupport.links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
-            >
-              <div className="font-medium text-foreground">{link.label}</div>
-              <div className="text-muted-foreground">{link.description}</div>
-            </Link>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 export default function E1RMCalculator({ relatedArticles }) {
   const title = "One Rep Max Calculator | Free 1RM Tool, No Login Required";
@@ -922,6 +864,76 @@ export function E1RMCalculatorMain({
       )}
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
+  );
+}
+
+const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
+
+function renderAnswer(answer) {
+  if (typeof answer === "string") return answer;
+  return answer.map((seg, i) =>
+    typeof seg === "string" ? seg : (
+      <Link
+        key={i}
+        href={seg.href}
+        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+      >
+        {seg.text}
+      </Link>
+    ),
+  );
+}
+
+function flattenAnswer(answer) {
+  if (typeof answer === "string") return answer;
+  return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
+}
+
+function FormulaSupportPanel({ formulaSupport }) {
+  if (!formulaSupport) return null;
+
+  return (
+    <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>{formulaSupport.summary}</p>
+          <ul className="space-y-2">
+            <li>
+              <strong className="text-foreground">Best for:</strong>{" "}
+              {formulaSupport.bestFor}
+            </li>
+            <li>
+              <strong className="text-foreground">Rep range:</strong>{" "}
+              {formulaSupport.repRange}
+            </li>
+            <li>
+              <strong className="text-foreground">Worked example:</strong>{" "}
+              {formulaSupport.example}
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Compare 1RM Methods</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {formulaSupport.links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+            >
+              <div className="font-medium text-foreground">{link.label}</div>
+              <div className="text-muted-foreground">{link.description}</div>
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

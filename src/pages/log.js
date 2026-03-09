@@ -214,16 +214,16 @@ function getFirstTimeCoachingCopy({ mode, dashboardStage, liftType, minIncrement
   if (mode === "first_lift_session_in_progress") {
     return earlyStage
       ? {
-          eyebrow: "Next set",
-          title: "Build the session one small jump at a time",
-          body: `Repeat the same weight or add ${minIncrement}${unitType} if the last set moved cleanly.`,
-          effortCue: "If the last rep slowed down hard, repeat instead of forcing the jump.",
+          eyebrow: null,
+          title: null,
+          body: "Keep adding weight while the reps stay clean and confident.",
+          effortCue: "Stop when it feels heavy, not grindy or impossible.",
         }
       : {
-          eyebrow: "New lift",
-          title: "Keep the jumps small",
-          body: `Stay patient and move in ${minIncrement}${unitType} steps while the bar speed stays honest.`,
-          effortCue: "Clean reps beat a desperate grind.",
+          eyebrow: null,
+          title: null,
+          body: "Keep adding weight while the reps stay clean and confident.",
+          effortCue: "Stop when it feels heavy, not grindy or impossible.",
         };
   }
 

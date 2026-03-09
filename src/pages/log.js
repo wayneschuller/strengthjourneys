@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -39,7 +40,6 @@ import {
   Trash2,
   Dumbbell,
   Check,
-  Copy,
   Info,
   Loader2,
   X,
@@ -214,6 +214,7 @@ export default function LogSessionPage() {
     sessionTonnageLookup,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
+  const { addEntry: addLogEntry, clearEntries } = useDevActivityMonitor();
   const { toast } = useToast();
   const persistedSheetInfo = useMemo(() => {
     if (!isClient) return null;
@@ -225,13 +226,13 @@ export default function LogSessionPage() {
     }
   }, [isClient]);
 
-  // Activity log for the debug panel (dev only)
-  const [activityLog, setActivityLog] = useState([]);
-  const addLogEntry = useCallback((entry) => {
-    const ts = new Date();
-    const time = `${String(ts.getHours()).padStart(2, "0")}:${String(ts.getMinutes()).padStart(2, "0")}:${String(ts.getSeconds()).padStart(2, "0")}.${String(ts.getMilliseconds()).padStart(3, "0")}`;
-    setActivityLog((prev) => [...prev.slice(-200), { ...entry, time }]);
-  }, []);
+  useEffect(() => {
+    clearEntries();
+
+    return () => {
+      clearEntries();
+    };
+  }, [clearEntries]);
 
   // --- SWR lifecycle logging ---
   const prevValidatingRef = useRef(isValidating);
@@ -1034,8 +1035,7 @@ export default function LogSessionPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-3 sm:px-4 lg:grid-cols-[minmax(0,42rem)_1fr]">
-    <div className="pb-24">
+    <div className="mx-auto max-w-[42rem] px-3 pb-24 sm:px-4">
       {/* Sticky header */}
       <div className="sticky top-0 z-[5] flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
         <Button
@@ -1092,7 +1092,6 @@ export default function LogSessionPage() {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-
 
       {/* Empty state */}
       {showSessionBootstrap && <LogSessionSkeleton />}
@@ -1189,8 +1188,6 @@ export default function LogSessionPage() {
           </div>
         </div>
       )}
-    </div>
-    <ActivityPanel entries={activityLog} />
     </div>
   );
 }
@@ -1342,145 +1339,6 @@ function LogSessionSkeleton() {
             <Skeleton className="h-12 w-full rounded-md" />
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-const API_DESCRIPTIONS = {
-  addSet: {
-    action: "Add set to existing lift block",
-    api: "POST /api/sheet/log-session",
-    sheets: "sheets.spreadsheets.batchUpdate (insertDimension + updateCells)",
-  },
-  addLift: {
-    action: "Add new lift type to session",
-    api: "POST /api/sheet/log-session",
-    sheets: "sheets.spreadsheets.batchUpdate (insertDimension + updateCells + optional border)",
-  },
-  deleteSet: {
-    action: "Delete a set row",
-    api: "DELETE /api/sheet/log-set",
-    sheets: "sheets.values.get (pre-read) → optional values.update (promote anchor) → batchUpdate (deleteDimension)",
-  },
-  updateSet: {
-    action: "Edit reps, weight, or notes",
-    api: "PATCH /api/sheet/log-set",
-    sheets: "sheets.values.update (cols C–F)",
-  },
-};
-
-function ActivityPanel({ entries }) {
-  const scrollRef = useRef(null);
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [entries.length]);
-
-  const copyLog = useCallback(() => {
-    const header = `SJ Activity Log — ${new Date().toISOString()}\n${"─".repeat(60)}`;
-    const lines = entries.map((e) => {
-      if (e.type === "warning") return `[${e.time}] ⚠ ${e.label}: ${e.detail}`;
-      if (e.type === "action") return `[${e.time}] → ${e.label}: ${e.detail}`;
-      if (e.type === "swr" || e.type === "swr-ok" || e.type === "swr-error") return `[${e.time}] ◆ ${e.label}: ${e.detail}`;
-      // timing
-      return `[${e.time}] ✓ ${e.label}: ${e.total}ms${e.detail ? ` | ${e.detail}` : ""}`;
-    });
-    navigator.clipboard.writeText(`${header}\n${lines.join("\n")}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [entries]);
-
-  return (
-    <div className="sticky top-0 hidden max-h-[65vh] flex-col rounded-lg border bg-card lg:flex">
-      <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Activity Monitor</span>
-        <div className="flex items-center gap-2">
-          {entries.length > 0 && (
-            <button
-              onClick={copyLog}
-              className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copied ? "Copied" : "Copy"}
-            </button>
-          )}
-          <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>
-        </div>
-      </div>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">
-        {entries.length === 0 && (
-          <div className="px-3 py-8 text-center text-muted-foreground/50">
-            <p>SWR data flow and Sheet API calls will appear here.</p>
-            <p className="mt-2 text-muted-foreground/30">Tracks revalidation, data parsing, and every read/write to Google Sheets.</p>
-          </div>
-        )}
-        {entries.map((entry, i) => {
-          const desc = API_DESCRIPTIONS[entry.label];
-          if (entry.type === "swr" || entry.type === "swr-ok" || entry.type === "swr-error") {
-            const colorClass = entry.type === "swr-error"
-              ? "text-destructive"
-              : entry.type === "swr-ok"
-                ? "text-green-600 dark:text-green-400"
-                : "text-purple-500 dark:text-purple-400";
-            return (
-              <div key={i} className="border-b border-border/20 px-3 py-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
-                  <span className={`font-medium ${colorClass}`}>{entry.label}</span>
-                </div>
-                {entry.detail && (
-                  <p className="mt-0.5 font-mono text-muted-foreground">{entry.detail}</p>
-                )}
-              </div>
-            );
-          }
-          if (entry.type === "warning") {
-            return (
-              <div key={i} className="border-b border-border/20 bg-destructive/10 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-destructive">{entry.label}</span>
-                </div>
-                <p className="mt-1 break-all text-destructive/80">{entry.detail}</p>
-              </div>
-            );
-          }
-          if (entry.type === "action") {
-            return (
-              <div key={i} className="border-b border-border/20 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-blue-500 dark:text-blue-400">{desc?.action ?? entry.label}</span>
-                </div>
-                <p className="mt-0.5 break-all text-muted-foreground">{entry.detail}</p>
-                {desc && (
-                  <div className="mt-1 space-y-0.5 rounded bg-muted/50 px-2 py-1 text-muted-foreground">
-                    <p><span className="text-foreground/70">SJ API:</span> {desc.api}</p>
-                    <p><span className="text-foreground/70">Sheets:</span> {desc.sheets}</p>
-                  </div>
-                )}
-              </div>
-            );
-          }
-          // timing entry
-          return (
-            <div key={i} className="border-b border-border/20 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
-                <span className="font-semibold text-foreground">{desc?.action ?? entry.label}</span>
-                <span
-                  className="ml-auto shrink-0 font-mono font-bold tabular-nums"
-                  style={{ color: entry.color }}
-                >
-                  {entry.total}ms
-                </span>
-              </div>
-              {entry.detail && (
-                <p className="mt-0.5 font-mono text-muted-foreground">{entry.detail}</p>
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );

@@ -11,11 +11,13 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle, ThemeChooser } from "@/components/theme-chooser";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
+import { DevActivityMonitorPanel } from "@/components/dev-activity-monitor";
 import { Table2, Loader2, Github, Layers, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
+import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
 
@@ -25,6 +27,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 import {
   NavigationMenu,
@@ -56,6 +63,7 @@ import {
   Sparkles,
   CircleDashed,
   Dumbbell,
+  ChevronDown,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { GorillaIcon } from "@/components/gorilla-icon";
@@ -145,41 +153,83 @@ function ensureCannyChangelog() {
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
+  const { entries } = useDevActivityMonitor();
+  const isDevLogPage =
+    authStatus === "authenticated" &&
+    pathname === "/log" &&
+    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
+  const [isActivityMonitorOpen, setIsActivityMonitorOpen] = useState(false);
+  const activityMonitorOpen = isDevLogPage && isActivityMonitorOpen;
 
   return (
-    <div className="bg-background/50 mx-2 my-3 flex items-center rounded-lg px-3 md:mx-10 md:px-6 xl:mx-24">
-      <div className="flex items-center">
-        <DesktopNav />
-        <MobileNav />
-      </div>
-      <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
-        {authStatus === "authenticated" && process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
-          <Button asChild size="sm" className="hidden gap-1.5 md:flex">
-            <Link href="/log">
-              <Dumbbell className="h-4 w-4" />
-              Log
-            </Link>
-          </Button>
-        )}
-        <MiniTimer />
-        {/* We used to show an icon to open the user google sheet */}
-        {/* <UserSheetIcon /> */}
-
-        {/* We used to show a github icon with xl:block*/}
-        <div className="hidden">
-          <GitHubButton />
+    <Collapsible
+      open={activityMonitorOpen}
+      onOpenChange={setIsActivityMonitorOpen}
+      className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24"
+    >
+      <div className="flex items-center px-3 md:px-6">
+        <div className="flex items-center">
+          <DesktopNav />
+          <MobileNav />
         </div>
+        <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 py-3">
+          {authStatus === "authenticated" && process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
+            <Button asChild size="sm" className="hidden gap-1.5 md:flex">
+              <Link href="/log">
+                <Dumbbell className="h-4 w-4" />
+                Log
+              </Link>
+            </Button>
+          )}
+          {isDevLogPage && (
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant={activityMonitorOpen ? "secondary" : "outline"}
+                size="sm"
+                className="hidden gap-1.5 md:flex"
+              >
+                <Activity className="h-4 w-4" />
+                Monitor
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
+                  {entries.length}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    activityMonitorOpen && "rotate-180",
+                  )}
+                />
+              </Button>
+            </CollapsibleTrigger>
+          )}
+          <MiniTimer />
+          {/* We used to show an icon to open the user google sheet */}
+          {/* <UserSheetIcon /> */}
 
-        {/* Logged-in users always get the bio settings button. For guests we only show it on
-            pages where bio data (age, sex, bodyweight) actively changes the output — we don't
-            want the pulsing badge distracting first-time visitors on the landing page. */}
-        {(authStatus === "authenticated" ||
-          BIO_SETTINGS_PAGES.includes(pathname)) && <AthleteBioQuickSettings />}
-        <ThemeChooser />
-        {/* <DarkModeToggle /> */}
-        <AvatarDropdown />
+          {/* We used to show a github icon with xl:block*/}
+          <div className="hidden">
+            <GitHubButton />
+          </div>
+
+          {/* Logged-in users always get the bio settings button. For guests we only show it on
+              pages where bio data (age, sex, bodyweight) actively changes the output — we don't
+              want the pulsing badge distracting first-time visitors on the landing page. */}
+          {(authStatus === "authenticated" ||
+            BIO_SETTINGS_PAGES.includes(pathname)) && <AthleteBioQuickSettings />}
+          <ThemeChooser />
+          {/* <DarkModeToggle /> */}
+          <AvatarDropdown />
+        </div>
       </div>
-    </div>
+      {isDevLogPage && (
+        <CollapsibleContent className="hidden border-t border-border/40 md:block">
+          <div className="px-3 pb-3 pt-2 md:px-6">
+            <DevActivityMonitorPanel className="max-h-[24rem]" />
+          </div>
+        </CollapsibleContent>
+      )}
+    </Collapsible>
   );
 }
 
@@ -195,25 +245,7 @@ export function DesktopNav() {
   const pathname = usePathname();
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
-  const [logoSrc, setLogoSrc] = useState(() => {
-    // Start with default theme for SSR/hydration consistency
-    return getLogoForTheme("light");
-  });
-
-  // Set logo on mount and when theme changes
-  useEffect(() => {
-    let currentTheme = theme ?? resolvedTheme;
-
-    // If theme not yet resolved, try to get from localStorage
-    if (!currentTheme && typeof window !== "undefined") {
-      const storedTheme = localStorage.getItem(LOCAL_STORAGE_KEYS.THEME);
-      if (storedTheme) {
-        currentTheme = storedTheme;
-      }
-    }
-
-    setLogoSrc(getLogoForTheme(currentTheme || "light"));
-  }, [theme, resolvedTheme]);
+  const logoSrc = getLogoForTheme(theme ?? resolvedTheme ?? "light");
 
   return (
     <div className="hidden align-middle md:flex">

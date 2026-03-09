@@ -38,10 +38,10 @@ import {
 // --- Big Four lifts with SVG icons ---
 
 const BIG_FOUR = [
-  { name: "Back Squat", icon: "/back_squat.svg", slug: "squat-1rm-calculator" },
-  { name: "Bench Press", icon: "/bench_press.svg", slug: "bench-press-1rm-calculator" },
-  { name: "Deadlift", icon: "/deadlift.svg", slug: "deadlift-1rm-calculator" },
-  { name: "Strict Press", icon: "/strict_press.svg", slug: "strict-press-1rm-calculator" },
+  { name: "Back Squat", icon: "/back_squat.svg", slug: "barbell-squat-insights" },
+  { name: "Bench Press", icon: "/bench_press.svg", slug: "barbell-bench-press-insights" },
+  { name: "Deadlift", icon: "/deadlift.svg", slug: "barbell-deadlift-insights" },
+  { name: "Strict Press", icon: "/strict_press.svg", slug: "barbell-strict-press-insights" },
 ];
 
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
@@ -123,7 +123,7 @@ function getTop20Rank(topLifts, weight, isMetric) {
 
   const rank = topLifts.findIndex((lift) => {
     const { value } = getDisplayWeight(lift, isMetric);
-    return weight >= value;
+    return weight > value;
   });
 
   if (rank !== -1) {
@@ -1447,19 +1447,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     return bestIdx;
   }, [sets, canShowStrength, e1rmFormula]);
 
-  // Compute the minimum weight column width based on the widest weight string
-  const weightColWidth = useMemo(() => {
-    let maxLen = 0;
-    for (const s of sets) {
-      const w = s.weight ?? 0;
-      const len = String(w).length;
-      if (len > maxLen) maxLen = len;
-    }
-    // Each digit ~0.6em at text-xl, plus padding. Use ch units for precision.
-    // Minimum w-14 (3.5rem) for small numbers, scale up for wider values
-    return maxLen <= 3 ? "w-14" : maxLen <= 4 ? "w-[4.5rem]" : "w-[5.5rem]";
-  }, [sets]);
-
   // Toggle between lifetime and 12-month PR scope
   const [prScope, setPrScope] = useState("lifetime");
 
@@ -1512,22 +1499,22 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
         <div className="absolute left-4 top-4 hidden md:block">
-          <Link href={`/calculator/${bigFourEntry.slug}`}>
+          <Link href={`/${bigFourEntry.slug}`}>
             <Image src={bigFourEntry.icon} alt="" width={80} height={80} className="opacity-80 transition-opacity hover:opacity-100" />
           </Link>
         </div>
       )}
 
-      {/* Header — px-4 matches set row padding for alignment */}
-      <div className="flex items-center gap-2 px-4 pb-1">
+      {/* Header */}
+      <div className="flex items-center gap-2 pb-1">
         {/* Mobile: inline icon (3× = 48px) */}
         {bigFourEntry && (
-          <Link href={`/calculator/${bigFourEntry.slug}`}>
+          <Link href={`/${bigFourEntry.slug}`}>
             <Image src={bigFourEntry.icon} alt="" width={48} height={48} className="md:hidden" />
           </Link>
         )}
         {bigFourEntry ? (
-          <Link href={`/calculator/${bigFourEntry.slug}`} className="text-base font-semibold text-foreground hover:underline">
+          <Link href={`/${bigFourEntry.slug}`} className="text-base font-semibold text-foreground hover:underline">
             {liftType}
           </Link>
         ) : (
@@ -1564,7 +1551,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
             set={set}
             isMetric={isMetric}
-            weightColWidth={weightColWidth}
             prMeta={prMeta[idx]}
             onUpdate={(fields) => onUpdateSet({ rowIndex: set.rowIndex, tempId: set._tempId ?? null }, fields)}
             onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
@@ -1603,13 +1589,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
 function UnitLabel({ unitType, mismatch }) {
   if (!mismatch) {
-    return <span className="text-sm font-medium text-muted-foreground">{unitType}</span>;
+    return <span className="ml-0.5 text-sm font-medium text-muted-foreground">{unitType}</span>;
   }
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-flex items-center gap-0.5 text-sm font-medium text-muted-foreground">
+          <span className="ml-0.5 inline-flex items-center gap-0.5 text-sm font-medium text-muted-foreground">
             {unitType}
             <Info className="h-3 w-3" />
           </span>
@@ -1625,7 +1611,7 @@ function UnitLabel({ unitType, mismatch }) {
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, isMetric, weightColWidth = "w-14", prMeta, onUpdate, onDelete, strengthBadge }) {
+function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -1735,12 +1721,9 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prMeta, onUpdate, onDe
   }
 
   return (
-    <div className="group flex items-center gap-4 px-4 py-3">
+    <div className="group flex items-center gap-4 py-3">
       {/* Reps @ Weight unit — tight visual unit.
-          Fixed-width containers prevent layout shift when toggling between
-          display (button) and edit (input) modes. weightColWidth is computed
-          by LiftBlock based on the widest weight value across all sets.
-          Reps right-aligned, weight left-aligned so the digit sits flush against @. */}
+          Reps right-aligned in fixed w-12, weight auto-width so it sits tight against unit label. */}
       <div className="flex items-center">
         <div className="w-12">
           {editingReps ? (
@@ -1763,27 +1746,25 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prMeta, onUpdate, onDe
           )}
         </div>
         <span className="mx-0.5 text-base text-muted-foreground">@</span>
-        <div className={weightColWidth}>
-          {editingWeight ? (
-            <input
-              type="number"
-              step="any"
-              className="w-full rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-              value={draftWeight}
-              onChange={(e) => setDraftWeight(e.target.value)}
-              onBlur={commitWeight}
-              onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-              autoFocus
-            />
-          ) : (
-            <button
-              className="w-full rounded py-0.5 text-left text-xl font-semibold tabular-nums hover:bg-muted/60"
-              onClick={() => setEditingWeight(true)}
-            >
-              {displayWeight}
-            </button>
-          )}
-        </div>
+        {editingWeight ? (
+          <input
+            type="number"
+            step="any"
+            className="w-20 rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+            value={draftWeight}
+            onChange={(e) => setDraftWeight(e.target.value)}
+            onBlur={commitWeight}
+            onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+            autoFocus
+          />
+        ) : (
+          <button
+            className="rounded py-0.5 text-left text-xl font-semibold tabular-nums hover:bg-muted/60"
+            onClick={() => setEditingWeight(true)}
+          >
+            {displayWeight}
+          </button>
+        )}
         <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
       </div>
 
@@ -1875,7 +1856,7 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
     .join("  ·  ");
 
   return (
-    <p className="px-4 pb-1 text-xs italic text-muted-foreground/70">
+    <p className="pb-1 text-xs italic text-muted-foreground/70">
       Last {getReadableDateString(lastSets[0].date)}: {summary}
     </p>
   );
@@ -1892,7 +1873,7 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHin
     // Fallback: no prior session data — plain add button
     return (
       <button
-        className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+        className="flex w-full items-center gap-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
         onClick={() => onAddSet(lastRealSet)}
       >
         <Plus className="h-4 w-4" />

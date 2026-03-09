@@ -75,14 +75,6 @@ export const featurePages = [
     IconComponent: Anvil,
   },
   {
-    href: "/strength-club-calculator",
-    title: "200/300/400/500 Strength Club",
-    description:
-      "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
-    IconComponent: Mountain,
-    devOnly: true,
-  },
-  {
     href: "/big-four-strength-standards-calculator",
     title: "Big Four Strength Standards",
     description:
@@ -109,6 +101,14 @@ export const featurePages = [
     description:
       "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
     IconComponent: Flame,
+  },
+  {
+    href: "/strength-club-calculator",
+    title: "200/300/400/500 Strength Club",
+    description:
+      "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
+    IconComponent: Mountain,
+    devOnly: true,
   },
   {
     href: "/articles",

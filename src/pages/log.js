@@ -141,35 +141,31 @@ function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndRep
     weight,
     isMetric,
   );
-  let yearlyRank = getTop20Rank(
+  const yearlyRank = getTop20Rank(
     topLiftsByTypeAndRepsLast12Months?.[liftType]?.[reps - 1],
     weight,
     isMetric,
   );
 
-  if (lifetimeRank != null && yearlyRank != null && yearlyRank >= lifetimeRank) {
-    yearlyRank = null;
-  }
+  const lifetime = lifetimeRank != null ? {
+    scope: "lifetime",
+    rank: lifetimeRank,
+    emoji: getCelebrationEmoji(lifetimeRank),
+    message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
+  } : null;
 
-  if (lifetimeRank != null) {
-    return {
-      scope: "lifetime",
-      rank: lifetimeRank,
-      emoji: getCelebrationEmoji(lifetimeRank),
-      message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
-    };
-  }
+  const yearly = yearlyRank != null ? {
+    scope: "yearly",
+    rank: yearlyRank,
+    emoji: getCelebrationEmoji(yearlyRank),
+    message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
+  } : null;
 
-  if (yearlyRank != null) {
-    return {
-      scope: "yearly",
-      rank: yearlyRank,
-      emoji: getCelebrationEmoji(yearlyRank),
-      message: `${getCelebrationEmoji(yearlyRank)} Yearly #${yearlyRank + 1} ${reps}RM`,
-    };
-  }
+  // Default pick: lifetime wins, yearly only if it adds info beyond lifetime
+  const suppressYearly = lifetime && yearly && yearly.rank >= lifetime.rank;
+  const best = lifetime ?? (suppressYearly ? null : yearly);
 
-  return null;
+  return { best, lifetime, yearly };
 }
 
 export default function LogSessionPage() {
@@ -1331,9 +1327,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     // Detect drop set mode: last logged weight is below the session's peak
     const inDropSetMode = atOrPastTop && lastLoggedWeight < maxLogged;
 
-    // Helper: check if a suggested set would be a PR
+    // Helper: check if a suggested set would be a PR (use best/default pick)
     const getSuggestionRankingMeta = (reps, weight) => {
-      return getRankingMeta({
+      const meta = getRankingMeta({
         liftType,
         reps,
         weight,
@@ -1341,6 +1337,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
       });
+      return meta?.best ?? null;
     };
 
     const result = [];
@@ -1463,6 +1460,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     return maxLen <= 3 ? "w-14" : maxLen <= 4 ? "w-[4.5rem]" : "w-[5.5rem]";
   }, [sets]);
 
+  // Toggle between lifetime and 12-month PR scope
+  const [prScope, setPrScope] = useState("lifetime");
+
   const prMeta = useMemo(() => {
     return sets.map((s) => {
       const rankingMeta = getRankingMeta({
@@ -1476,17 +1476,34 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       if (s._pending || !s.reps || !s.weight) {
         return { status: null, message: null, scope: null };
       }
-      if (s.isHistoricalPR) {
+
+      // Pick the ranking for the active scope
+      const active = prScope === "yearly"
+        ? rankingMeta?.yearly
+        : (rankingMeta?.best ?? null);
+
+      // For lifetime scope, also flag historical PRs
+      if (prScope === "lifetime" && s.isHistoricalPR) {
         return {
           status: "lifetime",
-          message: rankingMeta?.message ?? null,
-          scope: rankingMeta?.scope ?? "lifetime",
+          message: active?.message ?? null,
+          scope: active?.scope ?? "lifetime",
         };
       }
-      if (rankingMeta?.scope === "yearly") {
-        return { status: "yearly", message: rankingMeta.message, scope: "yearly" };
+
+      if (active) {
+        return { status: active.scope, message: active.message, scope: active.scope };
       }
-      return { status: null, message: rankingMeta?.message ?? null, scope: rankingMeta?.scope ?? null };
+      return { status: null, message: null, scope: null };
+    });
+  }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, prScope]);
+
+  // Check if any set has a yearly ranking (to decide whether to show the toggle)
+  const hasYearlyData = useMemo(() => {
+    return sets.some((s) => {
+      if (s._pending || !s.reps || !s.weight) return false;
+      const meta = getRankingMeta({ liftType, reps: s.reps, weight: s.weight, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months });
+      return meta?.yearly != null;
     });
   }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
@@ -1501,8 +1518,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center gap-2 pb-1">
+      {/* Header — px-4 matches set row padding for alignment */}
+      <div className="flex items-center gap-2 px-4 pb-1">
         {/* Mobile: inline icon (3× = 48px) */}
         {bigFourEntry && (
           <Link href={`/calculator/${bigFourEntry.slug}`}>
@@ -1517,6 +1534,18 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           <h2 className="text-base font-semibold text-foreground">
             {liftType}
           </h2>
+        )}
+        {hasYearlyData && (
+          <button
+            className={`ml-auto rounded-full px-2.5 py-0.5 text-[10px] font-medium tracking-wide transition-colors ${
+              prScope === "yearly"
+                ? "bg-blue-500/10 text-blue-500"
+                : "text-muted-foreground/50 hover:text-muted-foreground"
+            }`}
+            onClick={() => setPrScope((s) => s === "lifetime" ? "yearly" : "lifetime")}
+          >
+            {prScope === "yearly" ? "12 month" : "lifetime"}
+          </button>
         )}
       </div>
 
@@ -1846,7 +1875,7 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
     .join("  ·  ");
 
   return (
-    <p className="pb-1 text-xs italic text-muted-foreground/70">
+    <p className="px-4 pb-1 text-xs italic text-muted-foreground/70">
       Last {getReadableDateString(lastSets[0].date)}: {summary}
     </p>
   );

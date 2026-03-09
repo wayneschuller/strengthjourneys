@@ -8,7 +8,10 @@ import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
-import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import {
+  extractYouTubeVideoId,
+  getYouTubeThumbnailUrl,
+} from "@/lib/video-thumbnails";
 import {
   getConsecutiveWorkoutGroups,
   LiftStrengthLevel,
@@ -34,7 +37,6 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   Plus,
   PlayCircle,
   Trash2,
@@ -65,28 +67,106 @@ const BIG_FOUR = [
   { name: "Strict Press", icon: "/strict_press.svg", slug: "barbell-strict-press-insights" },
 ];
 
-const BIG_FOUR_FORM_CUES = {
-  "Back Squat": [
-    "Root your whole foot and brace hard before every rep.",
-    "Sit between your hips while the bar stays balanced over mid-foot.",
-    "Drive straight up out of the hole and finish tall.",
-  ],
-  "Bench Press": [
-    "Set your shoulder blades first, then keep the upper back pinned tight.",
-    "Plant your feet and stay tight from the handoff to lockout.",
-    "Touch the bar low on the chest and press back toward the shoulders.",
-  ],
-  "Deadlift": [
-    "Start with the bar over mid-foot and bring your shins in only after you hinge down.",
-    "Brace, squeeze the bar, and pull the slack out before the floor breaks.",
-    "Keep the bar close up the legs and finish tall without leaning back.",
-  ],
-  "Strict Press": [
-    "Squeeze glutes and abs so the ribs stay down before the press starts.",
-    "Stack wrists over elbows and begin with forearms close to vertical.",
-    "Move your head back to clear the bar, then punch through to lockout.",
-  ],
-};
+const LIFT_CUE_VIDEOS = [
+  {
+    liftType: "Back Squat",
+    slug: "barbell-squat-insights",
+    cues: [
+      "Root your whole foot and brace hard before every rep.",
+      "Sit between your hips while the bar stays balanced over mid-foot.",
+      "Drive straight up out of the hole and finish tall.",
+    ],
+    videoUrl: "https://www.youtube.com/embed/jyopTyOjXb0", // "Gym Shorts (How To): The Squat" - Barbell Logic
+  },
+  {
+    liftType: "Bench Press",
+    slug: "barbell-bench-press-insights",
+    cues: [
+      "Set your shoulder blades first, then keep the upper back pinned tight.",
+      "Plant your feet and stay tight from the handoff to lockout.",
+      "Touch the bar low on the chest and press back toward the shoulders.",
+    ],
+    videoUrl: "https://www.youtube.com/embed/t3f2L7NRRUY", // "Gym Shorts (How To):  Bench Press" - Barbell Logic
+  },
+  {
+    liftType: "Deadlift",
+    slug: "barbell-deadlift-insights",
+    cues: [
+      "Start with the bar over mid-foot and bring your shins in only after you hinge down.",
+      "Brace, squeeze the bar, and pull the slack out before the floor breaks.",
+      "Keep the bar close up the legs and finish tall without leaning back.",
+    ],
+    videoUrl: "https://www.youtube.com/embed/3oMjoOm5O18", // "Gym Shorts (How To): The Deadlift" - Barbell Logic
+  },
+  {
+    liftType: "Strict Press",
+    slug: "barbell-strict-press-insights",
+    cues: [
+      "Squeeze glutes and abs so the ribs stay down before the press starts.",
+      "Stack wrists over elbows and begin with forearms close to vertical.",
+      "Move your head back to clear the bar, then punch through to lockout.",
+    ],
+    videoUrl: "https://www.youtube.com/embed/AhGW3XFG3M8", // "Gym Shorts (How To): The Press" - Barbell Logic
+  },
+  {
+    liftType: "Power Snatch",
+    cues: [
+      "Stay over the bar off the floor and keep the bar close as it passes the knees.",
+      "Finish tall through the hips before you pull under.",
+      "Punch fast into a stable overhead catch and stand under control.",
+    ],
+    videoUrl: "https://www.youtube.com/watch?v=7Jn6uNdmbc0",
+  },
+  {
+    liftType: "Romanian Deadlift",
+    cues: [
+      "Push the hips back and keep a soft bend in the knees.",
+      "Let the bar trace the thighs and stay close to the legs the whole way down.",
+      "Stop when the hamstrings are loaded, then drive the hips through to stand tall.",
+    ],
+    videoUrl: "https://www.youtube.com/watch?v=amLSSb8cXok",
+  },
+  {
+    liftType: "Power Clean",
+    cues: [
+      "Push through the floor smoothly and keep the bar close from mid-shin to hip.",
+      "Finish the pull with violent leg and hip extension before the elbows turn over.",
+      "Catch high on the shoulders with fast elbows and a solid front rack.",
+    ],
+    videoUrl: "https://www.youtube.com/watch?v=mLoPwZx90SI",
+  },
+  {
+    liftType: "Rack Pull",
+    cues: [
+      "Set the lats first and wedge into the bar before it leaves the pins.",
+      "Keep the bar glued to the thighs and lock out by driving the hips through.",
+      "Finish tall without leaning back or turning it into a backbend.",
+    ],
+    videoUrl: "https://www.youtube.com/watch?v=0nJs6Cnfv3M",
+  },
+  {
+    liftType: "Front Squat",
+    cues: [
+      "Keep the elbows high so the bar stays stacked on the shoulders.",
+      "Brace hard and sit straight down between the hips instead of folding forward.",
+      "Drive up with the chest tall and keep the rack position all the way through the rep.",
+    ],
+    videoUrl: "https://www.youtube.com/watch?v=feGKhZ7unUg",
+  },
+  {
+    liftType: "Barbell Row",
+    cues: [
+      "Set the back tight before the first rep and hold the torso angle steady.",
+      "Pull the bar into the lower chest or upper stomach without jerking the hips.",
+      "Lower the bar under control and re-brace before the next rep.",
+    ],
+    videoUrl: "https://www.youtube.com/watch?v=qbES7k4HDf8",
+  },
+];
+
+const DEFAULT_ADD_LIFT_CHIPS = LIFT_CUE_VIDEOS
+  .filter((item) => !BIG_FOUR.some((lift) => lift.name === item.liftType))
+  .map((item) => ({ name: item.liftType, icon: null }));
 
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
@@ -98,20 +178,18 @@ function isEarlyDashboardStage(dashboardStage) {
   );
 }
 
-function getBigFourVideoAssist(liftType) {
-  const match = bigFourLiftInsightData.find((item) => item.liftType === liftType);
-  if (!match?.videos?.length || !match?.slug) return null;
-  return {
-    slug: match.slug,
-    videos: match.videos,
-    prompt: `Need a quick ${liftType} form check?`,
-    label: `${match.videos.length} short video guides`,
-  };
-}
+function getLiftTechniqueAssist(liftType) {
+  const match = LIFT_CUE_VIDEOS.find((item) => item.liftType === liftType);
+  if (!match) return null;
 
-function getBigFourTechniqueAssist(liftType) {
-  const cues = BIG_FOUR_FORM_CUES[liftType] ?? [];
-  const videoAssist = getBigFourVideoAssist(liftType);
+  const cues = match.cues ?? [];
+  const videoAssist = match.videoUrl
+    ? {
+        slug: match.slug ?? null,
+        videoUrl: match.videoUrl,
+        prompt: `Need a quick ${liftType} form check?`,
+      }
+    : null;
 
   if (!cues.length && !videoAssist) return null;
 
@@ -128,6 +206,11 @@ function getYouTubeWatchHref(videoUrl) {
     return `https://www.youtube.com/watch?v=${videoUrl.slice(embedPrefix.length)}`;
   }
   return videoUrl;
+}
+
+function getYouTubeThumbnailSrc(videoUrl) {
+  const videoId = extractYouTubeVideoId(videoUrl);
+  return videoId ? getYouTubeThumbnailUrl(videoId, "hqdefault") : null;
 }
 
 function getFirstTimeEmptyButtons({ liftType, barWeight, minIncrement, unitType }) {
@@ -381,10 +464,20 @@ function getFirstTimeCoachingCopy({
   return null;
 }
 
+function getNonBigFourThreeByFiveCoaching(liftType) {
+  return {
+    eyebrow: null,
+    title: null,
+    body: `${liftType} usually goes well as 3x5.`,
+    effortCue: "If these sets felt solid, you've probably done enough for today.",
+  };
+}
+
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const isClient = useIsClient();
+  const prefersReducedMotion = useReducedMotion();
   const {
     parsedData,
     sheetInfo,
@@ -1220,6 +1313,19 @@ export default function LogSessionPage() {
     );
   }
 
+  const liftCardTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.22, ease: "easeOut" };
+  const liftCardInitial = prefersReducedMotion
+    ? { opacity: 1, height: "auto" }
+    : { opacity: 0, y: 12, scale: 0.985, height: 0 };
+  const liftCardAnimate = prefersReducedMotion
+    ? { opacity: 1, height: "auto" }
+    : { opacity: 1, y: 0, scale: 1, height: "auto" };
+  const liftCardExit = prefersReducedMotion
+    ? { opacity: 0, height: 0 }
+    : { opacity: 0, y: -8, scale: 0.985, height: 0 };
+
   return (
     <div className="mx-auto max-w-[42rem] px-3 pb-24 sm:px-4">
       {/* Sticky header */}
@@ -1315,25 +1421,36 @@ export default function LogSessionPage() {
       {/* Lift blocks */}
       {!showSessionBootstrap && hasSession && (
         <div className="space-y-5">
-          {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
-            <LiftBlock
-              key={liftType}
-              liftType={liftType}
-              sets={sets}
-              parsedData={parsedData}
-              sessionDate={sessionDate}
-              isMetric={isMetric}
-              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-              topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
-              tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
-              dashboardStage={dashboardStage}
-              sessionCount={sessionCount}
-              isPastSession={!isToday}
-              onUpdateSet={updateSet}
-              onDeleteSet={deleteSet}
-              onAddSet={(prevSet) => addSet(liftType, prevSet)}
-            />
-          ))}
+          <AnimatePresence initial={false}>
+            {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
+              <motion.div
+                key={liftType}
+                layout
+                initial={liftCardInitial}
+                animate={liftCardAnimate}
+                exit={liftCardExit}
+                transition={liftCardTransition}
+                className="overflow-y-hidden md:mx-[-1rem] lg:mx-[-1.5rem]"
+              >
+                <LiftBlock
+                  liftType={liftType}
+                  sets={sets}
+                  parsedData={parsedData}
+                  sessionDate={sessionDate}
+                  isMetric={isMetric}
+                  topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+                  topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
+                  tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
+                  dashboardStage={dashboardStage}
+                  sessionCount={sessionCount}
+                  isPastSession={!isToday}
+                  onUpdateSet={updateSet}
+                  onDeleteSet={deleteSet}
+                  onAddSet={(prevSet) => addSet(liftType, prevSet)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
           <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
 
@@ -1592,7 +1709,14 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     const unitType = isMetric ? "kg" : "lb";
     const barWeight = storedBarType === "womens" ? (isMetric ? 15 : 35) : (isMetric ? 20 : 45);
     const minIncrement = isMetric ? 2.5 : 5;
-    const techniqueAssist = getBigFourTechniqueAssist(liftType);
+    const techniqueAssist = getLiftTechniqueAssist(liftType);
+    const completedSetCount = realSets.filter(
+      (set) => (set.reps ?? 0) > 0 && (set.weight ?? 0) > 0,
+    ).length;
+    const nonBigFourCoaching =
+      !techniqueAssist && completedSetCount >= 3
+        ? getNonBigFourThreeByFiveCoaching(liftType)
+        : null;
     const firstTimeTargetWeight = getFirstTimeTargetWeight({
       standards,
       liftType,
@@ -1648,7 +1772,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
                 videoAssist: techniqueAssist.videoAssist
                   ? {
                       ...techniqueAssist.videoAssist,
-                      defaultOpen: isEarlyDashboardStage(dashboardStage),
+                      defaultOpen: false,
                     }
                   : null,
               }
@@ -1706,15 +1830,17 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
                 variant: "outline",
               },
             ],
-        coaching: getFirstTimeCoachingCopy({
-          mode: "first_lift_session_in_progress",
-          dashboardStage,
-          liftType,
-          minIncrement,
-          unitType,
-          hasReachedTarget: hasReachedFirstTimeTarget,
-          workSetCount: firstTimeWorkSetCount,
-        }),
+        coaching:
+          nonBigFourCoaching ??
+          getFirstTimeCoachingCopy({
+            mode: "first_lift_session_in_progress",
+            dashboardStage,
+            liftType,
+            minIncrement,
+            unitType,
+            hasReachedTarget: hasReachedFirstTimeTarget,
+            workSetCount: firstTimeWorkSetCount,
+          }),
         techniqueAssist,
       };
     }
@@ -1878,7 +2004,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     return {
       mode: "history",
       buttons,
-      coaching: null,
+      coaching: nonBigFourCoaching,
       techniqueAssist: null,
     };
   }, [parsedData, isMetric, storedBarType, storedPlatePreference, liftType, sessionDate, realSets, lastRealSet, dashboardStage, standards, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
@@ -1950,19 +2076,22 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     );
   }, [tonnageStats, sessionCount, hasBioData, topLiftsByTypeAndReps, liftType, standards, e1rmFormula]);
 
+  const desktopIconInsetClass = "md:pl-28 lg:pl-32";
+  const desktopIconOffsetClass = "md:ml-28 lg:ml-32";
+
   return (
     <div className="relative rounded-xl border bg-card shadow-sm">
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
-        <div className="absolute left-3 top-3 hidden md:block">
+        <div className="absolute left-4 top-4 hidden md:block">
           <Link href={`/${bigFourEntry.slug}`}>
-            <Image src={bigFourEntry.icon} alt="" width={88} height={88} className="opacity-80 transition-opacity hover:opacity-100" />
+            <Image src={bigFourEntry.icon} alt="" width={96} height={96} className="opacity-80 transition-opacity hover:opacity-100" />
           </Link>
         </div>
       )}
 
       {/* Header: icon + lift name + last session */}
-      <div className="flex gap-3 px-4 pt-4 md:pl-24">
+      <div className={`flex gap-3 px-4 pt-4 ${desktopIconInsetClass}`}>
         {bigFourEntry && (
           <Link href={`/${bigFourEntry.slug}`} className="shrink-0 self-start md:hidden">
             <Image src={bigFourEntry.icon} alt="" width={48} height={48} />
@@ -1991,11 +2120,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
       <LiftTechniqueAssist
         techniqueAssist={coachState?.techniqueAssist}
-        hasBigFourIcon={Boolean(bigFourEntry)}
+        hasBigFourIcon
       />
 
       {/* Set rows — border-t inset on desktop to clear the icon gutter */}
-      <div className="mx-4 mt-1 divide-y divide-border/40 border-t border-border/40 md:ml-24">
+      <div className={`mx-4 mt-1 divide-y divide-border/40 border-t border-border/40 ${desktopIconOffsetClass}`}>
         {sets.map((set, idx) => (
           <SetRow
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
@@ -2025,7 +2154,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
       </div>
       {shouldShowTonnage && (
-        <div className="mx-4 mt-3 md:ml-24">
+        <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
           <LiftTonnageRow
             liftType={liftType}
             stats={tonnageStats}
@@ -2041,7 +2170,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         liftType={liftType}
         onAddSet={onAddSet}
         showHint={showSuggestionHint}
-        hasBigFourIcon={Boolean(bigFourEntry)}
+        hasBigFourIcon
         isPastSession={isPastSession}
       />
     </div>
@@ -2364,11 +2493,14 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 // - first-time lift coaching with starter buttons
 // - a plain fallback when nothing smarter is available
 
-function LiftTechniqueAssist({ techniqueAssist, hasBigFourIcon = false }) {
+function LiftTechniqueAssist({
+  techniqueAssist,
+  hasBigFourIcon = false,
+}) {
   if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist) return null;
 
   return (
-    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-24" : ""}`}>
+    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-28 lg:ml-32" : ""}`}>
       {techniqueAssist?.cues?.length > 0 && (
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
@@ -2426,22 +2558,24 @@ function LiftCoachCopy({ coaching, alignClass = "" }) {
 
 function LiftCoachVideoAssist({ videoAssist }) {
   const [isOpen, setIsOpen] = useState(Boolean(videoAssist.defaultOpen));
+  const activeVideoUrl = videoAssist?.videoUrl;
+  const activeVideoHref = getYouTubeWatchHref(activeVideoUrl) ?? activeVideoUrl;
+  const activeThumbnailSrc = getYouTubeThumbnailSrc(activeVideoUrl);
+
+  if (!activeVideoUrl) return null;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="rounded-lg border border-border/60 bg-background/70">
+      <div className="overflow-hidden rounded-xl border border-border/60 bg-background/75">
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-accent/30"
+            className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-accent/30"
           >
             <div className="min-w-0">
               <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <PlayCircle className="h-4 w-4 text-muted-foreground" />
                 {videoAssist.prompt}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {videoAssist.label}
               </p>
             </div>
             <ChevronRight
@@ -2452,32 +2586,47 @@ function LiftCoachVideoAssist({ videoAssist }) {
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="border-t border-border/50 px-3 py-3">
-          <div className="grid gap-2 sm:grid-cols-3">
-            {videoAssist.videos.map((videoUrl, index) => {
-              const href = getYouTubeWatchHref(videoUrl);
-              return (
-                <a
-                  key={videoUrl}
-                  href={href ?? videoUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent/30"
-                >
-                  <span>Guide {index + 1}</span>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                </a>
-              );
-            })}
-          </div>
-          <div className="mt-3">
-            <Link
-              href={`/${videoAssist.slug}`}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-            >
-              Open the full lift guide
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
+          <a
+            href={activeVideoHref}
+            target="_blank"
+            rel="noreferrer"
+            className="group block overflow-hidden rounded-xl border border-border/60 bg-card transition-colors hover:border-primary/40 hover:bg-accent/20"
+          >
+            <div className="relative aspect-video overflow-hidden bg-muted">
+              {activeThumbnailSrc ? (
+                <Image
+                  src={activeThumbnailSrc}
+                  alt={`${videoAssist.prompt} thumbnail`}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  unoptimized
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/5" />
+              <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-base font-semibold text-white">
+                    Watch the quick form check
+                  </p>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/92 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm">
+                  <PlayCircle className="h-3.5 w-3.5" />
+                  Play
+                </span>
+              </div>
+            </div>
+          </a>
+          {videoAssist.slug ? (
+            <div className="mt-3">
+              <Link
+                href={`/${videoAssist.slug}`}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                Open the full lift guide
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          ) : null}
         </CollapsibleContent>
       </div>
     </Collapsible>
@@ -2555,7 +2704,7 @@ function SmartAddButtons({ coachState, lastRealSet, liftType, onAddSet, showHint
     <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
       <LiftCoachCopy
         coaching={coachState.coaching}
-        alignClass={hasBigFourIcon ? "md:pl-24" : ""}
+        alignClass={hasBigFourIcon ? "md:pl-28 lg:pl-32" : ""}
       />
       <SmartAddButtonGrid
         buttons={coachState.buttons}
@@ -2634,22 +2783,25 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
   const [liftType, setLiftType] = useState("");
   const inputRef = useRef(null);
 
-  // Build chip list: Big Four always first, then frequent lifts (excluding Big Four), cap at 8.
+  // Build chip list: Big Four first, then curated cue-video lifts, then frequent user lifts.
   const chips = useMemo(() => {
-    const bigFourNames = new Set(BIG_FOUR.map((b) => b.name));
+    const seen = new Set();
     const freq = {};
     if (parsedData) {
       for (const e of parsedData) {
-        if (!e.isGoal && !bigFourNames.has(e.liftType)) {
+        if (!e.isGoal) {
           freq[e.liftType] = (freq[e.liftType] ?? 0) + 1;
         }
       }
     }
     const frequentExtras = Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
       .map(([lt]) => ({ name: lt, icon: null }));
-    return [...BIG_FOUR, ...frequentExtras];
+    return [...BIG_FOUR, ...DEFAULT_ADD_LIFT_CHIPS, ...frequentExtras].filter(({ name }) => {
+      if (seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
   }, [parsedData]);
 
   useEffect(() => {

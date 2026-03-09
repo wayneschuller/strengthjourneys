@@ -1,5 +1,8 @@
 import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
+
+const MotionButton = motion.create(Button);
 
 /**
  * Reusable thumbs sentiment control.
@@ -26,15 +29,21 @@ export function ThumbsSentimentControl({
 }) {
   return (
     <div className={wrapperClassName}>
-      <Button
+      <MotionButton
         variant={value === "positive" ? "default" : "outline"}
         size={size}
-        className={buttonClassName}
+        className={`${buttonClassName} ${value === "positive" ? "border-green-500 bg-green-500/90 text-white hover:bg-green-500" : ""}`}
         onClick={() => onVote("positive")}
         aria-label={positiveAriaLabel}
+        animate={
+          value === "positive"
+            ? { scale: [1, 1.3, 1] }
+            : { scale: 1 }
+        }
+        transition={{ type: "spring", stiffness: 500, damping: 12 }}
       >
         <ThumbsUp className={iconClassName} />
-      </Button>
+      </MotionButton>
       <Button
         variant={value === "negative" ? "default" : "outline"}
         size={size}

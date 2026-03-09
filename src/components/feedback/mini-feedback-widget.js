@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { motion, AnimatePresence } from "motion/react";
 import { ThumbsSentimentControl } from "@/components/feedback/thumbs-sentiment-control";
 import { Button } from "@/components/ui/button";
 import {
   trackFeedbackSentiment,
 } from "@/components/feedback/feedback-tracking";
+
+const CELEBRATE_DURATION_MS = 800;
 
 const DEFAULT_SHORT_PROMPTS = [
   "Helpful?",
@@ -62,9 +65,11 @@ export function MiniFeedbackWidget({
   const { status } = useSession();
   const [vote, setVote] = useState(null);
   const [reasonCode, setReasonCode] = useState(null);
+  const [isCelebrating, setIsCelebrating] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const mountTime = useRef(null);
   const hideTimerRef = useRef(null);
+  const celebrateTimerRef = useRef(null);
   const safePromptOptions = Array.isArray(promptOptions) && promptOptions.length > 0
     ? promptOptions
     : DEFAULT_SHORT_PROMPTS;
@@ -80,9 +85,8 @@ export function MiniFeedbackWidget({
 
   useEffect(() => {
     return () => {
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current);
-      }
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      if (celebrateTimerRef.current) clearTimeout(celebrateTimerRef.current);
     };
   }, []);
 
@@ -100,6 +104,15 @@ export function MiniFeedbackWidget({
     if (sentiment === vote) return;
     setVote(sentiment);
     setReasonCode(null);
+
+    if (sentiment === "positive") {
+      setIsCelebrating(true);
+      if (celebrateTimerRef.current) clearTimeout(celebrateTimerRef.current);
+      celebrateTimerRef.current = setTimeout(() => {
+        setIsCelebrating(false);
+      }, CELEBRATE_DURATION_MS);
+    }
+
     scheduleAutoHide();
     trackFeedbackSentiment({
       sentiment,
@@ -141,9 +154,29 @@ export function MiniFeedbackWidget({
       aria-hidden={isHidden}
     >
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">
-          {vote ? "Thanks!" : promptText}
-        </span>
+        <AnimatePresence mode="wait">
+          {isCelebrating ? (
+            <motion.span
+              key="celebrate"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: "spring", stiffness: 500, damping: 15 }}
+              className="text-xs font-medium text-green-500"
+            >
+              Thanks! 🎉
+            </motion.span>
+          ) : (
+            <motion.span
+              key="prompt"
+              initial={vote ? { opacity: 0 } : false}
+              animate={{ opacity: 1 }}
+              className="text-xs text-muted-foreground"
+            >
+              {vote ? "Thanks!" : promptText}
+            </motion.span>
+          )}
+        </AnimatePresence>
         <ThumbsSentimentControl
           value={vote}
           onVote={handleVote}
@@ -154,8 +187,13 @@ export function MiniFeedbackWidget({
           negativeAriaLabel="Thumbs down"
         />
       </div>
-      {vote && reasonOptions.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1">
+      {vote && !isCelebrating && reasonOptions.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="flex flex-wrap items-center gap-1"
+        >
           <span className="text-[11px] text-muted-foreground">Reason:</span>
           {reasonOptions.map((reason) => (
             <Button
@@ -170,7 +208,7 @@ export function MiniFeedbackWidget({
               {reason.label}
             </Button>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );

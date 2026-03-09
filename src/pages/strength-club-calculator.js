@@ -56,17 +56,12 @@ const LIFT_GRAPHICS = {
   Deadlift: "/deadlift.svg",
 };
 
-// Blue 45lb plate — the iconic gym plate
-const BLUE_45 = { weight: 45, color: "#2563EB" };
-
 const MILESTONES = [
   {
     key: "press",
     liftType: "Strict Press",
     target: 200,
     label: "200 lb Press",
-    plateCount: 2,
-    targetPlates: [{ ...BLUE_45, count: 2 }],
     storageKey: LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
     defaultValue: 115,
     max: 400,
@@ -76,8 +71,6 @@ const MILESTONES = [
     liftType: "Bench Press",
     target: 300,
     label: "300 lb Bench",
-    plateCount: 3,
-    targetPlates: [{ ...BLUE_45, count: 3 }],
     storageKey: LOCAL_STORAGE_KEYS.STRENGTH_CLUB_BENCH,
     defaultValue: 185,
     max: 500,
@@ -87,8 +80,6 @@ const MILESTONES = [
     liftType: "Back Squat",
     target: 400,
     label: "400 lb Squat",
-    plateCount: 4,
-    targetPlates: [{ ...BLUE_45, count: 4 }],
     storageKey: LOCAL_STORAGE_KEYS.STRENGTH_CLUB_SQUAT,
     defaultValue: 255,
     max: 700,
@@ -98,13 +89,20 @@ const MILESTONES = [
     liftType: "Deadlift",
     target: 500,
     label: "500 lb Deadlift",
-    plateCount: 5,
-    targetPlates: [{ ...BLUE_45, count: 5 }],
     storageKey: LOCAL_STORAGE_KEYS.STRENGTH_CLUB_DEADLIFT,
     defaultValue: 315,
     max: 800,
   },
 ];
+
+// How many blue 45lb plates per side for a given weight?
+// Uses rounding so 400 → 4 plates (405 actual), not 3 + change.
+const BLUE_PLATE_COLOR = "#2563EB";
+function getBluePlates(weight) {
+  const count = Math.max(0, Math.round((weight - BAR_WEIGHT_LB) / 90));
+  if (count === 0) return [];
+  return [{ weight: 45, color: BLUE_PLATE_COLOR, count }];
+}
 
 const COMBINED_TARGET = 1400; // 200 + 300 + 400 + 500 (for display only)
 const BAR_WEIGHT_LB = 45;
@@ -706,7 +704,7 @@ function MilestoneCard({
   onValueCommit,
   prefersReducedMotion,
 }) {
-  const { key, liftType, target, max, targetPlates } = milestone;
+  const { key, liftType, target, max } = milestone;
   const percent = Math.min(100, Math.round((value / target) * 100));
   const achieved = value >= target;
 
@@ -815,15 +813,15 @@ function MilestoneCard({
           )}
         </div>
 
-        {/* Plate diagram showing the goal — pure blue 45s */}
+        {/* Plate diagram — blue 45s that update with slider */}
         <div className="mb-3">
           <PlateDiagram
-            platesPerSide={targetPlates}
+            platesPerSide={getBluePlates(value)}
             barWeight={BAR_WEIGHT_LB}
             isMetric={false}
             hideLabels
             animationDelay={0.3 + index * 0.1}
-            animationKey={`target-${key}`}
+            animationKey={`plates-${key}-${Math.round((value - BAR_WEIGHT_LB) / 90)}`}
           />
         </div>
 

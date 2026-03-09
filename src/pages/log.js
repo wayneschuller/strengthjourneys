@@ -996,6 +996,16 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const lastRealSet = realSets[realSets.length - 1];
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
+  // Show a one-time hint for new users (first ~20 sessions)
+  const showSuggestionHint = useMemo(() => {
+    if (!parsedData) return false;
+    const dates = new Set();
+    for (const e of parsedData) {
+      if (!e.isGoal) dates.add(e.date);
+    }
+    return dates.size <= 20;
+  }, [parsedData]);
+
   // Read warmup settings from localStorage (shared with warmup calculator page)
   const storedBarType =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
@@ -1283,6 +1293,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           lastRealSet={lastRealSet}
           isMetric={isMetric}
           onAddSet={onAddSet}
+          showHint={showSuggestionHint}
         />
       </div>
 
@@ -1529,7 +1540,7 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 // - Working phase: repeat last set + increment (+2.5kg/+5lb)
 // - No prior data: plain "Add set" fallback
 
-function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet }) {
+function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHint }) {
   if (!suggestions || suggestions.length === 0) {
     // Fallback: no prior session data — plain add button
     return (
@@ -1544,33 +1555,40 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet }) {
   }
 
   return (
-    <div className="flex items-stretch gap-0 divide-x divide-border/40">
-      {suggestions.map((s, i) => (
-        <button
-          key={i}
-          className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3 text-sm transition-colors hover:bg-accent/50 ${
-            s.variant === "primary"
-              ? "bg-accent/20 font-semibold text-foreground"
-              : s.variant === "secondary"
-                ? "font-medium text-foreground"
-                : "text-muted-foreground"
-          }`}
-          onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
-        >
-          <span className="flex items-center gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            {s.label}
-          </span>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            {s.sublabel}
-          </span>
-          {s.prHint && (
-            <span className={`text-[10px] font-bold uppercase ${s.prHint === "lifetime PR" ? "text-amber-500" : "text-blue-500"}`}>
-              {s.prHint === "lifetime PR" ? "🏆 Lifetime PR!" : "⭐ Yearly PR!"}
+    <div>
+      <div className="flex items-stretch gap-0 divide-x divide-border/40">
+        {suggestions.map((s, i) => (
+          <button
+            key={i}
+            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3 text-sm transition-colors hover:bg-accent/50 ${
+              s.variant === "primary"
+                ? "bg-accent/20 font-semibold text-foreground"
+                : s.variant === "secondary"
+                  ? "font-medium text-foreground"
+                  : "text-muted-foreground"
+            }`}
+            onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
+          >
+            <span className="flex items-center gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              {s.label}
             </span>
-          )}
-        </button>
-      ))}
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              {s.sublabel}
+            </span>
+            {s.prHint && (
+              <span className={`text-[10px] font-bold uppercase ${s.prHint === "lifetime PR" ? "text-amber-500" : "text-blue-500"}`}>
+                {s.prHint === "lifetime PR" ? "🏆 Lifetime PR!" : "⭐ Yearly PR!"}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      {showHint && (
+        <p className="px-4 py-1.5 text-center text-[11px] italic text-muted-foreground/60">
+          Tap to add, then edit the weight to match your plates
+        </p>
+      )}
     </div>
   );
 }

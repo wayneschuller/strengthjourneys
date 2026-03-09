@@ -2174,27 +2174,27 @@ function LiftTechniqueAssist({ techniqueAssist, hasBigFourIcon = false }) {
   if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist) return null;
 
   return (
-    <div className={`mx-4 mt-2 rounded-lg border border-border/50 bg-muted/20 p-3 ${hasBigFourIcon ? "md:ml-24" : ""}`}>
-      <div className="space-y-3">
-        {techniqueAssist?.cues?.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-              Form cues
-            </p>
-            <ul className="space-y-1.5">
-              {techniqueAssist.cues.map((cue) => (
-                <li key={cue} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
-                  <span>{cue}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {techniqueAssist?.videoAssist && (
+    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-24" : ""}`}>
+      {techniqueAssist?.cues?.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
+            Form cues
+          </p>
+          <ul className="space-y-1.5">
+            {techniqueAssist.cues.map((cue) => (
+              <li key={cue} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
+                <span>{cue}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {techniqueAssist?.videoAssist && (
+        <div className="pt-1">
           <LiftCoachVideoAssist videoAssist={techniqueAssist.videoAssist} />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

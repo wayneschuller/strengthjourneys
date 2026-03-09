@@ -1945,18 +1945,20 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHin
   if (!suggestions || suggestions.length === 0) {
     // Fallback: no prior session data — plain add button
     return (
-      <button
-        className="flex w-full items-center gap-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-        onClick={() => onAddSet(lastRealSet)}
-      >
-        <Plus className="h-4 w-4" />
-        Add set
-      </button>
+      <div className="mt-1 border-t border-border bg-muted/30">
+        <button
+          className="flex w-full items-center gap-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+          onClick={() => onAddSet(lastRealSet)}
+        >
+          <Plus className="h-4 w-4" />
+          Add set
+        </button>
+      </div>
     );
   }
 
   return (
-    <div>
+    <div className="mt-1 border-t border-border bg-muted/30">
       <div className="flex items-stretch gap-0 divide-x divide-border/40">
         {suggestions.map((s, i) => (
           <button

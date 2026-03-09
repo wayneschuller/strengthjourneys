@@ -1551,9 +1551,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     <div className="relative rounded-xl border bg-card shadow-sm">
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
-        <div className="absolute left-4 top-4 hidden md:block">
+        <div className="absolute left-3 top-3 hidden md:block">
           <Link href={`/${bigFourEntry.slug}`}>
-            <Image src={bigFourEntry.icon} alt="" width={80} height={80} className="opacity-80 transition-opacity hover:opacity-100" />
+            <Image src={bigFourEntry.icon} alt="" width={88} height={88} className="opacity-80 transition-opacity hover:opacity-100" />
           </Link>
         </div>
       )}
@@ -1586,8 +1586,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         </div>
       </div>
 
-      {/* Set rows — full width with own padding */}
-      <div className="mt-1 divide-y divide-border/40 border-t border-border/40 px-4 md:pl-24">
+      {/* Set rows — border-t inset on desktop to clear the icon gutter */}
+      <div className="mx-4 mt-1 divide-y divide-border/40 border-t border-border/40 md:ml-24">
         {sets.map((set, idx) => (
           <SetRow
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
@@ -1615,14 +1615,16 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           />
         ))}
 
-        <SmartAddButtons
-          suggestions={suggestions}
-          lastRealSet={lastRealSet}
-          isMetric={isMetric}
-          onAddSet={onAddSet}
-          showHint={showSuggestionHint}
-        />
       </div>
+
+      {/* Add-set buttons — card footer */}
+      <SmartAddButtons
+        suggestions={suggestions}
+        lastRealSet={lastRealSet}
+        isMetric={isMetric}
+        onAddSet={onAddSet}
+        showHint={showSuggestionHint}
+      />
     </div>
   );
 }
@@ -1945,9 +1947,9 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHin
   if (!suggestions || suggestions.length === 0) {
     // Fallback: no prior session data — plain add button
     return (
-      <div className="mt-1 border-t border-border bg-muted/30">
+      <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
         <button
-          className="flex w-full items-center gap-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+          className="flex w-full items-center justify-center gap-2 py-3.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           onClick={() => onAddSet(lastRealSet)}
         >
           <Plus className="h-4 w-4" />
@@ -1958,12 +1960,12 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHin
   }
 
   return (
-    <div className="mt-1 border-t border-border bg-muted/30">
-      <div className="flex items-stretch gap-0 divide-x divide-border/40">
+    <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
+      <div className="flex items-stretch divide-x divide-border/40">
         {suggestions.map((s, i) => (
           <button
             key={i}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3 text-sm transition-colors hover:bg-accent/50 ${
+            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3.5 text-sm transition-colors hover:bg-accent/50 ${
               s.variant === "primary"
                 ? "bg-accent/20 font-semibold text-foreground"
                 : s.variant === "secondary"
@@ -1988,7 +1990,7 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHin
         ))}
       </div>
       {showHint && (
-        <p className="px-4 py-1.5 text-center text-[11px] italic text-muted-foreground/60">
+        <p className="pb-2 pt-1 text-center text-[11px] italic text-muted-foreground/60">
           Tap to add, then edit the weight to match your plates
         </p>
       )}

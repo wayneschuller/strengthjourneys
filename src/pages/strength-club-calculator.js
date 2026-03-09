@@ -37,7 +37,6 @@ import {
 } from "lucide-react";
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
-import { calculatePlateBreakdown } from "@/lib/warmups";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
@@ -57,13 +56,17 @@ const LIFT_GRAPHICS = {
   Deadlift: "/deadlift.svg",
 };
 
+// Blue 45lb plate — the iconic gym plate
+const BLUE_45 = { weight: 45, color: "#2563EB" };
+
 const MILESTONES = [
   {
     key: "press",
     liftType: "Strict Press",
     target: 200,
     label: "200 lb Press",
-    plates: "2 plates per side",
+    plateCount: 2,
+    targetPlates: [{ ...BLUE_45, count: 2 }],
     storageKey: LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
     defaultValue: 115,
     max: 400,
@@ -73,7 +76,8 @@ const MILESTONES = [
     liftType: "Bench Press",
     target: 300,
     label: "300 lb Bench",
-    plates: "3 plates per side",
+    plateCount: 3,
+    targetPlates: [{ ...BLUE_45, count: 3 }],
     storageKey: LOCAL_STORAGE_KEYS.STRENGTH_CLUB_BENCH,
     defaultValue: 185,
     max: 500,
@@ -83,7 +87,8 @@ const MILESTONES = [
     liftType: "Back Squat",
     target: 400,
     label: "400 lb Squat",
-    plates: "3+ plates per side",
+    plateCount: 4,
+    targetPlates: [{ ...BLUE_45, count: 4 }],
     storageKey: LOCAL_STORAGE_KEYS.STRENGTH_CLUB_SQUAT,
     defaultValue: 255,
     max: 700,
@@ -93,7 +98,8 @@ const MILESTONES = [
     liftType: "Deadlift",
     target: 500,
     label: "500 lb Deadlift",
-    plates: "5 plates per side",
+    plateCount: 5,
+    targetPlates: [{ ...BLUE_45, count: 5 }],
     storageKey: LOCAL_STORAGE_KEYS.STRENGTH_CLUB_DEADLIFT,
     defaultValue: 315,
     max: 800,
@@ -700,12 +706,9 @@ function MilestoneCard({
   onValueCommit,
   prefersReducedMotion,
 }) {
-  const { key, liftType, target, max } = milestone;
+  const { key, liftType, target, max, targetPlates } = milestone;
   const percent = Math.min(100, Math.round((value / target) * 100));
   const achieved = value >= target;
-
-  // Calculate plate breakdown for the CURRENT slider value
-  const currentBreakdown = calculatePlateBreakdown(value, BAR_WEIGHT_LB, false, "blue");
 
   // Green gradient fill that rises from bottom based on progress
   const fillPercent = Math.min(100, (value / target) * 100);
@@ -812,15 +815,15 @@ function MilestoneCard({
           )}
         </div>
 
-        {/* Plate diagram showing current slider value */}
+        {/* Plate diagram showing the goal — pure blue 45s */}
         <div className="mb-3">
           <PlateDiagram
-            platesPerSide={currentBreakdown.platesPerSide}
+            platesPerSide={targetPlates}
             barWeight={BAR_WEIGHT_LB}
             isMetric={false}
             hideLabels
             animationDelay={0.3 + index * 0.1}
-            animationKey={`current-${key}-${value}`}
+            animationKey={`target-${key}`}
           />
         </div>
 

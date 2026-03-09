@@ -1558,15 +1558,14 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         </div>
       )}
 
-      {/* Mobile: icon + content side by side; Desktop: content only (icon in gutter) */}
-      <div className="flex gap-3 p-4 pb-0 md:pl-24">
+      {/* Header: icon + lift name + last session */}
+      <div className="flex gap-3 px-4 pt-4 md:pl-24">
         {bigFourEntry && (
           <Link href={`/${bigFourEntry.slug}`} className="shrink-0 self-start md:hidden">
             <Image src={bigFourEntry.icon} alt="" width={48} height={48} />
           </Link>
         )}
         <div className="min-w-0 flex-1">
-          {/* Header */}
           <div className="pb-1">
             {bigFourEntry ? (
               <Link href={`/${bigFourEntry.slug}`} className="text-base font-semibold text-foreground hover:underline">
@@ -1578,17 +1577,17 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
               </h2>
             )}
           </div>
-
-          {/* Last session suggestion */}
           <LiftSuggestions
             liftType={liftType}
             sessionDate={sessionDate}
             parsedData={parsedData}
             isMetric={isMetric}
           />
+        </div>
+      </div>
 
-          {/* Set rows — dividers between */}
-          <div className="mt-1 divide-y divide-border/40 border-t border-border/40">
+      {/* Set rows — full width with own padding */}
+      <div className="mt-1 divide-y divide-border/40 border-t border-border/40 px-4 md:pl-24">
         {sets.map((set, idx) => (
           <SetRow
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
@@ -1616,7 +1615,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           />
         ))}
 
-        {/* Smart add-set suggestions */}
         <SmartAddButtons
           suggestions={suggestions}
           lastRealSet={lastRealSet}
@@ -1624,10 +1622,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           onAddSet={onAddSet}
           showHint={showSuggestionHint}
         />
-          </div>
-        </div>
       </div>
-
     </div>
   );
 }

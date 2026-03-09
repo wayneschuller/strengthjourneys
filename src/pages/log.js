@@ -177,6 +177,11 @@ export default function LogSessionPage() {
     sheetInfo,
     mutate,
     isLoading,
+    isValidating,
+    isError,
+    fetchFailed,
+    rawRows,
+    dataSyncedAt,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
@@ -199,6 +204,46 @@ export default function LogSessionPage() {
     const time = `${String(ts.getHours()).padStart(2, "0")}:${String(ts.getMinutes()).padStart(2, "0")}:${String(ts.getSeconds()).padStart(2, "0")}.${String(ts.getMilliseconds()).padStart(3, "0")}`;
     setActivityLog((prev) => [...prev.slice(-200), { ...entry, time }]);
   }, []);
+
+  // --- SWR lifecycle logging ---
+  const prevValidatingRef = useRef(isValidating);
+  const revalidateStartRef = useRef(null);
+  useEffect(() => {
+    const was = prevValidatingRef.current;
+    prevValidatingRef.current = isValidating;
+    if (isValidating && !was) {
+      revalidateStartRef.current = performance.now();
+      addLogEntry({ type: "swr", label: "SWR revalidating", detail: "fetching sheet data…" });
+    }
+    if (!isValidating && was) {
+      const elapsed = revalidateStartRef.current ? Math.round(performance.now() - revalidateStartRef.current) : null;
+      const suffix = elapsed != null ? ` · ${elapsed}ms` : "";
+      if (isError || fetchFailed) {
+        addLogEntry({ type: "swr-error", label: "SWR revalidation failed", detail: `error=${isError} fetchFailed=${fetchFailed}${suffix}` });
+      } else {
+        addLogEntry({ type: "swr-ok", label: "SWR revalidation done", detail: `${rawRows ?? "?"} rows${suffix}` });
+      }
+    }
+  }, [isValidating, isError, fetchFailed, rawRows, addLogEntry]);
+
+  const prevParsedLenRef = useRef(parsedData?.length ?? null);
+  useEffect(() => {
+    const prevLen = prevParsedLenRef.current;
+    const newLen = parsedData?.length ?? null;
+    prevParsedLenRef.current = newLen;
+    if (newLen == null) return;
+    if (prevLen == null) {
+      addLogEntry({ type: "swr", label: "parsedData ready", detail: `${newLen} lifts` });
+    } else if (newLen !== prevLen) {
+      addLogEntry({ type: "swr", label: "parsedData updated", detail: `${prevLen} → ${newLen} lifts` });
+    }
+  }, [parsedData?.length, addLogEntry]);
+
+  useEffect(() => {
+    if (dataSyncedAt) {
+      addLogEntry({ type: "swr-ok", label: "dataSyncedAt", detail: new Date(dataSyncedAt).toLocaleTimeString() });
+    }
+  }, [dataSyncedAt, addLogEntry]);
 
   // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
   const todayIso = useMemo(() => {
@@ -381,8 +426,11 @@ export default function LogSessionPage() {
   // picks up any sets/lifts added during the session. Individual writes
   // deliberately skip mutate() to avoid mid-session flicker (see addSet).
   useEffect(() => {
-    return () => mutate();
-  }, [mutate]);
+    return () => {
+      addLogEntry({ type: "swr", label: "mutate()", detail: "page unmount — revalidating for dashboard" });
+      mutate();
+    };
+  }, [mutate, addLogEntry]);
 
   // --- Sync helpers ---
   // Structural ops (addSet/addLift/deleteSet) use markStructuralSaving/Saved/Error
@@ -522,6 +570,7 @@ export default function LogSessionPage() {
       .flat()
       .find((s) => !s._pending && s.rowIndex && s._queuedSync);
     if (!queuedSet) return;
+    addLogEntry({ type: "swr", label: "flushQueuedSync", detail: `draining queued edit for row ${queuedSet.rowIndex}` });
     void persistSetUpdate(queuedSet.rowIndex, getEditableSetFields(queuedSet), queuedSet._tempId);
   }
 
@@ -857,6 +906,7 @@ export default function LogSessionPage() {
         if (data.warning) addLogEntry({ type: "warning", label: "deleteSession", detail: data.warning });
         throw new Error(data.error || "Delete failed");
       }
+      addLogEntry({ type: "swr", label: "mutate()", detail: "after deleteSession — full revalidation" });
       await mutate();
       markStructuralSaved();
       setShowDeleteConfirm(false);
@@ -1114,10 +1164,11 @@ function ActivityPanel({ entries }) {
   }, [entries.length]);
 
   const copyLog = useCallback(() => {
-    const header = `SJ Sheet API Log — ${new Date().toISOString()}\n${"─".repeat(60)}`;
+    const header = `SJ Activity Log — ${new Date().toISOString()}\n${"─".repeat(60)}`;
     const lines = entries.map((e) => {
       if (e.type === "warning") return `[${e.time}] ⚠ ${e.label}: ${e.detail}`;
       if (e.type === "action") return `[${e.time}] → ${e.label}: ${e.detail}`;
+      if (e.type === "swr" || e.type === "swr-ok" || e.type === "swr-error") return `[${e.time}] ◆ ${e.label}: ${e.detail}`;
       // timing
       return `[${e.time}] ✓ ${e.label}: ${e.total}ms${e.detail ? ` | ${e.detail}` : ""}`;
     });
@@ -1129,7 +1180,7 @@ function ActivityPanel({ entries }) {
   return (
     <div className="sticky top-0 hidden max-h-[50vh] flex-col rounded-lg border bg-card lg:flex">
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Google Sheets API Monitor</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Activity Monitor</span>
         <div className="flex items-center gap-2">
           {entries.length > 0 && (
             <button
@@ -1146,12 +1197,30 @@ function ActivityPanel({ entries }) {
       <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">
         {entries.length === 0 && (
           <div className="px-3 py-8 text-center text-muted-foreground/50">
-            <p>Sheet API calls will appear here as you add, edit, and delete sets.</p>
-            <p className="mt-2 text-muted-foreground/30">Each entry shows the UI action, the SJ API endpoint, and the Google Sheets calls it makes.</p>
+            <p>SWR data flow and Sheet API calls will appear here.</p>
+            <p className="mt-2 text-muted-foreground/30">Tracks revalidation, data parsing, and every read/write to Google Sheets.</p>
           </div>
         )}
         {entries.map((entry, i) => {
           const desc = API_DESCRIPTIONS[entry.label];
+          if (entry.type === "swr" || entry.type === "swr-ok" || entry.type === "swr-error") {
+            const colorClass = entry.type === "swr-error"
+              ? "text-destructive"
+              : entry.type === "swr-ok"
+                ? "text-green-600 dark:text-green-400"
+                : "text-purple-500 dark:text-purple-400";
+            return (
+              <div key={i} className="border-b border-border/20 px-3 py-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
+                  <span className={`font-medium ${colorClass}`}>{entry.label}</span>
+                </div>
+                {entry.detail && (
+                  <p className="mt-0.5 font-mono text-muted-foreground">{entry.detail}</p>
+                )}
+              </div>
+            );
+          }
           if (entry.type === "warning") {
             return (
               <div key={i} className="border-b border-border/20 bg-destructive/10 px-3 py-2">

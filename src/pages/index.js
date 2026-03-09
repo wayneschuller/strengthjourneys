@@ -252,7 +252,7 @@ export default function Home() {
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
-  const { sheetInfo, isDemoMode, parsedData, rawRows } = useUserLiftingData();
+  const { sheetInfo, isDemoMode, parsedData, rawRows, isReturningUserLoading } = useUserLiftingData();
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
@@ -344,19 +344,19 @@ export default function Home() {
       />
       <main className="mb-4 px-3 md:px-0">
         <div className="flex flex-col items-center justify-center transition-all duration-800">
-          {showHeroSection ? (
+          {showHeroSection && !isReturningUserLoading ? (
             <div
               className={`inset-0 h-full w-full transition-all duration-800 ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
             >
               <HeroSection />
             </div>
-          ) : (
+          ) : !showHeroSection ? (
             <div
               className={`inset-0 h-full w-full transition-opacity duration-800 ${showHeroSection ? "opacity-0" : "opacity-100"} `}
             >
               <HomeDashboard />
             </div>
-          )}
+          ) : null}
         </div>
 
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />

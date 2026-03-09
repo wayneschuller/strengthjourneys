@@ -70,6 +70,21 @@ if (typeof window !== "undefined") {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Returning-user detection: synchronous localStorage snapshot at module load.
+// Used to suppress the onboarding hero flash while auth + useLocalStorage
+// hydrate. This runs exactly once, before any component mounts.
+// ---------------------------------------------------------------------------
+const _hadSheetOnLoad = (() => {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEYS.SHEET_INFO);
+    return !!JSON.parse(raw)?.ssid;
+  } catch {
+    return false;
+  }
+})();
+
 /**
  * Generic JSON fetcher for useSWR.
  * Throws on non-2xx so SWR sets `error` and the UI can surface real failures.
@@ -155,6 +170,14 @@ export const UserLiftingDataProvider = ({ children }) => {
   const isDemoMode =
     authStatus === "unauthenticated" ||
     (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode);
+
+  // True while we have localStorage evidence of a linked sheet but auth and/or
+  // useLocalStorage haven't hydrated yet. Consumers use this to avoid flashing
+  // onboarding UI for returning users during the initial load.
+  const isReturningUserLoading =
+    _hadSheetOnLoad &&
+    !(authStatus === "authenticated" && !!sheetInfo?.ssid) &&
+    authStatus !== "unauthenticated";
 
   const selectSheet = useCallback(
     (ssid, metadata = {}) => {
@@ -400,6 +423,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         apiError,
         isValidating,
         isDemoMode,
+        isReturningUserLoading,
         parseError,
         liftTypes,
         parsedData,

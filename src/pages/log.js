@@ -22,6 +22,7 @@ import {
   Trash2,
   Dumbbell,
   Check,
+  Copy,
   Info,
   Loader2,
   X,
@@ -862,16 +863,41 @@ const API_DESCRIPTIONS = {
 
 function ActivityPanel({ entries }) {
   const scrollRef = useRef(null);
+  const [copied, setCopied] = useState(false);
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [entries.length]);
 
+  const copyLog = useCallback(() => {
+    const header = `SJ Sheet API Log — ${new Date().toISOString()}\n${"─".repeat(60)}`;
+    const lines = entries.map((e) => {
+      if (e.type === "warning") return `[${e.time}] ⚠ ${e.label}: ${e.detail}`;
+      if (e.type === "action") return `[${e.time}] → ${e.label}: ${e.detail}`;
+      // timing
+      return `[${e.time}] ✓ ${e.label}: ${e.total}ms${e.detail ? ` | ${e.detail}` : ""}`;
+    });
+    navigator.clipboard.writeText(`${header}\n${lines.join("\n")}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [entries]);
+
   return (
     <div className="sticky top-0 hidden max-h-[50vh] flex-col rounded-lg border bg-card lg:flex">
       <div className="flex items-center justify-between border-b px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Google Sheets API Monitor</span>
-        <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>
+        <div className="flex items-center gap-2">
+          {entries.length > 0 && (
+            <button
+              onClick={copyLog}
+              className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {copied ? "Copied" : "Copy"}
+            </button>
+          )}
+          <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>
+        </div>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">
         {entries.length === 0 && (

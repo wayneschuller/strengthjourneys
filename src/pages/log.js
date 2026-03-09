@@ -101,7 +101,7 @@ function logSheetTimings(label, timings, totalMs, addLogEntry) {
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
-  const { parsedData, sheetInfo, mutate, isLoading } = useUserLiftingData();
+  const { parsedData, sheetInfo, mutate, isLoading, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
 
@@ -785,6 +785,8 @@ export default function LogSessionPage() {
               parsedData={parsedData}
               sessionDate={sessionDate}
               isMetric={isMetric}
+              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+              topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
               onUpdateSet={updateSet}
               onDeleteSet={deleteSet}
               onAddSet={(prevSet) => addSet(liftType, prevSet)}
@@ -912,7 +914,6 @@ function ActivityPanel({ entries }) {
             return (
               <div key={i} className="border-b border-border/20 bg-destructive/10 px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
                   <span className="font-semibold text-destructive">{entry.label}</span>
                 </div>
                 <p className="mt-1 break-all text-destructive/80">{entry.detail}</p>
@@ -923,7 +924,6 @@ function ActivityPanel({ entries }) {
             return (
               <div key={i} className="border-b border-border/20 px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
                   <span className="font-semibold text-blue-500 dark:text-blue-400">{desc?.action ?? entry.label}</span>
                 </div>
                 <p className="mt-0.5 break-all text-muted-foreground">{entry.detail}</p>
@@ -981,7 +981,7 @@ function SyncIndicator({ state }) {
 
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, onUpdateSet, onDeleteSet, onAddSet }) {
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const e1rmFormula =
@@ -1065,17 +1065,43 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
     }
 
     const atOrPastTop = nextWarmupIdx >= progression.length;
-    const lastLogged = loggedWeights.length > 0 ? Math.max(...loggedWeights) : 0;
-    const lastLoggedReps = sets.filter((s) => !s._pending && s.weight > 0).slice(-1)[0]?.reps ?? topReps;
+    const maxLogged = loggedWeights.length > 0 ? Math.max(...loggedWeights) : 0;
+    const lastRealSets = sets.filter((s) => !s._pending && s.weight > 0);
+    const lastLoggedWeight = lastRealSets.length > 0
+      ? getDisplayWeight(lastRealSets[lastRealSets.length - 1], isMetric).value
+      : 0;
+    const lastLoggedReps = lastRealSets[lastRealSets.length - 1]?.reps ?? topReps;
+
+    // Detect drop set mode: last logged weight is below the session's peak
+    const inDropSetMode = atOrPastTop && lastLoggedWeight < maxLogged;
+
+    // Helper: check if a suggested set would be a PR
+    const checkPR = (reps, weight) => {
+      if (reps < 1 || reps > 10) return null;
+      const allTimeBest = topLiftsByTypeAndReps?.[liftType]?.[reps - 1]?.[0];
+      const yearlyBest = topLiftsByTypeAndRepsLast12Months?.[liftType]?.[reps - 1]?.[0];
+      // Convert PR weights to current unit for comparison
+      if (allTimeBest) {
+        const { value: bestWeight } = getDisplayWeight(allTimeBest, isMetric);
+        if (weight > bestWeight) return "lifetime PR";
+      }
+      if (yearlyBest) {
+        const { value: bestWeight } = getDisplayWeight(yearlyBest, isMetric);
+        if (weight > bestWeight) return "yearly PR";
+      }
+      return null;
+    };
 
     const result = [];
 
     if (!atOrPastTop) {
       // Warmup phase: suggest next warmup set
       const nextSet = progression[nextWarmupIdx];
+      const prHint = checkPR(nextSet.reps, nextSet.weight);
       result.push({
         label: `${nextSet.reps}@${nextSet.weight}${unitType}`,
         sublabel: nextSet.isTopSet ? "top set" : "warmup",
+        prHint,
         reps: nextSet.reps,
         weight: nextSet.weight,
         unitType,
@@ -1085,36 +1111,51 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
       // Also offer skipping ahead to the top set if not already the next suggestion
       if (!nextSet.isTopSet) {
         const topProgSet = progression[progression.length - 1];
+        const topPrHint = checkPR(topProgSet.reps, topProgSet.weight);
         result.push({
           label: `${topProgSet.reps}@${topProgSet.weight}${unitType}`,
           sublabel: "top set",
+          prHint: topPrHint,
           reps: topProgSet.reps,
           weight: topProgSet.weight,
           unitType,
           variant: "outline",
         });
       }
-    } else {
-      // Working phase: suggest repeat, increment, and drop set
+    } else if (inDropSetMode) {
+      // Drop set mode: weight is descending — only offer repeat at current drop weight
       result.push({
-        label: `${lastLoggedReps}@${lastLogged}${unitType}`,
-        sublabel: "repeat",
+        label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
+        sublabel: "drop set",
         reps: lastLoggedReps,
-        weight: lastLogged,
+        weight: lastLoggedWeight,
         unitType,
         variant: "secondary",
       });
+    } else {
+      // Working phase: suggest repeat, increment, and drop set
       result.push({
-        label: `${lastLoggedReps}@${lastLogged + minIncrement}${unitType}`,
-        sublabel: `+${minIncrement}`,
+        label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
+        sublabel: "repeat",
         reps: lastLoggedReps,
-        weight: lastLogged + minIncrement,
+        weight: lastLoggedWeight,
+        unitType,
+        variant: "secondary",
+      });
+      const incrWeight = lastLoggedWeight + minIncrement;
+      const incrPrHint = checkPR(lastLoggedReps, incrWeight);
+      result.push({
+        label: `${lastLoggedReps}@${incrWeight}${unitType}`,
+        sublabel: `+${minIncrement}`,
+        prHint: incrPrHint,
+        reps: lastLoggedReps,
+        weight: incrWeight,
         unitType,
         variant: "outline",
       });
       // Drop set: ~80% of current weight, rounded to nearest increment
-      const dropWeight = Math.round((lastLogged * 0.8) / minIncrement) * minIncrement;
-      if (dropWeight >= barWeight && dropWeight < lastLogged) {
+      const dropWeight = Math.round((lastLoggedWeight * 0.8) / minIncrement) * minIncrement;
+      if (dropWeight >= barWeight && dropWeight < lastLoggedWeight) {
         result.push({
           label: `${lastLoggedReps}@${dropWeight}${unitType}`,
           sublabel: "drop set",
@@ -1127,7 +1168,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
     }
 
     return result;
-  }, [parsedData, liftType, sessionDate, isMetric, sets, storedBarType, storedPlatePreference]);
+  }, [parsedData, liftType, sessionDate, isMetric, sets, storedBarType, storedPlatePreference, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
   // Find the set index with the heaviest e1RM for the strength badge
   const canShowStrength = authStatus === "authenticated" && hasBioData;
@@ -1145,6 +1186,38 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
     });
     return bestIdx;
   }, [sets, canShowStrength, e1rmFormula]);
+
+  // Compute the minimum weight column width based on the widest weight string
+  const weightColWidth = useMemo(() => {
+    let maxLen = 0;
+    for (const s of sets) {
+      const w = s.weight ?? 0;
+      const len = String(w).length;
+      if (len > maxLen) maxLen = len;
+    }
+    // Each digit ~0.6em at text-xl, plus padding. Use ch units for precision.
+    // Minimum w-14 (3.5rem) for small numbers, scale up for wider values
+    return maxLen <= 3 ? "w-14" : maxLen <= 4 ? "w-[4.5rem]" : "w-[5.5rem]";
+  }, [sets]);
+
+  // Determine PR status for each set: "lifetime" | "yearly" | null
+  // Lifetime PR = isHistoricalPR from parsedData. Yearly PR = beats best in last 12 months.
+  const prStatus = useMemo(() => {
+    return sets.map((s) => {
+      if (s._pending || !s.reps || !s.weight) return null;
+      if (s.isHistoricalPR) return "lifetime";
+      // Check yearly PR
+      if (s.reps >= 1 && s.reps <= 10 && topLiftsByTypeAndRepsLast12Months?.[liftType]) {
+        const yearlyBest = topLiftsByTypeAndRepsLast12Months[liftType][s.reps - 1]?.[0];
+        if (yearlyBest) {
+          const { value: bestWeight } = getDisplayWeight(yearlyBest, isMetric);
+          const { value: thisWeight } = getDisplayWeight(s, isMetric);
+          if (thisWeight > bestWeight) return "yearly";
+        }
+      }
+      return null;
+    });
+  }, [sets, liftType, isMetric, topLiftsByTypeAndRepsLast12Months]);
 
   return (
     <div className="relative space-y-1 rounded-xl border bg-card p-4 shadow-sm md:pl-24">
@@ -1181,6 +1254,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
             set={set}
             isMetric={isMetric}
+            weightColWidth={weightColWidth}
+            prType={prStatus[idx]}
             onUpdate={set._pending ? null : (fields) => onUpdateSet(set.rowIndex, fields)}
             onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
             strengthBadge={idx === bestE1rmIndex ? (
@@ -1239,7 +1314,7 @@ function UnitLabel({ unitType, mismatch }) {
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, isMetric, onUpdate, onDelete, strengthBadge }) {
+function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDelete, strengthBadge }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -1303,7 +1378,7 @@ function SetRow({ set, isMetric, onUpdate, onDelete, strengthBadge }) {
         <div className="flex items-center">
           <span className="w-12 text-right text-xl font-semibold tabular-nums">{set.reps}</span>
           <span className="mx-0.5 text-base text-muted-foreground">@</span>
-          <span className="w-14 text-left text-xl font-semibold tabular-nums">{set.weight}</span>
+          <span className={`${weightColWidth} text-left text-xl font-semibold tabular-nums`}>{set.weight}</span>
           <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
         </div>
         <div className="flex flex-1 justify-end">
@@ -1316,10 +1391,10 @@ function SetRow({ set, isMetric, onUpdate, onDelete, strengthBadge }) {
   return (
     <div className="group flex items-center gap-4 px-4 py-3">
       {/* Reps @ Weight unit — tight visual unit.
-          Fixed-width containers (w-12 reps, w-20 weight) prevent layout shift when
-          toggling between display (button) and edit (input) modes.
+          Fixed-width containers prevent layout shift when toggling between
+          display (button) and edit (input) modes. weightColWidth is computed
+          by LiftBlock based on the widest weight value across all sets.
           Reps right-aligned, weight left-aligned so the digit sits flush against @.
-          Buttons use px-0 to avoid pushing numbers away from @.
           Keep in sync with the _pending branch above. */}
       <div className="flex items-center">
         <div className="w-12">
@@ -1343,7 +1418,7 @@ function SetRow({ set, isMetric, onUpdate, onDelete, strengthBadge }) {
           )}
         </div>
         <span className="mx-0.5 text-base text-muted-foreground">@</span>
-        <div className="w-14">
+        <div className={weightColWidth}>
           {editingWeight ? (
             <input
               type="number"
@@ -1395,9 +1470,14 @@ function SetRow({ set, isMetric, onUpdate, onDelete, strengthBadge }) {
           The group class on the row container drives the md:group-hover reveal. */}
       <div className="flex shrink-0 items-center gap-1">
         {strengthBadge}
-        {set.isHistoricalPR && (
+        {prType === "lifetime" && (
           <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
             PR
+          </Badge>
+        )}
+        {prType === "yearly" && (
+          <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">
+            Year PR
           </Badge>
         )}
         {onDelete && (
@@ -1484,6 +1564,11 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet }) {
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
             {s.sublabel}
           </span>
+          {s.prHint && (
+            <span className={`text-[10px] font-bold uppercase ${s.prHint === "lifetime PR" ? "text-amber-500" : "text-blue-500"}`}>
+              {s.prHint === "lifetime PR" ? "🏆 Lifetime PR!" : "⭐ Yearly PR!"}
+            </span>
+          )}
         </button>
       ))}
     </div>

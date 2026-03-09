@@ -60,7 +60,7 @@ export function getConsecutiveWorkoutGroups(workouts = []) {
  *   tonnage and strength level; "compact" shows a condensed row of pills, used in MostRecentSessionCard.
  * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
  * @param {Array<{reps: number, weight: number, unitType?: string, lifetimeRanking?: number, yearlyRanking?: number, notes?: string, URL?: string, lifetimeSignificanceAnnotation?: string, yearlySignificanceAnnotation?: string}>} props.workouts - Array of set objects.
- * @param {Object} [props.perLiftTonnageStats] - Map of liftType -> {currentLiftTonnage, avgLiftTonnage, sessionCount, pctDiff, unitType}. Used in full variant for tonnage comparison.
+ * @param {Object} [props.perLiftTonnageStats] - Map of liftType -> {currentLiftTonnage, avgLiftTonnage, sessionCount, shouldShowComparison?, pctDiff, unitType}. Used in full variant for tonnage comparison.
  * @param {string} [props.authStatus] - Session auth status; strength level shown only when "authenticated".
  * @param {boolean} [props.hasBioData] - Whether athlete bio (age, bodyweight, sex) is available for strength standards.
  * @param {Object} [props.standards] - Map of liftType -> strength standard objects for age/bodyweight adjustment.
@@ -562,6 +562,7 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
     currentLiftTonnage,
     avgLiftTonnage,
     sessionCount,
+    shouldShowComparison,
     pctDiff,
     unitType,
   } = stats;
@@ -575,7 +576,11 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
     isMetric,
   ).value;
   const hasComparison =
-    !!currentLiftTonnage && !!sessionCount && sessionCount > 1 && pctDiff !== null;
+    !!currentLiftTonnage &&
+    !!sessionCount &&
+    sessionCount > 1 &&
+    pctDiff !== null &&
+    (shouldShowComparison ?? true);
   const textClass = compact ? "text-xs" : pctDiff > 0 ? "text-sm" : "text-xs";
 
   if (!currentLiftTonnage) {

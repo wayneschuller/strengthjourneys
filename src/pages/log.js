@@ -275,6 +275,7 @@ export default function LogSessionPage() {
           (sum, set) => sum + (set.weight ?? 0) * (set.reps ?? 0),
           0,
         );
+        const setCount = sets.length;
         const { average: avgLiftTonnage, sessionCount } =
           getAverageLiftSessionTonnageFromPrecomputed(
             sessionTonnageLookup.sessionTonnageByDateAndLift,
@@ -290,6 +291,10 @@ export default function LogSessionPage() {
             currentLiftTonnage,
             avgLiftTonnage,
             sessionCount,
+            setCount,
+            shouldShowComparison:
+              setCount >= 4 ||
+              (avgLiftTonnage > 0 && currentLiftTonnage >= avgLiftTonnage * 0.4),
             pctDiff:
               avgLiftTonnage > 0
                 ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100

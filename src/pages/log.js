@@ -191,6 +191,113 @@ function getFirstTimeEmptyButtons({ liftType, barWeight, minIncrement, unitType 
   ];
 }
 
+function getFirstTimeTargetWeight({ standards, liftType, barWeight, minIncrement }) {
+  const physicallyActiveWeight = standards?.[liftType]?.physicallyActive;
+
+  if (!physicallyActiveWeight || physicallyActiveWeight <= 0) return null;
+
+  return Math.max(
+    barWeight,
+    Math.ceil(physicallyActiveWeight / minIncrement) * minIncrement,
+  );
+}
+
+function getFirstTimeProgressionButtons({
+  progression,
+  realSets,
+  isMetric,
+  unitType,
+  minIncrement,
+}) {
+  if (!progression?.length) return [];
+
+  const loggedSets = realSets.filter((set) => set.weight > 0);
+  const loggedWeights = loggedSets.map((set) => getDisplayWeight(set, isMetric).value);
+  let nextWarmupIdx = 0;
+
+  if (loggedWeights.length > 0) {
+    const maxLogged = Math.max(...loggedWeights);
+    nextWarmupIdx = progression.findIndex((set) => set.weight > maxLogged);
+    if (nextWarmupIdx === -1) nextWarmupIdx = progression.length;
+  }
+
+  const buttons = [];
+  const seen = new Set();
+  const pushButton = ({ reps, weight, sublabel, variant }) => {
+    const key = `${reps}-${weight}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    buttons.push({
+      label: `${reps}@${weight}${unitType}`,
+      sublabel,
+      reps,
+      weight,
+      unitType,
+      variant,
+    });
+  };
+
+  if (nextWarmupIdx < progression.length) {
+    const nextSet = progression[nextWarmupIdx];
+    const followingSet = progression[nextWarmupIdx + 1];
+    const topSet = progression[progression.length - 1];
+
+    pushButton({
+      reps: nextSet.reps,
+      weight: nextSet.weight,
+      sublabel: nextSet.isTopSet ? "today's target" : "next warmup",
+      variant: "primary",
+    });
+
+    if (followingSet && !followingSet.isTopSet) {
+      pushButton({
+        reps: followingSet.reps,
+        weight: followingSet.weight,
+        sublabel: "then this",
+        variant: "secondary",
+      });
+    }
+
+    if (!nextSet.isTopSet) {
+      pushButton({
+        reps: topSet.reps,
+        weight: topSet.weight,
+        sublabel: "today's target",
+        variant: "outline",
+      });
+    }
+
+    return buttons;
+  }
+
+  const lastLoggedSet = loggedSets[loggedSets.length - 1];
+  if (!lastLoggedSet) return [];
+
+  const lastLoggedWeight = getDisplayWeight(lastLoggedSet, isMetric).value;
+  const lastLoggedReps = lastLoggedSet.reps ?? 5;
+
+  pushButton({
+    reps: lastLoggedReps,
+    weight: lastLoggedWeight,
+    sublabel: "repeat",
+    variant: "secondary",
+  });
+  pushButton({
+    reps: lastLoggedReps,
+    weight: lastLoggedWeight + minIncrement,
+    sublabel: "small jump",
+    variant: "primary",
+  });
+  pushButton({
+    reps: lastLoggedReps,
+    weight: lastLoggedWeight + minIncrement * 2,
+    sublabel: "if it felt easy",
+    variant: "outline",
+  });
+
+  return buttons;
+}
+
 function getFirstTimeCoachingCopy({ mode, dashboardStage, liftType, minIncrement, unitType }) {
   const earlyStage = isEarlyDashboardStage(dashboardStage);
 
@@ -1442,21 +1549,48 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     const barWeight = storedBarType === "womens" ? (isMetric ? 15 : 35) : (isMetric ? 20 : 45);
     const minIncrement = isMetric ? 2.5 : 5;
     const techniqueAssist = getBigFourTechniqueAssist(liftType);
+    const firstTimeTargetWeight = getFirstTimeTargetWeight({
+      standards,
+      liftType,
+      barWeight,
+      minIncrement,
+    });
+    const firstTimeProgression = firstTimeTargetWeight
+      ? generateSessionSets(
+          firstTimeTargetWeight,
+          5,
+          barWeight,
+          isMetric,
+          storedPlatePreference,
+        )
+      : null;
 
     // Find last session's sets for this lift (same logic as LiftSuggestions)
     const prior = parsedData.filter(
       (e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal,
     );
     if (!prior.length) {
+      const firstTimeButtons = firstTimeProgression
+        ? getFirstTimeProgressionButtons({
+            progression: firstTimeProgression,
+            realSets,
+            isMetric,
+            unitType,
+            minIncrement,
+          })
+        : null;
+
       if (realSets.length === 0) {
         return {
           mode: "first_lift_session_empty",
-          buttons: getFirstTimeEmptyButtons({
-            liftType,
-            barWeight,
-            minIncrement,
-            unitType,
-          }),
+          buttons: firstTimeButtons?.length
+            ? firstTimeButtons
+            : getFirstTimeEmptyButtons({
+                liftType,
+                barWeight,
+                minIncrement,
+                unitType,
+              }),
           coaching: getFirstTimeCoachingCopy({
             mode: "first_lift_session_empty",
             dashboardStage,
@@ -1488,32 +1622,34 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
       return {
         mode: "first_lift_session_in_progress",
-        buttons: [
-          {
-            label: `${isBarOnlyIntro ? 5 : lastLoggedReps}@${nextWeight}${unitType}`,
-            sublabel: isBarOnlyIntro ? "first loaded set" : `+${minIncrement}${unitType}`,
-            reps: isBarOnlyIntro ? 5 : lastLoggedReps,
-            weight: nextWeight,
-            unitType,
-            variant: "primary",
-          },
-          {
-            label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
-            sublabel: "repeat",
-            reps: lastLoggedReps,
-            weight: lastLoggedWeight,
-            unitType,
-            variant: "secondary",
-          },
-          {
-            label: `${lastLoggedReps}@${secondJumpWeight}${unitType}`,
-            sublabel: `+${minIncrement * 2}${unitType}`,
-            reps: lastLoggedReps,
-            weight: secondJumpWeight,
-            unitType,
-            variant: "outline",
-          },
-        ],
+        buttons: firstTimeButtons?.length
+          ? firstTimeButtons
+          : [
+              {
+                label: `${isBarOnlyIntro ? 5 : lastLoggedReps}@${nextWeight}${unitType}`,
+                sublabel: isBarOnlyIntro ? "first loaded set" : `+${minIncrement}${unitType}`,
+                reps: isBarOnlyIntro ? 5 : lastLoggedReps,
+                weight: nextWeight,
+                unitType,
+                variant: "primary",
+              },
+              {
+                label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
+                sublabel: "repeat",
+                reps: lastLoggedReps,
+                weight: lastLoggedWeight,
+                unitType,
+                variant: "secondary",
+              },
+              {
+                label: `${lastLoggedReps}@${secondJumpWeight}${unitType}`,
+                sublabel: `+${minIncrement * 2}${unitType}`,
+                reps: lastLoggedReps,
+                weight: secondJumpWeight,
+                unitType,
+                variant: "outline",
+              },
+            ],
         coaching: getFirstTimeCoachingCopy({
           mode: "first_lift_session_in_progress",
           dashboardStage,
@@ -1687,7 +1823,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       coaching: null,
       techniqueAssist: null,
     };
-  }, [parsedData, isMetric, storedBarType, storedPlatePreference, liftType, sessionDate, realSets, lastRealSet, dashboardStage, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
+  }, [parsedData, isMetric, storedBarType, storedPlatePreference, liftType, sessionDate, realSets, lastRealSet, dashboardStage, standards, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
   // Find the set index with the heaviest e1RM for the strength badge
   const canShowStrength = authStatus === "authenticated" && hasBioData;

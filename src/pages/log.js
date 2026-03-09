@@ -298,7 +298,14 @@ function getFirstTimeProgressionButtons({
   return buttons;
 }
 
-function getFirstTimeCoachingCopy({ mode, dashboardStage, liftType, minIncrement, unitType }) {
+function getFirstTimeCoachingCopy({
+  mode,
+  dashboardStage,
+  liftType,
+  minIncrement,
+  unitType,
+  hasReachedTarget = false,
+}) {
   const earlyStage = isEarlyDashboardStage(dashboardStage);
 
   if (mode === "first_lift_session_empty") {
@@ -319,6 +326,24 @@ function getFirstTimeCoachingCopy({ mode, dashboardStage, liftType, minIncrement
   }
 
   if (mode === "first_lift_session_in_progress") {
+    if (hasReachedTarget) {
+      if (liftType === "Deadlift") {
+        return {
+          eyebrow: null,
+          title: null,
+          body: "Great, that's your top work set.",
+          effortCue: "Deadlift usually wants just one heavy set of 5. Stop here, or go a little heavier if that felt too easy.",
+        };
+      }
+
+      return {
+        eyebrow: null,
+        title: null,
+        body: "Great, that's your first work set.",
+        effortCue: "Now aim for 2 more sets of 5 at this same weight.",
+      };
+    }
+
     return earlyStage
       ? {
           eyebrow: null,
@@ -1619,6 +1644,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       const nextWeight = lastLoggedWeight + minIncrement;
       const secondJumpWeight = lastLoggedWeight + minIncrement * 2;
       const isBarOnlyIntro = lastLoggedWeight <= barWeight && lastLoggedReps >= 8;
+      const hasReachedFirstTimeTarget = firstTimeTargetWeight
+        ? realSets.some((set) => {
+            if ((set.reps ?? 0) < 5 || (set.weight ?? 0) <= 0) return false;
+            return getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight;
+          })
+        : false;
 
       return {
         mode: "first_lift_session_in_progress",
@@ -1656,6 +1687,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           liftType,
           minIncrement,
           unitType,
+          hasReachedTarget: hasReachedFirstTimeTarget,
         }),
         techniqueAssist,
       };

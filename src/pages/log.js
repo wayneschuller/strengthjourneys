@@ -5,9 +5,19 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
+import {
+  getConsecutiveWorkoutGroups,
+  LiftStrengthLevel,
+  LiftTonnageRow,
+} from "@/components/analyzer/session-exercise-block";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { getReadableDateString, getDisplayWeight, getCelebrationEmoji, devLog } from "@/lib/processing-utils";
+import {
+  getReadableDateString,
+  getDisplayWeight,
+  getCelebrationEmoji,
+  devLog,
+  getAverageLiftSessionTonnageFromPrecomputed,
+} from "@/lib/processing-utils";
 import { generateSessionSets } from "@/lib/warmups";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -17,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  Calendar,
   ChevronLeft,
   ChevronRight,
   Plus,
@@ -184,6 +195,7 @@ export default function LogSessionPage() {
     dataSyncedAt,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
+    sessionTonnageLookup,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
@@ -374,6 +386,41 @@ export default function LogSessionPage() {
   }, [sessionLifts, pendingSets]);
 
   const hasSession = Object.keys(sessionLiftsWithPending).length > 0;
+  const perLiftTonnageStats = useMemo(() => {
+    if (!sessionDate || !sessionTonnageLookup) return null;
+
+    return Object.fromEntries(
+      Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => {
+        const nativeUnitType = sets?.[0]?.unitType ?? "lb";
+        const currentLiftTonnage = sets.reduce(
+          (sum, set) => sum + (set.weight ?? 0) * (set.reps ?? 0),
+          0,
+        );
+        const { average: avgLiftTonnage, sessionCount } =
+          getAverageLiftSessionTonnageFromPrecomputed(
+            sessionTonnageLookup.sessionTonnageByDateAndLift,
+            sessionTonnageLookup.allSessionDates,
+            sessionDate,
+            liftType,
+            nativeUnitType,
+          );
+
+        return [
+          liftType,
+          {
+            currentLiftTonnage,
+            avgLiftTonnage,
+            sessionCount,
+            pctDiff:
+              avgLiftTonnage > 0
+                ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
+                : null,
+            unitType: nativeUnitType,
+          },
+        ];
+      }),
+    );
+  }, [sessionDate, sessionLiftsWithPending, sessionTonnageLookup]);
   const isToday = sessionDate === todayIso;
   const effectiveSsid = sheetInfo?.ssid ?? persistedSheetInfo?.ssid ?? null;
   const showSessionBootstrap =
@@ -971,7 +1018,7 @@ export default function LogSessionPage() {
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        <div className="flex-1 text-center">
+        <div className="relative flex-1 text-center">
           <h1 className="text-lg font-semibold leading-tight">
             {isToday ? "Today" : getReadableDateString(sessionDate, true)}
           </h1>
@@ -979,14 +1026,28 @@ export default function LogSessionPage() {
             <p className="text-xs text-muted-foreground">
               {getReadableDateString(sessionDate, true)}
             </p>
-          ) : (
-            <button
-              className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-              onClick={() => navigateToDate(todayIso)}
-            >
-              Back to today
-            </button>
-          )}
+          ) : null}
+
+          {!isToday ? (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2"
+                    onClick={() => navigateToDate(todayIso)}
+                    aria-label="Back to today"
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Back to today</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
         </div>
 
         <SyncIndicator state={syncState} />
@@ -1049,6 +1110,7 @@ export default function LogSessionPage() {
               isMetric={isMetric}
               topLiftsByTypeAndReps={topLiftsByTypeAndReps}
               topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
+              tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
               onUpdateSet={updateSet}
               onDeleteSet={deleteSet}
               onAddSet={(prevSet) => addSet(liftType, prevSet)}
@@ -1292,7 +1354,7 @@ function SyncIndicator({ state }) {
 
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, onUpdateSet, onDeleteSet, onAddSet }) {
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const e1rmFormula =
@@ -1616,6 +1678,15 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         ))}
 
       </div>
+      {tonnageStats && (
+        <div className="mx-4 mt-3 md:ml-24">
+          <LiftTonnageRow
+            liftType={liftType}
+            stats={tonnageStats}
+            isMetric={isMetric}
+          />
+        </div>
+      )}
 
       {/* Add-set buttons — card footer */}
       <SmartAddButtons
@@ -1923,10 +1994,12 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 
   if (!lastSets) return null;
 
-  const summary = lastSets
-    .map((s) => {
-      const { value, unit } = getDisplayWeight(s, isMetric);
-      return `${s.reps}@${value}${unit}`;
+  const summary = getConsecutiveWorkoutGroups(lastSets)
+    .map((group) => {
+      const firstSet = lastSets[group[0]];
+      const { value, unit } = getDisplayWeight(firstSet, isMetric);
+      const baseSummary = `${firstSet.reps}@${value}${unit}`;
+      return group.length > 1 ? `${group.length}×${baseSummary}` : baseSummary;
     })
     .join("  ·  ");
 

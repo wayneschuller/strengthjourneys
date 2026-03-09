@@ -29,6 +29,27 @@ import {
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 
+export function getConsecutiveWorkoutGroups(workouts = []) {
+  const groups = [];
+  let currentGroup = [];
+  let currentKey = null;
+
+  workouts.forEach((workout, index) => {
+    const key = `${workout.reps}×${workout.weight}`;
+    if (key !== currentKey) {
+      if (currentGroup.length > 0) groups.push(currentGroup);
+      currentGroup = [index];
+      currentKey = key;
+    } else {
+      currentGroup.push(index);
+    }
+  });
+
+  if (currentGroup.length > 0) groups.push(currentGroup);
+
+  return groups;
+}
+
 /**
  * Renders a block of workout sets for a single lift type. Shows reps×weight pills with
  * PR indicators (lifetime/yearly), notes, and video links. In "full" variant also shows
@@ -101,20 +122,7 @@ export function SessionExerciseBlock({
   }
 
   // Groups: consecutive sets with same reps×weight (e.g. 3x5 of 60kg)
-  const groups = [];
-  let currentGroup = [];
-  let currentKey = null;
-  workouts.forEach((w, i) => {
-    const key = `${w.reps}×${w.weight}`;
-    if (key !== currentKey) {
-      if (currentGroup.length > 0) groups.push(currentGroup);
-      currentGroup = [i];
-      currentKey = key;
-    } else {
-      currentGroup.push(i);
-    }
-  });
-  if (currentGroup.length > 0) groups.push(currentGroup);
+  const groups = getConsecutiveWorkoutGroups(workouts);
 
   // Initially highlighted: PRs or all sets with best e1rm (full variant only)
   const initiallyHighlighted = new Set(
@@ -549,7 +557,7 @@ export function SessionExerciseBlock({
 }
 
 // One-line tonnage comparison row: current session tonnage vs. 12-month average with a ±% badge.
-function LiftTonnageRow({ liftType, stats, isMetric = false, compact = false }) {
+export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = false }) {
   const {
     currentLiftTonnage,
     avgLiftTonnage,

@@ -4,6 +4,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "./home-inspiration-cards";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
 import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
+import { TheWeekInIronCard } from "@/components/home-dashboard/the-week-in-iron-card";
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { motion } from "motion/react";
@@ -254,11 +255,9 @@ export function HomeDashboard() {
         <>
           <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
             {/* Three headline cards intentionally begin with "The" and widen chronology:
-                The Latest Session -> The Month in Iron -> The Long Game.
+                The Week in Iron -> The Month in Iron -> The Long Game.
                 Together they make the app experience feel badass and motivating, like chapters in an ongoing strength story. */}
-            <TheLatestSessionCard
-              highlightDate={highlightDate}
-              setHighlightDate={setHighlightDate}
+            <TheWeekInIronCard
               dashboardStage={dashboardStage}
               dataMaturityStage={dataMaturityStage}
               sessionCount={sessionCount}

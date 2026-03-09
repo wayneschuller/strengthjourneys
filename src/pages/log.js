@@ -67,7 +67,7 @@ const BIG_FOUR = [
   { name: "Strict Press", icon: "/strict_press.svg", slug: "barbell-strict-press-insights" },
 ];
 
-const LIFT_CUE_VIDEOS = [
+const COACHED_LIFTS = [
   {
     liftType: "Back Squat",
     slug: "barbell-squat-insights",
@@ -110,6 +110,7 @@ const LIFT_CUE_VIDEOS = [
   },
   {
     liftType: "Power Snatch",
+    standardsRef: { liftType: "Strict Press", ratio: 0.85 },
     cues: [
       "Stay over the bar off the floor and keep the bar close as it passes the knees.",
       "Finish tall through the hips before you pull under.",
@@ -119,6 +120,7 @@ const LIFT_CUE_VIDEOS = [
   },
   {
     liftType: "Romanian Deadlift",
+    standardsRef: { liftType: "Deadlift", ratio: 0.70 },
     cues: [
       "Push the hips back and keep a soft bend in the knees.",
       "Let the bar trace the thighs and stay close to the legs the whole way down.",
@@ -128,6 +130,7 @@ const LIFT_CUE_VIDEOS = [
   },
   {
     liftType: "Power Clean",
+    standardsRef: { liftType: "Deadlift", ratio: 0.60 },
     cues: [
       "Push through the floor smoothly and keep the bar close from mid-shin to hip.",
       "Finish the pull with violent leg and hip extension before the elbows turn over.",
@@ -137,6 +140,7 @@ const LIFT_CUE_VIDEOS = [
   },
   {
     liftType: "Rack Pull",
+    standardsRef: { liftType: "Deadlift", ratio: 1.10 },
     cues: [
       "Set the lats first and wedge into the bar before it leaves the pins.",
       "Keep the bar glued to the thighs and lock out by driving the hips through.",
@@ -146,6 +150,7 @@ const LIFT_CUE_VIDEOS = [
   },
   {
     liftType: "Front Squat",
+    standardsRef: { liftType: "Back Squat", ratio: 0.85 },
     cues: [
       "Keep the elbows high so the bar stays stacked on the shoulders.",
       "Brace hard and sit straight down between the hips instead of folding forward.",
@@ -155,6 +160,7 @@ const LIFT_CUE_VIDEOS = [
   },
   {
     liftType: "Barbell Row",
+    standardsRef: { liftType: "Bench Press", ratio: 0.80 },
     cues: [
       "Set the back tight before the first rep and hold the torso angle steady.",
       "Pull the bar into the lower chest or upper stomach without jerking the hips.",
@@ -164,7 +170,7 @@ const LIFT_CUE_VIDEOS = [
   },
 ];
 
-const DEFAULT_ADD_LIFT_CHIPS = LIFT_CUE_VIDEOS
+const DEFAULT_ADD_LIFT_CHIPS = COACHED_LIFTS
   .filter((item) => !BIG_FOUR.some((lift) => lift.name === item.liftType))
   .map((item) => ({ name: item.liftType, icon: null }));
 
@@ -179,7 +185,7 @@ function isEarlyDashboardStage(dashboardStage) {
 }
 
 function getLiftTechniqueAssist(liftType) {
-  const match = LIFT_CUE_VIDEOS.find((item) => item.liftType === liftType);
+  const match = COACHED_LIFTS.find((item) => item.liftType === liftType);
   if (!match) return null;
 
   const cues = match.cues ?? [];
@@ -275,7 +281,15 @@ function getFirstTimeEmptyButtons({ liftType, barWeight, minIncrement, unitType 
 }
 
 function getFirstTimeTargetWeight({ standards, liftType, barWeight, minIncrement }) {
-  const physicallyActiveWeight = standards?.[liftType]?.physicallyActive;
+  let physicallyActiveWeight = standards?.[liftType]?.physicallyActive;
+
+  if (!physicallyActiveWeight || physicallyActiveWeight <= 0) {
+    const ref = COACHED_LIFTS.find((l) => l.liftType === liftType)?.standardsRef;
+    if (ref) {
+      const base = standards?.[ref.liftType]?.physicallyActive;
+      if (base > 0) physicallyActiveWeight = base * ref.ratio;
+    }
+  }
 
   if (!physicallyActiveWeight || physicallyActiveWeight <= 0) return null;
 

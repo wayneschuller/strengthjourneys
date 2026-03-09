@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
@@ -56,128 +57,6 @@ const BIG_FOUR = [
 ];
 
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
-
-// Color-coded timing log for sheet API calls.
-// Single-step calls print one line; multi-step calls print a grouped breakdown + total.
-// Also pushes an entry to the optional addLogEntry callback for the UI activity panel.
-function logSheetTimings(label, timings, totalMs, addLogEntry) {
-  if (!isDev) return;
-  const total = Math.round(totalMs);
-  const color = total < 500 ? "#22c55e" : total < 1500 ? "#f59e0b" : "#ef4444";
-
-  if (timings.length <= 1) {
-    console.log(
-      `%c📡 ${label}%c  %c${total}ms`,
-      "font-weight:bold",
-      "color:inherit",
-      `color:${color};font-weight:bold`,
-    );
-  } else {
-    const nameWidth = Math.max(...timings.map((t) => t.name.length));
-    console.groupCollapsed(
-      `%c📡 ${label}%c  %c${total}ms`,
-      "font-weight:bold",
-      "color:inherit",
-      `color:${color};font-weight:bold`,
-    );
-    timings.forEach((t) => {
-      const ms = Math.round(t.ms);
-      const c = ms < 500 ? "#22c55e" : ms < 1500 ? "#f59e0b" : "#ef4444";
-      console.log(
-        `  %c${t.name.padEnd(nameWidth)}%c  %c${String(ms).padStart(5)}ms`,
-        "font-weight:bold",
-        "color:inherit",
-        `color:${c};font-weight:bold`,
-      );
-    });
-    const divider = "─".repeat(nameWidth + 10);
-    console.log(`  ${divider}`);
-    console.log(
-      `  %c${"Total".padEnd(nameWidth)}%c  %c${String(total).padStart(5)}ms`,
-      "font-weight:bold",
-      "color:inherit",
-      `color:${color};font-weight:bold`,
-    );
-    console.groupEnd();
-  }
-
-  // Push to UI activity panel
-  if (addLogEntry) {
-    const detail = timings.length > 1
-      ? timings.map((t) => `${t.name} ${Math.round(t.ms)}ms`).join(" → ")
-      : "";
-    addLogEntry({ type: "timing", label, total, detail, color });
-  }
-}
-
-function getEditableSetFields(set) {
-  return {
-    reps: set.reps,
-    weight: set.weight,
-    unitType: set.unitType ?? "",
-    notes: set.notes ?? "",
-    url: set.URL ?? "",
-  };
-}
-
-function getSheetUpdatePayload(fields) {
-  return {
-    reps: fields.reps,
-    weight: `${fields.weight}${fields.unitType ?? ""}`,
-    notes: fields.notes ?? "",
-    url: fields.url ?? "",
-  };
-}
-
-function getTop20Rank(topLifts, weight, isMetric) {
-  if (!topLifts?.length || !weight) return null;
-
-  const rank = topLifts.findIndex((lift) => {
-    const { value } = getDisplayWeight(lift, isMetric);
-    return weight > value;
-  });
-
-  if (rank !== -1) {
-    return rank < 20 ? rank : null;
-  }
-
-  return topLifts.length < 20 ? topLifts.length : null;
-}
-
-function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months }) {
-  if (!liftType || !reps || reps < 1 || reps > 10 || !weight) return null;
-
-  const lifetimeRank = getTop20Rank(
-    topLiftsByTypeAndReps?.[liftType]?.[reps - 1],
-    weight,
-    isMetric,
-  );
-  const yearlyRank = getTop20Rank(
-    topLiftsByTypeAndRepsLast12Months?.[liftType]?.[reps - 1],
-    weight,
-    isMetric,
-  );
-
-  const lifetime = lifetimeRank != null ? {
-    scope: "lifetime",
-    rank: lifetimeRank,
-    emoji: getCelebrationEmoji(lifetimeRank),
-    message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
-  } : null;
-
-  const yearly = yearlyRank != null ? {
-    scope: "yearly",
-    rank: yearlyRank,
-    emoji: getCelebrationEmoji(yearlyRank),
-    message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
-  } : null;
-
-  // Default pick: lifetime wins, yearly only if it adds info beyond lifetime
-  const suppressYearly = lifetime && yearly && yearly.rank >= lifetime.rank;
-  const best = lifetime ?? (suppressYearly ? null : yearly);
-
-  return { best, lifetime, yearly };
-}
 
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
@@ -1111,6 +990,7 @@ export default function LogSessionPage() {
               topLiftsByTypeAndReps={topLiftsByTypeAndReps}
               topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
               tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
+              isPastSession={!isToday}
               onUpdateSet={updateSet}
               onDeleteSet={deleteSet}
               onAddSet={(prevSet) => addSet(liftType, prevSet)}
@@ -1160,6 +1040,126 @@ export default function LogSessionPage() {
     <ActivityPanel entries={activityLog} />
     </div>
   );
+}
+
+// Color-coded timing log for sheet API calls.
+// Single-step calls print one line; multi-step calls print a grouped breakdown + total.
+// Also pushes an entry to the optional addLogEntry callback for the UI activity panel.
+function logSheetTimings(label, timings, totalMs, addLogEntry) {
+  if (!isDev) return;
+  const total = Math.round(totalMs);
+  const color = total < 500 ? "#22c55e" : total < 1500 ? "#f59e0b" : "#ef4444";
+
+  if (timings.length <= 1) {
+    console.log(
+      `%c📡 ${label}%c  %c${total}ms`,
+      "font-weight:bold",
+      "color:inherit",
+      `color:${color};font-weight:bold`,
+    );
+  } else {
+    const nameWidth = Math.max(...timings.map((t) => t.name.length));
+    console.groupCollapsed(
+      `%c📡 ${label}%c  %c${total}ms`,
+      "font-weight:bold",
+      "color:inherit",
+      `color:${color};font-weight:bold`,
+    );
+    timings.forEach((t) => {
+      const ms = Math.round(t.ms);
+      const c = ms < 500 ? "#22c55e" : ms < 1500 ? "#f59e0b" : "#ef4444";
+      console.log(
+        `  %c${t.name.padEnd(nameWidth)}%c  %c${String(ms).padStart(5)}ms`,
+        "font-weight:bold",
+        "color:inherit",
+        `color:${c};font-weight:bold`,
+      );
+    });
+    const divider = "─".repeat(nameWidth + 10);
+    console.log(`  ${divider}`);
+    console.log(
+      `  %c${"Total".padEnd(nameWidth)}%c  %c${String(total).padStart(5)}ms`,
+      "font-weight:bold",
+      "color:inherit",
+      `color:${color};font-weight:bold`,
+    );
+    console.groupEnd();
+  }
+
+  if (addLogEntry) {
+    const detail = timings.length > 1
+      ? timings.map((t) => `${t.name} ${Math.round(t.ms)}ms`).join(" → ")
+      : "";
+    addLogEntry({ type: "timing", label, total, detail, color });
+  }
+}
+
+function getEditableSetFields(set) {
+  return {
+    reps: set.reps,
+    weight: set.weight,
+    unitType: set.unitType ?? "",
+    notes: set.notes ?? "",
+    url: set.URL ?? "",
+  };
+}
+
+function getSheetUpdatePayload(fields) {
+  return {
+    reps: fields.reps,
+    weight: `${fields.weight}${fields.unitType ?? ""}`,
+    notes: fields.notes ?? "",
+    url: fields.url ?? "",
+  };
+}
+
+function getTop20Rank(topLifts, weight, isMetric) {
+  if (!topLifts?.length || !weight) return null;
+
+  const rank = topLifts.findIndex((lift) => {
+    const { value } = getDisplayWeight(lift, isMetric);
+    return weight > value;
+  });
+
+  if (rank !== -1) {
+    return rank < 20 ? rank : null;
+  }
+
+  return topLifts.length < 20 ? topLifts.length : null;
+}
+
+function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months }) {
+  if (!liftType || !reps || reps < 1 || reps > 10 || !weight) return null;
+
+  const lifetimeRank = getTop20Rank(
+    topLiftsByTypeAndReps?.[liftType]?.[reps - 1],
+    weight,
+    isMetric,
+  );
+  const yearlyRank = getTop20Rank(
+    topLiftsByTypeAndRepsLast12Months?.[liftType]?.[reps - 1],
+    weight,
+    isMetric,
+  );
+
+  const lifetime = lifetimeRank != null ? {
+    scope: "lifetime",
+    rank: lifetimeRank,
+    emoji: getCelebrationEmoji(lifetimeRank),
+    message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
+  } : null;
+
+  const yearly = yearlyRank != null ? {
+    scope: "yearly",
+    rank: yearlyRank,
+    emoji: getCelebrationEmoji(yearlyRank),
+    message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
+  } : null;
+
+  const suppressYearly = lifetime && yearly && yearly.rank >= lifetime.rank;
+  const best = lifetime ?? (suppressYearly ? null : yearly);
+
+  return { best, lifetime, yearly };
 }
 
 // --- Activity log panel (dev only) ---
@@ -1354,7 +1354,7 @@ function SyncIndicator({ state }) {
 
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, isPastSession, onUpdateSet, onDeleteSet, onAddSet }) {
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const e1rmFormula =
@@ -1692,9 +1692,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       <SmartAddButtons
         suggestions={suggestions}
         lastRealSet={lastRealSet}
-        isMetric={isMetric}
         onAddSet={onAddSet}
         showHint={showSuggestionHint}
+        isPastSession={isPastSession}
       />
     </div>
   );
@@ -2016,24 +2016,9 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 // - Working phase: repeat last set + increment (+2.5kg/+5lb)
 // - No prior data: plain "Add set" fallback
 
-function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHint }) {
-  if (!suggestions || suggestions.length === 0) {
-    // Fallback: no prior session data — plain add button
-    return (
-      <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
-        <button
-          className="flex w-full items-center justify-center gap-2 py-3.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-          onClick={() => onAddSet(lastRealSet)}
-        >
-          <Plus className="h-4 w-4" />
-          Add set
-        </button>
-      </div>
-    );
-  }
-
+function SmartAddButtonGrid({ suggestions, onAddSet, showHint }) {
   return (
-    <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
+    <>
       <div className="flex items-stretch divide-x divide-border/40">
         {suggestions.map((s, i) => (
           <button
@@ -2067,6 +2052,104 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHin
           Tap to add, then edit the weight to match your plates
         </p>
       )}
+    </>
+  );
+}
+
+function SmartAddButtons({ suggestions, lastRealSet, onAddSet, showHint, isPastSession = false }) {
+  if (!suggestions || suggestions.length === 0) {
+    // Fallback: no prior session data — plain add button
+    return (
+      <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
+        <button
+          className="flex w-full items-center justify-center gap-2 py-3.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+          onClick={() => onAddSet(lastRealSet)}
+        >
+          <Plus className="h-4 w-4" />
+          Add set
+        </button>
+      </div>
+    );
+  }
+
+  if (isPastSession) {
+    return (
+      <PastSessionSmartAddButtons
+        suggestions={suggestions}
+        onAddSet={onAddSet}
+        showHint={showHint}
+      />
+    );
+  }
+
+  return (
+    <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
+      <SmartAddButtonGrid
+        suggestions={suggestions}
+        onAddSet={onAddSet}
+        showHint={showHint}
+      />
+    </div>
+  );
+}
+
+function PastSessionSmartAddButtons({ suggestions, onAddSet, showHint }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const transition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.18, ease: "easeOut" };
+
+  return (
+    <div
+      className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/20"
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
+      onFocusCapture={() => setIsExpanded(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          setIsExpanded(false);
+        }
+      }}
+    >
+      <button
+        type="button"
+        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
+        onClick={() => setIsExpanded((prev) => !prev)}
+        aria-expanded={isExpanded}
+      >
+        <span className="flex items-center gap-2">
+          <Plus className="h-3.5 w-3.5" />
+          Add more to this session
+        </span>
+        <span className="flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+          Suggestions
+          <motion.span
+            animate={{ rotate: isExpanded ? 90 : 0 }}
+            transition={transition}
+            className="inline-flex"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </motion.span>
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={transition}
+            className="overflow-hidden border-t border-border/40 bg-muted/30"
+          >
+            <SmartAddButtonGrid
+              suggestions={suggestions}
+              onAddSet={onAddSet}
+              showHint={showHint}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

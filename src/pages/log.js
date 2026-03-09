@@ -972,29 +972,30 @@ export default function LogSessionPage() {
 
 function LogSessionSkeleton() {
   return (
-    <div className="mt-6 space-y-5">
-      {[0, 1].map((index) => (
-        <div key={index} className="overflow-hidden rounded-xl border border-border/50 bg-card/70 shadow-sm">
-          <div className="space-y-3 border-b border-border/40 px-4 py-4">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-3 w-28" />
-          </div>
-          <div className="space-y-4 px-4 py-4">
-            {[0, 1, 2].map((row) => (
-              <div key={row} className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <Skeleton className="h-8 w-12" />
-                  <Skeleton className="h-4 w-3" />
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-4 w-6" />
-                </div>
-                <Skeleton className="h-4 flex-1" />
-                <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
+    <div className="mt-6">
+      <div className="overflow-hidden rounded-xl border border-border/50 bg-card/70 shadow-sm">
+        <div className="space-y-3 border-b border-border/40 px-5 py-5">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-3 w-36" />
+        </div>
+        <div className="space-y-5 px-5 py-5">
+          {[0, 1, 2, 3].map((row) => (
+            <div key={row} className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <Skeleton className="h-9 w-14" />
+                <Skeleton className="h-4 w-3" />
+                <Skeleton className="h-9 w-20" />
+                <Skeleton className="h-4 w-6" />
               </div>
-            ))}
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
+            </div>
+          ))}
+          <div className="border-t border-border/40 pt-5">
+            <Skeleton className="h-12 w-full rounded-md" />
           </div>
         </div>
-      ))}
+      </div>
     </div>
   );
 }

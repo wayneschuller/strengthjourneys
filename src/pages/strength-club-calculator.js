@@ -100,7 +100,7 @@ const MILESTONES = [
   },
 ];
 
-const COMBINED_TARGET = 1400; // 200 + 300 + 400 + 500
+const COMBINED_TARGET = 1400; // 200 + 300 + 400 + 500 (for display only)
 const BAR_WEIGHT_LB = 45;
 
 const FAQ_ITEMS = [
@@ -441,7 +441,7 @@ function StrengthClubMain({ relatedArticles }) {
           `${values[m.key] >= m.target ? "\u2705" : "\u2b1c"} ${m.liftType}: ${values[m.key]} lbs (${toKgF(values[m.key])} kg) — target ${m.target} lbs`,
       ),
       "",
-      `Total: ${total} lbs (${toKgF(total)} kg) of ${COMBINED_TARGET}`,
+      `Total: ${total} lbs (${toKgF(total)} kg)`,
       "",
       "Strength Journeys",
       url,
@@ -539,7 +539,7 @@ function StrengthClubMain({ relatedArticles }) {
               >
                 {allAchieved
                   ? "All four milestones achieved! You're in the 200/300/400/500 club!"
-                  : `${MILESTONES.filter((m) => values[m.key] >= m.target).length} of 4 milestones achieved — ${Math.max(0, COMBINED_TARGET - total)} lbs to go`}
+                  : `${MILESTONES.filter((m) => values[m.key] >= m.target).length} of 4 milestones achieved`}
               </div>
             </div>
 

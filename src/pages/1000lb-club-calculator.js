@@ -262,21 +262,21 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const prefersReducedMotion = useReducedMotion();
   const [squat, setSquat] = useLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
-    0,
+    275,
     {
       initializeWithValue: false,
     },
   );
   const [bench, setBench] = useLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_BENCH,
-    0,
+    205,
     {
       initializeWithValue: false,
     },
   );
   const [deadlift, setDeadlift] = useLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT,
-    0,
+    315,
     {
       initializeWithValue: false,
     },

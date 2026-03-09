@@ -76,6 +76,12 @@ export const LOCAL_STORAGE_KEYS = {
   THOUSAND_BENCH: "SJ_thousand_bench",
   THOUSAND_DEADLIFT: "SJ_thousand_deadlift",
 
+  // 200/300/400/500 strength club
+  STRENGTH_CLUB_PRESS: "SJ_strength_club_press",
+  STRENGTH_CLUB_BENCH: "SJ_strength_club_bench",
+  STRENGTH_CLUB_SQUAT: "SJ_strength_club_squat",
+  STRENGTH_CLUB_DEADLIFT: "SJ_strength_club_deadlift",
+
   // Gorilla comparison
   GORILLA_IS_METRIC: "SJ_gorilla_is_metric",
   GORILLA_BODY_WEIGHT: "SJ_gorilla_body_weight",

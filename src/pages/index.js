@@ -28,6 +28,8 @@ import {
   Flame,
   Sparkles,
   CircleDashed,
+  Dumbbell,
+  Mountain,
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -71,6 +73,14 @@ export const featurePages = [
     description:
       "Are you in the 1000lb club? Track your progress to this milestone.",
     IconComponent: Anvil,
+  },
+  {
+    href: "/strength-club-calculator",
+    title: "200/300/400/500 Strength Club",
+    description:
+      "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
+    IconComponent: Mountain,
+    devOnly: true,
   },
   {
     href: "/big-four-strength-standards-calculator",

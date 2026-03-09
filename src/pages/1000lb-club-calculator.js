@@ -436,8 +436,19 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   value: deadlift,
                   set: setDeadlift,
                 },
-              ].map(({ key, liftType, value, set }) => (
-                <div key={key} className="flex items-center gap-4">
+              ].map(({ key, liftType, value, set }, index) => (
+                <motion.div
+                  key={key}
+                  className="flex items-center gap-4"
+                  initial={prefersReducedMotion ? undefined : { opacity: 0, x: -20 }}
+                  animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20,
+                    delay: 0.15 + index * 0.15,
+                  }}
+                >
                   <Link
                     href={BIG_FOUR_URLS[liftType]}
                     className="flex-shrink-0"
@@ -486,7 +497,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       className="mt-2"
                     />
                   </div>
-                </div>
+                </motion.div>
               ))}
 
               <motion.div

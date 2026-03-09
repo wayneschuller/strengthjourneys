@@ -1447,9 +1447,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     return bestIdx;
   }, [sets, canShowStrength, e1rmFormula]);
 
-  // Toggle between lifetime and 12-month PR scope
-  const [prScope, setPrScope] = useState("lifetime");
-
   const prMeta = useMemo(() => {
     return sets.map((s) => {
       const rankingMeta = getRankingMeta({
@@ -1464,13 +1461,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         return { status: null, message: null, scope: null };
       }
 
-      // Pick the ranking for the active scope
-      const active = prScope === "yearly"
-        ? rankingMeta?.yearly
-        : (rankingMeta?.best ?? null);
+      const active = rankingMeta?.best ?? null;
 
-      // For lifetime scope, also flag historical PRs
-      if (prScope === "lifetime" && s.isHistoricalPR) {
+      if (s.isHistoricalPR) {
         return {
           status: "lifetime",
           message: active?.message ?? null,
@@ -1482,15 +1475,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         return { status: active.scope, message: active.message, scope: active.scope };
       }
       return { status: null, message: null, scope: null };
-    });
-  }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, prScope]);
-
-  // Check if any set has a yearly ranking (to decide whether to show the toggle)
-  const hasYearlyData = useMemo(() => {
-    return sets.some((s) => {
-      if (s._pending || !s.reps || !s.weight) return false;
-      const meta = getRankingMeta({ liftType, reps: s.reps, weight: s.weight, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months });
-      return meta?.yearly != null;
     });
   }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
@@ -1521,18 +1505,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           <h2 className="text-base font-semibold text-foreground">
             {liftType}
           </h2>
-        )}
-        {hasYearlyData && (
-          <button
-            className={`ml-auto rounded-full px-2.5 py-0.5 text-[10px] font-medium tracking-wide transition-colors ${
-              prScope === "yearly"
-                ? "bg-blue-500/10 text-blue-500"
-                : "text-muted-foreground/50 hover:text-muted-foreground"
-            }`}
-            onClick={() => setPrScope((s) => s === "lifetime" ? "yearly" : "lifetime")}
-          >
-            {prScope === "yearly" ? "12 month" : "lifetime"}
-          </button>
         )}
       </div>
 

@@ -705,8 +705,8 @@ function MilestoneCard({
   const percent = Math.min(100, Math.round((value / target) * 100));
   const achieved = value >= target;
 
-  // Calculate plate breakdown for the TARGET weight (shows the goal)
-  const targetBreakdown = calculatePlateBreakdown(target, BAR_WEIGHT_LB, false, "blue");
+  // Calculate plate breakdown for the CURRENT slider value
+  const currentBreakdown = calculatePlateBreakdown(value, BAR_WEIGHT_LB, false, "blue");
 
   // Green gradient fill that rises from bottom based on progress
   const fillPercent = Math.min(100, (value / target) * 100);
@@ -767,14 +767,14 @@ function MilestoneCard({
 
       {/* Content */}
       <div className="relative z-[1]">
-        {/* Header: lift name + achievement badge */}
+        {/* Header: target number + lift name + SVG */}
         <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link href={BIG_FOUR_URLS[liftType]} className="flex-shrink-0">
               <motion.img
                 src={LIFT_GRAPHICS[liftType]}
                 alt={`${liftType} illustration`}
-                className="h-14 w-14 origin-bottom object-contain sm:h-16 sm:w-16"
+                className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24"
                 animate={
                   prefersReducedMotion
                     ? undefined
@@ -791,15 +791,15 @@ function MilestoneCard({
               />
             </Link>
             <div>
+              <div className="text-4xl font-black tabular-nums sm:text-5xl">
+                {target}
+              </div>
               <Link
                 href={BIG_FOUR_URLS[liftType]}
-                className="text-lg font-semibold underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                className="text-muted-foreground text-sm font-semibold underline decoration-dotted underline-offset-2 hover:text-blue-600"
               >
                 {liftType}
               </Link>
-              <div className="text-muted-foreground text-sm">
-                Target: {target} lbs ({toKgF(target)} kg)
-              </div>
             </div>
           </div>
           {achieved && (
@@ -813,15 +813,15 @@ function MilestoneCard({
           )}
         </div>
 
-        {/* Plate diagram showing the goal */}
+        {/* Plate diagram showing current slider value */}
         <div className="mb-3">
           <PlateDiagram
-            platesPerSide={targetBreakdown.platesPerSide}
+            platesPerSide={currentBreakdown.platesPerSide}
             barWeight={BAR_WEIGHT_LB}
             isMetric={false}
             hideLabels
             animationDelay={0.3 + index * 0.1}
-            animationKey={`target-${key}`}
+            animationKey={`current-${key}-${value}`}
           />
         </div>
 

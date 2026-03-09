@@ -118,6 +118,33 @@ function getSheetUpdatePayload(fields) {
   };
 }
 
+function getPrBenchmarks({ liftType, reps, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months }) {
+  if (!liftType || !reps || reps < 1 || reps > 10) return null;
+
+  const lifetimeBest = topLiftsByTypeAndReps?.[liftType]?.[reps - 1]?.[0] ?? null;
+  const yearlyBest = topLiftsByTypeAndRepsLast12Months?.[liftType]?.[reps - 1]?.[0] ?? null;
+
+  return {
+    lifetimeValue: lifetimeBest ? getDisplayWeight(lifetimeBest, isMetric).value : null,
+    yearlyValue: yearlyBest ? getDisplayWeight(yearlyBest, isMetric).value : null,
+    unit: isMetric ? "kg" : "lb",
+  };
+}
+
+function formatPrBenchmarkLabel(benchmarks) {
+  if (!benchmarks) return null;
+  const { lifetimeValue, yearlyValue, unit } = benchmarks;
+  if (lifetimeValue == null && yearlyValue == null) return null;
+  if (lifetimeValue != null && yearlyValue != null && lifetimeValue === yearlyValue) {
+    return `LT/YR ${lifetimeValue}${unit}`;
+  }
+  if (yearlyValue != null && lifetimeValue != null) {
+    return `YR ${yearlyValue}${unit} · LT ${lifetimeValue}${unit}`;
+  }
+  if (yearlyValue != null) return `YR ${yearlyValue}${unit}`;
+  return `LT ${lifetimeValue}${unit}`;
+}
+
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -1246,20 +1273,22 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     const inDropSetMode = atOrPastTop && lastLoggedWeight < maxLogged;
 
     // Helper: check if a suggested set would be a PR
-    const checkPR = (reps, weight) => {
-      if (reps < 1 || reps > 10) return null;
-      const allTimeBest = topLiftsByTypeAndReps?.[liftType]?.[reps - 1]?.[0];
-      const yearlyBest = topLiftsByTypeAndRepsLast12Months?.[liftType]?.[reps - 1]?.[0];
-      // Convert PR weights to current unit for comparison
-      if (allTimeBest) {
-        const { value: bestWeight } = getDisplayWeight(allTimeBest, isMetric);
-        if (weight > bestWeight) return "lifetime PR";
+    const getSuggestionPrMeta = (reps, weight) => {
+      const benchmarks = getPrBenchmarks({
+        liftType,
+        reps,
+        isMetric,
+        topLiftsByTypeAndReps,
+        topLiftsByTypeAndRepsLast12Months,
+      });
+      const benchmarkLabel = formatPrBenchmarkLabel(benchmarks);
+      if (benchmarks?.lifetimeValue != null && weight > benchmarks.lifetimeValue) {
+        return { rewardLabel: "Lifetime PR", benchmarkLabel };
       }
-      if (yearlyBest) {
-        const { value: bestWeight } = getDisplayWeight(yearlyBest, isMetric);
-        if (weight > bestWeight) return "yearly PR";
+      if (benchmarks?.yearlyValue != null && weight > benchmarks.yearlyValue) {
+        return { rewardLabel: "Yearly PR", benchmarkLabel };
       }
-      return null;
+      return { rewardLabel: null, benchmarkLabel };
     };
 
     const result = [];
@@ -1267,11 +1296,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     if (!atOrPastTop) {
       // Warmup phase: suggest next warmup set
       const nextSet = progression[nextWarmupIdx];
-      const prHint = checkPR(nextSet.reps, nextSet.weight);
+      const prMeta = getSuggestionPrMeta(nextSet.reps, nextSet.weight);
       result.push({
         label: `${nextSet.reps}@${nextSet.weight}${unitType}`,
         sublabel: nextSet.isTopSet ? "top set" : "warmup",
-        prHint,
+        rewardLabel: prMeta.rewardLabel,
+        benchmarkLabel: prMeta.benchmarkLabel,
         reps: nextSet.reps,
         weight: nextSet.weight,
         unitType,
@@ -1281,11 +1311,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       // Also offer skipping ahead to the top set if not already the next suggestion
       if (!nextSet.isTopSet) {
         const topProgSet = progression[progression.length - 1];
-        const topPrHint = checkPR(topProgSet.reps, topProgSet.weight);
+        const topPrMeta = getSuggestionPrMeta(topProgSet.reps, topProgSet.weight);
         result.push({
           label: `${topProgSet.reps}@${topProgSet.weight}${unitType}`,
           sublabel: "top set",
-          prHint: topPrHint,
+          rewardLabel: topPrMeta.rewardLabel,
+          benchmarkLabel: topPrMeta.benchmarkLabel,
           reps: topProgSet.reps,
           weight: topProgSet.weight,
           unitType,
@@ -1294,9 +1325,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       }
     } else if (inDropSetMode) {
       // Drop set mode: weight is descending — only offer repeat at current drop weight
+      const dropPrMeta = getSuggestionPrMeta(lastLoggedReps, lastLoggedWeight);
       result.push({
         label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
         sublabel: "drop set",
+        rewardLabel: dropPrMeta.rewardLabel,
+        benchmarkLabel: dropPrMeta.benchmarkLabel,
         reps: lastLoggedReps,
         weight: lastLoggedWeight,
         unitType,
@@ -1304,20 +1338,24 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       });
     } else {
       // Working phase: suggest repeat, increment, and drop set
+      const repeatPrMeta = getSuggestionPrMeta(lastLoggedReps, lastLoggedWeight);
       result.push({
         label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
         sublabel: "repeat",
+        rewardLabel: repeatPrMeta.rewardLabel,
+        benchmarkLabel: repeatPrMeta.benchmarkLabel,
         reps: lastLoggedReps,
         weight: lastLoggedWeight,
         unitType,
         variant: "secondary",
       });
       const incrWeight = lastLoggedWeight + minIncrement;
-      const incrPrHint = checkPR(lastLoggedReps, incrWeight);
+      const incrPrMeta = getSuggestionPrMeta(lastLoggedReps, incrWeight);
       result.push({
         label: `${lastLoggedReps}@${incrWeight}${unitType}`,
         sublabel: `+${minIncrement}`,
-        prHint: incrPrHint,
+        rewardLabel: incrPrMeta.rewardLabel,
+        benchmarkLabel: incrPrMeta.benchmarkLabel,
         reps: lastLoggedReps,
         weight: incrWeight,
         unitType,
@@ -1326,9 +1364,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       // Drop set: ~80% of current weight, rounded to nearest increment
       const dropWeight = Math.round((lastLoggedWeight * 0.8) / minIncrement) * minIncrement;
       if (dropWeight >= barWeight && dropWeight < lastLoggedWeight) {
+        const dropPrMeta = getSuggestionPrMeta(lastLoggedReps, dropWeight);
         result.push({
           label: `${lastLoggedReps}@${dropWeight}${unitType}`,
           sublabel: "drop set",
+          rewardLabel: dropPrMeta.rewardLabel,
+          benchmarkLabel: dropPrMeta.benchmarkLabel,
           reps: lastLoggedReps,
           weight: dropWeight,
           unitType,
@@ -1370,24 +1411,31 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     return maxLen <= 3 ? "w-14" : maxLen <= 4 ? "w-[4.5rem]" : "w-[5.5rem]";
   }, [sets]);
 
-  // Determine PR status for each set: "lifetime" | "yearly" | null
-  // Lifetime PR = isHistoricalPR from parsedData. Yearly PR = beats best in last 12 months.
-  const prStatus = useMemo(() => {
+  const prMeta = useMemo(() => {
     return sets.map((s) => {
-      if (s._pending || !s.reps || !s.weight) return null;
-      if (s.isHistoricalPR) return "lifetime";
-      // Check yearly PR
-      if (s.reps >= 1 && s.reps <= 10 && topLiftsByTypeAndRepsLast12Months?.[liftType]) {
-        const yearlyBest = topLiftsByTypeAndRepsLast12Months[liftType][s.reps - 1]?.[0];
-        if (yearlyBest) {
-          const { value: bestWeight } = getDisplayWeight(yearlyBest, isMetric);
-          const { value: thisWeight } = getDisplayWeight(s, isMetric);
-          if (thisWeight > bestWeight) return "yearly";
+      const benchmarks = getPrBenchmarks({
+        liftType,
+        reps: s.reps,
+        isMetric,
+        topLiftsByTypeAndReps,
+        topLiftsByTypeAndRepsLast12Months,
+      });
+      const benchmarkLabel = formatPrBenchmarkLabel(benchmarks);
+      if (s._pending || !s.reps || !s.weight) {
+        return { status: null, benchmarkLabel };
+      }
+      if (s.isHistoricalPR) {
+        return { status: "lifetime", benchmarkLabel };
+      }
+      if (benchmarks?.yearlyValue != null) {
+        const { value: thisWeight } = getDisplayWeight(s, isMetric);
+        if (thisWeight > benchmarks.yearlyValue) {
+          return { status: "yearly", benchmarkLabel };
         }
       }
-      return null;
+      return { status: null, benchmarkLabel };
     });
-  }, [sets, liftType, isMetric, topLiftsByTypeAndRepsLast12Months]);
+  }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
   return (
     <div className="relative space-y-1 rounded-xl border bg-card p-4 shadow-sm md:pl-24">
@@ -1425,7 +1473,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             set={set}
             isMetric={isMetric}
             weightColWidth={weightColWidth}
-            prType={prStatus[idx]}
+            prMeta={prMeta[idx]}
             onUpdate={(fields) => onUpdateSet({ rowIndex: set.rowIndex, tempId: set._tempId ?? null }, fields)}
             onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
             strengthBadge={idx === bestE1rmIndex ? (
@@ -1485,7 +1533,7 @@ function UnitLabel({ unitType, mismatch }) {
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDelete, strengthBadge }) {
+function SetRow({ set, isMetric, weightColWidth = "w-14", prMeta, onUpdate, onDelete, strengthBadge }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -1560,6 +1608,17 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
 
   const displayReps = pendingReps !== null ? pendingReps : set.reps;
   const displayWeight = pendingWeight !== null ? pendingWeight : set.weight;
+  const prToneClass =
+    prMeta?.status === "lifetime"
+      ? "text-amber-600"
+      : prMeta?.status === "yearly"
+        ? "text-blue-500"
+        : "text-muted-foreground/45";
+  const prSummary = prMeta?.status === "lifetime"
+    ? `Lifetime PR${prMeta?.benchmarkLabel ? ` · ${prMeta.benchmarkLabel}` : ""}`
+    : prMeta?.status === "yearly"
+      ? `Yearly PR${prMeta?.benchmarkLabel ? ` · ${prMeta.benchmarkLabel}` : ""}`
+      : prMeta?.benchmarkLabel;
 
   function commitReps() {
     setEditingReps(false);
@@ -1654,12 +1713,19 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
             autoFocus
           />
         ) : (
-          <button
-            className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
-            onClick={() => setEditingNotes(true)}
-          >
-            {set.notes || "notes..."}
-          </button>
+          <div className="space-y-1">
+            <button
+              className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
+              onClick={() => setEditingNotes(true)}
+            >
+              {set.notes || "notes..."}
+            </button>
+            {prSummary && (
+              <p className={`truncate text-[10px] uppercase tracking-wide ${prToneClass}`}>
+                {prSummary}
+              </p>
+            )}
+          </div>
         )}
       </div>
 
@@ -1672,12 +1738,12 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
         ) : (
           <>
             {strengthBadge}
-            {prType === "lifetime" && (
+            {prMeta?.status === "lifetime" && (
               <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
                 PR
               </Badge>
             )}
-            {prType === "yearly" && (
+            {prMeta?.status === "yearly" && (
               <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">
                 Year PR
               </Badge>
@@ -1769,9 +1835,14 @@ function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet, showHin
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
               {s.sublabel}
             </span>
-            {s.prHint && (
-              <span className={`text-[10px] font-bold uppercase ${s.prHint === "lifetime PR" ? "text-amber-500" : "text-blue-500"}`}>
-                {s.prHint === "lifetime PR" ? "🏆 Lifetime PR!" : "⭐ Yearly PR!"}
+            {s.rewardLabel && (
+              <span className={`text-[10px] font-bold uppercase ${s.rewardLabel === "Lifetime PR" ? "text-amber-500" : "text-blue-500"}`}>
+                {s.rewardLabel}
+              </span>
+            )}
+            {!s.rewardLabel && s.benchmarkLabel && (
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground/55">
+                {s.benchmarkLabel}
               </span>
             )}
           </button>

@@ -220,17 +220,13 @@ export default function LogSessionPage() {
   const pendingSetsRef = useRef({});
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
 
-  // Mutation guard: prevents concurrent sheet API calls that could race on
-  // stale row indices. Structural mutations (addSet, addLift, deleteSet)
-  // check savingRef.current and bail silently if true.
-  // The UI is fully optimistic — rows appear/disappear instantly and API calls
-  // are sub-800ms, so the guard window is imperceptible during normal use.
-  // It only blocks spammy rapid clicks that would fire multiple calls with
-  // the same stale parsedData snapshot (which can drift row indices).
+  // Structural mutation guard: prevents concurrent row-shifting API calls
+  // (addSet, addLift, deleteSet) that could race on stale row indices.
+  // Non-structural updates (PATCH to edit reps/weight/notes) target a fixed
+  // rowIndex and never shift other rows, so they bypass this guard.
   // This is a ref (not state) so the guard works without triggering re-renders
   // — buttons stay visually enabled, clicks are just silently dropped.
-  // Set to true in markSaving(), cleared in markSaved()/markError().
-  const savingRef = useRef(false);
+  const structuralSavingRef = useRef(false);
   const savedTimerRef = useRef(null);
 
   // Wrapper that keeps pendingSetsRef synchronously in sync.
@@ -393,23 +389,46 @@ export default function LogSessionPage() {
   }, [mutate]);
 
   // --- Sync helpers ---
+  // Structural ops (addSet/addLift/deleteSet) use markStructuralSaving/Saved/Error
+  // which gate structuralSavingRef. Non-structural PATCH updates use markSaving/Saved/Error
+  // which only drive the UI spinner — they never block structural ops.
 
   function markSaving() {
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    savingRef.current = true;
     setSyncState("saving");
   }
 
   function markSaved() {
-    savingRef.current = false;
     setSyncState("saved");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
   }
 
   function markError() {
-    savingRef.current = false;
     setSyncState("error");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
+  }
+
+  function markStructuralSaving() {
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    structuralSavingRef.current = true;
+    setSyncState("saving");
+  }
+
+  function markStructuralSaved() {
+    structuralSavingRef.current = false;
+    setSyncState("saved");
+    savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
+    // Flush any queued sync that was waiting for the structural op to finish
+    flushQueuedSync();
+  }
+
+  function markStructuralError() {
+    structuralSavingRef.current = false;
+    setSyncState("error");
+    savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
+    // Still attempt to flush — the structural op failed but queued edits
+    // to already-confirmed rows are independent and should still land.
+    flushQueuedSync();
   }
 
   const updatePendingSet = useCallback((tempId, fields, queuedSync) => {
@@ -497,14 +516,23 @@ export default function LogSessionPage() {
     [sheetInfo?.ssid, clearPendingQueuedSync, addLogEntry],
   );
 
-  useEffect(() => {
-    if (savingRef.current) return;
+  // Drain queued sync: find the first pending set that has a real rowIndex
+  // and a queued edit, then fire the PATCH. Called from the effect below AND
+  // from markStructuralSaved/Error so edits that were blocked during a
+  // structural op are never permanently lost.
+  function flushQueuedSync() {
+    if (structuralSavingRef.current) return;
     const queuedSet = Object.values(pendingSetsRef.current)
       .flat()
       .find((s) => !s._pending && s.rowIndex && s._queuedSync);
     if (!queuedSet) return;
     void persistSetUpdate(queuedSet.rowIndex, getEditableSetFields(queuedSet), queuedSet._tempId);
-  }, [pendingSets, persistSetUpdate]);
+  }
+
+  // Also trigger on pendingSets changes (e.g. when a row gets promoted and
+  // its queued edit can now fire).
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- flushQueuedSync reads refs, doesn't need to be a dep
+  useEffect(() => { flushQueuedSync(); }, [pendingSets, persistSetUpdate]);
 
   // --- API calls ---
 
@@ -539,7 +567,7 @@ export default function LogSessionPage() {
   // Handles anchor-row promotion so date/liftType inheritance stays intact.
   const deleteSet = useCallback(
     async (set) => {
-      if (!sheetInfo?.ssid || !parsedData || !set.rowIndex || savingRef.current) return;
+      if (!sheetInfo?.ssid || !parsedData || !set.rowIndex || structuralSavingRef.current) return;
 
       // All confirmed rows for this session, sorted ascending by sheet position.
       const sessionSets = parsedData
@@ -568,7 +596,7 @@ export default function LogSessionPage() {
       // Optimistically hide the row immediately
       addLogEntry({ type: "action", label: "deleteSet", detail: `row ${set.rowIndex} · ${set.liftType} · ${set.reps}×${set.weight}` });
       setDeletedRowIndices((prev) => new Set([...prev, set.rowIndex]));
-      markSaving();
+      markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
       try {
@@ -598,7 +626,7 @@ export default function LogSessionPage() {
         // revalidation mid-session causes parsedData churn and flicker.
         // The deletedRowIndices filter keeps the row hidden in the UI.
         // SWR's revalidateOnFocus will sync when the user leaves the page.
-        markSaved();
+        markStructuralSaved();
       } catch (err) {
         console.error("[sheet/log-set] deleteSet failed:", err);
         // Restore the row on failure
@@ -607,10 +635,11 @@ export default function LogSessionPage() {
           next.delete(set.rowIndex);
           return next;
         });
-        markError();
+        markStructuralError();
       }
       logSheetTimings("deleteSet", timings, performance.now() - t0, addLogEntry);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
     [sheetInfo?.ssid, parsedData, toast, addLogEntry],
   );
 
@@ -618,7 +647,7 @@ export default function LogSessionPage() {
   // Optimistic: row appears immediately with spinner, promoted to confirmed on success.
   const addSet = useCallback(
     async (liftType, prevSet) => {
-      if (!sheetInfo?.ssid || !parsedData || savingRef.current) return;
+      if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
 
       const unitType = prevSet?.unitType ?? (isMetric ? "kg" : "lb");
       const reps = prevSet?.reps ?? 5;
@@ -652,7 +681,7 @@ export default function LogSessionPage() {
           { date: sessionDate, liftType, reps, weight, unitType, notes, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
         ],
       }));
-      markSaving();
+      markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
 
@@ -671,7 +700,7 @@ export default function LogSessionPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Add set failed");
         const { firstRowIndex } = data;
-        markSaved();
+        markStructuralSaved();
         // Promote pending → confirmed with real rowIndex.
         // Do NOT call mutate() here — firing a revalidation mid-session causes parsedData
         // to update while confirmed-pending rows are still present, which creates a brief
@@ -687,10 +716,11 @@ export default function LogSessionPage() {
           if (!next[liftType]?.length) delete next[liftType];
           return next;
         });
-        markError();
+        markStructuralError();
       }
       logSheetTimings("addSet", timings, performance.now() - t0, addLogEntry);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
     [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry],
   );
 
@@ -698,7 +728,7 @@ export default function LogSessionPage() {
   // Border is only drawn for the very first row of a brand-new session date.
   const addLift = useCallback(
     async (liftType) => {
-      if (!sheetInfo?.ssid || !parsedData || savingRef.current) return;
+      if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
 
       const unitType = isMetric ? "kg" : "lb";
       const weight = isMetric ? 20 : 45;
@@ -740,7 +770,7 @@ export default function LogSessionPage() {
           { date: sessionDate, liftType, reps, weight, unitType, notes, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
         ],
       }));
-      markSaving();
+      markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
 
@@ -769,7 +799,7 @@ export default function LogSessionPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed");
         const { firstRowIndex } = data;
-        markSaved();
+        markStructuralSaved();
         // See addSet for why we don't call mutate() here.
         promoteFirstPending(liftType, firstRowIndex);
       } catch (err) {
@@ -780,15 +810,16 @@ export default function LogSessionPage() {
           if (!next[liftType]?.length) delete next[liftType];
           return next;
         });
-        markError();
+        markStructuralError();
       }
       logSheetTimings("addLift", timings, performance.now() - t0, addLogEntry);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
     [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry],
   );
 
   const deleteSession = useCallback(async () => {
-    if (!sheetInfo?.ssid || !parsedData || savingRef.current) return;
+    if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
 
     const sessionRows = parsedData
       .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
@@ -808,7 +839,7 @@ export default function LogSessionPage() {
     const endRow = nearestAfter ? nearestAfter - 1 : maxRow;
 
     addLogEntry({ type: "action", label: "deleteSession", detail: `${sessionDate} · rows ${minRow}–${endRow} (${endRow - minRow + 1} rows)` });
-    markSaving();
+    markStructuralSaving();
     const timings = [];
     const t0 = performance.now();
 
@@ -831,7 +862,7 @@ export default function LogSessionPage() {
         throw new Error(data.error || "Delete failed");
       }
       await mutate();
-      markSaved();
+      markStructuralSaved();
       setShowDeleteConfirm(false);
       const remainingDates = sessionDates.filter((d) => d !== sessionDate);
       if (remainingDates.length) {
@@ -841,9 +872,10 @@ export default function LogSessionPage() {
       }
     } catch (err) {
       console.error("[sheet/delete] deleteSession failed:", err);
-      markError();
+      markStructuralError();
     }
     logSheetTimings("deleteSession", timings, performance.now() - t0, addLogEntry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
   }, [sheetInfo?.ssid, parsedData, sessionDate, sessionDates, todayIso, mutate, navigateToDate, addLogEntry]);
 
   // --- Render ---

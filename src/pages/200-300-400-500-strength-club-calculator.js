@@ -186,7 +186,7 @@ const WHATS_NEXT_FEATURES = [
 ];
 
 export async function getStaticProps() {
-  const RELATED_ARTICLES_CATEGORY = "Strength Standards";
+  const RELATED_ARTICLES_CATEGORY = "200/300/400/500 Strength Club";
   const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {

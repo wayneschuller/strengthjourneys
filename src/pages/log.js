@@ -582,6 +582,7 @@ export default function LogSessionPage() {
   const [pendingSets, setPendingSets] = useState({});
   const pendingSetsRef = useRef({});
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
+  const autoStartedLiftRef = useRef("");
 
   // Structural mutation guard: prevents concurrent row-shifting API calls
   // (addSet, addLift, deleteSet) that could race on stale row indices.
@@ -1233,6 +1234,36 @@ export default function LogSessionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
     [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry],
   );
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const startLift =
+      typeof router.query.startLift === "string" ? router.query.startLift.trim() : "";
+    if (!startLift || showSessionBootstrap) return;
+
+    const requestKey = `${sessionDate}:${startLift}`;
+    if (autoStartedLiftRef.current === requestKey) return;
+    autoStartedLiftRef.current = requestKey;
+
+    const nextQuery = sessionDate !== todayIso ? { date: sessionDate } : {};
+
+    if (hasSession) {
+      router.replace({ pathname: "/log", query: nextQuery }, undefined, { shallow: true });
+      return;
+    }
+
+    void addLift(startLift).finally(() => {
+      router.replace({ pathname: "/log", query: nextQuery }, undefined, { shallow: true });
+    });
+  }, [
+    addLift,
+    hasSession,
+    router,
+    sessionDate,
+    showSessionBootstrap,
+    todayIso,
+  ]);
 
   const deleteSession = useCallback(async () => {
     if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;

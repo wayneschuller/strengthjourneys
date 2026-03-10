@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
+import { calculatePlateBreakdown } from "@/lib/warmups";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
@@ -95,14 +96,6 @@ const MILESTONES = [
   },
 ];
 
-// How many blue 45lb plates per side for a given weight?
-// Uses rounding so 400 → 4 plates (405 actual), not 3 + change.
-const BLUE_PLATE_COLOR = "#2563EB";
-function getBluePlates(weight) {
-  const count = Math.max(0, Math.round((weight - BAR_WEIGHT_LB) / 90));
-  if (count === 0) return [];
-  return [{ weight: 45, color: BLUE_PLATE_COLOR, count }];
-}
 
 const COMBINED_TARGET = 1400; // 200 + 300 + 400 + 500 (for display only)
 const BAR_WEIGHT_LB = 45;
@@ -708,6 +701,9 @@ function MilestoneCard({
   const percent = Math.min(100, Math.round((value / target) * 100));
   const achieved = value >= target;
 
+  // Exact plate breakdown with minimum plates, blue preference (no red 55s)
+  const breakdown = calculatePlateBreakdown(value, BAR_WEIGHT_LB, false, "blue");
+
   // Green gradient fill that rises from bottom based on progress
   const fillPercent = Math.min(100, (value / target) * 100);
 
@@ -813,15 +809,15 @@ function MilestoneCard({
           )}
         </div>
 
-        {/* Plate diagram — blue 45s that update with slider */}
+        {/* Plate diagram — exact loading, updates with slider */}
         <div className="mb-3">
           <PlateDiagram
-            platesPerSide={getBluePlates(value)}
+            platesPerSide={breakdown.platesPerSide}
             barWeight={BAR_WEIGHT_LB}
             isMetric={false}
             hideLabels
             animationDelay={0.3 + index * 0.1}
-            animationKey={`plates-${key}-${Math.round((value - BAR_WEIGHT_LB) / 90)}`}
+            animationKey={`plates-${key}-${value}`}
           />
         </div>
 

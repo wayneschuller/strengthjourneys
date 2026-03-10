@@ -602,7 +602,7 @@ function CalculatorsMenu() {
     },
     {
       title: "200/300/400/500 Club",
-      href: "/strength-club-calculator",
+      href: "/200-300-400-500-strength-club-calculator",
       icon: <Mountain className="h-5 w-5" />,
     },
     {

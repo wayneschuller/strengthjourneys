@@ -55,6 +55,7 @@ import {
   Flame,
   Sparkles,
   CircleDashed,
+  Mountain,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { GorillaIcon } from "@/components/gorilla-icon";
@@ -598,6 +599,11 @@ function CalculatorsMenu() {
       title: "1000lb Club Calculator",
       href: "/1000lb-club-calculator",
       icon: <Anvil className="h-5 w-5" />,
+    },
+    {
+      title: "200/300/400/500 Club",
+      href: "/200-300-400-500-strength-club-calculator",
+      icon: <Mountain className="h-5 w-5" />,
     },
     {
       title: "Lifting Set Timer",

@@ -28,6 +28,8 @@ import {
   Flame,
   Sparkles,
   CircleDashed,
+  Dumbbell,
+  Mountain,
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -99,6 +101,13 @@ export const featurePages = [
     description:
       "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
     IconComponent: Flame,
+  },
+  {
+    href: "/200-300-400-500-strength-club-calculator",
+    title: "200/300/400/500 Strength Club",
+    description:
+      "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
+    IconComponent: Mountain,
   },
   {
     href: "/articles",

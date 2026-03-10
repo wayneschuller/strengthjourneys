@@ -124,6 +124,11 @@ const FAQ_ITEMS = [
       "Roughly: 90 kg press, 136 kg bench, 181 kg squat, and 227 kg deadlift. The targets are culturally rooted in pounds but the challenge is universal.",
   },
   {
+    question: "What do 2 plate, 3 plate, 4 plate, and 5 plate actually total?",
+    answer:
+      "On a standard 45 lb bar, the literal totals are 225 lb, 315 lb, 405 lb, and 495 lb. On a standard 20 kg bar, the equivalent plate milestones are 100 kg, 140 kg, 180 kg, and 220 kg. That is why the 200/300/400/500 club is closely related to the 2/3/4/5 plate idea, but not exactly the same numbers.",
+  },
+  {
     question: "Do I need to hit all four to be in the club?",
     answer:
       "Traditionally yes — all four lifts at their targets. But every milestone you reach is a major achievement worth celebrating on its own.",

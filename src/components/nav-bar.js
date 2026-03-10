@@ -246,7 +246,12 @@ export function DesktopNav() {
   const pathname = usePathname();
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
-  const logoSrc = getLogoForTheme(theme ?? resolvedTheme ?? "light");
+  const [logoSrc, setLogoSrc] = useState(() => getLogoForTheme("light"));
+
+  // Update logo after mount and on theme changes to avoid hydration mismatch
+  useEffect(() => {
+    setLogoSrc(getLogoForTheme(theme ?? resolvedTheme ?? "light"));
+  }, [theme, resolvedTheme]);
 
   return (
     <div className="hidden align-middle md:flex">

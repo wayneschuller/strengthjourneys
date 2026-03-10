@@ -256,6 +256,8 @@ export default function Home() {
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const hasLinkedSheet = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
   const { dashboardStage } = useMemo(
     () =>
@@ -344,7 +346,7 @@ export default function Home() {
       />
       <main className="mb-4 px-3 md:px-0">
         <div className="flex flex-col items-center justify-center transition-all duration-800">
-          {showHeroSection && !isReturningUserLoading ? (
+          {showHeroSection && !(mounted && isReturningUserLoading) ? (
             <div
               className={`inset-0 h-full w-full transition-all duration-800 ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
             >

@@ -133,6 +133,11 @@ const FAQ_ITEMS = [
     answer:
       "Traditionally yes — all four lifts at their targets. But every milestone you reach is a major achievement worth celebrating on its own.",
   },
+  {
+    question: "Do I need to hit all these lifts on the same day?",
+    answer:
+      "No. You do not need to hit a 200 press, 300 bench, 400 squat, and 500 deadlift in one session. The usual standard is that you hit each milestone at some point in your lifting lifetime. That said, your old high school bench probably should not count unless you can still claim it with a straight face.",
+  },
 ];
 
 const WHATS_NEXT_FEATURES = [

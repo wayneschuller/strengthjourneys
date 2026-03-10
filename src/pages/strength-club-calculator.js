@@ -99,6 +99,8 @@ const MILESTONES = [
 
 const COMBINED_TARGET = 1400; // 200 + 300 + 400 + 500 (for display only)
 const BAR_WEIGHT_LB = 45;
+const STRENGTH_CLUB_DIAGRAM_IS_METRIC = false;
+const STRENGTH_CLUB_PLATE_PREFERENCE = "blue";
 
 const FAQ_ITEMS = [
   {
@@ -283,6 +285,13 @@ export default function StrengthClubCalculator({ relatedArticles }) {
 // Helpers: dual lb/kg display (lb-primary, same as 1000lb club)
 const KG_PER_LB = 0.453592;
 const toKgF = (lbs) => (Number(lbs) * KG_PER_LB).toFixed(1);
+const getStrengthClubPlateBreakdown = (totalWeightLb) =>
+  calculatePlateBreakdown(
+    totalWeightLb,
+    BAR_WEIGHT_LB,
+    STRENGTH_CLUB_DIAGRAM_IS_METRIC,
+    STRENGTH_CLUB_PLATE_PREFERENCE,
+  );
 
 // Thor celebration: screen shake + lightning flash
 const SHAKE_KEYFRAMES = `
@@ -321,6 +330,7 @@ function StrengthClubMain({ relatedArticles }) {
   const prevValuesRef = useRef(null);
   const celebratedRef = useRef(new Set());
   const activeLiftTimeoutRef = useRef(null);
+  const celebrationFrameRef = useRef(null);
   const [activeLiftKey, setActiveLiftKey] = useState(null);
 
   const [press, setPress] = useLocalStorage(
@@ -354,6 +364,9 @@ function StrengthClubMain({ relatedArticles }) {
     return () => {
       if (activeLiftTimeoutRef.current) {
         clearTimeout(activeLiftTimeoutRef.current);
+      }
+      if (celebrationFrameRef.current) {
+        cancelAnimationFrame(celebrationFrameRef.current);
       }
     };
   }, []);
@@ -419,7 +432,10 @@ function StrengthClubMain({ relatedArticles }) {
       const nowAtOrAbove = values[m.key] >= m.target;
       if (wasBelow && nowAtOrAbove && !celebratedRef.current.has(m.key)) {
         celebratedRef.current.add(m.key);
-        triggerThorCelebration(m.key);
+        celebrationFrameRef.current = requestAnimationFrame(() => {
+          triggerThorCelebration(m.key);
+          celebrationFrameRef.current = null;
+        });
         break; // One celebration at a time
       }
     }
@@ -701,8 +717,8 @@ function MilestoneCard({
   const percent = Math.min(100, Math.round((value / target) * 100));
   const achieved = value >= target;
 
-  // Exact plate breakdown with minimum plates, blue preference (no red 55s)
-  const breakdown = calculatePlateBreakdown(value, BAR_WEIGHT_LB, false, "blue");
+  // These milestone diagrams are intentionally always shown with lb plates.
+  const breakdown = getStrengthClubPlateBreakdown(value);
 
   // Green gradient fill that rises from bottom based on progress
   const fillPercent = Math.min(100, (value / target) * 100);
@@ -787,8 +803,11 @@ function MilestoneCard({
               />
             </Link>
             <div>
-              <div className="text-4xl font-black tabular-nums sm:text-5xl">
+              <div className="flex items-baseline gap-1 text-4xl font-black tabular-nums sm:text-5xl">
                 {target}
+                <span className="text-muted-foreground text-sm font-semibold uppercase sm:text-base">
+                  lb
+                </span>
               </div>
               <Link
                 href={BIG_FOUR_URLS[liftType]}
@@ -814,11 +833,14 @@ function MilestoneCard({
           <PlateDiagram
             platesPerSide={breakdown.platesPerSide}
             barWeight={BAR_WEIGHT_LB}
-            isMetric={false}
+            isMetric={STRENGTH_CLUB_DIAGRAM_IS_METRIC}
             hideLabels
             animationDelay={0.3 + index * 0.1}
             animationKey={`plates-${key}-${value}`}
           />
+          <p className="text-muted-foreground mt-2 text-xs">
+            Plate diagram uses standard lb plates, even if you train in kg.
+          </p>
         </div>
 
         {/* Slider */}

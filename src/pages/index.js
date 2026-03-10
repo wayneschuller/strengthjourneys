@@ -116,6 +116,7 @@ export const featurePages = [
     description:
       "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
     IconComponent: Mountain,
+    badgeLabel: "New",
   },
   {
     href: "/articles",
@@ -404,7 +405,14 @@ export default function Home() {
  * @param {React.ComponentType} props.IconComponent - Lucide icon component rendered as the card illustration.
  * @param {number} [props.index=0] - Card position in the grid, used to assign a chart color and stagger the animation.
  */
-function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
+function FeatureCard({
+  href,
+  title,
+  description,
+  IconComponent,
+  badgeLabel,
+  index = 0,
+}) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
   const isAnalyzer = href === "/lift-explorer";
   const isGorillaCalculator = href === "/how-strong-is-a-gorilla";
@@ -434,6 +442,14 @@ function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
           className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
         >
           Bananas 🍌
+        </Badge>
+      )}
+      {badgeLabel && (
+        <Badge
+          variant="outline"
+          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
+        >
+          {badgeLabel}
         </Badge>
       )}
       <Link href={href}>

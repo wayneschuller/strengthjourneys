@@ -1933,6 +1933,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       // Warmup phase: suggest next warmup set
       const nextSet = progression[nextWarmupIdx];
       const rankingMeta = getSuggestionRankingMeta(nextSet.reps, nextSet.weight);
+      const isNearMissTopSet =
+        nextSet.isTopSet &&
+        lastLoggedWeight > 0 &&
+        lastLoggedWeight < nextSet.weight &&
+        nextSet.weight - lastLoggedWeight <= minIncrement * 2;
       buttons.push({
         label: `${nextSet.reps}@${nextSet.weight}${unitType}`,
         sublabel: nextSet.isTopSet ? "top set" : "warmup",
@@ -1943,6 +1948,20 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         unitType,
         variant: nextSet.isTopSet ? "primary" : "secondary",
       });
+
+      if (isNearMissTopSet) {
+        const repeatRankingMeta = getSuggestionRankingMeta(lastLoggedReps, lastLoggedWeight);
+        buttons.push({
+          label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
+          sublabel: "repeat",
+          rankingMessage: repeatRankingMeta?.message ?? null,
+          rankingScope: repeatRankingMeta?.scope ?? null,
+          reps: lastLoggedReps,
+          weight: lastLoggedWeight,
+          unitType,
+          variant: "secondary",
+        });
+      }
 
       // Also offer skipping ahead to the top set if not already the next suggestion
       if (!nextSet.isTopSet) {

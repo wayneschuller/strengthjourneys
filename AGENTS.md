@@ -275,7 +275,7 @@ Agents operating in this repo should:
 - Preserve visual design consistency
 - Avoid architectural rewrites unless explicitly requested
 - Run lint after every change
-- For small patches, auto-commit and push directly to `main` unless the user says otherwise
+- By default, automatically commit and push directly to `main` unless the user says otherwise
 - Do not run `npm run build` unless the user explicitly asks (it can disrupt the user's local `npm run dev` flow)
 - Never introduce TypeScript
 - Never migrate to App Router

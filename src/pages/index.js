@@ -108,7 +108,6 @@ export const featurePages = [
     description:
       "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
     IconComponent: Mountain,
-    devOnly: true,
   },
   {
     href: "/articles",

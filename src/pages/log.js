@@ -1910,9 +1910,21 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       ? getDisplayWeight(lastLoggedSets[lastLoggedSets.length - 1], isMetric).value
       : 0;
     const lastLoggedReps = lastLoggedSets[lastLoggedSets.length - 1]?.reps ?? topReps;
+    const nextSet = !atOrPastTop ? progression[nextWarmupIdx] : null;
+    const nearMissTopGapRatio =
+      nextSet?.isTopSet && nextSet.weight > 0 && lastLoggedWeight > 0
+        ? (nextSet.weight - lastLoggedWeight) / nextSet.weight
+        : null;
+    const treatNearMissAsTopSet =
+      nextSet?.isTopSet &&
+      lastLoggedWeight < nextSet.weight &&
+      nearMissTopGapRatio !== null &&
+      nearMissTopGapRatio > 0 &&
+      nearMissTopGapRatio <= 0.03;
+    const effectiveAtOrPastTop = atOrPastTop || treatNearMissAsTopSet;
 
     // Detect drop set mode: last logged weight is below the session's peak
-    const inDropSetMode = atOrPastTop && lastLoggedWeight < maxLogged;
+    const inDropSetMode = effectiveAtOrPastTop && lastLoggedWeight < maxLogged;
 
     // Helper: check if a suggested set would be a PR (use best/default pick)
     const getSuggestionRankingMeta = (reps, weight) => {
@@ -1929,15 +1941,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
     const buttons = [];
 
-    if (!atOrPastTop) {
+    if (!effectiveAtOrPastTop) {
       // Warmup phase: suggest next warmup set
-      const nextSet = progression[nextWarmupIdx];
       const rankingMeta = getSuggestionRankingMeta(nextSet.reps, nextSet.weight);
-      const isNearMissTopSet =
-        nextSet.isTopSet &&
-        lastLoggedWeight > 0 &&
-        lastLoggedWeight < nextSet.weight &&
-        nextSet.weight - lastLoggedWeight <= minIncrement * 2;
       buttons.push({
         label: `${nextSet.reps}@${nextSet.weight}${unitType}`,
         sublabel: nextSet.isTopSet ? "top set" : "warmup",
@@ -1948,20 +1954,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         unitType,
         variant: nextSet.isTopSet ? "primary" : "secondary",
       });
-
-      if (isNearMissTopSet) {
-        const repeatRankingMeta = getSuggestionRankingMeta(lastLoggedReps, lastLoggedWeight);
-        buttons.push({
-          label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
-          sublabel: "repeat",
-          rankingMessage: repeatRankingMeta?.message ?? null,
-          rankingScope: repeatRankingMeta?.scope ?? null,
-          reps: lastLoggedReps,
-          weight: lastLoggedWeight,
-          unitType,
-          variant: "secondary",
-        });
-      }
 
       // Also offer skipping ahead to the top set if not already the next suggestion
       if (!nextSet.isTopSet) {

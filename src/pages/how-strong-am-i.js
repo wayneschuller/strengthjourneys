@@ -36,7 +36,7 @@ import {
 } from "@/lib/strength-circles/universe-percentiles";
 
 export async function getStaticProps() {
-  const relatedArticles = await fetchRelatedArticles("Strength Standards");
+  const relatedArticles = await fetchRelatedArticles("How Strong Am I?");
   return { props: { relatedArticles }, revalidate: 60 * 60 };
 }
 

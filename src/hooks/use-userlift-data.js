@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useLayoutEffect,
   useCallback,
   createContext,
   useMemo,
@@ -108,6 +109,8 @@ const fetcher = async (...args) => {
 };
 
 const UserLiftingDataContext = createContext();
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /** Consumes the lifting data context. Use inside UserLiftingDataProvider. */
 export const useUserLiftingData = () => useContext(UserLiftingDataContext);
@@ -174,7 +177,15 @@ export const UserLiftingDataProvider = ({ children }) => {
   // True while we have localStorage evidence of a linked sheet but auth and/or
   // useLocalStorage haven't hydrated yet. Consumers use this to avoid flashing
   // onboarding UI for returning users during the initial load.
+  //
+  // Gated behind hasMounted so the initial render matches the server (which has
+  // no localStorage). useLayoutEffect flips it before the browser paints, so
+  // consumers still suppress onboarding UI before anything is visible.
+  const [hasMounted, setHasMounted] = useState(false);
+  useIsomorphicLayoutEffect(() => setHasMounted(true), []);
+
   const isReturningUserLoading =
+    hasMounted &&
     _hadSheetOnLoad &&
     !(authStatus === "authenticated" && !!sheetInfo?.ssid) &&
     authStatus !== "unauthenticated";

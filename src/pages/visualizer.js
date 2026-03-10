@@ -6,7 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
-import { TheLastWeekCard } from "@/components/home-dashboard/the-last-week";
+import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
 import {
   PageContainer,
   PageHeader,
@@ -109,7 +109,7 @@ function VisualizerMain({ relatedArticles }) {
           <VisualizerShadcn setHighlightDate={setHighlightDate} />
         </div>
         <div className="w-full lg:w-1/2 xl:w-1/3">
-          <TheLastWeekCard
+          <TheLatestSessionCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />

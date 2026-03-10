@@ -1,5 +1,7 @@
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -34,6 +36,12 @@ import {
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const BIG_FOUR_STARTERS = [
+  { liftType: "Back Squat", icon: "/back_squat.svg" },
+  { liftType: "Bench Press", icon: "/bench_press.svg" },
+  { liftType: "Deadlift", icon: "/deadlift.svg" },
+  { liftType: "Strict Press", icon: "/strict_press.svg" },
+];
 
 // ─── Week boundary helpers ─────────────────────────────────────────────────
 
@@ -395,6 +403,9 @@ export function TheWeekInIronCard({
                   </div>
                 </>
               )}
+
+              <Separator />
+              <StartLiftPrompt />
             </>
           )}
 
@@ -512,7 +523,43 @@ function EarlyWeekCard({ isDemoMode, dataMaturityStage, dashboardStage }) {
         <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
           Log your training sessions and this card will track your weekly rhythm — sessions, volume, and lifts trained.
         </p>
+        <div className="mt-5 w-full">
+          <StartLiftPrompt />
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+function StartLiftPrompt() {
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-foreground">
+          Start a new session
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Jump into the log with your first Big Four set already started.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {BIG_FOUR_STARTERS.map(({ liftType, icon }) => (
+          <Link
+            key={liftType}
+            href={{ pathname: "/log", query: { startLift: liftType } }}
+            className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 transition-colors hover:border-primary hover:bg-muted/40"
+          >
+            <Image
+              src={icon}
+              alt=""
+              width={40}
+              height={40}
+              className="h-10 w-10 shrink-0"
+            />
+            <span className="text-sm font-medium leading-tight">{liftType}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

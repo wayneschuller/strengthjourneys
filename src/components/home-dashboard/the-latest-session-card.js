@@ -5,7 +5,6 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
@@ -54,13 +53,6 @@ import { LoaderCircle, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
-const BIG_FOUR_STARTERS = [
-  { liftType: "Back Squat", icon: "/back_squat.svg" },
-  { liftType: "Bench Press", icon: "/bench_press.svg" },
-  { liftType: "Deadlift", icon: "/deadlift.svg" },
-  { liftType: "Strict Press", icon: "/strict_press.svg" },
-];
-
 // "The Latest Session" when on the most recent date.
 // "The Feb 6 Session" for an earlier date in the current year.
 // "Feb 6, 2024 Session" (no "The") for a date in a previous year.
@@ -84,14 +76,12 @@ function getSessionCardTitle(sessionDate, isLastDate) {
  * @param {function(string)} props.setHighlightDate - Callback to update the displayed session date.
  *   Called when user clicks prev/next or when parent (e.g. Visualizer) wants to sync.
  */
-export function TheLastWeekCard({
+export function TheLatestSessionCard({
   highlightDate = null,
   setHighlightDate,
   dashboardStage = "established",
   dataMaturityStage = "mature",
   sessionCount = 0,
-  showWeeklySummary = false,
-  showStartLiftPrompts = false,
 }) {
   const {
     isDemoMode,
@@ -173,42 +163,6 @@ export function TheLastWeekCard({
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   ]);
-
-  const lastWeekSummary = useMemo(() => {
-    if (!showWeeklySummary || !sessionDate || !parsedData) return null;
-
-    const endDate = new Date(`${sessionDate}T00:00:00`);
-    const startDate = new Date(endDate);
-    startDate.setDate(endDate.getDate() - 6);
-    const startIso = format(startDate, "yyyy-MM-dd");
-    const weekEntries = parsedData.filter(
-      (entry) =>
-        !entry?.isGoal &&
-        typeof entry?.date === "string" &&
-        entry.date >= startIso &&
-        entry.date <= sessionDate,
-    );
-
-    if (!weekEntries.length) return null;
-
-    const sessionDates = new Set();
-    const liftTypes = new Set();
-
-    for (const entry of weekEntries) {
-      sessionDates.add(entry.date);
-      liftTypes.add(entry.liftType);
-    }
-
-    return {
-      sessionCount: sessionDates.size,
-      setCount: weekEntries.length,
-      liftCount: liftTypes.size,
-      rangeLabel:
-        format(startDate, "MMM d") === format(endDate, "MMM d")
-          ? format(endDate, "MMM d")
-          : `${format(startDate, "MMM d")} - ${format(endDate, "MMM d")}`,
-    };
-  }, [showWeeklySummary, sessionDate, parsedData]);
 
   const perLiftTonnageStats = useMemo(() => {
     if (!analyzedSessionLifts || !sessionDate || !sessionTonnageLookup) return null;
@@ -347,10 +301,6 @@ export function TheLastWeekCard({
     }
   };
 
-  const cardTitle = showWeeklySummary
-    ? "The Last Week"
-    : getSessionCardTitle(sessionDate, isLastDate);
-
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
       <Card className="flex h-full flex-col overflow-hidden">
@@ -361,7 +311,7 @@ export function TheLastWeekCard({
                 {isDemoMode && (
                   <DemoModeBadge size="sm" />
                 )}
-                {cardTitle}
+                {getSessionCardTitle(sessionDate, isLastDate)}
                 {isValidating && (
                   <LoaderCircle className="inline-flex h-4 w-4 animate-spin text-muted-foreground" />
                 )}
@@ -378,10 +328,8 @@ export function TheLastWeekCard({
                 {hasLoggedSessions &&
                   analyzedSessionLifts &&
                   !isStarterSampleStage &&
-                  (showWeeklySummary && lastWeekSummary
-                    ? `${lastWeekSummary.rangeLabel} · latest session ${getReadableDateString(sessionDate, true)}`
-                    : isLastDate &&
-                      getReadableDateString(sessionDate, true))}
+                  isLastDate &&
+                  getReadableDateString(sessionDate, true)}
                 {hasLoggedSessions &&
                 analyzedSessionLifts &&
                 !isDemoMode &&
@@ -428,28 +376,6 @@ export function TheLastWeekCard({
           </div>
         </CardHeader>
         <CardContent className="flex-1 space-y-6 pt-0">
-          {showWeeklySummary && lastWeekSummary && (
-            <div className="grid gap-3 rounded-xl border border-border/70 bg-muted/25 p-4 sm:grid-cols-3">
-              <div className="rounded-lg border bg-background/80 px-3 py-3">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Sessions
-                </p>
-                <p className="mt-1 text-2xl font-semibold">{lastWeekSummary.sessionCount}</p>
-              </div>
-              <div className="rounded-lg border bg-background/80 px-3 py-3">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Sets Logged
-                </p>
-                <p className="mt-1 text-2xl font-semibold">{lastWeekSummary.setCount}</p>
-              </div>
-              <div className="rounded-lg border bg-background/80 px-3 py-3">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Lift Types
-                </p>
-                <p className="mt-1 text-2xl font-semibold">{lastWeekSummary.liftCount}</p>
-              </div>
-            </div>
-          )}
           {!hasLoggedSessions && (
             <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
               Start simple: add one training session in your sheet with Date, Lift Type, Reps, and Weight.
@@ -537,30 +463,6 @@ export function TheLastWeekCard({
             ))}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-4 pt-0">
-          {showStartLiftPrompts && authStatus === "authenticated" && (
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-foreground">
-                  Start a new session
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Jump straight into the log with your first Big Four set already started.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {BIG_FOUR_STARTERS.map(({ liftType, icon }) => (
-                  <Link
-                    key={liftType}
-                    href={{ pathname: "/log", query: { startLift: liftType } }}
-                    className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 transition-colors hover:border-primary hover:bg-muted/40"
-                  >
-                    <Image src={icon} alt="" width={40} height={40} className="h-10 w-10 shrink-0" />
-                    <span className="text-sm font-medium leading-tight">{liftType}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
           {authStatus === "authenticated" && hasLoggedSessions && sessionDate && (
             <Button asChild variant="outline" className="gap-2">
               <Link href={`/log?date=${sessionDate}`}>
@@ -574,8 +476,6 @@ export function TheLastWeekCard({
     </TooltipProvider>
   );
 }
-
-export const TheLatestSessionCard = TheLastWeekCard;
 
 // --- Supporting components and functions ---
 

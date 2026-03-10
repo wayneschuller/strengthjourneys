@@ -5,7 +5,7 @@ import { NextSeo } from "next-seo";
 import { useSession, signIn } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
-import { TheLastWeekCard } from "@/components/home-dashboard/the-last-week";
+import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
 import {
   PageContainer,
   PageHeader,
@@ -106,7 +106,7 @@ function TonnageVisualizerMain({ relatedArticles }) {
           <TonnageChart setHighlightDate={setHighlightDate} />
         </div>
         <div className="w-full lg:w-1/2 xl:w-1/3">
-          <TheLastWeekCard
+          <TheLatestSessionCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />

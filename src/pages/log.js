@@ -67,6 +67,11 @@ const BIG_FOUR = [
   { name: "Strict Press", icon: "/strict_press.svg", slug: "barbell-strict-press-insights" },
 ];
 
+function getLiftAnchorId(liftType) {
+  if (typeof liftType !== "string") return "lift";
+  return `lift-${liftType.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+}
+
 const COACHED_LIFTS = [
   {
     liftType: "Back Squat",
@@ -1246,24 +1251,43 @@ export default function LogSessionPage() {
     if (autoStartedLiftRef.current === requestKey) return;
     autoStartedLiftRef.current = requestKey;
 
-    const nextQuery = sessionDate !== todayIso ? { date: sessionDate } : {};
+    const liftHash = getLiftAnchorId(startLift);
+    const nextUrl = {
+      pathname: "/log",
+      query: sessionDate !== todayIso ? { date: sessionDate } : {},
+      hash: liftHash,
+    };
+    const hasLiftInSession = Boolean(sessionLiftsWithPending[startLift]?.length);
 
-    if (hasSession) {
-      router.replace({ pathname: "/log", query: nextQuery }, undefined, { shallow: true });
+    if (hasSession && hasLiftInSession) {
+      router.replace(nextUrl, undefined, { shallow: true });
       return;
     }
 
     void addLift(startLift).finally(() => {
-      router.replace({ pathname: "/log", query: nextQuery }, undefined, { shallow: true });
+      router.replace(nextUrl, undefined, { shallow: true });
     });
   }, [
     addLift,
     hasSession,
     router,
     sessionDate,
+    sessionLiftsWithPending,
     showSessionBootstrap,
     todayIso,
   ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash) return;
+
+    const anchorEl = document.getElementById(hash);
+    if (!anchorEl) return;
+
+    anchorEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [router.asPath, sessionLiftsWithPending]);
 
   const deleteSession = useCallback(async () => {
     if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
@@ -1470,12 +1494,13 @@ export default function LogSessionPage() {
             {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
               <motion.div
                 key={liftType}
+                id={getLiftAnchorId(liftType)}
                 layout
                 initial={liftCardInitial}
                 animate={liftCardAnimate}
                 exit={liftCardExit}
                 transition={liftCardTransition}
-                className="overflow-y-hidden md:mx-[-1rem] lg:mx-[-1.5rem]"
+                className="overflow-y-hidden scroll-mt-24 md:mx-[-1rem] lg:mx-[-1.5rem]"
               >
                 <LiftBlock
                   liftType={liftType}

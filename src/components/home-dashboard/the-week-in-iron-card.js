@@ -536,17 +536,17 @@ function StartLiftPrompt() {
     <div className="space-y-3">
       <div className="space-y-1">
         <p className="text-sm font-semibold text-foreground">
-          Start a new session
+          Pick a lift to work on
         </p>
         <p className="text-xs text-muted-foreground">
-          Jump into the log with your first Big Four set already started.
+          Open today&apos;s log and go straight to the lift you want to train.
         </p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {BIG_FOUR_STARTERS.map(({ liftType, icon }) => (
           <Link
             key={liftType}
-            href={{ pathname: "/log", query: { startLift: liftType } }}
+            href={`/log?startLift=${encodeURIComponent(liftType)}#${encodeURIComponent(`lift-${liftType.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`)}`}
             className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 transition-colors hover:border-primary hover:bg-muted/40"
           >
             <Image
@@ -556,7 +556,7 @@ function StartLiftPrompt() {
               height={40}
               className="h-10 w-10 shrink-0"
             />
-            <span className="text-sm font-medium leading-tight">{liftType}</span>
+            <span className="text-sm font-medium leading-tight">{`Log ${liftType} activity`}</span>
           </Link>
         ))}
       </div>

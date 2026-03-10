@@ -203,7 +203,7 @@ export async function getStaticProps() {
  */
 export default function StrengthClubCalculator({ relatedArticles }) {
   const canonicalURL =
-    "https://www.strengthjourneys.xyz/strength-club-calculator";
+    "https://www.strengthjourneys.xyz/200-300-400-500-strength-club-calculator";
   const description =
     "Free 200/300/400/500 Strength Club Calculator — track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift. The 2/3/4/5 plate club.";
   const title =
@@ -453,7 +453,8 @@ function StrengthClubMain({ relatedArticles }) {
 
   const handleCopyResult = () => {
     const achieved = MILESTONES.filter((m) => values[m.key] >= m.target);
-    const url = "https://www.strengthjourneys.xyz/strength-club-calculator";
+    const url =
+      "https://www.strengthjourneys.xyz/200-300-400-500-strength-club-calculator";
     const lines = [
       allAchieved
         ? "I've conquered the 200/300/400/500 Strength Club!"
@@ -571,7 +572,7 @@ function StrengthClubMain({ relatedArticles }) {
                 <MiniFeedbackWidget
                   prompt="Useful?"
                   contextId="strength_club_calculator"
-                  page="/strength-club-calculator"
+                  page="/200-300-400-500-strength-club-calculator"
                   analyticsExtra={{ context: "strength_club_calculator_card" }}
                 />
                 <ShareCopyButton
@@ -580,7 +581,7 @@ function StrengthClubMain({ relatedArticles }) {
                   isSuccess={isCopied}
                   onPressAnalytics={() =>
                     gaTrackShareCopy("strength_club", {
-                      page: "/strength-club-calculator",
+                      page: "/200-300-400-500-strength-club-calculator",
                     })
                   }
                   onClick={handleCopyResult}

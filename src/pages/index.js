@@ -111,7 +111,7 @@ export const featurePages = [
     IconComponent: Flame,
   },
   {
-    href: "/strength-club-calculator",
+    href: "/200-300-400-500-strength-club-calculator",
     title: "200/300/400/500 Strength Club",
     description:
       "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",

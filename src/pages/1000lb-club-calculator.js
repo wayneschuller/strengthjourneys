@@ -81,6 +81,25 @@ const FAQ_ITEMS = [
     answer:
       "You are in the club. The calculator shows how far past 1000lb you are so you can set the next milestone.",
   },
+  {
+    question: "Does this mean I'm strong now? What's next?",
+    answer:
+      "Not really. It means you have graduated from beginner bragging rights and earned the right to start side-eyeing the 200/300/400/500 club. If you want the next milestone with a bit more swagger, that is probably the one you are actually thinking about.",
+    renderAnswer: (
+      <>
+        Not really. It means you have graduated from beginner bragging rights
+        and earned the right to start side-eyeing the{" "}
+        <Link
+          href="/200-300-400-500-strength-club-calculator"
+          className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+        >
+          200/300/400/500 club
+        </Link>
+        . If you want the next milestone with a bit more swagger, that is
+        probably the one you are actually thinking about.
+      </>
+    ),
+  },
 ];
 
 const WHATS_NEXT_FEATURES = [
@@ -660,10 +679,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           1000lb Club FAQ
         </h2>
         <div className="space-y-4">
-          {FAQ_ITEMS.map(({ question, answer }) => (
+          {FAQ_ITEMS.map(({ question, answer, renderAnswer }) => (
             <article key={question} className="rounded-lg border p-4">
               <h3 className="text-base font-semibold">{question}</h3>
-              <p className="text-muted-foreground mt-1 text-sm">{answer}</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {renderAnswer || answer}
+              </p>
             </article>
           ))}
         </div>

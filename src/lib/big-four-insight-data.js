@@ -3,9 +3,9 @@ export const bigFourLiftInsightData = [
     liftType: "Back Squat",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
     seoTitle: "Back Squat Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Back Squat - The King of Lifts",
+    pageTitle: "Barbell Back Squat Strength Guide & Calculator",
     pageDescription:
-      "How strong should your back squat be? Check squat strength standards for your age, sex, and bodyweight. Track your squat E1RM, tonnage, and rep PRs over time with free analysis tools.",
+      "Check back squat strength standards, estimate your 1RM, and track your squat progress over time.",
     pageKeywords:
       "back squat, barbell squat, squat strength standards, squat strength levels, squat progress tracker, E1RM squat, squat PR",
     ogImageURL:

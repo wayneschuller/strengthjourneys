@@ -93,6 +93,17 @@ function getLiftIntroCopy(liftType) {
   return introByLift[liftType];
 }
 
+function getNavLiftLabel(liftType) {
+  const navLabels = {
+    "Back Squat": "Squat",
+    "Bench Press": "Bench",
+    Deadlift: "Deadlift",
+    "Strict Press": "Strict Press",
+  };
+
+  return navLabels[liftType] ?? liftType;
+}
+
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
     params: { lift: lift.slug },
@@ -280,6 +291,8 @@ function BarbellInsightsMain({
     "Strict Press": "/strict_press.svg",
   };
   const calcUrl = LIFT_CALC_URLS[liftInsightData.liftType];
+  const isBackSquatPage = liftInsightData.slug === "barbell-squat-insights";
+  const navLiftLabel = getNavLiftLabel(liftInsightData.liftType);
 
   return (
     <PageContainer>
@@ -289,19 +302,50 @@ function BarbellInsightsMain({
         </PageHeaderHeading>
         <PageHeaderDescription>
           <p>{liftInsightData.pageDescription}</p>
-          <p className="mt-3 text-base font-normal text-muted-foreground">
-            {getLiftIntroCopy(liftInsightData.liftType)}
-          </p>
+          {!isBackSquatPage && (
+            <p className="mt-3 text-base font-normal text-muted-foreground">
+              {getLiftIntroCopy(liftInsightData.liftType)}
+            </p>
+          )}
           {calcUrl && (
-            <div className="mt-4">
+            <div className="mt-5">
               <Link
                 href={calcUrl}
-                className="font-medium text-blue-600 underline underline-offset-4 visited:text-purple-600 hover:text-blue-800"
+                className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Try the {liftInsightData.liftType} 1RM calculator
+                Try the {liftInsightData.liftType} 1RM Calculator →
               </Link>
             </div>
           )}
+          <nav
+            aria-label={`${liftInsightData.liftType} page sections`}
+            className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-y py-3 text-sm text-muted-foreground"
+          >
+            <Link href="#strength-standards" className="hover:text-foreground">
+              {navLiftLabel} Standards
+            </Link>
+            <Link href="#progress-history" className="hover:text-foreground">
+              {navLiftLabel} Progress
+            </Link>
+            <Link href="#strength-potential" className="hover:text-foreground">
+              {navLiftLabel} Potential
+            </Link>
+            <Link href="#recent-sessions" className="hover:text-foreground">
+              {navLiftLabel} Sessions
+            </Link>
+            <Link href="#video-guides" className="hover:text-foreground">
+              Videos
+            </Link>
+            <Link href="#lift-prs" className="hover:text-foreground">
+              Rep PRs
+            </Link>
+            <Link href="#lift-faq" className="hover:text-foreground">
+              FAQ
+            </Link>
+            <Link href="#related-articles" className="hover:text-foreground">
+              Related Articles
+            </Link>
+          </nav>
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="w-32 md:w-auto md:max-w-[10vw]">
@@ -315,30 +359,34 @@ function BarbellInsightsMain({
       </PageHeader>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <div className="col-span-3">
+        <div className="col-span-3" id="strength-standards">
           <StrengthLevelsCard liftType={liftInsightData.liftType} />
         </div>
         {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
         <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch">
-          <LiftJourneyCard liftType={liftInsightData.liftType} />
+          <div id="progress-history">
+            <LiftJourneyCard liftType={liftInsightData.liftType} />
+          </div>
           <SanityArticleCard article={introductionArticle} />
           <div className="flex flex-col gap-6 lg:h-full">
             <SanityArticleCard
               article={resourcesArticle}
               className="lg:flex-1"
             />
-            <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            <div id="strength-potential">
+              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            </div>
           </div>
         </div>
         {prioritizeVideoGuides && (
-          <div className="col-span-3">
+          <div className="col-span-3" id="video-guides">
             <VideoCard
               liftType={liftInsightData.liftType}
               videos={liftInsightData.videos}
             />
           </div>
         )}
-        <div className="col-span-3">
+        <div className="col-span-3" id="recent-sessions">
           <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
@@ -349,6 +397,7 @@ function BarbellInsightsMain({
         </div>
         <div className="col-span-3">
           <LiftQuoteCard
+            title={liftInsightData.liftType === "Back Squat" ? "Why the back squat became the King of Lifts" : null}
             quote={liftInsightData.liftQuote}
             author={liftInsightData.liftQuoteAuthor}
           />
@@ -360,7 +409,7 @@ function BarbellInsightsMain({
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
         </div>
         {!prioritizeVideoGuides && (
-          <div className="col-span-3">
+          <div className="col-span-3" id="video-guides">
             <VideoCard
               liftType={liftInsightData.liftType}
               videos={liftInsightData.videos}
@@ -369,7 +418,7 @@ function BarbellInsightsMain({
         )}
       </div>
       {liftInsightData.faqItems?.length > 0 && (
-        <section className="mt-10">
+        <section className="mt-10" id="lift-faq">
           <h2 className="mb-4 text-xl font-semibold">
             {liftInsightData.liftType} FAQ
           </h2>
@@ -383,7 +432,9 @@ function BarbellInsightsMain({
           </div>
         </section>
       )}
-      <RelatedArticles articles={relatedArticles} />
+      <section id="related-articles">
+        <RelatedArticles articles={relatedArticles} />
+      </section>
     </PageContainer>
   );
 }
@@ -547,11 +598,16 @@ function StrengthLevelsCard({ liftType }) {
   );
 }
 
-function LiftQuoteCard({ quote, author }) {
+function LiftQuoteCard({ title, quote, author }) {
   return (
     <Card className="border-l-4 border-l-primary">
       <CardContent className="py-8">
         <blockquote className="space-y-4">
+          {title && (
+            <div className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+              {title}
+            </div>
+          )}
           <p className="text-xl leading-relaxed italic text-foreground md:text-2xl">
             &ldquo;{quote}&rdquo;
           </p>

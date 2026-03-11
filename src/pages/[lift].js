@@ -61,6 +61,10 @@ import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
+// Keep this page template generic across all four lift insight pages.
+// Lift-specific SEO copy, hero wording, and lower-page personality should live
+// in src/lib/big-four-insight-data.js so we do not reintroduce per-lift branching here.
+
 function renderAnswer(answer) {
   if (typeof answer === "string") return answer;
   return answer.map((seg, i) =>
@@ -76,21 +80,6 @@ function renderAnswer(answer) {
 function flattenAnswer(answer) {
   if (typeof answer === "string") return answer;
   return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
-}
-
-function getLiftIntroCopy(liftType) {
-  const introByLift = {
-    "Back Squat":
-      "Use this page to compare your back squat against strength standards, estimate your one rep max, and see how your squat volume, rep PRs, and long-term progress are trending over time.",
-    "Bench Press":
-      "Use this page to compare your bench press against strength standards, estimate your one rep max, and see how your pressing volume, rep PRs, and long-term progress are trending over time.",
-    Deadlift:
-      "Use this page to compare your deadlift against strength standards, estimate your one rep max, and see how your pulling volume, rep PRs, and long-term progress are trending over time.",
-    "Strict Press":
-      "Use this page to compare your overhead press against strength standards, estimate your one rep max, and see how your pressing volume, rep PRs, and long-term progress are trending over time.",
-  };
-
-  return introByLift[liftType];
 }
 
 function getNavLiftLabel(liftType) {
@@ -291,7 +280,6 @@ function BarbellInsightsMain({
     "Strict Press": "/strict_press.svg",
   };
   const calcUrl = LIFT_CALC_URLS[liftInsightData.liftType];
-  const isBackSquatPage = liftInsightData.slug === "barbell-squat-insights";
   const navLiftLabel = getNavLiftLabel(liftInsightData.liftType);
 
   return (
@@ -302,11 +290,6 @@ function BarbellInsightsMain({
         </PageHeaderHeading>
         <PageHeaderDescription>
           <p>{liftInsightData.pageDescription}</p>
-          {!isBackSquatPage && (
-            <p className="mt-3 text-base font-normal text-muted-foreground">
-              {getLiftIntroCopy(liftInsightData.liftType)}
-            </p>
-          )}
           {calcUrl && (
             <div className="mt-5">
               <Link
@@ -397,7 +380,7 @@ function BarbellInsightsMain({
         </div>
         <div className="col-span-3">
           <LiftQuoteCard
-            title={liftInsightData.liftType === "Back Squat" ? "Why the back squat became the King of Lifts" : null}
+            title={liftInsightData.quoteSectionTitle}
             quote={liftInsightData.liftQuote}
             author={liftInsightData.liftQuoteAuthor}
           />

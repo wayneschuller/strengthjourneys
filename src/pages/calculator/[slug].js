@@ -15,7 +15,11 @@ const PAGE_CONFIG = {
     type: "formula",
     formulaName: "Epley",
     equation: "w × (1 + r/30)",
-    blurb: "Developed by Boyd Epley in 1985, one of the most widely cited 1RM equations in strength research.",
+    blurb: [
+      "Developed by Boyd Epley in 1985, one of the most widely cited 1RM equations in strength research. A 2006 ",
+      { text: "Journal of Strength and Conditioning Research paper", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+      " reinforces the practical sweet spot here: moderate rep sets tend to estimate 1RM more cleanly than high-rep fatigue sets.",
+    ],
     title: "Epley Formula 1RM Calculator | Epley 1RM Calculation",
     description:
       "Use the Epley formula to calculate your one rep max from reps and weight. Compare Epley vs 6 other 1RM equations, rep max tables, and percentage loads.",
@@ -23,8 +27,11 @@ const PAGE_CONFIG = {
       "epley formula 1rm, epley formula 1rm calculation, epley formula one rep max, epley 1rm calculator",
     formulaSupport: {
       heading: "Use the Epley Formula 1RM Calculator",
-      summary:
-        "This page is tuned for lifters who want a fast Epley formula 1RM calculation from a normal working set, then compare that result against the other major equations.",
+      summary: [
+        "This page is tuned for lifters who want a fast Epley formula 1RM calculation from a normal working set, then compare that result against the other major equations. Reynolds, Gordon, and Robergs found that ",
+        { text: "\"5RM data produced the greatest prediction accuracy\"", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+        ", which lines up with how most lifters use Epley in practice.",
+      ],
       bestFor:
         "moderate rep sets when you want a widely cited estimate that most lifters already recognize",
       repRange: "usually strongest from about 3-10 reps before fatigue distorts the estimate",
@@ -61,11 +68,18 @@ const PAGE_CONFIG = {
       "brzycki formula 1rm, brzycki formula 1rm calculation, brzycki formula 1rm calculator, brzycki one rep max",
     formulaSupport: {
       heading: "Use the Brzycki Formula 1RM Calculator",
-      summary:
-        "This page is built for Brzycki formula queries where the lifter wants the exact equation, a cleaner lower-rep estimate, and a direct comparison with the rest of the calculator stack.",
+      summary: [
+        "This page is built for Brzycki formula queries where the lifter wants the exact equation, a cleaner lower-rep estimate, and a direct comparison with the rest of the calculator stack. That lower-rep bias also fits a 2006 ",
+        { text: "strength-prediction paper", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+        " showing that prediction quality held up best when rep counts stayed lower rather than drifting toward 20-rep fatigue sets.",
+      ],
       bestFor:
         "heavier sets in the lower rep ranges when you want a more conservative one rep max estimate",
-      repRange: "usually strongest from about 1-10 reps, especially on the lower end",
+      repRange: [
+        "usually strongest from about 1-10 reps, especially on the lower end; that same paper concluded ",
+        { text: "\"no more than 10 repetitions should be used\"", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+        " for linear 1RM estimates in the movements they tested",
+      ],
       example: "225 lb x 5 reps estimates about 253 lb with the Brzycki equation.",
       links: [
         {
@@ -182,8 +196,11 @@ const PAGE_CONFIG = {
   "bench-press-1rm-calculator": {
     type: "lift",
     liftName: "Bench Press",
-    blurb:
-      "Enter your bench press working weight and reps. Using a set of 3–10 reps gives the most accurate 1RM estimate. Results account for 7 proven formulas so you can see the full range.",
+    blurb: [
+      "Enter your bench press working weight and reps. Using a set of 3-10 reps gives the most accurate 1RM estimate. A 2006 ",
+      { text: "bench and leg press prediction study", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+      " found 5RM data gave the strongest 1RM prediction accuracy, so a hard set of 5 is often the cleanest input. Results account for 7 proven formulas so you can see the full range.",
+    ],
     title: "Bench Press 1RM Calculator | Max Bench Calculator — Free Tool",
     description:
       "Calculate your bench press one rep max using 7 proven formulas. Get rep-max tables, percentage guides, and strength level ratings. Free bench press 1RM calculator, no login required.",

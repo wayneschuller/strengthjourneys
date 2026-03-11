@@ -277,7 +277,7 @@ export default function E1RMCalculator({ relatedArticles }) {
  *   the target lift featured prominently in the strength standards section.
  *   Value should be a slug page lift name e.g. "Squat", "Bench Press", "Deadlift", "Strict Press".
  * @param {string} [props.pageTitle] - Heading text for the page.
- * @param {string} [props.pageDescription] - Description text under the heading.
+ * @param {string|Array} [props.pageDescription] - Description text under the heading.
  * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
  *   Shape: { equation: string, text: string }. Used by formula slug pages to show the formula equation.
  */
@@ -591,11 +591,11 @@ export function E1RMCalculatorMain({
           {pageTitle}
         </PageHeaderHeading>
         <PageHeaderDescription>
-          {pageDescription}
+          {renderInlineContent(pageDescription)}
         </PageHeaderDescription>
         {formulaBlurb && (
           <p className="text-sm text-muted-foreground mt-1 font-mono">
-            {formulaBlurb.equation} — {formulaBlurb.text}
+            {formulaBlurb.equation} {"\u2014"} {renderInlineContent(formulaBlurb.text)}
           </p>
         )}
         {forceLift && getLiftSvgPath(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
@@ -869,9 +869,9 @@ export function E1RMCalculatorMain({
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
-function renderAnswer(answer) {
-  if (typeof answer === "string") return answer;
-  return answer.map((seg, i) =>
+function renderInlineContent(content) {
+  if (typeof content === "string") return content;
+  return content.map((seg, i) =>
     typeof seg === "string" ? seg : (
       <Link
         key={i}
@@ -882,6 +882,10 @@ function renderAnswer(answer) {
       </Link>
     ),
   );
+}
+
+function renderAnswer(answer) {
+  return renderInlineContent(answer);
 }
 
 function flattenAnswer(answer) {
@@ -899,19 +903,19 @@ function FormulaSupportPanel({ formulaSupport }) {
           <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>{formulaSupport.summary}</p>
+          <p>{renderInlineContent(formulaSupport.summary)}</p>
           <ul className="space-y-2">
             <li>
               <strong className="text-foreground">Best for:</strong>{" "}
-              {formulaSupport.bestFor}
+              {renderInlineContent(formulaSupport.bestFor)}
             </li>
             <li>
               <strong className="text-foreground">Rep range:</strong>{" "}
-              {formulaSupport.repRange}
+              {renderInlineContent(formulaSupport.repRange)}
             </li>
             <li>
               <strong className="text-foreground">Worked example:</strong>{" "}
-              {formulaSupport.example}
+              {renderInlineContent(formulaSupport.example)}
             </li>
           </ul>
         </CardContent>

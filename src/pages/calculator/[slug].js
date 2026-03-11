@@ -15,11 +15,7 @@ const PAGE_CONFIG = {
     type: "formula",
     formulaName: "Epley",
     equation: "w × (1 + r/30)",
-    blurb: [
-      "Developed by Boyd Epley in 1985, one of the most widely cited 1RM equations in strength research. A 2006 ",
-      { text: "Journal of Strength and Conditioning Research paper", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
-      " reinforces the practical sweet spot here: moderate rep sets tend to estimate 1RM more cleanly than high-rep fatigue sets.",
-    ],
+    blurb: "Developed by Boyd Epley in 1985, one of the most widely cited 1RM equations in strength research.",
     title: "Epley Formula 1RM Calculator | Epley 1RM Calculation",
     description:
       "Use the Epley formula to calculate your one rep max from reps and weight. Compare Epley vs 6 other 1RM equations, rep max tables, and percentage loads.",

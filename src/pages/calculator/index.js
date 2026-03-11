@@ -597,7 +597,7 @@ export function E1RMCalculatorMain({
         </PageHeaderDescription>
         {formulaBlurb && (
           <p className="text-sm text-muted-foreground mt-1 font-mono">
-            {formulaBlurb.equation}
+            {formulaBlurb.equation} {"\u2014"} {renderInlineContent(formulaBlurb.text)}
           </p>
         )}
         {forceLift && getLiftSvgPath(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (

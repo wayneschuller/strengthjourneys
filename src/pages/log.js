@@ -1242,10 +1242,15 @@ export default function LogSessionPage() {
 
   useEffect(() => {
     if (!router.isReady) return;
+    if (authStatus !== "authenticated") return;
+    if (!sheetInfo?.ssid) return;
+    if (!Array.isArray(parsedData)) return;
+    if (isLoading || isValidating || isError || fetchFailed) return;
+    if (showSessionBootstrap) return;
 
     const startLift =
       typeof router.query.startLift === "string" ? router.query.startLift.trim() : "";
-    if (!startLift || showSessionBootstrap) return;
+    if (!startLift) return;
 
     const requestKey = `${sessionDate}:${startLift}`;
     if (autoStartedLiftRef.current === requestKey) return;
@@ -1269,9 +1274,16 @@ export default function LogSessionPage() {
     });
   }, [
     addLift,
+    authStatus,
+    fetchFailed,
     hasSession,
+    isError,
+    isLoading,
+    isValidating,
+    parsedData,
     router,
     sessionDate,
+    sheetInfo?.ssid,
     sessionLiftsWithPending,
     showSessionBootstrap,
     todayIso,

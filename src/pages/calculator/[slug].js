@@ -99,6 +99,16 @@ const PAGE_CONFIG = {
         },
       ],
     },
+    faqItems: [
+      {
+        question: "Why is Brzycki usually favored for lower-rep sets?",
+        answer: [
+          "Brzycki is popular when the set is already fairly heavy and reps stay low. That matches the practical takeaway from this ",
+          { text: "2006 1RM prediction paper", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+          ": prediction quality held up better with lower-rep testing, while very high-rep sets introduced more fatigue-related noise.",
+        ],
+      },
+    ],
   },
   "mayhew-1rm-formula-calculator": {
     type: "formula",
@@ -206,6 +216,16 @@ const PAGE_CONFIG = {
       "Calculate your bench press one rep max using 7 proven formulas. Get rep-max tables, percentage guides, and strength level ratings. Free bench press 1RM calculator, no login required.",
     keywords:
       "bench press 1rm calculator, max bench calculator, bench press max calculator, one rep max bench press",
+    faqItems: [
+      {
+        question: "What rep range gives the cleanest bench press 1RM estimate?",
+        answer: [
+          "For most lifters, a hard set somewhere around 3-10 reps works best, with 5 reps often being the cleanest compromise between load and fatigue. In a ",
+          { text: "2006 Journal of Strength and Conditioning Research study", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+          " on chest press and leg press, 5RM data produced the strongest 1RM prediction accuracy.",
+        ],
+      },
+    ],
   },
   "deadlift-1rm-calculator": {
     type: "lift",
@@ -247,62 +267,81 @@ export async function getStaticProps({ params }) {
   };
 }
 
+function flattenAnswer(answer) {
+  if (typeof answer === "string") return answer;
+  return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
+}
+
 export default function FormulaOrLiftCalculatorPage({ relatedArticles, pageConfig, slug }) {
   const canonicalURL = `https://www.strengthjourneys.xyz/calculator/${slug}`;
   const isFormula = pageConfig.type === "formula";
-  const structuredData = isFormula
-    ? {
-        "@context": "https://schema.org",
-        "@graph": [
+  const pageName = isFormula
+    ? `${pageConfig.formulaName} Formula 1RM Calculator`
+    : `${pageConfig.liftName} 1RM Calculator`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        name: pageName,
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
+        description: pageConfig.description,
+        url: canonicalURL,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
           {
-            "@type": "WebApplication",
-            name: `${pageConfig.formulaName} Formula 1RM Calculator`,
-            applicationCategory: "HealthApplication",
-            operatingSystem: "Any",
-            description: pageConfig.description,
-            url: canonicalURL,
-            offers: {
-              "@type": "Offer",
-              price: "0",
-              priceCurrency: "USD",
-            },
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.strengthjourneys.xyz",
           },
           {
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              {
-                "@type": "ListItem",
-                position: 1,
-                name: "Home",
-                item: "https://www.strengthjourneys.xyz",
-              },
-              {
-                "@type": "ListItem",
-                position: 2,
-                name: "One Rep Max Calculator",
-                item: "https://www.strengthjourneys.xyz/calculator",
-              },
-              {
-                "@type": "ListItem",
-                position: 3,
-                name: `${pageConfig.formulaName} Formula 1RM Calculator`,
-                item: canonicalURL,
-              },
-            ],
+            "@type": "ListItem",
+            position: 2,
+            name: "One Rep Max Calculator",
+            item: "https://www.strengthjourneys.xyz/calculator",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: pageName,
+            item: canonicalURL,
           },
         ],
-      }
-    : null;
+      },
+      ...(pageConfig.faqItems
+        ? [
+            {
+              "@type": "FAQPage",
+              mainEntity: pageConfig.faqItems.map(({ question, answer }) => ({
+                "@type": "Question",
+                name: question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: flattenAnswer(answer),
+                },
+              })),
+            },
+          ]
+        : []),
+    ],
+  };
 
   return (
     <>
-      {structuredData && (
-        <Head>
-          <script type="application/ld+json">
-            {JSON.stringify(structuredData)}
-          </script>
-        </Head>
-      )}
+      <Head>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Head>
       <NextSeo
         title={pageConfig.title}
         description={pageConfig.description}
@@ -341,6 +380,7 @@ export default function FormulaOrLiftCalculatorPage({ relatedArticles, pageConfi
           isFormula ? { equation: pageConfig.equation, text: pageConfig.blurb } : null
         }
         formulaSupport={isFormula ? pageConfig.formulaSupport : null}
+        faqItems={pageConfig.faqItems}
       />
     </>
   );

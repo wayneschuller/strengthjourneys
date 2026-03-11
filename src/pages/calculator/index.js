@@ -280,6 +280,7 @@ export default function E1RMCalculator({ relatedArticles }) {
  * @param {string|Array} [props.pageDescription] - Description text under the heading.
  * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
  *   Shape: { equation: string, text: string }. Used by formula slug pages to show the formula equation.
+ * @param {Array} [props.faqItems] - FAQ items rendered at the bottom of the page.
  */
 export function E1RMCalculatorMain({
   relatedArticles,
@@ -290,6 +291,7 @@ export function E1RMCalculatorMain({
   pageDescription = "Enter reps and weight to estimate your one-rep max across 7 proven formulas. See rep-max projections, percentage training guides, and personalized Big Four strength levels by age, sex, and bodyweight.",
   formulaBlurb = null,
   formulaSupport = null,
+  faqItems = CALCULATOR_FAQ,
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -835,7 +837,7 @@ export function E1RMCalculatorMain({
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">One Rep Max Calculator FAQ</h2>
         <div className="space-y-4">
-          {CALCULATOR_FAQ.map(({ question, answer }) => (
+          {faqItems.map(({ question, answer }) => (
             <article key={question} className="rounded-lg border p-4">
               <h3 className="text-base font-semibold">{question}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>

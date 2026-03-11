@@ -1,3 +1,6 @@
+// Data source for the four lift insight pages rendered by src/pages/[lift].js.
+// Keep page-specific SEO copy, hero titles/descriptions, quote-section titles,
+// FAQs, videos, and CMS article wiring here so the shared template can stay generic.
 export const bigFourLiftInsightData = [
   {
     liftType: "Back Squat",
@@ -5,11 +8,12 @@ export const bigFourLiftInsightData = [
     seoTitle: "Back Squat Strength Standards & Progress Tracker",
     pageTitle: "Barbell Back Squat Strength Guide & Calculator",
     pageDescription:
-      "Check back squat strength standards, estimate your 1RM, and track your squat progress over time.",
+      "Check back squat strength standards, explore squat progress charts, compare rep PRs, and dive into back squat videos, FAQs, and related articles.",
     pageKeywords:
       "back squat, barbell squat, squat strength standards, squat strength levels, squat progress tracker, E1RM squat, squat PR",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_back_squat_insights.png",
+    quoteSectionTitle: "Why the back squat became the King of Lifts",
     liftQuote:
       "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
     liftQuoteAuthor: "Mark Rippetoe, Starting Strength",
@@ -72,13 +76,14 @@ export const bigFourLiftInsightData = [
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
     seoTitle: "Bench Press Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Bench Press - Building Upper Body Dominance",
+    pageTitle: "Barbell Bench Press Strength Guide & Calculator",
     pageDescription:
-      "How strong should your bench press be? Check bench press strength standards for your age, sex, and bodyweight. Track your bench E1RM, tonnage, and rep PRs over time with free analysis tools.",
+      "Check bench press strength standards, explore bench progress charts, compare rep PRs, and dive into bench press videos, FAQs, and related articles.",
     pageKeywords:
       "bench press, barbell bench press, bench press strength standards, bench press strength levels, bench press progress tracker, E1RM bench, bench PR",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_bench_insights.png",
+    quoteSectionTitle: "Why the bench press became the classic upper-body test",
     liftQuote:
       "The bench press, since the 1950s, has become the most widely recognized resistance exercise movement in the world, the one exercise most representative in the public mind of barbell training...",
     liftQuoteAuthor: "Mark Rippetoe",
@@ -143,13 +148,14 @@ export const bigFourLiftInsightData = [
     liftType: "Deadlift",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-deadlift-insights",
     seoTitle: "Deadlift Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Deadlift - Building Power from the Ground Up",
+    pageTitle: "Barbell Deadlift Strength Guide & Calculator",
     pageDescription:
-      "How strong should your deadlift be? Check deadlift strength standards for your age, sex, and bodyweight. Track your deadlift E1RM, tonnage, and rep PRs over time with free analysis tools.",
+      "Check deadlift strength standards, explore deadlift progress charts, compare rep PRs, and dive into deadlift videos, FAQs, and related articles.",
     pageKeywords:
       "deadlift, barbell deadlift, deadlift strength standards, deadlift strength levels, deadlift progress tracker, E1RM deadlift, deadlift PR",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_deadlift_insights.png",
+    quoteSectionTitle: "Why the deadlift still defines raw strength",
     liftQuote: "There is no reason to be alive if you can't do deadlift!",
     liftQuoteAuthor: "Jón Páll Sigmarsson",
     slug: "barbell-deadlift-insights",
@@ -214,13 +220,14 @@ export const bigFourLiftInsightData = [
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
     seoTitle: "Overhead Press Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Strict Press - For When Your Suitcase Just Won't Fit",
+    pageTitle: "Barbell Strict Press Strength Guide & Calculator",
     pageDescription:
-      "How strong should your overhead press be? Check strict press strength standards for your age, sex, and bodyweight. Track your press E1RM, tonnage, and rep PRs over time with free analysis tools.",
+      "Check strict press strength standards, explore press progress charts, compare rep PRs, and dive into strict press videos, FAQs, and related articles.",
     pageKeywords:
       "overhead press, strict press, barbell press, OHP strength standards, overhead press strength levels, press progress tracker, E1RM press, OHP PR",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_strict_press_insights.png",
+    quoteSectionTitle: "Why the strict press remains the purest overhead test",
     liftQuote:
       "The strict press is a whole-body, multi-joint exercise that beautifully recapitulates a fundamental human movement pattern: lifting a heavy object overhead, as high as possible.",
     liftQuoteAuthor: "Jonathon M. Sullivan & Andy Baker",

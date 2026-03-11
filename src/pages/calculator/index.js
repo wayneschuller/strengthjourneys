@@ -596,7 +596,7 @@ export function E1RMCalculatorMain({
           {renderInlineContent(pageDescription)}
         </PageHeaderDescription>
         {formulaBlurb && (
-          <p className="text-sm text-muted-foreground mt-1 font-mono">
+          <p className="mt-1 text-base text-muted-foreground font-mono">
             {formulaBlurb.equation} {"\u2014"} {renderInlineContent(formulaBlurb.text)}
           </p>
         )}

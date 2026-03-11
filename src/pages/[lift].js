@@ -78,6 +78,21 @@ function flattenAnswer(answer) {
   return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
 }
 
+function getLiftIntroCopy(liftType) {
+  const introByLift = {
+    "Back Squat":
+      "Use this page to compare your back squat against strength standards, estimate your one rep max, and see how your squat volume, rep PRs, and long-term progress are trending over time.",
+    "Bench Press":
+      "Use this page to compare your bench press against strength standards, estimate your one rep max, and see how your pressing volume, rep PRs, and long-term progress are trending over time.",
+    Deadlift:
+      "Use this page to compare your deadlift against strength standards, estimate your one rep max, and see how your pulling volume, rep PRs, and long-term progress are trending over time.",
+    "Strict Press":
+      "Use this page to compare your overhead press against strength standards, estimate your one rep max, and see how your pressing volume, rep PRs, and long-term progress are trending over time.",
+  };
+
+  return introByLift[liftType];
+}
+
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
     params: { lift: lift.slug },
@@ -264,6 +279,7 @@ function BarbellInsightsMain({
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",
   };
+  const calcUrl = LIFT_CALC_URLS[liftInsightData.liftType];
 
   return (
     <PageContainer>
@@ -272,8 +288,20 @@ function BarbellInsightsMain({
           {liftInsightData.pageTitle}
         </PageHeaderHeading>
         <PageHeaderDescription>
-          <div className="italic">{liftInsightData.liftQuote}</div>
-          <div>{liftInsightData.liftQuoteAuthor}</div>
+          <p>{liftInsightData.pageDescription}</p>
+          <p className="mt-3 text-base font-normal text-muted-foreground">
+            {getLiftIntroCopy(liftInsightData.liftType)}
+          </p>
+          {calcUrl && (
+            <div className="mt-4">
+              <Link
+                href={calcUrl}
+                className="font-medium text-blue-600 underline underline-offset-4 visited:text-purple-600 hover:text-blue-800"
+              >
+                Try the {liftInsightData.liftType} 1RM calculator
+              </Link>
+            </div>
+          )}
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="w-32 md:w-auto md:max-w-[10vw]">
@@ -318,6 +346,12 @@ function BarbellInsightsMain({
         </div>
         <div className="col-span-3">
           <TonnageChart liftType={liftInsightData.liftType} />
+        </div>
+        <div className="col-span-3">
+          <LiftQuoteCard
+            quote={liftInsightData.liftQuote}
+            author={liftInsightData.liftQuoteAuthor}
+          />
         </div>
         <div className="col-span-3">
           <VisualizerReps liftType={liftInsightData.liftType} />
@@ -479,7 +513,7 @@ function StrengthLevelsCard({ liftType }) {
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-2xl font-semibold leading-none tracking-tight">My {liftType} Strength Rating</h2>
+        <h2 className="text-2xl font-semibold leading-none tracking-tight">{liftType} Strength Standards</h2>
         {strengthRating && (
           <CardDescription>
             My lifetime {liftType} level:{" "}
@@ -509,6 +543,23 @@ function StrengthLevelsCard({ liftType }) {
           </Link>
         )}
       </CardFooter>
+    </Card>
+  );
+}
+
+function LiftQuoteCard({ quote, author }) {
+  return (
+    <Card className="border-l-4 border-l-primary">
+      <CardContent className="py-8">
+        <blockquote className="space-y-4">
+          <p className="text-xl leading-relaxed italic text-foreground md:text-2xl">
+            &ldquo;{quote}&rdquo;
+          </p>
+          <footer className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+            {author}
+          </footer>
+        </blockquote>
+      </CardContent>
     </Card>
   );
 }

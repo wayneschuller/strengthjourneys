@@ -108,7 +108,7 @@ export function InspirationCard({
   return (
     <Card
       className={cn(
-        isRail && "border-border/50 bg-muted/15 shadow-none",
+        isRail && "border-border/35 bg-muted/8 shadow-sm",
         className,
       )}
     >

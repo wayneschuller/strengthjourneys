@@ -1425,7 +1425,7 @@ export default function LogSessionPage() {
 
   return (
     <div className="mx-auto max-w-[96rem] px-3 pb-24 sm:px-4">
-      <div className="lg:grid lg:grid-cols-[minmax(15rem,18rem)_minmax(0,46rem)_minmax(15rem,18rem)] lg:gap-6 xl:gap-8">
+      <div className="lg:grid lg:grid-cols-[15.75rem_minmax(0,46rem)_16.75rem] lg:gap-6 xl:gap-8">
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-4 pt-3">
             <InspirationCard
@@ -1670,6 +1670,26 @@ function formatCompactVolume(value, unit) {
   return `${Math.round(value)} ${unit}`;
 }
 
+function getPrimarySessionHighlight(summary, perLiftTonnageStats) {
+  const topLift = summary?.lifts
+    ?.slice()
+    ?.sort((a, b) => {
+      const aVolume = perLiftTonnageStats?.[a.liftType]?.currentLiftTonnage ?? 0;
+      const bVolume = perLiftTonnageStats?.[b.liftType]?.currentLiftTonnage ?? 0;
+      return bVolume - aVolume;
+    })?.[0];
+
+  if (!topLift) return null;
+
+  const tonnageStats = perLiftTonnageStats?.[topLift.liftType];
+  if (!tonnageStats) return null;
+
+  return `💪 Biggest lift today: ${topLift.liftType} - ${formatCompactVolume(
+    tonnageStats.currentLiftTonnage,
+    tonnageStats.unitType ?? summary.unit,
+  )}`;
+}
+
 function SessionSidebarRail({
   sessionDate,
   isToday,
@@ -1679,7 +1699,7 @@ function SessionSidebarRail({
 }) {
   return (
     <>
-      <Card className="border-border/50 bg-muted/15 shadow-none">
+      <Card className="border-border/35 bg-muted/8 shadow-sm">
         <CardHeader className="space-y-2 px-4 pb-0 pt-4">
           <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Session pulse
@@ -1691,6 +1711,13 @@ function SessionSidebarRail({
         <CardContent className="space-y-4 px-4 pb-4 pt-4">
           {hasSession ? (
             <>
+              {getPrimarySessionHighlight(summary, perLiftTonnageStats) ? (
+                <div className="rounded-md border border-border/35 bg-background/70 px-3 py-3">
+                  <p className="text-sm font-medium text-foreground/90">
+                    {getPrimarySessionHighlight(summary, perLiftTonnageStats)}
+                  </p>
+                </div>
+              ) : null}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <RailStat label="Lifts" value={summary.liftCount} />
                 <RailStat label="Sets" value={summary.setCount} />
@@ -1730,34 +1757,8 @@ function SessionSidebarRail({
       </Card>
 
       {hasSession ? (
-        <Card className="border-border/40 bg-transparent shadow-none">
+        <Card className="border-border/30 bg-transparent shadow-sm">
           <CardContent className="space-y-2 px-4 py-4 text-xs leading-6 text-muted-foreground">
-            {summary.lifts
-              .slice()
-              .sort((a, b) => {
-                const aVolume = perLiftTonnageStats?.[a.liftType]?.currentLiftTonnage ?? 0;
-                const bVolume = perLiftTonnageStats?.[b.liftType]?.currentLiftTonnage ?? 0;
-                return bVolume - aVolume;
-              })
-              .slice(0, 1)
-              .map(({ liftType }) => {
-                const tonnageStats = perLiftTonnageStats?.[liftType];
-                if (!tonnageStats) return null;
-
-                return (
-                  <p key={liftType}>
-                    Most work so far:{" "}
-                    <span className="text-foreground/80">{liftType}</span> at{" "}
-                    <span className="text-foreground/80">
-                      {formatCompactVolume(
-                        tonnageStats.currentLiftTonnage,
-                        tonnageStats.unitType ?? summary.unit,
-                      )}
-                    </span>
-                    .
-                  </p>
-                );
-              })}
             <p>
               Average sets per lift:{" "}
               <span className="text-foreground/80">
@@ -1773,7 +1774,7 @@ function SessionSidebarRail({
 
 function RailStat({ label, value }) {
   return (
-    <div className="rounded-md border border-border/40 bg-background/60 px-3 py-2">
+    <div className="rounded-md border border-border/30 bg-background/55 px-3 py-2 shadow-sm">
       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
@@ -2377,12 +2378,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const desktopIconOffsetClass = "md:ml-28 lg:ml-32";
 
   return (
-    <div className="relative rounded-xl border bg-card shadow-sm">
+    <div className="relative rounded-xl border bg-card shadow-md">
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
         <div className="absolute left-4 top-4 hidden md:block">
           <Link href={`/${bigFourEntry.slug}`}>
-            <Image src={bigFourEntry.icon} alt="" width={96} height={96} className="opacity-80 transition-opacity hover:opacity-100" />
+            <Image src={bigFourEntry.icon} alt="" width={104} height={104} className="opacity-80 transition-opacity hover:opacity-100" />
           </Link>
         </div>
       )}
@@ -2391,7 +2392,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       <div className={`flex gap-3 px-4 pt-4 ${desktopIconInsetClass}`}>
         {bigFourEntry && (
           <Link href={`/${bigFourEntry.slug}`} className="shrink-0 self-start md:hidden">
-            <Image src={bigFourEntry.icon} alt="" width={48} height={48} />
+            <Image src={bigFourEntry.icon} alt="" width={52} height={52} />
           </Link>
         )}
         <div className="min-w-0 flex-1">

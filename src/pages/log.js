@@ -764,42 +764,6 @@ export default function LogSessionPage() {
     !isClient ||
     authStatus === "loading" ||
     (authStatus === "authenticated" && !!effectiveSsid && (isLoading || parsedData === null));
-  const quoteRevealReady = useMemo(() => {
-    if (showSessionBootstrap) return false;
-    if (!Array.isArray(parsedData)) return false;
-    if (!topLiftsByTypeAndReps || !topLiftsByTypeAndRepsLast12Months) return false;
-    return true;
-  }, [
-    showSessionBootstrap,
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-  ]);
-  const [quoteRevealPhase, setQuoteRevealPhase] = useState("loading");
-
-  useEffect(() => {
-    if (!quoteRevealReady) {
-      setQuoteRevealPhase("loading");
-      return undefined;
-    }
-
-    setQuoteRevealPhase("primed");
-    let frameId = 0;
-    let timerId = 0;
-
-    frameId = window.requestAnimationFrame(() => {
-      frameId = window.requestAnimationFrame(() => {
-        timerId = window.setTimeout(() => {
-          setQuoteRevealPhase("ready");
-        }, 250);
-      });
-    });
-
-    return () => {
-      if (frameId) window.cancelAnimationFrame(frameId);
-      if (timerId) window.clearTimeout(timerId);
-    };
-  }, [quoteRevealReady, sessionDate]);
 
   const prevSessionDate = useMemo(() => {
     const earlier = sessionDates.filter((d) => d < sessionDate);
@@ -1469,12 +1433,7 @@ export default function LogSessionPage() {
               title={isToday ? "For today" : "Training note"}
               variant="rail"
               delayedReveal
-              revealDelayMs={700}
-              revealTriggerKey={
-                quoteRevealPhase === "ready"
-                  ? `analysis-painted:${sessionDate}:${parsedData?.length ?? 0}`
-                  : `analysis-${quoteRevealPhase}`
-              }
+              revealDelayMs={1500}
             />
           </div>
         </aside>

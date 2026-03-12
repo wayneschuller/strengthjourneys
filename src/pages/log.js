@@ -30,7 +30,14 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InspirationCard } from "@/components/analyzer/inspiration-card";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -770,6 +777,15 @@ export default function LogSessionPage() {
     if (sessionDate < todayIso) return todayIso;
     return null;
   }, [sessionDates, sessionDate, todayIso]);
+  const sessionSidebarSummary = useMemo(
+    () =>
+      getSessionSidebarSummary(
+        sessionLiftsWithPending,
+        perLiftTonnageStats,
+        isMetric ? "kg" : "lb",
+      ),
+    [sessionLiftsWithPending, perLiftTonnageStats, isMetric],
+  );
 
   // --- Unit mismatch nudge ---
   // If 100% of the user's sheet data is in one unit but their SJ preference is
@@ -1408,171 +1424,360 @@ export default function LogSessionPage() {
     : { opacity: 0, y: -8, scale: 0.985, height: 0 };
 
   return (
-    <div className="mx-auto max-w-[42rem] px-3 pb-24 sm:px-4">
-      {/* Sticky header */}
-      <div className="sticky top-0 z-[5] flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0"
-          disabled={!prevSessionDate}
-          onClick={() => navigateToDate(prevSessionDate)}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-
-        <div className="relative flex-1 text-center">
-          <h1 className="text-lg font-semibold leading-tight">
-            {isToday ? "Today" : getReadableDateString(sessionDate, true)}
-          </h1>
-          {isToday ? (
-            <p className="text-xs text-muted-foreground">
-              {getReadableDateString(sessionDate, true)}
-            </p>
-          ) : null}
-
-          {!isToday ? (
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2"
-                    onClick={() => navigateToDate(todayIso)}
-                    aria-label="Back to today"
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Back to today</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : null}
-        </div>
-
-        <SyncIndicator state={syncState} />
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0"
-          disabled={!nextSessionDate}
-          onClick={() => navigateToDate(nextSessionDate)}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Empty state */}
-      {showSessionBootstrap && <LogSessionSkeleton />}
-
-      {!showSessionBootstrap && !isLoading && !hasSession && (
-        <div className="mt-6 flex flex-col items-center gap-6">
-          <div className="space-y-1 text-center">
-            <h2 className="text-xl font-semibold">
-              {isToday ? "Start today's session" : "Start a session for this date"}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Pick a lift to begin.
-            </p>
+    <div className="mx-auto max-w-[96rem] px-3 pb-24 sm:px-4">
+      <div className="lg:grid lg:grid-cols-[minmax(15rem,18rem)_minmax(0,46rem)_minmax(15rem,18rem)] lg:gap-6 xl:gap-8">
+        <aside className="hidden lg:block">
+          <div className="sticky top-20 space-y-4 pt-3">
+            <InspirationCard
+              seedKey={sessionDate}
+              title={isToday ? "For today" : "Training note"}
+              variant="rail"
+            />
           </div>
+        </aside>
 
-          {/* Big Four — tap to add directly */}
-          <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
-            {BIG_FOUR.map(({ name, icon }) => (
-              <button
-                key={name}
-                title={`Start with ${name}`}
-                onClick={() => addLift(name)}
-                className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-4 py-6 shadow-sm transition-colors hover:border-primary hover:bg-muted/40 active:scale-95 md:gap-5 md:py-8"
-              >
-                <Image src={icon} alt={name} width={80} height={80} className="h-20 w-20 md:h-28 md:w-28" />
-                <span className="text-sm font-medium leading-tight">{name}</span>
-              </button>
-            ))}
-          </div>
-
-          <AddLiftButton parsedData={parsedData} onAddLift={addLift} label="Add other lift type" />
-        </div>
-      )}
-
-      {/* Lift blocks */}
-      {!showSessionBootstrap && hasSession && (
-        <div className="space-y-5">
-          <AnimatePresence initial={false}>
-            {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
-              <motion.div
-                key={liftType}
-                id={getLiftAnchorId(liftType)}
-                layout
-                initial={liftCardInitial}
-                animate={liftCardAnimate}
-                exit={liftCardExit}
-                transition={liftCardTransition}
-                className="overflow-y-hidden scroll-mt-24 md:mx-[-1rem] lg:mx-[-1.5rem]"
-              >
-                <LiftBlock
-                  liftType={liftType}
-                  sets={sets}
-                  parsedData={parsedData}
-                  sessionDate={sessionDate}
-                  isMetric={isMetric}
-                  topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-                  topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
-                  tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
-                  dashboardStage={dashboardStage}
-                  sessionCount={sessionCount}
-                  isPastSession={!isToday}
-                  onUpdateSet={updateSet}
-                  onDeleteSet={deleteSet}
-                  onAddSet={(prevSet) => addSet(liftType, prevSet)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-
-          <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
-
-          {/* Delete session */}
-          <div className="flex justify-center pt-2">
-            {!showDeleteConfirm ? (
+        <main className="min-w-0">
+          <div className="mx-auto max-w-[46rem]">
+            <div className="sticky top-0 z-[5] flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
               <Button
                 variant="ghost"
-                size="sm"
-                className="gap-2 text-muted-foreground hover:text-destructive"
-                onClick={() => setShowDeleteConfirm(true)}
+                size="icon"
+                className="shrink-0"
+                disabled={!prevSessionDate}
+                onClick={() => navigateToDate(prevSessionDate)}
               >
-                <Trash2 className="h-4 w-4" />
-                Delete this session
+                <ChevronLeft className="h-4 w-4" />
               </Button>
-            ) : (
-              <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
-                <p className="text-sm text-muted-foreground">
-                  Delete all rows for {sessionDate}?
-                </p>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={deleteSession}
-                  disabled={syncState === "saving"}
-                >
-                  Delete
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowDeleteConfirm(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+
+              <div className="relative flex-1 text-center">
+                <h1 className="text-lg font-semibold leading-tight">
+                  {isToday ? "Today" : getReadableDateString(sessionDate, true)}
+                </h1>
+                {isToday ? (
+                  <p className="text-xs text-muted-foreground">
+                    {getReadableDateString(sessionDate, true)}
+                  </p>
+                ) : null}
+
+                {!isToday ? (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2"
+                          onClick={() => navigateToDate(todayIso)}
+                          aria-label="Back to today"
+                        >
+                          <Calendar className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Back to today</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : null}
+              </div>
+
+              <SyncIndicator state={syncState} />
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                disabled={!nextSessionDate}
+                onClick={() => navigateToDate(nextSessionDate)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {showSessionBootstrap && <LogSessionSkeleton />}
+
+            {!showSessionBootstrap && !isLoading && !hasSession && (
+              <div className="mt-6 flex flex-col items-center gap-6">
+                <div className="space-y-1 text-center">
+                  <h2 className="text-xl font-semibold">
+                    {isToday ? "Start today's session" : "Start a session for this date"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Pick a lift to begin.
+                  </p>
+                </div>
+
+                <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
+                  {BIG_FOUR.map(({ name, icon }) => (
+                    <button
+                      key={name}
+                      title={`Start with ${name}`}
+                      onClick={() => addLift(name)}
+                      className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-4 py-6 shadow-sm transition-colors hover:border-primary hover:bg-muted/40 active:scale-95 md:gap-5 md:py-8"
+                    >
+                      <Image src={icon} alt={name} width={80} height={80} className="h-20 w-20 md:h-28 md:w-28" />
+                      <span className="text-sm font-medium leading-tight">{name}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <AddLiftButton parsedData={parsedData} onAddLift={addLift} label="Add other lift type" />
+              </div>
+            )}
+
+            {!showSessionBootstrap && hasSession && (
+              <div className="space-y-5">
+                <AnimatePresence initial={false}>
+                  {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
+                    <motion.div
+                      key={liftType}
+                      id={getLiftAnchorId(liftType)}
+                      layout
+                      initial={liftCardInitial}
+                      animate={liftCardAnimate}
+                      exit={liftCardExit}
+                      transition={liftCardTransition}
+                      className="overflow-y-hidden scroll-mt-24 md:mx-[-1rem] lg:mx-[-1.5rem]"
+                    >
+                      <LiftBlock
+                        liftType={liftType}
+                        sets={sets}
+                        parsedData={parsedData}
+                        sessionDate={sessionDate}
+                        isMetric={isMetric}
+                        topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+                        topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
+                        tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
+                        dashboardStage={dashboardStage}
+                        sessionCount={sessionCount}
+                        isPastSession={!isToday}
+                        onUpdateSet={updateSet}
+                        onDeleteSet={deleteSet}
+                        onAddSet={(prevSet) => addSet(liftType, prevSet)}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
+
+                <div className="flex justify-center pt-2">
+                  {!showDeleteConfirm ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-muted-foreground hover:text-destructive"
+                      onClick={() => setShowDeleteConfirm(true)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete this session
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+                      <p className="text-sm text-muted-foreground">
+                        Delete all rows for {sessionDate}?
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={deleteSession}
+                        disabled={syncState === "saving"}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowDeleteConfirm(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
-        </div>
-      )}
+        </main>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-20 space-y-4 pt-3">
+            <SessionSidebarRail
+              sessionDate={sessionDate}
+              isToday={isToday}
+              hasSession={hasSession}
+              summary={sessionSidebarSummary}
+              perLiftTonnageStats={perLiftTonnageStats}
+            />
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function getSessionSidebarSummary(
+  sessionLiftsWithPending,
+  perLiftTonnageStats,
+  fallbackUnit,
+) {
+  const liftNames = Object.keys(sessionLiftsWithPending ?? {});
+  if (liftNames.length === 0) {
+    return {
+      liftCount: 0,
+      setCount: 0,
+      repCount: 0,
+      volume: 0,
+      unit: fallbackUnit,
+      lifts: [],
+    };
+  }
+
+  let setCount = 0;
+  let repCount = 0;
+  let volume = 0;
+  let unit = fallbackUnit;
+
+  const lifts = liftNames.map((liftType) => {
+    const sets = sessionLiftsWithPending[liftType] ?? [];
+    const nativeUnit = sets[0]?.unitType ?? fallbackUnit;
+    if (!unit && nativeUnit) unit = nativeUnit;
+    setCount += sets.length;
+    repCount += sets.reduce((total, set) => total + (set.reps ?? 0), 0);
+    if (nativeUnit === unit) {
+      volume += perLiftTonnageStats?.[liftType]?.currentLiftTonnage ?? 0;
+    }
+
+    return {
+      liftType,
+      setCount: sets.length,
+    };
+  });
+
+  return {
+    liftCount: liftNames.length,
+    setCount,
+    repCount,
+    volume,
+    unit,
+    lifts,
+  };
+}
+
+function formatCompactVolume(value, unit) {
+  if (!value) return `0 ${unit}`;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k ${unit}`;
+  return `${Math.round(value)} ${unit}`;
+}
+
+function SessionSidebarRail({
+  sessionDate,
+  isToday,
+  hasSession,
+  summary,
+  perLiftTonnageStats,
+}) {
+  return (
+    <>
+      <Card className="border-border/50 bg-muted/15 shadow-none">
+        <CardHeader className="space-y-2 px-4 pb-0 pt-4">
+          <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            Session pulse
+          </CardTitle>
+          <p className="text-sm text-foreground/90">
+            {isToday ? "Today" : getReadableDateString(sessionDate, true)}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4 px-4 pb-4 pt-4">
+          {hasSession ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <RailStat label="Lifts" value={summary.liftCount} />
+                <RailStat label="Sets" value={summary.setCount} />
+                <RailStat label="Reps" value={summary.repCount} />
+                <RailStat
+                  label="Volume"
+                  value={formatCompactVolume(summary.volume, summary.unit)}
+                />
+              </div>
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  In this session
+                </p>
+                <div className="space-y-2">
+                  {summary.lifts.map(({ liftType, setCount }) => (
+                    <Link
+                      key={liftType}
+                      href={`#${getLiftAnchorId(liftType)}`}
+                      className="flex items-start justify-between gap-3 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground"
+                    >
+                      <span className="min-w-0">{liftType}</span>
+                      <span className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground/80">
+                        {setCount} sets
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm leading-6 text-muted-foreground">
+              No sets logged yet for this date. Start in the center column and
+              this rail will update as the session takes shape.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {hasSession ? (
+        <Card className="border-border/40 bg-transparent shadow-none">
+          <CardContent className="space-y-2 px-4 py-4 text-xs leading-6 text-muted-foreground">
+            {summary.lifts
+              .slice()
+              .sort((a, b) => {
+                const aVolume = perLiftTonnageStats?.[a.liftType]?.currentLiftTonnage ?? 0;
+                const bVolume = perLiftTonnageStats?.[b.liftType]?.currentLiftTonnage ?? 0;
+                return bVolume - aVolume;
+              })
+              .slice(0, 1)
+              .map(({ liftType }) => {
+                const tonnageStats = perLiftTonnageStats?.[liftType];
+                if (!tonnageStats) return null;
+
+                return (
+                  <p key={liftType}>
+                    Most work so far:{" "}
+                    <span className="text-foreground/80">{liftType}</span> at{" "}
+                    <span className="text-foreground/80">
+                      {formatCompactVolume(
+                        tonnageStats.currentLiftTonnage,
+                        tonnageStats.unitType ?? summary.unit,
+                      )}
+                    </span>
+                    .
+                  </p>
+                );
+              })}
+            <p>
+              Average sets per lift:{" "}
+              <span className="text-foreground/80">
+                {(summary.setCount / Math.max(summary.liftCount, 1)).toFixed(1)}
+              </span>
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+    </>
+  );
+}
+
+function RailStat({ label, value }) {
+  return (
+    <div className="rounded-md border border-border/40 bg-background/60 px-3 py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-medium text-foreground/90">{value}</p>
     </div>
   );
 }

@@ -1432,6 +1432,8 @@ export default function LogSessionPage() {
               seedKey={sessionDate}
               title={isToday ? "For today" : "Training note"}
               variant="rail"
+              delayedReveal
+              revealDelayMs={700}
             />
           </div>
         </aside>
@@ -1601,15 +1603,7 @@ export default function LogSessionPage() {
         </main>
 
         <aside className="hidden lg:block">
-          <div className="sticky top-20 space-y-4 pt-3">
-            <SessionSidebarRail
-              sessionDate={sessionDate}
-              isToday={isToday}
-              hasSession={hasSession}
-              summary={sessionSidebarSummary}
-              perLiftTonnageStats={perLiftTonnageStats}
-            />
-          </div>
+          <div className="sticky top-20 pt-3" />
         </aside>
       </div>
     </div>
@@ -1699,6 +1693,7 @@ function SessionSidebarRail({
 }) {
   return (
     <>
+      {/* Intended for the log page 3rd column once we bring that side-rail summary back. */}
       <Card className="border-border/35 bg-muted/8 shadow-sm">
         <CardHeader className="space-y-2 px-4 pb-0 pt-4">
           <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">

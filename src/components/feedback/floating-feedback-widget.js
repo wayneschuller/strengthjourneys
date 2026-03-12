@@ -269,6 +269,7 @@ export function FeedbackWidget() {
     "/warm-up-sets-calculator": "the Warm-up Calculator",
     "/strength-year-in-review": "your Year in Review",
     "/ai-lifting-assistant": "the AI Lifting Assistant",
+    "/olympic-lift-insights": "Olympic Lift Insights",
     "/timer": "the Gym Timer",
     "/gym-playlist-leaderboard": "the Playlist Leaderboard",
     "/barbell-strength-potential": "Strength Potential",

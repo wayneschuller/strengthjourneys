@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
-import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { useState, useContext, useRef, useCallback } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
 import { useLocalStorage } from "usehooks-ts";
 import { usePathname } from "next/navigation";
@@ -12,7 +12,7 @@ import { DarkModeToggle, ThemeChooser } from "@/components/theme-chooser";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
 import { DevActivityMonitorPanel } from "@/components/dev-activity-monitor";
-import { Table2, Loader2, Github, Layers, LineChart } from "lucide-react";
+import { Table2, Loader2, Github, Layers, LineChart, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
@@ -246,12 +246,9 @@ export function DesktopNav() {
   const pathname = usePathname();
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
-  const [logoSrc, setLogoSrc] = useState(() => getLogoForTheme("light"));
-
-  // Update logo after mount and on theme changes to avoid hydration mismatch
-  useEffect(() => {
-    setLogoSrc(getLogoForTheme(theme ?? resolvedTheme ?? "light"));
-  }, [theme, resolvedTheme]);
+  const activeTheme =
+    theme === "system" ? (resolvedTheme ?? "light") : (theme ?? resolvedTheme ?? "light");
+  const logoSrc = getLogoForTheme(activeTheme);
 
   return (
     <div className="hidden align-middle md:flex">
@@ -521,6 +518,11 @@ function StrengthInsightsMenu() {
       icon: <Layers className="h-5 w-5" />,
     },
     {
+      title: "Olympic Lift Insights",
+      href: "/olympic-lift-insights",
+      icon: <Zap className="h-5 w-5" />,
+    },
+    {
       title: "Strength Visualizer",
       href: "/visualizer",
       icon: <LineChart className="h-5 w-5" />,
@@ -583,6 +585,7 @@ function StrengthInsightsMenu() {
             className={cn(
               "hover:text-foreground/80 bg-transparent transition-colors",
               pathname.startsWith("/lift-explorer") ||
+                pathname.startsWith("/olympic-lift-insights") ||
                 pathname.startsWith("/visualizer") ||
                 pathname.startsWith("/ai-lifting-assistant")
                 ? "text-foreground"

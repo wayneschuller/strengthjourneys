@@ -764,6 +764,17 @@ export default function LogSessionPage() {
     !isClient ||
     authStatus === "loading" ||
     (authStatus === "authenticated" && !!effectiveSsid && (isLoading || parsedData === null));
+  const quoteRevealReady = useMemo(() => {
+    if (showSessionBootstrap) return false;
+    if (!Array.isArray(parsedData)) return false;
+    if (!topLiftsByTypeAndReps || !topLiftsByTypeAndRepsLast12Months) return false;
+    return true;
+  }, [
+    showSessionBootstrap,
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  ]);
 
   const prevSessionDate = useMemo(() => {
     const earlier = sessionDates.filter((d) => d < sessionDate);
@@ -1435,9 +1446,9 @@ export default function LogSessionPage() {
               delayedReveal
               revealDelayMs={700}
               revealTriggerKey={
-                showSessionBootstrap
-                  ? "sheet-loading"
-                  : `sheet-ready:${sessionDate}:${parsedData?.length ?? 0}`
+                quoteRevealReady
+                  ? `analysis-ready:${sessionDate}:${parsedData?.length ?? 0}`
+                  : "analysis-loading"
               }
             />
           </div>

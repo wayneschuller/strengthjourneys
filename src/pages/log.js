@@ -1434,6 +1434,11 @@ export default function LogSessionPage() {
               variant="rail"
               delayedReveal
               revealDelayMs={700}
+              revealTriggerKey={
+                showSessionBootstrap
+                  ? "sheet-loading"
+                  : `sheet-ready:${sessionDate}:${parsedData?.length ?? 0}`
+              }
             />
           </div>
         </aside>

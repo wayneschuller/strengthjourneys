@@ -6,7 +6,7 @@ export const bigFourLiftInsightData = [
     liftType: "Back Squat",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
     seoTitle: "Back Squat Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Back Squat Strength Guide & Calculator",
+    pageTitle: "Barbell Back Squat Strength Guide & Progress Tracker",
     pageDescription:
       "Check back squat strength standards, explore squat progress charts, compare rep PRs, and dive into back squat videos, FAQs, and related articles.",
     pageKeywords:
@@ -76,7 +76,7 @@ export const bigFourLiftInsightData = [
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
     seoTitle: "Bench Press Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Bench Press Strength Guide & Calculator",
+    pageTitle: "Barbell Bench Press Strength Guide & Progress Tracker",
     pageDescription:
       "Check bench press strength standards, explore bench progress charts, compare rep PRs, and dive into bench press videos, FAQs, and related articles.",
     pageKeywords:
@@ -148,7 +148,7 @@ export const bigFourLiftInsightData = [
     liftType: "Deadlift",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-deadlift-insights",
     seoTitle: "Deadlift Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Deadlift Strength Guide & Calculator",
+    pageTitle: "Barbell Deadlift Strength Guide & Progress Tracker",
     pageDescription:
       "Check deadlift strength standards, explore deadlift progress charts, compare rep PRs, and dive into deadlift videos, FAQs, and related articles.",
     pageKeywords:
@@ -220,7 +220,7 @@ export const bigFourLiftInsightData = [
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
     seoTitle: "Overhead Press Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Strict Press Strength Guide & Calculator",
+    pageTitle: "Barbell Strict Press Strength Guide & Progress Tracker",
     pageDescription:
       "Check strict press strength standards, explore press progress charts, compare rep PRs, and dive into strict press videos, FAQs, and related articles.",
     pageKeywords:

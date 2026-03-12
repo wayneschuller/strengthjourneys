@@ -3186,7 +3186,8 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
         onKeyDown={(e) => e.key === "Enter" && submit()}
       />
       {/* Quick-add chips: Big Four (with icons) + frequent lifts */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="max-h-36 overflow-y-auto pr-1">
+        <div className="flex flex-wrap gap-1.5">
         {chips.map(({ name, icon }) => (
           <button
             key={name}
@@ -3199,6 +3200,7 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
             {name}
           </button>
         ))}
+        </div>
       </div>
       <div className="flex gap-2">
         <Button size="sm" onClick={() => submit()} disabled={!liftType.trim()}>

@@ -3178,14 +3178,14 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
   }
 
   return (
-    <div className="space-y-3 rounded-lg border p-4">
+    <div className="mx-auto w-full max-w-2xl space-y-3 rounded-lg border p-4">
       <Command className="rounded-lg border bg-background">
         <CommandInput
           placeholder="Lift type (e.g. Back Squat)"
           value={liftType}
           onValueChange={setLiftType}
         />
-        <CommandList className="max-h-44">
+        <CommandList className="max-h-56">
           <CommandEmpty>
             {liftType.trim()
               ? `No match. Add "${liftType.trim()}" below.`
@@ -3203,20 +3203,23 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
             </CommandGroup>
           ) : null}
           <CommandGroup heading="Lifts">
-            {chips.map(({ name, icon }) => (
-              <CommandItem
-                key={name}
-                value={name}
-                onSelect={() => submit(name)}
-              >
-                {icon ? (
-                  <Image src={icon} alt="" width={16} height={16} className="shrink-0" />
-                ) : (
-                  <ClipboardPlus className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span>{name}</span>
-              </CommandItem>
-            ))}
+            <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+              {chips.map(({ name, icon }) => (
+                <CommandItem
+                  key={name}
+                  value={name}
+                  onSelect={() => submit(name)}
+                  className="min-w-0"
+                >
+                  {icon ? (
+                    <Image src={icon} alt="" width={16} height={16} className="shrink-0" />
+                  ) : (
+                    <ClipboardPlus className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="truncate">{name}</span>
+                </CommandItem>
+              ))}
+            </div>
           </CommandGroup>
         </CommandList>
       </Command>

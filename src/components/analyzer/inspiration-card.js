@@ -104,6 +104,7 @@ export function InspirationCard({
   className = "",
   delayedReveal = false,
   revealDelayMs = 500,
+  revealTriggerKey = "default",
 }) {
   const quote = getSeededQuote(seedKey);
   const isRail = variant === "rail";
@@ -119,7 +120,7 @@ export function InspirationCard({
     }, revealDelayMs);
 
     return () => window.clearTimeout(timerId);
-  }, [delayedReveal, revealDelayMs, seedKey]);
+  }, [delayedReveal, revealDelayMs, revealTriggerKey, seedKey]);
 
   return (
     <Card

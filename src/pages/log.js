@@ -3204,18 +3204,13 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
           ) : null}
           <CommandGroup heading="Lifts">
             <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
-              {chips.map(({ name, icon }) => (
+              {chips.map(({ name }) => (
                 <CommandItem
                   key={name}
                   value={name}
                   onSelect={() => submit(name)}
                   className="min-w-0"
                 >
-                  {icon ? (
-                    <Image src={icon} alt="" width={16} height={16} className="shrink-0" />
-                  ) : (
-                    <ClipboardPlus className="h-4 w-4 text-muted-foreground" />
-                  )}
                   <span className="truncate">{name}</span>
                 </CommandItem>
               ))}

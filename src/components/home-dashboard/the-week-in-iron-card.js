@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/tooltip";
 import {
   BIG_FOUR_LIFT_TYPES,
-  getDisplayWeight,
 } from "@/lib/processing-utils";
 import {
   formatDateToYmdLocal,
@@ -316,69 +315,64 @@ export function TheWeekInIronCard({
 
           {stats && (
             <>
-              {/* Day-of-week dot grid */}
-              <WeekDayGrid
-                dayActivity={stats.dayActivity}
-                boundaries={boundaries}
-              />
-
-              <Separator />
-
-              {/* Key stats */}
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <StatBlock
-                  label="Sessions"
-                  value={stats.sessions.current}
-                  prev={
-                    boundaries.isCurrentWeek
-                      ? stats.sessions.prevSameDay
-                      : stats.sessions.prev
-                  }
+              <WeekSection
+                stepLabel="A"
+                title="What happened this week"
+                description={getWeekRecapCopy(stats, boundaries, unit)}
+              >
+                <WeekDayGrid
+                  dayActivity={stats.dayActivity}
+                  boundaries={boundaries}
                 />
-                <StatBlock
-                  label="Sets"
-                  value={stats.sets.current}
-                />
-                <StatBlock
-                  label="PRs"
-                  value={stats.prs}
-                  highlight={stats.prs > 0}
-                />
-              </div>
 
-              <Separator />
-
-              {/* Tonnage summary */}
-              <div className="space-y-1">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Volume
-                  </span>
-                  {tonnageDelta !== null && (
-                    <TonnageDeltaBadge delta={tonnageDelta} />
-                  )}
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <StatBlock
+                    label="Sessions"
+                    value={stats.sessions.current}
+                    prev={
+                      boundaries.isCurrentWeek
+                        ? stats.sessions.prevSameDay
+                        : stats.sessions.prev
+                    }
+                  />
+                  <StatBlock
+                    label="Sets"
+                    value={stats.sets.current}
+                  />
+                  <StatBlock
+                    label="PRs"
+                    value={stats.prs}
+                    highlight={stats.prs > 0}
+                  />
                 </div>
-                <p className="text-2xl font-bold tracking-tight">
-                  {formatTonnage(stats.tonnage.current, unit)}
-                </p>
-                {boundaries.isCurrentWeek &&
-                  stats.tonnage.prevSameDay > 0 && (
+
+                <div className="rounded-xl border bg-muted/20 px-4 py-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Volume
+                    </span>
+                    {tonnageDelta !== null && (
+                      <TonnageDeltaBadge delta={tonnageDelta} />
+                    )}
+                  </div>
+                  <p className="mt-1 text-2xl font-bold tracking-tight">
+                    {formatTonnage(stats.tonnage.current, unit)}
+                  </p>
+                  {boundaries.isCurrentWeek &&
+                    stats.tonnage.prevSameDay > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        vs {formatTonnage(stats.tonnage.prevSameDay, unit)} same
+                        point last week
+                      </p>
+                    )}
+                  {!boundaries.isCurrentWeek && stats.tonnage.prev > 0 && (
                     <p className="text-xs text-muted-foreground">
-                      vs {formatTonnage(stats.tonnage.prevSameDay, unit)} same
-                      point last week
+                      vs {formatTonnage(stats.tonnage.prev, unit)} previous week
                     </p>
                   )}
-                {!boundaries.isCurrentWeek && stats.tonnage.prev > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    vs {formatTonnage(stats.tonnage.prev, unit)} previous week
-                  </p>
-                )}
-              </div>
+                </div>
 
-              {/* Lift types trained */}
-              {stats.liftTypes.length > 0 && (
-                <>
-                  <Separator />
+                {stats.liftTypes.length > 0 && (
                   <div className="space-y-1.5">
                     <span className="text-sm font-medium text-muted-foreground">
                       Lifts trained
@@ -401,11 +395,18 @@ export function TheWeekInIronCard({
                       ))}
                     </div>
                   </div>
-                </>
-              )}
+                )}
+              </WeekSection>
 
               <Separator />
-              <StartLiftPrompt />
+
+              <WeekSection
+                stepLabel="B"
+                title="What to do next"
+                description={getNextStepCopy(stats, boundaries)}
+              >
+                <StartLiftPrompt showIntro={false} />
+              </WeekSection>
             </>
           )}
 
@@ -455,6 +456,24 @@ function WeekDayGrid({ dayActivity, boundaries }) {
         );
       })}
     </div>
+  );
+}
+
+function WeekSection({ stepLabel, title, description, children }) {
+  return (
+    <section className="space-y-3">
+      <div className="space-y-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          {stepLabel}. {title}
+        </p>
+        {description ? (
+          <p className="text-sm leading-6 text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
   );
 }
 
@@ -531,17 +550,56 @@ function EarlyWeekCard({ isDemoMode, dataMaturityStage, dashboardStage }) {
   );
 }
 
-function StartLiftPrompt() {
+function getWeekRecapCopy(stats, boundaries, unit) {
+  const sessionsLabel =
+    stats.sessions.current === 1 ? "1 session" : `${stats.sessions.current} sessions`;
+  const prsLabel = stats.prs === 1 ? "1 PR" : `${stats.prs} PRs`;
+  const volumeLabel = formatTonnage(stats.tonnage.current, unit);
+
+  if (stats.sessions.current === 0) {
+    return boundaries.isCurrentWeek
+      ? "Nothing logged yet this week. The first session sets the tone."
+      : "No sessions were logged in this week.";
+  }
+
+  if (stats.prs > 0) {
+    return `${sessionsLabel}, ${stats.sets.current} sets, and ${prsLabel}. You moved ${volumeLabel} total.`;
+  }
+
+  return `${sessionsLabel} and ${stats.sets.current} sets logged for ${volumeLabel} of total volume.`;
+}
+
+function getNextStepCopy(stats, boundaries) {
+  if (stats.sessions.current === 0) {
+    return boundaries.isCurrentWeek
+      ? "Start the week by logging the first lift you want to train."
+      : "Use this as a reset point and pick the first lift for your next week.";
+  }
+
+  if (boundaries.isCurrentWeek && stats.dayActivity.some((active) => !active)) {
+    return "Keep the week moving by opening today’s log and jumping straight into your next lift.";
+  }
+
+  if (stats.prs > 0) {
+    return "Build on the strong week by logging the lift you want to push next.";
+  }
+
+  return "Choose the next lift you want to train and head straight into the log.";
+}
+
+function StartLiftPrompt({ showIntro = true }) {
   return (
     <div className="space-y-3">
-      <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">
-          Pick a lift to work on
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Open today&apos;s log and go straight to the lift you want to train.
-        </p>
-      </div>
+      {showIntro && (
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">
+            Pick a lift to work on
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Open today&apos;s log and go straight to the lift you want to train.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         {BIG_FOUR_STARTERS.map(({ liftType, icon }) => (
           <Link

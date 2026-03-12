@@ -2398,7 +2398,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const desktopIconOffsetClass = "md:ml-28 lg:ml-32";
 
   return (
-    <div className="relative rounded-xl border bg-card shadow-md">
+    <div
+      className="relative rounded-xl border bg-card shadow-md"
+      style={{
+        backgroundImage: `linear-gradient(135deg, ${hexToRgba(liftColor, 0.12)} 0%, ${hexToRgba(liftColor, 0.06)} 18%, rgba(255, 255, 255, 0) 42%)`,
+      }}
+    >
       <div
         className="absolute inset-x-0 top-0 h-1 rounded-t-xl"
         style={{ backgroundColor: liftColor }}

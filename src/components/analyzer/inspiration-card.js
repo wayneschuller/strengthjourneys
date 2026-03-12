@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 const INSPIRATIONAL_QUOTES = [
   {
@@ -101,14 +102,33 @@ export function InspirationCard({
   title = "Training note",
   variant = "default",
   className = "",
+  delayedReveal = false,
+  revealDelayMs = 500,
 }) {
   const quote = getSeededQuote(seedKey);
   const isRail = variant === "rail";
+  const [isVisible, setIsVisible] = useState(() => !delayedReveal);
+
+  useEffect(() => {
+    if (!delayedReveal) {
+      return undefined;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setIsVisible(true);
+    }, revealDelayMs);
+
+    return () => window.clearTimeout(timerId);
+  }, [delayedReveal, revealDelayMs, seedKey]);
 
   return (
     <Card
       className={cn(
         isRail && "border-border/35 bg-muted/8 shadow-sm",
+        "transition-all duration-700 ease-out",
+        isVisible
+          ? "translate-y-0 opacity-100"
+          : "pointer-events-none translate-y-2 opacity-0",
         className,
       )}
     >

@@ -416,9 +416,10 @@ function WeekSessionList({ rows }) {
         </div>
       ) : (
         rows.map((row) => (
-          <div
+          <Link
             key={row.date}
-            className="grid grid-cols-[56px_72px_minmax(0,1fr)] items-start gap-3 rounded-xl border bg-muted/20 px-4 py-3"
+            href={{ pathname: "/log", query: { date: row.date } }}
+            className="grid grid-cols-[56px_72px_minmax(0,1fr)] items-start gap-3 rounded-xl border bg-muted/20 px-4 py-3 transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <p className="text-sm font-semibold text-foreground">
               {format(new Date(row.date + "T00:00:00"), "EEE")}
@@ -429,7 +430,7 @@ function WeekSessionList({ rows }) {
             <p className="min-w-0 text-sm text-foreground">
               {row.liftSummary}
             </p>
-          </div>
+          </Link>
         ))
       )}
     </div>

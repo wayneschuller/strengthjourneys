@@ -45,6 +45,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  ClipboardPlus,
   PlayCircle,
   Trash2,
   Dumbbell,
@@ -1429,6 +1430,7 @@ export default function LogSessionPage() {
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-4 pt-3">
             <InspirationCard
+              key={sessionDate}
               seedKey={sessionDate}
               title={isToday ? "For today" : "Training note"}
               variant="rail"
@@ -3118,7 +3120,7 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
         className="w-full gap-2"
         onClick={() => setShowInput(true)}
       >
-        <Plus className="h-4 w-4" />
+        <ClipboardPlus className="h-4 w-4" />
         {label}
       </Button>
     );

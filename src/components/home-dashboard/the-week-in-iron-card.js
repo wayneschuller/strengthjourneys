@@ -34,7 +34,6 @@ import {
 
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const BIG_FOUR_STARTERS = [
   { liftType: "Back Squat", icon: "/back_squat.svg" },
   { liftType: "Bench Press", icon: "/bench_press.svg" },
@@ -184,6 +183,38 @@ function computeWeeklyStats(parsedData, boundaries) {
   };
 }
 
+function getWeeklySessionRows(parsedData, boundaries) {
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return [];
+
+  const sessionsByDate = new Map();
+
+  for (const entry of parsedData) {
+    if (!entry || entry.isGoal) continue;
+    if ((entry.reps ?? 0) < 1) continue;
+    if (entry.date < boundaries.mondayStr || entry.date > boundaries.effectiveEnd) {
+      continue;
+    }
+
+    const existing = sessionsByDate.get(entry.date);
+    if (existing) {
+      existing.lifts.add(entry.liftType);
+      continue;
+    }
+
+    sessionsByDate.set(entry.date, {
+      date: entry.date,
+      lifts: new Set([entry.liftType]),
+    });
+  }
+
+  return [...sessionsByDate.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((session) => ({
+      ...session,
+      liftSummary: formatLiftSummary([...session.lifts]),
+    }));
+}
+
 // ─── Formatting helpers ────────────────────────────────────────────────────
 
 function formatTonnage(value, unit) {
@@ -196,6 +227,21 @@ function getTonnageDelta(current, prev) {
   if (prev === 0) return null;
   const pct = ((current - prev) / prev) * 100;
   return pct;
+}
+
+function formatLiftSummary(liftTypes) {
+  if (!Array.isArray(liftTypes) || liftTypes.length === 0) {
+    return "Session logged";
+  }
+
+  const orderedLiftTypes = [
+    ...liftTypes.filter((liftType) => BIG_FOUR_LIFT_TYPES.includes(liftType)),
+    ...liftTypes.filter((liftType) => !BIG_FOUR_LIFT_TYPES.includes(liftType)),
+  ];
+  const uniqueLiftTypes = [...new Set(orderedLiftTypes)];
+
+  if (uniqueLiftTypes.length <= 3) return uniqueLiftTypes.join(", ");
+  return `${uniqueLiftTypes.slice(0, 3).join(", ")} +${uniqueLiftTypes.length - 3}`;
 }
 
 // ─── Main component ────────────────────────────────────────────────────────
@@ -226,17 +272,12 @@ export function TheWeekInIronCard({
     if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
     return computeWeeklyStats(parsedData, boundaries);
   }, [parsedData, boundaries]);
+  const weeklySessionRows = useMemo(
+    () => getWeeklySessionRows(parsedData, boundaries),
+    [parsedData, boundaries],
+  );
 
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
-
-  const tonnageDelta = stats
-    ? getTonnageDelta(
-        stats.tonnage.current,
-        boundaries.isCurrentWeek
-          ? stats.tonnage.prevSameDay
-          : stats.tonnage.prev,
-      )
-    : null;
 
   const viewPreviousWeek = () => {
     setWeekOffset((prev) => Math.min(maxWeekOffset, prev + 1));
@@ -318,84 +359,9 @@ export function TheWeekInIronCard({
               <WeekSection
                 stepLabel="A"
                 title="What happened this week"
-                description={getWeekRecapCopy(stats, boundaries, unit)}
+                description={getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows)}
               >
-                <WeekDayGrid
-                  dayActivity={stats.dayActivity}
-                  boundaries={boundaries}
-                />
-
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <StatBlock
-                    label="Sessions"
-                    value={stats.sessions.current}
-                    prev={
-                      boundaries.isCurrentWeek
-                        ? stats.sessions.prevSameDay
-                        : stats.sessions.prev
-                    }
-                  />
-                  <StatBlock
-                    label="Sets"
-                    value={stats.sets.current}
-                  />
-                  <StatBlock
-                    label="PRs"
-                    value={stats.prs}
-                    highlight={stats.prs > 0}
-                  />
-                </div>
-
-                <div className="rounded-xl border bg-muted/20 px-4 py-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Volume
-                    </span>
-                    {tonnageDelta !== null && (
-                      <TonnageDeltaBadge delta={tonnageDelta} />
-                    )}
-                  </div>
-                  <p className="mt-1 text-2xl font-bold tracking-tight">
-                    {formatTonnage(stats.tonnage.current, unit)}
-                  </p>
-                  {boundaries.isCurrentWeek &&
-                    stats.tonnage.prevSameDay > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        vs {formatTonnage(stats.tonnage.prevSameDay, unit)} same
-                        point last week
-                      </p>
-                    )}
-                  {!boundaries.isCurrentWeek && stats.tonnage.prev > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      vs {formatTonnage(stats.tonnage.prev, unit)} previous week
-                    </p>
-                  )}
-                </div>
-
-                {stats.liftTypes.length > 0 && (
-                  <div className="space-y-1.5">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Lifts trained
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {stats.liftTypes.map((liftType) => (
-                        <span
-                          key={liftType}
-                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs ${
-                            BIG_FOUR_LIFT_TYPES.includes(liftType)
-                              ? "border-primary/30 bg-primary/5 font-medium text-foreground"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {liftType}
-                          <span className="text-muted-foreground">
-                            ×{stats.liftTypeSets[liftType]}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <WeekSessionList rows={weeklySessionRows} />
               </WeekSection>
 
               <Separator />
@@ -423,42 +389,6 @@ export function TheWeekInIronCard({
 
 // ─── Supporting components ─────────────────────────────────────────────────
 
-function WeekDayGrid({ dayActivity, boundaries }) {
-  return (
-    <div className="grid grid-cols-7 gap-1.5 text-center">
-      {DAY_LABELS.map((label, i) => {
-        const active = dayActivity[i];
-        const dateStr = addDaysFromStr(boundaries.mondayStr, i);
-        const isFuture =
-          boundaries.isCurrentWeek && dateStr > boundaries.todayStr;
-        const isToday =
-          boundaries.isCurrentWeek && dateStr === boundaries.todayStr;
-
-        return (
-          <div key={label} className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {label}
-            </span>
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : isFuture
-                    ? "border border-dashed border-muted-foreground/30 text-muted-foreground/40"
-                    : isToday
-                      ? "border-2 border-primary/50 text-muted-foreground"
-                      : "bg-muted/50 text-muted-foreground/60"
-              }`}
-            >
-              {new Date(dateStr + "T00:00:00").getDate()}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function WeekSection({ stepLabel, title, description, children }) {
   return (
     <section className="space-y-3">
@@ -477,44 +407,32 @@ function WeekSection({ stepLabel, title, description, children }) {
   );
 }
 
-function StatBlock({ label, value, prev, highlight = false }) {
+function WeekSessionList({ rows }) {
   return (
-    <div className="space-y-0.5">
-      <p
-        className={`text-2xl font-bold tabular-nums ${
-          highlight ? "text-primary" : ""
-        }`}
-      >
-        {value}
-      </p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      {prev !== undefined && prev > 0 && (
-        <p className="text-[10px] text-muted-foreground/70">
-          vs {prev} last wk
-        </p>
+    <div className="space-y-2">
+      {rows.length === 0 ? (
+        <div className="rounded-xl border border-dashed bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+          No sessions logged in this week.
+        </div>
+      ) : (
+        rows.map((row) => (
+          <div
+            key={row.date}
+            className="grid grid-cols-[56px_72px_minmax(0,1fr)] items-start gap-3 rounded-xl border bg-muted/20 px-4 py-3"
+          >
+            <p className="text-sm font-semibold text-foreground">
+              {format(new Date(row.date + "T00:00:00"), "EEE")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {format(new Date(row.date + "T00:00:00"), "MMM d")}
+            </p>
+            <p className="min-w-0 text-sm text-foreground">
+              {row.liftSummary}
+            </p>
+          </div>
+        ))
       )}
     </div>
-  );
-}
-
-function TonnageDeltaBadge({ delta }) {
-  const isUp = delta > 0;
-  const isDown = delta < 0;
-  const abs = Math.abs(delta);
-  if (abs < 0.5) return null;
-
-  return (
-    <span
-      className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ${
-        isUp
-          ? "bg-green-500/10 text-green-600 dark:text-green-400"
-          : isDown
-            ? "bg-red-500/10 text-red-600 dark:text-red-400"
-            : "bg-muted text-muted-foreground"
-      }`}
-    >
-      {isUp ? "▲" : "▼"} {abs.toFixed(1)}%
-    </span>
   );
 }
 
@@ -550,23 +468,20 @@ function EarlyWeekCard({ isDemoMode, dataMaturityStage, dashboardStage }) {
   );
 }
 
-function getWeekRecapCopy(stats, boundaries, unit) {
-  const sessionsLabel =
-    stats.sessions.current === 1 ? "1 session" : `${stats.sessions.current} sessions`;
-  const prsLabel = stats.prs === 1 ? "1 PR" : `${stats.prs} PRs`;
-  const volumeLabel = formatTonnage(stats.tonnage.current, unit);
-
-  if (stats.sessions.current === 0) {
+function getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows) {
+  if (weeklySessionRows.length === 0) {
     return boundaries.isCurrentWeek
       ? "Nothing logged yet this week. The first session sets the tone."
       : "No sessions were logged in this week.";
   }
 
-  if (stats.prs > 0) {
-    return `${sessionsLabel}, ${stats.sets.current} sets, and ${prsLabel}. You moved ${volumeLabel} total.`;
-  }
+  const sessionsLabel =
+    weeklySessionRows.length === 1
+      ? "1 training day logged"
+      : `${weeklySessionRows.length} training days logged`;
+  const volumeLabel = formatTonnage(stats.tonnage.current, unit);
 
-  return `${sessionsLabel} and ${stats.sets.current} sets logged for ${volumeLabel} of total volume.`;
+  return `${sessionsLabel} so far, with ${volumeLabel} of total volume across the week.`;
 }
 
 function getNextStepCopy(stats, boundaries) {

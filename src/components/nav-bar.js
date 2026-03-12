@@ -62,7 +62,7 @@ import {
   Flame,
   Sparkles,
   CircleDashed,
-  Dumbbell,
+  ClipboardPlus,
   ChevronDown,
   Mountain,
 } from "lucide-react";
@@ -177,7 +177,7 @@ export function NavBar() {
           {authStatus === "authenticated" && process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
             <Button asChild size="sm" className="hidden gap-1.5 md:flex">
               <Link href="/log">
-                <Dumbbell className="h-4 w-4" />
+                <ClipboardPlus className="h-4 w-4" />
                 Log
               </Link>
             </Button>

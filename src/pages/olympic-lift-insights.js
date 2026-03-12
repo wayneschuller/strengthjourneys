@@ -32,19 +32,16 @@ import { MostRecentSessionCard } from "@/components/most-recent-session-card";
 import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
 import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { interpolateOlympicStandardKG } from "@/lib/olympic-lifting-standards-kg";
 
 const CANONICAL_URL = "https://www.strengthjourneys.xyz/olympic-lift-insights";
 
-// The current page ships with preview targets for the power variations so the
-// UI can work now. Replace these ratios with dedicated Snatch / Clean & Jerk
-// Kilgore tables once they are digitized into the core standards data layer.
 const OLYMPIC_LIFTS = [
   {
     liftType: "Power Clean",
     navLabel: "Power Clean",
     sectionId: "power-clean",
-    standardsRef: { liftType: "Deadlift", ratio: 0.6 },
-    standardsSourceLabel: "Clean & Jerk",
+    standardsLiftType: "Clean & Jerk",
     intro:
       "The power clean is the fastest way to teach forceful hip extension, fast elbows, and athletic bar speed without turning the page into a full Olympic lifting textbook.",
     cues: [
@@ -58,8 +55,7 @@ const OLYMPIC_LIFTS = [
     liftType: "Power Snatch",
     navLabel: "Power Snatch",
     sectionId: "power-snatch",
-    standardsRef: { liftType: "Strict Press", ratio: 0.85 },
-    standardsSourceLabel: "Snatch",
+    standardsLiftType: "Snatch",
     intro:
       "The power snatch is less about muscling the bar and more about patience off the floor, a violent finish, and punching into a stable overhead catch.",
     cues: [
@@ -85,7 +81,7 @@ const FAQ_ITEMS = [
   {
     question: "Are these standards exact Kilgore power clean and power snatch tables?",
     answer:
-      "Not yet. The current sliders are preview targets derived from the existing standards model so you can compare your log today. The planned upgrade is to wire in the published Snatch and Clean & Jerk tables directly from the Kilgore source material.",
+      "No. Kilgore publishes Snatch and Clean & Jerk tables, not separate power clean and power snatch tables. This page uses those published Olympic-lift tables as the closest reference point for the power variations, which is more defensible than the earlier ratio-based placeholder model.",
   },
   {
     question: "What should I focus on first: load or technique?",
@@ -96,17 +92,6 @@ const FAQ_ITEMS = [
 
 function flattenAnswer(answer) {
   return typeof answer === "string" ? answer : "";
-}
-
-function scaleStandards(standard, ratio) {
-  if (!standard) return null;
-
-  return Object.fromEntries(
-    Object.entries(standard).map(([key, value]) => [
-      key,
-      typeof value === "number" ? Math.round(value * ratio) : value,
-    ]),
-  );
 }
 
 function OlympicLiftGuideCard({ lift }) {
@@ -139,8 +124,8 @@ function OlympicLiftGuideCard({ lift }) {
   );
 }
 
-function OlympicStandardsCard({ lift, previewStandards, isMetric }) {
-  if (!previewStandards) {
+function OlympicStandardsCard({ lift, standards, isMetric }) {
+  if (!standards) {
     return (
       <Card>
         <CardHeader>
@@ -158,15 +143,14 @@ function OlympicStandardsCard({ lift, previewStandards, isMetric }) {
       <CardHeader>
         <CardTitle>{lift.liftType} Standards</CardTitle>
         <CardDescription>
-          Preview targets for the power variation, currently scaled from the{" "}
-          {lift.standardsSourceLabel} source family while the dedicated Kilgore
-          Olympic-lift tables are being prepared for the app.
+          Uses the published Kilgore {lift.standardsLiftType} standards as the
+          benchmark reference for this power variation.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <StandardsSlider
           liftType={lift.liftType}
-          standards={previewStandards}
+          standards={standards}
           isMetric={isMetric}
           hideRating
         />
@@ -224,21 +208,39 @@ function FaqSection() {
 }
 
 export default function OlympicLiftInsightsPage() {
-  const { standards, isMetric } = useAthleteBio();
+  const { age, bodyWeight, isMetric, sex } = useAthleteBio();
 
-  const previewStandards = useMemo(() => {
-    if (!standards) return {};
+  const olympicStandards = useMemo(() => {
+    if (!age || !bodyWeight || !sex) return {};
+
+    const bodyWeightKG = isMetric
+      ? bodyWeight
+      : Math.round(bodyWeight / 2.2046);
 
     return Object.fromEntries(
       OLYMPIC_LIFTS.map((lift) => {
-        const baseStandard = standards?.[lift.standardsRef.liftType];
+        const standard = interpolateOlympicStandardKG(
+          age,
+          bodyWeightKG,
+          sex,
+          lift.standardsLiftType,
+        );
+
         return [
           lift.liftType,
-          scaleStandards(baseStandard, lift.standardsRef.ratio),
+          !isMetric && standard
+            ? {
+                physicallyActive: Math.round(standard.physicallyActive * 2.2046),
+                beginner: Math.round(standard.beginner * 2.2046),
+                intermediate: Math.round(standard.intermediate * 2.2046),
+                advanced: Math.round(standard.advanced * 2.2046),
+                elite: Math.round(standard.elite * 2.2046),
+              }
+            : standard,
         ];
       }),
     );
-  }, [standards]);
+  }, [age, bodyWeight, isMetric, sex]);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -247,7 +249,7 @@ export default function OlympicLiftInsightsPage() {
         "@type": "WebPage",
         name: "Olympic Lift Insights: Power Clean and Power Snatch",
         description:
-          "Power clean and power snatch cues, intro videos, standards preview, and tracking tools for your Olympic-lift variations.",
+          "Power clean and power snatch cues, intro videos, Kilgore Olympic-lift standards references, and tracking tools for your Olympic-lift variations.",
         url: CANONICAL_URL,
       },
       {
@@ -290,13 +292,13 @@ export default function OlympicLiftInsightsPage() {
       </Head>
       <NextSeo
         title="Olympic Lift Insights: Power Clean & Power Snatch"
-        description="Power clean and power snatch cues, intro videos, standards preview, and tracking tools for lifters who want more speed, power, and better barbell timing."
+        description="Power clean and power snatch cues, intro videos, Kilgore Olympic-lift standards references, and tracking tools for lifters who want more speed, power, and better barbell timing."
         canonical={CANONICAL_URL}
         openGraph={{
           url: CANONICAL_URL,
           title: "Olympic Lift Insights: Power Clean & Power Snatch",
           description:
-            "Power clean and power snatch cues, intro videos, standards preview, and tracking tools for lifters who want more speed, power, and better barbell timing.",
+            "Power clean and power snatch cues, intro videos, Kilgore Olympic-lift standards references, and tracking tools for lifters who want more speed, power, and better barbell timing.",
           type: "website",
           images: [
             {
@@ -421,11 +423,11 @@ export default function OlympicLiftInsightsPage() {
               <h2 className="text-2xl font-semibold tracking-tight">Olympic Lift Standards</h2>
               <p className="max-w-3xl text-sm text-muted-foreground">
                 The published Kilgore source material exposes Snatch and Clean &
-                Jerk tables, not power-variation tables. This page currently
-                uses a practical preview model for Power Clean and Power Snatch
-                so you can compare your log now, with a clear upgrade path to
-                dedicated Olympic-lift tables once they are wired into the core
-                standards data.
+                Jerk tables, not separate power-variation tables. This page now
+                uses those published Olympic-lift standards directly as the
+                closest benchmark reference for Power Clean and Power Snatch,
+                so your comparison is grounded in the actual Kilgore source
+                data rather than a derived placeholder model.
               </p>
             </div>
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -433,7 +435,7 @@ export default function OlympicLiftInsightsPage() {
                 <OlympicStandardsCard
                   key={lift.liftType}
                   lift={lift}
-                  previewStandards={previewStandards}
+                  standards={olympicStandards[lift.liftType]}
                   isMetric={isMetric}
                 />
               ))}

@@ -775,6 +775,31 @@ export default function LogSessionPage() {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   ]);
+  const [quoteRevealPhase, setQuoteRevealPhase] = useState("loading");
+
+  useEffect(() => {
+    if (!quoteRevealReady) {
+      setQuoteRevealPhase("loading");
+      return undefined;
+    }
+
+    setQuoteRevealPhase("primed");
+    let frameId = 0;
+    let timerId = 0;
+
+    frameId = window.requestAnimationFrame(() => {
+      frameId = window.requestAnimationFrame(() => {
+        timerId = window.setTimeout(() => {
+          setQuoteRevealPhase("ready");
+        }, 250);
+      });
+    });
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      if (timerId) window.clearTimeout(timerId);
+    };
+  }, [quoteRevealReady, sessionDate]);
 
   const prevSessionDate = useMemo(() => {
     const earlier = sessionDates.filter((d) => d < sessionDate);
@@ -1446,9 +1471,9 @@ export default function LogSessionPage() {
               delayedReveal
               revealDelayMs={700}
               revealTriggerKey={
-                quoteRevealReady
-                  ? `analysis-ready:${sessionDate}:${parsedData?.length ?? 0}`
-                  : "analysis-loading"
+                quoteRevealPhase === "ready"
+                  ? `analysis-painted:${sessionDate}:${parsedData?.length ?? 0}`
+                  : `analysis-${quoteRevealPhase}`
               }
             />
           </div>

@@ -2401,7 +2401,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     <div
       className="relative rounded-xl border bg-card shadow-md"
       style={{
-        borderColor: hexToRgba(liftColor, 0.35),
         backgroundImage: `linear-gradient(135deg, ${hexToRgba(liftColor, 0.12)} 0%, ${hexToRgba(liftColor, 0.06)} 18%, rgba(255, 255, 255, 0) 42%)`,
         boxShadow: `inset 4px 0 0 ${liftColor}`,
       }}

@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
@@ -1832,6 +1833,26 @@ function logSheetTimings(label, timings, totalMs, addLogEntry) {
   }
 }
 
+function hexToRgba(hexColor, alpha) {
+  if (typeof hexColor !== "string" || !hexColor.startsWith("#")) {
+    return `rgba(0, 0, 0, ${alpha})`;
+  }
+
+  let hex = hexColor.slice(1);
+  if (hex.length === 3) {
+    hex = hex.split("").map((char) => char + char).join("");
+  }
+  if (hex.length !== 6) {
+    return `rgba(0, 0, 0, ${alpha})`;
+  }
+
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
 function getEditableSetFields(set) {
   return {
     reps: set.reps,
@@ -1955,6 +1976,7 @@ function SyncIndicator({ state }) {
 function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, dashboardStage, sessionCount = 0, isPastSession, onUpdateSet, onDeleteSet, onAddSet }) {
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
+  const { getColor } = useLiftColors();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
@@ -1966,6 +1988,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const realSets = sets.filter((s) => !s._pending);
   const lastRealSet = realSets[realSets.length - 1];
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
+  const liftColor = getColor(liftType);
 
   // Show a one-time hint for new users (first ~20 sessions)
   const showSuggestionHint = useMemo(() => {
@@ -2375,7 +2398,18 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const desktopIconOffsetClass = "md:ml-28 lg:ml-32";
 
   return (
-    <div className="relative rounded-xl border bg-card shadow-md">
+    <div
+      className="relative rounded-xl border bg-card shadow-md"
+      style={{
+        borderColor: hexToRgba(liftColor, 0.35),
+        backgroundImage: `linear-gradient(135deg, ${hexToRgba(liftColor, 0.12)} 0%, ${hexToRgba(liftColor, 0.06)} 18%, rgba(255, 255, 255, 0) 42%)`,
+        boxShadow: `inset 4px 0 0 ${liftColor}`,
+      }}
+    >
+      <div
+        className="absolute inset-x-0 top-0 h-1 rounded-t-xl"
+        style={{ backgroundColor: liftColor }}
+      />
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
         <div className="absolute left-4 top-4 hidden md:block">
@@ -2394,8 +2428,24 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         )}
         <div className="min-w-0 flex-1">
           <div className="pb-1">
+            <div className="mb-2 flex items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: liftColor }}
+              />
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.22em]"
+                style={{ color: hexToRgba(liftColor, 0.9) }}
+              >
+                {liftType}
+              </span>
+            </div>
             {bigFourEntry ? (
-              <Link href={`/${bigFourEntry.slug}`} className="text-base font-semibold text-foreground hover:underline">
+              <Link
+                href={`/${bigFourEntry.slug}`}
+                className="text-base font-semibold text-foreground hover:underline"
+                style={{ textDecorationColor: liftColor }}
+              >
                 {liftType}
               </Link>
             ) : (

@@ -37,6 +37,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 import Image from "next/image";
@@ -3124,7 +3132,6 @@ function PastSessionSmartAddButtons({ liftType, buttons, onAddSet, showHint }) {
 function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
-  const inputRef = useRef(null);
 
   // Build chip list: Big Four first, then curated cue-video lifts, then frequent user lifts.
   const chips = useMemo(() => {
@@ -3146,10 +3153,6 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
       return true;
     });
   }, [parsedData]);
-
-  useEffect(() => {
-    if (showInput) inputRef.current?.focus();
-  }, [showInput]);
 
   function submit(lt) {
     const raw = (lt ?? liftType).trim();
@@ -3176,32 +3179,47 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" 
 
   return (
     <div className="space-y-3 rounded-lg border p-4">
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder="Lift type (e.g. Back Squat)"
-        className="w-full rounded border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-        value={liftType}
-        onChange={(e) => setLiftType(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-      />
-      {/* Quick-add chips: Big Four (with icons) + frequent lifts */}
-      <div className="max-h-36 overflow-y-auto pr-1">
-        <div className="flex flex-wrap gap-1.5">
-        {chips.map(({ name, icon }) => (
-          <button
-            key={name}
-            className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-            onClick={() => submit(name)}
-          >
-            {icon && (
-              <Image src={icon} alt="" width={16} height={16} className="shrink-0" />
-            )}
-            {name}
-          </button>
-        ))}
-        </div>
-      </div>
+      <Command className="rounded-lg border bg-background">
+        <CommandInput
+          placeholder="Lift type (e.g. Back Squat)"
+          value={liftType}
+          onValueChange={setLiftType}
+        />
+        <CommandList className="max-h-44">
+          <CommandEmpty>
+            {liftType.trim()
+              ? `No match. Add "${liftType.trim()}" below.`
+              : "No lift found."}
+          </CommandEmpty>
+          {liftType.trim() ? (
+            <CommandGroup heading="Add new">
+              <CommandItem
+                value={`create-${liftType.trim()}`}
+                onSelect={() => submit(liftType)}
+              >
+                <ClipboardPlus className="h-4 w-4" />
+                {`Add "${liftType.trim()}"`}
+              </CommandItem>
+            </CommandGroup>
+          ) : null}
+          <CommandGroup heading="Lifts">
+            {chips.map(({ name, icon }) => (
+              <CommandItem
+                key={name}
+                value={name}
+                onSelect={() => submit(name)}
+              >
+                {icon ? (
+                  <Image src={icon} alt="" width={16} height={16} className="shrink-0" />
+                ) : (
+                  <ClipboardPlus className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span>{name}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
       <div className="flex gap-2">
         <Button size="sm" onClick={() => submit()} disabled={!liftType.trim()}>
           Add

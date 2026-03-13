@@ -627,6 +627,29 @@ export default function LogSessionPage() {
     });
   }, []);
 
+  const recordDevSyncTrace = useCallback((entry) => {
+    // Dev-only forensic trace for recent sheet writes. This intentionally lives
+    // in localStorage so a preflight conflict can be investigated after the UI
+    // has already moved on. Production should not accumulate this noise.
+    if (!isDev || typeof window === "undefined") return;
+    try {
+      const key = LOCAL_STORAGE_KEYS.DEV_LOG_SYNC_TRACE;
+      const raw = window.localStorage.getItem(key);
+      const current = raw ? JSON.parse(raw) : [];
+      const next = [
+        ...current,
+        {
+          at: new Date().toISOString(),
+          sessionDate,
+          ...entry,
+        },
+      ].slice(-25);
+      window.localStorage.setItem(key, JSON.stringify(next));
+    } catch (error) {
+      console.error("[log-sync-trace] failed to record dev trace", error);
+    }
+  }, [sessionDate]);
+
   // Sync date from URL param after hydration
   useEffect(() => {
     if (router.query.date && typeof router.query.date === "string") {
@@ -962,6 +985,14 @@ export default function LogSessionPage() {
       if (!sheetInfo?.ssid) return;
       markSaving();
       const t0 = performance.now();
+      recordDevSyncTrace({
+        op: "edit-cell",
+        phase: "request",
+        rowIndex,
+        field,
+        beforeSnapshot,
+        value,
+      });
       try {
         const res = await fetch("/api/sheet/edit-cell", {
           method: "POST",
@@ -976,6 +1007,16 @@ export default function LogSessionPage() {
         });
         if (!res.ok) {
           const apiError = await readApiError(res, "Update failed");
+          recordDevSyncTrace({
+            op: "edit-cell",
+            phase: "response",
+            rowIndex,
+            field,
+            ok: false,
+            code: apiError.code,
+            message: apiError.message,
+            actual: apiError.actual,
+          });
           if (apiError.code === "PRECONDITION_FAILED") {
             console.error("[sheet/edit-cell] preflight verification failed", {
               rowIndex,
@@ -996,15 +1037,30 @@ export default function LogSessionPage() {
           }
           throw new Error(apiError.message || "Update failed");
         }
+        recordDevSyncTrace({
+          op: "edit-cell",
+          phase: "response",
+          rowIndex,
+          field,
+          ok: true,
+        });
         markSaved();
       } catch (err) {
         console.error("[sheet/edit-cell] updateSet failed:", err);
+        recordDevSyncTrace({
+          op: "edit-cell",
+          phase: "response",
+          rowIndex,
+          field,
+          ok: false,
+          message: err?.message || "Update failed",
+        });
         markError();
       }
       logSheetTimings("updateSet", [{ name: "POST /api/sheet/edit-cell", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
-    [sheetInfo?.ssid, addLogEntry, toast],
+    [sheetInfo?.ssid, addLogEntry, toast, recordDevSyncTrace],
   );
 
   const persistSetRowUpdate = useCallback(
@@ -1012,6 +1068,13 @@ export default function LogSessionPage() {
       if (!sheetInfo?.ssid) return;
       markSaving();
       const t0 = performance.now();
+      recordDevSyncTrace({
+        op: "edit-row",
+        phase: "request",
+        rowIndex,
+        beforeSnapshot,
+        afterSnapshot,
+      });
       try {
         const res = await fetch("/api/sheet/edit-row", {
           method: "POST",
@@ -1025,6 +1088,15 @@ export default function LogSessionPage() {
         });
         if (!res.ok) {
           const apiError = await readApiError(res, "Update failed");
+          recordDevSyncTrace({
+            op: "edit-row",
+            phase: "response",
+            rowIndex,
+            ok: false,
+            code: apiError.code,
+            message: apiError.message,
+            actual: apiError.actual,
+          });
           if (apiError.code === "PRECONDITION_FAILED") {
             console.error("[sheet/edit-row] preflight verification failed", {
               rowIndex,
@@ -1045,16 +1117,29 @@ export default function LogSessionPage() {
           }
           throw new Error(apiError.message || "Update failed");
         }
+        recordDevSyncTrace({
+          op: "edit-row",
+          phase: "response",
+          rowIndex,
+          ok: true,
+        });
         clearPendingQueuedSync(tempId, snapshotToEditableFields(afterSnapshot));
         markSaved();
       } catch (err) {
         console.error("[sheet/edit-row] updateSet failed:", err);
+        recordDevSyncTrace({
+          op: "edit-row",
+          phase: "response",
+          rowIndex,
+          ok: false,
+          message: err?.message || "Update failed",
+        });
         markError();
       }
       logSheetTimings("updateSet", [{ name: "POST /api/sheet/edit-row", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
-    [sheetInfo?.ssid, clearPendingQueuedSync, addLogEntry, toast],
+    [sheetInfo?.ssid, clearPendingQueuedSync, addLogEntry, toast, recordDevSyncTrace],
   );
 
   const drainQueuedEditOp = useCallback(() => {
@@ -1211,6 +1296,15 @@ export default function LogSessionPage() {
       markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
+      const beforeSnapshot = buildSheetSnapshotFromFields(getEditableSetFields(set), set);
+      recordDevSyncTrace({
+        op: "delete-row",
+        phase: "request",
+        rowIndex: set.rowIndex,
+        beforeSnapshot,
+        expectedAnchorType: isFirstOfSession ? "session" : isFirstOfLift ? "lift" : "plain",
+        promoteTo,
+      });
       try {
         const tApi = performance.now();
         const res = await fetch("/api/sheet/delete-row", {
@@ -1219,7 +1313,7 @@ export default function LogSessionPage() {
           body: JSON.stringify({
             ssid: sheetInfo.ssid,
             rowIndex: set.rowIndex,
-            before: buildSheetSnapshotFromFields(getEditableSetFields(set), set),
+            before: beforeSnapshot,
             expectedAnchorType: isFirstOfSession ? "session" : isFirstOfLift ? "lift" : "plain",
             promoteTo,
           }),
@@ -1227,6 +1321,15 @@ export default function LogSessionPage() {
         timings.push({ name: "POST /api/sheet/delete-row", ms: performance.now() - tApi });
         const data = await res.json();
         if (!res.ok) {
+          recordDevSyncTrace({
+            op: "delete-row",
+            phase: "response",
+            rowIndex: set.rowIndex,
+            ok: false,
+            code: data?.code || null,
+            message: data?.error || "Delete failed",
+            actual: data?.actual || null,
+          });
           if (data?.code === "PRECONDITION_FAILED") {
             console.error("[sheet/delete-row] preflight verification failed", {
               rowIndex: set.rowIndex,
@@ -1251,6 +1354,12 @@ export default function LogSessionPage() {
           }
           throw new Error(data.error || "Delete failed");
         }
+        recordDevSyncTrace({
+          op: "delete-row",
+          phase: "response",
+          rowIndex: set.rowIndex,
+          ok: true,
+        });
 
         // Do NOT call mutate() here — same reasoning as addSet: firing a
         // revalidation mid-session causes parsedData churn and flicker.
@@ -1259,6 +1368,13 @@ export default function LogSessionPage() {
         markStructuralSaved();
       } catch (err) {
         console.error("[sheet/delete-row] deleteSet failed:", err);
+        recordDevSyncTrace({
+          op: "delete-row",
+          phase: "response",
+          rowIndex: set.rowIndex,
+          ok: false,
+          message: err?.message || "Delete failed",
+        });
         // Restore the row on failure
         setDeletedRowIndices((prev) => {
           const next = new Set(prev);
@@ -1270,7 +1386,7 @@ export default function LogSessionPage() {
       logSheetTimings("deleteSet", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, toast, addLogEntry],
+    [sheetInfo?.ssid, parsedData, toast, addLogEntry, recordDevSyncTrace],
   );
 
   // Add a new set to an existing lift block.
@@ -1330,6 +1446,13 @@ export default function LogSessionPage() {
       markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
+      recordDevSyncTrace({
+        op: "insert-row",
+        phase: "request",
+        rowIndex: insertAfterRowIndex,
+        insertAfterRowIndex,
+        rows: [["", "", String(reps), `${weight}${unitType}`, notes, ""]],
+      });
 
       try {
         const tApi = performance.now();
@@ -1345,6 +1468,13 @@ export default function LogSessionPage() {
         timings.push({ name: "POST /api/sheet/insert-row", ms: performance.now() - tApi });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Add set failed");
+        recordDevSyncTrace({
+          op: "insert-row",
+          phase: "response",
+          rowIndex: data?.firstRowIndex ?? null,
+          ok: true,
+          firstRowIndex: data?.firstRowIndex ?? null,
+        });
         const { firstRowIndex } = data;
         markStructuralSaved();
         // Promote pending → confirmed with real rowIndex.
@@ -1355,6 +1485,13 @@ export default function LogSessionPage() {
         promoteFirstPending(liftType, firstRowIndex);
       } catch (err) {
         console.error("[sheet/insert-row] addSet failed:", err);
+        recordDevSyncTrace({
+          op: "insert-row",
+          phase: "response",
+          rowIndex: insertAfterRowIndex,
+          ok: false,
+          message: err?.message || "Add set failed",
+        });
         // Remove the failed pending row
         setPendingSetsSync((prev) => {
           const next = { ...prev };
@@ -1367,7 +1504,7 @@ export default function LogSessionPage() {
       logSheetTimings("addSet", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace],
   );
 
   // Add a brand-new lift type to the session.
@@ -1444,6 +1581,14 @@ export default function LogSessionPage() {
         notes,
         "",
       ];
+      recordDevSyncTrace({
+        op: "insert-row",
+        phase: "request",
+        rowIndex: insertAfterRowIndex,
+        insertAfterRowIndex,
+        rows: [row],
+        newSession: !hasExistingSession,
+      });
 
       try {
         const tApi = performance.now();
@@ -1460,12 +1605,26 @@ export default function LogSessionPage() {
         timings.push({ name: "POST /api/sheet/insert-row", ms: performance.now() - tApi });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed");
+        recordDevSyncTrace({
+          op: "insert-row",
+          phase: "response",
+          rowIndex: data?.firstRowIndex ?? null,
+          ok: true,
+          firstRowIndex: data?.firstRowIndex ?? null,
+        });
         const { firstRowIndex } = data;
         markStructuralSaved();
         // See addSet for why we don't call mutate() here.
         promoteFirstPending(liftType, firstRowIndex);
       } catch (err) {
         console.error("[sheet/insert-row] addLift failed:", err);
+        recordDevSyncTrace({
+          op: "insert-row",
+          phase: "response",
+          rowIndex: insertAfterRowIndex,
+          ok: false,
+          message: err?.message || "Failed",
+        });
         setPendingSetsSync((prev) => {
           const next = { ...prev };
           if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
@@ -1477,7 +1636,7 @@ export default function LogSessionPage() {
       logSheetTimings("addLift", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace],
   );
 
   useEffect(() => {

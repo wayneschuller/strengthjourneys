@@ -106,6 +106,9 @@ export const LOCAL_STORAGE_KEYS = {
 
   // Session analysis – creative ratings cache (per date, auth only)
   SESSION_RATING_CACHE: "sj-session-rating-cache",
+  // Dev-only log sync trace. Stores the last few sheet write attempts so
+  // preflight conflicts can be inspected after the fact.
+  DEV_LOG_SYNC_TRACE: "sj-dev-log-sync-trace",
 
   // Analyzer
   HEATMAP_VIEW_MODE: "SJ_heatmapViewMode",

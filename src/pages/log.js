@@ -1298,14 +1298,9 @@ export default function LogSessionPage() {
       const prevSessionSet = sessionIndex > 0 ? sessionSets[sessionIndex - 1] : null;
       const nextSessionSet =
         sessionIndex < sessionSets.length - 1 ? sessionSets[sessionIndex + 1] : null;
-      const isFirstOfSession = sessionIndex === 0;
-
-      // Anchor semantics are block-relative, not lift-type-global.
-      // If the previous row in the same session has a different liftType, this
-      // row is carrying column B as a new lift anchor even if the same lift
-      // appeared earlier in the session in a separate block.
-      const isLiftAnchor =
-        !isFirstOfSession && prevSessionSet?.liftType !== set.liftType;
+      const anchorType = set.anchorType ?? (sessionIndex === 0 ? "session" : prevSessionSet?.liftType !== set.liftType ? "lift" : "plain");
+      const isFirstOfSession = anchorType === "session";
+      const isLiftAnchor = anchorType === "lift";
 
       // Build promoteTo payload when the deleted row is an anchor.
       // The row immediately below (rowIndex + 1 before deletion) becomes the new anchor.
@@ -1333,7 +1328,7 @@ export default function LogSessionPage() {
         phase: "request",
         rowIndex: set.rowIndex,
         beforeSnapshot,
-        expectedAnchorType: isFirstOfSession ? "session" : isLiftAnchor ? "lift" : "plain",
+        expectedAnchorType: anchorType,
         promoteTo,
       });
       try {
@@ -1345,7 +1340,7 @@ export default function LogSessionPage() {
             ssid: sheetInfo.ssid,
             rowIndex: set.rowIndex,
             before: beforeSnapshot,
-            expectedAnchorType: isFirstOfSession ? "session" : isLiftAnchor ? "lift" : "plain",
+            expectedAnchorType: anchorType,
             promoteTo,
           }),
         });
@@ -1465,6 +1460,7 @@ export default function LogSessionPage() {
             rowIndex: null,
             isGoal: false,
             isHistoricalPR: false,
+            anchorType: "plain",
             _pending: true,
             _tempId: tempId,
             _serverSnapshot: buildSheetSnapshotFromFields(
@@ -1591,6 +1587,7 @@ export default function LogSessionPage() {
             rowIndex: null,
             isGoal: false,
             isHistoricalPR: false,
+            anchorType: hasExistingSession ? "lift" : "session",
             _pending: true,
             _tempId: tempId,
             _serverSnapshot: buildSheetSnapshotFromFields(

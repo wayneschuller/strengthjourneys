@@ -974,7 +974,28 @@ export default function LogSessionPage() {
             before: beforeSnapshot,
           }),
         });
-        if (!res.ok) throw new Error((await res.json()).error || "Update failed");
+        if (!res.ok) {
+          const apiError = await readApiError(res, "Update failed");
+          if (apiError.code === "PRECONDITION_FAILED") {
+            console.error("[sheet/edit-cell] preflight verification failed", {
+              rowIndex,
+              field,
+              beforeSnapshot,
+              actual: apiError.actual,
+              message: apiError.message,
+            });
+            addLogEntry({ type: "warning", label: "EDIT BLOCKED", detail: apiError.message });
+            toast({
+              title: "Sheet changed before the edit landed",
+              description: "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
+              variant: "destructive",
+              duration: 8000,
+            });
+            markError();
+            return;
+          }
+          throw new Error(apiError.message || "Update failed");
+        }
         markSaved();
       } catch (err) {
         console.error("[sheet/edit-cell] updateSet failed:", err);
@@ -983,7 +1004,7 @@ export default function LogSessionPage() {
       logSheetTimings("updateSet", [{ name: "POST /api/sheet/edit-cell", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
-    [sheetInfo?.ssid, addLogEntry],
+    [sheetInfo?.ssid, addLogEntry, toast],
   );
 
   const persistSetRowUpdate = useCallback(
@@ -1002,7 +1023,28 @@ export default function LogSessionPage() {
             after: afterSnapshot,
           }),
         });
-        if (!res.ok) throw new Error((await res.json()).error || "Update failed");
+        if (!res.ok) {
+          const apiError = await readApiError(res, "Update failed");
+          if (apiError.code === "PRECONDITION_FAILED") {
+            console.error("[sheet/edit-row] preflight verification failed", {
+              rowIndex,
+              beforeSnapshot,
+              afterSnapshot,
+              actual: apiError.actual,
+              message: apiError.message,
+            });
+            addLogEntry({ type: "warning", label: "EDIT BLOCKED", detail: apiError.message });
+            toast({
+              title: "Sheet changed before the edit landed",
+              description: "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
+              variant: "destructive",
+              duration: 8000,
+            });
+            markError();
+            return;
+          }
+          throw new Error(apiError.message || "Update failed");
+        }
         clearPendingQueuedSync(tempId, snapshotToEditableFields(afterSnapshot));
         markSaved();
       } catch (err) {
@@ -1012,7 +1054,7 @@ export default function LogSessionPage() {
       logSheetTimings("updateSet", [{ name: "POST /api/sheet/edit-row", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
-    [sheetInfo?.ssid, clearPendingQueuedSync, addLogEntry],
+    [sheetInfo?.ssid, clearPendingQueuedSync, addLogEntry, toast],
   );
 
   const drainQueuedEditOp = useCallback(() => {
@@ -1184,7 +1226,31 @@ export default function LogSessionPage() {
         });
         timings.push({ name: "POST /api/sheet/delete-row", ms: performance.now() - tApi });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Delete failed");
+        if (!res.ok) {
+          if (data?.code === "PRECONDITION_FAILED") {
+            console.error("[sheet/delete-row] preflight verification failed", {
+              rowIndex: set.rowIndex,
+              before: buildSheetSnapshotFromFields(getEditableSetFields(set), set),
+              actual: data?.actual ?? null,
+              message: data?.error || "Delete failed",
+            });
+            addLogEntry({ type: "warning", label: "DELETE BLOCKED", detail: data?.error || "Delete failed" });
+            setDeletedRowIndices((prev) => {
+              const next = new Set(prev);
+              next.delete(set.rowIndex);
+              return next;
+            });
+            toast({
+              title: "Delete blocked to protect the sheet",
+              description: "The target row no longer matched what the log expected. Refresh the log and try again.",
+              variant: "destructive",
+              duration: 8000,
+            });
+            markStructuralError();
+            return;
+          }
+          throw new Error(data.error || "Delete failed");
+        }
 
         // Do NOT call mutate() here — same reasoning as addSet: firing a
         // revalidation mid-session causes parsedData churn and flicker.
@@ -2052,6 +2118,15 @@ function getCellValueForField(field, fields) {
   if (field === "notes") return fields.notes ?? "";
   if (field === "url") return fields.url ?? "";
   return "";
+}
+
+async function readApiError(response, fallbackMessage) {
+  const payload = await response.json().catch(() => ({}));
+  return {
+    message: payload?.error || fallbackMessage,
+    code: payload?.code || null,
+    actual: payload?.actual || null,
+  };
 }
 
 function getTop20Rank(topLifts, weight, isMetric) {

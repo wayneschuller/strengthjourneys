@@ -603,6 +603,7 @@ export default function LogSessionPage() {
   // _pending: false → confirmed (rowIndex known, waiting for parsedData to catch up)
   const [pendingSets, setPendingSets] = useState({});
   const pendingSetsRef = useRef({});
+  const queuedEditOpsRef = useRef([]);
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
   const autoStartedLiftRef = useRef("");
 
@@ -836,9 +837,20 @@ export default function LogSessionPage() {
   }, [mutate, addLogEntry]);
 
   // --- Sync helpers ---
-  // Structural ops (addSet/addLift/deleteSet) use markStructuralSaving/Saved/Error
-  // which gate structuralSavingRef. Non-structural PATCH updates use markSaving/Saved/Error
-  // which only drive the UI spinner — they never block structural ops.
+  // Sync strategy note:
+  // These client calls are intentionally operation-oriented, not pure REST.
+  // The dangerous thing in this UI is not "updating a resource", it is
+  // mutating a sparse Google Sheet where row position is unstable during
+  // insert/delete flows. So the client talks to explicit sheet operations:
+  // - edit-cell
+  // - edit-row
+  // - insert-row
+  // - delete-row
+  //
+  // Structural ops (addSet/addLift/deleteSet) still gate on structuralSavingRef.
+  // Non-structural edits are queued behind that gate when needed so they do not
+  // blindly write against a row index while a local row-shifting operation is
+  // still in flight.
 
   function markSaving() {
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
@@ -848,11 +860,13 @@ export default function LogSessionPage() {
   function markSaved() {
     setSyncState("saved");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
+    flushQueuedSync();
   }
 
   function markError() {
     setSyncState("error");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
+    flushQueuedSync();
   }
 
   function markStructuralSaving() {
@@ -904,16 +918,23 @@ export default function LogSessionPage() {
     return updatedSet;
   }, [setPendingSetsSync]);
 
-  const clearPendingQueuedSync = useCallback((tempId) => {
+  const clearPendingQueuedSync = useCallback((tempId, syncedFields = null) => {
     if (!tempId) return;
     setPendingSetsSync((prev) => {
       let changed = false;
       const next = {};
       for (const [lt, sets] of Object.entries(prev)) {
         next[lt] = sets.map((s) => {
-          if (s._tempId !== tempId || !s._queuedSync) return s;
+          if (s._tempId !== tempId) return s;
+          if (!s._queuedSync && !syncedFields) return s;
           changed = true;
-          return { ...s, _queuedSync: false };
+          return {
+            ...s,
+            _queuedSync: false,
+            _serverSnapshot: syncedFields
+              ? buildSheetSnapshotFromFields(syncedFields, s)
+              : s._serverSnapshot,
+          };
         });
       }
       return changed ? next : prev;
@@ -936,35 +957,93 @@ export default function LogSessionPage() {
     });
   }, [setPendingSetsSync]);
 
-  const persistSetUpdate = useCallback(
-    async (rowIndex, fields, tempId = null) => {
+  const persistSetCellUpdate = useCallback(
+    async (rowIndex, field, beforeSnapshot, value) => {
       if (!sheetInfo?.ssid) return;
       markSaving();
       const t0 = performance.now();
       try {
-        const res = await fetch("/api/sheet/log-set", {
-          method: "PATCH",
+        const res = await fetch("/api/sheet/edit-cell", {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ssid: sheetInfo.ssid,
             rowIndex,
-            ...getSheetUpdatePayload(fields),
+            field,
+            value,
+            before: beforeSnapshot,
           }),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Update failed");
-        clearPendingQueuedSync(tempId);
         markSaved();
       } catch (err) {
-        console.error("[sheet/log-set] updateSet failed:", err);
+        console.error("[sheet/edit-cell] updateSet failed:", err);
         markError();
       }
-      logSheetTimings("updateSet", [{ name: "PATCH /api/sheet/log-set", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
+      logSheetTimings("updateSet", [{ name: "POST /api/sheet/edit-cell", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
+    [sheetInfo?.ssid, addLogEntry],
+  );
+
+  const persistSetRowUpdate = useCallback(
+    async (rowIndex, beforeSnapshot, afterSnapshot, tempId = null) => {
+      if (!sheetInfo?.ssid) return;
+      markSaving();
+      const t0 = performance.now();
+      try {
+        const res = await fetch("/api/sheet/edit-row", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ssid: sheetInfo.ssid,
+            rowIndex,
+            before: beforeSnapshot,
+            after: afterSnapshot,
+          }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Update failed");
+        clearPendingQueuedSync(tempId, snapshotToEditableFields(afterSnapshot));
+        markSaved();
+      } catch (err) {
+        console.error("[sheet/edit-row] updateSet failed:", err);
+        markError();
+      }
+      logSheetTimings("updateSet", [{ name: "POST /api/sheet/edit-row", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
     [sheetInfo?.ssid, clearPendingQueuedSync, addLogEntry],
   );
 
+  const drainQueuedEditOp = useCallback(() => {
+    if (structuralSavingRef.current) return;
+    const queuedOp = queuedEditOpsRef.current.shift();
+    if (!queuedOp) return;
+    addLogEntry({
+      type: "swr",
+      label: "flushQueuedSync",
+      detail: `draining queued ${queuedOp.kind} edit for row ${queuedOp.rowIndex}`,
+    });
+    if (queuedOp.kind === "cell") {
+      void persistSetCellUpdate(
+        queuedOp.rowIndex,
+        queuedOp.field,
+        queuedOp.beforeSnapshot,
+        queuedOp.value,
+      );
+      return;
+    }
+    void persistSetRowUpdate(
+      queuedOp.rowIndex,
+      queuedOp.beforeSnapshot,
+      queuedOp.afterSnapshot,
+      queuedOp.tempId ?? null,
+    );
+  }, [addLogEntry, persistSetCellUpdate, persistSetRowUpdate]);
+
   // Drain queued sync: find the first pending set that has a real rowIndex
-  // and a queued edit, then fire the PATCH. Called from the effect below AND
+  // and a queued edit, then fire the verified row update. Called from the
+  // effect below AND
   // from markStructuralSaved/Error so edits that were blocked during a
   // structural op are never permanently lost.
   function flushQueuedSync() {
@@ -972,15 +1051,23 @@ export default function LogSessionPage() {
     const queuedSet = Object.values(pendingSetsRef.current)
       .flat()
       .find((s) => !s._pending && s.rowIndex && s._queuedSync);
-    if (!queuedSet) return;
-    addLogEntry({ type: "swr", label: "flushQueuedSync", detail: `draining queued edit for row ${queuedSet.rowIndex}` });
-    void persistSetUpdate(queuedSet.rowIndex, getEditableSetFields(queuedSet), queuedSet._tempId);
+    if (queuedSet) {
+      addLogEntry({ type: "swr", label: "flushQueuedSync", detail: `draining queued row edit for row ${queuedSet.rowIndex}` });
+      void persistSetRowUpdate(
+        queuedSet.rowIndex,
+        queuedSet._serverSnapshot ?? buildSheetSnapshotFromFields(getEditableSetFields(queuedSet), queuedSet),
+        buildSheetSnapshotFromFields(getEditableSetFields(queuedSet), queuedSet),
+        queuedSet._tempId,
+      );
+      return;
+    }
+    drainQueuedEditOp();
   }
 
   // Also trigger on pendingSets changes (e.g. when a row gets promoted and
   // its queued edit can now fire).
   // eslint-disable-next-line react-hooks/exhaustive-deps -- flushQueuedSync reads refs, doesn't need to be a dep
-  useEffect(() => { flushQueuedSync(); }, [pendingSets, persistSetUpdate]);
+  useEffect(() => { flushQueuedSync(); }, [pendingSets, persistSetRowUpdate, drainQueuedEditOp]);
 
   // --- API calls ---
 
@@ -988,7 +1075,7 @@ export default function LogSessionPage() {
   // Pending optimistic rows can be edited before the insert call returns; those
   // edits are queued on the temp row and flushed once it gets a real rowIndex.
   const updateSet = useCallback(
-    async (setRef, fields) => {
+    async (setRef, update) => {
       if (!sheetInfo?.ssid) return;
 
       const pendingSet = setRef.tempId
@@ -997,18 +1084,53 @@ export default function LogSessionPage() {
           .find((s) => s._tempId === setRef.tempId)
         : null;
       const rowIndex = pendingSet?.rowIndex ?? setRef.rowIndex;
+      const nextFields = update.nextFields;
 
       if (pendingSet) {
-        updatePendingSet(setRef.tempId, fields, !rowIndex);
+        updatePendingSet(
+          setRef.tempId,
+          nextFields,
+          !rowIndex || structuralSavingRef.current,
+        );
       }
 
       if (!rowIndex) {
         return;
       }
 
-      void persistSetUpdate(rowIndex, fields, setRef.tempId ?? null);
+      if (pendingSet) {
+        if (!structuralSavingRef.current) {
+          void persistSetRowUpdate(
+            rowIndex,
+            pendingSet._serverSnapshot ?? buildSheetSnapshotFromFields(getEditableSetFields(pendingSet), pendingSet),
+            buildSheetSnapshotFromFields(nextFields, pendingSet),
+            setRef.tempId ?? null,
+          );
+        }
+        return;
+      }
+
+      const beforeSnapshot = buildSheetSnapshotFromFields(update.beforeFields, setRef.set);
+      const nextSnapshot = buildSheetSnapshotFromFields(nextFields, setRef.set);
+      if (structuralSavingRef.current) {
+        queuedEditOpsRef.current.push({
+          kind: "cell",
+          rowIndex,
+          field: update.field,
+          value: getCellValueForField(update.field, nextFields),
+          beforeSnapshot,
+        });
+        return;
+      }
+
+      void persistSetCellUpdate(
+        rowIndex,
+        update.field,
+        beforeSnapshot,
+        getCellValueForField(update.field, nextFields),
+      );
     },
-    [sheetInfo?.ssid, updatePendingSet, persistSetUpdate],
+    [sheetInfo?.ssid, updatePendingSet, persistSetCellUpdate, persistSetRowUpdate],
   );
 
   // deleteSet: removes a single set row from the sheet.
@@ -1049,26 +1171,20 @@ export default function LogSessionPage() {
       const t0 = performance.now();
       try {
         const tApi = performance.now();
-        const res = await fetch("/api/sheet/log-set", {
-          method: "DELETE",
+        const res = await fetch("/api/sheet/delete-row", {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex: set.rowIndex, expectedDate: set.date, promoteTo }),
+          body: JSON.stringify({
+            ssid: sheetInfo.ssid,
+            rowIndex: set.rowIndex,
+            before: buildSheetSnapshotFromFields(getEditableSetFields(set), set),
+            expectedAnchorType: isFirstOfSession ? "session" : isFirstOfLift ? "lift" : "plain",
+            promoteTo,
+          }),
         });
-        timings.push({ name: "DELETE /api/sheet/log-set", ms: performance.now() - tApi });
+        timings.push({ name: "POST /api/sheet/delete-row", ms: performance.now() - tApi });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Delete failed");
-
-        // Surface index drift warning as a toast
-        if (data.warning) {
-          devLog(`⚠️ ${data.warning}`);
-          addLogEntry({ type: "warning", label: "INDEX DRIFT", detail: data.warning });
-          toast({
-            title: "Index drift detected",
-            description: data.warning,
-            variant: "destructive",
-            duration: 8000,
-          });
-        }
 
         // Do NOT call mutate() here — same reasoning as addSet: firing a
         // revalidation mid-session causes parsedData churn and flicker.
@@ -1076,7 +1192,7 @@ export default function LogSessionPage() {
         // SWR's revalidateOnFocus will sync when the user leaves the page.
         markStructuralSaved();
       } catch (err) {
-        console.error("[sheet/log-set] deleteSet failed:", err);
+        console.error("[sheet/delete-row] deleteSet failed:", err);
         // Restore the row on failure
         setDeletedRowIndices((prev) => {
           const next = new Set(prev);
@@ -1126,7 +1242,23 @@ export default function LogSessionPage() {
         ...prev,
         [liftType]: [
           ...(prev[liftType] ?? []),
-          { date: sessionDate, liftType, reps, weight, unitType, notes, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
+          {
+            date: sessionDate,
+            liftType,
+            reps,
+            weight,
+            unitType,
+            notes,
+            rowIndex: null,
+            isGoal: false,
+            isHistoricalPR: false,
+            _pending: true,
+            _tempId: tempId,
+            _serverSnapshot: buildSheetSnapshotFromFields(
+              { reps, weight, unitType, notes, url: "" },
+              { date: sessionDate, liftType },
+            ),
+          },
         ],
       }));
       markStructuralSaving();
@@ -1135,7 +1267,7 @@ export default function LogSessionPage() {
 
       try {
         const tApi = performance.now();
-        const res = await fetch("/api/sheet/log-session", {
+        const res = await fetch("/api/sheet/insert-row", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1144,7 +1276,7 @@ export default function LogSessionPage() {
             insertAfterRowIndex,
           }),
         });
-        timings.push({ name: "POST /api/sheet/log-session", ms: performance.now() - tApi });
+        timings.push({ name: "POST /api/sheet/insert-row", ms: performance.now() - tApi });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Add set failed");
         const { firstRowIndex } = data;
@@ -1156,7 +1288,7 @@ export default function LogSessionPage() {
         // SWR's natural revalidateOnFocus will sync when the user leaves the page.
         promoteFirstPending(liftType, firstRowIndex);
       } catch (err) {
-        console.error("[sheet/log-session] addSet failed:", err);
+        console.error("[sheet/insert-row] addSet failed:", err);
         // Remove the failed pending row
         setPendingSetsSync((prev) => {
           const next = { ...prev };
@@ -1215,7 +1347,23 @@ export default function LogSessionPage() {
         ...prev,
         [liftType]: [
           ...(prev[liftType] ?? []),
-          { date: sessionDate, liftType, reps, weight, unitType, notes, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
+          {
+            date: sessionDate,
+            liftType,
+            reps,
+            weight,
+            unitType,
+            notes,
+            rowIndex: null,
+            isGoal: false,
+            isHistoricalPR: false,
+            _pending: true,
+            _tempId: tempId,
+            _serverSnapshot: buildSheetSnapshotFromFields(
+              { reps, weight, unitType, notes, url: "" },
+              { date: sessionDate, liftType },
+            ),
+          },
         ],
       }));
       markStructuralSaving();
@@ -1233,7 +1381,7 @@ export default function LogSessionPage() {
 
       try {
         const tApi = performance.now();
-        const res = await fetch("/api/sheet/log-session", {
+        const res = await fetch("/api/sheet/insert-row", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1243,7 +1391,7 @@ export default function LogSessionPage() {
             newSession: !hasExistingSession,
           }),
         });
-        timings.push({ name: "POST /api/sheet/log-session", ms: performance.now() - tApi });
+        timings.push({ name: "POST /api/sheet/insert-row", ms: performance.now() - tApi });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed");
         const { firstRowIndex } = data;
@@ -1251,7 +1399,7 @@ export default function LogSessionPage() {
         // See addSet for why we don't call mutate() here.
         promoteFirstPending(liftType, firstRowIndex);
       } catch (err) {
-        console.error("[sheet/log-session] addLift failed:", err);
+        console.error("[sheet/insert-row] addLift failed:", err);
         setPendingSetsSync((prev) => {
           const next = { ...prev };
           if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
@@ -1871,13 +2019,39 @@ function getEditableSetFields(set) {
   };
 }
 
-function getSheetUpdatePayload(fields) {
+function buildSheetSnapshotFromFields(fields, identity = {}) {
   return {
-    reps: fields.reps,
-    weight: `${fields.weight}${fields.unitType ?? ""}`,
+    date: identity.date ?? "",
+    liftType: identity.liftType ?? "",
+    reps: fields.reps != null ? String(fields.reps) : "",
+    weight: fields.weight != null ? `${fields.weight}${fields.unitType ?? ""}` : "",
     notes: fields.notes ?? "",
     url: fields.url ?? "",
   };
+}
+
+function snapshotToEditableFields(snapshot) {
+  const weightValue = typeof snapshot?.weight === "string"
+    ? parseFloat(snapshot.weight)
+    : snapshot?.weight;
+  const unitMatch = typeof snapshot?.weight === "string"
+    ? snapshot.weight.match(/[a-zA-Z]+$/)
+    : null;
+  return {
+    reps: snapshot?.reps != null ? Number(snapshot.reps) : "",
+    weight: Number.isNaN(weightValue) ? "" : weightValue,
+    unitType: unitMatch?.[0] ?? "",
+    notes: snapshot?.notes ?? "",
+    url: snapshot?.url ?? "",
+  };
+}
+
+function getCellValueForField(field, fields) {
+  if (field === "reps") return fields.reps != null ? String(fields.reps) : "";
+  if (field === "weight") return fields.weight != null ? `${fields.weight}${fields.unitType ?? ""}` : "";
+  if (field === "notes") return fields.notes ?? "";
+  if (field === "url") return fields.url ?? "";
+  return "";
 }
 
 function getTop20Rank(topLifts, weight, isMetric) {
@@ -2482,7 +2656,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             set={set}
             isMetric={isMetric}
             prMeta={prMeta[idx]}
-            onUpdate={(fields) => onUpdateSet({ rowIndex: set.rowIndex, tempId: set._tempId ?? null }, fields)}
+            onUpdate={(update) => onUpdateSet({
+              rowIndex: set.rowIndex,
+              tempId: set._tempId ?? null,
+              set,
+            }, update)}
             onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
             strengthBadge={idx === bestE1rmIndex ? (
               <LiftStrengthLevel
@@ -2565,6 +2743,7 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
   // Optimistic display: holds committed value until parsedData catches up
   const [pendingReps, setPendingReps] = useState(null);
   const [pendingWeight, setPendingWeight] = useState(null);
+  const [pendingNotes, setPendingNotes] = useState(null);
   const latestFieldsRef = useRef(getEditableSetFields(set));
 
   // Debounced update: coalesce rapid changes (spinner arrows, keyboard arrows)
@@ -2572,26 +2751,24 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
   // reps-then-weight edit still sends the final combined snapshot.
   const updateTimerRef = useRef(null);
   const scheduleUpdate = useCallback(
-    (partialFields) => {
-      const nextFields = { ...latestFieldsRef.current, ...partialFields };
-      latestFieldsRef.current = nextFields;
+    (update) => {
+      latestFieldsRef.current = update.nextFields;
       if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
       updateTimerRef.current = setTimeout(() => {
         updateTimerRef.current = null;
-        onUpdate(nextFields);
+        onUpdate(update);
       }, 800);
     },
     [onUpdate],
   );
   const flushUpdate = useCallback(
-    (partialFields) => {
-      const nextFields = { ...latestFieldsRef.current, ...partialFields };
-      latestFieldsRef.current = nextFields;
+    (update) => {
+      latestFieldsRef.current = update.nextFields;
       if (updateTimerRef.current) {
         clearTimeout(updateTimerRef.current);
         updateTimerRef.current = null;
       }
-      onUpdate(nextFields);
+      onUpdate(update);
     },
     [onUpdate],
   );
@@ -2604,29 +2781,45 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
   }, []);
 
   // Keep drafts in sync if SWR refreshes parsedData
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
   useEffect(() => { setDraftReps(String(set.reps ?? "")); }, [set.reps]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
   useEffect(() => { setDraftWeight(String(set.weight ?? "")); }, [set.weight]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
   useEffect(() => { setDraftNotes(set.notes ?? ""); }, [set.notes]);
 
   // Clear pending once parsedData reflects the committed value
   useEffect(() => {
-    if (pendingReps !== null && set.reps === pendingReps) setPendingReps(null);
+    if (pendingReps !== null && set.reps === pendingReps) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- optimistic local state clears when server data catches up
+      setPendingReps(null);
+    }
   }, [set.reps, pendingReps]);
   useEffect(() => {
-    if (pendingWeight !== null && set.weight === pendingWeight) setPendingWeight(null);
+    if (pendingWeight !== null && set.weight === pendingWeight) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- optimistic local state clears when server data catches up
+      setPendingWeight(null);
+    }
   }, [set.weight, pendingWeight]);
+  useEffect(() => {
+    if (pendingNotes !== null && (set.notes ?? "") === pendingNotes) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- optimistic local state clears when server data catches up
+      setPendingNotes(null);
+    }
+  }, [set.notes, pendingNotes]);
   useEffect(() => {
     latestFieldsRef.current = {
       reps: pendingReps ?? set.reps,
       weight: pendingWeight ?? set.weight,
       unitType: set.unitType ?? "",
-      notes: set.notes ?? "",
+      notes: pendingNotes ?? set.notes ?? "",
       url: set.URL ?? "",
     };
-  }, [set.reps, set.weight, set.unitType, set.notes, set.URL, pendingReps, pendingWeight]);
+  }, [set.reps, set.weight, set.unitType, set.notes, set.URL, pendingReps, pendingWeight, pendingNotes]);
 
   const displayReps = pendingReps !== null ? pendingReps : set.reps;
   const displayWeight = pendingWeight !== null ? pendingWeight : set.weight;
+  const displayNotes = pendingNotes !== null ? pendingNotes : (set.notes ?? "");
   const prToneClass =
     prMeta?.status === "lifetime"
       ? "text-amber-600"
@@ -2639,8 +2832,14 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
     setEditingReps(false);
     const parsed = parseInt(draftReps, 10);
     if (!isNaN(parsed) && parsed !== latestFieldsRef.current.reps) {
+      const beforeFields = latestFieldsRef.current;
+      const nextFields = { ...beforeFields, reps: parsed };
       setPendingReps(parsed);
-      scheduleUpdate({ reps: parsed });
+      scheduleUpdate({
+        field: "reps",
+        beforeFields,
+        nextFields,
+      });
     }
   }
 
@@ -2648,8 +2847,14 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
     setEditingWeight(false);
     const num = parseFloat(draftWeight);
     if (!isNaN(num) && num !== latestFieldsRef.current.weight) {
+      const beforeFields = latestFieldsRef.current;
+      const nextFields = { ...beforeFields, weight: num };
       setPendingWeight(num);
-      scheduleUpdate({ weight: num });
+      scheduleUpdate({
+        field: "weight",
+        beforeFields,
+        nextFields,
+      });
     }
   }
 
@@ -2657,7 +2862,14 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
     setEditingNotes(false);
     const trimmed = draftNotes.trim();
     if (trimmed !== (latestFieldsRef.current.notes ?? "").trim()) {
-      flushUpdate({ notes: trimmed });
+      const beforeFields = latestFieldsRef.current;
+      const nextFields = { ...beforeFields, notes: trimmed };
+      setPendingNotes(trimmed);
+      flushUpdate({
+        field: "notes",
+        beforeFields,
+        nextFields,
+      });
     }
   }
 
@@ -2732,7 +2944,7 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
                 className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
                 onClick={() => setEditingNotes(true)}
               >
-                {set.notes || "notes..."}
+                {displayNotes || "notes..."}
               </button>
               {rankingSummary && (
                 <p className={`hidden truncate text-[10px] uppercase tracking-wide md:block ${prToneClass}`}>

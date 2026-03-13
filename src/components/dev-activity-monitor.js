@@ -6,23 +6,23 @@ import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 const API_DESCRIPTIONS = {
   addSet: {
     action: "Add set to existing lift block",
-    api: "POST /api/sheet/log-session",
+    api: "POST /api/sheet/insert-row",
     sheets: "sheets.spreadsheets.batchUpdate (insertDimension + updateCells)",
   },
   addLift: {
     action: "Add new lift type to session",
-    api: "POST /api/sheet/log-session",
+    api: "POST /api/sheet/insert-row",
     sheets: "sheets.spreadsheets.batchUpdate (insertDimension + updateCells + optional border)",
   },
   deleteSet: {
     action: "Delete a set row",
-    api: "DELETE /api/sheet/log-set",
-    sheets: "sheets.values.get (pre-read) → optional values.update (promote anchor) → batchUpdate (deleteDimension)",
+    api: "POST /api/sheet/delete-row",
+    sheets: "sheets.values.get (verification read) → optional values.update (promote anchor) → batchUpdate (deleteDimension)",
   },
   updateSet: {
     action: "Edit reps, weight, or notes",
-    api: "PATCH /api/sheet/log-set",
-    sheets: "sheets.values.update (cols C–F)",
+    api: "POST /api/sheet/edit-cell or /api/sheet/edit-row",
+    sheets: "sheets.values.get (verification read) → values.update",
   },
 };
 

@@ -8,9 +8,11 @@
  * Safety strategy:
  * - Client sends the exact target rowIndex plus a `before` snapshot.
  * - Server verifies that exact row still matches the expected logical row.
- * - Server also verifies the expected anchor type (session / lift / plain).
- * - Promotion is only allowed to the immediate next physical row.
- * - If any verification fails, deletion is rejected.
+ * - Server then inspects the immediate next physical row and promotes only the
+ *   values that row would actually lose after deletion.
+ * - This keeps delete safe for both sparse sheets and "redundant" sheets where
+ *   users manually repeat Date / Lift Type on every row.
+ * - If verification fails, deletion is rejected.
  *
  * This is still not atomic with Google Sheets. The point is fail-closed
  * protection, not a transactional guarantee.
@@ -18,7 +20,7 @@
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
-import { verifyRowSnapshot } from "@/lib/sheet-row-ops";
+import { readLogicalRow, readRawRow, verifyRowSnapshot } from "@/lib/sheet-row-ops";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -31,7 +33,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, rowIndex, before, expectedAnchorType, promoteTo } = req.body;
+  const { ssid, rowIndex, before } = req.body;
 
   if (!ssid || !rowIndex || typeof rowIndex !== "number" || !before) {
     return res.status(400).json({ error: "Missing required fields: ssid, rowIndex, before" });
@@ -47,7 +49,6 @@ export default async function handler(req, res) {
       ssid,
       rowIndex,
       before,
-      expectedAnchorType,
       headers,
     });
 
@@ -60,11 +61,39 @@ export default async function handler(req, res) {
       });
     }
 
-    if (promoteTo?.rowIndex && promoteTo.rowIndex !== rowIndex + 1) {
-      return res.status(409).json({
-        error: `Delete promotion target must be the immediate next row. Expected ${rowIndex + 1}, received ${promoteTo.rowIndex}.`,
-        code: "PRECONDITION_FAILED",
+    let promoteTo = null;
+    const nextRawRow = await readRawRow({
+      ssid,
+      rowIndex: rowIndex + 1,
+      headers,
+    });
+
+    // Deletion safety is based on what the NEXT PHYSICAL ROW would lose, not on
+    // whether the target row "looks like" an anchor in the UI. If the next row
+    // already has its own Date / Lift Type cells filled, we do not promote them.
+    if (nextRawRow) {
+      const nextLogicalRow = await readLogicalRow({
+        ssid,
+        rowIndex: rowIndex + 1,
+        headers,
       });
+      const staysInSameSession = nextLogicalRow.date === verification.actual.date;
+      const needsDatePromotion =
+        staysInSameSession &&
+        Boolean(verification.actual.rawDate) &&
+        !nextLogicalRow.rawDate;
+      const needsLiftPromotion =
+        staysInSameSession &&
+        Boolean(verification.actual.rawLiftType) &&
+        !nextLogicalRow.rawLiftType;
+
+      if (needsDatePromotion || needsLiftPromotion) {
+        promoteTo = {
+          rowIndex: rowIndex + 1,
+          date: needsDatePromotion ? verification.actual.date : "",
+          liftType: needsLiftPromotion ? verification.actual.liftType : "",
+        };
+      }
     }
 
     if (promoteTo?.rowIndex) {
@@ -120,7 +149,7 @@ export default async function handler(req, res) {
       return res.status(deleteResponse.status).json({ error: message });
     }
 
-    return res.status(200).json({ deleted: true, rowIndex });
+    return res.status(200).json({ deleted: true, rowIndex, promoteTo });
   } catch (error) {
     console.error("[sheet/delete-row] unexpected error:", error);
     return res.status(500).json({ error: error.message || "Internal server error" });

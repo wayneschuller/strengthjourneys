@@ -91,6 +91,34 @@ export async function readLogicalRow({ ssid, rowIndex, headers }) {
   };
 }
 
+export async function readRawRow({ ssid, rowIndex, headers }) {
+  const range = `A${rowIndex}:F${rowIndex}`;
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?majorDimension=ROWS`,
+    { headers },
+  );
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const message = body?.error?.message || "Failed to read raw row";
+    throw new Error(message);
+  }
+
+  const payload = await response.json();
+  const row = payload.values?.[0];
+  if (!row) return null;
+
+  return {
+    rowIndex,
+    rawDate: row[0] ?? "",
+    rawLiftType: row[1] ?? "",
+    reps: row[2] ?? "",
+    weight: row[3] ?? "",
+    notes: row[4] ?? "",
+    url: row[5] ?? "",
+  };
+}
+
 export function getAnchorTypeFromLogicalRow(row) {
   if (row?.rawDate) return "session";
   if (row?.rawLiftType) return "lift";

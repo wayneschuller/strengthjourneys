@@ -1282,40 +1282,12 @@ export default function LogSessionPage() {
   );
 
   // deleteSet: removes a single set row from the sheet.
-  // Handles anchor-row promotion so date/liftType inheritance stays intact.
+  // The API now decides promotion from the raw target row + raw next row.
+  // This lets delete stay correct for both sparse sheets and sheets where the
+  // user manually repeats Date / Lift Type more often than the app would.
   const deleteSet = useCallback(
     async (set) => {
-      if (!sheetInfo?.ssid || !parsedData || !set.rowIndex || structuralSavingRef.current) return;
-
-      // All confirmed rows for this session, sorted ascending by sheet position.
-      const sessionSets = parsedData
-        .filter((e) => e.date === set.date && !e.isGoal && e.rowIndex)
-        .sort((a, b) => a.rowIndex - b.rowIndex);
-
-      const sessionIndex = sessionSets.findIndex((entry) => entry.rowIndex === set.rowIndex);
-      if (sessionIndex === -1) return;
-
-      const prevSessionSet = sessionIndex > 0 ? sessionSets[sessionIndex - 1] : null;
-      const nextSessionSet =
-        sessionIndex < sessionSets.length - 1 ? sessionSets[sessionIndex + 1] : null;
-      const anchorType =
-        sessionIndex === 0 ? "session" : prevSessionSet?.liftType !== set.liftType ? "lift" : "plain";
-      const isFirstOfSession = anchorType === "session";
-      const isLiftAnchor = anchorType === "lift";
-
-      // Build promoteTo payload when the deleted row is an anchor.
-      // The row immediately below (rowIndex + 1 before deletion) becomes the new anchor.
-      let promoteTo = null;
-      if (isFirstOfSession && sessionSets.length > 1) {
-        // First row of session: next session row needs date + liftType.
-        const next = nextSessionSet;
-        promoteTo = { rowIndex: next.rowIndex, date: set.date, liftType: set.liftType };
-      } else if (isLiftAnchor && nextSessionSet?.liftType === set.liftType) {
-        // First row of a contiguous lift block (not first of session): the next
-        // row in this block needs liftType promoted into column B.
-        const next = nextSessionSet;
-        promoteTo = { rowIndex: next.rowIndex, liftType: set.liftType };
-      }
+      if (!sheetInfo?.ssid || !set.rowIndex || structuralSavingRef.current) return;
 
       // Optimistically hide the row immediately
       addLogEntry({ type: "action", label: "deleteSet", detail: `row ${set.rowIndex} · ${set.liftType} · ${set.reps}×${set.weight}` });
@@ -1329,8 +1301,6 @@ export default function LogSessionPage() {
         phase: "request",
         rowIndex: set.rowIndex,
         beforeSnapshot,
-        expectedAnchorType: anchorType,
-        promoteTo,
       });
       try {
         const tApi = performance.now();
@@ -1341,8 +1311,6 @@ export default function LogSessionPage() {
             ssid: sheetInfo.ssid,
             rowIndex: set.rowIndex,
             before: beforeSnapshot,
-            expectedAnchorType: anchorType,
-            promoteTo,
           }),
         });
         timings.push({ name: "POST /api/sheet/delete-row", ms: performance.now() - tApi });
@@ -1413,7 +1381,7 @@ export default function LogSessionPage() {
       logSheetTimings("deleteSet", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, toast, addLogEntry, recordDevSyncTrace],
+    [sheetInfo?.ssid, toast, addLogEntry, recordDevSyncTrace],
   );
 
   // Add a new set to an existing lift block.

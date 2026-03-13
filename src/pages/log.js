@@ -1292,22 +1292,32 @@ export default function LogSessionPage() {
         .filter((e) => e.date === set.date && !e.isGoal && e.rowIndex)
         .sort((a, b) => a.rowIndex - b.rowIndex);
 
-      const isFirstOfSession = sessionSets[0]?.rowIndex === set.rowIndex;
+      const sessionIndex = sessionSets.findIndex((entry) => entry.rowIndex === set.rowIndex);
+      if (sessionIndex === -1) return;
 
-      // Sets for this lift type within the session, sorted ascending.
-      const liftSets = sessionSets.filter((e) => e.liftType === set.liftType);
-      const isFirstOfLift = liftSets[0]?.rowIndex === set.rowIndex;
+      const prevSessionSet = sessionIndex > 0 ? sessionSets[sessionIndex - 1] : null;
+      const nextSessionSet =
+        sessionIndex < sessionSets.length - 1 ? sessionSets[sessionIndex + 1] : null;
+      const isFirstOfSession = sessionIndex === 0;
+
+      // Anchor semantics are block-relative, not lift-type-global.
+      // If the previous row in the same session has a different liftType, this
+      // row is carrying column B as a new lift anchor even if the same lift
+      // appeared earlier in the session in a separate block.
+      const isLiftAnchor =
+        !isFirstOfSession && prevSessionSet?.liftType !== set.liftType;
 
       // Build promoteTo payload when the deleted row is an anchor.
       // The row immediately below (rowIndex + 1 before deletion) becomes the new anchor.
       let promoteTo = null;
       if (isFirstOfSession && sessionSets.length > 1) {
         // First row of session: next session row needs date + liftType.
-        const next = sessionSets[1];
+        const next = nextSessionSet;
         promoteTo = { rowIndex: next.rowIndex, date: set.date, liftType: set.liftType };
-      } else if (isFirstOfLift && liftSets.length > 1) {
-        // First row of lift type (not first of session): next lift row needs liftType.
-        const next = liftSets[1];
+      } else if (isLiftAnchor && nextSessionSet?.liftType === set.liftType) {
+        // First row of a contiguous lift block (not first of session): the next
+        // row in this block needs liftType promoted into column B.
+        const next = nextSessionSet;
         promoteTo = { rowIndex: next.rowIndex, liftType: set.liftType };
       }
 
@@ -1323,7 +1333,7 @@ export default function LogSessionPage() {
         phase: "request",
         rowIndex: set.rowIndex,
         beforeSnapshot,
-        expectedAnchorType: isFirstOfSession ? "session" : isFirstOfLift ? "lift" : "plain",
+        expectedAnchorType: isFirstOfSession ? "session" : isLiftAnchor ? "lift" : "plain",
         promoteTo,
       });
       try {
@@ -1335,7 +1345,7 @@ export default function LogSessionPage() {
             ssid: sheetInfo.ssid,
             rowIndex: set.rowIndex,
             before: beforeSnapshot,
-            expectedAnchorType: isFirstOfSession ? "session" : isFirstOfLift ? "lift" : "plain",
+            expectedAnchorType: isFirstOfSession ? "session" : isLiftAnchor ? "lift" : "plain",
             promoteTo,
           }),
         });

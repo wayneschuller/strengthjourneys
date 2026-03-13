@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle, ThemeChooser } from "@/components/theme-chooser";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import { DevActivityMonitorPanel } from "@/components/dev-activity-monitor";
 import { Table2, Loader2, Github, Layers, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -29,8 +28,6 @@ import {
 } from "@/components/ui/tooltip";
 import {
   Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
 import {
@@ -159,15 +156,15 @@ export function NavBar() {
     authStatus === "authenticated" &&
     pathname === "/log" &&
     process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
-  const [isActivityMonitorOpen, setIsActivityMonitorOpen] = useState(false);
+  const [isActivityMonitorOpen, setIsActivityMonitorOpen] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE,
+    false,
+    { initializeWithValue: false },
+  );
   const activityMonitorOpen = isDevLogPage && isActivityMonitorOpen;
 
   return (
-    <Collapsible
-      open={activityMonitorOpen}
-      onOpenChange={setIsActivityMonitorOpen}
-      className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24"
-    >
+    <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
       <div className="flex items-center px-3 md:px-6">
         <div className="flex items-center">
           <DesktopNav />
@@ -183,26 +180,25 @@ export function NavBar() {
             </Button>
           )}
           {isDevLogPage && (
-            <CollapsibleTrigger asChild>
-              <Button
-                type="button"
-                variant={activityMonitorOpen ? "secondary" : "outline"}
-                size="sm"
-                className="hidden gap-1.5 md:flex"
-              >
-                <Activity className="h-4 w-4" />
-                Monitor
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
-                  {entries.length}
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "h-4 w-4 transition-transform",
-                    activityMonitorOpen && "rotate-180",
-                  )}
-                />
-              </Button>
-            </CollapsibleTrigger>
+            <Button
+              type="button"
+              variant={activityMonitorOpen ? "secondary" : "outline"}
+              size="sm"
+              className="hidden gap-1.5 md:flex"
+              onClick={() => setIsActivityMonitorOpen(!isActivityMonitorOpen)}
+            >
+              <Activity className="h-4 w-4" />
+              Monitor
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
+                {entries.length}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  activityMonitorOpen && "rotate-180",
+                )}
+              />
+            </Button>
           )}
           <MiniTimer />
           {/* We used to show an icon to open the user google sheet */}
@@ -223,13 +219,6 @@ export function NavBar() {
           <AvatarDropdown />
         </div>
       </div>
-      {isDevLogPage && (
-        <CollapsibleContent className="hidden border-t border-border/40 md:block">
-          <div className="px-3 pb-3 pt-2 md:px-6">
-            <DevActivityMonitorPanel className="max-h-[24rem]" />
-          </div>
-        </CollapsibleContent>
-      )}
     </Collapsible>
   );
 }
@@ -250,6 +239,7 @@ export function DesktopNav() {
 
   // Update logo after mount and on theme changes to avoid hydration mismatch
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- derived client-only logo swap avoids hydration mismatch
     setLogoSrc(getLogoForTheme(theme ?? resolvedTheme ?? "light"));
   }, [theme, resolvedTheme]);
 

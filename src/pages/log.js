@@ -607,7 +607,11 @@ export default function LogSessionPage() {
   const queuedEditOpsRef = useRef([]);
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
   const autoStartedLiftRef = useRef("");
-  const [showDesktopActivityMonitor, setShowDesktopActivityMonitor] = useState(false);
+  const devActivityMonitorVisible =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE, {
+      initializeWithValue: false,
+    }) ?? false;
+  const showDesktopActivityMonitor = isDev && devActivityMonitorVisible;
 
   // Structural mutation guard: prevents concurrent row-shifting API calls
   // (addSet, addLift, deleteSet) that could race on stale row indices.
@@ -673,25 +677,6 @@ export default function LogSessionPage() {
     },
     [router, todayIso, setPendingSetsSync],
   );
-
-  useEffect(() => {
-    if (!isDev || typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE);
-    setShowDesktopActivityMonitor(raw === "1");
-  }, []);
-
-  const toggleDesktopActivityMonitor = useCallback(() => {
-    setShowDesktopActivityMonitor((prev) => {
-      const next = !prev;
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE,
-          next ? "1" : "0",
-        );
-      }
-      return next;
-    });
-  }, []);
 
   // All unique session dates from parsedData (ascending)
   const sessionDates = useMemo(() => {
@@ -1874,17 +1859,6 @@ export default function LogSessionPage() {
               </div>
 
               <SyncIndicator state={syncState} />
-
-              {isDev && (
-                <Button
-                  variant={showDesktopActivityMonitor ? "secondary" : "ghost"}
-                  size="sm"
-                  className="hidden lg:inline-flex"
-                  onClick={toggleDesktopActivityMonitor}
-                >
-                  Activity
-                </Button>
-              )}
 
               <Button
                 variant="ghost"

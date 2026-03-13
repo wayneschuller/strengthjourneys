@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useReadLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 
@@ -28,6 +30,13 @@ const API_DESCRIPTIONS = {
 
 export function DevActivityMonitorPanel({ className }) {
   const { entries } = useDevActivityMonitor();
+  const storedDevTrace = useReadLocalStorage(LOCAL_STORAGE_KEYS.DEV_LOG_SYNC_TRACE, {
+    initializeWithValue: false,
+  });
+  const devTrace = useMemo(
+    () => (Array.isArray(storedDevTrace) ? storedDevTrace : []),
+    [storedDevTrace],
+  );
   const scrollRef = useRef(null);
   const copyTimeoutRef = useRef(null);
   const [copied, setCopied] = useState(false);
@@ -64,7 +73,12 @@ export function DevActivityMonitorPanel({ className }) {
       return `[${entry.time}] ✓ ${entry.label}: ${entry.total}ms${entry.detail ? ` | ${entry.detail}` : ""}`;
     });
 
-    navigator.clipboard.writeText(`${header}\n${lines.join("\n")}`);
+    const traceHeader = `\n\nSJ Dev Sync Trace\n${"─".repeat(60)}`;
+    const traceLines = Array.isArray(devTrace)
+      ? devTrace.map((entry) => JSON.stringify(entry))
+      : [];
+
+    navigator.clipboard.writeText(`${header}\n${lines.join("\n")}${traceLines.length ? `${traceHeader}\n${traceLines.join("\n")}` : ""}`);
     setCopied(true);
     if (copyTimeoutRef.current) {
       window.clearTimeout(copyTimeoutRef.current);
@@ -72,7 +86,7 @@ export function DevActivityMonitorPanel({ className }) {
     copyTimeoutRef.current = window.setTimeout(() => {
       setCopied(false);
     }, 2000);
-  }, [entries]);
+  }, [entries, devTrace]);
 
   return (
     <div className={cn("flex flex-col rounded-lg border bg-card", className)}>
@@ -183,6 +197,47 @@ export function DevActivityMonitorPanel({ className }) {
             </div>
           );
         })}
+
+        {Array.isArray(devTrace) && devTrace.length > 0 && (
+          <div className="border-t border-border/30 bg-muted/20 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Dev Sync Trace
+            </p>
+            <div className="mt-2 space-y-2">
+              {devTrace.slice().reverse().map((entry, index) => (
+                <div
+                  key={`${entry.at ?? "trace"}-${index}`}
+                  className="rounded border border-border/30 bg-background/80 px-2 py-1.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] text-muted-foreground/60">
+                      {entry.at ? new Date(entry.at).toLocaleTimeString() : "?"}
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {entry.op}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      {entry.phase}
+                    </span>
+                    {typeof entry.ok === "boolean" && (
+                      <span
+                        className={cn(
+                          "ml-auto text-[10px] font-semibold uppercase tracking-wide",
+                          entry.ok ? "text-green-600 dark:text-green-400" : "text-destructive",
+                        )}
+                      >
+                        {entry.ok ? "ok" : "failed"}
+                      </span>
+                    )}
+                  </div>
+                  <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-all font-mono text-[10px] text-muted-foreground">
+                    {JSON.stringify(entry, null, 2)}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

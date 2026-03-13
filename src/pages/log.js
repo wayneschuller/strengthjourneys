@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
+import { DevActivityMonitorPanel } from "@/components/dev-activity-monitor";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -606,6 +607,7 @@ export default function LogSessionPage() {
   const queuedEditOpsRef = useRef([]);
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
   const autoStartedLiftRef = useRef("");
+  const [showDesktopActivityMonitor, setShowDesktopActivityMonitor] = useState(false);
 
   // Structural mutation guard: prevents concurrent row-shifting API calls
   // (addSet, addLift, deleteSet) that could race on stale row indices.
@@ -671,6 +673,25 @@ export default function LogSessionPage() {
     },
     [router, todayIso, setPendingSetsSync],
   );
+
+  useEffect(() => {
+    if (!isDev || typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE);
+    setShowDesktopActivityMonitor(raw === "1");
+  }, []);
+
+  const toggleDesktopActivityMonitor = useCallback(() => {
+    setShowDesktopActivityMonitor((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE,
+          next ? "1" : "0",
+        );
+      }
+      return next;
+    });
+  }, []);
 
   // All unique session dates from parsedData (ascending)
   const sessionDates = useMemo(() => {
@@ -1808,7 +1829,9 @@ export default function LogSessionPage() {
 
   return (
     <div className="mx-auto max-w-[96rem] px-3 pb-24 sm:px-4">
-      <div className="lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_16.25rem] lg:gap-12 xl:gap-16 2xl:gap-20">
+      <div
+        className={`lg:grid ${showDesktopActivityMonitor ? "lg:grid-cols-[15.25rem_minmax(0,46rem)_20rem]" : "lg:grid-cols-[15.25rem_minmax(0,46rem)]"} lg:gap-12 xl:gap-16 2xl:gap-20`}
+      >
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-4 pt-3">
             <InspirationCard
@@ -1868,6 +1891,17 @@ export default function LogSessionPage() {
               </div>
 
               <SyncIndicator state={syncState} />
+
+              {isDev && (
+                <Button
+                  variant={showDesktopActivityMonitor ? "secondary" : "ghost"}
+                  size="sm"
+                  className="hidden lg:inline-flex"
+                  onClick={toggleDesktopActivityMonitor}
+                >
+                  Activity
+                </Button>
+              )}
 
               <Button
                 variant="ghost"
@@ -1986,9 +2020,13 @@ export default function LogSessionPage() {
           </div>
         </main>
 
-        <aside className="hidden lg:block">
-          <div className="sticky top-20 pt-3" />
-        </aside>
+        {showDesktopActivityMonitor && (
+          <aside className="hidden lg:block">
+            <div className="sticky top-20 pt-3">
+              <DevActivityMonitorPanel className="max-h-[calc(100vh-6rem)]" />
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );

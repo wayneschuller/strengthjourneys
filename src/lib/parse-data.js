@@ -21,7 +21,6 @@ import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
  * @property {string} [URL]         Optional video or reference URL
  * @property {boolean} [isHistoricalPR] Marked true when this entry is a historical PR for its liftType + reps
  * @property {number} [rowIndex] 1-based row number in the source Google Sheet (header = row 1, first data row = row 2)
- * @property {"session"|"lift"|"plain"} [anchorType] Sparse-sheet anchor classification for the source row
  */
 
 /**
@@ -135,13 +134,11 @@ function parseBespokeData(data) {
     }
 
     const obj = {};
-    const rawDateCell = row[dateCol] ?? "";
-    const rawLiftTypeCell = row[liftTypeCol] ?? "";
 
     // --- DATE HANDLING LOGIC ---
     // If the date cell is filled, try to normalize it
-    if (rawDateCell) {
-      const normalizedDate = normalizeDateInput(rawDateCell, localeHint);
+    if (row[dateCol]) {
+      const normalizedDate = normalizeDateInput(row[dateCol], localeHint);
       if (normalizedDate) {
         // Valid date: use it and update previousDate
         obj.date = normalizedDate;
@@ -168,8 +165,8 @@ function parseBespokeData(data) {
     // --- END DATE HANDLING LOGIC ---
 
     // Process lift type next since it's used for previousLiftType
-    if (rawLiftTypeCell) {
-      obj.liftType = normalizeLiftTypeNames(rawLiftTypeCell);
+    if (row[liftTypeCol]) {
+      obj.liftType = normalizeLiftTypeNames(row[liftTypeCol]);
       previousLiftType = obj.liftType; // Store normalized value so inherited rows get "Strict Press" not "Overhead Press"
     } else {
       obj.liftType = previousLiftType;
@@ -195,7 +192,6 @@ function parseBespokeData(data) {
 
     // Store the 1-based sheet row number so the editor can write back to the exact row
     obj.rowIndex = i + 1;
-    obj.anchorType = rawDateCell ? "session" : rawLiftTypeCell ? "lift" : "plain";
 
     objectsArray.push(obj);
   }

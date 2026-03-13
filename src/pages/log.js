@@ -1298,7 +1298,8 @@ export default function LogSessionPage() {
       const prevSessionSet = sessionIndex > 0 ? sessionSets[sessionIndex - 1] : null;
       const nextSessionSet =
         sessionIndex < sessionSets.length - 1 ? sessionSets[sessionIndex + 1] : null;
-      const anchorType = set.anchorType ?? (sessionIndex === 0 ? "session" : prevSessionSet?.liftType !== set.liftType ? "lift" : "plain");
+      const anchorType =
+        sessionIndex === 0 ? "session" : prevSessionSet?.liftType !== set.liftType ? "lift" : "plain";
       const isFirstOfSession = anchorType === "session";
       const isLiftAnchor = anchorType === "lift";
 
@@ -1460,7 +1461,6 @@ export default function LogSessionPage() {
             rowIndex: null,
             isGoal: false,
             isHistoricalPR: false,
-            anchorType: "plain",
             _pending: true,
             _tempId: tempId,
             _serverSnapshot: buildSheetSnapshotFromFields(
@@ -1540,6 +1540,15 @@ export default function LogSessionPage() {
     async (liftType) => {
       if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
 
+      const existingSets = sessionLiftsWithPending[liftType] ?? [];
+      if (existingSets.length > 0) {
+        const lastExistingSet =
+          [...existingSets].reverse().find((set) => !set._pending) ??
+          existingSets[existingSets.length - 1];
+        await addSet(liftType, lastExistingSet ?? null);
+        return;
+      }
+
       const unitType = isMetric ? "kg" : "lb";
       const weight = isMetric ? 20 : 45;
       const reps = 5;
@@ -1587,7 +1596,6 @@ export default function LogSessionPage() {
             rowIndex: null,
             isGoal: false,
             isHistoricalPR: false,
-            anchorType: hasExistingSession ? "lift" : "session",
             _pending: true,
             _tempId: tempId,
             _serverSnapshot: buildSheetSnapshotFromFields(
@@ -1664,7 +1672,7 @@ export default function LogSessionPage() {
       logSheetTimings("addLift", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, sessionLiftsWithPending, addSet],
   );
 
   useEffect(() => {

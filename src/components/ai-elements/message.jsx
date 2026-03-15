@@ -262,6 +262,7 @@ export const MessageResponse = memo(({
 }) => (
   <Streamdown
     className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
+    linkSafety={{ enabled: false }}
     plugins={{ cjk, code, math, mermaid }}
     {...props} />
 ), (prevProps, nextProps) => prevProps.children === nextProps.children);

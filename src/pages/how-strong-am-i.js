@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import { Copy, CircleDashed } from "lucide-react";
+import {
+  Copy,
+  CircleDashed,
+  Calculator,
+  BicepsFlexed,
+  Trophy,
+  LineChart,
+  Anvil,
+} from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
@@ -58,6 +66,45 @@ const LIFTS = [
     label: "Deadlift",
     emoji: "⛓️",
     standardKey: "Deadlift",
+  },
+];
+
+const LIFT_INSIGHT_URLS = {
+  "Back Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  Deadlift: "/barbell-deadlift-insights",
+};
+
+const NEXT_TOOL_LINKS = [
+  {
+    href: "/big-four-strength-standards-calculator",
+    title: "Big Four Strength Standards",
+    description: "Check beginner-to-elite benchmarks for each lift.",
+    IconComponent: BicepsFlexed,
+  },
+  {
+    href: "/calculator",
+    title: "E1RM Calculator",
+    description: "Estimate your one-rep max from a recent work set.",
+    IconComponent: Calculator,
+  },
+  {
+    href: "/1000lb-club-calculator",
+    title: "1000lb Club Calculator",
+    description: "See how your squat, bench, and deadlift total stacks up.",
+    IconComponent: Anvil,
+  },
+  {
+    href: "/lift-explorer",
+    title: "Lift Explorer",
+    description: "Review PRs, consistency, and milestones across your training.",
+    IconComponent: Trophy,
+  },
+  {
+    href: "/visualizer",
+    title: "Strength Visualizer",
+    description: "Chart each lift over time and spot long-term trends.",
+    IconComponent: LineChart,
   },
 ];
 
@@ -246,6 +293,8 @@ function HowStrongAmIPageMain() {
           </section>
         </CardContent>
       </Card>
+
+      <NextToolsSection />
     </PageContainer>
   );
 }
@@ -320,7 +369,12 @@ function LiftSliders({ liftWeights, onChange, isMetric }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-sm font-medium">
                 <span>{emoji}</span>
-                <span>{label}</span>
+                <Link
+                  href={LIFT_INSIGHT_URLS[label]}
+                  className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                >
+                  {label}
+                </Link>
               </div>
               <span className="text-sm font-bold tabular-nums">
                 {liftWeights[key]}
@@ -364,11 +418,16 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
           return (
             <div
               key={key}
-              className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"
-            >
+                className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"
+              >
               <div className="min-w-0 flex items-center gap-2">
                 <span className="shrink-0">{emoji}</span>
-                <span className="truncate font-medium">{label}</span>
+                <Link
+                  href={LIFT_INSIGHT_URLS[label]}
+                  className="truncate font-medium underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                >
+                  {label}
+                </Link>
                 <span className="shrink-0 text-muted-foreground">
                   {weight}
                   {unit}
@@ -419,7 +478,15 @@ function ExplainerSection() {
         These percentiles are estimates anchored to the Kilgore strength
         standards and calibrated against published population distributions.
         They are informed comparisons, not exact rankings. Age adjustments are
-        handled automatically by the underlying standards data.
+        handled automatically by the underlying standards data. If you want to
+        compare the same lifts against beginner-to-elite benchmarks, use the{" "}
+        <Link
+          href="/big-four-strength-standards-calculator"
+          className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+        >
+          Big Four Strength Standards Calculator
+        </Link>
+        .
       </p>
     </div>
   );
@@ -444,7 +511,18 @@ const FAQ_ITEMS = [
   },
   {
     q: "Should I enter my true 1RM or an estimate?",
-    a: "Enter your best 1-rep max. If you only know a recent heavy set, use the One Rep Max Calculator to estimate it first.",
+    renderAnswer: (
+      <>
+        Enter your best 1-rep max. If you only know a recent heavy set, use the{" "}
+        <Link
+          href="/calculator"
+          className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+        >
+          One Rep Max Calculator
+        </Link>{" "}
+        to estimate it first.
+      </>
+    ),
   },
   {
     q: "Does age matter?",
@@ -457,13 +535,38 @@ function FAQSection() {
     <div className="mt-6">
       <h2 className="mb-3 text-base font-semibold">Frequently asked questions</h2>
       <div className="flex flex-col gap-3">
-        {FAQ_ITEMS.map(({ q, a }) => (
+        {FAQ_ITEMS.map(({ q, a, renderAnswer }) => (
           <div key={q} className="rounded-md border p-3">
             <p className="text-sm font-medium">{q}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{a}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {renderAnswer || a}
+            </p>
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+function NextToolsSection() {
+  return (
+    <section className="mt-10">
+      <h2 className="mb-4 text-xl font-semibold">What should you check next?</h2>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {NEXT_TOOL_LINKS.map(({ href, title, description, IconComponent }) => (
+          <Link
+            key={href}
+            href={href}
+            className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+          >
+            <div className="mb-2 flex items-center gap-2">
+              <IconComponent className="h-5 w-5" />
+              <h3 className="font-semibold">{title}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

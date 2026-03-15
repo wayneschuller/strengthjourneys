@@ -305,14 +305,24 @@ function AILiftingAssistantMain({ relatedArticles }) {
         topLiftsByTypeAndRepsLast12Months,
       );
 
-      const sessionLines = buildRecentSessionLines(
+      const {
+        recentBlockLines,
+        latestDetailLines,
+      } = buildRecentSessionWindowSections({
+        parsedData,
         recentSessionDate,
         analyzedSessionLifts,
-      );
+      });
 
-      if (sessionLines.length > 0) {
+      if (recentBlockLines.length > 0) {
         metadataSections.push(
-          createMetadataSection("recent_session", sessionLines),
+          createMetadataSection("recent_sessions", recentBlockLines),
+        );
+      }
+
+      if (latestDetailLines.length > 0) {
+        metadataSections.push(
+          createMetadataSection("latest_session_detail", latestDetailLines),
         );
       }
     }
@@ -937,13 +947,95 @@ function buildTrainingLoadLines({
   return lines.slice(0, 8);
 }
 
-function buildRecentSessionLines(sessionDate, analyzedLifts) {
+function buildRecentSessionWindowSections({
+  parsedData,
+  recentSessionDate,
+  analyzedSessionLifts,
+}) {
+  const recentWindowDates = getRecentWindowDates(parsedData, recentSessionDate, 28);
+
+  const recentBlockLines = [
+    "window=last_28_days",
+    `session_count=${recentWindowDates.length}`,
+    `latest_session=${recentSessionDate}`,
+    ...recentWindowDates.slice(0, 5).map((date) =>
+      summarizeSessionForPrompt(parsedData, date),
+    ),
+  ].filter(Boolean);
+
+  const latestDetailLines = buildLatestSessionDetailLines(
+    recentSessionDate,
+    analyzedSessionLifts,
+  );
+
+  return { recentBlockLines, latestDetailLines };
+}
+
+function getRecentWindowDates(parsedData, recentSessionDate, windowDays = 28) {
+  if (!parsedData || !recentSessionDate) return [];
+
+  const cutoffDate = new Date(recentSessionDate);
+  cutoffDate.setDate(cutoffDate.getDate() - (windowDays - 1));
+
+  const dateSet = new Set();
+
+  parsedData.forEach((entry) => {
+    if (entry.isGoal || !entry.date) return;
+    const entryDate = new Date(entry.date);
+    if (entryDate >= cutoffDate && entry.date <= recentSessionDate) {
+      dateSet.add(entry.date);
+    }
+  });
+
+  return Array.from(dateSet).sort((a, b) => b.localeCompare(a));
+}
+
+function summarizeSessionForPrompt(parsedData, sessionDate) {
+  const entries = (parsedData ?? []).filter(
+    (entry) => entry.date === sessionDate && !entry.isGoal,
+  );
+
+  if (entries.length === 0) return null;
+
+  const byLift = {};
+  entries.forEach((entry) => {
+    if (!byLift[entry.liftType]) {
+      byLift[entry.liftType] = [];
+    }
+    byLift[entry.liftType].push(entry);
+  });
+
+  const liftSummaries = Object.entries(byLift)
+    .slice(0, 4)
+    .map(([liftType, lifts]) => {
+      const topSet = lifts.reduce((best, current) => {
+        if (!best) return current;
+        if ((current.weight ?? 0) > (best.weight ?? 0)) return current;
+        if ((current.weight ?? 0) === (best.weight ?? 0)) {
+          return (current.reps ?? 0) > (best.reps ?? 0) ? current : best;
+        }
+        return best;
+      }, null);
+
+      if (!topSet) return null;
+
+      return `${liftType} ${lifts.length} sets top ${topSet.weight}${topSet.unitType}x${topSet.reps}`;
+    })
+    .filter(Boolean)
+    .join("; ");
+
+  if (!liftSummaries) return null;
+
+  return `${sessionDate}: ${liftSummaries}`;
+}
+
+function buildLatestSessionDetailLines(sessionDate, analyzedLifts) {
   if (!analyzedLifts || Object.keys(analyzedLifts).length === 0) return [];
 
   const lines = [`date=${sessionDate}`];
 
   Object.entries(analyzedLifts)
-    .slice(0, 6)
+    .slice(0, 4)
     .forEach(([liftType, lifts]) => {
       const setSummary = lifts
         .slice(0, 4)

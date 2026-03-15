@@ -72,10 +72,10 @@ export default async function handler(req, res) {
     });
   }
 
-  // 20260126 - GPT 5 is still too slow. Everyone gets 4o for a while.
+  // 2026-03-15: GPT-4.1 is the default here for stronger formatting and lower-latency chat quality.
   const AI_model = isAdvancedModel
-    ? openai("gpt-4o-mini")
-    : openai("gpt-4o-mini");
+    ? openai("gpt-4.1")
+    : openai("gpt-4.1");
 
   // Convert UI messages (from client) to model messages, then combine with system messages
   // In AI SDK v6, convertToModelMessages is async and must be awaited

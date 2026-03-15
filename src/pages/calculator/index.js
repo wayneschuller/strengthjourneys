@@ -68,8 +68,6 @@ import {
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
-const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
-
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
   const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
@@ -155,62 +153,6 @@ const FORMULA_GUIDE_LINKS = [
     description: "A conservative option that tends to estimate slightly lower than Epley.",
   },
 ];
-
-function renderAnswer(answer) {
-  if (typeof answer === "string") return answer;
-  return answer.map((seg, i) =>
-    typeof seg === "string" ? seg : (
-      <Link key={i} href={seg.href}
-        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
-        {seg.text}
-      </Link>
-    )
-  );
-}
-
-function flattenAnswer(answer) {
-  if (typeof answer === "string") return answer;
-  return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
-}
-
-function FormulaSupportPanel({ formulaSupport }) {
-  if (!formulaSupport) return null;
-
-  return (
-    <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>{formulaSupport.summary}</p>
-          <ul className="space-y-2">
-            <li><strong className="text-foreground">Best for:</strong> {formulaSupport.bestFor}</li>
-            <li><strong className="text-foreground">Rep range:</strong> {formulaSupport.repRange}</li>
-            <li><strong className="text-foreground">Worked example:</strong> {formulaSupport.example}</li>
-          </ul>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Compare 1RM Methods</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {formulaSupport.links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
-            >
-              <div className="font-medium text-foreground">{link.label}</div>
-              <div className="text-muted-foreground">{link.description}</div>
-            </Link>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 export default function E1RMCalculator({ relatedArticles }) {
   const title = "One Rep Max Calculator | Free 1RM Tool, No Login Required";
@@ -335,9 +277,12 @@ export default function E1RMCalculator({ relatedArticles }) {
  *   the target lift featured prominently in the strength standards section.
  *   Value should be a slug page lift name e.g. "Squat", "Bench Press", "Deadlift", "Strict Press".
  * @param {string} [props.pageTitle] - Heading text for the page.
- * @param {string} [props.pageDescription] - Description text under the heading.
+ * @param {string|Array} [props.pageDescription] - Description text under the heading.
  * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
  *   Shape: { equation: string, text: string }. Used by formula slug pages to show the formula equation.
+ * @param {Object|null} [props.exampleSnippet] - Optional example block rendered above the calculator card.
+ *   Shape: { heading: string, input: string|Array, calculation: string|Array, result: string|Array, takeaway: string|Array }.
+ * @param {Array} [props.faqItems] - FAQ items rendered at the bottom of the page.
  */
 export function E1RMCalculatorMain({
   relatedArticles,
@@ -347,7 +292,9 @@ export function E1RMCalculatorMain({
   pageTitle = "One Rep Max Calculator",
   pageDescription = "Enter reps and weight to estimate your one-rep max across 7 proven formulas. See rep-max projections, percentage training guides, and personalized Big Four strength levels by age, sex, and bodyweight.",
   formulaBlurb = null,
+  exampleSnippet = null,
   formulaSupport = null,
+  faqItems = CALCULATOR_FAQ,
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -649,11 +596,11 @@ export function E1RMCalculatorMain({
           {pageTitle}
         </PageHeaderHeading>
         <PageHeaderDescription>
-          {pageDescription}
+          {renderInlineContent(pageDescription)}
         </PageHeaderDescription>
         {formulaBlurb && (
-          <p className="text-sm text-muted-foreground mt-1 font-mono">
-            {formulaBlurb.equation} — {formulaBlurb.text}
+          <p className="mt-1 text-base text-muted-foreground font-mono">
+            {formulaBlurb.equation} {"\u2014"} {renderInlineContent(formulaBlurb.text)}
           </p>
         )}
         {forceLift && getLiftSvgPath(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
@@ -677,7 +624,10 @@ export function E1RMCalculatorMain({
           </PageHeaderRight>
         )}
       </PageHeader>
-      <FormulaSupportPanel formulaSupport={formulaSupport} />
+      <CalculatorSupportPanels
+        exampleSnippet={exampleSnippet}
+        formulaSupport={formulaSupport}
+      />
       <Card>
         <CardContent>
           {/* Two main sliders */}
@@ -893,7 +843,7 @@ export function E1RMCalculatorMain({
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">One Rep Max Calculator FAQ</h2>
         <div className="space-y-4">
-          {CALCULATOR_FAQ.map(({ question, answer }) => (
+          {faqItems.map(({ question, answer }) => (
             <article key={question} className="rounded-lg border p-4">
               <h3 className="text-base font-semibold">{question}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
@@ -922,6 +872,110 @@ export function E1RMCalculatorMain({
       )}
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
+  );
+}
+
+const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
+
+function renderInlineContent(content) {
+  if (typeof content === "string") return content;
+  return content.map((seg, i) =>
+    typeof seg === "string" ? seg : (
+      <Link
+        key={i}
+        href={seg.href}
+        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+      >
+        {seg.text}
+      </Link>
+    ),
+  );
+}
+
+function renderAnswer(answer) {
+  return renderInlineContent(answer);
+}
+
+function flattenAnswer(answer) {
+  if (typeof answer === "string") return answer;
+  return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
+}
+
+function CalculatorSupportPanels({ exampleSnippet, formulaSupport }) {
+  if (!exampleSnippet && !formulaSupport) return null;
+
+  return (
+    <section className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+      {exampleSnippet && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              <strong className="text-foreground">Input:</strong>{" "}
+              {renderInlineContent(exampleSnippet.input)}
+            </p>
+            <p>
+              <strong className="text-foreground">Calculation:</strong>{" "}
+              <span className="font-mono text-foreground">
+                {renderInlineContent(exampleSnippet.calculation)}
+              </span>
+            </p>
+            <p>
+              <strong className="text-foreground">Result:</strong>{" "}
+              {renderInlineContent(exampleSnippet.result)}
+            </p>
+            <p>{renderInlineContent(exampleSnippet.takeaway)}</p>
+          </CardContent>
+        </Card>
+      )}
+      {formulaSupport && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>{renderInlineContent(formulaSupport.summary)}</p>
+            <ul className="space-y-2">
+              <li>
+                <strong className="text-foreground">Best for:</strong>{" "}
+                {renderInlineContent(formulaSupport.bestFor)}
+              </li>
+            <li>
+              <strong className="text-foreground">Rep range:</strong>{" "}
+              {renderInlineContent(formulaSupport.repRange)}
+            </li>
+            {formulaSupport.example && (
+              <li>
+                <strong className="text-foreground">Worked example:</strong>{" "}
+                {renderInlineContent(formulaSupport.example)}
+              </li>
+            )}
+          </ul>
+        </CardContent>
+      </Card>
+      )}
+      {formulaSupport && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Compare 1RM Methods</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {formulaSupport.links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+              >
+                <div className="font-medium text-foreground">{link.label}</div>
+                <div className="text-muted-foreground">{link.description}</div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </section>
   );
 }
 

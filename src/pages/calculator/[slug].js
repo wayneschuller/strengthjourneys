@@ -50,6 +50,14 @@ const PAGE_CONFIG = {
         },
       ],
     },
+    exampleSnippet: {
+      heading: "Example Epley 1RM Calculation",
+      input: "Input set: 225 lb x 5 reps",
+      calculation: "Formula: 225 x (1 + 5/30) = 262.5",
+      result: "Estimated 1RM: 263 lb",
+      takeaway:
+        "This is why Epley is a common default for moderate-rep working sets: the math is simple and the estimate lands close to what most lifters expect.",
+    },
   },
   "brzycki-formula-1rm-calculator": {
     type: "formula",
@@ -94,6 +102,14 @@ const PAGE_CONFIG = {
           description: "Check how Brzycki differs when reps start climbing.",
         },
       ],
+    },
+    exampleSnippet: {
+      heading: "Example Brzycki 1RM Calculation",
+      input: "Input set: 225 lb x 5 reps",
+      calculation: "Formula: 225 / (1.0278 - 0.0278 x 5) = 252.8",
+      result: "Estimated 1RM: 253 lb",
+      takeaway:
+        "Brzycki usually reads a little stricter than Epley, which is part of why lifters often prefer it for heavier, lower-rep sets.",
     },
     faqItems: [
       {
@@ -141,6 +157,14 @@ const PAGE_CONFIG = {
         },
       ],
     },
+    exampleSnippet: {
+      heading: "Example Mayhew 1RM Calculation",
+      input: "Input set: 225 lb x 8 reps",
+      calculation: "Formula: 100 x 225 / (52.2 + 41.9 x e^(-0.055 x 8)) = 284.1",
+      result: "Estimated 1RM: 284 lb",
+      takeaway:
+        "Mayhew rises faster once reps climb, so it is useful when you want to compare a higher-rep estimate against simpler linear formulas.",
+    },
   },
   "wathan-1rm-formula-calculator": {
     type: "formula",
@@ -152,6 +176,14 @@ const PAGE_CONFIG = {
     description:
       "Use the Wathan 1RM formula to estimate your one rep max from reps and weight. Compare all 7 proven equations with rep max tables and percentage loads.",
     keywords: "wathan 1rm formula, wathan formula calculator, wathan one rep max",
+    exampleSnippet: {
+      heading: "Example Wathan 1RM Calculation",
+      input: "Input set: 225 lb x 8 reps",
+      calculation: "Formula: 100 x 225 / (48.8 + 53.8 x e^(-0.075 x 8)) = 281.7",
+      result: "Estimated 1RM: 282 lb",
+      takeaway:
+        "Wathan is another curved formula, so it is useful when you want a research-backed estimate that does not stay perfectly linear as reps increase.",
+    },
   },
   "mcglothin-formula-1rm-calculator": {
     type: "formula",
@@ -163,6 +195,14 @@ const PAGE_CONFIG = {
     description:
       "Use the McGlothin formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "mcglothin formula 1rm, mcglothin one rep max calculator, 1rm formula calculator",
+    exampleSnippet: {
+      heading: "Example McGlothin 1RM Calculation",
+      input: "Input set: 225 lb x 5 reps",
+      calculation: "Formula: 100 x 225 / (101.3 - 2.671 x 5) = 255.9",
+      result: "Estimated 1RM: 256 lb",
+      takeaway:
+        "McGlothin stays fairly steady across a broad middle rep range, which makes it useful when you want a calmer linear comparison.",
+    },
   },
   "lombardi-formula-1rm-calculator": {
     type: "formula",
@@ -174,6 +214,14 @@ const PAGE_CONFIG = {
     description:
       "Use the Lombardi formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "lombardi formula 1rm, lombardi one rep max calculator, 1rm formula calculator",
+    exampleSnippet: {
+      heading: "Example Lombardi 1RM Calculation",
+      input: "Input set: 225 lb x 5 reps",
+      calculation: "Formula: 225 x 5^0.1 = 264.2",
+      result: "Estimated 1RM: 264 lb",
+      takeaway:
+        "Lombardi is quick to compute and often lands near Epley, so it works well as a fast cross-check rather than a sole answer.",
+    },
   },
   "oconner-formula-1rm-calculator": {
     type: "formula",
@@ -185,6 +233,14 @@ const PAGE_CONFIG = {
     description:
       "Use the O'Conner formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "oconner formula 1rm, o'conner one rep max calculator, 1rm formula calculator",
+    exampleSnippet: {
+      heading: "Example O'Conner 1RM Calculation",
+      input: "Input set: 225 lb x 5 reps",
+      calculation: "Formula: 225 x (1 + 5/40) = 253.1",
+      result: "Estimated 1RM: 253 lb",
+      takeaway:
+        "O'Conner tends to estimate slightly lower than Epley, so it is a useful conservative check when you want to avoid inflated higher-rep projections.",
+    },
   },
 
   // ── LIFT PAGES ─────────────────────────────────────────────────────────────
@@ -198,6 +254,14 @@ const PAGE_CONFIG = {
       "Calculate your max squat using 7 proven 1RM formulas (Epley, Brzycki & more). Get squat rep-max tables, percentage training guides, and strength level ratings by age, sex, and bodyweight. Free, no login.",
     keywords:
       "squat 1rm calculator, max squat calculator, one rep max squat, squat max calculator, how to calculate squat max",
+    exampleSnippet: {
+      heading: "Example Squat 1RM Estimate",
+      input: "Input set: 225 lb x 5 reps",
+      calculation: "Using Brzycki: 225 / (1.0278 - 0.0278 x 5) = 252.8",
+      result: "Estimated squat 1RM: 253 lb",
+      takeaway:
+        "A hard set of 5 is a practical input for most squat estimates because it is heavy enough to be meaningful without the risk of true max testing.",
+    },
   },
   "bench-press-1rm-calculator": {
     type: "lift",
@@ -212,6 +276,14 @@ const PAGE_CONFIG = {
       "Calculate your bench press one rep max using 7 proven formulas. Get rep-max tables, percentage guides, and strength level ratings. Free bench press 1RM calculator, no login required.",
     keywords:
       "bench press 1rm calculator, max bench calculator, bench press max calculator, one rep max bench press",
+    exampleSnippet: {
+      heading: "Example Bench Press 1RM Estimate",
+      input: "Input set: 185 lb x 5 reps",
+      calculation: "Using Brzycki: 185 / (1.0278 - 0.0278 x 5) = 207.9",
+      result: "Estimated bench press 1RM: 208 lb",
+      takeaway:
+        "Bench press estimates are usually cleanest when the set stays in the 3-10 rep range, with 5 reps often acting as the sweet spot.",
+    },
     faqItems: [
       {
         question: "What rep range gives the cleanest bench press 1RM estimate?",
@@ -233,6 +305,14 @@ const PAGE_CONFIG = {
       "Calculate your deadlift one rep max using 7 proven formulas. Get rep-max tables, percentage guides, and strength level ratings. Free deadlift 1RM calculator, no login required.",
     keywords:
       "deadlift 1rm calculator, max deadlift calculator, one rep max deadlift, deadlift max calculator",
+    exampleSnippet: {
+      heading: "Example Deadlift 1RM Estimate",
+      input: "Input set: 315 lb x 5 reps",
+      calculation: "Using Brzycki: 315 / (1.0278 - 0.0278 x 5) = 353.9",
+      result: "Estimated deadlift 1RM: 354 lb",
+      takeaway:
+        "Deadlift estimates usually hold up best when the set is heavy but not grindy, which is why many lifters use a clean set of 3-5 reps.",
+    },
   },
   "strict-press-1rm-calculator": {
     type: "lift",
@@ -244,6 +324,14 @@ const PAGE_CONFIG = {
       "Calculate your strict press one rep max using 7 proven formulas. Rep-max tables, percentage guides, and strength ratings. Free overhead press / OHP 1RM calculator, no login required.",
     keywords:
       "strict press 1rm calculator, overhead press 1rm calculator, ohp 1rm calculator, max overhead press, press max calculator",
+    exampleSnippet: {
+      heading: "Example Strict Press 1RM Estimate",
+      input: "Input set: 135 lb x 5 reps",
+      calculation: "Using Brzycki: 135 / (1.0278 - 0.0278 x 5) = 151.7",
+      result: "Estimated strict press 1RM: 152 lb",
+      takeaway:
+        "Strict press estimates get noisy faster than squat or deadlift, so moderate rep sets with clean form tend to give the most useful signal.",
+    },
   },
 };
 
@@ -375,6 +463,7 @@ export default function FormulaOrLiftCalculatorPage({ relatedArticles, pageConfi
         formulaBlurb={
           isFormula ? { equation: pageConfig.equation, text: pageConfig.blurb } : null
         }
+        exampleSnippet={pageConfig.exampleSnippet ?? null}
         formulaSupport={isFormula ? pageConfig.formulaSupport : null}
         faqItems={pageConfig.faqItems}
       />

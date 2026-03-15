@@ -280,6 +280,8 @@ export default function E1RMCalculator({ relatedArticles }) {
  * @param {string|Array} [props.pageDescription] - Description text under the heading.
  * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
  *   Shape: { equation: string, text: string }. Used by formula slug pages to show the formula equation.
+ * @param {Object|null} [props.exampleSnippet] - Optional example block rendered above the calculator card.
+ *   Shape: { heading: string, input: string|Array, calculation: string|Array, result: string|Array, takeaway: string|Array }.
  * @param {Array} [props.faqItems] - FAQ items rendered at the bottom of the page.
  */
 export function E1RMCalculatorMain({
@@ -290,6 +292,7 @@ export function E1RMCalculatorMain({
   pageTitle = "One Rep Max Calculator",
   pageDescription = "Enter reps and weight to estimate your one-rep max across 7 proven formulas. See rep-max projections, percentage training guides, and personalized Big Four strength levels by age, sex, and bodyweight.",
   formulaBlurb = null,
+  exampleSnippet = null,
   formulaSupport = null,
   faqItems = CALCULATOR_FAQ,
 }) {
@@ -621,6 +624,7 @@ export function E1RMCalculatorMain({
           </PageHeaderRight>
         )}
       </PageHeader>
+      <ExampleSnippetPanel exampleSnippet={exampleSnippet} />
       <FormulaSupportPanel formulaSupport={formulaSupport} />
       <Card>
         <CardContent>
@@ -940,6 +944,37 @@ function FormulaSupportPanel({ formulaSupport }) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ExampleSnippetPanel({ exampleSnippet }) {
+  if (!exampleSnippet) return null;
+
+  return (
+    <section className="mb-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            <strong className="text-foreground">Input:</strong>{" "}
+            {renderInlineContent(exampleSnippet.input)}
+          </p>
+          <p>
+            <strong className="text-foreground">Calculation:</strong>{" "}
+            <span className="font-mono text-foreground">
+              {renderInlineContent(exampleSnippet.calculation)}
+            </span>
+          </p>
+          <p>
+            <strong className="text-foreground">Result:</strong>{" "}
+            {renderInlineContent(exampleSnippet.result)}
+          </p>
+          <p>{renderInlineContent(exampleSnippet.takeaway)}</p>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 

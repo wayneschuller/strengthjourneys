@@ -31,7 +31,6 @@ const PAGE_CONFIG = {
       bestFor:
         "moderate rep sets when you want a widely cited estimate that most lifters already recognize",
       repRange: "usually strongest from about 3-10 reps before fatigue distorts the estimate",
-      example: "225 lb x 5 reps estimates about 262 lb with the Epley equation.",
       links: [
         {
           href: "/calculator",
@@ -84,7 +83,6 @@ const PAGE_CONFIG = {
         { text: "\"no more than 10 repetitions should be used\"", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
         " for linear 1RM estimates in the movements they tested",
       ],
-      example: "225 lb x 5 reps estimates about 253 lb with the Brzycki equation.",
       links: [
         {
           href: "/calculator",
@@ -138,7 +136,6 @@ const PAGE_CONFIG = {
       bestFor:
         "higher-rep work where you want to see how an exponential equation changes the top-end estimate",
       repRange: "especially useful once your working sets move beyond the classic 3-5 rep zone",
-      example: "225 lb x 8 reps estimates about 284 lb with the Mayhew equation.",
       links: [
         {
           href: "/calculator",

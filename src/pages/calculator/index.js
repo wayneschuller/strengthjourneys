@@ -624,8 +624,10 @@ export function E1RMCalculatorMain({
           </PageHeaderRight>
         )}
       </PageHeader>
-      <ExampleSnippetPanel exampleSnippet={exampleSnippet} />
-      <FormulaSupportPanel formulaSupport={formulaSupport} />
+      <CalculatorSupportPanels
+        exampleSnippet={exampleSnippet}
+        formulaSupport={formulaSupport}
+      />
       <Card>
         <CardContent>
           {/* Two main sliders */}
@@ -899,81 +901,80 @@ function flattenAnswer(answer) {
   return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
 }
 
-function FormulaSupportPanel({ formulaSupport }) {
-  if (!formulaSupport) return null;
+function CalculatorSupportPanels({ exampleSnippet, formulaSupport }) {
+  if (!exampleSnippet && !formulaSupport) return null;
 
   return (
-    <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>{renderInlineContent(formulaSupport.summary)}</p>
-          <ul className="space-y-2">
-            <li>
-              <strong className="text-foreground">Best for:</strong>{" "}
-              {renderInlineContent(formulaSupport.bestFor)}
-            </li>
+    <section className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+      {exampleSnippet && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              <strong className="text-foreground">Input:</strong>{" "}
+              {renderInlineContent(exampleSnippet.input)}
+            </p>
+            <p>
+              <strong className="text-foreground">Calculation:</strong>{" "}
+              <span className="font-mono text-foreground">
+                {renderInlineContent(exampleSnippet.calculation)}
+              </span>
+            </p>
+            <p>
+              <strong className="text-foreground">Result:</strong>{" "}
+              {renderInlineContent(exampleSnippet.result)}
+            </p>
+            <p>{renderInlineContent(exampleSnippet.takeaway)}</p>
+          </CardContent>
+        </Card>
+      )}
+      {formulaSupport && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>{renderInlineContent(formulaSupport.summary)}</p>
+            <ul className="space-y-2">
+              <li>
+                <strong className="text-foreground">Best for:</strong>{" "}
+                {renderInlineContent(formulaSupport.bestFor)}
+              </li>
             <li>
               <strong className="text-foreground">Rep range:</strong>{" "}
               {renderInlineContent(formulaSupport.repRange)}
             </li>
-            <li>
-              <strong className="text-foreground">Worked example:</strong>{" "}
-              {renderInlineContent(formulaSupport.example)}
-            </li>
+            {formulaSupport.example && (
+              <li>
+                <strong className="text-foreground">Worked example:</strong>{" "}
+                {renderInlineContent(formulaSupport.example)}
+              </li>
+            )}
           </ul>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Compare 1RM Methods</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {formulaSupport.links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
-            >
-              <div className="font-medium text-foreground">{link.label}</div>
-              <div className="text-muted-foreground">{link.description}</div>
-            </Link>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function ExampleSnippetPanel({ exampleSnippet }) {
-  if (!exampleSnippet) return null;
-
-  return (
-    <section className="mb-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            <strong className="text-foreground">Input:</strong>{" "}
-            {renderInlineContent(exampleSnippet.input)}
-          </p>
-          <p>
-            <strong className="text-foreground">Calculation:</strong>{" "}
-            <span className="font-mono text-foreground">
-              {renderInlineContent(exampleSnippet.calculation)}
-            </span>
-          </p>
-          <p>
-            <strong className="text-foreground">Result:</strong>{" "}
-            {renderInlineContent(exampleSnippet.result)}
-          </p>
-          <p>{renderInlineContent(exampleSnippet.takeaway)}</p>
-        </CardContent>
-      </Card>
+      )}
+      {formulaSupport && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Compare 1RM Methods</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {formulaSupport.links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+              >
+                <div className="font-medium text-foreground">{link.label}</div>
+                <div className="text-muted-foreground">{link.description}</div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </section>
   );
 }

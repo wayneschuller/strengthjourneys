@@ -23,7 +23,7 @@ import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
  * Card that manages which lifting data categories are shared with the AI assistant.
  * Handles auth states (unauthenticated, no sheet connected, sheet loaded) and renders the appropriate Google sign-in, sheet picker, or data-sharing checkboxes.
  * @param {Object} props
- * @param {Object} props.selectedOptions - Object of boolean flags controlling which data categories are shared (all, records, frequency, consistency, sessionData).
+ * @param {Object} props.selectedOptions - Object of boolean flags controlling which data categories are shared (all, records, trainingLoad, frequency, consistency, sessionData).
  * @param {Function} props.setSelectedOptions - State setter for selectedOptions; receives the full updated options object.
  */
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
@@ -42,6 +42,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
     setSelectedOptions({
       all: allChecked,
       records: allChecked,
+      trainingLoad: allChecked,
       frequency: allChecked,
       consistency: allChecked,
       sessionData: allChecked,
@@ -175,6 +176,25 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
                   )}
                 >
                   Lift frequency and timeline metadata
+                </Label>
+              </div>
+              <div className="group flex items-center gap-2">
+                <Checkbox
+                  id="training-load-checkbox"
+                  checked={selectedOptions.trainingLoad}
+                  onCheckedChange={() => handleOptionChange("trainingLoad")}
+                  disabled={!hasPersonalData}
+                  className="group-hover:border-blue-500"
+                />
+                <Label
+                  htmlFor="training-load-checkbox"
+                  className={cn(
+                    "cursor-pointer hover:underline",
+                    !selectedOptions.trainingLoad &&
+                      "text-muted-foreground/50",
+                  )}
+                >
+                  Training load and tonnage trends
                 </Label>
               </div>
               <div className="group flex items-center gap-2">

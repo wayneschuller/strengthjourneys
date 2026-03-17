@@ -1883,9 +1883,9 @@ export default function LogSessionPage() {
     : { opacity: 0, y: -8, scale: 0.985, height: 0 };
 
   return (
-    <div className="mx-auto max-w-[96rem] px-3 pb-24 sm:px-4">
+    <div className="mx-auto max-w-[108rem] px-3 pb-24 sm:px-4">
       <div
-        className={`lg:grid ${showDesktopActivityMonitor ? "lg:grid-cols-[15.25rem_minmax(0,46rem)_20rem]" : "lg:grid-cols-[15.25rem_minmax(0,46rem)]"} lg:gap-12 xl:gap-16 2xl:gap-20`}
+        className={`lg:grid ${showDesktopActivityMonitor ? "lg:grid-cols-[15.25rem_minmax(0,46rem)_30rem]" : "lg:grid-cols-[15.25rem_minmax(0,46rem)]"} lg:gap-12 xl:gap-16 2xl:gap-20`}
       >
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-4 pt-3">
@@ -2067,7 +2067,7 @@ export default function LogSessionPage() {
         {showDesktopActivityMonitor && (
           <aside className="hidden lg:block">
             <div className="sticky top-20 pt-3">
-              <DevActivityMonitorPanel className="max-h-[calc(100vh-6rem)]" />
+              <DevActivityMonitorPanel className="max-h-[70vh]" />
             </div>
           </aside>
         )}

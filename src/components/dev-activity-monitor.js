@@ -243,6 +243,7 @@ export function DevActivityMonitorPanel({ className }) {
   const { entries } = useDevActivityMonitor();
   const scrollRef = useRef(null);
   const copyTimeoutRef = useRef(null);
+  const shouldStickToBottomRef = useRef(true);
   const [copied, setCopied] = useState(false);
 
   const orderedEntries = useMemo(
@@ -253,7 +254,7 @@ export function DevActivityMonitorPanel({ className }) {
   useEffect(() => {
     const scrollElement = scrollRef.current;
 
-    if (scrollElement) {
+    if (scrollElement && shouldStickToBottomRef.current) {
       scrollElement.scrollTop = scrollElement.scrollHeight;
     }
   }, [orderedEntries.length]);
@@ -280,8 +281,15 @@ export function DevActivityMonitorPanel({ className }) {
     }, 2000);
   }, [orderedEntries]);
 
+  const handleScroll = useCallback((event) => {
+    const element = event.currentTarget;
+    const distanceFromBottom =
+      element.scrollHeight - element.scrollTop - element.clientHeight;
+    shouldStickToBottomRef.current = distanceFromBottom < 48;
+  }, []);
+
   return (
-    <div className={cn("flex flex-col rounded-lg border bg-card", className)}>
+    <div className={cn("flex max-h-[70vh] flex-col rounded-lg border bg-card", className)}>
       <div className="flex items-center justify-between border-b px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Activity Monitor
@@ -301,7 +309,11 @@ export function DevActivityMonitorPanel({ className }) {
         </div>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto text-xs"
+      >
         {orderedEntries.length === 0 && (
           <div className="px-3 py-8 text-center text-muted-foreground/50">
             <p>UI actions, app API calls, and Google Sheets writes will appear here.</p>

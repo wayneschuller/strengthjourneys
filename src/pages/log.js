@@ -1883,24 +1883,43 @@ export default function LogSessionPage() {
     : { opacity: 0, y: -8, scale: 0.985, height: 0 };
 
   return (
-    <div className="mx-auto max-w-[108rem] px-3 pb-24 sm:px-4">
+    <div className="relative mx-auto max-w-[108rem] px-3 pb-24 sm:px-4">
+      {!showDesktopActivityMonitor && (
+        <aside className="pointer-events-none absolute left-1/2 top-0 hidden -translate-x-[calc(50%+25rem)] xl:block 2xl:-translate-x-[calc(50%+27rem)]">
+          <div className="sticky top-20 w-[15.25rem] space-y-4 pt-3">
+            <div className="pointer-events-auto">
+              <InspirationCard
+                key={sessionDate}
+                seedKey={sessionDate}
+                title={isToday ? "For today" : "Training note"}
+                variant="rail"
+                delayedReveal
+                revealDelayMs={1500}
+              />
+            </div>
+          </div>
+        </aside>
+      )}
+
       <div
         className={showDesktopActivityMonitor
           ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_30rem] lg:gap-12 xl:gap-16 2xl:gap-20"
-          : "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_15.25rem] lg:gap-12 xl:gap-16 2xl:gap-20"}
+          : ""}
       >
-        <aside className="hidden lg:block">
-          <div className="sticky top-20 space-y-4 pt-3">
-            <InspirationCard
-              key={sessionDate}
-              seedKey={sessionDate}
-              title={isToday ? "For today" : "Training note"}
-              variant="rail"
-              delayedReveal
-              revealDelayMs={1500}
-            />
-          </div>
-        </aside>
+        {showDesktopActivityMonitor && (
+          <aside className="hidden lg:block">
+            <div className="sticky top-20 space-y-4 pt-3">
+              <InspirationCard
+                key={sessionDate}
+                seedKey={sessionDate}
+                title={isToday ? "For today" : "Training note"}
+                variant="rail"
+                delayedReveal
+                revealDelayMs={1500}
+              />
+            </div>
+          </aside>
+        )}
 
         <main className="min-w-0">
           <div className="mx-auto max-w-[46rem]">
@@ -2073,8 +2092,6 @@ export default function LogSessionPage() {
             </div>
           </aside>
         )}
-
-        {!showDesktopActivityMonitor && <aside className="hidden lg:block" aria-hidden="true" />}
       </div>
     </div>
   );

@@ -1885,9 +1885,12 @@ export default function LogSessionPage() {
   return (
     <div className="mx-auto max-w-[108rem] px-3 pb-24 sm:px-4">
       <div
-        className={`lg:grid ${showDesktopActivityMonitor ? "lg:grid-cols-[15.25rem_minmax(0,46rem)_30rem]" : "lg:grid-cols-[15.25rem_minmax(0,46rem)]"} lg:gap-12 xl:gap-16 2xl:gap-20`}
+        className={showDesktopActivityMonitor
+          ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_30rem] lg:gap-12 xl:gap-16 2xl:gap-20"
+          : ""}
       >
-        <aside className="hidden lg:block">
+        {showDesktopActivityMonitor && (
+          <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-4 pt-3">
             <InspirationCard
               key={sessionDate}
@@ -1898,7 +1901,8 @@ export default function LogSessionPage() {
               revealDelayMs={1500}
             />
           </div>
-        </aside>
+          </aside>
+        )}
 
         <main className="min-w-0">
           <div className="mx-auto max-w-[46rem]">

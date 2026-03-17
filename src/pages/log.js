@@ -612,7 +612,6 @@ export default function LogSessionPage() {
       initializeWithValue: false,
     }) ?? false;
   const showDesktopActivityMonitor = isDev && devActivityMonitorVisible;
-  const showDesktopSideRails = !showDesktopActivityMonitor;
 
   // Structural mutation guard: prevents concurrent row-shifting API calls
   // (addSet, addLift, deleteSet) that could race on stale row indices.
@@ -1886,26 +1885,22 @@ export default function LogSessionPage() {
   return (
     <div className="mx-auto max-w-[116rem] px-3 pb-24 sm:px-4">
       <div
-        className={showDesktopSideRails
-          ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)] lg:gap-12 xl:gap-16 2xl:gap-20"
-          : showDesktopActivityMonitor
+        className={showDesktopActivityMonitor
           ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_minmax(0,42rem)] lg:gap-12 xl:gap-16 2xl:gap-20"
-          : ""}
+          : "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)] lg:gap-12 xl:gap-16 2xl:gap-20"}
       >
-        {showDesktopSideRails && (
-          <aside className="hidden lg:block">
-            <div className="sticky top-20 space-y-4 pt-3">
-              <InspirationCard
-                key={sessionDate}
-                seedKey={sessionDate}
-                title={isToday ? "For today" : "Training note"}
-                variant="rail"
-                delayedReveal
-                revealDelayMs={1500}
-              />
-            </div>
-          </aside>
-        )}
+        <aside className="hidden lg:block">
+          <div className="sticky top-20 space-y-4 pt-3">
+            <InspirationCard
+              key={sessionDate}
+              seedKey={sessionDate}
+              title={isToday ? "For today" : "Training note"}
+              variant="rail"
+              delayedReveal
+              revealDelayMs={1500}
+            />
+          </div>
+        </aside>
 
         <main className="min-w-0">
           <div className="mx-auto max-w-[46rem]">

@@ -558,15 +558,15 @@ export default function LogSessionPage() {
     prevValidatingRef.current = isValidating;
     if (isValidating && !was) {
       revalidateStartRef.current = performance.now();
-      addLogEntry({ type: "swr", label: "SWR revalidating", detail: "fetching sheet data…" });
+      addLogEntry({ type: "sync", label: "SWR revalidating", detail: "Fetching fresh sheet data for the log page." });
     }
     if (!isValidating && was) {
       const elapsed = revalidateStartRef.current ? Math.round(performance.now() - revalidateStartRef.current) : null;
       const suffix = elapsed != null ? ` · ${elapsed}ms` : "";
       if (isError || fetchFailed) {
-        addLogEntry({ type: "swr-error", label: "SWR revalidation failed", detail: `error=${isError} fetchFailed=${fetchFailed}${suffix}` });
+        addLogEntry({ type: "swr-error", label: "SWR revalidation failed", detail: `The latest sheet fetch failed. error=${isError} fetchFailed=${fetchFailed}${suffix}` });
       } else {
-        addLogEntry({ type: "swr-ok", label: "SWR revalidation done", detail: `${rawRows ?? "?"} rows${suffix}` });
+        addLogEntry({ type: "swr-ok", label: "SWR revalidation done", detail: `${rawRows ?? "?"} raw rows fetched from the sheet${suffix}` });
       }
     }
   }, [isValidating, isError, fetchFailed, rawRows, addLogEntry]);
@@ -578,15 +578,15 @@ export default function LogSessionPage() {
     prevParsedLenRef.current = newLen;
     if (newLen == null) return;
     if (prevLen == null) {
-      addLogEntry({ type: "swr", label: "parsedData ready", detail: `${newLen} lifts` });
+      addLogEntry({ type: "sync", label: "parsedData ready", detail: `The client parser built ${newLen} lift rows from the sheet response.` });
     } else if (newLen !== prevLen) {
-      addLogEntry({ type: "swr", label: "parsedData updated", detail: `${prevLen} → ${newLen} lifts` });
+      addLogEntry({ type: "sync", label: "parsedData updated", detail: `Parsed lift rows changed from ${prevLen} to ${newLen}.` });
     }
   }, [parsedData?.length, addLogEntry]);
 
   useEffect(() => {
     if (dataSyncedAt) {
-      addLogEntry({ type: "swr-ok", label: "dataSyncedAt", detail: new Date(dataSyncedAt).toLocaleTimeString() });
+      addLogEntry({ type: "swr-ok", label: "dataSyncedAt", detail: `Latest sync marker: ${new Date(dataSyncedAt).toLocaleTimeString()}` });
     }
   }, [dataSyncedAt, addLogEntry]);
 
@@ -634,27 +634,14 @@ export default function LogSessionPage() {
   }, []);
 
   const recordDevSyncTrace = useCallback((entry) => {
-    // Dev-only forensic trace for recent sheet writes. This intentionally lives
-    // in localStorage so a preflight conflict can be investigated after the UI
-    // has already moved on. Production should not accumulate this noise.
-    if (!isDev || typeof window === "undefined") return;
-    try {
-      const key = LOCAL_STORAGE_KEYS.DEV_LOG_SYNC_TRACE;
-      const raw = window.localStorage.getItem(key);
-      const current = raw ? JSON.parse(raw) : [];
-      const next = [
-        ...current,
-        {
-          at: new Date().toISOString(),
-          sessionDate,
-          ...entry,
-        },
-      ].slice(-25);
-      window.localStorage.setItem(key, JSON.stringify(next));
-    } catch (error) {
-      console.error("[log-sync-trace] failed to record dev trace", error);
-    }
-  }, [sessionDate]);
+    if (!isDev) return;
+    addLogEntry({
+      type: "trace",
+      sessionDate,
+      ...entry,
+      label: entry.label ?? entry.op,
+    });
+  }, [addLogEntry, sessionDate]);
 
   // Sync date from URL param after hydration
   useEffect(() => {
@@ -860,7 +847,11 @@ export default function LogSessionPage() {
   // deliberately skip mutate() to avoid mid-session flicker (see addSet).
   useEffect(() => {
     return () => {
-      addLogEntry({ type: "swr", label: "mutate()", detail: "page unmount — revalidating for dashboard" });
+      addLogEntry({
+        type: "sync",
+        label: "Log page closed",
+        detail: "Calling mutate() so the dashboard picks up any sheet writes from this session.",
+      });
       mutate();
     };
   }, [mutate, addLogEntry]);
@@ -902,12 +893,22 @@ export default function LogSessionPage() {
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
     structuralSavingRef.current = true;
     setSyncState("saving");
+    addLogEntry({
+      type: "sync",
+      label: "Index-shift guard enabled",
+      detail: "A structural sheet write is in flight, so fixed-row edits will queue until row positions settle.",
+    });
   }
 
   function markStructuralSaved() {
     structuralSavingRef.current = false;
     setSyncState("saved");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
+    addLogEntry({
+      type: "sync",
+      label: "Structural write finished",
+      detail: "Row positions can be trusted again, so any queued edits may resume.",
+    });
     // Flush any queued sync that was waiting for the structural op to finish
     flushQueuedSync();
   }
@@ -916,6 +917,11 @@ export default function LogSessionPage() {
     structuralSavingRef.current = false;
     setSyncState("error");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
+    addLogEntry({
+      type: "warning",
+      label: "Structural write failed",
+      detail: "The row-shifting operation did not complete cleanly. Queued edits will be rechecked before they resume.",
+    });
     // Still attempt to flush — the structural op failed but queued edits
     // to already-confirmed rows are independent and should still land.
     flushQueuedSync();
@@ -1031,7 +1037,11 @@ export default function LogSessionPage() {
               actual: apiError.actual,
               message: apiError.message,
             });
-            addLogEntry({ type: "warning", label: "EDIT BLOCKED", detail: apiError.message });
+            addLogEntry({
+              type: "warning",
+              label: "Edit blocked by index-shift protection",
+              detail: apiError.message,
+            });
             toast({
               title: "Sheet changed before the edit landed",
               description: "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
@@ -1111,7 +1121,11 @@ export default function LogSessionPage() {
               actual: apiError.actual,
               message: apiError.message,
             });
-            addLogEntry({ type: "warning", label: "EDIT BLOCKED", detail: apiError.message });
+            addLogEntry({
+              type: "warning",
+              label: "Edit blocked by index-shift protection",
+              detail: apiError.message,
+            });
             toast({
               title: "Sheet changed before the edit landed",
               description: "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
@@ -1153,9 +1167,9 @@ export default function LogSessionPage() {
     const queuedOp = queuedEditOpsRef.current.shift();
     if (!queuedOp) return;
     addLogEntry({
-      type: "swr",
-      label: "flushQueuedSync",
-      detail: `draining queued ${queuedOp.kind} edit for row ${queuedOp.rowIndex}`,
+      type: "sync",
+      label: "Queued edit resumed",
+      detail: `Replaying the queued ${queuedOp.kind} edit now that row ${queuedOp.rowIndex} is safe to target again.`,
     });
     if (queuedOp.kind === "cell") {
       void persistSetCellUpdate(
@@ -1185,7 +1199,11 @@ export default function LogSessionPage() {
       .flat()
       .find((s) => !s._pending && s.rowIndex && s._queuedSync);
     if (queuedSet) {
-      addLogEntry({ type: "swr", label: "flushQueuedSync", detail: `draining queued row edit for row ${queuedSet.rowIndex}` });
+      addLogEntry({
+        type: "sync",
+        label: "Queued optimistic row edit resumed",
+        detail: `The optimistic set now has real row ${queuedSet.rowIndex}, so its queued row update can be sent.`,
+      });
       void persistSetRowUpdate(
         queuedSet.rowIndex,
         queuedSet._serverSnapshot ?? buildSheetSnapshotFromFields(getEditableSetFields(queuedSet), queuedSet),
@@ -1244,8 +1262,12 @@ export default function LogSessionPage() {
       }
 
       const beforeSnapshot = buildSheetSnapshotFromFields(update.beforeFields, setRef.set);
-      const nextSnapshot = buildSheetSnapshotFromFields(nextFields, setRef.set);
       if (structuralSavingRef.current) {
+        addLogEntry({
+          type: "sync",
+          label: "Queued fixed-row edit",
+          detail: `Held the ${update.field} edit for row ${rowIndex} until the structural write stops shifting rows.`,
+        });
         queuedEditOpsRef.current.push({
           kind: "cell",
           rowIndex,
@@ -1263,7 +1285,7 @@ export default function LogSessionPage() {
         getCellValueForField(update.field, nextFields),
       );
     },
-    [sheetInfo?.ssid, updatePendingSet, persistSetCellUpdate, persistSetRowUpdate],
+    [sheetInfo?.ssid, updatePendingSet, persistSetCellUpdate, persistSetRowUpdate, addLogEntry],
   );
 
   // deleteSet: removes a single set row from the sheet.
@@ -1275,7 +1297,11 @@ export default function LogSessionPage() {
       if (!sheetInfo?.ssid || !set.rowIndex || structuralSavingRef.current) return;
 
       // Optimistically hide the row immediately
-      addLogEntry({ type: "action", label: "deleteSet", detail: `row ${set.rowIndex} · ${set.liftType} · ${set.reps}×${set.weight}` });
+      addLogEntry({
+        type: "ui",
+        label: "deleteSet",
+        detail: `You deleted ${set.liftType} ${set.reps}×${set.weight}${set.unitType ?? ""} from row ${set.rowIndex}.`,
+      });
       setDeletedRowIndices((prev) => new Set([...prev, set.rowIndex]));
       markStructuralSaving();
       const timings = [];
@@ -1317,7 +1343,11 @@ export default function LogSessionPage() {
               actual: data?.actual ?? null,
               message: data?.error || "Delete failed",
             });
-            addLogEntry({ type: "warning", label: "DELETE BLOCKED", detail: data?.error || "Delete failed" });
+            addLogEntry({
+              type: "warning",
+              label: "Delete blocked by index-shift protection",
+              detail: data?.error || "Delete failed",
+            });
             setDeletedRowIndices((prev) => {
               const next = new Set(prev);
               next.delete(set.rowIndex);
@@ -1399,7 +1429,11 @@ export default function LogSessionPage() {
       const notes = `${timeStamp} `;
 
       // Show optimistic row immediately (in-flight)
-      addLogEntry({ type: "action", label: "addSet", detail: `${liftType} · ${reps}×${weight}${unitType} · after row ${insertAfterRowIndex}` });
+      addLogEntry({
+        type: "ui",
+        label: "addSet",
+        detail: `You added ${reps}×${weight}${unitType} to ${liftType}. The new row will be inserted after row ${insertAfterRowIndex ?? "the session header"}.`,
+      });
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
@@ -1534,7 +1568,11 @@ export default function LogSessionPage() {
       const notes = `${timeStamp} `;
 
       // Show optimistic lift block immediately (in-flight)
-      addLogEntry({ type: "action", label: "addLift", detail: `${liftType} · ${reps}×${weight}${unitType} · after row ${insertAfterRowIndex} · ${hasExistingSession ? "existing session" : "new session"}` });
+      addLogEntry({
+        type: "ui",
+        label: "addLift",
+        detail: `You added a new ${liftType} block with ${reps}×${weight}${unitType}. It will be inserted after row ${insertAfterRowIndex ?? "the previous sheet content"} as ${hasExistingSession ? "part of the current session" : "a brand-new session"}.`,
+      });
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
@@ -1709,10 +1747,22 @@ export default function LogSessionPage() {
     const nearestAfter = rowsAfter.length ? Math.min(...rowsAfter) : null;
     const endRow = nearestAfter ? nearestAfter - 1 : maxRow;
 
-    addLogEntry({ type: "action", label: "deleteSession", detail: `${sessionDate} · rows ${minRow}–${endRow} (${endRow - minRow + 1} rows)` });
+    addLogEntry({
+      type: "ui",
+      label: "deleteSession",
+      detail: `You deleted the ${sessionDate} session, which spans rows ${minRow}-${endRow} (${endRow - minRow + 1} rows).`,
+    });
     markStructuralSaving();
     const timings = [];
     const t0 = performance.now();
+    recordDevSyncTrace({
+      op: "delete-session",
+      phase: "request",
+      startRowIndex: minRow,
+      endRowIndex: endRow,
+      expectedDate: sessionDate,
+      rowIndex: minRow,
+    });
 
     try {
       const tApi = performance.now();
@@ -1729,10 +1779,38 @@ export default function LogSessionPage() {
       timings.push({ name: "DELETE /api/sheet/delete", ms: performance.now() - tApi });
       const data = await res.json();
       if (!res.ok) {
-        if (data.warning) addLogEntry({ type: "warning", label: "deleteSession", detail: data.warning });
+        recordDevSyncTrace({
+          op: "delete-session",
+          phase: "response",
+          startRowIndex: minRow,
+          endRowIndex: endRow,
+          rowIndex: minRow,
+          ok: false,
+          code: data?.code || null,
+          message: data?.error || "Delete failed",
+        });
+        if (data.warning) {
+          addLogEntry({
+            type: "warning",
+            label: "Session delete warning",
+            detail: data.warning,
+          });
+        }
         throw new Error(data.error || "Delete failed");
       }
-      addLogEntry({ type: "swr", label: "mutate()", detail: "after deleteSession — full revalidation" });
+      recordDevSyncTrace({
+        op: "delete-session",
+        phase: "response",
+        startRowIndex: minRow,
+        endRowIndex: endRow,
+        rowIndex: minRow,
+        ok: true,
+      });
+      addLogEntry({
+        type: "sync",
+        label: "Full revalidation requested",
+        detail: "Calling mutate() after the session delete so the in-memory log matches the sheet immediately.",
+      });
       await mutate();
       markStructuralSaved();
       setShowDeleteConfirm(false);
@@ -1744,6 +1822,15 @@ export default function LogSessionPage() {
       }
     } catch (err) {
       console.error("[sheet/delete] deleteSession failed:", err);
+      recordDevSyncTrace({
+        op: "delete-session",
+        phase: "response",
+        startRowIndex: minRow,
+        endRowIndex: endRow,
+        rowIndex: minRow,
+        ok: false,
+        message: err?.message || "Delete failed",
+      });
       markStructuralError();
     }
     logSheetTimings("deleteSession", timings, performance.now() - t0, addLogEntry);

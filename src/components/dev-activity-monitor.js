@@ -1,45 +1,254 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
-import { useReadLocalStorage } from "usehooks-ts";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 
-const API_DESCRIPTIONS = {
+const OPERATION_GUIDES = {
   addSet: {
     action: "Add set to existing lift block",
     api: "POST /api/sheet/insert-row",
-    sheets: "sheets.spreadsheets.batchUpdate (insertDimension + updateCells)",
+    sheets: "insertDimension + updateCells",
   },
   addLift: {
-    action: "Add new lift type to session",
+    action: "Add new lift block to session",
     api: "POST /api/sheet/insert-row",
-    sheets: "sheets.spreadsheets.batchUpdate (insertDimension + updateCells + optional border)",
+    sheets: "insertDimension + updateCells + optional border",
   },
   deleteSet: {
-    action: "Delete a set row",
+    action: "Delete one set row",
     api: "POST /api/sheet/delete-row",
-    sheets: "sheets.values.get (verification read) → optional values.update (promote anchor) → batchUpdate (deleteDimension)",
+    sheets: "values.get verification -> optional values.update -> deleteDimension",
+  },
+  deleteSession: {
+    action: "Delete all rows for the session date",
+    api: "DELETE /api/sheet/delete",
+    sheets: "range verification -> deleteDimension over session rows",
   },
   updateSet: {
-    action: "Edit reps, weight, or notes",
+    action: "Edit reps, weight, notes, or URL",
     api: "POST /api/sheet/edit-cell or /api/sheet/edit-row",
-    sheets: "sheets.values.get (verification read) → values.update",
+    sheets: "values.get verification -> values.update",
+  },
+  "edit-cell": {
+    action: "Edit one field on an existing set",
+    api: "POST /api/sheet/edit-cell",
+    sheets: "values.get verification -> values.update",
+  },
+  "edit-row": {
+    action: "Edit the full set row",
+    api: "POST /api/sheet/edit-row",
+    sheets: "values.get verification -> values.update",
+  },
+  "insert-row": {
+    action: "Insert a new row into the sheet",
+    api: "POST /api/sheet/insert-row",
+    sheets: "batchUpdate insertDimension -> updateCells",
+  },
+  "delete-row": {
+    action: "Delete a row from the sheet",
+    api: "POST /api/sheet/delete-row",
+    sheets: "values.get verification -> optional values.update -> deleteDimension",
+  },
+  "delete-session": {
+    action: "Delete every row in the selected session",
+    api: "DELETE /api/sheet/delete",
+    sheets: "range verification -> deleteDimension over session rows",
   },
 };
 
+function getGuide(entry) {
+  if (entry.op && OPERATION_GUIDES[entry.op]) return OPERATION_GUIDES[entry.op];
+  if (entry.label && OPERATION_GUIDES[entry.label]) return OPERATION_GUIDES[entry.label];
+  return null;
+}
+
+function getEntryTone(entry) {
+  if (entry.type === "warning" || entry.type === "swr-error" || entry.ok === false) {
+    return {
+      badge: "Warning",
+      badgeClass: "border-destructive/30 bg-destructive/10 text-destructive",
+      titleClass: "text-destructive",
+      cardClass: "border-destructive/20 bg-destructive/5",
+    };
+  }
+
+  if (entry.type === "trace") {
+    const isApiStage = entry.phase === "request" || entry.ok === true;
+    return {
+      badge: isApiStage ? "API" : "Sheets",
+      badgeClass: isApiStage
+        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+        : "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300",
+      titleClass: "text-foreground",
+      cardClass: "",
+    };
+  }
+
+  if (entry.type === "ui" || entry.type === "action") {
+    return {
+      badge: "UI",
+      badgeClass: "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300",
+      titleClass: "text-foreground",
+      cardClass: "",
+    };
+  }
+
+  if (entry.type === "sync" || entry.type === "swr" || entry.type === "swr-ok") {
+    return {
+      badge: "Sync",
+      badgeClass: "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+      titleClass: "text-foreground",
+      cardClass: "",
+    };
+  }
+
+  if (entry.type === "timing") {
+    return {
+      badge: "Timing",
+      badgeClass: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+      titleClass: "text-foreground",
+      cardClass: "",
+    };
+  }
+
+  return {
+    badge: "Feed",
+    badgeClass: "border-border bg-muted text-muted-foreground",
+    titleClass: "text-foreground",
+    cardClass: "",
+  };
+}
+
+function getTraceTitle(entry, guide) {
+  const phaseLabel = entry.phase === "request" ? "Request" : "Response";
+  if (guide?.api) {
+    return `${phaseLabel}: ${guide.api}`;
+  }
+  return `${phaseLabel}: ${entry.op ?? entry.label}`;
+}
+
+function getEntryTitle(entry, guide) {
+  if (entry.type === "trace") return getTraceTitle(entry, guide);
+  if (entry.type === "timing") {
+    return `${guide?.action ?? entry.label} finished in ${entry.total}ms`;
+  }
+  if (entry.type === "ui" || entry.type === "action") {
+    return guide?.action ?? entry.label;
+  }
+  return entry.label;
+}
+
+function getTraceSummary(entry) {
+  const parts = [];
+
+  if (entry.phase === "request") {
+    if (entry.startRowIndex != null && entry.endRowIndex != null) {
+      parts.push(`rows ${entry.startRowIndex}-${entry.endRowIndex}`);
+    }
+    if (entry.insertAfterRowIndex != null) {
+      parts.push(`insert after row ${entry.insertAfterRowIndex}`);
+    }
+    if (entry.rowIndex != null && entry.insertAfterRowIndex == null) {
+      parts.push(`target row ${entry.rowIndex}`);
+    }
+    if (entry.field) {
+      parts.push(`field ${entry.field}`);
+    }
+    if (entry.newSession) {
+      parts.push("starts a new session block");
+    }
+  }
+
+  if (entry.phase === "response") {
+    if (entry.ok === true && entry.firstRowIndex != null) {
+      parts.push(`created row ${entry.firstRowIndex}`);
+    }
+    if (entry.ok === true && entry.startRowIndex != null && entry.endRowIndex != null) {
+      parts.push(`deleted rows ${entry.startRowIndex}-${entry.endRowIndex}`);
+    }
+    if (entry.ok === true && entry.rowIndex != null && entry.firstRowIndex == null) {
+      parts.push(`confirmed row ${entry.rowIndex}`);
+    }
+    if (entry.ok === false && entry.code) {
+      parts.push(`code ${entry.code}`);
+    }
+  }
+
+  if (entry.message) {
+    parts.push(entry.message);
+  }
+
+  return parts.join(" · ");
+}
+
+function getEntryLines(entry, guide) {
+  const lines = [];
+
+  if (entry.detail) {
+    lines.push(entry.detail);
+  } else if (entry.type === "trace") {
+    const traceSummary = getTraceSummary(entry);
+    if (traceSummary) lines.push(traceSummary);
+  }
+
+  if (guide?.api && entry.type !== "trace") {
+    lines.push(`SJ API: ${guide.api}`);
+  }
+
+  if (guide?.sheets) {
+    lines.push(`Sheets: ${guide.sheets}`);
+  }
+
+  if (entry.type === "trace" && entry.phase === "request" && entry.beforeSnapshot) {
+    lines.push("Preflight snapshot captured before writing to Sheets.");
+  }
+
+  if (entry.type === "trace" && entry.phase === "response" && entry.ok === false && entry.actual) {
+    lines.push("Preflight check found the row contents changed before the write landed.");
+  }
+
+  return lines;
+}
+
+function getMetaPills(entry) {
+  const pills = [];
+
+  if (entry.sessionDate) pills.push(`date ${entry.sessionDate}`);
+  if (entry.rowIndex != null) pills.push(`row ${entry.rowIndex}`);
+  if (entry.startRowIndex != null) pills.push(`start ${entry.startRowIndex}`);
+  if (entry.endRowIndex != null) pills.push(`end ${entry.endRowIndex}`);
+  if (entry.insertAfterRowIndex != null) pills.push(`after ${entry.insertAfterRowIndex}`);
+  if (entry.field) pills.push(`field ${entry.field}`);
+  if (entry.phase) pills.push(entry.phase);
+  if (typeof entry.ok === "boolean") pills.push(entry.ok ? "ok" : "failed");
+
+  return pills;
+}
+
+function formatCopyLine(entry) {
+  const guide = getGuide(entry);
+  const title = getEntryTitle(entry, guide);
+  const lines = getEntryLines(entry, guide);
+  const meta = getMetaPills(entry);
+  const suffix = [
+    lines.join(" | "),
+    meta.length ? meta.join(" | ") : null,
+    entry.type === "timing" ? `${entry.total}ms` : null,
+  ].filter(Boolean).join(" | ");
+
+  return `[${entry.time}] ${title}${suffix ? ` — ${suffix}` : ""}`;
+}
+
 export function DevActivityMonitorPanel({ className }) {
   const { entries } = useDevActivityMonitor();
-  const storedDevTrace = useReadLocalStorage(LOCAL_STORAGE_KEYS.DEV_LOG_SYNC_TRACE, {
-    initializeWithValue: false,
-  });
-  const devTrace = useMemo(
-    () => (Array.isArray(storedDevTrace) ? storedDevTrace : []),
-    [storedDevTrace],
-  );
   const scrollRef = useRef(null);
   const copyTimeoutRef = useRef(null);
   const [copied, setCopied] = useState(false);
+
+  const orderedEntries = useMemo(
+    () => entries.slice().sort((a, b) => (a.recordedAt ?? 0) - (b.recordedAt ?? 0)),
+    [entries],
+  );
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -47,7 +256,7 @@ export function DevActivityMonitorPanel({ className }) {
     if (scrollElement) {
       scrollElement.scrollTop = scrollElement.scrollHeight;
     }
-  }, [entries.length]);
+  }, [orderedEntries.length]);
 
   useEffect(() => {
     return () => {
@@ -59,26 +268,9 @@ export function DevActivityMonitorPanel({ className }) {
 
   const copyLog = useCallback(() => {
     const header = `SJ Activity Log — ${new Date().toISOString()}\n${"─".repeat(60)}`;
-    const lines = entries.map((entry) => {
-      if (entry.type === "warning") return `[${entry.time}] ⚠ ${entry.label}: ${entry.detail}`;
-      if (entry.type === "action") return `[${entry.time}] → ${entry.label}: ${entry.detail}`;
-      if (
-        entry.type === "swr" ||
-        entry.type === "swr-ok" ||
-        entry.type === "swr-error"
-      ) {
-        return `[${entry.time}] ◆ ${entry.label}: ${entry.detail}`;
-      }
+    const lines = orderedEntries.map(formatCopyLine);
 
-      return `[${entry.time}] ✓ ${entry.label}: ${entry.total}ms${entry.detail ? ` | ${entry.detail}` : ""}`;
-    });
-
-    const traceHeader = `\n\nSJ Dev Sync Trace\n${"─".repeat(60)}`;
-    const traceLines = Array.isArray(devTrace)
-      ? devTrace.map((entry) => JSON.stringify(entry))
-      : [];
-
-    navigator.clipboard.writeText(`${header}\n${lines.join("\n")}${traceLines.length ? `${traceHeader}\n${traceLines.join("\n")}` : ""}`);
+    navigator.clipboard.writeText(`${header}\n${lines.join("\n")}`);
     setCopied(true);
     if (copyTimeoutRef.current) {
       window.clearTimeout(copyTimeoutRef.current);
@@ -86,7 +278,7 @@ export function DevActivityMonitorPanel({ className }) {
     copyTimeoutRef.current = window.setTimeout(() => {
       setCopied(false);
     }, 2000);
-  }, [entries, devTrace]);
+  }, [orderedEntries]);
 
   return (
     <div className={cn("flex flex-col rounded-lg border bg-card", className)}>
@@ -95,7 +287,7 @@ export function DevActivityMonitorPanel({ className }) {
           Activity Monitor
         </span>
         <div className="flex items-center gap-2">
-          {entries.length > 0 && (
+          {orderedEntries.length > 0 && (
             <button
               type="button"
               onClick={copyLog}
@@ -105,139 +297,84 @@ export function DevActivityMonitorPanel({ className }) {
               {copied ? "Copied" : "Copy"}
             </button>
           )}
-          <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>
+          <span className="text-xs tabular-nums text-muted-foreground">{orderedEntries.length}</span>
         </div>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">
-        {entries.length === 0 && (
+        {orderedEntries.length === 0 && (
           <div className="px-3 py-8 text-center text-muted-foreground/50">
-            <p>SWR data flow and Sheet API calls will appear here.</p>
+            <p>UI actions, app API calls, and Google Sheets writes will appear here.</p>
             <p className="mt-2 text-muted-foreground/30">
-              Tracks revalidation, data parsing, and every read/write to Google Sheets.
+              Use the log page in dev and watch the full request-to-revalidation story unfold.
             </p>
           </div>
         )}
 
-        {entries.map((entry, index) => {
-          const description = API_DESCRIPTIONS[entry.label];
-
-          if (
-            entry.type === "swr" ||
-            entry.type === "swr-ok" ||
-            entry.type === "swr-error"
-          ) {
-            const colorClass =
-              entry.type === "swr-error"
-                ? "text-destructive"
-                : entry.type === "swr-ok"
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-purple-500 dark:text-purple-400";
-
-            return (
-              <div key={`${entry.time}-${index}`} className="border-b border-border/20 px-3 py-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
-                  <span className={`font-medium ${colorClass}`}>{entry.label}</span>
-                </div>
-                {entry.detail && (
-                  <p className="mt-0.5 font-mono text-muted-foreground">{entry.detail}</p>
-                )}
-              </div>
-            );
-          }
-
-          if (entry.type === "warning") {
-            return (
-              <div key={`${entry.time}-${index}`} className="border-b border-border/20 bg-destructive/10 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-destructive">{entry.label}</span>
-                </div>
-                <p className="mt-1 break-all text-destructive/80">{entry.detail}</p>
-              </div>
-            );
-          }
-
-          if (entry.type === "action") {
-            return (
-              <div key={`${entry.time}-${index}`} className="border-b border-border/20 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-blue-500 dark:text-blue-400">
-                    {description?.action ?? entry.label}
-                  </span>
-                </div>
-                <p className="mt-0.5 break-all text-muted-foreground">{entry.detail}</p>
-                {description && (
-                  <div className="mt-1 space-y-0.5 rounded bg-muted/50 px-2 py-1 text-muted-foreground">
-                    <p><span className="text-foreground/70">SJ API:</span> {description.api}</p>
-                    <p><span className="text-foreground/70">Sheets:</span> {description.sheets}</p>
-                  </div>
-                )}
-              </div>
-            );
-          }
+        {orderedEntries.map((entry) => {
+          const guide = getGuide(entry);
+          const tone = getEntryTone(entry);
+          const title = getEntryTitle(entry, guide);
+          const lines = getEntryLines(entry, guide);
+          const metaPills = getMetaPills(entry);
 
           return (
-            <div key={`${entry.time}-${index}`} className="border-b border-border/20 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
-                <span className="font-semibold text-foreground">
-                  {description?.action ?? entry.label}
+            <div
+              key={entry.id}
+              className={cn("border-b border-border/20 px-3 py-2", tone.cardClass)}
+            >
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 shrink-0 font-mono text-muted-foreground/50">
+                  {entry.time}
                 </span>
-                <span
-                  className="ml-auto shrink-0 font-mono font-bold tabular-nums"
-                  style={{ color: entry.color }}
-                >
-                  {entry.total}ms
-                </span>
-              </div>
-              {entry.detail && (
-                <p className="mt-0.5 font-mono text-muted-foreground">{entry.detail}</p>
-              )}
-            </div>
-          );
-        })}
-
-        {Array.isArray(devTrace) && devTrace.length > 0 && (
-          <div className="border-t border-border/30 bg-muted/20 px-3 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Dev Sync Trace
-            </p>
-            <div className="mt-2 space-y-2">
-              {devTrace.slice().reverse().map((entry, index) => (
-                <div
-                  key={`${entry.at ?? "trace"}-${index}`}
-                  className="rounded border border-border/30 bg-background/80 px-2 py-1.5"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] text-muted-foreground/60">
-                      {entry.at ? new Date(entry.at).toLocaleTimeString() : "?"}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        tone.badgeClass,
+                      )}
+                    >
+                      {tone.badge}
                     </span>
-                    <span className="font-semibold text-foreground">
-                      {entry.op}
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {entry.phase}
-                    </span>
-                    {typeof entry.ok === "boolean" && (
+                    <span className={cn("font-semibold", tone.titleClass)}>{title}</span>
+                    {entry.type === "timing" && (
                       <span
-                        className={cn(
-                          "ml-auto text-[10px] font-semibold uppercase tracking-wide",
-                          entry.ok ? "text-green-600 dark:text-green-400" : "text-destructive",
-                        )}
+                        className="ml-auto shrink-0 font-mono font-bold tabular-nums"
+                        style={{ color: entry.color }}
                       >
-                        {entry.ok ? "ok" : "failed"}
+                        {entry.total}ms
                       </span>
                     )}
                   </div>
-                  <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-all font-mono text-[10px] text-muted-foreground">
-                    {JSON.stringify(entry, null, 2)}
-                  </pre>
+
+                  {lines.length > 0 && (
+                    <div className="mt-1 space-y-1">
+                      {lines.map((line) => (
+                        <p key={line} className="break-all text-muted-foreground">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {metaPills.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {metaPills.map((pill) => (
+                        <span
+                          key={pill}
+                          className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground"
+                        >
+                          {pill}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
     </div>
   );

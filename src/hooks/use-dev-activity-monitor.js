@@ -14,9 +14,15 @@ export function DevActivityMonitorProvider({ children }) {
   const [entries, setEntries] = useState([]);
 
   const addEntry = useCallback((entry) => {
+    const timestamp = Date.now();
     setEntries((previousEntries) => [
       ...previousEntries.slice(-(MAX_ACTIVITY_ENTRIES - 1)),
-      { ...entry, time: getTimestamp() },
+      {
+        id: entry.id ?? `${timestamp}-${Math.random().toString(36).slice(2, 8)}`,
+        recordedAt: timestamp,
+        ...entry,
+        time: entry.time ?? getTimestamp(),
+      },
     ]);
   }, []);
 

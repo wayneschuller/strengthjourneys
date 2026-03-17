@@ -1887,7 +1887,7 @@ export default function LogSessionPage() {
     <div className="mx-auto max-w-[116rem] px-3 pb-24 sm:px-4">
       <div
         className={showDesktopSideRails
-          ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_15.25rem] lg:gap-12 xl:gap-16 2xl:gap-20"
+          ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)] lg:gap-12 xl:gap-16 2xl:gap-20"
           : showDesktopActivityMonitor
           ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_minmax(0,42rem)] lg:gap-12 xl:gap-16 2xl:gap-20"
           : ""}
@@ -2079,7 +2079,6 @@ export default function LogSessionPage() {
           </aside>
         )}
 
-        {showDesktopSideRails && <aside className="hidden lg:block" aria-hidden="true" />}
       </div>
     </div>
   );

@@ -3530,19 +3530,20 @@ function CelebrationReveal({ animationKey, className, children }) {
       key={animationKey}
       initial={prefersReducedMotion ? false : {
         opacity: 0,
-        y: 6,
-        scale: 0.92,
-        filter: "brightness(0.92)",
+        y: 8,
+        scale: 0.88,
+        filter: "brightness(0.9)",
       }}
       animate={prefersReducedMotion ? undefined : {
         opacity: [0, 1, 1],
-        y: [6, -1, 0],
-        scale: [0.92, 1.06, 1],
-        filter: ["brightness(0.92)", "brightness(1.28)", "brightness(1)"],
+        y: [8, -2, 0],
+        scale: [0.88, 1.12, 1],
+        filter: ["brightness(0.9)", "brightness(1.34)", "brightness(1)"],
       }}
       transition={prefersReducedMotion ? undefined : {
-        duration: 0.5,
-        ease: "easeOut",
+        duration: 0.62,
+        delay: 0.12,
+        ease: [0.2, 0.9, 0.25, 1],
       }}
       className={className}
     >

@@ -350,9 +350,15 @@ export function TheWeekInIronCard({
     () => Array.isArray(parsedData) && parsedData.some((e) => !e?.isGoal),
     [parsedData],
   );
+  const shouldShowEarlyWeekCard =
+    dataMaturityStage === "no_sessions" ||
+    dashboardStage === "starter_sample" ||
+    dashboardStage === "first_real_week";
 
-  // Early-stage: show a simpler card for users without mature data
-  if (dataMaturityStage !== "mature") {
+  // Unlock the detailed weekly recap as soon as the user exits the first real
+  // week. The monthly and long-game cards can stay staged longer, but the week
+  // card should reflect current sessions immediately once week two begins.
+  if (shouldShowEarlyWeekCard) {
     return (
       <EarlyWeekCard
         isDemoMode={isDemoMode}

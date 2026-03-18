@@ -226,7 +226,7 @@ export function ChooseSheetPanel({
               <p className="text-sm font-semibold text-foreground/80">
                 {isSwitchSheet ? "Recommended data source" : "Recommended for you"}
               </p>
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div
                   key={primaryCandidate.id}
                   className="rounded-2xl border border-primary/20 bg-card/80 px-6 py-6 shadow-sm"
@@ -320,43 +320,162 @@ export function ChooseSheetPanel({
                     </Button>
                   </div>
                 </div>
+                <div className="flex items-start justify-center lg:pt-1">
+                  <div className="w-full max-w-sm space-y-3">
+                    {isSwitchSheet && currentSheetInfo?.ssid && (
+                      <div className="rounded-2xl border border-border/70 bg-card/70 px-5 py-4">
+                        <div className="flex flex-col gap-3">
+                          <div className="min-w-0 space-y-1">
+                            <p className="text-sm font-semibold text-foreground/80">
+                              Current data source
+                            </p>
+                            {currentSheetInfo?.url ? (
+                              <a
+                                href={currentSheetInfo.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block truncate text-base font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
+                              >
+                                {currentSheetInfo.filename || "Connected lifting log"}
+                              </a>
+                            ) : (
+                              <p className="truncate text-base font-semibold text-foreground">
+                                {currentSheetInfo.filename || "Connected lifting log"}
+                              </p>
+                            )}
+                            <p className="text-sm text-muted-foreground">
+                              Disconnect it here if you want to remove it before choosing something else.
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            disabled={isWorking || isDisconnectingCurrent}
+                            onClick={onDisconnectCurrent}
+                          >
+                            <Unplug className="mr-2 h-4 w-4" />
+                            {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="w-full rounded-lg border border-primary/20 bg-primary/5 p-3">
+                      <p className="text-sm font-semibold text-foreground">
+                        Other options
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Browse another file from Google Drive or start fresh with a clean lifting log.
+                      </p>
+                      <div className="mt-3 flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          disabled={!openPicker || isWorking}
+                          onClick={() => {
+                            if (openPicker) handleOpenFilePicker(openPicker);
+                          }}
+                        >
+                          <FolderOpen className="mr-2 h-4 w-4" />
+                          Browse Google Drive
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={onCreateBlank}
+                          disabled={isWorking}
+                        >
+                          <PlusSquare className="mr-2 h-4 w-4" />
+                          Start fresh
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </>
           )}
-          <div className={primaryCandidate ? "flex items-start justify-center lg:pt-1" : ""}>
-            <div className="w-full max-w-sm rounded-lg border border-primary/20 bg-primary/5 p-3">
-              <p className="text-sm font-semibold text-foreground">
-                Other options
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Browse another file from Google Drive or start fresh with a clean lifting log.
-              </p>
-              <div className="mt-3 flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  disabled={!openPicker || isWorking}
-                  onClick={() => {
-                    if (openPicker) handleOpenFilePicker(openPicker);
-                  }}
-                >
-                  <FolderOpen className="mr-2 h-4 w-4" />
-                  Browse Google Drive
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={onCreateBlank}
-                  disabled={isWorking}
-                >
-                  <PlusSquare className="mr-2 h-4 w-4" />
-                  Start fresh
-                </Button>
+          {!primaryCandidate && (
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div />
+              <div className="flex items-start justify-center lg:pt-1">
+                <div className="w-full max-w-sm space-y-3">
+                  {isSwitchSheet && currentSheetInfo?.ssid && (
+                    <div className="rounded-2xl border border-border/70 bg-card/70 px-5 py-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-sm font-semibold text-foreground/80">
+                            Current data source
+                          </p>
+                          {currentSheetInfo?.url ? (
+                            <a
+                              href={currentSheetInfo.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block truncate text-base font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
+                            >
+                              {currentSheetInfo.filename || "Connected lifting log"}
+                            </a>
+                          ) : (
+                            <p className="truncate text-base font-semibold text-foreground">
+                              {currentSheetInfo.filename || "Connected lifting log"}
+                            </p>
+                          )}
+                          <p className="text-sm text-muted-foreground">
+                            Disconnect it here if you want to remove it before choosing something else.
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          disabled={isWorking || isDisconnectingCurrent}
+                          onClick={onDisconnectCurrent}
+                        >
+                          <Unplug className="mr-2 h-4 w-4" />
+                          {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="w-full rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <p className="text-sm font-semibold text-foreground">
+                      Other options
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Browse another file from Google Drive or start fresh with a clean lifting log.
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        disabled={!openPicker || isWorking}
+                        onClick={() => {
+                          if (openPicker) handleOpenFilePicker(openPicker);
+                        }}
+                      >
+                        <FolderOpen className="mr-2 h-4 w-4" />
+                        Browse Google Drive
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={onCreateBlank}
+                        disabled={isWorking}
+                      >
+                        <PlusSquare className="mr-2 h-4 w-4" />
+                        Start fresh
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
           {otherCandidates.length > 0 && (
             <>
               <div className="rounded-xl border bg-card/70">

@@ -607,6 +607,7 @@ export default function LogSessionPage() {
   const [pendingSets, setPendingSets] = useState({});
   const pendingSetsRef = useRef({});
   const queuedEditOpsRef = useRef([]);
+  const queuedStructuralActionRef = useRef(null);
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
   const autoStartedLiftRef = useRef("");
   const devActivityMonitorVisible =
@@ -634,6 +635,18 @@ export default function LogSessionPage() {
       return next;
     });
   }, []);
+
+  const queueStructuralAction = useCallback((action) => {
+    queuedStructuralActionRef.current = action;
+    addLogEntry({
+      type: "sync",
+      label: "Queued structural action",
+      detail:
+        action.kind === "addSet"
+          ? `Will add the next ${action.liftType} set as soon as the current row-shifting write finishes.`
+          : `Will add the ${action.liftType} lift block as soon as the current row-shifting write finishes.`,
+    });
+  }, [addLogEntry]);
 
   const recordDevSyncTrace = useCallback((entry) => {
     if (!isDev) return;
@@ -1449,7 +1462,11 @@ export default function LogSessionPage() {
   // Optimistic: row appears immediately with spinner, promoted to confirmed on success.
   const addSet = useCallback(
     async (liftType, prevSet) => {
-      if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
+      if (!sheetInfo?.ssid || !parsedData) return;
+      if (structuralSavingRef.current) {
+        queueStructuralAction({ kind: "addSet", liftType, prevSet: prevSet ?? null });
+        return;
+      }
 
       const unitType = prevSet?.unitType ?? (isMetric ? "kg" : "lb");
       const reps = prevSet?.reps ?? 5;
@@ -1564,14 +1581,18 @@ export default function LogSessionPage() {
       logSheetTimings("addSet", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, queueStructuralAction],
   );
 
   // Add a brand-new lift type to the session.
   // Border is only drawn for the very first row of a brand-new session date.
   const addLift = useCallback(
     async (liftType) => {
-      if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
+      if (!sheetInfo?.ssid || !parsedData) return;
+      if (structuralSavingRef.current) {
+        queueStructuralAction({ kind: "addLift", liftType });
+        return;
+      }
 
       const existingSets = sessionLiftsWithPending[liftType] ?? [];
       if (existingSets.length > 0) {
@@ -1709,7 +1730,7 @@ export default function LogSessionPage() {
       logSheetTimings("addLift", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, sessionLiftsWithPending, addSet],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, sessionLiftsWithPending, addSet, queueStructuralAction],
   );
 
   useEffect(() => {
@@ -1760,6 +1781,35 @@ export default function LogSessionPage() {
     showSessionBootstrap,
     todayIso,
   ]);
+
+  useEffect(() => {
+    // Structural actions (insert/delete row ranges) cannot safely run in
+    // parallel because row indices shift. Rather than dropping a fast follow-up
+    // click, keep the latest requested add action here and replay it once the
+    // current structural op settles.
+    if (structuralSavingRef.current) return;
+    if (syncState !== "saved" && syncState !== "error") return;
+
+    const queuedAction = queuedStructuralActionRef.current;
+    if (!queuedAction) return;
+
+    queuedStructuralActionRef.current = null;
+    addLogEntry({
+      type: "sync",
+      label: "Queued structural action resumed",
+      detail:
+        queuedAction.kind === "addSet"
+          ? `Resuming the queued ${queuedAction.liftType} set add after the previous structural write finished.`
+          : `Resuming the queued ${queuedAction.liftType} lift-block add after the previous structural write finished.`,
+    });
+
+    if (queuedAction.kind === "addSet") {
+      void addSet(queuedAction.liftType, queuedAction.prevSet ?? null);
+      return;
+    }
+
+    void addLift(queuedAction.liftType);
+  }, [syncState, addSet, addLift, addLogEntry]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

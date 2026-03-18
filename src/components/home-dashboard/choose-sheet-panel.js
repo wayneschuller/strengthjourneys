@@ -229,21 +229,9 @@ export function ChooseSheetPanel({
                           )}
                       </div>
                       {isPrimaryCurrent && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                            Currently connected
-                          </p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 px-3 text-xs"
-                            disabled={isWorking || isDisconnectingCurrent}
-                            onClick={onDisconnectCurrent}
-                          >
-                            <Unplug className="mr-2 h-3.5 w-3.5" />
-                            {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
-                          </Button>
-                        </div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                          Currently connected
+                        </p>
                       )}
                       {Array.isArray(primaryCandidate.bigFourPreview) &&
                         primaryCandidate.bigFourPreview.length > 0 && (
@@ -280,19 +268,33 @@ export function ChooseSheetPanel({
                           </div>
                         )}
                     </div>
-                    <Button
-                      size="lg"
-                      className="w-full sm:w-auto sm:min-w-56"
-                      disabled={isWorking || currentSsid === primaryCandidate.id}
-                      onClick={() => onChooseSheet(primaryCandidate.id)}
-                    >
-                      <Link2 className="mr-2 h-4 w-4" />
-                      {currentSsid === primaryCandidate.id
-                        ? "Already connected"
-                        : isSwitchSheet
-                          ? "Use this data source"
-                          : "Connect this lifting log"}
-                    </Button>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                      <Button
+                        size="lg"
+                        className="w-full sm:w-auto sm:min-w-56"
+                        disabled={isWorking || currentSsid === primaryCandidate.id}
+                        onClick={() => onChooseSheet(primaryCandidate.id)}
+                      >
+                        <Link2 className="mr-2 h-4 w-4" />
+                        {currentSsid === primaryCandidate.id
+                          ? "Already connected"
+                          : isSwitchSheet
+                            ? "Use this data source"
+                            : "Connect this lifting log"}
+                      </Button>
+                      {isPrimaryCurrent && (
+                        <Button
+                          variant="destructive"
+                          size="lg"
+                          className="w-full sm:w-auto"
+                          disabled={isWorking || isDisconnectingCurrent}
+                          onClick={onDisconnectCurrent}
+                        >
+                          <Unplug className="mr-2 h-4 w-4" />
+                          {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-start justify-center lg:pt-1">

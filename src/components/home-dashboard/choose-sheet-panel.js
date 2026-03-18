@@ -325,7 +325,7 @@ export function ChooseSheetPanel({
                             </p>
                           </div>
                           <Button
-                            variant="outline"
+                            variant="destructive"
                             size="sm"
                             className="w-full"
                             disabled={isWorking || isDisconnectingCurrent}
@@ -405,7 +405,7 @@ export function ChooseSheetPanel({
                           </p>
                         </div>
                         <Button
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
                           className="w-full"
                           disabled={isWorking || isDisconnectingCurrent}

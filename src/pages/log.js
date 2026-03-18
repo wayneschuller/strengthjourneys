@@ -2819,6 +2819,19 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const [isCelebrationShaking, setIsCelebrationShaking] = useState(false);
   const [activeCelebrationKey, setActiveCelebrationKey] = useState(null);
   const [optimisticFieldsByKey, setOptimisticFieldsByKey] = useState({});
+  const [initialPassiveRowKeys] = useState(() =>
+    new Set(
+      sets.map((set, index) => getSetIdentityKey(set, `initial-${index}`)),
+    ),
+  );
+  const [initialPassiveRowOrder] = useState(() =>
+    new Map(
+      sets.map((set, index) => [
+        getSetIdentityKey(set, `initial-${index}`),
+        index,
+      ]),
+    ),
+  );
   const trainingAgeYears = useMemo(
     () => getTrainingAgeYears(parsedData, sessionDate),
     [parsedData, sessionDate],
@@ -3434,7 +3447,19 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
       {/* Set rows — border-t inset on desktop to clear the icon gutter */}
       <div className={`mx-4 mt-1 divide-y divide-border/40 border-t border-border/40 ${desktopIconOffsetClass}`}>
-        {sets.map((set, idx) => (
+        {sets.map((set, idx) => {
+          const rowIdentityKey = getSetIdentityKey(set, `pending-${idx}`);
+          const shouldPassiveAnimate =
+            !prefersReducedMotion &&
+            initialPassiveRowKeys.has(rowIdentityKey);
+          const passiveDelay = shouldPassiveAnimate
+            ? Math.min(
+                (initialPassiveRowOrder.get(rowIdentityKey) ?? idx) * 0.06,
+                0.3,
+              )
+            : 0;
+
+          return (
           <SetRow
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
             set={set}
@@ -3445,6 +3470,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
               activeCelebrationKey ===
               (set.rowIndex ?? set._tempId ?? `pending-${idx}`)
             }
+            shouldPassiveAnimate={shouldPassiveAnimate}
+            passiveDelay={passiveDelay}
             onOptimisticFieldsChange={handleOptimisticFieldsChange}
             onUpdate={(update) => onUpdateSet({
               rowIndex: set.rowIndex,
@@ -3469,7 +3496,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
               />
             ) : null}
           />
-        ))}
+          );
+        })}
 
       </div>
       {shouldShowTonnage && (
@@ -3555,7 +3583,19 @@ function CelebrationReveal({ animationKey, className, children }) {
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, isMetric, prMeta, celebration, isActiveCelebration, onOptimisticFieldsChange, onUpdate, onDelete, strengthBadge }) {
+function SetRow({
+  set,
+  isMetric,
+  prMeta,
+  celebration,
+  isActiveCelebration,
+  shouldPassiveAnimate,
+  passiveDelay = 0,
+  onOptimisticFieldsChange,
+  onUpdate,
+  onDelete,
+  strengthBadge,
+}) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -3728,18 +3768,29 @@ function SetRow({ set, isMetric, prMeta, celebration, isActiveCelebration, onOpt
   return (
     <motion.div
       className={cn("group py-3", celebrationStyles.rowClassName)}
-      animate={isActiveCelebration
-        ? {
-            boxShadow: [
+      initial={shouldPassiveAnimate ? { opacity: 0, y: 12 } : false}
+      animate={{
+        opacity: 1,
+        y: 0,
+        boxShadow: isActiveCelebration
+          ? [
               "0 0 0 rgba(0,0,0,0)",
               prMeta?.scope === "lifetime"
                 ? "0 0 0 2px rgba(251,191,36,0.35), 0 18px 40px -22px rgba(245,158,11,0.8)"
                 : "0 0 0 2px rgba(96,165,250,0.28), 0 18px 40px -22px rgba(59,130,246,0.75)",
               "0 0 0 rgba(0,0,0,0)",
-            ],
-          }
-        : { boxShadow: "0 0 0 rgba(0,0,0,0)" }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+            ]
+          : "0 0 0 rgba(0,0,0,0)",
+      }}
+      transition={{
+        opacity: shouldPassiveAnimate
+          ? { duration: 0.28, delay: passiveDelay, ease: "easeOut" }
+          : { duration: 0.18, ease: "easeOut" },
+        y: shouldPassiveAnimate
+          ? { duration: 0.32, delay: passiveDelay, ease: "easeOut" }
+          : { duration: 0.18, ease: "easeOut" },
+        boxShadow: { duration: 0.6, ease: "easeOut" },
+      }}
     >
       {/* Main row: reps@weight + notes + (desktop: badges/trash) */}
       <div className="flex items-center gap-4">

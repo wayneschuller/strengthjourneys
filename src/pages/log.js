@@ -709,14 +709,16 @@ export default function LogSessionPage() {
       for (const [lt, sets] of Object.entries(prev)) {
         // Keep rows that are still in-flight OR whose rowIndex isn't in real data yet
         const remaining = sets.filter(
-          (s) => s._pending || !realRowIndices.has(s.rowIndex),
+          (s) =>
+            !deletedRowIndices.has(s.rowIndex) &&
+            (s._pending || !realRowIndices.has(s.rowIndex)),
         );
         if (remaining.length !== sets.length) changed = true;
         if (remaining.length) next[lt] = remaining;
       }
       return changed ? next : prev;
     });
-  }, [sessionLifts, setPendingSetsSync]);
+  }, [sessionLifts, deletedRowIndices, setPendingSetsSync]);
 
   // Merge real data with optimistic pending sets.
   // Deduplication: skip confirmed-pending rows whose rowIndex is already in sessionLifts.
@@ -728,14 +730,16 @@ export default function LogSessionPage() {
     const merged = { ...sessionLifts };
     for (const [lt, sets] of Object.entries(pendingSets)) {
       const unique = sets.filter(
-        (s) => s._pending || !realRowIndices.has(s.rowIndex),
+        (s) =>
+          !deletedRowIndices.has(s.rowIndex) &&
+          (s._pending || !realRowIndices.has(s.rowIndex)),
       );
       if (unique.length) {
         merged[lt] = [...(merged[lt] ?? []), ...unique];
       }
     }
     return merged;
-  }, [sessionLifts, pendingSets]);
+  }, [sessionLifts, pendingSets, deletedRowIndices]);
 
   const hasSession = Object.keys(sessionLiftsWithPending).length > 0;
   const perLiftTonnageStats = useMemo(() => {
@@ -1298,6 +1302,8 @@ export default function LogSessionPage() {
     async (set) => {
       if (!sheetInfo?.ssid || !set.rowIndex || structuralSavingRef.current) return;
 
+      let removedPendingRows = [];
+
       // Optimistically hide the row immediately
       addLogEntry({
         type: "ui",
@@ -1305,6 +1311,24 @@ export default function LogSessionPage() {
         detail: `You deleted ${set.liftType} ${set.reps}×${set.weight}${set.unitType ?? ""} from row ${set.rowIndex}.`,
       });
       setDeletedRowIndices((prev) => new Set([...prev, set.rowIndex]));
+      setPendingSetsSync((prev) => {
+        let changed = false;
+        const next = {};
+        removedPendingRows = [];
+        for (const [lt, sets] of Object.entries(prev)) {
+          const remaining = sets.filter((pendingSet) => {
+            const shouldRemove = pendingSet.rowIndex === set.rowIndex;
+            if (shouldRemove) {
+              changed = true;
+              removedPendingRows.push(pendingSet);
+            }
+            return !shouldRemove;
+          });
+          if (remaining.length) next[lt] = remaining;
+          if (remaining.length !== sets.length) changed = true;
+        }
+        return changed ? next : prev;
+      });
       markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
@@ -1355,6 +1379,16 @@ export default function LogSessionPage() {
               next.delete(set.rowIndex);
               return next;
             });
+            if (removedPendingRows.length) {
+              setPendingSetsSync((prev) => {
+                const next = { ...prev };
+                removedPendingRows.forEach((pendingSet) => {
+                  const key = pendingSet.liftType;
+                  next[key] = [...(next[key] ?? []), pendingSet];
+                });
+                return next;
+              });
+            }
             toast({
               title: "Delete blocked to protect the sheet",
               description: "The target row no longer matched what the log expected. Refresh the log and try again.",
@@ -1393,12 +1427,22 @@ export default function LogSessionPage() {
           next.delete(set.rowIndex);
           return next;
         });
+        if (removedPendingRows.length) {
+          setPendingSetsSync((prev) => {
+            const next = { ...prev };
+            removedPendingRows.forEach((pendingSet) => {
+              const key = pendingSet.liftType;
+              next[key] = [...(next[key] ?? []), pendingSet];
+            });
+            return next;
+          });
+        }
         markStructuralError();
       }
       logSheetTimings("deleteSet", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, toast, addLogEntry, recordDevSyncTrace],
+    [sheetInfo?.ssid, toast, addLogEntry, recordDevSyncTrace, setPendingSetsSync],
   );
 
   // Add a new set to an existing lift block.

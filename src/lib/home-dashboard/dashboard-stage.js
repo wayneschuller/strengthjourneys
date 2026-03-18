@@ -146,6 +146,19 @@ export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
     };
   }
 
+  // A personalized or newly linked sheet with no real sessions should still
+  // behave like onboarding. It is no longer the literal seeded sample, but the
+  // home dashboard should stay in the same starter-style experience until the
+  // first real session is logged.
+  if (sessionCount === 0) {
+    return {
+      dashboardStage: "starter_sample",
+      starterSheetState,
+      sessionCount,
+      dataMaturityStage: "no_sessions",
+    };
+  }
+
   // Treat "first real week" as the first 7-day window after the first real
   // session: day 0 through day 6. Once the log reaches day 7, users have
   // entered week two even if they only have a handful of sessions.

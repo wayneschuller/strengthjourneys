@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import {
   LogOut,
-  Table2,
   MessageSquarePlus,
   Coffee,
   Eraser,
@@ -188,9 +187,20 @@ export function AvatarDropdown() {
                   {sheetInfo?.filename && (
                     <>
                       <p className="font-bold">Data source loaded: </p>
-                      <p className="pl-2 text-xs leading-none text-muted-foreground">
-                        {sheetInfo.filename}
-                      </p>
+                      {sheetInfo?.url ? (
+                        <a
+                          href={sheetInfo.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="pl-2 text-xs leading-none text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                        >
+                          {sheetInfo.filename}
+                        </a>
+                      ) : (
+                        <p className="pl-2 text-xs leading-none text-muted-foreground">
+                          {sheetInfo.filename}
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
@@ -212,14 +222,6 @@ export function AvatarDropdown() {
                     Set Up Google Sheet
                   </DropdownMenuItem>
                 )}
-                {sheetInfo?.ssid && sheetInfo?.url && (
-                  <DropdownMenuItem
-                    onClick={() => window.open(sheetInfo.url)}
-                  >
-                    <Table2 className="mr-2 h-4 w-4" />
-                    Open Google Sheet
-                  </DropdownMenuItem>
-                )}
                 {sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
@@ -232,7 +234,7 @@ export function AvatarDropdown() {
                       className="mr-2 h-4 w-4 shrink-0"
                       aria-hidden
                     />
-                    Switch Sheets
+                    Select New Data Source
                   </DropdownMenuItem>
                 )}
                 {sheetInfo?.ssid && (

@@ -11,6 +11,7 @@ import {
   Link2,
   LoaderCircle,
   PlusSquare,
+  Unplug,
 } from "lucide-react";
 
 function formatYearLabel(isoDate) {
@@ -127,13 +128,16 @@ export function ChooseSheetPanel({
   intent = "recovery",
   candidates,
   currentSsid = null,
+  currentSheetInfo = null,
   recommendedId = null,
   openPicker,
   isWorking,
+  isDisconnectingCurrent = false,
   isEnriching = false,
   statusMessage = "",
   onChooseSheet,
   onCreateBlank,
+  onDisconnectCurrent,
   embedded = false,
 }) {
   const isSwitchSheet = intent === "switch_sheet";
@@ -173,10 +177,54 @@ export function ChooseSheetPanel({
       )}
       <CardContent className={embedded ? "space-y-5 px-0 pb-0 pt-0" : "space-y-5 xl:px-10 2xl:px-16"}>
         <div className="space-y-3">
+          {statusMessage && embedded && (
+            <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/50 px-4 py-3 text-sm text-muted-foreground">
+              {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
+              <span>{statusMessage}</span>
+            </div>
+          )}
+          {isSwitchSheet && currentSheetInfo?.ssid && (
+            <div className="rounded-2xl border border-border/70 bg-card/70 px-5 py-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 space-y-1">
+                  <p className="text-sm font-semibold text-foreground/80">
+                    Current data source
+                  </p>
+                  {currentSheetInfo?.url ? (
+                    <a
+                      href={currentSheetInfo.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block truncate text-base font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
+                    >
+                      {currentSheetInfo.filename || "Connected lifting log"}
+                    </a>
+                  ) : (
+                    <p className="truncate text-base font-semibold text-foreground">
+                      {currentSheetInfo.filename || "Connected lifting log"}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Disconnect it here if you want to remove it before choosing something else.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  disabled={isWorking || isDisconnectingCurrent}
+                  onClick={onDisconnectCurrent}
+                >
+                  <Unplug className="mr-2 h-4 w-4" />
+                  {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+                </Button>
+              </div>
+            </div>
+          )}
           {primaryCandidate && (
             <>
               <p className="text-sm font-semibold text-foreground/80">
-                {isSwitchSheet ? "Recommended sheet" : "Recommended for you"}
+                {isSwitchSheet ? "Recommended data source" : "Recommended for you"}
               </p>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <div
@@ -197,7 +245,7 @@ export function ChooseSheetPanel({
                       </div>
                       <p className="text-sm font-medium text-muted-foreground">
                         {isSwitchSheet
-                          ? "This looks like the strongest candidate to switch to."
+                          ? "This looks like the strongest data source to switch to."
                           : "This looks like your main lifting log."}
                       </p>
                       <p className="text-sm text-muted-foreground">
@@ -267,48 +315,48 @@ export function ChooseSheetPanel({
                       {currentSsid === primaryCandidate.id
                         ? "Already connected"
                         : isSwitchSheet
-                          ? "Switch to this sheet"
+                          ? "Use this data source"
                           : "Connect this lifting log"}
                     </Button>
-                  </div>
-                </div>
-                <div className="flex items-start justify-center lg:pt-1">
-                  <div className="w-full max-w-sm rounded-lg border border-primary/20 bg-primary/5 p-3">
-                    <p className="text-sm font-semibold text-foreground">
-                      Other options
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Pick a different sheet from Google Drive or start fresh with a clean lifting log.
-                    </p>
-                    <div className="mt-3 flex flex-col gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        disabled={!openPicker || isWorking}
-                        onClick={() => {
-                          if (openPicker) handleOpenFilePicker(openPicker);
-                        }}
-                      >
-                        <FolderOpen className="mr-2 h-4 w-4" />
-                        Browse Google Drive
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={onCreateBlank}
-                        disabled={isWorking}
-                      >
-                        <PlusSquare className="mr-2 h-4 w-4" />
-                        Start fresh
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </div>
             </>
           )}
+          <div className={primaryCandidate ? "flex items-start justify-center lg:pt-1" : ""}>
+            <div className="w-full max-w-sm rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <p className="text-sm font-semibold text-foreground">
+                Other options
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Browse another file from Google Drive or start fresh with a clean lifting log.
+              </p>
+              <div className="mt-3 flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={!openPicker || isWorking}
+                  onClick={() => {
+                    if (openPicker) handleOpenFilePicker(openPicker);
+                  }}
+                >
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  Browse Google Drive
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={onCreateBlank}
+                  disabled={isWorking}
+                >
+                  <PlusSquare className="mr-2 h-4 w-4" />
+                  Start fresh
+                </Button>
+              </div>
+            </div>
+          </div>
           {otherCandidates.length > 0 && (
             <>
               <div className="rounded-xl border bg-card/70">
@@ -368,9 +416,7 @@ export function ChooseSheetPanel({
                           <Link2 className="mr-2 h-4 w-4" />
                           {currentSsid === candidate.id
                             ? "Connected"
-                            : isSwitchSheet
-                              ? "Use this"
-                              : "Use this"}
+                            : "Use this"}
                         </Button>
                       </div>
                     ))}

@@ -6,25 +6,14 @@ import { gaTrackSignInClick } from "@/lib/analytics";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   LogOut,
   MessageSquarePlus,
   Coffee,
   Eraser,
   Trash2,
-  Unplug,
 } from "lucide-react";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
   DropdownMenu,
@@ -42,6 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 /**
  * User avatar button in the nav bar. Shows a Google sign-in button when unauthenticated,
@@ -53,15 +43,7 @@ export function AvatarDropdown() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
-  const [isDisconnectingSheet, setIsDisconnectingSheet] = useState(false);
-  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
-  const { setTheme, theme } = useTheme();
-
-  const {
-    sheetInfo,
-    clearSheet,
-    enterSignedInDemoMode,
-  } = useUserLiftingData();
+  const { sheetInfo } = useUserLiftingData();
 
   const runKvReset = useCallback(
     async (mode) => {
@@ -87,30 +69,6 @@ export function AvatarDropdown() {
     },
     [],
   );
-
-  const disconnectCurrentSheet = useCallback(async () => {
-    setIsDisconnectingSheet(true);
-    try {
-      const response = await fetch("/api/sheet/unlink", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to disconnect current sheet");
-      }
-      devLog("[sheet-flow] disconnected current sheet from avatar menu", payload);
-      clearSheet();
-      enterSignedInDemoMode();
-      setIsDisconnectDialogOpen(false);
-    } catch (error) {
-      console.error("[sheet-flow] disconnect current sheet failed:", error);
-    } finally {
-      setIsDisconnectingSheet(false);
-    }
-  }, [clearSheet, enterSignedInDemoMode]);
 
   if (authStatus !== "authenticated")
     return (
@@ -237,12 +195,6 @@ export function AvatarDropdown() {
                     Select New Data Source
                   </DropdownMenuItem>
                 )}
-                {sheetInfo?.ssid && (
-                  <DropdownMenuItem onClick={() => setIsDisconnectDialogOpen(true)}>
-                    <Unplug className="mr-2 h-4 w-4" />
-                    Disconnect Sheet
-                  </DropdownMenuItem>
-                )}
                 {/* Public actions shown in all environments. Keep these outside
                     any dev-only gate so production users always see them. */}
                 <DropdownMenuItem
@@ -302,36 +254,6 @@ export function AvatarDropdown() {
               </DropdownMenuGroup>
             </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Disconnect your sheet?</DialogTitle>
-            <DialogDescription>
-              This removes your current spreadsheet from Strength Journeys and stops
-              future reads of your lifting data. You&apos;ll stay signed in and return
-              to demo mode until you reconnect a sheet.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDisconnectDialogOpen(false)}
-              disabled={isDisconnectingSheet}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                void disconnectCurrentSheet();
-              }}
-              disabled={isDisconnectingSheet}
-            >
-              {isDisconnectingSheet ? "Disconnecting..." : "Disconnect Sheet"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

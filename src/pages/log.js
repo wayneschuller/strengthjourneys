@@ -9,6 +9,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
+import { cn } from "@/lib/utils";
 import {
   extractYouTubeVideoId,
   getYouTubeThumbnailUrl,
@@ -23,6 +24,7 @@ import {
   getReadableDateString,
   getDisplayWeight,
   getCelebrationEmoji,
+  PRIORITY_REP_SCHEMES,
   devLog,
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
@@ -1884,6 +1886,7 @@ export default function LogSessionPage() {
 
   return (
     <div className="mx-auto max-w-[116rem] px-3 pb-24 sm:px-4">
+      <style dangerouslySetInnerHTML={{ __html: LOG_CELEBRATION_KEYFRAMES }} />
       <div
         className={showDesktopActivityMonitor
           ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_minmax(0,42rem)] lg:gap-12 xl:gap-16 2xl:gap-20"
@@ -1996,7 +1999,7 @@ export default function LogSessionPage() {
                 <AnimatePresence initial={false}>
                   {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
                     <motion.div
-                      key={liftType}
+                      key={`${sessionDate}-${liftType}`}
                       id={getLiftAnchorId(liftType)}
                       layout
                       initial={liftCardInitial}
@@ -2388,6 +2391,187 @@ function getTop20Rank(topLifts, weight, isMetric) {
   return topLifts.length < 20 ? topLifts.length : null;
 }
 
+const LOG_CELEBRATION_KEYFRAMES = `
+@keyframes log-pr-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  12% { transform: translate3d(-8px, 2px, 0); }
+  24% { transform: translate3d(7px, -3px, 0); }
+  36% { transform: translate3d(-6px, 4px, 0); }
+  48% { transform: translate3d(5px, -2px, 0); }
+  60% { transform: translate3d(-4px, 3px, 0); }
+  72% { transform: translate3d(6px, -1px, 0); }
+  84% { transform: translate3d(-3px, 2px, 0); }
+}
+`;
+
+const CELEBRATION_TIERS = {
+  none: 0,
+  border: 1,
+  confettiSmall: 2,
+  confettiLarge: 3,
+  confettiLargeShake: 4,
+};
+
+function getTrainingAgeYears(parsedData, referenceDate) {
+  const firstLoggedDate = parsedData?.find((entry) => !entry.isGoal)?.date;
+  if (!firstLoggedDate || !referenceDate) return 0;
+
+  const start = new Date(`${firstLoggedDate}T00:00:00Z`);
+  const end = new Date(`${referenceDate}T00:00:00Z`);
+  const diffMs = end.getTime() - start.getTime();
+
+  if (Number.isNaN(diffMs) || diffMs <= 0) return 0;
+
+  return diffMs / (1000 * 60 * 60 * 24 * 365.25);
+}
+
+function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
+  const lifetimeRank = rankingMeta?.lifetime?.rank ?? null;
+  const yearlyRank = rankingMeta?.yearly?.rank ?? null;
+  const isPriorityRep = PRIORITY_REP_SCHEMES.includes(reps);
+
+  if (lifetimeRank === 0) {
+    return {
+      tier: "confettiLargeShake",
+      score: CELEBRATION_TIERS.confettiLargeShake,
+      reason: "Lifetime best",
+    };
+  }
+
+  if (trainingAgeYears >= 5) {
+    if (lifetimeRank != null && lifetimeRank < 5) {
+      return {
+        tier: "confettiLarge",
+        score: CELEBRATION_TIERS.confettiLarge,
+        reason: "Lifetime top 5",
+      };
+    }
+    if (lifetimeRank != null && lifetimeRank < 10) {
+      return {
+        tier: "confettiSmall",
+        score: CELEBRATION_TIERS.confettiSmall,
+        reason: "Lifetime top 10",
+      };
+    }
+    if (yearlyRank === 0) {
+      return {
+        tier: "border",
+        score: CELEBRATION_TIERS.border,
+        reason: "12-month best",
+      };
+    }
+  }
+
+  if (trainingAgeYears >= 2) {
+    if (lifetimeRank != null && lifetimeRank < 5) {
+      return {
+        tier: "confettiSmall",
+        score: CELEBRATION_TIERS.confettiSmall,
+        reason: "Lifetime top 5",
+      };
+    }
+    if ((lifetimeRank != null && lifetimeRank < 10 && isPriorityRep) || yearlyRank === 0) {
+      return {
+        tier: "border",
+        score: CELEBRATION_TIERS.border,
+        reason: lifetimeRank != null && lifetimeRank < 10 ? "Priority lifetime top 10" : "12-month best",
+      };
+    }
+  }
+
+  if (lifetimeRank != null && lifetimeRank < 3 && isPriorityRep) {
+    return {
+      tier: "confettiSmall",
+      score: CELEBRATION_TIERS.confettiSmall,
+      reason: "Early-phase lifetime top 3",
+    };
+  }
+
+  if (yearlyRank === 0 && isPriorityRep) {
+    return {
+      tier: "border",
+      score: CELEBRATION_TIERS.border,
+      reason: "12-month best",
+    };
+  }
+
+  return {
+    tier: "none",
+    score: CELEBRATION_TIERS.none,
+    reason: null,
+  };
+}
+
+function getCelebrationStyles(celebration) {
+  if (!celebration || celebration.tier === "none") {
+    return {
+      rowClassName: "",
+      glowClassName: "",
+    };
+  }
+
+  const isLifetime = celebration.scope === "lifetime";
+  const baseBorder = isLifetime
+    ? "border-amber-300/80 bg-amber-50/30 dark:border-amber-500/40 dark:bg-amber-500/5"
+    : "border-blue-300/80 bg-blue-50/30 dark:border-blue-500/40 dark:bg-blue-500/5";
+
+  const glowClassName = isLifetime
+    ? "shadow-[0_0_0_1px_rgba(251,191,36,0.2),0_12px_28px_-20px_rgba(245,158,11,0.7)]"
+    : "shadow-[0_0_0_1px_rgba(96,165,250,0.18),0_12px_28px_-20px_rgba(59,130,246,0.65)]";
+
+  return {
+    rowClassName: cn("rounded-lg border px-2", baseBorder),
+    glowClassName,
+  };
+}
+
+function getCelebrationOriginFromElement(element) {
+  if (!element) return { x: 0.5, y: 0.55 };
+  const rect = element.getBoundingClientRect();
+  return {
+    x: (rect.left + rect.width / 2) / window.innerWidth,
+    y: (rect.top + rect.height / 2) / window.innerHeight,
+  };
+}
+
+function fireSetCelebrationConfetti(tier, element) {
+  if (typeof window === "undefined") return;
+
+  const origin = getCelebrationOriginFromElement(element);
+
+  import("canvas-confetti").then(({ default: confetti }) => {
+    if (tier === "confettiLargeShake" || tier === "confettiLarge") {
+      confetti({
+        particleCount: 85,
+        spread: 80,
+        startVelocity: 40,
+        scalar: 1.05,
+        origin,
+      });
+      confetti({
+        particleCount: 50,
+        spread: 120,
+        startVelocity: 30,
+        decay: 0.92,
+        origin,
+      });
+      return;
+    }
+
+    if (tier === "confettiSmall") {
+      confetti({
+        particleCount: 28,
+        spread: 42,
+        startVelocity: 22,
+        scalar: 0.9,
+        origin,
+      });
+    }
+  }).catch((error) => {
+    console.error("[log-celebration] confetti failed", error);
+  });
+}
+
 function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months }) {
   if (!liftType || !reps || reps < 1 || reps > 10 || !weight) return null;
 
@@ -2478,6 +2662,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const { getColor } = useLiftColors();
+  const prefersReducedMotion = useReducedMotion();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
@@ -2490,6 +2675,17 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const lastRealSet = realSets[realSets.length - 1];
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
   const liftColor = getColor(liftType);
+  const liftBlockRef = useRef(null);
+  const shakeTimerRef = useRef(null);
+  const activeCelebrationTimerRef = useRef(null);
+  const initialCelebrationPassRef = useRef(true);
+  const previousCelebrationKeysRef = useRef(new Map());
+  const [isCelebrationShaking, setIsCelebrationShaking] = useState(false);
+  const [activeCelebrationKey, setActiveCelebrationKey] = useState(null);
+  const trainingAgeYears = useMemo(
+    () => getTrainingAgeYears(parsedData, sessionDate),
+    [parsedData, sessionDate],
+  );
 
   // Show a one-time hint for new users (first ~20 sessions)
   const showSuggestionHint = useMemo(() => {
@@ -2856,25 +3052,122 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         topLiftsByTypeAndRepsLast12Months,
       });
       if (s._pending || !s.reps || !s.weight) {
-        return { status: null, message: null, scope: null };
+        return {
+          status: null,
+          message: null,
+          scope: null,
+          celebration: { tier: "none", score: CELEBRATION_TIERS.none, reason: null },
+          celebrationKey: null,
+        };
       }
 
       const active = rankingMeta?.best ?? null;
+      const celebration = getCelebrationTier({
+        rankingMeta,
+        reps: s.reps,
+        trainingAgeYears,
+      });
+      const celebrationKey =
+        celebration.tier !== "none"
+          ? [
+              s.rowIndex ?? s._tempId ?? `${liftType}-${s.reps}-${s.weight}`,
+              celebration.tier,
+              active?.scope ?? "lifetime",
+              active?.rank ?? "na",
+            ].join(":")
+          : null;
 
       if (s.isHistoricalPR) {
         return {
           status: "lifetime",
           message: active?.message ?? null,
           scope: active?.scope ?? "lifetime",
+          celebration,
+          celebrationKey,
         };
       }
 
       if (active) {
-        return { status: active.scope, message: active.message, scope: active.scope };
+        return {
+          status: active.scope,
+          message: active.message,
+          scope: active.scope,
+          celebration,
+          celebrationKey,
+        };
       }
-      return { status: null, message: null, scope: null };
+      return {
+        status: null,
+        message: null,
+        scope: null,
+        celebration,
+        celebrationKey,
+      };
     });
-  }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
+  }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, trainingAgeYears]);
+
+  useEffect(() => {
+    return () => {
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+      if (activeCelebrationTimerRef.current) clearTimeout(activeCelebrationTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const currentKeys = new Map(
+      sets.map((set, index) => [
+        set.rowIndex ?? set._tempId ?? `pending-${index}`,
+        prMeta[index]?.celebrationKey ?? null,
+      ]),
+    );
+
+    if (initialCelebrationPassRef.current || isPastSession) {
+      initialCelebrationPassRef.current = false;
+      previousCelebrationKeysRef.current = currentKeys;
+      return;
+    }
+
+    const newlyQualified = sets
+      .map((set, index) => {
+        const rowKey = set.rowIndex ?? set._tempId ?? `pending-${index}`;
+        const meta = prMeta[index];
+        const previousKey = previousCelebrationKeysRef.current.get(rowKey);
+
+        if (!meta?.celebrationKey || meta.celebrationKey === previousKey) {
+          return null;
+        }
+
+        return {
+          rowKey,
+          celebration: meta.celebration,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.celebration.score - a.celebration.score);
+
+    previousCelebrationKeysRef.current = currentKeys;
+
+    if (!newlyQualified.length) return;
+
+    const winner = newlyQualified[0];
+    setActiveCelebrationKey(winner.rowKey);
+    if (activeCelebrationTimerRef.current) clearTimeout(activeCelebrationTimerRef.current);
+    activeCelebrationTimerRef.current = setTimeout(() => {
+      setActiveCelebrationKey(null);
+    }, 2200);
+
+    if (prefersReducedMotion) return;
+
+    fireSetCelebrationConfetti(winner.celebration.tier, liftBlockRef.current);
+
+    if (winner.celebration.tier === "confettiLargeShake") {
+      setIsCelebrationShaking(true);
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+      shakeTimerRef.current = setTimeout(() => {
+        setIsCelebrationShaking(false);
+      }, 600);
+    }
+  }, [sets, prMeta, isPastSession, prefersReducedMotion]);
 
   const shouldShowTonnage = useMemo(() => {
     if (!tonnageStats) return false;
@@ -2900,9 +3193,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
   return (
     <div
+      ref={liftBlockRef}
       className="relative rounded-xl border bg-card shadow-md"
       style={{
         backgroundImage: `linear-gradient(135deg, ${hexToRgba(liftColor, 0.12)} 0%, ${hexToRgba(liftColor, 0.06)} 18%, rgba(255, 255, 255, 0) 42%)`,
+        animation: isCelebrationShaking ? "log-pr-shake 0.6s ease-in-out" : undefined,
       }}
     >
       <div
@@ -2975,6 +3270,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             set={set}
             isMetric={isMetric}
             prMeta={prMeta[idx]}
+            celebration={prMeta[idx]?.celebration ?? null}
+            isActiveCelebration={
+              activeCelebrationKey ===
+              (set.rowIndex ?? set._tempId ?? `pending-${idx}`)
+            }
             onUpdate={(update) => onUpdateSet({
               rowIndex: set.rowIndex,
               tempId: set._tempId ?? null,
@@ -3046,10 +3346,44 @@ function UnitLabel({ unitType, mismatch }) {
   );
 }
 
+/**
+ * Every visible PR marker gets a small entrance burst and shimmer. This is the
+ * baseline celebration treatment; stronger milestones add border, confetti, and
+ * shake on top.
+ */
+function CelebrationReveal({ animationKey, className, children }) {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      key={animationKey}
+      initial={prefersReducedMotion ? false : {
+        opacity: 0,
+        y: 6,
+        scale: 0.92,
+        filter: "brightness(0.92)",
+      }}
+      animate={prefersReducedMotion ? undefined : {
+        opacity: [0, 1, 1],
+        y: [6, -1, 0],
+        scale: [0.92, 1.06, 1],
+        filter: ["brightness(0.92)", "brightness(1.28)", "brightness(1)"],
+      }}
+      transition={prefersReducedMotion ? undefined : {
+        duration: 0.5,
+        ease: "easeOut",
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
+function SetRow({ set, isMetric, prMeta, celebration, isActiveCelebration, onUpdate, onDelete, strengthBadge }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -3146,6 +3480,10 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
         ? "text-blue-500"
         : "text-muted-foreground/45";
   const rankingSummary = prMeta?.message ?? null;
+  const celebrationStyles = getCelebrationStyles({
+    ...celebration,
+    scope: prMeta?.scope ?? null,
+  });
 
   function commitReps() {
     setEditingReps(false);
@@ -3195,7 +3533,21 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
   const hasBadges = !set._pending && (strengthBadge || prMeta?.status === "lifetime" || prMeta?.status === "yearly");
 
   return (
-    <div className="group py-3">
+    <motion.div
+      className={cn("group py-3", celebrationStyles.rowClassName)}
+      animate={isActiveCelebration
+        ? {
+            boxShadow: [
+              "0 0 0 rgba(0,0,0,0)",
+              prMeta?.scope === "lifetime"
+                ? "0 0 0 2px rgba(251,191,36,0.35), 0 18px 40px -22px rgba(245,158,11,0.8)"
+                : "0 0 0 2px rgba(96,165,250,0.28), 0 18px 40px -22px rgba(59,130,246,0.75)",
+              "0 0 0 rgba(0,0,0,0)",
+            ],
+          }
+        : { boxShadow: "0 0 0 rgba(0,0,0,0)" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       {/* Main row: reps@weight + notes + (desktop: badges/trash) */}
       <div className="flex items-center gap-4">
         {/* Reps @ Weight unit — tight visual unit.
@@ -3266,9 +3618,14 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
                 {displayNotes || "notes..."}
               </button>
               {rankingSummary && (
-                <p className={`hidden truncate text-[10px] uppercase tracking-wide md:block ${prToneClass}`}>
-                  {rankingSummary}
-                </p>
+                <CelebrationReveal
+                  animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
+                  className={cn("hidden md:block", prToneClass)}
+                >
+                  <p className="truncate text-[10px] uppercase tracking-wide">
+                    {rankingSummary}
+                  </p>
+                </CelebrationReveal>
               )}
             </div>
           )}
@@ -3282,10 +3639,18 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
             <>
               {strengthBadge}
               {prMeta?.status === "lifetime" && (
-                <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">PR</Badge>
+                <CelebrationReveal
+                  animationKey={`desktop-pr-${set.rowIndex ?? set._tempId ?? "pending"}-lifetime`}
+                >
+                  <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">PR</Badge>
+                </CelebrationReveal>
               )}
               {prMeta?.status === "yearly" && (
-                <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">Year PR</Badge>
+                <CelebrationReveal
+                  animationKey={`desktop-pr-${set.rowIndex ?? set._tempId ?? "pending"}-yearly`}
+                >
+                  <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">Year PR</Badge>
+                </CelebrationReveal>
               )}
               {onDelete && (
                 <button
@@ -3310,15 +3675,28 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
             <>
               {strengthBadge}
               {prMeta?.status === "lifetime" && (
-                <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">PR</Badge>
+                <CelebrationReveal
+                  animationKey={`mobile-pr-${set.rowIndex ?? set._tempId ?? "pending"}-lifetime`}
+                >
+                  <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">PR</Badge>
+                </CelebrationReveal>
               )}
               {prMeta?.status === "yearly" && (
-                <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">Year PR</Badge>
+                <CelebrationReveal
+                  animationKey={`mobile-pr-${set.rowIndex ?? set._tempId ?? "pending"}-yearly`}
+                >
+                  <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">Year PR</Badge>
+                </CelebrationReveal>
               )}
               {rankingSummary && (
-                <span className={`truncate text-[10px] uppercase tracking-wide ${prToneClass}`}>
-                  {rankingSummary}
-                </span>
+                <CelebrationReveal
+                  animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
+                  className={prToneClass}
+                >
+                  <span className="truncate text-[10px] uppercase tracking-wide">
+                    {rankingSummary}
+                  </span>
+                </CelebrationReveal>
               )}
               <div className="flex-1" />
               {onDelete && (
@@ -3334,7 +3712,7 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

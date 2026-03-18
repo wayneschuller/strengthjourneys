@@ -7,7 +7,10 @@ import { ChevronLeft, ChevronRight, ClipboardPlus } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { getConsecutiveWorkoutGroups } from "@/components/analyzer/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
   Card,
   CardContent,
@@ -25,6 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   BIG_FOUR_LIFT_TYPES,
+  getDisplayWeight,
 } from "@/lib/processing-utils";
 import {
   formatDateToYmdLocal,
@@ -183,7 +187,7 @@ function computeWeeklyStats(parsedData, boundaries) {
   };
 }
 
-function getWeeklySessionRows(parsedData, boundaries) {
+function getWeeklySessionRows(parsedData, boundaries, isMetric) {
   if (!Array.isArray(parsedData) || parsedData.length === 0) return [];
 
   const sessionsByDate = new Map();
@@ -198,12 +202,14 @@ function getWeeklySessionRows(parsedData, boundaries) {
     const existing = sessionsByDate.get(entry.date);
     if (existing) {
       existing.lifts.add(entry.liftType);
+      existing.entries.push(entry);
       continue;
     }
 
     sessionsByDate.set(entry.date, {
       date: entry.date,
       lifts: new Set([entry.liftType]),
+      entries: [entry],
     });
   }
 
@@ -211,7 +217,7 @@ function getWeeklySessionRows(parsedData, boundaries) {
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((session) => ({
       ...session,
-      liftSummary: formatLiftSummary([...session.lifts]),
+      liftDetails: getSessionLiftDetails(session.entries, isMetric),
     }));
 }
 
@@ -244,6 +250,59 @@ function formatLiftSummary(liftTypes) {
   return `${uniqueLiftTypes.slice(0, 3).join(", ")} +${uniqueLiftTypes.length - 3}`;
 }
 
+function formatTopSetGroup(sets, group, isMetric) {
+  const firstSet = sets[group[0]];
+  const { value, unit } = getDisplayWeight(firstSet, isMetric);
+  const baseSummary = `${firstSet.reps}@${value}${unit}`;
+  return group.length > 1 ? `${group.length}x${baseSummary}` : baseSummary;
+}
+
+function getLiftTopSetSummaries(sets, isMetric) {
+  if (!Array.isArray(sets) || sets.length === 0) return [];
+
+  const e1rms = sets.map((set) => estimateE1RM(set.reps ?? 0, set.weight ?? 0, "Brzycki"));
+  const bestE1rm = Math.max(...e1rms);
+  const groups = getConsecutiveWorkoutGroups(sets);
+
+  return groups
+    .filter((group) => group.some((index) => e1rms[index] >= bestE1rm - 1e-6))
+    .map((group) => formatTopSetGroup(sets, group, isMetric));
+}
+
+function getSessionLiftDetails(entries, isMetric) {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return [];
+  }
+
+  const entriesByLiftType = entries.reduce((acc, entry) => {
+    acc[entry.liftType] = acc[entry.liftType] || [];
+    acc[entry.liftType].push(entry);
+    return acc;
+  }, {});
+
+  const orderedLiftTypes = [
+    ...BIG_FOUR_LIFT_TYPES.filter((liftType) => entriesByLiftType[liftType]?.length),
+    ...Object.keys(entriesByLiftType).filter(
+      (liftType) => !BIG_FOUR_LIFT_TYPES.includes(liftType),
+    ),
+  ];
+
+  const liftSummaries = orderedLiftTypes
+    .map((liftType) => {
+      const sets = entriesByLiftType[liftType];
+      const topSets = getLiftTopSetSummaries(sets, isMetric);
+      if (topSets.length === 0) return null;
+      return {
+        liftType,
+        topSets,
+        hasHistoricalPR: sets.some((set) => set.isHistoricalPR),
+      };
+    })
+    .filter(Boolean);
+
+  return liftSummaries;
+}
+
 // ─── Main component ────────────────────────────────────────────────────────
 
 export function TheWeekInIronCard({
@@ -273,8 +332,8 @@ export function TheWeekInIronCard({
     return computeWeeklyStats(parsedData, boundaries);
   }, [parsedData, boundaries]);
   const weeklySessionRows = useMemo(
-    () => getWeeklySessionRows(parsedData, boundaries),
-    [parsedData, boundaries],
+    () => getWeeklySessionRows(parsedData, boundaries, isMetric),
+    [parsedData, boundaries, isMetric],
   );
 
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
@@ -368,8 +427,8 @@ export function TheWeekInIronCard({
 
               <WeekSection
                 stepLabel="B"
-                title="What to do next"
-                description={getNextStepCopy(stats, boundaries)}
+                title="Looking ahead"
+                description={getNextStepCopy(stats, boundaries, weeklySessionRows)}
               >
                 <StartLiftPrompt showIntro={false} />
               </WeekSection>
@@ -419,17 +478,43 @@ function WeekSessionList({ rows }) {
           <Link
             key={row.date}
             href={{ pathname: "/log", query: { date: row.date } }}
-            className="grid grid-cols-[56px_72px_minmax(0,1fr)] items-start gap-3 rounded-xl border bg-muted/20 px-4 py-3 transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4 rounded-xl border bg-muted/20 px-4 py-3 transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            <p className="text-sm font-semibold text-foreground">
-              {format(new Date(row.date + "T00:00:00"), "EEE")}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(row.date + "T00:00:00"), "MMM d")}
-            </p>
-            <p className="min-w-0 text-sm text-foreground">
-              {row.liftSummary}
-            </p>
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold leading-none text-foreground">
+                {format(new Date(row.date + "T00:00:00"), "EEE")}
+              </p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {format(new Date(row.date + "T00:00:00"), "MMM d")}
+              </p>
+            </div>
+            <div className="min-w-0 space-y-1.5">
+              {row.liftDetails.length > 0 ? (
+                row.liftDetails.map((lift) => (
+                  <div
+                    key={lift.liftType}
+                    className="grid grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1"
+                  >
+                    <span className="min-w-0 text-sm font-medium text-foreground">
+                      {lift.liftType}
+                    </span>
+                    <span className="min-w-0 text-sm text-muted-foreground">
+                      {lift.topSets.length > 1 ? "Top sets" : "Top set"} {lift.topSets.join(" · ")}
+                    </span>
+                    {lift.hasHistoricalPR ? (
+                      <Badge
+                        variant="outline"
+                        className="justify-self-start border-amber-400 px-2 py-0 text-[10px] text-amber-600"
+                      >
+                        PR
+                      </Badge>
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-foreground">Session logged</p>
+              )}
+            </div>
           </Link>
         ))
       )}
@@ -485,22 +570,34 @@ function getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows) {
   return `${sessionsLabel} so far, with ${volumeLabel} of total volume across the week.`;
 }
 
-function getNextStepCopy(stats, boundaries) {
+function getNextStepCopy(stats, boundaries, weeklySessionRows) {
   if (stats.sessions.current === 0) {
     return boundaries.isCurrentWeek
       ? "Start the week by logging the first lift you want to train."
       : "Use this as a reset point and pick the first lift for your next week.";
   }
 
+  const hasLiftedToday = weeklySessionRows.some(
+    (session) => session.date === boundaries.todayStr,
+  );
+
+  if (boundaries.isCurrentWeek && hasLiftedToday) {
+    if (stats.prs > 0) {
+      return "Nice work getting today’s session in. That’s a strong note for the week. Take the win, recover well, and start thinking about what you’ll want to train next.";
+    }
+
+    return "Nice work getting today’s session in. That’s another day in the bank this week. Recover well, and when you’re ready, start thinking about when you want to lift next and what you want to train.";
+  }
+
   if (boundaries.isCurrentWeek && stats.dayActivity.some((active) => !active)) {
-    return "Keep the week moving by opening today’s log and jumping straight into your next lift.";
+    return "You’ve already put work into this week. If today is a rest day, let it be one. When you’re ready, think about when you want to lift next and what you want to train.";
   }
 
   if (stats.prs > 0) {
-    return "Build on the strong week by logging the lift you want to push next.";
+    return "Strong week so far. Take a moment to recover, reflect on how it felt, and decide what you want to train next.";
   }
 
-  return "Choose the next lift you want to train and head straight into the log.";
+  return "This week is underway. Take stock of how you’re feeling, and when the time is right, choose the next lift you want to log.";
 }
 
 function StartLiftPrompt({ showIntro = true }) {

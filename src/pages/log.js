@@ -2391,6 +2391,142 @@ function getTop20Rank(topLifts, weight, isMetric) {
   return topLifts.length < 20 ? topLifts.length : null;
 }
 
+function getSetIdentityKey(set, fallback = "pending") {
+  if (set?.rowIndex != null) return `row:${set.rowIndex}`;
+  if (set?._tempId) return `tmp:${set._tempId}`;
+  return fallback;
+}
+
+function getEffectiveSetForRanking(set, optimisticFields) {
+  if (!optimisticFields) return set;
+
+  return {
+    ...set,
+    reps: optimisticFields.reps,
+    weight: optimisticFields.weight,
+    unitType: optimisticFields.unitType ?? set.unitType,
+    notes: optimisticFields.notes ?? set.notes,
+    URL: optimisticFields.url ?? set.URL,
+  };
+}
+
+function isWithinRollingYear(date) {
+  if (!date) return false;
+  const now = new Date();
+  const cutoff = new Date(now);
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  return new Date(`${date}T00:00:00Z`) >= cutoff;
+}
+
+function compareRankingEntries(a, b, isMetric) {
+  const aWeight = getDisplayWeight(a, isMetric).value;
+  const bWeight = getDisplayWeight(b, isMetric).value;
+
+  if (aWeight !== bWeight) return bWeight - aWeight;
+
+  const aDate = a?.date ?? "";
+  const bDate = b?.date ?? "";
+  if (aDate !== bDate) return aDate.localeCompare(bDate);
+
+  return String(a?.rowIndex ?? a?._tempId ?? "").localeCompare(
+    String(b?.rowIndex ?? b?._tempId ?? ""),
+  );
+}
+
+/**
+ * The log page treats newly entered/edited sets as "already done" for UX.
+ * We therefore rank against the precomputed SWR top-lift arrays as a baseline,
+ * then locally replace current-session rows with their optimistic in-page values.
+ * After a full SWR cycle, parsedData/topLifts* naturally converge to the same result.
+ */
+function getOptimisticRankingMeta({
+  set,
+  sets,
+  optimisticFieldsByKey,
+  isMetric,
+  topLiftsByTypeAndReps,
+  topLiftsByTypeAndRepsLast12Months,
+}) {
+  const effectiveSet = getEffectiveSetForRanking(
+    set,
+    optimisticFieldsByKey[getSetIdentityKey(set)],
+  );
+
+  if (
+    !effectiveSet?.liftType ||
+    !effectiveSet?.reps ||
+    effectiveSet.reps < 1 ||
+    effectiveSet.reps > 10 ||
+    !effectiveSet?.weight
+  ) {
+    return null;
+  }
+
+  const currentSessionSets = sets
+    .map((sessionSet, index) => getEffectiveSetForRanking(
+      sessionSet,
+      optimisticFieldsByKey[getSetIdentityKey(sessionSet, `set-${index}`)],
+    ))
+    .filter((sessionSet) => (sessionSet?.reps ?? 0) > 0 && (sessionSet?.weight ?? 0) > 0);
+
+  const currentSessionRowIndices = new Set(
+    currentSessionSets.map((sessionSet) => sessionSet?.rowIndex).filter(Boolean),
+  );
+
+  const buildOptimisticLane = (baselineEntries, filterToYear = false) => {
+    const baseline = (baselineEntries ?? []).filter(
+      (entry) => !currentSessionRowIndices.has(entry?.rowIndex),
+    );
+    const optimisticSessionEntries = currentSessionSets.filter((sessionSet) => {
+      if (sessionSet.reps !== effectiveSet.reps) return false;
+      if (filterToYear && !isWithinRollingYear(sessionSet.date)) return false;
+      return true;
+    });
+
+    return [...baseline, ...optimisticSessionEntries].sort((a, b) => compareRankingEntries(a, b, isMetric));
+  };
+
+  const lifetimeLane = buildOptimisticLane(
+    topLiftsByTypeAndReps?.[effectiveSet.liftType]?.[effectiveSet.reps - 1],
+  );
+  const yearlyLane = buildOptimisticLane(
+    topLiftsByTypeAndRepsLast12Months?.[effectiveSet.liftType]?.[effectiveSet.reps - 1],
+    true,
+  );
+
+  const effectiveKey = getSetIdentityKey(effectiveSet);
+  const getRankForLane = (lane) => {
+    const rank = lane.findIndex((entry, index) => {
+      const entryKey = getSetIdentityKey(entry, `lane-${index}`);
+      return entryKey === effectiveKey;
+    });
+    return rank !== -1 && rank < 20 ? rank : null;
+  };
+
+  const lifetimeRank = getRankForLane(lifetimeLane);
+  const yearlyRank = getRankForLane(yearlyLane);
+
+  const lifetime = lifetimeRank != null ? {
+    scope: "lifetime",
+    rank: lifetimeRank,
+    emoji: getCelebrationEmoji(lifetimeRank),
+    message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${effectiveSet.reps}RM`,
+  } : null;
+
+  const yearly = yearlyRank != null ? {
+    scope: "yearly",
+    rank: yearlyRank,
+    emoji: getCelebrationEmoji(yearlyRank),
+    message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${effectiveSet.reps}RM`,
+  } : null;
+
+  return {
+    best: lifetime ?? yearly,
+    lifetime,
+    yearly,
+  };
+}
+
 const LOG_CELEBRATION_KEYFRAMES = `
 @keyframes log-pr-shake {
   0%, 100% { transform: translate3d(0, 0, 0); }
@@ -2682,10 +2818,40 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const previousCelebrationKeysRef = useRef(new Map());
   const [isCelebrationShaking, setIsCelebrationShaking] = useState(false);
   const [activeCelebrationKey, setActiveCelebrationKey] = useState(null);
+  const [optimisticFieldsByKey, setOptimisticFieldsByKey] = useState({});
   const trainingAgeYears = useMemo(
     () => getTrainingAgeYears(parsedData, sessionDate),
     [parsedData, sessionDate],
   );
+
+  const handleOptimisticFieldsChange = useCallback((rowKey, fields) => {
+    if (!rowKey) return;
+    setOptimisticFieldsByKey((prev) => {
+      if (!fields) {
+        if (!(rowKey in prev)) return prev;
+        const next = { ...prev };
+        delete next[rowKey];
+        return next;
+      }
+
+      const current = prev[rowKey];
+      if (
+        current &&
+        current.reps === fields.reps &&
+        current.weight === fields.weight &&
+        current.unitType === fields.unitType &&
+        current.notes === fields.notes &&
+        current.url === fields.url
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [rowKey]: fields,
+      };
+    });
+  }, []);
 
   // Show a one-time hint for new users (first ~20 sessions)
   const showSuggestionHint = useMemo(() => {
@@ -3043,15 +3209,19 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
   const prMeta = useMemo(() => {
     return sets.map((s) => {
-      const rankingMeta = getRankingMeta({
-        liftType,
-        reps: s.reps,
-        weight: s.weight,
+      const effectiveSet = getEffectiveSetForRanking(
+        s,
+        optimisticFieldsByKey[getSetIdentityKey(s)],
+      );
+      const rankingMeta = getOptimisticRankingMeta({
+        set: effectiveSet,
+        sets,
+        optimisticFieldsByKey,
         isMetric,
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
       });
-      if (s._pending || !s.reps || !s.weight) {
+      if (s._pending || !effectiveSet.reps || !effectiveSet.weight) {
         return {
           status: null,
           message: null,
@@ -3064,13 +3234,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       const active = rankingMeta?.best ?? null;
       const celebration = getCelebrationTier({
         rankingMeta,
-        reps: s.reps,
+        reps: effectiveSet.reps,
         trainingAgeYears,
       });
       const celebrationKey =
         celebration.tier !== "none"
           ? [
-              s.rowIndex ?? s._tempId ?? `${liftType}-${s.reps}-${s.weight}`,
+              s.rowIndex ?? s._tempId ?? `${liftType}-${effectiveSet.reps}-${effectiveSet.weight}`,
               celebration.tier,
               active?.scope ?? "lifetime",
               active?.rank ?? "na",
@@ -3104,7 +3274,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         celebrationKey,
       };
     });
-  }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, trainingAgeYears]);
+  }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, trainingAgeYears, optimisticFieldsByKey]);
 
   useEffect(() => {
     return () => {
@@ -3275,6 +3445,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
               activeCelebrationKey ===
               (set.rowIndex ?? set._tempId ?? `pending-${idx}`)
             }
+            onOptimisticFieldsChange={handleOptimisticFieldsChange}
             onUpdate={(update) => onUpdateSet({
               rowIndex: set.rowIndex,
               tempId: set._tempId ?? null,
@@ -3383,7 +3554,7 @@ function CelebrationReveal({ animationKey, className, children }) {
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, isMetric, prMeta, celebration, isActiveCelebration, onUpdate, onDelete, strengthBadge }) {
+function SetRow({ set, isMetric, prMeta, celebration, isActiveCelebration, onOptimisticFieldsChange, onUpdate, onDelete, strengthBadge }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -3484,6 +3655,27 @@ function SetRow({ set, isMetric, prMeta, celebration, isActiveCelebration, onUpd
     ...celebration,
     scope: prMeta?.scope ?? null,
   });
+  const rowKey = getSetIdentityKey(set);
+  const optimisticFields = useMemo(() => {
+    const hasOptimisticOverride =
+      pendingReps !== null || pendingWeight !== null || pendingNotes !== null;
+
+    if (!hasOptimisticOverride) return null;
+
+    return {
+      reps: pendingReps ?? set.reps,
+      weight: pendingWeight ?? set.weight,
+      unitType: set.unitType ?? "",
+      notes: pendingNotes ?? set.notes ?? "",
+      url: set.URL ?? "",
+    };
+  }, [pendingReps, pendingWeight, pendingNotes, set.reps, set.weight, set.unitType, set.notes, set.URL]);
+
+  useEffect(() => {
+    if (!onOptimisticFieldsChange) return undefined;
+    onOptimisticFieldsChange(rowKey, optimisticFields);
+    return () => onOptimisticFieldsChange(rowKey, null);
+  }, [rowKey, optimisticFields, onOptimisticFieldsChange]);
 
   function commitReps() {
     setEditingReps(false);

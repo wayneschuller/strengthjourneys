@@ -12,6 +12,7 @@ import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
  * @typedef {Object} LiftEntry
  * @property {string} date          ISO date string "YYYY-MM-DD"
  * @property {string} liftType      Normalized lift name ("Back Squat", "Bench Press", etc.)
+ * @property {string} [rawLiftType] Original effective lift label from the sheet ("OHP", "Overhead Press", etc.)
  * @property {number} reps          Number of reps for this set
  * @property {number} weight        Weight used for this set
  * @property {"lb"|"kg"} [unitType] Units, if known
@@ -78,6 +79,7 @@ function parseBespokeData(data) {
   const columnNames = data[0];
   let previousDate = null;
   let previousLiftType = null;
+  let previousRawLiftType = null;
   const localeHint =
     typeof navigator !== "undefined" && typeof navigator.language === "string"
       ? navigator.language
@@ -166,10 +168,13 @@ function parseBespokeData(data) {
 
     // Process lift type next since it's used for previousLiftType
     if (row[liftTypeCol]) {
+      obj.rawLiftType = row[liftTypeCol];
       obj.liftType = normalizeLiftTypeNames(row[liftTypeCol]);
       previousLiftType = obj.liftType; // Store normalized value so inherited rows get "Strict Press" not "Overhead Press"
+      previousRawLiftType = obj.rawLiftType;
     } else {
       obj.liftType = previousLiftType;
+      obj.rawLiftType = previousRawLiftType;
     }
 
     // Process required fields

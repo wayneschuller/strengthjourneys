@@ -1475,13 +1475,13 @@ export default function LogSessionPage() {
       // Compute insertion position BEFORE adding to pending, so we can include
       // confirmed-pending rows (promoted on previous successful adds) in the calculation.
       const confirmedPendingRows = (pendingSetsRef.current[liftType] ?? [])
-        .filter((s) => !s._pending && s.rowIndex)
-        .map((s) => s.rowIndex);
+        .filter((s) => !s._pending && s.rowIndex);
       const parsedRows = parsedData
-        .filter((e) => e.date === sessionDate && e.liftType === liftType && !e.isGoal && e.rowIndex)
-        .map((e) => e.rowIndex);
-      const allKnownRows = [...parsedRows, ...confirmedPendingRows];
-      const insertAfterRowIndex = allKnownRows.length ? Math.max(...allKnownRows) : null;
+        .filter((e) => e.date === sessionDate && e.liftType === liftType && !e.isGoal && e.rowIndex);
+      const predecessorRow = [...parsedRows, ...confirmedPendingRows]
+        .reduce((latest, row) => (!latest || row.rowIndex > latest.rowIndex ? row : latest), null);
+      const insertAfterRowIndex = predecessorRow?.rowIndex ?? null;
+      const beforeSnapshot = buildSheetSnapshotFromSetLike(predecessorRow);
 
       // Stable temp key so the SetRow component keeps the same React key through
       // the in-flight → confirmed transition (avoiding a remount/flash).
@@ -1529,6 +1529,7 @@ export default function LogSessionPage() {
         rowIndex: insertAfterRowIndex,
         insertAfterRowIndex,
         rows: [["", "", String(reps), `${weight}${unitType}`, notes, ""]],
+        before: beforeSnapshot,
       });
 
       try {
@@ -1540,11 +1541,22 @@ export default function LogSessionPage() {
             ssid: sheetInfo.ssid,
             rows: [["", "", String(reps), `${weight}${unitType}`, notes, ""]],
             insertAfterRowIndex,
+            before: beforeSnapshot,
           }),
         });
         timings.push({ name: "POST /api/sheet/insert-row", ms: performance.now() - tApi });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Add set failed");
+        if (!res.ok) {
+          if (data?.code === "PRECONDITION_FAILED") {
+            console.error("[sheet/insert-row] preflight verification failed", {
+              rowIndex: insertAfterRowIndex,
+              beforeSnapshot,
+              actual: data?.actual ?? null,
+              message: data?.error || "Add set failed",
+            });
+          }
+          throw new Error(data.error || "Add set failed");
+        }
         recordDevSyncTrace({
           op: "insert-row",
           phase: "response",
@@ -1615,18 +1627,32 @@ export default function LogSessionPage() {
       );
 
       const sessionRows = parsedData
-        .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
-        .map((e) => e.rowIndex);
+        .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex);
 
       // Also include confirmed-pending row indices for correct insertion position
       const confirmedPendingSessionRows = Object.values(currentPending)
         .flat()
         .filter((s) => s.date === sessionDate && !s._pending && s.rowIndex)
-        .map((s) => s.rowIndex);
+        .map((s) => s);
       const allSessionRows = [...sessionRows, ...confirmedPendingSessionRows];
 
       const hasExistingSession = allSessionRows.length > 0 || hasPendingForDate;
-      const insertAfterRowIndex = hasExistingSession ? Math.max(...allSessionRows) : null;
+      const predecessorRow = hasExistingSession
+        ? allSessionRows.reduce(
+          (latest, row) => (!latest || row.rowIndex > latest.rowIndex ? row : latest),
+          null,
+        )
+        : null;
+      const topExistingRow = !hasExistingSession
+        ? [...parsedData.filter((e) => e.rowIndex), ...Object.values(currentPending)
+          .flat()
+          .filter((s) => !s._pending && s.rowIndex)]
+          .reduce((top, row) => (!top || row.rowIndex < top.rowIndex ? row : top), null)
+        : null;
+      const insertAfterRowIndex = predecessorRow?.rowIndex ?? null;
+      const beforeSnapshot = buildSheetSnapshotFromSetLike(
+        hasExistingSession ? predecessorRow : topExistingRow,
+      );
 
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -1682,6 +1708,7 @@ export default function LogSessionPage() {
         insertAfterRowIndex,
         rows: [row],
         newSession: !hasExistingSession,
+        before: beforeSnapshot,
       });
 
       try {
@@ -1694,11 +1721,22 @@ export default function LogSessionPage() {
             rows: [row],
             insertAfterRowIndex,
             newSession: !hasExistingSession,
+            before: beforeSnapshot,
           }),
         });
         timings.push({ name: "POST /api/sheet/insert-row", ms: performance.now() - tApi });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed");
+        if (!res.ok) {
+          if (data?.code === "PRECONDITION_FAILED") {
+            console.error("[sheet/insert-row] preflight verification failed", {
+              rowIndex: insertAfterRowIndex,
+              beforeSnapshot,
+              actual: data?.actual ?? null,
+              message: data?.error || "Failed",
+            });
+          }
+          throw new Error(data.error || "Failed");
+        }
         recordDevSyncTrace({
           op: "insert-row",
           phase: "response",
@@ -2429,12 +2467,20 @@ function getEditableSetFields(set) {
 function buildSheetSnapshotFromFields(fields, identity = {}) {
   return {
     date: identity.date ?? "",
-    liftType: identity.liftType ?? "",
+    // Verified sheet writes must match the original sheet label, not the
+    // normalized app label, so aliased rows (for example "OHP") stay editable.
+    liftType: identity.rawLiftType ?? identity.liftType ?? "",
     reps: fields.reps != null ? String(fields.reps) : "",
     weight: fields.weight != null ? `${fields.weight}${fields.unitType ?? ""}` : "",
     notes: fields.notes ?? "",
     url: fields.url ?? "",
   };
+}
+
+function buildSheetSnapshotFromSetLike(set) {
+  if (!set) return null;
+  if (set._serverSnapshot) return set._serverSnapshot;
+  return buildSheetSnapshotFromFields(getEditableSetFields(set), set);
 }
 
 function snapshotToEditableFields(snapshot) {

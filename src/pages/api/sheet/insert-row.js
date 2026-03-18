@@ -20,6 +20,7 @@
  */
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { readRawRow, verifyRowSnapshot } from "@/lib/sheet-row-ops";
 import { getServerSession } from "next-auth/next";
 
 // ─── Design principle: the sheet is a first-class artefact ──────────────────
@@ -87,7 +88,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, rows, insertAfterRowIndex, newSession } = req.body;
+  const { ssid, rows, insertAfterRowIndex, newSession, before } = req.body;
 
   if (!ssid || !Array.isArray(rows) || rows.length === 0) {
     return res.status(400).json({ error: "Missing required fields: ssid, rows" });
@@ -104,6 +105,45 @@ export default async function handler(req, res) {
   };
 
   try {
+    let verification = { ok: true, actual: null };
+    if (insertAfter === 1) {
+      const firstDataRow = await readRawRow({ ssid, rowIndex: 2, headers });
+      if (firstDataRow) {
+        if (!before) {
+          return res.status(400).json({
+            error: "Missing required field: before for top-of-sheet insert",
+          });
+        }
+        verification = await verifyRowSnapshot({
+          ssid,
+          rowIndex: 2,
+          before,
+          headers,
+        });
+      }
+    } else {
+      if (!before) {
+        return res.status(400).json({
+          error: "Missing required field: before for structural insert",
+        });
+      }
+      verification = await verifyRowSnapshot({
+        ssid,
+        rowIndex: insertAfter,
+        before,
+        headers,
+      });
+    }
+
+    if (!verification.ok) {
+      console.warn("[sheet/insert-row] verification failed:", verification.message);
+      return res.status(409).json({
+        error: verification.message,
+        code: "PRECONDITION_FAILED",
+        actual: verification.actual,
+      });
+    }
+
     // Step 1: insert N empty rows at the target position.
     //
     // Google Sheets formatting quirk:

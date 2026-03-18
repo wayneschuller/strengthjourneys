@@ -144,6 +144,7 @@ export function ChooseSheetPanel({
   const primaryCandidate =
     candidates.find((candidate) => candidate.id === recommendedId) || candidates[0] || null;
   const otherCandidates = candidates.filter((candidate) => candidate.id !== primaryCandidate?.id);
+  const isPrimaryCurrent = primaryCandidate?.id && currentSsid === primaryCandidate.id;
   const [showOtherSheets, setShowOtherSheets] = useState(false);
   const freshnessLabel = formatRelativeFreshness(
     primaryCandidate?.modifiedByMeTime || primaryCandidate?.modifiedTime,
@@ -181,44 +182,6 @@ export function ChooseSheetPanel({
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/50 px-4 py-3 text-sm text-muted-foreground">
               {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
               <span>{statusMessage}</span>
-            </div>
-          )}
-          {isSwitchSheet && currentSheetInfo?.ssid && (
-            <div className="rounded-2xl border border-border/70 bg-card/70 px-5 py-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0 space-y-1">
-                  <p className="text-sm font-semibold text-foreground/80">
-                    Current data source
-                  </p>
-                  {currentSheetInfo?.url ? (
-                    <a
-                      href={currentSheetInfo.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block truncate text-base font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
-                    >
-                      {currentSheetInfo.filename || "Connected lifting log"}
-                    </a>
-                  ) : (
-                    <p className="truncate text-base font-semibold text-foreground">
-                      {currentSheetInfo.filename || "Connected lifting log"}
-                    </p>
-                  )}
-                  <p className="text-sm text-muted-foreground">
-                    Disconnect it here if you want to remove it before choosing something else.
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full sm:w-auto"
-                  disabled={isWorking || isDisconnectingCurrent}
-                  onClick={onDisconnectCurrent}
-                >
-                  <Unplug className="mr-2 h-4 w-4" />
-                  {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
-                </Button>
-              </div>
             </div>
           )}
           {primaryCandidate && (
@@ -265,10 +228,22 @@ export function ChooseSheetPanel({
                             </span>
                           )}
                       </div>
-                      {currentSsid === primaryCandidate.id && (
-                        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                          Currently connected
-                        </p>
+                      {isPrimaryCurrent && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                            Currently connected
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-3 text-xs"
+                            disabled={isWorking || isDisconnectingCurrent}
+                            onClick={onDisconnectCurrent}
+                          >
+                            <Unplug className="mr-2 h-3.5 w-3.5" />
+                            {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+                          </Button>
+                        </div>
                       )}
                       {Array.isArray(primaryCandidate.bigFourPreview) &&
                         primaryCandidate.bigFourPreview.length > 0 && (
@@ -322,7 +297,7 @@ export function ChooseSheetPanel({
                 </div>
                 <div className="flex items-start justify-center lg:pt-1">
                   <div className="w-full max-w-sm space-y-3">
-                    {isSwitchSheet && currentSheetInfo?.ssid && (
+                    {isSwitchSheet && currentSheetInfo?.ssid && !isPrimaryCurrent && (
                       <div className="rounded-2xl border border-border/70 bg-card/70 px-5 py-4">
                         <div className="flex flex-col gap-3">
                           <div className="min-w-0 space-y-1">
@@ -402,7 +377,7 @@ export function ChooseSheetPanel({
               <div />
               <div className="flex items-start justify-center lg:pt-1">
                 <div className="w-full max-w-sm space-y-3">
-                  {isSwitchSheet && currentSheetInfo?.ssid && (
+                  {isSwitchSheet && currentSheetInfo?.ssid && !isPrimaryCurrent && (
                     <div className="rounded-2xl border border-border/70 bg-card/70 px-5 py-4">
                       <div className="flex flex-col gap-3">
                         <div className="min-w-0 space-y-1">

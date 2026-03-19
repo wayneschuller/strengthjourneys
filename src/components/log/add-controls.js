@@ -3,10 +3,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronRight,
   ClipboardPlus,
+  PenLine,
   PlayCircle,
   Plus,
+  Repeat,
 } from "lucide-react";
 import {
   Command,
@@ -201,11 +205,44 @@ function LiftCoachVideoAssist({ videoAssist }) {
   );
 }
 
-function SmartAddButtonGrid({ buttons, onAddSet, showHint, disabled = false }) {
+function getSuggestionIcon(button, lastRealSet) {
+  if (!lastRealSet?.weight || button.weight == null) {
+    return {
+      Icon: Plus,
+      className: "text-muted-foreground",
+    };
+  }
+
+  if (button.weight === lastRealSet.weight) {
+    return {
+      Icon: Repeat,
+      className: "text-muted-foreground",
+    };
+  }
+
+  if (button.weight > lastRealSet.weight) {
+    return {
+      Icon: ArrowUp,
+      className: "text-emerald-600",
+    };
+  }
+
+  return {
+    Icon: ArrowDown,
+    className: "text-sky-600",
+  };
+}
+
+function SmartAddButtonGrid({ buttons, lastRealSet, onAddSet, showHint, disabled = false }) {
+  const visibleButtons = buttons.slice(0, 2);
+
   return (
     <>
       <div className="flex items-stretch divide-x divide-border/40">
-        {buttons.map((s, i) => (
+        {visibleButtons.map((s, i) => {
+          const { Icon, className: iconClassName } = getSuggestionIcon(s, lastRealSet);
+
+          return (
           <button
             key={i}
             type="button"
@@ -222,7 +259,7 @@ function SmartAddButtonGrid({ buttons, onAddSet, showHint, disabled = false }) {
             onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
           >
             <span className="flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
+              <Icon className={`h-3.5 w-3.5 ${iconClassName}`} />
               {s.label}
             </span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
@@ -234,20 +271,37 @@ function SmartAddButtonGrid({ buttons, onAddSet, showHint, disabled = false }) {
               </span>
             )}
           </button>
-        ))}
+          );
+        })}
+        <button
+          type="button"
+          disabled={disabled}
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3.5 text-sm transition-colors ${
+            disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
+          } text-muted-foreground`}
+          onClick={() => onAddSet(lastRealSet ?? null)}
+        >
+          <span className="flex items-center gap-1.5">
+            <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+            Custom set
+          </span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            any reps or weight
+          </span>
+        </button>
       </div>
       {showHint && (
         <p className="pb-2 pt-1 text-center text-[11px] italic text-muted-foreground/60">
           {disabled
             ? "Row positions are updating. Add controls will re-enable in a moment."
-            : "Want something different? Add a set, then edit any reps or weight."}
+            : "Custom set adds a new row you can edit to any reps or weight."}
         </p>
       )}
     </>
   );
 }
 
-function PastSessionSmartAddButtons({ liftType, buttons, onAddSet, showHint, disabled = false }) {
+function PastSessionSmartAddButtons({ liftType, buttons, lastRealSet, onAddSet, showHint, disabled = false }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const transition = prefersReducedMotion
@@ -300,6 +354,7 @@ function PastSessionSmartAddButtons({ liftType, buttons, onAddSet, showHint, dis
           >
             <SmartAddButtonGrid
               buttons={buttons}
+              lastRealSet={lastRealSet}
               onAddSet={onAddSet}
               showHint={showHint}
               disabled={disabled}
@@ -335,6 +390,7 @@ export function SmartAddButtons({ inSessionCoachState, lastRealSet, liftType, on
       <PastSessionSmartAddButtons
         liftType={liftType}
         buttons={inSessionCoachState.buttons}
+        lastRealSet={lastRealSet}
         onAddSet={onAddSet}
         showHint={showHint}
         disabled={disabled}
@@ -350,6 +406,7 @@ export function SmartAddButtons({ inSessionCoachState, lastRealSet, liftType, on
       />
       <SmartAddButtonGrid
         buttons={inSessionCoachState.buttons}
+        lastRealSet={lastRealSet}
         onAddSet={onAddSet}
         showHint={showHint}
         disabled={disabled}

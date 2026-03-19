@@ -290,11 +290,9 @@ function SmartAddButtonGrid({ buttons, lastRealSet, onAddSet, showHint, disabled
           </span>
         </button>
       </div>
-      {showHint && (
+      {showHint && disabled && (
         <p className="pb-2 pt-1 text-center text-[11px] italic text-muted-foreground/60">
-          {disabled
-            ? "Row positions are updating. Add controls will re-enable in a moment."
-            : "Custom set adds a new row you can edit to any reps or weight."}
+          Row positions are updating. Add controls will re-enable in a moment.
         </p>
       )}
     </>

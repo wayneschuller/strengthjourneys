@@ -93,30 +93,30 @@ export function LiftTechniqueAssist({
   );
 }
 
-function LiftCoachCopy({ coaching, alignClass = "" }) {
-  if (!coaching) return null;
+function LiftCoachCopy({ inSessionCoaching, alignClass = "" }) {
+  if (!inSessionCoaching) return null;
 
   return (
     <div className={`border-b border-border/40 px-4 py-3 ${alignClass}`}>
       <div className="space-y-1.5">
-        {coaching.eyebrow && (
+        {inSessionCoaching.eyebrow && (
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-            {coaching.eyebrow}
+            {inSessionCoaching.eyebrow}
           </p>
         )}
-        {coaching.title && (
+        {inSessionCoaching.title && (
           <p className="text-sm font-semibold text-foreground">
-            {coaching.title}
+            {inSessionCoaching.title}
           </p>
         )}
-        {coaching.body && (
+        {inSessionCoaching.body && (
           <p className="text-sm text-muted-foreground">
-            {coaching.body}
+            {inSessionCoaching.body}
           </p>
         )}
-        {coaching.effortCue && (
+        {inSessionCoaching.effortCue && (
           <p className="text-xs italic text-muted-foreground/75">
-            {coaching.effortCue}
+            {inSessionCoaching.effortCue}
           </p>
         )}
       </div>
@@ -311,8 +311,8 @@ function PastSessionSmartAddButtons({ liftType, buttons, onAddSet, showHint, dis
   );
 }
 
-export function SmartAddButtons({ coachState, lastRealSet, liftType, onAddSet, showHint, hasBigFourIcon = false, isPastSession = false, disabled = false }) {
-  if (!coachState?.buttons?.length) {
+export function SmartAddButtons({ inSessionCoachState, lastRealSet, liftType, onAddSet, showHint, hasBigFourIcon = false, isPastSession = false, disabled = false }) {
+  if (!inSessionCoachState?.buttons?.length) {
     return (
       <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
         <button
@@ -330,11 +330,11 @@ export function SmartAddButtons({ coachState, lastRealSet, liftType, onAddSet, s
     );
   }
 
-  if (isPastSession && coachState.mode === "history") {
+  if (isPastSession && inSessionCoachState.mode === "history") {
     return (
       <PastSessionSmartAddButtons
         liftType={liftType}
-        buttons={coachState.buttons}
+        buttons={inSessionCoachState.buttons}
         onAddSet={onAddSet}
         showHint={showHint}
         disabled={disabled}
@@ -345,11 +345,11 @@ export function SmartAddButtons({ coachState, lastRealSet, liftType, onAddSet, s
   return (
     <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
       <LiftCoachCopy
-        coaching={coachState.coaching}
+        inSessionCoaching={inSessionCoachState.inSessionCoaching}
         alignClass={hasBigFourIcon ? "md:pl-28 lg:pl-32" : ""}
       />
       <SmartAddButtonGrid
-        buttons={coachState.buttons}
+        buttons={inSessionCoachState.buttons}
         onAddSet={onAddSet}
         showHint={showHint}
         disabled={disabled}

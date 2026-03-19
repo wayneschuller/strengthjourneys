@@ -184,7 +184,7 @@ const DEFAULT_ADD_LIFT_CHIPS = COACHED_LIFTS
 
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
-function isEarlyDashboardStage(dashboardStage) {
+function isEarlyStrengthJourneyStage(dashboardStage) {
   return (
     dashboardStage === "starter_sample" ||
     dashboardStage === "first_real_week" ||
@@ -192,11 +192,22 @@ function isEarlyDashboardStage(dashboardStage) {
   );
 }
 
-function getLiftTechniqueAssist(liftType) {
+function getDaysBetweenDates(startDate, endDate) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 86400000));
+}
+
+function getJourneyTechniqueAssist({
+  liftType,
+  dashboardStage,
+  priorLiftDates = [],
+  sessionDate,
+}) {
   const match = COACHED_LIFTS.find((item) => item.liftType === liftType);
   if (!match) return null;
 
-  const cues = match.cues ?? [];
+  const defaultCues = match.cues ?? [];
   const videoAssist = match.videoUrl
     ? {
         slug: match.slug ?? null,
@@ -204,6 +215,16 @@ function getLiftTechniqueAssist(liftType) {
         prompt: `Need a quick ${liftType} form check?`,
       }
     : null;
+  const mostRecentLiftDate = priorLiftDates.length ? priorLiftDates[priorLiftDates.length - 1] : null;
+  const isLiftReintroduction =
+    !!mostRecentLiftDate &&
+    !!sessionDate &&
+    getDaysBetweenDates(mostRecentLiftDate, sessionDate) > 42;
+  const shouldShowFullAssist =
+    isEarlyStrengthJourneyStage(dashboardStage) ||
+    !mostRecentLiftDate ||
+    isLiftReintroduction;
+  const cues = shouldShowFullAssist ? defaultCues : [];
 
   if (!cues.length && !videoAssist) return null;
 
@@ -389,7 +410,7 @@ function getFirstTimeProgressionButtons({
   return buttons;
 }
 
-function getFirstTimeCoachingCopy({
+function getInSessionCoachingCopy({
   mode,
   dashboardStage,
   liftType,
@@ -398,9 +419,9 @@ function getFirstTimeCoachingCopy({
   hasReachedTarget = false,
   workSetCount = 0,
 }) {
-  const earlyStage = isEarlyDashboardStage(dashboardStage);
+  const earlyStage = isEarlyStrengthJourneyStage(dashboardStage);
 
-  if (mode === "first_lift_session_empty") {
+  if (mode === "firstLiftEmpty") {
     return earlyStage
       ? {
           eyebrow: "First lift",
@@ -417,7 +438,7 @@ function getFirstTimeCoachingCopy({
         };
   }
 
-  if (mode === "first_lift_session_in_progress") {
+  if (mode === "firstLiftInProgress") {
     if (hasReachedTarget) {
       if (liftType === "Deadlift") {
         return {
@@ -2819,18 +2840,31 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       initializeWithValue: false,
     }) ?? "blue";
 
-  const coachState = useMemo(() => {
+  const inSessionCoachState = useMemo(() => {
     if (!parsedData) return null;
 
     const unitType = isMetric ? "kg" : "lb";
     const barWeight = storedBarType === "womens" ? (isMetric ? 15 : 35) : (isMetric ? 20 : 45);
     const minIncrement = isMetric ? 2.5 : 5;
-    const techniqueAssist = getLiftTechniqueAssist(liftType);
+    const priorLiftDates = Array.from(
+      new Set(
+        parsedData
+          .filter((e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal)
+          .map((e) => e.date)
+          .filter(Boolean),
+      ),
+    ).sort();
+    const journeyTechniqueAssist = getJourneyTechniqueAssist({
+      liftType,
+      dashboardStage,
+      priorLiftDates,
+      sessionDate,
+    });
     const completedSetCount = realSets.filter(
       (set) => (set.reps ?? 0) > 0 && (set.weight ?? 0) > 0,
     ).length;
-    const nonBigFourCoaching =
-      !techniqueAssist && completedSetCount >= 3
+    const inSessionFallbackCoaching =
+      !journeyTechniqueAssist && completedSetCount >= 3
         ? getNonBigFourThreeByFiveCoaching(liftType)
         : null;
     const firstTimeTargetWeight = getFirstTimeTargetWeight({
@@ -2866,7 +2900,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
       if (realSets.length === 0) {
         return {
-          mode: "first_lift_session_empty",
+          mode: "firstLiftEmpty",
           buttons: firstTimeButtons?.length
             ? firstTimeButtons
             : getFirstTimeEmptyButtons({
@@ -2875,19 +2909,19 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
                 minIncrement,
                 unitType,
               }),
-          coaching: getFirstTimeCoachingCopy({
-            mode: "first_lift_session_empty",
+          inSessionCoaching: getInSessionCoachingCopy({
+            mode: "firstLiftEmpty",
             dashboardStage,
             liftType,
             minIncrement,
             unitType,
           }),
-          techniqueAssist: techniqueAssist
+          journeyTechniqueAssist: journeyTechniqueAssist
             ? {
-                ...techniqueAssist,
-                videoAssist: techniqueAssist.videoAssist
+                ...journeyTechniqueAssist,
+                videoAssist: journeyTechniqueAssist.videoAssist
                   ? {
-                      ...techniqueAssist.videoAssist,
+                      ...journeyTechniqueAssist.videoAssist,
                       defaultOpen: false,
                     }
                   : null,
@@ -2917,7 +2951,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         : 0;
 
       return {
-        mode: "first_lift_session_in_progress",
+        mode: "firstLiftInProgress",
         buttons: firstTimeButtons?.length
           ? firstTimeButtons
           : [
@@ -2946,10 +2980,10 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
                 variant: "outline",
               },
             ],
-        coaching:
-          nonBigFourCoaching ??
-          getFirstTimeCoachingCopy({
-            mode: "first_lift_session_in_progress",
+        inSessionCoaching:
+          inSessionFallbackCoaching ??
+          getInSessionCoachingCopy({
+            mode: "firstLiftInProgress",
             dashboardStage,
             liftType,
             minIncrement,
@@ -2957,7 +2991,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             hasReachedTarget: hasReachedFirstTimeTarget,
             workSetCount: firstTimeWorkSetCount,
           }),
-        techniqueAssist,
+        journeyTechniqueAssist,
       };
     }
 
@@ -3131,8 +3165,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     return {
       mode: "history",
       buttons,
-      coaching: nonBigFourCoaching,
-      techniqueAssist: null,
+      inSessionCoaching: inSessionFallbackCoaching,
+      journeyTechniqueAssist,
     };
   }, [parsedData, isMetric, storedBarType, storedPlatePreference, liftType, sessionDate, realSets, lastRealSet, dashboardStage, standards, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
 
@@ -3374,7 +3408,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       </div>
 
       <LiftTechniqueAssist
-        techniqueAssist={coachState?.techniqueAssist}
+        techniqueAssist={inSessionCoachState?.journeyTechniqueAssist}
         hasBigFourIcon
       />
 
@@ -3445,7 +3479,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
       {/* Add-set buttons — card footer */}
       <SmartAddButtons
-        coachState={coachState}
+        inSessionCoachState={inSessionCoachState}
         lastRealSet={lastRealSet}
         liftType={liftType}
         onAddSet={onAddSet}

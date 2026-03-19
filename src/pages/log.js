@@ -3600,6 +3600,7 @@ function CustomSetDraftRow({
   const [draftReps, setDraftReps] = useState("");
   const [draftWeight, setDraftWeight] = useState("");
   const [draftNotes, setDraftNotes] = useState(defaultNotes ?? "");
+  const shouldPlaceNotesCaretRef = useRef(false);
 
   useEffect(() => {
     if (disabled) return;
@@ -3621,12 +3622,22 @@ function CustomSetDraftRow({
 
   const moveToNotes = useCallback(() => {
     if (!hasValidWeight || disabled) return;
+    shouldPlaceNotesCaretRef.current = true;
     const notesInput = notesInputRef.current;
     if (!notesInput) return;
     notesInput.focus();
     const caretPosition = (defaultNotes ?? "").length;
     notesInput.setSelectionRange(caretPosition, caretPosition);
   }, [defaultNotes, disabled, hasValidWeight]);
+
+  const handleNotesFocus = useCallback(() => {
+    if (!shouldPlaceNotesCaretRef.current) return;
+    shouldPlaceNotesCaretRef.current = false;
+    const notesInput = notesInputRef.current;
+    if (!notesInput) return;
+    const caretPosition = (defaultNotes ?? "").length;
+    notesInput.setSelectionRange(caretPosition, caretPosition);
+  }, [defaultNotes]);
 
   const commitDraft = useCallback(() => {
     if (!canSubmit) return;
@@ -3693,6 +3704,7 @@ function CustomSetDraftRow({
             value={draftNotes}
             disabled={disabled}
             placeholder="notes..."
+            onFocus={handleNotesFocus}
             onChange={(e) => setDraftNotes(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {

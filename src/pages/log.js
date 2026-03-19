@@ -11,11 +11,6 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { cn } from "@/lib/utils";
 import {
-  extractYouTubeVideoId,
-  getYouTubeThumbnailUrl,
-} from "@/lib/video-thumbnails";
-import {
-  getConsecutiveWorkoutGroups,
   LiftStrengthLevel,
   LiftTonnageRow,
 } from "@/components/analyzer/session-exercise-block";
@@ -33,21 +28,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Skeleton } from "@/components/ui/skeleton";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 import { DevActivityMonitorPanel } from "@/components/dev-activity-monitor";
 import Image from "next/image";
@@ -70,13 +50,21 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-  TooltipProvider,
+    TooltipProvider,
 } from "@/components/ui/tooltip";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+  AddLiftButton,
+  LiftSuggestions,
+  LiftTechniqueAssist,
+  SmartAddButtons,
+} from "@/components/log/add-controls";
+import {
+  getSessionSidebarSummary,
+  LogSessionSkeleton,
+  SessionSidebarRail,
+  SyncIndicator,
+} from "@/components/log/session-summary";
+import { getLiftAnchorId } from "@/components/log/utils";
 
 // --- Big Four lifts with SVG icons ---
 
@@ -86,11 +74,6 @@ const BIG_FOUR = [
   { name: "Deadlift", icon: "/deadlift.svg", slug: "barbell-deadlift-insights" },
   { name: "Strict Press", icon: "/strict_press.svg", slug: "barbell-strict-press-insights" },
 ];
-
-function getLiftAnchorId(liftType) {
-  if (typeof liftType !== "string") return "lift";
-  return `lift-${liftType.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
-}
 
 const COACHED_LIFTS = [
   {
@@ -228,20 +211,6 @@ function getLiftTechniqueAssist(liftType) {
     cues,
     videoAssist,
   };
-}
-
-function getYouTubeWatchHref(videoUrl) {
-  if (typeof videoUrl !== "string") return null;
-  const embedPrefix = "https://www.youtube.com/embed/";
-  if (videoUrl.startsWith(embedPrefix)) {
-    return `https://www.youtube.com/watch?v=${videoUrl.slice(embedPrefix.length)}`;
-  }
-  return videoUrl;
-}
-
-function getYouTubeThumbnailSrc(videoUrl) {
-  const videoId = extractYouTubeVideoId(videoUrl);
-  return videoId ? getYouTubeThumbnailUrl(videoId, "hqdefault") : null;
 }
 
 function getFirstTimeEmptyButtons({ liftType, barWeight, minIncrement, unitType }) {
@@ -600,6 +569,7 @@ export default function LogSessionPage() {
 
   const [sessionDate, setSessionDate] = useState(todayIso);
   const [syncState, setSyncState] = useState("idle"); // idle | saving | saved | error
+  const [isStructuralSaving, setIsStructuralSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Optimistic pending sets: { [liftType]: [pendingSetObj, ...] }
   // _pending: true  → in-flight (show spinner)
@@ -620,8 +590,8 @@ export default function LogSessionPage() {
   // (addSet, addLift, deleteSet) that could race on stale row indices.
   // Non-structural updates (PATCH to edit reps/weight/notes) target a fixed
   // rowIndex and never shift other rows, so they bypass this guard.
-  // This is a ref (not state) so the guard works without triggering re-renders
-  // — buttons stay visually enabled, clicks are just silently dropped.
+  // Keep the ref as the source of truth for race protection, and mirror it to
+  // state so structural controls can visibly disable while row indices settle.
   const structuralSavingRef = useRef(false);
   const savedTimerRef = useRef(null);
 
@@ -832,6 +802,25 @@ export default function LogSessionPage() {
       ),
     [sessionLiftsWithPending, perLiftTonnageStats, isMetric],
   );
+  const addLiftChips = useMemo(() => {
+    const seen = new Set();
+    const freq = {};
+    if (parsedData) {
+      for (const entry of parsedData) {
+        if (!entry.isGoal) {
+          freq[entry.liftType] = (freq[entry.liftType] ?? 0) + 1;
+        }
+      }
+    }
+    const frequentExtras = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => ({ name, icon: null }));
+    return [...BIG_FOUR, ...DEFAULT_ADD_LIFT_CHIPS, ...frequentExtras].filter(({ name }) => {
+      if (seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
+  }, [parsedData]);
 
   // --- Unit mismatch nudge ---
   // If 100% of the user's sheet data is in one unit but their SJ preference is
@@ -911,6 +900,7 @@ export default function LogSessionPage() {
   function markStructuralSaving() {
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
     structuralSavingRef.current = true;
+    setIsStructuralSaving(true);
     setSyncState("saving");
     addLogEntry({
       type: "sync",
@@ -921,6 +911,7 @@ export default function LogSessionPage() {
 
   function markStructuralSaved() {
     structuralSavingRef.current = false;
+    setIsStructuralSaving(false);
     setSyncState("saved");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
     addLogEntry({
@@ -934,6 +925,7 @@ export default function LogSessionPage() {
 
   function markStructuralError() {
     structuralSavingRef.current = false;
+    setIsStructuralSaving(false);
     setSyncState("error");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
     addLogEntry({
@@ -1420,14 +1412,12 @@ export default function LogSessionPage() {
           ok: true,
         });
 
-        // Do NOT call mutate() here — same reasoning as addSet: firing a
-        // revalidation mid-session causes parsedData churn and flicker.
-        // The deletedRowIndices filter keeps the row hidden in the UI.
-        // SWR's revalidateOnFocus will sync when the user leaves the page.
+        // The deletedRowIndices filter keeps the row hidden in the UI while the
+        // background revalidation refreshes canonical row indices. Keep the
+        // row-shift guard active until that refresh lands so queued edits/adds
+        // do not resume against stale positions.
+        await mutate();
         markStructuralSaved();
-        // Keep row indices fresh for subsequent inserts. This runs in the background
-        // and the optimistic UI already hides the deleted row immediately.
-        void mutate();
       } catch (err) {
         console.error("[sheet/delete-row] deleteSet failed:", err);
         recordDevSyncTrace({
@@ -1571,16 +1561,13 @@ export default function LogSessionPage() {
           firstRowIndex: data?.firstRowIndex ?? null,
         });
         const { firstRowIndex } = data;
-        markStructuralSaved();
-        // Promote pending → confirmed with real rowIndex.
-        // Do NOT call mutate() here — firing a revalidation mid-session causes parsedData
-        // to update while confirmed-pending rows are still present, which creates a brief
-        // intermediate state where the row appears to disappear and reappear.
-        // SWR's natural revalidateOnFocus will sync when the user leaves the page.
+        // Promote pending → confirmed with the real rowIndex before revalidation
+        // so the optimistic row dedupes cleanly when parsedData catches up.
         promoteFirstPending(liftType, firstRowIndex);
-        // Keep row indices fresh for subsequent inserts. This runs in the background
-        // and the optimistic UI already shows the inserted row.
-        void mutate();
+        // Keep the row-shift guard active until fresh sheet data lands; queued
+        // follow-up actions should only resume once canonical row indices exist.
+        await mutate();
+        markStructuralSaved();
       } catch (err) {
         console.error("[sheet/insert-row] addSet failed:", err);
         recordDevSyncTrace({
@@ -1755,10 +1742,9 @@ export default function LogSessionPage() {
           firstRowIndex: data?.firstRowIndex ?? null,
         });
         const { firstRowIndex } = data;
-        markStructuralSaved();
-        // See addSet for why we don't call mutate() here.
         promoteFirstPending(liftType, firstRowIndex);
-        void mutate();
+        await mutate();
+        markStructuralSaved();
       } catch (err) {
         console.error("[sheet/insert-row] addLift failed:", err);
         recordDevSyncTrace({
@@ -2133,7 +2119,13 @@ export default function LogSessionPage() {
                   ))}
                 </div>
 
-                <AddLiftButton parsedData={parsedData} onAddLift={addLift} label="Add other lift type" />
+                <AddLiftButton
+                  parsedData={parsedData}
+                  onAddLift={addLift}
+                  chips={addLiftChips}
+                  label="Add other lift type"
+                  disabled={isStructuralSaving}
+                />
               </div>
             )}
 
@@ -2163,6 +2155,7 @@ export default function LogSessionPage() {
                         dashboardStage={dashboardStage}
                         sessionCount={sessionCount}
                         isPastSession={!isToday}
+                        isStructuralSaving={isStructuralSaving}
                         onUpdateSet={updateSet}
                         onDeleteSet={deleteSet}
                         onAddSet={(prevSet) => addSet(liftType, prevSet)}
@@ -2171,7 +2164,12 @@ export default function LogSessionPage() {
                   ))}
                 </AnimatePresence>
 
-                <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
+                <AddLiftButton
+                  parsedData={parsedData}
+                  onAddLift={addLift}
+                  chips={addLiftChips}
+                  disabled={isStructuralSaving}
+                />
 
                 <div className="flex justify-center pt-2">
                   {!showDeleteConfirm ? (
@@ -2221,174 +2219,6 @@ export default function LogSessionPage() {
         )}
 
       </div>
-    </div>
-  );
-}
-
-function getSessionSidebarSummary(
-  sessionLiftsWithPending,
-  perLiftTonnageStats,
-  fallbackUnit,
-) {
-  const liftNames = Object.keys(sessionLiftsWithPending ?? {});
-  if (liftNames.length === 0) {
-    return {
-      liftCount: 0,
-      setCount: 0,
-      repCount: 0,
-      volume: 0,
-      unit: fallbackUnit,
-      lifts: [],
-    };
-  }
-
-  let setCount = 0;
-  let repCount = 0;
-  let volume = 0;
-  let unit = fallbackUnit;
-
-  const lifts = liftNames.map((liftType) => {
-    const sets = sessionLiftsWithPending[liftType] ?? [];
-    const nativeUnit = sets[0]?.unitType ?? fallbackUnit;
-    if (!unit && nativeUnit) unit = nativeUnit;
-    setCount += sets.length;
-    repCount += sets.reduce((total, set) => total + (set.reps ?? 0), 0);
-    if (nativeUnit === unit) {
-      volume += perLiftTonnageStats?.[liftType]?.currentLiftTonnage ?? 0;
-    }
-
-    return {
-      liftType,
-      setCount: sets.length,
-    };
-  });
-
-  return {
-    liftCount: liftNames.length,
-    setCount,
-    repCount,
-    volume,
-    unit,
-    lifts,
-  };
-}
-
-function formatCompactVolume(value, unit) {
-  if (!value) return `0 ${unit}`;
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}k ${unit}`;
-  return `${Math.round(value)} ${unit}`;
-}
-
-function getPrimarySessionHighlight(summary, perLiftTonnageStats) {
-  const topLift = summary?.lifts
-    ?.slice()
-    ?.sort((a, b) => {
-      const aVolume = perLiftTonnageStats?.[a.liftType]?.currentLiftTonnage ?? 0;
-      const bVolume = perLiftTonnageStats?.[b.liftType]?.currentLiftTonnage ?? 0;
-      return bVolume - aVolume;
-    })?.[0];
-
-  if (!topLift) return null;
-
-  const tonnageStats = perLiftTonnageStats?.[topLift.liftType];
-  if (!tonnageStats) return null;
-
-  return `💪 Biggest lift today: ${topLift.liftType} - ${formatCompactVolume(
-    tonnageStats.currentLiftTonnage,
-    tonnageStats.unitType ?? summary.unit,
-  )}`;
-}
-
-function SessionSidebarRail({
-  sessionDate,
-  isToday,
-  hasSession,
-  summary,
-  perLiftTonnageStats,
-}) {
-  return (
-    <>
-      {/* Intended for the log page 3rd column once we bring that side-rail summary back. */}
-      <Card className="border-border/35 bg-muted/8 shadow-sm">
-        <CardHeader className="space-y-2 px-4 pb-0 pt-4">
-          <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Session pulse
-          </CardTitle>
-          <p className="text-sm text-foreground/90">
-            {isToday ? "Today" : getReadableDateString(sessionDate, true)}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4 px-4 pb-4 pt-4">
-          {hasSession ? (
-            <>
-              {getPrimarySessionHighlight(summary, perLiftTonnageStats) ? (
-                <div className="rounded-md border border-border/35 bg-background/70 px-3 py-3">
-                  <p className="text-sm font-medium text-foreground/90">
-                    {getPrimarySessionHighlight(summary, perLiftTonnageStats)}
-                  </p>
-                </div>
-              ) : null}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <RailStat label="Lifts" value={summary.liftCount} />
-                <RailStat label="Sets" value={summary.setCount} />
-                <RailStat label="Reps" value={summary.repCount} />
-                <RailStat
-                  label="Volume"
-                  value={formatCompactVolume(summary.volume, summary.unit)}
-                />
-              </div>
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  In this session
-                </p>
-                <div className="space-y-2">
-                  {summary.lifts.map(({ liftType, setCount }) => (
-                    <Link
-                      key={liftType}
-                      href={`#${getLiftAnchorId(liftType)}`}
-                      className="flex items-start justify-between gap-3 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground"
-                    >
-                      <span className="min-w-0">{liftType}</span>
-                      <span className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground/80">
-                        {setCount} sets
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <p className="text-sm leading-6 text-muted-foreground">
-              No sets logged yet for this date. Start in the center column and
-              this rail will update as the session takes shape.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {hasSession ? (
-        <Card className="border-border/30 bg-transparent shadow-sm">
-          <CardContent className="space-y-2 px-4 py-4 text-xs leading-6 text-muted-foreground">
-            <p>
-              Average sets per lift:{" "}
-              <span className="text-foreground/80">
-                {(summary.setCount / Math.max(summary.liftCount, 1)).toFixed(1)}
-              </span>
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
-    </>
-  );
-}
-
-function RailStat({ label, value }) {
-  return (
-    <div className="rounded-md border border-border/30 bg-background/55 px-3 py-2 shadow-sm">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-medium text-foreground/90">{value}</p>
     </div>
   );
 }
@@ -2719,9 +2549,12 @@ function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
 
   if (lifetimeRank === 0) {
     return {
-      tier: "confettiLargeShake",
-      score: CELEBRATION_TIERS.confettiLargeShake,
-      reason: "Lifetime best",
+      tier: trainingAgeYears <= 2 ? "confettiLarge" : "confettiLargeShake",
+      score:
+        trainingAgeYears <= 2
+          ? CELEBRATION_TIERS.confettiLarge
+          : CELEBRATION_TIERS.confettiLargeShake,
+      reason: trainingAgeYears <= 2 ? "Lifetime best without shake" : "Lifetime best",
     };
   }
 
@@ -2892,60 +2725,9 @@ function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndRep
   return { best, lifetime, yearly };
 }
 
-// --- Activity log panel (dev only) ---
-
-function LogSessionSkeleton() {
-  return (
-    <div className="mt-6">
-      <div className="overflow-hidden rounded-xl border border-border/50 bg-card/70 shadow-sm">
-        <div className="space-y-3 border-b border-border/40 px-5 py-5">
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-3 w-36" />
-        </div>
-        <div className="space-y-5 px-5 py-5">
-          {[0, 1, 2, 3].map((row) => (
-            <div key={row} className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <Skeleton className="h-9 w-14" />
-                <Skeleton className="h-4 w-3" />
-                <Skeleton className="h-9 w-20" />
-                <Skeleton className="h-4 w-6" />
-              </div>
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
-            </div>
-          ))}
-          <div className="border-t border-border/40 pt-5">
-            <Skeleton className="h-12 w-full rounded-md" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// --- Sync indicator ---
-
-function SyncIndicator({ state }) {
-  if (state === "idle") return <div className="w-8" />;
-  return (
-    <div className="flex w-8 items-center justify-center">
-      {state === "saving" && (
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-      )}
-      {state === "saved" && (
-        <Check className="h-4 w-4 text-green-500" />
-      )}
-      {state === "error" && (
-        <X className="h-4 w-4 text-destructive" />
-      )}
-    </div>
-  );
-}
-
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, dashboardStage, sessionCount = 0, isPastSession, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, dashboardStage, sessionCount = 0, isPastSession, isStructuralSaving = false, onUpdateSet, onDeleteSet, onAddSet }) {
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const { getColor } = useLiftColors();
@@ -3670,6 +3452,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         showHint={showSuggestionHint}
         hasBigFourIcon
         isPastSession={isPastSession}
+        disabled={isStructuralSaving}
       />
     </div>
   );
@@ -4133,429 +3916,6 @@ function SetRow({
         </div>
       )}
     </motion.div>
-  );
-}
-
-// --- Italic suggestions under lift header ---
-
-function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
-  const lastSets = useMemo(() => {
-    if (!parsedData) return null;
-    const prior = parsedData.filter(
-      (e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal,
-    );
-    if (!prior.length) return null;
-    const lastDate = prior[prior.length - 1].date;
-    return prior.filter((e) => e.date === lastDate);
-  }, [parsedData, liftType, sessionDate]);
-
-  if (!lastSets) return null;
-
-  const summary = getConsecutiveWorkoutGroups(lastSets)
-    .map((group) => {
-      const firstSet = lastSets[group[0]];
-      const { value, unit } = getDisplayWeight(firstSet, isMetric);
-      const baseSummary = `${firstSet.reps}@${value}${unit}`;
-      return group.length > 1 ? `${group.length}×${baseSummary}` : baseSummary;
-    })
-    .join("  ·  ");
-
-  return (
-    <p className="pb-1 text-xs italic text-muted-foreground/70">
-      Last {getReadableDateString(lastSets[0].date)}: {summary}
-    </p>
-  );
-}
-
-// --- Smart add-set buttons ---
-// The footer can render one of three states:
-// - history-based smart suggestions for returning lifts
-// - first-time lift coaching with starter buttons
-// - a plain fallback when nothing smarter is available
-
-function LiftTechniqueAssist({
-  techniqueAssist,
-  hasBigFourIcon = false,
-}) {
-  if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist) return null;
-
-  return (
-    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-28 lg:ml-32" : ""}`}>
-      {techniqueAssist?.cues?.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-            Form cues
-          </p>
-          <ul className="space-y-1.5">
-            {techniqueAssist.cues.map((cue) => (
-              <li key={cue} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
-                <span>{cue}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {techniqueAssist?.videoAssist && (
-        <div className="pt-1">
-          <LiftCoachVideoAssist videoAssist={techniqueAssist.videoAssist} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function LiftCoachCopy({ coaching, alignClass = "" }) {
-  if (!coaching) return null;
-
-  return (
-    <div className={`border-b border-border/40 px-4 py-3 ${alignClass}`}>
-      <div className="space-y-1.5">
-        {coaching.eyebrow && (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-            {coaching.eyebrow}
-          </p>
-        )}
-        {coaching.title && (
-          <p className="text-sm font-semibold text-foreground">
-            {coaching.title}
-          </p>
-        )}
-        {coaching.body && (
-          <p className="text-sm text-muted-foreground">
-            {coaching.body}
-          </p>
-        )}
-        {coaching.effortCue && (
-          <p className="text-xs italic text-muted-foreground/75">
-            {coaching.effortCue}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function LiftCoachVideoAssist({ videoAssist }) {
-  const [isOpen, setIsOpen] = useState(Boolean(videoAssist.defaultOpen));
-  const activeVideoUrl = videoAssist?.videoUrl;
-  const activeVideoHref = getYouTubeWatchHref(activeVideoUrl) ?? activeVideoUrl;
-  const activeThumbnailSrc = getYouTubeThumbnailSrc(activeVideoUrl);
-
-  if (!activeVideoUrl) return null;
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-background/75">
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-accent/30"
-          >
-            <div className="min-w-0">
-              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <PlayCircle className="h-4 w-4 text-muted-foreground" />
-                {videoAssist.prompt}
-              </p>
-            </div>
-            <ChevronRight
-              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
-                isOpen ? "rotate-90" : ""
-              }`}
-            />
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="border-t border-border/50 px-3 py-3">
-          <a
-            href={activeVideoHref}
-            target="_blank"
-            rel="noreferrer"
-            className="group block overflow-hidden rounded-xl border border-border/60 bg-card transition-colors hover:border-primary/40 hover:bg-accent/20"
-          >
-            <div className="relative aspect-video overflow-hidden bg-muted">
-              {activeThumbnailSrc ? (
-                <Image
-                  src={activeThumbnailSrc}
-                  alt={`${videoAssist.prompt} thumbnail`}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                  unoptimized
-                />
-              ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/5" />
-              <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-base font-semibold text-white">
-                    Watch the quick form check
-                  </p>
-                </div>
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/92 px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm">
-                  <PlayCircle className="h-3.5 w-3.5" />
-                  Play
-                </span>
-              </div>
-            </div>
-          </a>
-          {videoAssist.slug ? (
-            <div className="mt-3">
-              <Link
-                href={`/${videoAssist.slug}`}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-              >
-                Open the full lift guide
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          ) : null}
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  );
-}
-
-function SmartAddButtonGrid({ buttons, onAddSet, showHint }) {
-  return (
-    <>
-      <div className="flex items-stretch divide-x divide-border/40">
-        {buttons.map((s, i) => (
-          <button
-            key={i}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3.5 text-sm transition-colors hover:bg-accent/50 ${
-              s.variant === "primary"
-                ? "bg-accent/20 font-semibold text-foreground"
-                : s.variant === "secondary"
-                  ? "font-medium text-foreground"
-                  : "text-muted-foreground"
-            }`}
-            onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
-          >
-            <span className="flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              {s.label}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
-              {s.sublabel}
-            </span>
-            {s.rankingMessage && (
-              <span className={`text-[10px] uppercase tracking-wide ${s.rankingScope === "lifetime" ? "text-amber-500" : "text-blue-500"}`}>
-                {s.rankingMessage}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-      {showHint && (
-        <p className="pb-2 pt-1 text-center text-[11px] italic text-muted-foreground/60">
-          Want something different? Add a set, then edit any reps or weight.
-        </p>
-      )}
-    </>
-  );
-}
-
-function SmartAddButtons({ coachState, lastRealSet, liftType, onAddSet, showHint, hasBigFourIcon = false, isPastSession = false }) {
-  if (!coachState?.buttons?.length) {
-    // Fallback: no prior session data — plain add button
-    return (
-      <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
-        <button
-          className="flex w-full items-center justify-center gap-2 py-3.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-          onClick={() => onAddSet(lastRealSet)}
-        >
-          <Plus className="h-4 w-4" />
-          Add set
-        </button>
-      </div>
-    );
-  }
-
-  if (isPastSession && coachState.mode === "history") {
-    return (
-      <PastSessionSmartAddButtons
-        liftType={liftType}
-        buttons={coachState.buttons}
-        onAddSet={onAddSet}
-        showHint={showHint}
-      />
-    );
-  }
-
-  return (
-    <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
-      <LiftCoachCopy
-        coaching={coachState.coaching}
-        alignClass={hasBigFourIcon ? "md:pl-28 lg:pl-32" : ""}
-      />
-      <SmartAddButtonGrid
-        buttons={coachState.buttons}
-        onAddSet={onAddSet}
-        showHint={showHint}
-      />
-    </div>
-  );
-}
-
-function PastSessionSmartAddButtons({ liftType, buttons, onAddSet, showHint }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
-  const transition = prefersReducedMotion
-    ? { duration: 0 }
-    : { duration: 0.18, ease: "easeOut" };
-
-  return (
-    <div
-      className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/20"
-      onMouseEnter={() => setIsExpanded(true)}
-      onMouseLeave={() => setIsExpanded(false)}
-      onFocusCapture={() => setIsExpanded(true)}
-      onBlurCapture={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget)) {
-          setIsExpanded(false);
-        }
-      }}
-    >
-      <button
-        type="button"
-        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
-        onClick={() => setIsExpanded((prev) => !prev)}
-        aria-expanded={isExpanded}
-      >
-        <span className="flex items-center gap-2">
-          <Plus className="h-3.5 w-3.5" />
-          {`Add another ${liftType} set`}
-        </span>
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
-          <motion.span
-            animate={{ rotate: isExpanded ? 90 : 0 }}
-            transition={transition}
-            className="inline-flex"
-          >
-            <ChevronRight className="h-3.5 w-3.5" />
-          </motion.span>
-        </span>
-      </button>
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={transition}
-            className="overflow-hidden border-t border-border/40 bg-muted/30"
-          >
-            <SmartAddButtonGrid
-              buttons={buttons}
-              onAddSet={onAddSet}
-              showHint={showHint}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// --- Add lift button ---
-// Simplified: just calls onAddLift(liftType), all API logic lives in the parent.
-
-function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" }) {
-  const [showInput, setShowInput] = useState(false);
-  const [liftType, setLiftType] = useState("");
-
-  // Build chip list: Big Four first, then curated cue-video lifts, then frequent user lifts.
-  const chips = useMemo(() => {
-    const seen = new Set();
-    const freq = {};
-    if (parsedData) {
-      for (const e of parsedData) {
-        if (!e.isGoal) {
-          freq[e.liftType] = (freq[e.liftType] ?? 0) + 1;
-        }
-      }
-    }
-    const frequentExtras = Object.entries(freq)
-      .sort((a, b) => b[1] - a[1])
-      .map(([lt]) => ({ name: lt, icon: null }));
-    return [...BIG_FOUR, ...DEFAULT_ADD_LIFT_CHIPS, ...frequentExtras].filter(({ name }) => {
-      if (seen.has(name)) return false;
-      seen.add(name);
-      return true;
-    });
-  }, [parsedData]);
-
-  function submit(lt) {
-    const raw = (lt ?? liftType).trim();
-    if (!raw) return;
-    // Title Case: "barbell row" → "Barbell Row"
-    const clean = raw.replace(/\S+/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
-    setShowInput(false);
-    setLiftType("");
-    onAddLift(clean);
-  }
-
-  if (!showInput) {
-    return (
-      <Button
-        variant="outline"
-        className="w-full gap-2"
-        onClick={() => setShowInput(true)}
-      >
-        <ClipboardPlus className="h-4 w-4" />
-        {label}
-      </Button>
-    );
-  }
-
-  return (
-    <div className="mx-auto w-full max-w-2xl space-y-3 rounded-lg border p-4">
-      <Command className="rounded-lg border bg-background">
-        <CommandInput
-          placeholder="Lift type (e.g. Back Squat)"
-          value={liftType}
-          onValueChange={setLiftType}
-        />
-        <CommandList className="max-h-56">
-          <CommandEmpty>
-            {liftType.trim()
-              ? `No match. Add "${liftType.trim()}" below.`
-              : "No lift found."}
-          </CommandEmpty>
-          {liftType.trim() ? (
-            <CommandGroup heading="Add new">
-              <CommandItem
-                value={`create-${liftType.trim()}`}
-                onSelect={() => submit(liftType)}
-              >
-                <ClipboardPlus className="h-4 w-4" />
-                {`Add "${liftType.trim()}"`}
-              </CommandItem>
-            </CommandGroup>
-          ) : null}
-          <CommandGroup heading="Lifts">
-            <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
-              {chips.map(({ name }) => (
-                <CommandItem
-                  key={name}
-                  value={name}
-                  onSelect={() => submit(name)}
-                  className="min-w-0"
-                >
-                  <span className="truncate">{name}</span>
-                </CommandItem>
-              ))}
-            </div>
-          </CommandGroup>
-        </CommandList>
-      </Command>
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => submit()} disabled={!liftType.trim()}>
-          Add
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => { setShowInput(false); setLiftType(""); }}>
-          Cancel
-        </Button>
-      </div>
-    </div>
   );
 }
 

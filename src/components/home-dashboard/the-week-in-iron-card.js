@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, ClipboardPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
@@ -637,10 +637,14 @@ function StartLiftPrompt({ showIntro = true }) {
           </Link>
         ))}
       </div>
-      <Button asChild variant="outline" className="w-full justify-center gap-2">
+      <Button
+        asChild
+        className="w-full justify-center gap-2 rounded-full bg-zinc-700 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+      >
         <Link href="/log">
-          <ClipboardPlus className="h-4 w-4" />
-          Log any lift
+          <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+          <span className="sm:hidden">Log</span>
+          <span className="hidden sm:inline">Log any lift</span>
         </Link>
       </Button>
     </div>

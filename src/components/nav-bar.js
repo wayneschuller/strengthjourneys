@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle, ThemeChooser } from "@/components/theme-chooser";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import { Table2, Loader2, Github, Layers, LineChart } from "lucide-react";
+import { Table2, Loader2, Github, Layers, LineChart, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
@@ -172,10 +172,15 @@ export function NavBar() {
         </div>
         <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 py-3">
           {authStatus === "authenticated" && process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
-            <Button asChild size="sm" className="hidden gap-1.5 md:flex">
+            <Button
+              asChild
+              size="sm"
+              className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+            >
               <Link href="/log">
-                <ClipboardPlus className="h-4 w-4" />
-                Log
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                <span className="md:hidden">Log</span>
+                <span className="hidden md:inline">Log Session</span>
               </Link>
             </Button>
           )}

@@ -1425,6 +1425,9 @@ export default function LogSessionPage() {
         // The deletedRowIndices filter keeps the row hidden in the UI.
         // SWR's revalidateOnFocus will sync when the user leaves the page.
         markStructuralSaved();
+        // Keep row indices fresh for subsequent inserts. This runs in the background
+        // and the optimistic UI already hides the deleted row immediately.
+        void mutate();
       } catch (err) {
         console.error("[sheet/delete-row] deleteSet failed:", err);
         recordDevSyncTrace({
@@ -1455,7 +1458,7 @@ export default function LogSessionPage() {
       logSheetTimings("deleteSet", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, toast, addLogEntry, recordDevSyncTrace, setPendingSetsSync],
+    [sheetInfo?.ssid, toast, addLogEntry, recordDevSyncTrace, setPendingSetsSync, mutate],
   );
 
   // Add a new set to an existing lift block.
@@ -1554,6 +1557,9 @@ export default function LogSessionPage() {
               actual: data?.actual ?? null,
               message: data?.error || "Add set failed",
             });
+            // If indices drifted, immediately revalidate so a retry can succeed.
+            // Keep this lightweight: we already removed the optimistic in-flight row below.
+            void mutate();
           }
           throw new Error(data.error || "Add set failed");
         }
@@ -1572,6 +1578,9 @@ export default function LogSessionPage() {
         // intermediate state where the row appears to disappear and reappear.
         // SWR's natural revalidateOnFocus will sync when the user leaves the page.
         promoteFirstPending(liftType, firstRowIndex);
+        // Keep row indices fresh for subsequent inserts. This runs in the background
+        // and the optimistic UI already shows the inserted row.
+        void mutate();
       } catch (err) {
         console.error("[sheet/insert-row] addSet failed:", err);
         recordDevSyncTrace({
@@ -1593,7 +1602,7 @@ export default function LogSessionPage() {
       logSheetTimings("addSet", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, queueStructuralAction],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, queueStructuralAction, mutate],
   );
 
   // Add a brand-new lift type to the session.
@@ -1734,6 +1743,7 @@ export default function LogSessionPage() {
               actual: data?.actual ?? null,
               message: data?.error || "Failed",
             });
+            void mutate();
           }
           throw new Error(data.error || "Failed");
         }
@@ -1748,6 +1758,7 @@ export default function LogSessionPage() {
         markStructuralSaved();
         // See addSet for why we don't call mutate() here.
         promoteFirstPending(liftType, firstRowIndex);
+        void mutate();
       } catch (err) {
         console.error("[sheet/insert-row] addLift failed:", err);
         recordDevSyncTrace({
@@ -1768,7 +1779,7 @@ export default function LogSessionPage() {
       logSheetTimings("addLift", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, sessionLiftsWithPending, addSet, queueStructuralAction],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, sessionLiftsWithPending, addSet, queueStructuralAction, mutate],
   );
 
   useEffect(() => {
@@ -3736,6 +3747,7 @@ function SetRow({
   onDelete,
   strengthBadge,
 }) {
+  const isLocked = Boolean(set._pending);
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -3859,6 +3871,7 @@ function SetRow({
   }, [rowKey, optimisticFields, onOptimisticFieldsChange]);
 
   function commitReps() {
+    if (isLocked) return;
     setEditingReps(false);
     const parsed = parseInt(draftReps, 10);
     if (!isNaN(parsed) && parsed !== latestFieldsRef.current.reps) {
@@ -3874,6 +3887,7 @@ function SetRow({
   }
 
   function commitWeight() {
+    if (isLocked) return;
     setEditingWeight(false);
     const num = parseFloat(draftWeight);
     if (!isNaN(num) && num !== latestFieldsRef.current.weight) {
@@ -3889,6 +3903,7 @@ function SetRow({
   }
 
   function commitNotes() {
+    if (isLocked) return;
     setEditingNotes(false);
     const trimmed = draftNotes.trim();
     if (trimmed !== (latestFieldsRef.current.notes ?? "").trim()) {
@@ -3943,18 +3958,25 @@ function SetRow({
                 type="number"
                 className="w-10 rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
                 value={draftReps}
+                disabled={isLocked}
                 onChange={(e) => setDraftReps(e.target.value)}
                 onBlur={commitReps}
                 onKeyDown={(e) => e.key === "Enter" && commitReps()}
                 autoFocus
               />
             ) : (
-              <button
-                className="w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums hover:bg-muted/60"
-                onClick={() => setEditingReps(true)}
-              >
-                {displayReps}
-              </button>
+              isLocked ? (
+                <div className="w-full py-0.5 text-right text-xl font-semibold tabular-nums text-foreground/80">
+                  {displayReps}
+                </div>
+              ) : (
+                <button
+                  className="w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums hover:bg-muted/60"
+                  onClick={() => setEditingReps(true)}
+                >
+                  {displayReps}
+                </button>
+              )
             )}
           </div>
           <span className="mx-0.5 text-base text-muted-foreground">@</span>
@@ -3964,18 +3986,25 @@ function SetRow({
               step="any"
               className="w-20 rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
               value={draftWeight}
+              disabled={isLocked}
               onChange={(e) => setDraftWeight(e.target.value)}
               onBlur={commitWeight}
               onKeyDown={(e) => e.key === "Enter" && commitWeight()}
               autoFocus
             />
           ) : (
-            <button
-              className="rounded py-0.5 text-left text-xl font-semibold tabular-nums hover:bg-muted/60"
-              onClick={() => setEditingWeight(true)}
-            >
-              {displayWeight}
-            </button>
+            isLocked ? (
+              <div className="py-0.5 text-left text-xl font-semibold tabular-nums text-foreground/80">
+                {displayWeight}
+              </div>
+            ) : (
+              <button
+                className="rounded py-0.5 text-left text-xl font-semibold tabular-nums hover:bg-muted/60"
+                onClick={() => setEditingWeight(true)}
+              >
+                {displayWeight}
+              </button>
+            )
           )}
           <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
         </div>
@@ -3987,6 +4016,7 @@ function SetRow({
               type="text"
               className="w-full border-b border-input bg-transparent py-0.5 text-xs text-muted-foreground focus:border-primary focus:outline-none"
               value={draftNotes}
+              disabled={isLocked}
               onChange={(e) => setDraftNotes(e.target.value)}
               onBlur={commitNotes}
               onKeyDown={(e) => e.key === "Enter" && commitNotes()}
@@ -3995,12 +4025,18 @@ function SetRow({
             />
           ) : (
             <div className="space-y-1">
-              <button
-                className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
-                onClick={() => setEditingNotes(true)}
-              >
-                {displayNotes || "notes..."}
-              </button>
+              {isLocked ? (
+                <div className="w-full truncate text-left text-xs italic text-muted-foreground/50">
+                  {displayNotes || "notes..."}
+                </div>
+              ) : (
+                <button
+                  className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
+                  onClick={() => setEditingNotes(true)}
+                >
+                  {displayNotes || "notes..."}
+                </button>
+              )}
               {rankingSummary && (
                 <CelebrationReveal
                   animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}

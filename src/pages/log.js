@@ -3596,9 +3596,10 @@ function CustomSetDraftRow({
 }) {
   const repsInputRef = useRef(null);
   const weightInputRef = useRef(null);
+  const notesInputRef = useRef(null);
   const [draftReps, setDraftReps] = useState("");
   const [draftWeight, setDraftWeight] = useState("");
-  const [draftNotes] = useState(defaultNotes ?? "");
+  const [draftNotes, setDraftNotes] = useState(defaultNotes ?? "");
 
   useEffect(() => {
     if (disabled) return;
@@ -3617,6 +3618,12 @@ function CustomSetDraftRow({
     weightInputRef.current?.focus();
     weightInputRef.current?.select?.();
   }, [disabled, hasValidReps]);
+
+  const moveToNotes = useCallback(() => {
+    if (!hasValidWeight || disabled) return;
+    notesInputRef.current?.focus();
+    notesInputRef.current?.select?.();
+  }, [disabled, hasValidWeight]);
 
   const commitDraft = useCallback(() => {
     if (!canSubmit) return;
@@ -3665,7 +3672,7 @@ function CustomSetDraftRow({
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                commitDraft();
+                moveToNotes();
               } else if (e.key === "Escape") {
                 e.preventDefault();
                 onCancel();
@@ -3675,10 +3682,25 @@ function CustomSetDraftRow({
           <UnitLabel unitType={unitType} mismatch={false} />
         </div>
 
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="truncate text-xs italic text-muted-foreground/60">
-            {draftNotes || "notes..."}
-          </p>
+        <div className="min-w-0 flex-1">
+          <input
+            ref={notesInputRef}
+            type="text"
+            className="w-full border-b border-input bg-transparent py-0.5 text-xs italic text-muted-foreground focus:border-primary focus:outline-none"
+            value={draftNotes}
+            disabled={disabled}
+            placeholder="notes..."
+            onChange={(e) => setDraftNotes(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitDraft();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                onCancel();
+              }
+            }}
+          />
         </div>
 
         <div className="hidden w-[12.5rem] shrink-0 items-start justify-end gap-1 md:flex">

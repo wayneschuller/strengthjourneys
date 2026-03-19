@@ -3765,7 +3765,7 @@ function SetRow({
       }}
     >
       {/* Main row: reps@weight + notes + (desktop: badges/trash) */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         {/* Reps @ Weight unit — tight visual unit.
             Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
         <div className="flex items-center">
@@ -3869,7 +3869,7 @@ function SetRow({
         </div>
 
         {/* Desktop: badges + trash inline */}
-        <div className="hidden shrink-0 items-center gap-1 md:flex">
+        <div className="hidden w-[12.5rem] shrink-0 items-start justify-end gap-1 md:flex">
           {set._pending ? (
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
           ) : (

@@ -2661,7 +2661,7 @@ function getCelebrationStyles(celebration) {
     : "shadow-[0_0_0_1px_rgba(96,165,250,0.18),0_12px_28px_-20px_rgba(59,130,246,0.65)]";
 
   return {
-    rowClassName: cn("rounded-lg border px-2", baseBorder),
+    rowClassName: cn("rounded-lg border", baseBorder),
     glowClassName,
   };
 }

@@ -3679,9 +3679,6 @@ function CustomSetDraftRow({
           <p className="truncate text-xs italic text-muted-foreground/60">
             {draftNotes || "notes..."}
           </p>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground/55">
-            Custom draft
-          </p>
         </div>
 
         <div className="hidden w-[12.5rem] shrink-0 items-start justify-end gap-1 md:flex">

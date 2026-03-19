@@ -3344,7 +3344,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   return (
     <div
       ref={liftBlockRef}
-      className="relative rounded-xl border bg-card shadow-md"
+      className="relative overflow-hidden rounded-xl border bg-card shadow-md"
       style={{
         backgroundImage: `linear-gradient(135deg, ${hexToRgba(liftColor, 0.12)} 0%, ${hexToRgba(liftColor, 0.06)} 18%, rgba(255, 255, 255, 0) 42%)`,
         animation: isCelebrationShaking ? "log-pr-shake 0.6s ease-in-out" : undefined,

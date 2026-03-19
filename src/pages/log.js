@@ -3621,9 +3621,12 @@ function CustomSetDraftRow({
 
   const moveToNotes = useCallback(() => {
     if (!hasValidWeight || disabled) return;
-    notesInputRef.current?.focus();
-    notesInputRef.current?.select?.();
-  }, [disabled, hasValidWeight]);
+    const notesInput = notesInputRef.current;
+    if (!notesInput) return;
+    notesInput.focus();
+    const caretPosition = (defaultNotes ?? "").length;
+    notesInput.setSelectionRange(caretPosition, caretPosition);
+  }, [defaultNotes, disabled, hasValidWeight]);
 
   const commitDraft = useCallback(() => {
     if (!canSubmit) return;

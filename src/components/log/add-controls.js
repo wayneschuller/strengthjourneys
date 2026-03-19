@@ -233,7 +233,14 @@ function getSuggestionIcon(button, lastRealSet) {
   };
 }
 
-function SmartAddButtonGrid({ buttons, lastRealSet, onAddSet, showHint, disabled = false }) {
+function SmartAddButtonGrid({
+  buttons,
+  lastRealSet,
+  onAddSet,
+  onStartCustomSet,
+  showHint,
+  disabled = false,
+}) {
   const visibleButtons = buttons.slice(0, 2);
 
   return (
@@ -279,7 +286,7 @@ function SmartAddButtonGrid({ buttons, lastRealSet, onAddSet, showHint, disabled
           className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3.5 text-sm transition-colors ${
             disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
           } text-muted-foreground`}
-          onClick={() => onAddSet(lastRealSet ?? null)}
+          onClick={onStartCustomSet}
         >
           <span className="flex items-center gap-1.5">
             <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
@@ -299,7 +306,15 @@ function SmartAddButtonGrid({ buttons, lastRealSet, onAddSet, showHint, disabled
   );
 }
 
-function PastSessionSmartAddButtons({ liftType, buttons, lastRealSet, onAddSet, showHint, disabled = false }) {
+function PastSessionSmartAddButtons({
+  liftType,
+  buttons,
+  lastRealSet,
+  onAddSet,
+  onStartCustomSet,
+  showHint,
+  disabled = false,
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const transition = prefersReducedMotion
@@ -354,6 +369,7 @@ function PastSessionSmartAddButtons({ liftType, buttons, lastRealSet, onAddSet, 
               buttons={buttons}
               lastRealSet={lastRealSet}
               onAddSet={onAddSet}
+              onStartCustomSet={onStartCustomSet}
               showHint={showHint}
               disabled={disabled}
             />
@@ -364,7 +380,17 @@ function PastSessionSmartAddButtons({ liftType, buttons, lastRealSet, onAddSet, 
   );
 }
 
-export function SmartAddButtons({ inSessionCoachState, lastRealSet, liftType, onAddSet, showHint, hasBigFourIcon = false, isPastSession = false, disabled = false }) {
+export function SmartAddButtons({
+  inSessionCoachState,
+  lastRealSet,
+  liftType,
+  onAddSet,
+  onStartCustomSet,
+  showHint,
+  hasBigFourIcon = false,
+  isPastSession = false,
+  disabled = false,
+}) {
   if (!inSessionCoachState?.buttons?.length) {
     return (
       <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
@@ -390,6 +416,7 @@ export function SmartAddButtons({ inSessionCoachState, lastRealSet, liftType, on
         buttons={inSessionCoachState.buttons}
         lastRealSet={lastRealSet}
         onAddSet={onAddSet}
+        onStartCustomSet={onStartCustomSet}
         showHint={showHint}
         disabled={disabled}
       />
@@ -406,6 +433,7 @@ export function SmartAddButtons({ inSessionCoachState, lastRealSet, liftType, on
         buttons={inSessionCoachState.buttons}
         lastRealSet={lastRealSet}
         onAddSet={onAddSet}
+        onStartCustomSet={onStartCustomSet}
         showHint={showHint}
         disabled={disabled}
       />

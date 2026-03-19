@@ -1184,8 +1184,10 @@ export default function LogSessionPage() {
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       // Auto-timestamp: 24h clock in the notes column (e.g. "14:35 ")
-      const timeStamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-      const notes = `${timeStamp} `;
+      const notes =
+        prevSet && Object.prototype.hasOwnProperty.call(prevSet, "notes")
+          ? (prevSet.notes ?? "")
+          : getAutoTimestampNotes();
 
       // Show optimistic row immediately (in-flight)
       addLogEntry({
@@ -1356,8 +1358,7 @@ export default function LogSessionPage() {
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       // Auto-timestamp: 24h clock in the notes column (e.g. "14:35 ")
-      const timeStamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-      const notes = `${timeStamp} `;
+      const notes = getAutoTimestampNotes();
 
       // Show optimistic lift block immediately (in-flight)
       addLogEntry({
@@ -2316,6 +2317,10 @@ function hexToRgba(hexColor, alpha) {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
+function getAutoTimestampNotes() {
+  return `${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} `;
+}
+
 function getEditableSetFields(set) {
   return {
     reps: set.reps,
@@ -2773,6 +2778,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const [isCelebrationShaking, setIsCelebrationShaking] = useState(false);
   const [activeCelebrationKey, setActiveCelebrationKey] = useState(null);
   const [optimisticFieldsByKey, setOptimisticFieldsByKey] = useState({});
+  const [customDraftSeed, setCustomDraftSeed] = useState(0);
+  const [customDraftConfig, setCustomDraftConfig] = useState(null);
   const [initialPassiveRowKeys] = useState(() =>
     new Set(
       sets.map((set, index) => getSetIdentityKey(set, `initial-${index}`)),
@@ -2829,6 +2836,28 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     }
     return dates.size <= 20;
   }, [parsedData]);
+
+  const closeCustomSetDraft = useCallback(() => {
+    setCustomDraftConfig(null);
+  }, []);
+
+  const openCustomSetDraft = useCallback(() => {
+    setCustomDraftSeed((prev) => prev + 1);
+    setCustomDraftConfig({
+      unitType: lastRealSet?.unitType ?? (isMetric ? "kg" : "lb"),
+      notes: getAutoTimestampNotes(),
+    });
+  }, [isMetric, lastRealSet?.unitType]);
+
+  const handleSuggestedAddSet = useCallback(async (setFields) => {
+    setCustomDraftConfig(null);
+    await onAddSet(setFields);
+  }, [onAddSet]);
+
+  const handleCustomDraftCommit = useCallback(async (setFields) => {
+    setCustomDraftConfig(null);
+    await onAddSet(setFields);
+  }, [onAddSet]);
 
   // Read warmup settings from localStorage (shared with warmup calculator page)
   const storedBarType =
@@ -3465,7 +3494,16 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           />
           );
         })}
-
+        {customDraftConfig && (
+          <CustomSetDraftRow
+            key={`custom-${liftType}-${customDraftSeed}`}
+            unitType={customDraftConfig.unitType}
+            defaultNotes={customDraftConfig.notes}
+            onCommit={handleCustomDraftCommit}
+            onCancel={closeCustomSetDraft}
+            disabled={isStructuralSaving}
+          />
+        )}
       </div>
       {shouldShowTonnage && (
         <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
@@ -3482,7 +3520,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         inSessionCoachState={inSessionCoachState}
         lastRealSet={lastRealSet}
         liftType={liftType}
-        onAddSet={onAddSet}
+        onAddSet={handleSuggestedAddSet}
+        onStartCustomSet={openCustomSetDraft}
         showHint={showSuggestionHint}
         hasBigFourIcon
         isPastSession={isPastSession}
@@ -3545,6 +3584,149 @@ function CelebrationReveal({ animationKey, className, children }) {
     >
       {children}
     </motion.div>
+  );
+}
+
+function CustomSetDraftRow({
+  unitType,
+  defaultNotes,
+  onCommit,
+  onCancel,
+  disabled = false,
+}) {
+  const repsInputRef = useRef(null);
+  const weightInputRef = useRef(null);
+  const [draftReps, setDraftReps] = useState("");
+  const [draftWeight, setDraftWeight] = useState("");
+  const [draftNotes] = useState(defaultNotes ?? "");
+
+  useEffect(() => {
+    if (disabled) return;
+    repsInputRef.current?.focus();
+    repsInputRef.current?.select?.();
+  }, [disabled]);
+
+  const parsedReps = Number.parseInt(draftReps, 10);
+  const parsedWeight = Number.parseFloat(draftWeight);
+  const hasValidReps = Number.isInteger(parsedReps) && parsedReps > 0;
+  const hasValidWeight = Number.isFinite(parsedWeight) && parsedWeight > 0;
+  const canSubmit = !disabled && hasValidReps && hasValidWeight;
+
+  const moveToWeight = useCallback(() => {
+    if (!hasValidReps || disabled) return;
+    weightInputRef.current?.focus();
+    weightInputRef.current?.select?.();
+  }, [disabled, hasValidReps]);
+
+  const commitDraft = useCallback(() => {
+    if (!canSubmit) return;
+    onCommit({
+      reps: parsedReps,
+      weight: parsedWeight,
+      unitType,
+      notes: draftNotes,
+    });
+  }, [canSubmit, draftNotes, onCommit, parsedReps, parsedWeight, unitType]);
+
+  return (
+    <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 px-2 py-3">
+      <div className="flex items-start gap-4">
+        <div className="flex items-center">
+          <input
+            ref={repsInputRef}
+            type="number"
+            inputMode="numeric"
+            className="w-10 rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+            value={draftReps}
+            disabled={disabled}
+            placeholder="5"
+            onChange={(e) => setDraftReps(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                moveToWeight();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                onCancel();
+              }
+            }}
+          />
+          <span className="mx-0.5 text-base text-muted-foreground">@</span>
+          <input
+            ref={weightInputRef}
+            type="number"
+            inputMode="decimal"
+            step="any"
+            className="w-20 rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+            value={draftWeight}
+            disabled={disabled}
+            placeholder={unitType === "kg" ? "20" : "45"}
+            onChange={(e) => setDraftWeight(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitDraft();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                onCancel();
+              }
+            }}
+          />
+          <UnitLabel unitType={unitType} mismatch={false} />
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="truncate text-xs italic text-muted-foreground/60">
+            {draftNotes || "notes..."}
+          </p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground/55">
+            Custom draft
+          </p>
+        </div>
+
+        <div className="hidden w-[12.5rem] shrink-0 items-start justify-end gap-1 md:flex">
+          <button
+            type="button"
+            disabled={disabled}
+            className="rounded p-1 text-muted-foreground/45 transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onCancel}
+            aria-label="Cancel custom set"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            disabled={!canSubmit}
+            className="rounded p-1 text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground/35"
+            onClick={commitDraft}
+            aria-label="Add custom set"
+          >
+            <Check className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-2 flex items-center justify-end gap-1 md:hidden">
+        <button
+          type="button"
+          disabled={disabled}
+          className="rounded p-1 text-muted-foreground/45 transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={onCancel}
+          aria-label="Cancel custom set"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          disabled={!canSubmit}
+          className="rounded p-1 text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground/35"
+          onClick={commitDraft}
+          aria-label="Add custom set"
+        >
+          <Check className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }
 

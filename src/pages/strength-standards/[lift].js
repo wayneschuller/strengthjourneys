@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
-import { BicepsFlexed, BookOpen, CircleDashed } from "lucide-react";
+import { BicepsFlexed, BookOpen, Calculator, CircleDashed } from "lucide-react";
 
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { RelatedArticles } from "@/components/article-cards";
@@ -215,24 +215,38 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
           <p className="mt-3">{page.supportingCopy}</p>
         </PageHeaderDescription>
         <PageHeaderRight>
-          <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
+          <div className="hidden justify-end gap-3 text-muted-foreground lg:flex lg:flex-col xl:items-end">
             <Link
               href={page.calculatorUrl}
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+              className="block w-full max-w-[22rem] rounded-lg border p-4 text-left shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
-              <h3 className="text-base font-semibold">{page.navLabel} 1RM Calculator</h3>
-              <p className="text-sm">
-                Estimate your max from a recent heavy set.
-              </p>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-md border bg-muted/60 p-2 text-foreground">
+                  <Calculator className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold">{page.navLabel} 1RM Calculator</h3>
+                  <p className="text-sm">
+                    Estimate your max from a recent heavy set.
+                  </p>
+                </div>
+              </div>
             </Link>
             <Link
               href={page.insightUrl}
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+              className="block w-full max-w-[22rem] rounded-lg border p-4 text-left shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
-              <h3 className="text-base font-semibold">{page.navLabel} Guide</h3>
-              <p className="text-sm">
-                Go deeper with progress charts, PRs, videos, and more.
-              </p>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-md border bg-muted/60 p-2 text-foreground">
+                  <BookOpen className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold">{page.navLabel} Guide</h3>
+                  <p className="text-sm">
+                    Go deeper with progress charts, PRs, videos, and more.
+                  </p>
+                </div>
+              </div>
             </Link>
           </div>
         </PageHeaderRight>

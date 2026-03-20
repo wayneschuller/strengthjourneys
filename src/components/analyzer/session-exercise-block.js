@@ -666,6 +666,7 @@ export function LiftStrengthLevel({
   bestSetReps,
   bestSetWeight,
   asBadge = false,
+  badgeClassName = "",
 }) {
   const formula = e1rmFormula || "Brzycki";
   const standard =
@@ -756,7 +757,7 @@ export function LiftStrengthLevel({
       >
         <Badge
           variant={getRatingBadgeVariant(rating)}
-          className="inline-flex items-center gap-1 cursor-pointer"
+          className={cn("inline-flex items-center gap-1 cursor-pointer", badgeClassName)}
         >
           {ratingEmoji && <span>{ratingEmoji}</span>}
           <span>{ratingLabel}</span>

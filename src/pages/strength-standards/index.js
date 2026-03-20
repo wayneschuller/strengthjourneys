@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -51,7 +52,25 @@ const FAQ_ITEMS = [
   {
     question: "Which lifts are covered in this cluster?",
     answer:
-      "This page covers the big four barbell lifts: squat, bench press, deadlift, and strict press. You can browse all four here, then open the individual lift pages if you want a more focused breakdown for one movement.",
+      "This page covers the big four barbell lifts. You can browse all four here, then open the individual lift pages if you want a more focused breakdown for one movement.",
+    inlineLinks: [
+      {
+        href: getStrengthStandardsUrl("squat"),
+        label: "Squat",
+      },
+      {
+        href: getStrengthStandardsUrl("bench-press"),
+        label: "Bench Press",
+      },
+      {
+        href: getStrengthStandardsUrl("deadlift"),
+        label: "Deadlift",
+      },
+      {
+        href: getStrengthStandardsUrl("strict-press"),
+        label: "Strict Press",
+      },
+    ],
   },
   {
     question: "What do strength levels like beginner, intermediate, advanced, and elite actually mean?",
@@ -272,11 +291,31 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
           <section className="rounded-lg border p-4">
             <h2 className="mb-4 text-xl font-semibold">Strength Standards FAQ</h2>
             <div className="space-y-4">
-              {FAQ_ITEMS.map(({ question, answer, ctaHref, ctaLabel }) => (
+              {FAQ_ITEMS.map(
+                ({ question, answer, inlineLinks, ctaHref, ctaLabel }) => (
                 <article key={question} className="rounded-lg border p-4">
                   <h3 className="text-base font-semibold">{question}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {answer}
+                    {inlineLinks?.length ? (
+                      <>
+                        {" "}
+                        {inlineLinks.map((link, index) => (
+                          <Fragment key={link.href}>
+                            {index === 0 ? null : index === inlineLinks.length - 1
+                              ? ", and "
+                              : ", "}
+                            <Link
+                              href={link.href}
+                              className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
+                            >
+                              {link.label}
+                            </Link>
+                          </Fragment>
+                        ))}
+                        .
+                      </>
+                    ) : null}
                     {ctaHref ? (
                       <>
                         {" "}
@@ -291,7 +330,8 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                     ) : null}
                   </p>
                 </article>
-              ))}
+                ),
+              )}
             </div>
           </section>
 

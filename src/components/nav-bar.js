@@ -520,6 +520,11 @@ function StrengthInsightsMenu() {
       icon: <Layers className="h-5 w-5" />,
     },
     {
+      title: "Strength Standards",
+      href: "/strength-standards",
+      icon: <BarChart className="h-5 w-5" />,
+    },
+    {
       title: "Strength Visualizer",
       href: "/visualizer",
       icon: <LineChart className="h-5 w-5" />,
@@ -582,6 +587,7 @@ function StrengthInsightsMenu() {
             className={cn(
               "hover:text-foreground/80 bg-transparent transition-colors",
               pathname.startsWith("/lift-explorer") ||
+                pathname.startsWith("/strength-standards") ||
                 pathname.startsWith("/visualizer") ||
                 pathname.startsWith("/ai-lifting-assistant")
                 ? "text-foreground"
@@ -634,11 +640,6 @@ function CalculatorsMenu() {
       title: "Warm Ups Calculator",
       href: "/warm-up-sets-calculator",
       icon: <Flame className="h-5 w-5" />,
-    },
-    {
-      title: "Strength Standards",
-      href: "/strength-standards",
-      icon: <BarChart className="h-5 w-5" />,
     },
     {
       title: "1000lb Club Calculator",
@@ -700,7 +701,6 @@ function CalculatorsMenu() {
               pathname.startsWith("/calculator") ||
                 pathname.startsWith("/warm-up-sets-calculator") ||
                 pathname.startsWith("/big-four-strength-standards-calculator") ||
-                pathname.startsWith("/strength-standards") ||
                 pathname.startsWith("/timer")
                 ? "text-foreground"
                 : "text-foreground/60",

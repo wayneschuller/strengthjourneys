@@ -3952,10 +3952,11 @@ function SetRow({
   }
 
   const hasBadges = !set._pending && Boolean(strengthBadge);
+  const hasDesktopMetaRow = Boolean(hasBadges || rankingSummary || set._pending);
 
   return (
     <motion.div
-      className={cn("group py-3", celebrationStyles.rowClassName)}
+      className={cn("group py-2", celebrationStyles.rowClassName)}
       initial={shouldPassiveAnimate ? { opacity: 0, y: 12 } : false}
       animate={{
         opacity: 1,
@@ -4073,11 +4074,23 @@ function SetRow({
             </div>
           )}
         </div>
+
+        {onDelete && !set._pending && (
+          <div className="hidden shrink-0 md:flex">
+            <button
+              className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+              onClick={onDelete}
+              aria-label="Delete set"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Desktop: badges + ranking + trash on second row */}
-      {(hasBadges || rankingSummary || onDelete || set._pending) && (
-        <div className="mt-2 hidden items-center justify-end gap-2 md:flex">
+      {hasDesktopMetaRow && (
+        <div className="mt-1 hidden items-center justify-end gap-2 md:flex">
           {set._pending ? (
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
           ) : (
@@ -4089,20 +4102,11 @@ function SetRow({
                 >
                   <Badge
                     variant="outline"
-                    className={cn("h-9 max-w-[12rem] px-3 text-[10px] uppercase tracking-wide", prToneClass)}
+                    className={cn("h-8 max-w-[12rem] px-3 text-[10px] uppercase tracking-wide", prToneClass)}
                   >
                     <span className="truncate">{rankingSummary}</span>
                   </Badge>
                 </CelebrationReveal>
-              )}
-              {onDelete && (
-                <button
-                  className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
-                  onClick={onDelete}
-                  aria-label="Delete set"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
               )}
             </>
           )}

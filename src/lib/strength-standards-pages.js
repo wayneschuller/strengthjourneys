@@ -6,7 +6,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "bench-press",
     liftType: "Bench Press",
     navLabel: "Bench Press",
-    pageTitle: "Bench Press Strength Standards",
+    pageTitle: "Bench Press Strength Levels",
     seoTitle: "Bench Press Strength Standards by Bodyweight, Age, and Sex",
     description:
       "Check bench press strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite benchmarks, then compare your numbers to a bench press 1RM calculator and deeper progress tracking.",
@@ -41,7 +41,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "squat",
     liftType: "Back Squat",
     navLabel: "Squat",
-    pageTitle: "Squat Strength Standards",
+    pageTitle: "Squat Strength Levels",
     seoTitle: "Squat Strength Standards by Bodyweight, Age, and Sex",
     description:
       "Check squat strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite benchmarks, then compare your numbers to a squat 1RM calculator and deeper progress tracking.",
@@ -76,7 +76,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "deadlift",
     liftType: "Deadlift",
     navLabel: "Deadlift",
-    pageTitle: "Deadlift Strength Standards",
+    pageTitle: "Deadlift Strength Levels",
     seoTitle: "Deadlift Strength Standards by Bodyweight, Age, and Sex",
     description:
       "Check deadlift strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite benchmarks, then compare your numbers to a deadlift 1RM calculator and deeper progress tracking.",
@@ -111,7 +111,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "strict-press",
     liftType: "Strict Press",
     navLabel: "Strict Press",
-    pageTitle: "Overhead Press Strength Standards",
+    pageTitle: "Overhead Press Strength Levels",
     seoTitle: "Overhead Press Strength Standards by Bodyweight, Age, and Sex",
     description:
       "Check strict press and overhead press strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite OHP benchmarks, then compare your numbers to a strict press 1RM calculator and deeper progress tracking.",

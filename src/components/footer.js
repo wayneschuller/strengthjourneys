@@ -29,10 +29,10 @@ const FORMULA_CALCULATORS = [
 ];
 
 const STRENGTH_STANDARDS_LINKS = [
-  { href: "/strength-levels/squat", label: "Squat Strength Standards" },
-  { href: "/strength-levels/bench-press", label: "Bench Press Strength Standards" },
-  { href: "/strength-levels/deadlift", label: "Deadlift Strength Standards" },
-  { href: "/strength-levels/strict-press", label: "Overhead Press Strength Standards" },
+  { href: "/strength-levels/squat", label: "Squat Strength Levels" },
+  { href: "/strength-levels/bench-press", label: "Bench Press Strength Levels" },
+  { href: "/strength-levels/deadlift", label: "Deadlift Strength Levels" },
+  { href: "/strength-levels/strict-press", label: "Overhead Press Strength Levels" },
   { href: "/1000lb-club-calculator", label: "1000lb Club" },
   { href: "/200-300-400-500-strength-club-calculator", label: "200/300/400/500 Club" },
 ];

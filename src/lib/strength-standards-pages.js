@@ -111,14 +111,14 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "strict-press",
     liftType: "Strict Press",
     navLabel: "Strict Press",
-    pageTitle: "Overhead Press Strength Levels",
-    seoTitle: "Overhead Press Strength Standards by Bodyweight, Age, and Sex",
+    pageTitle: "Strict Press Strength Levels",
+    seoTitle: "Strict Press Strength Standards by Bodyweight, Age, and Sex",
     description:
-      "Check strict press and overhead press strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite OHP benchmarks, then compare your numbers to a strict press 1RM calculator and deeper progress tracking.",
+      "Check strict press strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite benchmarks, then compare your numbers to a strict press 1RM calculator and deeper progress tracking.",
     keywords:
-      "strict press standards, overhead press standards by bodyweight, ohp standards, overhead press strength standards male female",
+      "strict press standards, strict press strength standards by bodyweight, overhead press standards by bodyweight, military press standards, ohp standards",
     intro:
-      "Use these strict press standards to benchmark your overhead press against lifters of similar size. This page targets both strict press and overhead press queries, because most lifters mean the same general benchmarking problem.",
+      "Use these strict press standards to benchmark your press against lifters of similar size. If you call it an overhead press, OHP, or even a military press, this is the same general strength-level question.",
     supportingCopy:
       "The press moves more slowly than squat or deadlift, so standards help keep expectations realistic. A strict press that looks modest in absolute pounds can still be genuinely advanced once bodyweight is considered.",
     calculatorUrl: "/calculator/strict-press-1rm-calculator",
@@ -126,17 +126,22 @@ export const STRENGTH_STANDARDS_PAGES = [
     relatedArticlesCategory: "Strict Press",
     faqItems: [
       {
-        question: "What is a good overhead press for my bodyweight?",
+        question: "What is a good strict press for my bodyweight?",
         answer:
           "For many male lifters, pressing around half bodyweight is an early milestone, while pressing bodyweight is elite. For many female lifters, lower absolute numbers still represent very strong relative pressing. Use the personalised standards here rather than guessing from gym myths.",
       },
       {
-        question: "Is a 135 pound overhead press good?",
+        question: "Is a 135 pound strict press good?",
         answer:
           "Yes. A strict 135 pound press is a serious benchmark for most lifters. Depending on your size and sex, it may fall around advanced or even elite territory. That is exactly the kind of question these standards are meant to answer.",
       },
       {
-        question: "Why is my overhead press category lower than my bench press category?",
+        question: "Is strict press the same thing as overhead press or military press?",
+        answer:
+          "Usually, yes. Most lifters use strict press, overhead press, OHP, and military press to mean the same general standing barbell press benchmark. Technique details can vary a little, but if you want strength levels for that movement, this page is the right place to start.",
+      },
+      {
+        question: "Why is my strict press category lower than my bench press category?",
         answer:
           "That is normal. The strict press is usually the hardest of the big four barbell lifts to progress on, and the strength standards reflect that. A lower pressing number can still be very respectable.",
       },

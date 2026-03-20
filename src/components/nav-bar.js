@@ -179,8 +179,8 @@ export function NavBar() {
             >
               <Link href="/log">
                 <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                <span className="md:hidden">Log</span>
-                <span className="hidden md:inline">Log Session</span>
+                <span className="xl:hidden">Log</span>
+                <span className="hidden xl:inline">Log Session</span>
               </Link>
             </Button>
           )}

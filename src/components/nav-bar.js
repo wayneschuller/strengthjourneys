@@ -5,19 +5,19 @@ import Link from "next/link";
 import * as React from "react";
 import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
-import { useLocalStorage } from "usehooks-ts";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle, ThemeChooser } from "@/components/theme-chooser";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import { Table2, Loader2, Github, Layers, LineChart } from "lucide-react";
+import { Table2, Loader2, Github, Layers, LineChart, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 
 import {
   Tooltip,
@@ -25,6 +25,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Collapsible,
+} from "@/components/ui/collapsible";
 
 import {
   NavigationMenu,
@@ -46,7 +49,6 @@ import {
   Calculator,
   BarChart,
   Anvil,
-  Activity,
   Timer,
   Bot,
   Grid2x2Check,
@@ -55,6 +57,7 @@ import {
   Flame,
   Sparkles,
   CircleDashed,
+  ClipboardPlus,
   Mountain,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
@@ -145,33 +148,68 @@ function ensureCannyChangelog() {
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
+  const { sheetInfo, isDemoMode } = useUserLiftingData();
+  const canOpenLog = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
 
   return (
-    <div className="bg-background/50 mx-2 my-3 flex items-center rounded-lg px-3 md:mx-10 md:px-6 xl:mx-24">
-      <div className="flex items-center">
-        <DesktopNav />
-        <MobileNav />
-      </div>
-      <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
-        <MiniTimer />
-        {/* We used to show an icon to open the user google sheet */}
-        {/* <UserSheetIcon /> */}
-
-        {/* We used to show a github icon with xl:block*/}
-        <div className="hidden">
-          <GitHubButton />
+    <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
+      <div className="flex items-center px-3 md:px-6">
+        <div className="flex items-center">
+          <DesktopNav />
+          <MobileNav />
         </div>
+        <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 py-3">
+          {canOpenLog && (
+            <Button
+              asChild
+              size="sm"
+              className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+            >
+              <Link href="/log">
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                <span className="xl:hidden">Log</span>
+                <span className="hidden xl:inline">Log Session</span>
+              </Link>
+            </Button>
+          )}
+          {authStatus === "authenticated" && !canOpenLog && (
+            <Button
+              size="sm"
+              className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+              onClick={() => {
+                openSheetSetupDialog("bootstrap");
+              }}
+            >
+              <img
+                src={GOOGLE_SHEETS_ICON_URL}
+                alt=""
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden
+              />
+              <span className="xl:hidden">Set Up</span>
+              <span className="hidden xl:inline">Set Up Sheet</span>
+            </Button>
+          )}
+          <MiniTimer />
+          {/* We used to show an icon to open the user google sheet */}
+          {/* <UserSheetIcon /> */}
 
-        {/* Logged-in users always get the bio settings button. For guests we only show it on
-            pages where bio data (age, sex, bodyweight) actively changes the output — we don't
-            want the pulsing badge distracting first-time visitors on the landing page. */}
-        {(authStatus === "authenticated" ||
-          BIO_SETTINGS_PAGES.includes(pathname)) && <AthleteBioQuickSettings />}
-        <ThemeChooser />
-        {/* <DarkModeToggle /> */}
-        <AvatarDropdown />
+          {/* We used to show a github icon with xl:block*/}
+          <div className="hidden">
+            <GitHubButton />
+          </div>
+
+          {/* Logged-in users always get the bio settings button. For guests we only show it on
+              pages where bio data (age, sex, bodyweight) actively changes the output — we don't
+              want the pulsing badge distracting first-time visitors on the landing page. */}
+          {(authStatus === "authenticated" ||
+            BIO_SETTINGS_PAGES.includes(pathname)) && <AthleteBioQuickSettings />}
+          <ThemeChooser />
+          {/* <DarkModeToggle /> */}
+          <AvatarDropdown />
+        </div>
       </div>
-    </div>
+    </Collapsible>
   );
 }
 
@@ -187,24 +225,12 @@ export function DesktopNav() {
   const pathname = usePathname();
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
-  const [logoSrc, setLogoSrc] = useState(() => {
-    // Start with default theme for SSR/hydration consistency
-    return getLogoForTheme("light");
-  });
+  const [logoSrc, setLogoSrc] = useState(() => getLogoForTheme("light"));
 
-  // Set logo on mount and when theme changes
+  // Update logo after mount and on theme changes to avoid hydration mismatch
   useEffect(() => {
-    let currentTheme = theme ?? resolvedTheme;
-
-    // If theme not yet resolved, try to get from localStorage
-    if (!currentTheme && typeof window !== "undefined") {
-      const storedTheme = localStorage.getItem(LOCAL_STORAGE_KEYS.THEME);
-      if (storedTheme) {
-        currentTheme = storedTheme;
-      }
-    }
-
-    setLogoSrc(getLogoForTheme(currentTheme || "light"));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- derived client-only logo swap avoids hydration mismatch
+    setLogoSrc(getLogoForTheme(theme ?? resolvedTheme ?? "light"));
   }, [theme, resolvedTheme]);
 
   return (
@@ -439,9 +465,9 @@ function BigFourBarbellInsightsMenu() {
             >
               <>
                 {/* Short title on small screens */}
-                <span className="hidden md:block xl:hidden">Big Four</span>
+                <span className="hidden md:block 2xl:hidden">Big Four</span>
                 {/* Full title on larger screens */}
-                <span className="hidden xl:block">Big Four Barbell Lifts</span>
+                <span className="hidden 2xl:block">Big Four Barbell Lifts</span>
               </>
             </NavigationMenuTrigger>
             <NavigationMenuContent className="">
@@ -545,9 +571,9 @@ function StrengthInsightsMenu() {
           >
             <>
               {/* Short title on small screens */}
-              <span className="hidden md:block xl:hidden">Insights</span>
+              <span className="hidden md:block 2xl:hidden">Insights</span>
               {/* Full title on larger screens */}
-              <span className="hidden xl:block">Strength Insights</span>
+              <span className="hidden 2xl:block">Strength Insights</span>
             </>
           </NavigationMenuTrigger>
           <NavigationMenuContent>

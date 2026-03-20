@@ -167,8 +167,6 @@ export default function SpreadsheetShowcase() {
             />
           </motion.div>
         </AnimatePresence>
-
-        {/* Floating caption */}
         <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 md:bottom-4">
           <AnimatePresence mode="wait">
             <motion.div
@@ -189,7 +187,6 @@ export default function SpreadsheetShowcase() {
             </motion.div>
           </AnimatePresence>
         </div>
-
       </div>
     </div>
   );

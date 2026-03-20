@@ -12,6 +12,7 @@ import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
  * @typedef {Object} LiftEntry
  * @property {string} date          ISO date string "YYYY-MM-DD"
  * @property {string} liftType      Normalized lift name ("Back Squat", "Bench Press", etc.)
+ * @property {string} [rawLiftType] Original effective lift label from the sheet ("OHP", "Overhead Press", etc.)
  * @property {number} reps          Number of reps for this set
  * @property {number} weight        Weight used for this set
  * @property {"lb"|"kg"} [unitType] Units, if known
@@ -20,6 +21,7 @@ import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
  * @property {string} [label]       Optional label or tag for this lift
  * @property {string} [URL]         Optional video or reference URL
  * @property {boolean} [isHistoricalPR] Marked true when this entry is a historical PR for its liftType + reps
+ * @property {number} [rowIndex] 1-based row number in the source Google Sheet (header = row 1, first data row = row 2)
  */
 
 /**
@@ -54,10 +56,16 @@ export function parseData(data) {
 // https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0
 //
 // We try to be agnostic about column positions by normalizing header names.
-// If date or lift type cells are blank, we infer them from the previous row.
-// This only assumes that each session's sets are kept together in contiguous
-// rows (all sets for a given session grouped together), regardless of whether
-// new sessions are inserted at the top or appended at the bottom of the sheet.
+//
+// SPARSE ENCODING / ANCHOR ROWS:
+// The sheet uses a sparse encoding where Date (col A) and Lift Type (col B) are
+// only written on "anchor rows" — the first row of a session or the first row of
+// a new lift type within a session. All subsequent rows for the same date/lift
+// leave those cells blank and inherit from the previous row via `previousDate`
+// and `previousLiftType`. See the full data model (examples, anchor types,
+// insertion order, deletion/promotion rules) in the block comment at the top of
+// src/pages/api/sheet/insert-row.js.
+//
 // Returns a `ParsedData` array that is always sorted by date ascending.
 // See @/lib/sample-parsed-data.js for example data using this structure.
 /**
@@ -71,6 +79,7 @@ function parseBespokeData(data) {
   const columnNames = data[0];
   let previousDate = null;
   let previousLiftType = null;
+  let previousRawLiftType = null;
   const localeHint =
     typeof navigator !== "undefined" && typeof navigator.language === "string"
       ? navigator.language
@@ -159,10 +168,13 @@ function parseBespokeData(data) {
 
     // Process lift type next since it's used for previousLiftType
     if (row[liftTypeCol]) {
+      obj.rawLiftType = row[liftTypeCol];
       obj.liftType = normalizeLiftTypeNames(row[liftTypeCol]);
       previousLiftType = obj.liftType; // Store normalized value so inherited rows get "Strict Press" not "Overhead Press"
+      previousRawLiftType = obj.rawLiftType;
     } else {
       obj.liftType = previousLiftType;
+      obj.rawLiftType = previousRawLiftType;
     }
 
     // Process required fields
@@ -182,6 +194,9 @@ function parseBespokeData(data) {
     if (row[isGoalCol]) obj.isGoal = row[isGoalCol] === "TRUE";
     if (row[labelCol]) obj.label = row[labelCol];
     if (row[urlCol]) obj.URL = row[urlCol];
+
+    // Store the 1-based sheet row number so the editor can write back to the exact row
+    obj.rowIndex = i + 1;
 
     objectsArray.push(obj);
   }

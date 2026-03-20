@@ -375,7 +375,7 @@ function BarbellInsightsMain({
         <div className="col-span-3">
           <VisualizerMini liftType={liftInsightData.liftType} />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-3" id="tonnage-chart">
           <TonnageChart liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">

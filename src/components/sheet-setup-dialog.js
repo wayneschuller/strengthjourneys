@@ -159,8 +159,8 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, load
 
   if (state === "linking_or_creating") {
     return {
-      eyebrow: "Linking your sheet",
-      title: "Almost there.",
+      eyebrow: intent === "switch_sheet" ? "Checking your lifting logs" : "Linking your lifting log",
+      title: intent === "switch_sheet" ? "Reviewing your options." : "Almost there.",
       description: loadingQuip,
       tone: "working",
     };
@@ -169,21 +169,27 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, load
   if (state === "choose_sheet") {
     const hasMultipleCandidates = candidateCount > 1;
     return {
-      eyebrow: intent === "switch_sheet" ? "Ready to switch" : "Sheets found",
+      eyebrow: intent === "switch_sheet" ? "Choose a new data source" : "Sheets found",
       title: hasMultipleCandidates
-        ? (intent === "switch_sheet" ? "Choose your lifting log." : "Pick your lifting log.")
-        : "Your sheet is ready.",
+        ? (intent === "switch_sheet" ? "Select your lifting data." : "Pick your lifting log.")
+        : intent === "switch_sheet"
+          ? "Select your lifting data."
+          : "Your sheet is ready.",
       description:
         hasMultipleCandidates
-          ? `We found ${candidateCount} likely sheets.`
-          : "We found the sheet that looks like your lifting log.",
+          ? (intent === "switch_sheet"
+            ? `We found ${candidateCount} likely data sources.`
+            : `We found ${candidateCount} likely sheets.`)
+          : intent === "switch_sheet"
+            ? "We found a likely lifting data source."
+            : "We found the sheet that looks like your lifting log.",
       tone: "ready",
     };
   }
 
   return {
-    eyebrow: "Setting up your lifting log",
-    title: intent === "switch_sheet" ? "Finding the right sheet." : "Getting your sheet ready.",
+    eyebrow: intent === "switch_sheet" ? "Checking your lifting logs" : "Setting up your lifting log",
+    title: intent === "switch_sheet" ? "Loading your sheet options." : "Getting your sheet ready.",
     description: loadingQuip || statusMessage,
     tone: "working",
   };
@@ -216,6 +222,7 @@ export function SheetSetupDialog() {
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
   const [createdSheetInfo, setCreatedSheetInfo] = useState(null);
   const [createdSheetReason, setCreatedSheetReason] = useState(null);
+  const [isDisconnectingCurrentSheet, setIsDisconnectingCurrentSheet] = useState(false);
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
   const dialogInitialSsidRef = useRef(null);
@@ -239,6 +246,7 @@ export function SheetSetupDialog() {
     setHadLocalSheetBefore(false);
     setCreatedSheetInfo(null);
     setCreatedSheetReason(null);
+    setIsDisconnectingCurrentSheet(false);
   }, []);
 
   const handlePickerReady = useCallback((picker) => {
@@ -282,7 +290,7 @@ export function SheetSetupDialog() {
             : enrichIds[0];
         const secondaryIds = enrichIds.filter((id) => id !== primaryId);
 
-        const primaryResponse = await fetch("/api/enrich-sheet-candidates", {
+        const primaryResponse = await fetch("/api/sheet/enrich", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -304,7 +312,7 @@ export function SheetSetupDialog() {
 
         if (secondaryIds.length > 0) {
           setSheetDiscoveryStatusMessage("Checking the rest of your likely lifting logs.");
-          const secondaryResponse = await fetch("/api/enrich-sheet-candidates", {
+          const secondaryResponse = await fetch("/api/sheet/enrich", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -349,9 +357,11 @@ export function SheetSetupDialog() {
         setFlowIntent(payload?.intent || intent);
         setSheetDiscoveryStatusMessage(
           discoveredCandidates.length > 0
-            ? `Found ${discoveredCandidates.length} potential lifting logs.`
+            ? intent === "switch_sheet"
+              ? `Found ${discoveredCandidates.length} possible data sources.`
+              : `Found ${discoveredCandidates.length} potential lifting logs.`
             : intent === "switch_sheet"
-              ? "No accessible lifting logs detected yet."
+              ? "No accessible data sources detected yet."
               : "No previous lifting logs detected yet.",
         );
         setOnboardingState("choose_sheet");
@@ -415,12 +425,12 @@ export function SheetSetupDialog() {
       setOnboardingState("discovering");
       setSheetDiscoveryStatusMessage(
         intent === "switch_sheet"
-          ? "Finding accessible lifting logs."
+          ? "Loading accessible data sources."
           : "Scanning Google Drive for existing lifting logs.",
       );
 
       try {
-        const response = await fetch("/api/resolve-sheet-flow", {
+        const response = await fetch("/api/sheet/resolve", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -455,7 +465,7 @@ export function SheetSetupDialog() {
       setIsProvisionActionLoading(true);
       setOnboardingState("linking_or_creating");
       try {
-        const response = await fetch("/api/link-sheet", {
+        const response = await fetch("/api/sheet/link", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -482,6 +492,34 @@ export function SheetSetupDialog() {
     },
     [flowIntent, hadLocalSheetBefore, handleResolvedAction],
   );
+
+  const disconnectCurrentSheet = useCallback(async () => {
+    setProvisionError(null);
+    setIsDisconnectingCurrentSheet(true);
+    try {
+      const response = await fetch("/api/sheet/unlink", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to disconnect current data source");
+      }
+      devLog("[sheet-flow] disconnected current sheet from setup dialog", payload);
+      clearSheet();
+      enterSignedInDemoMode();
+      setHadLocalSheetBefore(false);
+      setOnboardingState("choose_sheet");
+      setSheetDiscoveryStatusMessage("Current data source disconnected. Choose what to connect next.");
+    } catch (error) {
+      console.error("[sheet-flow] disconnect current sheet failed:", error);
+      setProvisionError(error?.message || "Failed to disconnect current data source");
+    } finally {
+      setIsDisconnectingCurrentSheet(false);
+    }
+  }, [clearSheet, enterSignedInDemoMode]);
 
   const closeDialog = useCallback(() => {
     setOpen(false);
@@ -631,13 +669,18 @@ export function SheetSetupDialog() {
                   intent={flowIntent}
                   candidates={candidateSheets}
                   currentSsid={sheetInfo?.ssid || null}
+                  currentSheetInfo={sheetInfo}
                   recommendedId={recommendedCandidateId}
                   openPicker={openPicker}
                   isWorking={isProvisionActionLoading}
+                  isDisconnectingCurrent={isDisconnectingCurrentSheet}
                   isEnriching={isCandidateEnrichmentLoading}
                   statusMessage={sheetDiscoveryStatusMessage}
                   onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
                   onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
+                  onDisconnectCurrent={() => {
+                    void disconnectCurrentSheet();
+                  }}
                 />
               )}
               {onboardingState === "fallback_error" && (
@@ -721,16 +764,18 @@ function FallbackConnectPanel({ intent, openPicker, onRetry, isWorking, errorMes
           Setup needs a hand
         </div>
         <CardTitle>
-          {intent === "switch_sheet" ? "Couldn’t prepare the switch yet" : "Automatic setup needs help"}
+          {intent === "switch_sheet" ? "Couldn’t load your data source options yet" : "Automatic setup needs help"}
         </CardTitle>
         <CardDescription className="text-base leading-relaxed">
-          {errorMessage || "You can retry automatic setup or choose a Google Sheet yourself."}
+          {errorMessage || (intent === "switch_sheet"
+            ? "Retry loading your options or choose a file from Google Drive."
+            : "You can retry automatic setup or choose a Google Sheet yourself.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row">
         <Button onClick={onRetry} disabled={isWorking} className="gap-2">
           <LoaderCircle className={`h-4 w-4 ${isWorking ? "animate-spin" : ""}`} />
-          Retry automatic setup
+          {intent === "switch_sheet" ? "Retry loading options" : "Retry automatic setup"}
         </Button>
         <Button
           variant="outline"

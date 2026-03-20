@@ -281,21 +281,21 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const prefersReducedMotion = useReducedMotion();
   const [squat, setSquat] = useLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
-    0,
+    275,
     {
       initializeWithValue: false,
     },
   );
   const [bench, setBench] = useLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_BENCH,
-    0,
+    205,
     {
       initializeWithValue: false,
     },
   );
   const [deadlift, setDeadlift] = useLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT,
-    0,
+    315,
     {
       initializeWithValue: false,
     },
@@ -455,8 +455,19 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   value: deadlift,
                   set: setDeadlift,
                 },
-              ].map(({ key, liftType, value, set }) => (
-                <div key={key} className="flex items-center gap-4">
+              ].map(({ key, liftType, value, set }, index) => (
+                <motion.div
+                  key={key}
+                  className="flex items-center gap-4"
+                  initial={prefersReducedMotion ? undefined : { opacity: 0, x: -20 }}
+                  animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20,
+                    delay: 0.15 + index * 0.15,
+                  }}
+                >
                   <Link
                     href={BIG_FOUR_URLS[liftType]}
                     className="flex-shrink-0"
@@ -502,10 +513,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       step={5}
                       onValueChange={handleLiftValueChange(key, set)}
                       onValueCommit={handleLiftValueCommit}
-                      className="mt-2"
+                      className={`mt-2 ${prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}`}
                     />
                   </div>
-                </div>
+                </motion.div>
               ))}
 
               <motion.div

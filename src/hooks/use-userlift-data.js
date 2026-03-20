@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useLayoutEffect,
   useCallback,
   createContext,
   useMemo,
@@ -70,6 +71,21 @@ if (typeof window !== "undefined") {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Returning-user detection: synchronous localStorage snapshot at module load.
+// Used to suppress the onboarding hero flash while auth + useLocalStorage
+// hydrate. This runs exactly once, before any component mounts.
+// ---------------------------------------------------------------------------
+const _hadSheetOnLoad = (() => {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEYS.SHEET_INFO);
+    return !!JSON.parse(raw)?.ssid;
+  } catch {
+    return false;
+  }
+})();
+
 /**
  * Generic JSON fetcher for useSWR.
  * Throws on non-2xx so SWR sets `error` and the UI can surface real failures.
@@ -93,6 +109,8 @@ const fetcher = async (...args) => {
 };
 
 const UserLiftingDataContext = createContext();
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /** Consumes the lifting data context. Use inside UserLiftingDataProvider. */
 export const useUserLiftingData = () => useContext(UserLiftingDataContext);
@@ -156,6 +174,22 @@ export const UserLiftingDataProvider = ({ children }) => {
     authStatus === "unauthenticated" ||
     (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode);
 
+  // True while we have localStorage evidence of a linked sheet but auth and/or
+  // useLocalStorage haven't hydrated yet. Consumers use this to avoid flashing
+  // onboarding UI for returning users during the initial load.
+  //
+  // Gated behind hasMounted so the initial render matches the server (which has
+  // no localStorage). useLayoutEffect flips it before the browser paints, so
+  // consumers still suppress onboarding UI before anything is visible.
+  const [hasMounted, setHasMounted] = useState(false);
+  useIsomorphicLayoutEffect(() => setHasMounted(true), []);
+
+  const isReturningUserLoading =
+    hasMounted &&
+    _hadSheetOnLoad &&
+    !(authStatus === "authenticated" && !!sheetInfo?.ssid) &&
+    authStatus !== "unauthenticated";
+
   const selectSheet = useCallback(
     (ssid, metadata = {}) => {
       gaTrackSheetLinked();
@@ -207,7 +241,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const MAX_RETRIES = 3;
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    shouldFetch ? `/api/read-gsheet?ssid=${sheetInfo.ssid}` : null,
+    shouldFetch ? `/api/sheet/read?ssid=${sheetInfo.ssid}` : null,
     fetcher,
     {
       // Be explicit about mobile resume behavior. Chrome on Android may keep
@@ -400,6 +434,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         apiError,
         isValidating,
         isDemoMode,
+        isReturningUserLoading,
         parseError,
         liftTypes,
         parsedData,

@@ -1,4 +1,5 @@
 import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -24,16 +25,29 @@ export function ThumbsSentimentControl({
   positiveAriaLabel = "Thumbs up",
   negativeAriaLabel = "Thumbs down",
 }) {
+  const controls = useAnimationControls();
+
+  function handlePositiveClick() {
+    controls.start({
+      scale: [1, 1.4, 0.9, 1.15, 1],
+      rotate: [0, -12, 8, -4, 0],
+      transition: { duration: 0.5, ease: "easeInOut" },
+    });
+    onVote("positive");
+  }
+
   return (
     <div className={wrapperClassName}>
       <Button
         variant={value === "positive" ? "default" : "outline"}
         size={size}
-        className={buttonClassName}
-        onClick={() => onVote("positive")}
+        className={`${buttonClassName} ${value === "positive" ? "!border-green-500 !bg-green-500 !text-white hover:!bg-green-600" : ""}`}
+        onClick={handlePositiveClick}
         aria-label={positiveAriaLabel}
       >
-        <ThumbsUp className={iconClassName} />
+        <motion.span animate={controls} className="inline-flex">
+          <ThumbsUp className={iconClassName} />
+        </motion.span>
       </Button>
       <Button
         variant={value === "negative" ? "default" : "outline"}

@@ -349,24 +349,30 @@ const RepRangeDetailView = ({
  * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
  */
 export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
-  const { topLiftsByTypeAndReps, isDemoMode } = useUserLiftingData();
+  const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, isDemoMode } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const [activeTab, setActiveTab] = useState("overview");
+  const [prScope, setPrScope] = useState("lifetime"); // "lifetime" | "yearly"
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
     }) ?? "Brzycki";
   const containerRef = useRef(null);
   const { width = 0 } = useResizeObserver({ ref: containerRef });
-  
+
   // Check if we have the necessary data for strength ratings
   const hasBioData = age && bodyWeight && standards && Object.keys(standards).length > 0;
 
   if (!topLiftsByTypeAndReps) return null;
 
-  const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
+  const activeDataSource = prScope === "yearly" ? topLiftsByTypeAndRepsLast12Months : topLiftsByTypeAndReps;
+  const topLiftsByReps = activeDataSource?.[liftType];
   if (!topLiftsByReps) return null;
+
+  const hasYearlyData = !!topLiftsByTypeAndRepsLast12Months?.[liftType]?.some(
+    (reps) => reps?.length > 0,
+  );
 
   const liftColor = getColor(liftType);
 
@@ -414,6 +420,32 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
             {isDemoMode && <DemoModeBadge size="sm" />}
             {liftType} PRs
           </h2>
+          {hasYearlyData && (
+            <div className="flex items-center rounded-full border p-0.5 text-xs">
+              <button
+                className={cn(
+                  "rounded-full px-3 py-1 font-medium transition-colors",
+                  prScope === "lifetime"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => { setPrScope("lifetime"); setActiveTab("overview"); }}
+              >
+                Lifetime
+              </button>
+              <button
+                className={cn(
+                  "rounded-full px-3 py-1 font-medium transition-colors",
+                  prScope === "yearly"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => { setPrScope("yearly"); setActiveTab("overview"); }}
+              >
+                12 months
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Narrow container: only show key rep ranges to reduce crowding */}
@@ -458,7 +490,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
         {/* Overview tab: summary grid of rep range PR cards */}
         <TabsContent value="overview" className="mt-4 space-y-4">
           <p className="text-sm text-muted-foreground">
-            Overview of your best {liftType} sets across different rep ranges. Click
+            Overview of your {prScope === "yearly" ? "best 12-month" : "all-time best"} {liftType} sets across different rep ranges. Click
             a card or a tab above to explore all lifts for that rep range.
           </p>
           <div className={`grid gap-4 ${overviewGridCols}`}>

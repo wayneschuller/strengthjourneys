@@ -17,6 +17,7 @@ import { TimerProvider } from "@/hooks/use-timer";
 import { UserLiftingDataProvider } from "@/hooks/use-userlift-data";
 import { LiftColorsProvider } from "@/hooks/use-lift-colors";
 import { AthleteBioProvider } from "@/hooks/use-athlete-biodata";
+import { DevActivityMonitorProvider } from "@/hooks/use-dev-activity-monitor";
 
 // Fonts needed for themes defined in global.css
 import "@fontsource/geist-sans/index.css"; // Used in: light, dark
@@ -70,10 +71,12 @@ export default function App({ Component, pageProps, session }) {
             <TimerProvider>
               <LiftColorsProvider>
                 <AthleteBioProvider>
-                  <Layout>
-                    <Component {...pageProps} />
-                    <Toaster />
-                  </Layout>
+                  <DevActivityMonitorProvider>
+                    <Layout>
+                      <Component {...pageProps} />
+                      <Toaster />
+                    </Layout>
+                  </DevActivityMonitorProvider>
                 </AthleteBioProvider>
               </LiftColorsProvider>
             </TimerProvider>

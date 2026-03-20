@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
-const inspirationalQuotes = [
+const INSPIRATIONAL_QUOTES = [
   {
     quote:
       "Strong people are harder to kill than weak people and more useful in general. A weak man is not as happy as that same man would be if he were strong.",
@@ -26,13 +27,13 @@ const inspirationalQuotes = [
   },
   {
     quote:
-      "For me, life is continuously being hungry. The meaning of life is not simply to exist, to survive, but to move ahead, to go up, to achieve, to conquer. ",
+      "For me, life is continuously being hungry. The meaning of life is not simply to exist, to survive, but to move ahead, to go up, to achieve, to conquer.",
     author: "Arnold Schwarzenegger",
     URL: "https://grokipedia.com/page/Arnold_Schwarzenegger",
   },
   {
     quote:
-      "I have my own therapy. I will choose the iron to feel what most other people only feel when someone else tells them to. Those that use the iron as therapy and as an escape really get it, because the mind and body are one – working, thriving, and alive,",
+      "I have my own therapy. I will choose the iron to feel what most other people only feel when someone else tells them to. Those that use the iron as therapy and as an escape really get it, because the mind and body are one - working, thriving, and alive.",
     author: "Jim Steel",
     URL: "https://www.basbarbell.com/",
   },
@@ -50,8 +51,8 @@ const inspirationalQuotes = [
   },
   {
     quote: "Slowly is the fastest way to get to where you want to be.",
-    author: "André De Shields",
-    URL: "https://grokipedia.com/page/Andr%C3%A9_De_Shields",
+    author: "Andre De Shields",
+    URL: "https://grokipedia.com/page/Andre_De_Shields",
   },
   {
     quote:
@@ -62,7 +63,7 @@ const inspirationalQuotes = [
   {
     quote:
       "Your health will likely run out before your money. Invest proportionally.",
-    author: "Source unknown.",
+    author: "Source unknown",
     URL: null,
   },
   {
@@ -85,49 +86,99 @@ const inspirationalQuotes = [
   },
 ];
 
-const getRandomQuote = () => {
-  const randomIndex = Math.floor(Math.random() * inspirationalQuotes.length);
-  return inspirationalQuotes[randomIndex];
-};
+function getSeededQuote(seedKey = "default") {
+  const key = String(seedKey);
+  let hash = 0;
 
-/**
- * Card that displays a random inspirational strength-training quote on each mount.
- * The initial quote is set server-side for SEO consistency and randomized client-side via useEffect.
- *
- * @param {Object} props
- */
-export function InspirationCard({}) {
-  const [quote, setQuote] = useState(inspirationalQuotes[0]); // Consistent default for static rendering SEO
+  for (let index = 0; index < key.length; index += 1) {
+    hash = (hash * 31 + key.charCodeAt(index)) >>> 0;
+  }
+
+  return INSPIRATIONAL_QUOTES[hash % INSPIRATIONAL_QUOTES.length];
+}
+
+export function InspirationCard({
+  seedKey = "default",
+  title = "Training note",
+  variant = "default",
+  className = "",
+  delayedReveal = false,
+  revealDelayMs = 500,
+  revealTriggerKey = "default",
+}) {
+  const quote = getSeededQuote(seedKey);
+  const isRail = variant === "rail";
+  const [isVisible, setIsVisible] = useState(() => !delayedReveal);
 
   useEffect(() => {
-    const quote = getRandomQuote();
-    setQuote(quote);
-  }, []);
+    if (!delayedReveal) {
+      return undefined;
+    }
 
-  if (!quote) return;
+    const timerId = window.setTimeout(() => {
+      setIsVisible(true);
+    }, revealDelayMs);
+
+    return () => window.clearTimeout(timerId);
+  }, [delayedReveal, revealDelayMs, revealTriggerKey, seedKey]);
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <CardTitle>Inspirational Quote</CardTitle>
+    <Card
+      className={cn(
+        isRail && "border-border/35 bg-muted/8 shadow-sm",
+        "transition-all duration-700 ease-out",
+        isVisible
+          ? "translate-y-0 opacity-100"
+          : "pointer-events-none translate-y-2 opacity-0",
+        className,
+      )}
+    >
+      <CardHeader className={cn(isRail ? "space-y-2 px-4 pb-0 pt-4" : "")}>
+        <CardTitle
+          className={cn(
+            isRail
+              ? "text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+              : "",
+          )}
+        >
+          {title}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="grid flex-1 content-around">
-        <div className="text-xl italic md:text-2xl">
-          &ldquo;{quote.quote}&rdquo;
-          <div className="mt-2 text-right text-lg md:text-xl">
-            {quote.URL ? (
-              <a
-                href={quote.URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-4 hover:opacity-80"
-              >
-                {quote.author}
-              </a>
-            ) : (
-              quote.author
-            )}
-          </div>
+      <CardContent className={cn(isRail ? "space-y-4 px-4 pb-4 pt-3" : "")}>
+        <blockquote
+          className={cn(
+            isRail
+              ? "text-sm leading-6 text-muted-foreground"
+              : "text-xl italic md:text-2xl",
+          )}
+        >
+          <span className={cn(isRail ? "text-foreground/90" : "")}>
+            &ldquo;{quote.quote}&rdquo;
+          </span>
+        </blockquote>
+        <div
+          className={cn(
+            isRail
+              ? "text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              : "text-right text-lg md:text-xl",
+          )}
+        >
+          {quote.URL ? (
+            <a
+              href={quote.URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                isRail
+                  ? "transition-colors hover:text-foreground"
+                  : "underline underline-offset-4 hover:opacity-80",
+              )}
+            >
+              {quote.author}
+            </a>
+          ) : (
+            quote.author
+          )}
         </div>
       </CardContent>
     </Card>

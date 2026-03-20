@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
-import { MessageCircleHeart } from "lucide-react";
+import { MessageCircleHeart, PartyPopper } from "lucide-react";
 import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -118,7 +118,7 @@ const TRIGGER_LABELS = [
  * Renders a fixed-position button in the bottom-right corner that opens a multi-step dialog
  * (thumbs rating → optional comment → optional email → success/donation prompt).
  */
-export function FeedbackWidget() {
+export function FeedbackWidget({ labels = {} }) {
   const router = useRouter();
   const { data: session } = useSession();
   const { sheetInfo, parsedData } = useUserLiftingData();
@@ -255,8 +255,16 @@ export function FeedbackWidget() {
   const subtitle = SUBTITLES[phraseIndexRef.current.subtitle];
   const donationNudge = DONATION_NUDGES[phraseIndexRef.current.nudge];
   const donationAsk = DONATION_ASKS[phraseIndexRef.current.ask];
-  const tooltipMessage = TOOLTIP_MESSAGES[phraseIndexRef.current.tooltip];
-  const triggerLabel = TRIGGER_LABELS[triggerLabelIndex] || TRIGGER_LABELS[0];
+  const tooltipMessages = labels.tooltipMessages?.length
+    ? labels.tooltipMessages
+    : TOOLTIP_MESSAGES;
+  const triggerLabels = labels.triggerLabels?.length
+    ? labels.triggerLabels
+    : TRIGGER_LABELS;
+  const tooltipMessage = tooltipMessages[
+    phraseIndexRef.current.tooltip % tooltipMessages.length
+  ] || TOOLTIP_MESSAGES[0];
+  const triggerLabel = triggerLabels[triggerLabelIndex % triggerLabels.length] || TRIGGER_LABELS[0];
 
   const PAGE_NAMES = {
     "/": session ? "the Home Dashboard" : "the Landing Page",
@@ -325,8 +333,18 @@ export function FeedbackWidget() {
       page: router.pathname,
       isLoggedIn: Boolean(session),
     });
-    setLayer(2);
-    startCountdown();
+
+    if (value === "positive") {
+      // Brief green celebration before advancing
+      setLayer("celebrate");
+      setTimeout(() => {
+        setLayer(2);
+        startCountdown();
+      }, 1500);
+    } else {
+      setLayer(2);
+      startCountdown();
+    }
   }
 
   async function handleSubmit() {
@@ -400,7 +418,7 @@ export function FeedbackWidget() {
                 onClick={() => {
                   clickedTriggerLabelRef.current = triggerLabel;
                   setOpen(true);
-                  const nextIndex = (triggerLabelIndex + 1) % TRIGGER_LABELS.length;
+                  const nextIndex = (triggerLabelIndex + 1) % triggerLabels.length;
                   setTriggerLabelIndex(nextIndex);
                   sessionStorage.setItem(
                     SESSION_STORAGE_KEYS.FEEDBACK_TRIGGER_LABEL_INDEX,
@@ -427,12 +445,14 @@ export function FeedbackWidget() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {layer === 1 && `${titlePrefix} ${pageName}?`}
+              {layer === 1 && (labels.introTitle || `${titlePrefix} ${pageName}?`)}
+              {layer === "celebrate" && "You're awesome!"}
               {layer >= 2 && layer <= 3 && "Thanks! Anything you'd like to tell us?"}
               {layer === 4 && "Feedback sent"}
             </DialogTitle>
             <DialogDescription>
-              {layer === 1 && subtitle}
+              {layer === 1 && (labels.introDescription || subtitle)}
+              {layer === "celebrate" && "Thanks for the positive vibes!"}
               {layer === 2 && countdown !== null && `Closing in ${countdown}s — start typing to keep open.`}
               {layer === 3 && "Optional — skip anytime."}
               {layer === 4 && (successCountdown !== null
@@ -455,11 +475,33 @@ export function FeedbackWidget() {
             />
           )}
 
+          {/* Celebrate layer: green success moment after thumbs up */}
+          {layer === "celebrate" && (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15"
+              >
+                <PartyPopper className="h-8 w-8 text-green-500" />
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+                className="text-sm font-medium text-green-600 dark:text-green-400"
+              >
+                Your feedback means a lot!
+              </motion.p>
+            </div>
+          )}
+
           {/* Layer 2: Comment */}
           {layer >= 2 && layer <= 3 && (
             <div className="space-y-4">
               <Textarea
-                placeholder="Bug report, feature idea, or just say hi..."
+                placeholder={labels.commentPlaceholder || "Bug report, feature idea, or just say hi..."}
                 value={message}
                 onChange={(e) => {
                   setMessage(e.target.value);

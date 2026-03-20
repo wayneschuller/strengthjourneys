@@ -1,3 +1,33 @@
+// POST /api/sheet/provision
+//
+// Heavy-duty sheet provisioning: scans the user's Google Drive for existing
+// lifting sheets, scores and ranks candidates, and either auto-links the best
+// match or creates a new sheet from the Strength Journeys template.
+//
+// This is an older provisioning path. New users now go through resolve.js →
+// link.js instead. provision.js is still used for legacy flows and can be
+// called directly with an explicit mode.
+//
+// Modes (req.body.mode):
+//   discover_fast       — quick Drive scan, returns ranked candidates to the UI
+//   discover_deep       — full Drive scan with header-level validation
+//   enrich_candidates   — fetch rich metadata for specific candidate IDs
+//   select_existing     — link a specific sheet chosen by the user
+//   create_new          — copy the sample template to create a new sheet
+//
+// Body: {
+//   mode: string,
+//   selectedSsid?: string,      // required for select_existing
+//   candidateIds?: string[],    // required for enrich_candidates
+//   candidates?: Candidate[],   // pre-fetched candidates for enrichment
+// }
+//
+// Returns: varies by mode — either a candidate list for the picker UI or a
+//          fully linked sheet record { ssid, url, filename, ... }.
+//
+// Post-response side effect: updates the KV record and may fire a founder
+// activation notification when a new user successfully links their first sheet.
+
 import { getServerSession } from "next-auth/next";
 import { kv } from "@vercel/kv";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
@@ -230,7 +260,7 @@ async function listRecentSpreadsheetCandidates(headers) {
   const url = `https://www.googleapis.com/drive/v3/files?${params.toString()}`;
   const response = await fetch(url, { method: "GET", headers });
   if (!response.ok) {
-    devLog("[provision-sheet] drive scan failed:", response.status);
+    devLog("[sheet/provision] drive scan failed:", response.status);
     return [];
   }
 
@@ -252,10 +282,10 @@ async function listRecentSpreadsheetCandidates(headers) {
   });
 
   devLog(
-    `[provision-sheet] drive scan returned ${ranked.length} candidate sheets in ${Date.now() - t0}ms`,
+    `[sheet/provision] drive scan returned ${ranked.length} candidate sheets in ${Date.now() - t0}ms`,
   );
   devLog(
-    "[provision-sheet] ranked candidates:",
+    "[sheet/provision] ranked candidates:",
     ranked.map((file, index) => ({
       rank: index + 1,
       id: file.id,
@@ -456,7 +486,7 @@ function scoreAndSortCandidates(candidates, userNameTokens, debug) {
       rows: candidate.__rowsForScore,
       factors: candidate.__scoreFactors,
     }));
-    devLog("[provision-sheet] candidate score breakdown:", debug.scores);
+    devLog("[sheet/provision] candidate score breakdown:", debug.scores);
   }
 
   return scored.map((candidate) => {
@@ -517,8 +547,6 @@ async function discoverValidCandidates(headers, debug) {
     };
     debug.headerChecks.push(checkResult);
 
-    devLog("[provision-sheet] header check:", checkResult);
-
     if (headerInfo.valid) {
       validCandidates.push({
         ...candidate,
@@ -533,7 +561,7 @@ async function discoverValidCandidates(headers, debug) {
   }
 
   devLog(
-    `[provision-sheet] valid candidate count after header checks: ${validCandidates.length}`,
+    `[sheet/provision] valid candidate count after header checks: ${validCandidates.length}`,
   );
   return validCandidates.map((candidate) => {
     const copy = { ...candidate };

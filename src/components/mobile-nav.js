@@ -2,6 +2,7 @@
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
@@ -32,6 +33,7 @@ import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { status: authStatus } = useSession();
   const logoWidth = 150;
   const { resolvedTheme, theme } = useTheme();
   const [logoSrc, setLogoSrc] = useState(() => {
@@ -113,9 +115,11 @@ export function MobileNav() {
         </SheetHeader>
         <div className="flex flex-1 flex-col overflow-y-auto">
           <div className="flex flex-col gap-4 text-lg font-medium tracking-tight">
-            {featurePages.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
+            {featurePages
+              .filter((item) => !item.authRequired || authStatus === "authenticated")
+              .map((item) => (
+                <NavLink key={item.href} {...item} />
+              ))}
             {lifts.map((lift) => (
               <NavLink
                 key={lift.slug}

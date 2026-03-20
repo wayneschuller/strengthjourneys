@@ -1088,10 +1088,6 @@ function FirstMonthLongGameState({ parsedData }) {
           body="Richer daily, weekly, and monthly views unlock once you have more history."
         />
       </div>
-      <p className="text-sm text-muted-foreground">
-        Early on, this is better read as a simple habit tracker: show up, log the
-        work, and let the pattern build week by week.
-      </p>
     </div>
   );
 }

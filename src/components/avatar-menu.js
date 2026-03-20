@@ -1,31 +1,24 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
+import { useLocalStorage } from "usehooks-ts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import {
   LogOut,
-  Table2,
   MessageSquarePlus,
   Coffee,
   Eraser,
   Trash2,
-  Unplug,
+  Activity,
+  Check,
 } from "lucide-react";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
   DropdownMenu,
@@ -43,6 +36,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 /**
  * User avatar button in the nav bar. Shows a Google sign-in button when unauthenticated,
@@ -54,15 +48,13 @@ export function AvatarDropdown() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
-  const [isDisconnectingSheet, setIsDisconnectingSheet] = useState(false);
-  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
-  const { setTheme, theme } = useTheme();
-
-  const {
-    sheetInfo,
-    clearSheet,
-    enterSignedInDemoMode,
-  } = useUserLiftingData();
+  const { sheetInfo } = useUserLiftingData();
+  const { entries } = useDevActivityMonitor();
+  const [isActivityMonitorVisible, setIsActivityMonitorVisible] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE,
+    false,
+    { initializeWithValue: false },
+  );
 
   const runKvReset = useCallback(
     async (mode) => {
@@ -88,30 +80,6 @@ export function AvatarDropdown() {
     },
     [],
   );
-
-  const disconnectCurrentSheet = useCallback(async () => {
-    setIsDisconnectingSheet(true);
-    try {
-      const response = await fetch("/api/clear-sheet-link", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to disconnect current sheet");
-      }
-      devLog("[sheet-flow] disconnected current sheet from avatar menu", payload);
-      clearSheet();
-      enterSignedInDemoMode();
-      setIsDisconnectDialogOpen(false);
-    } catch (error) {
-      console.error("[sheet-flow] disconnect current sheet failed:", error);
-    } finally {
-      setIsDisconnectingSheet(false);
-    }
-  }, [clearSheet, enterSignedInDemoMode]);
 
   if (authStatus !== "authenticated")
     return (
@@ -188,9 +156,20 @@ export function AvatarDropdown() {
                   {sheetInfo?.filename && (
                     <>
                       <p className="font-bold">Data source loaded: </p>
-                      <p className="pl-2 text-xs leading-none text-muted-foreground">
-                        {sheetInfo.filename}
-                      </p>
+                      {sheetInfo?.url ? (
+                        <a
+                          href={sheetInfo.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="pl-2 text-xs leading-none text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                        >
+                          {sheetInfo.filename}
+                        </a>
+                      ) : (
+                        <p className="pl-2 text-xs leading-none text-muted-foreground">
+                          {sheetInfo.filename}
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
@@ -212,14 +191,6 @@ export function AvatarDropdown() {
                     Set Up Google Sheet
                   </DropdownMenuItem>
                 )}
-                {sheetInfo?.ssid && sheetInfo?.url && (
-                  <DropdownMenuItem
-                    onClick={() => window.open(sheetInfo.url)}
-                  >
-                    <Table2 className="mr-2 h-4 w-4" />
-                    Open Google Sheet
-                  </DropdownMenuItem>
-                )}
                 {sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
@@ -232,13 +203,7 @@ export function AvatarDropdown() {
                       className="mr-2 h-4 w-4 shrink-0"
                       aria-hidden
                     />
-                    Switch Sheets
-                  </DropdownMenuItem>
-                )}
-                {sheetInfo?.ssid && (
-                  <DropdownMenuItem onClick={() => setIsDisconnectDialogOpen(true)}>
-                    <Unplug className="mr-2 h-4 w-4" />
-                    Disconnect Sheet
+                    Select New Data Source
                   </DropdownMenuItem>
                 )}
                 {/* Public actions shown in all environments. Keep these outside
@@ -286,6 +251,18 @@ export function AvatarDropdown() {
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete full KV user record
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setIsActivityMonitorVisible((current) => !current);
+                      }}
+                    >
+                      <Activity className="mr-2 h-4 w-4" />
+                      {isActivityMonitorVisible ? "Hide" : "Show"} log activity monitor
+                      <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{entries.length}</span>
+                        {isActivityMonitorVisible && <Check className="h-3.5 w-3.5" />}
+                      </span>
+                    </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
@@ -300,36 +277,6 @@ export function AvatarDropdown() {
               </DropdownMenuGroup>
             </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Disconnect your sheet?</DialogTitle>
-            <DialogDescription>
-              This removes your current spreadsheet from Strength Journeys and stops
-              future reads of your lifting data. You&apos;ll stay signed in and return
-              to demo mode until you reconnect a sheet.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDisconnectDialogOpen(false)}
-              disabled={isDisconnectingSheet}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                void disconnectCurrentSheet();
-              }}
-              disabled={isDisconnectingSheet}
-            >
-              {isDisconnectingSheet ? "Disconnecting..." : "Disconnect Sheet"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

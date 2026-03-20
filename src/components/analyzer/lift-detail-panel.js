@@ -18,7 +18,9 @@ export function LiftDetailPanel({ liftType }) {
         asCard={false}
         chartDensity="dense"
       />
-      <LiftTypeRepPRsDisplay liftType={liftType} />
+      <div id="lift-prs">
+        <LiftTypeRepPRsDisplay liftType={liftType} />
+      </div>
     </div>
   );
 }

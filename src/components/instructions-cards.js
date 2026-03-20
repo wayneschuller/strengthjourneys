@@ -236,10 +236,11 @@ export function GettingStartedCard() {
   const router = useRouter();
   const { status: authStatus } = useSession();
 
-  const { sheetInfo } = useUserLiftingData();
+  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
   const isConnected = !!sheetInfo?.ssid;
 
   if (authStatus === "authenticated" && isConnected) return null;
+  if (isReturningUserLoading) return null;
 
   return (
     <Card className="relative overflow-hidden border hover:ring-0">
@@ -370,7 +371,9 @@ export function GettingStartedCardCompact() {
   const router = useRouter();
   const { status: authStatus } = useSession();
 
-  const { sheetInfo } = useUserLiftingData();
+  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
+
+  if (isReturningUserLoading) return null;
 
   return (
     <Card>
@@ -456,9 +459,11 @@ export function GettingStartedCardCompact() {
 export const SignInInvite = () => {
   const router = useRouter();
   const { status: authStatus } = useSession();
+  const { isReturningUserLoading } = useUserLiftingData();
 
   // FIXME: add in a check for ssid and prompt for file picker if needed.
   if (authStatus === "authenticated") return null;
+  if (isReturningUserLoading) return null;
 
   return (
     <div>
@@ -484,9 +489,10 @@ export const SignInInvite = () => {
  */
 export function ConnectSheetRecapCard() {
   const { status: authStatus } = useSession();
-  const { sheetInfo } = useUserLiftingData();
+  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
 
   if (authStatus !== "authenticated" || sheetInfo?.ssid) return null;
+  if (isReturningUserLoading) return null;
 
   return (
     <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">
@@ -537,8 +543,10 @@ export function ConnectSheetRecapCard() {
 export function DemoModeSignInCard() {
   const router = useRouter();
   const { status: authStatus } = useSession();
+  const { isReturningUserLoading } = useUserLiftingData();
 
   if (authStatus === "authenticated") return null;
+  if (isReturningUserLoading) return null;
 
   return (
     <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">

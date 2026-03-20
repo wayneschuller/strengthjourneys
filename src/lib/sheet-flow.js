@@ -11,6 +11,7 @@ const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 6;
 const METADATA_SCAN_ROW_CAP = 10000;
 const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
+const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
 const REQUIRED_HEADERS = [
   "Date",
@@ -346,6 +347,20 @@ function parseWeightAndUnit(value) {
   return { weight: parsed, unitType: hasKg ? "kg" : hasLb ? "lb" : null };
 }
 
+function shouldReplacePreviewSet(current, candidate) {
+  if (!current) return true;
+  if (candidate.e1rm > current.e1rm) {
+    const relativeDelta = (candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
+    if (relativeDelta > PREVIEW_E1RM_TIE_TOLERANCE_RATIO) return true;
+  }
+  const relativeGap = Math.abs(candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
+  if (relativeGap <= PREVIEW_E1RM_TIE_TOLERANCE_RATIO) {
+    if (candidate.reps < current.reps) return true;
+    if (candidate.reps === current.reps && candidate.weight > current.weight) return true;
+  }
+  return false;
+}
+
 export async function enrichCandidateMetadata(
   candidate,
   headers,
@@ -383,7 +398,7 @@ export async function enrichCandidateMetadata(
   let minDate = null;
   let maxDate = null;
   let previousDate = null;
-  let previousLiftType = null;
+  let previousSessionLiftType = null;
   const bestByLift = {};
 
   for (const row of nonEmptyRows) {
@@ -399,9 +414,10 @@ export async function enrichCandidateMetadata(
     if (!parsedDate) continue;
     previousDate = parsedDate;
 
-    const normalizedLiftType =
-      normalizeLiftTypeForPreview(row?.[liftTypeColumnIndex]) || previousLiftType;
-    if (normalizedLiftType) previousLiftType = normalizedLiftType;
+    const rawLiftType = String(row?.[liftTypeColumnIndex] || "").trim();
+    const sessionLiftType = rawLiftType || previousSessionLiftType;
+    if (rawLiftType) previousSessionLiftType = rawLiftType;
+    const normalizedLiftType = normalizeLiftTypeForPreview(sessionLiftType);
 
     sessions.add(parsedDate);
     if (!minDate || parsedDate < minDate) minDate = parsedDate;
@@ -415,7 +431,14 @@ export async function enrichCandidateMetadata(
 
     const e1rm = estimateE1RM(reps, weightInfo.weight, "Brzycki");
     const current = bestByLift[normalizedLiftType];
-    if (!current || e1rm > current.e1rm) {
+    if (
+      shouldReplacePreviewSet(current, {
+        liftType: normalizedLiftType,
+        e1rm,
+        reps,
+        weight: weightInfo.weight,
+      })
+    ) {
       bestByLift[normalizedLiftType] = {
         liftType: normalizedLiftType,
         e1rm,

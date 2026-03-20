@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { cn } from "@/lib/utils";
 import {
   PlayCircle,
   StickyNote,
@@ -29,6 +30,27 @@ import {
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 
+export function getConsecutiveWorkoutGroups(workouts = []) {
+  const groups = [];
+  let currentGroup = [];
+  let currentKey = null;
+
+  workouts.forEach((workout, index) => {
+    const key = `${workout.reps}×${workout.weight}`;
+    if (key !== currentKey) {
+      if (currentGroup.length > 0) groups.push(currentGroup);
+      currentGroup = [index];
+      currentKey = key;
+    } else {
+      currentGroup.push(index);
+    }
+  });
+
+  if (currentGroup.length > 0) groups.push(currentGroup);
+
+  return groups;
+}
+
 /**
  * Renders a block of workout sets for a single lift type. Shows reps×weight pills with
  * PR indicators (lifetime/yearly), notes, and video links. In "full" variant also shows
@@ -39,7 +61,7 @@ import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
  *   tonnage and strength level; "compact" shows a condensed row of pills, used in MostRecentSessionCard.
  * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
  * @param {Array<{reps: number, weight: number, unitType?: string, lifetimeRanking?: number, yearlyRanking?: number, notes?: string, URL?: string, lifetimeSignificanceAnnotation?: string, yearlySignificanceAnnotation?: string}>} props.workouts - Array of set objects.
- * @param {Object} [props.perLiftTonnageStats] - Map of liftType -> {currentLiftTonnage, avgLiftTonnage, sessionCount, pctDiff, unitType}. Used in full variant for tonnage comparison.
+ * @param {Object} [props.perLiftTonnageStats] - Map of liftType -> {currentLiftTonnage, avgLiftTonnage, sessionCount, shouldShowComparison?, pctDiff, unitType}. Used in full variant for tonnage comparison.
  * @param {string} [props.authStatus] - Session auth status; strength level shown only when "authenticated".
  * @param {boolean} [props.hasBioData] - Whether athlete bio (age, bodyweight, sex) is available for strength standards.
  * @param {Object} [props.standards] - Map of liftType -> strength standard objects for age/bodyweight adjustment.
@@ -101,20 +123,7 @@ export function SessionExerciseBlock({
   }
 
   // Groups: consecutive sets with same reps×weight (e.g. 3x5 of 60kg)
-  const groups = [];
-  let currentGroup = [];
-  let currentKey = null;
-  workouts.forEach((w, i) => {
-    const key = `${w.reps}×${w.weight}`;
-    if (key !== currentKey) {
-      if (currentGroup.length > 0) groups.push(currentGroup);
-      currentGroup = [i];
-      currentKey = key;
-    } else {
-      currentGroup.push(i);
-    }
-  });
-  if (currentGroup.length > 0) groups.push(currentGroup);
+  const groups = getConsecutiveWorkoutGroups(workouts);
 
   // Initially highlighted: PRs or all sets with best e1rm (full variant only)
   const initiallyHighlighted = new Set(
@@ -549,11 +558,12 @@ export function SessionExerciseBlock({
 }
 
 // One-line tonnage comparison row: current session tonnage vs. 12-month average with a ±% badge.
-function LiftTonnageRow({ liftType, stats, isMetric = false, compact = false }) {
+export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = false }) {
   const {
     currentLiftTonnage,
     avgLiftTonnage,
     sessionCount,
+    shouldShowComparison,
     pctDiff,
     unitType,
   } = stats;
@@ -567,8 +577,13 @@ function LiftTonnageRow({ liftType, stats, isMetric = false, compact = false }) 
     isMetric,
   ).value;
   const hasComparison =
-    !!currentLiftTonnage && !!sessionCount && sessionCount > 1 && pctDiff !== null;
+    !!currentLiftTonnage &&
+    !!sessionCount &&
+    sessionCount > 1 &&
+    pctDiff !== null &&
+    (shouldShowComparison ?? true);
   const textClass = compact ? "text-xs" : pctDiff > 0 ? "text-sm" : "text-xs";
+  const tonnageHref = bigFourURLs[liftType] ? `${bigFourURLs[liftType]}#tonnage-chart` : null;
 
   if (!currentLiftTonnage) {
     return (
@@ -592,7 +607,14 @@ function LiftTonnageRow({ liftType, stats, isMetric = false, compact = false }) 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${textClass}`}>
       <span className="text-muted-foreground">
-        {liftType}: {Math.round(currentDisplay).toLocaleString()}
+        {tonnageHref ? (
+          <Link href={tonnageHref} className="underline-offset-2 hover:underline">
+            {liftType} tonnage
+          </Link>
+        ) : (
+          `${liftType} tonnage`
+        )}
+        : {Math.round(currentDisplay).toLocaleString()}
         {displayUnit} vs {Math.round(avgDisplay).toLocaleString()}
         {displayUnit} 12-mo avg
       </span>
@@ -653,6 +675,7 @@ export function LiftStrengthLevel({
   bestSetReps,
   bestSetWeight,
   asBadge = false,
+  badgeClassName = "",
 }) {
   const formula = e1rmFormula || "Brzycki";
   const standard =
@@ -743,7 +766,7 @@ export function LiftStrengthLevel({
       >
         <Badge
           variant={getRatingBadgeVariant(rating)}
-          className="inline-flex items-center gap-1 cursor-pointer"
+          className={cn("inline-flex items-center gap-1 cursor-pointer", badgeClassName)}
         >
           {ratingEmoji && <span>{ratingEmoji}</span>}
           <span>{ratingLabel}</span>

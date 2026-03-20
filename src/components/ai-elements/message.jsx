@@ -1,4 +1,5 @@
 "use client";;
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   ButtonGroup,
@@ -25,6 +26,49 @@ import {
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
+
+const APP_ORIGIN = "https://www.strengthjourneys.xyz";
+
+function resolveInternalHref(href) {
+  if (!href || typeof href !== "string") return null;
+  if (href.startsWith("/")) return href;
+
+  try {
+    const url = new URL(href);
+    if (url.origin !== APP_ORIGIN) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+}
+
+function MessageLink({ href, children, className, ...props }) {
+  const internalHref = resolveInternalHref(href);
+
+  if (internalHref) {
+    return (
+      <Link
+        className={cn("wrap-anywhere font-medium text-primary underline", className)}
+        href={internalHref}
+        {...props}
+      >
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <a
+      className={cn("wrap-anywhere font-medium text-primary underline", className)}
+      href={href}
+      rel="noreferrer noopener"
+      target="_blank"
+      {...props}
+    >
+      {children}
+    </a>
+  );
+}
 
 export const Message = ({
   className,
@@ -262,6 +306,8 @@ export const MessageResponse = memo(({
 }) => (
   <Streamdown
     className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
+    components={{ a: MessageLink }}
+    linkSafety={{ enabled: false }}
     plugins={{ cjk, code, math, mermaid }}
     {...props} />
 ), (prevProps, nextProps) => prevProps.children === nextProps.children);

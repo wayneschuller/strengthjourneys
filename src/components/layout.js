@@ -51,6 +51,20 @@ export function Layout({ children }) {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const { toast } = useToast();
+  const feedbackLabels = router.pathname === "/log"
+    ? {
+        triggerLabels: [
+          "Logging is new. Feedback?",
+          "Logging is in beta. Thoughts?",
+          "New logging feature. Comments?",
+        ],
+        tooltipMessages: ["Logging is in beta. Leave feedback or bug reports."],
+        introTitle: "Logging is in beta. How's it feeling?",
+        introDescription:
+          "If anything feels confusing, broken, or worth polishing in the log, please leave feedback.",
+        commentPlaceholder: "Bug report, rough edge, or idea about logging...",
+      }
+    : undefined;
 
   // Once-per-session guards
   const apiErrorShown = useRef(false);
@@ -95,7 +109,7 @@ export function Layout({ children }) {
     prevRawRowsRef.current = rawRows;
 
     if (!isNewData && !shouldForceToastOnHome) return;
-    if (router.pathname === "/" && !shouldForceToastOnHome) return;
+    if ((router.pathname === "/" || router.pathname === "/log") && !shouldForceToastOnHome) return;
     if (shouldForceToastOnHome && typeof window !== "undefined") {
       window.sessionStorage.removeItem(FORCE_SHEET_SYNC_TOAST_KEY);
     }
@@ -202,7 +216,7 @@ export function Layout({ children }) {
           {children}
         </main>
         <Footer />
-        <FeedbackWidget />
+        <FeedbackWidget labels={feedbackLabels} />
       </div>
     </div>
   );

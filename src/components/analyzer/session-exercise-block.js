@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { cn } from "@/lib/utils";
 import {
   PlayCircle,
   StickyNote,

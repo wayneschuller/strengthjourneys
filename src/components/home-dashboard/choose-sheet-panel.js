@@ -116,12 +116,27 @@ function formatPreviewWeight(preview) {
   return `${roundedWeight}${preview.unitType || ""}`;
 }
 
+function formatPreviewE1RM(preview) {
+  if (!preview || typeof preview.e1rm !== "number") return "";
+  const roundedE1RM =
+    Math.abs(preview.e1rm - Math.round(preview.e1rm)) < 0.05
+      ? String(Math.round(preview.e1rm))
+      : preview.e1rm.toFixed(1);
+  return `~${roundedE1RM}${preview.unitType || ""} e1rm`;
+}
+
+function formatPreviewPrimaryValue(preview) {
+  const weight = formatPreviewWeight(preview);
+  if (!weight || !preview?.reps) return weight;
+  return `${weight} × ${preview.reps}`;
+}
+
 function formatPreviewSetDetail(preview) {
   if (!preview) return "";
-  const weight = formatPreviewWeight(preview);
   const date = formatPreviewDate(preview.date);
-  if (!weight) return "";
-  return `${preview.reps}@${weight}${date ? ` (${date})` : ""}`;
+  const e1rm = formatPreviewE1RM(preview);
+  if (!e1rm) return date ? `(${date})` : "";
+  return `${e1rm}${date ? ` (${date})` : ""}`;
 }
 
 export function ChooseSheetPanel({
@@ -237,7 +252,7 @@ export function ChooseSheetPanel({
                         primaryCandidate.bigFourPreview.length > 0 && (
                           <div className="space-y-2 pt-1">
                             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                              Best lifts detected
+                              Best sets detected
                             </p>
                             <div className="flex flex-wrap gap-2">
                               {primaryCandidate.bigFourPreview.map((preview) => (
@@ -256,7 +271,7 @@ export function ChooseSheetPanel({
                                       {getPreviewLiftLabel(preview.liftType)}
                                     </p>
                                     <p className="text-base font-semibold leading-tight text-foreground">
-                                      {formatPreviewWeight(preview)}
+                                      {formatPreviewPrimaryValue(preview)}
                                     </p>
                                     <p className="truncate text-[10px] leading-tight text-muted-foreground">
                                       {formatPreviewSetDetail(preview)}

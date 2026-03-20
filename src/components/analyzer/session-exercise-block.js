@@ -583,6 +583,7 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
     pctDiff !== null &&
     (shouldShowComparison ?? true);
   const textClass = compact ? "text-xs" : pctDiff > 0 ? "text-sm" : "text-xs";
+  const tonnageHref = bigFourURLs[liftType] ? `${bigFourURLs[liftType]}#tonnage-chart` : null;
 
   if (!currentLiftTonnage) {
     return (
@@ -606,7 +607,14 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
   return (
     <div className={`flex flex-wrap items-center gap-2 ${textClass}`}>
       <span className="text-muted-foreground">
-        {liftType} tonnage: {Math.round(currentDisplay).toLocaleString()}
+        {tonnageHref ? (
+          <Link href={tonnageHref} className="underline-offset-2 hover:underline">
+            {liftType} tonnage
+          </Link>
+        ) : (
+          `${liftType} tonnage`
+        )}
+        : {Math.round(currentDisplay).toLocaleString()}
         {displayUnit} vs {Math.round(avgDisplay).toLocaleString()}
         {displayUnit} 12-mo avg
       </span>

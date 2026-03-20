@@ -1723,7 +1723,7 @@ export default function LogSessionPage() {
   return (
     <div className="mx-auto max-w-[116rem] px-3 pb-24 sm:px-4">
       <style dangerouslySetInnerHTML={{ __html: LOG_CELEBRATION_KEYFRAMES }} />
-      <div className="lg:grid lg:grid-cols-[minmax(13rem,1fr)_minmax(0,46rem)_minmax(13rem,1fr)] lg:gap-10 xl:gap-14 2xl:gap-16">
+      <div className="lg:grid lg:grid-cols-[11rem_minmax(0,48rem)_minmax(11rem,1fr)] lg:gap-12 xl:grid-cols-[10rem_minmax(0,52rem)_minmax(12rem,1fr)] xl:gap-16 2xl:grid-cols-[9rem_minmax(0,56rem)_minmax(14rem,1fr)] 2xl:gap-20">
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-4 pt-3">
             <InspirationCard
@@ -1738,7 +1738,7 @@ export default function LogSessionPage() {
         </aside>
 
         <main className="min-w-0">
-          <div className="max-w-[46rem]">
+          <div className="max-w-[56rem]">
             <div className="sticky top-0 z-[5] flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
               <Button
                 variant="ghost"

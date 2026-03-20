@@ -5,7 +5,6 @@ import { PageContainer } from "@/components/page-header";
 
 const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },
-  { href: "/1000lb-club-calculator", label: "1000lb Club Calculator" },
   { href: "/strength-standards", label: "Strength Standards" },
   { href: "/how-strong-am-i", label: "How Strong Am I?" },
   { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },

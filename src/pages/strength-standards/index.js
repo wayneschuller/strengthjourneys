@@ -114,11 +114,12 @@ export async function getStaticProps() {
 export default function StrengthStandardsHubPage({ relatedArticles }) {
   const { standards, isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
-  const title = "Strength Standards by Bodyweight, Age, and Sex";
+  // GSC review 2026-03-20
+  const title = "Strength Standards and Levels by Bodyweight, Age, and Sex";
   const description =
-    "Browse strength standards for squat, bench press, deadlift, and overhead press. Check beginner, intermediate, advanced, and elite benchmarks by bodyweight, age, and sex, then compare them to your estimated 1RM.";
+    "Compare strength standards and strength levels for squat, bench press, deadlift, and strict press by bodyweight, age, and sex, from active to elite.";
   const keywords =
-    "strength standards, strength levels, strength standards by bodyweight, strength calculator, bench press standards, squat standards, deadlift standards, overhead press standards";
+    "strength standards, strength levels, strength level calculator, strength standards by bodyweight, bench press standards, squat standards, deadlift standards, overhead press standards";
   const canonicalURL = STRENGTH_STANDARDS_HUB_URL;
   const structuredData = {
     "@context": "https://schema.org",
@@ -188,12 +189,12 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
       <PageContainer>
         <PageHeader>
           <PageHeaderHeading icon={BicepsFlexed}>
-            Strength Standards
+            Strength Standards and Levels
           </PageHeaderHeading>
           <PageHeaderDescription>
-            Browse benchmark pages for squat, bench press, deadlift, and
-            strict press. These standards are designed for the question most
-            lifters actually ask: how strong is this lift for someone like me?
+            Compare strength levels for squat, bench press, deadlift, and
+            strict press using standards adjusted for bodyweight, age, and sex.
+            See where your estimated max lands from active through elite.
           </PageHeaderDescription>
           <PageHeaderRight>
             <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">

@@ -166,7 +166,9 @@ const PROMPT_MESSAGES = {
         : null,
       meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
       meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
-      meta.provisionedSheetId ? `Provisioned sheet ID: ${meta.provisionedSheetId}` : null,
+      meta.provisionedSheetId != null
+        ? `Provisioned sheet ID exists: ${meta.provisionedSheetId ? "yes" : "no"}`
+        : null,
       meta.activationPromptedAt
         ? `Activation prompt sent: ${friendlyDate(meta.activationPromptedAt)}`
         : null,
@@ -223,8 +225,8 @@ const PROMPT_MESSAGES = {
         ? `Provisioning method: ${meta.provisioningMethod}`
         : null,
       meta.sheetName ? `New sheet: ${meta.sheetName}` : null,
-      meta.previousProvisionedSheetId
-        ? `Previous sheet ID: ${meta.previousProvisionedSheetId}`
+      meta.previousProvisionedSheetId != null
+        ? `Previous sheet ID existed: ${meta.previousProvisionedSheetId ? "yes" : "no"}`
         : null,
       meta.previousSheetState
         ? `Previous sheet state: ${meta.previousSheetState}`
@@ -248,7 +250,7 @@ const PROMPT_MESSAGES = {
       meta.reason ? `Reason: ${meta.reason}` : null,
       meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
       meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
-      meta.ssid ? `Sheet ID: ${meta.ssid}` : null,
+      meta.ssid != null ? `Sheet ID exists: ${meta.ssid ? "yes" : "no"}` : null,
       meta.sheetName ? `Sheet: ${meta.sheetName}` : null,
       meta.hadLocalSheetBefore != null
         ? `Had local sheet before: ${meta.hadLocalSheetBefore ? "yes" : "no"}`

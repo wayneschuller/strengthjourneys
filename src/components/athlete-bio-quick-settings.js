@@ -221,10 +221,13 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <div className="rounded-xl border bg-background/40 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <Label htmlFor="page-athlete-age-slider" className="text-base font-semibold">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1.35fr)] xl:items-end">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-end justify-between gap-4">
+            <Label
+              htmlFor="page-athlete-age-slider"
+              className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               Age
             </Label>
             <div className="text-2xl font-bold">{age}</div>
@@ -238,20 +241,22 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
             onValueChange={(values) => setAge(values[0])}
             aria-label="Age"
           />
-          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>13</span>
             <span>100</span>
           </div>
         </div>
 
-        <div className="rounded-xl border bg-background/40 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <Label className="text-base font-semibold">Sex</Label>
+        <div className="flex flex-col gap-2 xl:min-w-[17rem]">
+          <div className="flex items-end justify-between gap-4">
+            <Label className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Sex
+            </Label>
             <Badge variant="secondary" className="capitalize">
               {sex}
             </Badge>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
               variant={sex === "male" ? "default" : "outline"}
@@ -273,11 +278,11 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
           </div>
         </div>
 
-        <div className="rounded-xl border bg-background/40 p-4 lg:col-span-2">
-          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <Label
               htmlFor="page-athlete-bodyweight-slider"
-              className="text-base font-semibold"
+              className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
             >
               Bodyweight
             </Label>
@@ -303,7 +308,7 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
             onValueChange={(values) => setBodyWeight(values[0])}
             aria-label="Bodyweight"
           />
-          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>
               {isMetric ? 40 : 90}
               {unit}

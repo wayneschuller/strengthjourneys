@@ -37,14 +37,6 @@ import {
   getStrengthStandardsUrl,
 } from "@/lib/strength-standards-pages";
 
-const STANDARD_LEVELS = [
-  { key: "physicallyActive", label: "Physically Active" },
-  { key: "beginner", label: "Beginner" },
-  { key: "intermediate", label: "Intermediate" },
-  { key: "advanced", label: "Advanced" },
-  { key: "elite", label: "Elite" },
-];
-
 const INTERPRETATION_COPY = {
   "Bench Press": {
     title: "What Counts As A Good Bench Press For Your Bodyweight?",
@@ -209,8 +201,6 @@ export default function StrengthStandardsLiftPage({ page, relatedArticles }) {
 
 function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
   const { standards, isMetric } = useAthleteBio();
-  const standard = standards?.[page.liftType];
-  const unitLabel = isMetric ? "kg" : "lb";
   const interpretation = INTERPRETATION_COPY[page.liftType];
   const liftSvgPath = getLiftSvgPath(page.liftType);
 
@@ -276,26 +266,6 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
             <StrengthLevelsDataCta page={page} />
           </CardContent>
         </Card>
-
-        {standard && (
-          <section className="grid grid-cols-2 gap-4 xl:grid-cols-5">
-            {STANDARD_LEVELS.map(({ key, label }) => (
-              <Card key={key}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{label}</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-2xl font-bold">
-                    {standard[key]}
-                    <span className="ml-1 text-base font-medium text-muted-foreground">
-                      {unitLabel}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </section>
-        )}
 
         {interpretation && (
           <section className="overflow-hidden rounded-lg border">

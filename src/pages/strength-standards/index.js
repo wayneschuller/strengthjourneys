@@ -200,6 +200,12 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                     >
                       {page.navLabel} 1RM Calculator
                     </Link>
+                    <Link
+                      href={page.insightUrl}
+                      className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+                    >
+                      {page.navLabel} Guide
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

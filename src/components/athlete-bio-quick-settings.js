@@ -173,6 +173,158 @@ export function AthleteBioQuickSettings() {
 }
 
 /**
+ * Larger slider-based athlete bio controls for pages where the bio data is a
+ * primary part of the experience, such as standards and percentile tools.
+ *
+ * @param {Object} props
+ * @param {Function} [props.onUnitChange] - Optional override for unit changes. Receives next isMetric boolean.
+ * @param {string} [props.className] - Optional wrapper classes.
+ */
+export function AthleteBioSliderSettings({ onUnitChange, className }) {
+  const {
+    age,
+    setAge,
+    bodyWeight,
+    setBodyWeight,
+    sex,
+    setSex,
+    isMetric,
+    toggleIsMetric,
+    bioDataIsDefault,
+  } = useAthleteBio();
+
+  const handleUnitSwitch = onUnitChange ?? toggleIsMetric;
+  const unit = isMetric ? "kg" : "lb";
+
+  return (
+    <div className={cn("flex flex-col gap-6", className)}>
+      <div className="flex flex-col gap-2 text-center">
+        <p
+          className={cn(
+            "text-sm",
+            bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
+          )}
+        >
+          Strength levels for a{" "}
+          <strong className="font-semibold text-foreground">
+            {bodyWeight}
+            {unit}
+          </strong>{" "}
+          <strong className="font-semibold text-foreground">{sex}</strong>, age{" "}
+          <strong className="font-semibold text-foreground">{age}</strong>.
+        </p>
+        {bioDataIsDefault && (
+          <p className="text-xs text-muted-foreground">
+            Set your real details so the standards reflect your profile instead
+            of the default starting values.
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <div className="rounded-xl border bg-background/40 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <Label htmlFor="page-athlete-age-slider" className="text-base font-semibold">
+              Age
+            </Label>
+            <div className="text-2xl font-bold">{age}</div>
+          </div>
+          <Slider
+            id="page-athlete-age-slider"
+            min={13}
+            max={100}
+            step={1}
+            value={[age]}
+            onValueChange={(values) => setAge(values[0])}
+            aria-label="Age"
+          />
+          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+            <span>13</span>
+            <span>100</span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-background/40 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <Label className="text-base font-semibold">Sex</Label>
+            <Badge variant="secondary" className="capitalize">
+              {sex}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              type="button"
+              variant={sex === "male" ? "default" : "outline"}
+              className="w-full"
+              onClick={() => setSex("male")}
+              aria-pressed={sex === "male"}
+            >
+              Male
+            </Button>
+            <Button
+              type="button"
+              variant={sex === "female" ? "default" : "outline"}
+              className="w-full"
+              onClick={() => setSex("female")}
+              aria-pressed={sex === "female"}
+            >
+              Female
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-background/40 p-4 lg:col-span-2">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Label
+              htmlFor="page-athlete-bodyweight-slider"
+              className="text-base font-semibold"
+            >
+              Bodyweight
+            </Label>
+            <div className="flex items-center gap-3">
+              <div className="text-2xl font-bold">
+                {bodyWeight}
+                <span className="ml-1 text-sm font-medium text-muted-foreground">
+                  {unit}
+                </span>
+              </div>
+              <UnitChooser
+                isMetric={isMetric}
+                onSwitchChange={handleUnitSwitch}
+              />
+            </div>
+          </div>
+          <Slider
+            id="page-athlete-bodyweight-slider"
+            min={isMetric ? 40 : 90}
+            max={isMetric ? 180 : 400}
+            step={1}
+            value={[bodyWeight]}
+            onValueChange={(values) => setBodyWeight(values[0])}
+            aria-label="Bodyweight"
+          />
+          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+            <span>
+              {isMetric ? 40 : 90}
+              {unit}
+            </span>
+            <span>
+              {isMetric ? 180 : 400}
+              {unit}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-center text-xs text-muted-foreground">
+        These settings stay in your browser and power personalised strength
+        standards across the site.
+      </p>
+    </div>
+  );
+}
+
+/**
  * Inline variant of the athlete bio settings panel, used inside the calculator's Big Four strength section.
  * Shows a bio summary line with an edit toggle that slides out compact age, sex, and bodyweight controls.
  * Auto-opens once on mount when bio data is genuinely at defaults (never set by the user).

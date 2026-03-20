@@ -5,7 +5,7 @@ import { NextSeo } from "next-seo";
 import { BicepsFlexed, Calculator, CircleDashed, LineChart } from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
-import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
+import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import {
   PageContainer,
   PageHeader,
@@ -169,7 +169,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
-              <AthleteBioInlineSettings />
+              <AthleteBioSliderSettings />
             </CardContent>
           </Card>
 

@@ -402,9 +402,9 @@ function StrengthLevelsDataCta({ page }) {
         <div className="space-y-1">
           <h3 className="text-base font-semibold">See Your Actual Lifts Ranked</h3>
           <p className="text-sm text-muted-foreground">
-            Connect your lifting log and Strength Journeys can compare your real{" "}
-            {page.navLabel.toLowerCase()} history against these standards
-            automatically.
+            Sign in to create your free lifting log. Track your real lifts over
+            time and see how your strength level stacks up against these
+            standards.
           </p>
         </div>
 

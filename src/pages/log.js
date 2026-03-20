@@ -3489,7 +3489,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
                 bestSetReps={set.reps}
                 bestSetWeight={set.weight}
                 asBadge
-                badgeClassName="h-8 rounded-full px-3 text-sm font-semibold"
+                badgeClassName="h-8 rounded-full px-3 text-xs font-semibold"
               />
             ) : null}
           />
@@ -3953,7 +3953,7 @@ function SetRow({
   }
 
   const hasBadges = !set._pending && Boolean(strengthBadge);
-  const metaBadgeClassName = "h-8 rounded-full px-3 text-sm font-semibold";
+  const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
 
   return (
     <motion.div

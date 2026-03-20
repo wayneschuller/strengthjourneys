@@ -8,7 +8,6 @@ import {
   BookOpen,
   Calculator,
   CircleDashed,
-  LineChart,
 } from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
@@ -53,6 +52,32 @@ const FAQ_ITEMS = [
     question: "Which lifts are covered in this cluster?",
     answer:
       "This cluster currently focuses on the big four barbell lifts: squat, bench press, deadlift, and strict press. The hub now shows all four together, with dedicated single-lift pages for deeper SEO targeting.",
+  },
+  {
+    question: "What do strength levels like beginner, intermediate, advanced, and elite actually mean?",
+    answer:
+      "They are comparison buckets. Your estimated max is matched against standards for lifters with a similar age, bodyweight, and sex, so the label tells you where your lift sits on the usual progression curve rather than giving you a random pass-fail score.",
+  },
+  {
+    question: "What if I want a strength percentile instead of just a level?",
+    answer:
+      "Use the How Strong Am I? calculator if you want a percentile-style answer. It is the better page for questions like how you compare to a broader lifting population instead of just asking which level bucket your lift falls into.",
+    ctaHref: "/how-strong-am-i",
+    ctaLabel: "Open How Strong Am I?",
+  },
+  {
+    question: "How do strength standards relate to the 1000lb club?",
+    answer:
+      "Strength standards tell you how strong each individual lift is. The 1000lb club calculator answers a different question: whether your squat, bench press, and deadlift total has crossed one of the classic strength milestones.",
+    ctaHref: "/1000lb-club-calculator",
+    ctaLabel: "Open the 1000lb Club Calculator",
+  },
+  {
+    question: "Is there a page for milestone goals like 200, 300, 400, and 500 pounds?",
+    answer:
+      "Yes. If you want a clearer milestone target for each lift, use the 200 300 400 500 Strength Club Calculator. It is built for the common gym milestones people chase before or alongside bigger total-based goals.",
+    ctaHref: "/200-300-400-500-strength-club-calculator",
+    ctaLabel: "Open the 200 300 400 500 Strength Club Calculator",
   },
 ];
 
@@ -244,31 +269,27 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
             ))}
           </section>
 
-          <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <InfoCard
-              title="Use Standards For Context"
-              description="Strength standards tell you what a lift means. They turn an isolated number into a category like beginner, intermediate, advanced, or elite."
-              icon={<BicepsFlexed className="h-5 w-5" />}
-            />
-            <InfoCard
-              title="Use Calculators For Estimates"
-              description="A 1RM calculator is still the cleanest way to estimate your max from a recent hard set. The two tools complement each other."
-              icon={<Calculator className="h-5 w-5" />}
-            />
-            <InfoCard
-              title="Use Insight Pages For Depth"
-              description="If you want charts, PR history, videos, and richer lift-by-lift guidance, the older insight pages are still the deeper destination."
-              icon={<LineChart className="h-5 w-5" />}
-            />
-          </section>
-
           <section className="rounded-lg border p-4">
             <h2 className="mb-4 text-xl font-semibold">Strength Standards FAQ</h2>
             <div className="space-y-4">
-              {FAQ_ITEMS.map(({ question, answer }) => (
+              {FAQ_ITEMS.map(({ question, answer, ctaHref, ctaLabel }) => (
                 <article key={question} className="rounded-lg border p-4">
                   <h3 className="text-base font-semibold">{question}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{answer}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {answer}
+                    {ctaHref ? (
+                      <>
+                        {" "}
+                        <Link
+                          href={ctaHref}
+                          className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
+                        >
+                          {ctaLabel}
+                        </Link>
+                        .
+                      </>
+                    ) : null}
+                  </p>
                 </article>
               ))}
             </div>
@@ -295,22 +316,6 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
         </div>
       </PageContainer>
     </>
-  );
-}
-
-function InfoCard({ title, description, icon }) {
-  return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          {icon}
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0 text-sm text-muted-foreground">
-        {description}
-      </CardContent>
-    </Card>
   );
 }
 

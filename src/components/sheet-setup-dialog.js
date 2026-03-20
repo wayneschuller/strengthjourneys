@@ -226,6 +226,8 @@ export function SheetSetupDialog() {
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
   const dialogInitialSsidRef = useRef(null);
+  const flowStartedAtRef = useRef(null);
+  const outcomeReportedRef = useRef(false);
   const dialogCopy = getSheetDialogCopy({
     intent: flowIntent,
     state: onboardingState,
@@ -248,6 +250,23 @@ export function SheetSetupDialog() {
     setCreatedSheetReason(null);
     setIsDisconnectingCurrentSheet(false);
   }, []);
+
+  const reportOnboardingEvent = useCallback(
+    async (event, meta = {}) => {
+      if (authStatus !== "authenticated") return;
+      try {
+        await fetch("/api/founder/onboarding-event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event, meta }),
+          keepalive: true,
+        });
+      } catch (error) {
+        devLog("[sheet-setup] founder onboarding event failed:", error?.message || error);
+      }
+    },
+    [authStatus],
+  );
 
   const handlePickerReady = useCallback((picker) => {
     setOpenPicker(() => picker);
@@ -376,6 +395,18 @@ export function SheetSetupDialog() {
       if (payload?.action === "recover_returning_user") {
         setOnboardingState("fallback_error");
         setSheetDiscoveryStatusMessage("");
+        if (!outcomeReportedRef.current) {
+          outcomeReportedRef.current = true;
+          void reportOnboardingEvent("onboarding-failed", {
+            intent,
+            state: "recover_returning_user",
+            reason: payload?.reason || "no_match",
+            hadLocalSheetBefore,
+            durationMs: flowStartedAtRef.current
+              ? Date.now() - flowStartedAtRef.current
+              : null,
+          });
+        }
         return;
       }
 
@@ -408,14 +439,38 @@ export function SheetSetupDialog() {
         if (payload?.action === "create_new_user_sheet" && router.pathname !== "/") {
           void router.replace("/");
         }
+        if (!outcomeReportedRef.current) {
+          outcomeReportedRef.current = true;
+          void reportOnboardingEvent("onboarding-success", {
+            intent,
+            resultAction: payload.action,
+            reason: payload?.reason || null,
+            ssid: payload?.ssid || null,
+            sheetName: payload?.name || null,
+            hadLocalSheetBefore,
+            durationMs: flowStartedAtRef.current
+              ? Date.now() - flowStartedAtRef.current
+              : null,
+          });
+        }
       }
     },
-    [enrichCandidateSheets, exitSignedInDemoMode, resetUiState, router, selectSheet],
+    [
+      enrichCandidateSheets,
+      exitSignedInDemoMode,
+      hadLocalSheetBefore,
+      reportOnboardingEvent,
+      resetUiState,
+      router,
+      selectSheet,
+    ],
   );
 
   const resolveSheetFlow = useCallback(
     async ({ intent, hadLocalBefore = false } = {}) => {
       dialogInitialSsidRef.current = sheetInfo?.ssid || null;
+      flowStartedAtRef.current = Date.now();
+      outcomeReportedRef.current = false;
       setLoadingQuip(pickRandomSheetSetupQuip());
       setOpen(true);
       setProvisionError(null);
@@ -452,11 +507,24 @@ export function SheetSetupDialog() {
         setSheetDiscoveryStatusMessage("");
         setIsCandidateEnrichmentLoading(false);
         provisioningStartedRef.current = false;
+        if (!outcomeReportedRef.current) {
+          outcomeReportedRef.current = true;
+          void reportOnboardingEvent("onboarding-failed", {
+            intent: intent || "bootstrap",
+            state: "resolve_failed",
+            reason: "automatic_setup_failed",
+            hadLocalSheetBefore: Boolean(hadLocalBefore),
+            durationMs: flowStartedAtRef.current
+              ? Date.now() - flowStartedAtRef.current
+              : null,
+            provisionError: error?.message || "Automatic setup failed",
+          });
+        }
       } finally {
         setIsProvisionActionLoading(false);
       }
     },
-    [handleResolvedAction, sheetInfo?.ssid],
+    [handleResolvedAction, reportOnboardingEvent, sheetInfo?.ssid],
   );
 
   const runLinkAction = useCallback(
@@ -486,11 +554,24 @@ export function SheetSetupDialog() {
       } catch (error) {
         setProvisionError(error?.message || "Sheet linking failed");
         setOnboardingState(intent === "switch_sheet" ? "choose_sheet" : "fallback_error");
+        if (!outcomeReportedRef.current && intent !== "switch_sheet") {
+          outcomeReportedRef.current = true;
+          void reportOnboardingEvent("onboarding-failed", {
+            intent,
+            state: "link_failed",
+            reason: "sheet_linking_failed",
+            hadLocalSheetBefore,
+            durationMs: flowStartedAtRef.current
+              ? Date.now() - flowStartedAtRef.current
+              : null,
+            provisionError: error?.message || "Sheet linking failed",
+          });
+        }
       } finally {
         setIsProvisionActionLoading(false);
       }
     },
-    [flowIntent, hadLocalSheetBefore, handleResolvedAction],
+    [flowIntent, hadLocalSheetBefore, handleResolvedAction, reportOnboardingEvent],
   );
 
   const disconnectCurrentSheet = useCallback(async () => {
@@ -522,6 +603,24 @@ export function SheetSetupDialog() {
   }, [clearSheet, enterSignedInDemoMode]);
 
   const closeDialog = useCallback(() => {
+    const shouldReportAbort =
+      authStatus === "authenticated" &&
+      !sheetInfo?.ssid &&
+      provisioningStartedRef.current &&
+      !outcomeReportedRef.current;
+    if (shouldReportAbort) {
+      outcomeReportedRef.current = true;
+      void reportOnboardingEvent("onboarding-aborted", {
+        intent: flowIntent,
+        state: onboardingState,
+        reason: "dialog_closed",
+        hadLocalSheetBefore,
+        durationMs: flowStartedAtRef.current
+          ? Date.now() - flowStartedAtRef.current
+          : null,
+        provisionError: provisionError || null,
+      });
+    }
     setOpen(false);
     dialogInitialSsidRef.current = sheetInfo?.ssid || null;
     if (authStatus === "authenticated" && !sheetInfo?.ssid) {
@@ -530,13 +629,25 @@ export function SheetSetupDialog() {
     resetUiState();
     launchedFromUserRef.current = false;
     provisioningStartedRef.current = Boolean(sheetInfo?.ssid);
-  }, [authStatus, enterSignedInDemoMode, resetUiState, sheetInfo?.ssid]);
+  }, [
+    authStatus,
+    enterSignedInDemoMode,
+    flowIntent,
+    hadLocalSheetBefore,
+    onboardingState,
+    provisionError,
+    reportOnboardingEvent,
+    resetUiState,
+    sheetInfo?.ssid,
+  ]);
 
   useEffect(() => {
     if (authStatus !== "authenticated") {
       setOpen(false);
       launchedFromUserRef.current = false;
       provisioningStartedRef.current = false;
+      outcomeReportedRef.current = false;
+      flowStartedAtRef.current = null;
       resetUiState();
     }
   }, [authStatus, resetUiState]);

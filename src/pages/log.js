@@ -3980,7 +3980,7 @@ function SetRow({
         boxShadow: { duration: 0.6, ease: "easeOut" },
       }}
     >
-      {/* Main row: reps@weight + notes + (desktop: badges/trash) */}
+      {/* Main row: reps@weight + notes */}
       <div className="flex items-center gap-4">
         {/* Reps @ Weight unit — tight visual unit.
             Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
@@ -4073,9 +4073,11 @@ function SetRow({
             </div>
           )}
         </div>
+      </div>
 
-        {/* Desktop: badges + trash inline */}
-        <div className="hidden w-[12.5rem] shrink-0 items-start justify-end gap-1 md:flex">
+      {/* Desktop: badges + ranking + trash on second row */}
+      {(hasBadges || rankingSummary || onDelete || set._pending) && (
+        <div className="mt-2 hidden items-center justify-end gap-2 md:flex">
           {set._pending ? (
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
           ) : (
@@ -4087,7 +4089,7 @@ function SetRow({
                 >
                   <Badge
                     variant="outline"
-                    className={cn("max-w-[9rem] text-[10px] uppercase tracking-wide", prToneClass)}
+                    className={cn("h-9 max-w-[12rem] px-3 text-[10px] uppercase tracking-wide", prToneClass)}
                   >
                     <span className="truncate">{rankingSummary}</span>
                   </Badge>
@@ -4105,7 +4107,7 @@ function SetRow({
             </>
           )}
         </div>
-      </div>
+      )}
 
       {/* Mobile: badges + ranking + trash on second row */}
       {(hasBadges || rankingSummary || onDelete || set._pending) && (
@@ -4121,7 +4123,7 @@ function SetRow({
                 >
                   <Badge
                     variant="outline"
-                    className={cn("max-w-[11rem] text-[10px] uppercase tracking-wide", prToneClass)}
+                    className={cn("h-8 max-w-[11rem] px-3 text-[10px] uppercase tracking-wide", prToneClass)}
                   >
                     <span className="truncate">{rankingSummary}</span>
                   </Badge>

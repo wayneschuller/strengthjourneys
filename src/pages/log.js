@@ -8,6 +8,7 @@ import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { cn } from "@/lib/utils";
 import {
@@ -205,6 +206,7 @@ export default function LogSessionPage() {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
+    isDemoMode,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { addEntry: addLogEntry, clearEntries } = useDevActivityMonitor();
@@ -218,6 +220,7 @@ export default function LogSessionPage() {
       return null;
     }
   }, [isClient]);
+  const hasLinkedSheet = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
 
   useEffect(() => {
     clearEntries();
@@ -1687,6 +1690,26 @@ export default function LogSessionPage() {
         </p>
         <Button asChild>
           <Link href="/">Get Started</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (authStatus === "authenticated" && !hasLinkedSheet) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <Dumbbell className="h-12 w-12 text-muted-foreground" />
+        <h1 className="text-2xl font-bold">Set up your Google Sheet first</h1>
+        <p className="max-w-md text-muted-foreground">
+          The log works on top of your linked training sheet. Connect or create one
+          first, then you can log sessions here.
+        </p>
+        <Button
+          onClick={() => {
+            openSheetSetupDialog("bootstrap");
+          }}
+        >
+          Set Up Google Sheet
         </Button>
       </div>
     );

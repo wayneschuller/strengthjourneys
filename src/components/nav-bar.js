@@ -16,6 +16,7 @@ import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 
 import {
   Tooltip,
@@ -146,6 +147,8 @@ function ensureCannyChangelog() {
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
+  const { sheetInfo, isDemoMode } = useUserLiftingData();
+  const canOpenLog = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
 
   return (
     <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
@@ -155,7 +158,7 @@ export function NavBar() {
           <MobileNav />
         </div>
         <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 py-3">
-          {authStatus === "authenticated" && (
+          {canOpenLog && (
             <Button
               asChild
               size="sm"
@@ -166,6 +169,19 @@ export function NavBar() {
                 <span className="xl:hidden">Log</span>
                 <span className="hidden xl:inline">Log Session</span>
               </Link>
+            </Button>
+          )}
+          {authStatus === "authenticated" && !canOpenLog && (
+            <Button
+              size="sm"
+              className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+              onClick={() => {
+                openSheetSetupDialog("bootstrap");
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+              <span className="xl:hidden">Set Up</span>
+              <span className="hidden xl:inline">Set Up Sheet</span>
             </Button>
           )}
           <MiniTimer />

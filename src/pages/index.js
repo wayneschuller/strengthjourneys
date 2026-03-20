@@ -256,6 +256,7 @@ export default function Home() {
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
   const hasLinkedSheet = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
+  const canAccessLog = hasLinkedSheet;
   const { dashboardStage } = useMemo(
     () =>
       getDashboardStage({
@@ -379,6 +380,7 @@ export default function Home() {
         <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {featurePages
             .filter((card) => !card.authRequired || authStatus === "authenticated")
+            .filter((card) => card.href !== "/log" || canAccessLog)
             .map((card, index) => (
               <FeatureCard key={index} index={index} {...card} />
             ))}

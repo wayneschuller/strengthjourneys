@@ -74,6 +74,9 @@ const BIG_FOUR = [
   { name: "Deadlift", icon: "/deadlift.svg", slug: "barbell-deadlift-insights" },
   { name: "Strict Press", icon: "/strict_press.svg", slug: "barbell-strict-press-insights" },
 ];
+const BIG_FOUR_INSIGHT_URLS = Object.fromEntries(
+  BIG_FOUR.map((lift) => [lift.name, `/${lift.slug}`]),
+);
 
 const COACHED_LIFTS = [
   {
@@ -3553,6 +3556,18 @@ function UnitLabel({ unitType, mismatch }) {
   );
 }
 
+function getLogPRBadgeHref(liftType) {
+  if (!liftType) return null;
+  if (BIG_FOUR_INSIGHT_URLS[liftType]) return BIG_FOUR_INSIGHT_URLS[liftType];
+  return `/lift-explorer?liftType=${encodeURIComponent(liftType)}`;
+}
+
+function getLogPRBadgeTooltip(liftType) {
+  if (!liftType) return "Open lift details";
+  if (BIG_FOUR_INSIGHT_URLS[liftType]) return `Open ${liftType} insights`;
+  return `Open Lift Explorer for ${liftType}`;
+}
+
 /**
  * Every visible PR marker gets a small entrance burst and shimmer. This is the
  * baseline celebration treatment; stronger milestones add border, confetti, and
@@ -3954,6 +3969,8 @@ function SetRow({
 
   const hasBadges = !set._pending && Boolean(strengthBadge);
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
+  const prBadgeHref = getLogPRBadgeHref(set.liftType);
+  const prBadgeTooltip = getLogPRBadgeTooltip(set.liftType);
 
   return (
     <motion.div
@@ -4082,28 +4099,57 @@ function SetRow({
           ) : (
             <>
               <div className="ml-auto flex items-center gap-2">
-                {strengthBadge}
+                {strengthBadge && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>{strengthBadge}</TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Open strength calculator details</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 {rankingSummary && (
-                  <CelebrationReveal
-                    animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
-                  >
-                    <Badge
-                      variant="outline"
-                      className={cn(metaBadgeClassName, "max-w-[10.5rem]", prToneClass)}
-                    >
-                      <span className="truncate">{rankingSummary}</span>
-                    </Badge>
-                  </CelebrationReveal>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link href={prBadgeHref} className="inline-flex">
+                          <CelebrationReveal
+                            animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
+                          >
+                            <Badge
+                              variant="outline"
+                              className={cn(metaBadgeClassName, "max-w-[10.5rem]", prToneClass)}
+                            >
+                              <span className="truncate">{rankingSummary}</span>
+                            </Badge>
+                          </CelebrationReveal>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>{prBadgeTooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
               {onDelete && (
-                <button
-                  className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
-                  onClick={onDelete}
-                  aria-label="Delete set"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+                        onClick={onDelete}
+                        aria-label="Delete set"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Delete set</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </>
           )}
@@ -4117,28 +4163,57 @@ function SetRow({
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
           ) : (
             <>
-              {strengthBadge}
+              {strengthBadge && (
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>{strengthBadge}</TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Open strength calculator details</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               {rankingSummary && (
-                <CelebrationReveal
-                  animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
-                >
-                  <Badge
-                    variant="outline"
-                    className={cn(metaBadgeClassName, "max-w-[11rem]", prToneClass)}
-                  >
-                    <span className="truncate">{rankingSummary}</span>
-                  </Badge>
-                </CelebrationReveal>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link href={prBadgeHref} className="inline-flex">
+                        <CelebrationReveal
+                          animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
+                        >
+                          <Badge
+                            variant="outline"
+                            className={cn(metaBadgeClassName, "max-w-[11rem]", prToneClass)}
+                          >
+                            <span className="truncate">{rankingSummary}</span>
+                          </Badge>
+                        </CelebrationReveal>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{prBadgeTooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               <div className="flex-1" />
               {onDelete && (
-                <button
-                  className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive"
-                  onClick={onDelete}
-                  aria-label="Delete set"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive"
+                        onClick={onDelete}
+                        aria-label="Delete set"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Delete set</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </>
           )}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { RelatedArticles } from "@/components/article-cards";
@@ -89,11 +90,19 @@ export default function LiftExplorer({ relatedArticles }) {
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
 function LiftExplorerMain({ relatedArticles }) {
+  const router = useRouter();
   const { liftTypes } = useUserLiftingData();
   const [selectedLiftType, setSelectedLiftType] = useState(null);
+  const requestedLiftType =
+    typeof router.query.liftType === "string" ? router.query.liftType : null;
+  const requestedLiftSelection =
+    requestedLiftType && liftTypes?.length
+      ? liftTypes.find((lift) => lift.liftType === requestedLiftType)?.liftType ?? null
+      : null;
 
   // null means "auto" — default to the user's most frequent lift
-  const effectiveLiftType = selectedLiftType ?? liftTypes?.[0]?.liftType ?? null;
+  const effectiveLiftType =
+    selectedLiftType ?? requestedLiftSelection ?? liftTypes?.[0]?.liftType ?? null;
 
   return (
     <PageContainer>

@@ -291,11 +291,6 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
           </div>
         </div>
       </div>
-
-      <p className="text-center text-xs text-muted-foreground">
-        These settings stay in your browser and power personalised strength
-        standards across the site.
-      </p>
     </div>
   );
 }

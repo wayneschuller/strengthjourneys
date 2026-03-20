@@ -7,7 +7,6 @@ const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },
   { href: "/1000lb-club-calculator", label: "1000lb Club Calculator" },
   { href: "/strength-standards", label: "Strength Standards" },
-  { href: "/strength-standards/big-four", label: "Big Four Strength Standards" },
   { href: "/how-strong-am-i", label: "How Strong Am I?" },
   { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },
   { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
@@ -28,6 +27,13 @@ const FORMULA_CALCULATORS = [
   { href: "/calculator/mcglothin-formula-1rm-calculator", label: "McGlothin Formula 1RM Calculator" },
   { href: "/calculator/lombardi-formula-1rm-calculator", label: "Lombardi Formula 1RM Calculator" },
   { href: "/calculator/oconner-formula-1rm-calculator", label: "O'Conner Formula 1RM Calculator" },
+];
+
+const STRENGTH_STANDARDS_LINKS = [
+  { href: "/strength-standards/squat", label: "Squat Strength Standards" },
+  { href: "/strength-standards/bench-press", label: "Bench Press Strength Standards" },
+  { href: "/strength-standards/deadlift", label: "Deadlift Strength Standards" },
+  { href: "/strength-standards/strict-press", label: "Overhead Press Strength Standards" },
 ];
 
 const RESOURCES = [
@@ -128,17 +134,40 @@ export function Footer() {
         </div>
 
         <div className="mt-8 border-t pt-6">
-          <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">More Calculators</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {[...LIFT_CALCULATORS, ...FORMULA_CALCULATORS].map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
-              >
-                {label}
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div>
+              <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
+                More Calculators
+              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {[...LIFT_CALCULATORS, ...FORMULA_CALCULATORS].map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
+                Strength Standards
+              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {STRENGTH_STANDARDS_LINKS.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

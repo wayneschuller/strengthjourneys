@@ -84,9 +84,9 @@ export const featurePages = [
   },
   {
     href: "/strength-standards",
-    title: "Big Four Strength Standards",
+    title: "Strength Standards",
     description:
-      "Check beginner, intermediate, advanced, and elite benchmarks for each Big Four lift.",
+      "Check beginner, intermediate, advanced, and elite benchmarks for squat, bench press, deadlift, and strict press.",
     IconComponent: BicepsFlexed,
   },
   {

@@ -144,8 +144,6 @@ export const STRENGTH_STANDARDS_PAGES = [
   },
 ];
 
-export const STRENGTH_STANDARDS_BIG_FOUR_URL = "/strength-standards/big-four";
-
 export function getStrengthStandardsPageBySlug(slug) {
   return STRENGTH_STANDARDS_PAGES.find((page) => page.slug === slug) ?? null;
 }

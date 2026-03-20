@@ -73,7 +73,7 @@ import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings
 const BIO_SETTINGS_PAGES = [
   "/calculator",
   "/big-four-strength-standards-calculator",
-  "/strength-standards/big-four",
+  "/strength-standards",
 ];
 const CANNY_APP_ID = "65ae4d4c921071bb0aae99c3";
 
@@ -636,8 +636,8 @@ function CalculatorsMenu() {
       icon: <Flame className="h-5 w-5" />,
     },
     {
-      title: "Big Four Strength Standards",
-      href: "/strength-standards/big-four",
+      title: "Strength Standards",
+      href: "/strength-standards",
       icon: <BarChart className="h-5 w-5" />,
     },
     {

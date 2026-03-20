@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { BicepsFlexed, Calculator, CircleDashed, LineChart } from "lucide-react";
@@ -19,9 +20,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { StandardsSlider } from "@/components/standards-slider";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useLiftColors } from "@/hooks/use-lift-colors";
+import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { fetchRelatedArticles } from "@/lib/sanity-io";
 import {
-  STRENGTH_STANDARDS_BIG_FOUR_URL,
   STRENGTH_STANDARDS_HUB_URL,
   STRENGTH_STANDARDS_PAGES,
   getStrengthStandardsUrl,
@@ -41,7 +45,7 @@ const FAQ_ITEMS = [
   {
     question: "Which lifts are covered in this cluster?",
     answer:
-      "This cluster currently focuses on the big four barbell lifts: squat, bench press, deadlift, and strict press, plus a combined big four standards page.",
+      "This cluster currently focuses on the big four barbell lifts: squat, bench press, deadlift, and strict press. The hub now shows all four together, with dedicated single-lift pages for deeper SEO targeting.",
   },
 ];
 
@@ -57,6 +61,8 @@ export async function getStaticProps() {
 }
 
 export default function StrengthStandardsHubPage({ relatedArticles }) {
+  const { standards, isMetric } = useAthleteBio();
+  const { getColor } = useLiftColors();
   const title = "Strength Standards by Bodyweight, Age, and Sex";
   const description =
     "Browse strength standards for squat, bench press, deadlift, and overhead press. Check beginner, intermediate, advanced, and elite benchmarks by bodyweight, age, and sex, then compare them to your estimated 1RM.";
@@ -141,15 +147,6 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
           <PageHeaderRight>
             <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
               <Link
-                href={STRENGTH_STANDARDS_BIG_FOUR_URL}
-                className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
-              >
-                <h3 className="text-base font-semibold">Big Four Standards</h3>
-                <p className="text-sm">
-                  See all four lifts together on one standards page.
-                </p>
-              </Link>
-              <Link
                 href="/calculator"
                 className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
               >
@@ -178,16 +175,41 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
 
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {STRENGTH_STANDARDS_PAGES.map((page) => (
-              <Card key={page.slug} className="h-full">
-                <CardHeader>
-                  <CardTitle>{page.pageTitle}</CardTitle>
-                  <CardDescription>{page.intro}</CardDescription>
+              <Card key={`overview-${page.slug}`} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border bg-muted/40 p-2">
+                      {getLiftSvgPath(page.liftType) ? (
+                        <Image
+                          src={getLiftSvgPath(page.liftType)}
+                          alt=""
+                          width={48}
+                          height={48}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0">
+                      <CardTitle
+                        className="text-xl underline decoration-2 underline-offset-2"
+                        style={{ textDecorationColor: getColor(page.liftType) }}
+                      >
+                        {page.pageTitle}
+                      </CardTitle>
+                      <CardDescription className="mt-2">
+                        Live standards preview for {page.navLabel.toLowerCase()}.
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="flex h-full flex-col gap-4">
-                  <p className="text-sm text-muted-foreground">
-                    {page.supportingCopy}
-                  </p>
-                  <div className="flex flex-wrap gap-3 pt-1">
+                <CardContent className="flex flex-col gap-4">
+                  <StandardsSlider
+                    liftType={page.liftType}
+                    standards={standards}
+                    isMetric={isMetric}
+                    hideRating
+                  />
+                  <div className="flex flex-wrap gap-3">
                     <Link
                       href={getStrengthStandardsUrl(page.slug)}
                       className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
@@ -242,13 +264,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
             </div>
           </section>
 
-          <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <QuickLinkCard
-              href={STRENGTH_STANDARDS_BIG_FOUR_URL}
-              title="Big Four Standards"
-              description="Check all four benchmark lifts on one page."
-              icon={<BicepsFlexed className="h-5 w-5" />}
-            />
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <QuickLinkCard
               href="/how-strong-am-i"
               title="How Strong Am I?"

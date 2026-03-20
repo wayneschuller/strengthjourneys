@@ -37,13 +37,13 @@ const nextConfig = {
       // 2026-03-08: Strength Level Calculator was rebranded to Big Four Strength Standards Calculator.
       {
         source: "/strength-level-calculator",
-        destination: "/strength-standards/big-four",
+        destination: "/strength-standards",
         permanent: true,
       },
-      // 2026-03-20: Big Four standards now live inside the strength-standards cluster.
+      // 2026-03-20: Big Four standards now live on the cluster root.
       {
         source: "/big-four-strength-standards-calculator",
-        destination: "/strength-standards/big-four",
+        destination: "/strength-standards",
         permanent: true,
       },
       // 2024-09-01: Preserve traffic from the old manually-authored article slug after Sanity migration.

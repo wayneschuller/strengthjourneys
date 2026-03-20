@@ -480,9 +480,9 @@ function BigFourBarbellInsightsMenu() {
             >
               <>
                 {/* Short title on small screens */}
-                <span className="hidden md:block xl:hidden">Big Four</span>
+                <span className="hidden md:block 2xl:hidden">Big Four</span>
                 {/* Full title on larger screens */}
-                <span className="hidden xl:block">Big Four Barbell Lifts</span>
+                <span className="hidden 2xl:block">Big Four Barbell Lifts</span>
               </>
             </NavigationMenuTrigger>
             <NavigationMenuContent className="">
@@ -586,9 +586,9 @@ function StrengthInsightsMenu() {
           >
             <>
               {/* Short title on small screens */}
-              <span className="hidden md:block xl:hidden">Insights</span>
+              <span className="hidden md:block 2xl:hidden">Insights</span>
               {/* Full title on larger screens */}
-              <span className="hidden xl:block">Strength Insights</span>
+              <span className="hidden 2xl:block">Strength Insights</span>
             </>
           </NavigationMenuTrigger>
           <NavigationMenuContent>

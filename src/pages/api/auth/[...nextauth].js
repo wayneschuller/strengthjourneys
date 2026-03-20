@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { kv } from "@vercel/kv";
 import { Resend } from "resend";
 import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 import { devLog } from "@/lib/processing-utils";
@@ -77,7 +78,8 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
-      await promptDeveloper("sign-in", user);
+      const signInMeta = await getSignInSupportMeta(user?.email);
+      await promptDeveloper("sign-in", user, signInMeta);
       return true;
     },
     async jwt({ token, user, account }) {
@@ -152,9 +154,30 @@ function daysAgo(isoString) {
 }
 
 const PROMPT_MESSAGES = {
-  "sign-in": (name, email, timeStr) => ({
+  "sign-in": (name, email, timeStr, meta) => ({
     subject: `[SJ] Sign-in — ${name}`,
-    text: `${name} (${email}) signed in at ${timeStr}.`,
+    text: [
+      `${name} (${email}) signed in at ${timeStr}.`,
+      meta.kvLookupFailed ? `KV lookup failed: ${meta.kvLookupFailed}` : null,
+      meta.hasKvRecord != null ? `KV record exists: ${meta.hasKvRecord ? "yes" : "no"}` : null,
+      meta.connectedAt ? `Connected at: ${friendlyDate(meta.connectedAt)}` : null,
+      meta.lastSeenAt
+        ? `Last seen: ${friendlyDate(meta.lastSeenAt)} (${daysAgo(meta.lastSeenAt)})`
+        : null,
+      meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
+      meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
+      meta.provisionedSheetId != null
+        ? `Provisioned sheet ID exists: ${meta.provisionedSheetId ? "yes" : "no"}`
+        : null,
+      meta.activationPromptedAt
+        ? `Activation prompt sent: ${friendlyDate(meta.activationPromptedAt)}`
+        : null,
+      meta.returnPromptedAt
+        ? `Return prompt sent: ${friendlyDate(meta.returnPromptedAt)}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
   }),
   activated: (name, email, timeStr, meta) => ({
     subject: `[SJ] Activated — ${name}`,
@@ -202,8 +225,8 @@ const PROMPT_MESSAGES = {
         ? `Provisioning method: ${meta.provisioningMethod}`
         : null,
       meta.sheetName ? `New sheet: ${meta.sheetName}` : null,
-      meta.previousProvisionedSheetId
-        ? `Previous sheet ID: ${meta.previousProvisionedSheetId}`
+      meta.previousProvisionedSheetId != null
+        ? `Previous sheet ID existed: ${meta.previousProvisionedSheetId ? "yes" : "no"}`
         : null,
       meta.previousSheetState
         ? `Previous sheet state: ${meta.previousSheetState}`
@@ -218,7 +241,87 @@ const PROMPT_MESSAGES = {
       .filter(Boolean)
       .join("\n"),
   }),
+  "onboarding-success": (name, email, timeStr, meta) => ({
+    subject: `[SJ] Onboarding success — ${name}`,
+    text: [
+      `${name} (${email}) completed onboarding at ${timeStr}.`,
+      meta.intent ? `Intent: ${meta.intent}` : null,
+      meta.resultAction ? `Result action: ${meta.resultAction}` : null,
+      meta.reason ? `Reason: ${meta.reason}` : null,
+      meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
+      meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
+      meta.ssid != null ? `Sheet ID exists: ${meta.ssid ? "yes" : "no"}` : null,
+      meta.sheetName ? `Sheet: ${meta.sheetName}` : null,
+      meta.hadLocalSheetBefore != null
+        ? `Had local sheet before: ${meta.hadLocalSheetBefore ? "yes" : "no"}`
+        : null,
+      meta.durationMs != null ? `Flow duration: ${meta.durationMs}ms` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
+  "onboarding-aborted": (name, email, timeStr, meta) => ({
+    subject: `[SJ] Onboarding aborted — ${name}`,
+    text: [
+      `${name} (${email}) aborted onboarding at ${timeStr}.`,
+      meta.intent ? `Intent: ${meta.intent}` : null,
+      meta.state ? `State when closed: ${meta.state}` : null,
+      meta.reason ? `Reason: ${meta.reason}` : null,
+      meta.hadLocalSheetBefore != null
+        ? `Had local sheet before: ${meta.hadLocalSheetBefore ? "yes" : "no"}`
+        : null,
+      meta.durationMs != null ? `Flow duration: ${meta.durationMs}ms` : null,
+      meta.provisionError ? `Last error: ${meta.provisionError}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
+  "onboarding-failed": (name, email, timeStr, meta) => ({
+    subject: `[SJ] Onboarding failed — ${name}`,
+    text: [
+      `${name} (${email}) hit an onboarding failure at ${timeStr}.`,
+      meta.intent ? `Intent: ${meta.intent}` : null,
+      meta.state ? `State: ${meta.state}` : null,
+      meta.reason ? `Reason: ${meta.reason}` : null,
+      meta.hadLocalSheetBefore != null
+        ? `Had local sheet before: ${meta.hadLocalSheetBefore ? "yes" : "no"}`
+        : null,
+      meta.durationMs != null ? `Flow duration: ${meta.durationMs}ms` : null,
+      meta.provisionError ? `Error: ${meta.provisionError}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
 };
+
+async function getSignInSupportMeta(email) {
+  if (!email) return {};
+
+  try {
+    const exactKey = `sj:user:${email}`;
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedKey = `sj:user:${normalizedEmail}`;
+    const record =
+      (await kv.get(exactKey)) ||
+      (normalizedKey !== exactKey ? await kv.get(normalizedKey) : null) ||
+      null;
+
+    return {
+      hasKvRecord: Boolean(record && Object.keys(record).length > 0),
+      connectedAt: record?.connectedAt || null,
+      lastSeenAt: record?.lastSeenAt || null,
+      connectionMethod: record?.connectionMethod || null,
+      provisioningMethod: record?.provisioningMethod || null,
+      provisionedSheetId: record?.provisionedSheetId || null,
+      activationPromptedAt: record?.activationPromptedAt || null,
+      returnPromptedAt: record?.returnPromptedAt || null,
+    };
+  } catch (error) {
+    return {
+      kvLookupFailed: error?.message || "unknown KV error",
+    };
+  }
+}
 
 export async function promptDeveloper(event, user, meta = {}) {
   try {

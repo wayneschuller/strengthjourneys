@@ -3,18 +3,19 @@
 
 import { useRef, useEffect } from "react";
 import { useRouter } from "next/router";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { AppBackground } from "@/components/app-background";
 import { FeedbackWidget } from "@/components/feedback";
-import { GoogleLogo } from "@/components/hero-section";
+import {
+  GoogleSignInButton,
+  GoogleSignInToastAction,
+} from "@/components/google-sign-in";
 import { SheetSetupDialog } from "@/components/sheet-setup-dialog";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
-import { gaTrackSignInClick } from "@/lib/analytics";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
@@ -186,17 +187,9 @@ export function Layout({ children }) {
         description: nudgeMessage.description,
         duration: DEMO_MODE_NUDGE_TOAST_DURATION_MS,
         action: (
-          <ToastAction
-            altText="Google Login"
-            className="inline-flex items-center gap-2"
-            onClick={() => {
-              gaTrackSignInClick(router.pathname, "demo_toast");
-              signIn("google", { callbackUrl: "/" });
-            }}
-          >
-            <GoogleLogo size={14} />
+          <GoogleSignInToastAction altText="Google Login" cta="demo_toast">
             Google Sign in
-          </ToastAction>
+          </GoogleSignInToastAction>
         ),
       });
     }, getRandomDemoModeNudgeDelayMs());
@@ -391,17 +384,12 @@ function DataAccessBanner({ pathname }) {
                 : "Set up your Google Sheet and Strength Journeys will help you get it ready so your own lifting history appears here."}
           </p>
           {showSignInCta ? (
-            <Button
+            <GoogleSignInButton
               size="sm"
-              className="flex items-center gap-2"
-              onClick={() => {
-                gaTrackSignInClick(pathname, "demo_banner");
-                signIn("google", { callbackUrl: "/" });
-              }}
+              cta="demo_banner"
             >
-              <GoogleLogo size={16} />
               Sign in with Google
-            </Button>
+            </GoogleSignInButton>
           ) : (
             <Button
               size="sm"

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { useRouter } from "next/router";
 import {
   Card,
   CardContent,
@@ -11,11 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "../ui/separator";
+import { GoogleSignInButton } from "@/components/google-sign-in";
 import { cn } from "@/lib/utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useSession, signIn } from "next-auth/react";
-import { gaTrackSignInClick } from "@/lib/analytics";
-import { GoogleLogo } from "@/components/hero-section";
+import { useSession } from "next-auth/react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 
@@ -27,7 +25,6 @@ import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
  * @param {Function} props.setSelectedOptions - State setter for selectedOptions; receives the full updated options object.
  */
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
-  const router = useRouter();
   const { parsedData, isLoading, isDemoMode, sheetInfo } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
@@ -79,17 +76,12 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
               Sign in with Google to connect your lifting spreadsheet and share
               your data with the AI assistant.
             </p>
-            <Button
+            <GoogleSignInButton
               size="sm"
-              className="flex items-center gap-2"
-              onClick={() => {
-                gaTrackSignInClick(router.pathname, "ai_assistant");
-                signIn("google", { callbackUrl: "/" });
-              }}
+              cta="ai_assistant"
             >
-              <GoogleLogo size={16} />
               Sign in with Google
-            </Button>
+            </GoogleSignInButton>
           </div>
         )}
 

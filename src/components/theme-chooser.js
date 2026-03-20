@@ -2,13 +2,12 @@
 
 
 import { devLog } from "@/lib/processing-utils";
-import { gaEvent, GA_EVENT_TAGS, gaTrackSignInClick } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { GoogleSignInMenuItem } from "@/components/google-sign-in";
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import { useSession, signIn } from "next-auth/react";
-import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
 import { Moon, Sun } from "lucide-react";
-import { GoogleLogo } from "@/components/hero-section";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +39,6 @@ const BASIC_THEMES = ["light", "dark"];
  * Authenticated users can access all themes and toggle the animated background; unauthenticated users are limited to light/dark.
  */
 export function ThemeChooser() {
-  const router = useRouter();
   const { theme, setTheme, themes } = useTheme();
   const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === "authenticated";
@@ -131,21 +129,14 @@ export function ThemeChooser() {
         {!isAuthenticated && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={() => {
-                gaTrackSignInClick(router.pathname, "theme_chooser");
-                signIn("google", { callbackUrl: "/" });
-              }}
-              className="cursor-pointer"
-            >
-              <GoogleLogo size={16} />
+            <GoogleSignInMenuItem cta="theme_chooser">
               <span>
                 <span className="font-medium">Sign in with Google</span>
                 <span className="text-muted-foreground text-xs block">
                   Unlock all themes and animated background
                 </span>
               </span>
-            </DropdownMenuItem>
+            </GoogleSignInMenuItem>
           </>
         )}
       </DropdownMenuContent>

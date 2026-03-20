@@ -290,7 +290,7 @@ export default function LogSessionPage() {
     useReadLocalStorage(LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE, {
       initializeWithValue: false,
     }) ?? false;
-  const showDesktopActivityMonitor = isDev && devActivityMonitorVisible;
+  const showActivityMonitor = isDev && devActivityMonitorVisible;
 
   // Structural mutation guard: prevents concurrent row-shifting API calls
   // (addSet, addLift, deleteSet) that could race on stale row indices.
@@ -1723,11 +1723,7 @@ export default function LogSessionPage() {
   return (
     <div className="mx-auto max-w-[116rem] px-3 pb-24 sm:px-4">
       <style dangerouslySetInnerHTML={{ __html: LOG_CELEBRATION_KEYFRAMES }} />
-      <div
-        className={showDesktopActivityMonitor
-          ? "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)_minmax(0,42rem)] lg:gap-12 xl:gap-16 2xl:gap-20"
-          : "lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)] lg:gap-12 xl:gap-16 2xl:gap-20"}
-      >
+      <div className="lg:grid lg:grid-cols-[15.25rem_minmax(0,46rem)] lg:gap-12 xl:gap-16 2xl:gap-20">
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-4 pt-3">
             <InspirationCard
@@ -1914,17 +1910,14 @@ export default function LogSessionPage() {
                 </div>
               </div>
             )}
+
+            {showActivityMonitor && (
+              <div className="mt-8 border-t border-border/40 pt-6">
+                <DevActivityMonitorPanel className="max-h-[70vh]" />
+              </div>
+            )}
           </div>
         </main>
-
-        {showDesktopActivityMonitor && (
-          <aside className="hidden lg:block">
-            <div className="sticky top-20 pt-3">
-              <DevActivityMonitorPanel className="max-h-[70vh]" />
-            </div>
-          </aside>
-        )}
-
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import Link from "next/link";
 import * as React from "react";
 import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
-import { useLocalStorage } from "usehooks-ts";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle, ThemeChooser } from "@/components/theme-chooser";
@@ -13,10 +12,8 @@ import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
 import { Table2, Loader2, Github, Layers, LineChart, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
-import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
 
@@ -50,7 +47,6 @@ import {
   Calculator,
   BarChart,
   Anvil,
-  Activity,
   Timer,
   Bot,
   Grid2x2Check,
@@ -60,7 +56,6 @@ import {
   Sparkles,
   CircleDashed,
   ClipboardPlus,
-  ChevronDown,
   Mountain,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
@@ -151,17 +146,6 @@ function ensureCannyChangelog() {
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
-  const { entries } = useDevActivityMonitor();
-  const isDevLogPage =
-    authStatus === "authenticated" &&
-    pathname === "/log" &&
-    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
-  const [isActivityMonitorOpen, setIsActivityMonitorOpen] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE,
-    false,
-    { initializeWithValue: false },
-  );
-  const activityMonitorOpen = isDevLogPage && isActivityMonitorOpen;
 
   return (
     <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
@@ -182,27 +166,6 @@ export function NavBar() {
                 <span className="xl:hidden">Log</span>
                 <span className="hidden xl:inline">Log Session</span>
               </Link>
-            </Button>
-          )}
-          {isDevLogPage && (
-            <Button
-              type="button"
-              variant={activityMonitorOpen ? "secondary" : "outline"}
-              size="sm"
-              className="hidden gap-1.5 md:flex"
-              onClick={() => setIsActivityMonitorOpen(!isActivityMonitorOpen)}
-            >
-              <Activity className="h-4 w-4" />
-              Monitor
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
-                {entries.length}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  activityMonitorOpen && "rotate-180",
-                )}
-              />
             </Button>
           )}
           <MiniTimer />

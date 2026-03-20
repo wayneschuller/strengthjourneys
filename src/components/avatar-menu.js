@@ -1,18 +1,23 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
+import { useLocalStorage } from "usehooks-ts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
+import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import {
   LogOut,
   MessageSquarePlus,
   Coffee,
   Eraser,
   Trash2,
+  Activity,
+  Check,
 } from "lucide-react";
 
 import {
@@ -44,6 +49,12 @@ export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
   const { sheetInfo } = useUserLiftingData();
+  const { entries } = useDevActivityMonitor();
+  const [isActivityMonitorVisible, setIsActivityMonitorVisible] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE,
+    false,
+    { initializeWithValue: false },
+  );
 
   const runKvReset = useCallback(
     async (mode) => {
@@ -239,6 +250,18 @@ export function AvatarDropdown() {
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete full KV user record
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setIsActivityMonitorVisible((current) => !current);
+                      }}
+                    >
+                      <Activity className="mr-2 h-4 w-4" />
+                      {isActivityMonitorVisible ? "Hide" : "Show"} log activity monitor
+                      <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{entries.length}</span>
+                        {isActivityMonitorVisible && <Check className="h-3.5 w-3.5" />}
+                      </span>
                     </DropdownMenuItem>
                   </>
                 )}

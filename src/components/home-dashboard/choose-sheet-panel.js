@@ -134,6 +134,7 @@ function formatPreviewPrimaryValue(preview) {
 function formatPreviewSetDetail(preview) {
   if (!preview) return "";
   const date = formatPreviewDate(preview.date);
+  if (preview.reps === 1) return date ? `(${date})` : "";
   const e1rm = formatPreviewE1RM(preview);
   if (!e1rm) return date ? `(${date})` : "";
   return `${e1rm}${date ? ` (${date})` : ""}`;

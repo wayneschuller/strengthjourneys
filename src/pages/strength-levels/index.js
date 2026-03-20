@@ -267,7 +267,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                       className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                     >
                       <ArrowUpRight className="h-4 w-4" />
-                      Open {page.navLabel} Standards
+                      Open Detailed {page.navLabel} Standards
                     </Link>
                     <Link
                       href={page.calculatorUrl}

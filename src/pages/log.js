@@ -1677,21 +1677,6 @@ export default function LogSessionPage() {
 
   // --- Render ---
 
-  if (!isDev) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-        <Dumbbell className="h-12 w-12 text-muted-foreground" />
-        <h1 className="text-2xl font-bold">Coming Soon</h1>
-        <p className="text-muted-foreground">
-          This feature is under development.
-        </p>
-        <Button asChild>
-          <Link href="/">Back to Home</Link>
-        </Button>
-      </div>
-    );
-  }
-
   if (authStatus === "unauthenticated") {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">

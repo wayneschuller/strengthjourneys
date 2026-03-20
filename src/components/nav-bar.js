@@ -155,7 +155,7 @@ export function NavBar() {
           <MobileNav />
         </div>
         <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 py-3">
-          {authStatus === "authenticated" && process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
+          {authStatus === "authenticated" && (
             <Button
               asChild
               size="sm"

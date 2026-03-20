@@ -155,7 +155,7 @@ export function Footer() {
 
             <div>
               <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
-                Strength Standards
+                Strength Standards & Levels
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {STRENGTH_STANDARDS_LINKS.map(({ href, label }) => (

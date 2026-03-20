@@ -232,15 +232,12 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
         </div>
 
         <div className="flex flex-col gap-1.5 xl:min-w-[15rem]">
-          <div className="flex items-end justify-between gap-4">
+          <div className="flex items-end justify-center">
             <Label className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Sex
             </Label>
-            <Badge variant="secondary" className="capitalize">
-              {sex}
-            </Badge>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center gap-3">
             <span className="text-sm font-semibold text-muted-foreground">M</span>
             <Switch
               aria-label="Sex"

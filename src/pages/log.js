@@ -1719,21 +1719,24 @@ export default function LogSessionPage() {
   const liftCardExit = prefersReducedMotion
     ? { opacity: 0, height: 0 }
     : { opacity: 0, y: -8, scale: 0.985, height: 0 };
+  const secondaryQuoteCard = (
+    <InspirationCard
+      key={sessionDate}
+      seedKey={sessionDate}
+      title={isToday ? "For today" : "Training note"}
+      variant="rail"
+      delayedReveal
+      revealDelayMs={1500}
+    />
+  );
 
   return (
     <div className="mx-auto max-w-[116rem] px-3 pb-24 sm:px-4">
       <style dangerouslySetInnerHTML={{ __html: LOG_CELEBRATION_KEYFRAMES }} />
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] lg:gap-12 xl:gap-16 2xl:gap-20">
-        <aside className="hidden lg:block">
-          <div className="sticky top-20 ml-auto w-full max-w-[10rem] space-y-4 pt-3 xl:max-w-[11rem]">
-            <InspirationCard
-              key={sessionDate}
-              seedKey={sessionDate}
-              title={isToday ? "For today" : "Training note"}
-              variant="rail"
-              delayedReveal
-              revealDelayMs={1500}
-            />
+      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:gap-20">
+        <aside className="hidden xl:block">
+          <div className="sticky top-20 mr-auto w-full max-w-[9rem] space-y-4 pt-3 2xl:max-w-[10rem]">
+            {secondaryQuoteCard}
           </div>
         </aside>
 
@@ -1916,10 +1919,16 @@ export default function LogSessionPage() {
                 <DevActivityMonitorPanel className="max-h-[70vh]" />
               </div>
             )}
+
+            <div className="mt-10 hidden lg:block xl:hidden">
+              <div className="max-w-[11rem]">
+                {secondaryQuoteCard}
+              </div>
+            </div>
           </div>
         </main>
 
-        <aside className="hidden lg:block" aria-hidden="true" />
+        <aside className="hidden xl:block" aria-hidden="true" />
       </div>
     </div>
   );

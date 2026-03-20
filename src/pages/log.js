@@ -4102,7 +4102,9 @@ function SetRow({
                 {strengthBadge && (
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
-                      <TooltipTrigger asChild>{strengthBadge}</TooltipTrigger>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex">{strengthBadge}</span>
+                      </TooltipTrigger>
                       <TooltipContent side="bottom">
                         <p>Open strength calculator details</p>
                       </TooltipContent>
@@ -4166,7 +4168,9 @@ function SetRow({
               {strengthBadge && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
-                    <TooltipTrigger asChild>{strengthBadge}</TooltipTrigger>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">{strengthBadge}</span>
+                    </TooltipTrigger>
                     <TooltipContent side="bottom">
                       <p>Open strength calculator details</p>
                     </TooltipContent>

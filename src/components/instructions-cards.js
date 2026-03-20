@@ -1,9 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/router";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
-import { gaTrackSignInClick } from "@/lib/analytics";
 import { SESSION_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { Button } from "@/components/ui/button";
@@ -12,11 +10,14 @@ import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
 import { BarChart3, Calendar, Check, Flame, FolderOpen, Table2 } from "lucide-react";
 import { motion, useReducedMotion, useAnimationControls } from "motion/react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 import SampleImage from "../../public/sample_google_sheet_fuzzy_border.png";
-import { GoogleLogo } from "@/components/hero-section";
+import {
+  GoogleSignInButton,
+  GoogleSignInInlineButton,
+} from "@/components/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
 import {
@@ -233,7 +234,6 @@ export function OnBoardingDashboard() {
  * @param {Object} props - No props; reads session and sheet context internally.
  */
 export function GettingStartedCard() {
-  const router = useRouter();
   const { status: authStatus } = useSession();
 
   const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
@@ -290,17 +290,14 @@ export function GettingStartedCard() {
           <div className="bg-background/75 ring-border flex flex-col items-start gap-4 rounded-2xl p-5 shadow-sm ring-1">
             {authStatus !== "authenticated" ? (
               <>
-                <Button
+                <GoogleSignInButton
                   size="lg"
                   className="gap-2 px-6"
-                  onClick={() => {
-                    gaTrackSignInClick(router.pathname, "getting_started_card");
-                    signIn("google", { callbackUrl: "/" });
-                  }}
+                  iconSize={18}
+                  cta="getting_started_card"
                 >
-                  <GoogleLogo size={18} />
                   Start tracking your lifts
-                </Button>
+                </GoogleSignInButton>
                 <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
                   Free forever. No app to install. Your data lives in your own Google Sheet —{" "}
                   <Link
@@ -368,7 +365,6 @@ export function GettingStartedCard() {
  * @param {Object} props - No props; reads session and sheet context internally.
  */
 export function GettingStartedCardCompact() {
-  const router = useRouter();
   const { status: authStatus } = useSession();
 
   const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
@@ -409,14 +405,9 @@ export function GettingStartedCardCompact() {
             </p>
           )}
           {authStatus !== "authenticated" ? (
-            <Button
-              onClick={() => {
-                gaTrackSignInClick(router.pathname, "lift_page_card");
-                signIn("google", { callbackUrl: "/" });
-              }}
-            >
+            <GoogleSignInButton cta="lift_page_card">
               Sign in and we&apos;ll set you up
-            </Button>
+            </GoogleSignInButton>
           ) : !sheetInfo?.ssid ? (
             <Button
               className="flex items-center gap-2"
@@ -457,7 +448,6 @@ export function GettingStartedCardCompact() {
  * @param {Object} props - No props; reads auth status from session context.
  */
 export const SignInInvite = () => {
-  const router = useRouter();
   const { status: authStatus } = useSession();
   const { isReturningUserLoading } = useUserLiftingData();
 
@@ -467,15 +457,9 @@ export const SignInInvite = () => {
 
   return (
     <div>
-      <button
-        onClick={() => {
-          gaTrackSignInClick(router.pathname, "sign_in_invite");
-          signIn("google", { callbackUrl: "/" });
-        }}
-        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-      >
+      <GoogleSignInInlineButton cta="sign_in_invite">
         Sign in
-      </button>{" "}
+      </GoogleSignInInlineButton>{" "}
       and link your Google Sheet lifting data to see your unique ratings for
       each lift.
     </div>
@@ -541,7 +525,6 @@ export function ConnectSheetRecapCard() {
  * Compact layout to fit narrow columns; other instruction cards are horizontal.
  */
 export function DemoModeSignInCard() {
-  const router = useRouter();
   const { status: authStatus } = useSession();
   const { isReturningUserLoading } = useUserLiftingData();
 
@@ -566,17 +549,14 @@ export function DemoModeSignInCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6 pb-8 pt-2">
-        <Button
+        <GoogleSignInButton
           size="default"
           className="flex w-full items-center justify-center gap-2"
-          onClick={() => {
-            gaTrackSignInClick(router.pathname, "year_recap_card");
-            signIn("google", { callbackUrl: "/" });
-          }}
+          iconSize={18}
+          cta="year_recap_card"
         >
-          <GoogleLogo size={18} />
           Sign in with Google
-        </Button>
+        </GoogleSignInButton>
         <div className="space-y-5 text-sm text-muted-foreground">
           <p className="leading-relaxed">
             Your recap will show your sessions, tonnage, PRs, most-trained lifts,

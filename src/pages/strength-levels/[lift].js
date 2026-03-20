@@ -1,13 +1,13 @@
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
 import { BicepsFlexed, BookOpen, Calculator, CircleDashed } from "lucide-react";
 
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { RelatedArticles } from "@/components/article-cards";
-import { GoogleLogo } from "@/components/hero-section";
+import { GoogleSignInButton } from "@/components/google-sign-in";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import {
   PageContainer,
@@ -34,7 +34,6 @@ import {
   STRENGTH_STANDARDS_HUB_URL,
   STRENGTH_STANDARDS_PAGES,
   getStrengthStandardsPageBySlug,
-  getStrengthStandardsUrl,
 } from "@/lib/strength-standards-pages";
 
 const INTERPRETATION_COPY = {
@@ -394,17 +393,13 @@ function StrengthLevelsDataCta({ page }) {
 
         <div className="flex flex-col gap-2 sm:flex-row">
           {showSignIn && (
-            <Button
+            <GoogleSignInButton
               className="flex items-center gap-2"
-              onClick={() => {
-                signIn("google", {
-                  callbackUrl: getStrengthStandardsUrl(page.slug),
-                });
-              }}
+              cta="strength_levels_page"
+              iconSize={16}
             >
-              <GoogleLogo size={16} />
               Sign In With Google
-            </Button>
+            </GoogleSignInButton>
           )}
 
           {showSheetSetup && (

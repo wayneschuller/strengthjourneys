@@ -67,7 +67,11 @@ import { getLogoForTheme } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
-const BIO_SETTINGS_PAGES = ["/calculator", "/big-four-strength-standards-calculator"];
+const BIO_SETTINGS_PAGES = [
+  "/calculator",
+  "/big-four-strength-standards-calculator",
+  "/strength-levels",
+];
 const CANNY_APP_ID = "65ae4d4c921071bb0aae99c3";
 
 let cannyLoadPromise = null;
@@ -501,6 +505,11 @@ function StrengthInsightsMenu() {
       icon: <Layers className="h-5 w-5" />,
     },
     {
+      title: "Strength Levels",
+      href: "/strength-levels",
+      icon: <BarChart className="h-5 w-5" />,
+    },
+    {
       title: "Strength Visualizer",
       href: "/visualizer",
       icon: <LineChart className="h-5 w-5" />,
@@ -563,6 +572,7 @@ function StrengthInsightsMenu() {
             className={cn(
               "hover:text-foreground/80 bg-transparent transition-colors",
               pathname.startsWith("/lift-explorer") ||
+                pathname.startsWith("/strength-levels") ||
                 pathname.startsWith("/visualizer") ||
                 pathname.startsWith("/ai-lifting-assistant")
                 ? "text-foreground"
@@ -615,11 +625,6 @@ function CalculatorsMenu() {
       title: "Warm Ups Calculator",
       href: "/warm-up-sets-calculator",
       icon: <Flame className="h-5 w-5" />,
-    },
-    {
-      title: "Big Four Strength Standards",
-      href: "/big-four-strength-standards-calculator",
-      icon: <BarChart className="h-5 w-5" />,
     },
     {
       title: "1000lb Club Calculator",

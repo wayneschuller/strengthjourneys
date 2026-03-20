@@ -77,8 +77,8 @@ const LIFT_INSIGHT_URLS = {
 
 const NEXT_TOOL_LINKS = [
   {
-    href: "/big-four-strength-standards-calculator",
-    title: "Big Four Strength Standards",
+    href: "/strength-levels",
+    title: "Strength Levels",
     description: "Check beginner-to-elite benchmarks for each lift.",
     IconComponent: BicepsFlexed,
   },
@@ -220,11 +220,11 @@ function HowStrongAmIPageMain() {
         <PageHeaderRight>
           <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
             <Link
-              href="/big-four-strength-standards-calculator"
+              href="/strength-levels"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
               <h3 className="text-base font-semibold">
-                Big Four Strength Standards
+                Strength Levels
               </h3>
               <p className="text-sm">
                 Check beginner-to-elite benchmarks per lift.
@@ -481,10 +481,10 @@ function ExplainerSection() {
         handled automatically by the underlying standards data. If you want to
         compare the same lifts against beginner-to-elite benchmarks, use the{" "}
         <Link
-          href="/big-four-strength-standards-calculator"
+          href="/strength-levels"
           className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
         >
-          Big Four Strength Standards Calculator
+          Strength Levels
         </Link>
         .
       </p>

@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, useRef } from "react";
 import { subMonths, subYears, format } from "date-fns";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
@@ -12,7 +12,7 @@ import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils"
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { formatDateToYmdLocal, getWeekKeyFromDateStr } from "@/lib/date-utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
+import { useReadLocalStorage, useResizeObserver, useWindowSize } from "usehooks-ts";
 
 const PERIOD_KEYS = ["1M", "6M", "1Y", "2Y", "5Y", "10Y"];
 
@@ -44,6 +44,7 @@ export function StandardsSlider({
   hideRating = false,
   ratingRightSlot = null,
 }) {
+  const containerRef = useRef(null);
   const {
     isLoading: isUserDataLoading,
     sheetInfo,
@@ -54,6 +55,7 @@ export function StandardsSlider({
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex } = useAthleteBio();
   const { width } = useWindowSize({ initializeWithValue: false });
+  const { width: containerWidth = 0 } = useResizeObserver({ ref: containerRef });
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
 
@@ -437,8 +439,11 @@ export function StandardsSlider({
     }
   }
 
+  const shouldUseCompactActiveLabel =
+    containerWidth > 0 ? containerWidth < 1200 : width < 800;
+
   return (
-    <div className="mx-auto w-full">
+    <div ref={containerRef} className="mx-auto w-full">
       {/* Lift level labels */}
       <div className="relative mb-2 h-14 w-full">
         {levelLabels.map((level, index) => {
@@ -472,7 +477,9 @@ export function StandardsSlider({
           return (
             <span key={level} className={labelClass} style={labelStyle}>
               <div className="md:text-base">
-                {width < 800 && level === "Physically Active" ? "Active" : level}
+                {shouldUseCompactActiveLabel && level === "Physically Active"
+                  ? "Active"
+                  : level}
               </div>
               <div className="font-bold md:text-lg lg:text-xl">
                 {liftTypeStandards[level]}

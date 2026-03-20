@@ -82,10 +82,10 @@ export const featurePages = [
     IconComponent: Anvil,
   },
   {
-    href: "/big-four-strength-standards-calculator",
-    title: "Big Four Strength Standards",
+    href: "/strength-levels",
+    title: "Strength Levels",
     description:
-      "Check beginner, intermediate, advanced, and elite benchmarks for each Big Four lift.",
+      "Check beginner, intermediate, advanced, and elite benchmarks for squat, bench press, deadlift, and strict press.",
     IconComponent: BicepsFlexed,
   },
   {

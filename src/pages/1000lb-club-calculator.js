@@ -111,8 +111,8 @@ const WHATS_NEXT_FEATURES = [
     IconComponent: CircleDashed,
   },
   {
-    href: "/big-four-strength-standards-calculator",
-    title: "Big Four Strength Standards",
+    href: "/strength-levels",
+    title: "Strength Levels",
     description:
       "Check beginner-to-elite benchmarks for squat, bench, deadlift, and strict press.",
     IconComponent: BicepsFlexed,
@@ -422,10 +422,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               <p className="text-sm">See your percentile rank across lifter groups.</p>
             </Link>
             <Link
-              href="/big-four-strength-standards-calculator"
+              href="/strength-levels"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
-              <h3 className="text-base font-semibold">Big Four Strength Standards</h3>
+              <h3 className="text-base font-semibold">Strength Levels</h3>
               <p className="text-sm">Check beginner-to-elite benchmarks per lift.</p>
             </Link>
           </div>
@@ -583,10 +583,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           <p>
             To see your beginner-to-elite standards per lift, see our{" "}
             <Link
-              href="/big-four-strength-standards-calculator"
+              href="/strength-levels"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
-              Big Four Strength Standards Calculator
+              Strength Levels
             </Link>
             . Explore:{" "}
             <Link
@@ -657,10 +657,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             Use the sliders to estimate your current total, then compare your
             progress with our{" "}
             <Link
-              href="/big-four-strength-standards-calculator"
+              href="/strength-levels"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
-              Big Four Strength Standards Calculator
+              Strength Levels
             </Link>{" "}
             and project training loads with the{" "}
             <Link

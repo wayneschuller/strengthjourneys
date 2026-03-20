@@ -156,8 +156,8 @@ const WHATS_NEXT_FEATURES = [
     IconComponent: CircleDashed,
   },
   {
-    href: "/big-four-strength-standards-calculator",
-    title: "Big Four Strength Standards",
+    href: "/strength-levels",
+    title: "Strength Levels",
     description:
       "Check beginner-to-elite benchmarks for squat, bench, deadlift, and strict press.",
     IconComponent: BicepsFlexed,
@@ -513,11 +513,11 @@ function StrengthClubMain({ relatedArticles }) {
                 </p>
               </Link>
               <Link
-                href="/big-four-strength-standards-calculator"
+                href="/strength-levels"
                 className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
               >
                 <h3 className="text-base font-semibold">
-                  Big Four Standards
+                  Strength Levels
                 </h3>
                 <p className="text-sm">
                   Beginner-to-elite benchmarks per lift.
@@ -593,10 +593,10 @@ function StrengthClubMain({ relatedArticles }) {
             <p>
               See your beginner-to-elite standards per lift at our{" "}
               <Link
-                href="/big-four-strength-standards-calculator"
+                href="/strength-levels"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
-                Big Four Strength Standards Calculator
+                Strength Levels
               </Link>
               . Explore:{" "}
               <Link
@@ -672,10 +672,10 @@ function StrengthClubMain({ relatedArticles }) {
               satisfying to achieve. Use the sliders above to see how close
               you are, then check your per-lift standards with our{" "}
               <Link
-                href="/big-four-strength-standards-calculator"
+                href="/strength-levels"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
-                Big Four Strength Standards Calculator
+                Strength Levels
               </Link>
               .
             </p>

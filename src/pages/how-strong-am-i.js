@@ -152,7 +152,7 @@ function HowStrongAmIPageMain() {
     deadlift: toKg(265, false),
   }));
 
-  const [selectedUniverse, setSelectedUniverse] = useState("Barbell Lifters");
+  const [selectedUniverse, setSelectedUniverse] = useState("General Population");
   const [hoveredUniverse, setHoveredUniverse] = useState(null);
 
   const liftWeights = useMemo(

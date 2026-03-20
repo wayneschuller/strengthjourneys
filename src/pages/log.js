@@ -3981,7 +3981,7 @@ function SetRow({
       }}
     >
       {/* Main row: reps@weight + notes + (desktop: badges/trash) */}
-      <div className={cn("flex gap-4", rankingSummary ? "items-start" : "items-center")}>
+      <div className="flex items-center gap-4">
         {/* Reps @ Weight unit — tight visual unit.
             Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
         <div className="flex items-center">
@@ -4043,7 +4043,7 @@ function SetRow({
         </div>
 
         {/* Notes — flex-1, tap to edit */}
-        <div className={cn("min-w-0 flex-1", !rankingSummary && "self-center")}>
+        <div className="min-w-0 flex-1">
           {editingNotes ? (
             <input
               type="text"
@@ -4070,16 +4070,6 @@ function SetRow({
                   {displayNotes || "notes..."}
                 </button>
               )}
-              {rankingSummary && (
-                <CelebrationReveal
-                  animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
-                  className={cn("hidden md:block", prToneClass)}
-                >
-                  <p className="truncate text-[10px] uppercase tracking-wide">
-                    {rankingSummary}
-                  </p>
-                </CelebrationReveal>
-              )}
             </div>
           )}
         </div>
@@ -4091,6 +4081,18 @@ function SetRow({
           ) : (
             <>
               {strengthBadge}
+              {rankingSummary && (
+                <CelebrationReveal
+                  animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
+                >
+                  <Badge
+                    variant="outline"
+                    className={cn("max-w-[9rem] text-[10px] uppercase tracking-wide", prToneClass)}
+                  >
+                    <span className="truncate">{rankingSummary}</span>
+                  </Badge>
+                </CelebrationReveal>
+              )}
               {onDelete && (
                 <button
                   className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
@@ -4116,11 +4118,13 @@ function SetRow({
               {rankingSummary && (
                 <CelebrationReveal
                   animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
-                  className={prToneClass}
                 >
-                  <span className="truncate text-[10px] uppercase tracking-wide">
-                    {rankingSummary}
-                  </span>
+                  <Badge
+                    variant="outline"
+                    className={cn("max-w-[11rem] text-[10px] uppercase tracking-wide", prToneClass)}
+                  >
+                    <span className="truncate">{rankingSummary}</span>
+                  </Badge>
                 </CelebrationReveal>
               )}
               <div className="flex-1" />

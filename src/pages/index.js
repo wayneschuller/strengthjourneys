@@ -83,7 +83,7 @@ export const featurePages = [
     IconComponent: Anvil,
   },
   {
-    href: "/big-four-strength-standards-calculator",
+    href: "/strength-standards",
     title: "Big Four Strength Standards",
     description:
       "Check beginner, intermediate, advanced, and elite benchmarks for each Big Four lift.",

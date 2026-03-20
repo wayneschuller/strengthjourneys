@@ -1683,10 +1683,10 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         <div className="border-t pt-3">
           <h2 className="text-center text-base font-semibold">
             <Link
-              href={featuredBigFourName ? (bigFourURLs[featuredBigFourName] ?? "/big-four-strength-standards-calculator") : "/big-four-strength-standards-calculator"}
+              href={featuredBigFourName ? (bigFourURLs[featuredBigFourName] ?? "/strength-levels") : "/strength-levels"}
               className="transition-opacity hover:opacity-70"
             >
-              {featuredBigFourName ? `${forceLift} Strength Standards` : "Big Four Strength Standards"}
+              {featuredBigFourName ? `${forceLift} Strength Standards` : "Strength Levels"}
             </Link>
           </h2>
           <div className="mt-1 flex justify-center">

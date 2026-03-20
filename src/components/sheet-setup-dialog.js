@@ -255,7 +255,7 @@ export function SheetSetupDialog() {
     async (event, meta = {}) => {
       if (authStatus !== "authenticated") return;
       try {
-        await fetch("/api/founder/onboarding-event", {
+        await fetch("/api/onboarding-event", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ event, meta }),

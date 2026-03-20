@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     await promptDeveloper(event, session.user, meta);
     res.status(200).json({ ok: true });
   } catch (error) {
-    console.error("[founder/onboarding-event] failed:", error);
+    console.error("[onboarding-event] failed:", error);
     res.status(500).json({ error: error.message || "Failed to send onboarding event" });
   }
 }

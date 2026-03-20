@@ -141,6 +141,11 @@ export const STRENGTH_STANDARDS_PAGES = [
           "Usually, yes. Most lifters use strict press, overhead press, OHP, and military press to mean the same general standing barbell press benchmark. Technique details can vary a little, but if you want strength levels for that movement, this page is the right place to start.",
       },
       {
+        question: "What is the difference between push press and strict press?",
+        answer:
+          "A push press uses a knee dip and leg drive to help move the bar overhead. A strict press should be done with stiff legs and no knee flexion, so the press is driven by the upper body instead of getting momentum from the lower body.",
+      },
+      {
         question: "Why is my strict press category lower than my bench press category?",
         answer:
           "That is normal. The strict press is usually the hardest of the big four barbell lifts to progress on, and the strength standards reflect that. A lower pressing number can still be very respectable.",

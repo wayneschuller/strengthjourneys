@@ -142,7 +142,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
           {
             "@type": "ListItem",
             position: 2,
-            name: "Strength Standards",
+            name: "Strength Levels",
             item: canonicalURL,
           },
         ],

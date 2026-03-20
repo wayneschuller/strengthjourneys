@@ -5,7 +5,7 @@ import { PageContainer } from "@/components/page-header";
 
 const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },
-  { href: "/strength-standards", label: "Strength Standards" },
+  { href: "/strength-levels", label: "Strength Levels" },
   { href: "/how-strong-am-i", label: "How Strong Am I?" },
   { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },
   { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
@@ -29,10 +29,10 @@ const FORMULA_CALCULATORS = [
 ];
 
 const STRENGTH_STANDARDS_LINKS = [
-  { href: "/strength-standards/squat", label: "Squat Strength Standards" },
-  { href: "/strength-standards/bench-press", label: "Bench Press Strength Standards" },
-  { href: "/strength-standards/deadlift", label: "Deadlift Strength Standards" },
-  { href: "/strength-standards/strict-press", label: "Overhead Press Strength Standards" },
+  { href: "/strength-levels/squat", label: "Squat Strength Standards" },
+  { href: "/strength-levels/bench-press", label: "Bench Press Strength Standards" },
+  { href: "/strength-levels/deadlift", label: "Deadlift Strength Standards" },
+  { href: "/strength-levels/strict-press", label: "Overhead Press Strength Standards" },
   { href: "/1000lb-club-calculator", label: "1000lb Club" },
   { href: "/200-300-400-500-strength-club-calculator", label: "200/300/400/500 Club" },
 ];

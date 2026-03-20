@@ -73,7 +73,7 @@ import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings
 const BIO_SETTINGS_PAGES = [
   "/calculator",
   "/big-four-strength-standards-calculator",
-  "/strength-standards",
+  "/strength-levels",
 ];
 const CANNY_APP_ID = "65ae4d4c921071bb0aae99c3";
 
@@ -520,8 +520,8 @@ function StrengthInsightsMenu() {
       icon: <Layers className="h-5 w-5" />,
     },
     {
-      title: "Strength Standards",
-      href: "/strength-standards",
+      title: "Strength Levels",
+      href: "/strength-levels",
       icon: <BarChart className="h-5 w-5" />,
     },
     {
@@ -587,7 +587,7 @@ function StrengthInsightsMenu() {
             className={cn(
               "hover:text-foreground/80 bg-transparent transition-colors",
               pathname.startsWith("/lift-explorer") ||
-                pathname.startsWith("/strength-standards") ||
+                pathname.startsWith("/strength-levels") ||
                 pathname.startsWith("/visualizer") ||
                 pathname.startsWith("/ai-lifting-assistant")
                 ? "text-foreground"

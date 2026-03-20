@@ -1,5 +1,5 @@
 export const STRENGTH_STANDARDS_HUB_URL =
-  "https://www.strengthjourneys.xyz/strength-standards";
+  "https://www.strengthjourneys.xyz/strength-levels";
 
 export const STRENGTH_STANDARDS_PAGES = [
   {
@@ -149,12 +149,12 @@ export function getStrengthStandardsPageBySlug(slug) {
 }
 
 export function getStrengthStandardsUrl(slug) {
-  return `/strength-standards/${slug}`;
+  return `/strength-levels/${slug}`;
 }
 
 export const STRENGTH_STANDARDS_LINKS = {
-  "Back Squat": "/strength-standards/squat",
-  "Bench Press": "/strength-standards/bench-press",
-  Deadlift: "/strength-standards/deadlift",
-  "Strict Press": "/strength-standards/strict-press",
+  "Back Squat": "/strength-levels/squat",
+  "Bench Press": "/strength-levels/bench-press",
+  Deadlift: "/strength-levels/deadlift",
+  "Strict Press": "/strength-levels/strict-press",
 };

@@ -83,8 +83,8 @@ export const featurePages = [
     IconComponent: Anvil,
   },
   {
-    href: "/strength-standards",
-    title: "Strength Standards",
+    href: "/strength-levels",
+    title: "Strength Levels",
     description:
       "Check beginner, intermediate, advanced, and elite benchmarks for squat, bench press, deadlift, and strict press.",
     IconComponent: BicepsFlexed,

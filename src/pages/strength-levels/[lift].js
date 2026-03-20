@@ -141,7 +141,7 @@ export default function StrengthStandardsLiftPage({ page, relatedArticles }) {
           {
             "@type": "ListItem",
             position: 2,
-            name: "Strength Standards",
+            name: "Strength Levels",
             item: STRENGTH_STANDARDS_HUB_URL,
           },
           {
@@ -342,8 +342,8 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <QuickLinkCard
-            href="/strength-standards"
-            title="Strength Standards Hub"
+            href="/strength-levels"
+            title="Strength Levels Hub"
             description="Browse the rest of the standards cluster."
             icon={<BicepsFlexed className="h-5 w-5" />}
           />

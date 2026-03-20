@@ -51,7 +51,7 @@ const FAQ_ITEMS = [
   {
     question: "Which lifts are covered in this cluster?",
     answer:
-      "This cluster currently focuses on the big four barbell lifts: squat, bench press, deadlift, and strict press. The hub now shows all four together, with dedicated single-lift pages for deeper SEO targeting.",
+      "This page covers the big four barbell lifts: squat, bench press, deadlift, and strict press. You can browse all four here, then open the individual lift pages if you want a more focused breakdown for one movement.",
   },
   {
     question: "What do strength levels like beginner, intermediate, advanced, and elite actually mean?",

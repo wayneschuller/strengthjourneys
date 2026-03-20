@@ -3558,8 +3558,8 @@ function UnitLabel({ unitType, mismatch }) {
 
 function getLogPRBadgeHref(liftType) {
   if (!liftType) return null;
-  if (BIG_FOUR_INSIGHT_URLS[liftType]) return BIG_FOUR_INSIGHT_URLS[liftType];
-  return `/lift-explorer?liftType=${encodeURIComponent(liftType)}`;
+  if (BIG_FOUR_INSIGHT_URLS[liftType]) return `${BIG_FOUR_INSIGHT_URLS[liftType]}#lift-prs`;
+  return `/lift-explorer?liftType=${encodeURIComponent(liftType)}#lift-prs`;
 }
 
 function getLogPRBadgeTooltip(liftType) {

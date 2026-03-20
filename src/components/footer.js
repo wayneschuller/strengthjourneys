@@ -34,6 +34,8 @@ const STRENGTH_STANDARDS_LINKS = [
   { href: "/strength-standards/bench-press", label: "Bench Press Strength Standards" },
   { href: "/strength-standards/deadlift", label: "Deadlift Strength Standards" },
   { href: "/strength-standards/strict-press", label: "Overhead Press Strength Standards" },
+  { href: "/1000lb-club-calculator", label: "1000lb Club" },
+  { href: "/200-300-400-500-strength-club-calculator", label: "200/300/400/500 Club" },
 ];
 
 const RESOURCES = [

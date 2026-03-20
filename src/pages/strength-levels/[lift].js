@@ -81,7 +81,7 @@ const INTERPRETATION_COPY = {
       "Use the standards on this page to answer the question people actually mean when they search for deadlift standards: not just 'what is impressive,' but 'what is impressive for me?'",
   },
   "Strict Press": {
-    title: "What Counts As A Good Overhead Press For Your Bodyweight?",
+    title: "What Counts As A Good Strict Press For Your Bodyweight?",
     body: [
       "The overhead press climbs more slowly than the other big barbell lifts, so many lifters underestimate what counts as genuinely strong pressing.",
       "That is why strict press and overhead press standards by bodyweight matter. A press that looks modest in absolute pounds can still be advanced once bodyweight, sex, and age are factored in.",

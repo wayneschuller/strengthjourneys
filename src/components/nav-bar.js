@@ -16,6 +16,7 @@ import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 
 import {
@@ -179,7 +180,12 @@ export function NavBar() {
                 openSheetSetupDialog("bootstrap");
               }}
             >
-              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+              <img
+                src={GOOGLE_SHEETS_ICON_URL}
+                alt=""
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden
+              />
               <span className="xl:hidden">Set Up</span>
               <span className="hidden xl:inline">Set Up Sheet</span>
             </Button>

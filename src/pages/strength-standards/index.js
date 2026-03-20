@@ -73,9 +73,9 @@ const FAQ_ITEMS = [
     ctaLabel: "Open the 1000lb Club Calculator",
   },
   {
-    question: "Is there a page for milestone goals like 200, 300, 400, and 500 pounds?",
+    question: "I'm already in the 1000lb club, is there a more exclusive strength level?",
     answer:
-      "Yes. If you want a clearer milestone target for each lift, use the 200 300 400 500 Strength Club Calculator. It is built for the common gym milestones people chase before or alongside bigger total-based goals.",
+      "Yes. Once you are past the 1000lb club, one of the clearest next benchmarks is hitting the classic round-number milestones across the big four lifts. A true long-term measure of strength is stacking those 200, 300, 400, and 500 pound achievements over time. For most lifters, that is not a quick challenge but a lifelong training milestone.",
     ctaHref: "/200-300-400-500-strength-club-calculator",
     ctaLabel: "Open the 200 300 400 500 Strength Club Calculator",
   },

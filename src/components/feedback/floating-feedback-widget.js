@@ -118,7 +118,7 @@ const TRIGGER_LABELS = [
  * Renders a fixed-position button in the bottom-right corner that opens a multi-step dialog
  * (thumbs rating → optional comment → optional email → success/donation prompt).
  */
-export function FeedbackWidget() {
+export function FeedbackWidget({ labels = {} }) {
   const router = useRouter();
   const { data: session } = useSession();
   const { sheetInfo, parsedData } = useUserLiftingData();
@@ -255,8 +255,16 @@ export function FeedbackWidget() {
   const subtitle = SUBTITLES[phraseIndexRef.current.subtitle];
   const donationNudge = DONATION_NUDGES[phraseIndexRef.current.nudge];
   const donationAsk = DONATION_ASKS[phraseIndexRef.current.ask];
-  const tooltipMessage = TOOLTIP_MESSAGES[phraseIndexRef.current.tooltip];
-  const triggerLabel = TRIGGER_LABELS[triggerLabelIndex] || TRIGGER_LABELS[0];
+  const tooltipMessages = labels.tooltipMessages?.length
+    ? labels.tooltipMessages
+    : TOOLTIP_MESSAGES;
+  const triggerLabels = labels.triggerLabels?.length
+    ? labels.triggerLabels
+    : TRIGGER_LABELS;
+  const tooltipMessage = tooltipMessages[
+    phraseIndexRef.current.tooltip % tooltipMessages.length
+  ] || TOOLTIP_MESSAGES[0];
+  const triggerLabel = triggerLabels[triggerLabelIndex % triggerLabels.length] || TRIGGER_LABELS[0];
 
   const PAGE_NAMES = {
     "/": session ? "the Home Dashboard" : "the Landing Page",
@@ -410,7 +418,7 @@ export function FeedbackWidget() {
                 onClick={() => {
                   clickedTriggerLabelRef.current = triggerLabel;
                   setOpen(true);
-                  const nextIndex = (triggerLabelIndex + 1) % TRIGGER_LABELS.length;
+                  const nextIndex = (triggerLabelIndex + 1) % triggerLabels.length;
                   setTriggerLabelIndex(nextIndex);
                   sessionStorage.setItem(
                     SESSION_STORAGE_KEYS.FEEDBACK_TRIGGER_LABEL_INDEX,
@@ -437,13 +445,13 @@ export function FeedbackWidget() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {layer === 1 && `${titlePrefix} ${pageName}?`}
+              {layer === 1 && (labels.introTitle || `${titlePrefix} ${pageName}?`)}
               {layer === "celebrate" && "You're awesome!"}
               {layer >= 2 && layer <= 3 && "Thanks! Anything you'd like to tell us?"}
               {layer === 4 && "Feedback sent"}
             </DialogTitle>
             <DialogDescription>
-              {layer === 1 && subtitle}
+              {layer === 1 && (labels.introDescription || subtitle)}
               {layer === "celebrate" && "Thanks for the positive vibes!"}
               {layer === 2 && countdown !== null && `Closing in ${countdown}s — start typing to keep open.`}
               {layer === 3 && "Optional — skip anytime."}
@@ -493,7 +501,7 @@ export function FeedbackWidget() {
           {layer >= 2 && layer <= 3 && (
             <div className="space-y-4">
               <Textarea
-                placeholder="Bug report, feature idea, or just say hi..."
+                placeholder={labels.commentPlaceholder || "Bug report, feature idea, or just say hi..."}
                 value={message}
                 onChange={(e) => {
                   setMessage(e.target.value);

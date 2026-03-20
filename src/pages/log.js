@@ -4081,20 +4081,21 @@ function SetRow({
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
           ) : (
             <>
-              {strengthBadge}
-              {rankingSummary && (
-                <CelebrationReveal
-                  animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
-                >
-                  <Badge
-                    variant="outline"
-                    className={cn(metaBadgeClassName, "max-w-[10.5rem]", prToneClass)}
+              <div className="ml-auto flex items-center gap-2">
+                {strengthBadge}
+                {rankingSummary && (
+                  <CelebrationReveal
+                    animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
                   >
-                    <span className="truncate">{rankingSummary}</span>
-                  </Badge>
-                </CelebrationReveal>
-              )}
-              <div className="flex-1" />
+                    <Badge
+                      variant="outline"
+                      className={cn(metaBadgeClassName, "max-w-[10.5rem]", prToneClass)}
+                    >
+                      <span className="truncate">{rankingSummary}</span>
+                    </Badge>
+                  </CelebrationReveal>
+                )}
+              </div>
               {onDelete && (
                 <button
                   className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"

@@ -59,9 +59,9 @@ const FAQ_ITEMS = [
       "They are comparison buckets. Your estimated max is matched against standards for lifters with a similar age, bodyweight, and sex, so the label tells you where your lift sits on the usual progression curve rather than giving you a random pass-fail score.",
   },
   {
-    question: "What if I want a strength percentile instead of just a level?",
+    question: "How does my strength level compare to the general population?",
     answer:
-      "Use the How Strong Am I? calculator if you want a percentile-style answer. It is the better page for questions like how you compare to a broader lifting population instead of just asking which level bucket your lift falls into.",
+      "Use the How Strong Am I? calculator if you want to see how your lifting strength compares to the broader population. It is the better tool when you want a percentile-style answer instead of only seeing whether your lift lands in a beginner, intermediate, advanced, or elite bucket.",
     ctaHref: "/how-strong-am-i",
     ctaLabel: "Open How Strong Am I?",
   },

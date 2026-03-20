@@ -3951,7 +3951,7 @@ function SetRow({
     }
   }
 
-  const hasBadges = !set._pending && (strengthBadge || prMeta?.status === "lifetime" || prMeta?.status === "yearly");
+  const hasBadges = !set._pending && Boolean(strengthBadge);
 
   return (
     <motion.div
@@ -3981,7 +3981,7 @@ function SetRow({
       }}
     >
       {/* Main row: reps@weight + notes + (desktop: badges/trash) */}
-      <div className="flex items-start gap-4">
+      <div className={cn("flex gap-4", rankingSummary ? "items-start" : "items-center")}>
         {/* Reps @ Weight unit — tight visual unit.
             Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
         <div className="flex items-center">
@@ -4043,7 +4043,7 @@ function SetRow({
         </div>
 
         {/* Notes — flex-1, tap to edit */}
-        <div className="min-w-0 flex-1">
+        <div className={cn("min-w-0 flex-1", !rankingSummary && "self-center")}>
           {editingNotes ? (
             <input
               type="text"
@@ -4091,20 +4091,6 @@ function SetRow({
           ) : (
             <>
               {strengthBadge}
-              {prMeta?.status === "lifetime" && (
-                <CelebrationReveal
-                  animationKey={`desktop-pr-${set.rowIndex ?? set._tempId ?? "pending"}-lifetime`}
-                >
-                  <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">PR</Badge>
-                </CelebrationReveal>
-              )}
-              {prMeta?.status === "yearly" && (
-                <CelebrationReveal
-                  animationKey={`desktop-pr-${set.rowIndex ?? set._tempId ?? "pending"}-yearly`}
-                >
-                  <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">Year PR</Badge>
-                </CelebrationReveal>
-              )}
               {onDelete && (
                 <button
                   className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
@@ -4127,20 +4113,6 @@ function SetRow({
           ) : (
             <>
               {strengthBadge}
-              {prMeta?.status === "lifetime" && (
-                <CelebrationReveal
-                  animationKey={`mobile-pr-${set.rowIndex ?? set._tempId ?? "pending"}-lifetime`}
-                >
-                  <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">PR</Badge>
-                </CelebrationReveal>
-              )}
-              {prMeta?.status === "yearly" && (
-                <CelebrationReveal
-                  animationKey={`mobile-pr-${set.rowIndex ?? set._tempId ?? "pending"}-yearly`}
-                >
-                  <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">Year PR</Badge>
-                </CelebrationReveal>
-              )}
               {rankingSummary && (
                 <CelebrationReveal
                   animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}

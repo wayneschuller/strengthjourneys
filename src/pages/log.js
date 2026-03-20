@@ -8,6 +8,7 @@ import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { cn } from "@/lib/utils";
@@ -1709,6 +1710,12 @@ export default function LogSessionPage() {
             openSheetSetupDialog("bootstrap");
           }}
         >
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="h-4 w-4 shrink-0"
+            aria-hidden
+          />
           Set Up Google Sheet
         </Button>
       </div>

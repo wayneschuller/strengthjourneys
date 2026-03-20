@@ -53,7 +53,11 @@ export function Layout({ children }) {
   const { toast } = useToast();
   const feedbackLabels = router.pathname === "/log"
     ? {
-        triggerLabels: ["Log beta", "Beta feedback", "Report issue"],
+        triggerLabels: [
+          "Logging is new. Feedback?",
+          "Logging is in beta. Thoughts?",
+          "New logging feature. Comments?",
+        ],
         tooltipMessages: ["Logging is in beta. Leave feedback or bug reports."],
         introTitle: "Logging is in beta. How's it feeling?",
         introDescription:

@@ -159,8 +159,8 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, load
 
   if (state === "linking_or_creating") {
     return {
-      eyebrow: intent === "switch_sheet" ? "Changing your data source" : "Linking your lifting log",
-      title: intent === "switch_sheet" ? "Updating your connection." : "Almost there.",
+      eyebrow: intent === "switch_sheet" ? "Checking your lifting logs" : "Linking your lifting log",
+      title: intent === "switch_sheet" ? "Reviewing your options." : "Almost there.",
       description: loadingQuip,
       tone: "working",
     };
@@ -188,8 +188,8 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, load
   }
 
   return {
-    eyebrow: intent === "switch_sheet" ? "Changing your data source" : "Setting up your lifting log",
-    title: intent === "switch_sheet" ? "Loading your data source options." : "Getting your sheet ready.",
+    eyebrow: intent === "switch_sheet" ? "Checking your lifting logs" : "Setting up your lifting log",
+    title: intent === "switch_sheet" ? "Loading your sheet options." : "Getting your sheet ready.",
     description: loadingQuip || statusMessage,
     tone: "working",
   };

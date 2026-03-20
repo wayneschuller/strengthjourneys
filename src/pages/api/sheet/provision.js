@@ -547,8 +547,6 @@ async function discoverValidCandidates(headers, debug) {
     };
     debug.headerChecks.push(checkResult);
 
-    devLog("[sheet/provision] header check:", checkResult);
-
     if (headerInfo.valid) {
       validCandidates.push({
         ...candidate,

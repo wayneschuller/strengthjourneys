@@ -202,33 +202,6 @@ export function buildClassicLiftMemoryPoolData({
     targetPoolSize,
   });
 
-  devLog(
-    "Classic lift pool size:",
-    selectionPool.length,
-    "target:",
-    targetPoolSize,
-    "candidateCount:",
-    candidates.length,
-    "pool:",
-    selectionPool.map((candidate) => ({
-      liftType: candidate.lift?.liftType,
-      reps: candidate.lift?.reps,
-      weight: candidate.lift?.weight,
-      unitType: candidate.lift?.unitType ?? "lb",
-      date: candidate.lift?.date,
-      reason: candidate.reasonLabel,
-      candidateKind: candidate.candidateKind,
-      score: candidate.score,
-      scoreBreakdown: candidate.scoreBreakdown,
-      strengthRating: candidate.strengthRating ?? null,
-      noteTags: candidate.noteSignals?.tags ?? [],
-      anniversaryDaysAway: candidate.anniversaryDaysAway ?? null,
-      hasUrl: !!(candidate.lift?.URL || candidate.lift?.url),
-      frequentLiftType: candidate.frequentLiftType ?? null,
-      frequentLiftSlot: candidate.frequentLiftSlot ?? null,
-    })),
-  );
-
   return {
     selectionPool,
     fallbackMemory: null,

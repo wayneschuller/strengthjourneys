@@ -197,29 +197,13 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
   const unit = isMetric ? "kg" : "lb";
 
   return (
-    <div className={cn("flex flex-col gap-4", className)}>
-      <div className="flex flex-col gap-1 text-center">
-        <p
-          className={cn(
-            "text-sm",
-            bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
-          )}
-        >
-          Strength levels for a{" "}
-          <strong className="font-semibold text-foreground">
-            {bodyWeight}
-            {unit}
-          </strong>{" "}
-          <strong className="font-semibold text-foreground">{sex}</strong>, age{" "}
-          <strong className="font-semibold text-foreground">{age}</strong>.
+    <div className={cn("flex flex-col gap-3", className)}>
+      {bioDataIsDefault && (
+        <p className="text-center text-xs text-muted-foreground">
+          Set your real details so the standards reflect your profile instead
+          of the default starting values.
         </p>
-        {bioDataIsDefault && (
-          <p className="text-xs text-muted-foreground">
-            Set your real details so the standards reflect your profile instead
-            of the default starting values.
-          </p>
-        )}
-      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1.35fr)] xl:items-end">
         <div className="flex flex-col gap-1.5">

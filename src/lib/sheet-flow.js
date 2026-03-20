@@ -398,7 +398,7 @@ export async function enrichCandidateMetadata(
   let minDate = null;
   let maxDate = null;
   let previousDate = null;
-  let previousLiftType = null;
+  let previousSessionLiftType = null;
   const bestByLift = {};
 
   for (const row of nonEmptyRows) {
@@ -414,9 +414,10 @@ export async function enrichCandidateMetadata(
     if (!parsedDate) continue;
     previousDate = parsedDate;
 
-    const normalizedLiftType =
-      normalizeLiftTypeForPreview(row?.[liftTypeColumnIndex]) || previousLiftType;
-    if (normalizedLiftType) previousLiftType = normalizedLiftType;
+    const rawLiftType = String(row?.[liftTypeColumnIndex] || "").trim();
+    const sessionLiftType = rawLiftType || previousSessionLiftType;
+    if (rawLiftType) previousSessionLiftType = rawLiftType;
+    const normalizedLiftType = normalizeLiftTypeForPreview(sessionLiftType);
 
     sessions.add(parsedDate);
     if (!minDate || parsedDate < minDate) minDate = parsedDate;

@@ -164,8 +164,6 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
             <CardHeader>
               <CardTitle>Personalise The Standards</CardTitle>
               <CardDescription>
-                Your age, sex, and bodyweight change the benchmark. Use your
-                real profile rather than comparing against anonymous gym myths.
                 These settings stay in your browser and power personalised
                 strength standards across the site.
               </CardDescription>

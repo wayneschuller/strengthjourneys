@@ -28,7 +28,7 @@ import {
   Flame,
   Sparkles,
   CircleDashed,
-  Dumbbell,
+  Plus,
   Mountain,
 } from "lucide-react";
 
@@ -58,7 +58,7 @@ export const featurePages = [
     href: "/log",
     title: "Log",
     description: "Log your lifting session and track your progress in real time.",
-    IconComponent: Dumbbell,
+    IconComponent: Plus,
     authRequired: true, // Only shown to authenticated users in nav and feature cards
   },
   {

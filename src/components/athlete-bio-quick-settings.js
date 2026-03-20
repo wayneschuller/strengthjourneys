@@ -197,8 +197,8 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
   const unit = isMetric ? "kg" : "lb";
 
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
-      <div className="flex flex-col gap-2 text-center">
+    <div className={cn("flex flex-col gap-4", className)}>
+      <div className="flex flex-col gap-1 text-center">
         <p
           className={cn(
             "text-sm",
@@ -221,8 +221,8 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1.35fr)] xl:items-end">
-        <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1.35fr)] xl:items-end">
+        <div className="flex flex-col gap-1.5">
           <div className="flex items-end justify-between gap-4">
             <Label
               htmlFor="page-athlete-age-slider"
@@ -247,7 +247,7 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 xl:min-w-[17rem]">
+        <div className="flex flex-col gap-1.5 xl:min-w-[15rem]">
           <div className="flex items-end justify-between gap-4">
             <Label className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Sex
@@ -256,29 +256,19 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
               {sex}
             </Badge>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant={sex === "male" ? "default" : "outline"}
-              className="w-full"
-              onClick={() => setSex("male")}
-              aria-pressed={sex === "male"}
-            >
-              Male
-            </Button>
-            <Button
-              type="button"
-              variant={sex === "female" ? "default" : "outline"}
-              className="w-full"
-              onClick={() => setSex("female")}
-              aria-pressed={sex === "female"}
-            >
-              Female
-            </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-muted-foreground">M</span>
+            <Switch
+              aria-label="Sex"
+              checked={sex === "female"}
+              onCheckedChange={(checked) => setSex(checked ? "female" : "male")}
+              className="h-6 w-11 data-[state=checked]:bg-pink-500"
+            />
+            <span className="text-sm font-semibold text-muted-foreground">F</span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <Label
               htmlFor="page-athlete-bodyweight-slider"

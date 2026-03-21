@@ -368,11 +368,21 @@ export function SheetSetupDialog() {
         const discoveredCandidates = Array.isArray(payload.candidates)
           ? sortCandidatesForChooser(payload.candidates)
           : [];
+        const currentCandidateId =
+          intent === "switch_sheet" &&
+          discoveredCandidates.some((candidate) => candidate.id === sheetInfo?.ssid)
+            ? sheetInfo.ssid
+            : null;
+        const recommendedId = currentCandidateId || discoveredCandidates[0]?.id || payload?.recommendedId || null;
         const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
           ? payload.enrichCandidateIds
           : discoveredCandidates.slice(0, ENRICH_CANDIDATE_LIMIT).map((candidate) => candidate.id);
+        const prioritizedEnrichCandidateIds =
+          currentCandidateId && !enrichCandidateIds.includes(currentCandidateId)
+            ? [currentCandidateId, ...enrichCandidateIds].slice(0, ENRICH_CANDIDATE_LIMIT)
+            : enrichCandidateIds;
         setCandidateSheets(discoveredCandidates);
-        setRecommendedCandidateId(discoveredCandidates[0]?.id || payload?.recommendedId || null);
+        setRecommendedCandidateId(recommendedId);
         setFlowIntent(payload?.intent || intent);
         setSheetDiscoveryStatusMessage(
           discoveredCandidates.length > 0
@@ -386,8 +396,8 @@ export function SheetSetupDialog() {
         setOnboardingState("choose_sheet");
         void enrichCandidateSheets({
           candidates: discoveredCandidates,
-          candidateIds: enrichCandidateIds,
-          primaryCandidateId: payload?.recommendedId || null,
+          candidateIds: prioritizedEnrichCandidateIds,
+          primaryCandidateId: recommendedId,
         });
         return;
       }
@@ -463,6 +473,7 @@ export function SheetSetupDialog() {
       resetUiState,
       router,
       selectSheet,
+      sheetInfo?.ssid,
     ],
   );
 

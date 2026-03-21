@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
-const ENRICH_CANDIDATE_LIMIT = 6;
+const ENRICH_CANDIDATE_LIMIT = 12;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
 const FORCE_SHEET_SYNC_TOAST_KEY = "SJ_forceNextSheetSyncToast";
 const SHEET_SETUP_QUIPS = [
@@ -384,7 +384,7 @@ export function SheetSetupDialog() {
           ? payload.enrichCandidateIds
           : discoveredCandidates.slice(0, ENRICH_CANDIDATE_LIMIT).map((candidate) => candidate.id);
         setCandidateSheets(discoveredCandidates);
-        setRecommendedCandidateId(discoveredCandidates[0]?.id || payload?.recommendedId || null);
+        setRecommendedCandidateId(payload?.recommendedId || discoveredCandidates[0]?.id || null);
         setFlowIntent(payload?.intent || intent);
         setSheetDiscoveryStatusMessage(
           discoveredCandidates.length > 0

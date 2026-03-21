@@ -8,7 +8,7 @@ import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 export const PROVISION_VERSION = 2;
 const MAX_HEADER_CHECKS = 12;
-const MAX_DEEP_ENRICH_CANDIDATES = 6;
+const MAX_DEEP_ENRICH_CANDIDATES = 12;
 const METADATA_SCAN_ROW_CAP = 10000;
 const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 const BIG_FOUR_LIFTS_SET = new Set(BIG_FOUR_LIFTS);
@@ -405,6 +405,15 @@ export async function enrichCandidateMetadata(
       continue;
     }
 
+    const parsedDateFromCell = parseYmd(row?.[dateColumnIndex], locale);
+    if (parsedDateFromCell && previousDate && parsedDateFromCell !== previousDate) {
+      previousSessionLiftType = null;
+    }
+    if (parsedDateFromCell) previousDate = parsedDateFromCell;
+
+    const rawLiftType = String(row?.[liftTypeColumnIndex] || "").trim();
+    if (rawLiftType) previousSessionLiftType = rawLiftType;
+
     const hasReps =
       repsColumnIndex >= 0 && String(row?.[repsColumnIndex] || "").trim() !== "";
     const hasWeight =
@@ -413,17 +422,9 @@ export async function enrichCandidateMetadata(
     if (!hasReps || !hasWeight) continue;
     approxRows += 1;
 
-    const parsedDateFromCell = parseYmd(row?.[dateColumnIndex], locale);
     const parsedDate = parsedDateFromCell || previousDate;
     if (!parsedDate) continue;
-    if (parsedDateFromCell && previousDate && parsedDateFromCell !== previousDate) {
-      previousSessionLiftType = null;
-    }
-    previousDate = parsedDate;
-
-    const rawLiftType = String(row?.[liftTypeColumnIndex] || "").trim();
     const sessionLiftType = rawLiftType || previousSessionLiftType;
-    if (rawLiftType) previousSessionLiftType = rawLiftType;
     const normalizedLiftType = normalizeLiftTypeForPreview(sessionLiftType);
 
     sessions.add(parsedDate);

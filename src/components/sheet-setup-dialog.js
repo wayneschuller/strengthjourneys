@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
-const ENRICH_CANDIDATE_LIMIT = 12;
+const ENRICH_CANDIDATE_LIMIT = 6;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
 const FORCE_SHEET_SYNC_TOAST_KEY = "SJ_forceNextSheetSyncToast";
 const SHEET_SETUP_QUIPS = [
@@ -228,7 +228,6 @@ export function SheetSetupDialog() {
   const dialogInitialSsidRef = useRef(null);
   const flowStartedAtRef = useRef(null);
   const outcomeReportedRef = useRef(false);
-  const onboardingFlowTokenRef = useRef(null);
   const dialogCopy = getSheetDialogCopy({
     intent: flowIntent,
     state: onboardingState,
@@ -255,19 +254,11 @@ export function SheetSetupDialog() {
   const reportOnboardingEvent = useCallback(
     async (event, meta = {}) => {
       if (authStatus !== "authenticated") return;
-      if (!onboardingFlowTokenRef.current) {
-        devLog("[sheet-setup] onboarding event skipped: missing flow token");
-        return;
-      }
       try {
         await fetch("/api/onboarding-event", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            event,
-            meta,
-            onboardingFlowToken: onboardingFlowTokenRef.current,
-          }),
+          body: JSON.stringify({ event, meta }),
           keepalive: true,
         });
       } catch (error) {
@@ -373,20 +364,15 @@ export function SheetSetupDialog() {
 
   const handleResolvedAction = useCallback(
     (payload, intent) => {
-      if (payload?.onboardingFlowToken) {
-        onboardingFlowTokenRef.current = payload.onboardingFlowToken;
-      }
       if (payload?.action === "choose_sheet") {
         const discoveredCandidates = Array.isArray(payload.candidates)
           ? sortCandidatesForChooser(payload.candidates)
           : [];
-        const initialRecommendedId =
-          discoveredCandidates[0]?.id || payload?.recommendedId || null;
         const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
           ? payload.enrichCandidateIds
           : discoveredCandidates.slice(0, ENRICH_CANDIDATE_LIMIT).map((candidate) => candidate.id);
         setCandidateSheets(discoveredCandidates);
-        setRecommendedCandidateId(initialRecommendedId);
+        setRecommendedCandidateId(discoveredCandidates[0]?.id || payload?.recommendedId || null);
         setFlowIntent(payload?.intent || intent);
         setSheetDiscoveryStatusMessage(
           discoveredCandidates.length > 0
@@ -401,7 +387,7 @@ export function SheetSetupDialog() {
         void enrichCandidateSheets({
           candidates: discoveredCandidates,
           candidateIds: enrichCandidateIds,
-          primaryCandidateId: initialRecommendedId,
+          primaryCandidateId: payload?.recommendedId || null,
         });
         return;
       }
@@ -485,7 +471,6 @@ export function SheetSetupDialog() {
       dialogInitialSsidRef.current = sheetInfo?.ssid || null;
       flowStartedAtRef.current = Date.now();
       outcomeReportedRef.current = false;
-      onboardingFlowTokenRef.current = null;
       setLoadingQuip(pickRandomSheetSetupQuip());
       setOpen(true);
       setProvisionError(null);
@@ -512,9 +497,6 @@ export function SheetSetupDialog() {
           }),
         });
         const payload = await response.json().catch(() => ({}));
-        if (payload?.onboardingFlowToken) {
-          onboardingFlowTokenRef.current = payload.onboardingFlowToken;
-        }
         if (!response.ok) {
           throw new Error(payload?.error || "Automatic setup failed");
         }
@@ -666,7 +648,6 @@ export function SheetSetupDialog() {
       provisioningStartedRef.current = false;
       outcomeReportedRef.current = false;
       flowStartedAtRef.current = null;
-      onboardingFlowTokenRef.current = null;
       resetUiState();
     }
   }, [authStatus, resetUiState]);

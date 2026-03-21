@@ -380,11 +380,13 @@ export function SheetSetupDialog() {
         const discoveredCandidates = Array.isArray(payload.candidates)
           ? sortCandidatesForChooser(payload.candidates)
           : [];
+        const initialRecommendedId =
+          discoveredCandidates[0]?.id || payload?.recommendedId || null;
         const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
           ? payload.enrichCandidateIds
           : discoveredCandidates.slice(0, ENRICH_CANDIDATE_LIMIT).map((candidate) => candidate.id);
         setCandidateSheets(discoveredCandidates);
-        setRecommendedCandidateId(payload?.recommendedId || discoveredCandidates[0]?.id || null);
+        setRecommendedCandidateId(initialRecommendedId);
         setFlowIntent(payload?.intent || intent);
         setSheetDiscoveryStatusMessage(
           discoveredCandidates.length > 0
@@ -399,7 +401,7 @@ export function SheetSetupDialog() {
         void enrichCandidateSheets({
           candidates: discoveredCandidates,
           candidateIds: enrichCandidateIds,
-          primaryCandidateId: payload?.recommendedId || null,
+          primaryCandidateId: initialRecommendedId,
         });
         return;
       }

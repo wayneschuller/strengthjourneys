@@ -760,10 +760,10 @@ export function SheetSetupDialog() {
       }}>
         <DialogContent
           aria-describedby={undefined}
-          className="w-[min(96vw,1220px)] max-w-[1220px] border-0 bg-transparent p-0 shadow-none"
+          className="max-h-[92vh] w-[min(96vw,1220px)] max-w-[1220px] overflow-hidden border-0 bg-transparent p-0 shadow-none"
         >
-          <Card className="border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
-            <CardHeader className="space-y-3 xl:px-10 2xl:px-16">
+          <Card className="flex max-h-[92vh] flex-col overflow-hidden border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
+            <CardHeader className="shrink-0 space-y-3 xl:px-10 2xl:px-16">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-primary">
                 {dialogCopy.tone === "ready" ? (
                   <CheckCircle2 className="h-4 w-4" />
@@ -781,7 +781,7 @@ export function SheetSetupDialog() {
                 </CardDescription>
               ) : null}
             </CardHeader>
-            <CardContent className="space-y-5 xl:px-10 2xl:px-16">
+            <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto xl:px-10 2xl:px-16">
               {(onboardingState === "discovering" || onboardingState === "linking_or_creating") && (
                 <PlateLoadingAnimation isActive={true} />
               )}

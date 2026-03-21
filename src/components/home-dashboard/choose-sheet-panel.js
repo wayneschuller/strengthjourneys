@@ -140,6 +140,12 @@ function formatPreviewSetDetail(preview) {
   return `${e1rm}${date ? ` (${date})` : ""}`;
 }
 
+function getCandidateUrl(candidate) {
+  return typeof candidate?.webViewLink === "string" && candidate.webViewLink.trim()
+    ? candidate.webViewLink
+    : null;
+}
+
 export function ChooseSheetPanel({
   intent = "recovery",
   candidates,
@@ -213,9 +219,20 @@ export function ChooseSheetPanel({
                   <div className="max-w-2xl space-y-5">
                     <div className="min-w-0 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-lg font-semibold text-foreground">
-                          {primaryCandidate.name}
-                        </p>
+                        {getCandidateUrl(primaryCandidate) ? (
+                          <a
+                            href={getCandidateUrl(primaryCandidate)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="truncate text-lg font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
+                          >
+                            {primaryCandidate.name}
+                          </a>
+                        ) : (
+                          <p className="truncate text-lg font-semibold text-foreground">
+                            {primaryCandidate.name}
+                          </p>
+                        )}
                         {freshnessLabel && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                             {freshnessLabel}
@@ -506,9 +523,20 @@ export function ChooseSheetPanel({
                               className="h-4 w-4 shrink-0"
                               aria-hidden
                             />
-                            <p className="truncate text-sm font-semibold text-foreground">
-                              {candidate.name}
-                            </p>
+                            {getCandidateUrl(candidate) ? (
+                              <a
+                                href={getCandidateUrl(candidate)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="truncate text-sm font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
+                              >
+                                {candidate.name}
+                              </a>
+                            ) : (
+                              <p className="truncate text-sm font-semibold text-foreground">
+                                {candidate.name}
+                              </p>
+                            )}
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {formatCandidateMeta(candidate, isEnriching)}

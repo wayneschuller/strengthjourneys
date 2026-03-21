@@ -228,6 +228,7 @@ export function SheetSetupDialog() {
   const dialogInitialSsidRef = useRef(null);
   const flowStartedAtRef = useRef(null);
   const outcomeReportedRef = useRef(false);
+  const onboardingFlowTokenRef = useRef(null);
   const dialogCopy = getSheetDialogCopy({
     intent: flowIntent,
     state: onboardingState,
@@ -254,11 +255,19 @@ export function SheetSetupDialog() {
   const reportOnboardingEvent = useCallback(
     async (event, meta = {}) => {
       if (authStatus !== "authenticated") return;
+      if (!onboardingFlowTokenRef.current) {
+        devLog("[sheet-setup] onboarding event skipped: missing flow token");
+        return;
+      }
       try {
         await fetch("/api/onboarding-event", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event, meta }),
+          body: JSON.stringify({
+            event,
+            meta,
+            onboardingFlowToken: onboardingFlowTokenRef.current,
+          }),
           keepalive: true,
         });
       } catch (error) {
@@ -364,6 +373,9 @@ export function SheetSetupDialog() {
 
   const handleResolvedAction = useCallback(
     (payload, intent) => {
+      if (payload?.onboardingFlowToken) {
+        onboardingFlowTokenRef.current = payload.onboardingFlowToken;
+      }
       if (payload?.action === "choose_sheet") {
         const discoveredCandidates = Array.isArray(payload.candidates)
           ? sortCandidatesForChooser(payload.candidates)
@@ -471,6 +483,7 @@ export function SheetSetupDialog() {
       dialogInitialSsidRef.current = sheetInfo?.ssid || null;
       flowStartedAtRef.current = Date.now();
       outcomeReportedRef.current = false;
+      onboardingFlowTokenRef.current = null;
       setLoadingQuip(pickRandomSheetSetupQuip());
       setOpen(true);
       setProvisionError(null);
@@ -497,6 +510,9 @@ export function SheetSetupDialog() {
           }),
         });
         const payload = await response.json().catch(() => ({}));
+        if (payload?.onboardingFlowToken) {
+          onboardingFlowTokenRef.current = payload.onboardingFlowToken;
+        }
         if (!response.ok) {
           throw new Error(payload?.error || "Automatic setup failed");
         }
@@ -648,6 +664,7 @@ export function SheetSetupDialog() {
       provisioningStartedRef.current = false;
       outcomeReportedRef.current = false;
       flowStartedAtRef.current = null;
+      onboardingFlowTokenRef.current = null;
       resetUiState();
     }
   }, [authStatus, resetUiState]);

@@ -289,6 +289,12 @@ export function FeedbackWidget({ labels = {} }) {
     "barbell-deadlift-insights": "Deadlift Insights",
     "barbell-strict-press-insights": "Strict Press Insights",
   };
+  const STRENGTH_LEVELS_LIFT_NAMES = {
+    squat: "Squat Strength Levels",
+    "bench-press": "Bench Press Strength Levels",
+    deadlift: "Deadlift Strength Levels",
+    "strict-press": "Strict Press Strength Levels",
+  };
 
   // Schedules recurring attention nudges while closed; disabled after feedback is submitted.
   const controls = useAnimationControls();
@@ -319,6 +325,8 @@ export function FeedbackWidget({ labels = {} }) {
   const pageName =
     router.pathname === "/[lift]"
       ? LIFT_SLUG_NAMES[router.query.lift] || "Lift Insights"
+      : router.pathname === "/strength-levels/[lift]"
+        ? STRENGTH_LEVELS_LIFT_NAMES[router.query.lift] || "the Strength Levels page"
       : PAGE_NAMES[router.pathname] || "Strength Journeys";
 
   function getUserType() {

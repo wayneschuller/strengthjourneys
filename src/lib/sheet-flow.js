@@ -390,6 +390,7 @@ export async function enrichCandidateMetadata(
   const rows = Array.isArray(json?.values) ? json.values : [];
 
   const sessions = new Set();
+  let nonEmptyRowCount = 0;
   let approxRows = 0;
   let minDate = null;
   let maxDate = null;
@@ -404,6 +405,7 @@ export async function enrichCandidateMetadata(
     ) {
       continue;
     }
+    nonEmptyRowCount += 1;
 
     const parsedDateFromCell = parseYmd(row?.[dateColumnIndex], locale);
     if (parsedDateFromCell && previousDate && parsedDateFromCell !== previousDate) {
@@ -486,7 +488,7 @@ export async function enrichCandidateMetadata(
     dateRangeEnd: maxDate,
     bigFourPreview: BIG_FOUR_LIFTS.map((liftType) => bestByLift[liftType]).filter(Boolean),
     metadataSampled:
-      nonEmptyRows.length >= METADATA_SCAN_ROW_CAP || hasRowsBeyondScanCap,
+      nonEmptyRowCount >= METADATA_SCAN_ROW_CAP || hasRowsBeyondScanCap,
   };
 }
 

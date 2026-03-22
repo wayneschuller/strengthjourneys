@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
 import {
   Copy,
@@ -9,10 +10,12 @@ import {
   Trophy,
   LineChart,
   Anvil,
+  Sparkles,
 } from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
+import { GoogleSignInButton } from "@/components/google-sign-in";
 import {
   PageContainer,
   PageHeader,
@@ -35,8 +38,10 @@ import {
   STRENGTH_LEVEL_EMOJI,
   useAthleteBio,
 } from "@/hooks/use-athlete-biodata";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { findBestE1RM } from "@/lib/processing-utils";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import {
   computeStrengthResults,
@@ -145,12 +150,48 @@ export default function HowStrongAmIPage({ relatedArticles }) {
 function HowStrongAmIPageMain() {
   const { age, sex, bodyWeight, isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
+  const { status: authStatus } = useSession();
+  const { topLiftsByTypeAndReps, isReturningUserLoading } = useUserLiftingData();
 
   const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
     squat: toKg(225, false),
     bench: toKg(155, false),
     deadlift: toKg(265, false),
   }));
+
+  // Track whether we've auto-populated from user data
+  const [usingUserData, setUsingUserData] = useState(false);
+  const hasAutoPopulatedRef = useRef(false);
+
+  // Auto-populate sliders from user's actual best E1RMs
+  useEffect(() => {
+    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps) return;
+
+    const squat = findBestE1RM("Back Squat", topLiftsByTypeAndReps, "Brzycki");
+    const bench = findBestE1RM("Bench Press", topLiftsByTypeAndReps, "Brzycki");
+    const deadlift = findBestE1RM("Deadlift", topLiftsByTypeAndReps, "Brzycki");
+
+    // Only auto-populate if we found at least one lift
+    if (!squat.bestE1RMWeight && !bench.bestE1RMWeight && !deadlift.bestE1RMWeight) return;
+
+    hasAutoPopulatedRef.current = true;
+
+    const toKgFromUnit = (weight, unitType) =>
+      unitType === "kg" ? weight : weight / 2.2046;
+
+    setLiftWeightsKg({
+      squat: squat.bestE1RMWeight
+        ? toKgFromUnit(squat.bestE1RMWeight, squat.unitType)
+        : toKg(225, false),
+      bench: bench.bestE1RMWeight
+        ? toKgFromUnit(bench.bestE1RMWeight, bench.unitType)
+        : toKg(155, false),
+      deadlift: deadlift.bestE1RMWeight
+        ? toKgFromUnit(deadlift.bestE1RMWeight, deadlift.unitType)
+        : toKg(265, false),
+    });
+    setUsingUserData(true);
+  }, [topLiftsByTypeAndReps]);
 
   const [selectedUniverse, setSelectedUniverse] = useState("General Population");
   const [hoveredUniverse, setHoveredUniverse] = useState(null);
@@ -256,6 +297,9 @@ function HowStrongAmIPageMain() {
                 liftWeights={liftWeights}
                 onChange={handleLiftChange}
                 isMetric={isMetric}
+                usingUserData={usingUserData}
+                authStatus={authStatus}
+                isReturningUserLoading={isReturningUserLoading}
               />
             </div>
 
@@ -350,18 +394,29 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, isMetric }) {
+function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatus, isReturningUserLoading }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
   const step = isMetric ? 2.5 : 5;
 
+  const showSignInTeaser =
+    authStatus === "unauthenticated" && !isReturningUserLoading;
+
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Your Lifts
-        </CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Your Lifts
+          </CardTitle>
+          {usingUserData && (
+            <Badge variant="outline" className="gap-1 text-xs font-normal">
+              <Sparkles className="h-3 w-3" />
+              From your log
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         {LIFTS.map(({ key, label, emoji }) => (
@@ -393,6 +448,21 @@ function LiftSliders({ liftWeights, onChange, isMetric }) {
             />
           </div>
         ))}
+
+        {showSignInTeaser && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <p className="mb-2 text-sm text-muted-foreground">
+              Sign in to auto-fill these from your actual training PRs.
+            </p>
+            <GoogleSignInButton
+              className="flex items-center gap-2"
+              cta="how_strong_am_i"
+              iconSize={16}
+            >
+              Sign In With Google
+            </GoogleSignInButton>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

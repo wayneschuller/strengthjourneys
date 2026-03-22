@@ -20,6 +20,7 @@ import {
   PageHeaderHeading,
   PageHeaderRight,
 } from "@/components/page-header";
+import { QuickLinkCard } from "@/components/quick-link-card";
 import {
   Card,
   CardContent,
@@ -125,8 +126,10 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "WebPage",
+        "@type": "WebApplication",
         name: title,
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
         description,
         url: canonicalURL,
       },
@@ -360,20 +363,3 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
   );
 }
 
-function QuickLinkCard({ href, title, description, icon }) {
-  return (
-    <Link href={href} className="block">
-      <Card className="h-full transition-shadow hover:shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            {icon}
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 text-sm text-muted-foreground">
-          {description}
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}

@@ -8,6 +8,7 @@ import { BicepsFlexed, BookOpen, Calculator, CircleDashed } from "lucide-react";
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { RelatedArticles } from "@/components/article-cards";
 import { GoogleSignInButton } from "@/components/google-sign-in";
+import { QuickLinkCard } from "@/components/quick-link-card";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import {
   PageContainer,
@@ -51,6 +52,15 @@ const INTERPRETATION_COPY = {
     ],
     closer:
       "Use the personalised standards above instead of generic gym folklore. They give you a better answer than any one-size-fits-all chart.",
+    exampleTable: {
+      caption: "Bench press standards for males aged 20–29 (kg)",
+      rows: [
+        { bw: 68, active: 50, beginner: 70, intermediate: 90, advanced: 110, elite: 130 },
+        { bw: 79, active: 50, beginner: 70, intermediate: 90, advanced: 110, elite: 150 },
+        { bw: 91, active: 52, beginner: 73, intermediate: 93, advanced: 114, elite: 161 },
+        { bw: 102, active: 55, beginner: 77, intermediate: 99, advanced: 121, elite: 170 },
+      ],
+    },
   },
   "Back Squat": {
     title: "What Counts As A Good Squat For Your Bodyweight?",
@@ -65,6 +75,15 @@ const INTERPRETATION_COPY = {
     ],
     closer:
       "If your question is 'is my squat good?' the right answer is not a single number. It is where your squat lands inside the standards for someone with your build.",
+    exampleTable: {
+      caption: "Squat standards for males aged 20–29 (kg)",
+      rows: [
+        { bw: 68, active: 46, beginner: 78, intermediate: 104, advanced: 143, elite: 189 },
+        { bw: 79, active: 51, beginner: 87, intermediate: 116, advanced: 160, elite: 210 },
+        { bw: 91, active: 58, beginner: 98, intermediate: 130, advanced: 179, elite: 236 },
+        { bw: 102, active: 57, beginner: 98, intermediate: 131, advanced: 180, elite: 232 },
+      ],
+    },
   },
   Deadlift: {
     title: "What Counts As A Good Deadlift For Your Bodyweight?",
@@ -79,6 +98,15 @@ const INTERPRETATION_COPY = {
     ],
     closer:
       "Use the standards on this page to answer the question people actually mean when they search for deadlift standards: not just 'what is impressive,' but 'what is impressive for me?'",
+    exampleTable: {
+      caption: "Deadlift standards for males aged 20–29 (kg)",
+      rows: [
+        { bw: 68, active: 64, beginner: 112, intermediate: 139, advanced: 186, elite: 207 },
+        { bw: 79, active: 76, beginner: 131, intermediate: 164, advanced: 219, elite: 243 },
+        { bw: 91, active: 83, beginner: 144, intermediate: 180, advanced: 240, elite: 266 },
+        { bw: 102, active: 84, beginner: 146, intermediate: 182, advanced: 243, elite: 270 },
+      ],
+    },
   },
   "Strict Press": {
     title: "What Counts As A Good Strict Press For Your Bodyweight?",
@@ -93,6 +121,15 @@ const INTERPRETATION_COPY = {
     ],
     closer:
       "These standards are built to give your press the right context instead of making it compete with lifts that naturally move more weight.",
+    exampleTable: {
+      caption: "Strict press standards for males aged 20–29 (kg)",
+      rows: [
+        { bw: 68, active: 28, beginner: 39, intermediate: 51, advanced: 62, elite: 82 },
+        { bw: 79, active: 31, beginner: 43, intermediate: 55, advanced: 68, elite: 89 },
+        { bw: 91, active: 35, beginner: 49, intermediate: 63, advanced: 78, elite: 102 },
+        { bw: 102, active: 36, beginner: 50, intermediate: 65, advanced: 80, elite: 105 },
+      ],
+    },
   },
 };
 
@@ -124,8 +161,10 @@ export default function StrengthStandardsLiftPage({ page, relatedArticles }) {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "WebPage",
+        "@type": "WebApplication",
         name: page.seoTitle,
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
         description: page.description,
         url: canonicalURL,
       },
@@ -306,6 +345,50 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                   </ul>
                 </div>
 
+                {interpretation.exampleTable && (
+                  <div className="mt-5 overflow-x-auto rounded-lg border">
+                    <table className="w-full text-sm">
+                      <caption className="sr-only">
+                        {interpretation.exampleTable.caption}
+                      </caption>
+                      <thead>
+                        <tr className="border-b bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                          <th className="px-3 py-2">BW (kg)</th>
+                          <th className="px-3 py-2">Active</th>
+                          <th className="px-3 py-2">Beginner</th>
+                          <th className="px-3 py-2">Inter.</th>
+                          <th className="px-3 py-2">Advanced</th>
+                          <th className="px-3 py-2">Elite</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {interpretation.exampleTable.rows.map((row) => (
+                          <tr key={row.bw} className="border-b last:border-0">
+                            <td className="px-3 py-2 font-medium">{row.bw}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{row.active}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{row.beginner}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{row.intermediate}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{row.advanced}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{row.elite}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="px-3 py-2 text-xs text-muted-foreground">
+                      {interpretation.exampleTable.caption}. Based on{" "}
+                      <a
+                        href="https://lonkilgore.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline decoration-1 underline-offset-2 hover:text-foreground"
+                      >
+                        Professor Lon Kilgore&apos;s research
+                      </a>
+                      . Use the interactive tool above for personalised results.
+                    </p>
+                  </div>
+                )}
+
                 <p className="mt-5 text-sm text-muted-foreground md:text-base">
                   {interpretation.closer}
                 </p>
@@ -340,11 +423,35 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
           </div>
         </section>
 
+        <section className="rounded-lg border p-4">
+          <h2 className="mb-3 text-lg font-semibold">
+            Browse Other Strength Standards
+          </h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {STRENGTH_STANDARDS_PAGES.filter((p) => p.slug !== page.slug).map(
+              (other) => (
+                <Link
+                  key={other.slug}
+                  href={getStrengthStandardsUrl(other.slug)}
+                  className="rounded-lg border p-3 text-center transition-colors hover:bg-muted"
+                >
+                  <span className="text-sm font-semibold">
+                    {other.navLabel}
+                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    Strength Levels
+                  </span>
+                </Link>
+              ),
+            )}
+          </div>
+        </section>
+
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <QuickLinkCard
             href="/strength-levels"
             title="Strength Levels Hub"
-            description="Browse the rest of the standards cluster."
+            description="Browse all four lifts on one page."
             icon={<BicepsFlexed className="h-5 w-5" />}
           />
           <QuickLinkCard
@@ -371,11 +478,12 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
 
 function StrengthLevelsDataCta({ page }) {
   const { status: authStatus } = useSession();
-  const { sheetInfo } = useUserLiftingData();
+  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
 
   if (authStatus === "authenticated" && sheetInfo?.ssid) {
     return null;
   }
+  if (isReturningUserLoading) return null;
 
   const showSignIn = authStatus === "unauthenticated";
   const showSheetSetup = authStatus === "authenticated" && !sheetInfo?.ssid;
@@ -425,20 +533,3 @@ function StrengthLevelsDataCta({ page }) {
   );
 }
 
-function QuickLinkCard({ href, title, description, icon }) {
-  return (
-    <Link href={href} className="block">
-      <Card className="h-full transition-shadow hover:shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            {icon}
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 text-sm text-muted-foreground">
-          {description}
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}

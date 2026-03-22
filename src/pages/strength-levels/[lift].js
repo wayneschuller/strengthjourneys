@@ -53,12 +53,12 @@ const INTERPRETATION_COPY = {
     closer:
       "Use the personalised standards above instead of generic gym folklore. They give you a better answer than any one-size-fits-all chart.",
     exampleTable: {
-      caption: "Bench press standards for males aged 20–29 (kg)",
+      caption: "Bench press standards for males aged 20–29",
       rows: [
-        { bw: 68, active: 50, beginner: 70, intermediate: 90, advanced: 110, elite: 130 },
-        { bw: 79, active: 50, beginner: 70, intermediate: 90, advanced: 110, elite: 150 },
-        { bw: 91, active: 52, beginner: 73, intermediate: 93, advanced: 114, elite: 161 },
-        { bw: 102, active: 55, beginner: 77, intermediate: 99, advanced: 121, elite: 170 },
+        { bwKg: 68, bwLb: 150, active: [50, 110], beginner: [70, 155], intermediate: [90, 200], advanced: [110, 245], elite: [130, 285] },
+        { bwKg: 79, bwLb: 175, active: [50, 110], beginner: [70, 155], intermediate: [90, 200], advanced: [110, 245], elite: [150, 330] },
+        { bwKg: 91, bwLb: 200, active: [52, 115], beginner: [73, 160], intermediate: [93, 205], advanced: [114, 250], elite: [161, 355] },
+        { bwKg: 102, bwLb: 225, active: [55, 120], beginner: [77, 170], intermediate: [99, 220], advanced: [121, 265], elite: [170, 375] },
       ],
     },
   },
@@ -76,12 +76,12 @@ const INTERPRETATION_COPY = {
     closer:
       "If your question is 'is my squat good?' the right answer is not a single number. It is where your squat lands inside the standards for someone with your build.",
     exampleTable: {
-      caption: "Squat standards for males aged 20–29 (kg)",
+      caption: "Squat standards for males aged 20–29",
       rows: [
-        { bw: 68, active: 46, beginner: 78, intermediate: 104, advanced: 143, elite: 189 },
-        { bw: 79, active: 51, beginner: 87, intermediate: 116, advanced: 160, elite: 210 },
-        { bw: 91, active: 58, beginner: 98, intermediate: 130, advanced: 179, elite: 236 },
-        { bw: 102, active: 57, beginner: 98, intermediate: 131, advanced: 180, elite: 232 },
+        { bwKg: 68, bwLb: 150, active: [46, 100], beginner: [78, 170], intermediate: [104, 230], advanced: [143, 315], elite: [189, 415] },
+        { bwKg: 79, bwLb: 175, active: [51, 110], beginner: [87, 190], intermediate: [116, 255], advanced: [160, 355], elite: [210, 465] },
+        { bwKg: 91, bwLb: 200, active: [58, 130], beginner: [98, 215], intermediate: [130, 285], advanced: [179, 395], elite: [236, 520] },
+        { bwKg: 102, bwLb: 225, active: [57, 125], beginner: [98, 215], intermediate: [131, 290], advanced: [180, 395], elite: [232, 510] },
       ],
     },
   },
@@ -99,12 +99,12 @@ const INTERPRETATION_COPY = {
     closer:
       "Use the standards on this page to answer the question people actually mean when they search for deadlift standards: not just 'what is impressive,' but 'what is impressive for me?'",
     exampleTable: {
-      caption: "Deadlift standards for males aged 20–29 (kg)",
+      caption: "Deadlift standards for males aged 20–29",
       rows: [
-        { bw: 68, active: 64, beginner: 112, intermediate: 139, advanced: 186, elite: 207 },
-        { bw: 79, active: 76, beginner: 131, intermediate: 164, advanced: 219, elite: 243 },
-        { bw: 91, active: 83, beginner: 144, intermediate: 180, advanced: 240, elite: 266 },
-        { bw: 102, active: 84, beginner: 146, intermediate: 182, advanced: 243, elite: 270 },
+        { bwKg: 68, bwLb: 150, active: [64, 140], beginner: [112, 245], intermediate: [139, 305], advanced: [186, 410], elite: [207, 455] },
+        { bwKg: 79, bwLb: 175, active: [76, 170], beginner: [131, 290], intermediate: [164, 360], advanced: [219, 485], elite: [243, 535] },
+        { bwKg: 91, bwLb: 200, active: [83, 185], beginner: [144, 315], intermediate: [180, 395], advanced: [240, 530], elite: [266, 585] },
+        { bwKg: 102, bwLb: 225, active: [84, 185], beginner: [146, 320], intermediate: [182, 400], advanced: [243, 535], elite: [270, 595] },
       ],
     },
   },
@@ -122,12 +122,12 @@ const INTERPRETATION_COPY = {
     closer:
       "These standards are built to give your press the right context instead of making it compete with lifts that naturally move more weight.",
     exampleTable: {
-      caption: "Strict press standards for males aged 20–29 (kg)",
+      caption: "Strict press standards for males aged 20–29",
       rows: [
-        { bw: 68, active: 28, beginner: 39, intermediate: 51, advanced: 62, elite: 82 },
-        { bw: 79, active: 31, beginner: 43, intermediate: 55, advanced: 68, elite: 89 },
-        { bw: 91, active: 35, beginner: 49, intermediate: 63, advanced: 78, elite: 102 },
-        { bw: 102, active: 36, beginner: 50, intermediate: 65, advanced: 80, elite: 105 },
+        { bwKg: 68, bwLb: 150, active: [28, 60], beginner: [39, 85], intermediate: [51, 110], advanced: [62, 135], elite: [82, 180] },
+        { bwKg: 79, bwLb: 175, active: [31, 70], beginner: [43, 95], intermediate: [55, 120], advanced: [68, 150], elite: [89, 195] },
+        { bwKg: 91, bwLb: 200, active: [35, 75], beginner: [49, 110], intermediate: [63, 140], advanced: [78, 170], elite: [102, 225] },
+        { bwKg: 102, bwLb: 225, active: [36, 80], beginner: [50, 110], intermediate: [65, 145], advanced: [80, 175], elite: [105, 230] },
       ],
     },
   },
@@ -353,7 +353,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                       </caption>
                       <thead>
                         <tr className="border-b bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-foreground/70">
-                          <th className="px-3 py-2">BW (kg)</th>
+                          <th className="px-3 py-2">Bodyweight</th>
                           <th className="px-3 py-2">Active</th>
                           <th className="px-3 py-2">Beginner</th>
                           <th className="px-3 py-2">Inter.</th>
@@ -363,28 +363,33 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                       </thead>
                       <tbody>
                         {interpretation.exampleTable.rows.map((row) => (
-                          <tr key={row.bw} className="border-b last:border-0">
-                            <td className="px-3 py-2 font-medium">{row.bw}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{row.active}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{row.beginner}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{row.intermediate}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{row.advanced}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{row.elite}</td>
+                          <tr key={row.bwKg} className="border-b last:border-0">
+                            <td className="px-3 py-2 font-medium">
+                              <span>{row.bwLb} lb</span>
+                              <span className="ml-1 text-muted-foreground">/ {row.bwKg} kg</span>
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {row.active[1]}<span className="hidden sm:inline"> / {row.active[0]}</span>
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {row.beginner[1]}<span className="hidden sm:inline"> / {row.beginner[0]}</span>
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {row.intermediate[1]}<span className="hidden sm:inline"> / {row.intermediate[0]}</span>
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {row.advanced[1]}<span className="hidden sm:inline"> / {row.advanced[0]}</span>
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {row.elite[1]}<span className="hidden sm:inline"> / {row.elite[0]}</span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                     <p className="px-3 py-2 text-xs text-muted-foreground">
-                      {interpretation.exampleTable.caption}. Based on{" "}
-                      <a
-                        href="https://lonkilgore.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline decoration-1 underline-offset-2 hover:text-foreground"
-                      >
-                        Professor Lon Kilgore&apos;s research
-                      </a>
-                      . Use the interactive tool above for personalised results.
+                      {interpretation.exampleTable.caption}. Values in lb<span className="hidden sm:inline"> / kg</span>.
+                      Use the interactive tool above for personalised results by age, sex, and bodyweight.
                     </p>
                   </div>
                 )}

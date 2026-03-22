@@ -5,6 +5,7 @@ import { NextSeo } from "next-seo";
 import {
   ArrowUpRight,
   BicepsFlexed,
+  BookOpen,
   Calculator,
   CircleDashed,
 } from "lucide-react";
@@ -264,14 +265,21 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                         >
                           <ArrowUpRight className="h-4 w-4" />
-                          See Full Standards
+                          {page.navLabel} Standards
                         </Link>
                         <Link
                           href={page.calculatorUrl}
                           className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                         >
                           <Calculator className="h-4 w-4" />
-                          1RM Calculator
+                          {page.navLabel} 1RM Calculator
+                        </Link>
+                        <Link
+                          href={page.insightUrl}
+                          className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+                        >
+                          <BookOpen className="h-4 w-4" />
+                          {page.navLabel} Guide
                         </Link>
                       </div>
                     </CardContent>

@@ -508,7 +508,7 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                 Reset to PRs
               </Button>
             )}
-            {usingUserData && (
+            {usingUserData && !hasMovedFromPR && (
               <Badge variant="outline" className="gap-1 text-xs font-normal">
                 <Sparkles className="h-3 w-3" />
                 From your log

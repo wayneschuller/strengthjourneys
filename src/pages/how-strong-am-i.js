@@ -897,17 +897,13 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
   const activePercentile = chartPercentiles[activeUniverse] ?? genPop;
 
   let careerLabel = null;
-  let careerDescription = null;
   if (careerYears != null) {
     if (careerYears >= 1) {
       const years = Math.floor(careerYears);
       careerLabel = `${years}yr${years !== 1 ? "s" : ""}`;
-      if (years >= 2) careerDescription = "Multi-year consistency is the hardest part — and you\u2019re doing it.";
-      else careerDescription = "Year one is where the biggest jumps happen. You\u2019re right in it.";
     } else {
       const months = Math.max(1, Math.round(careerYears * 12));
       careerLabel = `${months}mo`;
-      careerDescription = "Early momentum builds the habits that last decades.";
     }
   }
 
@@ -950,9 +946,6 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
             </span>
           )}
         </div>
-        {careerDescription && (
-          <p className="text-sm text-muted-foreground">{careerDescription}</p>
-        )}
       </div>
 
       {/* Percentile timeline chart */}

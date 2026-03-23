@@ -661,7 +661,7 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                   </span>
                 </div>
               </div>
-              <div className="relative pb-4">
+              <div className="relative pb-6">
                 <Slider
                   value={[liftWeights[key]]}
                   onValueChange={([value]) => {
@@ -682,7 +682,7 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                     className="pointer-events-none absolute bottom-0 flex flex-col items-center"
                     style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
                   >
-                    <div className="h-1.5 w-px bg-primary/50" />
+                    <div className="h-3 w-px bg-primary/40" />
                     <span className="text-[9px] font-medium leading-none text-primary/60">
                       PR
                     </span>

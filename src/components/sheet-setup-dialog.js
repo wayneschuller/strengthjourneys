@@ -228,6 +228,7 @@ export function SheetSetupDialog() {
   const dialogInitialSsidRef = useRef(null);
   const flowStartedAtRef = useRef(null);
   const outcomeReportedRef = useRef(false);
+  const onboardingFlowTokenRef = useRef(null);
   const dialogCopy = getSheetDialogCopy({
     intent: flowIntent,
     state: onboardingState,
@@ -249,16 +250,22 @@ export function SheetSetupDialog() {
     setCreatedSheetInfo(null);
     setCreatedSheetReason(null);
     setIsDisconnectingCurrentSheet(false);
+    onboardingFlowTokenRef.current = null;
   }, []);
 
   const reportOnboardingEvent = useCallback(
     async (event, meta = {}) => {
       if (authStatus !== "authenticated") return;
+      const token = onboardingFlowTokenRef.current;
+      if (!token) {
+        devLog("[sheet-setup] skipping onboarding event — no flow token:", event);
+        return;
+      }
       try {
         await fetch("/api/onboarding-event", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event, meta }),
+          body: JSON.stringify({ event, meta, onboardingFlowToken: token }),
           keepalive: true,
         });
       } catch (error) {
@@ -508,6 +515,9 @@ export function SheetSetupDialog() {
           }),
         });
         const payload = await response.json().catch(() => ({}));
+        if (payload?.onboardingFlowToken) {
+          onboardingFlowTokenRef.current = payload.onboardingFlowToken;
+        }
         if (!response.ok) {
           throw new Error(payload?.error || "Automatic setup failed");
         }
@@ -558,6 +568,9 @@ export function SheetSetupDialog() {
           }),
         });
         const payload = await response.json().catch(() => ({}));
+        if (payload?.onboardingFlowToken) {
+          onboardingFlowTokenRef.current = payload.onboardingFlowToken;
+        }
         if (!response.ok) {
           throw new Error(payload?.error || "Sheet linking failed");
         }

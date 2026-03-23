@@ -93,6 +93,11 @@ const FAQ_ITEMS = [
       "Most versions of the challenge use only back squat, bench press, and deadlift. Strict press is a strong benchmark but usually not part of the 1000lb total.",
   },
   {
+    question: "What does 'biggest opportunity' mean?",
+    answer:
+      "It is a simple balance check based on a rough squat-bench-deadlift split of 36% / 24% / 40% of your total. For a 1000lb total, that works out to about a 360lb squat, 240lb bench, and 400lb deadlift. For a 1200lb total, the same split would be about 432lb squat, 288lb bench, and 480lb deadlift. The calculator highlights the lift that is furthest below that rough balance point.",
+  },
+  {
     question: "What if my total is over 1000lb?",
     answer:
       "You are in the club. The calculator shows how far past 1000lb you are so you can set the next milestone.",
@@ -891,19 +896,14 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 {inClub
                   ? `You\u2019re in the 1000lb Club! You\u2019re ${pastLbs} lbs (${toKgF(pastLbs)} kg) past 1000.`
                   : `You\u2019re ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
-              </div>
-              {biggestOpportunity && (
-                <div className="bg-muted/40 mt-2 rounded-lg border px-4 py-3">
-                  <p className="text-base font-medium">
+                {biggestOpportunity && (
+                  <span className="text-foreground/90">
+                    {" "}
                     Biggest opportunity: {biggestOpportunity.lift} is ~
-                    {biggestOpportunity.gapLbs} lbs below its ideal share of
-                    your total.
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Ideal SBD ratio: 36% / 24% / 40%
-                  </p>
-                </div>
-              )}
+                    {biggestOpportunity.gapLbs} lbs below its ideal share.
+                  </span>
+                )}
+              </div>
             </div>
             <div className="xl:self-center">
               <ThousandDonut

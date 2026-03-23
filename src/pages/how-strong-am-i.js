@@ -817,6 +817,7 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
               percentile={results.total.percentiles?.[activeUniverse]}
               universe={activeUniverse}
               allPercentiles={results.total.percentiles}
+              firstName={session?.user?.name?.split(" ")[0]}
             />
           </>
         )}
@@ -856,30 +857,34 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
 }
 
 
-function PercentileConclusion({ percentile, universe, allPercentiles }) {
+function PercentileConclusion({ percentile, universe, allPercentiles, firstName }) {
   if (percentile == null) return null;
+
+  const name = firstName || "You";
+  const namePos = firstName ? `${firstName}'s` : "Your";
+  const u = universe.toLowerCase();
 
   let headline;
   let detail;
 
   if (percentile >= 95) {
-    headline = "Elite territory.";
-    detail = `You're stronger than ${percentile}% of ${universe.toLowerCase()}. Very few people reach this level — years of serious, consistent training got you here.`;
+    headline = `Elite territory${firstName ? `, ${firstName}` : ""}.`;
+    detail = `Stronger than ${percentile}% of ${u}. Very few people reach this level \u2014 years of serious, consistent training got ${name.toLowerCase() === "you" ? "you" : firstName} here.`;
   } else if (percentile >= 85) {
     headline = "Seriously strong.";
-    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. You're well past the point where people notice. This is dedicated-lifter strength.`;
+    detail = `${name}'${name.endsWith("s") ? "" : "s"} stronger than ${percentile}% of ${u}. Well past the point where people notice \u2014 this is dedicated-lifter strength.`;
   } else if (percentile >= 70) {
     headline = "Above average, clearly trained.";
-    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. Your training is paying off — most people who lift don't reach this range.`;
+    detail = `Stronger than ${percentile}% of ${u}. ${namePos} training is paying off \u2014 most people who lift don\u2019t reach this range.`;
   } else if (percentile >= 50) {
     headline = "Solid foundation.";
-    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. You're right in the middle of the pack, with real room to grow. Consistency will move this number.`;
+    detail = `Stronger than ${percentile}% of ${u}. Right in the middle of the pack, with real room to grow. Consistency will move this number.`;
   } else if (percentile >= 30) {
     headline = "Building momentum.";
-    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. Everyone starts somewhere, and the biggest jumps happen in this range. Keep showing up.`;
+    detail = `Stronger than ${percentile}% of ${u}. Everyone starts somewhere, and the biggest jumps happen in this range. Keep showing up.`;
   } else {
-    headline = "Early days — big gains ahead.";
-    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. The good news? Beginners progress faster than anyone. A few months of consistent work will change this dramatically.`;
+    headline = "Early days \u2014 big gains ahead.";
+    detail = `Stronger than ${percentile}% of ${u}. The good news? Beginners progress faster than anyone. A few months of consistent work will change this dramatically.`;
   }
 
   // Add cross-universe context when viewing a universe other than the one shown

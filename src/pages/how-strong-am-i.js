@@ -386,13 +386,15 @@ function HowStrongAmIPageMain() {
             </div>
           </div>
 
-          {userStoryData && (
+          {authStatus === "authenticated" && userStoryData ? (
             <YourStrengthStory
               storyData={userStoryData}
               chartPercentiles={chartPercentiles}
               isMetric={isMetric}
             />
-          )}
+          ) : authStatus === "unauthenticated" && !isReturningUserLoading ? (
+            <StrengthStoryTeaser />
+          ) : null}
 
           <section className="mx-auto mt-10 max-w-2xl lg:max-w-4xl">
             <ExplainerSection />
@@ -592,6 +594,35 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function StrengthStoryTeaser() {
+  return (
+    <div className="mx-auto mt-8 max-w-2xl">
+      <Card className="border-dashed">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-muted-foreground" />
+            Your Strength Story
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <p className="text-sm text-muted-foreground">
+            Sign in and connect your lifting log to unlock your personal
+            strength story — career stats, all-time PRs vs last 12 months, and
+            your real percentile rankings filled in automatically.
+          </p>
+          <GoogleSignInButton
+            className="flex w-fit items-center gap-2"
+            cta="how_strong_story_teaser"
+            iconSize={16}
+          >
+            Sign In With Google
+          </GoogleSignInButton>
+        </CardContent>
+      </Card>
     </div>
   );
 }

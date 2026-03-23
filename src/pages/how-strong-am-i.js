@@ -455,12 +455,12 @@ function HowStrongAmIPageMain() {
       if (bestE1rm.squat == null || bestE1rm.bench == null || bestE1rm.deadlift == null) continue;
 
       const result = computeStrengthResults(bio, bestE1rm);
-      const pct = result.total?.percentiles?.["General Population"];
-      if (pct == null) continue;
+      const allPcts = result.total?.percentiles;
+      if (!allPcts?.["General Population"]) continue;
 
       points.push({
         date: sampleDate.toISOString().slice(0, 10),
-        percentile: pct,
+        ...allPcts,
       });
     }
 
@@ -826,6 +826,7 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
             chartPercentiles={chartPercentiles}
             isMetric={isMetric}
             percentileTimeline={percentileTimeline}
+            activeUniverse={activeUniverse}
           />
         )}
 
@@ -888,11 +889,12 @@ function PercentileConclusion({ percentile, universe }) {
   );
 }
 
-function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentileTimeline }) {
+function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentileTimeline, activeUniverse }) {
   const { careerYears, totalSessions, liftCount, liftStories } = storyData;
 
   const barbell = chartPercentiles["Barbell Lifters"];
   const genPop = chartPercentiles["General Population"];
+  const activePercentile = chartPercentiles[activeUniverse] ?? genPop;
 
   let careerLabel = null;
   let careerDescription = null;
@@ -956,7 +958,11 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
 
       {/* Percentile timeline chart */}
       {percentileTimeline && (
-        <PercentileTimelineChart data={percentileTimeline} currentPercentile={genPop} />
+        <PercentileTimelineChart
+          data={percentileTimeline}
+          currentPercentile={activePercentile}
+          activeUniverse={activeUniverse}
+        />
       )}
 
       {/* Motivational closer */}
@@ -980,7 +986,9 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
   );
 }
 
-function PercentileTimelineChart({ data, currentPercentile }) {
+function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "General Population" }) {
+  const dataKey = activeUniverse;
+
   // Determine smart tick formatting based on time span
   const firstDate = new Date(data[0].date);
   const lastDate = new Date(data[data.length - 1].date);
@@ -1013,13 +1021,15 @@ function PercentileTimelineChart({ data, currentPercentile }) {
   };
 
   // Compute Y domain: floor to nearest 10 below min, cap at 100
-  const minPct = Math.min(...data.map((d) => d.percentile));
+  const minPct = Math.min(...data.map((d) => d[dataKey] ?? 0));
   const yMin = Math.max(0, Math.floor(minPct / 10) * 10 - 5);
+
+  const universeLabel = activeUniverse.toLowerCase();
 
   return (
     <div className="flex flex-col gap-1">
       <p className="text-xs text-muted-foreground">
-        SBD percentile vs. general population over time
+        SBD percentile vs. {universeLabel} over time
       </p>
       <div className="h-28 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -1066,7 +1076,7 @@ function PercentileTimelineChart({ data, currentPercentile }) {
             )}
             <Area
               type="monotone"
-              dataKey="percentile"
+              dataKey={dataKey}
               stroke="var(--chart-1)"
               strokeWidth={2}
               fill="url(#pctGrad)"

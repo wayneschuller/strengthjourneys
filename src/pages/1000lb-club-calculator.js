@@ -1,14 +1,15 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useState, useEffect, useRef, useId } from "react";
+import { useMemo, useState, useEffect, useRef, useId } from "react";
 import { NextSeo } from "next-seo";
+import { useSession } from "next-auth/react";
 import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/instructions-cards";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -27,6 +28,7 @@ import {
   PageHeaderRight,
 } from "@/components/page-header";
 
+import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,14 +39,30 @@ import {
   BicepsFlexed,
   Bot,
   CircleDashed,
+  Sparkles,
+  RotateCcw,
 } from "lucide-react";
 
-import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ReferenceLine,
+} from "recharts";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { findBestE1RM } from "@/lib/processing-utils";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 const BIG_FOUR_URLS = {
   "Back Squat": "/barbell-squat-insights",
@@ -279,6 +297,11 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const { toast } = useToast();
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
+  const { status: authStatus } = useSession();
+  const { topLiftsByTypeAndReps, parsedData, isDemoMode } = useUserLiftingData();
+  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false });
+  const e1rmFormula = storedFormula ?? "Brzycki";
+
   const [squat, setSquat] = useLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
     275,
@@ -306,6 +329,125 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const donutContainerRef = useRef(null);
   const [activeLiftKey, setActiveLiftKey] = useState(null);
 
+  // PR auto-populate for authenticated users with real data
+  const [usingUserData, setUsingUserData] = useState(false);
+  const hasAutoPopulatedRef = useRef(false);
+  const prWeightsLbRef = useRef(null);
+
+  useEffect(() => {
+    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps || isDemoMode) return;
+
+    const sq = findBestE1RM("Back Squat", topLiftsByTypeAndReps, e1rmFormula);
+    const bp = findBestE1RM("Bench Press", topLiftsByTypeAndReps, e1rmFormula);
+    const dl = findBestE1RM("Deadlift", topLiftsByTypeAndReps, e1rmFormula);
+
+    if (!sq.bestE1RMWeight && !bp.bestE1RMWeight && !dl.bestE1RMWeight) return;
+
+    hasAutoPopulatedRef.current = true;
+
+    const toLbs = (weight, unitType) =>
+      unitType === "lb" ? weight : weight * 2.2046;
+
+    const roundTo5 = (v) => Math.round(v / 5) * 5;
+    const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
+
+    const prSquat = sq.bestE1RMWeight ? clampLb(toLbs(sq.bestE1RMWeight, sq.unitType)) : null;
+    const prBench = bp.bestE1RMWeight ? clampLb(toLbs(bp.bestE1RMWeight, bp.unitType)) : null;
+    const prDeadlift = dl.bestE1RMWeight ? clampLb(toLbs(dl.bestE1RMWeight, dl.unitType)) : null;
+
+    prWeightsLbRef.current = { squat: prSquat, bench: prBench, deadlift: prDeadlift };
+
+    if (prSquat != null) setSquat(prSquat);
+    if (prBench != null) setBench(prBench);
+    if (prDeadlift != null) setDeadlift(prDeadlift);
+    setUsingUserData(true);
+  }, [topLiftsByTypeAndReps, isDemoMode, e1rmFormula, setSquat, setBench, setDeadlift]);
+
+  const handleResetToPRs = () => {
+    const pr = prWeightsLbRef.current;
+    if (!pr) return;
+    if (pr.squat != null) setSquat(pr.squat);
+    if (pr.bench != null) setBench(pr.bench);
+    if (pr.deadlift != null) setDeadlift(pr.deadlift);
+  };
+
+  const hasMovedFromPR = usingUserData && prWeightsLbRef.current && (
+    (prWeightsLbRef.current.squat != null && squat !== prWeightsLbRef.current.squat) ||
+    (prWeightsLbRef.current.bench != null && bench !== prWeightsLbRef.current.bench) ||
+    (prWeightsLbRef.current.deadlift != null && deadlift !== prWeightsLbRef.current.deadlift)
+  );
+
+  // Rolling 90-day SBD total timeline
+  const totalTimeline = useMemo(() => {
+    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+
+    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
+    const WINDOW_DAYS = 90;
+
+    const sbdEntries = parsedData
+      .filter((d) => SBD_TYPES[d.liftType] && !d.isGoal && d.reps > 0 && d.weight > 0)
+      .map((d) => ({
+        date: d.date,
+        key: SBD_TYPES[d.liftType],
+        weightLb: d.unitType === "lb" ? d.weight : d.weight * 2.2046,
+        reps: d.reps,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (sbdEntries.length < 2) return null;
+
+    const firstDate = new Date(sbdEntries[0].date);
+    const lastDate = new Date(sbdEntries[sbdEntries.length - 1].date);
+    const spanDays = (lastDate - firstDate) / 86400000;
+
+    let intervalDays;
+    if (spanDays <= 180) intervalDays = 7;
+    else if (spanDays <= 730) intervalDays = 14;
+    else intervalDays = 30;
+
+    const samples = [];
+    const cursor = new Date(firstDate);
+    cursor.setDate(cursor.getDate() + WINDOW_DAYS);
+    while (cursor <= lastDate) {
+      samples.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + intervalDays);
+    }
+    if (samples.length === 0 || (lastDate - samples[samples.length - 1]) / 86400000 > 7) {
+      samples.push(new Date(lastDate));
+    }
+    if (samples.length < 2) return null;
+
+    const points = [];
+    for (const sampleDate of samples) {
+      const sampleMs = sampleDate.getTime();
+      const cutoff = sampleMs - WINDOW_DAYS * 86400000;
+
+      const bestE1rm = { squat: 0, bench: 0, deadlift: 0 };
+
+      for (const key of ["squat", "bench", "deadlift"]) {
+        for (const entry of sbdEntries) {
+          const entryMs = new Date(entry.date).getTime();
+          if (entryMs > sampleMs) break;
+          if (entryMs < cutoff || entry.key !== key) continue;
+          const e1rm = entry.reps === 1
+            ? entry.weightLb
+            : estimateE1RM(entry.reps, entry.weightLb, e1rmFormula);
+          if (e1rm > bestE1rm[key]) bestE1rm[key] = e1rm;
+        }
+      }
+
+      if (bestE1rm.squat === 0 || bestE1rm.bench === 0 || bestE1rm.deadlift === 0) continue;
+
+      const total = Math.round(bestE1rm.squat + bestE1rm.bench + bestE1rm.deadlift);
+      points.push({
+        date: sampleDate.toISOString().slice(0, 10),
+        total,
+      });
+    }
+
+    return points.length >= 2 ? points : null;
+  }, [usingUserData, parsedData, isDemoMode, e1rmFormula]);
+
   const total = squat + bench + deadlift;
   const inClub = total >= 1000;
 
@@ -326,7 +468,13 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const handleLiftValueChange =
     (liftKey, setter) =>
     ([v]) => {
-      setter(v);
+      const pr = prWeightsLbRef.current;
+      const prVal = pr?.[liftKey];
+      if (prVal != null && Math.abs(v - prVal) <= 5) {
+        setter(prVal);
+      } else {
+        setter(v);
+      }
       if (prefersReducedMotion) return;
       setActiveLiftKey(liftKey);
       if (activeLiftTimeoutRef.current) {
@@ -506,21 +654,39 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       </Link>
                       : {value} lbs ({toKgF(value)} kg)
                     </div>
-                    <Slider
-                      value={[value]}
-                      min={0}
-                      max={700}
-                      step={5}
-                      onValueChange={handleLiftValueChange(key, set)}
-                      onValueCommit={handleLiftValueCommit}
-                      className={`mt-2 ${prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}`}
-                    />
+                    {(() => {
+                      const prVal = prWeightsLbRef.current?.[key];
+                      const showMarker = prVal != null && prVal > 0 && prVal <= 700;
+                      const prPercent = showMarker ? (prVal / 700) * 100 : 0;
+                      return (
+                        <div className="relative pb-6">
+                          <Slider
+                            value={[value]}
+                            min={0}
+                            max={700}
+                            step={5}
+                            onValueChange={handleLiftValueChange(key, set)}
+                            onValueCommit={handleLiftValueCommit}
+                            className={`mt-2 ${prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}`}
+                          />
+                          {showMarker && (
+                            <div
+                              className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+                              style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
+                            >
+                              <div className="h-3 w-px bg-primary/40" />
+                              <span className="text-[9px] font-medium leading-none text-primary/60">PR</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </motion.div>
               ))}
 
               <motion.div
-                className="mt-4 text-3xl font-bold tabular-nums"
+                className="mt-4 flex flex-wrap items-center gap-3"
                 animate={
                   prefersReducedMotion
                     ? undefined
@@ -535,7 +701,26 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   mass: 0.7,
                 }}
               >
-                Total: {total} lbs ({toKgF(total)} kg)
+                <span className="text-3xl font-bold tabular-nums">
+                  Total: {total} lbs ({toKgF(total)} kg)
+                </span>
+                {usingUserData && !hasMovedFromPR && (
+                  <Badge variant="secondary" className="gap-1 text-xs">
+                    <Sparkles className="h-3 w-3" />
+                    From your log
+                  </Badge>
+                )}
+                {hasMovedFromPR && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={handleResetToPRs}
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset to PRs
+                  </Button>
+                )}
               </motion.div>
 
               <div
@@ -619,6 +804,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           </p>
         </CardFooter>
       </Card>
+
+      {totalTimeline && (
+        <TotalTimelineChart data={totalTimeline} target={TARGET_TOTAL} />
+      )}
 
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">
@@ -829,5 +1018,110 @@ function ThousandDonut({
         </motion.div>
       </div>
     </motion.div>
+  );
+}
+
+function TotalTimelineChart({ data, target }) {
+  if (!data || data.length < 2) return null;
+
+  const spanDays =
+    (new Date(data[data.length - 1].date) - new Date(data[0].date)) / 86400000;
+
+  const formatTick = (dateStr) => {
+    const d = new Date(dateStr);
+    if (spanDays <= 365) return d.toLocaleDateString("en-US", { month: "short" });
+    if (spanDays <= 1095) return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    return d.toLocaleDateString("en-US", { year: "numeric" });
+  };
+
+  const minTotal = Math.min(...data.map((d) => d.total));
+  const maxTotal = Math.max(...data.map((d) => d.total));
+  const yMin = Math.floor(Math.min(minTotal, target - 50) / 50) * 50;
+  const yMax = Math.ceil(Math.max(maxTotal, target + 50) / 50) * 50;
+
+  const everCrossed = data.some((d) => d.total >= target);
+  const latestAbove = data[data.length - 1].total >= target;
+
+  return (
+    <Card className="mt-6">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Trophy className="h-5 w-5" />
+          Your SBD Total Over Time
+        </CardTitle>
+        <CardDescription>
+          Rolling 90-day best E1RM total (squat + bench + deadlift).
+          {everCrossed && latestAbove && " You\u2019re in the club."}
+          {everCrossed && !latestAbove && " You\u2019ve crossed the line before \u2014 get back there."}
+          {!everCrossed && ` ${target - data[data.length - 1].total} lbs to go.`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[220px] w-full sm:h-[260px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -12 }}>
+              <defs>
+                <linearGradient id="timeline-above" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10B981" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#10B981" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="timeline-below" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatTick}
+                tick={{ fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                domain={[yMin, yMax]}
+                tick={{ fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => `${v}`}
+              />
+              <RechartsTooltip
+                labelFormatter={(d) =>
+                  new Date(d).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                }
+                formatter={(value) => [`${value} lbs (${(value * KG_PER_LB).toFixed(0)} kg)`, "SBD Total"]}
+                contentStyle={{ fontSize: 12 }}
+              />
+              <ReferenceLine
+                y={target}
+                stroke="#10B981"
+                strokeDasharray="6 3"
+                strokeWidth={2}
+                label={{
+                  value: `${target} lbs`,
+                  position: "right",
+                  fill: "#10B981",
+                  fontSize: 11,
+                  fontWeight: 600,
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="total"
+                stroke={latestAbove ? "#10B981" : "#F59E0B"}
+                strokeWidth={2.5}
+                fill={latestAbove ? "url(#timeline-above)" : "url(#timeline-below)"}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

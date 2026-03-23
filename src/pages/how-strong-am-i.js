@@ -986,8 +986,16 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
   );
 }
 
+const UNIVERSE_COLORS = {
+  "General Population":  "var(--chart-1)",
+  "Gym-Goers":           "var(--chart-2)",
+  "Barbell Lifters":     "var(--chart-3)",
+  "Powerlifting Culture": "var(--chart-4)",
+};
+
 function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "General Population" }) {
   const dataKey = activeUniverse;
+  const chartColor = UNIVERSE_COLORS[activeUniverse] || "var(--chart-1)";
 
   // Determine smart tick formatting based on time span
   const firstDate = new Date(data[0].date);
@@ -1036,8 +1044,8 @@ function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "Ge
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="pctGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.02} />
+                <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={chartColor} stopOpacity={0.02} />
               </linearGradient>
             </defs>
             <XAxis
@@ -1064,7 +1072,7 @@ function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "Ge
                 color: "hsl(var(--popover-foreground))",
               }}
               labelFormatter={formatTooltipDate}
-              formatter={(value) => [`${value}%`, "Percentile"]}
+              formatter={(value) => [`${value}%`, universeLabel]}
             />
             {currentPercentile != null && (
               <ReferenceLine
@@ -1077,11 +1085,11 @@ function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "Ge
             <Area
               type="monotone"
               dataKey={dataKey}
-              stroke="var(--chart-1)"
+              stroke={chartColor}
               strokeWidth={2}
               fill="url(#pctGrad)"
               dot={false}
-              activeDot={{ r: 3, strokeWidth: 0, fill: "var(--chart-1)" }}
+              activeDot={{ r: 3, strokeWidth: 0, fill: chartColor }}
             />
           </AreaChart>
         </ResponsiveContainer>

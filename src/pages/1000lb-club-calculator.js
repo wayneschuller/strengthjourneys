@@ -1427,7 +1427,7 @@ function TotalTimelineCtaCard() {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Trophy className="h-5 w-5" />
-          Your SBD Total Over Time
+          Want to see your 1000lb club history over time?
         </CardTitle>
         <CardDescription>
           See your 1000lb club history over time, spot the dips, and figure out
@@ -1465,26 +1465,15 @@ function TotalTimelineCtaCard() {
           </div>
 
           <div className="relative max-w-xl space-y-4">
-            <div className="space-y-2">
-              <p className="text-lg font-semibold sm:text-xl">
-                Want to see your 1000lb club history over time?
-              </p>
-              <p className="text-muted-foreground text-sm sm:text-base">
-                Sign in with Google to unlock the full chart, follow your
-                rolling total across the years, and then let&apos;s discuss a
-                plan.
-              </p>
-            </div>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Sign in with Google to unlock the full chart and follow your
+              rolling total across the years.
+            </p>
 
             <div className="flex flex-wrap gap-3">
               <GoogleSignInButton cta="1000lb_club_timeline" size="sm">
                 Sign in with Google
               </GoogleSignInButton>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/ai-lifting-assistant">
-                  Let&apos;s discuss a plan
-                </Link>
-              </Button>
             </div>
           </div>
         </div>

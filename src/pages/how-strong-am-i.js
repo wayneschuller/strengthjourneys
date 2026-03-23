@@ -527,26 +527,6 @@ function HowStrongAmIPageMain() {
           </div>
 
           <div className="mt-5 flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
-            <div className="w-full max-w-md shrink-0 lg:order-2 lg:max-w-md xl:max-w-lg">
-              <LiftSliders
-                liftWeights={liftWeights}
-                onChange={handleLiftChange}
-                onReset={handleResetToPRs}
-                onResetTo90d={handleResetTo90d}
-                isMetric={isMetric}
-                usingUserData={usingUserData}
-                authStatus={authStatus}
-                isReturningUserLoading={isReturningUserLoading}
-                prWeights={prWeightsDisplay}
-                recent90d={recent90dDisplay}
-                results={results}
-                activeUniverse={activeUniverse}
-                userStoryData={authStatus === "authenticated" ? userStoryData : null}
-                chartPercentiles={chartPercentiles}
-                percentileTimeline={percentileTimeline}
-              />
-            </div>
-
             <div className="flex w-full max-w-sm flex-col items-center gap-4 lg:order-1 lg:flex-1 lg:max-w-none">
               <div className="w-full max-w-lg xl:max-w-xl">
                 <StrengthCirclesChart
@@ -565,6 +545,26 @@ function HowStrongAmIPageMain() {
                 <Copy className="h-3.5 w-3.5" />
                 Copy result
               </Button>
+            </div>
+
+            <div className="w-full max-w-md shrink-0 lg:order-2 lg:max-w-md xl:max-w-lg">
+              <LiftSliders
+                liftWeights={liftWeights}
+                onChange={handleLiftChange}
+                onReset={handleResetToPRs}
+                onResetTo90d={handleResetTo90d}
+                isMetric={isMetric}
+                usingUserData={usingUserData}
+                authStatus={authStatus}
+                isReturningUserLoading={isReturningUserLoading}
+                prWeights={prWeightsDisplay}
+                recent90d={recent90dDisplay}
+                results={results}
+                activeUniverse={activeUniverse}
+                userStoryData={authStatus === "authenticated" ? userStoryData : null}
+                chartPercentiles={chartPercentiles}
+                percentileTimeline={percentileTimeline}
+              />
             </div>
           </div>
 
@@ -1064,6 +1064,7 @@ function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "Ge
               tickFormatter={(v) => `${v}`}
             />
             <RechartsTooltip
+              position={{ y: -10 }}
               contentStyle={{
                 fontSize: 12,
                 borderRadius: 8,

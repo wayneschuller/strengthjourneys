@@ -374,7 +374,7 @@ function HowStrongAmIPageMain() {
           </div>
 
           <div className="mt-5 flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
-            <div className="w-full max-w-md shrink-0 lg:order-2 lg:max-w-sm xl:max-w-md">
+            <div className="w-full max-w-md shrink-0 lg:order-2 lg:max-w-md xl:max-w-lg">
               <LiftSliders
                 liftWeights={liftWeights}
                 onChange={handleLiftChange}
@@ -526,7 +526,6 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
           const showMarker = usingUserData && prPercent != null && prPercent >= 0 && prPercent <= 100;
 
           const liftResult = results?.lifts[key];
-          const percentile = liftResult?.percentiles?.[activeUniverse];
           const rating = liftResult?.standard
             ? getStrengthRatingForE1RM(toKg(liftWeights[key], isMetric), liftResult.standard)
             : null;
@@ -535,7 +534,7 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
             <div key={key} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-sm font-medium">
-                  <img src={svg} alt="" className="h-5 w-5 dark:invert" aria-hidden />
+                  <img src={svg} alt="" className="h-10 w-10 dark:invert" aria-hidden />
                   <Link
                     href={LIFT_INSIGHT_URLS[label]}
                     className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
@@ -558,11 +557,6 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                       {unit}
                     </span>
                   </span>
-                  {percentile != null && (
-                    <span className="text-xs font-semibold tabular-nums text-muted-foreground">
-                      {ordinal(percentile)}
-                    </span>
-                  )}
                 </div>
               </div>
               <div className="relative">
@@ -591,12 +585,18 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
         })}
 
         {results?.hasAllThree && results.total && (
-          <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-            <span className="text-muted-foreground">SBD Total</span>
-            <span className="font-bold tabular-nums">
-              {ordinal(results.total.percentiles?.[activeUniverse])}
-            </span>
-          </div>
+          <>
+            <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+              <span className="text-muted-foreground">SBD Total</span>
+              <span className="font-bold tabular-nums">
+                {ordinal(results.total.percentiles?.[activeUniverse])}
+              </span>
+            </div>
+            <PercentileConclusion
+              percentile={results.total.percentiles?.[activeUniverse]}
+              universe={activeUniverse}
+            />
+          </>
         )}
 
         {/* Strength Story — inline for authenticated users */}
@@ -631,6 +631,42 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
 }
 
 
+function PercentileConclusion({ percentile, universe }) {
+  if (percentile == null) return null;
+
+  let headline;
+  let detail;
+
+  if (percentile >= 95) {
+    headline = "Elite territory.";
+    detail = `You're stronger than ${percentile}% of ${universe.toLowerCase()}. Very few people reach this level — years of serious, consistent training got you here.`;
+  } else if (percentile >= 85) {
+    headline = "Seriously strong.";
+    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. You're well past the point where people notice. This is dedicated-lifter strength.`;
+  } else if (percentile >= 70) {
+    headline = "Above average, clearly trained.";
+    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. Your training is paying off — most people who lift don't reach this range.`;
+  } else if (percentile >= 50) {
+    headline = "Solid foundation.";
+    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. You're right in the middle of the pack, with real room to grow. Consistency will move this number.`;
+  } else if (percentile >= 30) {
+    headline = "Building momentum.";
+    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. Everyone starts somewhere, and the biggest jumps happen in this range. Keep showing up.`;
+  } else {
+    headline = "Early days — big gains ahead.";
+    detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. The good news? Beginners progress faster than anyone. A few months of consistent work will change this dramatically.`;
+  }
+
+  return (
+    <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+      <p className="text-sm font-semibold">{headline}</p>
+      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+        {detail}
+      </p>
+    </div>
+  );
+}
+
 function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
   const { liftStories, careerYears, totalSessions, liftCount } = storyData;
 
@@ -638,13 +674,18 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
   const genPop = chartPercentiles["General Population"];
 
   let careerLabel = null;
+  let careerDescription = null;
   if (careerYears != null) {
     if (careerYears >= 1) {
       const years = Math.floor(careerYears);
       careerLabel = `${years}yr${years !== 1 ? "s" : ""}`;
+      if (years >= 5) careerDescription = "That's a long game. Most people quit inside twelve months.";
+      else if (years >= 2) careerDescription = "Multi-year consistency is the hardest part — and you're doing it.";
+      else careerDescription = "Year one is where the biggest jumps happen. You're right in it.";
     } else {
       const months = Math.max(1, Math.round(careerYears * 12));
       careerLabel = `${months}mo`;
+      careerDescription = "Early momentum builds the habits that last decades. Keep going.";
     }
   }
 
@@ -654,47 +695,52 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
     deadlift: { label: "Deadlift", svg: "/deadlift.svg" },
   };
 
+  // Compute SBD total in display units
+  let sbdTotal = null;
+  if (liftCount >= 3) {
+    const unit = isMetric ? "kg" : "lb";
+    const total = Object.values(liftStories).reduce((sum, ls) => {
+      const w = ls.unitType === "lb" && isMetric
+        ? ls.allTimeE1RM / 2.2046
+        : ls.unitType === "kg" && !isMetric
+          ? ls.allTimeE1RM * 2.2046
+          : ls.allTimeE1RM;
+      return sum + Math.round(w);
+    }, 0);
+    sbdTotal = `${total}${unit}`;
+  }
+
   return (
-    <div className="flex flex-col gap-3 rounded-lg border-t pt-4">
+    <div className="flex flex-col gap-4 rounded-lg border-t pt-5">
       <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         <Trophy className="h-3.5 w-3.5 text-yellow-500" />
         Your Strength Story
       </p>
 
-      {/* Compact career stats */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        {careerLabel && (
-          <span className="text-muted-foreground">
-            <span className="font-semibold text-foreground">{careerLabel}</span> training
-          </span>
-        )}
-        {totalSessions && (
-          <span className="text-muted-foreground">
-            <span className="font-semibold text-foreground">{totalSessions.toLocaleString()}</span> sessions
-          </span>
-        )}
-        {liftCount >= 3 && (
-          <span className="text-muted-foreground">
-            <span className="font-semibold text-foreground">
-              {(() => {
-                const unit = isMetric ? "kg" : "lb";
-                const total = Object.values(liftStories).reduce((sum, ls) => {
-                  const w = ls.unitType === "lb" && isMetric
-                    ? ls.allTimeE1RM / 2.2046
-                    : ls.unitType === "kg" && !isMetric
-                      ? ls.allTimeE1RM * 2.2046
-                      : ls.allTimeE1RM;
-                  return sum + Math.round(w);
-                }, 0);
-                return `${total}${unit}`;
-              })()}
-            </span>{" "}SBD
-          </span>
+      {/* Career headline */}
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          {careerLabel && (
+            <span className="text-2xl font-bold tracking-tight">{careerLabel}</span>
+          )}
+          {totalSessions && (
+            <span className="text-lg font-semibold text-muted-foreground">
+              {totalSessions.toLocaleString()} sessions
+            </span>
+          )}
+          {sbdTotal && (
+            <span className="text-lg font-semibold text-muted-foreground">
+              {sbdTotal} SBD
+            </span>
+          )}
+        </div>
+        {careerDescription && (
+          <p className="text-sm text-muted-foreground">{careerDescription}</p>
         )}
       </div>
 
-      {/* Per-lift all-time vs 12mo */}
-      <div className="flex flex-col gap-1.5">
+      {/* Per-lift breakdown with all-time vs 12mo comparison */}
+      <div className="flex flex-col gap-2.5">
         {Object.entries(liftStories).map(([key, story]) => {
           const meta = LIFT_META[key];
           if (!meta) return null;
@@ -716,39 +762,48 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
           const diff = lastYear != null ? lastYear - allTime : null;
 
           return (
-            <div key={key} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-1.5">
-                <img src={meta.svg} alt="" className="h-4 w-4 dark:invert" aria-hidden />
-                <span className="font-medium">{meta.label}</span>
-                <span className="tabular-nums text-muted-foreground">
+            <div key={key} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src={meta.svg} alt="" className="h-5 w-5 dark:invert" aria-hidden />
+                <span className="text-sm font-medium">{meta.label}</span>
+                <span className="text-sm font-bold tabular-nums">
                   {allTime}{unit}
+                  <span className="ml-0.5 text-xs font-normal text-muted-foreground">all-time</span>
                 </span>
               </div>
               {lastYear != null && (
-                <span className="tabular-nums text-muted-foreground">
-                  {lastYear}{unit}
-                  <span className="ml-0.5 text-xs">12mo</span>
+                <div className="flex items-center gap-1.5 text-sm tabular-nums text-muted-foreground">
+                  <span>{lastYear}{unit}</span>
+                  <span className="text-xs">12mo</span>
                   {diff != null && diff !== 0 && (
-                    <span className={`ml-1 text-xs font-semibold ${diff > 0 ? "text-green-600" : "text-amber-600"}`}>
+                    <span className={`text-xs font-semibold ${diff > 0 ? "text-green-600" : "text-amber-600"}`}>
                       {diff > 0 ? "+" : ""}{diff}
                     </span>
                   )}
-                </span>
+                </div>
               )}
             </div>
           );
         })}
       </div>
 
-      {/* Compact motivational line */}
-      <p className="text-xs italic text-muted-foreground">
-        {genPop >= 90
-          ? `Stronger than ${genPop}% of the general population. Rare company.`
-          : genPop >= 70
-            ? `Stronger than ${genPop}% of the general population.`
-            : "Every percentage point is earned."}
-        {barbell != null && ` ${ordinal(barbell)} among barbell lifters.`}
-      </p>
+      {/* Motivational closer */}
+      <div className="rounded-lg bg-muted/30 px-3 py-2.5">
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {genPop >= 95
+            ? `Stronger than ${genPop}% of the general population — that's rarified air. You've put in work most people never will.`
+            : genPop >= 85
+              ? `Stronger than ${genPop}% of the general population. You're clearly not just going through the motions — real strength takes real effort.`
+              : genPop >= 70
+                ? `Stronger than ${genPop}% of the general population. You're past the point of casual training — this is where the fun starts.`
+                : genPop >= 50
+                  ? `Stronger than ${genPop}% of the general population. Solid ground. The next 10% is closer than you think.`
+                  : "Every session counts. Strength is built one rep at a time — and you're building it."}
+          {barbell != null && genPop >= 50 && (
+            <>{" "}Among barbell lifters specifically, you rank {ordinal(barbell)} — a tougher crowd, and you&apos;re holding your own.</>
+          )}
+        </p>
+      </div>
     </div>
   );
 }

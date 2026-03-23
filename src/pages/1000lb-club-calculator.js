@@ -1036,7 +1036,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
       <section className="mt-10">
         <h2 className="mb-3 text-xl font-semibold">
-          Three ways to reach the 1000lb Club
+          Sample paths to the 1000lb Club
         </h2>
         <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
           There is no single path to a 1000&nbsp;lb total. Your build, training

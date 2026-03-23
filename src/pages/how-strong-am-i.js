@@ -564,6 +564,7 @@ function HowStrongAmIPageMain() {
                 userStoryData={authStatus === "authenticated" ? userStoryData : null}
                 chartPercentiles={chartPercentiles}
                 percentileTimeline={percentileTimeline}
+                firstName={session?.user?.name?.split(" ")[0]}
               />
             </div>
           </div>
@@ -651,7 +652,7 @@ function getWeakestLiftHint(squat, bench, deadlift) {
   return { lift: LIFT_LABELS_SHORT[worst.key], gap: Math.round(worst.gap) };
 }
 
-function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, recent90d, results, activeUniverse, userStoryData, chartPercentiles, percentileTimeline }) {
+function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, recent90d, results, activeUniverse, userStoryData, chartPercentiles, percentileTimeline, firstName }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -828,7 +829,7 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
             isMetric={isMetric}
             percentileTimeline={percentileTimeline}
             activeUniverse={activeUniverse}
-            firstName={session?.user?.name?.split(" ")[0]}
+            firstName={firstName}
           />
         )}
 

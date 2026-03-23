@@ -363,6 +363,49 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     setUsingUserData(true);
   }, [topLiftsByTypeAndReps, isDemoMode, e1rmFormula, setSquat, setBench, setDeadlift]);
 
+  // Recent 90-day best E1RM per lift (in lbs, rounded to 5)
+  const recent90dLb = useMemo(() => {
+    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+
+    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
+    const WINDOW = 90;
+    const now = new Date();
+    const cutoffMs = now.getTime() - WINDOW * 86400000;
+    const roundTo5 = (v) => Math.round(v / 5) * 5;
+    const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
+
+    const best = { squat: 0, bench: 0, deadlift: 0 };
+
+    for (const d of parsedData) {
+      const key = SBD_TYPES[d.liftType];
+      if (!key || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
+      if (new Date(d.date).getTime() < cutoffMs) continue;
+      const weightLb = d.unitType === "lb" ? d.weight : d.weight * 2.2046;
+      const e1rm = d.reps === 1 ? weightLb : estimateE1RM(d.reps, weightLb, e1rmFormula);
+      if (e1rm > best[key]) best[key] = e1rm;
+    }
+
+    const result = {
+      squat: best.squat > 0 ? clampLb(best.squat) : null,
+      bench: best.bench > 0 ? clampLb(best.bench) : null,
+      deadlift: best.deadlift > 0 ? clampLb(best.deadlift) : null,
+    };
+
+    // Only return if at least one lift has recent data and differs from all-time PR
+    const pr = prWeightsLbRef.current;
+    if (!pr) return null;
+    const hasDistinct = ["squat", "bench", "deadlift"].some(
+      (k) => result[k] != null && result[k] !== pr[k],
+    );
+    return hasDistinct ? result : null;
+  }, [usingUserData, parsedData, isDemoMode, e1rmFormula]);
+
+  // Biggest opportunity hint for the main UI
+  const biggestOpportunity = useMemo(() => {
+    if (!usingUserData) return null;
+    return getWeakestLiftHint(squat, bench, deadlift);
+  }, [usingUserData, squat, bench, deadlift]);
+
   const handleResetToPRs = () => {
     const pr = prWeightsLbRef.current;
     if (!pr) return;
@@ -471,10 +514,13 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const handleLiftValueChange =
     (liftKey, setter) =>
     ([v]) => {
-      const pr = prWeightsLbRef.current;
-      const prVal = pr?.[liftKey];
+      const prVal = prWeightsLbRef.current?.[liftKey];
+      const r90Val = recent90dLb?.[liftKey];
+      // Snap to whichever marker is closest within 1 step
       if (prVal != null && Math.abs(v - prVal) <= 5) {
         setter(prVal);
+      } else if (r90Val != null && Math.abs(v - r90Val) <= 5) {
+        setter(r90Val);
       } else {
         setter(v);
       }
@@ -659,8 +705,11 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                     </div>
                     {(() => {
                       const prVal = prWeightsLbRef.current?.[key];
-                      const showMarker = prVal != null && prVal > 0 && prVal <= 700;
-                      const prPercent = showMarker ? (prVal / 700) * 100 : 0;
+                      const r90Val = recent90dLb?.[key];
+                      const showPr = prVal != null && prVal > 0 && prVal <= 700;
+                      const showR90 = r90Val != null && r90Val > 0 && r90Val <= 700 && r90Val !== prVal;
+                      const prPercent = showPr ? (prVal / 700) * 100 : 0;
+                      const r90Percent = showR90 ? (r90Val / 700) * 100 : 0;
                       return (
                         <div className="relative pb-6">
                           <Slider
@@ -672,13 +721,22 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                             onValueCommit={handleLiftValueCommit}
                             className={`mt-2 ${prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}`}
                           />
-                          {showMarker && (
+                          {showPr && (
                             <div
                               className="pointer-events-none absolute bottom-0 flex flex-col items-center"
                               style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
                             >
                               <div className="h-3 w-px bg-primary/40" />
                               <span className="text-[9px] font-medium leading-none text-primary/60">PR</span>
+                            </div>
+                          )}
+                          {showR90 && (
+                            <div
+                              className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+                              style={{ left: `${r90Percent}%`, transform: "translateX(-50%)" }}
+                            >
+                              <div className="h-3 w-px bg-amber-500/40" />
+                              <span className="text-[9px] font-medium leading-none text-amber-600/60">90d</span>
                             </div>
                           )}
                         </div>
@@ -733,9 +791,16 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 })}
               >
                 {inClub
-                  ? `You're in the 1000lb Club! You're ${pastLbs} lbs (${toKgF(pastLbs)} kg) past 1000.`
-                  : `You're ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
+                  ? `You\u2019re in the 1000lb Club! You\u2019re ${pastLbs} lbs (${toKgF(pastLbs)} kg) past 1000.`
+                  : `You\u2019re ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
               </div>
+              {biggestOpportunity && (
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Biggest opportunity: <span className="font-medium">{biggestOpportunity.lift}</span> is ~{biggestOpportunity.gapLbs} lbs below its ideal share of your total.
+                  {" "}
+                  <span className="text-muted-foreground/70 text-xs">(Ideal SBD ratio: 36% / 24% / 40%)</span>
+                </p>
+              )}
             </div>
             <div className="xl:self-center">
               <ThousandDonut

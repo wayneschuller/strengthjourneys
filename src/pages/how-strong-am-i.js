@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
 import {
   Copy,
@@ -9,10 +10,12 @@ import {
   Trophy,
   LineChart,
   Anvil,
+  Sparkles,
 } from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
+import { GoogleSignInButton } from "@/components/google-sign-in";
 import {
   PageContainer,
   PageHeader,
@@ -35,8 +38,10 @@ import {
   STRENGTH_LEVEL_EMOJI,
   useAthleteBio,
 } from "@/hooks/use-athlete-biodata";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { findBestE1RM } from "@/lib/processing-utils";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import {
   computeStrengthResults,
@@ -145,12 +150,103 @@ export default function HowStrongAmIPage({ relatedArticles }) {
 function HowStrongAmIPageMain() {
   const { age, sex, bodyWeight, isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
+  const { status: authStatus } = useSession();
+  const {
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    parsedData,
+    isReturningUserLoading,
+  } = useUserLiftingData();
 
   const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
     squat: toKg(225, false),
     bench: toKg(155, false),
     deadlift: toKg(265, false),
   }));
+
+  // Track whether we've auto-populated from user data
+  const [usingUserData, setUsingUserData] = useState(false);
+  const hasAutoPopulatedRef = useRef(false);
+
+  // Auto-populate sliders from user's actual best E1RMs
+  useEffect(() => {
+    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps) return;
+
+    const squat = findBestE1RM("Back Squat", topLiftsByTypeAndReps, "Brzycki");
+    const bench = findBestE1RM("Bench Press", topLiftsByTypeAndReps, "Brzycki");
+    const deadlift = findBestE1RM("Deadlift", topLiftsByTypeAndReps, "Brzycki");
+
+    // Only auto-populate if we found at least one lift
+    if (!squat.bestE1RMWeight && !bench.bestE1RMWeight && !deadlift.bestE1RMWeight) return;
+
+    hasAutoPopulatedRef.current = true;
+
+    const toKgFromUnit = (weight, unitType) =>
+      unitType === "kg" ? weight : weight / 2.2046;
+
+    setLiftWeightsKg({
+      squat: squat.bestE1RMWeight
+        ? toKgFromUnit(squat.bestE1RMWeight, squat.unitType)
+        : toKg(225, false),
+      bench: bench.bestE1RMWeight
+        ? toKgFromUnit(bench.bestE1RMWeight, bench.unitType)
+        : toKg(155, false),
+      deadlift: deadlift.bestE1RMWeight
+        ? toKgFromUnit(deadlift.bestE1RMWeight, deadlift.unitType)
+        : toKg(265, false),
+    });
+    setUsingUserData(true);
+  }, [topLiftsByTypeAndReps]);
+
+  // Compute enriched user story data (career span, last-year comparison)
+  const userStoryData = useMemo(() => {
+    if (!usingUserData || !topLiftsByTypeAndReps) return null;
+
+    const allTimeLookup = { squat: "Back Squat", bench: "Bench Press", deadlift: "Deadlift" };
+    const liftStories = {};
+
+    for (const [key, liftType] of Object.entries(allTimeLookup)) {
+      const allTime = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
+      const lastYear = topLiftsByTypeAndRepsLast12Months
+        ? findBestE1RM(liftType, topLiftsByTypeAndRepsLast12Months, "Brzycki")
+        : null;
+
+      if (!allTime.bestE1RMWeight) continue;
+
+      liftStories[key] = {
+        allTimeE1RM: Math.round(allTime.bestE1RMWeight),
+        lastYearE1RM: lastYear?.bestE1RMWeight ? Math.round(lastYear.bestE1RMWeight) : null,
+        unitType: allTime.unitType,
+        prDate: allTime.bestLift?.date,
+      };
+    }
+
+    // Career span from parsedData
+    let careerYears = null;
+    if (parsedData?.length > 1) {
+      const oldest = parsedData[0]?.date;
+      const newest = parsedData[parsedData.length - 1]?.date;
+      if (oldest && newest) {
+        const diffMs = new Date(newest) - new Date(oldest);
+        const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+        careerYears = diffYears;
+      }
+    }
+
+    // Total sessions (unique dates)
+    let totalSessions = null;
+    if (parsedData?.length) {
+      const dates = new Set(parsedData.filter((d) => !d.isGoal).map((d) => d.date));
+      totalSessions = dates.size;
+    }
+
+    return {
+      liftStories,
+      careerYears,
+      totalSessions,
+      liftCount: Object.keys(liftStories).length,
+    };
+  }, [usingUserData, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, parsedData]);
 
   const [selectedUniverse, setSelectedUniverse] = useState("General Population");
   const [hoveredUniverse, setHoveredUniverse] = useState(null);
@@ -256,6 +352,9 @@ function HowStrongAmIPageMain() {
                 liftWeights={liftWeights}
                 onChange={handleLiftChange}
                 isMetric={isMetric}
+                usingUserData={usingUserData}
+                authStatus={authStatus}
+                isReturningUserLoading={isReturningUserLoading}
               />
             </div>
 
@@ -286,6 +385,16 @@ function HowStrongAmIPageMain() {
               />
             </div>
           </div>
+
+          {authStatus === "authenticated" && userStoryData ? (
+            <YourStrengthStory
+              storyData={userStoryData}
+              chartPercentiles={chartPercentiles}
+              isMetric={isMetric}
+            />
+          ) : authStatus === "unauthenticated" && !isReturningUserLoading ? (
+            <StrengthStoryTeaser />
+          ) : null}
 
           <section className="mx-auto mt-10 max-w-2xl lg:max-w-4xl">
             <ExplainerSection />
@@ -350,18 +459,29 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, isMetric }) {
+function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatus, isReturningUserLoading }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
   const step = isMetric ? 2.5 : 5;
 
+  const showSignInTeaser =
+    authStatus === "unauthenticated" && !isReturningUserLoading;
+
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Your Lifts
-        </CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Your Lifts
+          </CardTitle>
+          {usingUserData && (
+            <Badge variant="outline" className="gap-1 text-xs font-normal">
+              <Sparkles className="h-3 w-3" />
+              From your log
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         {LIFTS.map(({ key, label, emoji }) => (
@@ -393,6 +513,21 @@ function LiftSliders({ liftWeights, onChange, isMetric }) {
             />
           </div>
         ))}
+
+        {showSignInTeaser && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <p className="mb-2 text-sm text-muted-foreground">
+              Sign in to auto-fill these from your actual training PRs.
+            </p>
+            <GoogleSignInButton
+              className="flex items-center gap-2"
+              cta="how_strong_am_i"
+              iconSize={16}
+            >
+              Sign In With Google
+            </GoogleSignInButton>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -459,6 +594,198 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function StrengthStoryTeaser() {
+  return (
+    <div className="mx-auto mt-8 max-w-2xl">
+      <Card className="border-dashed">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-muted-foreground" />
+            Your Strength Story
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <p className="text-sm text-muted-foreground">
+            Sign in and connect your lifting log to unlock your personal
+            strength story — career stats, all-time PRs vs last 12 months, and
+            your real percentile rankings filled in automatically.
+          </p>
+          <GoogleSignInButton
+            className="flex w-fit items-center gap-2"
+            cta="how_strong_story_teaser"
+            iconSize={16}
+          >
+            Sign In With Google
+          </GoogleSignInButton>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function YourStrengthStory({ storyData, chartPercentiles, isMetric }) {
+  const { liftStories, careerYears, totalSessions, liftCount } = storyData;
+
+  // Find best universe ranking for the headline
+  const barbell = chartPercentiles["Barbell Lifters"];
+  const genPop = chartPercentiles["General Population"];
+
+  // Career span label
+  let careerLabel = null;
+  if (careerYears != null) {
+    if (careerYears >= 1) {
+      const years = Math.floor(careerYears);
+      careerLabel = `${years} year${years !== 1 ? "s" : ""}`;
+    } else {
+      const months = Math.max(1, Math.round(careerYears * 12));
+      careerLabel = `${months} month${months !== 1 ? "s" : ""}`;
+    }
+  }
+
+  const LIFT_META = {
+    squat: { label: "Squat", emoji: "🏋️" },
+    bench: { label: "Bench", emoji: "💪" },
+    deadlift: { label: "Deadlift", emoji: "⛓️" },
+  };
+
+  return (
+    <div className="mx-auto mt-8 max-w-2xl">
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Your Strength Story
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {/* Headline stat */}
+          <p className="text-sm text-muted-foreground">
+            {genPop >= 90
+              ? `You're stronger than ${genPop}% of the general population. That puts you in rare company.`
+              : genPop >= 70
+                ? `You're stronger than ${genPop}% of the general population — solidly above average.`
+                : `You're stronger than ${genPop}% of the general population. Every percentage point is earned.`}
+            {barbell != null && (
+              <>
+                {" "}Among barbell lifters specifically, you rank in the{" "}
+                <span className="font-semibold">{ordinal(barbell)}</span> percentile.
+              </>
+            )}
+          </p>
+
+          {/* Career stats row */}
+          {(careerLabel || totalSessions) && (
+            <div className="flex flex-wrap gap-4 rounded-lg border bg-background/60 px-4 py-3">
+              {careerLabel && (
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold">{careerLabel}</span>
+                  <span className="text-xs text-muted-foreground">of training data</span>
+                </div>
+              )}
+              {totalSessions && (
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold">{totalSessions.toLocaleString()}</span>
+                  <span className="text-xs text-muted-foreground">sessions logged</span>
+                </div>
+              )}
+              {liftCount >= 3 && (
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold">
+                    {(() => {
+                      const unit = isMetric ? "kg" : "lb";
+                      const factor = isMetric ? 1 / 2.2046 : 1;
+                      const total = Object.values(liftStories).reduce((sum, ls) => {
+                        const w = ls.unitType === "lb" && isMetric
+                          ? ls.allTimeE1RM * factor
+                          : ls.unitType === "kg" && !isMetric
+                            ? ls.allTimeE1RM * 2.2046
+                            : ls.allTimeE1RM;
+                        return sum + Math.round(w);
+                      }, 0);
+                      return `${total} ${unit}`;
+                    })()}
+                  </span>
+                  <span className="text-xs text-muted-foreground">estimated SBD total</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Per-lift all-time vs last year */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              All-time vs last 12 months
+            </p>
+            {Object.entries(liftStories).map(([key, story]) => {
+              const meta = LIFT_META[key];
+              if (!meta) return null;
+              const unit = isMetric
+                ? "kg"
+                : story.unitType === "kg"
+                  ? "lb"
+                  : story.unitType;
+              const allTime = isMetric && story.unitType === "lb"
+                ? Math.round(story.allTimeE1RM / 2.2046)
+                : !isMetric && story.unitType === "kg"
+                  ? Math.round(story.allTimeE1RM * 2.2046)
+                  : story.allTimeE1RM;
+              const lastYear = story.lastYearE1RM
+                ? isMetric && story.unitType === "lb"
+                  ? Math.round(story.lastYearE1RM / 2.2046)
+                  : !isMetric && story.unitType === "kg"
+                    ? Math.round(story.lastYearE1RM * 2.2046)
+                    : story.lastYearE1RM
+                : null;
+
+              const diff = lastYear != null ? lastYear - allTime : null;
+
+              return (
+                <div
+                  key={key}
+                  className="rounded-md bg-background/60 px-3 py-2 text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{meta.emoji}</span>
+                    <span className="font-medium">{meta.label}</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-4 pl-7">
+                    <span className="tabular-nums text-muted-foreground">
+                      {allTime} {unit}
+                      <span className="ml-1 text-xs">all-time</span>
+                    </span>
+                    {lastYear != null && (
+                      <span className="tabular-nums">
+                        {lastYear} {unit}
+                        <span className="ml-1 text-xs text-muted-foreground">12mo</span>
+                        {diff != null && diff !== 0 && (
+                          <span
+                            className={`ml-1 text-xs font-semibold ${diff > 0 ? "text-green-600" : "text-amber-600"}`}
+                          >
+                            {diff > 0 ? "+" : ""}{diff}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Motivational closer */}
+          <p className="text-xs italic text-muted-foreground">
+            {careerYears >= 3
+              ? "Years of consistency built this. That is the kind of strength that does not fade."
+              : careerYears >= 1
+                ? "A year or more under the bar — your numbers reflect real commitment."
+                : "You are building something. Every session adds to the story."}
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

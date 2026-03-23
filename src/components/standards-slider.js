@@ -440,7 +440,7 @@ export function StandardsSlider({
   }
 
   const shouldUseCompactActiveLabel =
-    containerWidth > 0 ? containerWidth < 1200 : width < 800;
+    containerWidth > 0 ? containerWidth < 1200 : true;
 
   return (
     <div ref={containerRef} className="mx-auto w-full">

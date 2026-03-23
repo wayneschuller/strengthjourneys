@@ -1,14 +1,17 @@
+import { Fragment } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
 import { BicepsFlexed, BookOpen, Calculator, CircleDashed } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { RelatedArticles } from "@/components/article-cards";
 import { GoogleSignInButton } from "@/components/google-sign-in";
-import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { QuickLinkCard } from "@/components/quick-link-card";
+import { LiftSvg, getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import {
   PageContainer,
   PageHeader,
@@ -24,8 +27,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
@@ -51,6 +61,15 @@ const INTERPRETATION_COPY = {
     ],
     closer:
       "Use the personalised standards above instead of generic gym folklore. They give you a better answer than any one-size-fits-all chart.",
+    exampleTable: {
+      caption: "Bench press standards for males aged 20–29",
+      rows: [
+        { bwKg: 68, bwLb: 150, active: [50, 110], beginner: [70, 155], intermediate: [90, 200], advanced: [110, 245], elite: [130, 285] },
+        { bwKg: 79, bwLb: 175, active: [50, 110], beginner: [70, 155], intermediate: [90, 200], advanced: [110, 245], elite: [150, 330] },
+        { bwKg: 91, bwLb: 200, active: [52, 115], beginner: [73, 160], intermediate: [93, 205], advanced: [114, 250], elite: [161, 355] },
+        { bwKg: 102, bwLb: 225, active: [55, 120], beginner: [77, 170], intermediate: [99, 220], advanced: [121, 265], elite: [170, 375] },
+      ],
+    },
   },
   "Back Squat": {
     title: "What Counts As A Good Squat For Your Bodyweight?",
@@ -65,6 +84,15 @@ const INTERPRETATION_COPY = {
     ],
     closer:
       "If your question is 'is my squat good?' the right answer is not a single number. It is where your squat lands inside the standards for someone with your build.",
+    exampleTable: {
+      caption: "Squat standards for males aged 20–29",
+      rows: [
+        { bwKg: 68, bwLb: 150, active: [46, 100], beginner: [78, 170], intermediate: [104, 230], advanced: [143, 315], elite: [189, 415] },
+        { bwKg: 79, bwLb: 175, active: [51, 110], beginner: [87, 190], intermediate: [116, 255], advanced: [160, 355], elite: [210, 465] },
+        { bwKg: 91, bwLb: 200, active: [58, 130], beginner: [98, 215], intermediate: [130, 285], advanced: [179, 395], elite: [236, 520] },
+        { bwKg: 102, bwLb: 225, active: [57, 125], beginner: [98, 215], intermediate: [131, 290], advanced: [180, 395], elite: [232, 510] },
+      ],
+    },
   },
   Deadlift: {
     title: "What Counts As A Good Deadlift For Your Bodyweight?",
@@ -79,6 +107,15 @@ const INTERPRETATION_COPY = {
     ],
     closer:
       "Use the standards on this page to answer the question people actually mean when they search for deadlift standards: not just 'what is impressive,' but 'what is impressive for me?'",
+    exampleTable: {
+      caption: "Deadlift standards for males aged 20–29",
+      rows: [
+        { bwKg: 68, bwLb: 150, active: [64, 140], beginner: [112, 245], intermediate: [139, 305], advanced: [186, 410], elite: [207, 455] },
+        { bwKg: 79, bwLb: 175, active: [76, 170], beginner: [131, 290], intermediate: [164, 360], advanced: [219, 485], elite: [243, 535] },
+        { bwKg: 91, bwLb: 200, active: [83, 185], beginner: [144, 315], intermediate: [180, 395], advanced: [240, 530], elite: [266, 585] },
+        { bwKg: 102, bwLb: 225, active: [84, 185], beginner: [146, 320], intermediate: [182, 400], advanced: [243, 535], elite: [270, 595] },
+      ],
+    },
   },
   "Strict Press": {
     title: "What Counts As A Good Strict Press For Your Bodyweight?",
@@ -93,6 +130,15 @@ const INTERPRETATION_COPY = {
     ],
     closer:
       "These standards are built to give your press the right context instead of making it compete with lifts that naturally move more weight.",
+    exampleTable: {
+      caption: "Strict press standards for males aged 20–29",
+      rows: [
+        { bwKg: 68, bwLb: 150, active: [28, 60], beginner: [39, 85], intermediate: [51, 110], advanced: [62, 135], elite: [82, 180] },
+        { bwKg: 79, bwLb: 175, active: [31, 70], beginner: [43, 95], intermediate: [55, 120], advanced: [68, 150], elite: [89, 195] },
+        { bwKg: 91, bwLb: 200, active: [35, 75], beginner: [49, 110], intermediate: [63, 140], advanced: [78, 170], elite: [102, 225] },
+        { bwKg: 102, bwLb: 225, active: [36, 80], beginner: [50, 110], intermediate: [65, 145], advanced: [80, 175], elite: [105, 230] },
+      ],
+    },
   },
 };
 
@@ -124,8 +170,10 @@ export default function StrengthStandardsLiftPage({ page, relatedArticles }) {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "WebPage",
+        "@type": "WebApplication",
         name: page.seoTitle,
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
         description: page.description,
         url: canonicalURL,
       },
@@ -201,8 +249,10 @@ export default function StrengthStandardsLiftPage({ page, relatedArticles }) {
 
 function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
   const { standards, isMetric } = useAthleteBio();
+  const { getColor } = useLiftColors();
+  const prefersReducedMotion = useReducedMotion();
   const interpretation = INTERPRETATION_COPY[page.liftType];
-  const liftSvgPath = getLiftSvgPath(page.liftType);
+  const liftColor = getColor(page.liftType);
 
   return (
     <PageContainer>
@@ -215,51 +265,39 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
           <p className="mt-3">{page.supportingCopy}</p>
         </PageHeaderDescription>
         <PageHeaderRight>
-          <div className="hidden justify-end gap-3 text-muted-foreground lg:flex lg:flex-col xl:items-end">
-            <Link
-              href={page.calculatorUrl}
-              className="block w-full max-w-[22rem] rounded-lg border p-4 text-left shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+          <div className="hidden items-center justify-end md:flex">
+            <motion.div
+              initial={prefersReducedMotion ? false : { scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: prefersReducedMotion ? 0 : 0.2,
+              }}
+              className="flex items-center justify-center"
+              style={{ filter: `drop-shadow(0 4px 12px ${liftColor}40)` }}
             >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-md border bg-muted/60 p-2 text-foreground">
-                  <Calculator className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold">{page.navLabel} 1RM Calculator</h3>
-                  <p className="text-sm">
-                    Estimate your max from a recent heavy set.
-                  </p>
-                </div>
-              </div>
-            </Link>
-            <Link
-              href={page.insightUrl}
-              className="block w-full max-w-[22rem] rounded-lg border p-4 text-left shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-md border bg-muted/60 p-2 text-foreground">
-                  <BookOpen className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold">{page.navLabel} Guide</h3>
-                  <p className="text-sm">
-                    Go deeper with progress charts, PRs, videos, and more.
-                  </p>
-                </div>
-              </div>
-            </Link>
+              <LiftSvg
+                liftType={page.liftType}
+                size="lg"
+                animate={false}
+              />
+            </motion.div>
           </div>
         </PageHeaderRight>
       </PageHeader>
 
       <div className="grid gap-6">
-        <Card id="strength-standards">
+        <Card
+          id="strength-standards"
+          style={{ borderTopColor: liftColor, borderTopWidth: "3px" }}
+        >
           <CardHeader>
-            <CardTitle>{page.pageTitle} By Bodyweight</CardTitle>
+            <CardTitle>Where Does Your {page.navLabel} Land?</CardTitle>
             <CardDescription>
-              Change your athlete settings to see the standards shift in real
-              time. This is the fast way to answer whether your current max is
-              beginner, intermediate, advanced, or elite.
+              Drag the sliders to match your profile. Your strength level
+              updates instantly.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -277,66 +315,160 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                 </Link>
               }
             />
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <Link
+                href={page.calculatorUrl}
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                {page.navLabel} 1RM Calculator
+              </Link>
+              <span className="hidden sm:inline" aria-hidden>·</span>
+              <Link
+                href={page.insightUrl}
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                {page.navLabel} Progress Guide
+              </Link>
+            </div>
             <StrengthLevelsDataCta page={page} />
           </CardContent>
         </Card>
 
         {interpretation && (
           <section className="overflow-hidden rounded-lg border">
-            <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_260px]">
-              <div className="p-5 md:p-6">
-                <h2 className="text-xl font-semibold">{interpretation.title}</h2>
-                <div className="mt-4 space-y-3 text-sm text-muted-foreground md:text-base">
-                  {interpretation.body.map((paragraph) => (
-                    <p key={paragraph}>{paragraph}</p>
-                  ))}
-                </div>
-
-                <div className="mt-5 rounded-lg border bg-muted/30 p-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground/80">
-                    Milestones To Keep In Mind
-                  </h3>
-                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    {interpretation.milestones.map((item) => (
-                      <li key={item} className="flex gap-2">
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/60" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <p className="mt-5 text-sm text-muted-foreground md:text-base">
-                  {interpretation.closer}
-                </p>
+            <div className="p-5 md:p-6">
+              <h2
+                className="border-l-4 pl-4 text-2xl font-semibold"
+                style={{ borderColor: liftColor }}
+              >
+                {interpretation.title}
+              </h2>
+              <div className="mt-4 space-y-3 text-sm text-muted-foreground md:text-base">
+                {interpretation.body.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
               </div>
 
-              <div className="flex items-center justify-center border-t bg-muted/20 p-6 lg:border-l lg:border-t-0">
-                {liftSvgPath ? (
-                  <div className="flex h-40 w-40 items-center justify-center rounded-2xl border bg-background/80 p-4 shadow-sm md:h-48 md:w-48">
-                    <Image
-                      src={liftSvgPath}
-                      alt={`${page.navLabel} illustration`}
-                      width={160}
-                      height={160}
-                      className="h-full w-full object-contain"
-                    />
-                  </div>
-                ) : null}
+              <div className="mt-5 rounded-lg border bg-muted/30 p-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground/80">
+                  Milestones Worth Chasing
+                </h3>
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  {interpretation.milestones.map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <span
+                        className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: liftColor }}
+                      />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {interpretation.exampleTable && (
+                <div className="mt-5 overflow-x-auto rounded-lg border">
+                  <table className="w-full text-sm">
+                    <caption className="sr-only">
+                      {interpretation.exampleTable.caption}
+                    </caption>
+                    <thead>
+                      <tr className="border-b bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                        <th className="px-3 py-2">Bodyweight</th>
+                        <th className="px-3 py-2">Active</th>
+                        <th className="px-3 py-2">Beginner</th>
+                        <th className="px-3 py-2">Inter.</th>
+                        <th className="px-3 py-2">Advanced</th>
+                        <th className="px-3 py-2">Elite</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {interpretation.exampleTable.rows.map((row) => (
+                        <tr key={row.bwKg} className="border-b last:border-0">
+                          <td className="px-3 py-2 font-medium">
+                            <span>{row.bwLb} lb</span>
+                            <span className="ml-1 text-muted-foreground">/ {row.bwKg} kg</span>
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {row.active[1]} lb<span className="hidden sm:inline"> / {row.active[0]} kg</span>
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {row.beginner[1]} lb<span className="hidden sm:inline"> / {row.beginner[0]} kg</span>
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {row.intermediate[1]} lb<span className="hidden sm:inline"> / {row.intermediate[0]} kg</span>
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {row.advanced[1]} lb<span className="hidden sm:inline"> / {row.advanced[0]} kg</span>
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {row.elite[1]} lb<span className="hidden sm:inline"> / {row.elite[0]} kg</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="px-3 py-2 text-xs text-muted-foreground">
+                    {interpretation.exampleTable.caption}. Values in lb<span className="hidden sm:inline"> / kg</span>.
+                    Use the interactive tool above for personalised results by age, sex, and bodyweight.
+                  </p>
+                </div>
+              )}
+
+              <div
+                className="mt-5 rounded-lg border-l-4 bg-muted/30 p-4 text-sm font-medium italic text-muted-foreground md:text-base"
+                style={{ borderColor: liftColor }}
+              >
+                {interpretation.closer}
               </div>
             </div>
           </section>
         )}
 
         <section className="rounded-lg border p-4" id="lift-faq">
-          <h2 className="mb-4 text-xl font-semibold">{page.pageTitle} FAQ</h2>
-          <div className="space-y-4">
+          <h2 className="mb-2 text-xl font-semibold">{page.pageTitle} FAQ</h2>
+          <Accordion type="multiple">
             {page.faqItems.map(({ question, answer }) => (
-              <article key={question} className="rounded-lg border p-4">
-                <h3 className="text-base font-semibold">{question}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{answer}</p>
-              </article>
+              <AccordionItem key={question} value={question}>
+                <AccordionTrigger className="text-left text-base">
+                  {question}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-sm text-muted-foreground">{answer}</p>
+                </AccordionContent>
+              </AccordionItem>
             ))}
+          </Accordion>
+        </section>
+
+        <section className="rounded-lg border p-4">
+          <h2 className="mb-3 text-lg font-semibold">
+            Explore Other Lifts
+          </h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {STRENGTH_STANDARDS_PAGES.filter((p) => p.slug !== page.slug).map(
+              (other) => {
+                const otherColor = getColor(other.liftType);
+                return (
+                  <Link
+                    key={other.slug}
+                    href={getStrengthStandardsUrl(other.slug)}
+                    className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted"
+                    style={{ borderColor: `${otherColor}30` }}
+                  >
+                    <LiftSvg liftType={other.liftType} size="sm" animate={false} />
+                    <div>
+                      <span className="text-sm font-semibold">
+                        {other.navLabel}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        Strength Levels
+                      </span>
+                    </div>
+                  </Link>
+                );
+              },
+            )}
           </div>
         </section>
 
@@ -344,7 +476,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
           <QuickLinkCard
             href="/strength-levels"
             title="Strength Levels Hub"
-            description="Browse the rest of the standards cluster."
+            description="Browse all four lifts on one page."
             icon={<BicepsFlexed className="h-5 w-5" />}
           />
           <QuickLinkCard
@@ -371,11 +503,12 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
 
 function StrengthLevelsDataCta({ page }) {
   const { status: authStatus } = useSession();
-  const { sheetInfo } = useUserLiftingData();
+  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
 
   if (authStatus === "authenticated" && sheetInfo?.ssid) {
     return null;
   }
+  if (isReturningUserLoading) return null;
 
   const showSignIn = authStatus === "unauthenticated";
   const showSheetSetup = authStatus === "authenticated" && !sheetInfo?.ssid;
@@ -422,23 +555,5 @@ function StrengthLevelsDataCta({ page }) {
         </div>
       </div>
     </div>
-  );
-}
-
-function QuickLinkCard({ href, title, description, icon }) {
-  return (
-    <Link href={href} className="block">
-      <Card className="h-full transition-shadow hover:shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            {icon}
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 text-sm text-muted-foreground">
-          {description}
-        </CardContent>
-      </Card>
-    </Link>
   );
 }

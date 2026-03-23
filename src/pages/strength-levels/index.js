@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import {
@@ -10,6 +9,7 @@ import {
   Calculator,
   CircleDashed,
 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
@@ -18,8 +18,8 @@ import {
   PageHeader,
   PageHeaderDescription,
   PageHeaderHeading,
-  PageHeaderRight,
 } from "@/components/page-header";
+import { QuickLinkCard } from "@/components/quick-link-card";
 import {
   Card,
   CardContent,
@@ -27,10 +27,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { StandardsSlider } from "@/components/standards-slider";
+import { LiftSvg } from "@/components/year-recap/lift-svg";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { fetchRelatedArticles } from "@/lib/sanity-io";
 import {
   STRENGTH_STANDARDS_HUB_URL,
@@ -114,6 +120,7 @@ export async function getStaticProps() {
 export default function StrengthStandardsHubPage({ relatedArticles }) {
   const { standards, isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
+  const prefersReducedMotion = useReducedMotion();
   // GSC review 2026-03-20
   const title = "Strength Standards and Levels by Bodyweight, Age, and Sex";
   const description =
@@ -125,8 +132,10 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "WebPage",
+        "@type": "WebApplication",
         name: title,
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
         description,
         url: canonicalURL,
       },
@@ -192,32 +201,18 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
             Strength Standards and Levels
           </PageHeaderHeading>
           <PageHeaderDescription>
-            Compare strength levels for squat, bench press, deadlift, and
-            strict press using standards adjusted for bodyweight, age, and sex.
-            See where your estimated max lands from active through elite.
+            You are here because you want to know where you stand. These
+            standards adjust for your bodyweight, sex, and age — so you get a
+            real answer, not gym folklore. Pick a lift below to find yours.
           </PageHeaderDescription>
-          <PageHeaderRight>
-            <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
-              <Link
-                href="/calculator"
-                className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
-              >
-                <h3 className="text-base font-semibold">1RM Calculator</h3>
-                <p className="text-sm">
-                  Estimate a max, then come back here for context.
-                </p>
-              </Link>
-            </div>
-          </PageHeaderRight>
         </PageHeader>
 
         <div className="grid gap-6">
-          <Card>
+          <Card className="border-t-2 border-primary/40">
             <CardHeader>
-              <CardTitle>Personalise The Standards</CardTitle>
+              <CardTitle>Your Athlete Profile</CardTitle>
               <CardDescription>
-                These settings stay in your browser and power personalised
-                strength standards across the site.
+                Adjust once — every standard on this page shifts in real time.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
@@ -226,114 +221,123 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
           </Card>
 
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {STRENGTH_STANDARDS_PAGES.map((page) => (
-              <Card key={`overview-${page.slug}`} className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border bg-muted/40 p-2">
-                      {getLiftSvgPath(page.liftType) ? (
-                        <Image
-                          src={getLiftSvgPath(page.liftType)}
-                          alt=""
-                          width={48}
-                          height={48}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : null}
+            {STRENGTH_STANDARDS_PAGES.map((page, index) => {
+              const liftColor = getColor(page.liftType);
+              return (
+                <motion.div
+                  key={`overview-${page.slug}`}
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 24,
+                    delay: prefersReducedMotion ? 0 : index * 0.1,
+                  }}
+                >
+                  <Card className="h-full overflow-hidden">
+                    <div
+                      className="flex items-center justify-between gap-4 px-5 pt-5 pb-3"
+                      style={{
+                        background: `linear-gradient(to right, ${liftColor}20, transparent)`,
+                      }}
+                    >
+                      <div className="min-w-0">
+                        <CardTitle className="text-xl">{page.pageTitle}</CardTitle>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {page.hubDescription}
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        <LiftSvg liftType={page.liftType} size="md" />
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <CardTitle
-                        className="text-xl underline decoration-2 underline-offset-2"
-                        style={{ textDecorationColor: getColor(page.liftType) }}
-                      >
-                        {page.pageTitle}
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        Live standards preview for {page.navLabel.toLowerCase()}.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                  <StandardsSlider
-                    liftType={page.liftType}
-                    standards={standards}
-                    isMetric={isMetric}
-                    hideRating
-                  />
-                  <div className="flex flex-wrap gap-3">
-                    <Link
-                      href={getStrengthStandardsUrl(page.slug)}
-                      className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                    >
-                      <ArrowUpRight className="h-4 w-4" />
-                      Open Detailed {page.navLabel} Standards
-                    </Link>
-                    <Link
-                      href={page.calculatorUrl}
-                      className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
-                    >
-                      <Calculator className="h-4 w-4" />
-                      {page.navLabel} 1RM Calculator
-                    </Link>
-                    <Link
-                      href={page.insightUrl}
-                      className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
-                    >
-                      <BookOpen className="h-4 w-4" />
-                      {page.navLabel} Guide
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <CardContent className="flex flex-col gap-4 pt-3">
+                      <StandardsSlider
+                        liftType={page.liftType}
+                        standards={standards}
+                        isMetric={isMetric}
+                        hideRating
+                      />
+                      <div className="flex flex-wrap gap-3">
+                        <Link
+                          href={getStrengthStandardsUrl(page.slug)}
+                          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                        >
+                          <ArrowUpRight className="h-4 w-4" />
+                          {page.navLabel} Standards
+                        </Link>
+                        <Link
+                          href={page.calculatorUrl}
+                          className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+                        >
+                          <Calculator className="h-4 w-4" />
+                          {page.navLabel} 1RM Calculator
+                        </Link>
+                        <Link
+                          href={page.insightUrl}
+                          className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+                        >
+                          <BookOpen className="h-4 w-4" />
+                          {page.navLabel} Guide
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </section>
 
           <section className="rounded-lg border p-4">
-            <h2 className="mb-4 text-xl font-semibold">Strength Standards FAQ</h2>
-            <div className="space-y-4">
+            <h2 className="mb-2 text-xl font-semibold">Frequently Asked Questions</h2>
+            <Accordion type="multiple">
               {FAQ_ITEMS.map(
                 ({ question, answer, inlineLinks, ctaHref, ctaLabel }) => (
-                <article key={question} className="rounded-lg border p-4">
-                  <h3 className="text-base font-semibold">{question}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {answer}
-                    {inlineLinks?.length ? (
-                      <>
-                        {" "}
-                        {inlineLinks.map((link, index) => (
-                          <Fragment key={link.href}>
-                            {index === 0 ? null : index === inlineLinks.length - 1
-                              ? ", and "
-                              : ", "}
+                  <AccordionItem key={question} value={question}>
+                    <AccordionTrigger className="text-left text-base">
+                      {question}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-sm text-muted-foreground">
+                        {answer}
+                        {inlineLinks?.length ? (
+                          <>
+                            {" "}
+                            {inlineLinks.map((link, index) => (
+                              <Fragment key={link.href}>
+                                {index === 0 ? null : index === inlineLinks.length - 1
+                                  ? ", and "
+                                  : ", "}
+                                <Link
+                                  href={link.href}
+                                  className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
+                                >
+                                  {link.label}
+                                </Link>
+                              </Fragment>
+                            ))}
+                            .
+                          </>
+                        ) : null}
+                        {ctaHref ? (
+                          <>
+                            {" "}
                             <Link
-                              href={link.href}
+                              href={ctaHref}
                               className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
                             >
-                              {link.label}
+                              {ctaLabel}
                             </Link>
-                          </Fragment>
-                        ))}
-                        .
-                      </>
-                    ) : null}
-                    {ctaHref ? (
-                      <>
-                        {" "}
-                        <Link
-                          href={ctaHref}
-                          className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
-                        >
-                          {ctaLabel}
-                        </Link>
-                        .
-                      </>
-                    ) : null}
-                  </p>
-                </article>
+                            .
+                          </>
+                        ) : null}
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
                 ),
               )}
-            </div>
+            </Accordion>
           </section>
 
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -357,23 +361,5 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
         </div>
       </PageContainer>
     </>
-  );
-}
-
-function QuickLinkCard({ href, title, description, icon }) {
-  return (
-    <Link href={href} className="block">
-      <Card className="h-full transition-shadow hover:shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            {icon}
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 text-sm text-muted-foreground">
-          {description}
-        </CardContent>
-      </Card>
-    </Link>
   );
 }

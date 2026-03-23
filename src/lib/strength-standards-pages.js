@@ -6,6 +6,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "bench-press",
     liftType: "Bench Press",
     navLabel: "Bench Press",
+    hubDescription: "The lift everyone asks about first.",
     pageTitle: "Bench Press Strength Levels",
     seoTitle: "Bench Press Strength Standards by Bodyweight, Age, and Sex",
     description:
@@ -41,6 +42,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "squat",
     liftType: "Back Squat",
     navLabel: "Squat",
+    hubDescription: "The king of lower-body strength.",
     pageTitle: "Squat Strength Levels",
     seoTitle: "Squat Strength Standards by Bodyweight, Age, and Sex",
     description:
@@ -76,6 +78,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "deadlift",
     liftType: "Deadlift",
     navLabel: "Deadlift",
+    hubDescription: "The heaviest bar you will ever move.",
     pageTitle: "Deadlift Strength Levels",
     seoTitle: "Deadlift Strength Standards by Bodyweight, Age, and Sex",
     description:
@@ -111,6 +114,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     slug: "strict-press",
     liftType: "Strict Press",
     navLabel: "Strict Press",
+    hubDescription: "The slowest to climb and the most rewarding.",
     pageTitle: "Strict Press Strength Levels",
     seoTitle: "Strict Press Strength Standards by Bodyweight, Age, and Sex",
     description:

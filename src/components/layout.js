@@ -198,7 +198,7 @@ export function Layout({ children }) {
   }, [authStatus, isDemoMode, router.asPath, router.pathname, toast]);
 
   return (
-    <div className="bg-background relative min-h-screen w-full">
+    <div className="bg-background relative min-h-screen w-full overflow-x-hidden">
       <AppBackground />
 
       <div className="relative z-10">

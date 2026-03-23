@@ -8,9 +8,10 @@ import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 export const PROVISION_VERSION = 2;
 const MAX_HEADER_CHECKS = 12;
-const MAX_DEEP_ENRICH_CANDIDATES = 6;
+const MAX_DEEP_ENRICH_CANDIDATES = 12;
 const METADATA_SCAN_ROW_CAP = 10000;
 const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
+const BIG_FOUR_LIFTS_SET = new Set(BIG_FOUR_LIFTS);
 const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
 const REQUIRED_HEADERS = [
@@ -387,13 +388,9 @@ export async function enrichCandidateMetadata(
 
   const json = await response.json().catch(() => ({}));
   const rows = Array.isArray(json?.values) ? json.values : [];
-  const nonEmptyRows = rows.filter((row) =>
-    Array.isArray(row)
-      ? row.some((cell) => String(cell || "").trim() !== "")
-      : false,
-  );
 
   const sessions = new Set();
+  let nonEmptyRowCount = 0;
   let approxRows = 0;
   let minDate = null;
   let maxDate = null;
@@ -401,7 +398,24 @@ export async function enrichCandidateMetadata(
   let previousSessionLiftType = null;
   const bestByLift = {};
 
-  for (const row of nonEmptyRows) {
+  for (const row of rows) {
+    if (
+      !Array.isArray(row) ||
+      !row.some((cell) => String(cell || "").trim() !== "")
+    ) {
+      continue;
+    }
+    nonEmptyRowCount += 1;
+
+    const parsedDateFromCell = parseYmd(row?.[dateColumnIndex], locale);
+    if (parsedDateFromCell && previousDate && parsedDateFromCell !== previousDate) {
+      previousSessionLiftType = null;
+    }
+    if (parsedDateFromCell) previousDate = parsedDateFromCell;
+
+    const rawLiftType = String(row?.[liftTypeColumnIndex] || "").trim();
+    if (rawLiftType) previousSessionLiftType = rawLiftType;
+
     const hasReps =
       repsColumnIndex >= 0 && String(row?.[repsColumnIndex] || "").trim() !== "";
     const hasWeight =
@@ -410,20 +424,16 @@ export async function enrichCandidateMetadata(
     if (!hasReps || !hasWeight) continue;
     approxRows += 1;
 
-    const parsedDate = parseYmd(row?.[dateColumnIndex], locale) || previousDate;
+    const parsedDate = parsedDateFromCell || previousDate;
     if (!parsedDate) continue;
-    previousDate = parsedDate;
-
-    const rawLiftType = String(row?.[liftTypeColumnIndex] || "").trim();
     const sessionLiftType = rawLiftType || previousSessionLiftType;
-    if (rawLiftType) previousSessionLiftType = rawLiftType;
     const normalizedLiftType = normalizeLiftTypeForPreview(sessionLiftType);
 
     sessions.add(parsedDate);
     if (!minDate || parsedDate < minDate) minDate = parsedDate;
     if (!maxDate || parsedDate > maxDate) maxDate = parsedDate;
 
-    if (!normalizedLiftType || !BIG_FOUR_LIFTS.includes(normalizedLiftType)) continue;
+    if (!normalizedLiftType || !BIG_FOUR_LIFTS_SET.has(normalizedLiftType)) continue;
 
     const reps = parseReps(row?.[repsColumnIndex]);
     const weightInfo = parseWeightAndUnit(row?.[weightColumnIndex]);
@@ -478,7 +488,7 @@ export async function enrichCandidateMetadata(
     dateRangeEnd: maxDate,
     bigFourPreview: BIG_FOUR_LIFTS.map((liftType) => bestByLift[liftType]).filter(Boolean),
     metadataSampled:
-      nonEmptyRows.length >= METADATA_SCAN_ROW_CAP || hasRowsBeyondScanCap,
+      nonEmptyRowCount >= METADATA_SCAN_ROW_CAP || hasRowsBeyondScanCap,
   };
 }
 
@@ -1011,7 +1021,11 @@ export async function markActivationPrompted({ kvKey, existingRecord, nowIso }) 
   });
 }
 
-export function respondLinkExisting(res, metadata, { reason, wasCreated = false, debug }) {
+export function respondLinkExisting(
+  res,
+  metadata,
+  { reason, wasCreated = false, debug, onboardingFlowToken = null },
+) {
   return res.status(200).json(
     withDebug(
       {
@@ -1023,6 +1037,7 @@ export function respondLinkExisting(res, metadata, { reason, wasCreated = false,
         modifiedTime: metadata.modifiedTime || null,
         modifiedByMeTime: metadata.modifiedByMeTime || null,
         wasCreated,
+        ...(onboardingFlowToken ? { onboardingFlowToken } : {}),
       },
       debug,
     ),
@@ -1033,7 +1048,7 @@ export function respondCreateNewUserSheet(
   res,
   metadata,
   debug,
-  { reason = "true_new_user" } = {},
+  { reason = "true_new_user", onboardingFlowToken = null } = {},
 ) {
   return res.status(200).json(
     withDebug(
@@ -1046,6 +1061,7 @@ export function respondCreateNewUserSheet(
         modifiedTime: metadata.modifiedTime || null,
         modifiedByMeTime: metadata.modifiedByMeTime || null,
         wasCreated: true,
+        ...(onboardingFlowToken ? { onboardingFlowToken } : {}),
       },
       debug,
     ),
@@ -1054,7 +1070,7 @@ export function respondCreateNewUserSheet(
 
 export function respondChooseSheet(
   res,
-  { intent, candidates, recommendedId, debug },
+  { intent, candidates, recommendedId, debug, onboardingFlowToken = null },
 ) {
   return res.status(200).json(
     withDebug(
@@ -1064,18 +1080,24 @@ export function respondChooseSheet(
         candidates: candidates.map(toClientCandidate),
         recommendedId,
         enrichCandidateIds: pickEnrichCandidateIds(candidates),
+        ...(onboardingFlowToken ? { onboardingFlowToken } : {}),
       },
       debug,
     ),
   );
 }
 
-export function respondRecoverReturningUser(res, debug) {
+export function respondRecoverReturningUser(
+  res,
+  debug,
+  { onboardingFlowToken = null } = {},
+) {
   return res.status(200).json(
     withDebug(
       {
         action: "recover_returning_user",
         reason: "no_match",
+        ...(onboardingFlowToken ? { onboardingFlowToken } : {}),
       },
       debug,
     ),

@@ -1,4 +1,5 @@
 import { devLog } from "@/lib/processing-utils";
+import { issueOnboardingFlowToken } from "@/lib/onboarding-flow-events";
 import {
   buildSheetName,
   classifyLifecycle,
@@ -84,6 +85,16 @@ export default async function handler(req, res) {
   const debug = createDebug(intent, "discover");
   const existingRecord = await getExistingRecord(base.kvKey);
   const sheetName = buildSheetName(base.session.user.name);
+  let onboardingFlowToken = null;
+
+  try {
+    onboardingFlowToken = await issueOnboardingFlowToken({
+      email: base.session.user.email,
+      intent,
+    });
+  } catch (error) {
+    console.error("[sheet/resolve] onboarding flow token issue failed:", error);
+  }
 
   try {
     debug.path.push("resolve:start");
@@ -118,6 +129,7 @@ export default async function handler(req, res) {
         candidates: rankedCandidates,
         recommendedId: rankedCandidates[0]?.id || null,
         debug,
+        onboardingFlowToken,
       });
     }
 
@@ -145,6 +157,7 @@ export default async function handler(req, res) {
       return respondLinkExisting(res, candidate, {
         reason,
         debug,
+        onboardingFlowToken,
       });
     }
 
@@ -159,6 +172,7 @@ export default async function handler(req, res) {
         candidates: rankedCandidates,
         recommendedId: rankedCandidates[0]?.id || null,
         debug,
+        onboardingFlowToken,
       });
     }
 
@@ -211,7 +225,9 @@ export default async function handler(req, res) {
         });
       }
       devLog("[sheet/resolve] founder activation after bootstrap template", { prompted });
-      return respondCreateNewUserSheet(res, created, debug);
+      return respondCreateNewUserSheet(res, created, debug, {
+        onboardingFlowToken,
+      });
     }
 
     if (
@@ -272,6 +288,7 @@ export default async function handler(req, res) {
         });
         return respondCreateNewUserSheet(res, created, debug, {
           reason: "reprovision_after_missing_sheet",
+          onboardingFlowToken,
         });
       }
     }
@@ -281,9 +298,12 @@ export default async function handler(req, res) {
       intent,
       hadLocalSheetBefore,
     });
-    return respondRecoverReturningUser(res, debug);
+    return respondRecoverReturningUser(res, debug, { onboardingFlowToken });
   } catch (error) {
     console.error("[sheet/resolve] resolve failed:", error);
-    res.status(500).json({ error: error.message || "Sheet flow resolution failed" });
+    res.status(500).json({
+      error: error.message || "Sheet flow resolution failed",
+      ...(onboardingFlowToken ? { onboardingFlowToken } : {}),
+    });
   }
 }

@@ -256,12 +256,14 @@ function BarbellInsightsMain({
   resourcesArticle,
 }) {
   const { isLoading, parsedData, rawRows, sheetInfo } = useUserLiftingData();
+  const { status: insightAuthStatus } = useSession();
   const { dashboardStage } = getDashboardStage({
     parsedData,
     rawRows,
     sheetInfo,
   });
   const prioritizeVideoGuides =
+    insightAuthStatus !== "authenticated" ||
     dashboardStage === "starter_sample" ||
     dashboardStage === "first_real_week" ||
     dashboardStage === "first_month";

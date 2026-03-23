@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
-const ENRICH_CANDIDATE_LIMIT = 6;
+const ENRICH_CANDIDATE_LIMIT = 12;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
 const FORCE_SHEET_SYNC_TOAST_KEY = "SJ_forceNextSheetSyncToast";
 const SHEET_SETUP_QUIPS = [
@@ -368,11 +368,21 @@ export function SheetSetupDialog() {
         const discoveredCandidates = Array.isArray(payload.candidates)
           ? sortCandidatesForChooser(payload.candidates)
           : [];
+        const currentCandidateId =
+          intent === "switch_sheet" &&
+          discoveredCandidates.some((candidate) => candidate.id === sheetInfo?.ssid)
+            ? sheetInfo.ssid
+            : null;
+        const recommendedId = currentCandidateId || discoveredCandidates[0]?.id || payload?.recommendedId || null;
         const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
           ? payload.enrichCandidateIds
           : discoveredCandidates.slice(0, ENRICH_CANDIDATE_LIMIT).map((candidate) => candidate.id);
+        const prioritizedEnrichCandidateIds =
+          currentCandidateId && !enrichCandidateIds.includes(currentCandidateId)
+            ? [currentCandidateId, ...enrichCandidateIds].slice(0, ENRICH_CANDIDATE_LIMIT)
+            : enrichCandidateIds;
         setCandidateSheets(discoveredCandidates);
-        setRecommendedCandidateId(discoveredCandidates[0]?.id || payload?.recommendedId || null);
+        setRecommendedCandidateId(recommendedId);
         setFlowIntent(payload?.intent || intent);
         setSheetDiscoveryStatusMessage(
           discoveredCandidates.length > 0
@@ -386,8 +396,8 @@ export function SheetSetupDialog() {
         setOnboardingState("choose_sheet");
         void enrichCandidateSheets({
           candidates: discoveredCandidates,
-          candidateIds: enrichCandidateIds,
-          primaryCandidateId: payload?.recommendedId || null,
+          candidateIds: prioritizedEnrichCandidateIds,
+          primaryCandidateId: recommendedId,
         });
         return;
       }
@@ -463,6 +473,7 @@ export function SheetSetupDialog() {
       resetUiState,
       router,
       selectSheet,
+      sheetInfo?.ssid,
     ],
   );
 
@@ -749,10 +760,10 @@ export function SheetSetupDialog() {
       }}>
         <DialogContent
           aria-describedby={undefined}
-          className="w-[min(96vw,1220px)] max-w-[1220px] border-0 bg-transparent p-0 shadow-none"
+          className="max-h-[92vh] w-[min(96vw,1220px)] max-w-[1220px] overflow-hidden border-0 bg-transparent p-0 shadow-none"
         >
-          <Card className="border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
-            <CardHeader className="space-y-3 xl:px-10 2xl:px-16">
+          <Card className="flex max-h-[92vh] flex-col overflow-hidden border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
+            <CardHeader className="shrink-0 space-y-3 xl:px-10 2xl:px-16">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-primary">
                 {dialogCopy.tone === "ready" ? (
                   <CheckCircle2 className="h-4 w-4" />
@@ -770,7 +781,7 @@ export function SheetSetupDialog() {
                 </CardDescription>
               ) : null}
             </CardHeader>
-            <CardContent className="space-y-5 xl:px-10 2xl:px-16">
+            <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto xl:px-10 2xl:px-16">
               {(onboardingState === "discovering" || onboardingState === "linking_or_creating") && (
                 <PlateLoadingAnimation isActive={true} />
               )}

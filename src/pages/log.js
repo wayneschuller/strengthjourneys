@@ -4,7 +4,13 @@ import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
-import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
+import {
+  getTopLiftStats,
+  useAthleteBio,
+  getStrengthRatingForE1RM,
+  STRENGTH_LEVEL_EMOJI,
+  getStandardForLiftDate,
+} from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -52,7 +58,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-    TooltipProvider,
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 import {
   AddLiftButton,
@@ -71,10 +77,26 @@ import { getLiftAnchorId } from "@/components/log/utils";
 // --- Big Four lifts with SVG icons ---
 
 const BIG_FOUR = [
-  { name: "Back Squat", icon: "/back_squat.svg", slug: "barbell-squat-insights" },
-  { name: "Bench Press", icon: "/bench_press.svg", slug: "barbell-bench-press-insights" },
-  { name: "Deadlift", icon: "/deadlift.svg", slug: "barbell-deadlift-insights" },
-  { name: "Strict Press", icon: "/strict_press.svg", slug: "barbell-strict-press-insights" },
+  {
+    name: "Back Squat",
+    icon: "/back_squat.svg",
+    slug: "barbell-squat-insights",
+  },
+  {
+    name: "Bench Press",
+    icon: "/bench_press.svg",
+    slug: "barbell-bench-press-insights",
+  },
+  {
+    name: "Deadlift",
+    icon: "/deadlift.svg",
+    slug: "barbell-deadlift-insights",
+  },
+  {
+    name: "Strict Press",
+    icon: "/strict_press.svg",
+    slug: "barbell-strict-press-insights",
+  },
 ];
 const BIG_FOUR_INSIGHT_URLS = Object.fromEntries(
   BIG_FOUR.map((lift) => [lift.name, `/${lift.slug}`]),
@@ -133,7 +155,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Romanian Deadlift",
-    standardsRef: { liftType: "Deadlift", ratio: 0.70 },
+    standardsRef: { liftType: "Deadlift", ratio: 0.7 },
     cues: [
       "Push the hips back and keep a soft bend in the knees.",
       "Let the bar trace the thighs and stay close to the legs the whole way down.",
@@ -143,7 +165,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Power Clean",
-    standardsRef: { liftType: "Deadlift", ratio: 0.60 },
+    standardsRef: { liftType: "Deadlift", ratio: 0.6 },
     cues: [
       "Push through the floor smoothly and keep the bar close from mid-shin to hip.",
       "Finish the pull with violent leg and hip extension before the elbows turn over.",
@@ -153,7 +175,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Rack Pull",
-    standardsRef: { liftType: "Deadlift", ratio: 1.10 },
+    standardsRef: { liftType: "Deadlift", ratio: 1.1 },
     cues: [
       "Set the lats first and wedge into the bar before it leaves the pins.",
       "Keep the bar glued to the thighs and lock out by driving the hips through.",
@@ -173,7 +195,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Barbell Row",
-    standardsRef: { liftType: "Bench Press", ratio: 0.80 },
+    standardsRef: { liftType: "Bench Press", ratio: 0.8 },
     cues: [
       "Set the back tight before the first rep and hold the torso angle steady.",
       "Pull the bar into the lower chest or upper stomach without jerking the hips.",
@@ -183,9 +205,9 @@ const COACHED_LIFTS = [
   },
 ];
 
-const DEFAULT_ADD_LIFT_CHIPS = COACHED_LIFTS
-  .filter((item) => !BIG_FOUR.some((lift) => lift.name === item.liftType))
-  .map((item) => ({ name: item.liftType, icon: null }));
+const DEFAULT_ADD_LIFT_CHIPS = COACHED_LIFTS.filter(
+  (item) => !BIG_FOUR.some((lift) => lift.name === item.liftType),
+).map((item) => ({ name: item.liftType, icon: null }));
 
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
@@ -221,7 +243,8 @@ export default function LogSessionPage() {
       return null;
     }
   }, [isClient]);
-  const hasLinkedSheet = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
+  const hasLinkedSheet =
+    authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
 
   useEffect(() => {
     clearEntries();
@@ -239,15 +262,29 @@ export default function LogSessionPage() {
     prevValidatingRef.current = isValidating;
     if (isValidating && !was) {
       revalidateStartRef.current = performance.now();
-      addLogEntry({ type: "sync", label: "SWR revalidating", detail: "Fetching fresh sheet data for the log page." });
+      addLogEntry({
+        type: "sync",
+        label: "SWR revalidating",
+        detail: "Fetching fresh sheet data for the log page.",
+      });
     }
     if (!isValidating && was) {
-      const elapsed = revalidateStartRef.current ? Math.round(performance.now() - revalidateStartRef.current) : null;
+      const elapsed = revalidateStartRef.current
+        ? Math.round(performance.now() - revalidateStartRef.current)
+        : null;
       const suffix = elapsed != null ? ` · ${elapsed}ms` : "";
       if (isError || fetchFailed) {
-        addLogEntry({ type: "swr-error", label: "SWR revalidation failed", detail: `The latest sheet fetch failed. error=${isError} fetchFailed=${fetchFailed}${suffix}` });
+        addLogEntry({
+          type: "swr-error",
+          label: "SWR revalidation failed",
+          detail: `The latest sheet fetch failed. error=${isError} fetchFailed=${fetchFailed}${suffix}`,
+        });
       } else {
-        addLogEntry({ type: "swr-ok", label: "SWR revalidation done", detail: `${rawRows ?? "?"} raw rows fetched from the sheet${suffix}` });
+        addLogEntry({
+          type: "swr-ok",
+          label: "SWR revalidation done",
+          detail: `${rawRows ?? "?"} raw rows fetched from the sheet${suffix}`,
+        });
       }
     }
   }, [isValidating, isError, fetchFailed, rawRows, addLogEntry]);
@@ -259,15 +296,27 @@ export default function LogSessionPage() {
     prevParsedLenRef.current = newLen;
     if (newLen == null) return;
     if (prevLen == null) {
-      addLogEntry({ type: "sync", label: "parsedData ready", detail: `The client parser built ${newLen} lift rows from the sheet response.` });
+      addLogEntry({
+        type: "sync",
+        label: "parsedData ready",
+        detail: `The client parser built ${newLen} lift rows from the sheet response.`,
+      });
     } else if (newLen !== prevLen) {
-      addLogEntry({ type: "sync", label: "parsedData updated", detail: `Parsed lift rows changed from ${prevLen} to ${newLen}.` });
+      addLogEntry({
+        type: "sync",
+        label: "parsedData updated",
+        detail: `Parsed lift rows changed from ${prevLen} to ${newLen}.`,
+      });
     }
   }, [parsedData?.length, addLogEntry]);
 
   useEffect(() => {
     if (dataSyncedAt) {
-      addLogEntry({ type: "swr-ok", label: "dataSyncedAt", detail: `Latest sync marker: ${new Date(dataSyncedAt).toLocaleTimeString()}` });
+      addLogEntry({
+        type: "swr-ok",
+        label: "dataSyncedAt",
+        detail: `Latest sync marker: ${new Date(dataSyncedAt).toLocaleTimeString()}`,
+      });
     }
   }, [dataSyncedAt, addLogEntry]);
 
@@ -280,6 +329,11 @@ export default function LogSessionPage() {
   const [sessionDate, setSessionDate] = useState(todayIso);
   const [syncState, setSyncState] = useState("idle"); // idle | saving | saved | error
   const [isStructuralSaving, setIsStructuralSaving] = useState(false);
+  // Row deletes reindex the visible list. A very fast double-click can hit the
+  // intended row first, then hit the next row after the list collapses. Keep
+  // the per-set trash buttons disabled for a short beat after delete completion
+  // so pointer follow-through cannot immediately delete the shifted row.
+  const [isDeleteCooldownActive, setIsDeleteCooldownActive] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Optimistic pending sets: { [liftType]: [pendingSetObj, ...] }
   // _pending: true  → in-flight (show spinner)
@@ -304,6 +358,14 @@ export default function LogSessionPage() {
   // state so structural controls can visibly disable while row indices settle.
   const structuralSavingRef = useRef(false);
   const savedTimerRef = useRef(null);
+  const deleteCooldownTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (deleteCooldownTimerRef.current)
+        clearTimeout(deleteCooldownTimerRef.current);
+    };
+  }, []);
 
   // Wrapper that keeps pendingSetsRef synchronously in sync.
   // Using the setState callback form means the updater runs synchronously inside
@@ -316,27 +378,33 @@ export default function LogSessionPage() {
     });
   }, []);
 
-  const queueStructuralAction = useCallback((action) => {
-    queuedStructuralActionRef.current = action;
-    addLogEntry({
-      type: "sync",
-      label: "Queued structural action",
-      detail:
-        action.kind === "addSet"
-          ? `Will add the next ${action.liftType} set as soon as the current row-shifting write finishes.`
-          : `Will add the ${action.liftType} lift block as soon as the current row-shifting write finishes.`,
-    });
-  }, [addLogEntry]);
+  const queueStructuralAction = useCallback(
+    (action) => {
+      queuedStructuralActionRef.current = action;
+      addLogEntry({
+        type: "sync",
+        label: "Queued structural action",
+        detail:
+          action.kind === "addSet"
+            ? `Will add the next ${action.liftType} set as soon as the current row-shifting write finishes.`
+            : `Will add the ${action.liftType} lift block as soon as the current row-shifting write finishes.`,
+      });
+    },
+    [addLogEntry],
+  );
 
-  const recordDevSyncTrace = useCallback((entry) => {
-    if (!isDev) return;
-    addLogEntry({
-      type: "trace",
-      sessionDate,
-      ...entry,
-      label: entry.label ?? entry.op,
-    });
-  }, [addLogEntry, sessionDate]);
+  const recordDevSyncTrace = useCallback(
+    (entry) => {
+      if (!isDev) return;
+      addLogEntry({
+        type: "trace",
+        sessionDate,
+        ...entry,
+        label: entry.label ?? entry.op,
+      });
+    },
+    [addLogEntry, sessionDate],
+  );
 
   // Sync date from URL param after hydration
   useEffect(() => {
@@ -379,7 +447,10 @@ export default function LogSessionPage() {
   const sessionLifts = useMemo(() => {
     if (!parsedData) return {};
     const entries = parsedData.filter(
-      (e) => e.date === sessionDate && !e.isGoal && !deletedRowIndices.has(e.rowIndex),
+      (e) =>
+        e.date === sessionDate &&
+        !e.isGoal &&
+        !deletedRowIndices.has(e.rowIndex),
     );
     const grouped = {};
     for (const entry of entries) {
@@ -393,8 +464,9 @@ export default function LogSessionPage() {
   // to avoid doubling once the real data arrives.
   useEffect(() => {
     const realRowIndices = new Set(
-      Object.values(sessionLifts)
-        .flatMap((sets) => sets.map((s) => s.rowIndex).filter(Boolean)),
+      Object.values(sessionLifts).flatMap((sets) =>
+        sets.map((s) => s.rowIndex).filter(Boolean),
+      ),
     );
     setPendingSetsSync((prev) => {
       let changed = false;
@@ -417,8 +489,9 @@ export default function LogSessionPage() {
   // Deduplication: skip confirmed-pending rows whose rowIndex is already in sessionLifts.
   const sessionLiftsWithPending = useMemo(() => {
     const realRowIndices = new Set(
-      Object.values(sessionLifts)
-        .flatMap((sets) => sets.map((s) => s.rowIndex).filter(Boolean)),
+      Object.values(sessionLifts).flatMap((sets) =>
+        sets.map((s) => s.rowIndex).filter(Boolean),
+      ),
     );
     const merged = { ...sessionLifts };
     for (const [lt, sets] of Object.entries(pendingSets)) {
@@ -464,7 +537,8 @@ export default function LogSessionPage() {
             setCount,
             shouldShowComparison:
               setCount >= 4 ||
-              (avgLiftTonnage > 0 && currentLiftTonnage >= avgLiftTonnage * 0.4),
+              (avgLiftTonnage > 0 &&
+                currentLiftTonnage >= avgLiftTonnage * 0.4),
             pctDiff:
               avgLiftTonnage > 0
                 ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
@@ -489,7 +563,9 @@ export default function LogSessionPage() {
   const showSessionBootstrap =
     !isClient ||
     authStatus === "loading" ||
-    (authStatus === "authenticated" && !!effectiveSsid && (isLoading || parsedData === null));
+    (authStatus === "authenticated" &&
+      !!effectiveSsid &&
+      (isLoading || parsedData === null));
 
   const prevSessionDate = useMemo(() => {
     const earlier = sessionDates.filter((d) => d < sessionDate);
@@ -525,11 +601,13 @@ export default function LogSessionPage() {
     const frequentExtras = Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
       .map(([name]) => ({ name, icon: null }));
-    return [...BIG_FOUR, ...DEFAULT_ADD_LIFT_CHIPS, ...frequentExtras].filter(({ name }) => {
-      if (seen.has(name)) return false;
-      seen.add(name);
-      return true;
-    });
+    return [...BIG_FOUR, ...DEFAULT_ADD_LIFT_CHIPS, ...frequentExtras].filter(
+      ({ name }) => {
+        if (seen.has(name)) return false;
+        seen.add(name);
+        return true;
+      },
+    );
   }, [parsedData]);
 
   // --- Unit mismatch nudge ---
@@ -553,7 +631,10 @@ export default function LogSessionPage() {
       description: `New sets will be logged in ${prefUnit}. Switch to ${sheetUnit}?`,
       duration: 10000,
       action: (
-        <ToastAction altText={`Switch to ${sheetUnit}`} onClick={() => toggleIsMetric()}>
+        <ToastAction
+          altText={`Switch to ${sheetUnit}`}
+          onClick={() => toggleIsMetric()}
+        >
           Use {sheetUnit}
         </ToastAction>
       ),
@@ -568,7 +649,8 @@ export default function LogSessionPage() {
       addLogEntry({
         type: "sync",
         label: "Log page closed",
-        detail: "Calling mutate() so the dashboard picks up any sheet writes from this session.",
+        detail:
+          "Calling mutate() so the dashboard picks up any sheet writes from this session.",
       });
       mutate();
     };
@@ -615,7 +697,8 @@ export default function LogSessionPage() {
     addLogEntry({
       type: "sync",
       label: "Index-shift guard enabled",
-      detail: "A structural sheet write is in flight, so fixed-row edits will queue until row positions settle.",
+      detail:
+        "A structural sheet write is in flight, so fixed-row edits will queue until row positions settle.",
     });
   }
 
@@ -627,7 +710,8 @@ export default function LogSessionPage() {
     addLogEntry({
       type: "sync",
       label: "Structural write finished",
-      detail: "Row positions can be trusted again, so any queued edits may resume.",
+      detail:
+        "Row positions can be trusted again, so any queued edits may resume.",
     });
     // Flush any queued sync that was waiting for the structural op to finish
     flushQueuedSync();
@@ -641,77 +725,97 @@ export default function LogSessionPage() {
     addLogEntry({
       type: "warning",
       label: "Structural write failed",
-      detail: "The row-shifting operation did not complete cleanly. Queued edits will be rechecked before they resume.",
+      detail:
+        "The row-shifting operation did not complete cleanly. Queued edits will be rechecked before they resume.",
     });
     // Still attempt to flush — the structural op failed but queued edits
     // to already-confirmed rows are independent and should still land.
     flushQueuedSync();
   }
 
-  const updatePendingSet = useCallback((tempId, fields, queuedSync) => {
-    let updatedSet = null;
-    setPendingSetsSync((prev) => {
-      let changed = false;
-      const next = {};
-      for (const [lt, sets] of Object.entries(prev)) {
-        next[lt] = sets.map((s) => {
-          if (s._tempId !== tempId) return s;
-          changed = true;
-          updatedSet = {
-            ...s,
-            reps: fields.reps,
-            weight: fields.weight,
-            unitType: fields.unitType ?? s.unitType,
-            notes: fields.notes ?? "",
-            URL: fields.url ?? "",
-            _queuedSync: queuedSync,
-          };
-          return updatedSet;
-        });
-      }
-      return changed ? next : prev;
-    });
-    return updatedSet;
-  }, [setPendingSetsSync]);
+  function startDeleteCooldown() {
+    if (deleteCooldownTimerRef.current)
+      clearTimeout(deleteCooldownTimerRef.current);
+    setIsDeleteCooldownActive(true);
+    deleteCooldownTimerRef.current = setTimeout(() => {
+      setIsDeleteCooldownActive(false);
+      deleteCooldownTimerRef.current = null;
+    }, 700);
+  }
 
-  const clearPendingQueuedSync = useCallback((tempId, syncedFields = null) => {
-    if (!tempId) return;
-    setPendingSetsSync((prev) => {
-      let changed = false;
-      const next = {};
-      for (const [lt, sets] of Object.entries(prev)) {
-        next[lt] = sets.map((s) => {
-          if (s._tempId !== tempId) return s;
-          if (!s._queuedSync && !syncedFields) return s;
-          changed = true;
-          return {
-            ...s,
-            _queuedSync: false,
-            _serverSnapshot: syncedFields
-              ? buildSheetSnapshotFromFields(syncedFields, s)
-              : s._serverSnapshot,
-          };
-        });
-      }
-      return changed ? next : prev;
-    });
-  }, [setPendingSetsSync]);
+  const updatePendingSet = useCallback(
+    (tempId, fields, queuedSync) => {
+      let updatedSet = null;
+      setPendingSetsSync((prev) => {
+        let changed = false;
+        const next = {};
+        for (const [lt, sets] of Object.entries(prev)) {
+          next[lt] = sets.map((s) => {
+            if (s._tempId !== tempId) return s;
+            changed = true;
+            updatedSet = {
+              ...s,
+              reps: fields.reps,
+              weight: fields.weight,
+              unitType: fields.unitType ?? s.unitType,
+              notes: fields.notes ?? "",
+              URL: fields.url ?? "",
+              _queuedSync: queuedSync,
+            };
+            return updatedSet;
+          });
+        }
+        return changed ? next : prev;
+      });
+      return updatedSet;
+    },
+    [setPendingSetsSync],
+  );
+
+  const clearPendingQueuedSync = useCallback(
+    (tempId, syncedFields = null) => {
+      if (!tempId) return;
+      setPendingSetsSync((prev) => {
+        let changed = false;
+        const next = {};
+        for (const [lt, sets] of Object.entries(prev)) {
+          next[lt] = sets.map((s) => {
+            if (s._tempId !== tempId) return s;
+            if (!s._queuedSync && !syncedFields) return s;
+            changed = true;
+            return {
+              ...s,
+              _queuedSync: false,
+              _serverSnapshot: syncedFields
+                ? buildSheetSnapshotFromFields(syncedFields, s)
+                : s._serverSnapshot,
+            };
+          });
+        }
+        return changed ? next : prev;
+      });
+    },
+    [setPendingSetsSync],
+  );
 
   // Promote the first still-pending row for a liftType to confirmed with a real rowIndex.
-  const promoteFirstPending = useCallback((liftType, rowIndex) => {
-    setPendingSetsSync((prev) => {
-      if (!prev[liftType]) return prev;
-      let promoted = false;
-      const next = prev[liftType].map((s) => {
-        if (!promoted && s._pending) {
-          promoted = true;
-          return { ...s, _pending: false, rowIndex };
-        }
-        return s;
+  const promoteFirstPending = useCallback(
+    (liftType, rowIndex) => {
+      setPendingSetsSync((prev) => {
+        if (!prev[liftType]) return prev;
+        let promoted = false;
+        const next = prev[liftType].map((s) => {
+          if (!promoted && s._pending) {
+            promoted = true;
+            return { ...s, _pending: false, rowIndex };
+          }
+          return s;
+        });
+        return { ...prev, [liftType]: next };
       });
-      return { ...prev, [liftType]: next };
-    });
-  }, [setPendingSetsSync]);
+    },
+    [setPendingSetsSync],
+  );
 
   const persistSetCellUpdate = useCallback(
     async (rowIndex, field, beforeSnapshot, value) => {
@@ -765,7 +869,8 @@ export default function LogSessionPage() {
             });
             toast({
               title: "Sheet changed before the edit landed",
-              description: "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
+              description:
+                "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
               variant: "destructive",
               duration: 8000,
             });
@@ -794,7 +899,12 @@ export default function LogSessionPage() {
         });
         markError();
       }
-      logSheetTimings("updateSet", [{ name: "POST /api/sheet/edit-cell", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
+      logSheetTimings(
+        "updateSet",
+        [{ name: "POST /api/sheet/edit-cell", ms: performance.now() - t0 }],
+        performance.now() - t0,
+        addLogEntry,
+      );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
     [sheetInfo?.ssid, addLogEntry, toast, recordDevSyncTrace],
@@ -849,7 +959,8 @@ export default function LogSessionPage() {
             });
             toast({
               title: "Sheet changed before the edit landed",
-              description: "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
+              description:
+                "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
               variant: "destructive",
               duration: 8000,
             });
@@ -877,10 +988,21 @@ export default function LogSessionPage() {
         });
         markError();
       }
-      logSheetTimings("updateSet", [{ name: "POST /api/sheet/edit-row", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
+      logSheetTimings(
+        "updateSet",
+        [{ name: "POST /api/sheet/edit-row", ms: performance.now() - t0 }],
+        performance.now() - t0,
+        addLogEntry,
+      );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
-    [sheetInfo?.ssid, clearPendingQueuedSync, addLogEntry, toast, recordDevSyncTrace],
+    [
+      sheetInfo?.ssid,
+      clearPendingQueuedSync,
+      addLogEntry,
+      toast,
+      recordDevSyncTrace,
+    ],
   );
 
   const drainQueuedEditOp = useCallback(() => {
@@ -927,8 +1049,15 @@ export default function LogSessionPage() {
       });
       void persistSetRowUpdate(
         queuedSet.rowIndex,
-        queuedSet._serverSnapshot ?? buildSheetSnapshotFromFields(getEditableSetFields(queuedSet), queuedSet),
-        buildSheetSnapshotFromFields(getEditableSetFields(queuedSet), queuedSet),
+        queuedSet._serverSnapshot ??
+          buildSheetSnapshotFromFields(
+            getEditableSetFields(queuedSet),
+            queuedSet,
+          ),
+        buildSheetSnapshotFromFields(
+          getEditableSetFields(queuedSet),
+          queuedSet,
+        ),
         queuedSet._tempId,
       );
       return;
@@ -939,7 +1068,9 @@ export default function LogSessionPage() {
   // Also trigger on pendingSets changes (e.g. when a row gets promoted and
   // its queued edit can now fire).
   // eslint-disable-next-line react-hooks/exhaustive-deps -- flushQueuedSync reads refs, doesn't need to be a dep
-  useEffect(() => { flushQueuedSync(); }, [pendingSets, persistSetRowUpdate, drainQueuedEditOp]);
+  useEffect(() => {
+    flushQueuedSync();
+  }, [pendingSets, persistSetRowUpdate, drainQueuedEditOp]);
 
   // --- API calls ---
 
@@ -952,8 +1083,8 @@ export default function LogSessionPage() {
 
       const pendingSet = setRef.tempId
         ? Object.values(pendingSetsRef.current)
-          .flat()
-          .find((s) => s._tempId === setRef.tempId)
+            .flat()
+            .find((s) => s._tempId === setRef.tempId)
         : null;
       const rowIndex = pendingSet?.rowIndex ?? setRef.rowIndex;
       const nextFields = update.nextFields;
@@ -974,7 +1105,11 @@ export default function LogSessionPage() {
         if (!structuralSavingRef.current) {
           void persistSetRowUpdate(
             rowIndex,
-            pendingSet._serverSnapshot ?? buildSheetSnapshotFromFields(getEditableSetFields(pendingSet), pendingSet),
+            pendingSet._serverSnapshot ??
+              buildSheetSnapshotFromFields(
+                getEditableSetFields(pendingSet),
+                pendingSet,
+              ),
             buildSheetSnapshotFromFields(nextFields, pendingSet),
             setRef.tempId ?? null,
           );
@@ -982,7 +1117,10 @@ export default function LogSessionPage() {
         return;
       }
 
-      const beforeSnapshot = buildSheetSnapshotFromFields(update.beforeFields, setRef.set);
+      const beforeSnapshot = buildSheetSnapshotFromFields(
+        update.beforeFields,
+        setRef.set,
+      );
       if (structuralSavingRef.current) {
         addLogEntry({
           type: "sync",
@@ -1006,7 +1144,13 @@ export default function LogSessionPage() {
         getCellValueForField(update.field, nextFields),
       );
     },
-    [sheetInfo?.ssid, updatePendingSet, persistSetCellUpdate, persistSetRowUpdate, addLogEntry],
+    [
+      sheetInfo?.ssid,
+      updatePendingSet,
+      persistSetCellUpdate,
+      persistSetRowUpdate,
+      addLogEntry,
+    ],
   );
 
   // deleteSet: removes a single set row from the sheet.
@@ -1015,7 +1159,9 @@ export default function LogSessionPage() {
   // user manually repeats Date / Lift Type more often than the app would.
   const deleteSet = useCallback(
     async (set) => {
-      if (!sheetInfo?.ssid || !set.rowIndex || structuralSavingRef.current) return;
+      if (!sheetInfo?.ssid || !set.rowIndex) return;
+      if (structuralSavingRef.current) return;
+      markStructuralSaving();
 
       let removedPendingRows = [];
 
@@ -1044,10 +1190,12 @@ export default function LogSessionPage() {
         }
         return changed ? next : prev;
       });
-      markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
-      const beforeSnapshot = buildSheetSnapshotFromFields(getEditableSetFields(set), set);
+      const beforeSnapshot = buildSheetSnapshotFromFields(
+        getEditableSetFields(set),
+        set,
+      );
       recordDevSyncTrace({
         op: "delete-row",
         phase: "request",
@@ -1065,7 +1213,10 @@ export default function LogSessionPage() {
             before: beforeSnapshot,
           }),
         });
-        timings.push({ name: "POST /api/sheet/delete-row", ms: performance.now() - tApi });
+        timings.push({
+          name: "POST /api/sheet/delete-row",
+          ms: performance.now() - tApi,
+        });
         const data = await res.json();
         if (!res.ok) {
           recordDevSyncTrace({
@@ -1080,7 +1231,10 @@ export default function LogSessionPage() {
           if (data?.code === "PRECONDITION_FAILED") {
             console.error("[sheet/delete-row] preflight verification failed", {
               rowIndex: set.rowIndex,
-              before: buildSheetSnapshotFromFields(getEditableSetFields(set), set),
+              before: buildSheetSnapshotFromFields(
+                getEditableSetFields(set),
+                set,
+              ),
               actual: data?.actual ?? null,
               message: data?.error || "Delete failed",
             });
@@ -1106,7 +1260,8 @@ export default function LogSessionPage() {
             }
             toast({
               title: "Delete blocked to protect the sheet",
-              description: "The target row no longer matched what the log expected. Refresh the log and try again.",
+              description:
+                "The target row no longer matched what the log expected. Refresh the log and try again.",
               variant: "destructive",
               duration: 8000,
             });
@@ -1127,6 +1282,7 @@ export default function LogSessionPage() {
         // row-shift guard active until that refresh lands so queued edits/adds
         // do not resume against stale positions.
         await mutate();
+        startDeleteCooldown();
         markStructuralSaved();
       } catch (err) {
         console.error("[sheet/delete-row] deleteSet failed:", err);
@@ -1155,10 +1311,22 @@ export default function LogSessionPage() {
         }
         markStructuralError();
       }
-      logSheetTimings("deleteSet", timings, performance.now() - t0, addLogEntry);
+      logSheetTimings(
+        "deleteSet",
+        timings,
+        performance.now() - t0,
+        addLogEntry,
+      );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, toast, addLogEntry, recordDevSyncTrace, setPendingSetsSync, mutate],
+    [
+      sheetInfo?.ssid,
+      toast,
+      addLogEntry,
+      recordDevSyncTrace,
+      setPendingSetsSync,
+      mutate,
+    ],
   );
 
   // Add a new set to an existing lift block.
@@ -1167,7 +1335,11 @@ export default function LogSessionPage() {
     async (liftType, prevSet) => {
       if (!sheetInfo?.ssid || !parsedData) return;
       if (structuralSavingRef.current) {
-        queueStructuralAction({ kind: "addSet", liftType, prevSet: prevSet ?? null });
+        queueStructuralAction({
+          kind: "addSet",
+          liftType,
+          prevSet: prevSet ?? null,
+        });
         return;
       }
 
@@ -1177,12 +1349,21 @@ export default function LogSessionPage() {
 
       // Compute insertion position BEFORE adding to pending, so we can include
       // confirmed-pending rows (promoted on previous successful adds) in the calculation.
-      const confirmedPendingRows = (pendingSetsRef.current[liftType] ?? [])
-        .filter((s) => !s._pending && s.rowIndex);
-      const parsedRows = parsedData
-        .filter((e) => e.date === sessionDate && e.liftType === liftType && !e.isGoal && e.rowIndex);
-      const predecessorRow = [...parsedRows, ...confirmedPendingRows]
-        .reduce((latest, row) => (!latest || row.rowIndex > latest.rowIndex ? row : latest), null);
+      const confirmedPendingRows = (
+        pendingSetsRef.current[liftType] ?? []
+      ).filter((s) => !s._pending && s.rowIndex);
+      const parsedRows = parsedData.filter(
+        (e) =>
+          e.date === sessionDate &&
+          e.liftType === liftType &&
+          !e.isGoal &&
+          e.rowIndex,
+      );
+      const predecessorRow = [...parsedRows, ...confirmedPendingRows].reduce(
+        (latest, row) =>
+          !latest || row.rowIndex > latest.rowIndex ? row : latest,
+        null,
+      );
       const insertAfterRowIndex = predecessorRow?.rowIndex ?? null;
       const beforeSnapshot = buildSheetSnapshotFromSetLike(predecessorRow);
 
@@ -1225,9 +1406,9 @@ export default function LogSessionPage() {
           },
         ],
       }));
-      markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
+      markStructuralSaving();
       recordDevSyncTrace({
         op: "insert-row",
         phase: "request",
@@ -1249,7 +1430,10 @@ export default function LogSessionPage() {
             before: beforeSnapshot,
           }),
         });
-        timings.push({ name: "POST /api/sheet/insert-row", ms: performance.now() - tApi });
+        timings.push({
+          name: "POST /api/sheet/insert-row",
+          ms: performance.now() - tApi,
+        });
         const data = await res.json();
         if (!res.ok) {
           if (data?.code === "PRECONDITION_FAILED") {
@@ -1292,7 +1476,8 @@ export default function LogSessionPage() {
         // Remove the failed pending row
         setPendingSetsSync((prev) => {
           const next = { ...prev };
-          if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
+          if (next[liftType])
+            next[liftType] = next[liftType].filter((s) => !s._pending);
           if (!next[liftType]?.length) delete next[liftType];
           return next;
         });
@@ -1301,7 +1486,18 @@ export default function LogSessionPage() {
       logSheetTimings("addSet", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, queueStructuralAction, mutate],
+    [
+      sheetInfo?.ssid,
+      parsedData,
+      sessionDate,
+      isMetric,
+      setPendingSetsSync,
+      promoteFirstPending,
+      addLogEntry,
+      recordDevSyncTrace,
+      queueStructuralAction,
+      mutate,
+    ],
   );
 
   // Add a brand-new lift type to the session.
@@ -1334,8 +1530,9 @@ export default function LogSessionPage() {
         sets.some((s) => s.date === sessionDate),
       );
 
-      const sessionRows = parsedData
-        .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex);
+      const sessionRows = parsedData.filter(
+        (e) => e.date === sessionDate && !e.isGoal && e.rowIndex,
+      );
 
       // Also include confirmed-pending row indices for correct insertion position
       const confirmedPendingSessionRows = Object.values(currentPending)
@@ -1347,15 +1544,21 @@ export default function LogSessionPage() {
       const hasExistingSession = allSessionRows.length > 0 || hasPendingForDate;
       const predecessorRow = hasExistingSession
         ? allSessionRows.reduce(
-          (latest, row) => (!latest || row.rowIndex > latest.rowIndex ? row : latest),
-          null,
-        )
+            (latest, row) =>
+              !latest || row.rowIndex > latest.rowIndex ? row : latest,
+            null,
+          )
         : null;
       const topExistingRow = !hasExistingSession
-        ? [...parsedData.filter((e) => e.rowIndex), ...Object.values(currentPending)
-          .flat()
-          .filter((s) => !s._pending && s.rowIndex)]
-          .reduce((top, row) => (!top || row.rowIndex < top.rowIndex ? row : top), null)
+        ? [
+            ...parsedData.filter((e) => e.rowIndex),
+            ...Object.values(currentPending)
+              .flat()
+              .filter((s) => !s._pending && s.rowIndex),
+          ].reduce(
+            (top, row) => (!top || row.rowIndex < top.rowIndex ? row : top),
+            null,
+          )
         : null;
       const insertAfterRowIndex = predecessorRow?.rowIndex ?? null;
       const beforeSnapshot = buildSheetSnapshotFromSetLike(
@@ -1396,9 +1599,9 @@ export default function LogSessionPage() {
           },
         ],
       }));
-      markStructuralSaving();
       const timings = [];
       const t0 = performance.now();
+      markStructuralSaving();
 
       const row = [
         hasExistingSession ? "" : sessionDate,
@@ -1431,7 +1634,10 @@ export default function LogSessionPage() {
             before: beforeSnapshot,
           }),
         });
-        timings.push({ name: "POST /api/sheet/insert-row", ms: performance.now() - tApi });
+        timings.push({
+          name: "POST /api/sheet/insert-row",
+          ms: performance.now() - tApi,
+        });
         const data = await res.json();
         if (!res.ok) {
           if (data?.code === "PRECONDITION_FAILED") {
@@ -1467,7 +1673,8 @@ export default function LogSessionPage() {
         });
         setPendingSetsSync((prev) => {
           const next = { ...prev };
-          if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
+          if (next[liftType])
+            next[liftType] = next[liftType].filter((s) => !s._pending);
           if (!next[liftType]?.length) delete next[liftType];
           return next;
         });
@@ -1476,7 +1683,20 @@ export default function LogSessionPage() {
       logSheetTimings("addLift", timings, performance.now() - t0, addLogEntry);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry, recordDevSyncTrace, sessionLiftsWithPending, addSet, queueStructuralAction, mutate],
+    [
+      sheetInfo?.ssid,
+      parsedData,
+      sessionDate,
+      isMetric,
+      setPendingSetsSync,
+      promoteFirstPending,
+      addLogEntry,
+      recordDevSyncTrace,
+      sessionLiftsWithPending,
+      addSet,
+      queueStructuralAction,
+      mutate,
+    ],
   );
 
   useEffect(() => {
@@ -1488,7 +1708,9 @@ export default function LogSessionPage() {
     if (showSessionBootstrap) return;
 
     const startLift =
-      typeof router.query.startLift === "string" ? router.query.startLift.trim() : "";
+      typeof router.query.startLift === "string"
+        ? router.query.startLift.trim()
+        : "";
     if (!startLift) return;
 
     const requestKey = `${sessionDate}:${startLift}`;
@@ -1501,7 +1723,9 @@ export default function LogSessionPage() {
       query: sessionDate !== todayIso ? { date: sessionDate } : {},
       hash: liftHash,
     };
-    const hasLiftInSession = Boolean(sessionLiftsWithPending[startLift]?.length);
+    const hasLiftInSession = Boolean(
+      sessionLiftsWithPending[startLift]?.length,
+    );
 
     if (hasSession && hasLiftInSession) {
       router.replace(nextUrl, undefined, { shallow: true });
@@ -1571,6 +1795,7 @@ export default function LogSessionPage() {
 
   const deleteSession = useCallback(async () => {
     if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
+    markStructuralSaving();
 
     const sessionRows = parsedData
       .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
@@ -1594,7 +1819,6 @@ export default function LogSessionPage() {
       label: "deleteSession",
       detail: `You deleted the ${sessionDate} session, which spans rows ${minRow}-${endRow} (${endRow - minRow + 1} rows).`,
     });
-    markStructuralSaving();
     const timings = [];
     const t0 = performance.now();
     recordDevSyncTrace({
@@ -1618,7 +1842,10 @@ export default function LogSessionPage() {
           expectedDate: sessionDate,
         }),
       });
-      timings.push({ name: "DELETE /api/sheet/delete", ms: performance.now() - tApi });
+      timings.push({
+        name: "DELETE /api/sheet/delete",
+        ms: performance.now() - tApi,
+      });
       const data = await res.json();
       if (!res.ok) {
         recordDevSyncTrace({
@@ -1651,7 +1878,8 @@ export default function LogSessionPage() {
       addLogEntry({
         type: "sync",
         label: "Full revalidation requested",
-        detail: "Calling mutate() after the session delete so the in-memory log matches the sheet immediately.",
+        detail:
+          "Calling mutate() after the session delete so the in-memory log matches the sheet immediately.",
       });
       await mutate();
       markStructuralSaved();
@@ -1675,16 +1903,30 @@ export default function LogSessionPage() {
       });
       markStructuralError();
     }
-    logSheetTimings("deleteSession", timings, performance.now() - t0, addLogEntry);
+    logSheetTimings(
+      "deleteSession",
+      timings,
+      performance.now() - t0,
+      addLogEntry,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-  }, [sheetInfo?.ssid, parsedData, sessionDate, sessionDates, todayIso, mutate, navigateToDate, addLogEntry]);
+  }, [
+    sheetInfo?.ssid,
+    parsedData,
+    sessionDate,
+    sessionDates,
+    todayIso,
+    mutate,
+    navigateToDate,
+    addLogEntry,
+  ]);
 
   // --- Render ---
 
   if (authStatus === "unauthenticated") {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-        <Dumbbell className="h-12 w-12 text-muted-foreground" />
+        <Dumbbell className="text-muted-foreground h-12 w-12" />
         <h1 className="text-2xl font-bold">Log a Session</h1>
         <p className="text-muted-foreground">
           Sign in with Google to log your lifting sessions.
@@ -1699,11 +1941,11 @@ export default function LogSessionPage() {
   if (authStatus === "authenticated" && !hasLinkedSheet) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-        <Dumbbell className="h-12 w-12 text-muted-foreground" />
+        <Dumbbell className="text-muted-foreground h-12 w-12" />
         <h1 className="text-2xl font-bold">Set up your Google Sheet first</h1>
-        <p className="max-w-md text-muted-foreground">
-          The log works on top of your linked training sheet. Connect or create one
-          first, then you can log sessions here.
+        <p className="text-muted-foreground max-w-md">
+          The log works on top of your linked training sheet. Connect or create
+          one first, then you can log sessions here.
         </p>
         <Button
           onClick={() => {
@@ -1757,7 +1999,7 @@ export default function LogSessionPage() {
 
         <main className="min-w-0">
           <div className="w-full max-w-[56rem]">
-            <div className="sticky top-0 z-[5] flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
+            <div className="border-border/40 bg-background/95 sticky top-0 z-[5] flex items-center gap-2 border-b py-3 backdrop-blur-sm">
               <Button
                 variant="ghost"
                 size="icon"
@@ -1769,11 +2011,11 @@ export default function LogSessionPage() {
               </Button>
 
               <div className="relative flex-1 text-center">
-                <h1 className="text-lg font-semibold leading-tight">
+                <h1 className="text-lg leading-tight font-semibold">
                   {isToday ? "Today" : getReadableDateString(sessionDate, true)}
                 </h1>
                 {isToday ? (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {getReadableDateString(sessionDate, true)}
                   </p>
                 ) : null}
@@ -1785,7 +2027,7 @@ export default function LogSessionPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2"
+                          className="absolute top-1/2 right-0 h-8 w-8 -translate-y-1/2"
                           onClick={() => navigateToDate(todayIso)}
                           aria-label="Back to today"
                         >
@@ -1819,9 +2061,11 @@ export default function LogSessionPage() {
               <div className="mt-6 flex flex-col items-center gap-6">
                 <div className="space-y-1 text-center">
                   <h2 className="text-xl font-semibold">
-                    {isToday ? "Start today's session" : "Start a session for this date"}
+                    {isToday
+                      ? "Start today's session"
+                      : "Start a session for this date"}
                   </h2>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Pick a lift to begin.
                   </p>
                 </div>
@@ -1832,10 +2076,18 @@ export default function LogSessionPage() {
                       key={name}
                       title={`Start with ${name}`}
                       onClick={() => addLift(name)}
-                      className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-4 py-6 shadow-sm transition-colors hover:border-primary hover:bg-muted/40 active:scale-95 md:gap-5 md:py-8"
+                      className="border-border bg-card hover:border-primary hover:bg-muted/40 flex flex-col items-center gap-4 rounded-xl border px-4 py-6 shadow-sm transition-colors active:scale-95 md:gap-5 md:py-8"
                     >
-                      <Image src={icon} alt={name} width={80} height={80} className="h-20 w-20 md:h-28 md:w-28" />
-                      <span className="text-sm font-medium leading-tight">{name}</span>
+                      <Image
+                        src={icon}
+                        alt={name}
+                        width={80}
+                        height={80}
+                        className="h-20 w-20 md:h-28 md:w-28"
+                      />
+                      <span className="text-sm leading-tight font-medium">
+                        {name}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -1853,36 +2105,41 @@ export default function LogSessionPage() {
             {!showSessionBootstrap && hasSession && (
               <div className="space-y-5">
                 <AnimatePresence initial={false}>
-                  {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
-                    <motion.div
-                      key={`${sessionDate}-${liftType}`}
-                      id={getLiftAnchorId(liftType)}
-                      layout
-                      initial={liftCardInitial}
-                      animate={liftCardAnimate}
-                      exit={liftCardExit}
-                      transition={liftCardTransition}
-                      className="overflow-y-hidden scroll-mt-24 md:mx-[-1rem] lg:mx-[-1.5rem]"
-                    >
-                      <LiftBlock
-                        liftType={liftType}
-                        sets={sets}
-                        parsedData={parsedData}
-                        sessionDate={sessionDate}
-                        isMetric={isMetric}
-                        topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-                        topLiftsByTypeAndRepsLast12Months={topLiftsByTypeAndRepsLast12Months}
-                        tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
-                        dashboardStage={dashboardStage}
-                        sessionCount={sessionCount}
-                        isPastSession={!isToday}
-                        isStructuralSaving={isStructuralSaving}
-                        onUpdateSet={updateSet}
-                        onDeleteSet={deleteSet}
-                        onAddSet={(prevSet) => addSet(liftType, prevSet)}
-                      />
-                    </motion.div>
-                  ))}
+                  {Object.entries(sessionLiftsWithPending).map(
+                    ([liftType, sets]) => (
+                      <motion.div
+                        key={`${sessionDate}-${liftType}`}
+                        id={getLiftAnchorId(liftType)}
+                        layout
+                        initial={liftCardInitial}
+                        animate={liftCardAnimate}
+                        exit={liftCardExit}
+                        transition={liftCardTransition}
+                        className="scroll-mt-24 overflow-y-hidden md:mx-[-1rem] lg:mx-[-1.5rem]"
+                      >
+                        <LiftBlock
+                          liftType={liftType}
+                          sets={sets}
+                          parsedData={parsedData}
+                          sessionDate={sessionDate}
+                          isMetric={isMetric}
+                          topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+                          topLiftsByTypeAndRepsLast12Months={
+                            topLiftsByTypeAndRepsLast12Months
+                          }
+                          tonnageStats={perLiftTonnageStats?.[liftType] ?? null}
+                          dashboardStage={dashboardStage}
+                          sessionCount={sessionCount}
+                          isPastSession={!isToday}
+                          isStructuralSaving={isStructuralSaving}
+                          isDeleteCooldownActive={isDeleteCooldownActive}
+                          onUpdateSet={updateSet}
+                          onDeleteSet={deleteSet}
+                          onAddSet={(prevSet) => addSet(liftType, prevSet)}
+                        />
+                      </motion.div>
+                    ),
+                  )}
                 </AnimatePresence>
 
                 <AddLiftButton
@@ -1897,24 +2154,33 @@ export default function LogSessionPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-2 text-muted-foreground hover:text-destructive"
+                      className="text-muted-foreground hover:text-destructive gap-2"
                       onClick={() => setShowDeleteConfirm(true)}
                     >
                       <Trash2 className="h-4 w-4" />
                       Delete this session
                     </Button>
                   ) : (
-                    <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
-                      <p className="text-sm text-muted-foreground">
-                        Delete all rows for {sessionDate}?
+                    <div className="border-destructive/30 bg-destructive/5 flex items-center gap-3 rounded-lg border px-4 py-3">
+                      <p className="text-muted-foreground text-sm">
+                        {isStructuralSaving
+                          ? "Finish the current sheet change, then delete this session."
+                          : `Delete all rows for ${sessionDate}?`}
                       </p>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={deleteSession}
-                        disabled={syncState === "saving"}
+                        disabled={isStructuralSaving}
                       >
-                        Delete
+                        {isStructuralSaving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Waiting...
+                          </>
+                        ) : (
+                          "Delete"
+                        )}
                       </Button>
                       <Button
                         size="sm"
@@ -1930,15 +2196,13 @@ export default function LogSessionPage() {
             )}
 
             {showActivityMonitor && (
-              <div className="mt-8 border-t border-border/40 pt-6">
+              <div className="border-border/40 mt-8 border-t pt-6">
                 <DevActivityMonitorPanel className="max-h-[70vh]" />
               </div>
             )}
 
             <div className="mt-10 hidden lg:block xl:hidden">
-              <div className="max-w-[11rem]">
-                {secondaryQuoteCard}
-              </div>
+              <div className="max-w-[11rem]">{secondaryQuoteCard}</div>
             </div>
           </div>
         </main>
@@ -1980,7 +2244,9 @@ function getJourneyTechniqueAssist({
         prompt: `Need a quick ${liftType} form check?`,
       }
     : null;
-  const mostRecentLiftDate = priorLiftDates.length ? priorLiftDates[priorLiftDates.length - 1] : null;
+  const mostRecentLiftDate = priorLiftDates.length
+    ? priorLiftDates[priorLiftDates.length - 1]
+    : null;
   const isLiftReintroduction =
     !!mostRecentLiftDate &&
     !!sessionDate &&
@@ -1999,9 +2265,16 @@ function getJourneyTechniqueAssist({
   };
 }
 
-function getFirstTimeEmptyButtons({ liftType, barWeight, minIncrement, unitType }) {
+function getFirstTimeEmptyButtons({
+  liftType,
+  barWeight,
+  minIncrement,
+  unitType,
+}) {
   const lightJumpWeight =
-    liftType === "Deadlift" ? barWeight + minIncrement * 2 : barWeight + minIncrement;
+    liftType === "Deadlift"
+      ? barWeight + minIncrement * 2
+      : barWeight + minIncrement;
 
   if (liftType === "Deadlift") {
     return [
@@ -2060,11 +2333,18 @@ function getFirstTimeEmptyButtons({ liftType, barWeight, minIncrement, unitType 
   ];
 }
 
-function getFirstTimeTargetWeight({ standards, liftType, barWeight, minIncrement }) {
+function getFirstTimeTargetWeight({
+  standards,
+  liftType,
+  barWeight,
+  minIncrement,
+}) {
   let physicallyActiveWeight = standards?.[liftType]?.physicallyActive;
 
   if (!physicallyActiveWeight || physicallyActiveWeight <= 0) {
-    const ref = COACHED_LIFTS.find((l) => l.liftType === liftType)?.standardsRef;
+    const ref = COACHED_LIFTS.find(
+      (l) => l.liftType === liftType,
+    )?.standardsRef;
     if (ref) {
       const base = standards?.[ref.liftType]?.physicallyActive;
       if (base > 0) physicallyActiveWeight = base * ref.ratio;
@@ -2089,7 +2369,9 @@ function getFirstTimeProgressionButtons({
   if (!progression?.length) return [];
 
   const loggedSets = realSets.filter((set) => set.weight > 0);
-  const loggedWeights = loggedSets.map((set) => getDisplayWeight(set, isMetric).value);
+  const loggedWeights = loggedSets.map(
+    (set) => getDisplayWeight(set, isMetric).value,
+  );
   let nextWarmupIdx = 0;
 
   if (loggedWeights.length > 0) {
@@ -2210,7 +2492,8 @@ function getInSessionCoachingCopy({
           eyebrow: null,
           title: null,
           body: "Great, that's your top work set.",
-          effortCue: "Deadlift usually wants just one heavy set of 5. Stop here, or go a little heavier if that felt too easy.",
+          effortCue:
+            "Deadlift usually wants just one heavy set of 5. Stop here, or go a little heavier if that felt too easy.",
         };
       }
 
@@ -2219,7 +2502,8 @@ function getInSessionCoachingCopy({
           eyebrow: null,
           title: null,
           body: `You can stop doing ${liftType} now.`,
-          effortCue: "Feel free to go do some curls in the squat rack or hit your local fast food franchise.",
+          effortCue:
+            "Feel free to go do some curls in the squat rack or hit your local fast food franchise.",
         };
       }
 
@@ -2263,7 +2547,8 @@ function getNonBigFourThreeByFiveCoaching(liftType) {
     eyebrow: null,
     title: null,
     body: `${liftType} usually goes well as 3x5.`,
-    effortCue: "If these sets felt solid, you've probably done enough for today.",
+    effortCue:
+      "If these sets felt solid, you've probably done enough for today.",
   };
 }
 
@@ -2312,9 +2597,10 @@ function logSheetTimings(label, timings, totalMs, addLogEntry) {
   }
 
   if (addLogEntry) {
-    const detail = timings.length > 1
-      ? timings.map((t) => `${t.name} ${Math.round(t.ms)}ms`).join(" → ")
-      : "";
+    const detail =
+      timings.length > 1
+        ? timings.map((t) => `${t.name} ${Math.round(t.ms)}ms`).join(" → ")
+        : "";
     addLogEntry({ type: "timing", label, total, detail, color });
   }
 }
@@ -2326,7 +2612,10 @@ function hexToRgba(hexColor, alpha) {
 
   let hex = hexColor.slice(1);
   if (hex.length === 3) {
-    hex = hex.split("").map((char) => char + char).join("");
+    hex = hex
+      .split("")
+      .map((char) => char + char)
+      .join("");
   }
   if (hex.length !== 6) {
     return `rgba(0, 0, 0, ${alpha})`;
@@ -2360,7 +2649,8 @@ function buildSheetSnapshotFromFields(fields, identity = {}) {
     // normalized app label, so aliased rows (for example "OHP") stay editable.
     liftType: identity.rawLiftType ?? identity.liftType ?? "",
     reps: fields.reps != null ? String(fields.reps) : "",
-    weight: fields.weight != null ? `${fields.weight}${fields.unitType ?? ""}` : "",
+    weight:
+      fields.weight != null ? `${fields.weight}${fields.unitType ?? ""}` : "",
     notes: fields.notes ?? "",
     url: fields.url ?? "",
   };
@@ -2373,12 +2663,14 @@ function buildSheetSnapshotFromSetLike(set) {
 }
 
 function snapshotToEditableFields(snapshot) {
-  const weightValue = typeof snapshot?.weight === "string"
-    ? parseFloat(snapshot.weight)
-    : snapshot?.weight;
-  const unitMatch = typeof snapshot?.weight === "string"
-    ? snapshot.weight.match(/[a-zA-Z]+$/)
-    : null;
+  const weightValue =
+    typeof snapshot?.weight === "string"
+      ? parseFloat(snapshot.weight)
+      : snapshot?.weight;
+  const unitMatch =
+    typeof snapshot?.weight === "string"
+      ? snapshot.weight.match(/[a-zA-Z]+$/)
+      : null;
   return {
     reps: snapshot?.reps != null ? Number(snapshot.reps) : "",
     weight: Number.isNaN(weightValue) ? "" : weightValue,
@@ -2390,7 +2682,10 @@ function snapshotToEditableFields(snapshot) {
 
 function getCellValueForField(field, fields) {
   if (field === "reps") return fields.reps != null ? String(fields.reps) : "";
-  if (field === "weight") return fields.weight != null ? `${fields.weight}${fields.unitType ?? ""}` : "";
+  if (field === "weight")
+    return fields.weight != null
+      ? `${fields.weight}${fields.unitType ?? ""}`
+      : "";
   if (field === "notes") return fields.notes ?? "";
   if (field === "url") return fields.url ?? "";
   return "";
@@ -2492,14 +2787,21 @@ function getOptimisticRankingMeta({
   }
 
   const currentSessionSets = sets
-    .map((sessionSet, index) => getEffectiveSetForRanking(
-      sessionSet,
-      optimisticFieldsByKey[getSetIdentityKey(sessionSet, `set-${index}`)],
-    ))
-    .filter((sessionSet) => (sessionSet?.reps ?? 0) > 0 && (sessionSet?.weight ?? 0) > 0);
+    .map((sessionSet, index) =>
+      getEffectiveSetForRanking(
+        sessionSet,
+        optimisticFieldsByKey[getSetIdentityKey(sessionSet, `set-${index}`)],
+      ),
+    )
+    .filter(
+      (sessionSet) =>
+        (sessionSet?.reps ?? 0) > 0 && (sessionSet?.weight ?? 0) > 0,
+    );
 
   const currentSessionRowIndices = new Set(
-    currentSessionSets.map((sessionSet) => sessionSet?.rowIndex).filter(Boolean),
+    currentSessionSets
+      .map((sessionSet) => sessionSet?.rowIndex)
+      .filter(Boolean),
   );
 
   const buildOptimisticLane = (baselineEntries, filterToYear = false) => {
@@ -2512,14 +2814,18 @@ function getOptimisticRankingMeta({
       return true;
     });
 
-    return [...baseline, ...optimisticSessionEntries].sort((a, b) => compareRankingEntries(a, b, isMetric));
+    return [...baseline, ...optimisticSessionEntries].sort((a, b) =>
+      compareRankingEntries(a, b, isMetric),
+    );
   };
 
   const lifetimeLane = buildOptimisticLane(
     topLiftsByTypeAndReps?.[effectiveSet.liftType]?.[effectiveSet.reps - 1],
   );
   const yearlyLane = buildOptimisticLane(
-    topLiftsByTypeAndRepsLast12Months?.[effectiveSet.liftType]?.[effectiveSet.reps - 1],
+    topLiftsByTypeAndRepsLast12Months?.[effectiveSet.liftType]?.[
+      effectiveSet.reps - 1
+    ],
     true,
   );
 
@@ -2535,19 +2841,25 @@ function getOptimisticRankingMeta({
   const lifetimeRank = getRankForLane(lifetimeLane);
   const yearlyRank = getRankForLane(yearlyLane);
 
-  const lifetime = lifetimeRank != null ? {
-    scope: "lifetime",
-    rank: lifetimeRank,
-    emoji: getCelebrationEmoji(lifetimeRank),
-    message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${effectiveSet.reps}RM`,
-  } : null;
+  const lifetime =
+    lifetimeRank != null
+      ? {
+          scope: "lifetime",
+          rank: lifetimeRank,
+          emoji: getCelebrationEmoji(lifetimeRank),
+          message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${effectiveSet.reps}RM`,
+        }
+      : null;
 
-  const yearly = yearlyRank != null ? {
-    scope: "yearly",
-    rank: yearlyRank,
-    emoji: getCelebrationEmoji(yearlyRank),
-    message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${effectiveSet.reps}RM`,
-  } : null;
+  const yearly =
+    yearlyRank != null
+      ? {
+          scope: "yearly",
+          rank: yearlyRank,
+          emoji: getCelebrationEmoji(yearlyRank),
+          message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${effectiveSet.reps}RM`,
+        }
+      : null;
 
   return {
     best: lifetime ?? yearly,
@@ -2602,7 +2914,8 @@ function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
         trainingAgeYears <= 2
           ? CELEBRATION_TIERS.confettiLarge
           : CELEBRATION_TIERS.confettiLargeShake,
-      reason: trainingAgeYears <= 2 ? "Lifetime best without shake" : "Lifetime best",
+      reason:
+        trainingAgeYears <= 2 ? "Lifetime best without shake" : "Lifetime best",
     };
   }
 
@@ -2638,11 +2951,17 @@ function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
         reason: "Lifetime top 5",
       };
     }
-    if ((lifetimeRank != null && lifetimeRank < 10 && isPriorityRep) || yearlyRank === 0) {
+    if (
+      (lifetimeRank != null && lifetimeRank < 10 && isPriorityRep) ||
+      yearlyRank === 0
+    ) {
       return {
         tier: "border",
         score: CELEBRATION_TIERS.border,
-        reason: lifetimeRank != null && lifetimeRank < 10 ? "Priority lifetime top 10" : "12-month best",
+        reason:
+          lifetimeRank != null && lifetimeRank < 10
+            ? "Priority lifetime top 10"
+            : "12-month best",
       };
     }
   }
@@ -2707,40 +3026,49 @@ function fireSetCelebrationConfetti(tier, element) {
 
   const origin = getCelebrationOriginFromElement(element);
 
-  import("canvas-confetti").then(({ default: confetti }) => {
-    if (tier === "confettiLargeShake" || tier === "confettiLarge") {
-      confetti({
-        particleCount: 85,
-        spread: 80,
-        startVelocity: 40,
-        scalar: 1.05,
-        origin,
-      });
-      confetti({
-        particleCount: 50,
-        spread: 120,
-        startVelocity: 30,
-        decay: 0.92,
-        origin,
-      });
-      return;
-    }
+  import("canvas-confetti")
+    .then(({ default: confetti }) => {
+      if (tier === "confettiLargeShake" || tier === "confettiLarge") {
+        confetti({
+          particleCount: 85,
+          spread: 80,
+          startVelocity: 40,
+          scalar: 1.05,
+          origin,
+        });
+        confetti({
+          particleCount: 50,
+          spread: 120,
+          startVelocity: 30,
+          decay: 0.92,
+          origin,
+        });
+        return;
+      }
 
-    if (tier === "confettiSmall") {
-      confetti({
-        particleCount: 28,
-        spread: 42,
-        startVelocity: 22,
-        scalar: 0.9,
-        origin,
-      });
-    }
-  }).catch((error) => {
-    console.error("[log-celebration] confetti failed", error);
-  });
+      if (tier === "confettiSmall") {
+        confetti({
+          particleCount: 28,
+          spread: 42,
+          startVelocity: 22,
+          scalar: 0.9,
+          origin,
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("[log-celebration] confetti failed", error);
+    });
 }
 
-function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months }) {
+function getRankingMeta({
+  liftType,
+  reps,
+  weight,
+  isMetric,
+  topLiftsByTypeAndReps,
+  topLiftsByTypeAndRepsLast12Months,
+}) {
   if (!liftType || !reps || reps < 1 || reps > 10 || !weight) return null;
 
   const lifetimeRank = getTop20Rank(
@@ -2754,28 +3082,169 @@ function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndRep
     isMetric,
   );
 
-  const lifetime = lifetimeRank != null ? {
-    scope: "lifetime",
-    rank: lifetimeRank,
-    emoji: getCelebrationEmoji(lifetimeRank),
-    message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
-  } : null;
+  const lifetime =
+    lifetimeRank != null
+      ? {
+          scope: "lifetime",
+          rank: lifetimeRank,
+          emoji: getCelebrationEmoji(lifetimeRank),
+          message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
+        }
+      : null;
 
-  const yearly = yearlyRank != null ? {
-    scope: "yearly",
-    rank: yearlyRank,
-    emoji: getCelebrationEmoji(yearlyRank),
-    message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
-  } : null;
+  const yearly =
+    yearlyRank != null
+      ? {
+          scope: "yearly",
+          rank: yearlyRank,
+          emoji: getCelebrationEmoji(yearlyRank),
+          message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
+        }
+      : null;
 
   const best = lifetime ?? yearly;
 
   return { best, lifetime, yearly };
 }
 
+// --- Strength bar for log page ---
+
+const LOG_NEXT_TIER = {
+  "Physically Active": { name: "Beginner", key: "beginner" },
+  Beginner: { name: "Intermediate", key: "intermediate" },
+  Intermediate: { name: "Advanced", key: "advanced" },
+  Advanced: { name: "Elite", key: "elite" },
+  Elite: null,
+};
+
+function LogStrengthBar({
+  liftType,
+  e1rmValue,
+  standards,
+  age,
+  sessionDate,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  const standard =
+    sessionDate && age && bodyWeight != null && sex != null
+      ? getStandardForLiftDate(
+          age,
+          sessionDate,
+          bodyWeight,
+          sex,
+          liftType,
+          isMetric ?? false,
+        )
+      : standards?.[liftType];
+
+  if (!standard?.elite || !e1rmValue) return null;
+
+  const rating = getStrengthRatingForE1RM(e1rmValue, standard);
+  if (!rating) return null;
+
+  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+  const { physicallyActive, elite } = standard;
+  const range = elite - physicallyActive;
+  const pct =
+    range > 0
+      ? Math.min(
+          98,
+          Math.max(2, ((e1rmValue - physicallyActive) / range) * 100),
+        )
+      : 50;
+
+  const nextTierInfo = LOG_NEXT_TIER[rating];
+  const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
+  const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmValue) : null;
+  const unit = isMetric ? "kg" : "lb";
+
+  // Tier divider positions
+  const tiers = [standard.beginner, standard.intermediate, standard.advanced]
+    .map((val) => ((val - physicallyActive) / range) * 100)
+    .filter((p) => p > 0 && p < 100);
+
+  return (
+    <TooltipProvider>
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground shrink-0 text-[10px] font-medium">
+          {emoji} {rating}
+        </span>
+        <div className="relative flex-1">
+          <div
+            className="h-2 w-full rounded-full"
+            style={{
+              background:
+                "linear-gradient(to right, #EAB308, #86EFAC, #166534)",
+            }}
+          />
+          {tiers.map((p, i) => (
+            <div
+              key={i}
+              className="absolute top-0 h-2 w-px"
+              style={{
+                left: `${p}%`,
+                backgroundColor: "var(--background)",
+                opacity: 0.7,
+              }}
+            />
+          ))}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="bg-foreground ring-background absolute top-1/2 h-3.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm ring-1 transition-[left] duration-300"
+                style={{ left: `${pct}%` }}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              <p className="font-semibold">{liftType}</p>
+              <p>
+                {emoji} {rating} · E1RM {Math.round(e1rmValue)}
+                {unit}
+              </p>
+              {nextTierInfo && diff > 0 ? (
+                <p className="text-muted-foreground">
+                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
+                  {nextTierInfo.name} — {diff}
+                  {unit} away
+                </p>
+              ) : nextTierInfo && diff <= 0 ? (
+                <p className="text-muted-foreground">
+                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
+                  {nextTierInfo.name} — you&apos;re there!
+                </p>
+              ) : (
+                <p className="text-muted-foreground">Top of the chart!</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+}
+
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, dashboardStage, sessionCount = 0, isPastSession, isStructuralSaving = false, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({
+  liftType,
+  sets,
+  parsedData,
+  sessionDate,
+  isMetric,
+  topLiftsByTypeAndReps,
+  topLiftsByTypeAndRepsLast12Months,
+  tonnageStats,
+  dashboardStage,
+  sessionCount = 0,
+  isPastSession,
+  isStructuralSaving = false,
+  isDeleteCooldownActive = false,
+  onUpdateSet,
+  onDeleteSet,
+  onAddSet,
+}) {
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const { getColor } = useLiftColors();
@@ -2802,18 +3271,20 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   const [optimisticFieldsByKey, setOptimisticFieldsByKey] = useState({});
   const [customDraftSeed, setCustomDraftSeed] = useState(0);
   const [customDraftConfig, setCustomDraftConfig] = useState(null);
-  const [initialPassiveRowKeys] = useState(() =>
-    new Set(
-      sets.map((set, index) => getSetIdentityKey(set, `initial-${index}`)),
-    ),
+  const [initialPassiveRowKeys] = useState(
+    () =>
+      new Set(
+        sets.map((set, index) => getSetIdentityKey(set, `initial-${index}`)),
+      ),
   );
-  const [initialPassiveRowOrder] = useState(() =>
-    new Map(
-      sets.map((set, index) => [
-        getSetIdentityKey(set, `initial-${index}`),
-        index,
-      ]),
-    ),
+  const [initialPassiveRowOrder] = useState(
+    () =>
+      new Map(
+        sets.map((set, index) => [
+          getSetIdentityKey(set, `initial-${index}`),
+          index,
+        ]),
+      ),
   );
   const trainingAgeYears = useMemo(
     () => getTrainingAgeYears(parsedData, sessionDate),
@@ -2871,15 +3342,21 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     });
   }, [isMetric, lastRealSet?.unitType]);
 
-  const handleSuggestedAddSet = useCallback(async (setFields) => {
-    setCustomDraftConfig(null);
-    await onAddSet(setFields);
-  }, [onAddSet]);
+  const handleSuggestedAddSet = useCallback(
+    async (setFields) => {
+      setCustomDraftConfig(null);
+      await onAddSet(setFields);
+    },
+    [onAddSet],
+  );
 
-  const handleCustomDraftCommit = useCallback(async (setFields) => {
-    setCustomDraftConfig(null);
-    await onAddSet(setFields);
-  }, [onAddSet]);
+  const handleCustomDraftCommit = useCallback(
+    async (setFields) => {
+      setCustomDraftConfig(null);
+      await onAddSet(setFields);
+    },
+    [onAddSet],
+  );
 
   // Read warmup settings from localStorage (shared with warmup calculator page)
   const storedBarType =
@@ -2895,12 +3372,15 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     if (!parsedData) return null;
 
     const unitType = isMetric ? "kg" : "lb";
-    const barWeight = storedBarType === "womens" ? (isMetric ? 15 : 35) : (isMetric ? 20 : 45);
+    const barWeight =
+      storedBarType === "womens" ? (isMetric ? 15 : 35) : isMetric ? 20 : 45;
     const minIncrement = isMetric ? 2.5 : 5;
     const priorLiftDates = Array.from(
       new Set(
         parsedData
-          .filter((e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal)
+          .filter(
+            (e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal,
+          )
           .map((e) => e.date)
           .filter(Boolean),
       ),
@@ -2987,17 +3467,22 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       const lastLoggedReps = lastRealSet?.reps ?? 5;
       const nextWeight = lastLoggedWeight + minIncrement;
       const secondJumpWeight = lastLoggedWeight + minIncrement * 2;
-      const isBarOnlyIntro = lastLoggedWeight <= barWeight && lastLoggedReps >= 8;
+      const isBarOnlyIntro =
+        lastLoggedWeight <= barWeight && lastLoggedReps >= 8;
       const hasReachedFirstTimeTarget = firstTimeTargetWeight
         ? realSets.some((set) => {
             if ((set.reps ?? 0) < 5 || (set.weight ?? 0) <= 0) return false;
-            return getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight;
+            return (
+              getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight
+            );
           })
         : false;
       const firstTimeWorkSetCount = firstTimeTargetWeight
         ? realSets.filter((set) => {
             if ((set.reps ?? 0) < 5 || (set.weight ?? 0) <= 0) return false;
-            return getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight;
+            return (
+              getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight
+            );
           }).length
         : 0;
 
@@ -3008,7 +3493,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           : [
               {
                 label: `${isBarOnlyIntro ? 5 : lastLoggedReps}@${nextWeight}${unitType}`,
-                sublabel: isBarOnlyIntro ? "first loaded set" : `+${minIncrement}${unitType}`,
+                sublabel: isBarOnlyIntro
+                  ? "first loaded set"
+                  : `+${minIncrement}${unitType}`,
                 reps: isBarOnlyIntro ? 5 : lastLoggedReps,
                 weight: nextWeight,
                 unitType,
@@ -3075,7 +3562,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     );
 
     // Determine where the lifter is based on already-logged sets
-    const loggedWeights = realSets.filter((s) => s.weight > 0)
+    const loggedWeights = realSets
+      .filter((s) => s.weight > 0)
       .map((s) => {
         const { value } = getDisplayWeight(s, isMetric);
         return value;
@@ -3094,10 +3582,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
     const atOrPastTop = nextWarmupIdx >= progression.length;
     const maxLogged = loggedWeights.length > 0 ? Math.max(...loggedWeights) : 0;
     const lastLoggedSets = realSets.filter((s) => s.weight > 0);
-    const lastLoggedWeight = lastLoggedSets.length > 0
-      ? getDisplayWeight(lastLoggedSets[lastLoggedSets.length - 1], isMetric).value
-      : 0;
-    const lastLoggedReps = lastLoggedSets[lastLoggedSets.length - 1]?.reps ?? topReps;
+    const lastLoggedWeight =
+      lastLoggedSets.length > 0
+        ? getDisplayWeight(lastLoggedSets[lastLoggedSets.length - 1], isMetric)
+            .value
+        : 0;
+    const lastLoggedReps =
+      lastLoggedSets[lastLoggedSets.length - 1]?.reps ?? topReps;
     const nextSet = !atOrPastTop ? progression[nextWarmupIdx] : null;
     const nearMissTopGapRatio =
       nextSet?.isTopSet && nextSet.weight > 0 && lastLoggedWeight > 0
@@ -3131,7 +3622,10 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
     if (!effectiveAtOrPastTop) {
       // Warmup phase: suggest next warmup set
-      const rankingMeta = getSuggestionRankingMeta(nextSet.reps, nextSet.weight);
+      const rankingMeta = getSuggestionRankingMeta(
+        nextSet.reps,
+        nextSet.weight,
+      );
       buttons.push({
         label: `${nextSet.reps}@${nextSet.weight}${unitType}`,
         sublabel: nextSet.isTopSet ? "top set" : "warmup",
@@ -3146,7 +3640,10 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       // Also offer skipping ahead to the top set if not already the next suggestion
       if (!nextSet.isTopSet) {
         const topProgSet = progression[progression.length - 1];
-        const topRankingMeta = getSuggestionRankingMeta(topProgSet.reps, topProgSet.weight);
+        const topRankingMeta = getSuggestionRankingMeta(
+          topProgSet.reps,
+          topProgSet.weight,
+        );
         buttons.push({
           label: `${topProgSet.reps}@${topProgSet.weight}${unitType}`,
           sublabel: "top set",
@@ -3160,7 +3657,10 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       }
     } else if (inDropSetMode) {
       // Drop set mode: weight is descending — only offer repeat at current drop weight
-      const dropRankingMeta = getSuggestionRankingMeta(lastLoggedReps, lastLoggedWeight);
+      const dropRankingMeta = getSuggestionRankingMeta(
+        lastLoggedReps,
+        lastLoggedWeight,
+      );
       buttons.push({
         label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
         sublabel: "drop set",
@@ -3173,7 +3673,10 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       });
     } else {
       // Working phase: suggest repeat, increment, and drop set
-      const repeatRankingMeta = getSuggestionRankingMeta(lastLoggedReps, lastLoggedWeight);
+      const repeatRankingMeta = getSuggestionRankingMeta(
+        lastLoggedReps,
+        lastLoggedWeight,
+      );
       buttons.push({
         label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
         sublabel: "repeat",
@@ -3185,7 +3688,10 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         variant: "secondary",
       });
       const incrWeight = lastLoggedWeight + minIncrement;
-      const incrRankingMeta = getSuggestionRankingMeta(lastLoggedReps, incrWeight);
+      const incrRankingMeta = getSuggestionRankingMeta(
+        lastLoggedReps,
+        incrWeight,
+      );
       buttons.push({
         label: `${lastLoggedReps}@${incrWeight}${unitType}`,
         sublabel: `+${minIncrement}`,
@@ -3197,9 +3703,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         variant: "outline",
       });
       // Drop set: ~80% of current weight, rounded to nearest increment
-      const dropWeight = Math.round((lastLoggedWeight * 0.8) / minIncrement) * minIncrement;
+      const dropWeight =
+        Math.round((lastLoggedWeight * 0.8) / minIncrement) * minIncrement;
       if (dropWeight >= barWeight && dropWeight < lastLoggedWeight) {
-        const dropRankingMeta = getSuggestionRankingMeta(lastLoggedReps, dropWeight);
+        const dropRankingMeta = getSuggestionRankingMeta(
+          lastLoggedReps,
+          dropWeight,
+        );
         buttons.push({
           label: `${lastLoggedReps}@${dropWeight}${unitType}`,
           sublabel: "drop set",
@@ -3219,12 +3729,25 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       inSessionCoaching: inSessionFallbackCoaching,
       journeyTechniqueAssist,
     };
-  }, [parsedData, isMetric, storedBarType, storedPlatePreference, liftType, sessionDate, realSets, lastRealSet, dashboardStage, standards, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months]);
+  }, [
+    parsedData,
+    isMetric,
+    storedBarType,
+    storedPlatePreference,
+    liftType,
+    sessionDate,
+    realSets,
+    lastRealSet,
+    dashboardStage,
+    standards,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  ]);
 
   // Find the set index with the heaviest e1RM for the strength badge
   const canShowStrength = authStatus === "authenticated" && hasBioData;
-  const bestE1rmIndex = useMemo(() => {
-    if (!canShowStrength) return -1;
+  const { bestE1rmIndex, bestE1rmValue } = useMemo(() => {
+    if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;
     let bestVal = 0;
     sets.forEach((s, i) => {
@@ -3232,10 +3755,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       const weight = s.weight ?? 0;
       if (reps > 0 && weight > 0) {
         const e1rm = estimateE1RM(reps, weight, e1rmFormula);
-        if (e1rm > bestVal) { bestVal = e1rm; bestIdx = i; }
+        if (e1rm > bestVal) {
+          bestVal = e1rm;
+          bestIdx = i;
+        }
       }
     });
-    return bestIdx;
+    return { bestE1rmIndex: bestIdx, bestE1rmValue: bestVal };
   }, [sets, canShowStrength, e1rmFormula]);
 
   const prMeta = useMemo(() => {
@@ -3257,7 +3783,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           status: null,
           message: null,
           scope: null,
-          celebration: { tier: "none", score: CELEBRATION_TIERS.none, reason: null },
+          celebration: {
+            tier: "none",
+            score: CELEBRATION_TIERS.none,
+            reason: null,
+          },
           celebrationKey: null,
         };
       }
@@ -3271,7 +3801,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       const celebrationKey =
         celebration.tier !== "none"
           ? [
-              s.rowIndex ?? s._tempId ?? `${liftType}-${effectiveSet.reps}-${effectiveSet.weight}`,
+              s.rowIndex ??
+                s._tempId ??
+                `${liftType}-${effectiveSet.reps}-${effectiveSet.weight}`,
               celebration.tier,
               active?.scope ?? "lifetime",
               active?.rank ?? "na",
@@ -3305,12 +3837,21 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         celebrationKey,
       };
     });
-  }, [sets, liftType, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, trainingAgeYears, optimisticFieldsByKey]);
+  }, [
+    sets,
+    liftType,
+    isMetric,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    trainingAgeYears,
+    optimisticFieldsByKey,
+  ]);
 
   useEffect(() => {
     return () => {
       if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
-      if (activeCelebrationTimerRef.current) clearTimeout(activeCelebrationTimerRef.current);
+      if (activeCelebrationTimerRef.current)
+        clearTimeout(activeCelebrationTimerRef.current);
     };
   }, []);
 
@@ -3352,7 +3893,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
     const winner = newlyQualified[0];
     setActiveCelebrationKey(winner.rowKey);
-    if (activeCelebrationTimerRef.current) clearTimeout(activeCelebrationTimerRef.current);
+    if (activeCelebrationTimerRef.current)
+      clearTimeout(activeCelebrationTimerRef.current);
     activeCelebrationTimerRef.current = setTimeout(() => {
       setActiveCelebrationKey(null);
     }, 2200);
@@ -3387,7 +3929,15 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       strengthRating === "Advanced" ||
       strengthRating === "Elite"
     );
-  }, [tonnageStats, sessionCount, hasBioData, topLiftsByTypeAndReps, liftType, standards, e1rmFormula]);
+  }, [
+    tonnageStats,
+    sessionCount,
+    hasBioData,
+    topLiftsByTypeAndReps,
+    liftType,
+    standards,
+    e1rmFormula,
+  ]);
 
   const desktopIconInsetClass = "md:pl-28 lg:pl-32";
   const desktopIconOffsetClass = "md:ml-28 lg:ml-32";
@@ -3395,10 +3945,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
   return (
     <div
       ref={liftBlockRef}
-      className="relative overflow-hidden rounded-xl border bg-card shadow-md"
+      className="bg-card relative overflow-hidden rounded-xl border shadow-md"
       style={{
         backgroundImage: `linear-gradient(135deg, ${hexToRgba(liftColor, 0.12)} 0%, ${hexToRgba(liftColor, 0.06)} 18%, rgba(255, 255, 255, 0) 42%)`,
-        animation: isCelebrationShaking ? "log-pr-shake 0.6s ease-in-out" : undefined,
+        animation: isCelebrationShaking
+          ? "log-pr-shake 0.6s ease-in-out"
+          : undefined,
       }}
     >
       <div
@@ -3407,9 +3959,15 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       />
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
-        <div className="absolute left-4 top-4 hidden md:block">
+        <div className="absolute top-4 left-4 hidden md:block">
           <Link href={`/${bigFourEntry.slug}`}>
-            <Image src={bigFourEntry.icon} alt="" width={104} height={104} className="opacity-80 transition-opacity hover:opacity-100" />
+            <Image
+              src={bigFourEntry.icon}
+              alt=""
+              width={104}
+              height={104}
+              className="opacity-80 transition-opacity hover:opacity-100"
+            />
           </Link>
         </div>
       )}
@@ -3417,7 +3975,10 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       {/* Header: icon + lift name + last session */}
       <div className={`flex gap-3 px-4 pt-4 ${desktopIconInsetClass}`}>
         {bigFourEntry && (
-          <Link href={`/${bigFourEntry.slug}`} className="shrink-0 self-start md:hidden">
+          <Link
+            href={`/${bigFourEntry.slug}`}
+            className="shrink-0 self-start md:hidden"
+          >
             <Image src={bigFourEntry.icon} alt="" width={52} height={52} />
           </Link>
         )}
@@ -3429,7 +3990,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
                 style={{ backgroundColor: liftColor }}
               />
               <span
-                className="text-[10px] font-semibold uppercase tracking-[0.22em]"
+                className="text-[10px] font-semibold tracking-[0.22em] uppercase"
                 style={{ color: hexToRgba(liftColor, 0.9) }}
               >
                 {liftType}
@@ -3438,13 +3999,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             {bigFourEntry ? (
               <Link
                 href={`/${bigFourEntry.slug}`}
-                className="text-base font-semibold text-foreground hover:underline"
+                className="text-foreground text-base font-semibold hover:underline"
                 style={{ textDecorationColor: liftColor }}
               >
                 {liftType}
               </Link>
             ) : (
-              <h2 className="text-base font-semibold text-foreground">
+              <h2 className="text-foreground text-base font-semibold">
                 {liftType}
               </h2>
             )}
@@ -3464,12 +4025,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       />
 
       {/* Set rows — border-t inset on desktop to clear the icon gutter */}
-      <div className={`mx-4 mt-1 divide-y divide-border/40 border-t border-border/40 ${desktopIconOffsetClass}`}>
+      <div
+        className={`divide-border/40 border-border/40 mx-4 mt-1 divide-y border-t ${desktopIconOffsetClass}`}
+      >
         {sets.map((set, idx) => {
           const rowIdentityKey = getSetIdentityKey(set, `pending-${idx}`);
           const shouldPassiveAnimate =
-            !prefersReducedMotion &&
-            initialPassiveRowKeys.has(rowIdentityKey);
+            !prefersReducedMotion && initialPassiveRowKeys.has(rowIdentityKey);
           const passiveDelay = shouldPassiveAnimate
             ? Math.min(
                 (initialPassiveRowOrder.get(rowIdentityKey) ?? idx) * 0.06,
@@ -3478,43 +4040,53 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             : 0;
 
           return (
-          <SetRow
-            key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
-            set={set}
-            isMetric={isMetric}
-            prMeta={prMeta[idx]}
-            celebration={prMeta[idx]?.celebration ?? null}
-            isActiveCelebration={
-              activeCelebrationKey ===
-              (set.rowIndex ?? set._tempId ?? `pending-${idx}`)
-            }
-            shouldPassiveAnimate={shouldPassiveAnimate}
-            passiveDelay={passiveDelay}
-            onOptimisticFieldsChange={handleOptimisticFieldsChange}
-            onUpdate={(update) => onUpdateSet({
-              rowIndex: set.rowIndex,
-              tempId: set._tempId ?? null,
-              set,
-            }, update)}
-            onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
-            strengthBadge={idx === bestE1rmIndex ? (
-              <LiftStrengthLevel
-                liftType={liftType}
-                workouts={sets}
-                standards={standards}
-                e1rmFormula={e1rmFormula}
-                sessionDate={sessionDate}
-                age={age}
-                bodyWeight={bodyWeight}
-                sex={sex}
-                isMetric={isMetric}
-                bestSetReps={set.reps}
-                bestSetWeight={set.weight}
-                asBadge
-                badgeClassName="h-8 rounded-full px-3 text-xs font-semibold"
-              />
-            ) : null}
-          />
+            <SetRow
+              key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
+              set={set}
+              isMetric={isMetric}
+              prMeta={prMeta[idx]}
+              celebration={prMeta[idx]?.celebration ?? null}
+              isActiveCelebration={
+                activeCelebrationKey ===
+                (set.rowIndex ?? set._tempId ?? `pending-${idx}`)
+              }
+              shouldPassiveAnimate={shouldPassiveAnimate}
+              passiveDelay={passiveDelay}
+              onOptimisticFieldsChange={handleOptimisticFieldsChange}
+              onUpdate={(update) =>
+                onUpdateSet(
+                  {
+                    rowIndex: set.rowIndex,
+                    tempId: set._tempId ?? null,
+                    set,
+                  },
+                  update,
+                )
+              }
+              onDelete={
+                set._pending || !set.rowIndex ? null : () => onDeleteSet(set)
+              }
+              isDeleteDisabled={isStructuralSaving || isDeleteCooldownActive}
+              strengthBadge={
+                idx === bestE1rmIndex ? (
+                  <LiftStrengthLevel
+                    liftType={liftType}
+                    workouts={sets}
+                    standards={standards}
+                    e1rmFormula={e1rmFormula}
+                    sessionDate={sessionDate}
+                    age={age}
+                    bodyWeight={bodyWeight}
+                    sex={sex}
+                    isMetric={isMetric}
+                    bestSetReps={set.reps}
+                    bestSetWeight={set.weight}
+                    asBadge
+                    badgeClassName="h-8 rounded-full px-3 text-xs font-semibold"
+                  />
+                ) : null
+              }
+            />
           );
         })}
         {customDraftConfig && (
@@ -3528,6 +4100,20 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           />
         )}
       </div>
+      {canShowStrength && bestE1rmValue > 0 && (
+        <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
+          <LogStrengthBar
+            liftType={liftType}
+            e1rmValue={bestE1rmValue}
+            standards={standards}
+            age={age}
+            sessionDate={sessionDate}
+            bodyWeight={bodyWeight}
+            sex={sex}
+            isMetric={isMetric}
+          />
+        </div>
+      )}
       {shouldShowTonnage && (
         <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
           <LiftTonnageRow
@@ -3556,13 +4142,17 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
 function UnitLabel({ unitType, mismatch }) {
   if (!mismatch) {
-    return <span className="ml-0.5 text-sm font-medium text-muted-foreground">{unitType}</span>;
+    return (
+      <span className="text-muted-foreground ml-0.5 text-sm font-medium">
+        {unitType}
+      </span>
+    );
   }
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="ml-0.5 inline-flex items-center gap-0.5 text-sm font-medium text-muted-foreground">
+          <span className="text-muted-foreground ml-0.5 inline-flex items-center gap-0.5 text-sm font-medium">
             {unitType}
             <Info className="h-3 w-3" />
           </span>
@@ -3577,7 +4167,8 @@ function UnitLabel({ unitType, mismatch }) {
 
 function getLogPRBadgeHref(liftType) {
   if (!liftType) return null;
-  if (BIG_FOUR_INSIGHT_URLS[liftType]) return `${BIG_FOUR_INSIGHT_URLS[liftType]}#lift-prs`;
+  if (BIG_FOUR_INSIGHT_URLS[liftType])
+    return `${BIG_FOUR_INSIGHT_URLS[liftType]}#lift-prs`;
   return `/lift-explorer?liftType=${encodeURIComponent(liftType)}#lift-prs`;
 }
 
@@ -3598,23 +4189,35 @@ function CelebrationReveal({ animationKey, className, children }) {
   return (
     <motion.div
       key={animationKey}
-      initial={prefersReducedMotion ? false : {
-        opacity: 0,
-        y: 8,
-        scale: 0.88,
-        filter: "brightness(0.9)",
-      }}
-      animate={prefersReducedMotion ? undefined : {
-        opacity: [0, 1, 1],
-        y: [8, -2, 0],
-        scale: [0.88, 1.12, 1],
-        filter: ["brightness(0.9)", "brightness(1.34)", "brightness(1)"],
-      }}
-      transition={prefersReducedMotion ? undefined : {
-        duration: 0.62,
-        delay: 0.12,
-        ease: [0.2, 0.9, 0.25, 1],
-      }}
+      initial={
+        prefersReducedMotion
+          ? false
+          : {
+              opacity: 0,
+              y: 8,
+              scale: 0.88,
+              filter: "brightness(0.9)",
+            }
+      }
+      animate={
+        prefersReducedMotion
+          ? undefined
+          : {
+              opacity: [0, 1, 1],
+              y: [8, -2, 0],
+              scale: [0.88, 1.12, 1],
+              filter: ["brightness(0.9)", "brightness(1.34)", "brightness(1)"],
+            }
+      }
+      transition={
+        prefersReducedMotion
+          ? undefined
+          : {
+              duration: 0.62,
+              delay: 0.12,
+              ease: [0.2, 0.9, 0.25, 1],
+            }
+      }
       className={className}
     >
       {children}
@@ -3685,14 +4288,14 @@ function CustomSetDraftRow({
   }, [canSubmit, draftNotes, onCommit, parsedReps, parsedWeight, unitType]);
 
   return (
-    <div className="rounded-lg border border-dashed border-primary/35 bg-primary/5 px-2 py-3">
+    <div className="border-primary/35 bg-primary/5 rounded-lg border border-dashed px-2 py-3">
       <div className="flex items-start gap-4">
         <div className="flex items-center">
           <input
             ref={repsInputRef}
             type="number"
             inputMode="numeric"
-            className="w-10 rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+            className="border-primary w-10 rounded border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
             value={draftReps}
             disabled={disabled}
             placeholder="5"
@@ -3707,13 +4310,13 @@ function CustomSetDraftRow({
               }
             }}
           />
-          <span className="mx-0.5 text-base text-muted-foreground">@</span>
+          <span className="text-muted-foreground mx-0.5 text-base">@</span>
           <input
             ref={weightInputRef}
             type="number"
             inputMode="decimal"
             step="any"
-            className="w-20 rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+            className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
             value={draftWeight}
             disabled={disabled}
             placeholder={unitType === "kg" ? "20" : "45"}
@@ -3735,7 +4338,7 @@ function CustomSetDraftRow({
           <input
             ref={notesInputRef}
             type="text"
-            className="w-full border-b border-input bg-transparent py-0.5 text-xs italic text-muted-foreground focus:border-primary focus:outline-none"
+            className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs italic focus:outline-none"
             value={draftNotes}
             disabled={disabled}
             placeholder="notes..."
@@ -3757,7 +4360,7 @@ function CustomSetDraftRow({
           <button
             type="button"
             disabled={disabled}
-            className="rounded p-1 text-muted-foreground/45 transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            className="text-muted-foreground/45 hover:text-foreground rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onCancel}
             aria-label="Cancel custom set"
           >
@@ -3766,7 +4369,7 @@ function CustomSetDraftRow({
           <button
             type="button"
             disabled={!canSubmit}
-            className="rounded p-1 text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground/35"
+            className="text-primary hover:text-primary/80 disabled:text-muted-foreground/35 rounded p-1 transition-colors disabled:cursor-not-allowed"
             onClick={commitDraft}
             aria-label="Add custom set"
           >
@@ -3779,7 +4382,7 @@ function CustomSetDraftRow({
         <button
           type="button"
           disabled={disabled}
-          className="rounded p-1 text-muted-foreground/45 transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          className="text-muted-foreground/45 hover:text-foreground rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onCancel}
           aria-label="Cancel custom set"
         >
@@ -3788,7 +4391,7 @@ function CustomSetDraftRow({
         <button
           type="button"
           disabled={!canSubmit}
-          className="rounded p-1 text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground/35"
+          className="text-primary hover:text-primary/80 disabled:text-muted-foreground/35 rounded p-1 transition-colors disabled:cursor-not-allowed"
           onClick={commitDraft}
           aria-label="Add custom set"
         >
@@ -3813,6 +4416,7 @@ function SetRow({
   onOptimisticFieldsChange,
   onUpdate,
   onDelete,
+  isDeleteDisabled = false,
   strengthBadge,
 }) {
   const isLocked = Boolean(set._pending);
@@ -3858,20 +4462,29 @@ function SetRow({
     [onUpdate],
   );
   // Flush any pending debounced update on unmount
-  useEffect(() => () => {
-    if (updateTimerRef.current) {
-      clearTimeout(updateTimerRef.current);
-      updateTimerRef.current = null;
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current);
+        updateTimerRef.current = null;
+      }
+    },
+    [],
+  );
 
   // Keep drafts in sync if SWR refreshes parsedData
   // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
-  useEffect(() => { setDraftReps(String(set.reps ?? "")); }, [set.reps]);
+  useEffect(() => {
+    setDraftReps(String(set.reps ?? ""));
+  }, [set.reps]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
-  useEffect(() => { setDraftWeight(String(set.weight ?? "")); }, [set.weight]);
+  useEffect(() => {
+    setDraftWeight(String(set.weight ?? ""));
+  }, [set.weight]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
-  useEffect(() => { setDraftNotes(set.notes ?? ""); }, [set.notes]);
+  useEffect(() => {
+    setDraftNotes(set.notes ?? "");
+  }, [set.notes]);
 
   // Clear pending once parsedData reflects the committed value
   useEffect(() => {
@@ -3900,7 +4513,16 @@ function SetRow({
       notes: pendingNotes ?? set.notes ?? "",
       url: set.URL ?? "",
     };
-  }, [set.reps, set.weight, set.unitType, set.notes, set.URL, pendingReps, pendingWeight, pendingNotes]);
+  }, [
+    set.reps,
+    set.weight,
+    set.unitType,
+    set.notes,
+    set.URL,
+    pendingReps,
+    pendingWeight,
+    pendingNotes,
+  ]);
 
   const displayReps = pendingReps !== null ? pendingReps : set.reps;
   const displayWeight = pendingWeight !== null ? pendingWeight : set.weight;
@@ -3930,7 +4552,16 @@ function SetRow({
       notes: pendingNotes ?? set.notes ?? "",
       url: set.URL ?? "",
     };
-  }, [pendingReps, pendingWeight, pendingNotes, set.reps, set.weight, set.unitType, set.notes, set.URL]);
+  }, [
+    pendingReps,
+    pendingWeight,
+    pendingNotes,
+    set.reps,
+    set.weight,
+    set.unitType,
+    set.notes,
+    set.URL,
+  ]);
 
   useEffect(() => {
     if (!onOptimisticFieldsChange) return undefined;
@@ -4027,7 +4658,7 @@ function SetRow({
             {editingReps ? (
               <input
                 type="number"
-                className="w-10 rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+                className="border-primary w-10 rounded border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
                 value={draftReps}
                 disabled={isLocked}
                 onChange={(e) => setDraftReps(e.target.value)}
@@ -4035,27 +4666,25 @@ function SetRow({
                 onKeyDown={(e) => e.key === "Enter" && commitReps()}
                 autoFocus
               />
+            ) : isLocked ? (
+              <div className="text-foreground/80 w-full py-0.5 text-right text-xl font-semibold tabular-nums">
+                {displayReps}
+              </div>
             ) : (
-              isLocked ? (
-                <div className="w-full py-0.5 text-right text-xl font-semibold tabular-nums text-foreground/80">
-                  {displayReps}
-                </div>
-              ) : (
-                <button
-                  className="w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums hover:bg-muted/60"
-                  onClick={() => setEditingReps(true)}
-                >
-                  {displayReps}
-                </button>
-              )
+              <button
+                className="hover:bg-muted/60 w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums"
+                onClick={() => setEditingReps(true)}
+              >
+                {displayReps}
+              </button>
             )}
           </div>
-          <span className="mx-0.5 text-base text-muted-foreground">@</span>
+          <span className="text-muted-foreground mx-0.5 text-base">@</span>
           {editingWeight ? (
             <input
               type="number"
               step="any"
-              className="w-20 rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+              className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
               value={draftWeight}
               disabled={isLocked}
               onChange={(e) => setDraftWeight(e.target.value)}
@@ -4063,19 +4692,17 @@ function SetRow({
               onKeyDown={(e) => e.key === "Enter" && commitWeight()}
               autoFocus
             />
+          ) : isLocked ? (
+            <div className="text-foreground/80 py-0.5 text-left text-xl font-semibold tabular-nums">
+              {displayWeight}
+            </div>
           ) : (
-            isLocked ? (
-              <div className="py-0.5 text-left text-xl font-semibold tabular-nums text-foreground/80">
-                {displayWeight}
-              </div>
-            ) : (
-              <button
-                className="rounded py-0.5 text-left text-xl font-semibold tabular-nums hover:bg-muted/60"
-                onClick={() => setEditingWeight(true)}
-              >
-                {displayWeight}
-              </button>
-            )
+            <button
+              className="hover:bg-muted/60 rounded py-0.5 text-left text-xl font-semibold tabular-nums"
+              onClick={() => setEditingWeight(true)}
+            >
+              {displayWeight}
+            </button>
           )}
           <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
         </div>
@@ -4085,7 +4712,7 @@ function SetRow({
           {editingNotes ? (
             <input
               type="text"
-              className="w-full border-b border-input bg-transparent py-0.5 text-xs text-muted-foreground focus:border-primary focus:outline-none"
+              className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs focus:outline-none"
               value={draftNotes}
               disabled={isLocked}
               onChange={(e) => setDraftNotes(e.target.value)}
@@ -4097,12 +4724,12 @@ function SetRow({
           ) : (
             <div className="space-y-1">
               {isLocked ? (
-                <div className="w-full truncate text-left text-xs italic text-muted-foreground/50">
+                <div className="text-muted-foreground/50 w-full truncate text-left text-xs italic">
                   {displayNotes || "notes..."}
                 </div>
               ) : (
                 <button
-                  className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
+                  className="text-muted-foreground/50 hover:text-muted-foreground w-full truncate text-left text-xs italic"
                   onClick={() => setEditingNotes(true)}
                 >
                   {displayNotes || "notes..."}
@@ -4114,7 +4741,7 @@ function SetRow({
 
         <div className="hidden w-[17rem] shrink-0 items-center justify-end gap-2 md:flex">
           {set._pending ? (
-            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
+            <Loader2 className="text-muted-foreground/50 h-3 w-3 animate-spin" />
           ) : (
             <>
               <div className="ml-auto flex items-center gap-2">
@@ -4140,7 +4767,11 @@ function SetRow({
                           >
                             <Badge
                               variant="outline"
-                              className={cn(metaBadgeClassName, "max-w-[10.5rem]", prToneClass)}
+                              className={cn(
+                                metaBadgeClassName,
+                                "max-w-[10.5rem]",
+                                prToneClass,
+                              )}
                             >
                               <span className="truncate">{rankingSummary}</span>
                             </Badge>
@@ -4159,8 +4790,9 @@ function SetRow({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+                        className="text-muted-foreground/30 hover:text-destructive disabled:text-muted-foreground/20 disabled:hover:text-muted-foreground/20 rounded p-1 transition-colors disabled:cursor-not-allowed md:opacity-0 md:group-hover:opacity-100 disabled:md:opacity-35"
                         onClick={onDelete}
+                        disabled={isDeleteDisabled}
                         aria-label="Delete set"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -4181,7 +4813,7 @@ function SetRow({
       {(hasBadges || rankingSummary || onDelete || set._pending) && (
         <div className="mt-1 flex items-center gap-2 pl-7 md:hidden">
           {set._pending ? (
-            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
+            <Loader2 className="text-muted-foreground/50 h-3 w-3 animate-spin" />
           ) : (
             <>
               {strengthBadge && (
@@ -4206,7 +4838,11 @@ function SetRow({
                         >
                           <Badge
                             variant="outline"
-                            className={cn(metaBadgeClassName, "max-w-[11rem]", prToneClass)}
+                            className={cn(
+                              metaBadgeClassName,
+                              "max-w-[11rem]",
+                              prToneClass,
+                            )}
                           >
                             <span className="truncate">{rankingSummary}</span>
                           </Badge>
@@ -4225,8 +4861,9 @@ function SetRow({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive"
+                        className="text-muted-foreground/30 hover:text-destructive disabled:text-muted-foreground/20 disabled:hover:text-muted-foreground/20 rounded p-1 transition-colors disabled:cursor-not-allowed"
                         onClick={onDelete}
+                        disabled={isDeleteDisabled}
                         aria-label="Delete set"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -4247,4 +4884,5 @@ function SetRow({
 }
 
 LogSessionPage.pageTitle = "Log";
-LogSessionPage.pageDescription = "Log your lifting session and track your progress.";
+LogSessionPage.pageDescription =
+  "Log your lifting session and track your progress.";

@@ -815,6 +815,7 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
             <PercentileConclusion
               percentile={results.total.percentiles?.[activeUniverse]}
               universe={activeUniverse}
+              allPercentiles={results.total.percentiles}
             />
           </>
         )}
@@ -853,7 +854,7 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
 }
 
 
-function PercentileConclusion({ percentile, universe }) {
+function PercentileConclusion({ percentile, universe, allPercentiles }) {
   if (percentile == null) return null;
 
   let headline;
@@ -879,11 +880,23 @@ function PercentileConclusion({ percentile, universe }) {
     detail = `Stronger than ${percentile}% of ${universe.toLowerCase()}. The good news? Beginners progress faster than anyone. A few months of consistent work will change this dramatically.`;
   }
 
+  // Add cross-universe context when viewing a universe other than the one shown
+  const extras = [];
+  if (allPercentiles) {
+    if (universe !== "General Population" && allPercentiles["General Population"] != null) {
+      extras.push(`${ordinal(allPercentiles["General Population"])} percentile in the general population`);
+    }
+    if (universe !== "Barbell Lifters" && allPercentiles["Barbell Lifters"] != null) {
+      extras.push(`${ordinal(allPercentiles["Barbell Lifters"])} among barbell lifters`);
+    }
+  }
+
   return (
     <div className="rounded-lg bg-muted/40 px-3 py-2.5">
       <p className="text-sm font-semibold">{headline}</p>
       <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
         {detail}
+        {extras.length > 0 && ` ${extras.join(", ")}.`}
       </p>
     </div>
   );
@@ -892,7 +905,6 @@ function PercentileConclusion({ percentile, universe }) {
 function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentileTimeline, activeUniverse }) {
   const { careerYears, totalSessions, liftCount, liftStories } = storyData;
 
-  const barbell = chartPercentiles["Barbell Lifters"];
   const genPop = chartPercentiles["General Population"];
   const activePercentile = chartPercentiles[activeUniverse] ?? genPop;
 
@@ -957,23 +969,6 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
         />
       )}
 
-      {/* Motivational closer */}
-      <div className="rounded-lg bg-muted/30 px-3 py-2.5">
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {genPop >= 95
-            ? `Stronger than ${genPop}% of the general population — that\u2019s rarified air.`
-            : genPop >= 85
-              ? `Stronger than ${genPop}% of the general population. Dedicated-lifter strength.`
-              : genPop >= 70
-                ? `Stronger than ${genPop}% of the general population. Your training is paying off.`
-                : genPop >= 50
-                  ? `Stronger than ${genPop}% of the general population. Solid ground — the next 10% is closer than you think.`
-                  : "Every session counts. Strength is built one rep at a time."}
-          {barbell != null && genPop >= 50 && (
-            <>{" "}{ordinal(barbell)} among barbell lifters.</>
-          )}
-        </p>
-      </div>
     </div>
   );
 }

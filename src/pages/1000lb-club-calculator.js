@@ -1087,7 +1087,7 @@ function ThousandDonut({
   ];
   const percent = Math.min(100, Math.round((total / target) * 100));
   const inClub = total >= target;
-  const totalKg = (total * KG_PER_LB).toFixed(1);
+
   const progressGradient = inClub
     ? { start: "#34D399", end: "#059669" }
     : { start: "#FBBF24", end: "#D97706" };
@@ -1180,9 +1180,6 @@ function ThousandDonut({
               <div className="text-3xl font-bold text-green-500 xl:text-4xl">
                 {total} lbs
               </div>
-              <div className="text-sm text-green-500/90 xl:text-base">
-                ({totalKg} kg)
-              </div>
               <div className="text-sm font-semibold text-green-400 xl:text-base">
                 1000lb Club!
               </div>
@@ -1191,7 +1188,7 @@ function ThousandDonut({
             <>
               <div className="text-2xl font-bold xl:text-4xl">{total} lbs</div>
               <div className="text-muted-foreground text-xs xl:text-sm">
-                ({totalKg} kg) of {target}
+                of {target}
               </div>
               <div className="text-muted-foreground text-sm xl:text-lg">
                 {percent}%

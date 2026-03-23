@@ -116,6 +116,7 @@ export function MobileNav() {
         <div className="flex flex-1 flex-col overflow-y-auto">
           <div className="flex flex-col gap-4 text-lg font-medium tracking-tight">
             {featurePages
+              .filter((item) => !item.devOnly || process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development")
               .filter((item) => !item.authRequired || authStatus === "authenticated")
               .map((item) => (
                 <NavLink key={item.href} {...item} />

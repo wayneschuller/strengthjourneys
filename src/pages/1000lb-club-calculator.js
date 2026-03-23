@@ -295,11 +295,15 @@ const KG_PER_LB = 0.453592;
  */
 function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const { toast } = useToast();
-  const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
+  const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
+    useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
   const { status: authStatus } = useSession();
-  const { topLiftsByTypeAndReps, parsedData, isDemoMode } = useUserLiftingData();
-  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false });
+  const { topLiftsByTypeAndReps, parsedData, isDemoMode } =
+    useUserLiftingData();
+  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+    initializeWithValue: false,
+  });
   const e1rmFormula = storedFormula ?? "Brzycki";
 
   const [squat, setSquat] = useLocalStorage(
@@ -335,7 +339,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const prWeightsLbRef = useRef(null);
 
   useEffect(() => {
-    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps || isDemoMode) return;
+    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps || isDemoMode)
+      return;
 
     const sq = findBestE1RM("Back Squat", topLiftsByTypeAndReps, e1rmFormula);
     const bp = findBestE1RM("Bench Press", topLiftsByTypeAndReps, e1rmFormula);
@@ -351,23 +356,44 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     const roundTo5 = (v) => Math.round(v / 5) * 5;
     const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
 
-    const prSquat = sq.bestE1RMWeight ? clampLb(toLbs(sq.bestE1RMWeight, sq.unitType)) : null;
-    const prBench = bp.bestE1RMWeight ? clampLb(toLbs(bp.bestE1RMWeight, bp.unitType)) : null;
-    const prDeadlift = dl.bestE1RMWeight ? clampLb(toLbs(dl.bestE1RMWeight, dl.unitType)) : null;
+    const prSquat = sq.bestE1RMWeight
+      ? clampLb(toLbs(sq.bestE1RMWeight, sq.unitType))
+      : null;
+    const prBench = bp.bestE1RMWeight
+      ? clampLb(toLbs(bp.bestE1RMWeight, bp.unitType))
+      : null;
+    const prDeadlift = dl.bestE1RMWeight
+      ? clampLb(toLbs(dl.bestE1RMWeight, dl.unitType))
+      : null;
 
-    prWeightsLbRef.current = { squat: prSquat, bench: prBench, deadlift: prDeadlift };
+    prWeightsLbRef.current = {
+      squat: prSquat,
+      bench: prBench,
+      deadlift: prDeadlift,
+    };
 
     if (prSquat != null) setSquat(prSquat);
     if (prBench != null) setBench(prBench);
     if (prDeadlift != null) setDeadlift(prDeadlift);
     setUsingUserData(true);
-  }, [topLiftsByTypeAndReps, isDemoMode, e1rmFormula, setSquat, setBench, setDeadlift]);
+  }, [
+    topLiftsByTypeAndReps,
+    isDemoMode,
+    e1rmFormula,
+    setSquat,
+    setBench,
+    setDeadlift,
+  ]);
 
   // Recent 90-day best E1RM per lift (in lbs, rounded to 5)
   const recent90dLb = useMemo(() => {
     if (!usingUserData || !parsedData?.length || isDemoMode) return null;
 
-    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
+    const SBD_TYPES = {
+      "Back Squat": "squat",
+      "Bench Press": "bench",
+      Deadlift: "deadlift",
+    };
     const WINDOW = 90;
     const now = new Date();
     const cutoffMs = now.getTime() - WINDOW * 86400000;
@@ -381,7 +407,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       if (!key || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
       if (new Date(d.date).getTime() < cutoffMs) continue;
       const weightLb = d.unitType === "lb" ? d.weight : d.weight * 2.2046;
-      const e1rm = d.reps === 1 ? weightLb : estimateE1RM(d.reps, weightLb, e1rmFormula);
+      const e1rm =
+        d.reps === 1 ? weightLb : estimateE1RM(d.reps, weightLb, e1rmFormula);
       if (e1rm > best[key]) best[key] = e1rm;
     }
 
@@ -414,21 +441,45 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     if (pr.deadlift != null) setDeadlift(pr.deadlift);
   };
 
-  const hasMovedFromPR = usingUserData && prWeightsLbRef.current && (
-    (prWeightsLbRef.current.squat != null && squat !== prWeightsLbRef.current.squat) ||
-    (prWeightsLbRef.current.bench != null && bench !== prWeightsLbRef.current.bench) ||
-    (prWeightsLbRef.current.deadlift != null && deadlift !== prWeightsLbRef.current.deadlift)
-  );
+  const handleResetTo90d = () => {
+    if (!recent90dLb) return;
+    if (recent90dLb.squat != null) setSquat(recent90dLb.squat);
+    if (recent90dLb.bench != null) setBench(recent90dLb.bench);
+    if (recent90dLb.deadlift != null) setDeadlift(recent90dLb.deadlift);
+  };
+
+  const hasMovedFromPR =
+    usingUserData &&
+    prWeightsLbRef.current &&
+    ((prWeightsLbRef.current.squat != null &&
+      squat !== prWeightsLbRef.current.squat) ||
+      (prWeightsLbRef.current.bench != null &&
+        bench !== prWeightsLbRef.current.bench) ||
+      (prWeightsLbRef.current.deadlift != null &&
+        deadlift !== prWeightsLbRef.current.deadlift));
+
+  const hasMovedFrom90d =
+    usingUserData &&
+    recent90dLb &&
+    ((recent90dLb.squat != null && squat !== recent90dLb.squat) ||
+      (recent90dLb.bench != null && bench !== recent90dLb.bench) ||
+      (recent90dLb.deadlift != null && deadlift !== recent90dLb.deadlift));
 
   // Rolling 90-day SBD total timeline
   const totalTimeline = useMemo(() => {
     if (!usingUserData || !parsedData?.length || isDemoMode) return null;
 
-    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
+    const SBD_TYPES = {
+      "Back Squat": "squat",
+      "Bench Press": "bench",
+      Deadlift: "deadlift",
+    };
     const WINDOW_DAYS = 90;
 
     const sbdEntries = parsedData
-      .filter((d) => SBD_TYPES[d.liftType] && !d.isGoal && d.reps > 0 && d.weight > 0)
+      .filter(
+        (d) => SBD_TYPES[d.liftType] && !d.isGoal && d.reps > 0 && d.weight > 0,
+      )
       .map((d) => ({
         date: d.date,
         key: SBD_TYPES[d.liftType],
@@ -455,7 +506,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       samples.push(new Date(cursor));
       cursor.setDate(cursor.getDate() + intervalDays);
     }
-    if (samples.length === 0 || (lastDate - samples[samples.length - 1]) / 86400000 > 7) {
+    if (
+      samples.length === 0 ||
+      (lastDate - samples[samples.length - 1]) / 86400000 > 7
+    ) {
       samples.push(new Date(lastDate));
     }
     if (samples.length < 2) return null;
@@ -472,16 +526,24 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           const entryMs = new Date(entry.date).getTime();
           if (entryMs > sampleMs) break;
           if (entryMs < cutoff || entry.key !== key) continue;
-          const e1rm = entry.reps === 1
-            ? entry.weightLb
-            : estimateE1RM(entry.reps, entry.weightLb, e1rmFormula);
+          const e1rm =
+            entry.reps === 1
+              ? entry.weightLb
+              : estimateE1RM(entry.reps, entry.weightLb, e1rmFormula);
           if (e1rm > bestE1rm[key]) bestE1rm[key] = e1rm;
         }
       }
 
-      if (bestE1rm.squat === 0 || bestE1rm.bench === 0 || bestE1rm.deadlift === 0) continue;
+      if (
+        bestE1rm.squat === 0 ||
+        bestE1rm.bench === 0 ||
+        bestE1rm.deadlift === 0
+      )
+        continue;
 
-      const total = Math.round(bestE1rm.squat + bestE1rm.bench + bestE1rm.deadlift);
+      const total = Math.round(
+        bestE1rm.squat + bestE1rm.bench + bestE1rm.deadlift,
+      );
       points.push({
         date: sampleDate.toISOString().slice(0, 10),
         total,
@@ -554,10 +616,22 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       hasCelebratedRef.current = true;
       const donutRect = donutContainerRef.current?.getBoundingClientRect();
       const x = donutRect
-        ? Math.min(1, Math.max(0, (donutRect.left + donutRect.width / 2) / window.innerWidth))
+        ? Math.min(
+            1,
+            Math.max(
+              0,
+              (donutRect.left + donutRect.width / 2) / window.innerWidth,
+            ),
+          )
         : 0.5;
       const y = donutRect
-        ? Math.min(1, Math.max(0, (donutRect.top + donutRect.height / 2) / window.innerHeight))
+        ? Math.min(
+            1,
+            Math.max(
+              0,
+              (donutRect.top + donutRect.height / 2) / window.innerHeight,
+            ),
+          )
         : 0.7;
       import("canvas-confetti").then((confetti) => {
         confetti.default({
@@ -613,17 +687,19 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               href="/how-strong-am-i"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
-              <h3 className="text-base font-semibold">
-                How Strong Am I?
-              </h3>
-              <p className="text-sm">See your percentile rank across lifter groups.</p>
+              <h3 className="text-base font-semibold">How Strong Am I?</h3>
+              <p className="text-sm">
+                See your percentile rank across lifter groups.
+              </p>
             </Link>
             <Link
               href="/strength-levels"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <h3 className="text-base font-semibold">Strength Levels</h3>
-              <p className="text-sm">Check beginner-to-elite benchmarks per lift.</p>
+              <p className="text-sm">
+                Check beginner-to-elite benchmarks per lift.
+              </p>
             </Link>
           </div>
         </PageHeaderRight>
@@ -656,8 +732,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 <motion.div
                   key={key}
                   className="flex items-center gap-4"
-                  initial={prefersReducedMotion ? undefined : { opacity: 0, x: -20 }}
-                  animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
+                  initial={
+                    prefersReducedMotion ? undefined : { opacity: 0, x: -20 }
+                  }
+                  animate={
+                    prefersReducedMotion ? undefined : { opacity: 1, x: 0 }
+                  }
                   transition={{
                     type: "spring",
                     stiffness: 260,
@@ -707,7 +787,11 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       const prVal = prWeightsLbRef.current?.[key];
                       const r90Val = recent90dLb?.[key];
                       const showPr = prVal != null && prVal > 0 && prVal <= 700;
-                      const showR90 = r90Val != null && r90Val > 0 && r90Val <= 700 && r90Val !== prVal;
+                      const showR90 =
+                        r90Val != null &&
+                        r90Val > 0 &&
+                        r90Val <= 700 &&
+                        r90Val !== prVal;
                       const prPercent = showPr ? (prVal / 700) * 100 : 0;
                       const r90Percent = showR90 ? (r90Val / 700) * 100 : 0;
                       return (
@@ -724,19 +808,29 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                           {showPr && (
                             <div
                               className="pointer-events-none absolute bottom-0 flex flex-col items-center"
-                              style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
+                              style={{
+                                left: `${prPercent}%`,
+                                transform: "translateX(-50%)",
+                              }}
                             >
-                              <div className="h-3 w-px bg-primary/40" />
-                              <span className="text-[9px] font-medium leading-none text-primary/60">PR</span>
+                              <div className="bg-primary/40 h-3 w-px" />
+                              <span className="text-primary/60 text-[9px] leading-none font-medium">
+                                PR
+                              </span>
                             </div>
                           )}
                           {showR90 && (
                             <div
                               className="pointer-events-none absolute bottom-0 flex flex-col items-center"
-                              style={{ left: `${r90Percent}%`, transform: "translateX(-50%)" }}
+                              style={{
+                                left: `${r90Percent}%`,
+                                transform: "translateX(-50%)",
+                              }}
                             >
                               <div className="h-3 w-px bg-amber-500/40" />
-                              <span className="text-[9px] font-medium leading-none text-amber-600/60">90d</span>
+                              <span className="text-[9px] leading-none font-medium text-amber-600/60">
+                                90d
+                              </span>
                             </div>
                           )}
                         </div>
@@ -782,6 +876,17 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                     Reset to PRs
                   </Button>
                 )}
+                {hasMovedFrom90d && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={handleResetTo90d}
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset to 90d
+                  </Button>
+                )}
               </motion.div>
 
               <div
@@ -796,9 +901,13 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               </div>
               {biggestOpportunity && (
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Biggest opportunity: <span className="font-medium">{biggestOpportunity.lift}</span> is ~{biggestOpportunity.gapLbs} lbs below its ideal share of your total.
-                  {" "}
-                  <span className="text-muted-foreground/70 text-xs">(Ideal SBD ratio: 36% / 24% / 40%)</span>
+                  Biggest opportunity:{" "}
+                  <span className="font-medium">{biggestOpportunity.lift}</span>{" "}
+                  is ~{biggestOpportunity.gapLbs} lbs below its ideal share of
+                  your total.{" "}
+                  <span className="text-muted-foreground/70 text-xs">
+                    (Ideal SBD ratio: 36% / 24% / 40%)
+                  </span>
                 </p>
               )}
             </div>
@@ -826,7 +935,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 onPressAnalytics={() =>
                   gaTrackShareCopy("1000lb_club", {
                     page: "/1000lb-club-calculator",
-                  })}
+                  })
+                }
                 onClick={handleCopyResult}
               />
             </div>
@@ -906,9 +1016,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
         </h2>
         <div className="space-y-3 text-sm leading-relaxed">
           <p>
-            The formula is simple: <strong>Back Squat + Bench Press + Deadlift</strong>.
-            If your total is at least <strong>{TARGET_TOTAL} lbs</strong>, you&apos;re in
-            the 1000lb club.
+            The formula is simple:{" "}
+            <strong>Back Squat + Bench Press + Deadlift</strong>. If your total
+            is at least <strong>{TARGET_TOTAL} lbs</strong>, you&apos;re in the
+            1000lb club.
           </p>
           <p>
             Use the sliders to estimate your current total, then compare your
@@ -932,9 +1043,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       </section>
 
       <section className="mt-10">
-        <h2 className="mb-4 text-xl font-semibold">
-          1000lb Club FAQ
-        </h2>
+        <h2 className="mb-4 text-xl font-semibold">1000lb Club FAQ</h2>
         <div className="space-y-4">
           {FAQ_ITEMS.map(({ question, answer, renderAnswer }) => (
             <article key={question} className="rounded-lg border p-4">
@@ -1002,7 +1111,11 @@ function ThousandDonut({
                 rotate: 0.6,
                 filter: "drop-shadow(0 10px 18px rgba(16,185,129,0.24))",
               }
-            : { scale: 1, rotate: 0, filter: "drop-shadow(0 0px 0px rgba(0,0,0,0))" }
+            : {
+                scale: 1,
+                rotate: 0,
+                filter: "drop-shadow(0 0px 0px rgba(0,0,0,0))",
+              }
       }
       whileHover={
         prefersReducedMotion
@@ -1041,7 +1154,10 @@ function ThousandDonut({
             animationEasing="ease-out"
           >
             {data.map((_, i) => (
-              <Cell key={i} fill={i === 0 ? `url(#${gradientId})` : COLORS[i]} />
+              <Cell
+                key={i}
+                fill={i === 0 ? `url(#${gradientId})` : COLORS[i]}
+              />
             ))}
           </Pie>
         </PieChart>
@@ -1069,7 +1185,9 @@ function ThousandDonut({
               <div className="text-3xl font-bold text-green-500 xl:text-4xl">
                 {total} lbs
               </div>
-              <div className="text-sm text-green-500/90 xl:text-base">({totalKg} kg)</div>
+              <div className="text-sm text-green-500/90 xl:text-base">
+                ({totalKg} kg)
+              </div>
               <div className="text-sm font-semibold text-green-400 xl:text-base">
                 1000lb Club!
               </div>
@@ -1080,7 +1198,9 @@ function ThousandDonut({
               <div className="text-muted-foreground text-xs xl:text-sm">
                 ({totalKg} kg) of {target}
               </div>
-              <div className="text-muted-foreground text-sm xl:text-lg">{percent}%</div>
+              <div className="text-muted-foreground text-sm xl:text-lg">
+                {percent}%
+              </div>
             </>
           )}
         </motion.div>
@@ -1091,7 +1211,7 @@ function ThousandDonut({
 
 // Ideal SBD proportions (% of total) — consensus from powerlifting averages.
 // Squat ~36%, Bench ~24%, Deadlift ~40%.
-const IDEAL_SBD_RATIO = { squat: 0.36, bench: 0.24, deadlift: 0.40 };
+const IDEAL_SBD_RATIO = { squat: 0.36, bench: 0.24, deadlift: 0.4 };
 const LIFT_LABELS = { squat: "Squat", bench: "Bench", deadlift: "Deadlift" };
 
 function getWeakestLiftHint(squat, bench, deadlift) {
@@ -1130,20 +1250,32 @@ function TimelineTooltipContent({ active, payload, label }) {
   const hint = getWeakestLiftHint(d.squat, d.bench, d.deadlift);
 
   return (
-    <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-md">
+    <div className="bg-popover rounded-lg border px-3 py-2 text-xs shadow-md">
       <div className="mb-1.5 font-medium">{dateStr}</div>
       <div className="space-y-0.5">
-        <div>Squat: {d.squat} lbs ({Math.round(d.squat * KG_PER_LB)} kg)</div>
-        <div>Bench: {d.bench} lbs ({Math.round(d.bench * KG_PER_LB)} kg)</div>
-        <div>Deadlift: {d.deadlift} lbs ({Math.round(d.deadlift * KG_PER_LB)} kg)</div>
+        <div>
+          Squat: {d.squat} lbs ({Math.round(d.squat * KG_PER_LB)} kg)
+        </div>
+        <div>
+          Bench: {d.bench} lbs ({Math.round(d.bench * KG_PER_LB)} kg)
+        </div>
+        <div>
+          Deadlift: {d.deadlift} lbs ({Math.round(d.deadlift * KG_PER_LB)} kg)
+        </div>
       </div>
-      <div className={cn("mt-1.5 border-t pt-1.5 font-semibold", above ? "text-green-600" : "text-amber-600")}>
+      <div
+        className={cn(
+          "mt-1.5 border-t pt-1.5 font-semibold",
+          above ? "text-green-600" : "text-amber-600",
+        )}
+      >
         Total: {d.total} lbs ({Math.round(d.total * KG_PER_LB)} kg)
         {above ? " \u2714" : ` \u2014 ${TARGET_TOTAL - d.total} lbs to go`}
       </div>
       {hint && (
         <div className="text-muted-foreground mt-1 text-[10px] leading-tight">
-          Biggest opportunity: {hint.lift} (~{hint.gapLbs} lbs below ideal ratio)
+          Biggest opportunity: {hint.lift} (~{hint.gapLbs} lbs below ideal
+          ratio)
         </div>
       )}
     </div>
@@ -1158,8 +1290,10 @@ function TotalTimelineChart({ data, target }) {
 
   const formatTick = (dateStr) => {
     const d = new Date(dateStr);
-    if (spanDays <= 365) return d.toLocaleDateString("en-US", { month: "short" });
-    if (spanDays <= 1095) return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    if (spanDays <= 365)
+      return d.toLocaleDateString("en-US", { month: "short" });
+    if (spanDays <= 1095)
+      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
     return d.toLocaleDateString("en-US", { year: "numeric" });
   };
 
@@ -1185,27 +1319,53 @@ function TotalTimelineChart({ data, target }) {
         <CardDescription>
           Rolling 90-day best E1RM total (squat + bench + deadlift).
           {everCrossed && latestAbove && " You\u2019re in the club."}
-          {everCrossed && !latestAbove && " You\u2019ve crossed the line before \u2014 get back there."}
-          {!everCrossed && ` ${target - data[data.length - 1].total} lbs to go.`}
+          {everCrossed &&
+            !latestAbove &&
+            " You\u2019ve crossed the line before \u2014 get back there."}
+          {!everCrossed &&
+            ` ${target - data[data.length - 1].total} lbs to go.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[220px] w-full sm:h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -12 }}>
+            <AreaChart
+              data={data}
+              margin={{ top: 8, right: 12, bottom: 0, left: -12 }}
+            >
               <defs>
                 {/* Stroke gradient: green above threshold, amber below */}
-                <linearGradient id="timeline-stroke-split" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                  id="timeline-stroke-split"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
                   <stop offset={0} stopColor="#10B981" />
                   <stop offset={thresholdFrac} stopColor="#10B981" />
                   <stop offset={thresholdFrac} stopColor="#F59E0B" />
                   <stop offset={1} stopColor="#F59E0B" />
                 </linearGradient>
                 {/* Fill gradient: green tint above, amber tint below */}
-                <linearGradient id="timeline-fill-split" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                  id="timeline-fill-split"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
                   <stop offset={0} stopColor="#10B981" stopOpacity={0.3} />
-                  <stop offset={thresholdFrac} stopColor="#10B981" stopOpacity={0.08} />
-                  <stop offset={thresholdFrac} stopColor="#F59E0B" stopOpacity={0.25} />
+                  <stop
+                    offset={thresholdFrac}
+                    stopColor="#10B981"
+                    stopOpacity={0.08}
+                  />
+                  <stop
+                    offset={thresholdFrac}
+                    stopColor="#F59E0B"
+                    stopOpacity={0.25}
+                  />
                   <stop offset={1} stopColor="#F59E0B" stopOpacity={0.04} />
                 </linearGradient>
               </defs>

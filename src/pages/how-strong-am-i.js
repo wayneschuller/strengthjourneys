@@ -157,6 +157,7 @@ function HowStrongAmIPageMain() {
     topLiftsByTypeAndRepsLast12Months,
     parsedData,
     isReturningUserLoading,
+    isDemoMode,
   } = useUserLiftingData();
 
   const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
@@ -170,9 +171,9 @@ function HowStrongAmIPageMain() {
   const hasAutoPopulatedRef = useRef(false);
   const prWeightsKgRef = useRef(null);
 
-  // Auto-populate sliders from user's actual best E1RMs
+  // Auto-populate sliders from user's actual best E1RMs (skip demo data)
   useEffect(() => {
-    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps) return;
+    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps || isDemoMode) return;
 
     const squat = findBestE1RM("Back Squat", topLiftsByTypeAndReps, "Brzycki");
     const bench = findBestE1RM("Bench Press", topLiftsByTypeAndReps, "Brzycki");
@@ -207,7 +208,7 @@ function HowStrongAmIPageMain() {
 
     setLiftWeightsKg(weights);
     setUsingUserData(true);
-  }, [topLiftsByTypeAndReps]);
+  }, [topLiftsByTypeAndReps, isDemoMode]);
 
   // PR weights in display units for slider markers
   const prWeightsDisplay = useMemo(() => {

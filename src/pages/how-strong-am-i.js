@@ -335,8 +335,7 @@ function HowStrongAmIPageMain() {
     if (!usingUserData || !parsedData?.length || isDemoMode) return null;
 
     const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
-    const WINDOW_30 = 30;
-    const WINDOW_90 = 90;
+    const WINDOW_DAYS = 90;
 
     // Filter to SBD lifts, convert weights to kg, sort by date
     const sbdEntries = parsedData
@@ -364,8 +363,8 @@ function HowStrongAmIPageMain() {
     // Generate sample dates
     const samples = [];
     const cursor = new Date(firstDate);
-    // Start first sample at least 30 days in so we have some data to look back on
-    cursor.setDate(cursor.getDate() + WINDOW_30);
+    // Start first sample at least 90 days in so we have data to look back on
+    cursor.setDate(cursor.getDate() + WINDOW_DAYS);
     while (cursor <= lastDate) {
       samples.push(new Date(cursor));
       cursor.setDate(cursor.getDate() + intervalDays);
@@ -382,29 +381,22 @@ function HowStrongAmIPageMain() {
 
     for (const sampleDate of samples) {
       const sampleMs = sampleDate.getTime();
-      const cutoff30 = sampleMs - WINDOW_30 * 86400000;
-      const cutoff90 = sampleMs - WINDOW_90 * 86400000;
+      const cutoff = sampleMs - WINDOW_DAYS * 86400000;
 
       const bestE1rm = { squat: null, bench: null, deadlift: null };
 
       for (const key of ["squat", "bench", "deadlift"]) {
-        // Try 30-day window first, fall back to 90-day
-        for (const cutoff of [cutoff30, cutoff90]) {
-          let best = 0;
-          for (const entry of sbdEntries) {
-            const entryMs = new Date(entry.date).getTime();
-            if (entryMs > sampleMs) break;
-            if (entryMs < cutoff || entry.key !== key) continue;
-            const e1rm = entry.reps === 1
-              ? entry.weightKg
-              : estimateE1RM(entry.reps, entry.weightKg, e1rmFormula);
-            if (e1rm > best) best = e1rm;
-          }
-          if (best > 0) {
-            bestE1rm[key] = best;
-            break; // found in this window, skip wider fallback
-          }
+        let best = 0;
+        for (const entry of sbdEntries) {
+          const entryMs = new Date(entry.date).getTime();
+          if (entryMs > sampleMs) break;
+          if (entryMs < cutoff || entry.key !== key) continue;
+          const e1rm = entry.reps === 1
+            ? entry.weightKg
+            : estimateE1RM(entry.reps, entry.weightKg, e1rmFormula);
+          if (e1rm > best) best = e1rm;
         }
+        if (best > 0) bestE1rm[key] = best;
       }
 
       // Need all 3 lifts for SBD total percentile
@@ -916,8 +908,8 @@ function PercentileTimelineChart({ data, currentPercentile }) {
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="pctGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.02} />
               </linearGradient>
             </defs>
             <XAxis
@@ -957,11 +949,11 @@ function PercentileTimelineChart({ data, currentPercentile }) {
             <Area
               type="monotone"
               dataKey="percentile"
-              stroke="hsl(var(--primary))"
+              stroke="var(--chart-1)"
               strokeWidth={2}
               fill="url(#pctGrad)"
               dot={false}
-              activeDot={{ r: 3, strokeWidth: 0, fill: "hsl(var(--primary))" }}
+              activeDot={{ r: 3, strokeWidth: 0, fill: "var(--chart-1)" }}
             />
           </AreaChart>
         </ResponsiveContainer>

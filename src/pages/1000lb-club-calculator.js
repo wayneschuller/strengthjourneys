@@ -1424,15 +1424,25 @@ function TotalTimelineChart({ data, target }) {
 function TotalTimelineCtaCard() {
   return (
     <Card className="mt-6 overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Trophy className="h-5 w-5" />
-          Want to see your 1000lb club history over time?
-        </CardTitle>
-        <CardDescription>
-          See your 1000lb club history over time, spot the dips, and figure out
-          what to push next.
-        </CardDescription>
+      <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5" />
+            Want to see your 1000lb club history over time?
+          </CardTitle>
+          <CardDescription>
+            See your 1000lb club history over time, spot the dips, and figure
+            out what to push next. Sign in with Google to unlock the full chart
+            and follow your rolling total across the years.
+          </CardDescription>
+        </div>
+        <GoogleSignInButton
+          cta="1000lb_club_timeline"
+          size="sm"
+          className="sm:shrink-0"
+        >
+          Sign in with Google
+        </GoogleSignInButton>
       </CardHeader>
       <CardContent>
         <div className="from-muted/20 via-background to-muted/30 relative overflow-hidden rounded-xl border bg-gradient-to-br p-5 sm:p-6">
@@ -1462,19 +1472,6 @@ function TotalTimelineCtaCard() {
                 opacity="0.8"
               />
             </svg>
-          </div>
-
-          <div className="relative max-w-xl space-y-4">
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Sign in with Google to unlock the full chart and follow your
-              rolling total across the years.
-            </p>
-
-            <div className="flex flex-wrap gap-3">
-              <GoogleSignInButton cta="1000lb_club_timeline" size="sm">
-                Sign in with Google
-              </GoogleSignInButton>
-            </div>
           </div>
         </div>
       </CardContent>

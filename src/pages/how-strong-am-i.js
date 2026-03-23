@@ -385,6 +385,8 @@ function HowStrongAmIPageMain() {
                 prWeights={prWeightsDisplay}
                 results={results}
                 activeUniverse={activeUniverse}
+                userStoryData={authStatus === "authenticated" ? userStoryData : null}
+                chartPercentiles={chartPercentiles}
               />
             </div>
 
@@ -408,16 +410,6 @@ function HowStrongAmIPageMain() {
               </Button>
             </div>
           </div>
-
-          {authStatus === "authenticated" && userStoryData ? (
-            <YourStrengthStory
-              storyData={userStoryData}
-              chartPercentiles={chartPercentiles}
-              isMetric={isMetric}
-            />
-          ) : authStatus === "unauthenticated" && !isReturningUserLoading ? (
-            <StrengthStoryTeaser />
-          ) : null}
 
           <section className="mx-auto mt-10 max-w-2xl lg:max-w-4xl">
             <ExplainerSection />
@@ -482,7 +474,7 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, results, activeUniverse }) {
+function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, results, activeUniverse, userStoryData, chartPercentiles }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -606,10 +598,22 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
           </div>
         )}
 
+        {/* Strength Story — inline for authenticated users */}
+        {userStoryData && (
+          <StrengthStorySummary
+            storyData={userStoryData}
+            chartPercentiles={chartPercentiles}
+            isMetric={isMetric}
+          />
+        )}
+
+        {/* Sign-in teaser for unauthenticated users */}
         {showSignInTeaser && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <div className="rounded-lg border border-dashed p-3">
+            <p className="mb-2 text-sm font-medium">Your Strength Story</p>
             <p className="mb-2 text-sm text-muted-foreground">
-              Sign in to auto-fill these from your actual training PRs.
+              Sign in to auto-fill from your training PRs, see career stats,
+              and track how your strength has changed over time.
             </p>
             <GoogleSignInButton
               className="flex items-center gap-2"
@@ -626,51 +630,20 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
 }
 
 
-function StrengthStoryTeaser() {
-  return (
-    <div className="mx-auto mt-8 max-w-2xl">
-      <Card className="border-dashed">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Trophy className="h-5 w-5 text-muted-foreground" />
-            Your Strength Story
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">
-            Sign in and connect your lifting log to unlock your personal
-            strength story — career stats, all-time PRs vs last 12 months, and
-            your real percentile rankings filled in automatically.
-          </p>
-          <GoogleSignInButton
-            className="flex w-fit items-center gap-2"
-            cta="how_strong_story_teaser"
-            iconSize={16}
-          >
-            Sign In With Google
-          </GoogleSignInButton>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function YourStrengthStory({ storyData, chartPercentiles, isMetric }) {
+function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
   const { liftStories, careerYears, totalSessions, liftCount } = storyData;
 
-  // Find best universe ranking for the headline
   const barbell = chartPercentiles["Barbell Lifters"];
   const genPop = chartPercentiles["General Population"];
 
-  // Career span label
   let careerLabel = null;
   if (careerYears != null) {
     if (careerYears >= 1) {
       const years = Math.floor(careerYears);
-      careerLabel = `${years} year${years !== 1 ? "s" : ""}`;
+      careerLabel = `${years}yr${years !== 1 ? "s" : ""}`;
     } else {
       const months = Math.max(1, Math.round(careerYears * 12));
-      careerLabel = `${months} month${months !== 1 ? "s" : ""}`;
+      careerLabel = `${months}mo`;
     }
   }
 
@@ -681,139 +654,100 @@ function YourStrengthStory({ storyData, chartPercentiles, isMetric }) {
   };
 
   return (
-    <div className="mx-auto mt-8 max-w-2xl">
-      <Card className="border-primary/20 bg-primary/5">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Your Strength Story
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {/* Headline stat */}
-          <p className="text-sm text-muted-foreground">
-            {genPop >= 90
-              ? `You're stronger than ${genPop}% of the general population. That puts you in rare company.`
-              : genPop >= 70
-                ? `You're stronger than ${genPop}% of the general population — solidly above average.`
-                : `You're stronger than ${genPop}% of the general population. Every percentage point is earned.`}
-            {barbell != null && (
-              <>
-                {" "}Among barbell lifters specifically, you rank in the{" "}
-                <span className="font-semibold">{ordinal(barbell)}</span> percentile.
-              </>
-            )}
-          </p>
+    <div className="flex flex-col gap-3 rounded-lg border-t pt-4">
+      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <Trophy className="h-3.5 w-3.5 text-yellow-500" />
+        Your Strength Story
+      </p>
 
-          {/* Career stats row */}
-          {(careerLabel || totalSessions) && (
-            <div className="flex flex-wrap gap-4 rounded-lg border bg-background/60 px-4 py-3">
-              {careerLabel && (
-                <div className="flex flex-col">
-                  <span className="text-lg font-bold">{careerLabel}</span>
-                  <span className="text-xs text-muted-foreground">of training data</span>
-                </div>
-              )}
-              {totalSessions && (
-                <div className="flex flex-col">
-                  <span className="text-lg font-bold">{totalSessions.toLocaleString()}</span>
-                  <span className="text-xs text-muted-foreground">sessions logged</span>
-                </div>
-              )}
-              {liftCount >= 3 && (
-                <div className="flex flex-col">
-                  <span className="text-lg font-bold">
-                    {(() => {
-                      const unit = isMetric ? "kg" : "lb";
-                      const factor = isMetric ? 1 / 2.2046 : 1;
-                      const total = Object.values(liftStories).reduce((sum, ls) => {
-                        const w = ls.unitType === "lb" && isMetric
-                          ? ls.allTimeE1RM * factor
-                          : ls.unitType === "kg" && !isMetric
-                            ? ls.allTimeE1RM * 2.2046
-                            : ls.allTimeE1RM;
-                        return sum + Math.round(w);
-                      }, 0);
-                      return `${total} ${unit}`;
-                    })()}
-                  </span>
-                  <span className="text-xs text-muted-foreground">estimated SBD total</span>
-                </div>
+      {/* Compact career stats */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        {careerLabel && (
+          <span className="text-muted-foreground">
+            <span className="font-semibold text-foreground">{careerLabel}</span> training
+          </span>
+        )}
+        {totalSessions && (
+          <span className="text-muted-foreground">
+            <span className="font-semibold text-foreground">{totalSessions.toLocaleString()}</span> sessions
+          </span>
+        )}
+        {liftCount >= 3 && (
+          <span className="text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              {(() => {
+                const unit = isMetric ? "kg" : "lb";
+                const total = Object.values(liftStories).reduce((sum, ls) => {
+                  const w = ls.unitType === "lb" && isMetric
+                    ? ls.allTimeE1RM / 2.2046
+                    : ls.unitType === "kg" && !isMetric
+                      ? ls.allTimeE1RM * 2.2046
+                      : ls.allTimeE1RM;
+                  return sum + Math.round(w);
+                }, 0);
+                return `${total}${unit}`;
+              })()}
+            </span>{" "}SBD
+          </span>
+        )}
+      </div>
+
+      {/* Per-lift all-time vs 12mo */}
+      <div className="flex flex-col gap-1.5">
+        {Object.entries(liftStories).map(([key, story]) => {
+          const meta = LIFT_META[key];
+          if (!meta) return null;
+          const unit = isMetric
+            ? "kg"
+            : story.unitType === "kg" ? "lb" : story.unitType;
+          const allTime = isMetric && story.unitType === "lb"
+            ? Math.round(story.allTimeE1RM / 2.2046)
+            : !isMetric && story.unitType === "kg"
+              ? Math.round(story.allTimeE1RM * 2.2046)
+              : story.allTimeE1RM;
+          const lastYear = story.lastYearE1RM
+            ? isMetric && story.unitType === "lb"
+              ? Math.round(story.lastYearE1RM / 2.2046)
+              : !isMetric && story.unitType === "kg"
+                ? Math.round(story.lastYearE1RM * 2.2046)
+                : story.lastYearE1RM
+            : null;
+          const diff = lastYear != null ? lastYear - allTime : null;
+
+          return (
+            <div key={key} className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-1.5">
+                <img src={meta.svg} alt="" className="h-4 w-4 dark:invert" aria-hidden />
+                <span className="font-medium">{meta.label}</span>
+                <span className="tabular-nums text-muted-foreground">
+                  {allTime}{unit}
+                </span>
+              </div>
+              {lastYear != null && (
+                <span className="tabular-nums text-muted-foreground">
+                  {lastYear}{unit}
+                  <span className="ml-0.5 text-xs">12mo</span>
+                  {diff != null && diff !== 0 && (
+                    <span className={`ml-1 text-xs font-semibold ${diff > 0 ? "text-green-600" : "text-amber-600"}`}>
+                      {diff > 0 ? "+" : ""}{diff}
+                    </span>
+                  )}
+                </span>
               )}
             </div>
-          )}
+          );
+        })}
+      </div>
 
-          {/* Per-lift all-time vs last year */}
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              All-time vs last 12 months
-            </p>
-            {Object.entries(liftStories).map(([key, story]) => {
-              const meta = LIFT_META[key];
-              if (!meta) return null;
-              const unit = isMetric
-                ? "kg"
-                : story.unitType === "kg"
-                  ? "lb"
-                  : story.unitType;
-              const allTime = isMetric && story.unitType === "lb"
-                ? Math.round(story.allTimeE1RM / 2.2046)
-                : !isMetric && story.unitType === "kg"
-                  ? Math.round(story.allTimeE1RM * 2.2046)
-                  : story.allTimeE1RM;
-              const lastYear = story.lastYearE1RM
-                ? isMetric && story.unitType === "lb"
-                  ? Math.round(story.lastYearE1RM / 2.2046)
-                  : !isMetric && story.unitType === "kg"
-                    ? Math.round(story.lastYearE1RM * 2.2046)
-                    : story.lastYearE1RM
-                : null;
-
-              const diff = lastYear != null ? lastYear - allTime : null;
-
-              return (
-                <div
-                  key={key}
-                  className="rounded-md bg-background/60 px-3 py-2 text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <img src={meta.svg} alt="" className="h-5 w-5 dark:invert" aria-hidden />
-                    <span className="font-medium">{meta.label}</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-4 pl-7">
-                    <span className="tabular-nums text-muted-foreground">
-                      {allTime} {unit}
-                      <span className="ml-1 text-xs">all-time</span>
-                    </span>
-                    {lastYear != null && (
-                      <span className="tabular-nums">
-                        {lastYear} {unit}
-                        <span className="ml-1 text-xs text-muted-foreground">12mo</span>
-                        {diff != null && diff !== 0 && (
-                          <span
-                            className={`ml-1 text-xs font-semibold ${diff > 0 ? "text-green-600" : "text-amber-600"}`}
-                          >
-                            {diff > 0 ? "+" : ""}{diff}
-                          </span>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Motivational closer */}
-          <p className="text-xs italic text-muted-foreground">
-            {careerYears >= 3
-              ? "Years of consistency built this. That is the kind of strength that does not fade."
-              : careerYears >= 1
-                ? "A year or more under the bar — your numbers reflect real commitment."
-                : "You are building something. Every session adds to the story."}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Compact motivational line */}
+      <p className="text-xs italic text-muted-foreground">
+        {genPop >= 90
+          ? `Stronger than ${genPop}% of the general population. Rare company.`
+          : genPop >= 70
+            ? `Stronger than ${genPop}% of the general population.`
+            : "Every percentage point is earned."}
+        {barbell != null && ` ${ordinal(barbell)} among barbell lifters.`}
+      </p>
     </div>
   );
 }

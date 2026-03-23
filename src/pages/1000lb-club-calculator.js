@@ -57,6 +57,7 @@ import {
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
+import { GoogleSignInButton } from "@/components/google-sign-in";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { findBestE1RM } from "@/lib/processing-utils";
@@ -977,9 +978,11 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
         </CardFooter>
       </Card>
 
-      {totalTimeline && (
+      {totalTimeline ? (
         <TotalTimelineChart data={totalTimeline} target={TARGET_TOTAL} />
-      )}
+      ) : authStatus === "unauthenticated" ? (
+        <TotalTimelineCtaCard />
+      ) : null}
 
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">
@@ -1412,6 +1415,78 @@ function TotalTimelineChart({ data, target }) {
               />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TotalTimelineCtaCard() {
+  return (
+    <Card className="mt-6 overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Trophy className="h-5 w-5" />
+          Your SBD Total Over Time
+        </CardTitle>
+        <CardDescription>
+          See your 1000lb club history over time, spot the dips, and figure out
+          what to push next.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="from-muted/20 via-background to-muted/30 relative overflow-hidden rounded-xl border bg-gradient-to-br p-5 sm:p-6">
+          <div className="pointer-events-none absolute inset-x-4 top-20 bottom-4 opacity-70">
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-amber-100/30 via-transparent to-emerald-100/20" />
+            <div className="absolute inset-x-0 top-1/3 border-t-2 border-dashed border-emerald-500/40" />
+            <svg
+              viewBox="0 0 600 180"
+              className="absolute inset-0 h-full w-full"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <path
+                d="M0,132 C40,126 75,120 110,88 S185,56 220,72 300,146 345,136 420,58 470,48 540,70 600,42"
+                fill="none"
+                stroke="#10B981"
+                strokeWidth="4"
+                strokeLinecap="round"
+                opacity="0.8"
+              />
+              <path
+                d="M0,144 C38,138 82,130 125,112 S205,76 245,120 320,164 375,150 460,98 520,118 575,146 600,136"
+                fill="none"
+                stroke="#F59E0B"
+                strokeWidth="4"
+                strokeLinecap="round"
+                opacity="0.8"
+              />
+            </svg>
+          </div>
+
+          <div className="relative max-w-xl space-y-4">
+            <div className="space-y-2">
+              <p className="text-lg font-semibold sm:text-xl">
+                Want to see your 1000lb club history over time?
+              </p>
+              <p className="text-muted-foreground text-sm sm:text-base">
+                Sign in with Google to unlock the full chart, follow your
+                rolling total across the years, and then let&apos;s discuss a
+                plan.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <GoogleSignInButton cta="1000lb_club_timeline" size="sm">
+                Sign in with Google
+              </GoogleSignInButton>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/ai-lifting-assistant">
+                  Let&apos;s discuss a plan
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

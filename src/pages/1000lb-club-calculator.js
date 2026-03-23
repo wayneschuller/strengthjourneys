@@ -442,6 +442,9 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       points.push({
         date: sampleDate.toISOString().slice(0, 10),
         total,
+        squat: Math.round(bestE1rm.squat),
+        bench: Math.round(bestE1rm.bench),
+        deadlift: Math.round(bestE1rm.deadlift),
       });
     }
 
@@ -1021,6 +1024,67 @@ function ThousandDonut({
   );
 }
 
+// Ideal SBD proportions (% of total) — consensus from powerlifting averages.
+// Squat ~36%, Bench ~24%, Deadlift ~40%.
+const IDEAL_SBD_RATIO = { squat: 0.36, bench: 0.24, deadlift: 0.40 };
+const LIFT_LABELS = { squat: "Squat", bench: "Bench", deadlift: "Deadlift" };
+
+function getWeakestLiftHint(squat, bench, deadlift) {
+  const total = squat + bench + deadlift;
+  if (total === 0) return null;
+
+  // How far each lift is below its ideal share of the total (as lbs deficit).
+  const gaps = {
+    squat: IDEAL_SBD_RATIO.squat * total - squat,
+    bench: IDEAL_SBD_RATIO.bench * total - bench,
+    deadlift: IDEAL_SBD_RATIO.deadlift * total - deadlift,
+  };
+
+  // Largest positive gap = most under-developed relative to ideal ratios.
+  const worst = Object.entries(gaps).reduce(
+    (best, [k, v]) => (v > best.gap ? { key: k, gap: v } : best),
+    { key: null, gap: 0 },
+  );
+
+  if (!worst.key || worst.gap < 10) return null; // <10 lb gap = balanced enough
+  return {
+    lift: LIFT_LABELS[worst.key],
+    gapLbs: Math.round(worst.gap),
+  };
+}
+
+function TimelineTooltipContent({ active, payload, label }) {
+  if (!active || !payload?.[0]) return null;
+  const d = payload[0].payload;
+  const above = d.total >= TARGET_TOTAL;
+  const dateStr = new Date(label).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const hint = getWeakestLiftHint(d.squat, d.bench, d.deadlift);
+
+  return (
+    <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-md">
+      <div className="mb-1.5 font-medium">{dateStr}</div>
+      <div className="space-y-0.5">
+        <div>Squat: {d.squat} lbs ({Math.round(d.squat * KG_PER_LB)} kg)</div>
+        <div>Bench: {d.bench} lbs ({Math.round(d.bench * KG_PER_LB)} kg)</div>
+        <div>Deadlift: {d.deadlift} lbs ({Math.round(d.deadlift * KG_PER_LB)} kg)</div>
+      </div>
+      <div className={cn("mt-1.5 border-t pt-1.5 font-semibold", above ? "text-green-600" : "text-amber-600")}>
+        Total: {d.total} lbs ({Math.round(d.total * KG_PER_LB)} kg)
+        {above ? " \u2714" : ` \u2014 ${TARGET_TOTAL - d.total} lbs to go`}
+      </div>
+      {hint && (
+        <div className="text-muted-foreground mt-1 text-[10px] leading-tight">
+          Biggest opportunity: {hint.lift} (~{hint.gapLbs} lbs below ideal ratio)
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TotalTimelineChart({ data, target }) {
   if (!data || data.length < 2) return null;
 
@@ -1042,6 +1106,10 @@ function TotalTimelineChart({ data, target }) {
   const everCrossed = data.some((d) => d.total >= target);
   const latestAbove = data[data.length - 1].total >= target;
 
+  // Y-space split gradient: green above target line, amber below.
+  // Calculate threshold offset as fraction of Y range (0 = top, 1 = bottom).
+  const thresholdFrac = (yMax - target) / (yMax - yMin);
+
   return (
     <Card className="mt-6">
       <CardHeader className="pb-2">
@@ -1061,13 +1129,19 @@ function TotalTimelineChart({ data, target }) {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -12 }}>
               <defs>
-                <linearGradient id="timeline-above" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10B981" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#10B981" stopOpacity={0.05} />
+                {/* Stroke gradient: green above threshold, amber below */}
+                <linearGradient id="timeline-stroke-split" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset={0} stopColor="#10B981" />
+                  <stop offset={thresholdFrac} stopColor="#10B981" />
+                  <stop offset={thresholdFrac} stopColor="#F59E0B" />
+                  <stop offset={1} stopColor="#F59E0B" />
                 </linearGradient>
-                <linearGradient id="timeline-below" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.05} />
+                {/* Fill gradient: green tint above, amber tint below */}
+                <linearGradient id="timeline-fill-split" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset={0} stopColor="#10B981" stopOpacity={0.3} />
+                  <stop offset={thresholdFrac} stopColor="#10B981" stopOpacity={0.08} />
+                  <stop offset={thresholdFrac} stopColor="#F59E0B" stopOpacity={0.25} />
+                  <stop offset={1} stopColor="#F59E0B" stopOpacity={0.04} />
                 </linearGradient>
               </defs>
               <XAxis
@@ -1085,17 +1159,7 @@ function TotalTimelineChart({ data, target }) {
                 axisLine={false}
                 tickFormatter={(v) => `${v}`}
               />
-              <RechartsTooltip
-                labelFormatter={(d) =>
-                  new Date(d).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                }
-                formatter={(value) => [`${value} lbs (${(value * KG_PER_LB).toFixed(0)} kg)`, "SBD Total"]}
-                contentStyle={{ fontSize: 12 }}
-              />
+              <RechartsTooltip content={<TimelineTooltipContent />} />
               <ReferenceLine
                 y={target}
                 stroke="#10B981"
@@ -1112,11 +1176,11 @@ function TotalTimelineChart({ data, target }) {
               <Area
                 type="monotone"
                 dataKey="total"
-                stroke={latestAbove ? "#10B981" : "#F59E0B"}
+                stroke="url(#timeline-stroke-split)"
                 strokeWidth={2.5}
-                fill={latestAbove ? "url(#timeline-above)" : "url(#timeline-below)"}
+                fill="url(#timeline-fill-split)"
                 dot={false}
-                activeDot={{ r: 4, strokeWidth: 2 }}
+                activeDot={{ r: 4, strokeWidth: 2, stroke: "#10B981" }}
               />
             </AreaChart>
           </ResponsiveContainer>

@@ -893,15 +893,16 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   : `You\u2019re ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
               </div>
               {biggestOpportunity && (
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Biggest opportunity:{" "}
-                  <span className="font-medium">{biggestOpportunity.lift}</span>{" "}
-                  is ~{biggestOpportunity.gapLbs} lbs below its ideal share of
-                  your total.{" "}
-                  <span className="text-muted-foreground/70 text-xs">
-                    (Ideal SBD ratio: 36% / 24% / 40%)
-                  </span>
-                </p>
+                <div className="bg-muted/40 mt-2 rounded-lg border px-4 py-3">
+                  <p className="text-base font-medium">
+                    Biggest opportunity: {biggestOpportunity.lift} is ~
+                    {biggestOpportunity.gapLbs} lbs below its ideal share of
+                    your total.
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Ideal SBD ratio: 36% / 24% / 40%
+                  </p>
+                </div>
               )}
             </div>
             <div className="xl:self-center">

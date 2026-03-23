@@ -1445,33 +1445,122 @@ function TotalTimelineCtaCard() {
         </GoogleSignInButton>
       </CardHeader>
       <CardContent>
-        <div className="from-muted/20 via-background to-muted/30 relative overflow-hidden rounded-xl border bg-gradient-to-br p-5 sm:p-6">
-          <div className="pointer-events-none absolute inset-x-4 top-20 bottom-4 opacity-70">
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-amber-100/30 via-transparent to-emerald-100/20" />
-            <div className="absolute inset-x-0 top-1/3 border-t-2 border-dashed border-emerald-500/40" />
-            <svg
-              viewBox="0 0 600 180"
-              className="absolute inset-0 h-full w-full"
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              <path
-                d="M0,132 C40,126 75,120 110,88 S185,56 220,72 300,146 345,136 420,58 470,48 540,70 600,42"
-                fill="none"
-                stroke="#10B981"
-                strokeWidth="4"
-                strokeLinecap="round"
-                opacity="0.8"
-              />
-              <path
-                d="M0,144 C38,138 82,130 125,112 S205,76 245,120 320,164 375,150 460,98 520,118 575,146 600,136"
-                fill="none"
-                stroke="#F59E0B"
-                strokeWidth="4"
-                strokeLinecap="round"
-                opacity="0.8"
-              />
-            </svg>
+        <div className="from-muted/20 via-background to-muted/30 relative overflow-hidden rounded-xl border bg-gradient-to-br p-4 sm:p-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Preview</p>
+              <p className="text-muted-foreground text-xs">
+                Your rolling 90-day SBD total with the 1000 lb line.
+              </p>
+            </div>
+            <span className="text-muted-foreground rounded-full border px-2.5 py-1 text-[11px] font-medium">
+              Sign in to unlock
+            </span>
+          </div>
+
+          <div className="bg-background/70 relative rounded-lg border p-3 sm:p-4">
+            <div className="grid grid-cols-[42px_minmax(0,1fr)] gap-2">
+              <div className="text-muted-foreground flex h-[180px] flex-col justify-between pt-1 text-[11px] tabular-nums sm:h-[220px]">
+                <span>1150</span>
+                <span>1000</span>
+                <span>850</span>
+                <span>700</span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="relative h-[180px] overflow-hidden rounded-md sm:h-[220px]">
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_calc(25%-1px),rgba(148,163,184,0.16)_25%,transparent_calc(25%+1px),transparent_calc(50%-1px),rgba(148,163,184,0.12)_50%,transparent_calc(50%+1px),transparent_calc(75%-1px),rgba(148,163,184,0.1)_75%,transparent_calc(75%+1px),transparent_100%)]" />
+                  <div className="absolute inset-x-0 top-[25%] border-t-2 border-dashed border-emerald-500/55" />
+                  <span className="bg-background/80 absolute top-[calc(25%-20px)] right-2 rounded px-1.5 py-0.5 text-[11px] font-semibold text-emerald-600">
+                    1000 lbs
+                  </span>
+                  <svg
+                    viewBox="0 0 700 220"
+                    className="absolute inset-0 h-full w-full"
+                    preserveAspectRatio="none"
+                    aria-hidden
+                  >
+                    <defs>
+                      <linearGradient
+                        id="timeline-cta-above"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#10B981"
+                          stopOpacity="0.22"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#10B981"
+                          stopOpacity="0.05"
+                        />
+                      </linearGradient>
+                      <linearGradient
+                        id="timeline-cta-below"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#F59E0B"
+                          stopOpacity="0.2"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#F59E0B"
+                          stopOpacity="0.04"
+                        />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M0,162 C35,154 65,148 98,136 C126,126 154,92 184,86 C224,78 248,118 278,124 C310,130 342,194 374,164 C405,136 434,86 466,92 C496,98 530,66 564,62 C598,58 632,88 700,72 L700,220 L0,220 Z"
+                      fill="url(#timeline-cta-below)"
+                    />
+                    <path
+                      d="M0,162 C35,154 65,148 98,136 C126,126 154,92 184,86 C224,78 248,118 278,124 C310,130 342,194 374,164 C405,136 434,86 466,92 C496,98 530,66 564,62 C598,58 632,88 700,72 L700,55 C632,70 598,42 564,46 C530,50 496,82 466,76 C434,70 405,58 374,66 C342,74 310,102 278,96 C248,90 224,50 184,40 C154,32 126,46 98,96 C65,110 35,126 0,132 Z"
+                      fill="url(#timeline-cta-above)"
+                    />
+                    <path
+                      d="M0,162 C35,154 65,148 98,136 C126,126 154,92 184,86 C224,78 248,118 278,124 C310,130 342,194 374,164 C405,136 434,86 466,92 C496,98 530,66 564,62 C598,58 632,88 700,72"
+                      fill="none"
+                      stroke="#F59E0B"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M98,136 C126,126 154,92 184,86 C224,78 248,118 278,124"
+                      fill="none"
+                      stroke="#10B981"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M374,164 C405,136 434,86 466,92 C496,98 530,66 564,62 C598,58 632,88 700,72"
+                      fill="none"
+                      stroke="#10B981"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+
+                <div className="text-muted-foreground flex justify-between pl-1 text-[11px] tabular-nums">
+                  <span>2019</span>
+                  <span>2020</span>
+                  <span>2021</span>
+                  <span>2022</span>
+                  <span>2023</span>
+                  <span>2024</span>
+                  <span>2025</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>

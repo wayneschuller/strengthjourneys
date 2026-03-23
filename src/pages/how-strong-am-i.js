@@ -817,7 +817,7 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
               percentile={results.total.percentiles?.[activeUniverse]}
               universe={activeUniverse}
               allPercentiles={results.total.percentiles}
-              firstName={session?.user?.name?.split(" ")[0]}
+              firstName={firstName}
             />
           </>
         )}

@@ -372,7 +372,7 @@ function HowStrongAmIPageMain() {
             />
           </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,420px)_1fr] lg:items-start lg:gap-8">
+          <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
             <div className="order-2 lg:order-none">
               <LiftSliders
                 liftWeights={liftWeights}
@@ -383,6 +383,8 @@ function HowStrongAmIPageMain() {
                 authStatus={authStatus}
                 isReturningUserLoading={isReturningUserLoading}
                 prWeights={prWeightsDisplay}
+                results={results}
+                activeUniverse={activeUniverse}
               />
             </div>
 
@@ -402,15 +404,6 @@ function HowStrongAmIPageMain() {
                 <Copy className="h-3.5 w-3.5" />
                 Copy result
               </Button>
-            </div>
-
-            <div className="order-3 lg:order-none">
-              <LiftBreakdown
-                results={results}
-                activeUniverse={activeUniverse}
-                liftWeights={liftWeights}
-                isMetric={isMetric}
-              />
             </div>
           </div>
 
@@ -487,7 +480,7 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights }) {
+function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, results, activeUniverse }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -537,6 +530,12 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
             : null;
           const showMarker = usingUserData && prPercent != null && prPercent >= 0 && prPercent <= 100;
 
+          const liftResult = results?.lifts[key];
+          const percentile = liftResult?.percentiles?.[activeUniverse];
+          const rating = liftResult?.standard
+            ? getStrengthRatingForE1RM(toKg(liftWeights[key], isMetric), liftResult.standard)
+            : null;
+
           return (
             <div key={key} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -549,12 +548,27 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                     {label}
                   </Link>
                 </div>
-                <span className="text-sm font-bold tabular-nums">
-                  {liftWeights[key]}
-                  <span className="ml-0.5 text-xs font-normal text-muted-foreground">
-                    {unit}
+                <div className="flex items-center gap-2">
+                  {rating && (
+                    <Badge
+                      variant={getRatingBadgeVariant(rating)}
+                      className="text-xs"
+                    >
+                      {STRENGTH_LEVEL_EMOJI[rating]} {rating}
+                    </Badge>
+                  )}
+                  <span className="text-sm font-bold tabular-nums">
+                    {liftWeights[key]}
+                    <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                      {unit}
+                    </span>
                   </span>
-                </span>
+                  {percentile != null && (
+                    <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                      {ordinal(percentile)}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="relative">
                 <Slider
@@ -581,6 +595,15 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
           );
         })}
 
+        {results?.hasAllThree && results.total && (
+          <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+            <span className="text-muted-foreground">SBD Total</span>
+            <span className="font-bold tabular-nums">
+              {ordinal(results.total.percentiles?.[activeUniverse])}
+            </span>
+          </div>
+        )}
+
         {showSignInTeaser && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
             <p className="mb-2 text-sm text-muted-foreground">
@@ -600,70 +623,6 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
   );
 }
 
-function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
-  const unit = isMetric ? "kg" : "lb";
-
-  return (
-    <div>
-      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Per-lift — {activeUniverse}
-      </p>
-      <div className="flex flex-col gap-1.5">
-        {LIFTS.map(({ key, label, svg }) => {
-          const liftResult = results.lifts[key];
-          const weight = liftWeights[key];
-          const percentile = liftResult?.percentiles?.[activeUniverse];
-          const rating = liftResult?.standard
-            ? getStrengthRatingForE1RM(toKg(weight, isMetric), liftResult.standard)
-            : null;
-
-          return (
-            <div
-              key={key}
-                className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"
-              >
-              <div className="min-w-0 flex items-center gap-2">
-                <img src={svg} alt="" className="h-5 w-5 shrink-0 dark:invert" aria-hidden />
-                <Link
-                  href={LIFT_INSIGHT_URLS[label]}
-                  className="truncate font-medium underline decoration-dotted underline-offset-2 hover:text-blue-600"
-                >
-                  {label}
-                </Link>
-                <span className="shrink-0 text-muted-foreground">
-                  {weight}
-                  {unit}
-                </span>
-              </div>
-              <div className="ml-2 flex shrink-0 items-center gap-2">
-                {rating && (
-                  <Badge
-                    variant={getRatingBadgeVariant(rating)}
-                    className="hidden text-xs xl:inline-flex"
-                  >
-                    {STRENGTH_LEVEL_EMOJI[rating]} {rating}
-                  </Badge>
-                )}
-                <span className="font-semibold tabular-nums">
-                  {ordinal(percentile)}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-
-        {results.hasAllThree && results.total && (
-          <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-            <span className="text-muted-foreground">SBD Total</span>
-            <span className="font-bold tabular-nums">
-              {ordinal(results.total.percentiles?.[activeUniverse])}
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function StrengthStoryTeaser() {
   return (

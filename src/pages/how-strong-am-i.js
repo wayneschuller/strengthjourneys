@@ -690,9 +690,9 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
   }
 
   const LIFT_META = {
-    squat: { label: "Squat", svg: "/back_squat.svg" },
-    bench: { label: "Bench", svg: "/bench_press.svg" },
-    deadlift: { label: "Deadlift", svg: "/deadlift.svg" },
+    squat: { label: "Squat", svg: "/back_squat.svg", href: "/barbell-squat-insights" },
+    bench: { label: "Bench", svg: "/bench_press.svg", href: "/barbell-bench-press-insights" },
+    deadlift: { label: "Deadlift", svg: "/deadlift.svg", href: "/barbell-deadlift-insights" },
   };
 
   // Compute SBD total in display units
@@ -739,14 +739,12 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
         )}
       </div>
 
-      {/* Per-lift breakdown with all-time vs 12mo comparison */}
-      <div className="flex flex-col gap-2.5">
+      {/* Per-lift E1RM breakdown */}
+      <div className="flex flex-col gap-2">
         {Object.entries(liftStories).map(([key, story]) => {
           const meta = LIFT_META[key];
           if (!meta) return null;
-          const unit = isMetric
-            ? "kg"
-            : story.unitType === "kg" ? "lb" : story.unitType;
+          const unit = isMetric ? "kg" : "lb";
           const allTime = isMetric && story.unitType === "lb"
             ? Math.round(story.allTimeE1RM / 2.2046)
             : !isMetric && story.unitType === "kg"
@@ -759,29 +757,30 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
                 ? Math.round(story.lastYearE1RM * 2.2046)
                 : story.lastYearE1RM
             : null;
-          const diff = lastYear != null ? lastYear - allTime : null;
 
           return (
-            <div key={key} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <img src={meta.svg} alt="" className="h-5 w-5 dark:invert" aria-hidden />
-                <span className="text-sm font-medium">{meta.label}</span>
-                <span className="text-sm font-bold tabular-nums">
-                  {allTime}{unit}
-                  <span className="ml-0.5 text-xs font-normal text-muted-foreground">all-time</span>
+            <div key={key} className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/50">
+              <img src={meta.svg} alt="" className="h-5 w-5 shrink-0 dark:invert" aria-hidden />
+              <Link
+                href={meta.href}
+                className="text-sm font-medium underline decoration-dotted underline-offset-2 hover:text-blue-600"
+              >
+                {meta.label}
+              </Link>
+              <span className="ml-auto flex items-baseline gap-3 tabular-nums">
+                <span className="text-sm">
+                  <span className="font-bold">{allTime}</span>
+                  <span className="ml-0.5 text-xs text-muted-foreground">{unit}</span>
+                  <span className="ml-1 text-xs text-muted-foreground">best</span>
                 </span>
-              </div>
-              {lastYear != null && (
-                <div className="flex items-center gap-1.5 text-sm tabular-nums text-muted-foreground">
-                  <span>{lastYear}{unit}</span>
-                  <span className="text-xs">12mo</span>
-                  {diff != null && diff !== 0 && (
-                    <span className={`text-xs font-semibold ${diff > 0 ? "text-green-600" : "text-amber-600"}`}>
-                      {diff > 0 ? "+" : ""}{diff}
-                    </span>
-                  )}
-                </div>
-              )}
+                {lastYear != null && (
+                  <span className="text-sm text-muted-foreground">
+                    <span className="font-semibold">{lastYear}</span>
+                    <span className="ml-0.5 text-xs">{unit}</span>
+                    <span className="ml-1 text-xs">12mo</span>
+                  </span>
+                )}
+              </span>
             </div>
           );
         })}

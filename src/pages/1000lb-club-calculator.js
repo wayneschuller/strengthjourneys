@@ -896,7 +896,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 {inClub
                   ? `You\u2019re in the 1000lb Club! You\u2019re ${pastLbs} lbs (${toKgF(pastLbs)} kg) past 1000.`
                   : `You\u2019re ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
-                {biggestOpportunity && (
+                {!inClub && biggestOpportunity && (
                   <span className="text-foreground/90">
                     {" "}
                     Biggest opportunity: {biggestOpportunity.lift} is ~

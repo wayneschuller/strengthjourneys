@@ -233,21 +233,20 @@ function HowStrongAmIPageMain() {
     };
   }, [isMetric, usingUserData]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Recent 90-day best E1RM per lift in display units (for slider markers)
+  // Recent 90-day best E1RM per lift — raw kg (for reset) and display units (for markers)
+  const recent90dKgRef = useRef(null);
   const recent90dDisplay = useMemo(() => {
     if (!usingUserData || !parsedData?.length || isDemoMode) return null;
 
     const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
-    const WINDOW = 90;
-    const now = new Date();
-    const cutoffMs = now.getTime() - WINDOW * 86400000;
+    const cutoffDate = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
 
     const bestKg = { squat: 0, bench: 0, deadlift: 0 };
 
     for (const d of parsedData) {
       const k = SBD_TYPES[d.liftType];
       if (!k || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
-      if (new Date(d.date).getTime() < cutoffMs) continue;
+      if (d.date < cutoffDate) continue;
       const wKg = d.unitType === "kg" ? d.weight : d.weight / 2.2046;
       const e1rm = d.reps === 1 ? wKg : estimateE1RM(d.reps, wKg, "Brzycki");
       if (e1rm > bestKg[k]) bestKg[k] = e1rm;
@@ -255,6 +254,13 @@ function HowStrongAmIPageMain() {
 
     const pr = prWeightsKgRef.current;
     if (!pr) return null;
+
+    // Store raw kg for reset handler
+    recent90dKgRef.current = {
+      squat: bestKg.squat > 0 ? bestKg.squat : null,
+      bench: bestKg.bench > 0 ? bestKg.bench : null,
+      deadlift: bestKg.deadlift > 0 ? bestKg.deadlift : null,
+    };
 
     const result = {};
     let hasDistinct = false;
@@ -267,7 +273,7 @@ function HowStrongAmIPageMain() {
     }
 
     return hasDistinct ? result : null;
-  }, [usingUserData, parsedData, isDemoMode, isMetric]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [usingUserData, parsedData, isDemoMode, isMetric]);
 
   // Compute enriched user story data (career span, last-year comparison)
   const userStoryData = useMemo(() => {
@@ -332,6 +338,16 @@ function HowStrongAmIPageMain() {
 
   const handleResetToPRs = () => {
     if (prWeightsKgRef.current) setLiftWeightsKg({ ...prWeightsKgRef.current });
+  };
+
+  const handleResetTo90d = () => {
+    const r90 = recent90dKgRef.current;
+    if (!r90) return;
+    setLiftWeightsKg((prev) => ({
+      squat: r90.squat ?? prev.squat,
+      bench: r90.bench ?? prev.bench,
+      deadlift: r90.deadlift ?? prev.deadlift,
+    }));
   };
 
   const handleUnitSwitch = (nextIsMetric) => {
@@ -516,6 +532,7 @@ function HowStrongAmIPageMain() {
                 liftWeights={liftWeights}
                 onChange={handleLiftChange}
                 onReset={handleResetToPRs}
+                onResetTo90d={handleResetTo90d}
                 isMetric={isMetric}
                 usingUserData={usingUserData}
                 authStatus={authStatus}
@@ -634,7 +651,7 @@ function getWeakestLiftHint(squat, bench, deadlift) {
   return { lift: LIFT_LABELS_SHORT[worst.key], gap: Math.round(worst.gap) };
 }
 
-function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, recent90d, results, activeUniverse, userStoryData, chartPercentiles, percentileTimeline }) {
+function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, recent90d, results, activeUniverse, userStoryData, chartPercentiles, percentileTimeline }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -648,6 +665,10 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
     ({ key }) => prWeights[key] != null && liftWeights[key] !== prWeights[key],
   );
 
+  const hasMovedFrom90d = usingUserData && recent90d && LIFTS.some(
+    ({ key }) => recent90d[key] != null && liftWeights[key] !== recent90d[key],
+  );
+
   const biggestOpportunity = usingUserData
     ? getWeakestLiftHint(liftWeights.squat, liftWeights.bench, liftWeights.deadlift)
     : null;
@@ -659,7 +680,7 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
           <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Your Lifts
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {hasMovedFromPR && (
               <Button
                 variant="ghost"
@@ -671,7 +692,18 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                 Reset to PRs
               </Button>
             )}
-            {usingUserData && !hasMovedFromPR && (
+            {hasMovedFrom90d && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+                onClick={onResetTo90d}
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset to 90-day bests
+              </Button>
+            )}
+            {usingUserData && !hasMovedFromPR && !hasMovedFrom90d && (
               <Badge variant="outline" className="gap-1 text-xs font-normal">
                 <Sparkles className="h-3 w-3" />
                 From your log
@@ -683,10 +715,15 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
       <CardContent className="flex flex-col gap-5">
         {LIFTS.map(({ key, label, svg }) => {
           const prWeight = prWeights?.[key];
+          const r90Weight = recent90d?.[key];
           const prPercent = prWeight != null
             ? ((prWeight - min) / (max - min)) * 100
             : null;
-          const showMarker = usingUserData && prPercent != null && prPercent >= 0 && prPercent <= 100;
+          const r90Percent = r90Weight != null
+            ? ((r90Weight - min) / (max - min)) * 100
+            : null;
+          const showPrMarker = usingUserData && prPercent != null && prPercent >= 0 && prPercent <= 100;
+          const showR90Marker = usingUserData && r90Percent != null && r90Percent >= 0 && r90Percent <= 100 && r90Weight !== prWeight;
 
           const liftResult = results?.lifts[key];
           const rating = liftResult?.standard
@@ -726,9 +763,11 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                 <Slider
                   value={[liftWeights[key]]}
                   onValueChange={([value]) => {
-                    // Snap to PR when within 1 step
+                    // Snap to PR or 90d marker when within 1 step
                     if (prWeight != null && Math.abs(value - prWeight) <= step) {
                       onChange(key, prWeight);
+                    } else if (r90Weight != null && Math.abs(value - r90Weight) <= step) {
+                      onChange(key, r90Weight);
                     } else {
                       onChange(key, value);
                     }
@@ -738,7 +777,7 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                   step={step}
                   aria-label={`${label} 1RM`}
                 />
-                {showMarker && (
+                {showPrMarker && (
                   <div
                     className="pointer-events-none absolute bottom-0 flex flex-col items-center"
                     style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
@@ -746,6 +785,17 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                     <div className="h-3 w-px bg-primary/40" />
                     <span className="text-[9px] font-medium leading-none text-primary/60">
                       PR
+                    </span>
+                  </div>
+                )}
+                {showR90Marker && (
+                  <div
+                    className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+                    style={{ left: `${r90Percent}%`, transform: "translateX(-50%)" }}
+                  >
+                    <div className="h-3 w-px bg-amber-500/40" />
+                    <span className="text-[9px] font-medium leading-none text-amber-600/60">
+                      90d
                     </span>
                   </div>
                 )}

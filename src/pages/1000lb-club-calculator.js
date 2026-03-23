@@ -76,6 +76,8 @@ const LIFT_GRAPHICS = {
   Deadlift: "/deadlift.svg",
 };
 const TARGET_TOTAL = 1000;
+const roundTo5 = (v) => Math.round(v / 5) * 5;
+const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
 
 const FAQ_ITEMS = [
   {
@@ -291,6 +293,46 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
 const toKg = (lbs) => (lbs * 0.453592).toFixed(1);
 const KG_PER_LB = 0.453592;
 
+function SliderWithMarkers({ value, prVal, r90Val, onValueChange, onValueCommit, className }) {
+  const MAX = 700;
+  const showPr = prVal != null && prVal > 0 && prVal <= MAX;
+  const showR90 = r90Val != null && r90Val > 0 && r90Val <= MAX && r90Val !== prVal;
+  const prPercent = showPr ? (prVal / MAX) * 100 : 0;
+  const r90Percent = showR90 ? (r90Val / MAX) * 100 : 0;
+
+  return (
+    <div className="relative pb-6">
+      <Slider
+        value={[value]}
+        min={0}
+        max={MAX}
+        step={5}
+        onValueChange={onValueChange}
+        onValueCommit={onValueCommit}
+        className={`mt-2 ${className}`}
+      />
+      {showPr && (
+        <div
+          className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+          style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
+        >
+          <div className="bg-primary/40 h-3 w-px" />
+          <span className="text-primary/60 text-[9px] leading-none font-medium">PR</span>
+        </div>
+      )}
+      {showR90 && (
+        <div
+          className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+          style={{ left: `${r90Percent}%`, transform: "translateX(-50%)" }}
+        >
+          <div className="h-3 w-px bg-amber-500/40" />
+          <span className="text-[9px] leading-none font-medium text-amber-600/60">90d</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  * Inner client component for the 1000lb Club Calculator page. Provides squat/bench/deadlift sliders,
  * a donut progress chart, a confetti celebration when 1000lb is reached, and a shareable result.
@@ -357,9 +399,6 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     const toLbs = (weight, unitType) =>
       unitType === "lb" ? weight : weight * 2.2046;
 
-    const roundTo5 = (v) => Math.round(v / 5) * 5;
-    const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
-
     const prSquat = sq.bestE1RMWeight
       ? clampLb(toLbs(sq.bestE1RMWeight, sq.unitType))
       : null;
@@ -398,18 +437,16 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       "Bench Press": "bench",
       Deadlift: "deadlift",
     };
-    const WINDOW = 90;
-    const now = new Date();
-    const cutoffMs = now.getTime() - WINDOW * 86400000;
-    const roundTo5 = (v) => Math.round(v / 5) * 5;
-    const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
+    const cutoffDate = new Date(
+      Date.now() - 90 * 86400000,
+    ).toISOString().slice(0, 10);
 
     const best = { squat: 0, bench: 0, deadlift: 0 };
 
     for (const d of parsedData) {
       const key = SBD_TYPES[d.liftType];
       if (!key || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
-      if (new Date(d.date).getTime() < cutoffMs) continue;
+      if (d.date < cutoffDate) continue;
       const weightLb = d.unitType === "lb" ? d.weight : d.weight * 2.2046;
       const e1rm =
         d.reps === 1 ? weightLb : estimateE1RM(d.reps, weightLb, e1rmFormula);
@@ -480,22 +517,26 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     };
     const WINDOW_DAYS = 90;
 
-    const sbdEntries = parsedData
-      .filter(
-        (d) => SBD_TYPES[d.liftType] && !d.isGoal && d.reps > 0 && d.weight > 0,
-      )
-      .map((d) => ({
-        date: d.date,
-        key: SBD_TYPES[d.liftType],
+    // Pre-split entries by lift for O(samples * entries_per_lift) instead of O(samples * all_entries * 3)
+    const byLift = { squat: [], bench: [], deadlift: [] };
+    for (const d of parsedData) {
+      const key = SBD_TYPES[d.liftType];
+      if (!key || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
+      byLift[key].push({
+        ms: new Date(d.date).getTime(),
         weightLb: d.unitType === "lb" ? d.weight : d.weight * 2.2046,
         reps: d.reps,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+      });
+    }
+    for (const key of ["squat", "bench", "deadlift"]) {
+      byLift[key].sort((a, b) => a.ms - b.ms);
+    }
 
-    if (sbdEntries.length < 2) return null;
+    const allEntries = [...byLift.squat, ...byLift.bench, ...byLift.deadlift];
+    if (allEntries.length < 2) return null;
 
-    const firstDate = new Date(sbdEntries[0].date);
-    const lastDate = new Date(sbdEntries[sbdEntries.length - 1].date);
+    const firstDate = new Date(Math.min(...allEntries.map((e) => e.ms)));
+    const lastDate = new Date(Math.max(...allEntries.map((e) => e.ms)));
     const spanDays = (lastDate - firstDate) / 86400000;
 
     let intervalDays;
@@ -526,10 +567,9 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       const bestE1rm = { squat: 0, bench: 0, deadlift: 0 };
 
       for (const key of ["squat", "bench", "deadlift"]) {
-        for (const entry of sbdEntries) {
-          const entryMs = new Date(entry.date).getTime();
-          if (entryMs > sampleMs) break;
-          if (entryMs < cutoff || entry.key !== key) continue;
+        for (const entry of byLift[key]) {
+          if (entry.ms > sampleMs) break;
+          if (entry.ms < cutoff) continue;
           const e1rm =
             entry.reps === 1
               ? entry.weightLb
@@ -788,59 +828,14 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       </Link>
                       : {value} lbs ({toKgF(value)} kg)
                     </div>
-                    {(() => {
-                      const prVal = prWeightsLbRef.current?.[key];
-                      const r90Val = recent90dLb?.[key];
-                      const showPr = prVal != null && prVal > 0 && prVal <= 700;
-                      const showR90 =
-                        r90Val != null &&
-                        r90Val > 0 &&
-                        r90Val <= 700 &&
-                        r90Val !== prVal;
-                      const prPercent = showPr ? (prVal / 700) * 100 : 0;
-                      const r90Percent = showR90 ? (r90Val / 700) * 100 : 0;
-                      return (
-                        <div className="relative pb-6">
-                          <Slider
-                            value={[value]}
-                            min={0}
-                            max={700}
-                            step={5}
-                            onValueChange={handleLiftValueChange(key, set)}
-                            onValueCommit={handleLiftValueCommit}
-                            className={`mt-2 ${prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}`}
-                          />
-                          {showPr && (
-                            <div
-                              className="pointer-events-none absolute bottom-0 flex flex-col items-center"
-                              style={{
-                                left: `${prPercent}%`,
-                                transform: "translateX(-50%)",
-                              }}
-                            >
-                              <div className="bg-primary/40 h-3 w-px" />
-                              <span className="text-primary/60 text-[9px] leading-none font-medium">
-                                PR
-                              </span>
-                            </div>
-                          )}
-                          {showR90 && (
-                            <div
-                              className="pointer-events-none absolute bottom-0 flex flex-col items-center"
-                              style={{
-                                left: `${r90Percent}%`,
-                                transform: "translateX(-50%)",
-                              }}
-                            >
-                              <div className="h-3 w-px bg-amber-500/40" />
-                              <span className="text-[9px] leading-none font-medium text-amber-600/60">
-                                90d
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
+                    <SliderWithMarkers
+                      value={value}
+                      prVal={prWeightsLbRef.current?.[key]}
+                      r90Val={recent90dLb?.[key]}
+                      onValueChange={handleLiftValueChange(key, set)}
+                      onValueCommit={handleLiftValueCommit}
+                      className={prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}
+                    />
                   </div>
                 </motion.div>
               ))}
@@ -1073,6 +1068,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
  * in the centre and a green color scheme once the target is reached.
  * @param {Object} props
  * @param {number} props.total - Combined squat + bench + deadlift total in pounds.
+/**
  * @param {number} [props.target=1000] - Target total in pounds (defaults to 1000).
  */
 function ThousandDonut({

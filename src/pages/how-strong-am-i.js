@@ -1,16 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useReadLocalStorage } from "usehooks-ts";
 import { NextSeo } from "next-seo";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ReferenceLine,
+} from "recharts";
 import {
   Copy,
   CircleDashed,
   Calculator,
   BicepsFlexed,
   Trophy,
-  LineChart,
+  LineChart as LineChartIcon,
   Anvil,
   Sparkles,
+  RotateCcw,
 } from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
@@ -42,7 +53,9 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { findBestE1RM } from "@/lib/processing-utils";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   computeStrengthResults,
   UNIVERSES,
@@ -57,19 +70,19 @@ const LIFTS = [
   {
     key: "squat",
     label: "Back Squat",
-    emoji: "🏋️",
+    svg: "/back_squat.svg",
     standardKey: "Back Squat",
   },
   {
     key: "bench",
     label: "Bench Press",
-    emoji: "💪",
+    svg: "/bench_press.svg",
     standardKey: "Bench Press",
   },
   {
     key: "deadlift",
     label: "Deadlift",
-    emoji: "⛓️",
+    svg: "/deadlift.svg",
     standardKey: "Deadlift",
   },
 ];
@@ -109,7 +122,7 @@ const NEXT_TOOL_LINKS = [
     href: "/visualizer",
     title: "Strength Visualizer",
     description: "Chart each lift over time and spot long-term trends.",
-    IconComponent: LineChart,
+    IconComponent: LineChartIcon,
   },
 ];
 
@@ -150,12 +163,13 @@ export default function HowStrongAmIPage({ relatedArticles }) {
 function HowStrongAmIPageMain() {
   const { age, sex, bodyWeight, isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
-  const { status: authStatus } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     parsedData,
     isReturningUserLoading,
+    isDemoMode,
   } = useUserLiftingData();
 
   const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
@@ -167,10 +181,11 @@ function HowStrongAmIPageMain() {
   // Track whether we've auto-populated from user data
   const [usingUserData, setUsingUserData] = useState(false);
   const hasAutoPopulatedRef = useRef(false);
+  const prWeightsKgRef = useRef(null);
 
-  // Auto-populate sliders from user's actual best E1RMs
+  // Auto-populate sliders from user's actual best E1RMs (skip demo data)
   useEffect(() => {
-    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps) return;
+    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps || isDemoMode) return;
 
     const squat = findBestE1RM("Back Squat", topLiftsByTypeAndReps, "Brzycki");
     const bench = findBestE1RM("Bench Press", topLiftsByTypeAndReps, "Brzycki");
@@ -184,7 +199,7 @@ function HowStrongAmIPageMain() {
     const toKgFromUnit = (weight, unitType) =>
       unitType === "kg" ? weight : weight / 2.2046;
 
-    setLiftWeightsKg({
+    const weights = {
       squat: squat.bestE1RMWeight
         ? toKgFromUnit(squat.bestE1RMWeight, squat.unitType)
         : toKg(225, false),
@@ -194,9 +209,71 @@ function HowStrongAmIPageMain() {
       deadlift: deadlift.bestE1RMWeight
         ? toKgFromUnit(deadlift.bestE1RMWeight, deadlift.unitType)
         : toKg(265, false),
-    });
+    };
+
+    // Remember original PR positions for marker labels
+    prWeightsKgRef.current = {
+      squat: squat.bestE1RMWeight ? toKgFromUnit(squat.bestE1RMWeight, squat.unitType) : null,
+      bench: bench.bestE1RMWeight ? toKgFromUnit(bench.bestE1RMWeight, bench.unitType) : null,
+      deadlift: deadlift.bestE1RMWeight ? toKgFromUnit(deadlift.bestE1RMWeight, deadlift.unitType) : null,
+    };
+
+    setLiftWeightsKg(weights);
     setUsingUserData(true);
-  }, [topLiftsByTypeAndReps]);
+  }, [topLiftsByTypeAndReps, isDemoMode]);
+
+  // PR weights in display units for slider markers
+  const prWeightsDisplay = useMemo(() => {
+    const raw = prWeightsKgRef.current;
+    if (!raw) return null;
+    return {
+      squat: raw.squat != null ? normalizeLiftWeight(convertWeight(raw.squat, true, isMetric), isMetric) : null,
+      bench: raw.bench != null ? normalizeLiftWeight(convertWeight(raw.bench, true, isMetric), isMetric) : null,
+      deadlift: raw.deadlift != null ? normalizeLiftWeight(convertWeight(raw.deadlift, true, isMetric), isMetric) : null,
+    };
+  }, [isMetric, usingUserData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Recent 90-day best E1RM per lift — raw kg (for reset) and display units (for markers)
+  const recent90dKgRef = useRef(null);
+  const recent90dDisplay = useMemo(() => {
+    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+
+    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
+    const cutoffDate = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+
+    const bestKg = { squat: 0, bench: 0, deadlift: 0 };
+
+    for (const d of parsedData) {
+      const k = SBD_TYPES[d.liftType];
+      if (!k || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
+      if (d.date < cutoffDate) continue;
+      const wKg = d.unitType === "kg" ? d.weight : d.weight / 2.2046;
+      const e1rm = d.reps === 1 ? wKg : estimateE1RM(d.reps, wKg, "Brzycki");
+      if (e1rm > bestKg[k]) bestKg[k] = e1rm;
+    }
+
+    const pr = prWeightsKgRef.current;
+    if (!pr) return null;
+
+    // Store raw kg for reset handler
+    recent90dKgRef.current = {
+      squat: bestKg.squat > 0 ? bestKg.squat : null,
+      bench: bestKg.bench > 0 ? bestKg.bench : null,
+      deadlift: bestKg.deadlift > 0 ? bestKg.deadlift : null,
+    };
+
+    const result = {};
+    let hasDistinct = false;
+    for (const k of ["squat", "bench", "deadlift"]) {
+      if (bestKg[k] <= 0) { result[k] = null; continue; }
+      const displayVal = normalizeLiftWeight(convertWeight(bestKg[k], true, isMetric), isMetric);
+      const prDisplay = pr[k] != null ? normalizeLiftWeight(convertWeight(pr[k], true, isMetric), isMetric) : null;
+      if (displayVal !== prDisplay) hasDistinct = true;
+      result[k] = displayVal;
+    }
+
+    return hasDistinct ? result : null;
+  }, [usingUserData, parsedData, isDemoMode, isMetric]);
 
   // Compute enriched user story data (career span, last-year comparison)
   const userStoryData = useMemo(() => {
@@ -259,6 +336,20 @@ function HowStrongAmIPageMain() {
   const handleLiftChange = (key, value) =>
     setLiftWeightsKg((prev) => ({ ...prev, [key]: toKg(value, isMetric) }));
 
+  const handleResetToPRs = () => {
+    if (prWeightsKgRef.current) setLiftWeightsKg({ ...prWeightsKgRef.current });
+  };
+
+  const handleResetTo90d = () => {
+    const r90 = recent90dKgRef.current;
+    if (!r90) return;
+    setLiftWeightsKg((prev) => ({
+      squat: r90.squat ?? prev.squat,
+      bench: r90.bench ?? prev.bench,
+      deadlift: r90.deadlift ?? prev.deadlift,
+    }));
+  };
+
   const handleUnitSwitch = (nextIsMetric) => {
     toggleIsMetric(nextIsMetric);
   };
@@ -286,6 +377,95 @@ function HowStrongAmIPageMain() {
 
     return out;
   }, [results]);
+
+  // User's preferred E1RM formula from localStorage
+  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false });
+  const e1rmFormula = storedFormula ?? "Brzycki";
+
+  // Compute percentile timeline from training history
+  const percentileTimeline = useMemo(() => {
+    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+
+    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
+    const WINDOW_DAYS = 90;
+
+    // Filter to SBD lifts, convert weights to kg, sort by date
+    const sbdEntries = parsedData
+      .filter((d) => SBD_TYPES[d.liftType] && !d.isGoal && d.reps > 0 && d.weight > 0)
+      .map((d) => ({
+        date: d.date,
+        key: SBD_TYPES[d.liftType],
+        weightKg: d.unitType === "kg" ? d.weight : d.weight / 2.2046,
+        reps: d.reps,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (sbdEntries.length < 2) return null;
+
+    const firstDate = new Date(sbdEntries[0].date);
+    const lastDate = new Date(sbdEntries[sbdEntries.length - 1].date);
+    const spanDays = (lastDate - firstDate) / 86400000;
+
+    // Decide sample interval based on career length
+    let intervalDays;
+    if (spanDays <= 180) intervalDays = 7;        // weekly for < 6mo
+    else if (spanDays <= 730) intervalDays = 14;   // biweekly for < 2yr
+    else intervalDays = 30;                         // monthly for 2yr+
+
+    // Generate sample dates
+    const samples = [];
+    const cursor = new Date(firstDate);
+    // Start first sample at least 90 days in so we have data to look back on
+    cursor.setDate(cursor.getDate() + WINDOW_DAYS);
+    while (cursor <= lastDate) {
+      samples.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + intervalDays);
+    }
+    // Always include the final date if not already close
+    if (samples.length === 0 || (lastDate - samples[samples.length - 1]) / 86400000 > 7) {
+      samples.push(new Date(lastDate));
+    }
+
+    if (samples.length < 2) return null;
+
+    const bio = { age, sex, bodyWeightKg };
+    const points = [];
+
+    for (const sampleDate of samples) {
+      const sampleMs = sampleDate.getTime();
+      const cutoff = sampleMs - WINDOW_DAYS * 86400000;
+
+      const bestE1rm = { squat: null, bench: null, deadlift: null };
+
+      for (const key of ["squat", "bench", "deadlift"]) {
+        let best = 0;
+        for (const entry of sbdEntries) {
+          const entryMs = new Date(entry.date).getTime();
+          if (entryMs > sampleMs) break;
+          if (entryMs < cutoff || entry.key !== key) continue;
+          const e1rm = entry.reps === 1
+            ? entry.weightKg
+            : estimateE1RM(entry.reps, entry.weightKg, e1rmFormula);
+          if (e1rm > best) best = e1rm;
+        }
+        if (best > 0) bestE1rm[key] = best;
+      }
+
+      // Need all 3 lifts for SBD total percentile
+      if (bestE1rm.squat == null || bestE1rm.bench == null || bestE1rm.deadlift == null) continue;
+
+      const result = computeStrengthResults(bio, bestE1rm);
+      const allPcts = result.total?.percentiles;
+      if (!allPcts?.["General Population"]) continue;
+
+      points.push({
+        date: sampleDate.toISOString().slice(0, 10),
+        ...allPcts,
+      });
+    }
+
+    return points.length >= 2 ? points : null;
+  }, [usingUserData, parsedData, isDemoMode, age, sex, bodyWeightKg, e1rmFormula]);
 
   const handleShare = () => {
     const percentile = chartPercentiles[activeUniverse];
@@ -346,25 +526,16 @@ function HowStrongAmIPageMain() {
             />
           </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,420px)_1fr] lg:items-start lg:gap-8">
-            <div className="order-2 lg:order-none">
-              <LiftSliders
-                liftWeights={liftWeights}
-                onChange={handleLiftChange}
-                isMetric={isMetric}
-                usingUserData={usingUserData}
-                authStatus={authStatus}
-                isReturningUserLoading={isReturningUserLoading}
-              />
-            </div>
-
-            <div className="order-1 flex flex-col items-center gap-4 lg:order-none">
-              <StrengthCirclesChart
-                percentiles={chartPercentiles}
-                activeUniverse={activeUniverse}
-                onUniverseChange={setSelectedUniverse}
-                onUniverseHoverChange={setHoveredUniverse}
-              />
+          <div className="mt-5 flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
+            <div className="flex w-full max-w-sm flex-col items-center gap-4 lg:order-1 lg:flex-1 lg:max-w-none">
+              <div className="w-full max-w-lg xl:max-w-xl">
+                <StrengthCirclesChart
+                  percentiles={chartPercentiles}
+                  activeUniverse={activeUniverse}
+                  onUniverseChange={setSelectedUniverse}
+                  onUniverseHoverChange={setHoveredUniverse}
+                />
+              </div>
               <Button
                 variant="outline"
                 size="sm"
@@ -376,25 +547,27 @@ function HowStrongAmIPageMain() {
               </Button>
             </div>
 
-            <div className="order-3 lg:order-none">
-              <LiftBreakdown
+            <div className="w-full max-w-md shrink-0 lg:order-2 lg:max-w-md xl:max-w-lg">
+              <LiftSliders
+                liftWeights={liftWeights}
+                onChange={handleLiftChange}
+                onReset={handleResetToPRs}
+                onResetTo90d={handleResetTo90d}
+                isMetric={isMetric}
+                usingUserData={usingUserData}
+                authStatus={authStatus}
+                isReturningUserLoading={isReturningUserLoading}
+                prWeights={prWeightsDisplay}
+                recent90d={recent90dDisplay}
                 results={results}
                 activeUniverse={activeUniverse}
-                liftWeights={liftWeights}
-                isMetric={isMetric}
+                userStoryData={authStatus === "authenticated" ? userStoryData : null}
+                chartPercentiles={chartPercentiles}
+                percentileTimeline={percentileTimeline}
+                firstName={session?.user?.name?.split(" ")[0]}
               />
             </div>
           </div>
-
-          {authStatus === "authenticated" && userStoryData ? (
-            <YourStrengthStory
-              storyData={userStoryData}
-              chartPercentiles={chartPercentiles}
-              isMetric={isMetric}
-            />
-          ) : authStatus === "unauthenticated" && !isReturningUserLoading ? (
-            <StrengthStoryTeaser />
-          ) : null}
 
           <section className="mx-auto mt-10 max-w-2xl lg:max-w-4xl">
             <ExplainerSection />
@@ -459,7 +632,27 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatus, isReturningUserLoading }) {
+// Ideal SBD proportions (% of total) — consensus from powerlifting averages.
+const IDEAL_SBD_RATIO = { squat: 0.36, bench: 0.24, deadlift: 0.40 };
+const LIFT_LABELS_SHORT = { squat: "Squat", bench: "Bench", deadlift: "Deadlift" };
+
+function getWeakestLiftHint(squat, bench, deadlift) {
+  const total = squat + bench + deadlift;
+  if (total === 0) return null;
+  const gaps = {
+    squat: IDEAL_SBD_RATIO.squat * total - squat,
+    bench: IDEAL_SBD_RATIO.bench * total - bench,
+    deadlift: IDEAL_SBD_RATIO.deadlift * total - deadlift,
+  };
+  const worst = Object.entries(gaps).reduce(
+    (best, [k, v]) => (v > best.gap ? { key: k, gap: v } : best),
+    { key: null, gap: 0 },
+  );
+  if (!worst.key || worst.gap < 5) return null;
+  return { lift: LIFT_LABELS_SHORT[worst.key], gap: Math.round(worst.gap) };
+}
+
+function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, recent90d, results, activeUniverse, userStoryData, chartPercentiles, percentileTimeline, firstName }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -468,6 +661,19 @@ function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatu
   const showSignInTeaser =
     authStatus === "unauthenticated" && !isReturningUserLoading;
 
+  // Show reset button when any slider has moved away from its PR value
+  const hasMovedFromPR = usingUserData && prWeights && LIFTS.some(
+    ({ key }) => prWeights[key] != null && liftWeights[key] !== prWeights[key],
+  );
+
+  const hasMovedFrom90d = usingUserData && recent90d && LIFTS.some(
+    ({ key }) => recent90d[key] != null && liftWeights[key] !== recent90d[key],
+  );
+
+  const biggestOpportunity = usingUserData
+    ? getWeakestLiftHint(liftWeights.squat, liftWeights.bench, liftWeights.deadlift)
+    : null;
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -475,49 +681,166 @@ function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatu
           <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Your Lifts
           </CardTitle>
-          {usingUserData && (
-            <Badge variant="outline" className="gap-1 text-xs font-normal">
-              <Sparkles className="h-3 w-3" />
-              From your log
-            </Badge>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {hasMovedFromPR && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+                onClick={onReset}
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset to PRs
+              </Button>
+            )}
+            {hasMovedFrom90d && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+                onClick={onResetTo90d}
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset to 90-day bests
+              </Button>
+            )}
+            {usingUserData && !hasMovedFromPR && !hasMovedFrom90d && (
+              <Badge variant="outline" className="gap-1 text-xs font-normal">
+                <Sparkles className="h-3 w-3" />
+                From your log
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        {LIFTS.map(({ key, label, emoji }) => (
-          <div key={key} className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-sm font-medium">
-                <span>{emoji}</span>
-                <Link
-                  href={LIFT_INSIGHT_URLS[label]}
-                  className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
-                >
-                  {label}
-                </Link>
+        {LIFTS.map(({ key, label, svg }) => {
+          const prWeight = prWeights?.[key];
+          const r90Weight = recent90d?.[key];
+          const prPercent = prWeight != null
+            ? ((prWeight - min) / (max - min)) * 100
+            : null;
+          const r90Percent = r90Weight != null
+            ? ((r90Weight - min) / (max - min)) * 100
+            : null;
+          const showPrMarker = usingUserData && prPercent != null && prPercent >= 0 && prPercent <= 100;
+          const showR90Marker = usingUserData && r90Percent != null && r90Percent >= 0 && r90Percent <= 100 && r90Weight !== prWeight;
+
+          const liftResult = results?.lifts[key];
+          const rating = liftResult?.standard
+            ? getStrengthRatingForE1RM(toKg(liftWeights[key], isMetric), liftResult.standard)
+            : null;
+
+          return (
+            <div key={key} className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-sm font-medium">
+                  <img src={svg} alt="" className="h-10 w-10 dark:invert" aria-hidden />
+                  <Link
+                    href={LIFT_INSIGHT_URLS[label]}
+                    className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                  >
+                    {label}
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2">
+                  {rating && (
+                    <Badge
+                      variant={getRatingBadgeVariant(rating)}
+                      className="text-xs"
+                    >
+                      {STRENGTH_LEVEL_EMOJI[rating]} {rating}
+                    </Badge>
+                  )}
+                  <span className="text-sm font-bold tabular-nums">
+                    {liftWeights[key]}
+                    <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                      {unit}
+                    </span>
+                  </span>
+                </div>
               </div>
-              <span className="text-sm font-bold tabular-nums">
-                {liftWeights[key]}
-                <span className="ml-0.5 text-xs font-normal text-muted-foreground">
-                  {unit}
-                </span>
+              <div className="relative pb-6">
+                <Slider
+                  value={[liftWeights[key]]}
+                  onValueChange={([value]) => {
+                    // Snap to PR or 90d marker when within 1 step
+                    if (prWeight != null && Math.abs(value - prWeight) <= step) {
+                      onChange(key, prWeight);
+                    } else if (r90Weight != null && Math.abs(value - r90Weight) <= step) {
+                      onChange(key, r90Weight);
+                    } else {
+                      onChange(key, value);
+                    }
+                  }}
+                  min={min}
+                  max={max}
+                  step={step}
+                  aria-label={`${label} 1RM`}
+                />
+                {showPrMarker && (
+                  <div
+                    className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+                    style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
+                  >
+                    <div className="h-3 w-px bg-primary/40" />
+                    <span className="text-[9px] font-medium leading-none text-primary/60">
+                      PR
+                    </span>
+                  </div>
+                )}
+                {showR90Marker && (
+                  <div
+                    className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+                    style={{ left: `${r90Percent}%`, transform: "translateX(-50%)" }}
+                  >
+                    <div className="h-3 w-px bg-amber-500/40" />
+                    <span className="text-[9px] font-medium leading-none text-amber-600/60">
+                      90d
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {results?.hasAllThree && results.total && (
+          <>
+            <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+              <span className="text-muted-foreground">SBD Total</span>
+              <span className="font-bold tabular-nums">
+                {ordinal(results.total.percentiles?.[activeUniverse])}
               </span>
             </div>
-            <Slider
-              value={[liftWeights[key]]}
-              onValueChange={([value]) => onChange(key, value)}
-              min={min}
-              max={max}
-              step={step}
-              aria-label={`${label} 1RM`}
+            <PercentileConclusion
+              percentile={results.total.percentiles?.[activeUniverse]}
+              universe={activeUniverse}
+              allPercentiles={results.total.percentiles}
+              firstName={firstName}
             />
-          </div>
-        ))}
+          </>
+        )}
 
+        {/* Strength Story — inline for authenticated users */}
+        {userStoryData && (
+          <StrengthStorySummary
+            storyData={userStoryData}
+            chartPercentiles={chartPercentiles}
+            isMetric={isMetric}
+            percentileTimeline={percentileTimeline}
+            activeUniverse={activeUniverse}
+            firstName={firstName}
+          />
+        )}
+
+        {/* Sign-in teaser for unauthenticated users */}
         {showSignInTeaser && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <div className="rounded-lg border border-dashed p-3">
+            <p className="mb-2 text-sm font-medium">Your Strength Story</p>
             <p className="mb-2 text-sm text-muted-foreground">
-              Sign in to auto-fill these from your actual training PRs.
+              Sign in to auto-fill from your training PRs, see career stats,
+              and track how your strength has changed over time.
             </p>
             <GoogleSignInButton
               className="flex items-center gap-2"
@@ -533,259 +856,239 @@ function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatu
   );
 }
 
-function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
-  const unit = isMetric ? "kg" : "lb";
+
+function PercentileConclusion({ percentile, universe, allPercentiles, firstName }) {
+  if (percentile == null) return null;
+
+  const name = firstName || "You";
+  const namePos = firstName ? `${firstName}'s` : "Your";
+  const u = universe.toLowerCase();
+
+  let headline;
+  let detail;
+
+  if (percentile >= 95) {
+    headline = `Elite territory${firstName ? `, ${firstName}` : ""}.`;
+    detail = `Stronger than ${percentile}% of ${u}. Very few people reach this level \u2014 years of serious, consistent training got ${name.toLowerCase() === "you" ? "you" : firstName} here.`;
+  } else if (percentile >= 85) {
+    headline = "Seriously strong.";
+    detail = `${name}'${name.endsWith("s") ? "" : "s"} stronger than ${percentile}% of ${u}. Well past the point where people notice \u2014 this is dedicated-lifter strength.`;
+  } else if (percentile >= 70) {
+    headline = "Above average, clearly trained.";
+    detail = `Stronger than ${percentile}% of ${u}. ${namePos} training is paying off \u2014 most people who lift don\u2019t reach this range.`;
+  } else if (percentile >= 50) {
+    headline = "Solid foundation.";
+    detail = `Stronger than ${percentile}% of ${u}. Right in the middle of the pack, with real room to grow. Consistency will move this number.`;
+  } else if (percentile >= 30) {
+    headline = "Building momentum.";
+    detail = `Stronger than ${percentile}% of ${u}. Everyone starts somewhere, and the biggest jumps happen in this range. Keep showing up.`;
+  } else {
+    headline = "Early days \u2014 big gains ahead.";
+    detail = `Stronger than ${percentile}% of ${u}. The good news? Beginners progress faster than anyone. A few months of consistent work will change this dramatically.`;
+  }
+
+  // Add cross-universe context when viewing a universe other than the one shown
+  const extras = [];
+  if (allPercentiles) {
+    if (universe !== "General Population" && allPercentiles["General Population"] != null) {
+      extras.push(`${ordinal(allPercentiles["General Population"])} percentile in the general population`);
+    }
+    if (universe !== "Barbell Lifters" && allPercentiles["Barbell Lifters"] != null) {
+      extras.push(`${ordinal(allPercentiles["Barbell Lifters"])} among barbell lifters`);
+    }
+  }
 
   return (
-    <div>
-      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Per-lift — {activeUniverse}
+    <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+      <p className="text-sm font-semibold">{headline}</p>
+      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+        {detail}
+        {extras.length > 0 && ` ${extras.join(", ")}.`}
       </p>
-      <div className="flex flex-col gap-1.5">
-        {LIFTS.map(({ key, label, emoji }) => {
-          const liftResult = results.lifts[key];
-          const weight = liftWeights[key];
-          const percentile = liftResult?.percentiles?.[activeUniverse];
-          const rating = liftResult?.standard
-            ? getStrengthRatingForE1RM(toKg(weight, isMetric), liftResult.standard)
-            : null;
-
-          return (
-            <div
-              key={key}
-                className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"
-              >
-              <div className="min-w-0 flex items-center gap-2">
-                <span className="shrink-0">{emoji}</span>
-                <Link
-                  href={LIFT_INSIGHT_URLS[label]}
-                  className="truncate font-medium underline decoration-dotted underline-offset-2 hover:text-blue-600"
-                >
-                  {label}
-                </Link>
-                <span className="shrink-0 text-muted-foreground">
-                  {weight}
-                  {unit}
-                </span>
-              </div>
-              <div className="ml-2 flex shrink-0 items-center gap-2">
-                {rating && (
-                  <Badge
-                    variant={getRatingBadgeVariant(rating)}
-                    className="hidden text-xs xl:inline-flex"
-                  >
-                    {STRENGTH_LEVEL_EMOJI[rating]} {rating}
-                  </Badge>
-                )}
-                <span className="font-semibold tabular-nums">
-                  {ordinal(percentile)}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-
-        {results.hasAllThree && results.total && (
-          <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-            <span className="text-muted-foreground">SBD Total</span>
-            <span className="font-bold tabular-nums">
-              {ordinal(results.total.percentiles?.[activeUniverse])}
-            </span>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
 
-function StrengthStoryTeaser() {
-  return (
-    <div className="mx-auto mt-8 max-w-2xl">
-      <Card className="border-dashed">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Trophy className="h-5 w-5 text-muted-foreground" />
-            Your Strength Story
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">
-            Sign in and connect your lifting log to unlock your personal
-            strength story — career stats, all-time PRs vs last 12 months, and
-            your real percentile rankings filled in automatically.
-          </p>
-          <GoogleSignInButton
-            className="flex w-fit items-center gap-2"
-            cta="how_strong_story_teaser"
-            iconSize={16}
-          >
-            Sign In With Google
-          </GoogleSignInButton>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentileTimeline, activeUniverse, firstName }) {
+  const { careerYears, totalSessions, liftCount, liftStories } = storyData;
 
-function YourStrengthStory({ storyData, chartPercentiles, isMetric }) {
-  const { liftStories, careerYears, totalSessions, liftCount } = storyData;
-
-  // Find best universe ranking for the headline
-  const barbell = chartPercentiles["Barbell Lifters"];
   const genPop = chartPercentiles["General Population"];
+  const activePercentile = chartPercentiles[activeUniverse] ?? genPop;
 
-  // Career span label
   let careerLabel = null;
   if (careerYears != null) {
     if (careerYears >= 1) {
       const years = Math.floor(careerYears);
-      careerLabel = `${years} year${years !== 1 ? "s" : ""}`;
+      careerLabel = `${years}yr${years !== 1 ? "s" : ""}`;
     } else {
       const months = Math.max(1, Math.round(careerYears * 12));
-      careerLabel = `${months} month${months !== 1 ? "s" : ""}`;
+      careerLabel = `${months}mo`;
     }
   }
 
-  const LIFT_META = {
-    squat: { label: "Squat", emoji: "🏋️" },
-    bench: { label: "Bench", emoji: "💪" },
-    deadlift: { label: "Deadlift", emoji: "⛓️" },
-  };
+  // Compute SBD total in display units
+  let sbdTotal = null;
+  if (liftCount >= 3) {
+    const unit = isMetric ? "kg" : "lb";
+    const total = Object.values(liftStories).reduce((sum, ls) => {
+      const w = ls.unitType === "lb" && isMetric
+        ? ls.allTimeE1RM / 2.2046
+        : ls.unitType === "kg" && !isMetric
+          ? ls.allTimeE1RM * 2.2046
+          : ls.allTimeE1RM;
+      return sum + Math.round(w);
+    }, 0);
+    sbdTotal = `${total}${unit}`;
+  }
 
   return (
-    <div className="mx-auto mt-8 max-w-2xl">
-      <Card className="border-primary/20 bg-primary/5">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Your Strength Story
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {/* Headline stat */}
-          <p className="text-sm text-muted-foreground">
-            {genPop >= 90
-              ? `You're stronger than ${genPop}% of the general population. That puts you in rare company.`
-              : genPop >= 70
-                ? `You're stronger than ${genPop}% of the general population — solidly above average.`
-                : `You're stronger than ${genPop}% of the general population. Every percentage point is earned.`}
-            {barbell != null && (
-              <>
-                {" "}Among barbell lifters specifically, you rank in the{" "}
-                <span className="font-semibold">{ordinal(barbell)}</span> percentile.
-              </>
-            )}
-          </p>
+    <div className="flex flex-col gap-4 rounded-lg border-t pt-5">
+      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <Trophy className="h-3.5 w-3.5 text-yellow-500" />
+        {firstName ? `${firstName}\u2019s Strength Story` : "Your Strength Story"}
+      </p>
 
-          {/* Career stats row */}
-          {(careerLabel || totalSessions) && (
-            <div className="flex flex-wrap gap-4 rounded-lg border bg-background/60 px-4 py-3">
-              {careerLabel && (
-                <div className="flex flex-col">
-                  <span className="text-lg font-bold">{careerLabel}</span>
-                  <span className="text-xs text-muted-foreground">of training data</span>
-                </div>
-              )}
-              {totalSessions && (
-                <div className="flex flex-col">
-                  <span className="text-lg font-bold">{totalSessions.toLocaleString()}</span>
-                  <span className="text-xs text-muted-foreground">sessions logged</span>
-                </div>
-              )}
-              {liftCount >= 3 && (
-                <div className="flex flex-col">
-                  <span className="text-lg font-bold">
-                    {(() => {
-                      const unit = isMetric ? "kg" : "lb";
-                      const factor = isMetric ? 1 / 2.2046 : 1;
-                      const total = Object.values(liftStories).reduce((sum, ls) => {
-                        const w = ls.unitType === "lb" && isMetric
-                          ? ls.allTimeE1RM * factor
-                          : ls.unitType === "kg" && !isMetric
-                            ? ls.allTimeE1RM * 2.2046
-                            : ls.allTimeE1RM;
-                        return sum + Math.round(w);
-                      }, 0);
-                      return `${total} ${unit}`;
-                    })()}
-                  </span>
-                  <span className="text-xs text-muted-foreground">estimated SBD total</span>
-                </div>
-              )}
-            </div>
+      {/* Career headline */}
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          {careerLabel && (
+            <span className="text-2xl font-bold tracking-tight">{careerLabel}</span>
           )}
+          {totalSessions && (
+            <span className="text-lg font-semibold text-muted-foreground">
+              {totalSessions.toLocaleString()} sessions
+            </span>
+          )}
+          {sbdTotal && (
+            <span className="text-lg font-semibold text-muted-foreground">
+              {sbdTotal} SBD
+            </span>
+          )}
+        </div>
+      </div>
 
-          {/* Per-lift all-time vs last year */}
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              All-time vs last 12 months
-            </p>
-            {Object.entries(liftStories).map(([key, story]) => {
-              const meta = LIFT_META[key];
-              if (!meta) return null;
-              const unit = isMetric
-                ? "kg"
-                : story.unitType === "kg"
-                  ? "lb"
-                  : story.unitType;
-              const allTime = isMetric && story.unitType === "lb"
-                ? Math.round(story.allTimeE1RM / 2.2046)
-                : !isMetric && story.unitType === "kg"
-                  ? Math.round(story.allTimeE1RM * 2.2046)
-                  : story.allTimeE1RM;
-              const lastYear = story.lastYearE1RM
-                ? isMetric && story.unitType === "lb"
-                  ? Math.round(story.lastYearE1RM / 2.2046)
-                  : !isMetric && story.unitType === "kg"
-                    ? Math.round(story.lastYearE1RM * 2.2046)
-                    : story.lastYearE1RM
-                : null;
+      {/* Percentile timeline chart */}
+      {percentileTimeline && (
+        <PercentileTimelineChart
+          data={percentileTimeline}
+          currentPercentile={activePercentile}
+          activeUniverse={activeUniverse}
+        />
+      )}
 
-              const diff = lastYear != null ? lastYear - allTime : null;
+    </div>
+  );
+}
 
-              return (
-                <div
-                  key={key}
-                  className="rounded-md bg-background/60 px-3 py-2 text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{meta.emoji}</span>
-                    <span className="font-medium">{meta.label}</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-4 pl-7">
-                    <span className="tabular-nums text-muted-foreground">
-                      {allTime} {unit}
-                      <span className="ml-1 text-xs">all-time</span>
-                    </span>
-                    {lastYear != null && (
-                      <span className="tabular-nums">
-                        {lastYear} {unit}
-                        <span className="ml-1 text-xs text-muted-foreground">12mo</span>
-                        {diff != null && diff !== 0 && (
-                          <span
-                            className={`ml-1 text-xs font-semibold ${diff > 0 ? "text-green-600" : "text-amber-600"}`}
-                          >
-                            {diff > 0 ? "+" : ""}{diff}
-                          </span>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+const UNIVERSE_COLORS = {
+  "General Population":  "var(--chart-1)",
+  "Gym-Goers":           "var(--chart-2)",
+  "Barbell Lifters":     "var(--chart-3)",
+  "Powerlifting Culture": "var(--chart-4)",
+};
 
-          {/* Motivational closer */}
-          <p className="text-xs italic text-muted-foreground">
-            {careerYears >= 3
-              ? "Years of consistency built this. That is the kind of strength that does not fade."
-              : careerYears >= 1
-                ? "A year or more under the bar — your numbers reflect real commitment."
-                : "You are building something. Every session adds to the story."}
-          </p>
-        </CardContent>
-      </Card>
+function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "General Population" }) {
+  const dataKey = activeUniverse;
+  const chartColor = UNIVERSE_COLORS[activeUniverse] || "var(--chart-1)";
+
+  // Determine smart tick formatting based on time span
+  const firstDate = new Date(data[0].date);
+  const lastDate = new Date(data[data.length - 1].date);
+  const spanDays = (lastDate - firstDate) / 86400000;
+
+  const formatTick = (dateStr) => {
+    const d = new Date(dateStr);
+    if (spanDays <= 365) {
+      // Short: show "Mar", "Apr", etc.
+      return d.toLocaleDateString("en-US", { month: "short" });
+    }
+    if (spanDays <= 365 * 4) {
+      // Medium: show "Mar '24"
+      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    }
+    // Long: show "'20", "'21", etc.
+    return "\u2019" + d.toLocaleDateString("en-US", { year: "2-digit" });
+  };
+
+  // Thin out tick labels to avoid overlap — show ~5-7 labels max
+  const maxTicks = spanDays <= 365 ? 6 : spanDays <= 365 * 4 ? 7 : 8;
+  const tickInterval = Math.max(1, Math.floor(data.length / maxTicks));
+  const ticks = data
+    .filter((_, i) => i % tickInterval === 0 || i === data.length - 1)
+    .map((d) => d.date);
+
+  const formatTooltipDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  };
+
+  // Compute Y domain: floor to nearest 10 below min, cap at 100
+  const minPct = Math.min(...data.map((d) => d[dataKey] ?? 0));
+  const yMin = Math.max(0, Math.floor(minPct / 10) * 10 - 5);
+
+  const universeLabel = activeUniverse.toLowerCase();
+
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-xs text-muted-foreground">
+        SBD percentile vs. {universeLabel} over time
+      </p>
+      <div className="h-28 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+            <defs>
+              <linearGradient id="pctGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={chartColor} stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="date"
+              tickFormatter={formatTick}
+              ticks={ticks}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              domain={[yMin, 100]}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => `${v}`}
+            />
+            <RechartsTooltip
+              position={{ y: -10 }}
+              contentStyle={{
+                fontSize: 12,
+                borderRadius: 8,
+                border: "1px solid hsl(var(--border))",
+                backgroundColor: "hsl(var(--popover))",
+                color: "hsl(var(--popover-foreground))",
+              }}
+              labelFormatter={formatTooltipDate}
+              formatter={(value) => [`${value}%`, universeLabel]}
+            />
+            {currentPercentile != null && (
+              <ReferenceLine
+                y={currentPercentile}
+                stroke="hsl(var(--muted-foreground))"
+                strokeDasharray="3 3"
+                strokeOpacity={0.5}
+              />
+            )}
+            <Area
+              type="monotone"
+              dataKey={dataKey}
+              stroke={chartColor}
+              strokeWidth={2}
+              fill="url(#pctGrad)"
+              dot={false}
+              activeDot={{ r: 3, strokeWidth: 0, fill: chartColor }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

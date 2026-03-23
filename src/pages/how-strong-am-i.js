@@ -163,7 +163,7 @@ export default function HowStrongAmIPage({ relatedArticles }) {
 function HowStrongAmIPageMain() {
   const { age, sex, bodyWeight, isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
-  const { status: authStatus } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
@@ -828,6 +828,7 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
             isMetric={isMetric}
             percentileTimeline={percentileTimeline}
             activeUniverse={activeUniverse}
+            firstName={session?.user?.name?.split(" ")[0]}
           />
         )}
 
@@ -902,7 +903,7 @@ function PercentileConclusion({ percentile, universe, allPercentiles }) {
   );
 }
 
-function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentileTimeline, activeUniverse }) {
+function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentileTimeline, activeUniverse, firstName }) {
   const { careerYears, totalSessions, liftCount, liftStories } = storyData;
 
   const genPop = chartPercentiles["General Population"];
@@ -938,7 +939,7 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
     <div className="flex flex-col gap-4 rounded-lg border-t pt-5">
       <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         <Trophy className="h-3.5 w-3.5 text-yellow-500" />
-        Your Strength Story
+        {firstName ? `${firstName}\u2019s Strength Story` : "Your Strength Story"}
       </p>
 
       {/* Career headline */}

@@ -167,6 +167,7 @@ function HowStrongAmIPageMain() {
   // Track whether we've auto-populated from user data
   const [usingUserData, setUsingUserData] = useState(false);
   const hasAutoPopulatedRef = useRef(false);
+  const prWeightsKgRef = useRef(null);
 
   // Auto-populate sliders from user's actual best E1RMs
   useEffect(() => {
@@ -184,7 +185,7 @@ function HowStrongAmIPageMain() {
     const toKgFromUnit = (weight, unitType) =>
       unitType === "kg" ? weight : weight / 2.2046;
 
-    setLiftWeightsKg({
+    const weights = {
       squat: squat.bestE1RMWeight
         ? toKgFromUnit(squat.bestE1RMWeight, squat.unitType)
         : toKg(225, false),
@@ -194,9 +195,29 @@ function HowStrongAmIPageMain() {
       deadlift: deadlift.bestE1RMWeight
         ? toKgFromUnit(deadlift.bestE1RMWeight, deadlift.unitType)
         : toKg(265, false),
-    });
+    };
+
+    // Remember original PR positions for marker labels
+    prWeightsKgRef.current = {
+      squat: squat.bestE1RMWeight ? toKgFromUnit(squat.bestE1RMWeight, squat.unitType) : null,
+      bench: bench.bestE1RMWeight ? toKgFromUnit(bench.bestE1RMWeight, bench.unitType) : null,
+      deadlift: deadlift.bestE1RMWeight ? toKgFromUnit(deadlift.bestE1RMWeight, deadlift.unitType) : null,
+    };
+
+    setLiftWeightsKg(weights);
     setUsingUserData(true);
   }, [topLiftsByTypeAndReps]);
+
+  // PR weights in display units for slider markers
+  const prWeightsDisplay = useMemo(() => {
+    const raw = prWeightsKgRef.current;
+    if (!raw) return null;
+    return {
+      squat: raw.squat != null ? normalizeLiftWeight(convertWeight(raw.squat, true, isMetric), isMetric) : null,
+      bench: raw.bench != null ? normalizeLiftWeight(convertWeight(raw.bench, true, isMetric), isMetric) : null,
+      deadlift: raw.deadlift != null ? normalizeLiftWeight(convertWeight(raw.deadlift, true, isMetric), isMetric) : null,
+    };
+  }, [isMetric, usingUserData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Compute enriched user story data (career span, last-year comparison)
   const userStoryData = useMemo(() => {
@@ -355,6 +376,7 @@ function HowStrongAmIPageMain() {
                 usingUserData={usingUserData}
                 authStatus={authStatus}
                 isReturningUserLoading={isReturningUserLoading}
+                prWeights={prWeightsDisplay}
               />
             </div>
 
@@ -459,7 +481,7 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatus, isReturningUserLoading }) {
+function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -484,35 +506,56 @@ function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatu
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        {LIFTS.map(({ key, label, emoji }) => (
-          <div key={key} className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-sm font-medium">
-                <span>{emoji}</span>
-                <Link
-                  href={LIFT_INSIGHT_URLS[label]}
-                  className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
-                >
-                  {label}
-                </Link>
-              </div>
-              <span className="text-sm font-bold tabular-nums">
-                {liftWeights[key]}
-                <span className="ml-0.5 text-xs font-normal text-muted-foreground">
-                  {unit}
+        {LIFTS.map(({ key, label, emoji }) => {
+          const prWeight = prWeights?.[key];
+          const prPercent = prWeight != null
+            ? ((prWeight - min) / (max - min)) * 100
+            : null;
+          const showMarker = usingUserData && prPercent != null && prPercent >= 0 && prPercent <= 100;
+
+          return (
+            <div key={key} className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-sm font-medium">
+                  <span>{emoji}</span>
+                  <Link
+                    href={LIFT_INSIGHT_URLS[label]}
+                    className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                  >
+                    {label}
+                  </Link>
+                </div>
+                <span className="text-sm font-bold tabular-nums">
+                  {liftWeights[key]}
+                  <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                    {unit}
+                  </span>
                 </span>
-              </span>
+              </div>
+              <div className="relative">
+                <Slider
+                  value={[liftWeights[key]]}
+                  onValueChange={([value]) => onChange(key, value)}
+                  min={min}
+                  max={max}
+                  step={step}
+                  aria-label={`${label} 1RM`}
+                />
+                {showMarker && (
+                  <div
+                    className="pointer-events-none absolute top-0 flex flex-col items-center"
+                    style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
+                  >
+                    <div className="h-2 w-0.5 bg-primary/70" />
+                    <span className="mt-0.5 text-[10px] font-semibold leading-none text-primary/70">
+                      PR
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-            <Slider
-              value={[liftWeights[key]]}
-              onValueChange={([value]) => onChange(key, value)}
-              min={min}
-              max={max}
-              step={step}
-              aria-label={`${label} 1RM`}
-            />
-          </div>
-        ))}
+          );
+        })}
 
         {showSignInTeaser && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">

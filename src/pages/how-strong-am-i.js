@@ -233,6 +233,42 @@ function HowStrongAmIPageMain() {
     };
   }, [isMetric, usingUserData]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Recent 90-day best E1RM per lift in display units (for slider markers)
+  const recent90dDisplay = useMemo(() => {
+    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+
+    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
+    const WINDOW = 90;
+    const now = new Date();
+    const cutoffMs = now.getTime() - WINDOW * 86400000;
+
+    const bestKg = { squat: 0, bench: 0, deadlift: 0 };
+
+    for (const d of parsedData) {
+      const k = SBD_TYPES[d.liftType];
+      if (!k || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
+      if (new Date(d.date).getTime() < cutoffMs) continue;
+      const wKg = d.unitType === "kg" ? d.weight : d.weight / 2.2046;
+      const e1rm = d.reps === 1 ? wKg : estimateE1RM(d.reps, wKg, "Brzycki");
+      if (e1rm > bestKg[k]) bestKg[k] = e1rm;
+    }
+
+    const pr = prWeightsKgRef.current;
+    if (!pr) return null;
+
+    const result = {};
+    let hasDistinct = false;
+    for (const k of ["squat", "bench", "deadlift"]) {
+      if (bestKg[k] <= 0) { result[k] = null; continue; }
+      const displayVal = normalizeLiftWeight(convertWeight(bestKg[k], true, isMetric), isMetric);
+      const prDisplay = pr[k] != null ? normalizeLiftWeight(convertWeight(pr[k], true, isMetric), isMetric) : null;
+      if (displayVal !== prDisplay) hasDistinct = true;
+      result[k] = displayVal;
+    }
+
+    return hasDistinct ? result : null;
+  }, [usingUserData, parsedData, isDemoMode, isMetric]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Compute enriched user story data (career span, last-year comparison)
   const userStoryData = useMemo(() => {
     if (!usingUserData || !topLiftsByTypeAndReps) return null;
@@ -485,6 +521,7 @@ function HowStrongAmIPageMain() {
                 authStatus={authStatus}
                 isReturningUserLoading={isReturningUserLoading}
                 prWeights={prWeightsDisplay}
+                recent90d={recent90dDisplay}
                 results={results}
                 activeUniverse={activeUniverse}
                 userStoryData={authStatus === "authenticated" ? userStoryData : null}
@@ -577,7 +614,27 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, results, activeUniverse, userStoryData, chartPercentiles, percentileTimeline }) {
+// Ideal SBD proportions (% of total) — consensus from powerlifting averages.
+const IDEAL_SBD_RATIO = { squat: 0.36, bench: 0.24, deadlift: 0.40 };
+const LIFT_LABELS_SHORT = { squat: "Squat", bench: "Bench", deadlift: "Deadlift" };
+
+function getWeakestLiftHint(squat, bench, deadlift) {
+  const total = squat + bench + deadlift;
+  if (total === 0) return null;
+  const gaps = {
+    squat: IDEAL_SBD_RATIO.squat * total - squat,
+    bench: IDEAL_SBD_RATIO.bench * total - bench,
+    deadlift: IDEAL_SBD_RATIO.deadlift * total - deadlift,
+  };
+  const worst = Object.entries(gaps).reduce(
+    (best, [k, v]) => (v > best.gap ? { key: k, gap: v } : best),
+    { key: null, gap: 0 },
+  );
+  if (!worst.key || worst.gap < 5) return null;
+  return { lift: LIFT_LABELS_SHORT[worst.key], gap: Math.round(worst.gap) };
+}
+
+function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, recent90d, results, activeUniverse, userStoryData, chartPercentiles, percentileTimeline }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -590,6 +647,10 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
   const hasMovedFromPR = usingUserData && prWeights && LIFTS.some(
     ({ key }) => prWeights[key] != null && liftWeights[key] !== prWeights[key],
   );
+
+  const biggestOpportunity = usingUserData
+    ? getWeakestLiftHint(liftWeights.squat, liftWeights.bench, liftWeights.deadlift)
+    : null;
 
   return (
     <Card>

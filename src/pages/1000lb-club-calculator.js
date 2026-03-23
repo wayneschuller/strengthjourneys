@@ -899,8 +899,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 {!inClub && biggestOpportunity && (
                   <span className="text-foreground/90">
                     {" "}
-                    Biggest opportunity: {biggestOpportunity.lift} is ~
-                    {biggestOpportunity.gapLbs} lbs below its ideal share.
+                    Biggest opportunity: Add ~{biggestOpportunity.gapLbs} lb to
+                    your {biggestOpportunity.lift.toLowerCase()}.
                   </span>
                 )}
               </div>

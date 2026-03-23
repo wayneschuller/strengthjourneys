@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
-import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { getTopLiftStats, useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI, getStandardForLiftDate } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -2773,6 +2773,91 @@ function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndRep
   return { best, lifetime, yearly };
 }
 
+// --- Strength bar for log page ---
+
+const LOG_NEXT_TIER = {
+  "Physically Active": { name: "Beginner", key: "beginner" },
+  Beginner: { name: "Intermediate", key: "intermediate" },
+  Intermediate: { name: "Advanced", key: "advanced" },
+  Advanced: { name: "Elite", key: "elite" },
+  Elite: null,
+};
+
+function LogStrengthBar({ liftType, e1rmValue, standards, age, sessionDate, bodyWeight, sex, isMetric }) {
+  const standard =
+    sessionDate && age && bodyWeight != null && sex != null
+      ? getStandardForLiftDate(age, sessionDate, bodyWeight, sex, liftType, isMetric ?? false)
+      : standards?.[liftType];
+
+  if (!standard?.elite || !e1rmValue) return null;
+
+  const rating = getStrengthRatingForE1RM(e1rmValue, standard);
+  if (!rating) return null;
+
+  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+  const { physicallyActive, elite } = standard;
+  const range = elite - physicallyActive;
+  const pct = range > 0
+    ? Math.min(98, Math.max(2, ((e1rmValue - physicallyActive) / range) * 100))
+    : 50;
+
+  const nextTierInfo = LOG_NEXT_TIER[rating];
+  const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
+  const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmValue) : null;
+  const unit = isMetric ? "kg" : "lb";
+
+  // Tier divider positions
+  const tiers = [standard.beginner, standard.intermediate, standard.advanced]
+    .map((val) => ((val - physicallyActive) / range) * 100)
+    .filter((p) => p > 0 && p < 100);
+
+  return (
+    <TooltipProvider>
+      <div className="flex items-center gap-2">
+        <span className="shrink-0 text-[10px] font-medium text-muted-foreground">
+          {emoji} {rating}
+        </span>
+        <div className="relative flex-1">
+          <div
+            className="h-2 w-full rounded-full"
+            style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
+          />
+          {tiers.map((p, i) => (
+            <div
+              key={i}
+              className="absolute top-0 h-2 w-px"
+              style={{ left: `${p}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
+            />
+          ))}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="absolute top-1/2 h-3.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background transition-[left] duration-300"
+                style={{ left: `${pct}%` }}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              <p className="font-semibold">{liftType}</p>
+              <p>{emoji} {rating} · E1RM {Math.round(e1rmValue)}{unit}</p>
+              {nextTierInfo && diff > 0 ? (
+                <p className="text-muted-foreground">
+                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                </p>
+              ) : nextTierInfo && diff <= 0 ? (
+                <p className="text-muted-foreground">
+                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — you&apos;re there!
+                </p>
+              ) : (
+                <p className="text-muted-foreground">Top of the chart!</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+}
+
 // --- Lift block ---
 
 function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, tonnageStats, dashboardStage, sessionCount = 0, isPastSession, isStructuralSaving = false, onUpdateSet, onDeleteSet, onAddSet }) {
@@ -3223,8 +3308,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
 
   // Find the set index with the heaviest e1RM for the strength badge
   const canShowStrength = authStatus === "authenticated" && hasBioData;
-  const bestE1rmIndex = useMemo(() => {
-    if (!canShowStrength) return -1;
+  const { bestE1rmIndex, bestE1rmValue } = useMemo(() => {
+    if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;
     let bestVal = 0;
     sets.forEach((s, i) => {
@@ -3235,7 +3320,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
         if (e1rm > bestVal) { bestVal = e1rm; bestIdx = i; }
       }
     });
-    return bestIdx;
+    return { bestE1rmIndex: bestIdx, bestE1rmValue: bestVal };
   }, [sets, canShowStrength, e1rmFormula]);
 
   const prMeta = useMemo(() => {
@@ -3528,6 +3613,20 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           />
         )}
       </div>
+      {canShowStrength && bestE1rmValue > 0 && (
+        <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
+          <LogStrengthBar
+            liftType={liftType}
+            e1rmValue={bestE1rmValue}
+            standards={standards}
+            age={age}
+            sessionDate={sessionDate}
+            bodyWeight={bodyWeight}
+            sex={sex}
+            isMetric={isMetric}
+          />
+        </div>
+      )}
       {shouldShowTonnage && (
         <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
           <LiftTonnageRow

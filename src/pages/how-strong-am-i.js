@@ -11,6 +11,7 @@ import {
   LineChart,
   Anvil,
   Sparkles,
+  RotateCcw,
 } from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
@@ -57,19 +58,19 @@ const LIFTS = [
   {
     key: "squat",
     label: "Back Squat",
-    emoji: "🏋️",
+    svg: "/back_squat.svg",
     standardKey: "Back Squat",
   },
   {
     key: "bench",
     label: "Bench Press",
-    emoji: "💪",
+    svg: "/bench_press.svg",
     standardKey: "Bench Press",
   },
   {
     key: "deadlift",
     label: "Deadlift",
-    emoji: "⛓️",
+    svg: "/deadlift.svg",
     standardKey: "Deadlift",
   },
 ];
@@ -280,6 +281,10 @@ function HowStrongAmIPageMain() {
   const handleLiftChange = (key, value) =>
     setLiftWeightsKg((prev) => ({ ...prev, [key]: toKg(value, isMetric) }));
 
+  const handleResetToPRs = () => {
+    if (prWeightsKgRef.current) setLiftWeightsKg({ ...prWeightsKgRef.current });
+  };
+
   const handleUnitSwitch = (nextIsMetric) => {
     toggleIsMetric(nextIsMetric);
   };
@@ -372,6 +377,7 @@ function HowStrongAmIPageMain() {
               <LiftSliders
                 liftWeights={liftWeights}
                 onChange={handleLiftChange}
+                onReset={handleResetToPRs}
                 isMetric={isMetric}
                 usingUserData={usingUserData}
                 authStatus={authStatus}
@@ -481,7 +487,7 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights }) {
+function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -490,6 +496,11 @@ function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatu
   const showSignInTeaser =
     authStatus === "unauthenticated" && !isReturningUserLoading;
 
+  // Show reset button when any slider has moved away from its PR value
+  const hasMovedFromPR = usingUserData && prWeights && LIFTS.some(
+    ({ key }) => prWeights[key] != null && liftWeights[key] !== prWeights[key],
+  );
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -497,16 +508,29 @@ function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatu
           <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Your Lifts
           </CardTitle>
-          {usingUserData && (
-            <Badge variant="outline" className="gap-1 text-xs font-normal">
-              <Sparkles className="h-3 w-3" />
-              From your log
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {hasMovedFromPR && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+                onClick={onReset}
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset to PRs
+              </Button>
+            )}
+            {usingUserData && (
+              <Badge variant="outline" className="gap-1 text-xs font-normal">
+                <Sparkles className="h-3 w-3" />
+                From your log
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        {LIFTS.map(({ key, label, emoji }) => {
+        {LIFTS.map(({ key, label, svg }) => {
           const prWeight = prWeights?.[key];
           const prPercent = prWeight != null
             ? ((prWeight - min) / (max - min)) * 100
@@ -517,7 +541,7 @@ function LiftSliders({ liftWeights, onChange, isMetric, usingUserData, authStatu
             <div key={key} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-sm font-medium">
-                  <span>{emoji}</span>
+                  <img src={svg} alt="" className="h-5 w-5 dark:invert" aria-hidden />
                   <Link
                     href={LIFT_INSIGHT_URLS[label]}
                     className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
@@ -585,7 +609,7 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
         Per-lift — {activeUniverse}
       </p>
       <div className="flex flex-col gap-1.5">
-        {LIFTS.map(({ key, label, emoji }) => {
+        {LIFTS.map(({ key, label, svg }) => {
           const liftResult = results.lifts[key];
           const weight = liftWeights[key];
           const percentile = liftResult?.percentiles?.[activeUniverse];
@@ -599,7 +623,7 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
                 className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"
               >
               <div className="min-w-0 flex items-center gap-2">
-                <span className="shrink-0">{emoji}</span>
+                <img src={svg} alt="" className="h-5 w-5 shrink-0 dark:invert" aria-hidden />
                 <Link
                   href={LIFT_INSIGHT_URLS[label]}
                   className="truncate font-medium underline decoration-dotted underline-offset-2 hover:text-blue-600"
@@ -690,9 +714,9 @@ function YourStrengthStory({ storyData, chartPercentiles, isMetric }) {
   }
 
   const LIFT_META = {
-    squat: { label: "Squat", emoji: "🏋️" },
-    bench: { label: "Bench", emoji: "💪" },
-    deadlift: { label: "Deadlift", emoji: "⛓️" },
+    squat: { label: "Squat", svg: "/back_squat.svg" },
+    bench: { label: "Bench", svg: "/bench_press.svg" },
+    deadlift: { label: "Deadlift", svg: "/deadlift.svg" },
   };
 
   return (
@@ -792,7 +816,7 @@ function YourStrengthStory({ storyData, chartPercentiles, isMetric }) {
                   className="rounded-md bg-background/60 px-3 py-2 text-sm"
                 >
                   <div className="flex items-center gap-2">
-                    <span>{meta.emoji}</span>
+                    <img src={meta.svg} alt="" className="h-5 w-5 dark:invert" aria-hidden />
                     <span className="font-medium">{meta.label}</span>
                   </div>
                   <div className="mt-1 flex items-baseline gap-4 pl-7">

@@ -372,8 +372,8 @@ function HowStrongAmIPageMain() {
             />
           </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
-            <div className="order-2 lg:order-none">
+          <div className="mt-5 flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
+            <div className="w-full max-w-md shrink-0 lg:order-2 lg:max-w-sm xl:max-w-md">
               <LiftSliders
                 liftWeights={liftWeights}
                 onChange={handleLiftChange}
@@ -388,13 +388,15 @@ function HowStrongAmIPageMain() {
               />
             </div>
 
-            <div className="order-1 flex flex-col items-center gap-4 lg:order-none">
-              <StrengthCirclesChart
-                percentiles={chartPercentiles}
-                activeUniverse={activeUniverse}
-                onUniverseChange={setSelectedUniverse}
-                onUniverseHoverChange={setHoveredUniverse}
-              />
+            <div className="flex w-full max-w-sm flex-col items-center gap-4 lg:order-1 lg:flex-1 lg:max-w-none">
+              <div className="w-full max-w-lg xl:max-w-xl">
+                <StrengthCirclesChart
+                  percentiles={chartPercentiles}
+                  activeUniverse={activeUniverse}
+                  onUniverseChange={setSelectedUniverse}
+                  onUniverseHoverChange={setHoveredUniverse}
+                />
+              </div>
               <Button
                 variant="outline"
                 size="sm"

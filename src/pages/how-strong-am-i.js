@@ -715,13 +715,13 @@ function YourStrengthStory({ storyData, chartPercentiles, isMetric }) {
               return (
                 <div
                   key={key}
-                  className="flex items-center justify-between rounded-md bg-background/60 px-3 py-2 text-sm"
+                  className="rounded-md bg-background/60 px-3 py-2 text-sm"
                 >
                   <div className="flex items-center gap-2">
                     <span>{meta.emoji}</span>
                     <span className="font-medium">{meta.label}</span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="mt-1 flex items-baseline gap-4 pl-7">
                     <span className="tabular-nums text-muted-foreground">
                       {allTime} {unit}
                       <span className="ml-1 text-xs">all-time</span>

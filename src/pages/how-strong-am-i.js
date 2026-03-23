@@ -902,8 +902,7 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
     if (careerYears >= 1) {
       const years = Math.floor(careerYears);
       careerLabel = `${years}yr${years !== 1 ? "s" : ""}`;
-      if (years >= 5) careerDescription = "Most people quit inside twelve months. You didn\u2019t.";
-      else if (years >= 2) careerDescription = "Multi-year consistency is the hardest part — and you\u2019re doing it.";
+      if (years >= 2) careerDescription = "Multi-year consistency is the hardest part — and you\u2019re doing it.";
       else careerDescription = "Year one is where the biggest jumps happen. You\u2019re right in it.";
     } else {
       const months = Math.max(1, Math.round(careerYears * 12));

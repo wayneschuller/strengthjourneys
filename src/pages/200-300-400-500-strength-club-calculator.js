@@ -138,6 +138,26 @@ const FAQ_ITEMS = [
     answer:
       "No. You do not need to hit a 200 press, 300 bench, 400 squat, and 500 deadlift in one session. The usual standard is that you hit each milestone at some point in your lifting lifetime. That said, your old high school bench probably should not count unless you can still claim it with a straight face.",
   },
+  {
+    question: "I hit 200/300/400/500 — am I ready to fight a gorilla?",
+    answer:
+      "No. A silverback gorilla is estimated at 6-10x the upper-body strength of a trained human. Your 300 lb bench is impressive for your species, but a gorilla could casually toss you and the barbell. Find out exactly how you measure up with our gorilla strength comparison tool.",
+    renderAnswer: (
+      <>
+        No. A silverback gorilla is estimated at 6–10× the upper-body strength
+        of a trained human. Your 300&nbsp;lb bench is impressive for your
+        species, but a gorilla could casually toss you and the barbell. Find out
+        exactly how you measure up with our{" "}
+        <Link
+          href="/how-strong-is-a-gorilla"
+          className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+        >
+          gorilla strength comparison tool
+        </Link>
+        .
+      </>
+    ),
+  },
 ];
 
 const WHATS_NEXT_FEATURES = [
@@ -685,10 +705,12 @@ function StrengthClubMain({ relatedArticles }) {
         <section className="mt-10">
           <h2 className="mb-4 text-xl font-semibold">FAQ</h2>
           <div className="space-y-4">
-            {FAQ_ITEMS.map(({ question, answer }) => (
+            {FAQ_ITEMS.map(({ question, answer, renderAnswer }) => (
               <article key={question} className="rounded-lg border p-4">
                 <h3 className="text-base font-semibold">{question}</h3>
-                <p className="text-muted-foreground mt-1 text-sm">{answer}</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {renderAnswer || answer}
+                </p>
               </article>
             ))}
           </div>

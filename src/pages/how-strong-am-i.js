@@ -661,10 +661,17 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                   </span>
                 </div>
               </div>
-              <div className="relative">
+              <div className="relative pb-4">
                 <Slider
                   value={[liftWeights[key]]}
-                  onValueChange={([value]) => onChange(key, value)}
+                  onValueChange={([value]) => {
+                    // Snap to PR when within 1 step
+                    if (prWeight != null && Math.abs(value - prWeight) <= step) {
+                      onChange(key, prWeight);
+                    } else {
+                      onChange(key, value);
+                    }
+                  }}
                   min={min}
                   max={max}
                   step={step}
@@ -672,11 +679,11 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
                 />
                 {showMarker && (
                   <div
-                    className="pointer-events-none absolute top-0 flex flex-col items-center"
+                    className="pointer-events-none absolute bottom-0 flex flex-col items-center"
                     style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
                   >
-                    <div className="h-2 w-0.5 bg-primary/70" />
-                    <span className="mt-0.5 text-[10px] font-semibold leading-none text-primary/70">
+                    <div className="h-1.5 w-px bg-primary/50" />
+                    <span className="text-[9px] font-medium leading-none text-primary/60">
                       PR
                     </span>
                   </div>

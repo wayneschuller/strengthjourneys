@@ -1,14 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useReadLocalStorage } from "usehooks-ts";
 import { NextSeo } from "next-seo";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ReferenceLine,
+} from "recharts";
 import {
   Copy,
   CircleDashed,
   Calculator,
   BicepsFlexed,
   Trophy,
-  LineChart,
+  LineChart as LineChartIcon,
   Anvil,
   Sparkles,
   RotateCcw,
@@ -43,7 +53,9 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { findBestE1RM } from "@/lib/processing-utils";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   computeStrengthResults,
   UNIVERSES,
@@ -110,7 +122,7 @@ const NEXT_TOOL_LINKS = [
     href: "/visualizer",
     title: "Strength Visualizer",
     description: "Chart each lift over time and spot long-term trends.",
-    IconComponent: LineChart,
+    IconComponent: LineChartIcon,
   },
 ];
 
@@ -314,6 +326,103 @@ function HowStrongAmIPageMain() {
     return out;
   }, [results]);
 
+  // User's preferred E1RM formula from localStorage
+  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false });
+  const e1rmFormula = storedFormula ?? "Brzycki";
+
+  // Compute percentile timeline from training history
+  const percentileTimeline = useMemo(() => {
+    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+
+    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
+    const WINDOW_30 = 30;
+    const WINDOW_90 = 90;
+
+    // Filter to SBD lifts, convert weights to kg, sort by date
+    const sbdEntries = parsedData
+      .filter((d) => SBD_TYPES[d.liftType] && !d.isGoal && d.reps > 0 && d.weight > 0)
+      .map((d) => ({
+        date: d.date,
+        key: SBD_TYPES[d.liftType],
+        weightKg: d.unitType === "kg" ? d.weight : d.weight / 2.2046,
+        reps: d.reps,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (sbdEntries.length < 2) return null;
+
+    const firstDate = new Date(sbdEntries[0].date);
+    const lastDate = new Date(sbdEntries[sbdEntries.length - 1].date);
+    const spanDays = (lastDate - firstDate) / 86400000;
+
+    // Decide sample interval based on career length
+    let intervalDays;
+    if (spanDays <= 180) intervalDays = 7;        // weekly for < 6mo
+    else if (spanDays <= 730) intervalDays = 14;   // biweekly for < 2yr
+    else intervalDays = 30;                         // monthly for 2yr+
+
+    // Generate sample dates
+    const samples = [];
+    const cursor = new Date(firstDate);
+    // Start first sample at least 30 days in so we have some data to look back on
+    cursor.setDate(cursor.getDate() + WINDOW_30);
+    while (cursor <= lastDate) {
+      samples.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + intervalDays);
+    }
+    // Always include the final date if not already close
+    if (samples.length === 0 || (lastDate - samples[samples.length - 1]) / 86400000 > 7) {
+      samples.push(new Date(lastDate));
+    }
+
+    if (samples.length < 2) return null;
+
+    const bio = { age, sex, bodyWeightKg };
+    const points = [];
+
+    for (const sampleDate of samples) {
+      const sampleMs = sampleDate.getTime();
+      const cutoff30 = sampleMs - WINDOW_30 * 86400000;
+      const cutoff90 = sampleMs - WINDOW_90 * 86400000;
+
+      const bestE1rm = { squat: null, bench: null, deadlift: null };
+
+      for (const key of ["squat", "bench", "deadlift"]) {
+        // Try 30-day window first, fall back to 90-day
+        for (const cutoff of [cutoff30, cutoff90]) {
+          let best = 0;
+          for (const entry of sbdEntries) {
+            const entryMs = new Date(entry.date).getTime();
+            if (entryMs > sampleMs) break;
+            if (entryMs < cutoff || entry.key !== key) continue;
+            const e1rm = entry.reps === 1
+              ? entry.weightKg
+              : estimateE1RM(entry.reps, entry.weightKg, e1rmFormula);
+            if (e1rm > best) best = e1rm;
+          }
+          if (best > 0) {
+            bestE1rm[key] = best;
+            break; // found in this window, skip wider fallback
+          }
+        }
+      }
+
+      // Need all 3 lifts for SBD total percentile
+      if (bestE1rm.squat == null || bestE1rm.bench == null || bestE1rm.deadlift == null) continue;
+
+      const result = computeStrengthResults(bio, bestE1rm);
+      const pct = result.total?.percentiles?.["General Population"];
+      if (pct == null) continue;
+
+      points.push({
+        date: sampleDate.toISOString().slice(0, 10),
+        percentile: pct,
+      });
+    }
+
+    return points.length >= 2 ? points : null;
+  }, [usingUserData, parsedData, isDemoMode, age, sex, bodyWeightKg, e1rmFormula]);
+
   const handleShare = () => {
     const percentile = chartPercentiles[activeUniverse];
     const text = `I'm stronger than ${percentile}% of ${activeUniverse.toLowerCase()} — Strength Journeys: How Strong Am I? ${CANONICAL}`;
@@ -388,6 +497,7 @@ function HowStrongAmIPageMain() {
                 activeUniverse={activeUniverse}
                 userStoryData={authStatus === "authenticated" ? userStoryData : null}
                 chartPercentiles={chartPercentiles}
+                percentileTimeline={percentileTimeline}
               />
             </div>
 
@@ -475,7 +585,7 @@ function ordinal(n) {
   return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
 
-function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, results, activeUniverse, userStoryData, chartPercentiles }) {
+function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, authStatus, isReturningUserLoading, prWeights, results, activeUniverse, userStoryData, chartPercentiles, percentileTimeline }) {
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
   const max = isMetric ? 300 : 660;
@@ -605,6 +715,7 @@ function LiftSliders({ liftWeights, onChange, onReset, isMetric, usingUserData, 
             storyData={userStoryData}
             chartPercentiles={chartPercentiles}
             isMetric={isMetric}
+            percentileTimeline={percentileTimeline}
           />
         )}
 
@@ -667,8 +778,8 @@ function PercentileConclusion({ percentile, universe }) {
   );
 }
 
-function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
-  const { liftStories, careerYears, totalSessions, liftCount } = storyData;
+function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentileTimeline }) {
+  const { careerYears, totalSessions, liftCount, liftStories } = storyData;
 
   const barbell = chartPercentiles["Barbell Lifters"];
   const genPop = chartPercentiles["General Population"];
@@ -679,21 +790,15 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
     if (careerYears >= 1) {
       const years = Math.floor(careerYears);
       careerLabel = `${years}yr${years !== 1 ? "s" : ""}`;
-      if (years >= 5) careerDescription = "That's a long game. Most people quit inside twelve months.";
-      else if (years >= 2) careerDescription = "Multi-year consistency is the hardest part — and you're doing it.";
-      else careerDescription = "Year one is where the biggest jumps happen. You're right in it.";
+      if (years >= 5) careerDescription = "Most people quit inside twelve months. You didn\u2019t.";
+      else if (years >= 2) careerDescription = "Multi-year consistency is the hardest part — and you\u2019re doing it.";
+      else careerDescription = "Year one is where the biggest jumps happen. You\u2019re right in it.";
     } else {
       const months = Math.max(1, Math.round(careerYears * 12));
       careerLabel = `${months}mo`;
-      careerDescription = "Early momentum builds the habits that last decades. Keep going.";
+      careerDescription = "Early momentum builds the habits that last decades.";
     }
   }
-
-  const LIFT_META = {
-    squat: { label: "Squat", svg: "/back_squat.svg", href: "/barbell-squat-insights" },
-    bench: { label: "Bench", svg: "/bench_press.svg", href: "/barbell-bench-press-insights" },
-    deadlift: { label: "Deadlift", svg: "/deadlift.svg", href: "/barbell-deadlift-insights" },
-  };
 
   // Compute SBD total in display units
   let sbdTotal = null;
@@ -739,69 +844,127 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric }) {
         )}
       </div>
 
-      {/* Per-lift E1RM breakdown */}
-      <div className="flex flex-col gap-2">
-        {Object.entries(liftStories).map(([key, story]) => {
-          const meta = LIFT_META[key];
-          if (!meta) return null;
-          const unit = isMetric ? "kg" : "lb";
-          const allTime = isMetric && story.unitType === "lb"
-            ? Math.round(story.allTimeE1RM / 2.2046)
-            : !isMetric && story.unitType === "kg"
-              ? Math.round(story.allTimeE1RM * 2.2046)
-              : story.allTimeE1RM;
-          const lastYear = story.lastYearE1RM
-            ? isMetric && story.unitType === "lb"
-              ? Math.round(story.lastYearE1RM / 2.2046)
-              : !isMetric && story.unitType === "kg"
-                ? Math.round(story.lastYearE1RM * 2.2046)
-                : story.lastYearE1RM
-            : null;
-
-          return (
-            <div key={key} className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/50">
-              <img src={meta.svg} alt="" className="h-5 w-5 shrink-0 dark:invert" aria-hidden />
-              <Link
-                href={meta.href}
-                className="text-sm font-medium underline decoration-dotted underline-offset-2 hover:text-blue-600"
-              >
-                {meta.label}
-              </Link>
-              <span className="ml-auto flex items-baseline gap-3 tabular-nums">
-                <span className="text-sm">
-                  <span className="font-bold">{allTime}</span>
-                  <span className="ml-0.5 text-xs text-muted-foreground">{unit}</span>
-                  <span className="ml-1 text-xs text-muted-foreground">best</span>
-                </span>
-                {lastYear != null && (
-                  <span className="text-sm text-muted-foreground">
-                    <span className="font-semibold">{lastYear}</span>
-                    <span className="ml-0.5 text-xs">{unit}</span>
-                    <span className="ml-1 text-xs">12mo</span>
-                  </span>
-                )}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      {/* Percentile timeline chart */}
+      {percentileTimeline && (
+        <PercentileTimelineChart data={percentileTimeline} currentPercentile={genPop} />
+      )}
 
       {/* Motivational closer */}
       <div className="rounded-lg bg-muted/30 px-3 py-2.5">
         <p className="text-sm leading-relaxed text-muted-foreground">
           {genPop >= 95
-            ? `Stronger than ${genPop}% of the general population — that's rarified air. You've put in work most people never will.`
+            ? `Stronger than ${genPop}% of the general population — that\u2019s rarified air.`
             : genPop >= 85
-              ? `Stronger than ${genPop}% of the general population. You're clearly not just going through the motions — real strength takes real effort.`
+              ? `Stronger than ${genPop}% of the general population. Dedicated-lifter strength.`
               : genPop >= 70
-                ? `Stronger than ${genPop}% of the general population. You're past the point of casual training — this is where the fun starts.`
+                ? `Stronger than ${genPop}% of the general population. Your training is paying off.`
                 : genPop >= 50
-                  ? `Stronger than ${genPop}% of the general population. Solid ground. The next 10% is closer than you think.`
-                  : "Every session counts. Strength is built one rep at a time — and you're building it."}
+                  ? `Stronger than ${genPop}% of the general population. Solid ground — the next 10% is closer than you think.`
+                  : "Every session counts. Strength is built one rep at a time."}
           {barbell != null && genPop >= 50 && (
-            <>{" "}Among barbell lifters specifically, you rank {ordinal(barbell)} — a tougher crowd, and you&apos;re holding your own.</>
+            <>{" "}{ordinal(barbell)} among barbell lifters.</>
           )}
         </p>
+      </div>
+    </div>
+  );
+}
+
+function PercentileTimelineChart({ data, currentPercentile }) {
+  // Determine smart tick formatting based on time span
+  const firstDate = new Date(data[0].date);
+  const lastDate = new Date(data[data.length - 1].date);
+  const spanDays = (lastDate - firstDate) / 86400000;
+
+  const formatTick = (dateStr) => {
+    const d = new Date(dateStr);
+    if (spanDays <= 365) {
+      // Short: show "Mar", "Apr", etc.
+      return d.toLocaleDateString("en-US", { month: "short" });
+    }
+    if (spanDays <= 365 * 4) {
+      // Medium: show "Mar '24"
+      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    }
+    // Long: show "'20", "'21", etc.
+    return "\u2019" + d.toLocaleDateString("en-US", { year: "2-digit" });
+  };
+
+  // Thin out tick labels to avoid overlap — show ~5-7 labels max
+  const maxTicks = spanDays <= 365 ? 6 : spanDays <= 365 * 4 ? 7 : 8;
+  const tickInterval = Math.max(1, Math.floor(data.length / maxTicks));
+  const ticks = data
+    .filter((_, i) => i % tickInterval === 0 || i === data.length - 1)
+    .map((d) => d.date);
+
+  const formatTooltipDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  };
+
+  // Compute Y domain: floor to nearest 10 below min, cap at 100
+  const minPct = Math.min(...data.map((d) => d.percentile));
+  const yMin = Math.max(0, Math.floor(minPct / 10) * 10 - 5);
+
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-xs text-muted-foreground">
+        SBD percentile vs. general population over time
+      </p>
+      <div className="h-28 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+            <defs>
+              <linearGradient id="pctGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="date"
+              tickFormatter={formatTick}
+              ticks={ticks}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              domain={[yMin, 100]}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => `${v}`}
+            />
+            <RechartsTooltip
+              contentStyle={{
+                fontSize: 12,
+                borderRadius: 8,
+                border: "1px solid hsl(var(--border))",
+                backgroundColor: "hsl(var(--popover))",
+                color: "hsl(var(--popover-foreground))",
+              }}
+              labelFormatter={formatTooltipDate}
+              formatter={(value) => [`${value}%`, "Percentile"]}
+            />
+            {currentPercentile != null && (
+              <ReferenceLine
+                y={currentPercentile}
+                stroke="hsl(var(--muted-foreground))"
+                strokeDasharray="3 3"
+                strokeOpacity={0.5}
+              />
+            )}
+            <Area
+              type="monotone"
+              dataKey="percentile"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              fill="url(#pctGrad)"
+              dot={false}
+              activeDot={{ r: 3, strokeWidth: 0, fill: "hsl(var(--primary))" }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

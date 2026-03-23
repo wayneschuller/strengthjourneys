@@ -1035,6 +1035,119 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       </section>
 
       <section className="mt-10">
+        <h2 className="mb-3 text-xl font-semibold">
+          Sample paths to the 1000lb Club
+        </h2>
+        <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
+          There is no single path to a 1000&nbsp;lb total. Your build, training
+          history, and leverages all shape where your numbers land. Here are
+          three common lifter archetypes that each hit 1000&nbsp;lbs in
+          different ways.
+        </p>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* Squat-dominant */}
+          <div className="rounded-lg border p-4">
+            <h3 className="mb-2 text-sm font-semibold">
+              🦵 The Squat Specialist
+            </h3>
+            <p className="text-muted-foreground mb-3 text-xs">
+              Thick quads, strong back, loves time in the hole. Squat day is the
+              best day.
+            </p>
+            <table className="w-full text-sm">
+              <tbody>
+                <tr className="border-b">
+                  <td className="py-1">Back Squat</td>
+                  <td className="py-1 text-right font-semibold">405 lbs</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-1">Bench Press</td>
+                  <td className="py-1 text-right">245 lbs</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-1">Deadlift</td>
+                  <td className="py-1 text-right">350 lbs</td>
+                </tr>
+                <tr>
+                  <td className="py-1 font-semibold">Total</td>
+                  <td className="py-1 text-right font-bold text-green-500">
+                    1000 lbs
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Deadlift-dominant */}
+          <div className="rounded-lg border p-4">
+            <h3 className="mb-2 text-sm font-semibold">
+              🏗️ The Deadlift Machine
+            </h3>
+            <p className="text-muted-foreground mb-3 text-xs">
+              Long arms, iron grip, built to pull. The bar always leaves the
+              floor.
+            </p>
+            <table className="w-full text-sm">
+              <tbody>
+                <tr className="border-b">
+                  <td className="py-1">Back Squat</td>
+                  <td className="py-1 text-right">315 lbs</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-1">Bench Press</td>
+                  <td className="py-1 text-right">225 lbs</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-1">Deadlift</td>
+                  <td className="py-1 text-right font-semibold">460 lbs</td>
+                </tr>
+                <tr>
+                  <td className="py-1 font-semibold">Total</td>
+                  <td className="py-1 text-right font-bold text-green-500">
+                    1000 lbs
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Bench-light / T-Rex */}
+          <div className="rounded-lg border p-4">
+            <h3 className="mb-2 text-sm font-semibold">
+              🦖 The T-Rex
+            </h3>
+            <p className="text-muted-foreground mb-3 text-xs">
+              Big squat, big pull, tiny arms. Bench day is a rest day in
+              disguise.
+            </p>
+            <table className="w-full text-sm">
+              <tbody>
+                <tr className="border-b">
+                  <td className="py-1">Back Squat</td>
+                  <td className="py-1 text-right font-semibold">385 lbs</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-1">Bench Press</td>
+                  <td className="py-1 text-right">185 lbs</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-1">Deadlift</td>
+                  <td className="py-1 text-right font-semibold">430 lbs</td>
+                </tr>
+                <tr>
+                  <td className="py-1 font-semibold">Total</td>
+                  <td className="py-1 text-right font-bold text-green-500">
+                    1000 lbs
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">1000lb Club FAQ</h2>
         <div className="space-y-4">
           {FAQ_ITEMS.map(({ question, answer, renderAnswer }) => (

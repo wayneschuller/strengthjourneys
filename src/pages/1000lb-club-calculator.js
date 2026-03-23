@@ -28,7 +28,6 @@ import {
   PageHeaderRight,
 } from "@/components/page-header";
 
-import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +38,6 @@ import {
   BicepsFlexed,
   Bot,
   CircleDashed,
-  Sparkles,
   RotateCcw,
 } from "lucide-react";
 
@@ -859,12 +857,6 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 <span className="text-3xl font-bold tabular-nums">
                   Total: {total} lbs ({toKgF(total)} kg)
                 </span>
-                {usingUserData && !hasMovedFromPR && (
-                  <Badge variant="secondary" className="gap-1 text-xs">
-                    <Sparkles className="h-3 w-3" />
-                    From your log
-                  </Badge>
-                )}
                 {hasMovedFromPR && (
                   <Button
                     variant="ghost"
@@ -884,7 +876,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                     onClick={handleResetTo90d}
                   >
                     <RotateCcw className="h-3 w-3" />
-                    Reset to 90d
+                    Reset to 90-day bests
                   </Button>
                 )}
               </motion.div>

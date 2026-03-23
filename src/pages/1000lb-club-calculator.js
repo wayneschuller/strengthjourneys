@@ -544,6 +544,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       );
       points.push({
         date: sampleDate.toISOString().slice(0, 10),
+        timestamp: sampleMs,
         total,
         squat: Math.round(bestE1rm.squat),
         bench: Math.round(bestE1rm.bench),
@@ -1234,7 +1235,7 @@ function TimelineTooltipContent({ active, payload, label }) {
   if (!active || !payload?.[0]) return null;
   const d = payload[0].payload;
   const above = d.total >= TARGET_TOTAL;
-  const dateStr = new Date(label).toLocaleDateString("en-US", {
+  const dateStr = new Date(Number(label)).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -1280,12 +1281,20 @@ function TotalTimelineChart({ data, target }) {
   const spanDays =
     (new Date(data[data.length - 1].date) - new Date(data[0].date)) / 86400000;
 
-  const formatTick = (dateStr) => {
-    const d = new Date(dateStr);
-    if (spanDays <= 365)
+  const segmentedData = buildSegmentedTimelineData(data, target);
+  const xTicks = buildTimelineTicks(data, spanDays);
+
+  const formatTick = (timestamp) => {
+    const d = new Date(timestamp);
+    if (spanDays <= 365) {
       return d.toLocaleDateString("en-US", { month: "short" });
-    if (spanDays <= 1095)
-      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    }
+    if (spanDays <= 1095) {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        year: "2-digit",
+      });
+    }
     return d.toLocaleDateString("en-US", { year: "numeric" });
   };
 
@@ -1296,10 +1305,6 @@ function TotalTimelineChart({ data, target }) {
 
   const everCrossed = data.some((d) => d.total >= target);
   const latestAbove = data[data.length - 1].total >= target;
-
-  // Y-space split gradient: green above target line, amber below.
-  // Calculate threshold offset as fraction of Y range (0 = top, 1 = bottom).
-  const thresholdFrac = (yMax - target) / (yMax - yMin);
 
   return (
     <Card className="mt-6">
@@ -1322,52 +1327,41 @@ function TotalTimelineChart({ data, target }) {
         <div className="h-[220px] w-full sm:h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={data}
+              data={segmentedData}
               margin={{ top: 8, right: 12, bottom: 0, left: -12 }}
             >
               <defs>
-                {/* Stroke gradient: green above threshold, amber below */}
                 <linearGradient
-                  id="timeline-stroke-split"
+                  id="timeline-fill-above"
                   x1="0"
                   y1="0"
                   x2="0"
                   y2="1"
                 >
-                  <stop offset={0} stopColor="#10B981" />
-                  <stop offset={thresholdFrac} stopColor="#10B981" />
-                  <stop offset={thresholdFrac} stopColor="#F59E0B" />
-                  <stop offset={1} stopColor="#F59E0B" />
+                  <stop offset={0} stopColor="#10B981" stopOpacity={0.24} />
+                  <stop offset={1} stopColor="#10B981" stopOpacity={0.06} />
                 </linearGradient>
-                {/* Fill gradient: green tint above, amber tint below */}
                 <linearGradient
-                  id="timeline-fill-split"
+                  id="timeline-fill-below"
                   x1="0"
                   y1="0"
                   x2="0"
                   y2="1"
                 >
-                  <stop offset={0} stopColor="#10B981" stopOpacity={0.3} />
-                  <stop
-                    offset={thresholdFrac}
-                    stopColor="#10B981"
-                    stopOpacity={0.08}
-                  />
-                  <stop
-                    offset={thresholdFrac}
-                    stopColor="#F59E0B"
-                    stopOpacity={0.25}
-                  />
+                  <stop offset={0} stopColor="#F59E0B" stopOpacity={0.22} />
                   <stop offset={1} stopColor="#F59E0B" stopOpacity={0.04} />
                 </linearGradient>
               </defs>
               <XAxis
-                dataKey="date"
+                dataKey="timestamp"
+                type="number"
+                scale="time"
+                domain={["dataMin", "dataMax"]}
+                ticks={xTicks}
                 tickFormatter={formatTick}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                interval="preserveStartEnd"
               />
               <YAxis
                 domain={[yMin, yMax]}
@@ -1392,10 +1386,22 @@ function TotalTimelineChart({ data, target }) {
               />
               <Area
                 type="monotone"
-                dataKey="total"
-                stroke="url(#timeline-stroke-split)"
+                dataKey="below"
+                connectNulls
+                stroke="#F59E0B"
                 strokeWidth={2.5}
-                fill="url(#timeline-fill-split)"
+                fill="url(#timeline-fill-below)"
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 2, stroke: "#F59E0B" }}
+              />
+              <Area
+                type="monotone"
+                dataKey="above"
+                connectNulls
+                baseValue={target}
+                stroke="#10B981"
+                strokeWidth={2.5}
+                fill="url(#timeline-fill-above)"
                 dot={false}
                 activeDot={{ r: 4, strokeWidth: 2, stroke: "#10B981" }}
               />
@@ -1405,4 +1411,84 @@ function TotalTimelineChart({ data, target }) {
       </CardContent>
     </Card>
   );
+}
+
+function buildSegmentedTimelineData(data, target) {
+  const segmented = [];
+
+  for (let i = 0; i < data.length; i += 1) {
+    const point = data[i];
+    segmented.push({
+      ...point,
+      above: point.total >= target ? point.total : null,
+      below: point.total <= target ? point.total : null,
+    });
+
+    const next = data[i + 1];
+    if (!next) continue;
+
+    const prevDelta = point.total - target;
+    const nextDelta = next.total - target;
+    if (prevDelta === 0 || nextDelta === 0 || prevDelta * nextDelta > 0) {
+      continue;
+    }
+
+    const ratio = (target - point.total) / (next.total - point.total);
+    const crossingTimestamp = Math.round(
+      point.timestamp + ratio * (next.timestamp - point.timestamp),
+    );
+
+    segmented.push({
+      ...point,
+      date: new Date(crossingTimestamp).toISOString().slice(0, 10),
+      timestamp: crossingTimestamp,
+      total: target,
+      above: target,
+      below: target,
+    });
+  }
+
+  return segmented;
+}
+
+function buildTimelineTicks(data, spanDays) {
+  if (!data.length) return [];
+
+  if (spanDays > 1095) {
+    const yearlyTicks = [];
+    let previousYear = null;
+
+    for (const point of data) {
+      const year = new Date(point.timestamp).getFullYear();
+      if (year !== previousYear) {
+        yearlyTicks.push(point.timestamp);
+        previousYear = year;
+      }
+    }
+
+    const lastTick = data[data.length - 1].timestamp;
+    if (yearlyTicks[yearlyTicks.length - 1] !== lastTick) {
+      yearlyTicks.push(lastTick);
+    }
+
+    return yearlyTicks;
+  }
+
+  const desiredTickCount = spanDays > 365 ? 7 : 6;
+  const step = Math.max(
+    1,
+    Math.ceil((data.length - 1) / (desiredTickCount - 1)),
+  );
+  const ticks = [];
+
+  for (let i = 0; i < data.length; i += step) {
+    ticks.push(data[i].timestamp);
+  }
+
+  const lastTick = data[data.length - 1].timestamp;
+  if (ticks[ticks.length - 1] !== lastTick) {
+    ticks.push(lastTick);
+  }
+
+  return ticks;
 }

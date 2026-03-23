@@ -1382,6 +1382,7 @@ function TotalTimelineChart({ data, target }) {
                   value: `${target} lbs`,
                   position: "insideRight",
                   offset: -6,
+                  dy: -10,
                   fill: "#10B981",
                   fontSize: 11,
                   fontWeight: 600,

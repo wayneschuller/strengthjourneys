@@ -1089,11 +1089,13 @@ function ThousandDonut({
     { name: "Progress", value: capped },
     { name: "Remainder", value: remainder },
   ];
-  const COLORS = ["#10B981", "#1F2937"]; // emerald / gray-800
-
   const percent = Math.min(100, Math.round((total / target) * 100));
   const inClub = total >= target;
   const totalKg = (total * KG_PER_LB).toFixed(1);
+  const progressGradient = inClub
+    ? { start: "#34D399", end: "#059669" }
+    : { start: "#FBBF24", end: "#D97706" };
+  const remainderColor = "#1F2937";
 
   return (
     <motion.div
@@ -1134,8 +1136,8 @@ function ThousandDonut({
         <PieChart>
           <defs>
             <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#34D399" />
-              <stop offset="100%" stopColor="#059669" />
+              <stop offset="0%" stopColor={progressGradient.start} />
+              <stop offset="100%" stopColor={progressGradient.end} />
             </linearGradient>
           </defs>
           <Pie
@@ -1153,7 +1155,7 @@ function ThousandDonut({
             {data.map((_, i) => (
               <Cell
                 key={i}
-                fill={i === 0 ? `url(#${gradientId})` : COLORS[i]}
+                fill={i === 0 ? `url(#${gradientId})` : remainderColor}
               />
             ))}
           </Pie>

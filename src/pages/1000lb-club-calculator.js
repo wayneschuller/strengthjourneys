@@ -1302,6 +1302,7 @@ function TotalTimelineChart({ data, target }) {
   const maxTotal = Math.max(...data.map((d) => d.total));
   const yMin = Math.floor(Math.min(minTotal, target - 50) / 50) * 50;
   const yMax = Math.ceil(Math.max(maxTotal, target + 50) / 50) * 50;
+  const yTicks = buildYAxisTicks(yMin, yMax, target);
 
   const everCrossed = data.some((d) => d.total >= target);
   const latestAbove = data[data.length - 1].total >= target;
@@ -1328,7 +1329,7 @@ function TotalTimelineChart({ data, target }) {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={segmentedData}
-              margin={{ top: 8, right: 12, bottom: 0, left: -12 }}
+              margin={{ top: 8, right: 40, bottom: 0, left: -12 }}
             >
               <defs>
                 <linearGradient
@@ -1365,6 +1366,7 @@ function TotalTimelineChart({ data, target }) {
               />
               <YAxis
                 domain={[yMin, yMax]}
+                ticks={yTicks}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
@@ -1378,7 +1380,8 @@ function TotalTimelineChart({ data, target }) {
                 strokeWidth={2}
                 label={{
                   value: `${target} lbs`,
-                  position: "right",
+                  position: "insideRight",
+                  offset: -6,
                   fill: "#10B981",
                   fontSize: 11,
                   fontWeight: 600,
@@ -1488,6 +1491,21 @@ function buildTimelineTicks(data, spanDays) {
   const lastTick = data[data.length - 1].timestamp;
   if (ticks[ticks.length - 1] !== lastTick) {
     ticks.push(lastTick);
+  }
+
+  return ticks;
+}
+
+function buildYAxisTicks(yMin, yMax, target) {
+  const ticks = [];
+
+  for (let value = yMin; value <= yMax; value += 50) {
+    ticks.push(value);
+  }
+
+  if (!ticks.includes(target)) {
+    ticks.push(target);
+    ticks.sort((a, b) => a - b);
   }
 
   return ticks;

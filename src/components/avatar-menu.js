@@ -202,7 +202,7 @@ export function AvatarDropdown() {
                   }
                 >
                   <Upload className="mr-2 h-4 w-4" />
-                  Import Data
+                  Import / Export
                 </DropdownMenuItem>
                 {/* Non-production tools for QA/reset workflows.
                     These are available in development-like envs (including

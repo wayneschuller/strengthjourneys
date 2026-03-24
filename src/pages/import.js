@@ -389,7 +389,7 @@ export default function ImportPage() {
         </PageHeader>
 
         {/* Quick Add Section */}
-        <section className="mx-auto mb-12 max-w-3xl space-y-4">
+        <section className="mx-auto mb-12 max-w-5xl space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
             <Button
@@ -448,7 +448,7 @@ export default function ImportPage() {
         </section>
 
         {/* File Upload Section (Coming Soon) */}
-        <section className="mx-auto mb-16 max-w-3xl">
+        <section className="mx-auto mb-16 max-w-5xl">
           <h2 className="mb-4 text-lg font-semibold">Import from Another App</h2>
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">

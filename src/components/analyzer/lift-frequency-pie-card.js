@@ -25,10 +25,10 @@ import {
 } from "@/components/mini-lift-chronology-chart";
 
 const bigFourURLs = {
-  "Back Squat": "/barbell-squat-insights",
-  "Bench Press": "/barbell-bench-press-insights",
-  Deadlift: "/barbell-deadlift-insights",
-  "Strict Press": "/barbell-strict-press-insights",
+  "Back Squat": "/progress-guide/squat",
+  "Bench Press": "/progress-guide/bench-press",
+  Deadlift: "/progress-guide/deadlift",
+  "Strict Press": "/progress-guide/strict-press",
 };
 
 const RADIAN = Math.PI / 180;

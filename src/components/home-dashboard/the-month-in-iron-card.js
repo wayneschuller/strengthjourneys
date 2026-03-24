@@ -45,10 +45,10 @@ import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-setting
 import { MiniFeedbackWidget } from "@/components/feedback";
 
 const BIG_FOUR_INSIGHT_HREFS = {
-  "Back Squat": "/barbell-squat-insights",
-  "Bench Press": "/barbell-bench-press-insights",
-  Deadlift: "/barbell-deadlift-insights",
-  "Strict Press": "/barbell-strict-press-insights",
+  "Back Squat": "/progress-guide/squat",
+  "Bench Press": "/progress-guide/bench-press",
+  Deadlift: "/progress-guide/deadlift",
+  "Strict Press": "/progress-guide/strict-press",
 };
 
 // ─── Main component ────────────────────────────────────────────────────────
@@ -759,10 +759,10 @@ const PAST_MONTH_NO_BASELINE_HEADLINES = [
 ];
 
 const BIG_FOUR_LIFT_URLS = {
-  "Back Squat": "/barbell-squat-insights",
-  "Bench Press": "/barbell-bench-press-insights",
-  Deadlift: "/barbell-deadlift-insights",
-  "Strict Press": "/barbell-strict-press-insights",
+  "Back Squat": "/progress-guide/squat",
+  "Bench Press": "/progress-guide/bench-press",
+  Deadlift: "/progress-guide/deadlift",
+  "Strict Press": "/progress-guide/strict-press",
 };
 
 const HIGHLIGHT_REVEAL_DELAY_MS = 650;

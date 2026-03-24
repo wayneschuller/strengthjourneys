@@ -284,10 +284,10 @@ export function FeedbackWidget({ labels = {} }) {
   };
 
   const LIFT_SLUG_NAMES = {
-    "barbell-squat-insights": "Back Squat Insights",
-    "barbell-bench-press-insights": "Bench Press Insights",
-    "barbell-deadlift-insights": "Deadlift Insights",
-    "barbell-strict-press-insights": "Strict Press Insights",
+    squat: "Back Squat Insights",
+    "bench-press": "Bench Press Insights",
+    deadlift: "Deadlift Insights",
+    "strict-press": "Strict Press Insights",
   };
   const STRENGTH_LEVELS_LIFT_NAMES = {
     squat: "Squat Strength Levels",
@@ -323,7 +323,7 @@ export function FeedbackWidget({ labels = {} }) {
   }, [controls, open, hasFeedback]);
 
   const pageName =
-    router.pathname === "/[lift]"
+    router.pathname === "/progress-guide/[lift]"
       ? LIFT_SLUG_NAMES[router.query.lift] || "Lift Insights"
       : router.pathname === "/strength-levels/[lift]"
         ? STRENGTH_LEVELS_LIFT_NAMES[router.query.lift] || "the Strength Levels page"

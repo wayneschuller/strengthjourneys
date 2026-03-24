@@ -8,7 +8,7 @@ Powerlifters and barbell weirdos will love this app, but our real target audienc
 
 ## Features
 
-- **Big four lift cards** — at-a-glance dashboard showing PRs, estimated 1RM, tonnage, and recent activity for [squat](https://www.strengthjourneys.xyz/barbell-squat-insights), [bench press](https://www.strengthjourneys.xyz/barbell-bench-press-insights), [deadlift](https://www.strengthjourneys.xyz/barbell-deadlift-insights), and [strict press](https://www.strengthjourneys.xyz/barbell-strict-press-insights)
+- **Big four lift cards** — at-a-glance dashboard showing PRs, estimated 1RM, tonnage, and recent activity for [squat](https://www.strengthjourneys.xyz/progress-guide/squat), [bench press](https://www.strengthjourneys.xyz/progress-guide/bench-press), [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), and [strict press](https://www.strengthjourneys.xyz/progress-guide/strict-press)
 - **[Visualizer](https://www.strengthjourneys.xyz/visualizer)** — interactive line charts of your lift history over time with E1RM (estimated one-rep max) curves
 - **[Analyzer](https://www.strengthjourneys.xyz/analyzer)** — activity heatmaps and PR tracking across all your lifts
 - **[Tonnage tracking](https://www.strengthjourneys.xyz/tonnage)** — volume analysis showing total weight moved over time

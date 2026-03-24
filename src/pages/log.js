@@ -86,22 +86,22 @@ const BIG_FOUR = [
   {
     name: "Back Squat",
     icon: "/back_squat.svg",
-    slug: "barbell-squat-insights",
+    slug: "progress-guide/squat",
   },
   {
     name: "Bench Press",
     icon: "/bench_press.svg",
-    slug: "barbell-bench-press-insights",
+    slug: "progress-guide/bench-press",
   },
   {
     name: "Deadlift",
     icon: "/deadlift.svg",
-    slug: "barbell-deadlift-insights",
+    slug: "progress-guide/deadlift",
   },
   {
     name: "Strict Press",
     icon: "/strict_press.svg",
-    slug: "barbell-strict-press-insights",
+    slug: "progress-guide/strict-press",
   },
 ];
 const BIG_FOUR_INSIGHT_URLS = Object.fromEntries(
@@ -111,7 +111,7 @@ const BIG_FOUR_INSIGHT_URLS = Object.fromEntries(
 const COACHED_LIFTS = [
   {
     liftType: "Back Squat",
-    slug: "barbell-squat-insights",
+    slug: "progress-guide/squat",
     cues: [
       "Root your whole foot and brace hard before every rep.",
       "Sit between your hips while the bar stays balanced over mid-foot.",
@@ -121,7 +121,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Bench Press",
-    slug: "barbell-bench-press-insights",
+    slug: "progress-guide/bench-press",
     cues: [
       "Set your shoulder blades first, then keep the upper back pinned tight.",
       "Plant your feet and stay tight from the handoff to lockout.",
@@ -131,7 +131,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Deadlift",
-    slug: "barbell-deadlift-insights",
+    slug: "progress-guide/deadlift",
     cues: [
       "Start with the bar over mid-foot and bring your shins in only after you hinge down.",
       "Brace, squeeze the bar, and pull the slack out before the floor breaks.",
@@ -141,7 +141,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Strict Press",
-    slug: "barbell-strict-press-insights",
+    slug: "progress-guide/strict-press",
     cues: [
       "Squeeze glutes and abs so the ribs stay down before the press starts.",
       "Stack wrists over elbows and begin with forearms close to vertical.",

@@ -1484,10 +1484,10 @@ const LIFT_SLUG_TO_BIG_FOUR = {
 
 // Maps lift slug page names to the dedicated lift insights page URL.
 const LIFT_SLUG_TO_INSIGHTS_URL = {
-  "Squat": "/barbell-squat-insights",
-  "Bench Press": "/barbell-bench-press-insights",
-  "Deadlift": "/barbell-deadlift-insights",
-  "Strict Press": "/barbell-strict-press-insights",
+  "Squat": "/progress-guide/squat",
+  "Bench Press": "/progress-guide/bench-press",
+  "Deadlift": "/progress-guide/deadlift",
+  "Strict Press": "/progress-guide/strict-press",
 };
 
 const NEXT_TIER = {

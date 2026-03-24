@@ -44,10 +44,10 @@ import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 
 const BIG_FOUR_URLS = {
-  "Strict Press": "/barbell-strict-press-insights",
-  "Bench Press": "/barbell-bench-press-insights",
-  "Back Squat": "/barbell-squat-insights",
-  Deadlift: "/barbell-deadlift-insights",
+  "Strict Press": "/progress-guide/strict-press",
+  "Bench Press": "/progress-guide/bench-press",
+  "Back Squat": "/progress-guide/squat",
+  Deadlift: "/progress-guide/deadlift",
 };
 
 const LIFT_GRAPHICS = {

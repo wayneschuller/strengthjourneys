@@ -239,7 +239,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
             className="mt-1"
             onClick={addEntry}
           >
-            <Plus className="mr-1 h-4 w-4" /> Add another
+            <Plus className="mr-1 h-4 w-4" /> Add another {lift.name}
           </Button>
         </CardContent>
       )}

@@ -260,7 +260,7 @@ function escapeCsvField(val) {
 }
 
 function buildCsvFromParsedData(parsedData) {
-  const header = "Date,Lift Type,Reps,Weight,Notes";
+  const header = "Date,Lift Type,Reps,Weight,Notes,Label,URL";
   const entries = parsedData.filter((e) => !e.isGoal);
 
   // parsedData is date-ascending with intraday order preserved.
@@ -282,7 +282,7 @@ function buildCsvFromParsedData(parsedData) {
 
   const rows = grouped.flat().map((e) => {
     const weight = `${e.weight}${e.unitType}`;
-    return [e.date, e.liftType, e.reps, weight, e.notes || ""]
+    return [e.date, e.liftType, e.reps, weight, e.notes || "", e.label || "", e.URL || ""]
       .map(escapeCsvField)
       .join(",");
   });

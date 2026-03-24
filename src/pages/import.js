@@ -35,8 +35,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const isDev =
-  process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
 const BIG_FOUR = [
   { name: "Back Squat", icon: "/back_squat.svg" },
@@ -354,18 +352,6 @@ export default function ImportPage() {
       setSaving(false);
     }
   }, [validEntries, sheetInfo, mutate, toast, defaultYear]);
-
-  // Dev gate
-  if (!isDev) {
-    return (
-      <>
-        <NextSeo title="Import Data" noindex />
-        <PageContainer className="py-16 text-center">
-          <p className="text-muted-foreground">This page is not yet available.</p>
-        </PageContainer>
-      </>
-    );
-  }
 
   // Auth gate
   if (authStatus === "unauthenticated") {

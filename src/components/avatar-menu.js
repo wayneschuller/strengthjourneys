@@ -12,6 +12,7 @@ import {
   LogOut,
   MessageSquarePlus,
   Coffee,
+  Upload,
   Eraser,
   Trash2,
   Activity,
@@ -194,6 +195,14 @@ export function AvatarDropdown() {
                 >
                   <Coffee className="mr-2 h-4 w-4" />
                   Buy Me A Coffee
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    window.location.href = "/import"
+                  }
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import Data
                 </DropdownMenuItem>
                 {/* Non-production tools for QA/reset workflows.
                     These are available in development-like envs (including

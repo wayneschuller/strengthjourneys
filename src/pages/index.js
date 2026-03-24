@@ -30,7 +30,6 @@ import {
   CircleDashed,
   Plus,
   Mountain,
-  Upload,
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -171,15 +170,6 @@ export const featurePages = [
     title: "Gym Music Leaderboard",
     description: "Discover and share new motivational music playlists.",
     IconComponent: Music,
-  },
-  {
-    href: "/import",
-    title: "Import Data",
-    description:
-      "Add your lifting history from other apps or enter your best lifts manually.",
-    IconComponent: Upload,
-    authRequired: true,
-    devOnly: true,
   },
 ];
 
@@ -389,7 +379,6 @@ export default function Home() {
         </h2>
         <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {featurePages
-            .filter((card) => !card.devOnly || process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development")
             .filter((card) => !card.authRequired || authStatus === "authenticated")
             .filter((card) => card.href !== "/log" || canAccessLog)
             .map((card, index) => (

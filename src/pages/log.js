@@ -73,6 +73,12 @@ import {
   SyncIndicator,
 } from "@/components/log/session-summary";
 import { getLiftAnchorId } from "@/components/log/utils";
+import { Calendar as CalendarWidget } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 // --- Big Four lifts with SVG icons ---
 
@@ -334,6 +340,7 @@ export default function LogSessionPage() {
   // the per-set trash buttons disabled for a short beat after delete completion
   // so pointer follow-through cannot immediately delete the shifted row.
   const [isDeleteCooldownActive, setIsDeleteCooldownActive] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Optimistic pending sets: { [liftType]: [pendingSetObj, ...] }
   // _pending: true  → in-flight (show spinner)
@@ -428,6 +435,16 @@ export default function LogSessionPage() {
     [router, todayIso, setPendingSetsSync],
   );
 
+  const handleDatePickerSelect = useCallback(
+    (date) => {
+      if (!date) return;
+      const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      navigateToDate(iso);
+      setDatePickerOpen(false);
+    },
+    [navigateToDate],
+  );
+
   // All unique session dates from parsedData (ascending)
   const sessionDates = useMemo(() => {
     if (!parsedData) return [];
@@ -441,6 +458,18 @@ export default function LogSessionPage() {
     }
     return dates;
   }, [parsedData]);
+
+  // Session dates as Date objects for the calendar picker modifier highlights
+  const sessionDateObjects = useMemo(
+    () => sessionDates.map((d) => new Date(d + "T00:00:00")),
+    [sessionDates],
+  );
+
+  // The currently viewed date as a Date object for the calendar picker
+  const selectedDateObj = useMemo(
+    () => new Date(sessionDate + "T00:00:00"),
+    [sessionDate],
+  );
 
   // Current session entries grouped by lift type (real confirmed data)
   // Excludes optimistically deleted rows so they vanish from the UI immediately.
@@ -1542,27 +1571,45 @@ export default function LogSessionPage() {
       const allSessionRows = [...sessionRows, ...confirmedPendingSessionRows];
 
       const hasExistingSession = allSessionRows.length > 0 || hasPendingForDate;
-      const predecessorRow = hasExistingSession
-        ? allSessionRows.reduce(
-            (latest, row) =>
-              !latest || row.rowIndex > latest.rowIndex ? row : latest,
+
+      let predecessorRow = null;
+      let topExistingRow = null;
+
+      if (hasExistingSession) {
+        // Existing session: insert after the last row of this session
+        predecessorRow = allSessionRows.reduce(
+          (latest, row) =>
+            !latest || row.rowIndex > latest.rowIndex ? row : latest,
+          null,
+        );
+      } else {
+        // New session: find correct chronological insertion point.
+        // Sheet is newest-first (low rowIndex = newer). For a historical
+        // date, insert after the last row whose date is still newer.
+        const allRows = [
+          ...parsedData.filter((e) => e.rowIndex && !e.isGoal),
+          ...Object.values(currentPending)
+            .flat()
+            .filter((s) => !s._pending && s.rowIndex),
+        ];
+        const newerRows = allRows.filter((e) => e.date > sessionDate);
+        if (newerRows.length > 0) {
+          predecessorRow = newerRows.reduce(
+            (best, row) =>
+              !best || row.rowIndex > best.rowIndex ? row : best,
             null,
-          )
-        : null;
-      const topExistingRow = !hasExistingSession
-        ? [
-            ...parsedData.filter((e) => e.rowIndex),
-            ...Object.values(currentPending)
-              .flat()
-              .filter((s) => !s._pending && s.rowIndex),
-          ].reduce(
-            (top, row) => (!top || row.rowIndex < top.rowIndex ? row : top),
-            null,
-          )
-        : null;
+          );
+        }
+        // Fallback: topExistingRow for beforeSnapshot when inserting at top
+        topExistingRow = allRows.reduce(
+          (top, row) => (!top || row.rowIndex < top.rowIndex ? row : top),
+          null,
+        );
+      }
+
       const insertAfterRowIndex = predecessorRow?.rowIndex ?? null;
       const beforeSnapshot = buildSheetSnapshotFromSetLike(
-        hasExistingSession ? predecessorRow : topExistingRow,
+        predecessorRow ?? topExistingRow,
       );
 
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -2011,35 +2058,58 @@ export default function LogSessionPage() {
               </Button>
 
               <div className="relative flex-1 text-center">
-                <h1 className="text-lg leading-tight font-semibold">
-                  {isToday ? "Today" : getReadableDateString(sessionDate, true)}
-                </h1>
-                {isToday ? (
-                  <p className="text-muted-foreground text-xs">
-                    {getReadableDateString(sessionDate, true)}
-                  </p>
-                ) : null}
-
-                {!isToday ? (
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="hover:bg-muted/40 mx-auto inline-flex flex-col items-center rounded-md px-3 py-1 transition-colors group"
+                      aria-label="Pick a date"
+                    >
+                      <span className="inline-flex items-center gap-1.5 text-lg leading-tight font-semibold">
+                        <Calendar className="text-muted-foreground group-hover:text-foreground h-4 w-4 transition-colors" />
+                        <span className="decoration-muted-foreground/50 group-hover:decoration-foreground/50 underline decoration-dotted underline-offset-4">
+                          {isToday
+                            ? "Today"
+                            : getReadableDateString(sessionDate, true)}
+                        </span>
+                      </span>
+                      {isToday ? (
+                        <span className="text-muted-foreground text-xs">
+                          {getReadableDateString(sessionDate, true)}
+                        </span>
+                      ) : null}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="center">
+                    <CalendarWidget
+                      mode="single"
+                      selected={selectedDateObj}
+                      onSelect={handleDatePickerSelect}
+                      disabled={{ after: new Date() }}
+                      modifiers={{ hasSession: sessionDateObjects }}
+                      modifiersClassNames={{
+                        hasSession:
+                          "bg-primary/15 font-semibold text-primary",
+                      }}
+                      defaultMonth={selectedDateObj}
+                    />
+                    {!isToday && (
+                      <div className="border-border border-t px-3 py-2">
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="absolute top-1/2 right-0 h-8 w-8 -translate-y-1/2"
-                          onClick={() => navigateToDate(todayIso)}
-                          aria-label="Back to today"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            navigateToDate(todayIso);
+                            setDatePickerOpen(false);
+                          }}
                         >
-                          <Calendar className="h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Back to today
                         </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Back to today</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ) : null}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <SyncIndicator state={syncState} />

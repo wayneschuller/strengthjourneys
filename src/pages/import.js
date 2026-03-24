@@ -32,7 +32,10 @@ import {
   ChevronUp,
   Dumbbell,
   FileUp,
+  Download,
+  ExternalLink,
 } from "lucide-react";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { cn } from "@/lib/utils";
 
 const BIG_FOUR = [
@@ -247,6 +250,29 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
   );
 }
 
+function buildCsvFromParsedData(parsedData) {
+  const header = "Date,Lift Type,Reps,Weight,Unit";
+  const rows = parsedData
+    .filter((e) => !e.isGoal)
+    .map((e) => {
+      const escapedLift = e.liftType.includes(",")
+        ? `"${e.liftType}"`
+        : e.liftType;
+      return `${e.date},${escapedLift},${e.reps},${e.weight},${e.unitType}`;
+    });
+  return [header, ...rows].join("\n");
+}
+
+function downloadCsv(csvString, filename) {
+  const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ImportPage() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -448,7 +474,7 @@ export default function ImportPage() {
         </section>
 
         {/* File Upload Section (Coming Soon) */}
-        <section className="mx-auto mb-16 max-w-5xl">
+        <section className="mx-auto mb-12 max-w-5xl">
           <h2 className="mb-4 text-lg font-semibold">Import from Another App</h2>
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -464,6 +490,85 @@ export default function ImportPage() {
             </CardContent>
           </Card>
         </section>
+
+        {/* Export Section */}
+        {authStatus === "authenticated" && !isDemoMode && (
+          <section className="mx-auto mb-16 max-w-5xl">
+            <h2 className="mb-4 text-lg font-semibold">Export Your Data</h2>
+
+            {/* Primary: Open Google Sheet */}
+            {sheetInfo?.url && (
+              <Card className="mb-4">
+                <CardContent className="flex flex-col items-center py-8 text-center sm:flex-row sm:gap-6 sm:text-left">
+                  <a
+                    href={sheetInfo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group shrink-0"
+                  >
+                    <img
+                      src={GOOGLE_SHEETS_ICON_URL}
+                      alt="Google Sheets"
+                      width={80}
+                      height={80}
+                      className="transition-transform group-hover:scale-105"
+                    />
+                  </a>
+                  <div className="mt-4 flex-1 sm:mt-0">
+                    <h3 className="mb-1 text-base font-semibold">
+                      {sheetInfo.filename || "Your Google Sheet"}
+                    </h3>
+                    <p className="text-muted-foreground mb-3 text-sm">
+                      Your data already lives in your own Google Sheet — it&apos;s
+                      always yours. Open it anytime to view, edit, or share.
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <a
+                        href={sheetInfo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Open in Google Sheets
+                      </a>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Secondary: Download CSV */}
+            {parsedData && parsedData.length > 0 && (
+              <Card>
+                <CardContent className="flex items-center gap-4 py-4">
+                  <Download className="text-muted-foreground h-8 w-8 shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold">Download as CSV</h3>
+                    <p className="text-muted-foreground text-xs">
+                      {parsedData.filter((e) => !e.isGoal).length} rows
+                      — portable format for backups or other apps
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const csv = buildCsvFromParsedData(parsedData);
+                      const name = sheetInfo?.filename
+                        ? `${sheetInfo.filename.replace(/\s+/g, "_")}.csv`
+                        : "strength_journeys_export.csv";
+                      downloadCsv(csv, name);
+                      toast({ title: "CSV downloaded" });
+                    }}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+        )}
       </PageContainer>
     </>
   );

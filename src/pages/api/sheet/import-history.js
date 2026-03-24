@@ -94,6 +94,8 @@ export default async function handler(req, res) {
       }
 
       // Build sheet rows (sparse encoding)
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const importNote = `Strength Journeys import ${today}`;
       const rows = [];
       for (let li = 0; li < liftOrder.length; li++) {
         const liftType = liftOrder[li];
@@ -107,7 +109,7 @@ export default async function handler(req, res) {
             isSessionAnchor || isLiftAnchor ? liftType : "",
             String(s.reps || 1),
             `${s.weight}${s.unitType || "kg"}`,
-            "", // notes
+            importNote,
             "", // url
           ]);
         }

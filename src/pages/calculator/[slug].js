@@ -18,7 +18,7 @@ const PAGE_CONFIG = {
     blurb: "Developed by Boyd Epley in 1985, one of the most widely cited 1RM equations in strength research.",
     title: "Epley Formula 1RM Calculator | Epley 1RM Calculation",
     description:
-      "Use the Epley formula to calculate your one rep max from reps and weight. Compare Epley vs 6 other 1RM equations, rep max tables, and percentage loads.",
+      "Calculate your one rep max with the Epley formula: 1RM = weight × (1 + reps/30). Enter your set, compare Epley vs 6 other 1RM equations, and get rep max tables.",
     keywords:
       "epley formula 1rm, epley formula 1rm calculation, epley formula one rep max, epley 1rm calculator",
     formulaSupport: {
@@ -57,6 +57,24 @@ const PAGE_CONFIG = {
       takeaway:
         "This is why Epley is a common default for moderate-rep working sets: the math is simple and the estimate lands close to what most lifters expect.",
     },
+    faqItems: [
+      {
+        question: "How does the Epley formula calculate a one rep max?",
+        answer: [
+          "The Epley formula is 1RM = weight × (1 + reps/30). For example, if you lift 225 lb for 5 reps: 225 × (1 + 5/30) = 262.5, giving an estimated 1RM of about 263 lb. Developed by Boyd Epley in 1985, it's one of the most widely cited 1RM equations. A ",
+          { text: "2006 Journal of Strength and Conditioning Research study", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+          " found that 5RM data produced the greatest prediction accuracy, which aligns with how most lifters use the Epley formula in practice.",
+        ],
+      },
+      {
+        question: "Is the Epley formula accurate for high reps?",
+        answer: [
+          "Epley is most reliable in the 3–10 rep range. Above 10 reps, fatigue and technique breakdown introduce more noise into the estimate. That same ",
+          { text: "2006 prediction accuracy study", href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf" },
+          " recommended using no more than 10 repetitions for linear 1RM predictions. For higher-rep sets, consider comparing Epley against the Mayhew formula, which uses an exponential curve designed for those ranges.",
+        ],
+      },
+    ],
   },
   "brzycki-formula-1rm-calculator": {
     type: "formula",
@@ -66,7 +84,7 @@ const PAGE_CONFIG = {
       "The Brzycki formula is considered especially accurate for lower rep ranges (1–10) and is widely used in powerlifting.",
     title: "Brzycki Formula 1RM Calculator | Brzycki 1RM Calculation",
     description:
-      "Use the Brzycki formula to calculate your one rep max from reps and weight. Compare Brzycki vs 6 other 1RM equations, rep max tables, and percentage loads.",
+      "Calculate your one rep max with the Brzycki formula: 1RM = weight ÷ (1.0278 − 0.0278 × reps). Compare Brzycki vs 6 other 1RM equations, rep max tables, and percentage loads.",
     keywords:
       "brzycki formula 1rm, brzycki formula 1rm calculation, brzycki formula 1rm calculator, brzycki one rep max",
     formulaSupport: {
@@ -127,7 +145,7 @@ const PAGE_CONFIG = {
     blurb: "The Mayhew formula uses an exponential curve, often cited as accurate for higher rep ranges.",
     title: "Mayhew 1RM Formula Calculator | One Rep Max Tool",
     description:
-      "Use the Mayhew formula to estimate one rep max from a working set. Compare results against Epley, Brzycki, and 4 more 1RM equations.",
+      "Estimate your one rep max with the Mayhew formula: 1RM = 100w ÷ (52.2 + 41.9 × e^(−0.055r)). Compare results against Epley, Brzycki, and 4 more 1RM equations.",
     keywords: "mayhew 1rm formula, mayhew formula calculator, mayhew one rep max",
     formulaSupport: {
       heading: "Use the Mayhew Formula 1RM Calculator",
@@ -171,7 +189,7 @@ const PAGE_CONFIG = {
       "The Wathan formula is an exponential model published in the National Strength and Conditioning Association journal.",
     title: "Wathan Formula 1RM Calculator | Wathan 1RM Formula",
     description:
-      "Use the Wathan 1RM formula to estimate your one rep max from reps and weight. Compare all 7 proven equations with rep max tables and percentage loads.",
+      "Estimate your one rep max with the Wathan formula: 1RM = 100w ÷ (48.8 + 53.8 × e^(−0.075r)). Compare all 7 proven equations with rep max tables and percentage loads.",
     keywords: "wathan 1rm formula, wathan formula calculator, wathan one rep max",
     exampleSnippet: {
       heading: "Example Wathan 1RM Calculation",
@@ -190,7 +208,7 @@ const PAGE_CONFIG = {
       "The McGlothin formula is a linear model offering consistent estimates across a wide range of rep counts.",
     title: "McGlothin Formula 1RM Calculator | McGlothin 1RM Formula",
     description:
-      "Use the McGlothin formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
+      "Estimate your one rep max with the McGlothin formula: 1RM = 100w ÷ (101.3 − 2.671r). Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "mcglothin formula 1rm, mcglothin one rep max calculator, 1rm formula calculator",
     exampleSnippet: {
       heading: "Example McGlothin 1RM Calculation",
@@ -209,7 +227,7 @@ const PAGE_CONFIG = {
       "The Lombardi formula uses a power model — simple and fast to compute, suitable as a quick estimate.",
     title: "Lombardi Formula 1RM Calculator | Lombardi 1RM Formula",
     description:
-      "Use the Lombardi formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
+      "Estimate your one rep max with the Lombardi formula: 1RM = weight × reps^0.1. Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "lombardi formula 1rm, lombardi one rep max calculator, 1rm formula calculator",
     exampleSnippet: {
       heading: "Example Lombardi 1RM Calculation",
@@ -228,7 +246,7 @@ const PAGE_CONFIG = {
       "The O'Conner formula is a simplified linear model that tends to give slightly more conservative 1RM estimates than Epley.",
     title: "O'Conner Formula 1RM Calculator | OConner 1RM Formula",
     description:
-      "Use the O'Conner formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
+      "Estimate your one rep max with the O'Conner formula: 1RM = weight × (1 + reps/40). Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "oconner formula 1rm, o'conner one rep max calculator, 1rm formula calculator",
     exampleSnippet: {
       heading: "Example O'Conner 1RM Calculation",

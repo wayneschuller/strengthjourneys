@@ -52,7 +52,6 @@ const StrengthJourneys = () => (
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
-import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
@@ -211,19 +210,6 @@ function BarbellInsightsMain({
   liftInsightData,
   relatedArticles,
 }) {
-  const { isLoading, parsedData, rawRows, sheetInfo } = useUserLiftingData();
-  const { status: insightAuthStatus } = useSession();
-  const { dashboardStage } = getDashboardStage({
-    parsedData,
-    rawRows,
-    sheetInfo,
-  });
-  const prioritizeVideoGuides =
-    insightAuthStatus !== "authenticated" ||
-    dashboardStage === "starter_sample" ||
-    dashboardStage === "first_real_week" ||
-    dashboardStage === "first_month";
-
   const bigFourIcons = {
     "Back Squat": Crown,
     "Bench Press": Shield,
@@ -298,80 +284,62 @@ function BarbellInsightsMain({
         </PageHeaderRight>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <div className="col-span-3" id="strength-standards">
+      <div className="flex flex-col gap-6">
+        <div id="strength-standards">
           <StrengthLevelsCard liftType={liftInsightData.liftType} />
         </div>
-        {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
-        <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <IntroductionCard introduction={liftInsightData.introduction} />
+          </div>
+          <ResourcesCard resources={liftInsightData.resources} />
+        </div>
+        <div id="video-guides">
+          <VideoCard
+            liftType={liftInsightData.liftType}
+            videos={liftInsightData.videos}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div id="progress-history">
             <LiftJourneyCard liftType={liftInsightData.liftType} />
           </div>
-          <IntroductionCard introduction={liftInsightData.introduction} />
-          <div className="flex flex-col gap-6 lg:h-full">
-            <ResourcesCard
-              resources={liftInsightData.resources}
-              className="lg:flex-1"
-            />
-            <div id="strength-potential">
-              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
-            </div>
+          <div className="lg:col-span-2" id="recent-sessions">
+            <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
           </div>
         </div>
-        {prioritizeVideoGuides && (
-          <div className="col-span-3" id="video-guides">
-            <VideoCard
-              liftType={liftInsightData.liftType}
-              videos={liftInsightData.videos}
-            />
-          </div>
-        )}
-        <div className="col-span-3" id="recent-sessions">
-          <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
-        </div>
-        <div className="col-span-3">
-          <VisualizerMini liftType={liftInsightData.liftType} />
-        </div>
-        <div className="col-span-3" id="tonnage-chart">
+        <VisualizerMini liftType={liftInsightData.liftType} />
+        <div id="tonnage-chart">
           <TonnageChart liftType={liftInsightData.liftType} />
         </div>
-        <div className="col-span-3">
-          <LiftQuoteCard
-            title={liftInsightData.quoteSectionTitle}
-            quote={liftInsightData.liftQuote}
-            author={liftInsightData.liftQuoteAuthor}
-          />
+        <LiftQuoteCard
+          title={liftInsightData.quoteSectionTitle}
+          quote={liftInsightData.liftQuote}
+          author={liftInsightData.liftQuoteAuthor}
+        />
+        {liftInsightData.faqItems?.length > 0 && (
+          <section id="lift-faq">
+            <h2 className="mb-4 text-xl font-semibold">
+              {liftInsightData.liftType} FAQ
+            </h2>
+            <div className="space-y-4">
+              {liftInsightData.faqItems.map(({ question, answer }) => (
+                <article key={question} className="rounded-lg border p-4">
+                  <h3 className="text-base font-semibold">{question}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+        <VisualizerReps liftType={liftInsightData.liftType} />
+        <div id="strength-potential">
+          <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
         </div>
-        <div className="col-span-3">
-          <VisualizerReps liftType={liftInsightData.liftType} />
-        </div>
-        <div className="col-span-3" id="lift-prs">
+        <div id="lift-prs">
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
         </div>
-        {!prioritizeVideoGuides && (
-          <div className="col-span-3" id="video-guides">
-            <VideoCard
-              liftType={liftInsightData.liftType}
-              videos={liftInsightData.videos}
-            />
-          </div>
-        )}
       </div>
-      {liftInsightData.faqItems?.length > 0 && (
-        <section className="mt-10" id="lift-faq">
-          <h2 className="mb-4 text-xl font-semibold">
-            {liftInsightData.liftType} FAQ
-          </h2>
-          <div className="space-y-4">
-            {liftInsightData.faqItems.map(({ question, answer }) => (
-              <article key={question} className="rounded-lg border p-4">
-                <h3 className="text-base font-semibold">{question}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
       <section id="related-articles">
         <RelatedArticles articles={relatedArticles} />
       </section>

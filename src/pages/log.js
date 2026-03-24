@@ -2061,13 +2061,16 @@ export default function LogSessionPage() {
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <button
-                      className="hover:bg-muted/40 mx-auto inline-flex flex-col items-center rounded-md px-3 py-1 transition-colors"
+                      className="hover:bg-muted/40 mx-auto inline-flex flex-col items-center rounded-md px-3 py-1 transition-colors group"
                       aria-label="Pick a date"
                     >
-                      <span className="text-lg leading-tight font-semibold">
-                        {isToday
-                          ? "Today"
-                          : getReadableDateString(sessionDate, true)}
+                      <span className="inline-flex items-center gap-1.5 text-lg leading-tight font-semibold">
+                        <Calendar className="text-muted-foreground group-hover:text-foreground h-4 w-4 transition-colors" />
+                        <span className="decoration-muted-foreground/50 group-hover:decoration-foreground/50 underline decoration-dotted underline-offset-4">
+                          {isToday
+                            ? "Today"
+                            : getReadableDateString(sessionDate, true)}
+                        </span>
                       </span>
                       {isToday ? (
                         <span className="text-muted-foreground text-xs">

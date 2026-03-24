@@ -57,6 +57,7 @@ const StrengthJourneys = () => (
 
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
@@ -281,7 +282,6 @@ function BarbellInsightsMain({
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",
   };
-  const calcUrl = LIFT_CALC_URLS[liftInsightData.liftType];
   const navLiftLabel = getNavLiftLabel(liftInsightData.liftType);
 
   return (
@@ -292,13 +292,13 @@ function BarbellInsightsMain({
         </PageHeaderHeading>
         <PageHeaderDescription>
           <p>{liftInsightData.pageDescription}</p>
-          {calcUrl && (
+          {STRENGTH_STANDARDS_LINKS[liftInsightData.liftType] && (
             <div className="mt-5">
               <Link
-                href={calcUrl}
+                href={STRENGTH_STANDARDS_LINKS[liftInsightData.liftType]}
                 className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Try the {liftInsightData.liftType} 1RM Calculator →
+                {liftInsightData.liftType} Strength Levels →
               </Link>
             </div>
           )}
@@ -509,13 +509,6 @@ function HowStrong({ liftType }) {
   );
 }
 
-const LIFT_CALC_URLS = {
-  "Back Squat": "/calculator/squat-1rm-calculator",
-  "Bench Press": "/calculator/bench-press-1rm-calculator",
-  "Deadlift": "/calculator/deadlift-1rm-calculator",
-  "Strict Press": "/calculator/strict-press-1rm-calculator",
-};
-
 /**
  * @param {Object} props
  * @param {string} props.liftType - The lift type to display strength levels for (e.g. "Deadlift").
@@ -524,7 +517,6 @@ function StrengthLevelsCard({ liftType }) {
   const { standards, isMetric, age, bodyWeight, sex } = useAthleteBio();
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   const { status: authStatus } = useSession();
-  const calcUrl = LIFT_CALC_URLS[liftType];
 
   let strengthRating = null;
   let isBeyondElite = false;
@@ -570,12 +562,12 @@ function StrengthLevelsCard({ liftType }) {
       </CardContent>
       <CardFooter className="flex flex-wrap items-center justify-between gap-3 pt-2">
         <AthleteBioInlineSettings />
-        {calcUrl && (
+        {STRENGTH_STANDARDS_LINKS[liftType] && (
           <Link
-            href={calcUrl}
+            href={STRENGTH_STANDARDS_LINKS[liftType]}
             className="text-xs text-muted-foreground hover:text-foreground whitespace-nowrap"
           >
-            {liftType} 1RM Calculator →
+            {liftType} Strength Levels →
           </Link>
         )}
       </CardFooter>

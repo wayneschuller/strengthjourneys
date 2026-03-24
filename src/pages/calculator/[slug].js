@@ -19,7 +19,6 @@ const PAGE_CONFIG = {
     equation: "w × (1 + r/30)",
     blurb:
       "The formula most lifters know first - and the one many start doubting once reps climb into optimistic territory.",
-    pageHeading: "Epley Formula 1RM Calculator: Does It Overestimate?",
     pageIntro:
       "Run your set through Epley, compare all 7 formulas side by side, and see whether the internet's favorite estimate is actually flattering your max.",
     title: "Epley Formula 1RM Calculator | Does Epley Overestimate?",
@@ -104,7 +103,6 @@ const PAGE_CONFIG = {
     equation: "w ÷ (1.0278 − 0.0278r)",
     blurb:
       "The stricter rival to Epley - popular with lifters who would rather undercall a max than get seduced by a generous estimate.",
-    pageHeading: "Brzycki Formula 1RM Calculator: Stricter Than Epley?",
     pageIntro:
       "If Epley feels a little too kind, Brzycki is the reality check. Run your set, compare every major formula, and see where your max actually lands.",
     title: "Brzycki Formula 1RM Calculator | Stricter Than Epley?",
@@ -185,7 +183,6 @@ const PAGE_CONFIG = {
     equation: "100w ÷ (52.2 + 41.9 × e^(−0.055r))",
     blurb:
       "The formula to check when your higher-rep set feels stronger than Epley or Brzycki are willing to admit.",
-    pageHeading: "Mayhew Formula 1RM Calculator: Higher-Rep Wild Card",
     pageIntro:
       "Mayhew often runs hotter once reps rise. Compare it against stricter formulas and decide whether the bigger number feels generous or finally honest.",
     title: "Mayhew Formula 1RM Calculator | Higher-Rep 1RM?",
@@ -250,7 +247,6 @@ const PAGE_CONFIG = {
     equation: "100w ÷ (48.8 + 53.8 × e^(−0.075r))",
     blurb:
       "A sleeper exponential formula that gets interesting when the familiar linear estimates stop agreeing with your higher-rep set.",
-    pageHeading: "Wathan Formula 1RM Calculator: The Sleeper Pick",
     pageIntro:
       "Wathan tracks close to Brzycki at low reps, then starts drifting higher as reps climb. Run your set through all 7 formulas and see exactly where Wathan breaks away.",
     title: "Wathan Formula 1RM Calculator | The Sleeper Formula?",
@@ -315,7 +311,6 @@ const PAGE_CONFIG = {
     equation: "100w ÷ (101.3 − 2.671r)",
     blurb:
       "The overlooked middle-ground formula - useful when Epley feels bold, Brzycki feels strict, and you want a tie-breaker.",
-    pageHeading: "McGlothin Formula 1RM Calculator: The Overlooked Formula",
     pageIntro:
       "McGlothin rarely gets the spotlight, but it often lands right between the aggressive and conservative estimates. Run your numbers and see whether the quiet formula gives the most believable answer.",
     title: "McGlothin Formula 1RM Calculator | Overlooked Formula",
@@ -380,7 +375,6 @@ const PAGE_CONFIG = {
     equation: "w × r^0.1",
     blurb:
       "A power formula that tracks close to Epley early, then starts doing something more surprising as reps rise.",
-    pageHeading: "Lombardi Formula 1RM Calculator: Watch It Diverge",
     pageIntro:
       "Lombardi uses a power curve, not a linear formula, so the gap between it and Brzycki grows with every rep. Run your set and see when the split starts getting interesting.",
     title: "Lombardi Formula 1RM Calculator | Diverges at High Reps",
@@ -443,7 +437,6 @@ const PAGE_CONFIG = {
     equation: "w × (1 + r/40)",
     blurb:
       "A calmer, more conservative estimate for lifters who want a quick reality check before loading the bar.",
-    pageHeading: "O'Conner Formula 1RM Calculator: Conservative Check",
     pageIntro:
       "If Epley feels optimistic, O'Conner is the fast sanity check. Enter your set, compare all 7 formulas, and roll straight into warm-up percentages.",
     title: "O'Conner Formula 1RM Calculator | Conservative 1RM Check",
@@ -633,7 +626,6 @@ export default function FormulaOrLiftCalculatorPage({
   const pageName = isFormula
     ? `${pageConfig.formulaName} Formula 1RM Calculator`
     : `${pageConfig.liftName} 1RM Calculator`;
-  const pageHeading = pageConfig.pageHeading ?? pageName;
   const pageIntro = pageConfig.pageIntro ?? pageConfig.blurb;
   const structuredData = {
     "@context": "https://schema.org",
@@ -729,7 +721,7 @@ export default function FormulaOrLiftCalculatorPage({
         relatedArticles={relatedArticles}
         forceFormula={isFormula ? pageConfig.formulaName : null}
         forceLift={isFormula ? null : pageConfig.liftName}
-        pageTitle={pageHeading}
+        pageTitle={pageName}
         pageDescription={pageIntro}
         formulaBlurb={
           isFormula

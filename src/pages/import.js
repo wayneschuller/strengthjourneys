@@ -261,21 +261,31 @@ function escapeCsvField(val) {
 
 function buildCsvFromParsedData(parsedData) {
   const header = "Date,Lift Type,Reps,Weight,Notes";
-  // parsedData is already in sheet order (newest-first, warmups natural within date)
-  const rows = parsedData
-    .filter((e) => !e.isGoal)
-    .map((e) => {
-      const weight = `${e.weight}${e.unitType}`;
-      return [
-        e.date,
-        e.liftType,
-        e.reps,
-        weight,
-        e.notes || "",
-      ]
-        .map(escapeCsvField)
-        .join(",");
-    });
+  const entries = parsedData.filter((e) => !e.isGoal);
+
+  // parsedData is date-ascending with intraday order preserved.
+  // Group by date, then reverse the groups for newest-first output
+  // while keeping warmup→work-set order within each date.
+  const grouped = [];
+  let currentDate = null;
+  let currentGroup = [];
+  for (const e of entries) {
+    if (e.date !== currentDate) {
+      if (currentGroup.length > 0) grouped.push(currentGroup);
+      currentGroup = [];
+      currentDate = e.date;
+    }
+    currentGroup.push(e);
+  }
+  if (currentGroup.length > 0) grouped.push(currentGroup);
+  grouped.reverse();
+
+  const rows = grouped.flat().map((e) => {
+    const weight = `${e.weight}${e.unitType}`;
+    return [e.date, e.liftType, e.reps, weight, e.notes || ""]
+      .map(escapeCsvField)
+      .join(",");
+  });
   return [header, ...rows].join("\n");
 }
 

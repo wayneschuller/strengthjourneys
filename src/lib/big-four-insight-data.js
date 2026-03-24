@@ -4,7 +4,8 @@
 export const bigFourLiftInsightData = [
   {
     liftType: "Back Squat",
-    canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
+    hubDescription: "The king of lower-body strength.",
+    canonicalURL: "https://www.strengthjourneys.xyz/progress-guide/squat",
     seoTitle: "Back Squat Strength Standards & Progress Tracker",
     pageTitle: "Barbell Back Squat Strength Guide & Progress Tracker",
     pageDescription:
@@ -17,7 +18,7 @@ export const bigFourLiftInsightData = [
     liftQuote:
       "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
     liftQuoteAuthor: "Mark Rippetoe, Starting Strength",
-    slug: "barbell-squat-insights",
+    slug: "squat",
     videos: [
       "https://www.youtube.com/embed/C_VtOYc6j5c",
       "https://www.youtube.com/embed/jyopTyOjXb0",
@@ -96,8 +97,9 @@ export const bigFourLiftInsightData = [
   },
   {
     liftType: "Bench Press",
+    hubDescription: "The lift everyone asks about first.",
     canonicalURL:
-      "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
+      "https://www.strengthjourneys.xyz/progress-guide/bench-press",
     seoTitle: "Bench Press Strength Standards & Progress Tracker",
     pageTitle: "Barbell Bench Press Strength Guide & Progress Tracker",
     pageDescription:
@@ -110,7 +112,7 @@ export const bigFourLiftInsightData = [
     liftQuote:
       "The bench press, since the 1950s, has become the most widely recognized resistance exercise movement in the world, the one exercise most representative in the public mind of barbell training...",
     liftQuoteAuthor: "Mark Rippetoe",
-    slug: "barbell-bench-press-insights",
+    slug: "bench-press",
     videos: [
       "https://www.youtube.com/embed/rxD321l2svE",
       "https://www.youtube.com/embed/t3f2L7NRRUY",
@@ -197,7 +199,8 @@ export const bigFourLiftInsightData = [
   },
   {
     liftType: "Deadlift",
-    canonicalURL: "https://www.strengthjourneys.xyz/barbell-deadlift-insights",
+    hubDescription: "The heaviest bar you will ever move.",
+    canonicalURL: "https://www.strengthjourneys.xyz/progress-guide/deadlift",
     seoTitle: "Deadlift Strength Standards & Progress Tracker",
     pageTitle: "Barbell Deadlift Strength Guide & Progress Tracker",
     pageDescription:
@@ -209,7 +212,7 @@ export const bigFourLiftInsightData = [
     quoteSectionTitle: "Why the deadlift still defines raw strength",
     liftQuote: "There is no reason to be alive if you can't do deadlift!",
     liftQuoteAuthor: "Jón Páll Sigmarsson",
-    slug: "barbell-deadlift-insights",
+    slug: "deadlift",
     videos: [
       "https://www.youtube.com/embed/AweC3UaM14o",
       "https://www.youtube.com/embed/p2OPUi4xGrM",
@@ -292,8 +295,9 @@ export const bigFourLiftInsightData = [
   },
   {
     liftType: "Strict Press",
+    hubDescription: "The slowest to climb and the most rewarding.",
     canonicalURL:
-      "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
+      "https://www.strengthjourneys.xyz/progress-guide/strict-press",
     seoTitle: "Overhead Press Strength Standards & Progress Tracker",
     pageTitle: "Barbell Strict Press Strength Guide & Progress Tracker",
     pageDescription:
@@ -306,7 +310,7 @@ export const bigFourLiftInsightData = [
     liftQuote:
       "The strict press is a whole-body, multi-joint exercise that beautifully recapitulates a fundamental human movement pattern: lifting a heavy object overhead, as high as possible.",
     liftQuoteAuthor: "Jonathon M. Sullivan & Andy Baker",
-    slug: "barbell-strict-press-insights",
+    slug: "strict-press",
     videos: [
       "https://www.youtube.com/embed/8dacy5hjaE8",
       "https://www.youtube.com/embed/AhGW3XFG3M8",

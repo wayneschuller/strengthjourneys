@@ -13,7 +13,7 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -35,7 +35,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-
 const BIG_FOUR = [
   { name: "Back Squat", icon: "/back_squat.svg" },
   { name: "Bench Press", icon: "/bench_press.svg" },
@@ -43,8 +42,11 @@ const BIG_FOUR = [
   { name: "Strict Press", icon: "/strict_press.svg" },
 ];
 
+// Default placeholder weights per unit
+const DEFAULT_PLACEHOLDER = { kg: "100", lb: "225" };
+
 const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = Array.from({ length: CURRENT_YEAR - 2004 }, (_, i) => CURRENT_YEAR - i);
+const YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - i);
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -62,28 +64,15 @@ function getDaysInMonth(year, month) {
   return new Date(year, month, 0).getDate();
 }
 
-function LiftEntryRow({ entry, onChange, onRemove, canRemove }) {
+function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
   const daysAvailable = entry.year && entry.month
     ? getDaysInMonth(entry.year, entry.month)
     : 31;
   const days = Array.from({ length: daysAvailable }, (_, i) => i + 1);
+  const placeholder = DEFAULT_PLACEHOLDER[unit] || "225";
 
   return (
     <div className="flex flex-wrap items-end gap-2 py-2">
-      {/* Weight */}
-      <div className="w-24">
-        <Label className="text-muted-foreground text-xs">Weight</Label>
-        <Input
-          type="number"
-          min="0"
-          step="any"
-          placeholder="225"
-          value={entry.weight}
-          onChange={(e) => onChange({ ...entry, weight: e.target.value })}
-          className="h-9"
-        />
-      </div>
-
       {/* Reps */}
       <div className="w-16">
         <Label className="text-muted-foreground text-xs">Reps</Label>
@@ -94,6 +83,20 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove }) {
           placeholder="1"
           value={entry.reps}
           onChange={(e) => onChange({ ...entry, reps: e.target.value })}
+          className="h-9"
+        />
+      </div>
+
+      {/* Weight */}
+      <div className="w-24">
+        <Label className="text-muted-foreground text-xs">Weight ({unit})</Label>
+        <Input
+          type="number"
+          min="0"
+          step="any"
+          placeholder={placeholder}
+          value={entry.weight}
+          onChange={(e) => onChange({ ...entry, weight: e.target.value })}
           className="h-9"
         />
       </div>
@@ -227,6 +230,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
               onChange={(updated) => updateEntry(idx, updated)}
               onRemove={() => removeEntry(idx)}
               canRemove={entries.length > 1}
+              unit={unit}
             />
           ))}
           <Button
@@ -370,6 +374,8 @@ export default function ImportPage() {
     );
   }
 
+  const isMetric = unit === "kg";
+
   return (
     <>
       <NextSeo title="Import Data" noindex />
@@ -383,21 +389,18 @@ export default function ImportPage() {
         </PageHeader>
 
         {/* Quick Add Section */}
-        <section className="mx-auto mb-12 max-w-2xl space-y-4">
+        <section className="mx-auto mb-12 max-w-3xl space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
-            <div className="flex items-center gap-2">
-              <Label className="text-muted-foreground text-sm">Unit</Label>
-              <Select value={unit} onValueChange={setUnit}>
-                <SelectTrigger className="h-8 w-16">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="kg">kg</SelectItem>
-                  <SelectItem value="lb">lb</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-14 font-semibold"
+              onClick={() => setUnit(isMetric ? "lb" : "kg")}
+              aria-label={`Switch to ${isMetric ? "lb" : "kg"}`}
+            >
+              {unit}
+            </Button>
           </div>
 
           <p className="text-muted-foreground text-sm">
@@ -405,15 +408,17 @@ export default function ImportPage() {
             These will be added to your Google Sheet as historical entries.
           </p>
 
-          {BIG_FOUR.map((lift) => (
-            <LiftSection
-              key={lift.name}
-              lift={lift}
-              entries={liftEntries[lift.name]}
-              onUpdate={(entries) => updateLiftEntries(lift.name, entries)}
-              unit={unit}
-            />
-          ))}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {BIG_FOUR.map((lift) => (
+              <LiftSection
+                key={lift.name}
+                lift={lift}
+                entries={liftEntries[lift.name]}
+                onUpdate={(entries) => updateLiftEntries(lift.name, entries)}
+                unit={unit}
+              />
+            ))}
+          </div>
 
           <div className="flex items-center justify-between pt-2">
             <p className="text-muted-foreground text-xs">
@@ -443,7 +448,7 @@ export default function ImportPage() {
         </section>
 
         {/* File Upload Section (Coming Soon) */}
-        <section className="mx-auto mb-16 max-w-2xl">
+        <section className="mx-auto mb-16 max-w-3xl">
           <h2 className="mb-4 text-lg font-semibold">Import from Another App</h2>
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">

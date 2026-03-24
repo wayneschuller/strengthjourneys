@@ -210,6 +210,9 @@ function BarbellInsightsMain({
   liftInsightData,
   relatedArticles,
 }) {
+  const { status: authStatus } = useSession();
+  const isAuthed = authStatus === "authenticated";
+
   const bigFourIcons = {
     "Back Squat": Crown,
     "Bench Press": Shield,
@@ -284,39 +287,92 @@ function BarbellInsightsMain({
         </PageHeaderRight>
       </PageHeader>
 
+      {/* Shared: strength standards always first */}
       <div className="flex flex-col gap-6">
         <div id="strength-standards">
           <StrengthLevelsCard liftType={liftInsightData.liftType} />
         </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <IntroductionCard introduction={liftInsightData.introduction} />
-          </div>
-          <ResourcesCard resources={liftInsightData.resources} />
-        </div>
-        <div id="video-guides">
-          <VideoCard
-            liftType={liftInsightData.liftType}
-            videos={liftInsightData.videos}
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div id="progress-history">
-            <LiftJourneyCard liftType={liftInsightData.liftType} />
-          </div>
-          <div className="lg:col-span-2" id="recent-sessions">
-            <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
-          </div>
-        </div>
-        <VisualizerMini liftType={liftInsightData.liftType} />
-        <div id="tonnage-chart">
-          <TonnageChart liftType={liftInsightData.liftType} />
-        </div>
-        <LiftQuoteCard
-          title={liftInsightData.quoteSectionTitle}
-          quote={liftInsightData.liftQuote}
-          author={liftInsightData.liftQuoteAuthor}
-        />
+
+        {isAuthed ? (
+          <>
+            {/* Authenticated: personal data first, editorial lower */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div id="progress-history">
+                <LiftJourneyCard liftType={liftInsightData.liftType} />
+              </div>
+              <div className="lg:col-span-2" id="recent-sessions">
+                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
+              </div>
+            </div>
+            <VisualizerMini liftType={liftInsightData.liftType} />
+            <div id="tonnage-chart">
+              <TonnageChart liftType={liftInsightData.liftType} />
+            </div>
+            <VisualizerReps liftType={liftInsightData.liftType} />
+            <div id="lift-prs">
+              <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
+            </div>
+            <div id="strength-potential">
+              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <IntroductionCard introduction={liftInsightData.introduction} />
+              </div>
+              <ResourcesCard resources={liftInsightData.resources} />
+            </div>
+            <div id="video-guides">
+              <VideoCard
+                liftType={liftInsightData.liftType}
+                videos={liftInsightData.videos}
+              />
+            </div>
+            <LiftQuoteCard
+              title={liftInsightData.quoteSectionTitle}
+              quote={liftInsightData.liftQuote}
+              author={liftInsightData.liftQuoteAuthor}
+            />
+          </>
+        ) : (
+          <>
+            {/* Anonymous: editorial content first, demo charts lower */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <IntroductionCard introduction={liftInsightData.introduction} />
+              </div>
+              <ResourcesCard resources={liftInsightData.resources} />
+            </div>
+            <div id="video-guides">
+              <VideoCard
+                liftType={liftInsightData.liftType}
+                videos={liftInsightData.videos}
+              />
+            </div>
+            <LiftQuoteCard
+              title={liftInsightData.quoteSectionTitle}
+              quote={liftInsightData.liftQuote}
+              author={liftInsightData.liftQuoteAuthor}
+            />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div id="progress-history">
+                <LiftJourneyCard liftType={liftInsightData.liftType} />
+              </div>
+              <div className="lg:col-span-2" id="recent-sessions">
+                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
+              </div>
+            </div>
+            <VisualizerMini liftType={liftInsightData.liftType} />
+            <div id="tonnage-chart">
+              <TonnageChart liftType={liftInsightData.liftType} />
+            </div>
+            <VisualizerReps liftType={liftInsightData.liftType} />
+            <div id="strength-potential">
+              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            </div>
+          </>
+        )}
+
+        {/* Shared: FAQ and related articles always at bottom */}
         {liftInsightData.faqItems?.length > 0 && (
           <section id="lift-faq">
             <h2 className="mb-4 text-xl font-semibold">
@@ -332,13 +388,6 @@ function BarbellInsightsMain({
             </div>
           </section>
         )}
-        <VisualizerReps liftType={liftInsightData.liftType} />
-        <div id="strength-potential">
-          <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
-        </div>
-        <div id="lift-prs">
-          <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
-        </div>
       </div>
       <section id="related-articles">
         <RelatedArticles articles={relatedArticles} />

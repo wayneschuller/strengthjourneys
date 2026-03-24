@@ -250,15 +250,31 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
   );
 }
 
+function escapeCsvField(val) {
+  if (val == null) return "";
+  const s = String(val);
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
 function buildCsvFromParsedData(parsedData) {
-  const header = "Date,Lift Type,Reps,Weight,Unit";
+  const header = "Date,Lift Type,Reps,Weight,Notes";
+  // parsedData is already in sheet order (newest-first, warmups natural within date)
   const rows = parsedData
     .filter((e) => !e.isGoal)
     .map((e) => {
-      const escapedLift = e.liftType.includes(",")
-        ? `"${e.liftType}"`
-        : e.liftType;
-      return `${e.date},${escapedLift},${e.reps},${e.weight},${e.unitType}`;
+      const weight = `${e.weight}${e.unitType}`;
+      return [
+        e.date,
+        e.liftType,
+        e.reps,
+        weight,
+        e.notes || "",
+      ]
+        .map(escapeCsvField)
+        .join(",");
     });
   return [header, ...rows].join("\n");
 }

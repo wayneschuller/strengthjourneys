@@ -176,7 +176,7 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
 }
 
 function LiftSection({ lift, entries, onUpdate, unit }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   const addEntry = () => {
     const defaultYear = CURRENT_YEAR - 2;
@@ -204,7 +204,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
         className="hover:bg-muted/30 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <Image src={lift.icon} alt={lift.name} width={32} height={32} className="dark:invert" />
+        <Image src={lift.icon} alt={lift.name} width={48} height={48} className="dark:invert" />
         <span className="flex-1 font-semibold">{lift.name}</span>
         {filledCount > 0 && (
           <span className="text-muted-foreground text-sm">

@@ -52,10 +52,11 @@ export function MostRecentSessionCard({
   highlightDate: highlightDateProp = null,
   setHighlightDate: setHighlightDateProp,
   isProgressDone = true,
+  defaultVisibleCount = RECENT_SESSIONS_COUNT,
 }) {
   const { status: authStatus } = useSession();
   const [internalHighlightDate, setInternalHighlightDate] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(RECENT_SESSIONS_COUNT);
+  const [visibleCount, setVisibleCount] = useState(defaultVisibleCount);
 
   const isControlled = setHighlightDateProp != null;
   const highlightDate = isControlled ? highlightDateProp : internalHighlightDate;

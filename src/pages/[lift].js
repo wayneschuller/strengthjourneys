@@ -301,19 +301,19 @@ function BarbellInsightsMain({
                 <LiftJourneyCard liftType={liftInsightData.liftType} />
               </div>
               <div className="lg:col-span-2" id="recent-sessions">
-                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
+                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} defaultVisibleCount={5} />
               </div>
             </div>
             <VisualizerMini liftType={liftInsightData.liftType} />
             <div id="tonnage-chart">
               <TonnageChart liftType={liftInsightData.liftType} />
             </div>
+            <div id="strength-potential">
+              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            </div>
             <VisualizerReps liftType={liftInsightData.liftType} />
             <div id="lift-prs">
               <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
-            </div>
-            <div id="strength-potential">
-              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
             </div>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
@@ -358,17 +358,17 @@ function BarbellInsightsMain({
                 <LiftJourneyCard liftType={liftInsightData.liftType} />
               </div>
               <div className="lg:col-span-2" id="recent-sessions">
-                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
+                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} defaultVisibleCount={5} />
               </div>
             </div>
             <VisualizerMini liftType={liftInsightData.liftType} />
             <div id="tonnage-chart">
               <TonnageChart liftType={liftInsightData.liftType} />
             </div>
-            <VisualizerReps liftType={liftInsightData.liftType} />
             <div id="strength-potential">
               <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
             </div>
+            <VisualizerReps liftType={liftInsightData.liftType} />
           </>
         )}
 

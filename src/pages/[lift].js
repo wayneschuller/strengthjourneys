@@ -335,18 +335,18 @@ function BarbellInsightsMain({
           </>
         ) : (
           <>
-            {/* Anonymous: editorial content first, demo charts lower */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <IntroductionCard introduction={liftInsightData.introduction} />
-              </div>
-              <ResourcesCard resources={liftInsightData.resources} />
-            </div>
+            {/* Anonymous: videos first (show the movement), then editorial, demo charts lower */}
             <div id="video-guides">
               <VideoCard
                 liftType={liftInsightData.liftType}
                 videos={liftInsightData.videos}
               />
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <IntroductionCard introduction={liftInsightData.introduction} />
+              </div>
+              <ResourcesCard resources={liftInsightData.resources} />
             </div>
             <LiftQuoteCard
               title={liftInsightData.quoteSectionTitle}

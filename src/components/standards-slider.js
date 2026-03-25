@@ -671,9 +671,19 @@ export function StandardsSlider({
             isMetric,
           ).value;
           const dotPercent = getPercent(dotE1rm);
+          // Skip dots that overlap the Now marker (no visual story to tell)
+          const nowPct = nowNotch
+            ? getPercent(
+                getDisplayWeight(
+                  { weight: nowNotch.e1rm, unitType: nowNotch.unitType || nativeUnitType },
+                  isMetric,
+                ).value,
+              )
+            : null;
+          if (nowPct !== null && Math.abs(dotPercent - nowPct) < 2) return null;
           // First trail dot (most recent prior) is more visible than second
-          const opacity = i === 0 ? 0.35 : 0.15;
-          const size = i === 0 ? "h-2.5 w-1" : "h-2 w-0.5";
+          const opacity = i === 0 ? 0.5 : 0.25;
+          const size = i === 0 ? "h-3 w-1.5" : "h-2.5 w-1";
           return (
             <div
               key={`trail-${dot.date}`}

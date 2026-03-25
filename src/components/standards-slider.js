@@ -13,7 +13,7 @@ import {
   getDisplayWeight,
 } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { formatDateToYmdLocal, getWeekKeyFromDateStr } from "@/lib/date-utils";
+import { formatDateToYmdLocal } from "@/lib/date-utils";
 import {
   Tooltip,
   TooltipContent,
@@ -89,13 +89,30 @@ export function StandardsSlider({
   const toDisplay = (w) =>
     getDisplayWeight({ weight: w, unitType: nativeUnitType }, isMetric).value;
 
-  // --- Compute period-best E1RMs (1M / 6M / 1Y / 2Y / 5Y / 10Y) ---
+  // --- Find the most recent session date for this lift type ---
+  const latestSessionDate = useMemo(() => {
+    if (authStatus !== "authenticated" || !parsedData?.length) return null;
+    let latest = null;
+    for (const entry of parsedData) {
+      if (
+        entry.isGoal ||
+        entry.liftType !== liftType ||
+        !entry.reps ||
+        !entry.weight ||
+        !entry.date
+      )
+        continue;
+      if (!latest || entry.date > latest) latest = entry.date;
+    }
+    return latest;
+  }, [authStatus, parsedData, liftType]);
+
+  // --- Compute period-best E1RMs EXCLUDING the most recent session ---
   const periodBestNotches = useMemo(() => {
     if (authStatus !== "authenticated" || !parsedData?.length || !e1rmFormula)
       return [];
 
     const now = new Date();
-    // Convert thresholds to "YYYY-MM-DD" strings for fast string comparison in the loop
     const thresholds = {
       "1M": format(subMonths(now, 1), "yyyy-MM-dd"),
       "6M": format(subMonths(now, 6), "yyyy-MM-dd"),
@@ -112,6 +129,8 @@ export function StandardsSlider({
       if (entry.isGoal) return;
       if (entry.liftType !== liftType || !entry.reps || !entry.weight) return;
       if (!entry.date) return;
+      // Exclude the most recent session so period markers show "where you were"
+      if (latestSessionDate && entry.date === latestSessionDate) return;
 
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
       const id = `${entry.date}-${entry.reps}-${entry.weight}-${entry.unitType || ""}`;
@@ -157,46 +176,32 @@ export function StandardsSlider({
     });
 
     return summaries;
-  }, [authStatus, parsedData, liftType, e1rmFormula, unitType]);
+  }, [authStatus, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
 
-  const recentLiftNotch = useMemo(() => {
-    if (authStatus !== "authenticated" || !parsedData?.length || !e1rmFormula) {
+  // --- "Now" marker: best E1RM from the most recent session ---
+  const nowNotch = useMemo(() => {
+    if (
+      authStatus !== "authenticated" ||
+      !parsedData?.length ||
+      !e1rmFormula ||
+      !latestSessionDate
+    )
       return null;
-    }
 
-    let latestDate = null;
-    let bestLiftOnLatestDate = null;
-
+    let bestOnLatest = null;
     for (const entry of parsedData) {
       if (
         entry.isGoal ||
         entry.liftType !== liftType ||
         !entry.reps ||
         !entry.weight ||
-        !entry.date
-      ) {
+        entry.date !== latestSessionDate
+      )
         continue;
-      }
 
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-
-      if (!latestDate || entry.date > latestDate) {
-        latestDate = entry.date;
-        bestLiftOnLatestDate = {
-          date: entry.date,
-          reps: entry.reps,
-          weight: entry.weight,
-          unitType: entry.unitType || unitType,
-          e1rm,
-        };
-        continue;
-      }
-
-      if (
-        entry.date === latestDate &&
-        (!bestLiftOnLatestDate || e1rm > bestLiftOnLatestDate.e1rm)
-      ) {
-        bestLiftOnLatestDate = {
+      if (!bestOnLatest || e1rm > bestOnLatest.e1rm) {
+        bestOnLatest = {
           date: entry.date,
           reps: entry.reps,
           weight: entry.weight,
@@ -206,29 +211,34 @@ export function StandardsSlider({
       }
     }
 
-    if (!bestLiftOnLatestDate?.date) return null;
+    if (!bestOnLatest) return null;
 
     const now = new Date();
     const todayYmd = formatDateToYmdLocal(now);
-    const oneMonthAgoYmd = format(subMonths(now, 1), "yyyy-MM-dd");
+    const threeMonthsAgoYmd = format(subMonths(now, 3), "yyyy-MM-dd");
 
-    if (bestLiftOnLatestDate.date < oneMonthAgoYmd) return null;
+    // Label: "Now" if within 3 months, otherwise the readable date
+    let shortLabel;
+    if (bestOnLatest.date >= threeMonthsAgoYmd) {
+      shortLabel = "Now";
+    } else {
+      shortLabel = getReadableDateString(bestOnLatest.date);
+    }
 
-    let shortLabel = "1M";
-    if (bestLiftOnLatestDate.date === todayYmd) {
-      shortLabel = "Today";
-    } else if (
-      getWeekKeyFromDateStr(bestLiftOnLatestDate.date) ===
-      getWeekKeyFromDateStr(todayYmd)
-    ) {
-      shortLabel = "This week";
+    // Detect if this matches or beats the lifetime PR/E1RM
+    let isNewPR = false;
+    let matchesPR = false;
+    if (bestOnLatest.date === todayYmd || bestOnLatest.date >= threeMonthsAgoYmd) {
+      // We'll check against lifetime stats after they're computed (set flags in render)
     }
 
     return {
-      ...bestLiftOnLatestDate,
+      ...bestOnLatest,
       shortLabel,
+      isNewPR,
+      matchesPR,
     };
-  }, [authStatus, parsedData, liftType, e1rmFormula, unitType]);
+  }, [authStatus, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
 
   // Prevent initial render on standards-only scale, then jumping once
   // authenticated user data (PR/E1RM) hydrates and expands min/max bounds.
@@ -310,11 +320,18 @@ export function StandardsSlider({
           ),
         )
       : Infinity;
+  const nowE1RMDisplay = nowNotch
+    ? getDisplayWeight(
+        { weight: nowNotch.e1rm, unitType: nowNotch.unitType || nativeUnitType },
+        isMetric,
+      ).value
+    : Infinity;
   const userMin =
     authStatus === "authenticated"
       ? Math.min(
           athleteRankingWeight > 0 ? athleteRankingWeight : Infinity,
           periodMinE1RMDisplay,
+          nowE1RMDisplay,
         )
       : Infinity;
   const effectiveMin = Number.isFinite(userMin)
@@ -485,57 +502,87 @@ export function StandardsSlider({
     }
   }
 
-  if (recentLiftNotch && recentLiftNotch.shortLabel !== "1M") {
-    const recentE1rmDisplay = getDisplayWeight(
-      {
-        weight: recentLiftNotch.e1rm,
-        unitType: recentLiftNotch.unitType || nativeUnitType,
-      },
+  // --- "Now" marker: dominant pill style, shows most recent session ---
+  if (nowNotch) {
+    const nowE1rmDisp = getDisplayWeight(
+      { weight: nowNotch.e1rm, unitType: nowNotch.unitType || nativeUnitType },
       isMetric,
     ).value;
-    const recentWeightDisplay = getDisplayWeight(
-      {
-        weight: recentLiftNotch.weight,
-        unitType: recentLiftNotch.unitType || nativeUnitType,
-      },
+    const nowWeightDisp = getDisplayWeight(
+      { weight: nowNotch.weight, unitType: nowNotch.unitType || nativeUnitType },
       isMetric,
     ).value;
-    const isShortRecencyLabel =
-      recentLiftNotch.shortLabel === "Today" ||
-      recentLiftNotch.shortLabel === "This week";
-    const shouldHideBelowLowestLevel =
-      isShortRecencyLabel && recentE1rmDisplay < standardsMin;
-    const isRecentSingle = Number(recentLiftNotch.reps) === 1;
-    const recentHeadlineValue = isRecentSingle
-      ? Math.round(recentWeightDisplay)
-      : Math.round(recentE1rmDisplay);
+    const nowIsSingle = Number(nowNotch.reps) === 1;
+    const nowHeadline = nowIsSingle
+      ? Math.round(nowWeightDisp)
+      : Math.round(nowE1rmDisp);
+    const nowPercent = getPercent(nowE1rmDisp);
 
-    if (!shouldHideBelowLowestLevel) {
-      allNotches.push({
-        key: `recent-${recentLiftNotch.date}-${recentLiftNotch.reps}-${recentLiftNotch.weight}`,
-        percent: getPercent(recentE1rmDisplay),
-        shortLabel: recentLiftNotch.shortLabel,
-        zIndex: 15,
-        tooltipContent: (
-          <div className="space-y-0.5">
-            <div className="font-semibold">
-              Most recent lift ({recentLiftNotch.shortLabel}):{" "}
-              {isRecentSingle ? "" : "~"}
-              {recentHeadlineValue}
-              {unitType}
-              {isRecentSingle ? " 1RM" : " E1RM"}
-            </div>
-            <div className="text-muted-foreground">
-              {recentLiftNotch.reps} × {recentWeightDisplay}
-              {unitType}
-              {recentLiftNotch.date && (
-                <> · {getReadableDateString(recentLiftNotch.date)}</>
-              )}
-            </div>
-          </div>
-        ),
-      });
+    // Detect PR relationship: compare Now against the best E1RM EXCLUDING
+    // the latest session (i.e. the period markers). This way we can detect
+    // when the most recent session IS the new PR vs matching an old one.
+    const PR_MATCH_THRESHOLD = 0.02; // 2%
+    const bestExcludingNow =
+      periodBestNotches.length > 0
+        ? Math.max(
+            ...periodBestNotches.map(
+              (n) =>
+                getDisplayWeight(
+                  { weight: n.e1rm, unitType: n.unitType || nativeUnitType },
+                  isMetric,
+                ).value,
+            ),
+          )
+        : 0;
+    const isNewPR =
+      bestExcludingNow > 0 && nowE1rmDisp > bestExcludingNow * (1 + PR_MATCH_THRESHOLD);
+    const matchesPR =
+      !isNewPR &&
+      bestExcludingNow > 0 &&
+      nowE1rmDisp >= bestExcludingNow * (1 - PR_MATCH_THRESHOLD);
+
+    let nowLabel = nowNotch.shortLabel;
+    let tooltipHeadline = "Most recent";
+    if (isNewPR) {
+      nowLabel = "New PR!";
+      tooltipHeadline = "New personal record!";
+    } else if (matchesPR) {
+      nowLabel = "PR · Now";
+      tooltipHeadline = "Matched your all-time best!";
     }
+
+    allNotches.push({
+      key: `now-${nowNotch.date}-${nowNotch.reps}-${nowNotch.weight}`,
+      percent: nowPercent,
+      shortLabel: nowLabel,
+      zIndex: 40,
+      isDominant: true,
+      isNewPR,
+      matchesPR,
+      tooltipContent: (
+        <div className="space-y-0.5">
+          <div className="font-semibold">
+            {tooltipHeadline}: {nowIsSingle ? "" : "~"}
+            {nowHeadline}
+            {unitType}
+            {nowIsSingle ? " 1RM" : " E1RM"}
+          </div>
+          <div className="text-muted-foreground">
+            {nowNotch.reps} × {nowWeightDisp}
+            {unitType}
+            {nowNotch.date && (
+              <> · {getReadableDateString(nowNotch.date)}</>
+            )}
+          </div>
+          {isNewPR && bestExcludingNow > 0 && (
+            <div className="text-green-400 font-medium">
+              +{Math.round(nowE1rmDisp - bestExcludingNow)}
+              {unitType} over previous best
+            </div>
+          )}
+        </div>
+      ),
+    });
   }
 
   // Sort by percent position and group nearby notches into clusters
@@ -617,6 +664,8 @@ export function StandardsSlider({
             const mergedLabel = cluster.map((n) => n.shortLabel).join(" · ");
             const clusterKey = cluster.map((n) => n.key).join("-");
             const isMerged = cluster.length > 1;
+            const hasDominant = cluster.some((n) => n.isDominant);
+            const dominantNotch = cluster.find((n) => n.isDominant);
 
             return (
               <Fragment key={clusterKey}>
@@ -631,9 +680,21 @@ export function StandardsSlider({
                         zIndex: notch.zIndex,
                       }}
                     >
-                      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2">
-                        <div className="bg-foreground ring-background/70 h-full w-px ring-1" />
-                      </div>
+                      {notch.isDominant ? (
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                          <div
+                            className={`h-3.5 w-1.5 rounded-full shadow-sm ring-1 transition-[left] duration-300 ${
+                              notch.isNewPR
+                                ? "bg-yellow-400 ring-yellow-600/50"
+                                : "bg-foreground ring-background"
+                            }`}
+                          />
+                        </div>
+                      ) : (
+                        <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2">
+                          <div className="bg-foreground ring-background/70 h-full w-px ring-1" />
+                        </div>
+                      )}
                     </div>
                   ))}
                 <Tooltip>
@@ -642,15 +703,35 @@ export function StandardsSlider({
                     style={{ left: `${centerPercent}%`, zIndex: maxZ }}
                   >
                     <TooltipTrigger asChild>
-                      <span className="bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground absolute -bottom-6 left-1/2 -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap shadow">
+                      <span
+                        className={`absolute -bottom-6 left-1/2 -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap shadow ${
+                          hasDominant && dominantNotch?.isNewPR
+                            ? "bg-yellow-400 text-yellow-950 group-hover:bg-yellow-300"
+                            : hasDominant
+                              ? "bg-foreground text-background group-hover:bg-primary group-hover:text-primary-foreground"
+                              : "bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground"
+                        }`}
+                      >
                         {mergedLabel}
                       </span>
                     </TooltipTrigger>
-                    {/* For single notch, render line inside group for hover effect */}
-                    {!isMerged && (
-                      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2">
-                        <div className="bg-foreground ring-background/70 group-hover:bg-primary group-hover:ring-primary/30 h-full w-px ring-1" />
+                    {/* For single notch, render line or dominant pill inside group */}
+                    {!isMerged && hasDominant ? (
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <div
+                          className={`h-3.5 w-1.5 rounded-full shadow-sm ring-1 transition-[left] duration-300 ${
+                            dominantNotch?.isNewPR
+                              ? "bg-yellow-400 ring-yellow-600/50"
+                              : "bg-foreground ring-background"
+                          }`}
+                        />
                       </div>
+                    ) : (
+                      !isMerged && (
+                        <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2">
+                          <div className="bg-foreground ring-background/70 group-hover:bg-primary group-hover:ring-primary/30 h-full w-px ring-1" />
+                        </div>
+                      )
                     )}
                   </div>
                   <TooltipContent

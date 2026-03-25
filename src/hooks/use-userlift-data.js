@@ -11,7 +11,7 @@ import {
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { parseData } from "@/lib/parse-data";
+import { parseData } from "@/lib/importers";
 import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
 import {
   flushTimings,

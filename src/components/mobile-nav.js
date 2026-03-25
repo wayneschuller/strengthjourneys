@@ -123,7 +123,7 @@ export function MobileNav() {
             {lifts.map((lift) => (
               <NavLink
                 key={lift.slug}
-                href={lift.slug}
+                href={"/progress-guide/" + lift.slug}
                 title={`${lift.liftType} Insights`}
                 IconComponent={bigFourIcons[lift.liftType]}
               />

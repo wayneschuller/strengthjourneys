@@ -178,32 +178,30 @@ export function StandardsSlider({
     return summaries;
   }, [authStatus, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
 
-  // --- "Now" marker + 2 trailing dots for momentum ---
-  const { nowNotch, trailDots } = useMemo(() => {
+  // --- "Now" marker: best E1RM from the most recent session ---
+  const nowNotch = useMemo(() => {
     if (
       authStatus !== "authenticated" ||
       !parsedData?.length ||
       !e1rmFormula ||
       !latestSessionDate
     )
-      return { nowNotch: null, trailDots: [] };
+      return null;
 
-    // Collect best E1RM per session date for this lift type
-    const bestByDate = {};
+    let bestOnLatest = null;
     for (const entry of parsedData) {
       if (
         entry.isGoal ||
         entry.liftType !== liftType ||
         !entry.reps ||
         !entry.weight ||
-        !entry.date
+        entry.date !== latestSessionDate
       )
         continue;
 
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-      const prev = bestByDate[entry.date];
-      if (!prev || e1rm > prev.e1rm) {
-        bestByDate[entry.date] = {
+      if (!bestOnLatest || e1rm > bestOnLatest.e1rm) {
+        bestOnLatest = {
           date: entry.date,
           reps: entry.reps,
           weight: entry.weight,
@@ -213,27 +211,17 @@ export function StandardsSlider({
       }
     }
 
-    // Sort dates descending to get the 3 most recent
-    const sortedDates = Object.keys(bestByDate).sort((a, b) => (a > b ? -1 : 1));
-    if (sortedDates.length === 0) return { nowNotch: null, trailDots: [] };
+    if (!bestOnLatest) return null;
 
-    const latest = bestByDate[sortedDates[0]];
     const threeMonthsAgoYmd = format(subMonths(new Date(), 3), "yyyy-MM-dd");
-
     let shortLabel;
-    if (latest.date >= threeMonthsAgoYmd) {
+    if (bestOnLatest.date >= threeMonthsAgoYmd) {
       shortLabel = "Now";
     } else {
-      shortLabel = getReadableDateString(latest.date);
+      shortLabel = getReadableDateString(bestOnLatest.date);
     }
 
-    // Build trail dots from the 2 prior sessions
-    const dots = sortedDates.slice(1, 3).map((d) => bestByDate[d]);
-
-    return {
-      nowNotch: { ...latest, shortLabel, isNewPR: false, matchesPR: false },
-      trailDots: dots,
-    };
+    return { ...bestOnLatest, shortLabel, isNewPR: false, matchesPR: false };
   }, [authStatus, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
 
   // Prevent initial render on standards-only scale, then jumping once
@@ -322,25 +310,12 @@ export function StandardsSlider({
         isMetric,
       ).value
     : Infinity;
-  const trailMinE1RMDisplay =
-    trailDots.length > 0
-      ? Math.min(
-          ...trailDots.map(
-            (d) =>
-              getDisplayWeight(
-                { weight: d.e1rm, unitType: d.unitType || nativeUnitType },
-                isMetric,
-              ).value,
-          ),
-        )
-      : Infinity;
   const userMin =
     authStatus === "authenticated"
       ? Math.min(
           athleteRankingWeight > 0 ? athleteRankingWeight : Infinity,
           periodMinE1RMDisplay,
           nowE1RMDisplay,
-          trailMinE1RMDisplay,
         )
       : Infinity;
   const effectiveMin = Number.isFinite(userMin)
@@ -664,41 +639,6 @@ export function StandardsSlider({
       <div className="relative mb-7 w-full">
         {/* Slider bar background */}
         <div className="relative h-2 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
-        {/* Momentum trail: 2 fading dots from prior sessions */}
-        {trailDots.map((dot, i) => {
-          const dotE1rm = getDisplayWeight(
-            { weight: dot.e1rm, unitType: dot.unitType || nativeUnitType },
-            isMetric,
-          ).value;
-          const dotPercent = getPercent(dotE1rm);
-          // Skip dots that overlap the Now marker (no visual story to tell)
-          const nowPct = nowNotch
-            ? getPercent(
-                getDisplayWeight(
-                  { weight: nowNotch.e1rm, unitType: nowNotch.unitType || nativeUnitType },
-                  isMetric,
-                ).value,
-              )
-            : null;
-          if (nowPct !== null && Math.abs(dotPercent - nowPct) < 2) return null;
-          // First trail dot (most recent prior) is more visible than second
-          const opacity = i === 0 ? 0.5 : 0.25;
-          const size = i === 0 ? "h-3 w-1.5" : "h-2.5 w-1";
-          return (
-            <div
-              key={`trail-${dot.date}`}
-              className="absolute top-0 h-full"
-              style={{ left: `${dotPercent}%`, zIndex: 5 }}
-            >
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <div
-                  className={`${size} bg-foreground rounded-full`}
-                  style={{ opacity }}
-                />
-              </div>
-            </div>
-          );
-        })}
         {/* Lifetime 1RM and E1RM notches */}
         <TooltipProvider>
           {notchClusters.map((cluster) => {

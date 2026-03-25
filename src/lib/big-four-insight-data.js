@@ -4,7 +4,8 @@
 export const bigFourLiftInsightData = [
   {
     liftType: "Back Squat",
-    canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
+    hubDescription: "The king of lower-body strength.",
+    canonicalURL: "https://www.strengthjourneys.xyz/progress-guide/squat",
     seoTitle: "Back Squat Strength Standards & Progress Tracker",
     pageTitle: "Barbell Back Squat Strength Guide & Progress Tracker",
     pageDescription:
@@ -17,14 +18,37 @@ export const bigFourLiftInsightData = [
     liftQuote:
       "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
     liftQuoteAuthor: "Mark Rippetoe, Starting Strength",
-    slug: "barbell-squat-insights",
+    slug: "squat",
     videos: [
       "https://www.youtube.com/embed/C_VtOYc6j5c",
       "https://www.youtube.com/embed/jyopTyOjXb0",
       "https://www.youtube.com/embed/nhoikoUEI8U",
     ],
-    introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
-    resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
+    introduction: {
+      title: "How Strong Should My Back Squat Be?",
+      paragraphs: [
+        "The barbell squat is one of the most effective exercises for building strength and muscle mass. The amount of weight you should be able to squat depends on your body weight, fitness level, and experience with the exercise.",
+        "Suppose you have mastered the air squat (for a set of 10-20) and can squat the barbell with decent form. Now, progressively add small amounts of weight until you get strong. Stick with three sets of 5 reps for as long as you can.",
+        [
+          "As a general guideline, ",
+          { text: "a beginner should be able to squat their body weight", bold: true },
+          ". An ",
+          { text: "intermediate strength milestone will be a squat 1.5 times", bold: true },
+          " their body weight. An ",
+          { text: "advanced lifter should be able to squat 1.75 to 2 times their body weight", bold: true },
+          ".",
+        ],
+        "Logged-in users can look below for their Back Squat history chart, which is visually mapped against both bodyweight multiples and the strength level standards for their bodyweight, age, and sex.",
+      ],
+    },
+    resources: {
+      title: "Third Party Back Squat Articles",
+      links: [
+        { text: "The Fastest Way To Blow Up Your Squat, Naturally", href: "https://jeffnippard.com/blogs/news/the-fastest-way-to-blow-up-your-squat-naturally", author: "Jeff Nippard" },
+        { text: "The Squat: Hips are the Key", href: "https://startingstrength.com/training/the-squat-hips-are-the-key", author: "Mark Rippetoe" },
+        { text: "How to Squat: The Definitive Guide", href: "https://www.strongerbyscience.com/how-to-squat/", author: "Greg Nuckols" },
+      ],
+    },
     faqItems: [
       {
         question: "What is a good squat weight for my bodyweight?",
@@ -73,8 +97,9 @@ export const bigFourLiftInsightData = [
   },
   {
     liftType: "Bench Press",
+    hubDescription: "The lift everyone asks about first.",
     canonicalURL:
-      "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
+      "https://www.strengthjourneys.xyz/progress-guide/bench-press",
     seoTitle: "Bench Press Strength Standards & Progress Tracker",
     pageTitle: "Barbell Bench Press Strength Guide & Progress Tracker",
     pageDescription:
@@ -87,14 +112,42 @@ export const bigFourLiftInsightData = [
     liftQuote:
       "The bench press, since the 1950s, has become the most widely recognized resistance exercise movement in the world, the one exercise most representative in the public mind of barbell training...",
     liftQuoteAuthor: "Mark Rippetoe",
-    slug: "barbell-bench-press-insights",
+    slug: "bench-press",
     videos: [
       "https://www.youtube.com/embed/rxD321l2svE",
       "https://www.youtube.com/embed/t3f2L7NRRUY",
       "https://www.youtube.com/embed/A0NBCkpYatQ",
     ],
-    introductionArticleId: "0533d1c7-687d-45f8-95a6-4165298a10ae",
-    resourcesArticleId: "7d31628b-820a-4095-ae31-1e405060f116",
+    introduction: {
+      title: "How Strong Should My Bench Press Be?",
+      paragraphs: [
+        "Answer: At least 225lb. But let's be more helpful than that.",
+        "The barbell bench press is the world's most popular strength exercise, and for good reason — it's the most effective way to build upper body pressing strength and muscle mass. How much you should be able to bench depends on your body weight, training experience, and goals.",
+        [
+          "If you are new to bench pressing, start with just the barbell (",
+          { text: "20kg/45lb", bold: true },
+          ") and focus on a controlled descent to your chest with a firm press back to lockout. Use ",
+          { text: "three sets of 5 reps", bold: true },
+          " and add a small amount of weight each session for as long as you can.",
+        ],
+        [
+          "As a general guideline, a beginner should be able to bench press their body weight. An intermediate strength milestone is a bench press of ",
+          { text: "1.25 times your body weight", bold: true },
+          ". An advanced lifter should be able to bench ",
+          { text: "1.5 times their body weight", bold: true },
+          " or more.",
+        ],
+        "Logged-in users can look below for their Bench Press history chart, which is visually mapped against both bodyweight multiples and the strength level standards for their bodyweight, age, and sex.",
+      ],
+    },
+    resources: {
+      title: "Third Party Bench Press Articles",
+      links: [
+        { text: "How-To Bench Press: Technique, Benefits, and Muscles Worked", href: "https://www.barbellmedicine.com/blog/how-to-bench-press/", author: "Claire Zai, Barbell Medicine" },
+        { text: "Struggling With the Bench Press", href: "https://www.jimwendler.com/blogs/jimwendler-com/101072966-struggling-with-the-bench-press", author: "Jeff Nippard" },
+        { text: "Training for the NFL Combine bench press test", href: "https://www.nfl.com/news/training-for-the-nfl-combine-bench-press-test-0ap3000000637311", author: "NFL", note: "Normally we encourage 5 reps or less for strength. But we make this one exception — the NFL combine bench press test is a significant marker of athleticism." },
+      ],
+    },
     faqItems: [
       {
         question: "Is benching 225 lbs good?",
@@ -146,7 +199,8 @@ export const bigFourLiftInsightData = [
   },
   {
     liftType: "Deadlift",
-    canonicalURL: "https://www.strengthjourneys.xyz/barbell-deadlift-insights",
+    hubDescription: "The heaviest bar you will ever move.",
+    canonicalURL: "https://www.strengthjourneys.xyz/progress-guide/deadlift",
     seoTitle: "Deadlift Strength Standards & Progress Tracker",
     pageTitle: "Barbell Deadlift Strength Guide & Progress Tracker",
     pageDescription:
@@ -158,14 +212,38 @@ export const bigFourLiftInsightData = [
     quoteSectionTitle: "Why the deadlift still defines raw strength",
     liftQuote: "There is no reason to be alive if you can't do deadlift!",
     liftQuoteAuthor: "Jón Páll Sigmarsson",
-    slug: "barbell-deadlift-insights",
+    slug: "deadlift",
     videos: [
       "https://www.youtube.com/embed/AweC3UaM14o",
       "https://www.youtube.com/embed/p2OPUi4xGrM",
       "https://www.youtube.com/embed/3oMjoOm5O18",
     ],
-    introductionArticleId: "674ab504-f6f8-4331-af4b-fe44920c2f88",
-    resourcesArticleId: "10fc56f1-abcd-4b7a-a63a-8e10c4a028f0",
+    introduction: {
+      title: "How Strong Should My Deadlift Be?",
+      paragraphs: [
+        [
+          "First, learn to deadlift with good form using the tutorial videos below. Once you can deadlift your body weight with good form, ",
+          { text: "deadlifting 1.5x your body weight is a key basic strength level for most lifters.", bold: true },
+        ],
+        [
+          "A ",
+          { text: "double bodyweight deadlift", bold: true },
+          " would be a significant marker that you are significantly above the general population and ",
+          { text: "can consider yourself strong", bold: true },
+          ".",
+        ],
+        "A classic life-goal milestone for strength enthusiasts is a 500lb (227kg) deadlift.",
+        "The strength levels slider above gives an overview of deadlift strength levels, calculated for your specific age, sex, and body weight.",
+        "Deadlifting rewards lifters who eat big and are not scared of being a higher body weight.",
+      ],
+    },
+    resources: {
+      title: "Third Party Deadlift Articles",
+      links: [
+        { text: "The Deadlift: Pushing the Floor", href: "https://startingstrength.com/training/the-deadlift-pushing-the-floor", author: "Mark Rippetoe" },
+        { text: "Squeeze the Slack Out of the Bar Before You Deadlift", href: "https://barbell-logic.com/squeeze-the-slack-out-of-the-bar-before-you-deadlift/", author: "Barbell Logic" },
+      ],
+    },
     faqItems: [
       {
         question: "What is a good deadlift for my bodyweight?",
@@ -217,8 +295,9 @@ export const bigFourLiftInsightData = [
   },
   {
     liftType: "Strict Press",
+    hubDescription: "The slowest to climb and the most rewarding.",
     canonicalURL:
-      "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
+      "https://www.strengthjourneys.xyz/progress-guide/strict-press",
     seoTitle: "Overhead Press Strength Standards & Progress Tracker",
     pageTitle: "Barbell Strict Press Strength Guide & Progress Tracker",
     pageDescription:
@@ -231,14 +310,42 @@ export const bigFourLiftInsightData = [
     liftQuote:
       "The strict press is a whole-body, multi-joint exercise that beautifully recapitulates a fundamental human movement pattern: lifting a heavy object overhead, as high as possible.",
     liftQuoteAuthor: "Jonathon M. Sullivan & Andy Baker",
-    slug: "barbell-strict-press-insights",
+    slug: "strict-press",
     videos: [
       "https://www.youtube.com/embed/8dacy5hjaE8",
       "https://www.youtube.com/embed/AhGW3XFG3M8",
       "https://www.youtube.com/embed/5yWaNOvgFCM",
     ],
-    introductionArticleId: "4303059c-e6f0-4da9-8709-4e71a664ba9b",
-    resourcesArticleId: "7a334076-be2a-46eb-9881-2bad267e88f8",
+    introduction: {
+      title: "How Strong Should My Strict Press Be?",
+      paragraphs: [
+        "Travelling with your partner can be exciting, but when their luggage is too heavy for the flight, it's easy to get frustrated. Instead of complaining, remember that everyone packs differently to feel comfortable. Offering to help manage the weight shows support and keeps the trip enjoyable. Plus, you're more than strong and athletic enough to handle lifting the heavy suitcase into the overhead locker with ease, impressing not only your partner but also the cabin crew and fellow passengers.",
+        "But seriously — the barbell strict press (also called the overhead press or OHP) is the hardest of the big four lifts to progress, and the one where you'll be moving the least weight. Don't let that discourage you — a strong press is one of the most impressive markers of real upper body strength.",
+        [
+          "Start with just the barbell (",
+          { text: "20kg/45lb", bold: true },
+          ") and focus on a strict lockout overhead with no leg drive. Use ",
+          { text: "three sets of 5 reps", bold: true },
+          " and add weight each session. Progress will be slower than your other lifts — adding 1kg/2.5lb per session is realistic.",
+        ],
+        [
+          "As a general guideline, a beginner should be able to strict press around ",
+          { text: "0.5 times their body weight.", bold: true },
+          " An ",
+          { text: "intermediate milestone is 0.75 times your body weight", bold: true },
+          ". Pressing your own body weight overhead is an advanced achievement that most recreational lifters never reach.",
+        ],
+        "Logged-in users can look below for their Strict Press history chart, which is visually mapped against both bodyweight multiples and the strength level standards for their bodyweight, age, and sex.",
+      ],
+    },
+    resources: {
+      title: "Third Party Strict Press Articles",
+      links: [
+        { text: "Why Everyone Should Press Overhead", href: "https://www.progressiverehabandstrength.com/articles/press", author: "Dr. Elizabeth Zeutschel", note: "This is a good article with examples, especially for women." },
+        { text: "The Press", href: "https://startingstrength.com/article/the_press", author: "Mark Rippetoe" },
+        { text: "Overhead Press Progression and Training Variables", href: "https://barbell-logic.com/overhead-press-progression-and-training-variables/", author: "Barbell Logic" },
+      ],
+    },
     faqItems: [
       {
         question: "What is a good overhead press for my bodyweight?",

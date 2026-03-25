@@ -59,6 +59,27 @@ const nextConfig = {
         destination: "/articles/the-iron-and-the-soul-author-henry-rollins",
         permanent: true,
       },
+      // 2026-03-25: Insight pages moved under /progress-guide/ cluster.
+      {
+        source: "/barbell-squat-insights",
+        destination: "/progress-guide/squat",
+        permanent: true,
+      },
+      {
+        source: "/barbell-bench-press-insights",
+        destination: "/progress-guide/bench-press",
+        permanent: true,
+      },
+      {
+        source: "/barbell-deadlift-insights",
+        destination: "/progress-guide/deadlift",
+        permanent: true,
+      },
+      {
+        source: "/barbell-strict-press-insights",
+        destination: "/progress-guide/strict-press",
+        permanent: true,
+      },
     ];
   },
 };

@@ -18,7 +18,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     supportingCopy:
       "Bench standards answer a different question than a 1RM calculator. The calculator estimates your max from a work set. Standards tell you what that estimated max means relative to other lifters at your size.",
     calculatorUrl: "/calculator/bench-press-1rm-calculator",
-    insightUrl: "/barbell-bench-press-insights",
+    insightUrl: "/progress-guide/bench-press",
     relatedArticlesCategory: "Bench Press",
     faqItems: [
       {
@@ -54,7 +54,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     supportingCopy:
       "Squat standards are useful for setting realistic goals. They tell you whether your current max is physically active, beginner, intermediate, advanced, or elite, and help you decide what milestone should come next.",
     calculatorUrl: "/calculator/squat-1rm-calculator",
-    insightUrl: "/barbell-squat-insights",
+    insightUrl: "/progress-guide/squat",
     relatedArticlesCategory: "Back Squat",
     faqItems: [
       {
@@ -90,7 +90,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     supportingCopy:
       "Deadlift standards are especially useful because raw numbers can be misleading. A big deadlift means something very different for a 68 kg lifter than it does for a 120 kg lifter.",
     calculatorUrl: "/calculator/deadlift-1rm-calculator",
-    insightUrl: "/barbell-deadlift-insights",
+    insightUrl: "/progress-guide/deadlift",
     relatedArticlesCategory: "Deadlift",
     faqItems: [
       {
@@ -126,7 +126,7 @@ export const STRENGTH_STANDARDS_PAGES = [
     supportingCopy:
       "The press moves more slowly than squat or deadlift, so standards help keep expectations realistic. A strict press that looks modest in absolute pounds can still be genuinely advanced once bodyweight is considered.",
     calculatorUrl: "/calculator/strict-press-1rm-calculator",
-    insightUrl: "/barbell-strict-press-insights",
+    insightUrl: "/progress-guide/strict-press",
     relatedArticlesCategory: "Strict Press",
     faqItems: [
       {

@@ -15,10 +15,10 @@ export const BIG_FOUR_LIFTS = [
 ];
 
 const BIG_FOUR_INSIGHT_PATHS = {
-  "Back Squat": "/barbell-squat-insights",
-  "Bench Press": "/barbell-bench-press-insights",
-  Deadlift: "/barbell-deadlift-insights",
-  "Strict Press": "/barbell-strict-press-insights",
+  "Back Squat": "/progress-guide/squat",
+  "Bench Press": "/progress-guide/bench-press",
+  Deadlift: "/progress-guide/deadlift",
+  "Strict Press": "/progress-guide/strict-press",
 };
 
 const STRENGTH_RATING_SCORE = {

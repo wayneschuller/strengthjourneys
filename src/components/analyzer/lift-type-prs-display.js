@@ -149,8 +149,6 @@ const PRCard = ({
                 bodyWeight={bodyWeight}
                 sex={sex}
                 isMetric={isMetric}
-                bestSetReps={repCount}
-                bestSetWeight={pr.weight}
                 inline
                 asBadge
               />
@@ -293,8 +291,6 @@ const RepRangeDetailView = ({
                           bodyWeight={bioForDateRating.bodyWeight}
                           sex={bioForDateRating.sex}
                           isMetric={bioForDateRating.isMetric}
-                          bestSetReps={repCount}
-                          bestSetWeight={lift.weight}
                           inline
                           asBadge
                         />
@@ -386,6 +382,13 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
     .filter(({ repRange }) => repRange && repRange.length > 0)
     .slice(0, 10); // Show top 10 rep ranges
 
+  // If current tab points to a rep range missing in this scope, fall back to overview
+  const activeRepMatch = activeTab.match(/^rep-(\d+)$/);
+  const effectiveTab =
+    activeRepMatch && !repRangesWithData.some(({ repIndex }) => repIndex === Number(activeRepMatch[1]))
+      ? "overview"
+      : activeTab;
+
   if (repRangesWithData.length === 0) {
     return (
       <div className="text-center text-muted-foreground">
@@ -414,7 +417,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
 
   return (
     <div ref={containerRef} className="space-y-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={effectiveTab} onValueChange={setActiveTab}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold sm:text-2xl">
             {isDemoMode && <DemoModeBadge size="sm" />}
@@ -429,7 +432,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-foreground",
                 )}
-                onClick={() => { setPrScope("lifetime"); setActiveTab("overview"); }}
+                onClick={() => setPrScope("lifetime")}
               >
                 Lifetime
               </button>
@@ -440,7 +443,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-foreground",
                 )}
-                onClick={() => { setPrScope("yearly"); setActiveTab("overview"); }}
+                onClick={() => setPrScope("yearly")}
               >
                 12 months
               </button>

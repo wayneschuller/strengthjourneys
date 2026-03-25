@@ -86,22 +86,22 @@ const BIG_FOUR = [
   {
     name: "Back Squat",
     icon: "/back_squat.svg",
-    slug: "barbell-squat-insights",
+    slug: "progress-guide/squat",
   },
   {
     name: "Bench Press",
     icon: "/bench_press.svg",
-    slug: "barbell-bench-press-insights",
+    slug: "progress-guide/bench-press",
   },
   {
     name: "Deadlift",
     icon: "/deadlift.svg",
-    slug: "barbell-deadlift-insights",
+    slug: "progress-guide/deadlift",
   },
   {
     name: "Strict Press",
     icon: "/strict_press.svg",
-    slug: "barbell-strict-press-insights",
+    slug: "progress-guide/strict-press",
   },
 ];
 const BIG_FOUR_INSIGHT_URLS = Object.fromEntries(
@@ -111,7 +111,7 @@ const BIG_FOUR_INSIGHT_URLS = Object.fromEntries(
 const COACHED_LIFTS = [
   {
     liftType: "Back Squat",
-    slug: "barbell-squat-insights",
+    slug: "progress-guide/squat",
     cues: [
       "Root your whole foot and brace hard before every rep.",
       "Sit between your hips while the bar stays balanced over mid-foot.",
@@ -121,7 +121,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Bench Press",
-    slug: "barbell-bench-press-insights",
+    slug: "progress-guide/bench-press",
     cues: [
       "Set your shoulder blades first, then keep the upper back pinned tight.",
       "Plant your feet and stay tight from the handoff to lockout.",
@@ -131,7 +131,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Deadlift",
-    slug: "barbell-deadlift-insights",
+    slug: "progress-guide/deadlift",
     cues: [
       "Start with the bar over mid-foot and bring your shins in only after you hinge down.",
       "Brace, squeeze the bar, and pull the slack out before the floor breaks.",
@@ -141,7 +141,7 @@ const COACHED_LIFTS = [
   },
   {
     liftType: "Strict Press",
-    slug: "barbell-strict-press-insights",
+    slug: "progress-guide/strict-press",
     cues: [
       "Squeeze glutes and abs so the ribs stay down before the press starts.",
       "Stack wrists over elbows and begin with forearms close to vertical.",
@@ -1595,8 +1595,7 @@ export default function LogSessionPage() {
         const newerRows = allRows.filter((e) => e.date > sessionDate);
         if (newerRows.length > 0) {
           predecessorRow = newerRows.reduce(
-            (best, row) =>
-              !best || row.rowIndex > best.rowIndex ? row : best,
+            (best, row) => (!best || row.rowIndex > best.rowIndex ? row : best),
             null,
           );
         }
@@ -2061,7 +2060,7 @@ export default function LogSessionPage() {
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <button
-                      className="hover:bg-muted/40 mx-auto inline-flex flex-col items-center rounded-md px-3 py-1 transition-colors group"
+                      className="hover:bg-muted/40 group mx-auto inline-flex flex-col items-center rounded-md px-3 py-1 transition-colors"
                       aria-label="Pick a date"
                     >
                       <span className="inline-flex items-center gap-1.5 text-lg leading-tight font-semibold">
@@ -2087,8 +2086,7 @@ export default function LogSessionPage() {
                       disabled={{ after: new Date() }}
                       modifiers={{ hasSession: sessionDateObjects }}
                       modifiersClassNames={{
-                        hasSession:
-                          "bg-primary/15 font-semibold text-primary",
+                        hasSession: "bg-primary/15 font-semibold text-primary",
                       }}
                       defaultMonth={selectedDateObj}
                     />
@@ -3235,12 +3233,25 @@ function LogStrengthBar({
     .map((val) => ((val - physicallyActive) / range) * 100)
     .filter((p) => p > 0 && p < 100);
 
+  const LIFT_STRENGTH_SLUGS = {
+    "Back Squat": "squat",
+    "Bench Press": "bench-press",
+    "Deadlift": "deadlift",
+    "Strict Press": "strict-press",
+  };
+  const strengthHref = LIFT_STRENGTH_SLUGS[liftType]
+    ? `/strength-levels/${LIFT_STRENGTH_SLUGS[liftType]}`
+    : "/strength-levels";
+
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground shrink-0 text-[10px] font-medium">
+        <Link
+          href={strengthHref}
+          className="text-muted-foreground hover:text-foreground shrink-0 text-[10px] font-medium transition-colors"
+        >
           {emoji} {rating}
-        </span>
+        </Link>
         <div className="relative flex-1">
           <div
             className="h-2 w-full rounded-full"
@@ -3403,6 +3414,40 @@ function LiftBlock({
   const closeCustomSetDraft = useCallback(() => {
     setCustomDraftConfig(null);
   }, []);
+
+  const optimisticSetsForStrength = useMemo(
+    () =>
+      sets.map((set, index) =>
+        getEffectiveSetForRanking(
+          set,
+          optimisticFieldsByKey[getSetIdentityKey(set, `set-${index}`)],
+        ),
+      ),
+    [sets, optimisticFieldsByKey],
+  );
+
+  // Recompute tonnage stats using optimistic reps/weight so the tonnage
+  // row updates instantly as the user edits inline.
+  const optimisticTonnageStats = useMemo(() => {
+    if (!tonnageStats) return null;
+    const optimisticTonnage = optimisticSetsForStrength.reduce(
+      (sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0),
+      0,
+    );
+    if (optimisticTonnage === tonnageStats.currentLiftTonnage) return tonnageStats;
+    const { avgLiftTonnage } = tonnageStats;
+    return {
+      ...tonnageStats,
+      currentLiftTonnage: optimisticTonnage,
+      pctDiff:
+        avgLiftTonnage > 0
+          ? ((optimisticTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
+          : null,
+      shouldShowComparison:
+        optimisticSetsForStrength.length >= 4 ||
+        (avgLiftTonnage > 0 && optimisticTonnage >= avgLiftTonnage * 0.4),
+    };
+  }, [tonnageStats, optimisticSetsForStrength]);
 
   const openCustomSetDraft = useCallback(() => {
     setCustomDraftSeed((prev) => prev + 1);
@@ -3820,7 +3865,7 @@ function LiftBlock({
     if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;
     let bestVal = 0;
-    sets.forEach((s, i) => {
+    optimisticSetsForStrength.forEach((s, i) => {
       const reps = s.reps ?? 0;
       const weight = s.weight ?? 0;
       if (reps > 0 && weight > 0) {
@@ -3832,7 +3877,7 @@ function LiftBlock({
       }
     });
     return { bestE1rmIndex: bestIdx, bestE1rmValue: bestVal };
-  }, [sets, canShowStrength, e1rmFormula]);
+  }, [optimisticSetsForStrength, canShowStrength, e1rmFormula]);
 
   const prMeta = useMemo(() => {
     return sets.map((s) => {
@@ -4100,6 +4145,7 @@ function LiftBlock({
       >
         {sets.map((set, idx) => {
           const rowIdentityKey = getSetIdentityKey(set, `pending-${idx}`);
+          const effectiveSet = optimisticSetsForStrength[idx] ?? set;
           const shouldPassiveAnimate =
             !prefersReducedMotion && initialPassiveRowKeys.has(rowIdentityKey);
           const passiveDelay = shouldPassiveAnimate
@@ -4141,7 +4187,7 @@ function LiftBlock({
                 idx === bestE1rmIndex ? (
                   <LiftStrengthLevel
                     liftType={liftType}
-                    workouts={sets}
+                    workouts={optimisticSetsForStrength}
                     standards={standards}
                     e1rmFormula={e1rmFormula}
                     sessionDate={sessionDate}
@@ -4149,8 +4195,6 @@ function LiftBlock({
                     bodyWeight={bodyWeight}
                     sex={sex}
                     isMetric={isMetric}
-                    bestSetReps={set.reps}
-                    bestSetWeight={set.weight}
                     asBadge
                     badgeClassName="h-8 rounded-full px-3 text-xs font-semibold"
                   />
@@ -4188,7 +4232,7 @@ function LiftBlock({
         <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
           <LiftTonnageRow
             liftType={liftType}
-            stats={tonnageStats}
+            stats={optimisticTonnageStats}
             isMetric={isMetric}
           />
         </div>
@@ -4822,7 +4866,7 @@ function SetRow({
                         <span className="inline-flex">{strengthBadge}</span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p>Open strength calculator details</p>
+                        <p>View detailed strength levels</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -4893,7 +4937,7 @@ function SetRow({
                       <span className="inline-flex">{strengthBadge}</span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p>Open strength calculator details</p>
+                      <p>View detailed strength levels</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

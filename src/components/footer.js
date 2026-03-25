@@ -6,6 +6,7 @@ import { PageContainer } from "@/components/page-header";
 const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },
   { href: "/strength-levels", label: "Strength Levels" },
+  { href: "/progress-guide", label: "Lift Insights & Progress" },
   { href: "/how-strong-am-i", label: "How Strong Am I?" },
   { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },
   { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
@@ -35,6 +36,13 @@ const STRENGTH_STANDARDS_LINKS = [
   { href: "/strength-levels/strict-press", label: "Strict Press Strength Levels" },
   { href: "/1000lb-club-calculator", label: "1000lb Club" },
   { href: "/200-300-400-500-strength-club-calculator", label: "200/300/400/500 Club" },
+];
+
+const PROGRESS_GUIDES = [
+  { href: "/progress-guide/squat", label: "Squat Progress Guide" },
+  { href: "/progress-guide/bench-press", label: "Bench Press Progress Guide" },
+  { href: "/progress-guide/deadlift", label: "Deadlift Progress Guide" },
+  { href: "/progress-guide/strict-press", label: "Strict Press Progress Guide" },
 ];
 
 const RESOURCES = [
@@ -135,7 +143,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 border-t pt-6">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
                 More Calculators
@@ -159,6 +167,23 @@ export function Footer() {
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {STRENGTH_STANDARDS_LINKS.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
+                Lift Guides & Progress Trackers
+              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {PROGRESS_GUIDES.map(({ href, label }) => (
                   <Link
                     key={href}
                     href={href}

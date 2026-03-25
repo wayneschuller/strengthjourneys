@@ -88,9 +88,9 @@ const LIFTS = [
 ];
 
 const LIFT_INSIGHT_URLS = {
-  "Back Squat": "/barbell-squat-insights",
-  "Bench Press": "/barbell-bench-press-insights",
-  Deadlift: "/barbell-deadlift-insights",
+  "Back Squat": "/progress-guide/squat",
+  "Bench Press": "/progress-guide/bench-press",
+  Deadlift: "/progress-guide/deadlift",
 };
 
 const NEXT_TOOL_LINKS = [

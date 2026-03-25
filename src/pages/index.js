@@ -178,27 +178,27 @@ export const featurePages = [
 // One day we might add power clean and power snatch.
 const mainBarbellLifts = [
   {
-    slug: "barbell-squat-insights",
+    slug: "progress-guide/squat",
     liftType: "Back Squat",
     liftDescription:
       "A barbell squat to full depth, resting across the upper back.",
     IconComponent: Crown,
   },
   {
-    slug: "barbell-bench-press-insights",
+    slug: "progress-guide/bench-press",
     liftType: "Bench Press",
     liftDescription:
       "A horizontal press from the chest while lying on a bench.",
     IconComponent: Shield,
   },
   {
-    slug: "barbell-deadlift-insights",
+    slug: "progress-guide/deadlift",
     liftType: "Deadlift",
     liftDescription: "Lifting a barbell from the floor to a standing lockout.",
     IconComponent: Skull,
   },
   {
-    slug: "barbell-strict-press-insights",
+    slug: "progress-guide/strict-press",
     liftType: "Strict Press",
     liftDescription: "A standing overhead press with no leg drive.",
     IconComponent: Luggage,

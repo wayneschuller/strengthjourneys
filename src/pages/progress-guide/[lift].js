@@ -1,18 +1,12 @@
 import Head from "next/head";
 import Link from "next/link";
-import Image from "next/image";
-
-
-import { cn } from "@/lib/utils";
 import { useAthleteBio, getTopLiftStats, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
-import { useTheme } from "next-themes";
-import { devLog, getDisplayWeight } from "@/lib/processing-utils";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
-import { PortableText } from "@portabletext/react";
-import { Crown, Shield, Skull, Luggage } from "lucide-react";
+import { Crown, Shield, Skull, Luggage, ExternalLink } from "lucide-react";
 
 import {
   Card,
@@ -55,9 +49,9 @@ const StrengthJourneys = () => (
   </span>
 );
 
-import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
-import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
+import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
@@ -105,50 +99,20 @@ export async function getStaticProps({ params }) {
     (lift) => lift.slug === params.lift,
   );
 
-  const RELATED_ARTICLES_CATEGORY = liftData.liftType;
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
-
-  const articleId = liftData.introductionArticleId;
-  const resourcesId = liftData.resourcesArticleId;
-
-  // Fetch both articles separately using the generic function
-  const introductionArticle = await fetchArticleById(articleId);
-  const resourcesArticle = await fetchArticleById(resourcesId);
-
-  // Error handling: if either article is missing, log it
-  if (!introductionArticle) {
-    console.error(`Introduction article not found for ID: ${articleId}`);
-  }
-
-  if (!resourcesArticle) {
-    console.error(`Resources article not found for ID: ${resourcesId}`);
-  }
+  const relatedArticles = await fetchRelatedArticles(liftData.liftType);
 
   return {
     props: {
       liftInsightData: liftData,
-      relatedArticles: relatedArticles,
-      introductionArticle: introductionArticle || null, // Provide null if not found
-      resourcesArticle: resourcesArticle || null, // Provide null if not found
+      relatedArticles,
     },
     revalidate: 60 * 60,
   };
 }
 
-/**
- * Dynamic insight page for a single Big Four barbell lift (e.g. Back Squat, Bench Press, Deadlift, Strict Press).
- * Renders SEO metadata from the lift's static data and delegates content rendering to BarbellInsightsMain.
- * @param {Object} props
- * @param {Object} props.liftInsightData - Static metadata for this lift (titles, SEO fields, quote, videos, etc.) from bigFourLiftInsightData.
- * @param {Array} props.relatedArticles - CMS articles related to this lift type, fetched via ISR.
- * @param {Object|null} props.introductionArticle - Sanity CMS article used as the introduction body for this lift.
- * @param {Object|null} props.resourcesArticle - Sanity CMS article used as the resources section for this lift.
- */
 export default function BigFourBarbellInsights({
   liftInsightData,
   relatedArticles,
-  introductionArticle,
-  resourcesArticle,
 }) {
   const structuredData = {
     "@context": "https://schema.org",
@@ -233,8 +197,6 @@ export default function BigFourBarbellInsights({
       <BarbellInsightsMain
         liftInsightData={liftInsightData}
         relatedArticles={relatedArticles}
-        introductionArticle={introductionArticle}
-        resourcesArticle={resourcesArticle}
       />
     </>
   );
@@ -243,30 +205,13 @@ export default function BigFourBarbellInsights({
 /**
  * Inner client component for a Big Four lift insight page. Renders the full dashboard of lift-specific
  * cards: strength levels, lift journey, articles, visualizer charts, PR tables, and video guides.
- * @param {Object} props
- * @param {Object} props.liftInsightData - Static metadata for this lift including liftType, quote, videos, etc.
- * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
- * @param {Object|null} props.introductionArticle - Sanity CMS article rendered as the introduction card.
- * @param {Object|null} props.resourcesArticle - Sanity CMS article rendered as the resources card.
  */
 function BarbellInsightsMain({
   liftInsightData,
   relatedArticles,
-  introductionArticle,
-  resourcesArticle,
 }) {
-  const { isLoading, parsedData, rawRows, sheetInfo } = useUserLiftingData();
-  const { status: insightAuthStatus } = useSession();
-  const { dashboardStage } = getDashboardStage({
-    parsedData,
-    rawRows,
-    sheetInfo,
-  });
-  const prioritizeVideoGuides =
-    insightAuthStatus !== "authenticated" ||
-    dashboardStage === "starter_sample" ||
-    dashboardStage === "first_real_week" ||
-    dashboardStage === "first_month";
+  const { status: authStatus } = useSession();
+  const isAuthed = authStatus === "authenticated";
 
   const bigFourIcons = {
     "Back Squat": Crown,
@@ -281,7 +226,6 @@ function BarbellInsightsMain({
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",
   };
-  const calcUrl = LIFT_CALC_URLS[liftInsightData.liftType];
   const navLiftLabel = getNavLiftLabel(liftInsightData.liftType);
 
   return (
@@ -292,13 +236,13 @@ function BarbellInsightsMain({
         </PageHeaderHeading>
         <PageHeaderDescription>
           <p>{liftInsightData.pageDescription}</p>
-          {calcUrl && (
+          {STRENGTH_STANDARDS_LINKS[liftInsightData.liftType] && (
             <div className="mt-5">
               <Link
-                href={calcUrl}
+                href={STRENGTH_STANDARDS_LINKS[liftInsightData.liftType]}
                 className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Try the {liftInsightData.liftType} 1RM Calculator →
+                {liftInsightData.liftType} Strength Levels →
               </Link>
             </div>
           )}
@@ -343,80 +287,108 @@ function BarbellInsightsMain({
         </PageHeaderRight>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <div className="col-span-3" id="strength-standards">
+      {/* Shared: strength standards always first */}
+      <div className="flex flex-col gap-6">
+        <div id="strength-standards">
           <StrengthLevelsCard liftType={liftInsightData.liftType} />
         </div>
-        {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
-        <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch">
-          <div id="progress-history">
-            <LiftJourneyCard liftType={liftInsightData.liftType} />
-          </div>
-          <SanityArticleCard article={introductionArticle} />
-          <div className="flex flex-col gap-6 lg:h-full">
-            <SanityArticleCard
-              article={resourcesArticle}
-              className="lg:flex-1"
-            />
+
+        {isAuthed ? (
+          <>
+            {/* Authenticated: personal data first, editorial lower */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div id="progress-history">
+                <LiftJourneyCard liftType={liftInsightData.liftType} />
+              </div>
+              <div className="lg:col-span-2" id="recent-sessions">
+                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} defaultVisibleCount={5} />
+              </div>
+            </div>
+            <VisualizerMini liftType={liftInsightData.liftType} />
+            <div id="tonnage-chart">
+              <TonnageChart liftType={liftInsightData.liftType} />
+            </div>
             <div id="strength-potential">
               <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
             </div>
-          </div>
-        </div>
-        {prioritizeVideoGuides && (
-          <div className="col-span-3" id="video-guides">
-            <VideoCard
-              liftType={liftInsightData.liftType}
-              videos={liftInsightData.videos}
+            <VisualizerReps liftType={liftInsightData.liftType} />
+            <div id="lift-prs">
+              <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <IntroductionCard introduction={liftInsightData.introduction} />
+              </div>
+              <ResourcesCard resources={liftInsightData.resources} />
+            </div>
+            <div id="video-guides">
+              <VideoCard
+                liftType={liftInsightData.liftType}
+                videos={liftInsightData.videos}
+              />
+            </div>
+            <LiftQuoteCard
+              title={liftInsightData.quoteSectionTitle}
+              quote={liftInsightData.liftQuote}
+              author={liftInsightData.liftQuoteAuthor}
             />
-          </div>
+          </>
+        ) : (
+          <>
+            {/* Anonymous: videos first (show the movement), then editorial, demo charts lower */}
+            <div id="video-guides">
+              <VideoCard
+                liftType={liftInsightData.liftType}
+                videos={liftInsightData.videos}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <IntroductionCard introduction={liftInsightData.introduction} />
+              </div>
+              <ResourcesCard resources={liftInsightData.resources} />
+            </div>
+            <LiftQuoteCard
+              title={liftInsightData.quoteSectionTitle}
+              quote={liftInsightData.liftQuote}
+              author={liftInsightData.liftQuoteAuthor}
+            />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div id="progress-history">
+                <LiftJourneyCard liftType={liftInsightData.liftType} />
+              </div>
+              <div className="lg:col-span-2" id="recent-sessions">
+                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} defaultVisibleCount={5} />
+              </div>
+            </div>
+            <VisualizerMini liftType={liftInsightData.liftType} />
+            <div id="tonnage-chart">
+              <TonnageChart liftType={liftInsightData.liftType} />
+            </div>
+            <div id="strength-potential">
+              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            </div>
+            <VisualizerReps liftType={liftInsightData.liftType} />
+          </>
         )}
-        <div className="col-span-3" id="recent-sessions">
-          <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
-        </div>
-        <div className="col-span-3">
-          <VisualizerMini liftType={liftInsightData.liftType} />
-        </div>
-        <div className="col-span-3" id="tonnage-chart">
-          <TonnageChart liftType={liftInsightData.liftType} />
-        </div>
-        <div className="col-span-3">
-          <LiftQuoteCard
-            title={liftInsightData.quoteSectionTitle}
-            quote={liftInsightData.liftQuote}
-            author={liftInsightData.liftQuoteAuthor}
-          />
-        </div>
-        <div className="col-span-3">
-          <VisualizerReps liftType={liftInsightData.liftType} />
-        </div>
-        <div className="col-span-3" id="lift-prs">
-          <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
-        </div>
-        {!prioritizeVideoGuides && (
-          <div className="col-span-3" id="video-guides">
-            <VideoCard
-              liftType={liftInsightData.liftType}
-              videos={liftInsightData.videos}
-            />
-          </div>
+
+        {/* Shared: FAQ and related articles always at bottom */}
+        {liftInsightData.faqItems?.length > 0 && (
+          <section id="lift-faq">
+            <h2 className="mb-4 text-xl font-semibold">
+              {liftInsightData.liftType} FAQ
+            </h2>
+            <div className="space-y-4">
+              {liftInsightData.faqItems.map(({ question, answer }) => (
+                <article key={question} className="rounded-lg border p-4">
+                  <h3 className="text-base font-semibold">{question}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
+                </article>
+              ))}
+            </div>
+          </section>
         )}
       </div>
-      {liftInsightData.faqItems?.length > 0 && (
-        <section className="mt-10" id="lift-faq">
-          <h2 className="mb-4 text-xl font-semibold">
-            {liftInsightData.liftType} FAQ
-          </h2>
-          <div className="space-y-4">
-            {liftInsightData.faqItems.map(({ question, answer }) => (
-              <article key={question} className="rounded-lg border p-4">
-                <h3 className="text-base font-semibold">{question}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
       <section id="related-articles">
         <RelatedArticles articles={relatedArticles} />
       </section>
@@ -451,70 +423,81 @@ function MyLiftTypePRsCard({ liftType }) {
   );
 }
 
-const DARK_THEMES = [
-  "dark",
-  "neo-brutalism-dark",
-  "retro-arcade-dark",
-  "starry-night-dark",
-];
-
 /**
- * Card rendering a Sanity CMS article's title and rich-text body using PortableText, with
- * dark-mode prose inversion support.
- * @param {Object} props
- * @param {Object} props.article - Sanity article object with at least `title` and `body` fields.
- * @param {string} [props.className] - Optional additional CSS classes for the card.
+ * Renders introduction content with paragraphs that can contain bold segments.
  */
-function SanityArticleCard({ article, className }) {
-  const { resolvedTheme } = useTheme();
-  const isDarkTheme = DARK_THEMES.includes(resolvedTheme ?? "");
-  return (
-    <Card className={className}>
-      <CardHeader>
-        <h2 className="text-2xl font-semibold leading-none tracking-tight">{article.title}</h2>
-      </CardHeader>
-      <CardContent className={cn("prose prose-orange", isDarkTheme && "prose-invert")}>
-        <PortableText value={article.body} components={components} />
-      </CardContent>
-    </Card>
-  );
-}
-
-function HowStrong({ liftType }) {
+function IntroductionCard({ introduction }) {
+  if (!introduction) return null;
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-2xl font-semibold leading-none tracking-tight">How Strong Should My {liftType} Be?</h2>
+        <h2 className="text-2xl font-semibold leading-none tracking-tight">
+          {introduction.title}
+        </h2>
       </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <p>
-          The barbell squat is one of the most effective exercises for building
-          strength and muscle mass. The amount of weight you should be able to
-          squat depends on your body weight, fitness level, and experience with
-          the exercise.
-        </p>
-        <p>
-          As a general guideline, a beginner should be able to squat their body
-          weight for 5 reps, an intermediate lifter should be able to squat 1.5
-          times their body weight for 5 reps, and an advanced lifter should be
-          able to squat 2 times their body weight for 5 reps.
-        </p>
-        <p>
-          {`On the chart below you can visualize your strength level by clicking
-          the checkbox for "Show Bodyweight Multiples" or "Show Strength
-          Standards"`}
-        </p>
+      <CardContent className="flex flex-col gap-4">
+        {introduction.paragraphs.map((para, i) => (
+          <p key={i}>
+            {typeof para === "string"
+              ? para
+              : para.map((seg, j) =>
+                  typeof seg === "string" ? (
+                    seg
+                  ) : seg.bold ? (
+                    <strong key={j}>{seg.text}</strong>
+                  ) : (
+                    seg.text
+                  ),
+                )}
+          </p>
+        ))}
       </CardContent>
     </Card>
   );
 }
 
-const LIFT_CALC_URLS = {
-  "Back Squat": "/calculator/squat-1rm-calculator",
-  "Bench Press": "/calculator/bench-press-1rm-calculator",
-  "Deadlift": "/calculator/deadlift-1rm-calculator",
-  "Strict Press": "/calculator/strict-press-1rm-calculator",
-};
+/**
+ * Renders a list of third-party resource links with author attribution.
+ */
+function ResourcesCard({ resources, className }) {
+  if (!resources) return null;
+  return (
+    <Card className={className}>
+      <CardHeader>
+        <h2 className="text-2xl font-semibold leading-none tracking-tight">
+          {resources.title}
+        </h2>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-3">
+          {resources.links.map((link, i) => (
+            <li key={i}>
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                {link.text}
+                <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+              </a>
+              <span className="text-sm text-muted-foreground">
+                {" "}
+                — {link.author}
+              </span>
+              {link.note && (
+                <span className="text-sm text-muted-foreground">
+                  {" "}
+                  ({link.note})
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
 
 /**
  * @param {Object} props
@@ -524,7 +507,6 @@ function StrengthLevelsCard({ liftType }) {
   const { standards, isMetric, age, bodyWeight, sex } = useAthleteBio();
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   const { status: authStatus } = useSession();
-  const calcUrl = LIFT_CALC_URLS[liftType];
 
   let strengthRating = null;
   let isBeyondElite = false;
@@ -570,12 +552,12 @@ function StrengthLevelsCard({ liftType }) {
       </CardContent>
       <CardFooter className="flex flex-wrap items-center justify-between gap-3 pt-2">
         <AthleteBioInlineSettings />
-        {calcUrl && (
+        {STRENGTH_STANDARDS_LINKS[liftType] && (
           <Link
-            href={calcUrl}
+            href={STRENGTH_STANDARDS_LINKS[liftType]}
             className="text-xs text-muted-foreground hover:text-foreground whitespace-nowrap"
           >
-            {liftType} 1RM Calculator →
+            {liftType} Strength Levels →
           </Link>
         )}
       </CardFooter>
@@ -636,32 +618,3 @@ function VideoCard({ liftType, videos }) {
   );
 }
 
-const components = {
-  types: {
-    image: ({ value }) => {
-      if (!value?.asset?._ref) {
-        return null;
-      }
-
-      // These will be in article images. These will be portrait landscpe so go slightly wider than higher
-      const imageUrl = urlFor(value)
-        .width(600)
-        .height(400)
-        .fit("clip")
-        .quality(80)
-        .auto("format")
-        .url();
-
-      return (
-        <div className="relative my-8 h-96 w-full">
-          <Image
-            src={imageUrl}
-            alt={value.alt || " "}
-            fill
-            style={{ objectFit: "contain" }}
-          />
-        </div>
-      );
-    },
-  },
-};

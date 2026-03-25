@@ -11,7 +11,7 @@ import {
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { parseData, parseImportedFile } from "@/lib/importers";
+import { parseData, parseImportedFile } from "@/lib/importers/import-dispatcher";
 import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
 import {
   flushTimings,
@@ -216,9 +216,11 @@ export const UserLiftingDataProvider = ({ children }) => {
     false,
     { initializeWithValue: false },
   );
+  // Imported CSV data overrides demo mode — the user has real data loaded.
   const isDemoMode =
-    authStatus === "unauthenticated" ||
-    (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode);
+    !importedParsedData &&
+    (authStatus === "unauthenticated" ||
+      (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode));
 
   // True while we have localStorage evidence of a linked sheet but auth and/or
   // useLocalStorage haven't hydrated yet. Consumers use this to avoid flashing
@@ -255,10 +257,13 @@ export const UserLiftingDataProvider = ({ children }) => {
   const enterSignedInDemoMode = useCallback(() => setSignedInDemoMode(true), [setSignedInDemoMode]);
   const exitSignedInDemoMode = useCallback(() => setSignedInDemoMode(false), [setSignedInDemoMode]);
 
+  // Skip sheet fetch when imported data is active — imported CSV takes over the whole app.
+  // The user can re-link their sheet from the avatar menu at any time.
   const shouldFetch =
     authStatus === "authenticated" &&
     !!session?.accessToken &&
-    !!sheetInfo?.ssid;
+    !!sheetInfo?.ssid &&
+    !importedParsedData;
 
   useEffect(() => {
     if (authStatus === "unauthenticated" && signedInDemoMode) {

@@ -236,6 +236,7 @@ export default function LogSessionPage() {
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
     isDemoMode,
+    isImportedData,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { addEntry: addLogEntry, clearEntries } = useDevActivityMonitor();
@@ -1968,6 +1969,22 @@ export default function LogSessionPage() {
   ]);
 
   // --- Render ---
+
+  if (isImportedData) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <Dumbbell className="text-muted-foreground h-12 w-12" />
+        <h1 className="text-2xl font-bold">Logging Unavailable</h1>
+        <p className="text-muted-foreground max-w-md">
+          You&apos;re viewing imported data in read-only mode. To log sessions,
+          clear the import and connect a Google Sheet.
+        </p>
+        <Button asChild>
+          <Link href="/import">Go to Import</Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (authStatus === "unauthenticated") {
     return (

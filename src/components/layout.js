@@ -16,6 +16,7 @@ import { SheetSetupDialog } from "@/components/sheet-setup-dialog";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { FileUp, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
@@ -42,6 +43,9 @@ export function Layout({ children }) {
     fetchFailed,
     apiError,
     isDemoMode,
+    isImportedData,
+    importedFormatName,
+    clearImportedData,
     parseError,
     parsedData,
     rawRows,
@@ -203,7 +207,15 @@ export function Layout({ children }) {
 
       <div className="relative z-10">
         <NavBar />
-        <DataAccessBanner pathname={router.pathname} />
+        {isImportedData ? (
+          <ImportedDataBanner
+            formatName={importedFormatName}
+            entryCount={parsedData?.length || 0}
+            onClear={clearImportedData}
+          />
+        ) : (
+          <DataAccessBanner pathname={router.pathname} />
+        )}
         <SheetSetupDialog />
         <main className="mx-0 md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           {children}
@@ -410,6 +422,41 @@ function DataAccessBanner({ pathname }) {
         </div>
       </section>
     </>
+  );
+}
+
+// Blue banner shown across the app when the user has imported CSV data (view-only mode).
+function ImportedDataBanner({ formatName, entryCount, onClear }) {
+  const router = useRouter();
+  return (
+    <section className="mb-3 border-y border-blue-200 bg-blue-50/80 dark:border-blue-800/60 dark:bg-blue-950/50">
+      <div className="mx-0 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-2.5 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
+        <p className="text-sm leading-tight text-blue-900 dark:text-blue-200">
+          <FileUp className="mr-1.5 -mt-0.5 inline-block h-4 w-4" />
+          Viewing {entryCount.toLocaleString()} imported {formatName} {entryCount === 1 ? "entry" : "entries"} — read-only mode.
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 border-blue-300 bg-white/80 text-xs text-blue-900 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/50 dark:text-blue-200 dark:hover:bg-blue-800/60"
+            onClick={() => router.push("/import")}
+          >
+            <FileUp className="mr-1.5 h-3.5 w-3.5" />
+            Import
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-blue-800 hover:bg-blue-100 hover:text-blue-950 dark:text-blue-300 dark:hover:bg-blue-900/50"
+            onClick={onClear}
+          >
+            <X className="mr-1 h-3.5 w-3.5" />
+            Clear
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }
 

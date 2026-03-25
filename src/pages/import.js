@@ -542,23 +542,6 @@ export default function ImportPage() {
     );
   }
 
-  // Auth gate
-  if (authStatus === "unauthenticated") {
-    return (
-      <>
-        <NextSeo title="Import & Export Data" noindex />
-        <PageContainer className="py-16 text-center">
-          <Dumbbell className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-          <h2 className="mb-2 text-xl font-semibold">Sign in to import data</h2>
-          <p className="text-muted-foreground mb-4">
-            You need to be signed in with a connected Google Sheet to import lifting history.
-          </p>
-          <Button onClick={() => router.push("/")}>Go to Home</Button>
-        </PageContainer>
-      </>
-    );
-  }
-
   return (
     <>
       <NextSeo title="Import & Export Data" noindex />
@@ -566,63 +549,12 @@ export default function ImportPage() {
         <PageHeader>
           <PageHeaderHeading icon={Upload}>Import Data</PageHeaderHeading>
           <PageHeaderDescription>
-            Add your lifting history from memory or other apps. Everything here
-            is optional — you can always come back and add more later.
+            Add your lifting history from another app or from memory.
+            Your data stays in your browser — nothing is uploaded to a server.
           </PageHeaderDescription>
         </PageHeader>
 
-        {/* Quick Add Section */}
-        <section className="mx-auto mb-12 max-w-5xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
-            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
-          </div>
-
-          <p className="text-muted-foreground text-sm">
-            Enter your most memorable lifts for each movement. You don&apos;t need exact dates — just the year is enough.
-            These will be added to your Google Sheet as historical entries.
-          </p>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {BIG_FOUR.map((lift) => (
-              <LiftSection
-                key={lift.name}
-                lift={lift}
-                entries={liftEntries[lift.name]}
-                onUpdate={(entries) => updateLiftEntries(lift.name, entries)}
-                unit={unit}
-              />
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-muted-foreground text-xs">
-              {validEntries.length} {validEntries.length === 1 ? "entry" : "entries"} ready to save
-            </p>
-            <Button
-              onClick={handleSave}
-              disabled={saving || validEntries.length === 0 || !sheetInfo?.ssid}
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                </>
-              ) : (
-                <>
-                  <Dumbbell className="mr-2 h-4 w-4" /> Save to Sheet
-                </>
-              )}
-            </Button>
-          </div>
-
-          {!sheetInfo?.ssid && authStatus === "authenticated" && (
-            <p className="text-destructive text-sm">
-              No Google Sheet connected. Connect one from the home page first.
-            </p>
-          )}
-        </section>
-
-        {/* File Import Section */}
+        {/* File Import Section — always visible, no auth required */}
         <FileImportSection
           importFile={importFile}
           clearImportedData={clearImportedData}
@@ -633,8 +565,55 @@ export default function ImportPage() {
           router={router}
         />
 
+        {/* Quick Add Section — only for authenticated users with a sheet, not in import mode */}
+        {authStatus === "authenticated" && sheetInfo?.ssid && !isImportedData && (
+          <section className="mx-auto mb-12 max-w-5xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
+              <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+            </div>
+
+            <p className="text-muted-foreground text-sm">
+              Enter your most memorable lifts for each movement. You don&apos;t need exact dates — just the year is enough.
+              These will be added to your Google Sheet as historical entries.
+            </p>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {BIG_FOUR.map((lift) => (
+                <LiftSection
+                  key={lift.name}
+                  lift={lift}
+                  entries={liftEntries[lift.name]}
+                  onUpdate={(entries) => updateLiftEntries(lift.name, entries)}
+                  unit={unit}
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-muted-foreground text-xs">
+                {validEntries.length} {validEntries.length === 1 ? "entry" : "entries"} ready to save
+              </p>
+              <Button
+                onClick={handleSave}
+                disabled={saving || validEntries.length === 0}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <Dumbbell className="mr-2 h-4 w-4" /> Save to Sheet
+                  </>
+                )}
+              </Button>
+            </div>
+          </section>
+        )}
+
         {/* Export Section */}
-        {authStatus === "authenticated" && !isDemoMode && (
+        {authStatus === "authenticated" && !isDemoMode && !isImportedData && (
           <section className="mx-auto mb-16 max-w-5xl">
             <h2 className="mb-4 text-lg font-semibold">Export Your Data</h2>
 

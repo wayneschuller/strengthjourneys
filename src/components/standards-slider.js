@@ -8,11 +8,23 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
-import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
+import {
+  getReadableDateString,
+  getDisplayWeight,
+} from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { formatDateToYmdLocal, getWeekKeyFromDateStr } from "@/lib/date-utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useReadLocalStorage, useResizeObserver, useWindowSize } from "usehooks-ts";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  useReadLocalStorage,
+  useResizeObserver,
+  useWindowSize,
+} from "usehooks-ts";
 
 const PERIOD_KEYS = ["1M", "6M", "1Y", "2Y", "5Y", "10Y"];
 
@@ -55,9 +67,13 @@ export function StandardsSlider({
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex } = useAthleteBio();
   const { width } = useWindowSize({ initializeWithValue: false });
-  const { width: containerWidth = 0 } = useResizeObserver({ ref: containerRef });
+  const { width: containerWidth = 0 } = useResizeObserver({
+    ref: containerRef,
+  });
   const e1rmFormula =
-    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+      initializeWithValue: false,
+    }) ?? "Brzycki";
 
   const unitType = isMetric ? "kg" : "lb";
 
@@ -66,9 +82,12 @@ export function StandardsSlider({
   // native unit (e.g. lb data viewed in kg mode). All lift weights/e1rms from parsedData
   // and topLiftsByTypeAndReps are in this native unit and must be converted before comparing
   // against `standards`, which are always in the display unit (see useAthleteBioData).
-  const firstLiftForType = (isYearly ? topLiftsByTypeAndRepsLast12Months : topLiftsByTypeAndReps)?.[liftType]?.[0]?.[0];
+  const firstLiftForType = (
+    isYearly ? topLiftsByTypeAndRepsLast12Months : topLiftsByTypeAndReps
+  )?.[liftType]?.[0]?.[0];
   const nativeUnitType = firstLiftForType?.unitType || unitType;
-  const toDisplay = (w) => getDisplayWeight({ weight: w, unitType: nativeUnitType }, isMetric).value;
+  const toDisplay = (w) =>
+    getDisplayWeight({ weight: w, unitType: nativeUnitType }, isMetric).value;
 
   // --- Compute period-best E1RMs (1M / 6M / 1Y / 2Y / 5Y / 10Y) ---
   const periodBestNotches = useMemo(() => {
@@ -90,6 +109,7 @@ export function StandardsSlider({
     PERIOD_KEYS.forEach((key) => (bestByPeriod[key] = null));
 
     parsedData.forEach((entry) => {
+      if (entry.isGoal) return;
       if (entry.liftType !== liftType || !entry.reps || !entry.weight) return;
       if (!entry.date) return;
 
@@ -121,11 +141,10 @@ export function StandardsSlider({
       "10Y": { label: "Last 10 years", shortLabel: "10Y" },
     };
 
-    // Iterate longest→shortest so deduplication keeps only the shortest
-    // period where a given best lift first appears
+    // Keep the shortest period where a given best lift first appears.
     const seenIds = new Set();
     const summaries = [];
-    [...PERIOD_KEYS].reverse().forEach((key) => {
+    PERIOD_KEYS.forEach((key) => {
       const best = bestByPeriod[key];
       if (!best || seenIds.has(best.id)) return;
       seenIds.add(best.id);
@@ -149,7 +168,13 @@ export function StandardsSlider({
     let bestLiftOnLatestDate = null;
 
     for (const entry of parsedData) {
-      if (entry.liftType !== liftType || !entry.reps || !entry.weight || !entry.date) {
+      if (
+        entry.isGoal ||
+        entry.liftType !== liftType ||
+        !entry.reps ||
+        !entry.weight ||
+        !entry.date
+      ) {
         continue;
       }
 
@@ -167,7 +192,10 @@ export function StandardsSlider({
         continue;
       }
 
-      if (entry.date === latestDate && (!bestLiftOnLatestDate || e1rm > bestLiftOnLatestDate.e1rm)) {
+      if (
+        entry.date === latestDate &&
+        (!bestLiftOnLatestDate || e1rm > bestLiftOnLatestDate.e1rm)
+      ) {
         bestLiftOnLatestDate = {
           date: entry.date,
           reps: entry.reps,
@@ -190,7 +218,8 @@ export function StandardsSlider({
     if (bestLiftOnLatestDate.date === todayYmd) {
       shortLabel = "Today";
     } else if (
-      getWeekKeyFromDateStr(bestLiftOnLatestDate.date) === getWeekKeyFromDateStr(todayYmd)
+      getWeekKeyFromDateStr(bestLiftOnLatestDate.date) ===
+      getWeekKeyFromDateStr(todayYmd)
     ) {
       shortLabel = "This week";
     }
@@ -204,7 +233,9 @@ export function StandardsSlider({
   // Prevent initial render on standards-only scale, then jumping once
   // authenticated user data (PR/E1RM) hydrates and expands min/max bounds.
   if (authStatus === "authenticated" && sheetInfo?.ssid && isUserDataLoading) {
-    return <div className="h-[7.5rem] w-full animate-pulse rounded bg-muted/30" />;
+    return (
+      <div className="bg-muted/30 h-[7.5rem] w-full animate-pulse rounded" />
+    );
   }
 
   if (!standards) return null;
@@ -243,17 +274,25 @@ export function StandardsSlider({
     );
     // Convert from native lift unit to display unit so positions on the slider
     // are consistent with the standards scale (which is already in display unit).
-    athleteRankingWeight = stats.bestWeight > 0 ? toDisplay(stats.bestWeight) : 0;
+    athleteRankingWeight =
+      stats.bestWeight > 0 ? toDisplay(stats.bestWeight) : 0;
     highestE1RM = stats.bestE1RM > 0 ? toDisplay(stats.bestE1RM) : 0;
     strengthRating = stats.strengthRating;
     // Keep raw (unconverted) copies for dedup comparison against period notches (also native unit)
     rawBestWeightTuple = stats.bestWeightTuple;
     rawBestE1RMTuple = stats.bestE1RMTuple;
     bestWeightTuple = stats.bestWeightTuple
-      ? { ...stats.bestWeightTuple, weight: toDisplay(stats.bestWeightTuple.weight) }
+      ? {
+          ...stats.bestWeightTuple,
+          weight: toDisplay(stats.bestWeightTuple.weight),
+        }
       : null;
     bestE1RMTuple = stats.bestE1RMTuple
-      ? { ...stats.bestE1RMTuple, weight: toDisplay(stats.bestE1RMTuple.weight), e1rm: toDisplay(stats.bestE1RMTuple.e1rm) }
+      ? {
+          ...stats.bestE1RMTuple,
+          weight: toDisplay(stats.bestE1RMTuple.weight),
+          e1rm: toDisplay(stats.bestE1RMTuple.e1rm),
+        }
       : null;
   }
 
@@ -261,9 +300,15 @@ export function StandardsSlider({
   // so the scale is consistent with standards (which are in display unit).
   const periodMinE1RMDisplay =
     periodBestNotches.length > 0
-      ? Math.min(...periodBestNotches.map((n) =>
-          getDisplayWeight({ weight: n.e1rm, unitType: n.unitType || nativeUnitType }, isMetric).value,
-        ))
+      ? Math.min(
+          ...periodBestNotches.map(
+            (n) =>
+              getDisplayWeight(
+                { weight: n.e1rm, unitType: n.unitType || nativeUnitType },
+                isMetric,
+              ).value,
+          ),
+        )
       : Infinity;
   const userMin =
     authStatus === "authenticated"
@@ -312,20 +357,31 @@ export function StandardsSlider({
       tooltipContent: bestWeightTuple ? (
         <div className="space-y-0.5">
           <div className="font-semibold">
-            Lifetime PR: {bestWeightTuple.weight}{unitType}
+            Lifetime PR: {bestWeightTuple.weight}
+            {unitType}
           </div>
           <div className="text-muted-foreground">
-            {bestWeightTuple.reps} × {bestWeightTuple.weight}{unitType}
-            {bestWeightTuple.date && <> · {getReadableDateString(bestWeightTuple.date)}</>}
+            {bestWeightTuple.reps} × {bestWeightTuple.weight}
+            {unitType}
+            {bestWeightTuple.date && (
+              <> · {getReadableDateString(bestWeightTuple.date)}</>
+            )}
           </div>
         </div>
       ) : (
-        <span>Lifetime PR: {athleteRankingWeight}{unitType}</span>
+        <span>
+          Lifetime PR: {athleteRankingWeight}
+          {unitType}
+        </span>
       ),
     });
   }
 
-  if (authStatus === "authenticated" && highestE1RM > 0 && highestE1RM > athleteRankingWeight) {
+  if (
+    authStatus === "authenticated" &&
+    highestE1RM > 0 &&
+    highestE1RM > athleteRankingWeight
+  ) {
     allNotches.push({
       key: "E1RM",
       percent: getPercent(highestE1RM),
@@ -334,15 +390,22 @@ export function StandardsSlider({
       tooltipContent: bestE1RMTuple ? (
         <div className="space-y-0.5">
           <div className="font-semibold">
-            Lifetime best E1RM: ~{Math.round(bestE1RMTuple.e1rm)}{unitType}
+            Lifetime best E1RM: ~{Math.round(bestE1RMTuple.e1rm)}
+            {unitType}
           </div>
           <div className="text-muted-foreground">
-            {bestE1RMTuple.reps} × {bestE1RMTuple.weight}{unitType}
-            {bestE1RMTuple.date && <> · {getReadableDateString(bestE1RMTuple.date)}</>}
+            {bestE1RMTuple.reps} × {bestE1RMTuple.weight}
+            {unitType}
+            {bestE1RMTuple.date && (
+              <> · {getReadableDateString(bestE1RMTuple.date)}</>
+            )}
           </div>
         </div>
       ) : (
-        <span>Lifetime best E1RM: ~{Math.round(highestE1RM)}{unitType}</span>
+        <span>
+          Lifetime best E1RM: ~{Math.round(highestE1RM)}
+          {unitType}
+        </span>
       ),
     });
   }
@@ -354,33 +417,66 @@ export function StandardsSlider({
 
   if (periodBestNotches.length > 0) {
     for (const notch of periodBestNotches) {
-      if (isSameLift(notch, rawBestWeightTuple) || isSameLift(notch, rawBestE1RMTuple))
+      if (
+        isSameLift(notch, rawBestWeightTuple) ||
+        isSameLift(notch, rawBestE1RMTuple)
+      )
         continue;
       // Convert notch values to display unit (same unit as standards scale)
-      const notchE1rmDisplay = getDisplayWeight({ weight: notch.e1rm, unitType: notch.unitType || nativeUnitType }, isMetric).value;
-      const notchWeightDisplay = typeof notch.weight === "number"
-        ? getDisplayWeight({ weight: notch.weight, unitType: notch.unitType || nativeUnitType }, isMetric).value
-        : notch.weight;
+      const notchE1rmDisplay = getDisplayWeight(
+        { weight: notch.e1rm, unitType: notch.unitType || nativeUnitType },
+        isMetric,
+      ).value;
+      const notchWeightDisplay =
+        typeof notch.weight === "number"
+          ? getDisplayWeight(
+              {
+                weight: notch.weight,
+                unitType: notch.unitType || nativeUnitType,
+              },
+              isMetric,
+            ).value
+          : notch.weight;
+      const isSingle = Number(notch.reps) === 1;
+      const headlineValue = isSingle
+        ? Math.round(notchWeightDisplay)
+        : Math.round(notchE1rmDisplay);
+      const bodyweightRatioValue = isSingle
+        ? notchWeightDisplay
+        : notchE1rmDisplay;
       allNotches.push({
-        key: notch.periodKey || notch.label || `extra-${getPercent(notchE1rmDisplay)}`,
+        key:
+          notch.periodKey ||
+          notch.label ||
+          `extra-${getPercent(notchE1rmDisplay)}`,
         percent: getPercent(notchE1rmDisplay),
         shortLabel: notch.shortLabel || notch.periodKey,
         zIndex: 10,
         tooltipContent: (
           <div className="space-y-0.5">
             <div className="font-semibold">
-              {notch.label} E1RM: ~{Math.round(notchE1rmDisplay)}{unitType}
+              {notch.label} {isSingle ? "1RM" : "E1RM"}: {isSingle ? "" : "~"}
+              {headlineValue}
+              {unitType}
               {bodyWeight > 0 && (
-                <span className="font-normal text-muted-foreground">
-                  {" "}({(notchE1rmDisplay / bodyWeight).toFixed(2)}×BW)
+                <span className="text-muted-foreground font-normal">
+                  {" "}
+                  ({(bodyweightRatioValue / bodyWeight).toFixed(2)}×BW)
                 </span>
               )}
             </div>
             <div className="text-muted-foreground">
-              {typeof notch.reps === "number" && typeof notch.weight === "number" && (
-                <>{notch.reps} × {notchWeightDisplay}{unitType}</>
-              )}
-              {typeof notch.reps === "number" && typeof notch.weight === "number" && notch.date && " · "}
+              {typeof notch.reps === "number" &&
+                typeof notch.weight === "number" && (
+                  <>
+                    {notch.reps} × {notchWeightDisplay}
+                    {unitType}
+                  </>
+                )}
+              {typeof notch.reps === "number" &&
+                typeof notch.weight === "number" &&
+                notch.date &&
+                " · "}
               {notch.date && getReadableDateString(notch.date)}
             </div>
           </div>
@@ -391,17 +487,28 @@ export function StandardsSlider({
 
   if (recentLiftNotch && recentLiftNotch.shortLabel !== "1M") {
     const recentE1rmDisplay = getDisplayWeight(
-      { weight: recentLiftNotch.e1rm, unitType: recentLiftNotch.unitType || nativeUnitType },
+      {
+        weight: recentLiftNotch.e1rm,
+        unitType: recentLiftNotch.unitType || nativeUnitType,
+      },
       isMetric,
     ).value;
     const recentWeightDisplay = getDisplayWeight(
-      { weight: recentLiftNotch.weight, unitType: recentLiftNotch.unitType || nativeUnitType },
+      {
+        weight: recentLiftNotch.weight,
+        unitType: recentLiftNotch.unitType || nativeUnitType,
+      },
       isMetric,
     ).value;
     const isShortRecencyLabel =
-      recentLiftNotch.shortLabel === "Today" || recentLiftNotch.shortLabel === "This week";
+      recentLiftNotch.shortLabel === "Today" ||
+      recentLiftNotch.shortLabel === "This week";
     const shouldHideBelowLowestLevel =
       isShortRecencyLabel && recentE1rmDisplay < standardsMin;
+    const isRecentSingle = Number(recentLiftNotch.reps) === 1;
+    const recentHeadlineValue = isRecentSingle
+      ? Math.round(recentWeightDisplay)
+      : Math.round(recentE1rmDisplay);
 
     if (!shouldHideBelowLowestLevel) {
       allNotches.push({
@@ -412,13 +519,18 @@ export function StandardsSlider({
         tooltipContent: (
           <div className="space-y-0.5">
             <div className="font-semibold">
-              Most recent lift ({recentLiftNotch.shortLabel}): ~{Math.round(recentE1rmDisplay)}
-              {unitType} E1RM
+              Most recent lift ({recentLiftNotch.shortLabel}):{" "}
+              {isRecentSingle ? "" : "~"}
+              {recentHeadlineValue}
+              {unitType}
+              {isRecentSingle ? " 1RM" : " E1RM"}
             </div>
             <div className="text-muted-foreground">
               {recentLiftNotch.reps} × {recentWeightDisplay}
               {unitType}
-              {recentLiftNotch.date && <> · {getReadableDateString(recentLiftNotch.date)}</>}
+              {recentLiftNotch.date && (
+                <> · {getReadableDateString(recentLiftNotch.date)}</>
+              )}
             </div>
           </div>
         ),
@@ -432,7 +544,10 @@ export function StandardsSlider({
   const notchClusters = [];
   for (const notch of allNotches) {
     const last = notchClusters[notchClusters.length - 1];
-    if (last && Math.abs(notch.percent - last[last.length - 1].percent) <= MERGE_THRESHOLD) {
+    if (
+      last &&
+      Math.abs(notch.percent - last[last.length - 1].percent) <= MERGE_THRESHOLD
+    ) {
       last.push(notch);
     } else {
       notchClusters.push([notch]);
@@ -511,10 +626,13 @@ export function StandardsSlider({
                     <div
                       key={`line-${notch.key}`}
                       className="absolute top-0 h-full"
-                      style={{ left: `${notch.percent}%`, zIndex: notch.zIndex }}
+                      style={{
+                        left: `${notch.percent}%`,
+                        zIndex: notch.zIndex,
+                      }}
                     >
                       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2">
-                        <div className="h-full w-px bg-foreground ring-1 ring-background/70" />
+                        <div className="bg-foreground ring-background/70 h-full w-px ring-1" />
                       </div>
                     </div>
                   ))}
@@ -524,18 +642,22 @@ export function StandardsSlider({
                     style={{ left: `${centerPercent}%`, zIndex: maxZ }}
                   >
                     <TooltipTrigger asChild>
-                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium shadow bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground">
+                      <span className="bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground absolute -bottom-6 left-1/2 -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap shadow">
                         {mergedLabel}
                       </span>
                     </TooltipTrigger>
                     {/* For single notch, render line inside group for hover effect */}
                     {!isMerged && (
                       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2">
-                        <div className="h-full w-px bg-foreground ring-1 ring-background/70 group-hover:bg-primary group-hover:ring-primary/30" />
+                        <div className="bg-foreground ring-background/70 group-hover:bg-primary group-hover:ring-primary/30 h-full w-px ring-1" />
                       </div>
                     )}
                   </div>
-                  <TooltipContent side="bottom" sideOffset={6} className="max-w-xs text-xs">
+                  <TooltipContent
+                    side="bottom"
+                    sideOffset={6}
+                    className="max-w-xs text-xs"
+                  >
                     {cluster.length === 1 ? (
                       cluster[0].tooltipContent
                     ) : (
@@ -553,13 +675,15 @@ export function StandardsSlider({
         </TooltipProvider>
       </div>
       {!hideRating && authStatus === "authenticated" && strengthRating && (
-        <div className="mt-2 flex items-center justify-between gap-4 text-sm font-medium text-muted-foreground">
+        <div className="text-muted-foreground mt-2 flex items-center justify-between gap-4 text-sm font-medium">
           <span>
             My lifetime {liftType} level:{" "}
             {strengthRating === "Elite" && userMax > eliteMax ? (
               <>{STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite</>
             ) : (
-              <>{STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}</>
+              <>
+                {STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}
+              </>
             )}
           </span>
           {ratingRightSlot}

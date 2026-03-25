@@ -12,7 +12,7 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
  */
 export function PageContainer({ className, children, ...props }) {
   return (
-    <div className={cn("container mx-auto px-2 sm:px-0", className)} {...props}>
+    <div className={cn("container mx-auto px-4 sm:px-6 lg:px-8", className)} {...props}>
       {children}
     </div>
   );

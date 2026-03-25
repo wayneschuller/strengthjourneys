@@ -308,10 +308,12 @@ function BarbellInsightsMain({
             <div id="tonnage-chart">
               <TonnageChart liftType={liftInsightData.liftType} />
             </div>
-            <div id="strength-potential">
-              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div id="strength-potential">
+                <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+              </div>
+              <VisualizerReps liftType={liftInsightData.liftType} />
             </div>
-            <VisualizerReps liftType={liftInsightData.liftType} />
             <div id="lift-prs">
               <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
             </div>
@@ -365,10 +367,12 @@ function BarbellInsightsMain({
             <div id="tonnage-chart">
               <TonnageChart liftType={liftInsightData.liftType} />
             </div>
-            <div id="strength-potential">
-              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div id="strength-potential">
+                <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+              </div>
+              <VisualizerReps liftType={liftInsightData.liftType} />
             </div>
-            <VisualizerReps liftType={liftInsightData.liftType} />
           </>
         )}
 

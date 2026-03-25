@@ -21,6 +21,15 @@ const PAGE_CONFIG = {
       "The formula most lifters know first - and the one many start doubting once reps climb into optimistic territory.",
     pageIntro:
       "Run your set through Epley, compare all 7 formulas side by side, and see whether the internet's favorite estimate is actually flattering your max.",
+    // GSC baseline 2026-03-24 (last 3 months): 22 clicks / 29,859 imp /
+    // 0.07% CTR / pos 3.59.
+    // GSC snapshot 2026-03-25 (last 7 days): 8 clicks / 9,717 imp / 0.08% CTR
+    // / pos 2.97.
+    // Previous title: "Epley Formula 1RM Calculator | Epley 1RM Calculation"
+    // Previous meta: "Calculate your one rep max with the Epley formula: 1RM =
+    // weight x (1 + reps/30). Enter your set, compare Epley vs 6 other 1RM
+    // equations, and get rep max tables."
+    // GSC review 2026-03-25: test challenge-based SERP copy to improve CTR.
     title: "Epley Formula 1RM Calculator | Does Epley Overestimate?",
     description:
       "Epley can overestimate above 10 reps. Enter your set, compare all 7 formulas, and see which one is actually honest about your max.",
@@ -105,6 +114,15 @@ const PAGE_CONFIG = {
       "The stricter rival to Epley - popular with lifters who would rather undercall a max than get seduced by a generous estimate.",
     pageIntro:
       "If Epley feels a little too kind, Brzycki is the reality check. Run your set, compare every major formula, and see where your max actually lands.",
+    // GSC baseline 2026-03-24 (last 3 months): 38 clicks / 15,411 imp /
+    // 0.25% CTR / pos 3.28.
+    // GSC snapshot 2026-03-25 (last 7 days): 12 clicks / 4,815 imp / 0.25% CTR
+    // / pos 3.07.
+    // Previous title: "Brzycki Formula 1RM Calculator | Brzycki 1RM Calculation"
+    // Previous meta: "Calculate your one rep max with the Brzycki formula: 1RM
+    // = weight / (1.0278 - 0.0278 x reps). Compare Brzycki vs 6 other 1RM
+    // equations, rep max tables, and percentage loads."
+    // GSC review 2026-03-25: test rivalry framing and stricter validation.
     title: "Brzycki Formula 1RM Calculator | Stricter Than Epley?",
     description:
       "Brzycki gives a stricter max than Epley - closer to reality? Calculate your 1RM, compare 7 formulas, and see your strength percentile instantly.",
@@ -185,6 +203,15 @@ const PAGE_CONFIG = {
       "The formula to check when your higher-rep set feels stronger than Epley or Brzycki are willing to admit.",
     pageIntro:
       "Mayhew often runs hotter once reps rise. Compare it against stricter formulas and decide whether the bigger number feels generous or finally honest.",
+    // GSC baseline 2026-03-24 (last 3 months): 6 clicks / 387 imp / 1.55% CTR
+    // / pos 4.82.
+    // GSC snapshot 2026-03-25 (last 7 days): 1 click / 122 imp / 0.82% CTR /
+    // pos 5.53.
+    // Previous title: "Mayhew 1RM Formula Calculator | One Rep Max Tool"
+    // Previous meta: "Estimate your one rep max with the Mayhew formula: 1RM =
+    // 100w / (52.2 + 41.9 x e^(-0.055r)). Compare results against Epley,
+    // Brzycki, and 4 more 1RM equations."
+    // GSC review 2026-03-25: test higher-rep curiosity and comparison framing.
     title: "Mayhew Formula 1RM Calculator | Higher-Rep 1RM?",
     description:
       "Mayhew runs higher than Brzycki or Epley - generous or more accurate for higher reps? Calculate your 1RM and compare all 7 formulas to find out.",
@@ -249,6 +276,15 @@ const PAGE_CONFIG = {
       "A sleeper exponential formula that gets interesting when the familiar linear estimates stop agreeing with your higher-rep set.",
     pageIntro:
       "Wathan tracks close to Brzycki at low reps, then starts drifting higher as reps climb. Run your set through all 7 formulas and see exactly where Wathan breaks away.",
+    // GSC baseline 2026-03-24 (last 3 months): not present in page export;
+    // likely very low impressions/clicks.
+    // GSC snapshot 2026-03-25 (last 7 days): not present in page export;
+    // likely very low impressions/clicks.
+    // Previous title: "Wathan Formula 1RM Calculator | Wathan 1RM Formula"
+    // Previous meta: "Estimate your one rep max with the Wathan formula: 1RM =
+    // 100w / (48.8 + 53.8 x e^(-0.075r)). Compare all 7 proven equations with
+    // rep max tables and percentage loads."
+    // GSC review 2026-03-25: test Brzycki anchor plus rep-drift curiosity.
     title: "Wathan Formula 1RM Calculator | The Sleeper Formula?",
     description:
       "Wathan tracks close to Brzycki at low reps but drifts higher as reps climb. Enter your set and compare all 7 formulas to see where Wathan lands.",
@@ -313,6 +349,15 @@ const PAGE_CONFIG = {
       "The overlooked middle-ground formula - useful when Epley feels bold, Brzycki feels strict, and you want a tie-breaker.",
     pageIntro:
       "McGlothin rarely gets the spotlight, but it often lands right between the aggressive and conservative estimates. Run your numbers and see whether the quiet formula gives the most believable answer.",
+    // GSC baseline 2026-03-24 (last 3 months): 2 clicks / 90 imp / 2.22% CTR /
+    // pos 8.59.
+    // GSC snapshot 2026-03-25 (last 7 days): 1 click / 22 imp / 4.55% CTR /
+    // pos 7.55.
+    // Previous title: "McGlothin Formula 1RM Calculator | McGlothin 1RM Formula"
+    // Previous meta: "Estimate your one rep max with the McGlothin formula:
+    // 1RM = 100w / (101.3 - 2.671r). Compare all 7 proven 1RM equations with
+    // rep max tables and percentages."
+    // GSC review 2026-03-25: test curiosity-gap framing as impressions grow.
     title: "McGlothin Formula 1RM Calculator | Overlooked Formula",
     description:
       "McGlothin sits between conservative and aggressive 1RM estimates. Calculate yours, compare all 7 formulas, and check your strength level instantly.",
@@ -377,6 +422,15 @@ const PAGE_CONFIG = {
       "A power formula that tracks close to Epley early, then starts doing something more surprising as reps rise.",
     pageIntro:
       "Lombardi uses a power curve, not a linear formula, so the gap between it and Brzycki grows with every rep. Run your set and see when the split starts getting interesting.",
+    // GSC baseline 2026-03-24 (last 3 months): 2 clicks / 787 imp / 0.25% CTR
+    // / pos 4.85.
+    // GSC snapshot 2026-03-25 (last 7 days): 0 clicks / 258 imp / 0% CTR /
+    // pos 4.74.
+    // Previous title: "Lombardi Formula 1RM Calculator | Lombardi 1RM Formula"
+    // Previous meta: "Estimate your one rep max with the Lombardi formula: 1RM
+    // = weight x reps^0.1. Compare all 7 proven 1RM equations with rep max
+    // tables and percentages."
+    // GSC review 2026-03-25: test divergence framing against Brzycki.
     title: "Lombardi Formula 1RM Calculator | Diverges at High Reps",
     description:
       "Lombardi uses a power curve instead of a linear formula - the gap between it and Brzycki grows with every rep. Compare all 7 estimates for your set.",
@@ -439,6 +493,15 @@ const PAGE_CONFIG = {
       "A calmer, more conservative estimate for lifters who want a quick reality check before loading the bar.",
     pageIntro:
       "If Epley feels optimistic, O'Conner is the fast sanity check. Enter your set, compare all 7 formulas, and roll straight into warm-up percentages.",
+    // GSC baseline 2026-03-24 (last 3 months): 4 clicks / 539 imp / 0.74% CTR
+    // / pos 6.56.
+    // GSC snapshot 2026-03-25 (last 7 days): 1 click / 327 imp / 0.31% CTR /
+    // pos 7.00.
+    // Previous title: "O'Conner Formula 1RM Calculator | OConner 1RM Formula"
+    // Previous meta: "Estimate your one rep max with the O'Conner formula: 1RM
+    // = weight x (1 + reps/40). Compare all 7 proven 1RM equations with rep
+    // max tables and percentages."
+    // GSC review 2026-03-25: test conservative-check framing plus warm-up tie-in.
     title: "O'Conner Formula 1RM Calculator | Conservative 1RM Check",
     description:
       "O'Conner's formula gives a conservative estimate similar to Brzycki. Enter your set, see where it lands across 7 formulas, and get your warm-up sets.",

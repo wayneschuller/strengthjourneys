@@ -462,7 +462,7 @@ function BigFourBarbellInsightsMenu() {
             <NavigationMenuTrigger
               className={cn(
                 "hover:text-foreground/80 bg-transparent transition-colors",
-                pathname.startsWith("/barbell")
+                pathname.startsWith("/progress-guide/")
                   ? "text-foreground"
                   : "text-foreground/60",
               )}
@@ -480,7 +480,7 @@ function BigFourBarbellInsightsMenu() {
                   <ListItem
                     key={lift.liftType}
                     title={lift.liftType}
-                    href={"/" + lift.slug}
+                    href={"/progress-guide/" + lift.slug}
                   >
                     {/* {lift.pageTitle} */}
                   </ListItem>

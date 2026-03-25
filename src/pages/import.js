@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { UnitChooser } from "@/components/unit-type-chooser";
 import { useToast } from "@/hooks/use-toast";
 import {
   PageContainer,
@@ -36,7 +37,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { cn } from "@/lib/utils";
 
 const BIG_FOUR = [
   { name: "Back Squat", icon: "/back_squat.svg" },
@@ -50,6 +50,15 @@ const DEFAULT_PLACEHOLDER = { kg: "100", lb: "225" };
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - i);
+
+let _entryIdCounter = 0;
+function nextEntryId() {
+  return ++_entryIdCounter;
+}
+
+function makeEntry(overrides = {}) {
+  return { id: nextEntryId(), weight: "", reps: "1", year: CURRENT_YEAR - 2, month: "", day: "", ...overrides };
+}
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -182,11 +191,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
   const [expanded, setExpanded] = useState(false);
 
   const addEntry = () => {
-    const defaultYear = CURRENT_YEAR - 2;
-    onUpdate([
-      ...entries,
-      { weight: "", reps: "1", year: defaultYear, month: "", day: "" },
-    ]);
+    onUpdate([...entries, makeEntry()]);
   };
 
   const updateEntry = (idx, updated) => {
@@ -228,7 +233,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
           </p>
           {entries.map((entry, idx) => (
             <LiftEntryRow
-              key={idx}
+              key={entry.id}
               entry={entry}
               onChange={(updated) => updateEntry(idx, updated)}
               onRemove={() => removeEntry(idx)}
@@ -302,38 +307,19 @@ function downloadCsv(csvString, filename) {
 export default function ImportPage() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, mutate, parsedData, isDemoMode } = useUserLiftingData();
+  const { sheetInfo, mutate, parsedData, isDemoMode, isReturningUserLoading } = useUserLiftingData();
+  const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
-  // Unit toggle
-  const [unit, setUnit] = useState("kg");
-  // Try to default from athlete bio
-  const bioCtx = useAthleteBio();
-  const detectedUnit = useMemo(() => {
-    if (!parsedData || parsedData.length === 0) return null;
-    let kg = 0, lb = 0;
-    for (const e of parsedData) {
-      if (e.unitType === "kg") kg++;
-      else if (e.unitType === "lb") lb++;
-    }
-    return lb > kg ? "lb" : "kg";
-  }, [parsedData]);
+  const unit = isMetric ? "kg" : "lb";
 
-  // Set unit once from detected
-  const [unitInitialized, setUnitInitialized] = useState(false);
-  if (detectedUnit && !unitInitialized) {
-    setUnit(detectedUnit);
-    setUnitInitialized(true);
-  }
-
-  // Lift entries state: { [liftName]: [{ weight, reps, year, month, day }] }
-  const defaultYear = CURRENT_YEAR - 2;
+  // Lift entries state: { [liftName]: [{ id, weight, reps, year, month, day }] }
   const [liftEntries, setLiftEntries] = useState(() =>
     Object.fromEntries(
       BIG_FOUR.map((lift) => [
         lift.name,
-        [{ weight: "", reps: "1", year: defaultYear, month: "", day: "" }],
+        [makeEntry()],
       ]),
     ),
   );
@@ -398,7 +384,7 @@ export default function ImportPage() {
         Object.fromEntries(
           BIG_FOUR.map((lift) => [
             lift.name,
-            [{ weight: "", reps: "1", year: defaultYear, month: "", day: "" }],
+            [makeEntry()],
           ]),
         ),
       );
@@ -407,13 +393,25 @@ export default function ImportPage() {
     } finally {
       setSaving(false);
     }
-  }, [validEntries, sheetInfo, mutate, toast, defaultYear]);
+  }, [validEntries, sheetInfo, mutate, toast]);
+
+  // Loading gate — prevent flash for returning users
+  if (authStatus === "loading" || isReturningUserLoading) {
+    return (
+      <>
+        <NextSeo title="Import & Export Data" noindex />
+        <PageContainer className="py-16 text-center">
+          <Loader2 className="text-muted-foreground mx-auto h-8 w-8 animate-spin" />
+        </PageContainer>
+      </>
+    );
+  }
 
   // Auth gate
   if (authStatus === "unauthenticated") {
     return (
       <>
-        <NextSeo title="Import Data" noindex />
+        <NextSeo title="Import & Export Data" noindex />
         <PageContainer className="py-16 text-center">
           <Dumbbell className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
           <h2 className="mb-2 text-xl font-semibold">Sign in to import data</h2>
@@ -426,11 +424,9 @@ export default function ImportPage() {
     );
   }
 
-  const isMetric = unit === "kg";
-
   return (
     <>
-      <NextSeo title="Import Data" noindex />
+      <NextSeo title="Import & Export Data" noindex />
       <PageContainer>
         <PageHeader>
           <PageHeaderHeading icon={Upload}>Import Data</PageHeaderHeading>
@@ -444,15 +440,7 @@ export default function ImportPage() {
         <section className="mx-auto mb-12 max-w-5xl space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-14 font-semibold"
-              onClick={() => setUnit(isMetric ? "lb" : "kg")}
-              aria-label={`Switch to ${isMetric ? "lb" : "kg"}`}
-            >
-              {unit}
-            </Button>
+            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
           </div>
 
           <p className="text-muted-foreground text-sm">

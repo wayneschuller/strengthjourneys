@@ -50,4 +50,4 @@ export function parseData(data) {
 }
 
 // Re-export normalization utilities for use by other modules
-export { normalizeLiftTypeNames } from "./normalize";
+export { normalizeLiftTypeNames } from "./parser-utilities";

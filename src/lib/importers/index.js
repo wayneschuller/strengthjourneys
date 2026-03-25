@@ -1,10 +1,14 @@
 // Import parser dispatcher.
 //
-// Detects the format of incoming data (Google Sheets array-of-arrays or CSV file)
-// and routes to the appropriate parser. All parsers return the same ParsedData shape.
+// Two entry points:
+//   parseData(rows)         — for Google Sheets (SJ format only, read/write)
+//   parseImportedFile(file) — for drag-and-drop CSV/file import (any format, view-only)
+//
+// All parsers take string[][] (rows with header) and return ParsedData[].
 
 import { parseStrengthJourneysData } from "./strength-journeys-parser";
 import { parseTurnKeyData } from "./turnkey-parser";
+import { decodeCSV } from "./decode-csv";
 
 /**
  * A single logged lift after parsing and normalization.
@@ -33,20 +37,92 @@ import { parseTurnKeyData } from "./turnkey-parser";
  */
 
 /**
- * Discern the incoming data format (TurnKey vs Strength Journeys sheet) and parse it
- * into the normalized `ParsedData` structure used throughout the app.
+ * Parse Google Sheets data in Strength Journeys format.
+ * This is the only format supported for the live read/write sheet connection.
  *
  * @param {any[][]} data Raw Google Sheets `values` array (rows x columns)
  * @returns {ParsedData}
  */
 export function parseData(data) {
-  const columnNames = data[0];
+  return parseStrengthJourneysData(data);
+}
 
-  if (columnNames[0] === "user_name" && columnNames[1] === "workout_id") {
-    return parseTurnKeyData(data); // TurnKey data source detected
+// -- Drag-and-drop file import (view-only, multi-format) ---------------------
+
+/**
+ * Known import formats and their header signatures.
+ * Order matters — first match wins.
+ */
+const FORMAT_SIGNATURES = [
+  {
+    name: "TurnKey",
+    detect: (headers) => headers.includes("user_name") && headers.includes("workout_id"),
+    parse: parseTurnKeyData,
+  },
+  {
+    // Strength Journeys CSV export or compatible sheet
+    // Detected by having the 4 required columns (after normalization happens inside the parser)
+    name: "Strength Journeys",
+    detect: (headers) => {
+      const lower = headers.map((h) => h.toLowerCase().replace(/[_-]/g, " ").trim());
+      return lower.some((h) => h === "date" || h === "workout date")
+        && lower.some((h) => ["lift type", "lifttype", "exercise", "movement"].includes(h))
+        && lower.some((h) => ["reps", "rep", "repetitions"].includes(h))
+        && lower.some((h) => ["weight", "load", "weight used"].includes(h));
+    },
+    parse: parseStrengthJourneysData,
+  },
+];
+
+/**
+ * Detect the format of a header row.
+ *
+ * @param {string[]} headers First row of the imported data
+ * @returns {{ name: string, parse: Function } | null}
+ */
+export function detectFormat(headers) {
+  for (const sig of FORMAT_SIGNATURES) {
+    if (sig.detect(headers)) return sig;
+  }
+  return null;
+}
+
+/**
+ * Parse a drag-and-dropped file into ParsedData.
+ * Handles container decoding (CSV → rows) and format detection.
+ *
+ * @param {File} file The dropped/selected file
+ * @returns {Promise<{ data: ParsedData, formatName: string }>}
+ * @throws {Error} If the file can't be parsed or format is unrecognized
+ */
+export async function parseImportedFile(file) {
+  const text = await file.text();
+  const rows = decodeCSV(text);
+
+  if (rows.length < 2) {
+    throw new Error("File appears to be empty or has no data rows.");
   }
 
-  return parseStrengthJourneysData(data); // Default to Strength Journeys format
+  const headers = rows[0];
+  const format = detectFormat(headers);
+
+  if (!format) {
+    throw new Error(
+      "Unrecognized file format. Supported formats: Strength Journeys CSV export, TurnKey export. " +
+      "Make sure your file has column headers in the first row.",
+    );
+  }
+
+  const data = format.parse(rows);
+
+  if (!data || data.length === 0) {
+    throw new Error(
+      `File was recognized as ${format.name} format but no valid entries were found. ` +
+      "Check that the file contains workout data with dates, exercises, reps, and weights.",
+    );
+  }
+
+  return { data, formatName: format.name };
 }
 
 // Re-export normalization utilities for use by other modules

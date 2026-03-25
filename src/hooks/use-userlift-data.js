@@ -11,7 +11,7 @@ import {
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { parseData } from "@/lib/importers";
+import { parseData, parseImportedFile } from "@/lib/importers";
 import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
 import {
   flushTimings,
@@ -156,6 +156,52 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
+
+  // -- Imported file data (view-only, persisted in sessionStorage) ------------
+  const [importedParsedData, setImportedParsedData] = useState(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = sessionStorage.getItem("sj_importedData");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [importedFormatName, setImportedFormatName] = useState(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return sessionStorage.getItem("sj_importedFormat") || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const importFile = useCallback(async (file) => {
+    const { data: parsed, formatName } = await parseImportedFile(file);
+    const processed = markHigherWeightAsHistoricalPRs(parsed);
+    setImportedParsedData(processed);
+    setImportedFormatName(formatName);
+    try {
+      sessionStorage.setItem("sj_importedData", JSON.stringify(processed));
+      sessionStorage.setItem("sj_importedFormat", formatName);
+    } catch {
+      // sessionStorage full or unavailable — data still works for this session
+    }
+    return { count: processed.length, formatName };
+  }, []);
+
+  const clearImportedData = useCallback(() => {
+    setImportedParsedData(null);
+    setImportedFormatName(null);
+    try {
+      sessionStorage.removeItem("sj_importedData");
+      sessionStorage.removeItem("sj_importedFormat");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const isImportedData = !!importedParsedData;
 
   const { data: session, status: authStatus } = useSession();
 
@@ -387,43 +433,47 @@ export const UserLiftingDataProvider = ({ children }) => {
     setSheetInfo,
   ]);
 
-  // Calculate liftTypes from parsedData (computed automatically when parsedData changes)
+  // When imported file data is active, it overrides the normal parsedData pipeline.
+  // All downstream computations (liftTypes, PRs, tonnage, etc.) derive from activeParsedData.
+  const activeParsedData = importedParsedData || parsedData;
+
+  // Calculate liftTypes from activeParsedData (computed automatically when data changes)
   const liftTypes = useMemo(
-    () => (parsedData ? calculateLiftTypes(parsedData) : []),
-    [parsedData],
+    () => (activeParsedData ? calculateLiftTypes(activeParsedData) : []),
+    [activeParsedData],
   );
 
-  // Calculate topLiftsByTypeAndReps from parsedData and liftTypes (computed automatically when they change)
+  // Calculate topLiftsByTypeAndReps from activeParsedData and liftTypes (computed automatically when they change)
   const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months } =
     useMemo(() => {
-      if (!parsedData || !liftTypes.length) {
+      if (!activeParsedData || !liftTypes.length) {
         return {
           topLiftsByTypeAndReps: null,
           topLiftsByTypeAndRepsLast12Months: null,
         };
       }
-      return processTopLiftsByTypeAndReps(parsedData, liftTypes);
-    }, [parsedData, liftTypes]);
+      return processTopLiftsByTypeAndReps(activeParsedData, liftTypes);
+    }, [activeParsedData, liftTypes]);
 
   // Top tonnage sessions per lift type (all-time and last 12 months)
   const { topTonnageByType, topTonnageByTypeLast12Months } = useMemo(() => {
-    if (!parsedData || !liftTypes.length) {
+    if (!activeParsedData || !liftTypes.length) {
       return { topTonnageByType: null, topTonnageByTypeLast12Months: null };
     }
-    return processTopTonnageByType(parsedData, liftTypes);
-  }, [parsedData, liftTypes]);
+    return processTopTonnageByType(activeParsedData, liftTypes);
+  }, [activeParsedData, liftTypes]);
 
   // Precomputed session tonnage lookup for fast getAverageLiftSessionTonnage / getAverageSessionTonnage
   const sessionTonnageLookup = useMemo(() => {
-    if (!parsedData) return null;
-    return processSessionTonnageLookup(parsedData);
-  }, [parsedData]);
+    if (!activeParsedData) return null;
+    return processSessionTonnageLookup(activeParsedData);
+  }, [activeParsedData]);
 
   // Flush accumulated pipeline timings once all processing is done
   useEffect(() => {
-    if (!parsedData || !sessionTonnageLookup) return;
+    if (!activeParsedData || !sessionTonnageLookup) return;
     flushTimings();
-  }, [parsedData, sessionTonnageLookup]);
+  }, [activeParsedData, sessionTonnageLookup]);
 
   return (
     <UserLiftingDataContext.Provider
@@ -434,10 +484,12 @@ export const UserLiftingDataProvider = ({ children }) => {
         apiError,
         isValidating,
         isDemoMode,
+        isImportedData,
+        importedFormatName,
         isReturningUserLoading,
         parseError,
         liftTypes,
-        parsedData,
+        parsedData: activeParsedData,
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
         topTonnageByType,
@@ -452,6 +504,8 @@ export const UserLiftingDataProvider = ({ children }) => {
         clearSheet,
         enterSignedInDemoMode,
         exitSignedInDemoMode,
+        importFile,
+        clearImportedData,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
 import Image from "next/image";
@@ -35,6 +35,8 @@ import {
   FileUp,
   Download,
   ExternalLink,
+  CheckCircle2,
+  X,
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
@@ -255,6 +257,139 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
   );
 }
 
+function FileImportSection({ importFile, clearImportedData, isImportedData, importedFormatName, parsedData, toast, router }) {
+  const fileInputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState(null);
+
+  const handleFile = useCallback(async (file) => {
+    if (!file) return;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["csv", "txt"].includes(ext)) {
+      setImportError("Unsupported file type. Please use a .csv file.");
+      return;
+    }
+
+    setImporting(true);
+    setImportError(null);
+    try {
+      const { count, formatName } = await importFile(file);
+      toast({
+        title: "Data imported!",
+        description: `Loaded ${count} entries from ${formatName} format. Explore your data across the app.`,
+      });
+      router.push("/");
+    } catch (err) {
+      setImportError(err.message);
+    } finally {
+      setImporting(false);
+    }
+  }, [importFile, toast, router]);
+
+  const onDrop = useCallback((e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer?.files?.[0];
+    handleFile(file);
+  }, [handleFile]);
+
+  const onDragOver = useCallback((e) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
+  const onDragLeave = useCallback(() => setDragOver(false), []);
+
+  // Already imported — show status
+  if (isImportedData) {
+    const entryCount = parsedData?.length || 0;
+    return (
+      <section className="mx-auto mb-12 max-w-5xl">
+        <h2 className="mb-4 text-lg font-semibold">Import from Another App</h2>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+            <CheckCircle2 className="text-primary mb-3 h-10 w-10" />
+            <h3 className="mb-1 font-semibold">
+              {importedFormatName} data loaded
+            </h3>
+            <p className="text-muted-foreground mb-4 text-sm">
+              {entryCount} {entryCount === 1 ? "entry" : "entries"} imported.
+              You&apos;re in view-only mode — explore your data across the app.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => router.push("/")}>
+                <Dumbbell className="mr-2 h-4 w-4" /> Explore Dashboard
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  clearImportedData();
+                  toast({ title: "Imported data cleared" });
+                }}
+              >
+                <X className="mr-2 h-4 w-4" /> Clear Import
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto mb-12 max-w-5xl">
+      <h2 className="mb-4 text-lg font-semibold">Import from Another App</h2>
+      <Card
+        className={`border-dashed transition-colors ${dragOver ? "border-primary bg-primary/5" : ""}`}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+      >
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          {importing ? (
+            <>
+              <Loader2 className="text-muted-foreground mb-4 h-12 w-12 animate-spin" />
+              <h3 className="mb-2 font-semibold">Parsing file...</h3>
+            </>
+          ) : (
+            <>
+              <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
+              <h3 className="mb-2 font-semibold">
+                Drag &amp; drop a CSV file here
+              </h3>
+              <p className="text-muted-foreground mb-4 max-w-sm text-sm">
+                Import your lifting history from TurnKey, or a Strength Journeys
+                CSV export. More formats coming soon.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FileUp className="mr-2 h-4 w-4" /> Choose File
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.txt"
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files?.[0])}
+              />
+              <p className="text-muted-foreground mt-3 text-xs">
+                Your data stays in your browser — nothing is uploaded to a server.
+              </p>
+            </>
+          )}
+          {importError && (
+            <p className="text-destructive mt-4 max-w-md text-sm">{importError}</p>
+          )}
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
 function escapeCsvField(val) {
   if (val == null) return "";
   const s = String(val);
@@ -307,7 +442,7 @@ function downloadCsv(csvString, filename) {
 export default function ImportPage() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, mutate, parsedData, isDemoMode, isReturningUserLoading } = useUserLiftingData();
+  const { sheetInfo, mutate, parsedData, isDemoMode, isReturningUserLoading, importFile, clearImportedData, isImportedData, importedFormatName } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -487,23 +622,16 @@ export default function ImportPage() {
           )}
         </section>
 
-        {/* File Upload Section (Coming Soon) */}
-        <section className="mx-auto mb-12 max-w-5xl">
-          <h2 className="mb-4 text-lg font-semibold">Import from Another App</h2>
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
-              <h3 className="mb-2 font-semibold">File Import — Coming Soon</h3>
-              <p className="text-muted-foreground mb-4 max-w-sm text-sm">
-                We&apos;re building support for importing data from popular lifting apps
-                including Strong, JEFIT, FitNotes, Hevy, and more.
-              </p>
-              <p className="text-muted-foreground text-xs">
-                Supported formats will include .csv, .xlsx, and .xls
-              </p>
-            </CardContent>
-          </Card>
-        </section>
+        {/* File Import Section */}
+        <FileImportSection
+          importFile={importFile}
+          clearImportedData={clearImportedData}
+          isImportedData={isImportedData}
+          importedFormatName={importedFormatName}
+          parsedData={parsedData}
+          toast={toast}
+          router={router}
+        />
 
         {/* Export Section */}
         {authStatus === "authenticated" && !isDemoMode && (

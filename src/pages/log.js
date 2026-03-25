@@ -4866,7 +4866,7 @@ function SetRow({
                         <span className="inline-flex">{strengthBadge}</span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p>Open strength calculator details</p>
+                        <p>View detailed strength levels</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -4937,7 +4937,7 @@ function SetRow({
                       <span className="inline-flex">{strengthBadge}</span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p>Open strength calculator details</p>
+                      <p>View detailed strength levels</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

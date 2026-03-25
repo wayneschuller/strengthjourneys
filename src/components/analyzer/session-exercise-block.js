@@ -717,7 +717,7 @@ export function LiftStrengthLevel({
     return (
       <Link
         href={href}
-        aria-label={`${liftType} strength level: ${ratingLabel}`}
+        aria-label={`View detailed ${liftType} strength levels`}
         className="inline-flex"
       >
         <Badge

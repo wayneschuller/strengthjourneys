@@ -3413,6 +3413,29 @@ function LiftBlock({
     [sets, optimisticFieldsByKey],
   );
 
+  // Recompute tonnage stats using optimistic reps/weight so the tonnage
+  // row updates instantly as the user edits inline.
+  const optimisticTonnageStats = useMemo(() => {
+    if (!tonnageStats) return null;
+    const optimisticTonnage = optimisticSetsForStrength.reduce(
+      (sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0),
+      0,
+    );
+    if (optimisticTonnage === tonnageStats.currentLiftTonnage) return tonnageStats;
+    const { avgLiftTonnage } = tonnageStats;
+    return {
+      ...tonnageStats,
+      currentLiftTonnage: optimisticTonnage,
+      pctDiff:
+        avgLiftTonnage > 0
+          ? ((optimisticTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
+          : null,
+      shouldShowComparison:
+        optimisticSetsForStrength.length >= 4 ||
+        (avgLiftTonnage > 0 && optimisticTonnage >= avgLiftTonnage * 0.4),
+    };
+  }, [tonnageStats, optimisticSetsForStrength]);
+
   const openCustomSetDraft = useCallback(() => {
     setCustomDraftSeed((prev) => prev + 1);
     setCustomDraftConfig({
@@ -4198,7 +4221,7 @@ function LiftBlock({
         <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
           <LiftTonnageRow
             liftType={liftType}
-            stats={tonnageStats}
+            stats={optimisticTonnageStats}
             isMetric={isMetric}
           />
         </div>

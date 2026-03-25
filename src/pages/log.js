@@ -1595,8 +1595,7 @@ export default function LogSessionPage() {
         const newerRows = allRows.filter((e) => e.date > sessionDate);
         if (newerRows.length > 0) {
           predecessorRow = newerRows.reduce(
-            (best, row) =>
-              !best || row.rowIndex > best.rowIndex ? row : best,
+            (best, row) => (!best || row.rowIndex > best.rowIndex ? row : best),
             null,
           );
         }
@@ -2061,7 +2060,7 @@ export default function LogSessionPage() {
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <button
-                      className="hover:bg-muted/40 mx-auto inline-flex flex-col items-center rounded-md px-3 py-1 transition-colors group"
+                      className="hover:bg-muted/40 group mx-auto inline-flex flex-col items-center rounded-md px-3 py-1 transition-colors"
                       aria-label="Pick a date"
                     >
                       <span className="inline-flex items-center gap-1.5 text-lg leading-tight font-semibold">
@@ -2087,8 +2086,7 @@ export default function LogSessionPage() {
                       disabled={{ after: new Date() }}
                       modifiers={{ hasSession: sessionDateObjects }}
                       modifiersClassNames={{
-                        hasSession:
-                          "bg-primary/15 font-semibold text-primary",
+                        hasSession: "bg-primary/15 font-semibold text-primary",
                       }}
                       defaultMonth={selectedDateObj}
                     />
@@ -3404,6 +3402,17 @@ function LiftBlock({
     setCustomDraftConfig(null);
   }, []);
 
+  const optimisticSetsForStrength = useMemo(
+    () =>
+      sets.map((set, index) =>
+        getEffectiveSetForRanking(
+          set,
+          optimisticFieldsByKey[getSetIdentityKey(set, `set-${index}`)],
+        ),
+      ),
+    [sets, optimisticFieldsByKey],
+  );
+
   const openCustomSetDraft = useCallback(() => {
     setCustomDraftSeed((prev) => prev + 1);
     setCustomDraftConfig({
@@ -3820,7 +3829,7 @@ function LiftBlock({
     if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;
     let bestVal = 0;
-    sets.forEach((s, i) => {
+    optimisticSetsForStrength.forEach((s, i) => {
       const reps = s.reps ?? 0;
       const weight = s.weight ?? 0;
       if (reps > 0 && weight > 0) {
@@ -3832,7 +3841,7 @@ function LiftBlock({
       }
     });
     return { bestE1rmIndex: bestIdx, bestE1rmValue: bestVal };
-  }, [sets, canShowStrength, e1rmFormula]);
+  }, [optimisticSetsForStrength, canShowStrength, e1rmFormula]);
 
   const prMeta = useMemo(() => {
     return sets.map((s) => {
@@ -4100,6 +4109,7 @@ function LiftBlock({
       >
         {sets.map((set, idx) => {
           const rowIdentityKey = getSetIdentityKey(set, `pending-${idx}`);
+          const effectiveSet = optimisticSetsForStrength[idx] ?? set;
           const shouldPassiveAnimate =
             !prefersReducedMotion && initialPassiveRowKeys.has(rowIdentityKey);
           const passiveDelay = shouldPassiveAnimate
@@ -4141,7 +4151,7 @@ function LiftBlock({
                 idx === bestE1rmIndex ? (
                   <LiftStrengthLevel
                     liftType={liftType}
-                    workouts={sets}
+                    workouts={optimisticSetsForStrength}
                     standards={standards}
                     e1rmFormula={e1rmFormula}
                     sessionDate={sessionDate}
@@ -4149,8 +4159,8 @@ function LiftBlock({
                     bodyWeight={bodyWeight}
                     sex={sex}
                     isMetric={isMetric}
-                    bestSetReps={set.reps}
-                    bestSetWeight={set.weight}
+                    bestSetReps={effectiveSet.reps}
+                    bestSetWeight={effectiveSet.weight}
                     asBadge
                     badgeClassName="h-8 rounded-full px-3 text-xs font-semibold"
                   />

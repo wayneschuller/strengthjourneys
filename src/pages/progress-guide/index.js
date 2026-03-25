@@ -27,7 +27,7 @@ export default function ProgressGuideHub() {
   const { getColor } = useLiftColors();
   const prefersReducedMotion = useReducedMotion();
 
-  const title = "Barbell Progress Guides & Trackers";
+  const title = "Lift Insights and Progress Tracking";
   const description =
     "Video guides, strength standards, progress charts, and session history for the big four barbell lifts. Sign in to track your own journey.";
   const keywords =
@@ -54,7 +54,7 @@ export default function ProgressGuideHub() {
           {
             "@type": "ListItem",
             position: 2,
-            name: "Progress Guides",
+            name: "Lift Insights and Progress Tracking",
             item: CANONICAL_URL,
           },
         ],
@@ -85,7 +85,7 @@ export default function ProgressGuideHub() {
       <PageContainer>
         <PageHeader>
           <PageHeaderHeading icon={TrendingUp}>
-            Progress Guides
+            Lift Insights and Progress Tracking
           </PageHeaderHeading>
           <PageHeaderDescription>
             Everything you need for each of the big four barbell lifts — video

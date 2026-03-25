@@ -6,6 +6,7 @@ import { PageContainer } from "@/components/page-header";
 const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },
   { href: "/strength-levels", label: "Strength Levels" },
+  { href: "/progress-guide", label: "Lift Insights & Progress" },
   { href: "/how-strong-am-i", label: "How Strong Am I?" },
   { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },
   { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
@@ -38,7 +39,6 @@ const STRENGTH_STANDARDS_LINKS = [
 ];
 
 const PROGRESS_GUIDES = [
-  { href: "/progress-guide", label: "All Progress Guides" },
   { href: "/progress-guide/squat", label: "Squat Progress Guide" },
   { href: "/progress-guide/bench-press", label: "Bench Press Progress Guide" },
   { href: "/progress-guide/deadlift", label: "Deadlift Progress Guide" },

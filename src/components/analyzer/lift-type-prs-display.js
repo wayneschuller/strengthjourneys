@@ -149,8 +149,6 @@ const PRCard = ({
                 bodyWeight={bodyWeight}
                 sex={sex}
                 isMetric={isMetric}
-                bestSetReps={repCount}
-                bestSetWeight={pr.weight}
                 inline
                 asBadge
               />
@@ -293,8 +291,6 @@ const RepRangeDetailView = ({
                           bodyWeight={bioForDateRating.bodyWeight}
                           sex={bioForDateRating.sex}
                           isMetric={bioForDateRating.isMetric}
-                          bestSetReps={repCount}
-                          bestSetWeight={lift.weight}
                           inline
                           asBadge
                         />

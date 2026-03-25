@@ -282,8 +282,6 @@ export function SessionExerciseBlock({
                     bodyWeight={bodyWeight}
                     sex={sex}
                     isMetric={isMetric}
-                    bestSetReps={workout.reps}
-                    bestSetWeight={workout.weight}
                     inline
                   />
                 </div>
@@ -471,8 +469,6 @@ export function SessionExerciseBlock({
                     bodyWeight={bodyWeight}
                     sex={sex}
                     isMetric={isMetric}
-                    bestSetReps={firstWorkout.reps}
-                    bestSetWeight={firstWorkout.weight}
                     inline
                   />
                 </div>
@@ -644,7 +640,7 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
 
 /**
  * Displays the strength level rating (e.g. "Advanced", "Elite") for a set of workouts on a given lift,
- * rendered as an inline pill or styled badge linking to the calculator pre-filled with the best set.
+ * rendered as an inline pill or styled badge linking to the strength levels page.
  *
  * @param {Object} props
  * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
@@ -657,8 +653,6 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
  * @param {string} [props.sex] - Athlete sex for standard lookup.
  * @param {boolean} [props.isMetric] - Whether the athlete uses kg.
  * @param {boolean} [props.inline=false] - When true renders a compact dashed-border pill; when false renders a text link row.
- * @param {number} [props.bestSetReps] - Explicit rep count for the best set (overrides scanning workouts).
- * @param {number} [props.bestSetWeight] - Explicit weight for the best set (overrides scanning workouts).
  * @param {boolean} [props.asBadge=false] - When true renders a shadcn Badge instead of a text link.
  */
 export function LiftStrengthLevel({
@@ -672,8 +666,6 @@ export function LiftStrengthLevel({
   sex,
   isMetric,
   inline = false,
-  bestSetReps,
-  bestSetWeight,
   asBadge = false,
   badgeClassName = "",
 }) {
@@ -702,52 +694,16 @@ export function LiftStrengthLevel({
   const eliteMax = standard?.elite ?? 0;
   const isBeyondElite = rating === "Elite" && bestE1RM > eliteMax;
 
-  // Best set to prefill the calculator with: use explicit override when provided,
-  // otherwise fall back to scanning workouts for the highest e1RM.
-  let bestSet = null;
-  let bestSetE1RM = 0;
-  if (bestSetReps != null && bestSetWeight != null) {
-    bestSet = { reps: bestSetReps, weight: bestSetWeight };
-    bestSetE1RM = estimateE1RM(bestSetReps, bestSetWeight, formula);
-  } else if (Array.isArray(workouts)) {
-    for (const w of workouts) {
-      const reps = w.reps ?? 0;
-      const weight = w.weight ?? 0;
-      if (reps === 0 || weight === 0) continue;
-      const e1rm = estimateE1RM(reps, weight, formula);
-      if (e1rm > bestSetE1RM) {
-        bestSetE1RM = e1rm;
-        bestSet = { reps, weight };
-      }
-    }
-  }
-
-  const searchParams = new URLSearchParams();
-  if (bestSet) {
-    searchParams.set("reps", String(bestSet.reps));
-    searchParams.set("weight", String(bestSet.weight));
-  }
-  searchParams.set("calcIsMetric", (isMetric ?? false).toString());
-  searchParams.set("formula", formula);
-
-  if (age != null && bodyWeight != null && sex && liftType) {
-    searchParams.set("AthleteAge", String(age));
-    searchParams.set("AthleteBodyWeight", String(bodyWeight));
-    searchParams.set("AthleteSex", String(sex));
-    searchParams.set("AthleteLiftType", liftType);
-    searchParams.set("advanced", "true");
-  }
-
-  const LIFT_CALC_SLUGS = {
-    "Back Squat": "squat-1rm-calculator",
-    "Bench Press": "bench-press-1rm-calculator",
-    "Deadlift": "deadlift-1rm-calculator",
-    "Strict Press": "strict-press-1rm-calculator",
+  const LIFT_STRENGTH_SLUGS = {
+    "Back Squat": "squat",
+    "Bench Press": "bench-press",
+    "Deadlift": "deadlift",
+    "Strict Press": "strict-press",
   };
-  const calcSlug = LIFT_CALC_SLUGS[liftType];
-  const href = calcSlug
-    ? `/calculator/${calcSlug}?${searchParams.toString()}`
-    : `/calculator?${searchParams.toString()}`;
+  const strengthSlug = LIFT_STRENGTH_SLUGS[liftType];
+  const href = strengthSlug
+    ? `/strength-levels/${strengthSlug}`
+    : `/strength-levels`;
   const ratingLabel = isBeyondElite ? "Beyond Elite" : rating;
   const ratingEmoji =
     isBeyondElite ? STRENGTH_LEVEL_EMOJI.Elite : STRENGTH_LEVEL_EMOJI[rating] ?? "";

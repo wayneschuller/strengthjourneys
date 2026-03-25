@@ -3233,12 +3233,25 @@ function LogStrengthBar({
     .map((val) => ((val - physicallyActive) / range) * 100)
     .filter((p) => p > 0 && p < 100);
 
+  const LIFT_STRENGTH_SLUGS = {
+    "Back Squat": "squat",
+    "Bench Press": "bench-press",
+    "Deadlift": "deadlift",
+    "Strict Press": "strict-press",
+  };
+  const strengthHref = LIFT_STRENGTH_SLUGS[liftType]
+    ? `/strength-levels/${LIFT_STRENGTH_SLUGS[liftType]}`
+    : "/strength-levels";
+
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground shrink-0 text-[10px] font-medium">
+        <Link
+          href={strengthHref}
+          className="text-muted-foreground hover:text-foreground shrink-0 text-[10px] font-medium transition-colors"
+        >
           {emoji} {rating}
-        </span>
+        </Link>
         <div className="relative flex-1">
           <div
             className="h-2 w-full rounded-full"
@@ -4182,8 +4195,6 @@ function LiftBlock({
                     bodyWeight={bodyWeight}
                     sex={sex}
                     isMetric={isMetric}
-                    bestSetReps={effectiveSet.reps}
-                    bestSetWeight={effectiveSet.weight}
                     asBadge
                     badgeClassName="h-8 rounded-full px-3 text-xs font-semibold"
                   />

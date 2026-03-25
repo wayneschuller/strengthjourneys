@@ -180,7 +180,7 @@ export function Footer() {
 
             <div>
               <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
-                Progress Guides
+                Lift Guides & Progress Trackers
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {PROGRESS_GUIDES.map(({ href, label }) => (

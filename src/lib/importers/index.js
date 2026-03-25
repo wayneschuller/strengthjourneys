@@ -3,8 +3,8 @@
 // Detects the format of incoming data (Google Sheets array-of-arrays or CSV file)
 // and routes to the appropriate parser. All parsers return the same ParsedData shape.
 
-import { parseStrengthJourneysData } from "./strength-journeys";
-import { parseTurnKeyData } from "./turnkey";
+import { parseStrengthJourneysData } from "./strength-journeys-parser";
+import { parseTurnKeyData } from "./turnkey-parser";
 
 /**
  * A single logged lift after parsing and normalization.

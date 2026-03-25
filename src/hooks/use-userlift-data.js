@@ -158,23 +158,22 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [fetchFailed, setFetchFailed] = useState(false);
 
   // -- Imported file data (view-only, persisted in sessionStorage) ------------
-  const [importedParsedData, setImportedParsedData] = useState(() => {
-    if (typeof window === "undefined") return null;
+  // Initialize as null (matches server) and hydrate after mount via layout effect
+  // to avoid hydration mismatch — sessionStorage is client-only.
+  const [importedParsedData, setImportedParsedData] = useState(null);
+  const [importedFormatName, setImportedFormatName] = useState(null);
+
+  useIsomorphicLayoutEffect(() => {
     try {
       const stored = sessionStorage.getItem("sj_importedData");
-      return stored ? JSON.parse(stored) : null;
+      if (stored) {
+        setImportedParsedData(JSON.parse(stored));
+        setImportedFormatName(sessionStorage.getItem("sj_importedFormat") || null);
+      }
     } catch {
-      return null;
+      // sessionStorage unavailable or corrupt — stay with null
     }
-  });
-  const [importedFormatName, setImportedFormatName] = useState(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return sessionStorage.getItem("sj_importedFormat") || null;
-    } catch {
-      return null;
-    }
-  });
+  }, []);
 
   const importFile = useCallback(async (file) => {
     const { data: parsed, formatName } = await parseImportedFile(file);

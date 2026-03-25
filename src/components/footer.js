@@ -84,7 +84,7 @@ function FooterLink({ href, label, external }) {
 
 function FooterSection({ title, children }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-1.5">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       {children}
     </div>
@@ -97,8 +97,8 @@ function FooterSection({ title, children }) {
 export function Footer() {
   return (
     <footer className="mt-16 border-t">
-      <PageContainer className="py-10">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+      <PageContainer className="py-8">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
           <FooterSection title="Tools">
             {TOOLS.map(({ href, label }) => (
               <FooterLink key={href} href={href} label={label} />

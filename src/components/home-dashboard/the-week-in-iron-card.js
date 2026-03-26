@@ -563,7 +563,7 @@ function EarlyWeekCard({ isDemoMode, dataMaturityStage, dashboardStage }) {
                 Already have training data?
               </p>
               <p className="text-xs text-muted-foreground">
-                Import a CSV to merge your history into your Google Sheet.
+                Import a data file to merge your history into your Google Sheet.
               </p>
             </div>
           </Link>

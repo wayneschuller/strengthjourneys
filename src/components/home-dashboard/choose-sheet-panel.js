@@ -7,12 +7,14 @@ import { LiftSvg } from "@/components/year-recap/lift-svg";
 import {
   ChevronDown,
   ChevronUp,
+  FileUp,
   FolderOpen,
   Link2,
   LoaderCircle,
   PlusSquare,
   Unplug,
 } from "lucide-react";
+import Link from "next/link";
 
 function formatYearLabel(isoDate) {
   if (!isoDate) return null;
@@ -375,7 +377,7 @@ export function ChooseSheetPanel({
                         Other options
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Browse another file from Google Drive or start fresh with a clean lifting log.
+                        Browse Google Drive, import a data file, or start fresh.
                       </p>
                       <div className="mt-3 flex flex-col gap-2">
                         <Button
@@ -389,6 +391,17 @@ export function ChooseSheetPanel({
                         >
                           <FolderOpen className="mr-2 h-4 w-4" />
                           Browse Google Drive
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          asChild
+                        >
+                          <Link href="/import">
+                            <FileUp className="mr-2 h-4 w-4" />
+                            Import data file
+                          </Link>
                         </Button>
                         <Button
                           variant="outline"
@@ -455,7 +468,7 @@ export function ChooseSheetPanel({
                       Other options
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Browse another file from Google Drive or start fresh with a clean lifting log.
+                      Browse Google Drive, import a data file, or start fresh.
                     </p>
                     <div className="mt-3 flex flex-col gap-2">
                       <Button
@@ -469,6 +482,17 @@ export function ChooseSheetPanel({
                       >
                         <FolderOpen className="mr-2 h-4 w-4" />
                         Browse Google Drive
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        asChild
+                      >
+                        <Link href="/import">
+                          <FileUp className="mr-2 h-4 w-4" />
+                          Import data file
+                        </Link>
                       </Button>
                       <Button
                         variant="outline"

@@ -1,4 +1,5 @@
 import { devLog, recordTiming } from "@/lib/processing-utils";
+import { normalizeLiftTypeNames } from "./parser-utilities";
 
 // Parse Turnkey data format
 //
@@ -62,9 +63,8 @@ export function parseTurnKeyData(data) {
 
     const liftURL = `https://app.turnkey.coach/workout/${row[workout_id_COL]}`;
 
-    let liftType = row[exercise_name_COL];
-
-    if (liftType === "Squat") liftType = "Back Squat"; // Our other two data types prefer the full name
+    const rawLiftType = row[exercise_name_COL];
+    const liftType = normalizeLiftTypeNames(rawLiftType);
 
     // Expand TurnKey sets into separate liftEntry tuples
     // This makes no difference to the graph, but it benefits a user wanting to convert their TurnKey data to our bespoke format
@@ -81,6 +81,7 @@ export function parseTurnKeyData(data) {
       parsedData.push({
         date: row[workout_date_COL],
         liftType: liftType,
+        rawLiftType: rawLiftType,
         reps: lifted_reps,
         weight: lifted_weight,
         URL: liftURL,
@@ -97,7 +98,11 @@ export function parseTurnKeyData(data) {
     return 0;
   });
 
-  recordTiming("Parse TurnKey", performance.now() - startTime, `${parsedData.length} lifts`);
+  recordTiming(
+    "Parse TurnKey",
+    performance.now() - startTime,
+    `${parsedData.length} lifts`,
+  );
 
   return parsedData;
 }

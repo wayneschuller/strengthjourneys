@@ -14,7 +14,7 @@
 // src/pages/api/sheet/insert-row.js.
 //
 // Returns a `ParsedData` array that is always sorted by date ascending.
-// See @/lib/sample-parsed-data.js for example data using this structure.
+// See @/lib/data-sources/sample-parsed-data.js for example data using this structure.
 
 import { recordTiming } from "@/lib/processing-utils";
 import { normalizeDateInput } from "@/lib/date-utils";
@@ -136,7 +136,9 @@ export function parseStrengthJourneysData(data) {
 
     // Process required fields
     obj.reps = convertStringToInt(row[repsCol]);
-    const { value, unitType, _explicitUnit } = convertWeightAndUnitType(row[weightCol]);
+    const { value, unitType, _explicitUnit } = convertWeightAndUnitType(
+      row[weightCol],
+    );
     obj.weight = value;
     obj.unitType = unitType;
     if (_explicitUnit !== null) obj._explicitUnit = _explicitUnit; // true=explicit, null=ambiguous
@@ -196,7 +198,11 @@ export function parseStrengthJourneysData(data) {
     return a.date.localeCompare(b.date);
   });
 
-  recordTiming("Parse", performance.now() - startTime, `${objectsArray.length} lifts`);
+  recordTiming(
+    "Parse",
+    performance.now() - startTime,
+    `${objectsArray.length} lifts`,
+  );
 
   return objectsArray;
 }

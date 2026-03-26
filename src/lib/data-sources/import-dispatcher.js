@@ -19,7 +19,7 @@ import { decodeWorkbook } from "./decode-workbook";
  * A single logged lift after parsing and normalization.
  *
  * This is the canonical data shape used throughout the app. See
- * `sample-parsed-data.js` for concrete examples of this structure in use.
+ * `data-sources/sample-parsed-data.js` for concrete examples of this structure in use.
  *
  * @typedef {Object} LiftEntry
  * @property {string} date          ISO date string "YYYY-MM-DD"

@@ -1,4 +1,3 @@
-
 import {
   useContext,
   useState,
@@ -11,7 +10,11 @@ import {
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { parseData, parseImportedFile } from "@/lib/importers/import-dispatcher";
+import {
+  parseData,
+  parseImportedFile,
+} from "@/lib/data-sources/import-dispatcher";
+import { getDemoParsedData } from "@/lib/data-sources/demo-data-source";
 import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
 import {
   flushTimings,
@@ -21,10 +24,6 @@ import {
   markHigherWeightAsHistoricalPRs,
   calculateLiftTypes,
 } from "@/lib/processing-utils";
-import {
-  sampleParsedData,
-  transposeDatesToToday,
-} from "@/lib/sample-parsed-data";
 import { useLocalStorage } from "usehooks-ts";
 
 // ---------------------------------------------------------------------------
@@ -152,7 +151,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
 export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
-  const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
+  const [parsedData, setParsedData] = useState(null); // see @/lib/data-sources/sample-parsed-data.js for data structure design
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
@@ -168,7 +167,9 @@ export const UserLiftingDataProvider = ({ children }) => {
       const stored = sessionStorage.getItem("sj_importedData");
       if (stored) {
         setImportedParsedData(JSON.parse(stored));
-        setImportedFormatName(sessionStorage.getItem("sj_importedFormat") || null);
+        setImportedFormatName(
+          sessionStorage.getItem("sj_importedFormat") || null,
+        );
       }
     } catch {
       // sessionStorage unavailable or corrupt — stay with null
@@ -264,8 +265,14 @@ export const UserLiftingDataProvider = ({ children }) => {
   );
 
   const clearSheet = useCallback(() => setSheetInfo(null), [setSheetInfo]);
-  const enterSignedInDemoMode = useCallback(() => setSignedInDemoMode(true), [setSignedInDemoMode]);
-  const exitSignedInDemoMode = useCallback(() => setSignedInDemoMode(false), [setSignedInDemoMode]);
+  const enterSignedInDemoMode = useCallback(
+    () => setSignedInDemoMode(true),
+    [setSignedInDemoMode],
+  );
+  const exitSignedInDemoMode = useCallback(
+    () => setSignedInDemoMode(false),
+    [setSignedInDemoMode],
+  );
 
   // Skip sheet fetch when imported data is active — imported CSV takes over the whole app.
   // The user can re-link their sheet from the avatar menu at any time.
@@ -565,7 +572,7 @@ function getParsedDataWithFallback({ authStatus, data, isDemoMode }) {
   const shouldUseDemoData = isDemoMode;
 
   if (shouldUseDemoData) {
-    parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter
+    parsedData = getDemoParsedData();
   } else if (!parsedData) {
     // Authenticated users without a selected/valid sheet should not see demo data.
     parsedData = [];

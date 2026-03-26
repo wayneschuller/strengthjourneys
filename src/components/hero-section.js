@@ -48,9 +48,9 @@ const PageDescription = () => (
 // authenticated demo-mode users who still need to set up a sheet.
 function HeroPrimaryCta() {
   const { status: authStatus } = useSession();
-  const { sheetInfo } = useUserLiftingData();
+  const { hasUserData } = useUserLiftingData();
 
-  if (authStatus === "authenticated" && sheetInfo?.ssid) return null;
+  if (hasUserData) return null;
 
   return (
     <div className="flex flex-col items-center gap-2 md:items-start">

@@ -442,7 +442,7 @@ function downloadCsv(csvString, filename) {
 export default function ImportPage() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, mutate, parsedData, isDemoMode, isReturningUserLoading, importFile, clearImportedData, isImportedData, importedFormatName } = useUserLiftingData();
+  const { sheetInfo, mutate, parsedData, isDemoMode, isReturningUserLoading, importFile, clearImportedData, isImportedData, importedFormatName, hasUserData, isReadOnly } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -565,8 +565,8 @@ export default function ImportPage() {
           router={router}
         />
 
-        {/* Quick Add Section — only for authenticated users with a sheet, not in import mode */}
-        {authStatus === "authenticated" && sheetInfo?.ssid && !isImportedData && (
+        {/* Quick Add Section — only for users with write access (GSheet mode) */}
+        {!isReadOnly && (
           <section className="mx-auto mb-12 max-w-5xl space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
@@ -613,7 +613,7 @@ export default function ImportPage() {
         )}
 
         {/* Export Section */}
-        {authStatus === "authenticated" && !isDemoMode && !isImportedData && (
+        {hasUserData && !isImportedData && (
           <section className="mx-auto mb-16 max-w-5xl">
             <h2 className="mb-4 text-lg font-semibold">Export Your Data</h2>
 

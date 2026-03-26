@@ -153,7 +153,7 @@ function RecapCustomiseSidebar() {
 function StrengthYearInReviewMain() {
   const router = useRouter();
   const { status: authStatus } = useSession();
-  const { parsedData, isDemoMode, isLoading, sheetInfo } = useUserLiftingData();
+  const { parsedData, isDemoMode, isLoading, sheetInfo, hasUserData } = useUserLiftingData();
 
   // Signed in but no sheet connected: we still have demo data in parsedData.
   // Treat as "no data" and show connect-sheet instructions instead of demo recap.
@@ -272,7 +272,7 @@ function StrengthYearInReviewMain() {
             )}
             {showCarousel && (
               <div className="order-3 flex flex-col gap-6 pt-2 xl:col-start-3 xl:pt-2">
-                {authStatus === "authenticated" && sheetInfo?.ssid && (
+                {hasUserData && (
                   <RecapCustomiseSidebar />
                 )}
                 {authStatus === "authenticated" && !sheetInfo?.ssid ? (

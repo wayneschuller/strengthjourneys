@@ -8,7 +8,6 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
-import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBio,
@@ -91,8 +90,8 @@ export function TheLatestSessionCard({
     sessionTonnageLookup,
     sheetInfo,
     isValidating,
+    isReadOnly,
   } = useUserLiftingData();
-  const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
@@ -396,7 +395,6 @@ export function TheLatestSessionCard({
                       workouts={workouts}
                       perLiftTonnageStats={perLiftTonnageStats}
                       showPerLiftTonnage={showPerLiftTonnage}
-                      authStatus={authStatus}
                       hasBioData={hasBioData}
                       standards={standards}
                       e1rmFormula={e1rmFormula}
@@ -463,7 +461,7 @@ export function TheLatestSessionCard({
             ))}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-4 pt-0">
-          {authStatus === "authenticated" && hasLoggedSessions && sessionDate && (
+          {!isReadOnly && hasLoggedSessions && sessionDate && (
             <Button asChild variant="outline" className="gap-2">
               <Link href={`/log?date=${sessionDate}`}>
                 <Pencil className="h-4 w-4" />

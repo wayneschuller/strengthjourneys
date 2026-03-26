@@ -2,7 +2,6 @@ import Head from "next/head";
 import Link from "next/link";
 import { useAthleteBio, getTopLiftStats, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useSession } from "next-auth/react";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
@@ -210,8 +209,7 @@ function BarbellInsightsMain({
   liftInsightData,
   relatedArticles,
 }) {
-  const { status: authStatus } = useSession();
-  const isAuthed = authStatus === "authenticated";
+  const { hasUserData } = useUserLiftingData();
 
   const bigFourIcons = {
     "Back Squat": Crown,
@@ -293,7 +291,7 @@ function BarbellInsightsMain({
           <StrengthLevelsCard liftType={liftInsightData.liftType} />
         </div>
 
-        {isAuthed ? (
+        {hasUserData ? (
           <>
             {/* Authenticated: personal data first, editorial lower */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -398,26 +396,22 @@ function BarbellInsightsMain({
 
 
 /**
- * Card displaying the authenticated user's all-time PR table for a specific lift type.
- * Returns null for unauthenticated users.
+ * Card displaying the user's all-time PR table for a specific lift type.
+ * Returns null when no user data is available.
  * @param {Object} props
  * @param {string} props.liftType - The lift type to display PRs for (e.g. "Back Squat").
  */
 function MyLiftTypePRsCard({ liftType }) {
-  const { status: authStatus } = useSession();
+  const { hasUserData } = useUserLiftingData();
 
-  if (authStatus !== "authenticated") return null;
+  if (!hasUserData) return null;
 
   // FIXME: add a skeleton loader
 
   return (
     <Card>
       <CardContent className="pt-6">
-        {authStatus === "authenticated" ? (
-          <LiftTypeRepPRsDisplay liftType={liftType} />
-        ) : (
-          <div>Login to see your data</div>
-        )}
+        <LiftTypeRepPRsDisplay liftType={liftType} />
       </CardContent>
     </Card>
   );
@@ -505,12 +499,11 @@ function ResourcesCard({ resources, className }) {
  */
 function StrengthLevelsCard({ liftType }) {
   const { standards, isMetric, age, bodyWeight, sex } = useAthleteBio();
-  const { topLiftsByTypeAndReps } = useUserLiftingData();
-  const { status: authStatus } = useSession();
+  const { topLiftsByTypeAndReps, hasUserData } = useUserLiftingData();
 
   let strengthRating = null;
   let isBeyondElite = false;
-  if (authStatus === "authenticated") {
+  if (hasUserData) {
     const topLifts = topLiftsByTypeAndReps?.[liftType];
     const bioForDateRating = age && bodyWeight != null && sex != null
       ? { age, bodyWeight, sex, isMetric }

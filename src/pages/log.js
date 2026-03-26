@@ -237,6 +237,7 @@ export default function LogSessionPage() {
     sessionTonnageLookup,
     isDemoMode,
     isImportedData,
+    hasUserData,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { addEntry: addLogEntry, clearEntries } = useDevActivityMonitor();
@@ -250,8 +251,7 @@ export default function LogSessionPage() {
       return null;
     }
   }, [isClient]);
-  const hasLinkedSheet =
-    authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
+  const hasLinkedSheet = hasUserData && !isImportedData;
 
   useEffect(() => {
     clearEntries();
@@ -3343,7 +3343,7 @@ function LiftBlock({
   onDeleteSet,
   onAddSet,
 }) {
-  const { status: authStatus } = useSession();
+  const { hasUserData } = useUserLiftingData();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const { getColor } = useLiftColors();
   const prefersReducedMotion = useReducedMotion();
@@ -3877,7 +3877,7 @@ function LiftBlock({
   ]);
 
   // Find the set index with the heaviest e1RM for the strength badge
-  const canShowStrength = authStatus === "authenticated" && hasBioData;
+  const canShowStrength = hasUserData && hasBioData;
   const { bestE1rmIndex, bestE1rmValue } = useMemo(() => {
     if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;

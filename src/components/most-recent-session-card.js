@@ -245,7 +245,6 @@ export function MostRecentSessionCard({
                           workouts={workouts}
                           e1rmFormula={e1rmFormula}
                           hideSvg
-                          authStatus={authStatus}
                           hasBioData={hasBioData}
                           standards={standards}
                           sessionDate={sessionDate}

@@ -251,12 +251,11 @@ export default function Home() {
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
-  const { sheetInfo, isDemoMode, parsedData, rawRows, isReturningUserLoading } = useUserLiftingData();
+  const { hasUserData, isReadOnly, parsedData, rawRows, sheetInfo, isReturningUserLoading } = useUserLiftingData();
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
-  const hasLinkedSheet = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
-  const canAccessLog = hasLinkedSheet;
+  const canAccessLog = !isReadOnly;
   const { dashboardStage } = useMemo(
     () =>
       getDashboardStage({
@@ -269,31 +268,31 @@ export default function Home() {
   // Keep the Big Four cards visible for early users, but delay the personalized
   // stats treatment until they have enough history for those comparisons to land.
   const showEnhancedBigFourStats =
-    hasLinkedSheet &&
+    hasUserData &&
     (dashboardStage === "early_base" || dashboardStage === "established");
 
   // Only collapse the landing hero once the user has real linked data and can
   // meaningfully land on the dashboard. Signed-in demo mode should still feel
   // like the public landing page with stronger setup prompts.
   useEffect(() => {
-    if (hasLinkedSheet && showHeroSection && !isFadingHero) {
+    if (hasUserData && showHeroSection && !isFadingHero) {
       setIsFadingHero(true); // start fade-out
       setTimeout(() => setShowHeroSection(false), 800); // <-- match duration below
     }
-  }, [hasLinkedSheet, showHeroSection, isFadingHero]);
+  }, [hasUserData, showHeroSection, isFadingHero]);
 
   useEffect(() => {
-    if (!hasLinkedSheet) {
+    if (!hasUserData) {
       setShowHeroSection(true);
       setIsFadingHero(false);
     }
-  }, [hasLinkedSheet]);
+  }, [hasUserData]);
 
   // Delay the Big Four lift cards entrance until after the home dashboard intro
   // (hero fade + row processing ~1.2s + top stat cards ~2.2s). For guests and
   // signed-in demo mode, show them immediately.
   useEffect(() => {
-    if (hasLinkedSheet) {
+    if (hasUserData) {
       const totalIntroMs = 4000; // Row processing + section cards left-to-right stagger
       const timeoutId = setTimeout(() => {
         setBigFourAnimated(true);
@@ -301,10 +300,10 @@ export default function Home() {
       return () => clearTimeout(timeoutId);
     }
 
-    if (authStatus === "unauthenticated" || (authStatus === "authenticated" && !hasLinkedSheet)) {
+    if (!hasUserData && authStatus !== "loading") {
       setBigFourAnimated(true);
     }
-  }, [authStatus, hasLinkedSheet]);
+  }, [authStatus, hasUserData]);
 
   return (
     <>
@@ -379,7 +378,7 @@ export default function Home() {
         </h2>
         <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {featurePages
-            .filter((card) => !card.authRequired || authStatus === "authenticated")
+            .filter((card) => !card.authRequired || hasUserData)
             .filter((card) => card.href !== "/log" || canAccessLog)
             .map((card, index) => (
               <FeatureCard key={index} index={index} {...card} />

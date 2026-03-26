@@ -7,7 +7,6 @@ import {
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useSession } from "next-auth/react";
 import {
   getReadableDateString,
   getDisplayWeight,
@@ -59,12 +58,11 @@ export function StandardsSlider({
   const containerRef = useRef(null);
   const {
     isLoading: isUserDataLoading,
-    sheetInfo,
+    hasUserData,
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
-  const { status: authStatus } = useSession();
   const { age, bodyWeight, sex } = useAthleteBio();
   const { width } = useWindowSize({ initializeWithValue: false });
   const { width: containerWidth = 0 } = useResizeObserver({
@@ -91,7 +89,7 @@ export function StandardsSlider({
 
   // --- Find the most recent session date for this lift type ---
   const latestSessionDate = useMemo(() => {
-    if (authStatus !== "authenticated" || !parsedData?.length) return null;
+    if (!hasUserData || !parsedData?.length) return null;
     let latest = null;
     for (const entry of parsedData) {
       if (
@@ -109,7 +107,7 @@ export function StandardsSlider({
 
   // --- Compute period-best E1RMs EXCLUDING the most recent session ---
   const periodBestNotches = useMemo(() => {
-    if (authStatus !== "authenticated" || !parsedData?.length || !e1rmFormula)
+    if (!hasUserData || !parsedData?.length || !e1rmFormula)
       return [];
 
     const now = new Date();
@@ -181,7 +179,7 @@ export function StandardsSlider({
   // --- "Now" marker: best E1RM from the most recent session ---
   const nowNotch = useMemo(() => {
     if (
-      authStatus !== "authenticated" ||
+      !hasUserData ||
       !parsedData?.length ||
       !e1rmFormula ||
       !latestSessionDate
@@ -226,7 +224,7 @@ export function StandardsSlider({
 
   // Prevent initial render on standards-only scale, then jumping once
   // authenticated user data (PR/E1RM) hydrates and expands min/max bounds.
-  if (authStatus === "authenticated" && sheetInfo?.ssid && isUserDataLoading) {
+  if (hasUserData && isUserDataLoading) {
     return (
       <div className="bg-muted/30 h-[7.5rem] w-full animate-pulse rounded" />
     );
@@ -251,7 +249,7 @@ export function StandardsSlider({
   // Raw (native-unit) copies kept for dedup comparison against period notches
   let rawBestWeightTuple = null;
   let rawBestE1RMTuple = null;
-  if (authStatus === "authenticated") {
+  if (hasUserData) {
     const topLifts = isYearly
       ? topLiftsByTypeAndRepsLast12Months?.[liftType]
       : topLiftsByTypeAndReps?.[liftType];
@@ -311,7 +309,7 @@ export function StandardsSlider({
       ).value
     : Infinity;
   const userMin =
-    authStatus === "authenticated"
+    hasUserData
       ? Math.min(
           athleteRankingWeight > 0 ? athleteRankingWeight : Infinity,
           periodMinE1RMDisplay,
@@ -379,7 +377,7 @@ export function StandardsSlider({
   }
 
   if (
-    authStatus === "authenticated" &&
+    hasUserData &&
     highestE1RM > 0 &&
     highestE1RM > athleteRankingWeight
   ) {
@@ -739,7 +737,7 @@ export function StandardsSlider({
           })}
         </TooltipProvider>
       </div>
-      {!hideRating && authStatus === "authenticated" && strengthRating && (
+      {!hideRating && hasUserData && strengthRating && (
         <div className="text-muted-foreground mt-2 flex items-center justify-between gap-4 text-sm font-medium">
           <span>
             My lifetime {liftType} level:{" "}

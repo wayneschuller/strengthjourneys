@@ -3,7 +3,6 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBio,
@@ -60,7 +59,7 @@ export function BigFourLiftCards({
   enhancedStats = true,
 }) {
   const {
-    sheetInfo,
+    hasUserData,
     parsedData,
     topLiftsByTypeAndReps,
     liftTypes,
@@ -72,7 +71,6 @@ export function BigFourLiftCards({
     initializeWithValue: false,
   });
   const { isMetric, standards } = useAthleteBio();
-  const { status: authStatus } = useSession();
   const isMobile = useMediaQuery("(max-width: 1279px)", {
     initializeWithValue: false,
   });
@@ -164,12 +162,7 @@ export function BigFourLiftCards({
   // Stagger the description→stats fade per card, left to right.
   // Only run when user has a connected sheet (real data), not demo.
   useEffect(() => {
-    if (
-      authStatus === "authenticated" &&
-      sheetInfo?.ssid &&
-      topLiftsByTypeAndReps &&
-      animated
-    ) {
+    if (hasUserData && topLiftsByTypeAndReps && animated) {
       const timeouts = [0, 1, 2, 3].map((i) =>
         setTimeout(
           () => setStatsVisibleCount((c) => Math.max(c, i + 1)),
@@ -179,7 +172,7 @@ export function BigFourLiftCards({
       return () => timeouts.forEach(clearTimeout);
     }
     setStatsVisibleCount(0);
-  }, [authStatus, sheetInfo?.ssid, topLiftsByTypeAndReps, animated]);
+  }, [hasUserData, topLiftsByTypeAndReps, animated]);
 
   const {
     liftTonnageMap,
@@ -212,8 +205,7 @@ export function BigFourLiftCards({
         // Only show personal stats when user has connected a sheet (avoid demo data on cards).
         const isStatsMode =
           enhancedStats &&
-          authStatus === "authenticated" &&
-          !!sheetInfo?.ssid &&
+          hasUserData &&
           hasAnyData;
 
         const recentPRTier = topLiftsByTypeAndReps

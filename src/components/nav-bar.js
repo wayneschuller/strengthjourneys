@@ -152,8 +152,8 @@ function ensureCannyChangelog() {
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
-  const { sheetInfo, isDemoMode } = useUserLiftingData();
-  const canOpenLog = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
+  const { hasUserData, isReadOnly } = useUserLiftingData();
+  const canOpenLog = !isReadOnly;
 
   return (
     <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
@@ -206,7 +206,7 @@ export function NavBar() {
           {/* Logged-in users always get the bio settings button. For guests we only show it on
               pages where bio data (age, sex, bodyweight) actively changes the output — we don't
               want the pulsing badge distracting first-time visitors on the landing page. */}
-          {(authStatus === "authenticated" ||
+          {(hasUserData ||
             BIO_SETTINGS_PAGES.includes(pathname)) && <AthleteBioQuickSettings />}
           <ThemeChooser />
           {/* <DarkModeToggle /> */}

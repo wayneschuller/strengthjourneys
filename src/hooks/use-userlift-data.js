@@ -221,6 +221,17 @@ export const UserLiftingDataProvider = ({ children }) => {
     (authStatus === "unauthenticated" ||
       (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode));
 
+  // True when real user data is available from any source (gsheet or CSV import).
+  // Use this for layout decisions (e.g. show personal charts first vs editorial first)
+  // instead of checking authStatus directly.
+  const hasUserData =
+    isImportedData ||
+    (authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode);
+
+  // True when the current data source doesn't support writes (CSV, demo, or no data).
+  // Use this to hide write-only UI (log buttons, sheet setup, etc.).
+  const isReadOnly = !hasUserData || isImportedData;
+
   // True while we have localStorage evidence of a linked sheet but auth and/or
   // useLocalStorage haven't hydrated yet. Consumers use this to avoid flashing
   // onboarding UI for returning users during the initial load.
@@ -488,6 +499,8 @@ export const UserLiftingDataProvider = ({ children }) => {
         apiError,
         isValidating,
         isDemoMode,
+        hasUserData,
+        isReadOnly,
         isImportedData,
         importedFormatName,
         isReturningUserLoading,

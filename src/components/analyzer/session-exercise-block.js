@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { cn } from "@/lib/utils";
 import {
   PlayCircle,
@@ -62,7 +63,6 @@ export function getConsecutiveWorkoutGroups(workouts = []) {
  * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
  * @param {Array<{reps: number, weight: number, unitType?: string, lifetimeRanking?: number, yearlyRanking?: number, notes?: string, URL?: string, lifetimeSignificanceAnnotation?: string, yearlySignificanceAnnotation?: string}>} props.workouts - Array of set objects.
  * @param {Object} [props.perLiftTonnageStats] - Map of liftType -> {currentLiftTonnage, avgLiftTonnage, sessionCount, shouldShowComparison?, pctDiff, unitType}. Used in full variant for tonnage comparison.
- * @param {string} [props.authStatus] - Session auth status; strength level shown only when "authenticated".
  * @param {boolean} [props.hasBioData] - Whether athlete bio (age, bodyweight, sex) is available for strength standards.
  * @param {Object} [props.standards] - Map of liftType -> strength standard objects for age/bodyweight adjustment.
  * @param {string} [props.e1rmFormula="Brzycki"] - E1RM formula for estimates (Brzycki, Epley, etc.).
@@ -80,7 +80,6 @@ export function SessionExerciseBlock({
   liftType,
   workouts,
   perLiftTonnageStats,
-  authStatus,
   hasBioData,
   standards,
   e1rmFormula,
@@ -146,8 +145,10 @@ export function SessionExerciseBlock({
   // Compact: big four uses SVG; full always uses LiftTypeIndicator
   const svgPath = isCompact && !hideSvg ? getLiftSvgPath(liftType) : null;
 
+  const { hasUserData } = useUserLiftingData();
+
    const canShowStrengthLevel =
-    authStatus === "authenticated" &&
+    hasUserData &&
     hasBioData &&
     (standards?.[liftType] ||
       (sessionDate && age && bodyWeight != null && sex != null));

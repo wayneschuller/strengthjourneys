@@ -25,14 +25,14 @@ import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
  * @param {Function} props.setSelectedOptions - State setter for selectedOptions; receives the full updated options object.
  */
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
-  const { parsedData, isLoading, isDemoMode, sheetInfo } = useUserLiftingData();
+  const { parsedData, isLoading, isDemoMode, sheetInfo, hasUserData } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
   const isUnauthenticated = authStatus === "unauthenticated";
   const isAuthenticated = authStatus === "authenticated";
   const hasSheet = isAuthenticated && !!sheetInfo?.ssid;
   const hasPersonalData =
-    hasSheet && !isDemoMode && parsedData && parsedData.length > 0;
+    hasUserData && parsedData && parsedData.length > 0;
 
   const handleSelectAll = () => {
     const allChecked = !selectedOptions.all;

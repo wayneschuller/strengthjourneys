@@ -576,32 +576,11 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
   // Contextual explanation based on auth + sheet state
   const mergeMode = isAuthenticated && canMerge;
   const createMode = isAuthenticated && !canMerge;
+  const sheetName = sheetInfo?.filename || "your Google Sheet";
 
   return (
     <section className="mx-auto mb-12 max-w-5xl">
       <h2 className="mb-4 text-lg font-semibold">Import from Another App</h2>
-
-      {/* Contextual info banner above the drop zone */}
-      {mergeMode && (
-        <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50/80 px-4 py-3 dark:border-blue-800/60 dark:bg-blue-950/50">
-          <p className="text-sm text-blue-900 dark:text-blue-200">
-            <strong>Merge mode:</strong> Any file you import will be merged into your existing
-            Strength Journeys Google Sheet. Duplicate entries are automatically skipped.
-          </p>
-          <p className="mt-1 text-xs text-blue-800/70 dark:text-blue-300/70">
-            Want to explore someone else&apos;s data without changing your sheet? Sign out first, then import — it opens in read-only mode.
-          </p>
-        </div>
-      )}
-      {createMode && (
-        <div className="mb-3 rounded-lg border border-green-200 bg-green-50/80 px-4 py-3 dark:border-green-800/60 dark:bg-green-950/50">
-          <p className="text-sm text-green-900 dark:text-green-200">
-            <strong>New sheet mode:</strong> Import a file and we&apos;ll create a new
-            Strength Journeys Google Sheet in your Drive, populated with your data.
-          </p>
-        </div>
-      )}
-
       <Card
         className={`border-dashed transition-colors ${dragOver ? "border-primary bg-primary/5" : ""}`}
         onDrop={onDrop}
@@ -622,9 +601,9 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
               </h3>
               <p className="text-muted-foreground mb-4 max-w-md text-sm">
                 {mergeMode
-                  ? "Your data will be parsed and merged into your connected Google Sheet."
+                  ? <>Drop a file and we&apos;ll merge your history straight into <strong className="text-foreground">&ldquo;{sheetName}&rdquo;</strong> — duplicates are skipped automatically.</>
                   : createMode
-                    ? "Your data will be parsed and saved to a new Google Sheet in your Drive."
+                    ? "Drop a file and we'll create a brand new Strength Journeys Google Sheet in your Drive, ready to go."
                     : "Import your lifting history from TurnKey, or a Strength Journeys CSV export. More formats coming soon."}
               </p>
               <Button
@@ -640,6 +619,11 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
                 className="hidden"
                 onChange={(e) => handleFile(e.target.files?.[0])}
               />
+              {mergeMode && (
+                <p className="text-muted-foreground mt-4 max-w-sm text-xs">
+                  Want to explore someone else&apos;s data without changing your sheet? Sign out first, then import — it opens in read-only mode.
+                </p>
+              )}
               <p className="text-muted-foreground mt-3 text-xs">
                 {isAuthenticated
                   ? "Your file is parsed in the browser, then written to your Google Sheet."

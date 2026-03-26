@@ -342,8 +342,10 @@ function FileImportSection({
     async (file) => {
       if (!file) return;
       const ext = file.name.split(".").pop()?.toLowerCase();
-      if (!["csv", "txt"].includes(ext)) {
-        setImportError("Unsupported file type. Please use a .csv file.");
+      if (!["csv", "txt", "xls", "xlsx"].includes(ext)) {
+        setImportError(
+          "Unsupported file type. Please use a .csv, .xls, or .xlsx file.",
+        );
         return;
       }
 
@@ -686,7 +688,7 @@ function FileImportSection({
             <>
               <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
               <h3 className="mb-2 font-semibold">
-                Drag &amp; drop a CSV file here
+                Drag &amp; drop a CSV or Excel file here
               </h3>
               <p className="text-muted-foreground mb-1 max-w-md text-sm">
                 {mergeMode ? (
@@ -700,13 +702,13 @@ function FileImportSection({
                 ) : createMode ? (
                   "Drop a file and we'll create a brand new Strength Journeys Google Sheet in your Drive, ready to go."
                 ) : (
-                  "Import your lifting history from Wodify, BTWB, TurnKey, or a Strength Journeys CSV export."
+                  "Import your lifting history from Wodify, BTWB, TurnKey, or a Strength Journeys export in CSV, XLS, or XLSX format."
                 )}
               </p>
               <p className="text-muted-foreground mb-4 text-xs">
                 {isAuthenticated
-                  ? "Your file is parsed in the browser, then written to your Google Sheet."
-                  : "Your data opens in preview mode right in your browser."}
+                  ? "Your CSV, XLS, or XLSX file is parsed in the browser, then written to your Google Sheet."
+                  : "Your CSV, XLS, or XLSX data opens in preview mode right in your browser."}
               </p>
               <Button
                 variant="outline"
@@ -717,7 +719,7 @@ function FileImportSection({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,.txt"
+                accept=".csv,.txt,.xls,.xlsx"
                 className="hidden"
                 onChange={(e) => handleFile(e.target.files?.[0])}
               />

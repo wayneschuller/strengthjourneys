@@ -11,6 +11,7 @@ import { parseBtwbData } from "./btwb-parser";
 import { parseTurnKeyData } from "./turnkey-parser";
 import { parseWodifyData } from "./wodify-parser";
 import { decodeCSV } from "./decode-csv";
+import { decodeWorkbook } from "./decode-workbook";
 
 /**
  * A single logged lift after parsing and normalization.
@@ -139,8 +140,15 @@ export function detectFormat(headers) {
  * @throws {Error} If the file can't be parsed or format is unrecognized
  */
 export async function parseImportedFile(file) {
-  const text = await file.text();
-  const rows = decodeCSV(text);
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  let rows;
+
+  if (["xls", "xlsx"].includes(ext)) {
+    rows = await decodeWorkbook(file);
+  } else {
+    const text = await file.text();
+    rows = decodeCSV(text);
+  }
 
   if (rows.length < 2) {
     throw new Error("File appears to be empty or has no data rows.");

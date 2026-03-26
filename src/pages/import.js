@@ -61,11 +61,29 @@ function nextEntryId() {
 }
 
 function makeEntry(overrides = {}) {
-  return { id: nextEntryId(), weight: "", reps: "1", year: CURRENT_YEAR - 2, month: "", day: "", ...overrides };
+  return {
+    id: nextEntryId(),
+    weight: "",
+    reps: "1",
+    year: CURRENT_YEAR - 2,
+    month: "",
+    day: "",
+    ...overrides,
+  };
 }
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function makeDate(year, month, day) {
@@ -81,9 +99,8 @@ function getDaysInMonth(year, month) {
 }
 
 function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
-  const daysAvailable = entry.year && entry.month
-    ? getDaysInMonth(entry.year, entry.month)
-    : 31;
+  const daysAvailable =
+    entry.year && entry.month ? getDaysInMonth(entry.year, entry.month) : 31;
   const days = Array.from({ length: daysAvailable }, (_, i) => i + 1);
   const placeholder = DEFAULT_PLACEHOLDER[unit] || "225";
 
@@ -122,14 +139,18 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
         <Label className="text-muted-foreground text-xs">Year</Label>
         <Select
           value={entry.year ? String(entry.year) : ""}
-          onValueChange={(v) => onChange({ ...entry, year: Number(v), month: "", day: "" })}
+          onValueChange={(v) =>
+            onChange({ ...entry, year: Number(v), month: "", day: "" })
+          }
         >
           <SelectTrigger className="h-9">
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
             {YEARS.map((y) => (
-              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              <SelectItem key={y} value={String(y)}>
+                {y}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -141,14 +162,18 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
           <Label className="text-muted-foreground text-xs">Month</Label>
           <Select
             value={entry.month ? String(entry.month) : ""}
-            onValueChange={(v) => onChange({ ...entry, month: Number(v), day: "" })}
+            onValueChange={(v) =>
+              onChange({ ...entry, month: Number(v), day: "" })
+            }
           >
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Optional" />
             </SelectTrigger>
             <SelectContent>
               {MONTHS.map((m, i) => (
-                <SelectItem key={i + 1} value={String(i + 1)}>{m}</SelectItem>
+                <SelectItem key={i + 1} value={String(i + 1)}>
+                  {m}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -168,7 +193,9 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
             </SelectTrigger>
             <SelectContent>
               {days.map((d) => (
-                <SelectItem key={d} value={String(d)}>{d}</SelectItem>
+                <SelectItem key={d} value={String(d)}>
+                  {d}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -216,7 +243,13 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
         className="hover:bg-muted/30 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <Image src={lift.icon} alt={lift.name} width={48} height={48} className="dark:invert" />
+        <Image
+          src={lift.icon}
+          alt={lift.name}
+          width={48}
+          height={48}
+          className="dark:invert"
+        />
         <span className="flex-1 font-semibold">{lift.name}</span>
         {filledCount > 0 && (
           <span className="text-muted-foreground text-sm">
@@ -233,7 +266,8 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
       {expanded && (
         <CardContent className="border-border border-t pt-3 pb-3">
           <p className="text-muted-foreground mb-2 text-xs">
-            Weight in {unit}. Reps defaults to 1 if left blank. Date precision is flexible — just a year is fine.
+            Weight in {unit}. Reps defaults to 1 if left blank. Date precision
+            is flexible — just a year is fine.
           </p>
           {entries.map((entry, idx) => (
             <LiftEntryRow
@@ -245,12 +279,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
               unit={unit}
             />
           ))}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-1"
-            onClick={addEntry}
-          >
+          <Button variant="ghost" size="sm" className="mt-1" onClick={addEntry}>
             <Plus className="mr-1 h-4 w-4" /> Add another {lift.name}
           </Button>
         </CardContent>
@@ -269,7 +298,9 @@ function deduplicateEntries(importedData, existingData) {
   for (const e of existingData) {
     if (e.isGoal) continue;
     // Normalize: date + liftType + reps + weight (rounded to avoid float issues)
-    existingKeys.add(`${e.date}|${e.liftType}|${e.reps}|${Math.round((e.weight ?? 0) * 100)}`);
+    existingKeys.add(
+      `${e.date}|${e.liftType}|${e.reps}|${Math.round((e.weight ?? 0) * 100)}`,
+    );
   }
 
   const newEntries = [];
@@ -287,56 +318,75 @@ function deduplicateEntries(importedData, existingData) {
   return { newEntries, skippedCount };
 }
 
-function FileImportSection({ importFile, clearImportedData, isImportedData, importedFormatName, parsedData, toast, router, sheetInfo, existingParsedData, mutate, selectSheet, isAuthenticated }) {
+function FileImportSection({
+  importFile,
+  clearImportedData,
+  isImportedData,
+  importedFormatName,
+  parsedData,
+  toast,
+  router,
+  sheetInfo,
+  existingParsedData,
+  mutate,
+  selectSheet,
+  isAuthenticated,
+}) {
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState(null);
   const [merging, setMerging] = useState(false);
 
-  const handleFile = useCallback(async (file) => {
-    if (!file) return;
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!["csv", "txt"].includes(ext)) {
-      setImportError("Unsupported file type. Please use a .csv file.");
-      return;
-    }
-
-    setImporting(true);
-    setImportError(null);
-    try {
-      const { count, formatName } = await importFile(file);
-
-      if (!isAuthenticated) {
-        // Not signed in → read-only explore mode
-        toast({
-          title: "Data loaded!",
-          description: `Parsed ${count} entries from ${formatName} format. Exploring in preview mode.`,
-        });
-        router.push("/");
+  const handleFile = useCallback(
+    async (file) => {
+      if (!file) return;
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (!["csv", "txt"].includes(ext)) {
+        setImportError("Unsupported file type. Please use a .csv file.");
         return;
       }
 
-      // Signed in — auto-action based on whether they have a sheet
-      // (The actual merge/create happens via the post-import UI below,
-      //  but we set importing=false so the UI renders)
-      toast({
-        title: "Data loaded!",
-        description: `Parsed ${count} entries from ${formatName} format.`,
-      });
-    } catch (err) {
-      setImportError(err.message);
-    } finally {
-      setImporting(false);
-    }
-  }, [importFile, toast, isAuthenticated, router]);
+      setImporting(true);
+      setImportError(null);
+      try {
+        const { count, formatName } = await importFile(file);
 
-  const onDrop = useCallback((e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer?.files?.[0];
-    handleFile(file);
-  }, [handleFile]);
+        if (!isAuthenticated) {
+          // Not signed in → read-only explore mode
+          toast({
+            title: "Data loaded!",
+            description: `Parsed ${count} entries from ${formatName} format. Exploring in preview mode.`,
+          });
+          router.push("/");
+          return;
+        }
+
+        // Signed in — auto-action based on whether they have a sheet
+        // (The actual merge/create happens via the post-import UI below,
+        //  but we set importing=false so the UI renders)
+        toast({
+          title: "Data loaded!",
+          description: `Parsed ${count} entries from ${formatName} format.`,
+        });
+      } catch (err) {
+        setImportError(err.message);
+      } finally {
+        setImporting(false);
+      }
+    },
+    [importFile, toast, isAuthenticated, router],
+  );
+
+  const onDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      setDragOver(false);
+      const file = e.dataTransfer?.files?.[0];
+      handleFile(file);
+    },
+    [handleFile],
+  );
 
   const onDragOver = useCallback((e) => {
     e.preventDefault();
@@ -374,7 +424,10 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
   const handleMerge = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
 
-    const { newEntries, skippedCount } = deduplicateEntries(parsedData, existingParsedData);
+    const { newEntries, skippedCount } = deduplicateEntries(
+      parsedData,
+      existingParsedData,
+    );
 
     if (newEntries.length === 0) {
       toast({
@@ -388,9 +441,10 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
     try {
       const data = await writeEntriesToSheet(sheetInfo.ssid, newEntries);
 
-      const skippedNote = skippedCount > 0
-        ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
-        : "";
+      const skippedNote =
+        skippedCount > 0
+          ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
+          : "";
 
       toast({
         title: "Data merged into your sheet!",
@@ -409,7 +463,16 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
     } finally {
       setMerging(false);
     }
-  }, [parsedData, existingParsedData, sheetInfo, writeEntriesToSheet, clearImportedData, mutate, toast, router]);
+  }, [
+    parsedData,
+    existingParsedData,
+    sheetInfo,
+    writeEntriesToSheet,
+    clearImportedData,
+    mutate,
+    toast,
+    router,
+  ]);
 
   // Create a new Google Sheet and populate it with the imported data
   const handleCreateSheetFromImport = useCallback(async () => {
@@ -458,7 +521,15 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
     } finally {
       setMerging(false);
     }
-  }, [parsedData, writeEntriesToSheet, selectSheet, clearImportedData, mutate, toast, router]);
+  }, [
+    parsedData,
+    writeEntriesToSheet,
+    selectSheet,
+    clearImportedData,
+    mutate,
+    toast,
+    router,
+  ]);
 
   // Already imported — show status + action options
   if (isImportedData) {
@@ -472,7 +543,10 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
 
     const { newEntries, skippedCount } = showMerge
       ? deduplicateEntries(parsedData || [], existingParsedData)
-      : { newEntries: parsedData?.filter((e) => !e.isGoal) || [], skippedCount: 0 };
+      : {
+          newEntries: parsedData?.filter((e) => !e.isGoal) || [],
+          skippedCount: 0,
+        };
 
     return (
       <section className="mx-auto mb-12 max-w-5xl">
@@ -483,7 +557,9 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
               <>
                 <Loader2 className="text-primary mb-3 h-10 w-10 animate-spin" />
                 <h3 className="mb-1 font-semibold">
-                  {showCreateSheet ? "Creating your Google Sheet..." : "Merging into your sheet..."}
+                  {showCreateSheet
+                    ? "Creating your Google Sheet..."
+                    : "Merging into your sheet..."}
                 </h3>
                 <p className="text-muted-foreground text-sm">
                   {showCreateSheet
@@ -498,16 +574,18 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
                   {importedFormatName} data loaded
                 </h3>
                 <p className="text-muted-foreground mb-4 text-sm">
-                  {entryCount} {entryCount === 1 ? "entry" : "entries"} parsed and ready.
+                  {entryCount} {entryCount === 1 ? "entry" : "entries"} parsed
+                  and ready.
                 </p>
 
                 {/* Signed-in: Create new Google Sheet from imported data */}
                 {showCreateSheet && (
                   <div className="w-full max-w-md space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      We&apos;ll create a new Google Sheet in your Drive and populate
-                      it with your {entryCount} {entryCount === 1 ? "entry" : "entries"}.
-                      This becomes your permanent data backend — fully yours.
+                    <p className="text-muted-foreground text-sm">
+                      We&apos;ll create a new Google Sheet in your Drive and
+                      populate it with your {entryCount}{" "}
+                      {entryCount === 1 ? "entry" : "entries"}. This becomes
+                      your permanent data backend — fully yours.
                     </p>
                     <Button
                       onClick={handleCreateSheetFromImport}
@@ -523,10 +601,15 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
                 {/* Signed-in with existing sheet: Merge */}
                 {showMerge && (
                   <div className="w-full max-w-md space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Merge this data into your existing Strength Journeys spreadsheet.
+                    <p className="text-muted-foreground text-sm">
+                      Merge this data into your existing Strength Journeys
+                      spreadsheet.
                       {skippedCount > 0 && (
-                        <> {skippedCount} duplicate{skippedCount === 1 ? "" : "s"} will be skipped.</>
+                        <>
+                          {" "}
+                          {skippedCount} duplicate
+                          {skippedCount === 1 ? "" : "s"} will be skipped.
+                        </>
                       )}
                     </p>
                     <Button
@@ -535,11 +618,13 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
                       className="w-full gap-2"
                     >
                       <ArrowRight className="h-4 w-4" />
-                      Merge {newEntries.length} {newEntries.length === 1 ? "entry" : "entries"} into sheet
+                      Merge {newEntries.length}{" "}
+                      {newEntries.length === 1 ? "entry" : "entries"} into sheet
                     </Button>
                     {newEntries.length === 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        All entries already exist in your sheet — nothing to merge.
+                      <p className="text-muted-foreground text-xs">
+                        All entries already exist in your sheet — nothing to
+                        merge.
                       </p>
                     )}
                   </div>
@@ -548,7 +633,11 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
                 {/* Not signed in: view-only explore */}
                 {!isAuthenticated && (
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => router.push("/")}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push("/")}
+                    >
                       <Dumbbell className="mr-2 h-4 w-4" /> Explore Dashboard
                     </Button>
                   </div>
@@ -600,11 +689,19 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
                 Drag &amp; drop a CSV file here
               </h3>
               <p className="text-muted-foreground mb-1 max-w-md text-sm">
-                {mergeMode
-                  ? <>Drop a file and we&apos;ll merge your history straight into <strong className="text-foreground">&ldquo;{sheetName}&rdquo;</strong> — duplicates are skipped automatically.</>
-                  : createMode
-                    ? "Drop a file and we'll create a brand new Strength Journeys Google Sheet in your Drive, ready to go."
-                    : "Import your lifting history from TurnKey, or a Strength Journeys CSV export. More formats coming soon."}
+                {mergeMode ? (
+                  <>
+                    Drop a file and we&apos;ll merge your history straight into{" "}
+                    <strong className="text-foreground">
+                      &ldquo;{sheetName}&rdquo;
+                    </strong>{" "}
+                    — duplicates are skipped automatically.
+                  </>
+                ) : createMode ? (
+                  "Drop a file and we'll create a brand new Strength Journeys Google Sheet in your Drive, ready to go."
+                ) : (
+                  "Import your lifting history from BTWB, TurnKey, or a Strength Journeys CSV export."
+                )}
               </p>
               <p className="text-muted-foreground mb-4 text-xs">
                 {isAuthenticated
@@ -626,13 +723,16 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
               />
               {mergeMode && (
                 <p className="text-muted-foreground mt-4 max-w-sm text-xs">
-                  Want to explore someone else&apos;s data without changing your sheet? Sign out first, then import — it opens in preview mode.
+                  Want to explore someone else&apos;s data without changing your
+                  sheet? Sign out first, then import — it opens in preview mode.
                 </p>
               )}
             </>
           )}
           {importError && (
-            <p className="text-destructive mt-4 max-w-md text-sm">{importError}</p>
+            <p className="text-destructive mt-4 max-w-md text-sm">
+              {importError}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -672,7 +772,15 @@ function buildCsvFromParsedData(parsedData) {
 
   const rows = grouped.flat().map((e) => {
     const weight = `${e.weight}${e.unitType}`;
-    return [e.date, e.liftType, e.reps, weight, e.notes || "", e.label || "", e.URL || ""]
+    return [
+      e.date,
+      e.liftType,
+      e.reps,
+      weight,
+      e.notes || "",
+      e.label || "",
+      e.URL || "",
+    ]
       .map(escapeCsvField)
       .join(",");
   });
@@ -692,7 +800,21 @@ function downloadCsv(csvString, filename) {
 export default function ImportPage() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, mutate, parsedData, isDemoMode, isReturningUserLoading, importFile, clearImportedData, isImportedData, importedFormatName, hasUserData, isReadOnly, sheetParsedData, selectSheet } = useUserLiftingData();
+  const {
+    sheetInfo,
+    mutate,
+    parsedData,
+    isDemoMode,
+    isReturningUserLoading,
+    importFile,
+    clearImportedData,
+    isImportedData,
+    importedFormatName,
+    hasUserData,
+    isReadOnly,
+    sheetParsedData,
+    selectSheet,
+  } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -701,12 +823,7 @@ export default function ImportPage() {
 
   // Lift entries state: { [liftName]: [{ id, weight, reps, year, month, day }] }
   const [liftEntries, setLiftEntries] = useState(() =>
-    Object.fromEntries(
-      BIG_FOUR.map((lift) => [
-        lift.name,
-        [makeEntry()],
-      ]),
-    ),
+    Object.fromEntries(BIG_FOUR.map((lift) => [lift.name, [makeEntry()]])),
   );
 
   const updateLiftEntries = useCallback((liftName, entries) => {
@@ -734,11 +851,19 @@ export default function ImportPage() {
 
   const handleSave = useCallback(async () => {
     if (validEntries.length === 0) {
-      toast({ title: "Nothing to save", description: "Enter at least one lift with a weight and year.", variant: "destructive" });
+      toast({
+        title: "Nothing to save",
+        description: "Enter at least one lift with a weight and year.",
+        variant: "destructive",
+      });
       return;
     }
     if (!sheetInfo?.ssid) {
-      toast({ title: "No sheet connected", description: "Connect a Google Sheet first from the home page.", variant: "destructive" });
+      toast({
+        title: "No sheet connected",
+        description: "Connect a Google Sheet first from the home page.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -752,7 +877,11 @@ export default function ImportPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast({ title: "Import failed", description: data.error || "Something went wrong.", variant: "destructive" });
+        toast({
+          title: "Import failed",
+          description: data.error || "Something went wrong.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -766,15 +895,14 @@ export default function ImportPage() {
 
       // Clear filled entries
       setLiftEntries(
-        Object.fromEntries(
-          BIG_FOUR.map((lift) => [
-            lift.name,
-            [makeEntry()],
-          ]),
-        ),
+        Object.fromEntries(BIG_FOUR.map((lift) => [lift.name, [makeEntry()]])),
       );
     } catch (err) {
-      toast({ title: "Import failed", description: "Network error. Please try again.", variant: "destructive" });
+      toast({
+        title: "Import failed",
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -828,12 +956,16 @@ export default function ImportPage() {
           <section className="mx-auto mb-12 max-w-5xl space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
-              <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+              <UnitChooser
+                isMetric={isMetric}
+                onSwitchChange={toggleIsMetric}
+              />
             </div>
 
             <p className="text-muted-foreground text-sm">
-              Enter your most memorable lifts for each movement. You don&apos;t need exact dates — just the year is enough.
-              These will be added to your Google Sheet as historical entries.
+              Enter your most memorable lifts for each movement. You don&apos;t
+              need exact dates — just the year is enough. These will be added to
+              your Google Sheet as historical entries.
             </p>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -850,7 +982,8 @@ export default function ImportPage() {
 
             <div className="flex items-center justify-between pt-2">
               <p className="text-muted-foreground text-xs">
-                {validEntries.length} {validEntries.length === 1 ? "entry" : "entries"} ready to save
+                {validEntries.length}{" "}
+                {validEntries.length === 1 ? "entry" : "entries"} ready to save
               </p>
               <Button
                 onClick={handleSave}
@@ -898,8 +1031,9 @@ export default function ImportPage() {
                       {sheetInfo.filename || "Your Google Sheet"}
                     </h3>
                     <p className="text-muted-foreground mb-3 text-sm">
-                      Your data already lives in your own Google Sheet — it&apos;s
-                      always yours. Open it anytime to view, edit, or share.
+                      Your data already lives in your own Google Sheet —
+                      it&apos;s always yours. Open it anytime to view, edit, or
+                      share.
                     </p>
                     <Button asChild variant="outline" size="sm">
                       <a
@@ -924,8 +1058,8 @@ export default function ImportPage() {
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold">Download as CSV</h3>
                     <p className="text-muted-foreground text-xs">
-                      {parsedData.filter((e) => !e.isGoal).length} rows
-                      — portable format for backups or other apps
+                      {parsedData.filter((e) => !e.isGoal).length} rows —
+                      portable format for backups or other apps
                     </p>
                   </div>
                   <Button

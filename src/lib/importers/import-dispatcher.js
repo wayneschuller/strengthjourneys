@@ -7,6 +7,7 @@
 // All parsers take string[][] (rows with header) and return ParsedData[].
 
 import { parseStrengthJourneysData } from "./strength-journeys-parser";
+import { parseBtwbData } from "./btwb-parser";
 import { parseTurnKeyData } from "./turnkey-parser";
 import { decodeCSV } from "./decode-csv";
 
@@ -55,8 +56,17 @@ export function parseData(data) {
  */
 const FORMAT_SIGNATURES = [
   {
+    name: "BTWB",
+    detect: (headers) =>
+      headers.includes("Date") &&
+      headers.includes("Description") &&
+      headers.includes("Pukie"),
+    parse: parseBtwbData,
+  },
+  {
     name: "TurnKey",
-    detect: (headers) => headers.includes("user_name") && headers.includes("workout_id"),
+    detect: (headers) =>
+      headers.includes("user_name") && headers.includes("workout_id"),
     parse: parseTurnKeyData,
   },
   {
@@ -64,11 +74,17 @@ const FORMAT_SIGNATURES = [
     // Detected by having the 4 required columns (after normalization happens inside the parser)
     name: "Strength Journeys",
     detect: (headers) => {
-      const lower = headers.map((h) => h.toLowerCase().replace(/[_-]/g, " ").trim());
-      return lower.some((h) => h === "date" || h === "workout date")
-        && lower.some((h) => ["lift type", "lifttype", "exercise", "movement"].includes(h))
-        && lower.some((h) => ["reps", "rep", "repetitions"].includes(h))
-        && lower.some((h) => ["weight", "load", "weight used"].includes(h));
+      const lower = headers.map((h) =>
+        h.toLowerCase().replace(/[_-]/g, " ").trim(),
+      );
+      return (
+        lower.some((h) => h === "date" || h === "workout date") &&
+        lower.some((h) =>
+          ["lift type", "lifttype", "exercise", "movement"].includes(h),
+        ) &&
+        lower.some((h) => ["reps", "rep", "repetitions"].includes(h)) &&
+        lower.some((h) => ["weight", "load", "weight used"].includes(h))
+      );
     },
     parse: parseStrengthJourneysData,
   },
@@ -108,8 +124,8 @@ export async function parseImportedFile(file) {
 
   if (!format) {
     throw new Error(
-      "Unrecognized file format. Supported formats: Strength Journeys CSV export, TurnKey export. " +
-      "Make sure your file has column headers in the first row.",
+      "Unrecognized file format. Supported formats: BTWB export, Strength Journeys CSV export, TurnKey export. " +
+        "Make sure your file has column headers in the first row.",
     );
   }
 
@@ -118,7 +134,7 @@ export async function parseImportedFile(file) {
   if (!data || data.length === 0) {
     throw new Error(
       `File was recognized as ${format.name} format but no valid entries were found. ` +
-      "Check that the file contains workout data with dates, exercises, reps, and weights.",
+        "Check that the file contains workout data with dates, exercises, reps, and weights.",
     );
   }
 

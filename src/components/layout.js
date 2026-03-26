@@ -535,19 +535,26 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
   return (
     <section className="mb-3 border-y border-blue-200 bg-blue-50/80 dark:border-blue-800/60 dark:bg-blue-950/50">
       <div className="mx-0 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-2.5 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
-        <p className="text-sm leading-tight text-blue-900 dark:text-blue-200">
-          <FileUp className="mr-1.5 -mt-0.5 inline-block h-4 w-4" />
-          Viewing {entryCount.toLocaleString()} imported {formatName} {entryCount === 1 ? "entry" : "entries"} — read-only mode.
-        </p>
+        <div className="space-y-0.5">
+          <p className="text-sm leading-tight text-blue-900 dark:text-blue-200">
+            <FileUp className="mr-1.5 -mt-0.5 inline-block h-4 w-4" />
+            You&apos;re in preview mode with {entryCount.toLocaleString()} {entryCount === 1 ? "lift" : "lifts"}.
+            {" "}
+            <span className="hidden sm:inline">Save your data to turn this into a full training log with auto warm-ups and progression targets.</span>
+          </p>
+          <p className="text-[11px] text-blue-700/70 dark:text-blue-300/60">
+            Preview data will be lost when you leave.
+          </p>
+        </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
-          {/* Not signed in: sign-in CTA */}
+          {/* Not signed in: primary save CTA */}
           {!isAuthenticated && authStatus !== "loading" && (
             <GoogleSignInButton
               size="sm"
-              cta="import_banner"
+              cta="preview_banner"
               className="h-7 text-xs"
             >
-              Sign in to save to Google Sheets
+              Save my data
             </GoogleSignInButton>
           )}
           {/* Signed in + has sheet: merge */}
@@ -558,7 +565,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
               disabled={working}
               onClick={handleMergeFromBanner}
             >
-              {working ? "Merging..." : "Merge into your sheet"}
+              {working ? "Saving..." : "Save my data"}
             </Button>
           )}
           {/* Signed in + no sheet: create */}
@@ -569,26 +576,17 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
               disabled={working}
               onClick={handleCreateFromBanner}
             >
-              {working ? "Creating sheet..." : "Save to a new Google Sheet"}
+              {working ? "Saving..." : "Save my data"}
             </Button>
           )}
           <Button
-            variant="outline"
-            size="sm"
-            className="h-7 border-blue-300 bg-white/80 text-xs text-blue-900 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/50 dark:text-blue-200 dark:hover:bg-blue-800/60"
-            onClick={() => router.push("/import")}
-          >
-            <FileUp className="mr-1.5 h-3.5 w-3.5" />
-            Import
-          </Button>
-          <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs text-blue-800 hover:bg-blue-100 hover:text-blue-950 dark:text-blue-300 dark:hover:bg-blue-900/50"
+            className="h-7 text-xs text-blue-800/60 hover:bg-blue-100 hover:text-blue-950 dark:text-blue-400/60 dark:hover:bg-blue-900/50"
             onClick={onClear}
           >
             <X className="mr-1 h-3.5 w-3.5" />
-            Clear
+            Clear preview
           </Button>
         </div>
       </div>

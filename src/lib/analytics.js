@@ -60,6 +60,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   FEEDBACK_SENTIMENT: "SJ_feedback_sentiment", // ~Feb 2026: Feedback thumbs sentiment (explicit SJ-prefixed new tag).
   HOME_DASHBOARD_FIRST_VIEW: "SJ_home_dashboard_first_view", // ~Mar 2026: First time user sees loaded home dashboard.
   HOME_DASHBOARD_STAGE_ENTERED: "SJ_home_dashboard_stage_entered", // ~Mar 2026: User entered a staged onboarding/dashboard phase.
+  HERO_IMPORT_CLICK: "SJ_hero_import_click", // ~Mar 2026: User clicked "Import Your Lifting Data" CTA on hero.
 });
 
 const UTM_STORAGE_KEY = "ga_utm";

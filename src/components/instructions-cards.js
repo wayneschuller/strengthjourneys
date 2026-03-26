@@ -276,7 +276,7 @@ export function GettingStartedCard() {
             {[
               { icon: "🏋️", text: "Built for serious lifting history — not generic workout logging." },
               { icon: "📊", text: "Every set becomes a data point: PRs, trends, and session recaps." },
-              { icon: "🔒", text: "Your Google Sheet stays yours. Read-only. Nothing stored on our servers." },
+              { icon: "🔒", text: "Your data lives in your own Google Sheet — nothing stored on our servers." },
             ].map(({ icon, text }) => (
               <div
                 key={text}
@@ -304,9 +304,16 @@ export function GettingStartedCard() {
                     href="/privacy-policy.html"
                     className="underline hover:text-foreground"
                   >
-                    read-only, never stored
+                    your data stays in your own sheet
                   </Link>
                   .
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  Already have lifting data?{" "}
+                  <Link href="/import" className="underline hover:text-foreground">
+                    Import a CSV
+                  </Link>{" "}
+                  to explore the app instantly.
                 </p>
               </>
             ) : isConnected ? (
@@ -580,8 +587,8 @@ export function DemoModeSignInCard() {
             </li>
             <li>
               After signing in above, connect your sheet — we&apos;ll prompt you to pick
-              it from your Google Drive. We read your data directly and never store
-              a copy.
+              it from your Google Drive. Your data lives in your own Google Sheet
+              — we never store a copy on our servers.
             </li>
           </ol>
         </div>

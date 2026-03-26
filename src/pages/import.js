@@ -311,7 +311,7 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
         // Not signed in → read-only explore mode
         toast({
           title: "Data loaded!",
-          description: `Parsed ${count} entries from ${formatName} format. Exploring in read-only mode.`,
+          description: `Parsed ${count} entries from ${formatName} format. Exploring in preview mode.`,
         });
         router.push("/");
         return;
@@ -609,7 +609,7 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
               <p className="text-muted-foreground mb-4 text-xs">
                 {isAuthenticated
                   ? "Your file is parsed in the browser, then written to your Google Sheet."
-                  : "Your data stays in your browser — nothing is uploaded to a server."}
+                  : "Your data opens in preview mode right in your browser."}
               </p>
               <Button
                 variant="outline"
@@ -626,7 +626,7 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
               />
               {mergeMode && (
                 <p className="text-muted-foreground mt-4 max-w-sm text-xs">
-                  Want to explore someone else&apos;s data without changing your sheet? Sign out first, then import — it opens in read-only mode.
+                  Want to explore someone else&apos;s data without changing your sheet? Sign out first, then import — it opens in preview mode.
                 </p>
               )}
             </>
@@ -803,7 +803,7 @@ export default function ImportPage() {
               ? "Import lifting history from another app. Data will be merged into your connected Google Sheet — duplicates are automatically skipped."
               : authStatus === "authenticated"
                 ? "Import lifting history from another app. We'll create a new Google Sheet in your Drive and populate it with your data."
-                : "Add your lifting history from another app or from memory. Your data stays in your browser — nothing is uploaded to a server."}
+                : "Import your lifting history and explore the full app in preview mode — no sign-in required."}
           </PageHeaderDescription>
         </PageHeader>
 

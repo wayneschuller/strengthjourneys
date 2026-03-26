@@ -1976,8 +1976,8 @@ export default function LogSessionPage() {
         <Dumbbell className="text-muted-foreground h-12 w-12" />
         <h1 className="text-2xl font-bold">Logging Unavailable</h1>
         <p className="text-muted-foreground max-w-md">
-          You&apos;re viewing imported data in read-only mode. To log sessions,
-          clear the import and connect a Google Sheet.
+          You&apos;re in preview mode with imported data. To log sessions,
+          save your data and connect a Google Sheet.
         </p>
         <Button asChild>
           <Link href="/import">Go to Import</Link>

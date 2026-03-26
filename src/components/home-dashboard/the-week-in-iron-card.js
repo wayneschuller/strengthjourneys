@@ -310,7 +310,7 @@ export function TheWeekInIronCard({
   dataMaturityStage = "mature",
   sessionCount = 0,
 }) {
-  const { isDemoMode, parsedData } = useUserLiftingData();
+  const { isDemoMode, isReadOnly, parsedData } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
   const [weekOffset, setWeekOffset] = useState(0);
@@ -426,24 +426,30 @@ export function TheWeekInIronCard({
                 title="What happened this week"
                 description={getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows)}
               >
-                <WeekSessionList rows={weeklySessionRows} />
+                <WeekSessionList rows={weeklySessionRows} isReadOnly={isReadOnly} />
               </WeekSection>
 
-              <Separator />
+              {!isReadOnly && (
+                <>
+                  <Separator />
 
-              <WeekSection
-                stepLabel="B"
-                title="Looking ahead"
-                description={getNextStepCopy(stats, boundaries, weeklySessionRows)}
-              >
-                <StartLiftPrompt showIntro={false} />
-              </WeekSection>
+                  <WeekSection
+                    stepLabel="B"
+                    title="Looking ahead"
+                    description={getNextStepCopy(stats, boundaries, weeklySessionRows)}
+                  >
+                    <StartLiftPrompt showIntro={false} />
+                  </WeekSection>
+                </>
+              )}
             </>
           )}
 
           {!hasLoggedSessions && (
             <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
-              Your training week will appear here once you log your first session.
+              {isReadOnly
+                ? "No sessions found in the current week."
+                : "Your training week will appear here once you log your first session."}
             </p>
           )}
         </CardContent>
@@ -472,7 +478,7 @@ function WeekSection({ stepLabel, title, description, children }) {
   );
 }
 
-function WeekSessionList({ rows }) {
+function WeekSessionList({ rows, isReadOnly = false }) {
   return (
     <div className="space-y-2">
       {rows.length === 0 ? (
@@ -480,12 +486,15 @@ function WeekSessionList({ rows }) {
           No sessions logged in this week.
         </div>
       ) : (
-        rows.map((row) => (
-          <Link
-            key={row.date}
-            href={{ pathname: "/log", query: { date: row.date } }}
-            className="grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4 rounded-xl border bg-muted/20 px-4 py-3 transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
+        rows.map((row) => {
+          const className = "grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4 rounded-xl border bg-muted/20 px-4 py-3" +
+            (isReadOnly ? "" : " transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2");
+          const Wrapper = isReadOnly ? "div" : Link;
+          const wrapperProps = isReadOnly
+            ? { className }
+            : { href: { pathname: "/log", query: { date: row.date } }, className };
+          return (
+          <Wrapper key={row.date} {...wrapperProps}>
             <div className="space-y-0.5">
               <p className="text-sm font-semibold leading-none text-foreground">
                 {format(new Date(row.date + "T00:00:00"), "EEE")}
@@ -521,8 +530,9 @@ function WeekSessionList({ rows }) {
                 <p className="text-sm text-foreground">Session logged</p>
               )}
             </div>
-          </Link>
-        ))
+          </Wrapper>
+          );
+        })
       )}
     </div>
   );

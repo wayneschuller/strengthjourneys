@@ -22,7 +22,7 @@
   </head>
   <body>
     <h1>Privacy Policy for Strength Journeys</h1>
-    <p>Last Updated: 3 March 2026</p>
+    <p>Last Updated: 26 March 2026</p>
     <p>
       Welcome to Strength Journeys, a free open-source web application designed
       to provide analysis and visualization of your barbell lifting history.
@@ -34,9 +34,11 @@
     <h2>Data Processing and Storage:</h2>
     <p>
       Strength Journeys is designed to minimise server-side data storage. Your
-      lifting data is processed entirely within your browser and is never stored
-      on our servers. Limited operational data may be retained to support your
-      experience, as described below.
+      lifting data is processed within your browser and is never stored on our
+      servers. When you use features that write to your Google Sheet (such as
+      logging sessions or importing data), that data passes through our server
+      to reach the Google Sheets API but is not retained. Limited operational
+      data may be retained to support your experience, as described below.
     </p>
 
     <h2>Google Sheets Integration:</h2>
@@ -44,8 +46,8 @@
       <li>
         <strong>Scope:</strong> Our app uses the <code>drive.file</code> scope
         to access Google Sheets. This permission allows Strength Journeys to
-        read Google Sheets files in your Google Drive that you explicitly open
-        via Strength Journeys.
+        read and write to Google Sheets files in your Google Drive that you
+        explicitly open or create via Strength Journeys.
       </li>
       <li>
         <strong>Data Access:</strong> During each login Strength Journeys will
@@ -56,6 +58,13 @@
         from your browser and removes the app&apos;s current linkage hint on our
         side, so Strength Journeys will no longer keep using that sheet as your
         active data source.
+      </li>
+      <li>
+        <strong>Data Writing:</strong> Strength Journeys may write to your
+        Google Sheet when you log a lifting session, import data from a CSV
+        file, or create a new sheet during onboarding. All writes go directly
+        to your own Google Sheet via the Google Sheets API. No copy of this
+        data is retained on our servers.
       </li>
       <li>
         <strong>Data Usage:</strong> The data from your Google Sheet is used
@@ -80,6 +89,14 @@
       By using Strength Journeys, you consent to the data practices described in
       this Privacy Policy. You also acknowledge and consent to the limited use
       of your Google Sheets data as specified.
+    </p>
+
+    <h2>CSV Import (Unauthenticated):</h2>
+    <p>
+      Visitors who are not signed in may import a CSV file to explore the app
+      in read-only mode. In this case the file is parsed entirely in your
+      browser and held in temporary session storage. No data is sent to our
+      servers. The data is discarded when you close the browser tab.
     </p>
 
     <h2>AI Lifting Assistant Page:</h2>

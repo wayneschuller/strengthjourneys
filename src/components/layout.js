@@ -402,7 +402,7 @@ function DataAccessBanner({ pathname }) {
         <div className="mx-0 flex flex-col items-center justify-center gap-3 px-4 py-3 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           <p className="text-sm leading-tight text-amber-950">
             {showSignInCta
-              ? "You are viewing demo data. Want to see your own lifts, trends, and PRs here? Sign in with Google or import your data instantly in preview mode."
+              ? "You are viewing demo data. Want to see your own lifts, trends, and PRs here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode."
               : isDemoMode
                 ? "Demo mode is on. Connect your data to replace the sample view with your own lifting history here."
                 : "Connect your data to replace the sample view with your own lifting history here."}

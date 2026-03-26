@@ -8,6 +8,8 @@
 
 import { parseStrengthJourneysData } from "./strength-journeys-parser";
 import { parseBtwbData } from "./btwb-parser";
+import { parseHevyData } from "./hevy-parser";
+import { parseStrongData } from "./strong-parser";
 import { parseTurnKeyData } from "./turnkey-parser";
 import { parseWodifyData } from "./wodify-parser";
 import { decodeCSV } from "./decode-csv";
@@ -57,6 +59,33 @@ export function parseData(data) {
  * Order matters — first match wins.
  */
 const FORMAT_SIGNATURES = [
+  {
+    name: "Hevy",
+    detect: (headers) =>
+      headers.includes("start_time") &&
+      headers.includes("exercise_title") &&
+      headers.includes("weight_kg") &&
+      headers.includes("reps"),
+    parse: parseHevyData,
+  },
+  {
+    name: "Strong",
+    detect: (headers) => {
+      const lower = headers.map((header) =>
+        String(header || "")
+          .toLowerCase()
+          .trim(),
+      );
+      return (
+        lower.includes("date") &&
+        lower.includes("workout name") &&
+        lower.includes("exercise name") &&
+        lower.some((header) => header.startsWith("weight")) &&
+        lower.includes("reps")
+      );
+    },
+    parse: parseStrongData,
+  },
   {
     name: "Wodify",
     detect: (headers) => {
@@ -159,7 +188,7 @@ export async function parseImportedFile(file) {
 
   if (!format) {
     throw new Error(
-      "Unrecognized file format. Supported formats: Wodify export, BTWB export, Strength Journeys CSV export, TurnKey export. " +
+      "Unrecognized file format. Supported formats: Hevy export, Strong export, Wodify export, BTWB export, Strength Journeys CSV export, TurnKey export. " +
         "Make sure your file has column headers in the first row.",
     );
   }

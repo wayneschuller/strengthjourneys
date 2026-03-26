@@ -4,13 +4,40 @@
 // and both \r\n and \n line endings. No external dependencies.
 
 /**
+ * Guess the most likely delimiter from the first line.
+ *
+ * Supports the common export variants we've seen in the wild:
+ * comma, semicolon, and tab-delimited files.
+ *
+ * @param {string} text Raw CSV text
+ * @returns {string} Detected delimiter
+ */
+export function guessCSVDelimiter(text) {
+  const firstLine = String(text || "").split(/\r?\n/, 1)[0] || "";
+  const candidates = [",", ";", "\t"];
+
+  let bestDelimiter = ",";
+  let bestScore = -1;
+
+  candidates.forEach((delimiter) => {
+    const score = firstLine.split(delimiter).length - 1;
+    if (score > bestScore) {
+      bestScore = score;
+      bestDelimiter = delimiter;
+    }
+  });
+
+  return bestDelimiter;
+}
+
+/**
  * Parse a CSV string into an array of rows, where each row is an array of strings.
  *
  * @param {string} text Raw CSV text
- * @param {string} [delimiter=","] Column delimiter
+ * @param {string} [delimiter] Column delimiter
  * @returns {string[][]} Parsed rows (header row first)
  */
-export function decodeCSV(text, delimiter = ",") {
+export function decodeCSV(text, delimiter = guessCSVDelimiter(text)) {
   const rows = [];
   let row = [];
   let field = "";
@@ -70,7 +97,10 @@ export function decodeCSV(text, delimiter = ",") {
   }
 
   // Filter out completely empty trailing rows
-  while (rows.length > 0 && rows[rows.length - 1].every((cell) => cell === "")) {
+  while (
+    rows.length > 0 &&
+    rows[rows.length - 1].every((cell) => cell === "")
+  ) {
     rows.pop();
   }
 

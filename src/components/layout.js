@@ -1,7 +1,7 @@
 /** @format */
 
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { NavBar } from "@/components/nav-bar";
@@ -426,8 +426,112 @@ function DataAccessBanner({ pathname }) {
 }
 
 // Blue banner shown across the app when the user has imported CSV data (view-only mode).
+// Offers contextual CTAs based on auth state:
+// - Not signed in: sign-in CTA (data will be saved to a new GSheet)
+// - Signed in + no sheet: "Save to Google Sheet" button
+// - Signed in + has sheet: "Merge into your sheet" button
 function ImportedDataBanner({ formatName, entryCount, onClear }) {
   const router = useRouter();
+  const { status: authStatus } = useSession();
+  const { sheetInfo, parsedData, sheetParsedData, selectSheet, mutate, clearImportedData } = useUserLiftingData();
+  const { toast } = useToast();
+  const [working, setWorking] = useState(false);
+
+  const isAuthenticated = authStatus === "authenticated";
+  const hasSsid = !!sheetInfo?.ssid;
+
+  const handleMergeFromBanner = useCallback(async () => {
+    if (!parsedData || !sheetInfo?.ssid) return;
+
+    // Dedup
+    const existingKeys = new Set();
+    if (Array.isArray(sheetParsedData)) {
+      for (const e of sheetParsedData) {
+        if (e.isGoal) continue;
+        existingKeys.add(`${e.date}|${e.liftType}|${e.reps}|${Math.round((e.weight ?? 0) * 100)}`);
+      }
+    }
+    const newEntries = [];
+    let skippedCount = 0;
+    for (const e of parsedData) {
+      if (e.isGoal) continue;
+      const key = `${e.date}|${e.liftType}|${e.reps}|${Math.round((e.weight ?? 0) * 100)}`;
+      if (existingKeys.has(key)) { skippedCount++; } else { newEntries.push(e); }
+    }
+
+    if (newEntries.length === 0) {
+      toast({ title: "Nothing new to merge", description: `All ${skippedCount} entries already exist in your sheet.` });
+      return;
+    }
+
+    setWorking(true);
+    try {
+      const apiEntries = newEntries.map((e) => ({
+        date: e.date, liftType: e.liftType, reps: e.reps, weight: e.weight, unitType: e.unitType || "kg",
+      }));
+      const res = await fetch("/api/sheet/import-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ssid: sheetInfo.ssid, entries: apiEntries }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Merge failed");
+
+      const skippedNote = skippedCount > 0 ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.` : "";
+      toast({ title: "Data merged!", description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}` });
+      clearImportedData();
+      mutate();
+    } catch (err) {
+      toast({ title: "Merge failed", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setWorking(false);
+    }
+  }, [parsedData, sheetParsedData, sheetInfo, clearImportedData, mutate, toast]);
+
+  const handleCreateFromBanner = useCallback(async () => {
+    if (!parsedData || parsedData.length === 0) return;
+
+    setWorking(true);
+    try {
+      const linkRes = await fetch("/api/sheet/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: "bootstrap", mode: "create_blank" }),
+      });
+      const linkPayload = await linkRes.json();
+      if (!linkRes.ok || !linkPayload?.ssid) throw new Error(linkPayload?.error || "Failed to create sheet");
+
+      const nonGoalEntries = parsedData.filter((e) => !e.isGoal);
+      const apiEntries = nonGoalEntries.map((e) => ({
+        date: e.date, liftType: e.liftType, reps: e.reps, weight: e.weight, unitType: e.unitType || "kg",
+      }));
+      const writeRes = await fetch("/api/sheet/import-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ssid: linkPayload.ssid, entries: apiEntries }),
+      });
+      const writeData = await writeRes.json();
+      if (!writeRes.ok) throw new Error(writeData.error || "Failed to write data");
+
+      selectSheet(linkPayload.ssid, {
+        url: linkPayload.webViewLink ?? null,
+        filename: linkPayload.name ?? null,
+        modifiedTime: linkPayload.modifiedTime ?? null,
+        modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
+      });
+      toast({
+        title: "Google Sheet created!",
+        description: `Imported ${writeData.insertedRows} entries into your new Strength Journeys sheet.`,
+      });
+      clearImportedData();
+      mutate();
+    } catch (err) {
+      toast({ title: "Import failed", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setWorking(false);
+    }
+  }, [parsedData, selectSheet, clearImportedData, mutate, toast]);
+
   return (
     <section className="mb-3 border-y border-blue-200 bg-blue-50/80 dark:border-blue-800/60 dark:bg-blue-950/50">
       <div className="mx-0 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-2.5 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
@@ -435,7 +539,39 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
           <FileUp className="mr-1.5 -mt-0.5 inline-block h-4 w-4" />
           Viewing {entryCount.toLocaleString()} imported {formatName} {entryCount === 1 ? "entry" : "entries"} — read-only mode.
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {/* Not signed in: sign-in CTA */}
+          {!isAuthenticated && authStatus !== "loading" && (
+            <GoogleSignInButton
+              size="sm"
+              cta="import_banner"
+              className="h-7 text-xs"
+            >
+              Sign in to save to Google Sheets
+            </GoogleSignInButton>
+          )}
+          {/* Signed in + has sheet: merge */}
+          {isAuthenticated && hasSsid && (
+            <Button
+              size="sm"
+              className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              disabled={working}
+              onClick={handleMergeFromBanner}
+            >
+              {working ? "Merging..." : "Merge into your sheet"}
+            </Button>
+          )}
+          {/* Signed in + no sheet: create */}
+          {isAuthenticated && !hasSsid && (
+            <Button
+              size="sm"
+              className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              disabled={working}
+              onClick={handleCreateFromBanner}
+            >
+              {working ? "Creating sheet..." : "Save to a new Google Sheet"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

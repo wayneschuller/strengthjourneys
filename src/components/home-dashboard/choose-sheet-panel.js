@@ -1,6 +1,6 @@
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
@@ -14,7 +14,6 @@ import {
   PlusSquare,
   Unplug,
 } from "lucide-react";
-import Link from "next/link";
 
 function formatYearLabel(isoDate) {
   if (!isoDate) return null;
@@ -162,8 +161,10 @@ export function ChooseSheetPanel({
   onChooseSheet,
   onCreateBlank,
   onDisconnectCurrent,
+  onImportFile,
   embedded = false,
 }) {
+  const importFileRef = useRef(null);
   const isSwitchSheet = intent === "switch_sheet";
   const primaryCandidate =
     candidates.find((candidate) => candidate.id === recommendedId) || candidates[0] || null;
@@ -396,13 +397,23 @@ export function ChooseSheetPanel({
                           variant="outline"
                           size="sm"
                           className="w-full"
-                          asChild
+                          disabled={isWorking || !onImportFile}
+                          onClick={() => importFileRef.current?.click()}
                         >
-                          <Link href="/import?createSheet=1">
-                            <FileUp className="mr-2 h-4 w-4" />
-                            Import data file
-                          </Link>
+                          <FileUp className="mr-2 h-4 w-4" />
+                          Import data file
                         </Button>
+                        <input
+                          ref={importFileRef}
+                          type="file"
+                          accept=".csv,.txt"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file && onImportFile) onImportFile(file);
+                            e.target.value = "";
+                          }}
+                        />
                         <Button
                           variant="outline"
                           size="sm"
@@ -487,12 +498,11 @@ export function ChooseSheetPanel({
                         variant="outline"
                         size="sm"
                         className="w-full"
-                        asChild
+                        disabled={isWorking || !onImportFile}
+                        onClick={() => importFileRef.current?.click()}
                       >
-                        <Link href="/import?createSheet=1">
-                          <FileUp className="mr-2 h-4 w-4" />
-                          Import data file
-                        </Link>
+                        <FileUp className="mr-2 h-4 w-4" />
+                        Import data file
                       </Button>
                       <Button
                         variant="outline"

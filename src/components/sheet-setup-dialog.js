@@ -9,6 +9,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -206,7 +207,12 @@ export function SheetSetupDialog() {
     enterSignedInDemoMode,
     exitSignedInDemoMode,
     apiError,
+    importFile,
+    clearImportedData,
+    isImportedData,
+    mutate,
   } = useUserLiftingData();
+  const { toast } = useToast();
 
   const [open, setOpen] = useState(false);
   const [onboardingState, setOnboardingState] = useState("idle");
@@ -598,6 +604,117 @@ export function SheetSetupDialog() {
     [flowIntent, hadLocalSheetBefore, handleResolvedAction, reportOnboardingEvent],
   );
 
+  // Inline file import from the onboarding dialog: parse → create sheet → populate → link → done.
+  const handleImportFile = useCallback(async (file) => {
+    setProvisionError(null);
+    setIsProvisionActionLoading(true);
+    setOnboardingState("linking_or_creating");
+    try {
+      // Step 1: Parse the file
+      const { count, formatName } = await importFile(file);
+      if (count === 0) {
+        throw new Error("No valid entries found in the file.");
+      }
+
+      // Step 2: Create a blank sheet
+      const linkRes = await fetch("/api/sheet/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "bootstrap",
+          mode: "create_blank",
+          preferredUnitType: getPreferredUnitTypeFromClient(),
+          locale: getClientLocale(),
+          starterDateText: getStarterDateTextForClientLocale(),
+        }),
+      });
+      const linkPayload = await linkRes.json().catch(() => ({}));
+      if (linkPayload?.onboardingFlowToken) {
+        onboardingFlowTokenRef.current = linkPayload.onboardingFlowToken;
+      }
+      if (!linkRes.ok || !linkPayload?.ssid) {
+        throw new Error(linkPayload?.error || "Failed to create Google Sheet");
+      }
+
+      // Step 3: Read imported data from sessionStorage (importFile stores it there)
+      let importedEntries = [];
+      try {
+        const stored = sessionStorage.getItem("sj_importedData");
+        if (stored) importedEntries = JSON.parse(stored).filter((e) => !e.isGoal);
+      } catch { /* fallback empty */ }
+
+      if (importedEntries.length > 0) {
+        const apiEntries = importedEntries.map((e) => ({
+          date: e.date,
+          liftType: e.liftType,
+          reps: e.reps,
+          weight: e.weight,
+          unitType: e.unitType || "kg",
+        }));
+        const writeRes = await fetch("/api/sheet/import-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ssid: linkPayload.ssid, entries: apiEntries }),
+        });
+        const writeData = await writeRes.json();
+        if (!writeRes.ok) {
+          throw new Error(writeData.error || "Failed to write data to sheet");
+        }
+      }
+
+      // Step 4: Link the sheet
+      const nextSheetInfo = {
+        ssid: linkPayload.ssid,
+        url: linkPayload.webViewLink ?? null,
+        filename: linkPayload.name ?? null,
+        modifiedTime: linkPayload.modifiedTime ?? null,
+        modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
+      };
+      exitSignedInDemoMode();
+      selectSheet(linkPayload.ssid, nextSheetInfo);
+      clearImportedData();
+      mutate();
+
+      toast({
+        title: "Google Sheet created from your data!",
+        description: `Imported ${count} ${formatName} entries into a new Strength Journeys sheet.`,
+      });
+
+      setOpen(false);
+      resetUiState();
+      if (router.pathname !== "/") {
+        void router.replace("/");
+      }
+
+      if (!outcomeReportedRef.current) {
+        outcomeReportedRef.current = true;
+        void reportOnboardingEvent("onboarding-success", {
+          intent: "bootstrap",
+          resultAction: "create_from_import",
+          reason: "file_import",
+          ssid: linkPayload.ssid,
+          sheetName: linkPayload.name || null,
+          hadLocalSheetBefore,
+          importedEntryCount: count,
+          importedFormatName: formatName,
+          durationMs: flowStartedAtRef.current
+            ? Date.now() - flowStartedAtRef.current
+            : null,
+        });
+      }
+    } catch (error) {
+      setProvisionError(error?.message || "File import failed");
+      setOnboardingState("fallback_error");
+      toast({
+        title: "File import failed",
+        description: error?.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProvisionActionLoading(false);
+    }
+  }, [importFile, clearImportedData, exitSignedInDemoMode, selectSheet, mutate, toast, router, resetUiState, hadLocalSheetBefore, reportOnboardingEvent]);
+
   const disconnectCurrentSheet = useCallback(async () => {
     setProvisionError(null);
     setIsDisconnectingCurrentSheet(true);
@@ -694,12 +811,13 @@ export function SheetSetupDialog() {
     if (authStatus !== "authenticated") return;
     if (sheetInfo?.ssid) return;
     if (isDemoMode) return;
+    if (isImportedData) return; // Suppress auto-open when user has imported data — banner handles it
     if (provisioningStartedRef.current) return;
 
     provisioningStartedRef.current = true;
     launchedFromUserRef.current = false;
     void resolveSheetFlow({ intent: "bootstrap", hadLocalBefore: false });
-  }, [authStatus, isDemoMode, resolveSheetFlow, sheetInfo?.ssid]);
+  }, [authStatus, isDemoMode, isImportedData, resolveSheetFlow, sheetInfo?.ssid]);
 
   useEffect(() => {
     if (authStatus !== "authenticated") return undefined;
@@ -813,6 +931,7 @@ export function SheetSetupDialog() {
                   statusMessage={sheetDiscoveryStatusMessage}
                   onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
                   onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
+                  onImportFile={handleImportFile}
                   onDisconnectCurrent={() => {
                     void disconnectCurrentSheet();
                   }}

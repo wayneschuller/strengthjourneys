@@ -98,7 +98,7 @@ export function Footer() {
   return (
     <footer className="mt-16 border-t">
       <PageContainer className="py-8">
-        <div className="mx-auto grid max-w-3xl grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
           <FooterSection title="Tools">
             {TOOLS.map(({ href, label }) => (
               <FooterLink key={href} href={href} label={label} />
@@ -142,7 +142,7 @@ export function Footer() {
           </FooterSection>
         </div>
 
-        <div className="mx-auto mt-8 max-w-3xl border-t pt-6">
+        <div className="mx-auto mt-8 max-w-4xl border-t pt-6">
           <div className="flex flex-col gap-6">
             <div>
               <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">

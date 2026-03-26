@@ -2,7 +2,13 @@ import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
 import {
   ChevronDown,
@@ -45,7 +51,9 @@ function formatCandidateMeta(candidate, isEnriching = false) {
   if (start && end) bits.push(`${start}-${end}`);
 
   if (bits.length === 0) {
-    return isEnriching ? "Analyzing workouts and date range..." : "Lifting sheet detected";
+    return isEnriching
+      ? "Analyzing workouts and date range..."
+      : "Lifting sheet detected";
   }
   return bits.join(" · ");
 }
@@ -53,7 +61,10 @@ function formatCandidateMeta(candidate, isEnriching = false) {
 function formatRecommendedMeta(candidate, isEnriching = false) {
   const bits = [];
   const isSampled = Boolean(candidate?.metadataSampled);
-  const startYear = parseInt(formatYearLabel(candidate?.dateRangeStart) || "", 10);
+  const startYear = parseInt(
+    formatYearLabel(candidate?.dateRangeStart) || "",
+    10,
+  );
   const endYear = parseInt(formatYearLabel(candidate?.dateRangeEnd) || "", 10);
   if (typeof candidate?.approxSessions === "number") {
     bits.push(
@@ -62,7 +73,11 @@ function formatRecommendedMeta(candidate, isEnriching = false) {
         : `${candidate.approxSessions.toLocaleString()} workouts`,
     );
   }
-  if (Number.isFinite(startYear) && Number.isFinite(endYear) && endYear >= startYear) {
+  if (
+    Number.isFinite(startYear) &&
+    Number.isFinite(endYear) &&
+    endYear >= startYear
+  ) {
     if (isSampled) {
       const spanYears = endYear - startYear + 1;
       bits.push(`${spanYears}+ years data`);
@@ -71,7 +86,9 @@ function formatRecommendedMeta(candidate, isEnriching = false) {
     }
   }
   if (bits.length === 0) {
-    return isEnriching ? "Analyzing workouts and date range..." : "Lifting log detected";
+    return isEnriching
+      ? "Analyzing workouts and date range..."
+      : "Lifting log detected";
   }
   return bits.join(" • ");
 }
@@ -142,7 +159,8 @@ function formatPreviewSetDetail(preview) {
 }
 
 function getCandidateUrl(candidate) {
-  return typeof candidate?.webViewLink === "string" && candidate.webViewLink.trim()
+  return typeof candidate?.webViewLink === "string" &&
+    candidate.webViewLink.trim()
     ? candidate.webViewLink
     : null;
 }
@@ -153,11 +171,14 @@ export function ChooseSheetPanel({
   currentSsid = null,
   currentSheetInfo = null,
   recommendedId = null,
+  showImportedPreviewWarning = false,
+  importedPreviewEntryCount = 0,
   openPicker,
   isWorking,
   isDisconnectingCurrent = false,
   isEnriching = false,
   statusMessage = "",
+  onMergeImportedPreview,
   onChooseSheet,
   onCreateBlank,
   onDisconnectCurrent,
@@ -167,9 +188,14 @@ export function ChooseSheetPanel({
   const importFileRef = useRef(null);
   const isSwitchSheet = intent === "switch_sheet";
   const primaryCandidate =
-    candidates.find((candidate) => candidate.id === recommendedId) || candidates[0] || null;
-  const otherCandidates = candidates.filter((candidate) => candidate.id !== primaryCandidate?.id);
-  const isPrimaryCurrent = primaryCandidate?.id && currentSsid === primaryCandidate.id;
+    candidates.find((candidate) => candidate.id === recommendedId) ||
+    candidates[0] ||
+    null;
+  const otherCandidates = candidates.filter(
+    (candidate) => candidate.id !== primaryCandidate?.id,
+  );
+  const isPrimaryCurrent =
+    primaryCandidate?.id && currentSsid === primaryCandidate.id;
   const [showOtherSheets, setShowOtherSheets] = useState(false);
   const freshnessLabel = formatRelativeFreshness(
     primaryCandidate?.modifiedByMeTime || primaryCandidate?.modifiedTime,
@@ -186,7 +212,9 @@ export function ChooseSheetPanel({
               className="h-5 w-5 shrink-0"
               aria-hidden
             />
-            {isSwitchSheet ? "Choose a lifting log" : "Connect your lifting log"}
+            {isSwitchSheet
+              ? "Choose a lifting log"
+              : "Connect your lifting log"}
           </CardTitle>
           <CardDescription>
             {isSwitchSheet
@@ -194,30 +222,69 @@ export function ChooseSheetPanel({
               : "Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or start fresh with a new sheet."}
           </CardDescription>
           {statusMessage && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
               {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
               <span>{statusMessage}</span>
             </div>
           )}
         </CardHeader>
       )}
-      <CardContent className={embedded ? "space-y-5 px-0 pb-0 pt-0" : "space-y-5 xl:px-10 2xl:px-16"}>
+      <CardContent
+        className={
+          embedded ? "space-y-5 px-0 pt-0 pb-0" : "space-y-5 xl:px-10 2xl:px-16"
+        }
+      >
         <div className="space-y-3">
+          {showImportedPreviewWarning && (
+            <div className="rounded-lg border border-amber-300/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
+              <div className="space-y-3">
+                <p>
+                  Choosing a sheet here leaves preview mode and forgets the
+                  imported file.
+                </p>
+                {onMergeImportedPreview && currentSheetInfo?.ssid ? (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-amber-900/80 dark:text-amber-100/80">
+                      Or merge {importedPreviewEntryCount.toLocaleString()}{" "}
+                      imported{" "}
+                      {importedPreviewEntryCount === 1 ? "entry" : "entries"}{" "}
+                      into your current sheet first.
+                    </p>
+                    <Button
+                      size="sm"
+                      className="bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400"
+                      disabled={isWorking}
+                      onClick={onMergeImportedPreview}
+                    >
+                      Merge into current sheet
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-900/80 dark:text-amber-100/80">
+                    Use the preview banner&apos;s save action if you want to
+                    merge that import into a sheet instead.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
           {statusMessage && embedded && (
-            <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/50 px-4 py-3 text-sm text-muted-foreground">
+            <div className="border-border/60 bg-card/50 text-muted-foreground flex items-center gap-2 rounded-lg border px-4 py-3 text-sm">
               {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
               <span>{statusMessage}</span>
             </div>
           )}
           {primaryCandidate && (
             <>
-              <p className="text-sm font-semibold text-foreground/80">
-                {isSwitchSheet ? "Recommended data source" : "Recommended for you"}
+              <p className="text-foreground/80 text-sm font-semibold">
+                {isSwitchSheet
+                  ? "Recommended data source"
+                  : "Recommended for you"}
               </p>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div
                   key={primaryCandidate.id}
-                  className="rounded-2xl border border-primary/20 bg-card/80 px-6 py-6 shadow-sm"
+                  className="border-primary/20 bg-card/80 rounded-2xl border px-6 py-6 shadow-sm"
                 >
                   <div className="max-w-2xl space-y-5">
                     <div className="min-w-0 space-y-2">
@@ -227,79 +294,81 @@ export function ChooseSheetPanel({
                             href={getCandidateUrl(primaryCandidate)}
                             target="_blank"
                             rel="noreferrer"
-                            className="truncate text-lg font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
+                            className="text-foreground hover:text-primary truncate text-lg font-semibold underline-offset-2 hover:underline"
                           >
                             {primaryCandidate.name}
                           </a>
                         ) : (
-                          <p className="truncate text-lg font-semibold text-foreground">
+                          <p className="text-foreground truncate text-lg font-semibold">
                             {primaryCandidate.name}
                           </p>
                         )}
                         {freshnessLabel && (
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                          <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[11px] font-semibold">
                             {freshnessLabel}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm font-medium text-muted-foreground">
+                      <p className="text-muted-foreground text-sm font-medium">
                         {isSwitchSheet
                           ? "This looks like the strongest data source to switch to."
                           : "This looks like your main lifting log."}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {formatRecommendedMeta(primaryCandidate, isEnriching)}
                       </p>
                       <div className="flex flex-wrap gap-2 pt-1">
                         {typeof primaryCandidate?.approxSessions === "number" &&
                           primaryCandidate.approxSessions >= 20 && (
-                            <span className="rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground/80">
+                            <span className="border-border bg-background text-foreground/80 rounded-full border px-2.5 py-1 text-xs font-medium">
                               Most complete history
                             </span>
                           )}
                         {typeof primaryCandidate?.approxRows === "number" &&
                           primaryCandidate.approxRows >= 250 && (
-                            <span className="rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground/80">
+                            <span className="border-border bg-background text-foreground/80 rounded-full border px-2.5 py-1 text-xs font-medium">
                               High-confidence match
                             </span>
                           )}
                       </div>
                       {isPrimaryCurrent && (
-                        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                        <p className="text-primary text-xs font-semibold tracking-wide uppercase">
                           Currently connected
                         </p>
                       )}
                       {Array.isArray(primaryCandidate.bigFourPreview) &&
                         primaryCandidate.bigFourPreview.length > 0 && (
                           <div className="space-y-2 pt-1">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                               Best sets detected
                             </p>
                             <div className="flex flex-wrap gap-2">
-                              {primaryCandidate.bigFourPreview.map((preview) => (
-                                <div
-                                  key={preview.liftType}
-                                  className="flex min-w-[120px] items-center gap-2 rounded-md border border-black/10 bg-background/90 px-2.5 py-2"
-                                >
-                                  <LiftSvg
-                                    liftType={preview.liftType}
-                                    size="sm"
-                                    animate={false}
-                                    className="h-8 w-8"
-                                  />
-                                  <div className="min-w-0">
-                                    <p className="text-[11px] font-medium leading-tight text-muted-foreground">
-                                      {getPreviewLiftLabel(preview.liftType)}
-                                    </p>
-                                    <p className="text-base font-semibold leading-tight text-foreground">
-                                      {formatPreviewPrimaryValue(preview)}
-                                    </p>
-                                    <p className="truncate text-[10px] leading-tight text-muted-foreground">
-                                      {formatPreviewSetDetail(preview)}
-                                    </p>
+                              {primaryCandidate.bigFourPreview.map(
+                                (preview) => (
+                                  <div
+                                    key={preview.liftType}
+                                    className="bg-background/90 flex min-w-[120px] items-center gap-2 rounded-md border border-black/10 px-2.5 py-2"
+                                  >
+                                    <LiftSvg
+                                      liftType={preview.liftType}
+                                      size="sm"
+                                      animate={false}
+                                      className="h-8 w-8"
+                                    />
+                                    <div className="min-w-0">
+                                      <p className="text-muted-foreground text-[11px] leading-tight font-medium">
+                                        {getPreviewLiftLabel(preview.liftType)}
+                                      </p>
+                                      <p className="text-foreground text-base leading-tight font-semibold">
+                                        {formatPreviewPrimaryValue(preview)}
+                                      </p>
+                                      <p className="text-muted-foreground truncate text-[10px] leading-tight">
+                                        {formatPreviewSetDetail(preview)}
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                ),
+                              )}
                             </div>
                           </div>
                         )}
@@ -308,7 +377,9 @@ export function ChooseSheetPanel({
                       <Button
                         size="lg"
                         className="w-full sm:w-auto sm:min-w-56"
-                        disabled={isWorking || currentSsid === primaryCandidate.id}
+                        disabled={
+                          isWorking || currentSsid === primaryCandidate.id
+                        }
                         onClick={() => onChooseSheet(primaryCandidate.id)}
                       >
                         <Link2 className="mr-2 h-4 w-4" />
@@ -327,7 +398,9 @@ export function ChooseSheetPanel({
                           onClick={onDisconnectCurrent}
                         >
                           <Unplug className="mr-2 h-4 w-4" />
-                          {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+                          {isDisconnectingCurrent
+                            ? "Disconnecting..."
+                            : "Disconnect"}
                         </Button>
                       )}
                     </div>
@@ -335,49 +408,56 @@ export function ChooseSheetPanel({
                 </div>
                 <div className="flex items-start justify-center lg:pt-1">
                   <div className="w-full max-w-sm space-y-3">
-                    {isSwitchSheet && currentSheetInfo?.ssid && !isPrimaryCurrent && (
-                      <div className="rounded-2xl border border-border/70 bg-card/70 px-5 py-4">
-                        <div className="flex flex-col gap-3">
-                          <div className="min-w-0 space-y-1">
-                            <p className="text-sm font-semibold text-foreground/80">
-                              Current data source
-                            </p>
-                            {currentSheetInfo?.url ? (
-                              <a
-                                href={currentSheetInfo.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="block truncate text-base font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
-                              >
-                                {currentSheetInfo.filename || "Connected lifting log"}
-                              </a>
-                            ) : (
-                              <p className="truncate text-base font-semibold text-foreground">
-                                {currentSheetInfo.filename || "Connected lifting log"}
+                    {isSwitchSheet &&
+                      currentSheetInfo?.ssid &&
+                      !isPrimaryCurrent && (
+                        <div className="border-border/70 bg-card/70 rounded-2xl border px-5 py-4">
+                          <div className="flex flex-col gap-3">
+                            <div className="min-w-0 space-y-1">
+                              <p className="text-foreground/80 text-sm font-semibold">
+                                Current data source
                               </p>
-                            )}
-                            <p className="text-sm text-muted-foreground">
-                              Disconnect it here if you want to remove it before choosing something else.
-                            </p>
+                              {currentSheetInfo?.url ? (
+                                <a
+                                  href={currentSheetInfo.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-foreground hover:text-primary block truncate text-base font-semibold underline-offset-2 hover:underline"
+                                >
+                                  {currentSheetInfo.filename ||
+                                    "Connected lifting log"}
+                                </a>
+                              ) : (
+                                <p className="text-foreground truncate text-base font-semibold">
+                                  {currentSheetInfo.filename ||
+                                    "Connected lifting log"}
+                                </p>
+                              )}
+                              <p className="text-muted-foreground text-sm">
+                                Disconnect it here if you want to remove it
+                                before choosing something else.
+                              </p>
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="w-full"
+                              disabled={isWorking || isDisconnectingCurrent}
+                              onClick={onDisconnectCurrent}
+                            >
+                              <Unplug className="mr-2 h-4 w-4" />
+                              {isDisconnectingCurrent
+                                ? "Disconnecting..."
+                                : "Disconnect"}
+                            </Button>
                           </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="w-full"
-                            disabled={isWorking || isDisconnectingCurrent}
-                            onClick={onDisconnectCurrent}
-                          >
-                            <Unplug className="mr-2 h-4 w-4" />
-                            {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
-                          </Button>
                         </div>
-                      </div>
-                    )}
-                    <div className="w-full rounded-lg border border-primary/20 bg-primary/5 p-3">
-                      <p className="text-sm font-semibold text-foreground">
+                      )}
+                    <div className="border-primary/20 bg-primary/5 w-full rounded-lg border p-3">
+                      <p className="text-foreground text-sm font-semibold">
                         Other options
                       </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="text-muted-foreground mt-1 text-sm">
                         Browse Google Drive, import a data file, or start fresh.
                       </p>
                       <div className="mt-3 flex flex-col gap-2">
@@ -436,49 +516,56 @@ export function ChooseSheetPanel({
               <div />
               <div className="flex items-start justify-center lg:pt-1">
                 <div className="w-full max-w-sm space-y-3">
-                  {isSwitchSheet && currentSheetInfo?.ssid && !isPrimaryCurrent && (
-                    <div className="rounded-2xl border border-border/70 bg-card/70 px-5 py-4">
-                      <div className="flex flex-col gap-3">
-                        <div className="min-w-0 space-y-1">
-                          <p className="text-sm font-semibold text-foreground/80">
-                            Current data source
-                          </p>
-                          {currentSheetInfo?.url ? (
-                            <a
-                              href={currentSheetInfo.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block truncate text-base font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
-                            >
-                              {currentSheetInfo.filename || "Connected lifting log"}
-                            </a>
-                          ) : (
-                            <p className="truncate text-base font-semibold text-foreground">
-                              {currentSheetInfo.filename || "Connected lifting log"}
+                  {isSwitchSheet &&
+                    currentSheetInfo?.ssid &&
+                    !isPrimaryCurrent && (
+                      <div className="border-border/70 bg-card/70 rounded-2xl border px-5 py-4">
+                        <div className="flex flex-col gap-3">
+                          <div className="min-w-0 space-y-1">
+                            <p className="text-foreground/80 text-sm font-semibold">
+                              Current data source
                             </p>
-                          )}
-                          <p className="text-sm text-muted-foreground">
-                            Disconnect it here if you want to remove it before choosing something else.
-                          </p>
+                            {currentSheetInfo?.url ? (
+                              <a
+                                href={currentSheetInfo.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-foreground hover:text-primary block truncate text-base font-semibold underline-offset-2 hover:underline"
+                              >
+                                {currentSheetInfo.filename ||
+                                  "Connected lifting log"}
+                              </a>
+                            ) : (
+                              <p className="text-foreground truncate text-base font-semibold">
+                                {currentSheetInfo.filename ||
+                                  "Connected lifting log"}
+                              </p>
+                            )}
+                            <p className="text-muted-foreground text-sm">
+                              Disconnect it here if you want to remove it before
+                              choosing something else.
+                            </p>
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="w-full"
+                            disabled={isWorking || isDisconnectingCurrent}
+                            onClick={onDisconnectCurrent}
+                          >
+                            <Unplug className="mr-2 h-4 w-4" />
+                            {isDisconnectingCurrent
+                              ? "Disconnecting..."
+                              : "Disconnect"}
+                          </Button>
                         </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="w-full"
-                          disabled={isWorking || isDisconnectingCurrent}
-                          onClick={onDisconnectCurrent}
-                        >
-                          <Unplug className="mr-2 h-4 w-4" />
-                          {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
-                        </Button>
                       </div>
-                    </div>
-                  )}
-                  <div className="w-full rounded-lg border border-primary/20 bg-primary/5 p-3">
-                    <p className="text-sm font-semibold text-foreground">
+                    )}
+                  <div className="border-primary/20 bg-primary/5 w-full rounded-lg border p-3">
+                    <p className="text-foreground text-sm font-semibold">
                       Other options
                     </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       Browse Google Drive, import a data file, or start fresh.
                     </p>
                     <div className="mt-3 flex flex-col gap-2">
@@ -522,24 +609,27 @@ export function ChooseSheetPanel({
           )}
           {otherCandidates.length > 0 && (
             <>
-              <div className="rounded-xl border bg-card/70">
+              <div className="bg-card/70 rounded-xl border">
                 <button
                   type="button"
                   className="flex w-full items-center justify-between px-4 py-3 text-left"
                   onClick={() => setShowOtherSheets((prev) => !prev)}
                 >
                   <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {isSwitchSheet ? "Other accessible sheets" : "Other detected sheets"}
+                    <p className="text-foreground text-sm font-semibold">
+                      {isSwitchSheet
+                        ? "Other accessible sheets"
+                        : "Other detected sheets"}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {otherCandidates.length} more option{otherCandidates.length === 1 ? "" : "s"}
+                    <p className="text-muted-foreground text-sm">
+                      {otherCandidates.length} more option
+                      {otherCandidates.length === 1 ? "" : "s"}
                     </p>
                   </div>
                   {showOtherSheets ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    <ChevronUp className="text-muted-foreground h-4 w-4" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <ChevronDown className="text-muted-foreground h-4 w-4" />
                   )}
                 </button>
                 {showOtherSheets && (
@@ -547,7 +637,7 @@ export function ChooseSheetPanel({
                     {otherCandidates.map((candidate) => (
                       <div
                         key={candidate.id}
-                        className="flex flex-col gap-3 rounded-xl border bg-background/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                        className="bg-background/80 flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="min-w-0">
                           <div className="mb-1 flex min-w-0 items-center gap-2">
@@ -562,21 +652,21 @@ export function ChooseSheetPanel({
                                 href={getCandidateUrl(candidate)}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="truncate text-sm font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
+                                className="text-foreground hover:text-primary truncate text-sm font-semibold underline-offset-2 hover:underline"
                               >
                                 {candidate.name}
                               </a>
                             ) : (
-                              <p className="truncate text-sm font-semibold text-foreground">
+                              <p className="text-foreground truncate text-sm font-semibold">
                                 {candidate.name}
                               </p>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-muted-foreground text-sm">
                             {formatCandidateMeta(candidate, isEnriching)}
                           </p>
                           {currentSsid === candidate.id && (
-                            <p className="pt-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                            <p className="text-primary pt-1 text-xs font-semibold tracking-wide uppercase">
                               Currently connected
                             </p>
                           )}
@@ -607,7 +697,7 @@ export function ChooseSheetPanel({
   if (embedded) return content;
 
   return (
-    <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
+    <Card className="border-primary/20 bg-background/95 mb-4 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
       {content}
     </Card>
   );

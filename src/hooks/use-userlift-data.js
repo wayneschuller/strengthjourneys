@@ -523,6 +523,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         exitSignedInDemoMode,
         importFile,
         clearImportedData,
+        sheetParsedData: parsedData,
       }}
     >
       {children}

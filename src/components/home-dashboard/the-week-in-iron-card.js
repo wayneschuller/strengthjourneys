@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, FileUp } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
@@ -552,6 +552,22 @@ function EarlyWeekCard({ isDemoMode, dataMaturityStage, dashboardStage }) {
         <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
           Log your training sessions and this card will track your weekly rhythm — sessions, volume, and lifts trained.
         </p>
+        {!isDemoMode && dashboardStage === "starter_sample" && (
+          <Link
+            href="/import"
+            className="mt-4 flex w-full items-center gap-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3 transition-colors hover:border-primary hover:bg-primary/10"
+          >
+            <FileUp className="h-5 w-5 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground">
+                Already have training data?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Import a CSV to merge your history into your Google Sheet.
+              </p>
+            </div>
+          </Link>
+        )}
         <div className="mt-5 w-full">
           <StartLiftPrompt />
         </div>

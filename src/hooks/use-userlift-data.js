@@ -14,7 +14,7 @@ import {
   parseData,
   parseImportedFile,
 } from "@/lib/data-sources/import-dispatcher";
-import { getDemoParsedData } from "@/lib/data-sources/demo-data-source";
+import { getDemoParsedData } from "@/lib/data-sources/sample-parsed-data";
 import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
 import {
   flushTimings,

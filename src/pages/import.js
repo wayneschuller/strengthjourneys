@@ -599,12 +599,17 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
               <h3 className="mb-2 font-semibold">
                 Drag &amp; drop a CSV file here
               </h3>
-              <p className="text-muted-foreground mb-4 max-w-md text-sm">
+              <p className="text-muted-foreground mb-1 max-w-md text-sm">
                 {mergeMode
-                  ? <>Drop a file and we&apos;ll merge your history straight into <strong className="text-foreground">&ldquo;{sheetName}&rdquo;</strong> — duplicates are skipped automatically. Want to explore someone else&apos;s data without changing your sheet? Sign out first, then import — it opens in read-only mode.</>
+                  ? <>Drop a file and we&apos;ll merge your history straight into <strong className="text-foreground">&ldquo;{sheetName}&rdquo;</strong> — duplicates are skipped automatically.</>
                   : createMode
                     ? "Drop a file and we'll create a brand new Strength Journeys Google Sheet in your Drive, ready to go."
                     : "Import your lifting history from TurnKey, or a Strength Journeys CSV export. More formats coming soon."}
+              </p>
+              <p className="text-muted-foreground mb-4 text-xs">
+                {isAuthenticated
+                  ? "Your file is parsed in the browser, then written to your Google Sheet."
+                  : "Your data stays in your browser — nothing is uploaded to a server."}
               </p>
               <Button
                 variant="outline"
@@ -619,11 +624,11 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
                 className="hidden"
                 onChange={(e) => handleFile(e.target.files?.[0])}
               />
-              <p className="text-muted-foreground mt-3 text-xs">
-                {isAuthenticated
-                  ? "Your file is parsed in the browser, then written to your Google Sheet."
-                  : "Your data stays in your browser — nothing is uploaded to a server."}
-              </p>
+              {mergeMode && (
+                <p className="text-muted-foreground mt-4 max-w-sm text-xs">
+                  Want to explore someone else&apos;s data without changing your sheet? Sign out first, then import — it opens in read-only mode.
+                </p>
+              )}
             </>
           )}
           {importError && (

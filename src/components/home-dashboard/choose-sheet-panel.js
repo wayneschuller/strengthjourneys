@@ -398,7 +398,7 @@ export function ChooseSheetPanel({
                           className="w-full"
                           asChild
                         >
-                          <Link href="/import">
+                          <Link href="/import?createSheet=1">
                             <FileUp className="mr-2 h-4 w-4" />
                             Import data file
                           </Link>
@@ -489,7 +489,7 @@ export function ChooseSheetPanel({
                         className="w-full"
                         asChild
                       >
-                        <Link href="/import">
+                        <Link href="/import?createSheet=1">
                           <FileUp className="mr-2 h-4 w-4" />
                           Import data file
                         </Link>

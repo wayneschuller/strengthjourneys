@@ -287,7 +287,7 @@ function deduplicateEntries(importedData, existingData) {
   return { newEntries, skippedCount };
 }
 
-function FileImportSection({ importFile, clearImportedData, isImportedData, importedFormatName, parsedData, toast, router, sheetInfo, existingParsedData, mutate }) {
+function FileImportSection({ importFile, clearImportedData, isImportedData, importedFormatName, parsedData, toast, router, sheetInfo, existingParsedData, mutate, selectSheet, createSheetMode, isAuthenticated }) {
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -307,16 +307,16 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
     try {
       const { count, formatName } = await importFile(file);
       toast({
-        title: "Data imported!",
-        description: `Loaded ${count} entries from ${formatName} format. Explore your data across the app.`,
+        title: "Data loaded!",
+        description: `Parsed ${count} entries from ${formatName} format.`,
       });
-      router.push("/");
+      // Don't navigate away — let the user see the merge/create options
     } catch (err) {
       setImportError(err.message);
     } finally {
       setImporting(false);
     }
-  }, [importFile, toast, router]);
+  }, [importFile, toast]);
 
   const onDrop = useCallback((e) => {
     e.preventDefault();
@@ -334,6 +334,30 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
 
   const canMerge = !!sheetInfo?.ssid;
 
+  // Write imported entries to a Google Sheet (existing or newly created)
+  const writeEntriesToSheet = useCallback(async (targetSsid, entries) => {
+    const apiEntries = entries.map((e) => ({
+      date: e.date,
+      liftType: e.liftType,
+      reps: e.reps,
+      weight: e.weight,
+      unitType: e.unitType || "kg",
+    }));
+
+    const res = await fetch("/api/sheet/import-history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ssid: targetSsid, entries: apiEntries }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to write data to sheet");
+    }
+    return data;
+  }, []);
+
+  // Merge into existing sheet (dedup against existing data)
   const handleMerge = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
 
@@ -349,29 +373,7 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
 
     setMerging(true);
     try {
-      const apiEntries = newEntries.map((e) => ({
-        date: e.date,
-        liftType: e.liftType,
-        reps: e.reps,
-        weight: e.weight,
-        unitType: e.unitType || "kg",
-      }));
-
-      const res = await fetch("/api/sheet/import-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ssid: sheetInfo.ssid, entries: apiEntries }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast({
-          title: "Merge failed",
-          description: data.error || "Something went wrong.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const data = await writeEntriesToSheet(sheetInfo.ssid, newEntries);
 
       const skippedNote = skippedCount > 0
         ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
@@ -382,27 +384,82 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
         description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}`,
       });
 
-      // Clear import state and refresh sheet data
       clearImportedData();
       mutate();
       router.push("/");
-    } catch {
+    } catch (err) {
       toast({
         title: "Merge failed",
-        description: "Network error. Please try again.",
+        description: err.message || "Network error. Please try again.",
         variant: "destructive",
       });
     } finally {
       setMerging(false);
     }
-  }, [parsedData, existingParsedData, sheetInfo, clearImportedData, mutate, toast, router]);
+  }, [parsedData, existingParsedData, sheetInfo, writeEntriesToSheet, clearImportedData, mutate, toast, router]);
 
-  // Already imported — show status + merge offer
+  // Create a new Google Sheet and populate it with the imported data
+  const handleCreateSheetFromImport = useCallback(async () => {
+    if (!parsedData || parsedData.length === 0) return;
+
+    setMerging(true);
+    try {
+      // Step 1: Create a blank sheet via the link API
+      const linkRes = await fetch("/api/sheet/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: "bootstrap", mode: "create_blank" }),
+      });
+      const linkPayload = await linkRes.json();
+
+      if (!linkRes.ok || !linkPayload?.ssid) {
+        throw new Error(linkPayload?.error || "Failed to create Google Sheet");
+      }
+
+      // Step 2: Write all imported entries into the new sheet
+      const nonGoalEntries = parsedData.filter((e) => !e.isGoal);
+      const data = await writeEntriesToSheet(linkPayload.ssid, nonGoalEntries);
+
+      // Step 3: Link the sheet in the app
+      selectSheet(linkPayload.ssid, {
+        url: linkPayload.webViewLink ?? null,
+        filename: linkPayload.name ?? null,
+        modifiedTime: linkPayload.modifiedTime ?? null,
+        modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
+      });
+
+      toast({
+        title: "Google Sheet created!",
+        description: `Added ${data.insertedRows} entries across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"} to your new sheet.`,
+      });
+
+      clearImportedData();
+      mutate();
+      router.push("/");
+    } catch (err) {
+      toast({
+        title: "Import failed",
+        description: err.message || "Network error. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMerging(false);
+    }
+  }, [parsedData, writeEntriesToSheet, selectSheet, clearImportedData, mutate, toast, router]);
+
+  // Already imported — show status + action options
   if (isImportedData) {
-    const entryCount = parsedData?.length || 0;
-    const { newEntries, skippedCount } = canMerge
+    const entryCount = parsedData?.filter((e) => !e.isGoal)?.length || 0;
+
+    // Signed-in user without a sheet (or createSheet mode): offer to create a new sheet
+    const showCreateSheet = isAuthenticated && (createSheetMode || !sheetInfo?.ssid);
+
+    // Signed-in user with existing sheet: offer merge with dedup
+    const showMerge = isAuthenticated && !showCreateSheet && canMerge;
+
+    const { newEntries, skippedCount } = showMerge
       ? deduplicateEntries(parsedData || [], existingParsedData)
-      : { newEntries: parsedData || [], skippedCount: 0 };
+      : { newEntries: parsedData?.filter((e) => !e.isGoal) || [], skippedCount: 0 };
 
     return (
       <section className="mx-auto mb-12 max-w-5xl">
@@ -414,65 +471,91 @@ function FileImportSection({ importFile, clearImportedData, isImportedData, impo
               {importedFormatName} data loaded
             </h3>
             <p className="text-muted-foreground mb-4 text-sm">
-              {entryCount} {entryCount === 1 ? "entry" : "entries"} imported.
-              You&apos;re in view-only mode — explore your data across the app.
+              {entryCount} {entryCount === 1 ? "entry" : "entries"} parsed and ready.
             </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => router.push("/")}>
-                <Dumbbell className="mr-2 h-4 w-4" /> Explore Dashboard
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  clearImportedData();
-                  toast({ title: "Imported data cleared" });
-                }}
-              >
-                <X className="mr-2 h-4 w-4" /> Clear Import
-              </Button>
-            </div>
 
-            {/* Merge into Google Sheet offer */}
-            {canMerge && (
-              <>
-                <Separator className="my-6 w-full" />
-                <div className="w-full max-w-md space-y-3">
-                  <h4 className="text-sm font-semibold text-foreground">
-                    Merge into your Google Sheet
-                  </h4>
-                  <p className="text-muted-foreground text-xs">
-                    Write this data permanently into your Strength Journeys
-                    spreadsheet.
-                    {newEntries.length < entryCount && (
-                      <> {skippedCount} duplicate{skippedCount === 1 ? "" : "s"} will be skipped.</>
-                    )}
-                  </p>
-                  <Button
-                    onClick={handleMerge}
-                    disabled={merging || newEntries.length === 0}
-                    className="w-full gap-2"
-                  >
-                    {merging ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Merging {newEntries.length} entries...
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRight className="h-4 w-4" />
-                        Merge {newEntries.length} {newEntries.length === 1 ? "entry" : "entries"} into sheet
-                      </>
-                    )}
-                  </Button>
-                  {newEntries.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      All entries already exist in your sheet — nothing to merge.
-                    </p>
+            {/* Signed-in: Create new Google Sheet from imported data */}
+            {showCreateSheet && (
+              <div className="w-full max-w-md space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  We&apos;ll create a new Google Sheet in your Drive and populate
+                  it with your {entryCount} {entryCount === 1 ? "entry" : "entries"}.
+                  This becomes your permanent data backend — fully yours.
+                </p>
+                <Button
+                  onClick={handleCreateSheetFromImport}
+                  disabled={merging || entryCount === 0}
+                  className="w-full gap-2"
+                >
+                  {merging ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating sheet &amp; importing...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="h-4 w-4" />
+                      Create Google Sheet with this data
+                    </>
                   )}
-                </div>
-              </>
+                </Button>
+              </div>
             )}
+
+            {/* Signed-in with existing sheet: Merge */}
+            {showMerge && (
+              <div className="w-full max-w-md space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Merge this data into your existing Strength Journeys spreadsheet.
+                  {skippedCount > 0 && (
+                    <> {skippedCount} duplicate{skippedCount === 1 ? "" : "s"} will be skipped.</>
+                  )}
+                </p>
+                <Button
+                  onClick={handleMerge}
+                  disabled={merging || newEntries.length === 0}
+                  className="w-full gap-2"
+                >
+                  {merging ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Merging {newEntries.length} entries...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="h-4 w-4" />
+                      Merge {newEntries.length} {newEntries.length === 1 ? "entry" : "entries"} into sheet
+                    </>
+                  )}
+                </Button>
+                {newEntries.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    All entries already exist in your sheet — nothing to merge.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Not signed in: view-only explore */}
+            {!isAuthenticated && (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => router.push("/")}>
+                  <Dumbbell className="mr-2 h-4 w-4" /> Explore Dashboard
+                </Button>
+              </div>
+            )}
+
+            <Separator className="my-5 w-full" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                clearImportedData();
+                toast({ title: "Imported data cleared" });
+              }}
+            >
+              <X className="mr-2 h-4 w-4" /> Clear &amp; start over
+            </Button>
           </CardContent>
         </Card>
       </section>
@@ -583,7 +666,8 @@ function downloadCsv(csvString, filename) {
 export default function ImportPage() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, mutate, parsedData, isDemoMode, isReturningUserLoading, importFile, clearImportedData, isImportedData, importedFormatName, hasUserData, isReadOnly, sheetParsedData } = useUserLiftingData();
+  const { sheetInfo, mutate, parsedData, isDemoMode, isReturningUserLoading, importFile, clearImportedData, isImportedData, importedFormatName, hasUserData, isReadOnly, sheetParsedData, selectSheet } = useUserLiftingData();
+  const createSheetMode = router.query.createSheet === "1";
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -707,6 +791,9 @@ export default function ImportPage() {
           sheetInfo={sheetInfo}
           existingParsedData={sheetParsedData}
           mutate={mutate}
+          selectSheet={selectSheet}
+          createSheetMode={createSheetMode}
+          isAuthenticated={authStatus === "authenticated"}
         />
 
         {/* Quick Add Section — only for users with write access (GSheet mode) */}

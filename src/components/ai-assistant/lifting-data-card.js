@@ -25,10 +25,10 @@ import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
  * @param {Function} props.setSelectedOptions - State setter for selectedOptions; receives the full updated options object.
  */
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
-  const { parsedData, isLoading, isDemoMode, sheetInfo, hasUserData } = useUserLiftingData();
+  const { parsedData, isLoading, isDemoMode, sheetInfo, hasUserData, isImportedData } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  const isUnauthenticated = authStatus === "unauthenticated";
+  const isUnauthenticated = authStatus === "unauthenticated" && !isImportedData;
   const isAuthenticated = authStatus === "authenticated";
   const hasSheet = isAuthenticated && !!sheetInfo?.ssid;
   const hasPersonalData =
@@ -59,18 +59,18 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
       <CardHeader>
         <CardTitle>Talk To Your Lifting Data</CardTitle>
         <CardDescription>
-          {isUnauthenticated && "Sign in to share your lifting data with the AI"}
-          {isAuthenticated && !hasSheet &&
-            "Set up your Google Sheet to get started"}
-          {hasSheet && !hasPersonalData && isLoading && "Loading your data..."}
-          {hasSheet && !hasPersonalData && !isLoading &&
-            "No lifting data found in the connected sheet"}
           {hasPersonalData && "Data successfully loaded and available."}
+          {!hasPersonalData && hasUserData && isLoading && "Loading your data..."}
+          {!hasPersonalData && hasUserData && !isLoading &&
+            "No lifting data found"}
+          {!hasUserData && isUnauthenticated && "Sign in to share your lifting data with the AI"}
+          {!hasUserData && isAuthenticated && !hasSheet &&
+            "Set up your Google Sheet to get started"}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* State 1: Unauthenticated - prompt to sign in */}
-        {isUnauthenticated && (
+        {/* State 1: Unauthenticated (and no CSV import) - prompt to sign in */}
+        {!hasUserData && isUnauthenticated && (
           <div className="flex flex-col items-start gap-3">
             <p className="text-muted-foreground w-64 text-pretty text-sm">
               Sign in with Google to connect your lifting spreadsheet and share
@@ -86,7 +86,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
         )}
 
         {/* State 2: Authenticated but no sheet connected */}
-        {isAuthenticated && !hasSheet && (
+        {!hasUserData && isAuthenticated && !hasSheet && (
           <div className="flex flex-col items-start gap-3">
             <p className="text-muted-foreground w-64 text-pretty text-sm">
               Set up your Google Sheet to share your personal lifting data with
@@ -110,8 +110,8 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
           </div>
         )}
 
-        {/* State 3: Authenticated + sheet + personal data loaded */}
-        {hasSheet && (
+        {/* State 3: User has data (GSheet or CSV import) — show sharing checkboxes */}
+        {hasUserData && (
           <div className={cn(!hasPersonalData && "pointer-events-none opacity-50")}>
             <div className="text-muted-foreground mb-2">
               Select the lifting info to share with the AI:
@@ -231,9 +231,8 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
 
         <div className="text-muted-foreground mt-5 text-sm">
           <p className="w-64 text-pretty">
-            Strength Journeys loads your Google Sheet lifting data directly into
-            your browser. Nothing is streamed to our servers—only summary points
-            are shared with the AI.{" "}
+            Your lifting data stays in your browser. Nothing is streamed to our
+            servers—only summary points are shared with the AI.{" "}
           </p>
           <p>
             For more information read our{" "}

@@ -103,7 +103,7 @@ export function StandardsSlider({
       if (!latest || entry.date > latest) latest = entry.date;
     }
     return latest;
-  }, [authStatus, parsedData, liftType]);
+  }, [hasUserData, parsedData, liftType]);
 
   // --- Compute period-best E1RMs EXCLUDING the most recent session ---
   const periodBestNotches = useMemo(() => {
@@ -174,7 +174,7 @@ export function StandardsSlider({
     });
 
     return summaries;
-  }, [authStatus, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
+  }, [hasUserData, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
 
   // --- "Now" marker: best E1RM from the most recent session ---
   const nowNotch = useMemo(() => {
@@ -220,7 +220,7 @@ export function StandardsSlider({
     }
 
     return { ...bestOnLatest, shortLabel, isNewPR: false, matchesPR: false };
-  }, [authStatus, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
+  }, [hasUserData, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
 
   // Prevent initial render on standards-only scale, then jumping once
   // authenticated user data (PR/E1RM) hydrates and expands min/max bounds.

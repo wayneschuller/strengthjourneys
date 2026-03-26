@@ -12,7 +12,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -54,7 +53,6 @@ export function MostRecentSessionCard({
   isProgressDone = true,
   defaultVisibleCount = RECENT_SESSIONS_COUNT,
 }) {
-  const { status: authStatus } = useSession();
   const [internalHighlightDate, setInternalHighlightDate] = useState(null);
   const [visibleCount, setVisibleCount] = useState(defaultVisibleCount);
 
@@ -397,7 +395,6 @@ export function MostRecentSessionCard({
                   liftType={lt}
                   workouts={workouts}
                   e1rmFormula={e1rmFormula}
-                  authStatus={authStatus}
                   hasBioData={hasBioData}
                   standards={standards}
                   sessionDate={sessionDate}

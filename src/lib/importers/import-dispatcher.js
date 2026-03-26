@@ -9,6 +9,7 @@
 import { parseStrengthJourneysData } from "./strength-journeys-parser";
 import { parseBtwbData } from "./btwb-parser";
 import { parseTurnKeyData } from "./turnkey-parser";
+import { parseWodifyData } from "./wodify-parser";
 import { decodeCSV } from "./decode-csv";
 
 /**
@@ -55,6 +56,32 @@ export function parseData(data) {
  * Order matters — first match wins.
  */
 const FORMAT_SIGNATURES = [
+  {
+    name: "Wodify",
+    detect: (headers) => {
+      const hasDate = headers.includes("Date");
+      const hasLegacyColumns =
+        headers.includes("Sets") &&
+        headers.includes("Reps") &&
+        headers.includes("Weight") &&
+        headers.includes("UOMLabel");
+      const hasPublicWeightliftingColumns =
+        headers.includes("Component") &&
+        headers.includes("Result") &&
+        (headers.includes("Performance Result Type") ||
+          headers.includes("Result Type Label"));
+      const hasWodifyNameStyle = headers.some((header) =>
+        /^Name\(\d+\)$/.test(header),
+      );
+
+      return (
+        hasDate &&
+        ((hasLegacyColumns && hasWodifyNameStyle) ||
+          hasPublicWeightliftingColumns)
+      );
+    },
+    parse: parseWodifyData,
+  },
   {
     name: "BTWB",
     detect: (headers) =>
@@ -124,7 +151,7 @@ export async function parseImportedFile(file) {
 
   if (!format) {
     throw new Error(
-      "Unrecognized file format. Supported formats: BTWB export, Strength Journeys CSV export, TurnKey export. " +
+      "Unrecognized file format. Supported formats: Wodify export, BTWB export, Strength Journeys CSV export, TurnKey export. " +
         "Make sure your file has column headers in the first row.",
     );
   }

@@ -700,7 +700,7 @@ function FileImportSection({
                 ) : createMode ? (
                   "Drop a file and we'll create a brand new Strength Journeys Google Sheet in your Drive, ready to go."
                 ) : (
-                  "Import your lifting history from BTWB, TurnKey, or a Strength Journeys CSV export."
+                  "Import your lifting history from Wodify, BTWB, TurnKey, or a Strength Journeys CSV export."
                 )}
               </p>
               <p className="text-muted-foreground mb-4 text-xs">

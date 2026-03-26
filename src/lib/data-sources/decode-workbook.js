@@ -1,3 +1,14 @@
+// Workbook decoder for spreadsheet-style imports.
+//
+// This module takes an uploaded Excel file (`.xls` / `.xlsx`) and converts the
+// first non-empty worksheet into the same `string[][]` row format used by the
+// CSV decoder. Keeping both decoders aligned means the downstream import
+// dispatcher can stay format-agnostic: it always receives header-first rows of
+// plain strings no matter where the file came from.
+//
+// We lazy-load `xlsx` inside `decodeWorkbook()` so the heavier workbook parser
+// only lands in the client bundle when someone actually chooses an Excel file.
+
 function coerceCell(value) {
   if (value == null) return "";
   if (typeof value === "string") return value;
@@ -27,10 +38,6 @@ function pickFirstNonEmptySheet(workbook, XLSX) {
   return [];
 }
 
-// Excel workbook -> string[][] decoder.
-//
-// Loaded lazily only when the user selects an .xls/.xlsx file so the parser
-// library doesn't inflate the normal import-page bundle.
 export async function decodeWorkbook(file) {
   const [{ read, utils }, buffer] = await Promise.all([
     import("xlsx"),

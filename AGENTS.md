@@ -125,6 +125,9 @@ All analysis is client-side. No user data is stored server-side.
 - Double quotes preferred
 - Keep JSX readable and vertically spaced
 - Do not introduce unnecessary comments
+- Every source file should start with a short explanatory comment block that
+  states the file's role in the system and, when useful, the key constraint or
+  design choice future agents should keep in mind
 - Exception: for SEO changes informed by Search Console reviews, add one short
   provenance comment near the tuned config or metadata block with the review
   date in `YYYY-MM-DD` format so future agents can distinguish evidence-led

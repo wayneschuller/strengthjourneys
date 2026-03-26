@@ -1,7 +1,16 @@
 // CSV text → string[][] decoder.
 //
-// Handles quoted fields, escaped quotes (""), newlines within quotes,
-// and both \r\n and \n line endings. No external dependencies.
+// This is the lightweight text-path companion to `decode-workbook.js`.
+// Its job is deliberately narrow: take raw CSV-like text and normalize it into
+// a header-first `string[][]` shape that every downstream importer can consume.
+//
+// A few real-world export quirks matter here:
+// - different apps use different delimiters (comma, semicolon, tab)
+// - quoted fields may contain commas, line breaks, or escaped quotes
+// - files may end with `\n`, `\r\n`, bare `\r`, or no trailing newline at all
+//
+// We keep this dependency-free because it runs on the client during import and
+// only needs a predictable, conservative parser rather than a full CSV library.
 
 /**
  * Guess the most likely delimiter from the first line.

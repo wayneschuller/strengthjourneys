@@ -437,7 +437,11 @@ export function TheWeekInIronCard({
                 title="What happened this week"
                 description={getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows)}
               >
-                <WeekSessionList rows={weeklySessionRows} isReadOnly={isReadOnly} />
+                <WeekSessionList
+                  authStatus={authStatus}
+                  rows={weeklySessionRows}
+                  isReadOnly={isReadOnly}
+                />
               </WeekSection>
 
               {!isReadOnly && (
@@ -488,13 +492,17 @@ function WeekSection({ stepLabel, title, description, children }) {
   );
 }
 
-function WeekSessionList({ rows, isReadOnly = false }) {
+function WeekSessionList({ authStatus, rows, isReadOnly = false }) {
   return (
     <div className="space-y-2">
       {rows.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
-          No sessions logged in this week.
-        </div>
+        isReadOnly ? (
+          <EmptyWeekState authStatus={authStatus} isReadOnly={isReadOnly} />
+        ) : (
+          <div className="rounded-xl border border-dashed bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+            No sessions logged in this week.
+          </div>
+        )
       ) : (
         rows.map((row) => {
           const className = "grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4 rounded-xl border bg-muted/20 px-4 py-3" +

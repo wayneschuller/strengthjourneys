@@ -13,6 +13,7 @@
  */
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
 import { getServerSession } from "next-auth/next";
 import { gunzipSync } from "node:zlib";
 
@@ -37,6 +38,20 @@ function logImportEvent(phase, meta = {}) {
     phase,
     ...meta,
   });
+}
+
+function buildGoogleApiFailure(body, fallbackMessage, httpStatus) {
+  const classifiedError = classifySheetFlowError({
+    message: body?.error?.message || fallbackMessage,
+  });
+
+  return {
+    httpStatus: classifiedError.code ? classifiedError.httpStatus : httpStatus,
+    payload: {
+      error: classifiedError.userMessage || fallbackMessage,
+      ...(classifiedError.code ? { errorCode: classifiedError.code } : {}),
+    },
+  };
 }
 
 export default async function handler(req, res) {
@@ -116,9 +131,12 @@ export default async function handler(req, res) {
     );
     if (!metadataRes.ok) {
       const body = await metadataRes.json().catch(() => ({}));
-      return res.status(metadataRes.status).json({
-        error: body?.error?.message || "Failed to read sheet metadata",
-      });
+      const failure = buildGoogleApiFailure(
+        body,
+        "Failed to read sheet metadata",
+        metadataRes.status,
+      );
+      return res.status(failure.httpStatus).json(failure.payload);
     }
     const metadataPayload = await metadataRes.json().catch(() => ({}));
     const firstSheet = Array.isArray(metadataPayload?.sheets)
@@ -135,9 +153,12 @@ export default async function handler(req, res) {
     );
     if (!dataRes.ok) {
       const body = await dataRes.json().catch(() => ({}));
-      return res.status(dataRes.status).json({
-        error: body?.error?.message || "Failed to read sheet",
-      });
+      const failure = buildGoogleApiFailure(
+        body,
+        "Failed to read sheet",
+        dataRes.status,
+      );
+      return res.status(failure.httpStatus).json(failure.payload);
     }
     const { values: sheetRows = [] } = await dataRes.json();
 
@@ -335,8 +356,13 @@ export default async function handler(req, res) {
       );
       if (!insertRes.ok) {
         const body = await insertRes.json().catch(() => ({}));
-        return res.status(insertRes.status).json({
-          error: body?.error?.message || "Failed to import rows",
+        const failure = buildGoogleApiFailure(
+          body,
+          "Failed to import rows",
+          insertRes.status,
+        );
+        return res.status(failure.httpStatus).json({
+          ...failure.payload,
           insertedSoFar: 0,
         });
       }

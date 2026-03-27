@@ -1,5 +1,6 @@
 import { devLog } from "@/lib/processing-utils";
 import { issueOnboardingFlowToken } from "@/lib/onboarding-flow-events";
+import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
 import {
   buildSheetName,
   classifyLifecycle,
@@ -301,8 +302,10 @@ export default async function handler(req, res) {
     return respondRecoverReturningUser(res, debug, { onboardingFlowToken });
   } catch (error) {
     console.error("[sheet/resolve] resolve failed:", error);
-    res.status(500).json({
-      error: error.message || "Sheet flow resolution failed",
+    const classifiedError = classifySheetFlowError(error);
+    res.status(classifiedError.httpStatus).json({
+      error: classifiedError.userMessage || "Sheet flow resolution failed",
+      ...(classifiedError.code ? { errorCode: classifiedError.code } : {}),
       ...(onboardingFlowToken ? { onboardingFlowToken } : {}),
     });
   }

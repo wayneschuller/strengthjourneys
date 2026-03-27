@@ -67,6 +67,10 @@ export const LOCAL_STORAGE_KEYS = {
   // Google Sheet / data source
   SHEET_INFO: "SJ_sheetInfo",
   SIGNED_IN_DEMO_MODE: "SJ_signedInDemoMode",
+  // Rare recovery rail only: stores the interrupted save intent long enough to
+  // resume after Google re-consent. Do not expand this into a general workflow
+  // state machine.
+  PENDING_SHEET_ACTION: "SJ_pendingSheetAction",
   SSID: "ssid", // deprecated — migrated to SHEET_INFO
   SHEET_URL: "sheetURL", // deprecated — migrated to SHEET_INFO
   SHEET_FILENAME: "sheetFilename", // deprecated — migrated to SHEET_INFO

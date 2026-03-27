@@ -1,7 +1,13 @@
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import { FileSpreadsheet, GitMerge, ShieldCheck, Upload } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  GitMerge,
+  Shield,
+  Upload,
+} from "lucide-react";
 
 import { ImportWorkflowSection } from "@/components/import-workflow-section";
 import {
@@ -19,15 +25,15 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   getImportAppPageBySlug,
   getImportAppUrl,
   IMPORT_APP_PAGES,
-} from "@/lib/import-seo-pages";
+} from "@/lib/import-app-guides";
 
 export async function getStaticPaths() {
   return {
@@ -57,7 +63,7 @@ function ImportAppPage({ page }) {
     "@graph": [
       {
         "@type": "WebPage",
-        name: page.seoTitle,
+        name: page.title,
         description: page.metaDescription,
         url: canonicalURL,
       },
@@ -73,7 +79,7 @@ function ImportAppPage({ page }) {
           {
             "@type": "ListItem",
             position: 2,
-            name: "Import Data",
+            name: "Import",
             item: "https://www.strengthjourneys.xyz/import",
           },
           {
@@ -117,12 +123,12 @@ function ImportAppPage({ page }) {
         </script>
       </Head>
       <NextSeo
-        title={page.seoTitle}
+        title={page.title}
         description={page.metaDescription}
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: page.seoTitle,
+          title: page.title,
           description: page.metaDescription,
           type: "article",
           site_name: "Strength Journeys",
@@ -137,44 +143,48 @@ function ImportAppPage({ page }) {
 
       <PageContainer className="pb-16">
         <PageHeader>
-          <PageHeaderHeading icon={Upload}>{page.heroTitle}</PageHeaderHeading>
+          <PageHeaderHeading icon={Upload}>
+            {page.heroTitle}
+          </PageHeaderHeading>
           <PageHeaderDescription>
             <p>{page.heroDescription}</p>
           </PageHeaderDescription>
         </PageHeader>
 
+        {/* Upload area — front and center */}
         <ImportWorkflowSection
-          title={`Start Importing from ${page.appName}`}
-          description={`Upload your ${page.appName} export here. Strength Journeys will parse the file in your browser, let you preview it, and if you are signed in, write it into a Google Sheet you own.`}
+          title={`Import from ${page.appName}`}
         />
 
-        <div className="mx-auto max-w-5xl space-y-8 px-3 sm:px-[2vw] md:px-[3vw] lg:px-[4vw] xl:px-[5vw]">
-          <div className="grid gap-4 lg:grid-cols-[1.25fr,0.95fr]">
+        {/* Privacy badge */}
+        <p className="text-muted-foreground mx-auto -mt-8 mb-10 max-w-5xl text-center text-xs">
+          <Shield className="mr-1 inline h-3.5 w-3.5 align-text-bottom" />
+          Your data stays in your browser — nothing is saved unless you choose
+          to.
+        </p>
+
+        <div className="mx-auto max-w-5xl space-y-8">
+          {/* Why it matters + What you get — side by side */}
+          <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>
-                  Turn your {page.appName} export into a sheet you own
-                </CardTitle>
-                <CardDescription>
-                  Import CSV, XLS, or XLSX files in the browser, preview the
-                  result, and store the final version in your own Google Sheet.
-                </CardDescription>
+                <CardTitle>Why move your {page.appName} data?</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-muted-foreground text-sm leading-6">
-                  {page.intro}
+              <CardContent>
+                <p className="text-muted-foreground text-sm leading-7">
+                  {page.whyItMatters}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>{page.comparisonTitle}</CardTitle>
+                <CardTitle>What you get</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 text-sm leading-6">
-                  {page.comparisonBullets.map((bullet) => (
+                  {page.whatYouGet.map((bullet) => (
                     <li key={bullet} className="flex gap-3">
-                      <ShieldCheck className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                      <CheckCircle2 className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                       <span className="text-muted-foreground">{bullet}</span>
                     </li>
                   ))}
@@ -183,14 +193,13 @@ function ImportAppPage({ page }) {
             </Card>
           </div>
 
+          {/* Export steps + Merge — side by side */}
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>How to export data from {page.appName}</CardTitle>
-                <CardDescription>
-                  The practical answer: export the file, then bring it into
-                  Strength Journeys so the data ends up in Google Sheets.
-                </CardDescription>
+                <CardTitle>
+                  How to export from {page.appName}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ol className="space-y-4 text-sm leading-6">
@@ -209,37 +218,22 @@ function ImportAppPage({ page }) {
             <Card>
               <CardHeader>
                 <CardTitle>{page.mergeTitle}</CardTitle>
-                <CardDescription>
-                  Strength Journeys is the bridge when your history is spread
-                  across more than one app.
-                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent>
                 <div className="flex items-start gap-3 rounded-lg border p-4">
                   <GitMerge className="text-primary mt-0.5 h-5 w-5 shrink-0" />
                   <p className="text-muted-foreground text-sm leading-6">
                     {page.mergeBody}
                   </p>
                 </div>
-                <div className="flex items-start gap-3 rounded-lg border p-4">
-                  <FileSpreadsheet className="text-primary mt-0.5 h-5 w-5 shrink-0" />
-                  <p className="text-muted-foreground text-sm leading-6">
-                    The end state is simple: one owned Google Sheet, one cleaner
-                    history, and one place to keep future imports instead of
-                    scattered app exports.
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </div>
 
+          {/* FAQ */}
           <Card>
             <CardHeader>
-              <CardTitle>{page.appName} import FAQ</CardTitle>
-              <CardDescription>
-                Short answers for the searches lifters actually make before they
-                move old workout data.
-              </CardDescription>
+              <CardTitle>Common questions</CardTitle>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
@@ -255,13 +249,10 @@ function ImportAppPage({ page }) {
             </CardContent>
           </Card>
 
+          {/* Related apps */}
           <Card>
             <CardHeader>
-              <CardTitle>Also importing from another app?</CardTitle>
-              <CardDescription>
-                Use these guides to bring multiple training histories into the
-                same Strength Journeys sheet.
-              </CardDescription>
+              <CardTitle>Importing from another app too?</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {relatedPages.map((relatedPage) => (
@@ -271,11 +262,11 @@ function ImportAppPage({ page }) {
                   className="hover:bg-muted/40 rounded-lg border p-4 transition-colors"
                 >
                   <div className="mb-1 font-semibold">
-                    Import {relatedPage.appName} Data
+                    {relatedPage.appName}
                   </div>
                   <p className="text-muted-foreground text-sm leading-6">
-                    See how to export {relatedPage.appName}, import it into
-                    Strength Journeys, and merge it into Google Sheets.
+                    Export from {relatedPage.appName} and merge it with your
+                    other training data.
                   </p>
                 </Link>
               ))}

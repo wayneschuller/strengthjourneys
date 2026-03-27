@@ -42,7 +42,7 @@ import {
   Shield,
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { IMPORT_APP_PAGES } from "@/lib/import-seo-pages";
+import { IMPORT_APP_PAGES } from "@/lib/import-app-guides";
 
 
 const BIG_FOUR = [

@@ -265,6 +265,10 @@ The project is intentionally committed to the Pages Router.
 - Feature branches branch off `main`
 - Never delete `stable`
 - Do not force push to `main` or `stable`
+- If the current branch is `stable` and the user asks for code changes, warn the
+  user up front that they are on the production branch before making edits
+- Unless the user explicitly asks to work on `stable`, switch to `main` before
+  making changes, then keep commits and pushes flowing to `main`
 
 ---
 
@@ -278,7 +282,10 @@ Agents operating in this repo should:
 - Preserve visual design consistency
 - Avoid architectural rewrites unless explicitly requested
 - Run lint after every change
-- By default, automatically commit and push directly to `main` unless the user says otherwise
+- Love the default workflow of committing and pushing to `main` as you go unless
+  the user says otherwise
+- If you discover you are on `stable`, say so immediately before editing and
+  move the work to `main` unless the user explicitly wants a production-branch change
 - Do not run `npm run build` unless the user explicitly asks (it can disrupt the user's local `npm run dev` flow)
 - Never introduce TypeScript
 - Never migrate to App Router

@@ -1,4 +1,8 @@
-/** @format */
+/**
+ * App-wide layout shell and preview-import banner.
+ * Keep rare save-recovery rails thin here; this file should surface them only
+ * through focused CTA handoffs, not as a first-class app mode.
+ */
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
@@ -22,6 +26,7 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { analyzeImportedEntries } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import {
   isToday,
   parseISO,
@@ -499,8 +504,6 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     parsedData,
     sheetParsedData,
     isLoading,
-    importedFileName,
-    selectSheet,
     mutate,
     clearImportedData,
   } = useUserLiftingData();
@@ -590,64 +593,15 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     toast,
   ]);
 
-  const handleCreateFromBanner = useCallback(async () => {
+  const handleCreateFromBanner = useCallback(() => {
     if (!parsedData || parsedData.length === 0) return;
 
-    setWorking(true);
-    try {
-      const linkRes = await fetch("/api/sheet/link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          intent: "bootstrap",
-          mode: "create_blank",
-          importedFileName,
-        }),
-      });
-      const linkPayload = await linkRes.json();
-      if (!linkRes.ok || !linkPayload?.ssid)
-        throw new Error(linkPayload?.error || "Failed to create sheet");
-
-      const nonGoalEntries = parsedData.filter((e) => !e.isGoal);
-      const apiEntries = nonGoalEntries.map((e) => ({
-        date: e.date,
-        liftType: e.liftType,
-        reps: e.reps,
-        weight: e.weight,
-        unitType: e.unitType || "kg",
-      }));
-      const writeRes = await postImportHistory({
-        ssid: linkPayload.ssid,
-        entries: apiEntries,
-      }, {
-        source: "preview_banner_create",
-      });
-      const writeData = await writeRes.json();
-      if (!writeRes.ok)
-        throw new Error(writeData.error || "Failed to write data");
-
-      selectSheet(linkPayload.ssid, {
-        url: linkPayload.webViewLink ?? null,
-        filename: linkPayload.name ?? null,
-        modifiedTime: linkPayload.modifiedTime ?? null,
-        modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
-      });
-      toast({
-        title: "Google Sheet created!",
-        description: `Imported ${writeData.insertedRows} entries into your new Strength Journeys sheet.`,
-      });
-      clearImportedData();
-      mutate();
-    } catch (err) {
-      toast({
-        title: "Import failed",
-        description: err.message || "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setWorking(false);
-    }
-  }, [parsedData, importedFileName, selectSheet, clearImportedData, mutate, toast]);
+    // Keep preview save orchestration inside the shared dialog so the missing-
+    // scope fallback remains a narrow recovery rail instead of a banner mode.
+    openSheetSetupDialog("bootstrap", {
+      action: PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT,
+    });
+  }, [parsedData]);
 
   return (
     <section className="mb-3 border-y border-blue-200 bg-blue-50/80 dark:border-blue-800/60 dark:bg-blue-950/50">
@@ -707,10 +661,9 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
             <Button
               size="sm"
               className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
-              disabled={working}
               onClick={handleCreateFromBanner}
             >
-              {working ? "Saving..." : "Save my data"}
+              Save my data
             </Button>
           )}
           <Button

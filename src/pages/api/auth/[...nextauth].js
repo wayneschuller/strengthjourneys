@@ -10,6 +10,32 @@ const scopes = [
   "https://www.googleapis.com/auth/userinfo.profile",
   "https://www.googleapis.com/auth/drive.file",
 ];
+const REQUIRED_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+
+function getGrantedScopeSupportMeta(account) {
+  const grantedScopeString =
+    typeof account?.scope === "string" && account.scope.trim().length > 0
+      ? account.scope.trim()
+      : typeof account?.granted_scope === "string" &&
+          account.granted_scope.trim().length > 0
+        ? account.granted_scope.trim()
+        : null;
+
+  if (!grantedScopeString) {
+    return {
+      grantedScopesKnown: false,
+      grantedScopes: null,
+      hasRequiredDriveScope: null,
+    };
+  }
+
+  const grantedScopes = grantedScopeString.split(/\s+/).filter(Boolean);
+  return {
+    grantedScopesKnown: true,
+    grantedScopes,
+    hasRequiredDriveScope: grantedScopes.includes(REQUIRED_DRIVE_SCOPE),
+  };
+}
 
 /**
  * Takes a token, and returns a new token with updated
@@ -77,9 +103,13 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account }) {
       const signInMeta = await getSignInSupportMeta(user?.email);
-      await promptDeveloper("sign-in", user, signInMeta);
+      const grantedScopeMeta = getGrantedScopeSupportMeta(account);
+      await promptDeveloper("sign-in", user, {
+        ...signInMeta,
+        ...grantedScopeMeta,
+      });
       return true;
     },
     async jwt({ token, user, account }) {
@@ -155,9 +185,20 @@ function daysAgo(isoString) {
 
 const PROMPT_MESSAGES = {
   "sign-in": (name, email, timeStr, meta) => ({
-    subject: `[SJ] Sign-in — ${name}`,
+    subject:
+      meta.hasRequiredDriveScope === false
+        ? `[SJ] Sign-in missing Drive scope — ${name}`
+        : `[SJ] Sign-in — ${name}`,
     text: [
       `${name} (${email}) signed in at ${timeStr}.`,
+      meta.hasRequiredDriveScope != null
+        ? `Drive scope granted: ${meta.hasRequiredDriveScope ? "yes" : "no"}`
+        : meta.grantedScopesKnown === false
+          ? "Drive scope granted: unknown"
+          : null,
+      Array.isArray(meta.grantedScopes) && meta.grantedScopes.length > 0
+        ? `Granted scopes: ${meta.grantedScopes.join(", ")}`
+        : null,
       meta.kvLookupFailed ? `KV lookup failed: ${meta.kvLookupFailed}` : null,
       meta.hasKvRecord != null ? `KV record exists: ${meta.hasKvRecord ? "yes" : "no"}` : null,
       meta.connectedAt ? `Connected at: ${friendlyDate(meta.connectedAt)}` : null,

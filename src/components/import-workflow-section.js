@@ -23,6 +23,8 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -43,9 +45,7 @@ export function ImportWorkflowSection({
     clearImportedData,
     isImportedData,
     importedFormatName,
-    importedFileName,
     sheetParsedData,
-    selectSheet,
   } = useUserLiftingData();
 
   const fileInputRef = useRef(null);
@@ -203,63 +203,15 @@ export function ImportWorkflowSection({
     writeEntriesToSheet,
   ]);
 
-  const handleCreateSheetFromImport = useCallback(async () => {
+  const handleCreateSheetFromImport = useCallback(() => {
     if (!parsedData || parsedData.length === 0) return;
 
-    setMerging(true);
-    try {
-      const linkRes = await fetch("/api/sheet/link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          intent: "bootstrap",
-          mode: "create_blank",
-          importedFileName,
-        }),
-      });
-      const linkPayload = await linkRes.json();
-
-      if (!linkRes.ok || !linkPayload?.ssid) {
-        throw new Error(linkPayload?.error || "Failed to create Google Sheet");
-      }
-
-      const nonGoalEntries = parsedData.filter((entry) => !entry.isGoal);
-      const data = await writeEntriesToSheet(linkPayload.ssid, nonGoalEntries);
-
-      selectSheet(linkPayload.ssid, {
-        url: linkPayload.webViewLink ?? null,
-        filename: linkPayload.name ?? null,
-        modifiedTime: linkPayload.modifiedTime ?? null,
-        modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
-      });
-
-      toast({
-        title: "Google Sheet created!",
-        description: `Added ${data.insertedRows} entries across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"} to your new sheet.`,
-      });
-
-      clearImportedData();
-      mutate();
-      router.push("/");
-    } catch (err) {
-      toast({
-        title: "Import failed",
-        description: err.message || "Network error. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setMerging(false);
-    }
-  }, [
-    clearImportedData,
-    mutate,
-    parsedData,
-    router,
-    selectSheet,
-    toast,
-    importedFileName,
-    writeEntriesToSheet,
-  ]);
+    // Route preview saves through the shared sheet dialog so the rare missing-
+    // scope recovery rail stays in one place instead of becoming a page mode.
+    openSheetSetupDialog("bootstrap", {
+      action: PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT,
+    });
+  }, [parsedData]);
 
   if (isImportedData) {
     const entryCount =

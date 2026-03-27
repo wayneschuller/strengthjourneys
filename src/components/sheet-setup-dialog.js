@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
+import { GoogleSignInButton } from "@/components/google-sign-in";
 import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
@@ -13,8 +14,15 @@ import { deduplicateImportedEntries } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/open-sheet-setup";
+import {
+  PENDING_SHEET_ACTIONS,
+  clearPendingSheetAction,
+  persistPendingSheetAction,
+  readPendingSheetAction,
+} from "@/lib/pending-sheet-action";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { SHEET_FLOW_ERROR_CODES } from "@/lib/sheet-flow-errors";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -177,19 +185,31 @@ async function writeEntriesToSheet(targetSsid, entries) {
     unitType: entry.unitType || "kg",
   }));
 
-  const response = await postImportHistory({
-    ssid: targetSsid,
-    entries: apiEntries,
-  }, {
-    source: "sheet_setup_write",
-  });
+  const response = await postImportHistory(
+    {
+      ssid: targetSsid,
+      entries: apiEntries,
+    },
+    {
+      source: "sheet_setup_write",
+    },
+  );
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(payload?.error || "Failed to write data to sheet");
+    throw buildClientFlowError(
+      payload?.error || "Failed to write data to sheet",
+      payload?.errorCode || null,
+    );
   }
 
   return payload;
+}
+
+function buildClientFlowError(message, errorCode = null) {
+  const error = new Error(message || "Automatic setup failed");
+  error.errorCode = errorCode;
+  return error;
 }
 
 function getSheetDialogCopy({
@@ -244,6 +264,15 @@ function getSheetDialogCopy({
     };
   }
 
+  if (state === "scope_reauth_required") {
+    return {
+      eyebrow: "Repair Google access",
+      title: "Google Drive access is needed to save.",
+      description: null,
+      tone: "warning",
+    };
+  }
+
   return {
     eyebrow:
       intent === "switch_sheet"
@@ -275,6 +304,7 @@ export function SheetSetupDialog() {
     importFile,
     clearImportedData,
     isImportedData,
+    importedFileName,
     mutate,
   } = useUserLiftingData();
   const { toast } = useToast();
@@ -298,6 +328,7 @@ export function SheetSetupDialog() {
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
   const [createdSheetInfo, setCreatedSheetInfo] = useState(null);
   const [createdSheetReason, setCreatedSheetReason] = useState(null);
+  const [dialogAction, setDialogAction] = useState(null);
   const [isDisconnectingCurrentSheet, setIsDisconnectingCurrentSheet] =
     useState(false);
   const launchedFromUserRef = useRef(false);
@@ -326,6 +357,7 @@ export function SheetSetupDialog() {
     setHadLocalSheetBefore(false);
     setCreatedSheetInfo(null);
     setCreatedSheetReason(null);
+    setDialogAction(null);
     setIsDisconnectingCurrentSheet(false);
     onboardingFlowTokenRef.current = null;
   }, []);
@@ -356,6 +388,58 @@ export function SheetSetupDialog() {
       }
     },
     [authStatus],
+  );
+
+  const routeToScopeRepair = useCallback(
+    ({ actionType, message, intent }) => {
+      const nextIntent = intent || flowIntent || "bootstrap";
+
+      // Rare recovery rail: only persist enough context to resume the save that
+      // just failed. Do not turn this into a first-class app mode.
+      persistPendingSheetAction({
+        type: actionType,
+        hadLocalBefore: hadLocalSheetBefore,
+        intent: nextIntent,
+        returnPath: router.asPath,
+      });
+      setDialogAction(actionType);
+      setFlowIntent(nextIntent);
+      setProvisionError(message);
+      setOnboardingState("scope_reauth_required");
+      setSheetDiscoveryStatusMessage("");
+      setOpen(true);
+    },
+    [flowIntent, hadLocalSheetBefore, router.asPath],
+  );
+
+  const handleActionFailure = useCallback(
+    ({
+      error,
+      fallbackMessage,
+      fallbackState = "fallback_error",
+      actionType,
+      intent,
+    }) => {
+      const message = error?.message || fallbackMessage;
+      setProvisionError(message);
+      setSheetDiscoveryStatusMessage("");
+
+      if (
+        error?.errorCode ===
+          SHEET_FLOW_ERROR_CODES.GOOGLE_DRIVE_SCOPE_MISSING &&
+        actionType
+      ) {
+        routeToScopeRepair({
+          actionType,
+          message,
+          intent,
+        });
+        return;
+      }
+
+      setOnboardingState(fallbackState);
+    },
+    [routeToScopeRepair],
   );
 
   const handlePickerReady = useCallback((picker) => {
@@ -552,6 +636,7 @@ export function SheetSetupDialog() {
       }
 
       if (payload?.action === "recover_returning_user") {
+        clearPendingSheetAction();
         setOnboardingState("fallback_error");
         setSheetDiscoveryStatusMessage("");
         if (!outcomeReportedRef.current) {
@@ -573,6 +658,7 @@ export function SheetSetupDialog() {
         payload?.action === "link_existing" ||
         payload?.action === "create_new_user_sheet"
       ) {
+        clearPendingSheetAction();
         const nextSheetInfo = {
           ssid: payload.ssid,
           url: payload.webViewLink ?? null,
@@ -675,13 +761,19 @@ export function SheetSetupDialog() {
           onboardingFlowTokenRef.current = payload.onboardingFlowToken;
         }
         if (!response.ok) {
-          throw new Error(payload?.error || "Automatic setup failed");
+          throw buildClientFlowError(
+            payload?.error || "Automatic setup failed",
+            payload?.errorCode || null,
+          );
         }
         handleResolvedAction(payload, intent || "bootstrap");
       } catch (error) {
-        setProvisionError(error?.message || "Automatic setup failed");
-        setOnboardingState("fallback_error");
-        setSheetDiscoveryStatusMessage("");
+        handleActionFailure({
+          error,
+          fallbackMessage: "Automatic setup failed",
+          actionType: PENDING_SHEET_ACTIONS.BOOTSTRAP_PROVISION,
+          intent: intent || "bootstrap",
+        });
         setIsCandidateEnrichmentLoading(false);
         provisioningStartedRef.current = false;
         if (!outcomeReportedRef.current) {
@@ -701,7 +793,12 @@ export function SheetSetupDialog() {
         setIsProvisionActionLoading(false);
       }
     },
-    [handleResolvedAction, reportOnboardingEvent, sheetInfo?.ssid],
+    [
+      handleActionFailure,
+      handleResolvedAction,
+      reportOnboardingEvent,
+      sheetInfo?.ssid,
+    ],
   );
 
   const runLinkAction = useCallback(
@@ -728,14 +825,24 @@ export function SheetSetupDialog() {
           onboardingFlowTokenRef.current = payload.onboardingFlowToken;
         }
         if (!response.ok) {
-          throw new Error(payload?.error || "Sheet linking failed");
+          throw buildClientFlowError(
+            payload?.error || "Sheet linking failed",
+            payload?.errorCode || null,
+          );
         }
         handleResolvedAction(payload, intent);
       } catch (error) {
-        setProvisionError(error?.message || "Sheet linking failed");
-        setOnboardingState(
-          intent === "switch_sheet" ? "choose_sheet" : "fallback_error",
-        );
+        handleActionFailure({
+          error,
+          fallbackMessage: "Sheet linking failed",
+          fallbackState:
+            intent === "switch_sheet" ? "choose_sheet" : "fallback_error",
+          actionType:
+            dialogAction === PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
+              ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
+              : PENDING_SHEET_ACTIONS.BOOTSTRAP_PROVISION,
+          intent,
+        });
         if (!outcomeReportedRef.current && intent !== "switch_sheet") {
           outcomeReportedRef.current = true;
           void reportOnboardingEvent("onboarding-failed", {
@@ -756,6 +863,8 @@ export function SheetSetupDialog() {
     [
       flowIntent,
       hadLocalSheetBefore,
+      dialogAction,
+      handleActionFailure,
       handleResolvedAction,
       reportOnboardingEvent,
     ],
@@ -775,7 +884,8 @@ export function SheetSetupDialog() {
     if (isSheetComparisonPending) {
       toast({
         title: "Still checking your sheet",
-        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+        description:
+          "Wait a moment so Strength Journeys can compare this preview against your linked data.",
       });
       return;
     }
@@ -833,6 +943,119 @@ export function SheetSetupDialog() {
     toast,
   ]);
 
+  const handleCreateSheetFromImportedPreview = useCallback(
+    async ({ resumeAfterReauth = false } = {}) => {
+      if (!parsedData || parsedData.length === 0) return;
+
+      // Rare recovery rail: imported preview normally saves in one step. We
+      // only persist a resumable action if Google tells us the session is
+      // missing Drive scope and the user needs to re-consent.
+      clearPendingSheetAction();
+      setDialogAction(PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT);
+      setProvisionError(null);
+      setIsProvisionActionLoading(true);
+      setOpen(true);
+      setFlowIntent("bootstrap");
+      setOnboardingState("linking_or_creating");
+      setLoadingQuip(pickRandomSheetSetupQuip());
+
+      try {
+        const linkRes = await fetch("/api/sheet/link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            intent: "bootstrap",
+            mode: "create_blank",
+            importedFileName,
+            preferredUnitType: getPreferredUnitTypeFromClient(),
+            locale: getClientLocale(),
+            starterDateText: getStarterDateTextForClientLocale(),
+          }),
+        });
+        const linkPayload = await linkRes.json().catch(() => ({}));
+        if (linkPayload?.onboardingFlowToken) {
+          onboardingFlowTokenRef.current = linkPayload.onboardingFlowToken;
+        }
+        if (!linkRes.ok || !linkPayload?.ssid) {
+          throw buildClientFlowError(
+            linkPayload?.error || "Failed to create Google Sheet",
+            linkPayload?.errorCode || null,
+          );
+        }
+
+        const importedEntries = parsedData.filter((entry) => !entry.isGoal);
+        const payload = await writeEntriesToSheet(
+          linkPayload.ssid,
+          importedEntries,
+        );
+        const nextSheetInfo = {
+          ssid: linkPayload.ssid,
+          url: linkPayload.webViewLink ?? null,
+          filename: linkPayload.name ?? null,
+          modifiedTime: linkPayload.modifiedTime ?? null,
+          modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
+        };
+
+        exitSignedInDemoMode();
+        selectSheet(linkPayload.ssid, nextSheetInfo);
+        clearImportedData();
+        mutate();
+        clearPendingSheetAction();
+
+        toast({
+          title: "Google Sheet created!",
+          description: `Imported ${payload.insertedRows} entries into your new Strength Journeys sheet.`,
+        });
+
+        setOpen(false);
+        resetUiState();
+        if (router.pathname !== "/") {
+          void router.replace("/");
+        }
+
+        if (!outcomeReportedRef.current) {
+          outcomeReportedRef.current = true;
+          void reportOnboardingEvent("onboarding-success", {
+            intent: "bootstrap",
+            resultAction: "create_from_import",
+            reason: resumeAfterReauth ? "scope_reauth_resume" : "preview_save",
+            ssid: linkPayload.ssid,
+            sheetName: linkPayload.name || null,
+            hadLocalSheetBefore,
+            importedEntryCount: importedEntries.length,
+            importedFileName: importedFileName || null,
+            durationMs: flowStartedAtRef.current
+              ? Date.now() - flowStartedAtRef.current
+              : null,
+          });
+        }
+      } catch (error) {
+        handleActionFailure({
+          error,
+          fallbackMessage: "Failed to create Google Sheet",
+          actionType: PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT,
+          intent: "bootstrap",
+        });
+      } finally {
+        setIsProvisionActionLoading(false);
+      }
+    },
+    [
+      clearImportedData,
+      exitSignedInDemoMode,
+      handleActionFailure,
+      hadLocalSheetBefore,
+      importedFileName,
+      mutate,
+      parsedData,
+      reportOnboardingEvent,
+      resetUiState,
+      router,
+      selectSheet,
+      toast,
+    ],
+  );
+
   // Inline file import from the onboarding dialog: parse → create sheet → populate → link → done.
   const handleImportFile = useCallback(
     async (file) => {
@@ -880,12 +1103,15 @@ export function SheetSetupDialog() {
             weight: e.weight,
             unitType: e.unitType || "kg",
           }));
-          const writeRes = await postImportHistory({
-            ssid: linkPayload.ssid,
-            entries: apiEntries,
-          }, {
-            source: "sheet_setup_create",
-          });
+          const writeRes = await postImportHistory(
+            {
+              ssid: linkPayload.ssid,
+              entries: apiEntries,
+            },
+            {
+              source: "sheet_setup_create",
+            },
+          );
           const writeData = await writeRes.json();
           if (!writeRes.ok) {
             throw new Error(writeData.error || "Failed to write data to sheet");
@@ -1064,6 +1290,7 @@ export function SheetSetupDialog() {
     if (authStatus !== "authenticated") return;
     if (sheetInfo?.ssid) return;
     if (isDemoMode) return;
+    if (readPendingSheetAction()?.type) return;
     if (isImportedData) return; // Suppress auto-open when user has imported data — banner handles it
     if (provisioningStartedRef.current) return;
 
@@ -1079,12 +1306,62 @@ export function SheetSetupDialog() {
   ]);
 
   useEffect(() => {
+    if (authStatus !== "authenticated") return;
+    if (sheetInfo?.ssid) {
+      clearPendingSheetAction();
+      return;
+    }
+    const pendingAction = readPendingSheetAction();
+    if (!pendingAction?.type) return;
+    if (open) return;
+    if (isProvisionActionLoading) return;
+
+    launchedFromUserRef.current = true;
+    provisioningStartedRef.current = true;
+    flowStartedAtRef.current = Date.now();
+    outcomeReportedRef.current = false;
+
+    if (pendingAction.type === PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT) {
+      if (!isImportedData) return;
+      void handleCreateSheetFromImportedPreview({ resumeAfterReauth: true });
+      return;
+    }
+
+    if (pendingAction.type === PENDING_SHEET_ACTIONS.BOOTSTRAP_PROVISION) {
+      void resolveSheetFlow({
+        intent: pendingAction.intent || "bootstrap",
+        hadLocalBefore: Boolean(pendingAction.hadLocalBefore),
+      });
+    }
+  }, [
+    authStatus,
+    handleCreateSheetFromImportedPreview,
+    isImportedData,
+    isProvisionActionLoading,
+    open,
+    resolveSheetFlow,
+    sheetInfo?.ssid,
+  ]);
+
+  useEffect(() => {
     if (authStatus !== "authenticated") return undefined;
 
     const handleOpenSheetSetup = (event) => {
       const requestedIntent = event?.detail?.intent || "bootstrap";
+      const requestedAction = event?.detail?.action || null;
       launchedFromUserRef.current = true;
       provisioningStartedRef.current = true;
+      flowStartedAtRef.current = Date.now();
+      outcomeReportedRef.current = false;
+
+      if (
+        requestedAction === PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT &&
+        isImportedData
+      ) {
+        void handleCreateSheetFromImportedPreview();
+        return;
+      }
+
       void resolveSheetFlow({
         intent: requestedIntent,
         hadLocalBefore: Boolean(sheetInfo?.ssid),
@@ -1095,7 +1372,13 @@ export function SheetSetupDialog() {
     return () => {
       window.removeEventListener(OPEN_SHEET_SETUP_EVENT, handleOpenSheetSetup);
     };
-  }, [authStatus, resolveSheetFlow, sheetInfo?.ssid]);
+  }, [
+    authStatus,
+    handleCreateSheetFromImportedPreview,
+    isImportedData,
+    resolveSheetFlow,
+    sheetInfo?.ssid,
+  ]);
 
   useEffect(() => {
     if (authStatus !== "authenticated") return;
@@ -1201,6 +1484,7 @@ export function SheetSetupDialog() {
                   importedPreviewEntryCount={
                     parsedData?.filter((entry) => !entry.isGoal)?.length || 0
                   }
+                  importedPreviewFileName={importedFileName || ""}
                   openPicker={openPicker}
                   isWorking={isProvisionActionLoading}
                   isDisconnectingCurrent={isDisconnectingCurrentSheet}
@@ -1241,6 +1525,30 @@ export function SheetSetupDialog() {
                   }}
                   isWorking={isProvisionActionLoading}
                   errorMessage={provisionError}
+                />
+              )}
+              {onboardingState === "scope_reauth_required" && (
+                <ScopeRepairPanel
+                  errorMessage={provisionError}
+                  callbackUrl={router.asPath}
+                  onDismiss={() => {
+                    clearPendingSheetAction();
+                    setOpen(false);
+                    resetUiState();
+                    provisioningStartedRef.current = false;
+                  }}
+                  onBeforeReauth={() => {
+                    // Rare recovery rail only: remember the interrupted save so
+                    // the dialog can resume it after Google re-consent returns.
+                    persistPendingSheetAction({
+                      type:
+                        dialogAction ||
+                        PENDING_SHEET_ACTIONS.BOOTSTRAP_PROVISION,
+                      hadLocalBefore: hadLocalSheetBefore,
+                      intent: flowIntent || "bootstrap",
+                      returnPath: router.asPath,
+                    });
+                  }}
                 />
               )}
               {onboardingState === "created_confirmation" && (
@@ -1346,6 +1654,46 @@ function FallbackConnectPanel({
         >
           <FolderOpen className="h-4 w-4" />
           Set up from Google Drive
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ScopeRepairPanel({
+  errorMessage,
+  callbackUrl,
+  onDismiss,
+  onBeforeReauth,
+}) {
+  return (
+    <Card className="bg-background/95 mb-4 border-blue-300/60 xl:mx-auto xl:w-full xl:max-w-5xl">
+      <CardHeader>
+        <div className="inline-flex items-center gap-2 text-sm font-medium text-blue-700">
+          <FolderOpen className="h-4 w-4" />
+          Google Drive access needed
+        </div>
+        <CardTitle>
+          Strength Journeys needs permission to save your sheet.
+        </CardTitle>
+        <CardDescription className="text-base leading-relaxed">
+          {errorMessage ||
+            "Your current Google connection is missing the Drive access needed to create and save your lifting log."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 sm:flex-row">
+        <GoogleSignInButton
+          cta="sheet_scope_repair"
+          callbackUrl={callbackUrl || "/"}
+          className="gap-2"
+          onClick={() => {
+            onBeforeReauth?.();
+          }}
+        >
+          Continue with Google
+        </GoogleSignInButton>
+        <Button variant="outline" onClick={onDismiss}>
+          Not now
         </Button>
       </CardContent>
     </Card>

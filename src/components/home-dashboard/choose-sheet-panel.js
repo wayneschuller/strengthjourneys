@@ -173,6 +173,7 @@ export function ChooseSheetPanel({
   recommendedId = null,
   showImportedPreviewWarning = false,
   importedPreviewEntryCount = 0,
+  importedPreviewFileName = "",
   openPicker,
   isWorking,
   isDisconnectingCurrent = false,
@@ -241,7 +242,10 @@ export function ChooseSheetPanel({
               <div className="space-y-3">
                 <p>
                   Choosing a sheet here leaves preview mode and forgets the
-                  imported file.
+                  imported file
+                  {importedPreviewFileName
+                    ? ` (${importedPreviewFileName}).`
+                    : "."}
                 </p>
                 {onMergeImportedPreview && currentSheetInfo?.ssid ? (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

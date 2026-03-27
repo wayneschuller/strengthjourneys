@@ -23,6 +23,7 @@
 //          (same shape as sheetInfo in localStorage)
 
 import { devLog } from "@/lib/processing-utils";
+import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
 import {
   buildImportedSheetName,
   buildSheetName,
@@ -202,6 +203,10 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("[sheet/link] link failed:", error);
-    res.status(500).json({ error: error.message || "Sheet linking failed" });
+    const classifiedError = classifySheetFlowError(error);
+    res.status(classifiedError.httpStatus).json({
+      error: classifiedError.userMessage || "Sheet linking failed",
+      ...(classifiedError.code ? { errorCode: classifiedError.code } : {}),
+    });
   }
 }

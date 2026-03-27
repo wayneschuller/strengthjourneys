@@ -63,7 +63,8 @@ import {
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
-import { postImportHistory } from "@/lib/import-history-client";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { GoogleSignInButton } from "@/components/google-sign-in";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
@@ -86,21 +87,6 @@ const LIFT_GRAPHICS = {
 const TARGET_TOTAL = 1000;
 const roundTo5 = (v) => Math.round(v / 5) * 5;
 const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
-
-async function readJsonResponseSafe(response) {
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { error: text };
-  }
-}
-
-function buildLargeImportMessage(payloadBytes, entryCount) {
-  const payloadMb = (payloadBytes / (1024 * 1024)).toFixed(2);
-  return `This import is still too large to save in one shot right now (${entryCount.toLocaleString()} rows, ${payloadMb} MB request). Your preview is still safe on this page. Wayne has been notified so he can help with a large-import path.`;
-}
 
 const FAQ_ITEMS = [
   {
@@ -1817,100 +1803,14 @@ function TotalTimelineCtaCard() {
 
 function TotalTimelineSavePromptInline() {
   const { status: authStatus } = useSession();
-  const { toast } = useToast();
-  const { parsedData, importedFileName, selectSheet, clearImportedData, mutate } =
-    useUserLiftingData();
-  const [working, setWorking] = useState(false);
-
-  const notifyLargeImportLimit = async ({ payloadBytes, entryCount, reason }) => {
-    try {
-      await fetch("/api/import-limit-event", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          meta: {
-            page: "/1000lb-club-calculator",
-            fileName: importedFileName || null,
-            entryCount,
-            payloadBytes,
-            payloadMb: Number((payloadBytes / (1024 * 1024)).toFixed(3)),
-            reason,
-          },
-        }),
-      });
-    } catch {
-      // Best-effort only
-    }
-  };
+  const { parsedData } = useUserLiftingData();
 
   const handleCreateFromPrompt = async () => {
     if (!parsedData || parsedData.length === 0) return;
 
-    setWorking(true);
-    try {
-      const linkRes = await fetch("/api/sheet/link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          intent: "bootstrap",
-          mode: "create_blank",
-          importedFileName,
-        }),
-      });
-      const linkPayload = await linkRes.json();
-      if (!linkRes.ok || !linkPayload?.ssid) {
-        throw new Error(linkPayload?.error || "Failed to create sheet");
-      }
-
-      const nonGoalEntries = parsedData.filter((entry) => !entry.isGoal);
-      const apiEntries = nonGoalEntries.map((entry) => ({
-        date: entry.date,
-        liftType: entry.liftType,
-        reps: entry.reps,
-        weight: entry.weight,
-        unitType: entry.unitType || "kg",
-      }));
-      const importPayload = { ssid: linkPayload.ssid, entries: apiEntries };
-      const payloadBytes = JSON.stringify(importPayload).length;
-      const writeRes = await postImportHistory(importPayload, {
-        source: "1000lb_chart_save",
-      });
-      const writeData = await readJsonResponseSafe(writeRes);
-      if (!writeRes.ok) {
-        if (writeRes.status === 413) {
-          // Even with gzip, keep the preview alive and turn the failure into a
-          // useful recovery path instead of a raw JSON/body-limit error.
-          await notifyLargeImportLimit({
-            payloadBytes,
-            entryCount: apiEntries.length,
-            reason: "server_413_body_limit",
-          });
-          throw new Error(buildLargeImportMessage(payloadBytes, apiEntries.length));
-        }
-        throw new Error(writeData.error || "Failed to save data");
-      }
-
-      selectSheet(linkPayload.ssid, {
-        url: linkPayload.webViewLink ?? null,
-        filename: linkPayload.name ?? null,
-        modifiedTime: linkPayload.modifiedTime ?? null,
-        modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
-      });
-      toast({
-        title: "Google Sheet created!",
-        description: `Imported ${writeData.insertedRows} entries into your new Strength Journeys sheet.`,
-      });
-      clearImportedData();
-      mutate();
-    } catch (err) {
-      toast({
-        title: "Import failed",
-        description: err.message || "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setWorking(false);
-    }
+    openSheetSetupDialog("bootstrap", {
+      action: PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT,
+    });
   };
 
   return (
@@ -1928,10 +1828,9 @@ function TotalTimelineSavePromptInline() {
         {authStatus === "authenticated" ? (
           <Button
             className="border-blue-300 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 sm:shrink-0"
-            disabled={working}
             onClick={handleCreateFromPrompt}
           >
-            {working ? "Saving..." : "Save my data"}
+            Save my data
           </Button>
         ) : (
           <GoogleSignInButton

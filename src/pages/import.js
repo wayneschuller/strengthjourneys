@@ -36,10 +36,14 @@ import {
   Download,
   ExternalLink,
   ArrowRight,
+  TrendingUp,
+  Trophy,
+  BarChart3,
+  Shield,
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { IMPORT_APP_PAGES } from "@/lib/import-seo-pages";
-import { Separator } from "@/components/ui/separator";
+
 
 const BIG_FOUR = [
   { name: "Back Squat", icon: "/back_squat.svg" },
@@ -287,34 +291,76 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
   );
 }
 
+function BenefitsRow() {
+  const benefits = [
+    {
+      icon: TrendingUp,
+      title: "Strength Over Time",
+      desc: "See how every lift has progressed across months and years",
+    },
+    {
+      icon: Trophy,
+      title: "Personal Records",
+      desc: "Every PR detected automatically — by lift, reps, and date",
+    },
+    {
+      icon: BarChart3,
+      title: "Training Trends",
+      desc: "Weekly volume, tonnage, consistency grades, and more",
+    },
+  ];
+
+  return (
+    <section className="mx-auto mb-8 max-w-5xl">
+      <div className="grid gap-4 md:grid-cols-3">
+        {benefits.map((b) => (
+          <div
+            key={b.title}
+            className="flex items-start gap-3 rounded-lg border p-4"
+          >
+            <b.icon className="text-primary mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">{b.title}</p>
+              <p className="text-muted-foreground text-xs leading-5">
+                {b.desc}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ImportSeoLinksSection() {
   return (
     <section className="mx-auto mb-12 max-w-5xl">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold">Import Guides By App</h2>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Step-by-step guides for exporting workout history, merging apps, and
-            moving everything into one Google Sheet backend.
-          </p>
-        </div>
+      <div className="mb-1">
+        <h2 className="text-lg font-semibold">
+          How to Export Your Data
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Takes about 2 minutes. Import from multiple apps — we&apos;ll
+          merge your history automatically.
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {IMPORT_APP_PAGES.map((page) => (
           <Card key={page.slug} className="h-full">
             <CardContent className="flex h-full flex-col gap-3 pt-6">
               <div>
-                <h3 className="font-semibold">Import {page.appName}</h3>
+                <h3 className="font-semibold">{page.appName}</h3>
                 <p className="text-muted-foreground mt-1 text-sm leading-6">
-                  Learn how to export from {page.appName}, import the file, and
-                  merge it with your other training data.
+                  Export your history from {page.appName} and drop it here.
+                  We handle the rest.
                 </p>
               </div>
               <div className="mt-auto pt-2">
                 <Button asChild variant="outline" size="sm" className="w-full">
                   <Link href={`/import/${page.slug}`}>
-                    Read Guide <ArrowRight className="ml-2 h-4 w-4" />
+                    Export from {page.appName}{" "}
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
@@ -492,15 +538,15 @@ export default function ImportPage() {
     return (
       <>
         <NextSeo
-          title="Import Workout Data from Hevy, Strong, Wodify, BTWB, and More"
-          description="Import workout history from Hevy, Strong, Wodify, BTWB, TurnKey, or spreadsheet exports. Preview it in-browser or write it into a Google Sheet you own."
+          title="Import Your Lifting History — See Your Strength Instantly"
+          description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds — no account required."
           canonical="https://www.strengthjourneys.xyz/import"
           openGraph={{
             url: "https://www.strengthjourneys.xyz/import",
             title:
-              "Import Workout Data from Hevy, Strong, Wodify, BTWB, and More",
+              "Import Your Lifting History — See Your Strength Instantly",
             description:
-              "Import workout history from Hevy, Strong, Wodify, BTWB, TurnKey, or spreadsheet exports. Preview it in-browser or write it into a Google Sheet you own.",
+              "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds — no account required.",
             type: "website",
             site_name: "Strength Journeys",
           }}
@@ -508,7 +554,7 @@ export default function ImportPage() {
             {
               name: "keywords",
               content:
-                "import Hevy data, import Strong CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets",
+                "import Hevy data, import Strong CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
             },
           ]}
         />
@@ -522,15 +568,15 @@ export default function ImportPage() {
   return (
     <>
       <NextSeo
-        title="Import Workout Data from Hevy, Strong, Wodify, BTWB, and More"
-        description="Import workout history from Hevy, Strong, Wodify, BTWB, TurnKey, or spreadsheet exports. Preview it in-browser or write it into a Google Sheet you own."
+        title="Import Your Lifting History — See Your Strength Instantly"
+        description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds — no account required."
         canonical="https://www.strengthjourneys.xyz/import"
         openGraph={{
           url: "https://www.strengthjourneys.xyz/import",
           title:
-            "Import Workout Data from Hevy, Strong, Wodify, BTWB, and More",
+            "Import Your Lifting History — See Your Strength Instantly",
           description:
-            "Import workout history from Hevy, Strong, Wodify, BTWB, TurnKey, or spreadsheet exports. Preview it in-browser or write it into a Google Sheet you own.",
+            "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds — no account required.",
           type: "website",
           site_name: "Strength Journeys",
         }}
@@ -538,24 +584,35 @@ export default function ImportPage() {
           {
             name: "keywords",
             content:
-              "import Hevy data, import Strong CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets",
+              "import Hevy data, import Strong CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
           },
         ]}
       />
       <PageContainer>
         <PageHeader>
-          <PageHeaderHeading icon={Upload}>Import Data</PageHeaderHeading>
+          <PageHeaderHeading icon={Upload}>
+            Import Your Lifting History
+          </PageHeaderHeading>
           <PageHeaderDescription>
-            {authStatus === "authenticated" && sheetInfo?.ssid
-              ? "Import lifting history from another app. Data will be merged into your linked Google Sheet — duplicates are automatically skipped."
-              : authStatus === "authenticated"
-                ? "Import lifting history from another app. We'll create a new Google Sheet in your Drive and populate it with your data."
-                : "Import your lifting history and explore the full app in preview mode — no sign-in required."}
+            Bring your data from Hevy, Strong, Wodify, BTWB, or any
+            spreadsheet and see your full strength dashboard instantly.
+            {authStatus !== "authenticated" &&
+              " No account required."}
           </PageHeaderDescription>
         </PageHeader>
 
+        {/* Value proposition — show what they'll get before asking for a file */}
+        <BenefitsRow />
+
         {/* File Import Section — always visible, no auth required */}
         <ImportWorkflowSection />
+
+        {/* Privacy reassurance */}
+        <p className="text-muted-foreground mx-auto -mt-8 mb-12 max-w-5xl text-center text-xs">
+          <Shield className="mr-1 inline h-3.5 w-3.5 align-text-bottom" />
+          Your data stays private. Files are parsed in your browser — nothing
+          is saved unless you choose to.
+        </p>
 
         <ImportSeoLinksSection />
 

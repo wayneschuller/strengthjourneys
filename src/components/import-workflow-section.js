@@ -381,30 +381,33 @@ export function ImportWorkflowSection({
             <>
               <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
               <h3 className="mb-2 font-semibold">
-                Drag &amp; drop a CSV or Excel file here
+                Drop your lifting history here
               </h3>
               <p className="text-muted-foreground mb-1 max-w-md text-sm">
                 {mergeMode ? (
                   <>
-                    Drop a file and we&apos;ll merge your history straight into{" "}
+                    We&apos;ll merge your history straight into{" "}
                     <strong className="text-foreground">
                       &ldquo;{sheetName}&rdquo;
                     </strong>{" "}
-                    - duplicates are skipped automatically.
+                    — duplicates are skipped automatically.
                   </>
                 ) : createMode ? (
-                  "Drop a file and we'll create a brand new Strength Journeys Google Sheet in your Drive, ready to go."
+                  "We'll create a Google Sheet in your Drive and populate it with your data — ready to explore."
                 ) : (
-                  "Import your lifting history from Hevy, Strong, Wodify, BTWB, TurnKey, or a Strength Journeys export in CSV, XLS, or XLSX format."
+                  "CSV or Excel from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet export."
                 )}
               </p>
-              <p className="text-muted-foreground mb-4 text-xs">
-                {isAuthenticated
-                  ? "Your CSV, XLS, or XLSX file is parsed in the browser, then written to your Google Sheet."
-                  : "Your CSV, XLS, or XLSX data opens in preview mode right in your browser."}
-              </p>
+              {!isAuthenticated && (
+                <p className="text-muted-foreground mb-3 flex items-center justify-center gap-3 text-xs">
+                  <span>No account required</span>
+                  <span aria-hidden="true" className="text-border">
+                    &bull;
+                  </span>
+                  <span>Instant preview</span>
+                </p>
+              )}
               <Button
-                variant="outline"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <FileUp className="mr-2 h-4 w-4" /> Choose File

@@ -1,3 +1,9 @@
+/**
+ * Landing-page hero for Strength Journeys.
+ * Keep the CTA branching aligned with auth + sheet-link state so setup and
+ * import actions feel consistent with the rest of the onboarding flow.
+ */
+
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -51,9 +57,20 @@ const PageDescription = () => (
 // authenticated demo-mode users who still need to set up a sheet.
 function HeroPrimaryCta() {
   const { status: authStatus } = useSession();
-  const { hasUserData } = useUserLiftingData();
+  const { hasUserData, sheetInfo } = useUserLiftingData();
+  const hasSsid = !!sheetInfo?.ssid;
 
   if (hasUserData) return null;
+
+  const importCtaLabel = hasSsid
+    ? "Import More Lifting History"
+    : "Import From Another Fitness App";
+  const importCtaDescription =
+    authStatus === "authenticated"
+      ? hasSsid
+        ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
+        : "Instant preview first. Save your data into a free Google Sheet when you're ready."
+      : "Instant preview. No sign-in required.";
 
   return (
     <div className="flex flex-col items-center gap-4 md:items-start">
@@ -93,7 +110,7 @@ function HeroPrimaryCta() {
         </div>
 
         {/* Secondary CTA column */}
-        {authStatus !== "authenticated" && (
+        {authStatus !== "loading" && (
           <div className="flex w-full flex-col items-center sm:w-auto">
             <Button
               variant="outline"
@@ -102,13 +119,18 @@ function HeroPrimaryCta() {
               asChild
               onClick={() => gaEvent(GA_EVENT_TAGS.HERO_IMPORT_CLICK, { page: "/" })}
             >
-              <Link href="/import">
+              <Link
+                href={{
+                  pathname: "/import",
+                  query: { from: "hero", returnTo: "/" },
+                }}
+              >
                 <Upload className="mr-2 h-4 w-4" />
-                Import From Another Fitness App
+                {importCtaLabel}
               </Link>
             </Button>
-            <p className="mt-1.5 text-xs text-slate-500">
-              Instant preview. No sign-in required.
+            <p className="mt-1.5 text-center text-xs text-slate-500 sm:text-left">
+              {importCtaDescription}
             </p>
           </div>
         )}

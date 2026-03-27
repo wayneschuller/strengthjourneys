@@ -1,3 +1,9 @@
+/**
+ * Shared file-import workflow used by the main /import page.
+ * Preserve route-specific follow-up behavior: some entry points want to stay on
+ * /import after parsing, while hero-driven imports should bounce home in preview mode.
+ */
+
 import { useCallback, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -52,6 +58,12 @@ export function ImportWorkflowSection({
   const mergeMode = isAuthenticated && canMerge;
   const createMode = isAuthenticated && !canMerge;
   const sheetName = sheetInfo?.filename || "your Google Sheet";
+  const returnToPath =
+    typeof router.query?.returnTo === "string"
+      ? router.query.returnTo
+      : router.query?.from === "hero"
+        ? "/"
+        : null;
 
   const handleFile = useCallback(
     async (file) => {
@@ -69,12 +81,12 @@ export function ImportWorkflowSection({
       try {
         const { count, formatName } = await importFile(file);
 
-        if (!isAuthenticated) {
+        if (returnToPath) {
           toast({
             title: "Data loaded!",
             description: `Parsed ${count} entries from ${formatName} format. Exploring in preview mode.`,
           });
-          router.push("/");
+          router.push(returnToPath);
           return;
         }
 
@@ -88,7 +100,7 @@ export function ImportWorkflowSection({
         setImporting(false);
       }
     },
-    [importFile, isAuthenticated, router, toast],
+    [importFile, returnToPath, router, toast],
   );
 
   const onDrop = useCallback(

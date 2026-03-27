@@ -224,7 +224,10 @@ export function Layout({ children }) {
             onClear={clearImportedData}
           />
         ) : (
-          <DataAccessBanner pathname={router.pathname} />
+          <DataAccessBanner
+            pathname={router.pathname}
+            currentPath={router.asPath}
+          />
         )}
         <SheetSetupDialog />
         <main className="mx-0 md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
@@ -387,7 +390,7 @@ const DEMO_MODE_NUDGE_MESSAGES = [
 ];
 
 // Internal banner shown on data pages when the user is unauthenticated or has no sheet connected.
-function DataAccessBanner({ pathname }) {
+function DataAccessBanner({ pathname, currentPath }) {
   const { status: authStatus } = useSession();
   const { sheetInfo, isDemoMode } = useUserLiftingData();
 
@@ -411,32 +414,72 @@ function DataAccessBanner({ pathname }) {
           </p>
           {showSignInCta ? (
             <div className="flex flex-col items-center gap-2 sm:flex-row">
-              <GoogleSignInButton size="sm" cta="demo_banner">
-                Sign in with Google
-              </GoogleSignInButton>
-              <Button size="sm" variant="outline" asChild>
-                <Link href="/import" className="flex items-center gap-2">
-                  <FileUp className="h-4 w-4" />
-                  Import Data Instantly
-                </Link>
-              </Button>
+              <div className="flex flex-col items-center">
+                <GoogleSignInButton size="sm" cta="demo_banner">
+                  Sign in with Google
+                </GoogleSignInButton>
+                <p className="mt-1.5 text-center text-xs text-amber-900/70">
+                  Free forever. Your data stays yours.
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <Button size="sm" variant="outline" asChild>
+                  <Link
+                    href={{
+                      pathname: "/import",
+                      query: { returnTo: currentPath },
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <FileUp className="h-4 w-4" />
+                    Import From Another Fitness App
+                  </Link>
+                </Button>
+                <p className="mt-1.5 text-center text-xs text-amber-900/70">
+                  Instant preview. No sign-in required.
+                </p>
+              </div>
             </div>
           ) : (
-            <Button
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => {
-                openSheetSetupDialog("bootstrap");
-              }}
-            >
-              <img
-                src={GOOGLE_SHEETS_ICON_URL}
-                alt=""
-                className="h-4 w-4 shrink-0"
-                aria-hidden
-              />
-              Set Up Google Sheet
-            </Button>
+            <div className="flex flex-col items-center gap-2 sm:flex-row">
+              <div className="flex flex-col items-center">
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    openSheetSetupDialog("bootstrap");
+                  }}
+                >
+                  <img
+                    src={GOOGLE_SHEETS_ICON_URL}
+                    alt=""
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden
+                  />
+                  Set Up Google Sheet
+                </Button>
+                <p className="mt-1.5 text-center text-xs text-amber-900/70">
+                  Free forever. Your data stays yours.
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <Button size="sm" variant="outline" asChild>
+                  <Link
+                    href={{
+                      pathname: "/import",
+                      query: { returnTo: currentPath },
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <FileUp className="h-4 w-4" />
+                    Import From Another Fitness App
+                  </Link>
+                </Button>
+                <p className="mt-1.5 text-center text-xs text-amber-900/70">
+                  Instant preview first. Save or merge when you&apos;re ready.
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </section>

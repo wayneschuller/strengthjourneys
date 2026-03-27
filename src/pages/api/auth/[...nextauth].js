@@ -292,6 +292,20 @@ const PROMPT_MESSAGES = {
       .filter(Boolean)
       .join("\n"),
   }),
+  "large-import": (name, email, timeStr, meta) => ({
+    subject: `[SJ] Large import hit request limit — ${name}`,
+    text: [
+      `${name} (${email}) hit the large-import save limit at ${timeStr}.`,
+      meta.page ? `Page: ${meta.page}` : null,
+      meta.fileName ? `File: ${meta.fileName}` : null,
+      meta.entryCount != null ? `Entries: ${meta.entryCount}` : null,
+      meta.payloadBytes != null ? `Payload bytes: ${meta.payloadBytes}` : null,
+      meta.payloadMb != null ? `Payload MB: ${meta.payloadMb}` : null,
+      meta.reason ? `Reason: ${meta.reason}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
 };
 
 async function getSignInSupportMeta(email) {

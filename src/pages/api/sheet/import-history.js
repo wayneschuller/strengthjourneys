@@ -14,6 +14,21 @@
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
+import { gunzipSync } from "node:zlib";
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+async function readRequestBody(req) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -21,18 +36,36 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const payloadBytes = Buffer.byteLength(JSON.stringify(req.body ?? {}), "utf8");
-  console.log("[sheet/import-history] payload:size", {
-    bytes: payloadBytes,
-    megabytes: Number((payloadBytes / (1024 * 1024)).toFixed(3)),
-  });
+  let requestBody;
+  let rawBody;
+  try {
+    rawBody = await readRequestBody(req);
+    const isGzipped = String(req.headers["content-encoding"] || "")
+      .toLowerCase()
+      .includes("gzip");
+    const decodedBody = isGzipped ? gunzipSync(rawBody) : rawBody;
+    const payloadBytes = decodedBody.byteLength;
+    console.log("[sheet/import-history] payload:size", {
+      compressedBytes: rawBody.byteLength,
+      compressedMegabytes: Number((rawBody.byteLength / (1024 * 1024)).toFixed(3)),
+      bytes: payloadBytes,
+      megabytes: Number((payloadBytes / (1024 * 1024)).toFixed(3)),
+      gzipped: isGzipped,
+    });
+    requestBody = JSON.parse(decodedBody.toString("utf8"));
+  } catch (error) {
+    return res.status(400).json({
+      error: "Invalid import payload",
+      details: error.message || "Could not decode request body",
+    });
+  }
 
   const session = await getServerSession(req, res, authOptions);
   if (!session?.accessToken) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, entries } = req.body;
+  const { ssid, entries } = requestBody;
 
   if (!ssid || !Array.isArray(entries) || entries.length === 0) {
     return res

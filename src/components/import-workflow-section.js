@@ -16,6 +16,7 @@ import {
   analyzeImportedEntries,
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
+import { postImportHistory } from "@/lib/import-history-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -115,11 +116,7 @@ export function ImportWorkflowSection({
       unitType: entry.unitType || "kg",
     }));
 
-    const res = await fetch("/api/sheet/import-history", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ssid: targetSsid, entries: apiEntries }),
-    });
+    const res = await postImportHistory({ ssid: targetSsid, entries: apiEntries });
     const data = await res.json();
 
     if (!res.ok) {

@@ -10,6 +10,7 @@ import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { deduplicateImportedEntries } from "@/lib/import/dedupe";
+import { postImportHistory } from "@/lib/import-history-client";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
@@ -176,10 +177,9 @@ async function writeEntriesToSheet(targetSsid, entries) {
     unitType: entry.unitType || "kg",
   }));
 
-  const response = await fetch("/api/sheet/import-history", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ssid: targetSsid, entries: apiEntries }),
+  const response = await postImportHistory({
+    ssid: targetSsid,
+    entries: apiEntries,
   });
   const payload = await response.json().catch(() => ({}));
 
@@ -872,13 +872,9 @@ export function SheetSetupDialog() {
             weight: e.weight,
             unitType: e.unitType || "kg",
           }));
-          const writeRes = await fetch("/api/sheet/import-history", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ssid: linkPayload.ssid,
-              entries: apiEntries,
-            }),
+          const writeRes = await postImportHistory({
+            ssid: linkPayload.ssid,
+            entries: apiEntries,
           });
           const writeData = await writeRes.json();
           if (!writeRes.ok) {

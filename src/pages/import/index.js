@@ -46,6 +46,7 @@ import {
   Shield,
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { postImportHistory } from "@/lib/import-history-client";
 import { IMPORT_APP_PAGES } from "@/lib/import-app-guides";
 
 const BIG_FOUR = [
@@ -497,10 +498,9 @@ export default function ImportPage() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/sheet/import-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ssid: sheetInfo.ssid, entries: validEntries }),
+      const res = await postImportHistory({
+        ssid: sheetInfo.ssid,
+        entries: validEntries,
       });
       const data = await res.json();
 

@@ -63,6 +63,7 @@ import {
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
+import { postImportHistory } from "@/lib/import-history-client";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { GoogleSignInButton } from "@/components/google-sign-in";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
@@ -85,6 +86,21 @@ const LIFT_GRAPHICS = {
 const TARGET_TOTAL = 1000;
 const roundTo5 = (v) => Math.round(v / 5) * 5;
 const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
+
+async function readJsonResponseSafe(response) {
+  const text = await response.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text };
+  }
+}
+
+function buildLargeImportMessage(payloadBytes, entryCount) {
+  const payloadMb = (payloadBytes / (1024 * 1024)).toFixed(2);
+  return `This import is still too large to save in one shot right now (${entryCount.toLocaleString()} rows, ${payloadMb} MB request). Your preview is still safe on this page. Wayne has been notified so he can help with a large-import path.`;
+}
 
 const FAQ_ITEMS = [
   {
@@ -1806,6 +1822,27 @@ function TotalTimelineSavePromptInline() {
     useUserLiftingData();
   const [working, setWorking] = useState(false);
 
+  const notifyLargeImportLimit = async ({ payloadBytes, entryCount, reason }) => {
+    try {
+      await fetch("/api/import-limit-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meta: {
+            page: "/1000lb-club-calculator",
+            fileName: importedFileName || null,
+            entryCount,
+            payloadBytes,
+            payloadMb: Number((payloadBytes / (1024 * 1024)).toFixed(3)),
+            reason,
+          },
+        }),
+      });
+    } catch {
+      // Best-effort only
+    }
+  };
+
   const handleCreateFromPrompt = async () => {
     if (!parsedData || parsedData.length === 0) return;
 
@@ -1833,14 +1870,19 @@ function TotalTimelineSavePromptInline() {
         weight: entry.weight,
         unitType: entry.unitType || "kg",
       }));
-
-      const writeRes = await fetch("/api/sheet/import-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ssid: linkPayload.ssid, entries: apiEntries }),
-      });
-      const writeData = await writeRes.json();
+      const importPayload = { ssid: linkPayload.ssid, entries: apiEntries };
+      const payloadBytes = JSON.stringify(importPayload).length;
+      const writeRes = await postImportHistory(importPayload);
+      const writeData = await readJsonResponseSafe(writeRes);
       if (!writeRes.ok) {
+        if (writeRes.status === 413) {
+          await notifyLargeImportLimit({
+            payloadBytes,
+            entryCount: apiEntries.length,
+            reason: "server_413_body_limit",
+          });
+          throw new Error(buildLargeImportMessage(payloadBytes, apiEntries.length));
+        }
         throw new Error(writeData.error || "Failed to save data");
       }
 

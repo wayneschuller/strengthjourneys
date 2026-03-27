@@ -20,6 +20,7 @@ import { FileUp, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { analyzeImportedEntries } from "@/lib/import/dedupe";
+import { postImportHistory } from "@/lib/import-history-client";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import {
   isToday,
@@ -499,10 +500,9 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         weight: e.weight,
         unitType: e.unitType || "kg",
       }));
-      const res = await fetch("/api/sheet/import-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ssid: sheetInfo.ssid, entries: apiEntries }),
+      const res = await postImportHistory({
+        ssid: sheetInfo.ssid,
+        entries: apiEntries,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Merge failed");
@@ -561,10 +561,9 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         weight: e.weight,
         unitType: e.unitType || "kg",
       }));
-      const writeRes = await fetch("/api/sheet/import-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ssid: linkPayload.ssid, entries: apiEntries }),
+      const writeRes = await postImportHistory({
+        ssid: linkPayload.ssid,
+        entries: apiEntries,
       });
       const writeData = await writeRes.json();
       if (!writeRes.ok)

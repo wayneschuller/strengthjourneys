@@ -116,7 +116,10 @@ export function ImportWorkflowSection({
       unitType: entry.unitType || "kg",
     }));
 
-    const res = await postImportHistory({ ssid: targetSsid, entries: apiEntries });
+    const res = await postImportHistory(
+      { ssid: targetSsid, entries: apiEntries },
+      { source: "import_workflow" },
+    );
     const data = await res.json();
 
     if (!res.ok) {

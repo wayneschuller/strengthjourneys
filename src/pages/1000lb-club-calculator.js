@@ -1872,7 +1872,9 @@ function TotalTimelineSavePromptInline() {
       }));
       const importPayload = { ssid: linkPayload.ssid, entries: apiEntries };
       const payloadBytes = JSON.stringify(importPayload).length;
-      const writeRes = await postImportHistory(importPayload);
+      const writeRes = await postImportHistory(importPayload, {
+        source: "1000lb_chart_save",
+      });
       const writeData = await readJsonResponseSafe(writeRes);
       if (!writeRes.ok) {
         if (writeRes.status === 413) {

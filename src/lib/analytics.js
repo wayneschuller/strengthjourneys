@@ -61,6 +61,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   HOME_DASHBOARD_FIRST_VIEW: "SJ_home_dashboard_first_view", // ~Mar 2026: First time user sees loaded home dashboard.
   HOME_DASHBOARD_STAGE_ENTERED: "SJ_home_dashboard_stage_entered", // ~Mar 2026: User entered a staged onboarding/dashboard phase.
   HERO_IMPORT_CLICK: "SJ_hero_import_click", // ~Mar 2026: User clicked "Import Your Lifting Data" CTA on hero.
+  IMPORT_PROCESS: "SJ_import_process", // ~Mar 2026: Client-side import/save lifecycle for preview and history imports.
 });
 
 const UTM_STORAGE_KEY = "ga_utm";
@@ -282,4 +283,39 @@ export function gaTrackHomeDashboardStageEntered({
   }
   if (typeof sessionCount === "number") params.session_count = sessionCount;
   gaEvent(GA_EVENT_TAGS.HOME_DASHBOARD_STAGE_ENTERED, params);
+}
+
+/**
+ * Track the client-visible lifecycle of history imports and preview saves.
+ * Uses one stable event name with a phase/source split so GA4 can alert on
+ * failures without fragmenting the import taxonomy.
+ */
+export function gaTrackImportProcess({
+  phase,
+  source,
+  entryCount,
+  payloadBytes,
+  compressedBytes,
+  durationMs,
+  result,
+  errorCode,
+} = {}) {
+  if (typeof phase !== "string" || phase.length === 0) return;
+  if (typeof source !== "string" || source.length === 0) return;
+
+  const params = {
+    phase,
+    source,
+  };
+  if (typeof entryCount === "number") params.entry_count = entryCount;
+  if (typeof payloadBytes === "number") params.payload_bytes = payloadBytes;
+  if (typeof compressedBytes === "number") {
+    params.compressed_bytes = compressedBytes;
+  }
+  if (typeof durationMs === "number") params.duration_ms = durationMs;
+  if (typeof result === "string" && result.length > 0) params.result = result;
+  if (typeof errorCode === "string" && errorCode.length > 0) {
+    params.error_code = errorCode;
+  }
+  gaEvent(GA_EVENT_TAGS.IMPORT_PROCESS, params);
 }

@@ -503,6 +503,8 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
       const res = await postImportHistory({
         ssid: sheetInfo.ssid,
         entries: apiEntries,
+      }, {
+        source: "preview_banner_merge",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Merge failed");
@@ -564,6 +566,8 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
       const writeRes = await postImportHistory({
         ssid: linkPayload.ssid,
         entries: apiEntries,
+      }, {
+        source: "preview_banner_create",
       });
       const writeData = await writeRes.json();
       if (!writeRes.ok)

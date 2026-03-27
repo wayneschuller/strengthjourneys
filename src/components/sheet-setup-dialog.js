@@ -180,6 +180,8 @@ async function writeEntriesToSheet(targetSsid, entries) {
   const response = await postImportHistory({
     ssid: targetSsid,
     entries: apiEntries,
+  }, {
+    source: "sheet_setup_write",
   });
   const payload = await response.json().catch(() => ({}));
 
@@ -875,6 +877,8 @@ export function SheetSetupDialog() {
           const writeRes = await postImportHistory({
             ssid: linkPayload.ssid,
             entries: apiEntries,
+          }, {
+            source: "sheet_setup_create",
           });
           const writeData = await writeRes.json();
           if (!writeRes.ok) {

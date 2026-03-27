@@ -501,6 +501,8 @@ export default function ImportPage() {
       const res = await postImportHistory({
         ssid: sheetInfo.ssid,
         entries: validEntries,
+      }, {
+        source: "import_page_manual",
       });
       const data = await res.json();
 

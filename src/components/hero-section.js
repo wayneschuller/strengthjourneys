@@ -59,18 +59,20 @@ function HeroPrimaryCta() {
   const { status: authStatus } = useSession();
   const { hasUserData, sheetInfo } = useUserLiftingData();
   const hasSsid = !!sheetInfo?.ssid;
+  const isAuthed = authStatus === "authenticated";
 
   if (hasUserData) return null;
 
-  const importCtaLabel = hasSsid
-    ? "Import More Lifting History"
+  const importCtaLabel = isAuthed
+    ? hasSsid
+      ? "Import More Lifting History"
+      : "Import From Another Fitness App"
     : "Import From Another Fitness App";
-  const importCtaDescription =
-    authStatus === "authenticated"
-      ? hasSsid
-        ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
-        : "Instant preview first. Save your data into a free Google Sheet when you're ready."
-      : "Instant preview. No sign-in required.";
+  const importCtaDescription = isAuthed
+    ? hasSsid
+      ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
+      : "Instant preview first. Save your data into a free Google Sheet when you're ready."
+    : "Instant preview. No sign-in required.";
 
   return (
     <div className="flex flex-col items-center gap-4 md:items-start">
@@ -110,30 +112,28 @@ function HeroPrimaryCta() {
         </div>
 
         {/* Secondary CTA column */}
-        {authStatus !== "loading" && (
-          <div className="flex w-full flex-col items-center sm:w-auto">
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto"
-              asChild
-              onClick={() => gaEvent(GA_EVENT_TAGS.HERO_IMPORT_CLICK, { page: "/" })}
+        <div className="flex w-full flex-col items-center sm:w-auto">
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full sm:w-auto"
+            asChild
+            onClick={() => gaEvent(GA_EVENT_TAGS.HERO_IMPORT_CLICK, { page: "/" })}
+          >
+            <Link
+              href={{
+                pathname: "/import",
+                query: { from: "hero", returnTo: "/" },
+              }}
             >
-              <Link
-                href={{
-                  pathname: "/import",
-                  query: { from: "hero", returnTo: "/" },
-                }}
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                {importCtaLabel}
-              </Link>
-            </Button>
-            <p className="mt-1.5 text-center text-xs text-slate-500 sm:text-left">
-              {importCtaDescription}
-            </p>
-          </div>
-        )}
+              <Upload className="mr-2 h-4 w-4" />
+              {importCtaLabel}
+            </Link>
+          </Button>
+          <p className="mt-1.5 text-center text-xs text-slate-500 sm:text-left">
+            {importCtaDescription}
+          </p>
+        </div>
       </div>
     </div>
   );

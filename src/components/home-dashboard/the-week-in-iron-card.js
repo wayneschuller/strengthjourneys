@@ -19,6 +19,7 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import {
   Card,
   CardContent,
@@ -34,10 +35,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  BIG_FOUR_LIFT_TYPES,
-  getDisplayWeight,
-} from "@/lib/processing-utils";
+import { BIG_FOUR_LIFT_TYPES, getDisplayWeight } from "@/lib/processing-utils";
 import {
   formatDateToYmdLocal,
   addDaysFromStr,
@@ -60,7 +58,10 @@ function getWeekBoundaries(weekOffset = 0) {
   const todayStr = formatDateToYmdLocal(today);
   const dow = today.getDay(); // 0=Sun … 6=Sat
   const daysBackToMonday = (dow + 6) % 7;
-  const mondayStr = subtractDaysFromStr(todayStr, daysBackToMonday + weekOffset * 7);
+  const mondayStr = subtractDaysFromStr(
+    todayStr,
+    daysBackToMonday + weekOffset * 7,
+  );
   const sundayStr = addDaysFromStr(mondayStr, 6);
   const isCurrentWeek = weekOffset === 0;
 
@@ -184,8 +185,16 @@ function computeWeeklyStats(parsedData, boundaries) {
   }
 
   return {
-    tonnage: { current: currentTonnage, prev: prevTonnage, prevSameDay: prevTonnageSameDay },
-    sessions: { current: currentDates.size, prev: prevDates.size, prevSameDay: prevDatesSameDay.size },
+    tonnage: {
+      current: currentTonnage,
+      prev: prevTonnage,
+      prevSameDay: prevTonnageSameDay,
+    },
+    sessions: {
+      current: currentDates.size,
+      prev: prevDates.size,
+      prevSameDay: prevDatesSameDay.size,
+    },
     sets: { current: currentSets, prev: prevSets },
     prs: currentPRs,
     dayActivity: dayDates.map((s) => s.size > 0),
@@ -203,7 +212,10 @@ function getWeeklySessionRows(parsedData, boundaries, isMetric) {
   for (const entry of parsedData) {
     if (!entry || entry.isGoal) continue;
     if ((entry.reps ?? 0) < 1) continue;
-    if (entry.date < boundaries.mondayStr || entry.date > boundaries.effectiveEnd) {
+    if (
+      entry.date < boundaries.mondayStr ||
+      entry.date > boundaries.effectiveEnd
+    ) {
       continue;
     }
 
@@ -268,7 +280,9 @@ function formatTopSetGroup(sets, group, isMetric) {
 function getLiftTopSetSummaries(sets, isMetric) {
   if (!Array.isArray(sets) || sets.length === 0) return [];
 
-  const e1rms = sets.map((set) => estimateE1RM(set.reps ?? 0, set.weight ?? 0, "Brzycki"));
+  const e1rms = sets.map((set) =>
+    estimateE1RM(set.reps ?? 0, set.weight ?? 0, "Brzycki"),
+  );
   const bestE1rm = Math.max(...e1rms);
   const groups = getConsecutiveWorkoutGroups(sets);
 
@@ -289,7 +303,9 @@ function getSessionLiftDetails(entries, isMetric) {
   }, {});
 
   const orderedLiftTypes = [
-    ...BIG_FOUR_LIFT_TYPES.filter((liftType) => entriesByLiftType[liftType]?.length),
+    ...BIG_FOUR_LIFT_TYPES.filter(
+      (liftType) => entriesByLiftType[liftType]?.length,
+    ),
     ...Object.keys(entriesByLiftType).filter(
       (liftType) => !BIG_FOUR_LIFT_TYPES.includes(liftType),
     ),
@@ -319,7 +335,8 @@ export function TheWeekInIronCard({
   sessionCount = 0,
 }) {
   const { status: authStatus } = useSession();
-  const { isDemoMode, isReadOnly, parsedData } = useUserLiftingData();
+  const { isDemoMode, isImportedData, isReadOnly, parsedData } =
+    useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
   const [weekOffset, setWeekOffset] = useState(0);
@@ -372,6 +389,7 @@ export function TheWeekInIronCard({
       <EarlyWeekCard
         authStatus={authStatus}
         isDemoMode={isDemoMode}
+        isImportedData={isImportedData}
         isReadOnly={isReadOnly}
         dataMaturityStage={dataMaturityStage}
         dashboardStage={dashboardStage}
@@ -391,7 +409,7 @@ export function TheWeekInIronCard({
               </CardTitle>
               <CardDescription>{subtitle}</CardDescription>
             </div>
-            <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
+            <div className="bg-muted/30 flex shrink-0 items-center gap-0.5 rounded-lg border p-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -435,10 +453,16 @@ export function TheWeekInIronCard({
               <WeekSection
                 stepLabel="A"
                 title="What happened this week"
-                description={getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows)}
+                description={getWeekRecapCopy(
+                  stats,
+                  boundaries,
+                  unit,
+                  weeklySessionRows,
+                )}
               >
                 <WeekSessionList
                   authStatus={authStatus}
+                  isImportedData={isImportedData}
                   rows={weeklySessionRows}
                   isReadOnly={isReadOnly}
                 />
@@ -451,7 +475,11 @@ export function TheWeekInIronCard({
                   <WeekSection
                     stepLabel="B"
                     title="Looking ahead"
-                    description={getNextStepCopy(stats, boundaries, weeklySessionRows)}
+                    description={getNextStepCopy(
+                      stats,
+                      boundaries,
+                      weeklySessionRows,
+                    )}
                   >
                     <StartLiftPrompt showIntro={false} />
                   </WeekSection>
@@ -463,6 +491,7 @@ export function TheWeekInIronCard({
           {!hasLoggedSessions && (
             <EmptyWeekState
               authStatus={authStatus}
+              isImportedData={isImportedData}
               isReadOnly={isReadOnly}
             />
           )}
@@ -478,11 +507,11 @@ function WeekSection({ stepLabel, title, description, children }) {
   return (
     <section className="space-y-3">
       <div className="space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.22em] uppercase">
           {stepLabel}. {title}
         </p>
         {description ? (
-          <p className="text-sm leading-6 text-muted-foreground">
+          <p className="text-muted-foreground text-sm leading-6">
             {description}
           </p>
         ) : null}
@@ -492,63 +521,79 @@ function WeekSection({ stepLabel, title, description, children }) {
   );
 }
 
-function WeekSessionList({ authStatus, rows, isReadOnly = false }) {
+function WeekSessionList({
+  authStatus,
+  isImportedData = false,
+  rows,
+  isReadOnly = false,
+}) {
   return (
     <div className="space-y-2">
       {rows.length === 0 ? (
         isReadOnly ? (
-          <EmptyWeekState authStatus={authStatus} isReadOnly={isReadOnly} />
+          <EmptyWeekState
+            authStatus={authStatus}
+            isImportedData={isImportedData}
+            isReadOnly={isReadOnly}
+          />
         ) : (
-          <div className="rounded-xl border border-dashed bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+          <div className="bg-muted/20 text-muted-foreground rounded-xl border border-dashed px-4 py-4 text-sm">
             No sessions logged in this week.
           </div>
         )
       ) : (
         rows.map((row) => {
-          const className = "grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4 rounded-xl border bg-muted/20 px-4 py-3" +
-            (isReadOnly ? "" : " transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2");
+          const className =
+            "grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4 rounded-xl border bg-muted/20 px-4 py-3" +
+            (isReadOnly
+              ? ""
+              : " transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2");
           const Wrapper = isReadOnly ? "div" : Link;
           const wrapperProps = isReadOnly
             ? { className }
-            : { href: { pathname: "/log", query: { date: row.date } }, className };
+            : {
+                href: { pathname: "/log", query: { date: row.date } },
+                className,
+              };
           return (
-          <Wrapper key={row.date} {...wrapperProps}>
-            <div className="space-y-0.5">
-              <p className="text-sm font-semibold leading-none text-foreground">
-                {format(new Date(row.date + "T00:00:00"), "EEE")}
-              </p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {format(new Date(row.date + "T00:00:00"), "MMM d")}
-              </p>
-            </div>
-            <div className="min-w-0 space-y-1.5">
-              {row.liftDetails.length > 0 ? (
-                row.liftDetails.map((lift) => (
-                  <div
-                    key={lift.liftType}
-                    className="grid grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1"
-                  >
-                    <span className="min-w-0 text-sm font-medium text-foreground">
-                      {lift.liftType}
-                    </span>
-                    <span className="min-w-0 text-sm text-muted-foreground">
-                      {lift.topSets.length > 1 ? "Top sets" : "Top set"} {lift.topSets.join(" · ")}
-                    </span>
-                    {lift.hasHistoricalPR ? (
-                      <Badge
-                        variant="outline"
-                        className="justify-self-start border-amber-400 px-2 py-0 text-[10px] text-amber-600"
-                      >
-                        PR
-                      </Badge>
-                    ) : null}
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-foreground">Session logged</p>
-              )}
-            </div>
-          </Wrapper>
+            <Wrapper key={row.date} {...wrapperProps}>
+              <div className="space-y-0.5">
+                <p className="text-foreground text-sm leading-none font-semibold">
+                  {format(new Date(row.date + "T00:00:00"), "EEE")}
+                </p>
+                <p className="text-muted-foreground text-xs leading-none">
+                  {format(new Date(row.date + "T00:00:00"), "MMM d")}
+                </p>
+              </div>
+              <div className="min-w-0 space-y-1.5">
+                {row.liftDetails.length > 0 ? (
+                  row.liftDetails.map((lift) => (
+                    <div
+                      key={lift.liftType}
+                      className="grid grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1"
+                    >
+                      <span className="text-foreground min-w-0 text-sm font-medium">
+                        {lift.liftType}
+                      </span>
+                      <span className="text-muted-foreground min-w-0 text-sm">
+                        {lift.topSets.length > 1 ? "Top sets" : "Top set"}{" "}
+                        {lift.topSets.join(" · ")}
+                      </span>
+                      {lift.hasHistoricalPR ? (
+                        <Badge
+                          variant="outline"
+                          className="justify-self-start border-amber-400 px-2 py-0 text-[10px] text-amber-600"
+                        >
+                          PR
+                        </Badge>
+                      ) : null}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-foreground text-sm">Session logged</p>
+                )}
+              </div>
+            </Wrapper>
           );
         })
       )}
@@ -559,6 +604,7 @@ function WeekSessionList({ authStatus, rows, isReadOnly = false }) {
 function EarlyWeekCard({
   authStatus,
   isDemoMode,
+  isImportedData,
   isReadOnly,
   dataMaturityStage,
   dashboardStage,
@@ -583,18 +629,22 @@ function EarlyWeekCard({
         <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col items-center justify-center">
-        <EmptyWeekState authStatus={authStatus} isReadOnly={isReadOnly} />
+        <EmptyWeekState
+          authStatus={authStatus}
+          isImportedData={isImportedData}
+          isReadOnly={isReadOnly}
+        />
         {!isDemoMode && dashboardStage === "starter_sample" && (
           <Link
             href="/import"
-            className="mt-4 flex w-full items-center gap-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3 transition-colors hover:border-primary hover:bg-primary/10"
+            className="border-primary/40 bg-primary/5 hover:border-primary hover:bg-primary/10 mt-4 flex w-full items-center gap-3 rounded-xl border border-dashed px-4 py-3 transition-colors"
           >
-            <FileUp className="h-5 w-5 shrink-0 text-primary" />
+            <FileUp className="text-primary h-5 w-5 shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-foreground text-sm font-medium">
                 Already have training data?
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Import a data file to merge your history into your Google Sheet.
               </p>
             </div>
@@ -608,25 +658,31 @@ function EarlyWeekCard({
   );
 }
 
-function EmptyWeekState({ authStatus, isReadOnly }) {
+function EmptyWeekState({ authStatus, isImportedData = false, isReadOnly }) {
   if (!isReadOnly) {
     return (
-      <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
-        Log your training sessions and this card will track your weekly rhythm — sessions, volume, and lifts trained.
+      <p className="bg-muted/30 text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
+        Log your training sessions and this card will track your weekly rhythm —
+        sessions, volume, and lifts trained.
       </p>
     );
   }
 
   if (authStatus === "authenticated") {
     return (
-      <div className="w-full space-y-4 rounded-lg border border-dashed bg-muted/30 px-4 py-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          Unlock weekly session tracking, momentum cues, and in-session lift logging by setting up your Google Sheet.
+      <div className="bg-muted/30 w-full space-y-4 rounded-lg border border-dashed px-4 py-6 text-center">
+        <p className="text-muted-foreground text-sm">
+          Unlock weekly session tracking, momentum cues, and in-session lift
+          logging by setting up your Google Sheet.
         </p>
         <Button
           className="gap-2"
           onClick={() => {
-            openSheetSetupDialog("bootstrap");
+            openSheetSetupDialog("bootstrap", {
+              action: isImportedData
+                ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
+                : null,
+            });
           }}
         >
           <img
@@ -642,9 +698,10 @@ function EmptyWeekState({ authStatus, isReadOnly }) {
   }
 
   return (
-    <div className="w-full space-y-4 rounded-lg border border-dashed bg-muted/30 px-4 py-6 text-center">
-      <p className="text-sm text-muted-foreground">
-        Unlock weekly session tracking, momentum cues, and in-session lift logging when you sign in with Google.
+    <div className="bg-muted/30 w-full space-y-4 rounded-lg border border-dashed px-4 py-6 text-center">
+      <p className="text-muted-foreground text-sm">
+        Unlock weekly session tracking, momentum cues, and in-session lift
+        logging when you sign in with Google.
       </p>
       <GoogleSignInButton cta="week_in_iron_empty_state" className="gap-2">
         Sign in to enable logging
@@ -704,10 +761,10 @@ function StartLiftPrompt({ showIntro = true }) {
     <div className="space-y-3">
       {showIntro && (
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-foreground text-sm font-semibold">
             Pick a lift to work on
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Open today&apos;s log and go straight to the lift you want to train.
           </p>
         </div>
@@ -716,8 +773,13 @@ function StartLiftPrompt({ showIntro = true }) {
         {BIG_FOUR_STARTERS.map(({ liftType, icon }) => (
           <Link
             key={liftType}
-            href={`/log?startLift=${encodeURIComponent(liftType)}#${encodeURIComponent(`lift-${liftType.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`)}`}
-            className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 transition-colors hover:border-primary hover:bg-muted/40"
+            href={`/log?startLift=${encodeURIComponent(liftType)}#${encodeURIComponent(
+              `lift-${liftType
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "")}`,
+            )}`}
+            className="border-border bg-card hover:border-primary hover:bg-muted/40 flex items-center gap-3 rounded-xl border px-3 py-3 transition-colors"
           >
             <Image
               src={icon}
@@ -726,7 +788,7 @@ function StartLiftPrompt({ showIntro = true }) {
               height={40}
               className="h-10 w-10 shrink-0"
             />
-            <span className="text-sm font-medium leading-tight">{`Log ${liftType} activity`}</span>
+            <span className="text-sm leading-tight font-medium">{`Log ${liftType} activity`}</span>
           </Link>
         ))}
       </div>

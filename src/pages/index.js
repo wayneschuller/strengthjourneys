@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 
 import {
   Calculator,
@@ -247,7 +248,15 @@ export default function Home() {
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
-  const { hasUserData, isReadOnly, parsedData, rawRows, sheetInfo, isReturningUserLoading } = useUserLiftingData();
+  const {
+    hasUserData,
+    isImportedData,
+    isReadOnly,
+    parsedData,
+    rawRows,
+    sheetInfo,
+    isReturningUserLoading,
+  } = useUserLiftingData();
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
@@ -259,8 +268,8 @@ export default function Home() {
         rawRows,
         sheetInfo,
       }),
-      [parsedData, rawRows, sheetInfo],
-    );
+    [parsedData, rawRows, sheetInfo],
+  );
   const importFeatureCard = (() => {
     if (authStatus === "authenticated" && sheetInfo?.ssid) {
       return {
@@ -326,7 +335,9 @@ export default function Home() {
             }
           : card,
       )
-      .filter((card) => !card.authRequired || hasUserData || card.href === "/log");
+      .filter(
+        (card) => !card.authRequired || hasUserData || card.href === "/log",
+      );
     const logCardIndex = visibleCards.findIndex((card) => card.href === "/log");
 
     if (logCardIndex === -1) {
@@ -452,12 +463,12 @@ export default function Home() {
         </h2>
         <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {homepageFeatureCards.map((card, index) => (
-              <FeatureCard
-                key={index}
-                index={index}
-                {...card}
-                {...(card.href === "/log" ? logTeaserMeta : null)}
-              />
+            <FeatureCard
+              key={index}
+              index={index}
+              {...card}
+              {...(card.href === "/log" ? logTeaserMeta : null)}
+            />
           ))}
         </div>
 
@@ -548,7 +559,8 @@ function FeatureCard({
             <CardDescription className="h-[2rem]">
               {lockedAction === "sign_in" ? (
                 <>
-                  Unlock live strength tracking, warm-up suggestions, and in-session logging.{" "}
+                  Unlock live strength tracking, warm-up suggestions, and
+                  in-session logging.{" "}
                   <GoogleSignInInlineButton cta="home_log_teaser_inline">
                     Sign in
                   </GoogleSignInInlineButton>{" "}
@@ -556,11 +568,16 @@ function FeatureCard({
                 </>
               ) : (
                 <>
-                  Unlock live strength tracking, warm-up suggestions, and in-session logging.{" "}
+                  Unlock live strength tracking, warm-up suggestions, and
+                  in-session logging.{" "}
                   <button
                     className="text-primary underline underline-offset-4 hover:opacity-80"
                     onClick={() => {
-                      openSheetSetupDialog("bootstrap");
+                      openSheetSetupDialog("bootstrap", {
+                        action: isImportedData
+                          ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
+                          : null,
+                      });
                     }}
                     type="button"
                   >
@@ -598,7 +615,9 @@ function FeatureCard({
         <Link href={href}>
           <CardHeader className="min-h-28">
             <CardTitle className="">{title}</CardTitle>
-            <CardDescription className="h-[2rem]">{description}</CardDescription>
+            <CardDescription className="h-[2rem]">
+              {description}
+            </CardDescription>
           </CardHeader>
           <CardContent
             className="flex justify-center transition-transform group-hover:scale-110"
@@ -615,7 +634,11 @@ function FeatureCard({
                 delay: (index % 12) * 0.04,
               }}
             >
-              <IconComponent size={64} strokeWidth={1.25} className="shrink-0" />
+              <IconComponent
+                size={64}
+                strokeWidth={1.25}
+                className="shrink-0"
+              />
             </motion.div>
           </CardContent>
         </Link>

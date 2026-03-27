@@ -19,7 +19,6 @@ import {
   LibraryBig,
   Bot,
   Anvil,
-  ChartColumnDecreasing,
   Bus,
   Crown,
   Shield,
@@ -95,13 +94,6 @@ export const featurePages = [
     description:
       "Explore your lifting history lift by lift. PRs across every rep range, your journey, and training frequency.",
     IconComponent: Layers,
-  },
-  {
-    href: "/barbell-strength-potential",
-    title: "Barbell Strength Potential",
-    description:
-      "Top lifts by rep range with bar charts that reveal untapped strength potential.",
-    IconComponent: ChartColumnDecreasing,
   },
   {
     href: "/warm-up-sets-calculator",

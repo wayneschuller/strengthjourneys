@@ -520,11 +520,6 @@ function StrengthInsightsMenu() {
       icon: <Bot className="h-5 w-5" />,
     },
     {
-      title: "Barbell Strength Potential",
-      href: "/barbell-strength-potential",
-      icon: <ChartColumnDecreasing className="h-5 w-5" />,
-    },
-    {
       title: "Tonnage Metrics",
       href: "/tonnage",
       icon: <Bus className="h-5 w-5" />,

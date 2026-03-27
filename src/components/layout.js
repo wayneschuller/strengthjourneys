@@ -338,7 +338,6 @@ function getTodayInviteMessage(now = new Date()) {
 const PERSONALIZED_DATA_CTA_PATHS = [
   "/visualizer",
   "/lift-explorer",
-  "/barbell-strength-potential",
   "/tonnage",
   "/progress-guide/[lift]",
   "/strength-year-in-review",

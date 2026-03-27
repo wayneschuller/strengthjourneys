@@ -41,10 +41,6 @@ next-env.d.ts
 # Sentry Config File
 .env.sentry-build-plugin
 
-# 20240911 next-sitemap
-public/sitemap*.xml
-public/robots.txt
-
 # AI coding assistant skills directories
 /.agent/
 /.agents/

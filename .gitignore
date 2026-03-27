@@ -41,6 +41,30 @@ next-env.d.ts
 # Sentry Config File
 .env.sentry-build-plugin
 
+# 20240911 next-sitemap
+# public/sitemap*.xml
+# public/robots.txt
+#
+# Intentionally commented out on 2026-03-27.
+# Why: Next.js 16.2 on Vercel currently has a regression where files written to
+# public/ after next build can be generated successfully during postbuild but
+# still not be served in the deployed output, causing production 404s for
+# sitemap.xml / sitemap-0.xml / robots.txt.
+# Reference: https://github.com/vercel/next.js/issues/91864
+#
+# Current workaround:
+# - Track public/robots.txt, public/sitemap.xml, and public/sitemap-0.xml in git.
+# - Do not rely on postbuild-only generation for production serving.
+#
+# When routes or sitemap-worthy pages change:
+# 1. Run `npm run build`
+# 2. Let next-sitemap regenerate the files in public/
+# 3. Commit updated public/robots.txt, public/sitemap.xml, and public/sitemap-0.xml
+# 4. Deploy stable and verify the live URLs return HTTP 200 before resubmitting in GSC
+#
+# Revisit after the upstream regression is fixed and decide whether these files
+# can safely go back to being ignored/generated-only.
+
 # AI coding assistant skills directories
 /.agent/
 /.agents/

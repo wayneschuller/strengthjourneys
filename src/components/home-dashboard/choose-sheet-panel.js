@@ -183,6 +183,7 @@ export function ChooseSheetPanel({
   onCreateBlank,
   onDisconnectCurrent,
   onImportFile,
+  showImportOption = true,
   embedded = false,
 }) {
   const importFileRef = useRef(null);
@@ -456,7 +457,9 @@ export function ChooseSheetPanel({
                         Other options
                       </p>
                       <p className="text-muted-foreground mt-1 text-sm">
-                        Browse Google Drive, import a data file, or start fresh.
+                        {showImportOption
+                          ? "Browse Google Drive, import a data file, or start fresh."
+                          : "Browse Google Drive or start fresh."}
                       </p>
                       <div className="mt-3 flex flex-col gap-2">
                         <Button
@@ -471,27 +474,31 @@ export function ChooseSheetPanel({
                           <FolderOpen className="mr-2 h-4 w-4" />
                           Browse Google Drive
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          disabled={isWorking || !onImportFile}
-                          onClick={() => importFileRef.current?.click()}
-                        >
-                          <FileUp className="mr-2 h-4 w-4" />
-                          Import data file
-                        </Button>
-                        <input
-                          ref={importFileRef}
-                          type="file"
-                          accept=".csv,.txt"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file && onImportFile) onImportFile(file);
-                            e.target.value = "";
-                          }}
-                        />
+                        {showImportOption && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              disabled={isWorking || !onImportFile}
+                              onClick={() => importFileRef.current?.click()}
+                            >
+                              <FileUp className="mr-2 h-4 w-4" />
+                              Import data file
+                            </Button>
+                            <input
+                              ref={importFileRef}
+                              type="file"
+                              accept=".csv,.txt"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file && onImportFile) onImportFile(file);
+                                e.target.value = "";
+                              }}
+                            />
+                          </>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -564,7 +571,9 @@ export function ChooseSheetPanel({
                       Other options
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      Browse Google Drive, import a data file, or start fresh.
+                      {showImportOption
+                        ? "Browse Google Drive, import a data file, or start fresh."
+                        : "Browse Google Drive or start fresh."}
                     </p>
                     <div className="mt-3 flex flex-col gap-2">
                       <Button
@@ -579,16 +588,18 @@ export function ChooseSheetPanel({
                         <FolderOpen className="mr-2 h-4 w-4" />
                         Browse Google Drive
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        disabled={isWorking || !onImportFile}
-                        onClick={() => importFileRef.current?.click()}
-                      >
-                        <FileUp className="mr-2 h-4 w-4" />
-                        Import data file
-                      </Button>
+                      {showImportOption && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          disabled={isWorking || !onImportFile}
+                          onClick={() => importFileRef.current?.click()}
+                        >
+                          <FileUp className="mr-2 h-4 w-4" />
+                          Import data file
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"

@@ -1,3 +1,7 @@
+/*
+ * Import landing page for bringing workout history into Strength Journeys.
+ * Keeps the base /import route separate from app-specific /import/[slug] pages.
+ */
 import { useState, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
@@ -43,7 +47,6 @@ import {
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { IMPORT_APP_PAGES } from "@/lib/import-app-guides";
-
 
 const BIG_FOUR = [
   { name: "Back Squat", icon: "/back_squat.svg" },
@@ -270,7 +273,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
         <CardContent className="border-border border-t pt-3 pb-3">
           <p className="text-muted-foreground mb-2 text-xs">
             Weight in {unit}. Reps defaults to 1 if left blank. Date precision
-            is flexible — just a year is fine.
+            is flexible - just a year is fine.
           </p>
           {entries.map((entry, idx) => (
             <LiftEntryRow
@@ -301,7 +304,7 @@ function BenefitsRow() {
     {
       icon: Trophy,
       title: "Personal Records",
-      desc: "Every PR detected automatically — by lift, reps, and date",
+      desc: "Every PR detected automatically - by lift, reps, and date",
     },
     {
       icon: BarChart3,
@@ -340,7 +343,7 @@ function ImportSeoLinksSection() {
           How to Export Your Data
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Takes about 2 minutes. Import from multiple apps — we&apos;ll
+          Takes about 2 minutes. Import from multiple apps - we&apos;ll
           merge your history automatically.
         </p>
       </div>
@@ -387,7 +390,7 @@ function buildCsvFromParsedData(parsedData) {
 
   // parsedData is date-ascending with intraday order preserved.
   // Group by date, then reverse the groups for newest-first output
-  // while keeping warmup→work-set order within each date.
+  // while keeping warmup->work-set order within each date.
   const grouped = [];
   let currentDate = null;
   let currentGroup = [];
@@ -533,20 +536,20 @@ export default function ImportPage() {
     }
   }, [validEntries, sheetInfo, mutate, toast]);
 
-  // Loading gate — prevent flash for returning users
+  // Loading gate - prevent flash for returning users
   if (authStatus === "loading" || isReturningUserLoading) {
     return (
       <>
         <NextSeo
-          title="Import Your Lifting History — See Your Strength Instantly"
-          description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds — no account required."
+          title="Import Your Lifting History - See Your Strength Instantly"
+          description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required."
           canonical="https://www.strengthjourneys.xyz/import"
           openGraph={{
             url: "https://www.strengthjourneys.xyz/import",
             title:
-              "Import Your Lifting History — See Your Strength Instantly",
+              "Import Your Lifting History - See Your Strength Instantly",
             description:
-              "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds — no account required.",
+              "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required.",
             type: "website",
             site_name: "Strength Journeys",
           }}
@@ -568,15 +571,15 @@ export default function ImportPage() {
   return (
     <>
       <NextSeo
-        title="Import Your Lifting History — See Your Strength Instantly"
-        description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds — no account required."
+        title="Import Your Lifting History - See Your Strength Instantly"
+        description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required."
         canonical="https://www.strengthjourneys.xyz/import"
         openGraph={{
           url: "https://www.strengthjourneys.xyz/import",
           title:
-            "Import Your Lifting History — See Your Strength Instantly",
+            "Import Your Lifting History - See Your Strength Instantly",
           description:
-            "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds — no account required.",
+            "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required.",
           type: "website",
           site_name: "Strength Journeys",
         }}
@@ -601,22 +604,22 @@ export default function ImportPage() {
           </PageHeaderDescription>
         </PageHeader>
 
-        {/* Value proposition — show what they'll get before asking for a file */}
+        {/* Value proposition - show what they'll get before asking for a file */}
         <BenefitsRow />
 
-        {/* File Import Section — always visible, no auth required */}
+        {/* File Import Section - always visible, no auth required */}
         <ImportWorkflowSection />
 
         {/* Privacy reassurance */}
         <p className="text-muted-foreground mx-auto -mt-8 mb-12 max-w-5xl text-center text-xs">
           <Shield className="mr-1 inline h-3.5 w-3.5 align-text-bottom" />
-          Your data stays private. Files are parsed in your browser — nothing
+          Your data stays private. Files are parsed in your browser - nothing
           is saved unless you choose to.
         </p>
 
         <ImportSeoLinksSection />
 
-        {/* Quick Add Section — only for users with write access (GSheet mode) */}
+        {/* Quick Add Section - only for users with write access (GSheet mode) */}
         {!isReadOnly && (
           <section className="mx-auto mb-12 max-w-5xl space-y-4">
             <div className="flex items-center justify-between">
@@ -629,7 +632,7 @@ export default function ImportPage() {
 
             <p className="text-muted-foreground text-sm">
               Enter your most memorable lifts for each movement. You don&apos;t
-              need exact dates — just the year is enough. These will be added to
+              need exact dates - just the year is enough. These will be added to
               your Google Sheet as historical entries.
             </p>
 
@@ -696,7 +699,7 @@ export default function ImportPage() {
                       {sheetInfo.filename || "Your Google Sheet"}
                     </h3>
                     <p className="text-muted-foreground mb-3 text-sm">
-                      Your data already lives in your own Google Sheet —
+                      Your data already lives in your own Google Sheet -
                       it&apos;s always yours. Open it anytime to view, edit, or
                       share.
                     </p>
@@ -723,7 +726,7 @@ export default function ImportPage() {
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold">Download as CSV</h3>
                     <p className="text-muted-foreground text-xs">
-                      {parsedData.filter((e) => !e.isGoal).length} rows —
+                      {parsedData.filter((e) => !e.isGoal).length} rows -
                       portable format for backups or other apps
                     </p>
                   </div>

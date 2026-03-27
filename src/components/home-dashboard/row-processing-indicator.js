@@ -1,9 +1,13 @@
+/*
+ * Home dashboard loading/status indicators for linked-sheet sync and initial data hydration.
+ * Keep source-specific wording accurate so imported preview mode never looks sheet-backed.
+ */
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
 import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
-import { RefreshCw, Loader2 } from "lucide-react";
+import { FileUp, RefreshCw, Loader2 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
 function formatSyncTime(timestamp) {
@@ -129,21 +133,29 @@ export function DataSheetStatus({
 const FADE_DELAY_MS = 2500;
 
 /**
- * Animated progress bar showing "Reading your workout data" with row count. Fades out after
- * progress completes. Re-triggers only when rowCount changes (new data arrived).
+ * Animated progress bar for the initial data load. Supports sheet rows and imported preview entries
+ * so the home dashboard can use one visual treatment without implying every source is Google Sheets.
  *
  * @param {Object} props
- * @param {number|null} props.rowCount - Total rows to process.
+ * @param {"sheet"|"preview"} [props.mode] - Source type powering the load indicator.
+ * @param {number|null} props.count - Total rows/entries to process.
  * @param {boolean} props.isProgressDone - Whether the animation has finished.
  * @param {function(boolean)} props.setIsProgressDone - Callback to mark progress complete.
  */
 export function RowProcessingIndicator({
-  rowCount,
+  mode = "sheet",
+  count,
   isProgressDone,
   setIsProgressDone,
 }) {
   const [animatedCount, setAnimatedCount] = useState(0);
   const [shouldFadeOut, setShouldFadeOut] = useState(false);
+  const isPreviewMode = mode === "preview";
+  const countLabel = isPreviewMode ? "entries" : "rows";
+  const loadingLabel = isPreviewMode
+    ? "Preparing imported preview"
+    : "Reading your workout data";
+  const completedLabel = isPreviewMode ? "Preview ready" : "Processed";
 
   useEffect(() => {
     if (!isProgressDone) {
@@ -155,16 +167,16 @@ export function RowProcessingIndicator({
   }, [isProgressDone]);
 
   useEffect(() => {
-    // Reset whenever the incoming row count changes
+    // Reset whenever the incoming count changes
     setAnimatedCount(0);
     setIsProgressDone(false);
 
-    if (rowCount === null || rowCount === undefined) {
+    if (count === null || count === undefined) {
       setIsProgressDone(false);
       return;
     }
 
-    if (rowCount <= 0) {
+    if (count <= 0) {
       setIsProgressDone(true);
       return;
     }
@@ -176,7 +188,7 @@ export function RowProcessingIndicator({
     const tick = (now) => {
       const elapsed = now - start;
       const progress = Math.min(1, elapsed / durationMs);
-      const nextCount = Math.round(rowCount * progress);
+      const nextCount = Math.round(count * progress);
       setAnimatedCount(nextCount);
 
       if (progress >= 1) {
@@ -192,14 +204,14 @@ export function RowProcessingIndicator({
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [rowCount, setIsProgressDone]);
+  }, [count, setIsProgressDone]);
 
   const percent =
-    rowCount && rowCount > 0
-      ? Math.min(100, Math.round((animatedCount / rowCount) * 100))
+    count && count > 0
+      ? Math.min(100, Math.round((animatedCount / count) * 100))
       : 0;
 
-  if (rowCount === null || rowCount === undefined) {
+  if (count === null || count === undefined) {
     return (
       <div className="flex flex-col items-center py-4">
         <Skeleton className="mb-2 h-2 w-4/5 md:w-3/5" />
@@ -228,17 +240,22 @@ export function RowProcessingIndicator({
           <Progress className="mb-2 h-2 w-4/5 md:w-3/5" value={percent} />
           <div className="text-sm text-muted-foreground grid grid-cols-[minmax(12rem,1fr)_auto] items-center gap-x-2">
             <div className="flex items-center justify-end gap-2 min-w-0">
-              <img
-                src={GOOGLE_SHEETS_ICON_URL}
-                alt=""
-                className="h-4 w-4 shrink-0"
-                aria-hidden
-              />
-              {isProgressDone ? "Processed" : "Reading your workout data"}:
+              {isPreviewMode ? (
+                <FileUp className="h-4 w-4 shrink-0" aria-hidden />
+              ) : (
+                <img
+                  src={GOOGLE_SHEETS_ICON_URL}
+                  alt=""
+                  className="h-4 w-4 shrink-0"
+                  aria-hidden
+                />
+              )}
+              {isProgressDone ? completedLabel : loadingLabel}:
             </div>
             <div className="flex items-center gap-2">
               <span className="tabular-nums min-w-[20ch] inline-block text-left">
-                {animatedCount.toLocaleString()} / {rowCount?.toLocaleString()}
+                {animatedCount.toLocaleString()} / {count?.toLocaleString()}{" "}
+                {countLabel}
               </span>
               <motion.span
                 className={`shrink-0 ${isProgressDone ? "text-green-500" : "text-amber-400"}`}

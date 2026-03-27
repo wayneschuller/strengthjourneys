@@ -386,11 +386,7 @@ export function ImportWorkflowSection({
               <p className="text-muted-foreground mb-1 max-w-md text-sm">
                 {mergeMode ? (
                   <>
-                    We&apos;ll merge your history straight into{" "}
-                    <strong className="text-foreground">
-                      &ldquo;{sheetName}&rdquo;
-                    </strong>{" "}
-                    — duplicates are skipped automatically.
+                    Preview your data before merging into your sheet.
                   </>
                 ) : createMode ? (
                   "We'll create a Google Sheet in your Drive and populate it with your data — ready to explore."
@@ -398,6 +394,16 @@ export function ImportWorkflowSection({
                   "CSV or Excel from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet export."
                 )}
               </p>
+              {mergeMode && (
+                <p className="text-muted-foreground mb-3 max-w-md text-xs">
+                  We&apos;ll show you a full preview first - then you can
+                  choose to merge it into{" "}
+                  <strong className="text-foreground">
+                    &ldquo;{sheetName}&rdquo;
+                  </strong>
+                  .
+                </p>
+              )}
               {!isAuthenticated && (
                 <p className="text-muted-foreground mb-3 flex items-center justify-center gap-3 text-xs">
                   <span>No account required</span>
@@ -421,8 +427,7 @@ export function ImportWorkflowSection({
               />
               {mergeMode && (
                 <p className="text-muted-foreground mt-4 max-w-sm text-xs">
-                  Want to explore someone else&apos;s data without changing your
-                  sheet? Sign out first, then import - it opens in preview mode.
+                  No changes are made until you confirm the merge.
                 </p>
               )}
             </>

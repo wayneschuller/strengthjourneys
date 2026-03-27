@@ -95,6 +95,16 @@ export function HomeDashboard() {
     useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
   const [hasDataLoaded, setHasDataLoaded] = useState(false);
+  const previewEntryCount = useMemo(
+    () =>
+      Array.isArray(parsedData)
+        ? parsedData.reduce(
+            (count, entry) => (entry?.isGoal ? count : count + 1),
+            0,
+          )
+        : null,
+    [parsedData],
+  );
   // `dashboardStage` drives onboarding vs mature behavior. Keep all stage
   // branching anchored here so child cards receive one consistent signal.
   const { dashboardStage, starterSheetState, sessionCount, dataMaturityStage } =
@@ -111,14 +121,6 @@ export function HomeDashboard() {
   useEffect(() => {
     if (isProgressDone) setHasDataLoaded(true);
   }, [isProgressDone]);
-
-  // For imported data there is no GSheet row count animation — go straight to loaded.
-  useEffect(() => {
-    if (isImportedData && parsedData?.length > 0) {
-      setIsProgressDone(true);
-      setHasDataLoaded(true);
-    }
-  }, [isImportedData, parsedData]);
 
   useEffect(() => {
     if (!hasUserData) setHasDataLoaded(false);
@@ -246,7 +248,8 @@ export function HomeDashboard() {
       )}
       {hasUserData && (
         <RowProcessingIndicator
-          rowCount={rawRows}
+          mode={isImportedData ? "preview" : "sheet"}
+          count={isImportedData ? previewEntryCount : rawRows}
           isProgressDone={isProgressDone}
           setIsProgressDone={setIsProgressDone}
         />

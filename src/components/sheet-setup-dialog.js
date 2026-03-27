@@ -1213,6 +1213,7 @@ export function SheetSetupDialog() {
                   }
                   onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
                   onImportFile={handleImportFile}
+                  showImportOption={false}
                   onDisconnectCurrent={() => {
                     void disconnectCurrentSheet();
                   }}

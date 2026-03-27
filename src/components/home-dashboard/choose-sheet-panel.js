@@ -213,12 +213,12 @@ export function ChooseSheetPanel({
               aria-hidden
             />
             {isSwitchSheet
-              ? "Choose a lifting log"
+              ? "Switch your lifting data"
               : "Connect your lifting log"}
           </CardTitle>
           <CardDescription>
             {isSwitchSheet
-              ? "Strength Journeys found sheets you can access. Pick the one you want to connect, or start fresh with a new sheet."
+              ? "Pick the sheet you want to use instead of your current one."
               : "Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or start fresh with a new sheet."}
           </CardDescription>
           {statusMessage && (
@@ -277,9 +277,7 @@ export function ChooseSheetPanel({
           {primaryCandidate && (
             <>
               <p className="text-foreground/80 text-sm font-semibold">
-                {isSwitchSheet
-                  ? "Recommended data source"
-                  : "Recommended for you"}
+                {isSwitchSheet ? "Best replacement" : "Recommended for you"}
               </p>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div
@@ -311,7 +309,7 @@ export function ChooseSheetPanel({
                       </div>
                       <p className="text-muted-foreground text-sm font-medium">
                         {isSwitchSheet
-                          ? "This looks like the strongest data source to switch to."
+                          ? "This looks like the best replacement for your current data source."
                           : "This looks like your main lifting log."}
                       </p>
                       <p className="text-muted-foreground text-sm">
@@ -384,9 +382,9 @@ export function ChooseSheetPanel({
                       >
                         <Link2 className="mr-2 h-4 w-4" />
                         {currentSsid === primaryCandidate.id
-                          ? "Already connected"
+                          ? "Currently connected"
                           : isSwitchSheet
-                            ? "Use this data source"
+                            ? "Switch to this sheet"
                             : "Connect this lifting log"}
                       </Button>
                       {isPrimaryCurrent && (
@@ -434,8 +432,8 @@ export function ChooseSheetPanel({
                                 </p>
                               )}
                               <p className="text-muted-foreground text-sm">
-                                Disconnect it here if you want to remove it
-                                before choosing something else.
+                                Disconnect it if you want to remove it without
+                                switching to another sheet.
                               </p>
                             </div>
                             <Button
@@ -542,8 +540,8 @@ export function ChooseSheetPanel({
                               </p>
                             )}
                             <p className="text-muted-foreground text-sm">
-                              Disconnect it here if you want to remove it before
-                              choosing something else.
+                              Disconnect it if you want to remove it without
+                              switching to another sheet.
                             </p>
                           </div>
                           <Button
@@ -633,11 +631,11 @@ export function ChooseSheetPanel({
                   )}
                 </button>
                 {showOtherSheets && (
-                  <div className="grid grid-cols-1 gap-2 border-t px-4 py-4 md:grid-cols-2 2xl:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-3 border-t px-4 py-4 md:grid-cols-2">
                     {otherCandidates.map((candidate) => (
                       <div
                         key={candidate.id}
-                        className="bg-background/80 flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                        className="bg-background/80 flex flex-col gap-3 rounded-xl border px-4 py-3"
                       >
                         <div className="min-w-0">
                           <div className="mb-1 flex min-w-0 items-center gap-2">
@@ -652,12 +650,12 @@ export function ChooseSheetPanel({
                                 href={getCandidateUrl(candidate)}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-foreground hover:text-primary truncate text-sm font-semibold underline-offset-2 hover:underline"
+                                className="text-foreground hover:text-primary text-sm leading-snug font-semibold break-words underline-offset-2 hover:underline"
                               >
                                 {candidate.name}
                               </a>
                             ) : (
-                              <p className="text-foreground truncate text-sm font-semibold">
+                              <p className="text-foreground text-sm leading-snug font-semibold break-words">
                                 {candidate.name}
                               </p>
                             )}
@@ -665,22 +663,20 @@ export function ChooseSheetPanel({
                           <p className="text-muted-foreground text-sm">
                             {formatCandidateMeta(candidate, isEnriching)}
                           </p>
-                          {currentSsid === candidate.id && (
-                            <p className="text-primary pt-1 text-xs font-semibold tracking-wide uppercase">
-                              Currently connected
-                            </p>
-                          )}
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
+                          className="w-full sm:w-auto"
                           disabled={isWorking || currentSsid === candidate.id}
                           onClick={() => onChooseSheet(candidate.id)}
                         >
                           <Link2 className="mr-2 h-4 w-4" />
                           {currentSsid === candidate.id
-                            ? "Connected"
-                            : "Use this"}
+                            ? "Currently connected"
+                            : isSwitchSheet
+                              ? "Switch to this sheet"
+                              : "Use this"}
                         </Button>
                       </div>
                     ))}

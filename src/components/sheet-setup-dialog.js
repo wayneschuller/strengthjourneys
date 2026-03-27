@@ -1457,6 +1457,7 @@ export function SheetSetupDialog() {
                   importedPreviewEntryCount={
                     parsedData?.filter((entry) => !entry.isGoal)?.length || 0
                   }
+                  importedPreviewFileName={importedFileName || ""}
                   openPicker={openPicker}
                   isWorking={isProvisionActionLoading}
                   isDisconnectingCurrent={isDisconnectingCurrentSheet}

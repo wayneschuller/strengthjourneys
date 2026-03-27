@@ -752,7 +752,7 @@ function ReadOnlyWeekCta({
               aria-hidden
             />
             {isImportedData
-              ? "Save imported week to my sheet"
+              ? "Save imported data to my sheet"
               : "Set up sheet to enable logging"}
           </Button>
         ) : (
@@ -761,7 +761,7 @@ function ReadOnlyWeekCta({
             className="gap-2"
           >
             {isImportedData
-              ? "Sign in to save this week"
+              ? "Sign in to save imported data"
               : "Sign in to enable logging"}
           </GoogleSignInButton>
         )}

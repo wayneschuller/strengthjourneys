@@ -340,11 +340,11 @@ function ImportSeoLinksSection() {
     <section className="mx-auto mb-12 max-w-5xl">
       <div className="mb-1">
         <h2 className="text-lg font-semibold">
-          How to Export Your Data
+          How to Export Your Data From Other Fitness Apps
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Takes about 2 minutes. Import from multiple apps - we&apos;ll
-          merge your history automatically.
+          Takes about 2 minutes. Export your history from apps like Hevy,
+          Strong, Wodify, or BTWB, then import it here.
         </p>
       </div>
 
@@ -355,8 +355,8 @@ function ImportSeoLinksSection() {
               <div>
                 <h3 className="font-semibold">{page.appName}</h3>
                 <p className="text-muted-foreground mt-1 text-sm leading-6">
-                  Export your history from {page.appName} and drop it here.
-                  We handle the rest.
+                  Export your history from {page.appName}, then import it into
+                  Strength Journeys here. We handle the rest.
                 </p>
               </div>
               <div className="mt-auto pt-2">

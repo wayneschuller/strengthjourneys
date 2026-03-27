@@ -32,11 +32,20 @@ async function readRequestBody(req) {
   return Buffer.concat(chunks);
 }
 
+function logImportEvent(phase, meta = {}) {
+  console.log("[sheet/import]", {
+    phase,
+    ...meta,
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  const startedAt = Date.now();
 
   let requestBody;
   let rawBody;
@@ -49,7 +58,7 @@ export default async function handler(req, res) {
     // the rest of the handler can stay unchanged.
     const decodedBody = isGzipped ? gunzipSync(rawBody) : rawBody;
     const payloadBytes = decodedBody.byteLength;
-    console.log("[sheet/import-history] payload:size", {
+    logImportEvent("request_decoded", {
       compressedBytes: rawBody.byteLength,
       compressedMegabytes: Number((rawBody.byteLength / (1024 * 1024)).toFixed(3)),
       bytes: payloadBytes,
@@ -58,6 +67,10 @@ export default async function handler(req, res) {
     });
     requestBody = JSON.parse(decodedBody.toString("utf8"));
   } catch (error) {
+    logImportEvent("request_invalid", {
+      durationMs: Date.now() - startedAt,
+      error: error.message || "Could not decode request body",
+    });
     return res.status(400).json({
       error: "Invalid import payload",
       details: error.message || "Could not decode request body",
@@ -72,10 +85,21 @@ export default async function handler(req, res) {
   const { ssid, entries } = requestBody;
 
   if (!ssid || !Array.isArray(entries) || entries.length === 0) {
+    logImportEvent("request_rejected", {
+      durationMs: Date.now() - startedAt,
+      hasSsid: Boolean(ssid),
+      entryCount: Array.isArray(entries) ? entries.length : 0,
+      reason: "missing_required_fields",
+    });
     return res
       .status(400)
       .json({ error: "Missing required fields: ssid, entries" });
   }
+
+  logImportEvent("request_validated", {
+    ssid,
+    entryCount: entries.length,
+  });
 
   const headers = {
     Authorization: `Bearer ${session.accessToken}`,
@@ -323,13 +347,27 @@ export default async function handler(req, res) {
       0,
     );
 
+    logImportEvent("write_complete", {
+      ssid,
+      entryCount: entries.length,
+      dateCount: sortedDates.length,
+      insertedRows: totalInserted,
+      batchRequestCount: batchRequests.length,
+      durationMs: Date.now() - startedAt,
+    });
+
     return res.status(200).json({
       ok: true,
       insertedRows: totalInserted,
       dateCount: sortedDates.length,
     });
   } catch (err) {
-    console.error("[sheet/import-history] error:", err);
+    logImportEvent("write_failed", {
+      ssid,
+      entryCount: Array.isArray(entries) ? entries.length : 0,
+      durationMs: Date.now() - startedAt,
+      error: err.message || "Internal server error",
+    });
     return res.status(500).json({ error: "Internal server error" });
   }
 }

@@ -170,6 +170,7 @@ function HowStrongAmIPageMain() {
     parsedData,
     isReturningUserLoading,
     isDemoMode,
+    hasUserData,
   } = useUserLiftingData();
 
   const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
@@ -561,7 +562,7 @@ function HowStrongAmIPageMain() {
                 recent90d={recent90dDisplay}
                 results={results}
                 activeUniverse={activeUniverse}
-                userStoryData={authStatus === "authenticated" ? userStoryData : null}
+                userStoryData={hasUserData ? userStoryData : null}
                 chartPercentiles={chartPercentiles}
                 percentileTimeline={percentileTimeline}
                 firstName={session?.user?.name?.split(" ")[0]}

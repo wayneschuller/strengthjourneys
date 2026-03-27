@@ -24,6 +24,7 @@
 
 import { devLog } from "@/lib/processing-utils";
 import {
+  buildImportedSheetName,
   buildSheetName,
   classifyLifecycle,
   copyTemplate,
@@ -55,11 +56,15 @@ export default async function handler(req, res) {
   const intent = normalizeIntent(req.body?.intent);
   const mode = normalizeLinkMode(req.body?.mode);
   const selectedSsid = req.body?.selectedSsid || null;
+  const importedFileName = req.body?.importedFileName || null;
   const hadLocalSheetBefore = Boolean(req.body?.hadLocalSheetBefore);
   const preferredUnitType = req.body?.preferredUnitType === "kg" ? "kg" : "lb";
   const debug = createDebug(intent, mode || "link");
   const existingRecord = await getExistingRecord(base.kvKey);
-  const sheetName = buildSheetName(base.session.user.name);
+  const sheetName =
+    mode === "create_blank" && importedFileName
+      ? buildImportedSheetName(base.session.user.name, importedFileName)
+      : buildSheetName(base.session.user.name);
   const lifecycle = classifyLifecycle({
     existingRecord,
     hadLocalSheetBefore,

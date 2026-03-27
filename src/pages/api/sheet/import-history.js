@@ -14,6 +14,30 @@
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
+import { gunzipSync } from "node:zlib";
+
+export const config = {
+  api: {
+    // We parse the raw body ourselves so gzipped imports can bypass the default
+    // 1 MB Next.js JSON body parser limit on this route.
+    bodyParser: false,
+  },
+};
+
+async function readRequestBody(req) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
+function logImportEvent(phase, meta = {}) {
+  console.log("[sheet/import]", {
+    phase,
+    ...meta,
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -21,16 +45,61 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const startedAt = Date.now();
+
+  let requestBody;
+  let rawBody;
+  try {
+    rawBody = await readRequestBody(req);
+    const isGzipped = String(req.headers["content-encoding"] || "")
+      .toLowerCase()
+      .includes("gzip");
+    // Client imports may arrive gzipped; decode before normal JSON parsing so
+    // the rest of the handler can stay unchanged.
+    const decodedBody = isGzipped ? gunzipSync(rawBody) : rawBody;
+    const payloadBytes = decodedBody.byteLength;
+    logImportEvent("request_decoded", {
+      compressedBytes: rawBody.byteLength,
+      compressedMegabytes: Number((rawBody.byteLength / (1024 * 1024)).toFixed(3)),
+      bytes: payloadBytes,
+      megabytes: Number((payloadBytes / (1024 * 1024)).toFixed(3)),
+      gzipped: isGzipped,
+    });
+    requestBody = JSON.parse(decodedBody.toString("utf8"));
+  } catch (error) {
+    logImportEvent("request_invalid", {
+      durationMs: Date.now() - startedAt,
+      error: error.message || "Could not decode request body",
+    });
+    return res.status(400).json({
+      error: "Invalid import payload",
+      details: error.message || "Could not decode request body",
+    });
+  }
+
   const session = await getServerSession(req, res, authOptions);
   if (!session?.accessToken) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, entries } = req.body;
+  const { ssid, entries } = requestBody;
 
   if (!ssid || !Array.isArray(entries) || entries.length === 0) {
-    return res.status(400).json({ error: "Missing required fields: ssid, entries" });
+    logImportEvent("request_rejected", {
+      durationMs: Date.now() - startedAt,
+      hasSsid: Boolean(ssid),
+      entryCount: Array.isArray(entries) ? entries.length : 0,
+      reason: "missing_required_fields",
+    });
+    return res
+      .status(400)
+      .json({ error: "Missing required fields: ssid, entries" });
   }
+
+  logImportEvent("request_validated", {
+    ssid,
+    entryCount: entries.length,
+  });
 
   const headers = {
     Authorization: `Bearer ${session.accessToken}`,
@@ -38,7 +107,28 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Step 1: Read existing sheet data to find date positions
+    // Step 1: Read sheet metadata + existing data to find date positions.
+    // When inserting at the very bottom, Google Sheets requires
+    // inheritFromBefore:true for insertDimension.
+    const metadataRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}?fields=sheets(properties(sheetId,title,gridProperties(rowCount)))`,
+      { headers },
+    );
+    if (!metadataRes.ok) {
+      const body = await metadataRes.json().catch(() => ({}));
+      return res.status(metadataRes.status).json({
+        error: body?.error?.message || "Failed to read sheet metadata",
+      });
+    }
+    const metadataPayload = await metadataRes.json().catch(() => ({}));
+    const firstSheet = Array.isArray(metadataPayload?.sheets)
+      ? metadataPayload.sheets[0]
+      : null;
+    const targetSheetId = firstSheet?.properties?.sheetId ?? 0;
+    const targetGridRowCount =
+      firstSheet?.properties?.gridProperties?.rowCount ?? 0;
+
+    // Step 2: Read existing sheet data to find date positions
     const dataRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:F?majorDimension=ROWS`,
       { headers },
@@ -64,7 +154,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // Step 2: Group entries by date, sort oldest-first
+    // Step 3: Group entries by date, sort oldest-first
     const byDate = {};
     for (const entry of entries) {
       if (!entry.date || !entry.liftType || !entry.weight) continue;
@@ -73,12 +163,9 @@ export default async function handler(req, res) {
     }
     const sortedDates = Object.keys(byDate).sort(); // ascending = oldest first
 
-    let totalInserted = 0;
-    let rowShift = 0; // cumulative shift from previous insertions
+    const importJobs = [];
 
-    // Step 3: Insert each date group, oldest first (highest row indices first)
-    // Oldest dates go to the bottom of the sheet, so their insertions don't
-    // shift the row indices needed for later (newer) date groups.
+    // Step 4: Build insertion jobs per date.
     for (const date of sortedDates) {
       const dateEntries = byDate[date];
 
@@ -125,76 +212,119 @@ export default async function handler(req, res) {
           (best, r) => (r.rowIndex > best.rowIndex ? r : best),
           newerRows[0],
         );
-        insertAfter = maxNewerRow.rowIndex + rowShift;
+        insertAfter = maxNewerRow.rowIndex;
       } else {
         // All existing data is older (or sheet is empty) — insert at top
         insertAfter = 1;
       }
 
-      const startIndex0 = insertAfter;
+      importJobs.push({
+        date,
+        rows,
+        startIndex0: insertAfter,
+      });
+    }
 
-      // Insert empty rows
-      const batchRequests = [
-        {
-          insertDimension: {
-            range: {
-              sheetId: 0,
-              dimension: "ROWS",
-              startIndex: startIndex0,
-              endIndex: startIndex0 + rows.length,
-            },
-            inheritFromBefore: false,
-          },
-        },
-        {
-          updateBorders: {
-            range: {
-              sheetId: 0,
-              startRowIndex: startIndex0,
-              endRowIndex: startIndex0 + rows.length,
-              startColumnIndex: 0,
-              endColumnIndex: 6,
-            },
-            top: { style: "NONE" },
-          },
-        },
-        {
-          repeatCell: {
-            range: {
-              sheetId: 0,
-              startRowIndex: startIndex0,
-              endRowIndex: startIndex0 + rows.length,
-              startColumnIndex: 4,
-              endColumnIndex: 5,
-            },
-            cell: {
-              userEnteredFormat: {
-                numberFormat: { type: "TEXT" },
-                horizontalAlignment: "LEFT",
-              },
-            },
-            fields:
-              "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
-          },
-        },
-        // Session border
-        {
-          updateBorders: {
-            range: {
-              sheetId: 0,
-              startRowIndex: startIndex0,
-              endRowIndex: startIndex0 + 1,
-              startColumnIndex: 0,
-              endColumnIndex: 6,
-            },
-            top: {
-              style: "SOLID",
-              color: { red: 0, green: 0, blue: 0 },
-            },
-          },
-        },
-      ];
+    // Step 5: Apply all inserts in one batch, working from the bottom upward.
+    // Descending start indexes keep earlier requests from shifting the target
+    // rows for later ones. For ties, oldest-first means later (newer) dates end
+    // up above older ones after repeated inserts at the same boundary.
+    importJobs.sort((a, b) => {
+      if (b.startIndex0 !== a.startIndex0) {
+        return b.startIndex0 - a.startIndex0;
+      }
+      return a.date.localeCompare(b.date);
+    });
 
+    let effectiveGridRowCount = targetGridRowCount;
+    const batchRequests = [];
+
+    for (const job of importJobs) {
+      const isAppendingAtBottom = job.startIndex0 >= effectiveGridRowCount;
+
+      batchRequests.push({
+        insertDimension: {
+          range: {
+            sheetId: targetSheetId,
+            dimension: "ROWS",
+            startIndex: job.startIndex0,
+            endIndex: job.startIndex0 + job.rows.length,
+          },
+          inheritFromBefore: isAppendingAtBottom,
+        },
+      });
+
+      batchRequests.push({
+        updateCells: {
+          range: {
+            sheetId: targetSheetId,
+            startRowIndex: job.startIndex0,
+            endRowIndex: job.startIndex0 + job.rows.length,
+            startColumnIndex: 0,
+            endColumnIndex: 6,
+          },
+          rows: job.rows.map((row) => ({
+            values: row.map((value) => ({
+              userEnteredValue: { stringValue: String(value ?? "") },
+            })),
+          })),
+          fields: "userEnteredValue",
+        },
+      });
+
+      batchRequests.push({
+        updateBorders: {
+          range: {
+            sheetId: targetSheetId,
+            startRowIndex: job.startIndex0,
+            endRowIndex: job.startIndex0 + job.rows.length,
+            startColumnIndex: 0,
+            endColumnIndex: 6,
+          },
+          top: { style: "NONE" },
+        },
+      });
+
+      batchRequests.push({
+        repeatCell: {
+          range: {
+            sheetId: targetSheetId,
+            startRowIndex: job.startIndex0,
+            endRowIndex: job.startIndex0 + job.rows.length,
+            startColumnIndex: 4,
+            endColumnIndex: 5,
+          },
+          cell: {
+            userEnteredFormat: {
+              numberFormat: { type: "TEXT" },
+              horizontalAlignment: "LEFT",
+            },
+          },
+          fields:
+            "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
+        },
+      });
+
+      batchRequests.push({
+        updateBorders: {
+          range: {
+            sheetId: targetSheetId,
+            startRowIndex: job.startIndex0,
+            endRowIndex: job.startIndex0 + 1,
+            startColumnIndex: 0,
+            endColumnIndex: 6,
+          },
+          top: {
+            style: "SOLID",
+            color: { red: 0, green: 0, blue: 0 },
+          },
+        },
+      });
+
+      effectiveGridRowCount += job.rows.length;
+    }
+
+    if (batchRequests.length > 0) {
       const insertRes = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
         {
@@ -206,35 +336,25 @@ export default async function handler(req, res) {
       if (!insertRes.ok) {
         const body = await insertRes.json().catch(() => ({}));
         return res.status(insertRes.status).json({
-          error: body?.error?.message || "Failed to insert rows",
-          insertedSoFar: totalInserted,
+          error: body?.error?.message || "Failed to import rows",
+          insertedSoFar: 0,
         });
       }
-
-      // Write data
-      const firstNewRow = insertAfter + 1;
-      const lastNewRow = insertAfter + rows.length;
-      const range = `A${firstNewRow}:F${lastNewRow}`;
-
-      const writeRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
-        {
-          method: "PUT",
-          headers,
-          body: JSON.stringify({ range, majorDimension: "ROWS", values: rows }),
-        },
-      );
-      if (!writeRes.ok) {
-        const body = await writeRes.json().catch(() => ({}));
-        return res.status(writeRes.status).json({
-          error: body?.error?.message || "Failed to write rows",
-          insertedSoFar: totalInserted,
-        });
-      }
-
-      totalInserted += rows.length;
-      rowShift += rows.length;
     }
+
+    const totalInserted = importJobs.reduce(
+      (sum, job) => sum + job.rows.length,
+      0,
+    );
+
+    logImportEvent("write_complete", {
+      ssid,
+      entryCount: entries.length,
+      dateCount: sortedDates.length,
+      insertedRows: totalInserted,
+      batchRequestCount: batchRequests.length,
+      durationMs: Date.now() - startedAt,
+    });
 
     return res.status(200).json({
       ok: true,
@@ -242,7 +362,12 @@ export default async function handler(req, res) {
       dateCount: sortedDates.length,
     });
   } catch (err) {
-    console.error("[sheet/import-history] error:", err);
+    logImportEvent("write_failed", {
+      ssid,
+      entryCount: Array.isArray(entries) ? entries.length : 0,
+      durationMs: Date.now() - startedAt,
+      error: err.message || "Internal server error",
+    });
     return res.status(500).json({ error: "Internal server error" });
   }
 }

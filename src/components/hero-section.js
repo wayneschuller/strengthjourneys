@@ -1,10 +1,19 @@
+/**
+ * Landing-page hero for Strength Journeys.
+ * Keep the CTA branching aligned with auth + sheet-link state so setup and
+ * import actions feel consistent with the rest of the onboarding flow.
+ */
+
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { Upload } from "lucide-react";
 import { GoogleSignInButton } from "@/components/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
 import { motion, AnimatePresence } from "motion/react";
@@ -27,7 +36,7 @@ export function HeroSection() {
             Welcome to Strength Journeys
           </p>
           <h1 className="mb-4 mt-2 text-balance text-center text-3xl font-extrabold leading-tight tracking-tight md:mb-8 lg:text-left lg:text-4xl xl:text-5xl">
-            Free barbell lifting analysis tools that turn your Google Sheet
+            Free barbell lifting analysis tools that turn your lifting data
             into powerful, visual insights.
           </h1>
           <PageDescription />
@@ -44,46 +53,88 @@ const PageDescription = () => (
   <></>
 );
 
-// Internal helper: prominent hero CTA for unauthenticated visitors and
+// Internal helper: prominent hero CTA area for unauthenticated visitors and
 // authenticated demo-mode users who still need to set up a sheet.
 function HeroPrimaryCta() {
   const { status: authStatus } = useSession();
-  const { sheetInfo } = useUserLiftingData();
+  const { hasUserData, sheetInfo } = useUserLiftingData();
+  const hasSsid = !!sheetInfo?.ssid;
 
-  if (authStatus === "authenticated" && sheetInfo?.ssid) return null;
+  if (hasUserData) return null;
+
+  const importCtaLabel = hasSsid
+    ? "Import More Lifting History"
+    : "Import From Another Fitness App";
+  const importCtaDescription =
+    authStatus === "authenticated"
+      ? hasSsid
+        ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
+        : "Instant preview first. Save your data into a free Google Sheet when you're ready."
+      : "Instant preview. No sign-in required.";
 
   return (
-    <div className="flex flex-col items-center gap-2 md:items-start">
-      {authStatus === "authenticated" ? (
-        <Button
-          className="w-2/3 hover:ring-2"
-          onClick={() => {
-            openSheetSetupDialog("bootstrap");
-          }}
-        >
-          <img
-            src={GOOGLE_SHEETS_ICON_URL}
-            alt=""
-            className="h-5 w-5 shrink-0"
-            aria-hidden
-          />
-          <div className="hidden md:block">Set Up Your Free Lifting Log</div>
-          <div className="md:hidden">Set up your log</div>
-        </Button>
-      ) : (
-        <GoogleSignInButton
-          className="w-2/3 hover:ring-2"
-          cta="hero"
-        >
-          <div className="hidden md:block">
-            Start Your Strength Journey — Free Google Sign-in
+    <div className="flex flex-col items-center gap-4 md:items-start">
+      {/* Primary + secondary CTAs side by side on sm+, stacked on mobile */}
+      <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+        {/* Primary CTA column */}
+        <div className="flex w-full flex-col items-center sm:w-auto">
+          {authStatus === "authenticated" ? (
+            <Button
+              size="lg"
+              className="w-full hover:ring-2 sm:w-auto"
+              onClick={() => {
+                openSheetSetupDialog("bootstrap");
+              }}
+            >
+              <img
+                src={GOOGLE_SHEETS_ICON_URL}
+                alt=""
+                className="h-5 w-5 shrink-0"
+                aria-hidden
+              />
+              Set Up Your Free Lifting Log
+            </Button>
+          ) : (
+            <GoogleSignInButton
+              size="lg"
+              className="w-full hover:ring-2 sm:w-auto"
+              cta="hero"
+            >
+              <span className="hidden sm:inline">Start Your Strength Journey</span>
+              <span className="sm:hidden">Start Your Journey</span>
+            </GoogleSignInButton>
+          )}
+          <p className="mt-1.5 text-xs text-slate-500">
+            Free forever. Your data stays yours.
+          </p>
+        </div>
+
+        {/* Secondary CTA column */}
+        {authStatus !== "loading" && (
+          <div className="flex w-full flex-col items-center sm:w-auto">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+              asChild
+              onClick={() => gaEvent(GA_EVENT_TAGS.HERO_IMPORT_CLICK, { page: "/" })}
+            >
+              <Link
+                href={{
+                  pathname: "/import",
+                  query: { from: "hero", returnTo: "/" },
+                }}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {importCtaLabel}
+              </Link>
+            </Button>
+            <p className="mt-1.5 text-center text-xs text-slate-500 sm:text-left">
+              {importCtaDescription}
+            </p>
           </div>
-          <div className="md:hidden">Free Google Sign-in</div>
-        </GoogleSignInButton>
-      )}
-      <p className="mt-2 text-xs italic text-slate-500">
-        We never copy or store your data.
-      </p>
+        )}
+      </div>
     </div>
   );
 }

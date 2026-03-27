@@ -91,10 +91,20 @@ export function HomeDashboard() {
       WELCOME_QUIPS[Math.floor(Math.random() * WELCOME_QUIPS.length)];
   }
 
-  const { sheetInfo, parsedData, rawRows, dataSyncedAt, isValidating, mutate } =
+  const { sheetInfo, parsedData, rawRows, dataSyncedAt, isValidating, mutate, hasUserData, isImportedData } =
     useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
   const [hasDataLoaded, setHasDataLoaded] = useState(false);
+  const previewEntryCount = useMemo(
+    () =>
+      Array.isArray(parsedData)
+        ? parsedData.reduce(
+            (count, entry) => (entry?.isGoal ? count : count + 1),
+            0,
+          )
+        : null,
+    [parsedData],
+  );
   // `dashboardStage` drives onboarding vs mature behavior. Keep all stage
   // branching anchored here so child cards receive one consistent signal.
   const { dashboardStage, starterSheetState, sessionCount, dataMaturityStage } =
@@ -113,8 +123,8 @@ export function HomeDashboard() {
   }, [isProgressDone]);
 
   useEffect(() => {
-    if (!sheetInfo?.ssid) setHasDataLoaded(false);
-  }, [sheetInfo?.ssid]);
+    if (!hasUserData) setHasDataLoaded(false);
+  }, [hasUserData]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -187,24 +197,26 @@ export function HomeDashboard() {
 
   return (
     <div>
-      {sheetInfo?.ssid && (
+      {hasUserData && (
         <div className="relative mb-4 2xl:mb-6 text-xl">
           {/* 2xl: welcome left + status right in one row, vertically centered with circles */}
           <div className="2xl:flex 2xl:items-start 2xl:justify-between">
-            <motion.div
-              className="mb-2 text-center 2xl:mb-0 2xl:text-left"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-            >
-              <span className="text-muted-foreground">
-                {quipRef.current.split("{name}")[0]}
-              </span>
-              <span className="font-bold">
-                {session.user.name?.split(" ")[0]}
-              </span>
-            </motion.div>
-            {hasDataLoaded && (
+            {session?.user?.name && (
+              <motion.div
+                className="mb-2 text-center 2xl:mb-0 2xl:text-left"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                <span className="text-muted-foreground">
+                  {quipRef.current.split("{name}")[0]}
+                </span>
+                <span className="font-bold">
+                  {session.user.name?.split(" ")[0]}
+                </span>
+              </motion.div>
+            )}
+            {hasDataLoaded && !isImportedData && (
               <div className="hidden 2xl:block">
                 <DataSheetStatus
                   rawRows={rawRows}
@@ -219,7 +231,7 @@ export function HomeDashboard() {
             )}
           </div>
           {/* Mobile: status below circles */}
-          {hasDataLoaded && (
+          {hasDataLoaded && !isImportedData && (
             <div className="mt-2 flex justify-center 2xl:hidden">
               <DataSheetStatus
                 rawRows={rawRows}
@@ -234,23 +246,24 @@ export function HomeDashboard() {
           )}
         </div>
       )}
-      {sheetInfo?.ssid && (
+      {hasUserData && (
         <RowProcessingIndicator
-          rowCount={rawRows}
+          mode={isImportedData ? "preview" : "sheet"}
+          count={isImportedData ? previewEntryCount : rawRows}
           isProgressDone={isProgressDone}
           setIsProgressDone={setIsProgressDone}
         />
       )}
       {/* The first week is intentionally quieter: skip the inspiration row until
           the user has enough real data for those cards to feel earned. */}
-      {sheetInfo?.ssid && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
+      {hasUserData && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
         <HomeInspirationCards
           isProgressDone={hasDataLoaded}
           dashboardStage={dashboardStage}
           sessionCount={sessionCount}
         />
       )}
-      {sheetInfo?.ssid && hasDataLoaded && (
+      {hasUserData && hasDataLoaded && (
         <>
           <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
             {/* Three headline cards intentionally begin with "The" and widen chronology:

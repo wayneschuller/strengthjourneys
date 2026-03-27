@@ -1,7 +1,7 @@
 /** @format */
 
-
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { NavBar } from "@/components/nav-bar";
@@ -16,8 +16,11 @@ import { SheetSetupDialog } from "@/components/sheet-setup-dialog";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { FileUp, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { analyzeImportedEntries } from "@/lib/import/dedupe";
+import { postImportHistory } from "@/lib/import-history-client";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import {
   isToday,
@@ -42,6 +45,9 @@ export function Layout({ children }) {
     fetchFailed,
     apiError,
     isDemoMode,
+    isImportedData,
+    importedFormatName,
+    clearImportedData,
     parseError,
     parsedData,
     rawRows,
@@ -52,20 +58,24 @@ export function Layout({ children }) {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const { toast } = useToast();
-  const feedbackLabels = router.pathname === "/log"
-    ? {
-        triggerLabels: [
-          "Logging is new. Feedback?",
-          "Logging is in beta. Thoughts?",
-          "New logging feature. Comments?",
-        ],
-        tooltipMessages: ["Logging is in beta. Leave feedback or bug reports."],
-        introTitle: "Logging is in beta. How's it feeling?",
-        introDescription:
-          "If anything feels confusing, broken, or worth polishing in the log, please leave feedback.",
-        commentPlaceholder: "Bug report, rough edge, or idea about logging...",
-      }
-    : undefined;
+  const feedbackLabels =
+    router.pathname === "/log"
+      ? {
+          triggerLabels: [
+            "Logging is new. Feedback?",
+            "Logging is in beta. Thoughts?",
+            "New logging feature. Comments?",
+          ],
+          tooltipMessages: [
+            "Logging is in beta. Leave feedback or bug reports.",
+          ],
+          introTitle: "Logging is in beta. How's it feeling?",
+          introDescription:
+            "If anything feels confusing, broken, or worth polishing in the log, please leave feedback.",
+          commentPlaceholder:
+            "Bug report, rough edge, or idea about logging...",
+        }
+      : undefined;
 
   // Once-per-session guards
   const apiErrorShown = useRef(false);
@@ -110,7 +120,11 @@ export function Layout({ children }) {
     prevRawRowsRef.current = rawRows;
 
     if (!isNewData && !shouldForceToastOnHome) return;
-    if ((router.pathname === "/" || router.pathname === "/log") && !shouldForceToastOnHome) return;
+    if (
+      (router.pathname === "/" || router.pathname === "/log") &&
+      !shouldForceToastOnHome
+    )
+      return;
     if (shouldForceToastOnHome && typeof window !== "undefined") {
       window.sessionStorage.removeItem(FORCE_SHEET_SYNC_TOAST_KEY);
     }
@@ -176,7 +190,7 @@ export function Layout({ children }) {
     if (authStatus === "loading") return;
     if (!isDemoMode || authStatus !== "unauthenticated") return;
 
-    if (!DATA_ACCESS_BANNER_PATHS.includes(router.pathname)) return;
+    if (!PERSONALIZED_DATA_CTA_PATHS.includes(router.pathname)) return;
 
     const timeoutId = setTimeout(() => {
       if (demoShown.current) return;
@@ -203,7 +217,18 @@ export function Layout({ children }) {
 
       <div className="relative z-10">
         <NavBar />
-        <DataAccessBanner pathname={router.pathname} />
+        {isImportedData ? (
+          <ImportedDataBanner
+            formatName={importedFormatName}
+            entryCount={parsedData?.length || 0}
+            onClear={clearImportedData}
+          />
+        ) : (
+          <DataAccessBanner
+            pathname={router.pathname}
+            currentPath={router.asPath}
+          />
+        )}
         <SheetSetupDialog />
         <main className="mx-0 md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           {children}
@@ -306,12 +331,15 @@ function getTodayInviteMessage(now = new Date()) {
   return TODAY_INVITE_MESSAGES[dayOfYear % TODAY_INVITE_MESSAGES.length];
 }
 
-const DATA_ACCESS_BANNER_PATHS = [
+// Routes where demo mode needs explicit context plus the primary next-step CTAs.
+// Keep this limited to core analysis pages that interpret a user's lifting data,
+// so demo visitors understand they are seeing sample output and can either sign
+// in or jump straight to preview-mode import.
+const PERSONALIZED_DATA_CTA_PATHS = [
   "/visualizer",
   "/lift-explorer",
-  "/barbell-strength-potential",
   "/tonnage",
-  "/[lift]",
+  "/progress-guide/[lift]",
   "/strength-year-in-review",
 ];
 const DEMO_MODE_NUDGE_DELAY_MIN_MS = 20000;
@@ -361,11 +389,11 @@ const DEMO_MODE_NUDGE_MESSAGES = [
 ];
 
 // Internal banner shown on data pages when the user is unauthenticated or has no sheet connected.
-function DataAccessBanner({ pathname }) {
+function DataAccessBanner({ pathname, currentPath }) {
   const { status: authStatus } = useSession();
   const { sheetInfo, isDemoMode } = useUserLiftingData();
 
-  const isDataPage = DATA_ACCESS_BANNER_PATHS.includes(pathname);
+  const isDataPage = PERSONALIZED_DATA_CTA_PATHS.includes(pathname);
   const showSignInCta = isDataPage && authStatus === "unauthenticated";
   const showSetupSheetCta =
     isDataPage && authStatus === "authenticated" && !sheetInfo?.ssid;
@@ -378,38 +406,325 @@ function DataAccessBanner({ pathname }) {
         <div className="mx-0 flex flex-col items-center justify-center gap-3 px-4 py-3 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           <p className="text-sm leading-tight text-amber-950">
             {showSignInCta
-              ? "You are viewing demo data. Sign in with Google to unlock your personal lifting history."
+              ? "You are viewing demo data. Want to see your own lifts, trends, and PRs here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode."
               : isDemoMode
-                ? "Demo mode is on. Set up your Google Sheet and Strength Journeys will help you get it ready so your own lifting history appears here."
-                : "Set up your Google Sheet and Strength Journeys will help you get it ready so your own lifting history appears here."}
+                ? "Demo mode is on. Connect your data to replace the sample view with your own lifting history here."
+                : "Connect your data to replace the sample view with your own lifting history here."}
           </p>
           {showSignInCta ? (
-            <GoogleSignInButton
-              size="sm"
-              cta="demo_banner"
-            >
-              Sign in with Google
-            </GoogleSignInButton>
+            <div className="flex flex-col items-center gap-2 sm:flex-row">
+              <div className="flex flex-col items-center">
+                <GoogleSignInButton size="sm" cta="demo_banner">
+                  Sign in with Google
+                </GoogleSignInButton>
+                <p className="mt-1.5 text-center text-xs text-amber-900/70">
+                  Free forever. Your data stays yours.
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <Button size="sm" variant="outline" asChild>
+                  <Link
+                    href={{
+                      pathname: "/import",
+                      query: { returnTo: currentPath },
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <FileUp className="h-4 w-4" />
+                    Import From Another Fitness App
+                  </Link>
+                </Button>
+                <p className="mt-1.5 text-center text-xs text-amber-900/70">
+                  Instant preview. No sign-in required.
+                </p>
+              </div>
+            </div>
           ) : (
-            <Button
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => {
-                openSheetSetupDialog("bootstrap");
-              }}
-            >
-              <img
-                src={GOOGLE_SHEETS_ICON_URL}
-                alt=""
-                className="h-4 w-4 shrink-0"
-                aria-hidden
-              />
-              Set Up Google Sheet
-            </Button>
+            <div className="flex flex-col items-center gap-2 sm:flex-row">
+              <div className="flex flex-col items-center">
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    openSheetSetupDialog("bootstrap");
+                  }}
+                >
+                  <img
+                    src={GOOGLE_SHEETS_ICON_URL}
+                    alt=""
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden
+                  />
+                  Set Up Google Sheet
+                </Button>
+                <p className="mt-1.5 text-center text-xs text-amber-900/70">
+                  Free forever. Your data stays yours.
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <Button size="sm" variant="outline" asChild>
+                  <Link
+                    href={{
+                      pathname: "/import",
+                      query: { returnTo: currentPath },
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <FileUp className="h-4 w-4" />
+                    Import From Another Fitness App
+                  </Link>
+                </Button>
+                <p className="mt-1.5 text-center text-xs text-amber-900/70">
+                  Instant preview first. Save or merge when you&apos;re ready.
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </section>
     </>
+  );
+}
+
+// Blue banner shown across the app when the user has imported CSV data (view-only mode).
+// Offers contextual CTAs based on auth state:
+// - Not signed in: sign-in CTA (data will be saved to a new GSheet)
+// - Signed in + no sheet: "Save to Google Sheet" button
+// - Signed in + has sheet: "Merge into your sheet" button
+function ImportedDataBanner({ formatName, entryCount, onClear }) {
+  const router = useRouter();
+  const { status: authStatus } = useSession();
+  const {
+    sheetInfo,
+    parsedData,
+    sheetParsedData,
+    isLoading,
+    importedFileName,
+    selectSheet,
+    mutate,
+    clearImportedData,
+  } = useUserLiftingData();
+  const { toast } = useToast();
+  const [working, setWorking] = useState(false);
+
+  const isAuthenticated = authStatus === "authenticated";
+  const hasSsid = !!sheetInfo?.ssid;
+  const importAnalysis = useMemo(() => {
+    if (!hasSsid) return null;
+    return analyzeImportedEntries(parsedData || [], sheetParsedData);
+  }, [hasSsid, parsedData, sheetParsedData]);
+  const mergeEntryCount = importAnalysis?.newEntriesCount ?? 0;
+  const duplicateCount = importAnalysis?.duplicateCount ?? 0;
+  const isFullyDuplicate = importAnalysis?.status === "already_in_linked_sheet";
+  const isPartialOverlap = importAnalysis?.status === "partial_overlap";
+  const isSheetComparisonPending =
+    hasSsid && isAuthenticated && isLoading && !Array.isArray(sheetParsedData);
+
+  const handleMergeFromBanner = useCallback(async () => {
+    if (!parsedData || !sheetInfo?.ssid) return;
+    if (isSheetComparisonPending) {
+      toast({
+        title: "Still checking your sheet",
+        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+      });
+      return;
+    }
+
+    const { newEntries, duplicateCount: skippedCount } = analyzeImportedEntries(
+      parsedData,
+      sheetParsedData,
+    );
+
+    if (newEntries.length === 0) {
+      toast({
+        title: "Nothing new to merge",
+        description: `All ${skippedCount} entries already exist in your linked sheet.`,
+      });
+      return;
+    }
+
+    setWorking(true);
+    try {
+      const apiEntries = newEntries.map((e) => ({
+        date: e.date,
+        liftType: e.liftType,
+        reps: e.reps,
+        weight: e.weight,
+        unitType: e.unitType || "kg",
+      }));
+      const res = await postImportHistory({
+        ssid: sheetInfo.ssid,
+        entries: apiEntries,
+      }, {
+        source: "preview_banner_merge",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Merge failed");
+
+      const skippedNote =
+        skippedCount > 0
+          ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
+          : "";
+      toast({
+        title: "Data merged!",
+        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}`,
+      });
+      clearImportedData();
+      mutate();
+    } catch (err) {
+      toast({
+        title: "Merge failed",
+        description: err.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setWorking(false);
+    }
+  }, [
+    parsedData,
+    sheetParsedData,
+    sheetInfo,
+    isSheetComparisonPending,
+    clearImportedData,
+    mutate,
+    toast,
+  ]);
+
+  const handleCreateFromBanner = useCallback(async () => {
+    if (!parsedData || parsedData.length === 0) return;
+
+    setWorking(true);
+    try {
+      const linkRes = await fetch("/api/sheet/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "bootstrap",
+          mode: "create_blank",
+          importedFileName,
+        }),
+      });
+      const linkPayload = await linkRes.json();
+      if (!linkRes.ok || !linkPayload?.ssid)
+        throw new Error(linkPayload?.error || "Failed to create sheet");
+
+      const nonGoalEntries = parsedData.filter((e) => !e.isGoal);
+      const apiEntries = nonGoalEntries.map((e) => ({
+        date: e.date,
+        liftType: e.liftType,
+        reps: e.reps,
+        weight: e.weight,
+        unitType: e.unitType || "kg",
+      }));
+      const writeRes = await postImportHistory({
+        ssid: linkPayload.ssid,
+        entries: apiEntries,
+      }, {
+        source: "preview_banner_create",
+      });
+      const writeData = await writeRes.json();
+      if (!writeRes.ok)
+        throw new Error(writeData.error || "Failed to write data");
+
+      selectSheet(linkPayload.ssid, {
+        url: linkPayload.webViewLink ?? null,
+        filename: linkPayload.name ?? null,
+        modifiedTime: linkPayload.modifiedTime ?? null,
+        modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
+      });
+      toast({
+        title: "Google Sheet created!",
+        description: `Imported ${writeData.insertedRows} entries into your new Strength Journeys sheet.`,
+      });
+      clearImportedData();
+      mutate();
+    } catch (err) {
+      toast({
+        title: "Import failed",
+        description: err.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setWorking(false);
+    }
+  }, [parsedData, importedFileName, selectSheet, clearImportedData, mutate, toast]);
+
+  return (
+    <section className="mb-3 border-y border-blue-200 bg-blue-50/80 dark:border-blue-800/60 dark:bg-blue-950/50">
+      <div className="mx-0 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-2.5 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
+        <div className="space-y-0.5">
+          <p className="text-sm leading-tight text-blue-900 dark:text-blue-200">
+            <FileUp className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
+            {hasSsid && isFullyDuplicate
+              ? `This preview file already matches your linked sheet.`
+              : hasSsid && isPartialOverlap
+                ? `This preview adds ${mergeEntryCount.toLocaleString()} new ${mergeEntryCount === 1 ? "entry" : "entries"}; ${duplicateCount.toLocaleString()} already exist in your linked sheet.`
+                : hasSsid
+                  ? `This preview has ${entryCount.toLocaleString()} ${entryCount === 1 ? "lift" : "lifts"} ready for your linked sheet.`
+                  : `You're in preview mode with ${entryCount.toLocaleString()} ${entryCount === 1 ? "lift" : "lifts"}.`}
+            {!hasSsid && (
+              <span className="hidden sm:inline">
+                {" "}
+                Save your data to turn this into a full training log with auto
+                warm-ups and progression targets.
+              </span>
+            )}
+          </p>
+          <p className="text-[11px] text-blue-700/70 dark:text-blue-300/60">
+            {hasSsid && isFullyDuplicate
+              ? "No merge is needed unless you import a different file."
+              : "Preview data will be lost when you leave."}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {/* Not signed in: primary save CTA */}
+          {!isAuthenticated && authStatus !== "loading" && (
+            <GoogleSignInButton
+              size="sm"
+              cta="preview_banner"
+              className="h-7 text-xs"
+            >
+              Save my data
+            </GoogleSignInButton>
+          )}
+          {/* Signed in + has sheet: merge */}
+          {isAuthenticated && hasSsid && !isFullyDuplicate && (
+            <Button
+              size="sm"
+              className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              disabled={working || isSheetComparisonPending}
+              onClick={handleMergeFromBanner}
+            >
+              {isSheetComparisonPending
+                ? "Checking sheet..."
+                : working
+                ? "Saving..."
+                : `Merge ${mergeEntryCount.toLocaleString()} ${mergeEntryCount === 1 ? "entry" : "entries"}`}
+            </Button>
+          )}
+          {/* Signed in + no sheet: create */}
+          {isAuthenticated && !hasSsid && (
+            <Button
+              size="sm"
+              className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              disabled={working}
+              onClick={handleCreateFromBanner}
+            >
+              {working ? "Saving..." : "Save my data"}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-blue-800/60 hover:bg-blue-100 hover:text-blue-950 dark:text-blue-400/60 dark:hover:bg-blue-900/50"
+            onClick={onClear}
+          >
+            <X className="mr-1 h-3.5 w-3.5" />
+            Clear preview
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }
 

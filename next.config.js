@@ -46,6 +46,12 @@ const nextConfig = {
         destination: "/strength-levels",
         permanent: true,
       },
+      // 2026-03-27: Strength potential charts now live inside Lift Explorer.
+      {
+        source: "/barbell-strength-potential",
+        destination: "/lift-explorer",
+        permanent: true,
+      },
       // 2024-09-01: Preserve traffic from the old manually-authored article slug after Sanity migration.
       {
         source: "/articles/own-your-lifting-data",

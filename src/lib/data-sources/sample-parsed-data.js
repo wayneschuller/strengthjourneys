@@ -66,6 +66,12 @@ export function transposeDatesToToday(parsedData, addJitter) {
   return updatedData;
 }
 
+// Built-in preview dataset used whenever the app intentionally falls back to
+// demo mode instead of a user-owned data source.
+export function getDemoParsedData() {
+  return transposeDatesToToday(sampleParsedData, true);
+}
+
 // Our sample parsedData format
 // It is always sorted date ascending
 export const sampleParsedData = [

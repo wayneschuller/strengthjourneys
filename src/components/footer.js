@@ -133,6 +133,7 @@ export function Footer() {
               external
             />
             <FooterLink href="https://x.com/wayneschuller" label="@wayneschuller" external />
+            <FooterLink href="/import" label="Import Data" />
           </FooterSection>
 
           <FooterSection title="Legal">

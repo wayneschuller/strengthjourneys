@@ -1,3 +1,7 @@
+/**
+ * Sheet setup dialog powers first-run onboarding and later sheet switching.
+ * Keep the chooser aligned with the server-side recommendation flow.
+ */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -5,10 +9,13 @@ import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
+import { deduplicateImportedEntries } from "@/lib/import/dedupe";
+import { postImportHistory } from "@/lib/import-history-client";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -53,7 +60,9 @@ const SHEET_SETUP_QUIPS = [
 ];
 
 function pickRandomSheetSetupQuip() {
-  return SHEET_SETUP_QUIPS[Math.floor(Math.random() * SHEET_SETUP_QUIPS.length)];
+  return SHEET_SETUP_QUIPS[
+    Math.floor(Math.random() * SHEET_SETUP_QUIPS.length)
+  ];
 }
 
 function toTimestamp(iso) {
@@ -70,13 +79,19 @@ function getDateSpanYears(candidate) {
 }
 
 function scoreCandidateForChooser(candidate) {
-  const rows = typeof candidate?.approxRows === "number" ? candidate.approxRows : 0;
+  const rows =
+    typeof candidate?.approxRows === "number" ? candidate.approxRows : 0;
   const sessions =
-    typeof candidate?.approxSessions === "number" ? candidate.approxSessions : 0;
-  const modifiedAt = toTimestamp(candidate?.modifiedByMeTime || candidate?.modifiedTime);
+    typeof candidate?.approxSessions === "number"
+      ? candidate.approxSessions
+      : 0;
+  const modifiedAt = toTimestamp(
+    candidate?.modifiedByMeTime || candidate?.modifiedTime,
+  );
   const title = String(candidate?.name || "").toLowerCase();
   const spanYears = getDateSpanYears(candidate);
-  const ageDays = modifiedAt > 0 ? (Date.now() - modifiedAt) / (24 * 60 * 60 * 1000) : 99999;
+  const ageDays =
+    modifiedAt > 0 ? (Date.now() - modifiedAt) / (24 * 60 * 60 * 1000) : 99999;
 
   let score = 0;
   score += Math.min(240, rows / 20);
@@ -98,8 +113,10 @@ function sortCandidatesForChooser(candidates) {
   arr.sort((a, b) => {
     const scoreDiff = scoreCandidateForChooser(b) - scoreCandidateForChooser(a);
     if (scoreDiff !== 0) return scoreDiff;
-    return toTimestamp(b?.modifiedByMeTime || b?.modifiedTime) -
-      toTimestamp(a?.modifiedByMeTime || a?.modifiedTime);
+    return (
+      toTimestamp(b?.modifiedByMeTime || b?.modifiedTime) -
+      toTimestamp(a?.modifiedByMeTime || a?.modifiedTime)
+    );
   });
   return arr;
 }
@@ -118,7 +135,9 @@ function getPreferredUnitTypeFromClient() {
 function getClientLocale() {
   if (typeof window === "undefined") return "en-US";
   const locale = window.navigator?.language;
-  return typeof locale === "string" && locale.trim().length > 0 ? locale : "en-US";
+  return typeof locale === "string" && locale.trim().length > 0
+    ? locale
+    : "en-US";
 }
 
 function getStarterDateTextForClientLocale() {
@@ -139,7 +158,9 @@ function getSheetUrl(ssid, url) {
 
 function shouldShowCreatedConfirmation(payload) {
   if (payload?.action !== "create_new_user_sheet") return false;
-  return ["true_new_user", "reprovision_after_missing_sheet"].includes(payload?.reason);
+  return ["true_new_user", "reprovision_after_missing_sheet"].includes(
+    payload?.reason,
+  );
 }
 
 function shouldShowSyncToastOnAutoLink(payload) {
@@ -147,7 +168,37 @@ function shouldShowSyncToastOnAutoLink(payload) {
   return ["drive_single", "legacy_drive_relink"].includes(payload?.reason);
 }
 
-function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, loadingQuip }) {
+async function writeEntriesToSheet(targetSsid, entries) {
+  const apiEntries = entries.map((entry) => ({
+    date: entry.date,
+    liftType: entry.liftType,
+    reps: entry.reps,
+    weight: entry.weight,
+    unitType: entry.unitType || "kg",
+  }));
+
+  const response = await postImportHistory({
+    ssid: targetSsid,
+    entries: apiEntries,
+  }, {
+    source: "sheet_setup_write",
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload?.error || "Failed to write data to sheet");
+  }
+
+  return payload;
+}
+
+function getSheetDialogCopy({
+  intent,
+  state,
+  candidateCount,
+  statusMessage,
+  loadingQuip,
+}) {
   if (state === "created_confirmation") {
     return {
       eyebrow: "Lifting log created",
@@ -159,8 +210,12 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, load
 
   if (state === "linking_or_creating") {
     return {
-      eyebrow: intent === "switch_sheet" ? "Checking your lifting logs" : "Linking your lifting log",
-      title: intent === "switch_sheet" ? "Reviewing your options." : "Almost there.",
+      eyebrow:
+        intent === "switch_sheet"
+          ? "Checking your lifting logs"
+          : "Linking your lifting log",
+      title:
+        intent === "switch_sheet" ? "Reviewing your options." : "Almost there.",
       description: loadingQuip,
       tone: "working",
     };
@@ -169,27 +224,35 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, load
   if (state === "choose_sheet") {
     const hasMultipleCandidates = candidateCount > 1;
     return {
-      eyebrow: intent === "switch_sheet" ? "Choose a new data source" : "Sheets found",
+      eyebrow:
+        intent === "switch_sheet" ? "Choose a new data source" : "Sheets found",
       title: hasMultipleCandidates
-        ? (intent === "switch_sheet" ? "Select your lifting data." : "Pick your lifting log.")
+        ? intent === "switch_sheet"
+          ? "Select your lifting data."
+          : "Pick your lifting log."
         : intent === "switch_sheet"
           ? "Select your lifting data."
           : "Your sheet is ready.",
-      description:
-        hasMultipleCandidates
-          ? (intent === "switch_sheet"
-            ? `We found ${candidateCount} likely data sources.`
-            : `We found ${candidateCount} likely sheets.`)
-          : intent === "switch_sheet"
-            ? "We found a likely lifting data source."
-            : "We found the sheet that looks like your lifting log.",
+      description: hasMultipleCandidates
+        ? intent === "switch_sheet"
+          ? `We found ${candidateCount} likely data sources.`
+          : `We found ${candidateCount} likely sheets.`
+        : intent === "switch_sheet"
+          ? "We found a likely lifting data source."
+          : "We found the sheet that looks like your lifting log.",
       tone: "ready",
     };
   }
 
   return {
-    eyebrow: intent === "switch_sheet" ? "Checking your lifting logs" : "Setting up your lifting log",
-    title: intent === "switch_sheet" ? "Loading your sheet options." : "Getting your sheet ready.",
+    eyebrow:
+      intent === "switch_sheet"
+        ? "Checking your lifting logs"
+        : "Setting up your lifting log",
+    title:
+      intent === "switch_sheet"
+        ? "Loading your sheet options."
+        : "Getting your sheet ready.",
     description: loadingQuip || statusMessage,
     tone: "working",
   };
@@ -200,29 +263,43 @@ export function SheetSetupDialog() {
   const { data: session, status: authStatus } = useSession();
   const {
     sheetInfo,
+    parsedData,
+    sheetParsedData,
+    isLoading,
     selectSheet,
     clearSheet,
     isDemoMode,
     enterSignedInDemoMode,
     exitSignedInDemoMode,
     apiError,
+    importFile,
+    clearImportedData,
+    isImportedData,
+    mutate,
   } = useUserLiftingData();
+  const { toast } = useToast();
 
   const [open, setOpen] = useState(false);
   const [onboardingState, setOnboardingState] = useState("idle");
   const [provisionError, setProvisionError] = useState(null);
   const [openPicker, setOpenPicker] = useState(null);
   const [candidateSheets, setCandidateSheets] = useState([]);
-  const [isProvisionActionLoading, setIsProvisionActionLoading] = useState(false);
-  const [isCandidateEnrichmentLoading, setIsCandidateEnrichmentLoading] = useState(false);
-  const [sheetDiscoveryStatusMessage, setSheetDiscoveryStatusMessage] = useState("");
-  const [loadingQuip, setLoadingQuip] = useState(() => pickRandomSheetSetupQuip());
+  const [isProvisionActionLoading, setIsProvisionActionLoading] =
+    useState(false);
+  const [isCandidateEnrichmentLoading, setIsCandidateEnrichmentLoading] =
+    useState(false);
+  const [sheetDiscoveryStatusMessage, setSheetDiscoveryStatusMessage] =
+    useState("");
+  const [loadingQuip, setLoadingQuip] = useState(() =>
+    pickRandomSheetSetupQuip(),
+  );
   const [flowIntent, setFlowIntent] = useState("bootstrap");
   const [recommendedCandidateId, setRecommendedCandidateId] = useState(null);
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
   const [createdSheetInfo, setCreatedSheetInfo] = useState(null);
   const [createdSheetReason, setCreatedSheetReason] = useState(null);
-  const [isDisconnectingCurrentSheet, setIsDisconnectingCurrentSheet] = useState(false);
+  const [isDisconnectingCurrentSheet, setIsDisconnectingCurrentSheet] =
+    useState(false);
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
   const dialogInitialSsidRef = useRef(null);
@@ -258,7 +335,10 @@ export function SheetSetupDialog() {
       if (authStatus !== "authenticated") return;
       const token = onboardingFlowTokenRef.current;
       if (!token) {
-        devLog("[sheet-setup] skipping onboarding event — no flow token:", event);
+        devLog(
+          "[sheet-setup] skipping onboarding event — no flow token:",
+          event,
+        );
         return;
       }
       try {
@@ -269,7 +349,10 @@ export function SheetSetupDialog() {
           keepalive: true,
         });
       } catch (error) {
-        devLog("[sheet-setup] founder onboarding event failed:", error?.message || error);
+        devLog(
+          "[sheet-setup] founder onboarding event failed:",
+          error?.message || error,
+        );
       }
     },
     [authStatus],
@@ -293,6 +376,9 @@ export function SheetSetupDialog() {
         return { ...candidate, ...update };
       });
       const sorted = sortCandidatesForChooser(merged);
+      // Recompute the recommendation after enrichment lands: the initial pick is
+      // only a lightweight guess, and the real winner often emerges once date
+      // span/session metadata arrives.
       setRecommendedCandidateId(sorted[0]?.id || null);
       return sorted;
     });
@@ -304,7 +390,8 @@ export function SheetSetupDialog() {
         .filter((id) => typeof id === "string" && id.trim().length > 0)
         .slice(0, ENRICH_CANDIDATE_LIMIT);
 
-      if (!enrichIds.length || !Array.isArray(candidates) || !candidates.length) return;
+      if (!enrichIds.length || !Array.isArray(candidates) || !candidates.length)
+        return;
 
       setIsCandidateEnrichmentLoading(true);
       setSheetDiscoveryStatusMessage("Analyzing your most likely lifting log.");
@@ -327,9 +414,13 @@ export function SheetSetupDialog() {
         });
         const primaryPayload = await primaryResponse.json().catch(() => ({}));
         if (!primaryResponse.ok) {
-          throw new Error(primaryPayload?.error || "Failed to enrich primary candidate");
+          throw new Error(
+            primaryPayload?.error || "Failed to enrich primary candidate",
+          );
         }
-        const primaryEnrichedCandidates = Array.isArray(primaryPayload?.enrichedCandidates)
+        const primaryEnrichedCandidates = Array.isArray(
+          primaryPayload?.enrichedCandidates,
+        )
           ? primaryPayload.enrichedCandidates
           : [];
         if (primaryEnrichedCandidates.length > 0) {
@@ -337,7 +428,9 @@ export function SheetSetupDialog() {
         }
 
         if (secondaryIds.length > 0) {
-          setSheetDiscoveryStatusMessage("Checking the rest of your likely lifting logs.");
+          setSheetDiscoveryStatusMessage(
+            "Checking the rest of your likely lifting logs.",
+          );
           const secondaryResponse = await fetch("/api/sheet/enrich", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -347,9 +440,13 @@ export function SheetSetupDialog() {
               candidates,
             }),
           });
-          const secondaryPayload = await secondaryResponse.json().catch(() => ({}));
+          const secondaryPayload = await secondaryResponse
+            .json()
+            .catch(() => ({}));
           if (secondaryResponse.ok) {
-            const secondaryEnrichedCandidates = Array.isArray(secondaryPayload?.enrichedCandidates)
+            const secondaryEnrichedCandidates = Array.isArray(
+              secondaryPayload?.enrichedCandidates,
+            )
               ? secondaryPayload.enrichedCandidates
               : [];
             if (secondaryEnrichedCandidates.length > 0) {
@@ -358,10 +455,17 @@ export function SheetSetupDialog() {
           }
         }
 
-        setSheetDiscoveryStatusMessage("Choose the lifting log you want to connect.");
+        setSheetDiscoveryStatusMessage(
+          "Choose the lifting log you want to connect.",
+        );
       } catch (error) {
-        devLog("[sheet-setup] candidate enrichment failed:", error?.message || error);
-        setSheetDiscoveryStatusMessage("Choose the lifting log you want to connect.");
+        devLog(
+          "[sheet-setup] candidate enrichment failed:",
+          error?.message || error,
+        );
+        setSheetDiscoveryStatusMessage(
+          "Choose the lifting log you want to connect.",
+        );
       } finally {
         setIsCandidateEnrichmentLoading(false);
       }
@@ -369,42 +473,80 @@ export function SheetSetupDialog() {
     [flowIntent, mergeCandidateUpdates],
   );
 
+  const showCandidateChooser = useCallback(
+    ({
+      candidates,
+      intent,
+      currentSheetId = null,
+      enrichCandidateIds = null,
+      preferredRecommendedId = null,
+    }) => {
+      const discoveredCandidates = sortCandidatesForChooser(candidates);
+      const currentCandidateId =
+        intent === "switch_sheet" &&
+        currentSheetId &&
+        discoveredCandidates.some(
+          (candidate) => candidate.id === currentSheetId,
+        )
+          ? currentSheetId
+          : null;
+      const serverRecommendedId =
+        preferredRecommendedId &&
+        discoveredCandidates.some(
+          (candidate) => candidate.id === preferredRecommendedId,
+        )
+          ? preferredRecommendedId
+          : null;
+      const recommendedId =
+        serverRecommendedId || discoveredCandidates[0]?.id || null;
+      const nextEnrichCandidateIds = Array.isArray(enrichCandidateIds)
+        ? enrichCandidateIds
+        : discoveredCandidates
+            .slice(0, ENRICH_CANDIDATE_LIMIT)
+            .map((candidate) => candidate.id);
+      const prioritizedEnrichCandidateIds =
+        recommendedId && !nextEnrichCandidateIds.includes(recommendedId)
+          ? [recommendedId, ...nextEnrichCandidateIds].slice(
+              0,
+              ENRICH_CANDIDATE_LIMIT,
+            )
+          : nextEnrichCandidateIds;
+
+      setCandidateSheets(discoveredCandidates);
+      setRecommendedCandidateId(recommendedId);
+      setFlowIntent(intent);
+      setSheetDiscoveryStatusMessage(
+        discoveredCandidates.length > 0
+          ? intent === "switch_sheet"
+            ? `Found ${discoveredCandidates.length} possible data sources.`
+            : `Found ${discoveredCandidates.length} potential lifting logs.`
+          : intent === "switch_sheet"
+            ? "No accessible data sources detected yet."
+            : "No previous lifting logs detected yet.",
+      );
+      setOnboardingState("choose_sheet");
+      void enrichCandidateSheets({
+        candidates: discoveredCandidates,
+        candidateIds: prioritizedEnrichCandidateIds,
+        primaryCandidateId: recommendedId,
+      });
+    },
+    [enrichCandidateSheets],
+  );
+
   const handleResolvedAction = useCallback(
     (payload, intent) => {
       if (payload?.action === "choose_sheet") {
-        const discoveredCandidates = Array.isArray(payload.candidates)
-          ? sortCandidatesForChooser(payload.candidates)
-          : [];
-        const currentCandidateId =
-          intent === "switch_sheet" &&
-          discoveredCandidates.some((candidate) => candidate.id === sheetInfo?.ssid)
-            ? sheetInfo.ssid
-            : null;
-        const recommendedId = currentCandidateId || discoveredCandidates[0]?.id || payload?.recommendedId || null;
-        const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
-          ? payload.enrichCandidateIds
-          : discoveredCandidates.slice(0, ENRICH_CANDIDATE_LIMIT).map((candidate) => candidate.id);
-        const prioritizedEnrichCandidateIds =
-          currentCandidateId && !enrichCandidateIds.includes(currentCandidateId)
-            ? [currentCandidateId, ...enrichCandidateIds].slice(0, ENRICH_CANDIDATE_LIMIT)
-            : enrichCandidateIds;
-        setCandidateSheets(discoveredCandidates);
-        setRecommendedCandidateId(recommendedId);
-        setFlowIntent(payload?.intent || intent);
-        setSheetDiscoveryStatusMessage(
-          discoveredCandidates.length > 0
-            ? intent === "switch_sheet"
-              ? `Found ${discoveredCandidates.length} possible data sources.`
-              : `Found ${discoveredCandidates.length} potential lifting logs.`
-            : intent === "switch_sheet"
-              ? "No accessible data sources detected yet."
-              : "No previous lifting logs detected yet.",
-        );
-        setOnboardingState("choose_sheet");
-        void enrichCandidateSheets({
-          candidates: discoveredCandidates,
-          candidateIds: prioritizedEnrichCandidateIds,
-          primaryCandidateId: recommendedId,
+        showCandidateChooser({
+          candidates: Array.isArray(payload.candidates)
+            ? payload.candidates
+            : [],
+          intent: payload?.intent || intent,
+          currentSheetId: sheetInfo?.ssid || null,
+          preferredRecommendedId: payload?.recommendedId || null,
+          enrichCandidateIds: Array.isArray(payload.enrichCandidateIds)
+            ? payload.enrichCandidateIds
+            : null,
         });
         return;
       }
@@ -427,7 +569,10 @@ export function SheetSetupDialog() {
         return;
       }
 
-      if (payload?.action === "link_existing" || payload?.action === "create_new_user_sheet") {
+      if (
+        payload?.action === "link_existing" ||
+        payload?.action === "create_new_user_sheet"
+      ) {
         const nextSheetInfo = {
           ssid: payload.ssid,
           url: payload.webViewLink ?? null,
@@ -436,8 +581,14 @@ export function SheetSetupDialog() {
           modifiedByMeTime: payload.modifiedByMeTime ?? null,
         };
 
+        if (isImportedData) {
+          clearImportedData();
+        }
         exitSignedInDemoMode();
-        if (shouldShowSyncToastOnAutoLink(payload) && typeof window !== "undefined") {
+        if (
+          shouldShowSyncToastOnAutoLink(payload) &&
+          typeof window !== "undefined"
+        ) {
           window.sessionStorage.setItem(FORCE_SHEET_SYNC_TOAST_KEY, "true");
         }
         selectSheet(payload.ssid, nextSheetInfo);
@@ -453,7 +604,10 @@ export function SheetSetupDialog() {
           setOpen(false);
           resetUiState();
         }
-        if (payload?.action === "create_new_user_sheet" && router.pathname !== "/") {
+        if (
+          payload?.action === "create_new_user_sheet" &&
+          router.pathname !== "/"
+        ) {
           void router.replace("/");
         }
         if (!outcomeReportedRef.current) {
@@ -473,14 +627,16 @@ export function SheetSetupDialog() {
       }
     },
     [
-      enrichCandidateSheets,
       exitSignedInDemoMode,
       hadLocalSheetBefore,
       reportOnboardingEvent,
       resetUiState,
       router,
+      clearImportedData,
+      isImportedData,
       selectSheet,
       sheetInfo?.ssid,
+      showCandidateChooser,
     ],
   );
 
@@ -577,7 +733,9 @@ export function SheetSetupDialog() {
         handleResolvedAction(payload, intent);
       } catch (error) {
         setProvisionError(error?.message || "Sheet linking failed");
-        setOnboardingState(intent === "switch_sheet" ? "choose_sheet" : "fallback_error");
+        setOnboardingState(
+          intent === "switch_sheet" ? "choose_sheet" : "fallback_error",
+        );
         if (!outcomeReportedRef.current && intent !== "switch_sheet") {
           outcomeReportedRef.current = true;
           void reportOnboardingEvent("onboarding-failed", {
@@ -595,7 +753,210 @@ export function SheetSetupDialog() {
         setIsProvisionActionLoading(false);
       }
     },
-    [flowIntent, hadLocalSheetBefore, handleResolvedAction, reportOnboardingEvent],
+    [
+      flowIntent,
+      hadLocalSheetBefore,
+      handleResolvedAction,
+      reportOnboardingEvent,
+    ],
+  );
+
+  const handleMergeImportedIntoCurrentSheet = useCallback(async () => {
+    if (
+      !sheetInfo?.ssid ||
+      !Array.isArray(parsedData) ||
+      parsedData.length === 0
+    ) {
+      return;
+    }
+
+    const isSheetComparisonPending =
+      isLoading && !Array.isArray(sheetParsedData);
+    if (isSheetComparisonPending) {
+      toast({
+        title: "Still checking your sheet",
+        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+      });
+      return;
+    }
+
+    setProvisionError(null);
+    setIsProvisionActionLoading(true);
+    try {
+      const importedEntries = parsedData.filter((entry) => !entry.isGoal);
+      const { newEntries, skippedCount } = deduplicateImportedEntries(
+        importedEntries,
+        sheetParsedData,
+      );
+
+      if (newEntries.length === 0) {
+        toast({
+          title: "Nothing new to merge",
+          description: `All ${skippedCount} entries already exist in your sheet.`,
+        });
+        return;
+      }
+
+      const payload = await writeEntriesToSheet(sheetInfo.ssid, newEntries);
+      clearImportedData();
+      mutate();
+      setOpen(false);
+      resetUiState();
+
+      const skippedNote =
+        skippedCount > 0
+          ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
+          : "";
+
+      toast({
+        title: "Preview merged into your sheet",
+        description: `Added ${payload.insertedRows} rows across ${payload.dateCount} date${payload.dateCount === 1 ? "" : "s"}.${skippedNote}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Merge failed",
+        description:
+          error?.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProvisionActionLoading(false);
+    }
+  }, [
+    clearImportedData,
+    isLoading,
+    mutate,
+    parsedData,
+    resetUiState,
+    sheetInfo?.ssid,
+    sheetParsedData,
+    toast,
+  ]);
+
+  // Inline file import from the onboarding dialog: parse → create sheet → populate → link → done.
+  const handleImportFile = useCallback(
+    async (file) => {
+      setProvisionError(null);
+      setIsProvisionActionLoading(true);
+      setOnboardingState("linking_or_creating");
+      try {
+        // Step 1: Parse the file
+        const { count, formatName, entries = [] } = await importFile(file);
+        if (count === 0) {
+          throw new Error("No valid entries found in the file.");
+        }
+
+        // Step 2: Create a blank sheet
+        const linkRes = await fetch("/api/sheet/link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            intent: "bootstrap",
+            mode: "create_blank",
+            preferredUnitType: getPreferredUnitTypeFromClient(),
+            locale: getClientLocale(),
+            starterDateText: getStarterDateTextForClientLocale(),
+          }),
+        });
+        const linkPayload = await linkRes.json().catch(() => ({}));
+        if (linkPayload?.onboardingFlowToken) {
+          onboardingFlowTokenRef.current = linkPayload.onboardingFlowToken;
+        }
+        if (!linkRes.ok || !linkPayload?.ssid) {
+          throw new Error(
+            linkPayload?.error || "Failed to create Google Sheet",
+          );
+        }
+
+        // Step 3: Use the parsed entries returned from importFile so the flow
+        // does not depend on sessionStorage remaining writable.
+        const importedEntries = entries.filter((entry) => !entry.isGoal);
+
+        if (importedEntries.length > 0) {
+          const apiEntries = importedEntries.map((e) => ({
+            date: e.date,
+            liftType: e.liftType,
+            reps: e.reps,
+            weight: e.weight,
+            unitType: e.unitType || "kg",
+          }));
+          const writeRes = await postImportHistory({
+            ssid: linkPayload.ssid,
+            entries: apiEntries,
+          }, {
+            source: "sheet_setup_create",
+          });
+          const writeData = await writeRes.json();
+          if (!writeRes.ok) {
+            throw new Error(writeData.error || "Failed to write data to sheet");
+          }
+        }
+
+        // Step 4: Link the sheet
+        const nextSheetInfo = {
+          ssid: linkPayload.ssid,
+          url: linkPayload.webViewLink ?? null,
+          filename: linkPayload.name ?? null,
+          modifiedTime: linkPayload.modifiedTime ?? null,
+          modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
+        };
+        exitSignedInDemoMode();
+        selectSheet(linkPayload.ssid, nextSheetInfo);
+        clearImportedData();
+        mutate();
+
+        toast({
+          title: "Google Sheet created from your data!",
+          description: `Imported ${count} ${formatName} entries into a new Strength Journeys sheet.`,
+        });
+
+        setOpen(false);
+        resetUiState();
+        if (router.pathname !== "/") {
+          void router.replace("/");
+        }
+
+        if (!outcomeReportedRef.current) {
+          outcomeReportedRef.current = true;
+          void reportOnboardingEvent("onboarding-success", {
+            intent: "bootstrap",
+            resultAction: "create_from_import",
+            reason: "file_import",
+            ssid: linkPayload.ssid,
+            sheetName: linkPayload.name || null,
+            hadLocalSheetBefore,
+            importedEntryCount: count,
+            importedFormatName: formatName,
+            durationMs: flowStartedAtRef.current
+              ? Date.now() - flowStartedAtRef.current
+              : null,
+          });
+        }
+      } catch (error) {
+        setProvisionError(error?.message || "File import failed");
+        setOnboardingState("fallback_error");
+        toast({
+          title: "File import failed",
+          description:
+            error?.message || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProvisionActionLoading(false);
+      }
+    },
+    [
+      importFile,
+      clearImportedData,
+      exitSignedInDemoMode,
+      selectSheet,
+      mutate,
+      toast,
+      router,
+      resetUiState,
+      hadLocalSheetBefore,
+      reportOnboardingEvent,
+    ],
   );
 
   const disconnectCurrentSheet = useCallback(async () => {
@@ -610,17 +971,26 @@ export function SheetSetupDialog() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload?.error || "Failed to disconnect current data source");
+        throw new Error(
+          payload?.error || "Failed to disconnect current data source",
+        );
       }
-      devLog("[sheet-flow] disconnected current sheet from setup dialog", payload);
+      devLog(
+        "[sheet-flow] disconnected current sheet from setup dialog",
+        payload,
+      );
       clearSheet();
       enterSignedInDemoMode();
       setHadLocalSheetBefore(false);
       setOnboardingState("choose_sheet");
-      setSheetDiscoveryStatusMessage("Current data source disconnected. Choose what to connect next.");
+      setSheetDiscoveryStatusMessage(
+        "Current data source disconnected. Choose what to connect next.",
+      );
     } catch (error) {
       console.error("[sheet-flow] disconnect current sheet failed:", error);
-      setProvisionError(error?.message || "Failed to disconnect current data source");
+      setProvisionError(
+        error?.message || "Failed to disconnect current data source",
+      );
     } finally {
       setIsDisconnectingCurrentSheet(false);
     }
@@ -694,12 +1064,19 @@ export function SheetSetupDialog() {
     if (authStatus !== "authenticated") return;
     if (sheetInfo?.ssid) return;
     if (isDemoMode) return;
+    if (isImportedData) return; // Suppress auto-open when user has imported data — banner handles it
     if (provisioningStartedRef.current) return;
 
     provisioningStartedRef.current = true;
     launchedFromUserRef.current = false;
     void resolveSheetFlow({ intent: "bootstrap", hadLocalBefore: false });
-  }, [authStatus, isDemoMode, resolveSheetFlow, sheetInfo?.ssid]);
+  }, [
+    authStatus,
+    isDemoMode,
+    isImportedData,
+    resolveSheetFlow,
+    sheetInfo?.ssid,
+  ]);
 
   useEffect(() => {
     if (authStatus !== "authenticated") return undefined;
@@ -726,13 +1103,23 @@ export function SheetSetupDialog() {
 
     launchedFromUserRef.current = true;
     provisioningStartedRef.current = true;
-    void resolveSheetFlow({ intent: "switch_sheet", hadLocalBefore: Boolean(sheetInfo?.ssid) });
+    void resolveSheetFlow({
+      intent: "switch_sheet",
+      hadLocalBefore: Boolean(sheetInfo?.ssid),
+    });
     const nextQuery = { ...router.query };
     delete nextQuery[SHEET_FLOW_QUERY_KEY];
     router.replace({ pathname: router.pathname, query: nextQuery }, undefined, {
       shallow: true,
     });
-  }, [authStatus, resolveSheetFlow, router, router.pathname, router.query, sheetInfo?.ssid]);
+  }, [
+    authStatus,
+    resolveSheetFlow,
+    router,
+    router.pathname,
+    router.query,
+    sheetInfo?.ssid,
+  ]);
 
   useEffect(() => {
     if (authStatus !== "authenticated") return;
@@ -764,20 +1151,23 @@ export function SheetSetupDialog() {
           });
         }}
       />
-      <Dialog open={open} onOpenChange={(nextOpen) => {
-        if (nextOpen) {
-          setOpen(true);
-          return;
-        }
-        closeDialog();
-      }}>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) {
+            setOpen(true);
+            return;
+          }
+          closeDialog();
+        }}
+      >
         <DialogContent
           aria-describedby={undefined}
           className="max-h-[92vh] w-[min(96vw,1220px)] max-w-[1220px] overflow-hidden border-0 bg-transparent p-0 shadow-none"
         >
-          <Card className="flex max-h-[92vh] flex-col overflow-hidden border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
+          <Card className="border-primary/20 bg-background/95 flex max-h-[92vh] flex-col overflow-hidden xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
             <CardHeader className="shrink-0 space-y-3 xl:px-10 2xl:px-16">
-              <div className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+              <div className="text-primary inline-flex items-center gap-2 text-sm font-medium">
                 {dialogCopy.tone === "ready" ? (
                   <CheckCircle2 className="h-4 w-4" />
                 ) : (
@@ -795,7 +1185,8 @@ export function SheetSetupDialog() {
               ) : null}
             </CardHeader>
             <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto xl:px-10 2xl:px-16">
-              {(onboardingState === "discovering" || onboardingState === "linking_or_creating") && (
+              {(onboardingState === "discovering" ||
+                onboardingState === "linking_or_creating") && (
                 <PlateLoadingAnimation isActive={true} />
               )}
               {onboardingState === "choose_sheet" && (
@@ -806,13 +1197,29 @@ export function SheetSetupDialog() {
                   currentSsid={sheetInfo?.ssid || null}
                   currentSheetInfo={sheetInfo}
                   recommendedId={recommendedCandidateId}
+                  showImportedPreviewWarning={isImportedData}
+                  importedPreviewEntryCount={
+                    parsedData?.filter((entry) => !entry.isGoal)?.length || 0
+                  }
                   openPicker={openPicker}
                   isWorking={isProvisionActionLoading}
                   isDisconnectingCurrent={isDisconnectingCurrentSheet}
                   isEnriching={isCandidateEnrichmentLoading}
                   statusMessage={sheetDiscoveryStatusMessage}
-                  onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
+                  onMergeImportedPreview={
+                    isImportedData && sheetInfo?.ssid
+                      ? handleMergeImportedIntoCurrentSheet
+                      : null
+                  }
+                  onChooseSheet={(ssid) =>
+                    runLinkAction({
+                      mode: "select_existing",
+                      selectedSsid: ssid,
+                    })
+                  }
                   onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
+                  onImportFile={handleImportFile}
+                  showImportOption={false}
                   onDisconnectCurrent={() => {
                     void disconnectCurrentSheet();
                   }}
@@ -825,7 +1232,10 @@ export function SheetSetupDialog() {
                   onRetry={() => {
                     provisioningStartedRef.current = false;
                     resolveSheetFlow({
-                      intent: flowIntent === "switch_sheet" ? "switch_sheet" : "recovery",
+                      intent:
+                        flowIntent === "switch_sheet"
+                          ? "switch_sheet"
+                          : "recovery",
                       hadLocalBefore: true,
                     });
                   }}
@@ -875,7 +1285,8 @@ function PlateLoadingAnimation({ isActive, stepDurationMs = 300 }) {
   const bluePlate = isMetric
     ? { weight: 20, color: "#2563EB", name: "20kg" }
     : { weight: 45, color: "#2563EB", name: "45lb" };
-  const platesPerSide = plateCount > 0 ? [{ ...bluePlate, count: plateCount }] : [];
+  const platesPerSide =
+    plateCount > 0 ? [{ ...bluePlate, count: plateCount }] : [];
 
   return (
     <div className="mx-auto w-fit py-6 opacity-70">
@@ -890,27 +1301,40 @@ function PlateLoadingAnimation({ isActive, stepDurationMs = 300 }) {
   );
 }
 
-function FallbackConnectPanel({ intent, openPicker, onRetry, isWorking, errorMessage }) {
+function FallbackConnectPanel({
+  intent,
+  openPicker,
+  onRetry,
+  isWorking,
+  errorMessage,
+}) {
   return (
-    <Card className="mb-4 border-orange-300/50 bg-background/95 xl:mx-auto xl:w-full xl:max-w-5xl">
+    <Card className="bg-background/95 mb-4 border-orange-300/50 xl:mx-auto xl:w-full xl:max-w-5xl">
       <CardHeader>
         <div className="inline-flex items-center gap-2 text-sm font-medium text-orange-600">
           <AlertTriangle className="h-4 w-4" />
           Setup needs a hand
         </div>
         <CardTitle>
-          {intent === "switch_sheet" ? "Couldn’t load your data source options yet" : "Automatic setup needs help"}
+          {intent === "switch_sheet"
+            ? "Couldn’t load your data source options yet"
+            : "Automatic setup needs help"}
         </CardTitle>
         <CardDescription className="text-base leading-relaxed">
-          {errorMessage || (intent === "switch_sheet"
-            ? "Retry loading your options or choose a file from Google Drive."
-            : "You can retry automatic setup or choose a Google Sheet yourself.")}
+          {errorMessage ||
+            (intent === "switch_sheet"
+              ? "Retry loading your options or choose a file from Google Drive."
+              : "You can retry automatic setup or choose a Google Sheet yourself.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row">
         <Button onClick={onRetry} disabled={isWorking} className="gap-2">
-          <LoaderCircle className={`h-4 w-4 ${isWorking ? "animate-spin" : ""}`} />
-          {intent === "switch_sheet" ? "Retry loading options" : "Retry automatic setup"}
+          <LoaderCircle
+            className={`h-4 w-4 ${isWorking ? "animate-spin" : ""}`}
+          />
+          {intent === "switch_sheet"
+            ? "Retry loading options"
+            : "Retry automatic setup"}
         </Button>
         <Button
           variant="outline"
@@ -930,106 +1354,112 @@ function FallbackConnectPanel({ intent, openPicker, onRetry, isWorking, errorMes
 
 function CreatedSheetPanel({ sheetInfo, reason, onGoToDashboard }) {
   const sheetUrl = getSheetUrl(sheetInfo?.ssid, sheetInfo?.url);
-  const sheetLabel = sheetInfo?.filename || "Your Strength Journeys lifting log";
+  const sheetLabel =
+    sheetInfo?.filename || "Your Strength Journeys lifting log";
   const showRecoveryHint = reason === "reprovision_after_missing_sheet";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 pb-2">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="mx-auto w-full max-w-2xl"
-        >
-          {sheetUrl ? (
-            <a
-              href={sheetUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-lg border border-border/70 bg-[#fafafa] p-5 text-left transition-colors hover:border-primary/35 hover:bg-primary/[0.03]"
-              aria-label={`Open ${sheetLabel} in Google Sheets`}
-            >
-              <div className="flex items-start gap-4">
-                <div className="rounded-md border border-border bg-background p-4">
-                  <img
-                    src={GOOGLE_SHEETS_ICON_URL}
-                    alt=""
-                    className="h-16 w-16"
-                    aria-hidden
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xl font-extrabold text-foreground md:text-2xl">
-                    {sheetLabel}
-                  </p>
-                  <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Created in your Google Drive
-                  </p>
-                </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="mx-auto w-full max-w-2xl"
+      >
+        {sheetUrl ? (
+          <a
+            href={sheetUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border/70 hover:border-primary/35 hover:bg-primary/[0.03] block rounded-lg border bg-[#fafafa] p-5 text-left transition-colors"
+            aria-label={`Open ${sheetLabel} in Google Sheets`}
+          >
+            <div className="flex items-start gap-4">
+              <div className="border-border bg-background rounded-md border p-4">
+                <img
+                  src={GOOGLE_SHEETS_ICON_URL}
+                  alt=""
+                  className="h-16 w-16"
+                  aria-hidden
+                />
               </div>
-            </a>
-          ) : (
-            <div className="rounded-lg border border-border/70 bg-[#fafafa] p-5 text-left">
-              <div className="flex items-start gap-4">
-                <div className="rounded-md border border-border bg-background p-4">
-                  <img
-                    src={GOOGLE_SHEETS_ICON_URL}
-                    alt=""
-                    className="h-16 w-16"
-                    aria-hidden
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xl font-extrabold text-foreground md:text-2xl">
-                    {sheetLabel}
-                  </p>
-                  <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Created in your Google Drive
-                  </p>
-                </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-foreground truncate text-xl font-extrabold md:text-2xl">
+                  {sheetLabel}
+                </p>
+                <p className="bg-primary/10 text-primary mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Created in your Google Drive
+                </p>
               </div>
             </div>
-          )}
-        </motion.div>
-        <p className="text-center text-sm font-medium italic text-foreground/80">
-          Every set you log becomes part of your strength story.
-        </p>
-        <div className="rounded-lg border border-border/70 bg-card/20 px-4 py-3 text-center text-sm leading-relaxed text-muted-foreground">
-          Log lifts in your sheet. Your dashboards update automatically.
-        </div>
-        {showRecoveryHint ? (
-          <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3 text-center text-sm leading-relaxed text-muted-foreground">
-            We created a new lifting log for you. If you deleted your old one
-            recently, you may still be able to restore it from{" "}
-            <a
-              href="https://drive.google.com/drive/trash"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
-            >
-              Google Drive trash
-            </a>
-            .
+          </a>
+        ) : (
+          <div className="border-border/70 rounded-lg border bg-[#fafafa] p-5 text-left">
+            <div className="flex items-start gap-4">
+              <div className="border-border bg-background rounded-md border p-4">
+                <img
+                  src={GOOGLE_SHEETS_ICON_URL}
+                  alt=""
+                  className="h-16 w-16"
+                  aria-hidden
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-foreground truncate text-xl font-extrabold md:text-2xl">
+                  {sheetLabel}
+                </p>
+                <p className="bg-primary/10 text-primary mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Created in your Google Drive
+                </p>
+              </div>
+            </div>
           </div>
-        ) : null}
-        <div className="flex flex-col justify-center gap-3 sm:flex-row">
-          {sheetUrl ? (
-            <Button asChild size="lg" className="gap-2 shadow-sm">
-              <a href={sheetUrl} target="_blank" rel="noopener noreferrer">
-                Open My Lifting Log
-              </a>
-            </Button>
-          ) : (
-            <Button size="lg" className="gap-2 shadow-sm" disabled>
-              Open My Lifting Log
-            </Button>
-          )}
-          <Button size="lg" variant="outline" className="gap-2" onClick={onGoToDashboard}>
-            Go to Strength Dashboard
-          </Button>
+        )}
+      </motion.div>
+      <p className="text-foreground/80 text-center text-sm font-medium italic">
+        Every set you log becomes part of your strength story.
+      </p>
+      <div className="border-border/70 bg-card/20 text-muted-foreground rounded-lg border px-4 py-3 text-center text-sm leading-relaxed">
+        Log lifts in your sheet. Your dashboards update automatically.
+      </div>
+      {showRecoveryHint ? (
+        <div className="border-border/70 bg-muted/20 text-muted-foreground rounded-lg border px-4 py-3 text-center text-sm leading-relaxed">
+          We created a new lifting log for you. If you deleted your old one
+          recently, you may still be able to restore it from{" "}
+          <a
+            href="https://drive.google.com/drive/trash"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-foreground hover:text-primary font-medium underline underline-offset-4 transition-colors"
+          >
+            Google Drive trash
+          </a>
+          .
         </div>
+      ) : null}
+      <div className="flex flex-col justify-center gap-3 sm:flex-row">
+        {sheetUrl ? (
+          <Button asChild size="lg" className="gap-2 shadow-sm">
+            <a href={sheetUrl} target="_blank" rel="noopener noreferrer">
+              Open My Lifting Log
+            </a>
+          </Button>
+        ) : (
+          <Button size="lg" className="gap-2 shadow-sm" disabled>
+            Open My Lifting Log
+          </Button>
+        )}
+        <Button
+          size="lg"
+          variant="outline"
+          className="gap-2"
+          onClick={onGoToDashboard}
+        >
+          Go to Strength Dashboard
+        </Button>
+      </div>
     </div>
   );
 }

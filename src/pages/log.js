@@ -236,6 +236,8 @@ export default function LogSessionPage() {
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
     isDemoMode,
+    isImportedData,
+    hasUserData,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { addEntry: addLogEntry, clearEntries } = useDevActivityMonitor();
@@ -249,8 +251,7 @@ export default function LogSessionPage() {
       return null;
     }
   }, [isClient]);
-  const hasLinkedSheet =
-    authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
+  const hasLinkedSheet = hasUserData && !isImportedData;
 
   useEffect(() => {
     clearEntries();
@@ -1969,6 +1970,22 @@ export default function LogSessionPage() {
 
   // --- Render ---
 
+  if (isImportedData) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <Dumbbell className="text-muted-foreground h-12 w-12" />
+        <h1 className="text-2xl font-bold">Logging Unavailable</h1>
+        <p className="text-muted-foreground max-w-md">
+          You&apos;re in preview mode with imported data. To log sessions,
+          save your data and connect a Google Sheet.
+        </p>
+        <Button asChild>
+          <Link href="/import">Go to Import</Link>
+        </Button>
+      </div>
+    );
+  }
+
   if (authStatus === "unauthenticated") {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
@@ -3326,7 +3343,7 @@ function LiftBlock({
   onDeleteSet,
   onAddSet,
 }) {
-  const { status: authStatus } = useSession();
+  const { hasUserData } = useUserLiftingData();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const { getColor } = useLiftColors();
   const prefersReducedMotion = useReducedMotion();
@@ -3860,7 +3877,7 @@ function LiftBlock({
   ]);
 
   // Find the set index with the heaviest e1RM for the strength badge
-  const canShowStrength = authStatus === "authenticated" && hasBioData;
+  const canShowStrength = hasUserData && hasBioData;
   const { bestE1rmIndex, bestE1rmValue } = useMemo(() => {
     if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;

@@ -280,7 +280,6 @@ export function FeedbackWidget({ labels = {} }) {
     "/ai-lifting-assistant": "the AI Lifting Assistant",
     "/timer": "the Gym Timer",
     "/gym-playlist-leaderboard": "the Playlist Leaderboard",
-    "/barbell-strength-potential": "Strength Potential",
   };
 
   const LIFT_SLUG_NAMES = {

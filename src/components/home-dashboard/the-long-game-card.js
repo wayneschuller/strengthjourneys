@@ -85,7 +85,8 @@ export function TheLongGameCard({
   // SSR default = first stage-1 title; randomised client-side once intervals load
   const [cardTitle, setCardTitle] = useState(HEATMAP_TITLES_STAGE1[0]);
   const sessionCount = useMemo(() => {
-    if (typeof sessionCountFromParent === "number") return sessionCountFromParent;
+    if (typeof sessionCountFromParent === "number")
+      return sessionCountFromParent;
     if (!Array.isArray(parsedData)) return 0;
     const dates = new Set();
     parsedData.forEach((entry) => {
@@ -163,7 +164,9 @@ export function TheLongGameCard({
   }, []);
 
   const writePngToClipboard = useCallback(async (blobPromise) => {
-    await navigator.clipboard.write([new ClipboardItem({ "image/png": blobPromise })]);
+    await navigator.clipboard.write([
+      new ClipboardItem({ "image/png": blobPromise }),
+    ]);
   }, []);
 
   const copyNodeToClipboard = useCallback(
@@ -176,7 +179,8 @@ export function TheLongGameCard({
         scale: 1,
         ...captureOptions,
       }).then(
-        (canvas) => new Promise((resolve) => canvas.toBlob(resolve, "image/png")),
+        (canvas) =>
+          new Promise((resolve) => canvas.toBlob(resolve, "image/png")),
       );
       await writePngToClipboard(blobPromise);
     },
@@ -186,7 +190,8 @@ export function TheLongGameCard({
   const buildStyledSvgImage = useCallback(async (svgElement) => {
     const svgRect = svgElement.getBoundingClientRect();
     const cloneWithInlineSvgStyles = (sourceNode, targetNode) => {
-      if (!(sourceNode instanceof Element) || !(targetNode instanceof Element)) return;
+      if (!(sourceNode instanceof Element) || !(targetNode instanceof Element))
+        return;
       const sourceTag = sourceNode.tagName.toLowerCase();
       const computedStyle = window.getComputedStyle(sourceNode);
 
@@ -228,16 +233,22 @@ export function TheLongGameCard({
       }
 
       for (let i = 0; i < sourceNode.children.length; i += 1) {
-        cloneWithInlineSvgStyles(sourceNode.children[i], targetNode.children[i]);
+        cloneWithInlineSvgStyles(
+          sourceNode.children[i],
+          targetNode.children[i],
+        );
       }
     };
 
     const clonedSvg = svgElement.cloneNode(true);
     cloneWithInlineSvgStyles(svgElement, clonedSvg);
 
-    const svgBlob = new Blob([new XMLSerializer().serializeToString(clonedSvg)], {
-      type: "image/svg+xml;charset=utf-8",
-    });
+    const svgBlob = new Blob(
+      [new XMLSerializer().serializeToString(clonedSvg)],
+      {
+        type: "image/svg+xml;charset=utf-8",
+      },
+    );
     const svgUrl = URL.createObjectURL(svgBlob);
     const image = await new Promise((resolve, reject) => {
       const img = new Image();
@@ -261,7 +272,8 @@ export function TheLongGameCard({
       if (!heatmapSvg) return false;
 
       const rowRect = yearNode.getBoundingClientRect();
-      const { image: svgImage, rect: svgRect } = await buildStyledSvgImage(heatmapSvg);
+      const { image: svgImage, rect: svgRect } =
+        await buildStyledSvgImage(heatmapSvg);
 
       const rowOffsetX = Math.max(0, rowRect.left - cardRect.left);
       const rowOffsetY = Math.max(0, rowRect.top - cardRect.top);
@@ -293,22 +305,25 @@ export function TheLongGameCard({
     [buildStyledSvgImage],
   );
 
-  const drawTextNodeToContext = useCallback((ctx, node, cardRect, fallback = {}) => {
-    if (!node) return;
-    const rect = node.getBoundingClientRect();
-    const style = window.getComputedStyle(node);
-    const text = (node.textContent || "").replace(/\s+/g, " ").trim();
-    if (!text) return;
+  const drawTextNodeToContext = useCallback(
+    (ctx, node, cardRect, fallback = {}) => {
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      const style = window.getComputedStyle(node);
+      const text = (node.textContent || "").replace(/\s+/g, " ").trim();
+      if (!text) return;
 
-    ctx.fillStyle = fallback.color || style.color || "#111827";
-    ctx.font = `${style.fontWeight || fallback.fontWeight || 400} ${style.fontSize || fallback.fontSize || "12px"} ${style.fontFamily || fallback.fontFamily || "sans-serif"}`;
-    ctx.textBaseline = "top";
-    ctx.fillText(
-      text,
-      Math.max(0, rect.left - cardRect.left),
-      Math.max(0, rect.top - cardRect.top),
-    );
-  }, []);
+      ctx.fillStyle = fallback.color || style.color || "#111827";
+      ctx.font = `${style.fontWeight || fallback.fontWeight || 400} ${style.fontSize || fallback.fontSize || "12px"} ${style.fontFamily || fallback.fontFamily || "sans-serif"}`;
+      ctx.textBaseline = "top";
+      ctx.fillText(
+        text,
+        Math.max(0, rect.left - cardRect.left),
+        Math.max(0, rect.top - cardRect.top),
+      );
+    },
+    [],
+  );
 
   const copyYearRowFastToClipboard = useCallback(
     async (yearNode, year) => {
@@ -342,7 +357,10 @@ export function TheLongGameCard({
 
       const canvasWidth = Math.max(1, Math.ceil(rowRect.width));
       const canvasHeight = Math.max(1, Math.ceil(rowRect.height));
-      const exportScale = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      const exportScale = Math.max(
+        1,
+        Math.min(3, window.devicePixelRatio || 1),
+      );
       const canvas = document.createElement("canvas");
       canvas.width = Math.round(canvasWidth * exportScale);
       canvas.height = Math.round(canvasHeight * exportScale);
@@ -371,15 +389,11 @@ export function TheLongGameCard({
 
       const svgX = Math.max(0, svgRect.left - rowRect.left);
       const svgY = Math.max(0, svgRect.top - rowRect.top);
-      ctx.drawImage(
-        svgImage,
-        svgX,
-        svgY,
-        svgRect.width,
-        svgRect.height,
-      );
+      ctx.drawImage(svgImage, svgX, svgY, svgRect.width, svgRect.height);
 
-      const blobPromise = new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      const blobPromise = new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/png"),
+      );
       await writePngToClipboard(blobPromise);
       devLog(
         `[heatmap-copy][${year}] fast-path total: ${Math.round(performance.now() - fastPathStart)}ms`,
@@ -429,9 +443,12 @@ export function TheLongGameCard({
     const headerNode = cardNode.querySelector('[data-share-section="header"]');
     if (headerNode) {
       const titleNode = headerNode.querySelector('[data-share-title="true"]');
-      const descriptionNode = headerNode.querySelector('[data-share-description="true"]');
+      const descriptionNode = headerNode.querySelector(
+        '[data-share-description="true"]',
+      );
       if (!titleNode) devLog("[heatmap-copy][full] header title node missing");
-      if (!descriptionNode) devLog("[heatmap-copy][full] header description node missing");
+      if (!descriptionNode)
+        devLog("[heatmap-copy][full] header description node missing");
       drawTextNodeToContext(ctx, titleNode, cardRect, {
         fontWeight: 700,
         fontSize: "28px",
@@ -448,7 +465,9 @@ export function TheLongGameCard({
     );
 
     const circlesStart = performance.now();
-    const consistencyNode = cardNode.querySelector('[data-share-section="consistency"]');
+    const consistencyNode = cardNode.querySelector(
+      '[data-share-section="consistency"]',
+    );
     if (consistencyNode) {
       const circleWraps = consistencyNode.querySelectorAll("svg");
       for (const svgNode of circleWraps) {
@@ -480,9 +499,16 @@ export function TheLongGameCard({
       const yearNode = yearRowRefs.current[year];
       if (!yearNode) continue;
       const yearStart = performance.now();
-      const rendered = await drawYearRowToContext(ctx, yearNode, year, cardRect);
+      const rendered = await drawYearRowToContext(
+        ctx,
+        yearNode,
+        year,
+        cardRect,
+      );
       if (!rendered) {
-        devLog(`[heatmap-copy][full] fast-path failed: year ${year} render failed`);
+        devLog(
+          `[heatmap-copy][full] fast-path failed: year ${year} render failed`,
+        );
         return false;
       }
       devLog(
@@ -491,7 +517,9 @@ export function TheLongGameCard({
     }
 
     const brandingStart = performance.now();
-    const brandingNode = cardNode.querySelector('[data-share-section="branding"]');
+    const brandingNode = cardNode.querySelector(
+      '[data-share-section="branding"]',
+    );
     if (brandingNode) {
       const brandRect = brandingNode.getBoundingClientRect();
       ctx.strokeStyle = "#e5e7eb";
@@ -555,7 +583,9 @@ export function TheLongGameCard({
           );
         }
         console.log("Heatmap copied to clipboard");
-        gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, { page: "/lift-explorer" });
+        gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, {
+          page: "/lift-explorer",
+        });
       }
 
       devLog(
@@ -648,8 +678,8 @@ export function TheLongGameCard({
               {isFirstWeekIntroState
                 ? "The Long Game Starts Here"
                 : dataMaturityStage === "no_sessions"
-                ? "The Long Game Starts Here"
-                : cardTitle}
+                  ? "The Long Game Starts Here"
+                  : cardTitle}
             </span>
           </CardTitle>
           {isFirstWeekIntroState ? (
@@ -661,7 +691,8 @@ export function TheLongGameCard({
           ) : dataMaturityStage === "no_sessions" ? (
             <CardDescription>
               <span data-share-description="true">
-                Your heatmap will light up as soon as you log your first session.
+                Your heatmap will light up as soon as you log your first
+                session.
               </span>
             </CardDescription>
           ) : (
@@ -693,18 +724,18 @@ export function TheLongGameCard({
           {!intervals &&
             !isFirstWeekIntroState &&
             dataMaturityStage !== "no_sessions" && (
-            <Skeleton className="h-64 w-11/12 flex-1" />
-          )}
+              <Skeleton className="h-64 w-11/12 flex-1" />
+            )}
           {!intervals &&
             !isFirstWeekIntroState &&
             dataMaturityStage === "no_sessions" && (
-            <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-5 text-center">
-              <p className="text-sm text-muted-foreground">
-                Your first training day is the first pixel in this map.
-                Keep showing up and the pattern builds.
-              </p>
-            </div>
-          )}
+              <div className="bg-muted/20 flex h-64 flex-col items-center justify-center rounded-lg border border-dashed px-5 text-center">
+                <p className="text-muted-foreground text-sm">
+                  Your first training day is the first pixel in this map. Keep
+                  showing up and the pattern builds.
+                </p>
+              </div>
+            )}
           {intervals && !isFirstWeekIntroState && (
             <>
               {/* Consistency grade rings — always included in capture output */}
@@ -713,7 +744,10 @@ export function TheLongGameCard({
                   <div className="mb-6" data-share-section="consistency">
                     {isSharing ? (
                       <div className="flex w-full items-start">
-                        <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
+                        <div
+                          className="shrink-0"
+                          style={{ width: WEEKLY_YEAR_W }}
+                        />
                         <div className="min-w-0 flex-1">
                           <ConsistencyGradesRow
                             parsedData={parsedData}
@@ -739,30 +773,32 @@ export function TheLongGameCard({
               {!isSharing &&
                 !isFirstMonthFocusState &&
                 (showWeeklyToggle || showMonthlyToggle) && (
-                <div className="mb-2 flex justify-end">
-                  <div className="flex flex-row rounded border border-border/40 p-px text-[10px]">
-                    {[
-                      { key: "daily", label: "Daily" },
-                      ...(showWeeklyToggle ? [{ key: "weekly", label: "Weekly" }] : []),
-                      ...(showMonthlyToggle
-                        ? [{ key: "monthly", label: "Monthly" }]
-                        : []),
-                    ].map(({ key, label }) => (
-                      <button
-                        key={key}
-                        className={`rounded px-1.5 py-px transition-colors ${
-                          effectiveViewMode === key
-                            ? "bg-muted text-foreground/90 font-medium"
-                            : "text-muted-foreground/40 hover:text-muted-foreground/70"
-                        }`}
-                        onClick={() => setViewMode(key)}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                  <div className="mb-2 flex justify-end">
+                    <div className="border-border/40 flex flex-row rounded border p-px text-[10px]">
+                      {[
+                        { key: "daily", label: "Daily" },
+                        ...(showWeeklyToggle
+                          ? [{ key: "weekly", label: "Weekly" }]
+                          : []),
+                        ...(showMonthlyToggle
+                          ? [{ key: "monthly", label: "Monthly" }]
+                          : []),
+                      ].map(({ key, label }) => (
+                        <button
+                          key={key}
+                          className={`rounded px-1.5 py-px transition-colors ${
+                            effectiveViewMode === key
+                              ? "bg-muted text-foreground/90 font-medium"
+                              : "text-muted-foreground/40 hover:text-muted-foreground/70"
+                          }`}
+                          onClick={() => setViewMode(key)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               {isFirstMonthFocusState && (
                 <FirstMonthLongGameState parsedData={parsedData} />
               )}
@@ -789,39 +825,49 @@ export function TheLongGameCard({
                             if (node) yearRowRefs.current[year] = node;
                             else delete yearRowRefs.current[year];
                           }}
-                          className={`flex w-full items-start ${isCurrentYear ? "-mx-1 rounded-lg bg-muted/20 px-1 py-0.5" : ""}`}
+                          className={`flex w-full items-start ${isCurrentYear ? "bg-muted/20 -mx-1 rounded-lg px-1 py-0.5" : ""}`}
                         >
                           <div
-                            className="shrink-0 pr-2 pt-1 text-right text-xs lg:text-sm"
+                            className="shrink-0 pt-1 pr-2 text-right text-xs lg:text-sm"
                             style={{ width: WEEKLY_YEAR_W }}
                           >
                             <div className="flex flex-col items-end gap-1">
                               <span
                                 data-year-label="true"
-                                className={isCurrentYear ? "font-semibold text-foreground text-[13px] lg:text-sm tabular-nums" : "text-muted-foreground tabular-nums"}
+                                className={
+                                  isCurrentYear
+                                    ? "text-foreground text-[13px] font-semibold tabular-nums lg:text-sm"
+                                    : "text-muted-foreground tabular-nums"
+                                }
                               >
                                 {year}
                               </span>
-                              {isCurrentYear && !isSharing && !interval?.label && (
-                                <span className="text-[9px] text-muted-foreground/60 leading-none">now</span>
-                              )}
+                              {isCurrentYear &&
+                                !isSharing &&
+                                !interval?.label && (
+                                  <span className="text-muted-foreground/60 text-[9px] leading-none">
+                                    now
+                                  </span>
+                                )}
                               {interval?.label && !isSharing && (
-                                <span className="max-w-[4.5rem] text-right text-[9px] leading-none text-muted-foreground/60">
+                                <span className="text-muted-foreground/60 max-w-[4.5rem] text-right text-[9px] leading-none">
                                   {interval.label}
                                 </span>
                               )}
-                              {!isSharing && canShareHeatmaps && intervals.length > 1 && (
-                                <LiftResultCopyButton
-                                  label={`Copy ${year} heatmap`}
-                                  tooltip={`Copy ${year} heatmap`}
-                                  onCopy={() => handleShareYear(year)}
-                                  isLoading={sharingYear === year}
-                                  isSuccess={sharedYear === year}
-                                  disabled={sharingYear === year}
-                                  data-share-ignore="true"
-                                  className="h-6 w-6 text-muted-foreground/50 hover:text-foreground"
-                                />
-                              )}
+                              {!isSharing &&
+                                canShareHeatmaps &&
+                                intervals.length > 1 && (
+                                  <LiftResultCopyButton
+                                    label={`Copy ${year} heatmap`}
+                                    tooltip={`Copy ${year} heatmap`}
+                                    onCopy={() => handleShareYear(year)}
+                                    isLoading={sharingYear === year}
+                                    isSuccess={sharedYear === year}
+                                    disabled={sharingYear === year}
+                                    data-share-ignore="true"
+                                    className="text-muted-foreground/50 hover:text-foreground h-6 w-6"
+                                  />
+                                )}
                             </div>
                           </div>
                           <div className="min-w-0 flex-1">
@@ -952,7 +998,7 @@ function StarterLongGameState({ parsedData, sessionCount = 0 }) {
 
   return (
     <div className="flex h-full flex-col justify-center gap-5">
-      <div className="rounded-xl border bg-muted/10 p-5">
+      <div className="bg-muted/10 rounded-xl border p-5">
         <div className="flex items-center justify-between gap-3">
           {days.map((label, index) => (
             <div
@@ -966,7 +1012,7 @@ function StarterLongGameState({ parsedData, sessionCount = 0 }) {
                     : "border-border/70 bg-muted/30"
                 }`}
               />
-              <span className="text-[10px] text-muted-foreground">{label}</span>
+              <span className="text-muted-foreground text-[10px]">{label}</span>
             </div>
           ))}
         </div>
@@ -985,7 +1031,7 @@ function StarterLongGameState({ parsedData, sessionCount = 0 }) {
           body="Weekly and monthly views unlock once you have more history."
         />
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Right now the story is just one week wide. That is normal. Keep logging
         and the timeline grows with you.
       </p>
@@ -995,9 +1041,9 @@ function StarterLongGameState({ parsedData, sessionCount = 0 }) {
 
 function StarterLongGameNote({ title, body }) {
   return (
-    <div className="rounded-lg border bg-background/80 px-3 py-3">
-      <p className="text-sm font-semibold text-foreground">{title}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+    <div className="bg-background/80 rounded-lg border px-3 py-3">
+      <p className="text-foreground text-sm font-semibold">{title}</p>
+      <p className="text-muted-foreground mt-1 text-sm">{body}</p>
     </div>
   );
 }
@@ -1015,8 +1061,7 @@ function FirstMonthLongGameState({ parsedData }) {
         ).sort()
       : [];
 
-    const anchorDateStr =
-      nonGoalDates[0] || format(new Date(), "yyyy-MM-dd");
+    const anchorDateStr = nonGoalDates[0] || format(new Date(), "yyyy-MM-dd");
     const anchorDate = new Date(`${anchorDateStr}T00:00:00`);
     const dayOfWeek = anchorDate.getDay();
     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -1036,7 +1081,10 @@ function FirstMonthLongGameState({ parsedData }) {
 
     const weekRows = Array.from({ length: 5 }, (_, weekIndex) => ({
       label: `W${weekIndex + 1}`,
-      days: Array.from({ length: 7 }, (_, dayIndex) => weekIndex * 7 + dayIndex),
+      days: Array.from(
+        { length: 7 },
+        (_, dayIndex) => weekIndex * 7 + dayIndex,
+      ),
     }));
 
     return { weekdayLabels, weekRows, activeDays };
@@ -1044,20 +1092,20 @@ function FirstMonthLongGameState({ parsedData }) {
 
   return (
     <div className="flex h-full flex-col gap-5">
-      <div className="rounded-xl border bg-muted/10 p-5">
-        <div className="grid justify-center grid-cols-[1.25rem_repeat(7,1.55rem)] gap-x-1.5 gap-y-1.5 sm:grid-cols-[1.5rem_repeat(7,1.75rem)] sm:gap-x-2 sm:gap-y-2">
+      <div className="bg-muted/10 rounded-xl border p-5">
+        <div className="grid grid-cols-[1.25rem_repeat(7,1.55rem)] justify-center gap-x-1.5 gap-y-1.5 sm:grid-cols-[1.5rem_repeat(7,1.75rem)] sm:gap-x-2 sm:gap-y-2">
           <div />
           {weekdayLabels.map((label, index) => (
             <span
               key={`${label}-${index}`}
-              className="text-center text-[10px] font-medium text-muted-foreground"
+              className="text-muted-foreground text-center text-[10px] font-medium"
             >
               {label}
             </span>
           ))}
           {weekRows.map((week) => (
             <Fragment key={week.label}>
-              <span className="self-center text-[10px] font-medium text-muted-foreground">
+              <span className="text-muted-foreground self-center text-[10px] font-medium">
                 {week.label}
               </span>
               {week.days.map((dayNumber) => (
@@ -1138,7 +1186,11 @@ function GradeCircle({
         <TooltipTrigger asChild>
           <motion.div
             className="flex flex-col items-center gap-0.5"
-            initial={isCaptureMode ? { opacity: targetOpacity, y: 0 } : { opacity: 0, y: -20 }}
+            initial={
+              isCaptureMode
+                ? { opacity: targetOpacity, y: 0 }
+                : { opacity: 0, y: -20 }
+            }
             animate={
               isCaptureMode
                 ? { opacity: targetOpacity, y: 0 }
@@ -1213,7 +1265,10 @@ function GradeCircle({
 // window — so the rings row doesn't end in visually meaningless placeholder dots.
 function trimTrailingDots(items) {
   let lastReal = items.length - 1;
-  while (lastReal >= 0 && getGradeAndColor(items[lastReal].percentage).grade === ".") {
+  while (
+    lastReal >= 0 &&
+    getGradeAndColor(items[lastReal].percentage).grade === "."
+  ) {
     lastReal--;
   }
   return items.slice(0, lastReal + 1);
@@ -1377,7 +1432,13 @@ function getDaysBetween(startDateStr, endDateStr) {
   );
 }
 
-function buildFocusedInterval({ startDate, endDate, minWindowDays, maxWindowDays, label }) {
+function buildFocusedInterval({
+  startDate,
+  endDate,
+  minWindowDays,
+  maxWindowDays,
+  label,
+}) {
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const historySpanDays = getDaysBetween(startDate, endDate);
 
@@ -1568,7 +1629,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   return (
     <div className="relative w-full">
       {/* Month label header — same 53-col grid so columns align with cells */}
-      <div className="flex w-full items-end border-b border-border/15 pb-0.5 mb-1">
+      <div className="border-border/15 mb-1 flex w-full items-end border-b pb-0.5">
         <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
         <div style={cellGridStyle}>
           {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
@@ -1586,17 +1647,28 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       {/* Year rows */}
       <div className="flex w-full flex-col gap-[2px]">
         {years.map((year) => (
-          <div key={year} className={`flex w-full items-center ${year === currentYear ? "-mx-1 rounded-md bg-muted/25 px-1 py-0.5" : ""}`}>
+          <div
+            key={year}
+            className={`flex w-full items-center ${year === currentYear ? "bg-muted/25 -mx-1 rounded-md px-1 py-0.5" : ""}`}
+          >
             <div
               className="shrink-0 pr-2 text-right text-xs lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
               <div className="flex flex-col items-end gap-0.5">
-                <span className={year === currentYear ? "font-semibold text-foreground text-[13px] lg:text-sm tabular-nums" : "text-muted-foreground tabular-nums"}>
+                <span
+                  className={
+                    year === currentYear
+                      ? "text-foreground text-[13px] font-semibold tabular-nums lg:text-sm"
+                      : "text-muted-foreground tabular-nums"
+                  }
+                >
                   {year}
                 </span>
                 {year === currentYear && (
-                  <span className="text-[9px] leading-none text-muted-foreground/60">now</span>
+                  <span className="text-muted-foreground/60 text-[9px] leading-none">
+                    now
+                  </span>
                 )}
               </div>
             </div>
@@ -1842,12 +1914,12 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       }
     >
       {/* Month name header */}
-      <div className="flex w-full items-end border-b border-border/15 pb-0.5 mb-1">
+      <div className="border-border/15 mb-1 flex w-full items-end border-b pb-0.5">
         <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
         <div style={cellGridStyle}>
-          {MONTH_NAMES.map((name) => (
+          {MONTH_NAMES.map((name, index) => (
             <span
-              key={name}
+              key={`${name}-${index}`}
               className="text-muted-foreground/80 text-center text-[9px] tracking-[0.04em] lg:text-[11px] 2xl:text-xs"
             >
               {name}
@@ -1859,17 +1931,28 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       {/* Year rows */}
       <div className="flex w-full flex-col gap-1.5">
         {years.map((year) => (
-          <div key={year} className={`flex w-full items-center ${year === currentYear ? "-mx-1 rounded-md bg-muted/25 px-1 py-0.5" : ""}`}>
+          <div
+            key={year}
+            className={`flex w-full items-center ${year === currentYear ? "bg-muted/25 -mx-1 rounded-md px-1 py-0.5" : ""}`}
+          >
             <div
               className="shrink-0 pr-2 text-right text-xs lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
               <div className="flex flex-col items-end gap-0.5">
-                <span className={year === currentYear ? "font-semibold text-foreground text-[13px] lg:text-sm tabular-nums" : "text-muted-foreground tabular-nums"}>
+                <span
+                  className={
+                    year === currentYear
+                      ? "text-foreground text-[13px] font-semibold tabular-nums lg:text-sm"
+                      : "text-muted-foreground tabular-nums"
+                  }
+                >
                   {year}
                 </span>
                 {year === currentYear && (
-                  <span className="text-[9px] leading-none text-muted-foreground/60">now</span>
+                  <span className="text-muted-foreground/60 text-[9px] leading-none">
+                    now
+                  </span>
                 )}
               </div>
             </div>

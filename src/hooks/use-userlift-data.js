@@ -1,4 +1,3 @@
-
 import {
   useContext,
   useState,
@@ -11,7 +10,11 @@ import {
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { parseData } from "@/lib/parse-data";
+import {
+  parseData,
+  parseImportedFile,
+} from "@/lib/data-sources/import-dispatcher";
+import { getDemoParsedData } from "@/lib/data-sources/sample-parsed-data";
 import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
 import {
   flushTimings,
@@ -21,10 +24,6 @@ import {
   markHigherWeightAsHistoricalPRs,
   calculateLiftTypes,
 } from "@/lib/processing-utils";
-import {
-  sampleParsedData,
-  transposeDatesToToday,
-} from "@/lib/sample-parsed-data";
 import { useLocalStorage } from "usehooks-ts";
 
 // ---------------------------------------------------------------------------
@@ -152,10 +151,70 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
 export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
-  const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
+  const [parsedData, setParsedData] = useState(null); // see @/lib/data-sources/sample-parsed-data.js for data structure design
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
+
+  // -- Imported file data (view-only, persisted in sessionStorage) ------------
+  // Initialize as null (matches server) and hydrate after mount via layout effect
+  // to avoid hydration mismatch — sessionStorage is client-only.
+  const [importedParsedData, setImportedParsedData] = useState(null);
+  const [importedFormatName, setImportedFormatName] = useState(null);
+  const [importedFileName, setImportedFileName] = useState(null);
+
+  useIsomorphicLayoutEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("sj_importedData");
+      if (stored) {
+        setImportedParsedData(JSON.parse(stored));
+        setImportedFormatName(
+          sessionStorage.getItem("sj_importedFormat") || null,
+        );
+        setImportedFileName(
+          sessionStorage.getItem("sj_importedFileName") || null,
+        );
+      }
+    } catch {
+      // sessionStorage unavailable or corrupt — stay with null
+    }
+  }, []);
+
+  const importFile = useCallback(async (file) => {
+    const { data: parsed, formatName } = await parseImportedFile(file);
+    const processed = markHigherWeightAsHistoricalPRs(parsed);
+    setImportedParsedData(processed);
+    setImportedFormatName(formatName);
+    setImportedFileName(file?.name || null);
+    try {
+      sessionStorage.setItem("sj_importedData", JSON.stringify(processed));
+      sessionStorage.setItem("sj_importedFormat", formatName);
+      sessionStorage.setItem("sj_importedFileName", file?.name || "");
+    } catch {
+      // sessionStorage full or unavailable — data still works for this session
+    }
+    return {
+      count: processed.length,
+      formatName,
+      fileName: file?.name || null,
+      entries: processed,
+    };
+  }, []);
+
+  const clearImportedData = useCallback(() => {
+    setImportedParsedData(null);
+    setImportedFormatName(null);
+    setImportedFileName(null);
+    try {
+      sessionStorage.removeItem("sj_importedData");
+      sessionStorage.removeItem("sj_importedFormat");
+      sessionStorage.removeItem("sj_importedFileName");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const isImportedData = !!importedParsedData;
 
   const { data: session, status: authStatus } = useSession();
 
@@ -170,9 +229,22 @@ export const UserLiftingDataProvider = ({ children }) => {
     false,
     { initializeWithValue: false },
   );
+  // Imported CSV data overrides demo mode — the user has real data loaded.
   const isDemoMode =
-    authStatus === "unauthenticated" ||
-    (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode);
+    !importedParsedData &&
+    (authStatus === "unauthenticated" ||
+      (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode));
+
+  // True when real user data is available from any source (gsheet or CSV import).
+  // Use this for layout decisions (e.g. show personal charts first vs editorial first)
+  // instead of checking authStatus directly.
+  const hasUserData =
+    isImportedData ||
+    (authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode);
+
+  // True when the current data source doesn't support writes (CSV, demo, or no data).
+  // Use this to hide write-only UI (log buttons, sheet setup, etc.).
+  const isReadOnly = !hasUserData || isImportedData;
 
   // True while we have localStorage evidence of a linked sheet but auth and/or
   // useLocalStorage haven't hydrated yet. Consumers use this to avoid flashing
@@ -206,9 +278,18 @@ export const UserLiftingDataProvider = ({ children }) => {
   );
 
   const clearSheet = useCallback(() => setSheetInfo(null), [setSheetInfo]);
-  const enterSignedInDemoMode = useCallback(() => setSignedInDemoMode(true), [setSignedInDemoMode]);
-  const exitSignedInDemoMode = useCallback(() => setSignedInDemoMode(false), [setSignedInDemoMode]);
+  const enterSignedInDemoMode = useCallback(
+    () => setSignedInDemoMode(true),
+    [setSignedInDemoMode],
+  );
+  const exitSignedInDemoMode = useCallback(
+    () => setSignedInDemoMode(false),
+    [setSignedInDemoMode],
+  );
 
+  // Keep fetching the linked sheet even during imported preview mode.
+  // The imported file still powers the visible UI, but import analysis and
+  // dedupe need the live linked-sheet data in the background.
   const shouldFetch =
     authStatus === "authenticated" &&
     !!session?.accessToken &&
@@ -387,43 +468,47 @@ export const UserLiftingDataProvider = ({ children }) => {
     setSheetInfo,
   ]);
 
-  // Calculate liftTypes from parsedData (computed automatically when parsedData changes)
+  // When imported file data is active, it overrides the normal parsedData pipeline.
+  // All downstream computations (liftTypes, PRs, tonnage, etc.) derive from activeParsedData.
+  const activeParsedData = importedParsedData || parsedData;
+
+  // Calculate liftTypes from activeParsedData (computed automatically when data changes)
   const liftTypes = useMemo(
-    () => (parsedData ? calculateLiftTypes(parsedData) : []),
-    [parsedData],
+    () => (activeParsedData ? calculateLiftTypes(activeParsedData) : []),
+    [activeParsedData],
   );
 
-  // Calculate topLiftsByTypeAndReps from parsedData and liftTypes (computed automatically when they change)
+  // Calculate topLiftsByTypeAndReps from activeParsedData and liftTypes (computed automatically when they change)
   const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months } =
     useMemo(() => {
-      if (!parsedData || !liftTypes.length) {
+      if (!activeParsedData || !liftTypes.length) {
         return {
           topLiftsByTypeAndReps: null,
           topLiftsByTypeAndRepsLast12Months: null,
         };
       }
-      return processTopLiftsByTypeAndReps(parsedData, liftTypes);
-    }, [parsedData, liftTypes]);
+      return processTopLiftsByTypeAndReps(activeParsedData, liftTypes);
+    }, [activeParsedData, liftTypes]);
 
   // Top tonnage sessions per lift type (all-time and last 12 months)
   const { topTonnageByType, topTonnageByTypeLast12Months } = useMemo(() => {
-    if (!parsedData || !liftTypes.length) {
+    if (!activeParsedData || !liftTypes.length) {
       return { topTonnageByType: null, topTonnageByTypeLast12Months: null };
     }
-    return processTopTonnageByType(parsedData, liftTypes);
-  }, [parsedData, liftTypes]);
+    return processTopTonnageByType(activeParsedData, liftTypes);
+  }, [activeParsedData, liftTypes]);
 
   // Precomputed session tonnage lookup for fast getAverageLiftSessionTonnage / getAverageSessionTonnage
   const sessionTonnageLookup = useMemo(() => {
-    if (!parsedData) return null;
-    return processSessionTonnageLookup(parsedData);
-  }, [parsedData]);
+    if (!activeParsedData) return null;
+    return processSessionTonnageLookup(activeParsedData);
+  }, [activeParsedData]);
 
   // Flush accumulated pipeline timings once all processing is done
   useEffect(() => {
-    if (!parsedData || !sessionTonnageLookup) return;
+    if (!activeParsedData || !sessionTonnageLookup) return;
     flushTimings();
-  }, [parsedData, sessionTonnageLookup]);
+  }, [activeParsedData, sessionTonnageLookup]);
 
   return (
     <UserLiftingDataContext.Provider
@@ -434,10 +519,15 @@ export const UserLiftingDataProvider = ({ children }) => {
         apiError,
         isValidating,
         isDemoMode,
+        hasUserData,
+        isReadOnly,
+        isImportedData,
+        importedFormatName,
+        importedFileName,
         isReturningUserLoading,
         parseError,
         liftTypes,
-        parsedData,
+        parsedData: activeParsedData,
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
         topTonnageByType,
@@ -452,6 +542,9 @@ export const UserLiftingDataProvider = ({ children }) => {
         clearSheet,
         enterSignedInDemoMode,
         exitSignedInDemoMode,
+        importFile,
+        clearImportedData,
+        sheetParsedData: parsedData,
       }}
     >
       {children}
@@ -493,7 +586,7 @@ function getParsedDataWithFallback({ authStatus, data, isDemoMode }) {
   const shouldUseDemoData = isDemoMode;
 
   if (shouldUseDemoData) {
-    parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter
+    parsedData = getDemoParsedData();
   } else if (!parsedData) {
     // Authenticated users without a selected/valid sheet should not see demo data.
     parsedData = [];

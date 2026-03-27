@@ -1,10 +1,16 @@
+/*
+ * Import landing page for bringing workout history into Strength Journeys.
+ * Keeps the base /import route separate from app-specific /import/[slug] pages.
+ */
 import { useState, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
 import Image from "next/image";
-import { useRouter } from "next/router";
+import Link from "next/link";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { ImportWorkflowSection } from "@/components/import-workflow-section";
+import { UnitChooser } from "@/components/unit-type-chooser";
 import { useToast } from "@/hooks/use-toast";
 import {
   PageContainer,
@@ -31,12 +37,17 @@ import {
   ChevronDown,
   ChevronUp,
   Dumbbell,
-  FileUp,
   Download,
   ExternalLink,
+  ArrowRight,
+  TrendingUp,
+  Trophy,
+  BarChart3,
+  Shield,
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { cn } from "@/lib/utils";
+import { postImportHistory } from "@/lib/import-history-client";
+import { IMPORT_APP_PAGES } from "@/lib/import-app-guides";
 
 const BIG_FOUR = [
   { name: "Back Squat", icon: "/back_squat.svg" },
@@ -50,9 +61,36 @@ const DEFAULT_PLACEHOLDER = { kg: "100", lb: "225" };
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - i);
+
+let _entryIdCounter = 0;
+function nextEntryId() {
+  return ++_entryIdCounter;
+}
+
+function makeEntry(overrides = {}) {
+  return {
+    id: nextEntryId(),
+    weight: "",
+    reps: "1",
+    year: CURRENT_YEAR - 2,
+    month: "",
+    day: "",
+    ...overrides,
+  };
+}
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function makeDate(year, month, day) {
@@ -68,9 +106,8 @@ function getDaysInMonth(year, month) {
 }
 
 function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
-  const daysAvailable = entry.year && entry.month
-    ? getDaysInMonth(entry.year, entry.month)
-    : 31;
+  const daysAvailable =
+    entry.year && entry.month ? getDaysInMonth(entry.year, entry.month) : 31;
   const days = Array.from({ length: daysAvailable }, (_, i) => i + 1);
   const placeholder = DEFAULT_PLACEHOLDER[unit] || "225";
 
@@ -109,14 +146,18 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
         <Label className="text-muted-foreground text-xs">Year</Label>
         <Select
           value={entry.year ? String(entry.year) : ""}
-          onValueChange={(v) => onChange({ ...entry, year: Number(v), month: "", day: "" })}
+          onValueChange={(v) =>
+            onChange({ ...entry, year: Number(v), month: "", day: "" })
+          }
         >
           <SelectTrigger className="h-9">
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
             {YEARS.map((y) => (
-              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              <SelectItem key={y} value={String(y)}>
+                {y}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -128,14 +169,18 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
           <Label className="text-muted-foreground text-xs">Month</Label>
           <Select
             value={entry.month ? String(entry.month) : ""}
-            onValueChange={(v) => onChange({ ...entry, month: Number(v), day: "" })}
+            onValueChange={(v) =>
+              onChange({ ...entry, month: Number(v), day: "" })
+            }
           >
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Optional" />
             </SelectTrigger>
             <SelectContent>
               {MONTHS.map((m, i) => (
-                <SelectItem key={i + 1} value={String(i + 1)}>{m}</SelectItem>
+                <SelectItem key={i + 1} value={String(i + 1)}>
+                  {m}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -155,7 +200,9 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
             </SelectTrigger>
             <SelectContent>
               {days.map((d) => (
-                <SelectItem key={d} value={String(d)}>{d}</SelectItem>
+                <SelectItem key={d} value={String(d)}>
+                  {d}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -182,11 +229,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
   const [expanded, setExpanded] = useState(false);
 
   const addEntry = () => {
-    const defaultYear = CURRENT_YEAR - 2;
-    onUpdate([
-      ...entries,
-      { weight: "", reps: "1", year: defaultYear, month: "", day: "" },
-    ]);
+    onUpdate([...entries, makeEntry()]);
   };
 
   const updateEntry = (idx, updated) => {
@@ -207,7 +250,13 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
         className="hover:bg-muted/30 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <Image src={lift.icon} alt={lift.name} width={48} height={48} className="dark:invert" />
+        <Image
+          src={lift.icon}
+          alt={lift.name}
+          width={48}
+          height={48}
+          className="dark:invert"
+        />
         <span className="flex-1 font-semibold">{lift.name}</span>
         {filledCount > 0 && (
           <span className="text-muted-foreground text-sm">
@@ -224,11 +273,12 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
       {expanded && (
         <CardContent className="border-border border-t pt-3 pb-3">
           <p className="text-muted-foreground mb-2 text-xs">
-            Weight in {unit}. Reps defaults to 1 if left blank. Date precision is flexible — just a year is fine.
+            Weight in {unit}. Reps defaults to 1 if left blank. Date precision
+            is flexible - just a year is fine.
           </p>
           {entries.map((entry, idx) => (
             <LiftEntryRow
-              key={idx}
+              key={entry.id}
               entry={entry}
               onChange={(updated) => updateEntry(idx, updated)}
               onRemove={() => removeEntry(idx)}
@@ -236,17 +286,93 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
               unit={unit}
             />
           ))}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-1"
-            onClick={addEntry}
-          >
+          <Button variant="ghost" size="sm" className="mt-1" onClick={addEntry}>
             <Plus className="mr-1 h-4 w-4" /> Add another {lift.name}
           </Button>
         </CardContent>
       )}
     </Card>
+  );
+}
+
+function BenefitsRow() {
+  const benefits = [
+    {
+      icon: TrendingUp,
+      title: "Strength Over Time",
+      desc: "See how every lift has progressed across months and years",
+    },
+    {
+      icon: Trophy,
+      title: "Personal Records",
+      desc: "Every PR detected automatically - by lift, reps, and date",
+    },
+    {
+      icon: BarChart3,
+      title: "Training Trends",
+      desc: "Weekly volume, tonnage, consistency grades, and more",
+    },
+  ];
+
+  return (
+    <section className="mx-auto mb-8 max-w-5xl">
+      <div className="grid gap-4 md:grid-cols-3">
+        {benefits.map((b) => (
+          <div
+            key={b.title}
+            className="flex items-start gap-3 rounded-lg border p-4"
+          >
+            <b.icon className="text-primary mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">{b.title}</p>
+              <p className="text-muted-foreground text-xs leading-5">
+                {b.desc}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ImportSeoLinksSection() {
+  return (
+    <section className="mx-auto mb-12 max-w-5xl">
+      <div className="mb-1">
+        <h2 className="text-lg font-semibold">
+          How to Export Your Data From Other Fitness Apps
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Takes about 2 minutes. Export your history from apps like Hevy,
+          Strong, Wodify, or BTWB, then import it here.
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {IMPORT_APP_PAGES.map((page) => (
+          <Card key={page.slug} className="h-full">
+            <CardContent className="flex h-full flex-col gap-3 pt-6">
+              <div>
+                <h3 className="font-semibold">{page.appName}</h3>
+                <p className="text-muted-foreground mt-1 text-sm leading-6">
+                  Export your history from {page.appName}, then import it into
+                  Strength Journeys here. We handle the rest.
+                </p>
+              </div>
+              <div className="mt-auto pt-2">
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <Link href={`/import/${page.slug}`}>
+                    Export from {page.appName}{" "}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -265,7 +391,7 @@ function buildCsvFromParsedData(parsedData) {
 
   // parsedData is date-ascending with intraday order preserved.
   // Group by date, then reverse the groups for newest-first output
-  // while keeping warmup→work-set order within each date.
+  // while keeping warmup->work-set order within each date.
   const grouped = [];
   let currentDate = null;
   let currentGroup = [];
@@ -282,7 +408,15 @@ function buildCsvFromParsedData(parsedData) {
 
   const rows = grouped.flat().map((e) => {
     const weight = `${e.weight}${e.unitType}`;
-    return [e.date, e.liftType, e.reps, weight, e.notes || "", e.label || "", e.URL || ""]
+    return [
+      e.date,
+      e.liftType,
+      e.reps,
+      weight,
+      e.notes || "",
+      e.label || "",
+      e.URL || "",
+    ]
       .map(escapeCsvField)
       .join(",");
   });
@@ -300,42 +434,25 @@ function downloadCsv(csvString, filename) {
 }
 
 export default function ImportPage() {
-  const router = useRouter();
-  const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, mutate, parsedData, isDemoMode } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+  const {
+    sheetInfo,
+    mutate,
+    parsedData,
+    isReturningUserLoading,
+    isImportedData,
+    hasUserData,
+    isReadOnly,
+  } = useUserLiftingData();
+  const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
-  // Unit toggle
-  const [unit, setUnit] = useState("kg");
-  // Try to default from athlete bio
-  const bioCtx = useAthleteBio();
-  const detectedUnit = useMemo(() => {
-    if (!parsedData || parsedData.length === 0) return null;
-    let kg = 0, lb = 0;
-    for (const e of parsedData) {
-      if (e.unitType === "kg") kg++;
-      else if (e.unitType === "lb") lb++;
-    }
-    return lb > kg ? "lb" : "kg";
-  }, [parsedData]);
+  const unit = isMetric ? "kg" : "lb";
 
-  // Set unit once from detected
-  const [unitInitialized, setUnitInitialized] = useState(false);
-  if (detectedUnit && !unitInitialized) {
-    setUnit(detectedUnit);
-    setUnitInitialized(true);
-  }
-
-  // Lift entries state: { [liftName]: [{ weight, reps, year, month, day }] }
-  const defaultYear = CURRENT_YEAR - 2;
+  // Lift entries state: { [liftName]: [{ id, weight, reps, year, month, day }] }
   const [liftEntries, setLiftEntries] = useState(() =>
-    Object.fromEntries(
-      BIG_FOUR.map((lift) => [
-        lift.name,
-        [{ weight: "", reps: "1", year: defaultYear, month: "", day: "" }],
-      ]),
-    ),
+    Object.fromEntries(BIG_FOUR.map((lift) => [lift.name, [makeEntry()]])),
   );
 
   const updateLiftEntries = useCallback((liftName, entries) => {
@@ -363,25 +480,38 @@ export default function ImportPage() {
 
   const handleSave = useCallback(async () => {
     if (validEntries.length === 0) {
-      toast({ title: "Nothing to save", description: "Enter at least one lift with a weight and year.", variant: "destructive" });
+      toast({
+        title: "Nothing to save",
+        description: "Enter at least one lift with a weight and year.",
+        variant: "destructive",
+      });
       return;
     }
     if (!sheetInfo?.ssid) {
-      toast({ title: "No sheet connected", description: "Connect a Google Sheet first from the home page.", variant: "destructive" });
+      toast({
+        title: "No sheet connected",
+        description: "Connect a Google Sheet first from the home page.",
+        variant: "destructive",
+      });
       return;
     }
 
     setSaving(true);
     try {
-      const res = await fetch("/api/sheet/import-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ssid: sheetInfo.ssid, entries: validEntries }),
+      const res = await postImportHistory({
+        ssid: sheetInfo.ssid,
+        entries: validEntries,
+      }, {
+        source: "import_page_manual",
       });
       const data = await res.json();
 
       if (!res.ok) {
-        toast({ title: "Import failed", description: data.error || "Something went wrong.", variant: "destructive" });
+        toast({
+          title: "Import failed",
+          description: data.error || "Something went wrong.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -395,130 +525,157 @@ export default function ImportPage() {
 
       // Clear filled entries
       setLiftEntries(
-        Object.fromEntries(
-          BIG_FOUR.map((lift) => [
-            lift.name,
-            [{ weight: "", reps: "1", year: defaultYear, month: "", day: "" }],
-          ]),
-        ),
+        Object.fromEntries(BIG_FOUR.map((lift) => [lift.name, [makeEntry()]])),
       );
     } catch (err) {
-      toast({ title: "Import failed", description: "Network error. Please try again.", variant: "destructive" });
+      toast({
+        title: "Import failed",
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
-  }, [validEntries, sheetInfo, mutate, toast, defaultYear]);
+  }, [validEntries, sheetInfo, mutate, toast]);
 
-  // Auth gate
-  if (authStatus === "unauthenticated") {
+  // Loading gate - prevent flash for returning users
+  if (authStatus === "loading" || isReturningUserLoading) {
     return (
       <>
-        <NextSeo title="Import Data" noindex />
+        <NextSeo
+          title="Import Your Lifting History - See Your Strength Instantly"
+          description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required."
+          canonical="https://www.strengthjourneys.xyz/import"
+          openGraph={{
+            url: "https://www.strengthjourneys.xyz/import",
+            title:
+              "Import Your Lifting History - See Your Strength Instantly",
+            description:
+              "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required.",
+            type: "website",
+            site_name: "Strength Journeys",
+          }}
+          additionalMetaTags={[
+            {
+              name: "keywords",
+              content:
+                "import Hevy data, import Strong CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
+            },
+          ]}
+        />
         <PageContainer className="py-16 text-center">
-          <Dumbbell className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-          <h2 className="mb-2 text-xl font-semibold">Sign in to import data</h2>
-          <p className="text-muted-foreground mb-4">
-            You need to be signed in with a connected Google Sheet to import lifting history.
-          </p>
-          <Button onClick={() => router.push("/")}>Go to Home</Button>
+          <Loader2 className="text-muted-foreground mx-auto h-8 w-8 animate-spin" />
         </PageContainer>
       </>
     );
   }
 
-  const isMetric = unit === "kg";
-
   return (
     <>
-      <NextSeo title="Import Data" noindex />
+      <NextSeo
+        title="Import Your Lifting History - See Your Strength Instantly"
+        description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required."
+        canonical="https://www.strengthjourneys.xyz/import"
+        openGraph={{
+          url: "https://www.strengthjourneys.xyz/import",
+          title:
+            "Import Your Lifting History - See Your Strength Instantly",
+          description:
+            "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required.",
+          type: "website",
+          site_name: "Strength Journeys",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content:
+              "import Hevy data, import Strong CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
+          },
+        ]}
+      />
       <PageContainer>
         <PageHeader>
-          <PageHeaderHeading icon={Upload}>Import Data</PageHeaderHeading>
+          <PageHeaderHeading icon={Upload}>
+            Import Your Lifting History
+          </PageHeaderHeading>
           <PageHeaderDescription>
-            Add your lifting history from memory or other apps. Everything here
-            is optional — you can always come back and add more later.
+            Bring your data from Hevy, Strong, Wodify, BTWB, or any
+            spreadsheet and see your full strength dashboard instantly.
+            {authStatus !== "authenticated" &&
+              " No account required."}
           </PageHeaderDescription>
         </PageHeader>
 
-        {/* Quick Add Section */}
-        <section className="mx-auto mb-12 max-w-5xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-14 font-semibold"
-              onClick={() => setUnit(isMetric ? "lb" : "kg")}
-              aria-label={`Switch to ${isMetric ? "lb" : "kg"}`}
-            >
-              {unit}
-            </Button>
-          </div>
+        {/* Value proposition - show what they'll get before asking for a file */}
+        <BenefitsRow />
 
-          <p className="text-muted-foreground text-sm">
-            Enter your most memorable lifts for each movement. You don&apos;t need exact dates — just the year is enough.
-            These will be added to your Google Sheet as historical entries.
-          </p>
+        {/* File Import Section - always visible, no auth required */}
+        <ImportWorkflowSection />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {BIG_FOUR.map((lift) => (
-              <LiftSection
-                key={lift.name}
-                lift={lift}
-                entries={liftEntries[lift.name]}
-                onUpdate={(entries) => updateLiftEntries(lift.name, entries)}
-                unit={unit}
+        {/* Privacy reassurance */}
+        <p className="text-muted-foreground mx-auto -mt-8 mb-12 max-w-5xl text-center text-xs">
+          <Shield className="mr-1 inline h-3.5 w-3.5 align-text-bottom" />
+          Your preview stays in your browser. If you choose to save it, Strength
+          Journeys writes it into a Google Sheet in your own Drive and does not
+          keep a server-side copy.
+        </p>
+
+        <ImportSeoLinksSection />
+
+        {/* Quick Add Section - only for users with write access (GSheet mode) */}
+        {!isReadOnly && (
+          <section className="mx-auto mb-12 max-w-5xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Quick Add Best Lifts</h2>
+              <UnitChooser
+                isMetric={isMetric}
+                onSwitchChange={toggleIsMetric}
               />
-            ))}
-          </div>
+            </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-muted-foreground text-xs">
-              {validEntries.length} {validEntries.length === 1 ? "entry" : "entries"} ready to save
+            <p className="text-muted-foreground text-sm">
+              Enter your most memorable lifts for each movement. You don&apos;t
+              need exact dates - just the year is enough. These will be added to
+              your Google Sheet as historical entries.
             </p>
-            <Button
-              onClick={handleSave}
-              disabled={saving || validEntries.length === 0 || !sheetInfo?.ssid}
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                </>
-              ) : (
-                <>
-                  <Dumbbell className="mr-2 h-4 w-4" /> Save to Sheet
-                </>
-              )}
-            </Button>
-          </div>
 
-          {!sheetInfo?.ssid && authStatus === "authenticated" && (
-            <p className="text-destructive text-sm">
-              No Google Sheet connected. Connect one from the home page first.
-            </p>
-          )}
-        </section>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {BIG_FOUR.map((lift) => (
+                <LiftSection
+                  key={lift.name}
+                  lift={lift}
+                  entries={liftEntries[lift.name]}
+                  onUpdate={(entries) => updateLiftEntries(lift.name, entries)}
+                  unit={unit}
+                />
+              ))}
+            </div>
 
-        {/* File Upload Section (Coming Soon) */}
-        <section className="mx-auto mb-12 max-w-5xl">
-          <h2 className="mb-4 text-lg font-semibold">Import from Another App</h2>
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
-              <h3 className="mb-2 font-semibold">File Import — Coming Soon</h3>
-              <p className="text-muted-foreground mb-4 max-w-sm text-sm">
-                We&apos;re building support for importing data from popular lifting apps
-                including Strong, JEFIT, FitNotes, Hevy, and more.
-              </p>
+            <div className="flex items-center justify-between pt-2">
               <p className="text-muted-foreground text-xs">
-                Supported formats will include .csv, .xlsx, and .xls
+                {validEntries.length}{" "}
+                {validEntries.length === 1 ? "entry" : "entries"} ready to save
               </p>
-            </CardContent>
-          </Card>
-        </section>
+              <Button
+                onClick={handleSave}
+                disabled={saving || validEntries.length === 0}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <Dumbbell className="mr-2 h-4 w-4" /> Save to Sheet
+                  </>
+                )}
+              </Button>
+            </div>
+          </section>
+        )}
 
         {/* Export Section */}
-        {authStatus === "authenticated" && !isDemoMode && (
+        {hasUserData && !isImportedData && (
           <section className="mx-auto mb-16 max-w-5xl">
             <h2 className="mb-4 text-lg font-semibold">Export Your Data</h2>
 
@@ -545,8 +702,9 @@ export default function ImportPage() {
                       {sheetInfo.filename || "Your Google Sheet"}
                     </h3>
                     <p className="text-muted-foreground mb-3 text-sm">
-                      Your data already lives in your own Google Sheet — it&apos;s
-                      always yours. Open it anytime to view, edit, or share.
+                      Your data already lives in your own Google Sheet -
+                      it&apos;s always yours. Open it anytime to view, edit, or
+                      share.
                     </p>
                     <Button asChild variant="outline" size="sm">
                       <a
@@ -571,8 +729,8 @@ export default function ImportPage() {
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold">Download as CSV</h3>
                     <p className="text-muted-foreground text-xs">
-                      {parsedData.filter((e) => !e.isGoal).length} rows
-                      — portable format for backups or other apps
+                      {parsedData.filter((e) => !e.isGoal).length} rows -
+                      portable format for backups or other apps
                     </p>
                   </div>
                   <Button

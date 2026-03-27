@@ -1,5 +1,12 @@
+/**
+ * Lift-detail panel for Lift Explorer.
+ * Keep the single-lift strength-potential chart directly above the PR block so
+ * the progression story stays in one vertical flow for the selected movement.
+ */
+
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
 import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
+import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
 
 /**
  * Email-style detail panel shown when a lift is selected in the pie card table.
@@ -18,6 +25,9 @@ export function LiftDetailPanel({ liftType }) {
         asCard={false}
         chartDensity="dense"
       />
+      <div id="strength-potential">
+        <StrengthPotentialBarChart liftType={liftType} />
+      </div>
       <div id="lift-prs">
         <LiftTypeRepPRsDisplay liftType={liftType} />
       </div>

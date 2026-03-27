@@ -19,7 +19,6 @@ import {
   LibraryBig,
   Bot,
   Anvil,
-  ChartColumnDecreasing,
   Bus,
   Crown,
   Shield,
@@ -30,6 +29,7 @@ import {
   CircleDashed,
   Plus,
   Mountain,
+  Upload,
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -94,13 +94,6 @@ export const featurePages = [
     description:
       "Explore your lifting history lift by lift. PRs across every rep range, your journey, and training frequency.",
     IconComponent: Layers,
-  },
-  {
-    href: "/barbell-strength-potential",
-    title: "Barbell Strength Potential",
-    description:
-      "Top lifts by rep range with bar charts that reveal untapped strength potential.",
-    IconComponent: ChartColumnDecreasing,
   },
   {
     href: "/warm-up-sets-calculator",
@@ -251,12 +244,11 @@ export default function Home() {
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
-  const { sheetInfo, isDemoMode, parsedData, rawRows, isReturningUserLoading } = useUserLiftingData();
+  const { hasUserData, isReadOnly, parsedData, rawRows, sheetInfo, isReturningUserLoading } = useUserLiftingData();
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
-  const hasLinkedSheet = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
-  const canAccessLog = hasLinkedSheet;
+  const canAccessLog = !isReadOnly;
   const { dashboardStage } = useMemo(
     () =>
       getDashboardStage({
@@ -264,36 +256,81 @@ export default function Home() {
         rawRows,
         sheetInfo,
       }),
-    [parsedData, rawRows, sheetInfo],
-  );
+      [parsedData, rawRows, sheetInfo],
+    );
+  const importFeatureCard = (() => {
+    if (authStatus === "authenticated" && sheetInfo?.ssid) {
+      return {
+        href: "/import",
+        title: "Import From Fitness Apps",
+        description:
+          "Preview imports from Hevy, Strong, Wodify, BTWB, or spreadsheets - then merge what you want into your data.",
+        IconComponent: Upload,
+      };
+    }
+
+    if (authStatus === "authenticated") {
+      return {
+        href: "/import",
+        title: "Import Your Lifting History",
+        description:
+          "Preview your file first, then create your free Google Sheet and keep the data you import.",
+        IconComponent: Upload,
+      };
+    }
+
+    return {
+      href: "/import",
+      title: "Import From Another App",
+      description:
+        "Preview Hevy, Strong, Wodify, BTWB, or spreadsheet exports instantly. No sign-in required.",
+      IconComponent: Upload,
+    };
+  })();
+  const homepageFeatureCards = useMemo(() => {
+    const visibleCards = featurePages
+      .filter((card) => !card.authRequired || hasUserData)
+      .filter((card) => card.href !== "/log" || canAccessLog);
+    const logCardIndex = visibleCards.findIndex((card) => card.href === "/log");
+
+    if (logCardIndex === -1) {
+      return [importFeatureCard, ...visibleCards];
+    }
+
+    return [
+      ...visibleCards.slice(0, logCardIndex + 1),
+      importFeatureCard,
+      ...visibleCards.slice(logCardIndex + 1),
+    ];
+  }, [canAccessLog, hasUserData, importFeatureCard]);
   // Keep the Big Four cards visible for early users, but delay the personalized
   // stats treatment until they have enough history for those comparisons to land.
   const showEnhancedBigFourStats =
-    hasLinkedSheet &&
+    hasUserData &&
     (dashboardStage === "early_base" || dashboardStage === "established");
 
   // Only collapse the landing hero once the user has real linked data and can
   // meaningfully land on the dashboard. Signed-in demo mode should still feel
   // like the public landing page with stronger setup prompts.
   useEffect(() => {
-    if (hasLinkedSheet && showHeroSection && !isFadingHero) {
+    if (hasUserData && showHeroSection && !isFadingHero) {
       setIsFadingHero(true); // start fade-out
       setTimeout(() => setShowHeroSection(false), 800); // <-- match duration below
     }
-  }, [hasLinkedSheet, showHeroSection, isFadingHero]);
+  }, [hasUserData, showHeroSection, isFadingHero]);
 
   useEffect(() => {
-    if (!hasLinkedSheet) {
+    if (!hasUserData) {
       setShowHeroSection(true);
       setIsFadingHero(false);
     }
-  }, [hasLinkedSheet]);
+  }, [hasUserData]);
 
   // Delay the Big Four lift cards entrance until after the home dashboard intro
   // (hero fade + row processing ~1.2s + top stat cards ~2.2s). For guests and
   // signed-in demo mode, show them immediately.
   useEffect(() => {
-    if (hasLinkedSheet) {
+    if (hasUserData) {
       const totalIntroMs = 4000; // Row processing + section cards left-to-right stagger
       const timeoutId = setTimeout(() => {
         setBigFourAnimated(true);
@@ -301,10 +338,10 @@ export default function Home() {
       return () => clearTimeout(timeoutId);
     }
 
-    if (authStatus === "unauthenticated" || (authStatus === "authenticated" && !hasLinkedSheet)) {
+    if (!hasUserData && authStatus !== "loading") {
       setBigFourAnimated(true);
     }
-  }, [authStatus, hasLinkedSheet]);
+  }, [authStatus, hasUserData]);
 
   return (
     <>
@@ -378,12 +415,9 @@ export default function Home() {
           🛠️ Strength Insights & Tools
         </h2>
         <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {featurePages
-            .filter((card) => !card.authRequired || authStatus === "authenticated")
-            .filter((card) => card.href !== "/log" || canAccessLog)
-            .map((card, index) => (
+          {homepageFeatureCards.map((card, index) => (
               <FeatureCard key={index} index={index} {...card} />
-            ))}
+          ))}
         </div>
 
         <Testimonials />

@@ -503,15 +503,13 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
 
 function StrengthLevelsDataCta({ page }) {
   const { status: authStatus } = useSession();
-  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
+  const { hasUserData, isReturningUserLoading } = useUserLiftingData();
 
-  if (authStatus === "authenticated" && sheetInfo?.ssid) {
-    return null;
-  }
+  if (hasUserData) return null;
   if (isReturningUserLoading) return null;
 
   const showSignIn = authStatus === "unauthenticated";
-  const showSheetSetup = authStatus === "authenticated" && !sheetInfo?.ssid;
+  const showSheetSetup = authStatus === "authenticated";
 
   return (
     <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">

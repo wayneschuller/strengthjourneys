@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect, useMemo } from "react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 
 import {
   Calculator,
@@ -30,6 +31,7 @@ import {
   Plus,
   Mountain,
   Upload,
+  Lock,
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -37,7 +39,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -51,13 +52,15 @@ import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/big-four-lift-cards";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
+import { GoogleSignInInlineButton } from "@/components/google-sign-in";
 
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
   {
     href: "/log",
     title: "Log",
-    description: "Log your lifting session and track your progress in real time.",
+    description:
+      "Log your lifting session with live strength tracking, warm-up suggestions, and more.",
     IconComponent: Plus,
     authRequired: true, // Only shown to authenticated users in nav and feature cards
   },
@@ -287,10 +290,43 @@ export default function Home() {
       IconComponent: Upload,
     };
   })();
+  const logCardDescription = useMemo(() => {
+    if (canAccessLog) {
+      return "Log your lifting session with live strength tracking, warm-up suggestions, and more.";
+    }
+
+    if (authStatus === "authenticated") {
+      return "Unlock live strength tracking, warm-up suggestions, and in-session logging. Set up your sheet to enable logging.";
+    }
+
+    return "Unlock live strength tracking, warm-up suggestions, and in-session logging. Sign in to enable logging.";
+  }, [authStatus, canAccessLog]);
+  const logTeaserMeta = useMemo(() => {
+    if (canAccessLog) return null;
+
+    if (authStatus === "authenticated") {
+      return {
+        lockedReason: logCardDescription,
+        lockedAction: "setup_sheet",
+      };
+    }
+
+    return {
+      lockedReason: logCardDescription,
+      lockedAction: "sign_in",
+    };
+  }, [authStatus, canAccessLog, logCardDescription]);
   const homepageFeatureCards = useMemo(() => {
     const visibleCards = featurePages
-      .filter((card) => !card.authRequired || hasUserData)
-      .filter((card) => card.href !== "/log" || canAccessLog);
+      .map((card) =>
+        card.href === "/log"
+          ? {
+              ...card,
+              description: logCardDescription,
+            }
+          : card,
+      )
+      .filter((card) => !card.authRequired || hasUserData || card.href === "/log");
     const logCardIndex = visibleCards.findIndex((card) => card.href === "/log");
 
     if (logCardIndex === -1) {
@@ -302,7 +338,7 @@ export default function Home() {
       importFeatureCard,
       ...visibleCards.slice(logCardIndex + 1),
     ];
-  }, [canAccessLog, hasUserData, importFeatureCard]);
+  }, [hasUserData, importFeatureCard, logCardDescription]);
   // Keep the Big Four cards visible for early users, but delay the personalized
   // stats treatment until they have enough history for those comparisons to land.
   const showEnhancedBigFourStats =
@@ -416,7 +452,12 @@ export default function Home() {
         </h2>
         <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {homepageFeatureCards.map((card, index) => (
-              <FeatureCard key={index} index={index} {...card} />
+              <FeatureCard
+                key={index}
+                index={index}
+                {...card}
+                {...(card.href === "/log" ? logTeaserMeta : null)}
+              />
           ))}
         </div>
 
@@ -445,15 +486,20 @@ function FeatureCard({
   description,
   IconComponent,
   badgeLabel,
+  lockedReason,
+  lockedAction,
   index = 0,
 }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
   const isAnalyzer = href === "/lift-explorer";
   const isGorillaCalculator = href === "/how-strong-is-a-gorilla";
+  const isLocked = Boolean(lockedReason);
   const chartColorVar = `--chart-${(index % 5) + 1}`;
 
   return (
-    <Card className="group ring-ring relative shadow-lg ring-0 hover:ring-1">
+    <Card
+      className={`group ring-ring relative shadow-lg ring-0 ${isLocked ? "border-muted-foreground/20 bg-muted/30" : "hover:ring-1"}`}
+    >
       {isAnalyzer && (
         <Badge
           variant="outline"
@@ -486,30 +532,94 @@ function FeatureCard({
           {badgeLabel}
         </Badge>
       )}
-      <Link href={href}>
-        <CardHeader className="min-h-28">
-          <CardTitle className="">{title}</CardTitle>
-          <CardDescription className="h-[2rem]">{description}</CardDescription>
-        </CardHeader>
-        <CardContent
-          className="flex justify-center transition-transform group-hover:scale-110"
-          style={{ color: `var(${chartColorVar})` }}
+      {isLocked && (
+        <Badge
+          variant="outline"
+          className="bg-background/80 text-muted-foreground absolute top-2 right-2 z-10 text-xs"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.7, y: 12 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px", amount: 0.3 }}
-            transition={{
-              type: "spring",
-              stiffness: 400,
-              damping: 18,
-              delay: (index % 12) * 0.04,
-            }}
+          <Lock className="mr-1 h-3 w-3" />
+          Locked
+        </Badge>
+      )}
+      {isLocked ? (
+        <>
+          <CardHeader className="min-h-28">
+            <CardTitle className="">{title}</CardTitle>
+            <CardDescription className="h-[2rem]">
+              {lockedAction === "sign_in" ? (
+                <>
+                  Unlock live strength tracking, warm-up suggestions, and in-session logging.{" "}
+                  <GoogleSignInInlineButton cta="home_log_teaser_inline">
+                    Sign in
+                  </GoogleSignInInlineButton>{" "}
+                  to enable logging.
+                </>
+              ) : (
+                <>
+                  Unlock live strength tracking, warm-up suggestions, and in-session logging.{" "}
+                  <button
+                    className="text-primary underline underline-offset-4 hover:opacity-80"
+                    onClick={() => {
+                      openSheetSetupDialog("bootstrap");
+                    }}
+                    type="button"
+                  >
+                    Set up your sheet
+                  </button>{" "}
+                  to enable logging.
+                </>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent
+            className="flex justify-center"
+            style={{ color: `var(${chartColorVar})` }}
           >
-            <IconComponent size={64} strokeWidth={1.25} className="shrink-0" />
-          </motion.div>
-        </CardContent>
-      </Link>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7, y: 12 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px", amount: 0.3 }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 18,
+                delay: (index % 12) * 0.04,
+              }}
+            >
+              <IconComponent
+                size={64}
+                strokeWidth={1.25}
+                className="text-foreground/35 shrink-0"
+              />
+            </motion.div>
+          </CardContent>
+        </>
+      ) : (
+        <Link href={href}>
+          <CardHeader className="min-h-28">
+            <CardTitle className="">{title}</CardTitle>
+            <CardDescription className="h-[2rem]">{description}</CardDescription>
+          </CardHeader>
+          <CardContent
+            className="flex justify-center transition-transform group-hover:scale-110"
+            style={{ color: `var(${chartColorVar})` }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7, y: 12 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px", amount: 0.3 }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 18,
+                delay: (index % 12) * 0.04,
+              }}
+            >
+              <IconComponent size={64} strokeWidth={1.25} className="shrink-0" />
+            </motion.div>
+          </CardContent>
+        </Link>
+      )}
     </Card>
   );
 }

@@ -1,16 +1,24 @@
-
+/**
+ * Weekly dashboard recap card.
+ * Keep the empty-state CTA tailored to the user's setup state so the logging
+ * pitch stays clear before the full logging workflow is available.
+ */
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, FileUp } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { GoogleSignInButton } from "@/components/google-sign-in";
 import { getConsecutiveWorkoutGroups } from "@/components/analyzer/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import {
   Card,
   CardContent,
@@ -310,6 +318,7 @@ export function TheWeekInIronCard({
   dataMaturityStage = "mature",
   sessionCount = 0,
 }) {
+  const { status: authStatus } = useSession();
   const { isDemoMode, isReadOnly, parsedData } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
@@ -361,7 +370,9 @@ export function TheWeekInIronCard({
   if (shouldShowEarlyWeekCard) {
     return (
       <EarlyWeekCard
+        authStatus={authStatus}
         isDemoMode={isDemoMode}
+        isReadOnly={isReadOnly}
         dataMaturityStage={dataMaturityStage}
         dashboardStage={dashboardStage}
       />
@@ -446,11 +457,10 @@ export function TheWeekInIronCard({
           )}
 
           {!hasLoggedSessions && (
-            <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
-              {isReadOnly
-                ? "No sessions found in the current week."
-                : "Your training week will appear here once you log your first session."}
-            </p>
+            <EmptyWeekState
+              authStatus={authStatus}
+              isReadOnly={isReadOnly}
+            />
           )}
         </CardContent>
       </Card>
@@ -538,7 +548,13 @@ function WeekSessionList({ rows, isReadOnly = false }) {
   );
 }
 
-function EarlyWeekCard({ isDemoMode, dataMaturityStage, dashboardStage }) {
+function EarlyWeekCard({
+  authStatus,
+  isDemoMode,
+  isReadOnly,
+  dataMaturityStage,
+  dashboardStage,
+}) {
   const title =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week"
       ? "The First Week"
@@ -559,9 +575,7 @@ function EarlyWeekCard({ isDemoMode, dataMaturityStage, dashboardStage }) {
         <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col items-center justify-center">
-        <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
-          Log your training sessions and this card will track your weekly rhythm — sessions, volume, and lifts trained.
-        </p>
+        <EmptyWeekState authStatus={authStatus} isReadOnly={isReadOnly} />
         {!isDemoMode && dashboardStage === "starter_sample" && (
           <Link
             href="/import"
@@ -583,6 +597,51 @@ function EarlyWeekCard({ isDemoMode, dataMaturityStage, dashboardStage }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function EmptyWeekState({ authStatus, isReadOnly }) {
+  if (!isReadOnly) {
+    return (
+      <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+        Log your training sessions and this card will track your weekly rhythm — sessions, volume, and lifts trained.
+      </p>
+    );
+  }
+
+  if (authStatus === "authenticated") {
+    return (
+      <div className="w-full space-y-4 rounded-lg border border-dashed bg-muted/30 px-4 py-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          Unlock weekly session tracking, momentum cues, and in-session lift logging by setting up your Google Sheet.
+        </p>
+        <Button
+          className="gap-2"
+          onClick={() => {
+            openSheetSetupDialog("bootstrap");
+          }}
+        >
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="h-4 w-4"
+            aria-hidden
+          />
+          Set up sheet to enable logging
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full space-y-4 rounded-lg border border-dashed bg-muted/30 px-4 py-6 text-center">
+      <p className="text-sm text-muted-foreground">
+        Unlock weekly session tracking, momentum cues, and in-session lift logging when you sign in with Google.
+      </p>
+      <GoogleSignInButton cta="week_in_iron_empty_state" className="gap-2">
+        Sign in to enable logging
+      </GoogleSignInButton>
+    </div>
   );
 }
 

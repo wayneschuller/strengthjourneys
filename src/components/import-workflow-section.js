@@ -12,7 +12,10 @@ import {
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
-import { deduplicateImportedEntries } from "@/lib/import/dedupe";
+import {
+  analyzeImportedEntries,
+  deduplicateImportedEntries,
+} from "@/lib/import/dedupe";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -234,13 +237,17 @@ export function ImportWorkflowSection({
       parsedData?.filter((entry) => !entry.isGoal)?.length || 0;
     const showCreateSheet = isAuthenticated && !sheetInfo?.ssid;
     const showMerge = isAuthenticated && !showCreateSheet && canMerge;
-
-    const { newEntries, skippedCount } = showMerge
-      ? deduplicateImportedEntries(parsedData || [], sheetParsedData)
-      : {
-          newEntries: parsedData?.filter((entry) => !entry.isGoal) || [],
-          skippedCount: 0,
-        };
+    const importAnalysis = showMerge
+      ? analyzeImportedEntries(parsedData || [], sheetParsedData)
+      : null;
+    const newEntries =
+      importAnalysis?.newEntries ||
+      parsedData?.filter((entry) => !entry.isGoal) ||
+      [];
+    const skippedCount = importAnalysis?.duplicateCount || 0;
+    const isFullyDuplicate =
+      importAnalysis?.status === "already_in_linked_sheet";
+    const isPartialOverlap = importAnalysis?.status === "partial_overlap";
 
     return (
       <section className="mx-auto mb-12 max-w-5xl">
@@ -265,11 +272,14 @@ export function ImportWorkflowSection({
               <>
                 <CheckCircle2 className="text-primary mb-3 h-10 w-10" />
                 <h3 className="mb-1 font-semibold">
-                  {importedFormatName} data loaded
+                  {showMerge && isFullyDuplicate
+                    ? "Already in your linked sheet"
+                    : importedFormatName + " data loaded"}
                 </h3>
                 <p className="text-muted-foreground mb-4 text-sm">
-                  {entryCount} {entryCount === 1 ? "entry" : "entries"} parsed
-                  and ready.
+                  {showMerge && isFullyDuplicate
+                    ? `All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} from this file already exist in your linked sheet.`
+                    : `${entryCount} ${entryCount === 1 ? "entry" : "entries"} parsed and ready.`}
                 </p>
 
                 {showCreateSheet && (
@@ -294,29 +304,23 @@ export function ImportWorkflowSection({
                 {showMerge && (
                   <div className="w-full max-w-md space-y-3">
                     <p className="text-muted-foreground text-sm">
-                      Merge this data into your linked Strength Journeys sheet.
-                      {skippedCount > 0 && (
-                        <>
-                          {" "}
-                          {skippedCount} duplicate
-                          {skippedCount === 1 ? "" : "s"} will be skipped.
-                        </>
-                      )}
+                      {isFullyDuplicate
+                        ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.`
+                        : isPartialOverlap
+                          ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Strength Journeys sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.`
+                          : `Merge this data into your linked Strength Journeys sheet.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}`}
                     </p>
-                    <Button
-                      onClick={handleMerge}
-                      disabled={newEntries.length === 0}
-                      className="w-full gap-2"
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                      Merge {newEntries.length}{" "}
-                      {newEntries.length === 1 ? "entry" : "entries"} into
-                      linked sheet
-                    </Button>
-                    {newEntries.length === 0 && (
+                    {newEntries.length > 0 ? (
+                      <Button onClick={handleMerge} className="w-full gap-2">
+                        <ArrowRight className="h-4 w-4" />
+                        Merge {newEntries.length}{" "}
+                        {newEntries.length === 1 ? "entry" : "entries"} into
+                        linked sheet
+                      </Button>
+                    ) : (
                       <p className="text-muted-foreground text-xs">
-                        All entries already exist in your linked sheet - nothing
-                        to merge.
+                        No merge is needed. You can clear this preview or import
+                        a different file.
                       </p>
                     )}
                   </div>

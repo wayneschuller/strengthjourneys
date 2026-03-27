@@ -71,3 +71,36 @@ export function deduplicateImportedEntries(importedData, existingData) {
 
   return { newEntries, skippedCount };
 }
+
+export function analyzeImportedEntries(importedData, existingData) {
+  const importedEntries = Array.isArray(importedData)
+    ? importedData.filter((entry) => !entry?.isGoal)
+    : [];
+  const { newEntries, skippedCount } = deduplicateImportedEntries(
+    importedEntries,
+    existingData,
+  );
+
+  const importedCount = importedEntries.length;
+  const newEntriesCount = newEntries.length;
+  const duplicateCount = skippedCount;
+
+  let status = "all_new";
+  if (!Array.isArray(existingData) || existingData.length === 0) {
+    status = "no_comparison";
+  } else if (importedCount === 0) {
+    status = "empty";
+  } else if (newEntriesCount === 0) {
+    status = "already_in_linked_sheet";
+  } else if (duplicateCount > 0) {
+    status = "partial_overlap";
+  }
+
+  return {
+    status,
+    importedCount,
+    newEntries,
+    newEntriesCount,
+    duplicateCount,
+  };
+}

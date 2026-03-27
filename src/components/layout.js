@@ -1,6 +1,6 @@
 /** @format */
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { FileUp, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { analyzeImportedEntries } from "@/lib/import/dedupe";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import {
   isToday,
@@ -463,36 +464,27 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
 
   const isAuthenticated = authStatus === "authenticated";
   const hasSsid = !!sheetInfo?.ssid;
+  const importAnalysis = useMemo(() => {
+    if (!hasSsid) return null;
+    return analyzeImportedEntries(parsedData || [], sheetParsedData);
+  }, [hasSsid, parsedData, sheetParsedData]);
+  const mergeEntryCount = importAnalysis?.newEntriesCount ?? 0;
+  const duplicateCount = importAnalysis?.duplicateCount ?? 0;
+  const isFullyDuplicate = importAnalysis?.status === "already_in_linked_sheet";
+  const isPartialOverlap = importAnalysis?.status === "partial_overlap";
 
   const handleMergeFromBanner = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
 
-    // Dedup
-    const existingKeys = new Set();
-    if (Array.isArray(sheetParsedData)) {
-      for (const e of sheetParsedData) {
-        if (e.isGoal) continue;
-        existingKeys.add(
-          `${e.date}|${e.liftType}|${e.reps}|${Math.round((e.weight ?? 0) * 100)}`,
-        );
-      }
-    }
-    const newEntries = [];
-    let skippedCount = 0;
-    for (const e of parsedData) {
-      if (e.isGoal) continue;
-      const key = `${e.date}|${e.liftType}|${e.reps}|${Math.round((e.weight ?? 0) * 100)}`;
-      if (existingKeys.has(key)) {
-        skippedCount++;
-      } else {
-        newEntries.push(e);
-      }
-    }
+    const { newEntries, duplicateCount: skippedCount } = analyzeImportedEntries(
+      parsedData,
+      sheetParsedData,
+    );
 
     if (newEntries.length === 0) {
       toast({
         title: "Nothing new to merge",
-        description: `All ${skippedCount} entries already exist in your sheet.`,
+        description: `All ${skippedCount} entries already exist in your linked sheet.`,
       });
       return;
     }
@@ -602,15 +594,25 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         <div className="space-y-0.5">
           <p className="text-sm leading-tight text-blue-900 dark:text-blue-200">
             <FileUp className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
-            You&apos;re in preview mode with {entryCount.toLocaleString()}{" "}
-            {entryCount === 1 ? "lift" : "lifts"}.{" "}
-            <span className="hidden sm:inline">
-              Save your data to turn this into a full training log with auto
-              warm-ups and progression targets.
-            </span>
+            {hasSsid && isFullyDuplicate
+              ? `This preview file already matches your linked sheet.`
+              : hasSsid && isPartialOverlap
+                ? `This preview adds ${mergeEntryCount.toLocaleString()} new ${mergeEntryCount === 1 ? "entry" : "entries"}; ${duplicateCount.toLocaleString()} already exist in your linked sheet.`
+                : hasSsid
+                  ? `This preview has ${entryCount.toLocaleString()} ${entryCount === 1 ? "lift" : "lifts"} ready for your linked sheet.`
+                  : `You're in preview mode with ${entryCount.toLocaleString()} ${entryCount === 1 ? "lift" : "lifts"}.`}
+            {!hasSsid && (
+              <span className="hidden sm:inline">
+                {" "}
+                Save your data to turn this into a full training log with auto
+                warm-ups and progression targets.
+              </span>
+            )}
           </p>
           <p className="text-[11px] text-blue-700/70 dark:text-blue-300/60">
-            Preview data will be lost when you leave.
+            {hasSsid && isFullyDuplicate
+              ? "No merge is needed unless you import a different file."
+              : "Preview data will be lost when you leave."}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -625,14 +627,16 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
             </GoogleSignInButton>
           )}
           {/* Signed in + has sheet: merge */}
-          {isAuthenticated && hasSsid && (
+          {isAuthenticated && hasSsid && !isFullyDuplicate && (
             <Button
               size="sm"
               className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
               disabled={working}
               onClick={handleMergeFromBanner}
             >
-              {working ? "Saving..." : "Save my data"}
+              {working
+                ? "Saving..."
+                : `Merge ${mergeEntryCount.toLocaleString()} ${mergeEntryCount === 1 ? "entry" : "entries"}`}
             </Button>
           )}
           {/* Signed in + no sheet: create */}

@@ -51,6 +51,9 @@ const BIG_FOUR_STARTERS = [
   { liftType: "Strict Press", icon: "/strict_press.svg" },
 ];
 
+const LOGGING_FEATURES_BLURB =
+  "smart warm-up suggestions, live strength ratings as you lift, session pulse stats, and form cues in the log";
+
 // ─── Week boundary helpers ─────────────────────────────────────────────────
 
 function getWeekBoundaries(weekOffset = 0) {
@@ -495,6 +498,13 @@ export function TheWeekInIronCard({
               isReadOnly={isReadOnly}
             />
           )}
+          {isReadOnly && (
+            <ReadOnlyWeekCta
+              authStatus={authStatus}
+              isImportedData={isImportedData}
+              hasLoggedSessions={hasLoggedSessions}
+            />
+          )}
         </CardContent>
       </Card>
     </TooltipProvider>
@@ -634,6 +644,14 @@ function EarlyWeekCard({
           isImportedData={isImportedData}
           isReadOnly={isReadOnly}
         />
+        {isReadOnly && (
+          <ReadOnlyWeekCta
+            authStatus={authStatus}
+            isImportedData={isImportedData}
+            hasLoggedSessions={false}
+            className="mt-4"
+          />
+        )}
         {!isDemoMode && dashboardStage === "starter_sample" && (
           <Link
             href="/import"
@@ -672,27 +690,10 @@ function EmptyWeekState({ authStatus, isImportedData = false, isReadOnly }) {
     return (
       <div className="bg-muted/30 w-full space-y-4 rounded-lg border border-dashed px-4 py-6 text-center">
         <p className="text-muted-foreground text-sm">
-          Unlock weekly session tracking, momentum cues, and in-session lift
-          logging by setting up your Google Sheet.
+          {isImportedData
+            ? `Your imported preview is ready. Save it to a Google Sheet to keep this weekly recap and unlock ${LOGGING_FEATURES_BLURB}.`
+            : `Unlock weekly session tracking, momentum cues, and ${LOGGING_FEATURES_BLURB} by setting up your Google Sheet.`}
         </p>
-        <Button
-          className="gap-2"
-          onClick={() => {
-            openSheetSetupDialog("bootstrap", {
-              action: isImportedData
-                ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
-                : null,
-            });
-          }}
-        >
-          <img
-            src={GOOGLE_SHEETS_ICON_URL}
-            alt=""
-            className="h-4 w-4"
-            aria-hidden
-          />
-          Set up sheet to enable logging
-        </Button>
       </div>
     );
   }
@@ -700,12 +701,71 @@ function EmptyWeekState({ authStatus, isImportedData = false, isReadOnly }) {
   return (
     <div className="bg-muted/30 w-full space-y-4 rounded-lg border border-dashed px-4 py-6 text-center">
       <p className="text-muted-foreground text-sm">
-        Unlock weekly session tracking, momentum cues, and in-session lift
-        logging when you sign in with Google.
+        {isImportedData
+          ? `Your imported preview is ready. Sign in with Google to save it and unlock ${LOGGING_FEATURES_BLURB}.`
+          : `Unlock weekly session tracking, momentum cues, and ${LOGGING_FEATURES_BLURB} when you sign in with Google.`}
       </p>
-      <GoogleSignInButton cta="week_in_iron_empty_state" className="gap-2">
-        Sign in to enable logging
-      </GoogleSignInButton>
+    </div>
+  );
+}
+
+function ReadOnlyWeekCta({
+  authStatus,
+  isImportedData = false,
+  hasLoggedSessions = false,
+  className = "",
+}) {
+  const description =
+    authStatus === "authenticated"
+      ? isImportedData
+        ? `Save this imported history to a new Google Sheet so this week becomes part of your permanent log with ${LOGGING_FEATURES_BLURB}.`
+        : hasLoggedSessions
+          ? `Make this card live by linking your Google Sheet so each session updates your weekly recap automatically, with ${LOGGING_FEATURES_BLURB}.`
+          : `Set up your Google Sheet to turn this card into a live weekly recap with ${LOGGING_FEATURES_BLURB}.`
+      : isImportedData
+        ? `Sign in with Google to save this imported week and keep building from it with ${LOGGING_FEATURES_BLURB}.`
+        : hasLoggedSessions
+          ? `Sign in with Google to unlock live weekly tracking and keep your sessions attached to your own log with ${LOGGING_FEATURES_BLURB}.`
+          : `Sign in with Google to unlock live weekly tracking, momentum cues, and ${LOGGING_FEATURES_BLURB}.`;
+
+  return (
+    <div
+      className={`border-primary/25 bg-primary/5 w-full rounded-xl border px-4 py-4 text-center ${className}`.trim()}
+    >
+      <p className="text-muted-foreground text-sm leading-6">{description}</p>
+      <div className="mt-3 flex justify-center">
+        {authStatus === "authenticated" ? (
+          <Button
+            className="gap-2"
+            onClick={() => {
+              openSheetSetupDialog("bootstrap", {
+                action: isImportedData
+                  ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
+                  : null,
+              });
+            }}
+          >
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-4 w-4"
+              aria-hidden
+            />
+            {isImportedData
+              ? "Save imported week to my sheet"
+              : "Set up sheet to enable logging"}
+          </Button>
+        ) : (
+          <GoogleSignInButton
+            cta="week_in_iron_read_only_cta"
+            className="gap-2"
+          >
+            {isImportedData
+              ? "Sign in to save this week"
+              : "Sign in to enable logging"}
+          </GoogleSignInButton>
+        )}
+      </div>
     </div>
   );
 }

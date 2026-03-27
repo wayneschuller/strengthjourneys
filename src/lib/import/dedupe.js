@@ -43,20 +43,12 @@ export function buildComparableLiftKey(entry) {
 }
 
 export function deduplicateImportedEntries(importedData, existingData) {
-  if (!Array.isArray(existingData) || existingData.length === 0) {
-    return {
-      newEntries: Array.isArray(importedData)
-        ? importedData.filter((entry) => !entry?.isGoal)
-        : [],
-      skippedCount: 0,
-    };
-  }
-
   const existingKeys = new Set(
-    existingData
+    (Array.isArray(existingData) ? existingData : [])
       .map(buildComparableLiftKey)
       .filter((key) => typeof key === "string" && key.length > 0),
   );
+  const seenKeys = new Set(existingKeys);
 
   const newEntries = [];
   let skippedCount = 0;
@@ -65,8 +57,13 @@ export function deduplicateImportedEntries(importedData, existingData) {
     if (entry?.isGoal) continue;
     const key = buildComparableLiftKey(entry);
     if (!key) continue;
-    if (existingKeys.has(key)) skippedCount++;
-    else newEntries.push(entry);
+    if (seenKeys.has(key)) {
+      skippedCount++;
+      continue;
+    }
+
+    seenKeys.add(key);
+    newEntries.push(entry);
   }
 
   return { newEntries, skippedCount };

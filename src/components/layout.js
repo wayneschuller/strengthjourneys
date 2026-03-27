@@ -498,6 +498,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     sheetInfo,
     parsedData,
     sheetParsedData,
+    isLoading,
     importedFileName,
     selectSheet,
     mutate,
@@ -516,9 +517,18 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
   const duplicateCount = importAnalysis?.duplicateCount ?? 0;
   const isFullyDuplicate = importAnalysis?.status === "already_in_linked_sheet";
   const isPartialOverlap = importAnalysis?.status === "partial_overlap";
+  const isSheetComparisonPending =
+    hasSsid && isAuthenticated && isLoading && !Array.isArray(sheetParsedData);
 
   const handleMergeFromBanner = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
+    if (isSheetComparisonPending) {
+      toast({
+        title: "Still checking your sheet",
+        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+      });
+      return;
+    }
 
     const { newEntries, duplicateCount: skippedCount } = analyzeImportedEntries(
       parsedData,
@@ -574,6 +584,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     parsedData,
     sheetParsedData,
     sheetInfo,
+    isSheetComparisonPending,
     clearImportedData,
     mutate,
     toast,
@@ -681,10 +692,12 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
             <Button
               size="sm"
               className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
-              disabled={working}
+              disabled={working || isSheetComparisonPending}
               onClick={handleMergeFromBanner}
             >
-              {working
+              {isSheetComparisonPending
+                ? "Checking sheet..."
+                : working
                 ? "Saving..."
                 : `Merge ${mergeEntryCount.toLocaleString()} ${mergeEntryCount === 1 ? "entry" : "entries"}`}
             </Button>

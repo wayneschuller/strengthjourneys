@@ -92,7 +92,7 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
     if (exerciseName.includes("barbell") && weight === 45) lbScore += 3;
   }
 
-  return lbScore > kgScore ? "lb" : "kg";
+  return kgScore > lbScore ? "kg" : "lb";
 }
 
 // Parse Strong CSV exports.
@@ -100,7 +100,7 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
 // Public samples show one row per set with `Date`, `Exercise Name`, `Weight`,
 // and `Reps`. Strong exports do not expose units in the CSV, so we infer the
 // most likely unit from common barbell warm-up/loading patterns and default to
-// kilograms if the file is ambiguous.
+// pounds if the file is ambiguous.
 export function parseStrongData(data) {
   const startTime = performance.now();
   const headers = data[0] || [];

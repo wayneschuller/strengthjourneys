@@ -265,6 +265,7 @@ export function SheetSetupDialog() {
     sheetInfo,
     parsedData,
     sheetParsedData,
+    isLoading,
     selectSheet,
     clearSheet,
     isDemoMode,
@@ -769,6 +770,16 @@ export function SheetSetupDialog() {
       return;
     }
 
+    const isSheetComparisonPending =
+      isLoading && !Array.isArray(sheetParsedData);
+    if (isSheetComparisonPending) {
+      toast({
+        title: "Still checking your sheet",
+        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+      });
+      return;
+    }
+
     setProvisionError(null);
     setIsProvisionActionLoading(true);
     try {
@@ -813,6 +824,7 @@ export function SheetSetupDialog() {
     }
   }, [
     clearImportedData,
+    isLoading,
     mutate,
     parsedData,
     resetUiState,
@@ -829,7 +841,7 @@ export function SheetSetupDialog() {
       setOnboardingState("linking_or_creating");
       try {
         // Step 1: Parse the file
-        const { count, formatName } = await importFile(file);
+        const { count, formatName, entries = [] } = await importFile(file);
         if (count === 0) {
           throw new Error("No valid entries found in the file.");
         }
@@ -856,15 +868,9 @@ export function SheetSetupDialog() {
           );
         }
 
-        // Step 3: Read imported data from sessionStorage (importFile stores it there)
-        let importedEntries = [];
-        try {
-          const stored = sessionStorage.getItem("sj_importedData");
-          if (stored)
-            importedEntries = JSON.parse(stored).filter((e) => !e.isGoal);
-        } catch {
-          /* fallback empty */
-        }
+        // Step 3: Use the parsed entries returned from importFile so the flow
+        // does not depend on sessionStorage remaining writable.
+        const importedEntries = entries.filter((entry) => !entry.isGoal);
 
         if (importedEntries.length > 0) {
           const apiEntries = importedEntries.map((e) => ({

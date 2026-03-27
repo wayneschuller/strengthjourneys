@@ -193,7 +193,12 @@ export const UserLiftingDataProvider = ({ children }) => {
     } catch {
       // sessionStorage full or unavailable — data still works for this session
     }
-    return { count: processed.length, formatName, fileName: file?.name || null };
+    return {
+      count: processed.length,
+      formatName,
+      fileName: file?.name || null,
+      entries: processed,
+    };
   }, []);
 
   const clearImportedData = useCallback(() => {

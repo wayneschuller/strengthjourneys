@@ -615,8 +615,9 @@ export default function ImportPage() {
         {/* Privacy reassurance */}
         <p className="text-muted-foreground mx-auto -mt-8 mb-12 max-w-5xl text-center text-xs">
           <Shield className="mr-1 inline h-3.5 w-3.5 align-text-bottom" />
-          Your data stays private. Files are parsed in your browser - nothing
-          is saved unless you choose to.
+          Your preview stays in your browser. If you choose to save it, Strength
+          Journeys writes it into a Google Sheet in your own Drive and does not
+          keep a server-side copy.
         </p>
 
         <ImportSeoLinksSection />

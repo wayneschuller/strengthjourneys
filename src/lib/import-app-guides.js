@@ -1,4 +1,6 @@
 const IMPORT_PAGE_BASE_URL = "https://www.strengthjourneys.xyz/import";
+const IMPORT_PRIVACY_ANSWER =
+  "Your file is parsed in your browser first. If you choose to save it, Strength Journeys sends the parsed data to write into a Google Sheet in your own Google Drive. We do not keep a server-side copy of your workout history.";
 
 export const IMPORT_APP_PAGES = [
   {
@@ -48,8 +50,7 @@ export const IMPORT_APP_PAGES = [
       {
         question:
           "What happens to my data?",
-        answer:
-          "Your file is parsed entirely in your browser — nothing is uploaded to our servers. If you sign in, the parsed data is written to a Google Sheet in your own Google Drive.",
+        answer: IMPORT_PRIVACY_ANSWER,
       },
     ],
   },
@@ -100,8 +101,7 @@ export const IMPORT_APP_PAGES = [
       {
         question:
           "Is my data secure?",
-        answer:
-          "Your file is parsed entirely in your browser. If you sign in, the data goes straight to a Google Sheet in your own Drive — we never store your workout data on our servers.",
+        answer: IMPORT_PRIVACY_ANSWER,
       },
     ],
   },
@@ -152,8 +152,7 @@ export const IMPORT_APP_PAGES = [
       {
         question:
           "What happens to my data?",
-        answer:
-          "Everything is parsed in your browser. Nothing is uploaded to our servers. If you sign in, the data is written to a Google Sheet in your own Google Drive.",
+        answer: IMPORT_PRIVACY_ANSWER,
       },
     ],
   },
@@ -204,8 +203,7 @@ export const IMPORT_APP_PAGES = [
       {
         question:
           "Is my data private?",
-        answer:
-          "Your file is parsed in your browser — nothing is uploaded to our servers. If you sign in, the data goes to a Google Sheet in your own Google Drive.",
+        answer: IMPORT_PRIVACY_ANSWER,
       },
     ],
   },

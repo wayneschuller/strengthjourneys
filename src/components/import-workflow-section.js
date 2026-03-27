@@ -37,6 +37,7 @@ export function ImportWorkflowSection({
   const {
     sheetInfo,
     mutate,
+    isLoading,
     parsedData,
     importFile,
     clearImportedData,
@@ -57,6 +58,8 @@ export function ImportWorkflowSection({
   const canMerge = !!sheetInfo?.ssid;
   const mergeMode = isAuthenticated && canMerge;
   const createMode = isAuthenticated && !canMerge;
+  const isSheetComparisonPending =
+    mergeMode && isLoading && !Array.isArray(sheetParsedData);
   const sheetName = sheetInfo?.filename || "your Google Sheet";
   const returnToPath =
     typeof router.query?.returnTo === "string"
@@ -142,6 +145,13 @@ export function ImportWorkflowSection({
 
   const handleMerge = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
+    if (isSheetComparisonPending) {
+      toast({
+        title: "Still checking your sheet",
+        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+      });
+      return;
+    }
 
     const { newEntries, skippedCount } = deduplicateImportedEntries(
       parsedData,
@@ -188,6 +198,7 @@ export function ImportWorkflowSection({
     router,
     sheetInfo,
     sheetParsedData,
+    isSheetComparisonPending,
     toast,
     writeEntriesToSheet,
   ]);
@@ -322,18 +333,24 @@ export function ImportWorkflowSection({
                 {showMerge && (
                   <div className="w-full max-w-md space-y-3">
                     <p className="text-muted-foreground text-sm">
-                      {isFullyDuplicate
+                      {isSheetComparisonPending
+                        ? "Checking your linked Strength Journeys sheet for duplicates before merge."
+                        : isFullyDuplicate
                         ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.`
                         : isPartialOverlap
                           ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Strength Journeys sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.`
                           : `Merge this data into your linked Strength Journeys sheet.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}`}
                     </p>
                     {newEntries.length > 0 ? (
-                      <Button onClick={handleMerge} className="w-full gap-2">
+                      <Button
+                        onClick={handleMerge}
+                        className="w-full gap-2"
+                        disabled={isSheetComparisonPending}
+                      >
                         <ArrowRight className="h-4 w-4" />
-                        Merge {newEntries.length}{" "}
-                        {newEntries.length === 1 ? "entry" : "entries"} into
-                        linked sheet
+                        {isSheetComparisonPending
+                          ? "Checking linked sheet..."
+                          : `Merge ${newEntries.length} ${newEntries.length === 1 ? "entry" : "entries"} into linked sheet`}
                       </Button>
                     ) : (
                       <p className="text-muted-foreground text-xs">

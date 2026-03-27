@@ -161,6 +161,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   // to avoid hydration mismatch — sessionStorage is client-only.
   const [importedParsedData, setImportedParsedData] = useState(null);
   const [importedFormatName, setImportedFormatName] = useState(null);
+  const [importedFileName, setImportedFileName] = useState(null);
 
   useIsomorphicLayoutEffect(() => {
     try {
@@ -169,6 +170,9 @@ export const UserLiftingDataProvider = ({ children }) => {
         setImportedParsedData(JSON.parse(stored));
         setImportedFormatName(
           sessionStorage.getItem("sj_importedFormat") || null,
+        );
+        setImportedFileName(
+          sessionStorage.getItem("sj_importedFileName") || null,
         );
       }
     } catch {
@@ -181,21 +185,25 @@ export const UserLiftingDataProvider = ({ children }) => {
     const processed = markHigherWeightAsHistoricalPRs(parsed);
     setImportedParsedData(processed);
     setImportedFormatName(formatName);
+    setImportedFileName(file?.name || null);
     try {
       sessionStorage.setItem("sj_importedData", JSON.stringify(processed));
       sessionStorage.setItem("sj_importedFormat", formatName);
+      sessionStorage.setItem("sj_importedFileName", file?.name || "");
     } catch {
       // sessionStorage full or unavailable — data still works for this session
     }
-    return { count: processed.length, formatName };
+    return { count: processed.length, formatName, fileName: file?.name || null };
   }, []);
 
   const clearImportedData = useCallback(() => {
     setImportedParsedData(null);
     setImportedFormatName(null);
+    setImportedFileName(null);
     try {
       sessionStorage.removeItem("sj_importedData");
       sessionStorage.removeItem("sj_importedFormat");
+      sessionStorage.removeItem("sj_importedFileName");
     } catch {
       // ignore
     }
@@ -510,6 +518,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         isReadOnly,
         isImportedData,
         importedFormatName,
+        importedFileName,
         isReturningUserLoading,
         parseError,
         liftTypes,

@@ -35,6 +35,7 @@ export function ImportWorkflowSection({
     clearImportedData,
     isImportedData,
     importedFormatName,
+    importedFileName,
     sheetParsedData,
     selectSheet,
   } = useUserLiftingData();
@@ -187,7 +188,11 @@ export function ImportWorkflowSection({
       const linkRes = await fetch("/api/sheet/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: "bootstrap", mode: "create_blank" }),
+        body: JSON.stringify({
+          intent: "bootstrap",
+          mode: "create_blank",
+          importedFileName,
+        }),
       });
       const linkPayload = await linkRes.json();
 
@@ -229,6 +234,7 @@ export function ImportWorkflowSection({
     router,
     selectSheet,
     toast,
+    importedFileName,
     writeEntriesToSheet,
   ]);
 

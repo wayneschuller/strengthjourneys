@@ -59,6 +59,35 @@ export function buildSheetName(fullName) {
   return cleaned ? `${cleaned}'s Strength Journey` : "My Strength Journey";
 }
 
+export function buildImportedSheetName(fullName, importedFileName) {
+  const baseName = buildSheetName(fullName);
+  const rawName =
+    typeof importedFileName === "string" ? importedFileName.trim() : "";
+
+  if (!rawName) return baseName;
+
+  const fileNameOnly = rawName.split(/[\\/]/).pop() || rawName;
+  const extensionMatch = fileNameOnly.match(/(\.[^.]{1,4})$/);
+  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : "";
+  const withoutExtension = extension
+    ? fileNameOnly.slice(0, -extension.length)
+    : fileNameOnly;
+  const normalized = withoutExtension.replace(/\s+/g, " ").trim();
+
+  if (!normalized) return baseName;
+
+  const MAX_SOURCE_CHARS = 38;
+  const reservedChars = extension ? extension.length + 3 : 3;
+  const visibleChars = Math.max(8, MAX_SOURCE_CHARS - reservedChars);
+  const clampedBase =
+    normalized.length > visibleChars
+      ? `${normalized.slice(0, visibleChars).trimEnd()}...`
+      : normalized;
+  const clampedSource = `${clampedBase}${extension}`;
+
+  return `${baseName} (imported from ${clampedSource})`;
+}
+
 export function createDebug(intent, mode) {
   return {
     intent,

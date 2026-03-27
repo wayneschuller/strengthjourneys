@@ -21,6 +21,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const payloadBytes = Buffer.byteLength(JSON.stringify(req.body ?? {}), "utf8");
+  console.log("[sheet/import-history] payload:size", {
+    bytes: payloadBytes,
+    megabytes: Number((payloadBytes / (1024 * 1024)).toFixed(3)),
+  });
+
   const session = await getServerSession(req, res, authOptions);
   if (!session?.accessToken) {
     return res.status(401).json({ error: "Unauthorized" });

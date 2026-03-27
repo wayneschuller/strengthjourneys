@@ -1,3 +1,8 @@
+/**
+ * 1000lb Club calculator page.
+ * Keeps the page on the Pages Router and reuses the shared lifting-data import pipeline
+ * so timeline previews can come from uploaded fitness-app exports without a separate flow.
+ */
 import Head from "next/head";
 import Link from "next/link";
 import { useMemo, useState, useEffect, useRef, useId } from "react";
@@ -38,6 +43,8 @@ import {
   BicepsFlexed,
   Bot,
   CircleDashed,
+  FileUp,
+  Loader2,
   RotateCcw,
 } from "lucide-react";
 
@@ -345,8 +352,13 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
   const { status: authStatus } = useSession();
-  const { topLiftsByTypeAndReps, parsedData, isDemoMode } =
-    useUserLiftingData();
+  const {
+    topLiftsByTypeAndReps,
+    parsedData,
+    isDemoMode,
+    isImportedData,
+    sheetInfo,
+  } = useUserLiftingData();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
     initializeWithValue: false,
   });
@@ -974,8 +986,17 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       </Card>
 
       {totalTimeline ? (
-        <TotalTimelineChart data={totalTimeline} target={TARGET_TOTAL} />
-      ) : authStatus === "unauthenticated" ? (
+        <TotalTimelineChart
+          data={totalTimeline}
+          target={TARGET_TOTAL}
+          showSavePrompt={
+            isImportedData &&
+            (authStatus === "unauthenticated" ||
+              (authStatus === "authenticated" && !sheetInfo?.ssid))
+          }
+        />
+      ) : authStatus === "unauthenticated" ||
+        (authStatus === "authenticated" && !sheetInfo?.ssid) ? (
         <TotalTimelineCtaCard />
       ) : null}
 
@@ -1387,7 +1408,7 @@ function TimelineTooltipContent({ active, payload, label }) {
   );
 }
 
-function TotalTimelineChart({ data, target }) {
+function TotalTimelineChart({ data, target, showSavePrompt = false }) {
   if (!data || data.length < 2) return null;
 
   const spanDays =
@@ -1524,135 +1545,359 @@ function TotalTimelineChart({ data, target }) {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+        {showSavePrompt ? <TotalTimelineSavePromptInline /> : null}
       </CardContent>
     </Card>
   );
 }
 
 function TotalTimelineCtaCard() {
+  const { toast } = useToast();
+  const { importFile } = useUserLiftingData();
+  const fileInputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState(null);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["csv", "txt", "xls", "xlsx"].includes(ext)) {
+      setImportError(
+        "Unsupported file type. Use a .csv, .xls, or .xlsx export.",
+      );
+      return;
+    }
+
+    setImporting(true);
+    setImportError(null);
+
+    try {
+      const { count, formatName } = await importFile(file);
+      toast({
+        title: "Data loaded",
+        description: `Parsed ${count} entries from ${formatName}. Your chart is ready below.`,
+      });
+    } catch (err) {
+      setImportError(err.message || "Could not parse that export.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    setDragOver(false);
+    await handleFile(event.dataTransfer?.files?.[0]);
+  };
+
+  const handleBrowseClick = () => {
+    if (importing) return;
+    fileInputRef.current?.click();
+  };
+
   return (
     <Card className="mt-6 overflow-hidden">
-      <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-start sm:justify-between">
+      <CardHeader className="pb-2">
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Trophy className="h-5 w-5" />
-            Want to see your 1000lb club history over time?
+            Drop in your data to unlock your 1000lb club chart
           </CardTitle>
           <CardDescription>
-            See your 1000lb club history over time, spot the dips, and figure
-            out what to push next. Sign in with Google to unlock the full chart
-            and follow your rolling total across the years.
+            Drag in your workout data from Hevy, Strong, Wodify, BTWB, or
+            TurnKey. We&apos;ll parse it in your browser and turn it into your
+            1000lb club chart.
           </CardDescription>
         </div>
-        <GoogleSignInButton
-          cta="1000lb_club_timeline"
-          size="sm"
-          className="sm:shrink-0"
-        >
-          Sign in with Google
-        </GoogleSignInButton>
       </CardHeader>
       <CardContent>
-        <div className="from-muted/20 via-background to-muted/30 relative overflow-hidden rounded-xl border bg-gradient-to-br p-4 sm:p-6">
-          <div className="grid grid-cols-[42px_minmax(0,1fr)] gap-2 opacity-55 saturate-[0.85]">
-            <div className="text-muted-foreground flex h-[180px] flex-col justify-between pt-1 text-[11px] tabular-nums sm:h-[220px]">
-              <span>1150</span>
-              <span>1000</span>
-              <span>850</span>
-              <span>700</span>
-            </div>
+        <div className="grid gap-4 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] lg:items-stretch">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleBrowseClick}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleBrowseClick();
+              }
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            className={cn(
+              "from-muted/20 via-background to-muted/30 flex h-full flex-col justify-between rounded-xl border border-dashed bg-gradient-to-br p-4 text-left transition-colors sm:p-5",
+              dragOver && "border-primary bg-primary/5",
+              importing && "cursor-wait opacity-80",
+              !importing && "cursor-pointer hover:border-primary/60",
+            )}
+            aria-label="Upload workout export file"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.txt,.xls,.xlsx"
+              className="hidden"
+              onChange={(event) => {
+                handleFile(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
 
-            <div className="space-y-2">
-              <div className="relative h-[180px] overflow-hidden sm:h-[220px]">
-                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_calc(25%-1px),rgba(148,163,184,0.16)_25%,transparent_calc(25%+1px),transparent_calc(50%-1px),rgba(148,163,184,0.12)_50%,transparent_calc(50%+1px),transparent_calc(75%-1px),rgba(148,163,184,0.1)_75%,transparent_calc(75%+1px),transparent_100%)]" />
-                <div className="absolute inset-x-0 top-[25%] border-t-2 border-dashed border-emerald-500/55" />
-                <span className="bg-background/70 absolute top-[calc(25%-20px)] right-2 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-600">
-                  1000 lbs
-                </span>
-                <svg
-                  viewBox="0 0 700 220"
-                  className="absolute inset-0 h-full w-full"
-                  preserveAspectRatio="none"
-                  aria-hidden
-                >
-                  <defs>
-                    <linearGradient
-                      id="timeline-cta-above"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor="#10B981"
-                        stopOpacity="0.22"
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor="#10B981"
-                        stopOpacity="0.05"
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="timeline-cta-below"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.2" />
-                      <stop
-                        offset="100%"
-                        stopColor="#F59E0B"
-                        stopOpacity="0.04"
-                      />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d="M0,170 C55,164 95,156 138,116 C176,82 218,72 268,92 C314,110 362,172 414,146 C463,122 506,72 548,62 C594,50 642,76 700,68 L700,220 L0,220 Z"
-                    fill="url(#timeline-cta-below)"
-                  />
-                  <path
-                    d="M0,170 C55,164 95,156 138,116 C176,82 218,72 268,92 C314,110 362,172 414,146 C463,122 506,72 548,62 C594,50 642,76 700,68 L700,48 C642,58 594,30 548,36 C506,42 463,96 414,112 C362,130 314,86 268,70 C218,52 176,58 138,90 C95,126 55,146 0,152 Z"
-                    fill="url(#timeline-cta-above)"
-                  />
-                  <path
-                    d="M0,170 C55,164 95,156 138,116 C176,82 218,72 268,92 C314,110 362,172 414,146 C463,122 506,72 548,62 C594,50 642,76 700,68"
-                    fill="none"
-                    stroke="#F59E0B"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M138,116 C176,82 218,72 268,92"
-                    fill="none"
-                    stroke="#10B981"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M414,146 C463,122 506,72 548,62 C594,50 642,76 700,68"
-                    fill="none"
-                    stroke="#10B981"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                </svg>
+            <div className="space-y-4">
+              <div className="bg-primary/10 text-primary flex h-11 w-11 items-center justify-center rounded-full border">
+                {importing ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <FileUp className="h-5 w-5" />
+                )}
               </div>
 
-              <div className="text-muted-foreground flex justify-between pl-1 text-[11px] tabular-nums">
-                <span>2021</span>
-                <span>2022</span>
-                <span>2023</span>
-                <span>2024</span>
-                <span>2025</span>
+              <div className="space-y-2">
+                <p className="text-sm font-semibold sm:text-base">
+                  {importing ? "Parsing your data..." : "Add your workout data"}
+                </p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Drop in a Hevy, Strong, Wodify, BTWB, or TurnKey export to
+                  generate your 1000lb club chart.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleBrowseClick();
+                }}
+                disabled={importing}
+              >
+                Choose file
+              </Button>
+
+              {importError ? (
+                <p className="text-sm font-medium text-red-600">
+                  {importError}
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Parsed locally in your browser for preview mode.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="from-muted/20 via-background to-muted/30 relative overflow-hidden rounded-xl border bg-gradient-to-br p-4 sm:p-6">
+            <div className="grid grid-cols-[42px_minmax(0,1fr)] gap-2 opacity-55 saturate-[0.85]">
+              <div className="text-muted-foreground flex h-[180px] flex-col justify-between pt-1 text-[11px] tabular-nums sm:h-[220px]">
+                <span>1150</span>
+                <span>1000</span>
+                <span>850</span>
+                <span>700</span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="relative h-[180px] overflow-hidden sm:h-[220px]">
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_calc(25%-1px),rgba(148,163,184,0.16)_25%,transparent_calc(25%+1px),transparent_calc(50%-1px),rgba(148,163,184,0.12)_50%,transparent_calc(50%+1px),transparent_calc(75%-1px),rgba(148,163,184,0.1)_75%,transparent_calc(75%+1px),transparent_100%)]" />
+                  <div className="absolute inset-x-0 top-[25%] border-t-2 border-dashed border-emerald-500/55" />
+                  <span className="bg-background/70 absolute top-[calc(25%-20px)] right-2 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-600">
+                    1000 lbs
+                  </span>
+                  <svg
+                    viewBox="0 0 700 220"
+                    className="absolute inset-0 h-full w-full"
+                    preserveAspectRatio="none"
+                    aria-hidden
+                  >
+                    <defs>
+                      <linearGradient
+                        id="timeline-cta-above"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#10B981"
+                          stopOpacity="0.22"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#10B981"
+                          stopOpacity="0.05"
+                        />
+                      </linearGradient>
+                      <linearGradient
+                        id="timeline-cta-below"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.2" />
+                        <stop
+                          offset="100%"
+                          stopColor="#F59E0B"
+                          stopOpacity="0.04"
+                        />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M0,170 C55,164 95,156 138,116 C176,82 218,72 268,92 C314,110 362,172 414,146 C463,122 506,72 548,62 C594,50 642,76 700,68 L700,220 L0,220 Z"
+                      fill="url(#timeline-cta-below)"
+                    />
+                    <path
+                      d="M0,170 C55,164 95,156 138,116 C176,82 218,72 268,92 C314,110 362,172 414,146 C463,122 506,72 548,62 C594,50 642,76 700,68 L700,48 C642,58 594,30 548,36 C506,42 463,96 414,112 C362,130 314,86 268,70 C218,52 176,58 138,90 C95,126 55,146 0,152 Z"
+                      fill="url(#timeline-cta-above)"
+                    />
+                    <path
+                      d="M0,170 C55,164 95,156 138,116 C176,82 218,72 268,92 C314,110 362,172 414,146 C463,122 506,72 548,62 C594,50 642,76 700,68"
+                      fill="none"
+                      stroke="#F59E0B"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M138,116 C176,82 218,72 268,92"
+                      fill="none"
+                      stroke="#10B981"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M414,146 C463,122 506,72 548,62 C594,50 642,76 700,68"
+                      fill="none"
+                      stroke="#10B981"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+
+                <div className="text-muted-foreground flex justify-between pl-1 text-[11px] tabular-nums">
+                  <span>2021</span>
+                  <span>2022</span>
+                  <span>2023</span>
+                  <span>2024</span>
+                  <span>2025</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function TotalTimelineSavePromptInline() {
+  const { status: authStatus } = useSession();
+  const { toast } = useToast();
+  const { parsedData, importedFileName, selectSheet, clearImportedData, mutate } =
+    useUserLiftingData();
+  const [working, setWorking] = useState(false);
+
+  const handleCreateFromPrompt = async () => {
+    if (!parsedData || parsedData.length === 0) return;
+
+    setWorking(true);
+    try {
+      const linkRes = await fetch("/api/sheet/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "bootstrap",
+          mode: "create_blank",
+          importedFileName,
+        }),
+      });
+      const linkPayload = await linkRes.json();
+      if (!linkRes.ok || !linkPayload?.ssid) {
+        throw new Error(linkPayload?.error || "Failed to create sheet");
+      }
+
+      const nonGoalEntries = parsedData.filter((entry) => !entry.isGoal);
+      const apiEntries = nonGoalEntries.map((entry) => ({
+        date: entry.date,
+        liftType: entry.liftType,
+        reps: entry.reps,
+        weight: entry.weight,
+        unitType: entry.unitType || "kg",
+      }));
+
+      const writeRes = await fetch("/api/sheet/import-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ssid: linkPayload.ssid, entries: apiEntries }),
+      });
+      const writeData = await writeRes.json();
+      if (!writeRes.ok) {
+        throw new Error(writeData.error || "Failed to save data");
+      }
+
+      selectSheet(linkPayload.ssid, {
+        url: linkPayload.webViewLink ?? null,
+        filename: linkPayload.name ?? null,
+        modifiedTime: linkPayload.modifiedTime ?? null,
+        modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
+      });
+      toast({
+        title: "Google Sheet created!",
+        description: `Imported ${writeData.insertedRows} entries into your new Strength Journeys sheet.`,
+      });
+      clearImportedData();
+      mutate();
+    } catch (err) {
+      toast({
+        title: "Import failed",
+        description: err.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50/80 px-4 py-3 dark:border-blue-800/60 dark:bg-blue-950/50">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-base font-semibold text-blue-950 dark:text-blue-100">
+            Love this chart?
+          </p>
+          <p className="text-sm leading-relaxed text-blue-900/85 dark:text-blue-200/85">
+            Sign in with Google (3 seconds) to save your history forever and get
+            automatic updates with every new workout.
+          </p>
+        </div>
+        {authStatus === "authenticated" ? (
+          <Button
+            className="border-blue-300 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 sm:shrink-0"
+            disabled={working}
+            onClick={handleCreateFromPrompt}
+          >
+            {working ? "Saving..." : "Save my data"}
+          </Button>
+        ) : (
+          <GoogleSignInButton
+            cta="1000lb_club_preview_save"
+            callbackUrl="/1000lb-club-calculator"
+            className="sm:shrink-0"
+          >
+            Sign in with Google
+          </GoogleSignInButton>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -455,6 +455,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     sheetInfo,
     parsedData,
     sheetParsedData,
+    importedFileName,
     selectSheet,
     mutate,
     clearImportedData,
@@ -542,7 +543,11 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
       const linkRes = await fetch("/api/sheet/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: "bootstrap", mode: "create_blank" }),
+        body: JSON.stringify({
+          intent: "bootstrap",
+          mode: "create_blank",
+          importedFileName,
+        }),
       });
       const linkPayload = await linkRes.json();
       if (!linkRes.ok || !linkPayload?.ssid)
@@ -586,7 +591,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     } finally {
       setWorking(false);
     }
-  }, [parsedData, selectSheet, clearImportedData, mutate, toast]);
+  }, [parsedData, importedFileName, selectSheet, clearImportedData, mutate, toast]);
 
   return (
     <section className="mb-3 border-y border-blue-200 bg-blue-50/80 dark:border-blue-800/60 dark:bg-blue-950/50">

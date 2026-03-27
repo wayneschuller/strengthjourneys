@@ -76,6 +76,8 @@ export function buildImportedSheetName(fullName, importedFileName) {
 
   if (!normalized) return baseName;
 
+  // Keep enough of the original filename to be useful in Drive while capping
+  // the suffix so sheet names stay readable in the chooser and navbar.
   const MAX_SOURCE_CHARS = 38;
   const reservedChars = extension ? extension.length + 3 : 3;
   const visibleChars = Math.max(8, MAX_SOURCE_CHARS - reservedChars);

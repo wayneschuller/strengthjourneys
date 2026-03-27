@@ -1,6 +1,7 @@
 /**
  * Reports a large import request-limit hit so the founder can follow up.
  * This is best-effort only and never blocks the client-side recovery UX.
+ * The point is visibility on rare oversized imports, not another critical path.
  */
 import { getServerSession } from "next-auth/next";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";

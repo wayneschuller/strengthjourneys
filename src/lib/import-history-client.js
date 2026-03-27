@@ -23,6 +23,8 @@ export async function postImportHistory(payload) {
   const gzippedBody = await gzipJsonString(jsonString);
 
   if (gzippedBody) {
+    // Large history imports repeat the same keys thousands of times, so gzip
+    // dramatically reduces the request body before it hits Vercel/Next limits.
     return fetch("/api/sheet/import-history", {
       method: "POST",
       headers: {

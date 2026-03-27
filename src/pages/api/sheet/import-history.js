@@ -18,6 +18,8 @@ import { gunzipSync } from "node:zlib";
 
 export const config = {
   api: {
+    // We parse the raw body ourselves so gzipped imports can bypass the default
+    // 1 MB Next.js JSON body parser limit on this route.
     bodyParser: false,
   },
 };
@@ -43,6 +45,8 @@ export default async function handler(req, res) {
     const isGzipped = String(req.headers["content-encoding"] || "")
       .toLowerCase()
       .includes("gzip");
+    // Client imports may arrive gzipped; decode before normal JSON parsing so
+    // the rest of the handler can stay unchanged.
     const decodedBody = isGzipped ? gunzipSync(rawBody) : rawBody;
     const payloadBytes = decodedBody.byteLength;
     console.log("[sheet/import-history] payload:size", {

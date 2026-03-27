@@ -1876,6 +1876,8 @@ function TotalTimelineSavePromptInline() {
       const writeData = await readJsonResponseSafe(writeRes);
       if (!writeRes.ok) {
         if (writeRes.status === 413) {
+          // Even with gzip, keep the preview alive and turn the failure into a
+          // useful recovery path instead of a raw JSON/body-limit error.
           await notifyLargeImportLimit({
             payloadBytes,
             entryCount: apiEntries.length,

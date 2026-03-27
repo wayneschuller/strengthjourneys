@@ -274,13 +274,13 @@ export const UserLiftingDataProvider = ({ children }) => {
     [setSignedInDemoMode],
   );
 
-  // Skip sheet fetch when imported data is active — imported CSV takes over the whole app.
-  // The user can re-link their sheet from the avatar menu at any time.
+  // Keep fetching the linked sheet even during imported preview mode.
+  // The imported file still powers the visible UI, but import analysis and
+  // dedupe need the live linked-sheet data in the background.
   const shouldFetch =
     authStatus === "authenticated" &&
     !!session?.accessToken &&
-    !!sheetInfo?.ssid &&
-    !importedParsedData;
+    !!sheetInfo?.ssid;
 
   useEffect(() => {
     if (authStatus === "unauthenticated" && signedInDemoMode) {

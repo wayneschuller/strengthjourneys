@@ -547,7 +547,7 @@ export default function ImportPage() {
           <PageHeaderHeading icon={Upload}>Import Data</PageHeaderHeading>
           <PageHeaderDescription>
             {authStatus === "authenticated" && sheetInfo?.ssid
-              ? "Import lifting history from another app. Data will be merged into your connected Google Sheet — duplicates are automatically skipped."
+              ? "Import lifting history from another app. Data will be merged into your linked Google Sheet — duplicates are automatically skipped."
               : authStatus === "authenticated"
                 ? "Import lifting history from another app. We'll create a new Google Sheet in your Drive and populate it with your data."
                 : "Import your lifting history and explore the full app in preview mode — no sign-in required."}

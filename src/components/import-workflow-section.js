@@ -12,35 +12,10 @@ import {
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
+import { deduplicateImportedEntries } from "@/lib/import/dedupe";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
-function deduplicateEntries(importedData, existingData) {
-  if (!Array.isArray(existingData) || existingData.length === 0) {
-    return { newEntries: importedData, skippedCount: 0 };
-  }
-
-  const existingKeys = new Set();
-  for (const entry of existingData) {
-    if (entry.isGoal) continue;
-    existingKeys.add(
-      `${entry.date}|${entry.liftType}|${entry.reps}|${Math.round((entry.weight ?? 0) * 100)}`,
-    );
-  }
-
-  const newEntries = [];
-  let skippedCount = 0;
-
-  for (const entry of importedData) {
-    if (entry.isGoal) continue;
-    const key = `${entry.date}|${entry.liftType}|${entry.reps}|${Math.round((entry.weight ?? 0) * 100)}`;
-    if (existingKeys.has(key)) skippedCount++;
-    else newEntries.push(entry);
-  }
-
-  return { newEntries, skippedCount };
-}
 
 export function ImportWorkflowSection({
   title = "Import from Another App",
@@ -152,7 +127,7 @@ export function ImportWorkflowSection({
   const handleMerge = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
 
-    const { newEntries, skippedCount } = deduplicateEntries(
+    const { newEntries, skippedCount } = deduplicateImportedEntries(
       parsedData,
       sheetParsedData,
     );
@@ -160,7 +135,7 @@ export function ImportWorkflowSection({
     if (newEntries.length === 0) {
       toast({
         title: "Nothing new to merge",
-        description: `All ${skippedCount} entries already exist in your sheet.`,
+        description: `All ${skippedCount} entries already exist in your linked sheet.`,
       });
       return;
     }
@@ -174,7 +149,7 @@ export function ImportWorkflowSection({
           : "";
 
       toast({
-        title: "Data merged into your sheet!",
+        title: "Data merged into your linked sheet!",
         description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}`,
       });
 
@@ -261,7 +236,7 @@ export function ImportWorkflowSection({
     const showMerge = isAuthenticated && !showCreateSheet && canMerge;
 
     const { newEntries, skippedCount } = showMerge
-      ? deduplicateEntries(parsedData || [], sheetParsedData)
+      ? deduplicateImportedEntries(parsedData || [], sheetParsedData)
       : {
           newEntries: parsedData?.filter((entry) => !entry.isGoal) || [],
           skippedCount: 0,
@@ -278,12 +253,12 @@ export function ImportWorkflowSection({
                 <h3 className="mb-1 font-semibold">
                   {showCreateSheet
                     ? "Creating your Google Sheet..."
-                    : "Merging into your sheet..."}
+                    : "Merging into your linked sheet..."}
                 </h3>
                 <p className="text-muted-foreground text-sm">
                   {showCreateSheet
                     ? `Setting up a new Strength Journeys sheet with ${entryCount} entries.`
-                    : `Adding ${newEntries.length} new entries to your sheet.`}
+                    : `Adding ${newEntries.length} new entries to your linked sheet.`}
                 </p>
               </>
             ) : (
@@ -319,8 +294,7 @@ export function ImportWorkflowSection({
                 {showMerge && (
                   <div className="w-full max-w-md space-y-3">
                     <p className="text-muted-foreground text-sm">
-                      Merge this data into your existing Strength Journeys
-                      spreadsheet.
+                      Merge this data into your linked Strength Journeys sheet.
                       {skippedCount > 0 && (
                         <>
                           {" "}
@@ -336,12 +310,13 @@ export function ImportWorkflowSection({
                     >
                       <ArrowRight className="h-4 w-4" />
                       Merge {newEntries.length}{" "}
-                      {newEntries.length === 1 ? "entry" : "entries"} into sheet
+                      {newEntries.length === 1 ? "entry" : "entries"} into
+                      linked sheet
                     </Button>
                     {newEntries.length === 0 && (
                       <p className="text-muted-foreground text-xs">
-                        All entries already exist in your sheet - nothing to
-                        merge.
+                        All entries already exist in your linked sheet - nothing
+                        to merge.
                       </p>
                     )}
                   </div>

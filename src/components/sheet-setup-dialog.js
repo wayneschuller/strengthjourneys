@@ -9,6 +9,7 @@ import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
+import { deduplicateImportedEntries } from "@/lib/import/dedupe";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
@@ -164,32 +165,6 @@ function shouldShowCreatedConfirmation(payload) {
 function shouldShowSyncToastOnAutoLink(payload) {
   if (payload?.action !== "link_existing") return false;
   return ["drive_single", "legacy_drive_relink"].includes(payload?.reason);
-}
-
-function deduplicateEntries(importedData, existingData) {
-  if (!Array.isArray(existingData) || existingData.length === 0) {
-    return { newEntries: importedData, skippedCount: 0 };
-  }
-
-  const existingKeys = new Set();
-  for (const entry of existingData) {
-    if (entry.isGoal) continue;
-    existingKeys.add(
-      `${entry.date}|${entry.liftType}|${entry.reps}|${Math.round((entry.weight ?? 0) * 100)}`,
-    );
-  }
-
-  const newEntries = [];
-  let skippedCount = 0;
-
-  for (const entry of importedData) {
-    if (entry.isGoal) continue;
-    const key = `${entry.date}|${entry.liftType}|${entry.reps}|${Math.round((entry.weight ?? 0) * 100)}`;
-    if (existingKeys.has(key)) skippedCount++;
-    else newEntries.push(entry);
-  }
-
-  return { newEntries, skippedCount };
 }
 
 async function writeEntriesToSheet(targetSsid, entries) {
@@ -796,7 +771,7 @@ export function SheetSetupDialog() {
     setIsProvisionActionLoading(true);
     try {
       const importedEntries = parsedData.filter((entry) => !entry.isGoal);
-      const { newEntries, skippedCount } = deduplicateEntries(
+      const { newEntries, skippedCount } = deduplicateImportedEntries(
         importedEntries,
         sheetParsedData,
       );

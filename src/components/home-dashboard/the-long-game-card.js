@@ -741,7 +741,7 @@ export function TheLongGameCard({
               {/* Consistency grade rings — always included in capture output */}
               {!isFirstMonthFocusState && (
                 <>
-                  <div className="mb-6" data-share-section="consistency">
+                  <div className="mb-3" data-share-section="consistency">
                     {isSharing ? (
                       <div className="flex w-full items-start">
                         <div
@@ -766,7 +766,7 @@ export function TheLongGameCard({
                       </div>
                     )}
                   </div>
-                  {!isSharing && <hr className="border-border/60 mb-3" />}
+                  {!isSharing && <hr className="border-border/60 mb-2" />}
                 </>
               )}
               {/* View selector — right-justified, anchored just above the heatmap grid */}
@@ -814,7 +814,7 @@ export function TheLongGameCard({
                         : "max-h-[52vh] overflow-y-auto pr-1"
                   }
                 >
-                  <div className="flex flex-col gap-9">
+                  <div className="flex flex-col gap-4">
                     {intervals.map((interval, index) => {
                       const year = new Date(interval.startDate).getFullYear();
                       const isCurrentYear = year === new Date().getFullYear();
@@ -825,10 +825,14 @@ export function TheLongGameCard({
                             if (node) yearRowRefs.current[year] = node;
                             else delete yearRowRefs.current[year];
                           }}
-                          className={`flex w-full items-start ${isCurrentYear ? "bg-muted/20 -mx-1 rounded-lg px-1 py-0.5" : ""}`}
+                          className={`group relative flex w-full items-start rounded-2xl border px-2 py-2 transition-colors ${
+                            isCurrentYear
+                              ? "border-primary/20 bg-primary/[0.07] shadow-[0_10px_30px_-24px_var(--color-primary)]"
+                              : "border-border/40 bg-gradient-to-r from-background via-muted/10 to-background"
+                          }`}
                         >
                           <div
-                            className="shrink-0 pt-1 pr-2 text-right text-xs lg:text-sm"
+                            className="shrink-0 pt-1 pr-3 text-right text-xs lg:text-sm"
                             style={{ width: WEEKLY_YEAR_W }}
                           >
                             <div className="flex flex-col items-end gap-1">
@@ -836,8 +840,8 @@ export function TheLongGameCard({
                                 data-year-label="true"
                                 className={
                                   isCurrentYear
-                                    ? "text-foreground text-[13px] font-semibold tabular-nums lg:text-sm"
-                                    : "text-muted-foreground tabular-nums"
+                                    ? "text-foreground rounded-full border border-primary/20 bg-background/80 px-2 py-0.5 text-[13px] font-semibold tabular-nums lg:text-sm"
+                                    : "text-muted-foreground rounded-full border border-border/40 bg-background/70 px-2 py-0.5 tabular-nums"
                                 }
                               >
                                 {year}
@@ -1316,7 +1320,7 @@ function ConsistencyGradesRow({
   const rows = splitIntoBalancedRows(consistency);
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-3">
       {rows.map((row, rowIndex) => (
         <div
           key={`consistency-row-${rowIndex}`}
@@ -2162,7 +2166,7 @@ function Heatmap({
   }
 
   return (
-    <div className="relative">
+    <div className="border-border/35 relative rounded-xl border bg-background/70 px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
       <CalendarHeatmap
         startDate={startDate}
         endDate={endDate}

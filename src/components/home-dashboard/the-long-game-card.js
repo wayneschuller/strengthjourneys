@@ -1830,6 +1830,55 @@ const MONTH_NAMES = [
   "D",
 ];
 
+function getMonthlyCellStyles(count, isFuture) {
+  if (isFuture) {
+    return {
+      outerStyle: {
+        height: 30,
+        borderColor: "transparent",
+        backgroundColor: "transparent",
+      },
+      innerStyle: {},
+    };
+  }
+
+  if (count === 0) {
+    return {
+      outerStyle: {
+        height: 30,
+        borderColor: "color-mix(in srgb, var(--border) 75%, transparent)",
+        background:
+          "linear-gradient(180deg, color-mix(in srgb, var(--background) 92%, white 8%) 0%, color-mix(in srgb, var(--muted) 72%, transparent) 100%)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+        opacity: 0.75,
+      },
+      innerStyle: {
+        backgroundColor: "var(--heatmap-0)",
+        opacity: 0.55,
+      },
+    };
+  }
+
+  return {
+    outerStyle: {
+      height: 30,
+      borderColor: "color-mix(in srgb, var(--border) 62%, transparent)",
+      background:
+        "linear-gradient(180deg, color-mix(in srgb, var(--background) 88%, white 12%) 0%, color-mix(in srgb, var(--muted) 34%, transparent) 100%)",
+      boxShadow:
+        "inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 2px rgba(15,23,42,0.04)",
+    },
+    innerStyle: {
+      backgroundColor: `var(--heatmap-${count})`,
+      boxShadow:
+        count === 4
+          ? "inset 0 1px 0 rgba(255,255,255,0.18), 0 0 0 1px rgba(255,255,255,0.04)"
+          : "inset 0 1px 0 rgba(255,255,255,0.22)",
+      filter: count === 4 ? "brightness(1.08) saturate(0.9)" : "none",
+    },
+  };
+}
+
 // Aggregates parsedData into { [year]: { [month]: { activeWeeks, count, weekBreakdown } } }.
 // activeWeeks = distinct calendar weeks in that month with at least one session; count capped at 4.
 // weekBreakdown is sorted chronologically and drives the per-week rows in the monthly tooltip.
@@ -2004,24 +2053,15 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                   (year === currentYear && month > currentMonth);
                 const data = monthlyData[year]?.[month];
                 const count = data?.count ?? 0;
-                const innerStyle = isFuture
-                  ? {}
-                  : count === 0
-                    ? {
-                        backgroundColor: "var(--heatmap-0)",
-                        opacity: 0.3,
-                      }
-                    : {
-                        backgroundColor: `var(--heatmap-${count})`,
-                        ...(count === 4
-                          ? { filter: "brightness(1.15) saturate(0.8)" }
-                          : {}),
-                      };
+                const { outerStyle, innerStyle } = getMonthlyCellStyles(
+                  count,
+                  isFuture,
+                );
                 return (
                   <div
                     key={month}
-                    className={`rounded-[6px] p-[2px] transition-transform duration-150 ${!isFuture && count > 0 ? "hover:scale-105" : ""}`}
-                    style={{ height: 28 }}
+                    className={`rounded-[10px] border p-[3px] transition-transform duration-150 ${!isFuture && count > 0 ? "hover:scale-[1.04]" : ""}`}
+                    style={outerStyle}
                     onMouseOver={
                       !isFuture
                         ? (e) => handleMouseOver(e, year, month, data)
@@ -2030,7 +2070,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                     onMouseLeave={!isFuture ? handleMouseLeave : undefined}
                   >
                     <div
-                      className="h-full w-full rounded-[4px]"
+                      className="h-full w-full rounded-[7px]"
                       style={innerStyle}
                     />
                   </div>

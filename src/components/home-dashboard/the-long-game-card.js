@@ -1636,8 +1636,11 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
     [parsedData, startYear, endYear, isDemoMode],
   );
 
-  const years = [];
-  for (let y = startYear; y <= endYear; y++) years.push(y);
+  const years = useMemo(() => {
+    const nextYears = [];
+    for (let y = startYear; y <= endYear; y++) nextYears.push(y);
+    return nextYears;
+  }, [startYear, endYear]);
 
   // Used to distinguish future weeks (no data yet) from past missed weeks
   const todayDate = new Date();
@@ -1830,53 +1833,62 @@ const MONTH_NAMES = [
   "D",
 ];
 
-function getMonthlyCellStyles(count, isFuture) {
+function getMonthlyShade(level) {
+  const clampedLevel = Math.max(1, Math.min(level, 6));
+  const mixPercent = 18 + clampedLevel * 14;
+  return `color-mix(in srgb, var(--heatmap-4) ${mixPercent}%, var(--heatmap-1))`;
+}
+
+function getMonthlyCellStyles(level, isFuture) {
   if (isFuture) {
-    return {
-      outerStyle: {
-        height: 30,
-        borderColor: "transparent",
-        backgroundColor: "transparent",
-      },
-      innerStyle: {},
-    };
+    return {};
   }
 
-  if (count === 0) {
+  if (level === 0) {
     return {
-      outerStyle: {
-        height: 30,
-        borderColor: "color-mix(in srgb, var(--border) 75%, transparent)",
-        background:
-          "linear-gradient(180deg, color-mix(in srgb, var(--background) 92%, white 8%) 0%, color-mix(in srgb, var(--muted) 72%, transparent) 100%)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
-        opacity: 0.75,
-      },
-      innerStyle: {
-        backgroundColor: "var(--heatmap-0)",
-        opacity: 0.55,
-      },
+      backgroundColor: "var(--heatmap-0)",
+      opacity: 0.38,
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
     };
   }
 
   return {
-    outerStyle: {
-      height: 30,
-      borderColor: "color-mix(in srgb, var(--border) 62%, transparent)",
-      background:
-        "linear-gradient(180deg, color-mix(in srgb, var(--background) 88%, white 12%) 0%, color-mix(in srgb, var(--muted) 34%, transparent) 100%)",
-      boxShadow:
-        "inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 2px rgba(15,23,42,0.04)",
-    },
-    innerStyle: {
-      backgroundColor: `var(--heatmap-${count})`,
-      boxShadow:
-        count === 4
-          ? "inset 0 1px 0 rgba(255,255,255,0.18), 0 0 0 1px rgba(255,255,255,0.04)"
-          : "inset 0 1px 0 rgba(255,255,255,0.22)",
-      filter: count === 4 ? "brightness(1.08) saturate(0.9)" : "none",
-    },
+    backgroundColor: getMonthlyShade(level),
+    boxShadow:
+      "inset 0 1px 0 rgba(255,255,255,0.22), 0 0 0 1px rgba(15,23,42,0.04)",
+    filter: level >= 5 ? "saturate(0.96) brightness(1.02)" : "none",
   };
+}
+
+function buildMonthlyRelativeLevels(monthlyData, years) {
+  const months = [];
+
+  years.forEach((year) => {
+    Object.entries(monthlyData[year] ?? {}).forEach(([month, data]) => {
+      if ((data?.totalSessions ?? 0) > 0) {
+        months.push({
+          year,
+          month: Number(month),
+          totalSessions: data.totalSessions,
+        });
+      }
+    });
+  });
+
+  if (months.length === 0) return {};
+
+  const sorted = [...months].sort((a, b) => a.totalSessions - b.totalSessions);
+  const relativeLevels = {};
+
+  sorted.forEach((entry, index) => {
+    const percentile =
+      sorted.length === 1 ? 1 : index / Math.max(sorted.length - 1, 1);
+    const level = 1 + Math.round(percentile * 5);
+    if (!relativeLevels[entry.year]) relativeLevels[entry.year] = {};
+    relativeLevels[entry.year][entry.month] = level;
+  });
+
+  return relativeLevels;
 }
 
 // Aggregates parsedData into { [year]: { [month]: { activeWeeks, count, weekBreakdown } } }.
@@ -1908,7 +1920,15 @@ function generateMonthlyHeatmapData(
         const weekBreakdown = Array.from({ length: count }, () => ({
           sessions: Math.floor(Math.random() * 4) + 1,
         }));
-        result[year][month] = { activeWeeks: count, count, weekBreakdown };
+        result[year][month] = {
+          activeWeeks: count,
+          count,
+          totalSessions: weekBreakdown.reduce(
+            (sum, week) => sum + week.sessions,
+            0,
+          ),
+          weekBreakdown,
+        };
       }
     }
     return result;
@@ -1941,6 +1961,7 @@ function generateMonthlyHeatmapData(
       result[yearStr][monthStr] = {
         activeWeeks,
         count: Math.min(activeWeeks, 4),
+        totalSessions: weekBreakdown.reduce((sum, week) => sum + week.sessions, 0),
         weekBreakdown,
       };
     }
@@ -1966,8 +1987,15 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
     [parsedData, startYear, endYear, isDemoMode],
   );
 
-  const years = [];
-  for (let y = startYear; y <= endYear; y++) years.push(y);
+  const years = useMemo(() => {
+    const nextYears = [];
+    for (let y = startYear; y <= endYear; y++) nextYears.push(y);
+    return nextYears;
+  }, [startYear, endYear]);
+  const relativeLevels = useMemo(
+    () => buildMonthlyRelativeLevels(monthlyData, years),
+    [monthlyData, years],
+  );
 
   const todayDate = new Date();
   const currentYear = todayDate.getFullYear();
@@ -2019,7 +2047,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       </div>
 
       {/* Year rows */}
-      <div className="flex w-full flex-col gap-1.5">
+      <div className="flex w-full flex-col gap-1">
         {years.map((year) => (
           <div
             key={year}
@@ -2052,28 +2080,29 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                   year > currentYear ||
                   (year === currentYear && month > currentMonth);
                 const data = monthlyData[year]?.[month];
-                const count = data?.count ?? 0;
-                const { outerStyle, innerStyle } = getMonthlyCellStyles(
-                  count,
+                const relativeLevel =
+                  data?.totalSessions > 0
+                    ? relativeLevels[year]?.[month] ?? 1
+                    : 0;
+                const cellStyle = getMonthlyCellStyles(
+                  relativeLevel,
                   isFuture,
                 );
                 return (
                   <div
                     key={month}
-                    className={`rounded-[10px] border p-[3px] transition-transform duration-150 ${!isFuture && count > 0 ? "hover:scale-[1.04]" : ""}`}
-                    style={outerStyle}
+                    className={`rounded-[8px] transition-transform duration-150 ${!isFuture && relativeLevel > 0 ? "hover:scale-[1.03]" : ""}`}
+                    style={{
+                      height: 26,
+                      ...cellStyle,
+                    }}
                     onMouseOver={
                       !isFuture
                         ? (e) => handleMouseOver(e, year, month, data)
                         : undefined
                     }
                     onMouseLeave={!isFuture ? handleMouseLeave : undefined}
-                  >
-                    <div
-                      className="h-full w-full rounded-[7px]"
-                      style={innerStyle}
-                    />
-                  </div>
+                  />
                 );
               })}
             </div>
@@ -2083,19 +2112,24 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
 
       {/* Legend */}
       <div className="text-muted-foreground mt-3 flex flex-col gap-1 text-[10px]">
-        <span className="font-medium">Active weeks per month</span>
+        <span className="font-medium">Relative monthly activity</span>
         <div className="flex items-center gap-3">
-          {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="flex items-center gap-1.5">
+          {[
+            { level: 1, label: "Low" },
+            { level: 3, label: "Mid" },
+            { level: 6, label: "High" },
+          ].map(({ level, label }) => (
+            <div key={label} className="flex items-center gap-1.5">
               <div
                 className="shrink-0 rounded-[4px]"
                 style={{
                   width: 14,
                   height: 14,
-                  backgroundColor: `var(--heatmap-${n})`,
+                  backgroundColor: getMonthlyShade(level),
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)",
                 }}
               />
-              <span>{n === 4 ? "4+" : n}</span>
+              <span>{label}</span>
             </div>
           ))}
         </div>

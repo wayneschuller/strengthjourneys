@@ -3,10 +3,10 @@
 import "@/styles/globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Layout } from "@/components/layout";
+import { ThemeProvider } from "@/components/ui-shell/theme-provider";
+import { Layout } from "@/components/ui-shell/layout";
 import { Toaster } from "@/components/ui/toaster";
-import { AnalyticsSession } from "@/components/analytics-session";
+import { AnalyticsSession } from "@/components/ui-shell/analytics-session";
 import { SessionProvider } from "next-auth/react";
 import { useEffect } from "react";
 import { useRouter } from "next/router";

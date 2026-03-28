@@ -1,3 +1,7 @@
+/**
+ * Shared date helpers for the dashboard's YYYY-MM-DD data model.
+ * Keep week math canonical here so cards and heatmaps agree on Monday-first buckets.
+ */
 export function parseYmdUtc(dateStr) {
   return new Date(dateStr + "T00:00:00Z");
 }
@@ -118,6 +122,44 @@ export function getWeekKeyFromDateStr(dateStr) {
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   const day = String(d.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+const DAY_NUMBER_CACHE = new Map();
+const FIRST_WEEK_KEY_CACHE = new Map();
+const FIRST_WEEK_DAY_NUMBER_CACHE = new Map();
+
+function getUtcDayNumber(dateStr) {
+  const cached = DAY_NUMBER_CACHE.get(dateStr);
+  if (cached !== undefined) return cached;
+  const dayNumber = Math.floor(parseYmdUtc(dateStr).getTime() / 86400000);
+  DAY_NUMBER_CACHE.set(dateStr, dayNumber);
+  return dayNumber;
+}
+
+function getFirstWeekKeyForYear(year) {
+  const cached = FIRST_WEEK_KEY_CACHE.get(year);
+  if (cached) return cached;
+  const firstWeekKey = getWeekKeyFromDateStr(`${year}-01-01`);
+  FIRST_WEEK_KEY_CACHE.set(year, firstWeekKey);
+  return firstWeekKey;
+}
+
+function getFirstWeekDayNumberForYear(year) {
+  const cached = FIRST_WEEK_DAY_NUMBER_CACHE.get(year);
+  if (cached !== undefined) return cached;
+  const dayNumber = getUtcDayNumber(getFirstWeekKeyForYear(year));
+  FIRST_WEEK_DAY_NUMBER_CACHE.set(year, dayNumber);
+  return dayNumber;
+}
+
+export function getCalendarYearWeekIndexFromWeekKey(year, weekKey) {
+  const deltaDays =
+    getUtcDayNumber(weekKey) - getFirstWeekDayNumberForYear(year);
+  return Math.floor(deltaDays / 7) + 1;
+}
+
+export function getCalendarYearWeekStartFromIndex(year, weekIndex) {
+  return addDaysFromStr(getFirstWeekKeyForYear(year), (weekIndex - 1) * 7);
 }
 
 export function daysInMonth(y, month1Based) {

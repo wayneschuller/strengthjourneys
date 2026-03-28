@@ -38,6 +38,12 @@ import { motion } from "motion/react";
 import { processConsistency } from "@/lib/consistency";
 import { getGradeAndColor } from "@/lib/consistency-grades";
 import {
+  getCalendarYearWeekIndexFromWeekKey,
+  getCalendarYearWeekStartFromIndex,
+  getWeekKeyFromDateStr,
+  parseYmdUtc,
+} from "@/lib/date-utils";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -1548,35 +1554,28 @@ const WEEKLY_GAP = 2; // px gap between cells
 const MONTHLY_GAP = 5; // px gap between monthly cells (wider for breathing room)
 const WEEKLY_YEAR_W = 48; // px for year label column
 
-const WEEKLY_MONTH_LABELS = [
-  { label: "J", week: 1 },
-  { label: "F", week: 5 },
-  { label: "M", week: 9 },
-  { label: "A", week: 14 },
-  { label: "M", week: 18 },
-  { label: "J", week: 22 },
-  { label: "J", week: 27 },
-  { label: "A", week: 31 },
-  { label: "S", week: 35 },
-  { label: "O", week: 40 },
-  { label: "N", week: 44 },
-  { label: "D", week: 48 },
-];
-
-// Returns which calendar week of the year (1–53) a date string falls in.
-// Week 1 = Jan 1–7, week 2 = Jan 8–14, etc. No ISO week ambiguity.
-function getCalendarWeekOfYear(dateStr) {
-  const date = new Date(dateStr + "T00:00:00");
-  const startOfYear = new Date(date.getFullYear(), 0, 1);
-  const dayOfYear = Math.floor((date - startOfYear) / 86400000) + 1;
-  return Math.ceil(dayOfYear / 7);
+function buildWeeklyMonthLabels(year) {
+  return MONTH_NAMES.map((label, monthIndex) => ({
+    label,
+    week: getCalendarYearWeekIndexFromWeekKey(
+      year,
+      getWeekKeyFromDateStr(
+        `${year}-${String(monthIndex + 1).padStart(2, "0")}-01`,
+      ),
+    ),
+  })).filter(
+    ({ week }, index, labels) =>
+      week >= 1 &&
+      week <= 53 &&
+      labels.findIndex((candidate) => candidate.week === week) === index,
+  );
 }
 
-// Returns "MMM d" for the first day of the given (year, weekNum) pair.
 function getWeekStartDate(year, weekNum) {
-  const jan1 = new Date(year, 0, 1);
-  const weekStart = new Date(jan1.getTime() + (weekNum - 1) * 7 * 86400000);
-  return format(weekStart, "MMM d");
+  return format(
+    parseYmdUtc(getCalendarYearWeekStartFromIndex(year, weekNum)),
+    "MMM d",
+  );
 }
 
 // Aggregates parsedData into { [year]: { [weekNum]: { sessions, count } } }.
@@ -1597,11 +1596,23 @@ function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
   }
 
   const weekMap = {};
+  const dateToWeekKey = new Map();
+  const yearWeekIndexCache = new Map();
   for (const lift of parsedData) {
     if (lift.isGoal) continue;
     const year = parseInt(lift.date.substring(0, 4));
     if (year < startYear || year > endYear) continue;
-    const weekNum = getCalendarWeekOfYear(lift.date);
+    let weekKey = dateToWeekKey.get(lift.date);
+    if (weekKey === undefined) {
+      weekKey = getWeekKeyFromDateStr(lift.date);
+      dateToWeekKey.set(lift.date, weekKey);
+    }
+    const yearWeekCacheKey = `${year}:${weekKey}`;
+    let weekNum = yearWeekIndexCache.get(yearWeekCacheKey);
+    if (weekNum === undefined) {
+      weekNum = getCalendarYearWeekIndexFromWeekKey(year, weekKey);
+      yearWeekIndexCache.set(yearWeekCacheKey, weekNum);
+    }
     if (!weekMap[year]) weekMap[year] = {};
     if (!weekMap[year][weekNum])
       weekMap[year][weekNum] = { sessionDays: new Set() };
@@ -1645,7 +1656,14 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   // Used to distinguish future weeks (no data yet) from past missed weeks
   const todayDate = new Date();
   const currentYear = todayDate.getFullYear();
-  const currentWeekNum = getCalendarWeekOfYear(format(todayDate, "yyyy-MM-dd"));
+  const currentWeekNum = getCalendarYearWeekIndexFromWeekKey(
+    currentYear,
+    getWeekKeyFromDateStr(format(todayDate, "yyyy-MM-dd")),
+  );
+  const weeklyMonthLabels = useMemo(
+    () => buildWeeklyMonthLabels(currentYear),
+    [currentYear],
+  );
 
   const handleMouseOver = useCallback((e, year, weekNum, data) => {
     const cellRect = e.target.getBoundingClientRect();
@@ -1676,7 +1694,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       <div className="border-border/15 mb-1 flex w-full items-end border-b pb-0.5">
         <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
         <div style={cellGridStyle}>
-          {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
+          {weeklyMonthLabels.map(({ label, week }) => (
             <span
               key={week}
               className="text-muted-foreground/80 overflow-visible text-[9px] tracking-[0.04em] whitespace-nowrap lg:text-[11px] 2xl:text-xs"
@@ -1936,17 +1954,21 @@ function generateMonthlyHeatmapData(
 
   // Per week within each month, collect unique training days (dates)
   const monthMap = {};
+  const dateToWeekKey = new Map();
   for (const lift of parsedData) {
     if (lift.isGoal) continue;
     const year = parseInt(lift.date.substring(0, 4));
     if (year < startYear || year > endYear) continue;
     const month = parseInt(lift.date.substring(5, 7));
-    const weekNum = getCalendarWeekOfYear(lift.date);
+    let weekKey = dateToWeekKey.get(lift.date);
+    if (weekKey === undefined) {
+      weekKey = getWeekKeyFromDateStr(lift.date);
+      dateToWeekKey.set(lift.date, weekKey);
+    }
     if (!monthMap[year]) monthMap[year] = {};
     if (!monthMap[year][month]) monthMap[year][month] = {};
-    if (!monthMap[year][month][weekNum])
-      monthMap[year][month][weekNum] = new Set();
-    monthMap[year][month][weekNum].add(lift.date);
+    if (!monthMap[year][month][weekKey]) monthMap[year][month][weekKey] = new Set();
+    monthMap[year][month][weekKey].add(lift.date);
   }
 
   const result = {};
@@ -1955,8 +1977,8 @@ function generateMonthlyHeatmapData(
     for (const [monthStr, weekData] of Object.entries(months)) {
       // Sort by week number so tooltip rows are chronological
       const weekBreakdown = Object.entries(weekData)
-        .sort(([a], [b]) => parseInt(a) - parseInt(b))
-        .map(([, days]) => ({ sessions: days.size }));
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([weekKey, days]) => ({ weekKey, sessions: days.size }));
       const activeWeeks = weekBreakdown.length;
       result[yearStr][monthStr] = {
         activeWeeks,
@@ -2172,10 +2194,11 @@ function MonthlyTooltipContent({ value }) {
       </p>
       {weekBreakdown?.length > 0 ? (
         <div className="flex flex-col gap-0.5">
-          {weekBreakdown.map(({ sessions }, i) => (
-            <p key={i} className="text-muted-foreground">
+          {weekBreakdown.map(({ sessions, weekKey }, i) => (
+            <p key={weekKey ?? i} className="text-muted-foreground">
               <span className="text-foreground font-semibold">
-                Week {i + 1}:
+                Week of{" "}
+                {weekKey ? format(parseYmdUtc(weekKey), "MMM d") : `Week ${i + 1}`}:
               </span>{" "}
               {sessions} {sessions === 1 ? "session" : "sessions"}{" "}
               {weekEmoji(sessions)}

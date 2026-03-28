@@ -3,7 +3,7 @@
 This document provides guidance for autonomous coding agents operating in the
 Strength Journeys repository.
 
-The project is a **Next.js 14 application using the Pages Router (JavaScript only)**
+The project is a **Next.js 16 application using the Pages Router (JavaScript only)**
 and is deployed on Vercel.
 
 ---
@@ -24,7 +24,13 @@ npm install
 npm run dev
 ```
 
-Starts the Next.js dev server.
+Starts the Next.js dev server with Turbopack.
+
+If Turbopack itself seems to be the problem, fall back to:
+
+```
+npm run dev:webpack
+```
 
 ### Production Build
 
@@ -68,7 +74,8 @@ If adding tests:
 - Co-locate tests as `*.test.js`
 - Add a `npm run test` script
 
-Until then, validation = lint + production build.
+Until then, validation = lint. Only run `npm run build` when the user asks or
+when you specifically need production-build confirmation.
 
 ---
 
@@ -76,23 +83,48 @@ Until then, validation = lint + production build.
 
 ---
 
-- Next.js 14
+- Next.js 16
 - Pages Router (NOT App Router)
 - JavaScript only (NO TypeScript)
+- React 19
 - Tailwind CSS v4
 - shadcn/ui (Radix primitives)
 - Recharts for charts
 - NextAuth v4 (Google OAuth)
-- Data from Google Sheets (read-only via API route)
+- Google Sheets is the primary user data source
+- Lightweight lifecycle/support metadata is stored in Vercel KV
+- Founder/support notification emails use Resend on best-effort server-side paths
 
 Key data flow:
 
-1. `src/pages/api/read-gsheet.js`
-2. `src/lib/parse-data.js`
-3. `src/lib/processing-utils.js`
-4. `UserLiftingDataProvider` (context)
+1. `src/pages/api/sheet/read.js` fetches linked sheet values + Drive metadata
+2. `src/lib/data-sources/import-dispatcher.js` handles file-import format detection and parsing
+3. `src/lib/parse-data.js` and parser utilities normalize rows into canonical lift objects
+4. `src/lib/processing-utils.js` computes historical PRs, tonnage, and derived lift summaries
+5. `src/hooks/use-userlift-data.js` is the central app data provider
 
-All analysis is client-side. No user data is stored server-side.
+Important supporting flows:
+
+1. `src/pages/api/sheet/resolve.js` decides bootstrap/recovery/switch-sheet flow
+2. `src/lib/sheet-flow.js` contains the shared sheet-linking/provisioning logic
+3. `src/pages/api/sheet/import-history.js` handles authenticated import merges into the linked sheet
+4. `src/components/import-workflow-section.js` and `src/components/sheet-setup-dialog.js` are the main import entry points
+
+All lifting analysis is client-side. The server does store limited operational
+metadata in KV for onboarding, recovery, and support visibility, but not the
+user's analyzed training state.
+
+### Global Provider Order
+
+Defined in `src/pages/_app.js`, nested in this order:
+
+1. `ThemeProvider`
+2. `SessionProvider`
+3. `UserLiftingDataProvider`
+4. `TimerProvider`
+5. `LiftColorsProvider`
+6. `AthleteBioProvider`
+7. `DevActivityMonitorProvider`
 
 ---
 
@@ -174,6 +206,11 @@ Naming:
   - `isHistoricalPR`
   - `isGoal`
 - Do not modify this schema without updating parsing + processing
+- Imported file preview data is stored client-side in `sessionStorage` and
+  overrides the normal linked-sheet pipeline until cleared
+- `sheetInfo` in localStorage is the canonical linked-sheet pointer
+- Date ordering in parsed data relies on lexical `YYYY-MM-DD` comparisons;
+  avoid unnecessary `new Date(...)` creation in hot paths
 
 ### Styling
 
@@ -237,6 +274,8 @@ Checklist for adding a new theme (always add a dark variant too):
 - Avoid unnecessary re-renders
 - Avoid expensive computations inside render
 - Avoid deep object recreation inside JSX
+- Prefer single-pass summaries over extra server-side scans, especially in API
+  routes that already process large import payloads
 
 ---
 
@@ -253,6 +292,24 @@ Checklist for adding a new theme (always add a dark variant too):
 - Do NOT use `generateMetadata`
 
 The project is intentionally committed to the Pages Router.
+
+---
+
+## 5.5. API and Import Flow Notes
+
+---
+
+- The primary linked-sheet read route is `src/pages/api/sheet/read.js`, not the
+  older `read-gsheet.js` path referenced in some historical docs/comments
+- Import parsing can happen for anonymous users entirely client-side
+- Import merges into a linked Google Sheet only happen for authenticated users
+  through `src/pages/api/sheet/import-history.js`
+- Founder/support notifications should stay best-effort and should not add
+  visible extra client requests unless the user explicitly wants that tradeoff
+- If adding metadata for founder/support emails, keep it lightweight and
+  support-oriented rather than product-analytics-heavy
+- Existing server-side founder email transport lives in
+  `src/pages/api/auth/[...nextauth].js` via `promptDeveloper(...)`
 
 ---
 
@@ -284,6 +341,8 @@ Agents operating in this repo should:
 - Run lint after every change
 - Love the default workflow of committing and pushing to `main` as you go unless
   the user says otherwise
+- If you make a tracked repository change and the user has not opted out, finish
+  the task by committing and pushing to `main`
 - If you discover you are on `stable`, say so immediately before editing and
   move the work to `main` unless the user explicitly wants a production-branch change
 - Do not run `npm run build` unless the user explicitly asks (it can disrupt the user's local `npm run dev` flow)
@@ -291,6 +350,8 @@ Agents operating in this repo should:
 - Never migrate to App Router
 - Keep changes aligned with existing conventions
 - Park future follow-up tasks and todos in `.agents/follow-up-audit-items.md`
+- Prefer reusing shared flows (`sheet-flow.js`, import helpers, analytics
+  helpers, `promptDeveloper`) over creating one-off parallel implementations
 
 If unsure, follow existing patterns in nearby files.
 

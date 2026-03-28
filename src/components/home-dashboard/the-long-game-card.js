@@ -1146,18 +1146,40 @@ const MAX_LIFTS_SHOWN = 6;
 
 // --- Consistency Grades ---
 
-const LABEL_ABBREV = {
-  Week: "W",
-  Month: "M",
-  "3 Month": "3M",
-  "Half Year": "6M",
-  Year: "Y",
-  "24 Month": "2Y",
-  "5 Year": "5Y",
-  Decade: "10Y",
-};
-
 const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
+
+function getConsistencyLabelAbbrev(label) {
+  if (label === "Week") return "W";
+  if (label === "Month") return "M";
+  if (label === "Half Year") return "6M";
+  if (label === "Year") return "Y";
+  if (label === "24 Month") return "2Y";
+  if (label === "Decade") return "10Y";
+
+  const monthMatch = label.match(/^(\d+) Month$/);
+  if (monthMatch) return `${monthMatch[1]}M`;
+
+  const yearMatch = label.match(/^(\d+) Year$/);
+  if (yearMatch) return `${yearMatch[1]}Y`;
+
+  return label;
+}
+
+function splitIntoBalancedRows(items, maxItemsPerRow = 5) {
+  const rowCount = Math.max(1, Math.ceil(items.length / maxItemsPerRow));
+  const minItemsPerRow = Math.floor(items.length / rowCount);
+  const extraItems = items.length % rowCount;
+  const rows = [];
+  let startIndex = 0;
+
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+    const rowSize = minItemsPerRow + (rowIndex < extraItems ? 1 : 0);
+    rows.push(items.slice(startIndex, startIndex + rowSize));
+    startIndex += rowSize;
+  }
+
+  return rows;
+}
 
 // Animated SVG ring showing a consistency grade letter and percentage fill for one time window.
 // Short-term rings (W/M/3M) render with a thicker stroke and full opacity to emphasise recent form;
@@ -1178,7 +1200,7 @@ function GradeCircle({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
-  const abbrev = LABEL_ABBREV[label] ?? label;
+  const abbrev = getConsistencyLabelAbbrev(label);
 
   return (
     <TooltipProvider>
@@ -1289,13 +1311,9 @@ function ConsistencyGradesRow({
 
   if (!consistency || consistency.length === 0) return null;
 
-  const circleSize = consistency.length >= 7 ? 56 : 64;
-  const rowCount = consistency.length >= 7 ? 2 : 1;
-  const midpoint = Math.ceil(consistency.length / rowCount);
-  const rows =
-    rowCount === 1
-      ? [consistency]
-      : [consistency.slice(0, midpoint), consistency.slice(midpoint)];
+  const circleSize =
+    consistency.length >= 11 ? 48 : consistency.length >= 7 ? 56 : 64;
+  const rows = splitIntoBalancedRows(consistency);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -1305,7 +1323,10 @@ function ConsistencyGradesRow({
           className="flex items-start justify-center gap-x-3 sm:gap-x-4"
         >
           {row.map((item, index) => {
-            const sequenceIndex = rowIndex * midpoint + index;
+            const sequenceIndex =
+              rows
+                .slice(0, rowIndex)
+                .reduce((count, priorRow) => count + priorRow.length, 0) + index;
 
             return (
               <GradeCircle

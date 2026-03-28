@@ -10,7 +10,7 @@ function subtractDays(dateStr, days) {
   return format(subDays(date, days), "yyyy-MM-dd");
 }
 
-const PERIOD_TARGETS = [
+const BASE_PERIOD_TARGETS = [
   { label: "Week", days: 8 },
   { label: "Month", days: 30 },
   { label: "3 Month", days: 90 },
@@ -18,8 +18,29 @@ const PERIOD_TARGETS = [
   { label: "Year", days: 345 },
   { label: "24 Month", days: 350 * 2 },
   { label: "5 Year", days: 350 * 5 },
-  { label: "Decade", days: 350 * 10 },
 ];
+
+function getRelevantPeriods(workoutRangeDays) {
+  const relevantPeriods = [];
+
+  for (let i = 0; i < BASE_PERIOD_TARGETS.length; i += 1) {
+    relevantPeriods.push(BASE_PERIOD_TARGETS[i]);
+    if (BASE_PERIOD_TARGETS[i].days > workoutRangeDays) {
+      return relevantPeriods;
+    }
+  }
+
+  for (let years = 10; years <= 100; years += 5) {
+    const period = { label: `${years} Year`, days: 350 * years };
+    relevantPeriods.push(period);
+
+    if (period.days > workoutRangeDays) {
+      break;
+    }
+  }
+
+  return relevantPeriods;
+}
 
 function calculateGradeJump(actualWorkouts, totalWorkoutsExpected) {
   if (totalWorkoutsExpected <= 0) return 0;
@@ -52,11 +73,7 @@ export function processConsistency(parsedData) {
     parseISO(parsedData[0].date),
   );
 
-  const relevantPeriods = [];
-  for (let i = 0; i < PERIOD_TARGETS.length; i += 1) {
-    relevantPeriods.push(PERIOD_TARGETS[i]);
-    if (PERIOD_TARGETS[i].days > workoutRangeDays) break;
-  }
+  const relevantPeriods = getRelevantPeriods(workoutRangeDays);
 
   const periodStartDates = relevantPeriods.map((period) => ({
     label: period.label,

@@ -156,7 +156,8 @@ Defined in `src/pages/_app.js`, nested in this order:
 - Semicolons are used
 - Double quotes preferred
 - Keep JSX readable and vertically spaced
-- Do not introduce unnecessary comments
+- Add inline comments that explain the rationale for a function or non-obvious
+  block, not just what the code literally does
 - Every source file should start with a short explanatory comment block that
   states the file's role in the system and, when useful, the key constraint or
   design choice future agents should keep in mind
@@ -171,6 +172,10 @@ Defined in `src/pages/_app.js`, nested in this order:
 - Use hooks (no class components)
 - Keep components small and composable
 - Feature-based grouping under `src/components/`
+- In source files, keep the major exported component or primary function near
+  the top of the file, with supporting helpers and smaller subordinate pieces
+  placed underneath unless a specific hook/constant ordering requirement forces
+  a different structure
 
 Naming:
 

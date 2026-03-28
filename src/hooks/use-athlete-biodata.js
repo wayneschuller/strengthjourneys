@@ -15,8 +15,8 @@ import {
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { useStateFromQueryOrLocalStorage } from "./use-state-from-query-or-localStorage";
-import { useUserLiftingData } from "./use-userlift-data";
+import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 /** Emoji for each strength level, shared across UI */
 export const STRENGTH_LEVEL_EMOJI = {

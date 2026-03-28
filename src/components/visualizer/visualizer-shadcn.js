@@ -3,7 +3,7 @@ import { useMemo, useEffect, useState } from "react";
 import {
   SidePanelSelectLiftsButton,
   VISUALIZER_STORAGE_PREFIX,
-} from "../side-panel-lift-chooser";
+} from "@/components/side-panel-lift-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
@@ -25,12 +25,12 @@ import {
   E1RMFormulaSelect,
   SpecialHtmlLabel,
   MultiLiftTooltipContent,
-} from "./visualizer-utils";
+} from "@/components/visualizer/visualizer-utils";
 import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
-} from "./time-range-select";
+} from "@/components/visualizer/time-range-select";
 
 import {
   Card,
@@ -65,7 +65,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { processVisualizerData, getYearLabels } from "./visualizer-processing";
+import { processVisualizerData, getYearLabels } from "@/components/visualizer/visualizer-processing";
 
 // Wraps MultiLiftTooltipContent and syncs the hovered date to TheLatestSessionCard via setHighlightDate.
 // recharts v3 doesn't reliably populate activePayload in onMouseMove for numeric/time XAxis,

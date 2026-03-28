@@ -23,7 +23,7 @@ import {
   normalizeColumnName,
   convertStringToInt,
   convertWeightAndUnitType,
-} from "./parser-utilities";
+} from "@/lib/data-sources/parser-utilities";
 
 /**
  * Parse the Strength Journeys Google Sheet format into `ParsedData`.

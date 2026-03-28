@@ -1,7 +1,7 @@
 import { Lightbulb } from "lucide-react";
 import { useMemo } from "react";
 
-import { InspirationCard } from "./inspiration-card";
+import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
 
 const FIRST_WEEK_TIPS = [
   "Run the same basic lifts twice before changing anything dramatic.",

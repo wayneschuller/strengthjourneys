@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { isValidElement } from "react";
 
-import { CodeBlock } from "./code-block";
+import { CodeBlock } from "@/components/ai-elements/code-block";
 
 export const Tool = ({
   className,

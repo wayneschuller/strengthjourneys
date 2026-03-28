@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { HomeInspirationCards } from "./home-inspiration-cards";
-import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
+import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
+import { DataSheetStatus, RowProcessingIndicator } from "@/components/home-dashboard/row-processing-indicator";
 import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
 import { TheWeekInIronCard } from "@/components/home-dashboard/the-week-in-iron-card";
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";

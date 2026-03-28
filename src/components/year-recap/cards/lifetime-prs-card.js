@@ -4,13 +4,13 @@ import {
   pickQuirkyPhrase,
   PR_HIGHLIGHTS_PHRASES,
   PR_EMPTY_PHRASES,
-} from "../phrases";
+} from "@/components/year-recap/phrases";
 import { getReadableDateString, getLifetimePRsAchievedInYear, getDisplayWeight } from "@/lib/processing-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Trophy } from "lucide-react";
 import { motion } from "motion/react";
-import { LiftSvg, getLiftSvgPath } from "../lift-svg";
+import { LiftSvg, getLiftSvgPath } from "@/components/year-recap/lift-svg";
 
 /**
  * Recap slide listing all lifetime personal records the user achieved during the given year.

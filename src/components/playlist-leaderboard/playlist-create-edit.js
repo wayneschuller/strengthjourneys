@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { validateAndProcessPlaylist } from "./playlist-utils";
+import { validateAndProcessPlaylist } from "@/components/playlist-leaderboard/playlist-utils";
 
 /**
  * Modal dialog for creating a new playlist or editing an existing one on the gym playlist leaderboard.

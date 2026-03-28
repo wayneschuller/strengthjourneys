@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 
 import { STREAK_ENCOURAGMENTS } from "@/lib/home-dashboard/inspiration-card-copy";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
-import { InspirationCard } from "./inspiration-card";
+import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
 
 export function ConsistencyStreakCard({ allSessionDates, animationDelay = 0 }) {
   const { currentStreak, bestStreak, sessionsThisWeek } = useMemo(

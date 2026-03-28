@@ -5,11 +5,11 @@ import {
   pickQuirkyPhrase,
   MOST_TRAINED_LIFT_PHRASES,
   MOST_TRAINED_LIFT_LABELS,
-} from "../phrases";
+} from "@/components/year-recap/phrases";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getLiftVolumeMultiplier } from "@/lib/processing-utils";
 import { Trophy } from "lucide-react";
-import { LiftSvg } from "../lift-svg";
+import { LiftSvg } from "@/components/year-recap/lift-svg";
 
 /**
  * Recap slide highlighting the lift the user trained most frequently during the given year, with set/rep counts and a session frequency sentence.

@@ -7,7 +7,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, logTiming, getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
-import { SessionRow } from "./visualizer-utils";
+import { SessionRow } from "@/components/visualizer/visualizer-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
-} from "./time-range-select";
+} from "@/components/visualizer/time-range-select";
 
 import {
   Card,
@@ -45,7 +45,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { getYearLabels } from "./visualizer-processing";
+import { getYearLabels } from "@/components/visualizer/visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 

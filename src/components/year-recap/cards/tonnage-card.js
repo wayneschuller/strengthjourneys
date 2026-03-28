@@ -5,7 +5,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Dumbbell } from "lucide-react";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
-import { getLiftSvgPath } from "../lift-svg";
+import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 
 /**
  * Recap slide displaying total weight moved (tonnage) for the year, a fun real-world equivalent comparison, and per-lift bar chart for the Big Four lifts.

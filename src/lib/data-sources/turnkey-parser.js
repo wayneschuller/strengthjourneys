@@ -1,5 +1,5 @@
 import { devLog, recordTiming } from "@/lib/processing-utils";
-import { normalizeLiftTypeNames } from "./parser-utilities";
+import { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
 
 // Parse Turnkey data format
 //

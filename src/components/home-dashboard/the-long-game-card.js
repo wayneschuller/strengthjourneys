@@ -1290,21 +1290,38 @@ function ConsistencyGradesRow({
   if (!consistency || consistency.length === 0) return null;
 
   const circleSize = consistency.length >= 7 ? 56 : 64;
+  const rowCount = consistency.length >= 7 ? 2 : 1;
+  const midpoint = Math.ceil(consistency.length / rowCount);
+  const rows =
+    rowCount === 1
+      ? [consistency]
+      : [consistency.slice(0, midpoint), consistency.slice(midpoint)];
 
   return (
-    <div className="flex flex-wrap items-start justify-center gap-x-3 gap-y-4 sm:gap-x-4">
-      {consistency.map((item, index) => (
-        <GradeCircle
-          key={item.label}
-          percentage={item.percentage}
-          label={item.label}
-          tooltip={item.tooltip}
-          size={circleSize}
-          delay={index * 0.05}
-          isVisible={isVisible}
-          isShortTerm={SHORT_TERM_LABELS.has(item.label)}
-          isCaptureMode={isCaptureMode}
-        />
+    <div className="flex flex-col items-center gap-4">
+      {rows.map((row, rowIndex) => (
+        <div
+          key={`consistency-row-${rowIndex}`}
+          className="flex items-start justify-center gap-x-3 sm:gap-x-4"
+        >
+          {row.map((item, index) => {
+            const sequenceIndex = rowIndex * midpoint + index;
+
+            return (
+              <GradeCircle
+                key={item.label}
+                percentage={item.percentage}
+                label={item.label}
+                tooltip={item.tooltip}
+                size={circleSize}
+                delay={sequenceIndex * 0.05}
+                isVisible={isVisible}
+                isShortTerm={SHORT_TERM_LABELS.has(item.label)}
+                isCaptureMode={isCaptureMode}
+              />
+            );
+          })}
+        </div>
       ))}
     </div>
   );

@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { kv } from "@vercel/kv";
 import { Resend } from "resend";
+import { shouldSendFounderNotification } from "@/lib/founder-notifications";
 import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 import { devLog } from "@/lib/processing-utils";
 
@@ -347,6 +348,28 @@ const PROMPT_MESSAGES = {
       .filter(Boolean)
       .join("\n"),
   }),
+  "import-merged": (name, email, timeStr, meta) => ({
+    subject: `[SJ] Import merged — ${name}`,
+    text: [
+      `${name} (${email}) merged imported history at ${timeStr}.`,
+      meta.entryCount != null ? `Imported entries: ${meta.entryCount}` : null,
+      meta.insertedRows != null ? `Inserted rows: ${meta.insertedRows}` : null,
+      meta.dateCount != null ? `Imported dates: ${meta.dateCount}` : null,
+      meta.liftTypeCount != null ? `Lift types: ${meta.liftTypeCount}` : null,
+      meta.bigFourEntryCount != null
+        ? `Big Four entries: ${meta.bigFourEntryCount}`
+        : null,
+      meta.bigFourLiftCount != null
+        ? `Big Four lift types present: ${meta.bigFourLiftCount}`
+        : null,
+      meta.unitSystem ? `Units: ${meta.unitSystem}` : null,
+      meta.dateRange ? `Date range: ${meta.dateRange}` : null,
+      meta.topLiftTypes ? `Top lifts: ${meta.topLiftTypes}` : null,
+      meta.durationMs != null ? `Merge duration: ${meta.durationMs}ms` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
 };
 
 async function getSignInSupportMeta(email) {
@@ -384,6 +407,7 @@ export async function promptDeveloper(event, user, meta = {}) {
     const to = process.env.FEEDBACK_EMAIL_TO;
     if (!apiKey || !to || !user?.email) return;
     if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") return;
+    if (!shouldSendFounderNotification(event)) return;
 
     const name = user.name || user.email;
     const timeStr =

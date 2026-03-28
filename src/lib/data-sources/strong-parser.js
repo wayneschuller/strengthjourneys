@@ -1,5 +1,5 @@
 import { recordTiming } from "@/lib/processing-utils";
-import { normalizeLiftTypeNames } from "./parser-utilities";
+import { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
 
 function getColumnIndex(headers, candidates) {
   for (const candidate of candidates) {

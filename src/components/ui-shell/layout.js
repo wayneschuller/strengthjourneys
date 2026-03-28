@@ -8,15 +8,15 @@ import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
-import { NavBar } from "@/components/nav-bar";
-import { Footer } from "@/components/footer";
-import { AppBackground } from "@/components/app-background";
+import { NavBar } from "@/components/ui-shell/nav-bar";
+import { Footer } from "@/components/ui-shell/footer";
+import { AppBackground } from "@/components/ui-shell/app-background";
 import { FeedbackWidget } from "@/components/feedback";
 import {
   GoogleSignInButton,
   GoogleSignInToastAction,
-} from "@/components/google-sign-in";
-import { SheetSetupDialog } from "@/components/sheet-setup-dialog";
+} from "@/components/onboarding/google-sign-in";
+import { SheetSetupDialog } from "@/components/onboarding/sheet-setup-dialog";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";

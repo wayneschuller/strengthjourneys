@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { BotIcon } from "lucide-react";
 import { memo } from "react";
 
-import { CodeBlock } from "./code-block";
+import { CodeBlock } from "@/components/ai-elements/code-block";
 
 export const Agent = memo(({
   className,

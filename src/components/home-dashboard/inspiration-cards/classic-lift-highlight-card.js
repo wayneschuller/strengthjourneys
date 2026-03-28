@@ -6,8 +6,8 @@ import { getDisplayWeight } from "@/lib/processing-utils";
 import { getBigFourPrSectionHref } from "@/lib/classic-lift-memory";
 import { pickClassicLiftMemory } from "@/lib/home-dashboard/classic-lift-highlight-selection";
 import { Button } from "@/components/ui/button";
-import { ClassicLiftDetails } from "./classic-lift-details";
-import { InspirationCard } from "./inspiration-card";
+import { ClassicLiftDetails } from "@/components/home-dashboard/inspiration-cards/classic-lift-details";
+import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
 
 export function ClassicLiftHighlightCard({
   parsedData,

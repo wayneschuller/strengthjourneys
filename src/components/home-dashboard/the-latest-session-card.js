@@ -49,7 +49,7 @@ import {
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
 import { LoaderCircle, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
-import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
+import { SessionExerciseBlock } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 // "The Latest Session" when on the most recent date.

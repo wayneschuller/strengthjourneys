@@ -12,7 +12,7 @@ import {
   useState,
 } from "react";
 
-import { Shimmer } from "./shimmer";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 
 const TerminalContext = createContext({
   autoScroll: true,

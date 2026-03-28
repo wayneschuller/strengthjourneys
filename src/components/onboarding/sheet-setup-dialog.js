@@ -5,8 +5,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { DrivePickerContainer } from "@/components/drive-picker-container";
-import { GoogleSignInButton } from "@/components/google-sign-in";
+import { DrivePickerContainer } from "@/components/onboarding/drive-picker-container";
+import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";

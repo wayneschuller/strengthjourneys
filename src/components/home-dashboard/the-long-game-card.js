@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
 import { motion } from "motion/react";
-import { processConsistency } from "@/components/analyzer/consistency-card";
+import { processConsistency } from "@/lib/consistency";
 import { getGradeAndColor } from "@/lib/consistency-grades";
 import {
   Tooltip,
@@ -741,7 +741,7 @@ export function TheLongGameCard({
               {/* Consistency grade rings — always included in capture output */}
               {!isFirstMonthFocusState && (
                 <>
-                  <div className="mb-6" data-share-section="consistency">
+                  <div className="mb-3" data-share-section="consistency">
                     {isSharing ? (
                       <div className="flex w-full items-start">
                         <div
@@ -766,7 +766,7 @@ export function TheLongGameCard({
                       </div>
                     )}
                   </div>
-                  {!isSharing && <hr className="border-border/60 mb-3" />}
+                  {!isSharing && <hr className="border-border/60 mb-2" />}
                 </>
               )}
               {/* View selector — right-justified, anchored just above the heatmap grid */}
@@ -814,7 +814,7 @@ export function TheLongGameCard({
                         : "max-h-[52vh] overflow-y-auto pr-1"
                   }
                 >
-                  <div className="flex flex-col gap-9">
+                  <div className="flex flex-col gap-4">
                     {intervals.map((interval, index) => {
                       const year = new Date(interval.startDate).getFullYear();
                       const isCurrentYear = year === new Date().getFullYear();
@@ -825,10 +825,14 @@ export function TheLongGameCard({
                             if (node) yearRowRefs.current[year] = node;
                             else delete yearRowRefs.current[year];
                           }}
-                          className={`flex w-full items-start ${isCurrentYear ? "bg-muted/20 -mx-1 rounded-lg px-1 py-0.5" : ""}`}
+                          className={`group relative flex w-full items-start rounded-2xl border px-2 py-2 transition-colors ${
+                            isCurrentYear
+                              ? "border-primary/20 bg-primary/[0.07] shadow-[0_10px_30px_-24px_var(--color-primary)]"
+                              : "border-border/40 bg-gradient-to-r from-background via-muted/10 to-background"
+                          }`}
                         >
                           <div
-                            className="shrink-0 pt-1 pr-2 text-right text-xs lg:text-sm"
+                            className="shrink-0 pt-1 pr-3 text-right text-xs lg:text-sm"
                             style={{ width: WEEKLY_YEAR_W }}
                           >
                             <div className="flex flex-col items-end gap-1">
@@ -836,8 +840,8 @@ export function TheLongGameCard({
                                 data-year-label="true"
                                 className={
                                   isCurrentYear
-                                    ? "text-foreground text-[13px] font-semibold tabular-nums lg:text-sm"
-                                    : "text-muted-foreground tabular-nums"
+                                    ? "text-foreground rounded-full border border-primary/20 bg-background/80 px-2 py-0.5 text-[13px] font-semibold tabular-nums lg:text-sm"
+                                    : "text-muted-foreground rounded-full border border-border/40 bg-background/70 px-2 py-0.5 tabular-nums"
                                 }
                               >
                                 {year}
@@ -1146,18 +1150,40 @@ const MAX_LIFTS_SHOWN = 6;
 
 // --- Consistency Grades ---
 
-const LABEL_ABBREV = {
-  Week: "W",
-  Month: "M",
-  "3 Month": "3M",
-  "Half Year": "6M",
-  Year: "Y",
-  "24 Month": "2Y",
-  "5 Year": "5Y",
-  Decade: "10Y",
-};
-
 const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
+
+function getConsistencyLabelAbbrev(label) {
+  if (label === "Week") return "W";
+  if (label === "Month") return "M";
+  if (label === "Half Year") return "6M";
+  if (label === "Year") return "Y";
+  if (label === "24 Month") return "2Y";
+  if (label === "Decade") return "10Y";
+
+  const monthMatch = label.match(/^(\d+) Month$/);
+  if (monthMatch) return `${monthMatch[1]}M`;
+
+  const yearMatch = label.match(/^(\d+) Year$/);
+  if (yearMatch) return `${yearMatch[1]}Y`;
+
+  return label;
+}
+
+function splitIntoBalancedRows(items, maxItemsPerRow = 5) {
+  const rowCount = Math.max(1, Math.ceil(items.length / maxItemsPerRow));
+  const minItemsPerRow = Math.floor(items.length / rowCount);
+  const extraItems = items.length % rowCount;
+  const rows = [];
+  let startIndex = 0;
+
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+    const rowSize = minItemsPerRow + (rowIndex < extraItems ? 1 : 0);
+    rows.push(items.slice(startIndex, startIndex + rowSize));
+    startIndex += rowSize;
+  }
+
+  return rows;
+}
 
 // Animated SVG ring showing a consistency grade letter and percentage fill for one time window.
 // Short-term rings (W/M/3M) render with a thicker stroke and full opacity to emphasise recent form;
@@ -1178,14 +1204,14 @@ function GradeCircle({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
-  const abbrev = LABEL_ABBREV[label] ?? label;
+  const abbrev = getConsistencyLabelAbbrev(label);
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <motion.div
-            className="flex flex-col items-center gap-0.5"
+            className="flex flex-col items-center gap-1"
             initial={
               isCaptureMode
                 ? { opacity: targetOpacity, y: 0 }
@@ -1248,7 +1274,7 @@ function GradeCircle({
                 {grade}
               </text>
             </svg>
-            <span className="text-muted-foreground text-[9px] leading-none">
+            <span className="text-muted-foreground text-[11px] leading-none">
               {abbrev}
             </span>
           </motion.div>
@@ -1289,23 +1315,38 @@ function ConsistencyGradesRow({
 
   if (!consistency || consistency.length === 0) return null;
 
-  const circleSize = consistency.length >= 7 ? 42 : 52;
-  const gapPx = consistency.length >= 7 ? 6 : 12;
+  const circleSize =
+    consistency.length >= 11 ? 48 : consistency.length >= 7 ? 56 : 64;
+  const rows = splitIntoBalancedRows(consistency);
 
   return (
-    <div className="flex items-start justify-center" style={{ gap: gapPx }}>
-      {consistency.map((item, index) => (
-        <GradeCircle
-          key={item.label}
-          percentage={item.percentage}
-          label={item.label}
-          tooltip={item.tooltip}
-          size={circleSize}
-          delay={index * 0.05}
-          isVisible={isVisible}
-          isShortTerm={SHORT_TERM_LABELS.has(item.label)}
-          isCaptureMode={isCaptureMode}
-        />
+    <div className="flex flex-col items-center gap-3">
+      {rows.map((row, rowIndex) => (
+        <div
+          key={`consistency-row-${rowIndex}`}
+          className="flex items-start justify-center gap-x-3 sm:gap-x-4"
+        >
+          {row.map((item, index) => {
+            const sequenceIndex =
+              rows
+                .slice(0, rowIndex)
+                .reduce((count, priorRow) => count + priorRow.length, 0) + index;
+
+            return (
+              <GradeCircle
+                key={item.label}
+                percentage={item.percentage}
+                label={item.label}
+                tooltip={item.tooltip}
+                size={circleSize}
+                delay={sequenceIndex * 0.05}
+                isVisible={isVisible}
+                isShortTerm={SHORT_TERM_LABELS.has(item.label)}
+                isCaptureMode={isCaptureMode}
+              />
+            );
+          })}
+        </div>
       ))}
     </div>
   );
@@ -1595,8 +1636,11 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
     [parsedData, startYear, endYear, isDemoMode],
   );
 
-  const years = [];
-  for (let y = startYear; y <= endYear; y++) years.push(y);
+  const years = useMemo(() => {
+    const nextYears = [];
+    for (let y = startYear; y <= endYear; y++) nextYears.push(y);
+    return nextYears;
+  }, [startYear, endYear]);
 
   // Used to distinguish future weeks (no data yet) from past missed weeks
   const todayDate = new Date();
@@ -1789,6 +1833,64 @@ const MONTH_NAMES = [
   "D",
 ];
 
+function getMonthlyShade(level) {
+  const clampedLevel = Math.max(1, Math.min(level, 6));
+  const mixPercent = 18 + clampedLevel * 14;
+  return `color-mix(in srgb, var(--heatmap-4) ${mixPercent}%, var(--heatmap-1))`;
+}
+
+function getMonthlyCellStyles(level, isFuture) {
+  if (isFuture) {
+    return {};
+  }
+
+  if (level === 0) {
+    return {
+      backgroundColor: "var(--heatmap-0)",
+      opacity: 0.38,
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
+    };
+  }
+
+  return {
+    backgroundColor: getMonthlyShade(level),
+    boxShadow:
+      "inset 0 1px 0 rgba(255,255,255,0.22), 0 0 0 1px rgba(15,23,42,0.04)",
+    filter: level >= 5 ? "saturate(0.96) brightness(1.02)" : "none",
+  };
+}
+
+function buildMonthlyRelativeLevels(monthlyData, years) {
+  const months = [];
+
+  years.forEach((year) => {
+    Object.entries(monthlyData[year] ?? {}).forEach(([month, data]) => {
+      if ((data?.totalSessions ?? 0) > 0) {
+        months.push({
+          year,
+          month: Number(month),
+          totalSessions: data.totalSessions,
+        });
+      }
+    });
+  });
+
+  if (months.length === 0) return {};
+
+  const sorted = [...months].sort((a, b) => a.totalSessions - b.totalSessions);
+  const relativeLevels = {};
+
+  sorted.forEach((entry, index) => {
+    const percentile =
+      sorted.length === 1 ? 1 : index / Math.max(sorted.length - 1, 1);
+    const level = 1 + Math.round(percentile * 5);
+    if (!relativeLevels[entry.year]) relativeLevels[entry.year] = {};
+    relativeLevels[entry.year][entry.month] = level;
+  });
+
+  return relativeLevels;
+}
+
 // Aggregates parsedData into { [year]: { [month]: { activeWeeks, count, weekBreakdown } } }.
 // activeWeeks = distinct calendar weeks in that month with at least one session; count capped at 4.
 // weekBreakdown is sorted chronologically and drives the per-week rows in the monthly tooltip.
@@ -1818,7 +1920,15 @@ function generateMonthlyHeatmapData(
         const weekBreakdown = Array.from({ length: count }, () => ({
           sessions: Math.floor(Math.random() * 4) + 1,
         }));
-        result[year][month] = { activeWeeks: count, count, weekBreakdown };
+        result[year][month] = {
+          activeWeeks: count,
+          count,
+          totalSessions: weekBreakdown.reduce(
+            (sum, week) => sum + week.sessions,
+            0,
+          ),
+          weekBreakdown,
+        };
       }
     }
     return result;
@@ -1851,6 +1961,7 @@ function generateMonthlyHeatmapData(
       result[yearStr][monthStr] = {
         activeWeeks,
         count: Math.min(activeWeeks, 4),
+        totalSessions: weekBreakdown.reduce((sum, week) => sum + week.sessions, 0),
         weekBreakdown,
       };
     }
@@ -1876,8 +1987,15 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
     [parsedData, startYear, endYear, isDemoMode],
   );
 
-  const years = [];
-  for (let y = startYear; y <= endYear; y++) years.push(y);
+  const years = useMemo(() => {
+    const nextYears = [];
+    for (let y = startYear; y <= endYear; y++) nextYears.push(y);
+    return nextYears;
+  }, [startYear, endYear]);
+  const relativeLevels = useMemo(
+    () => buildMonthlyRelativeLevels(monthlyData, years),
+    [monthlyData, years],
+  );
 
   const todayDate = new Date();
   const currentYear = todayDate.getFullYear();
@@ -1929,7 +2047,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       </div>
 
       {/* Year rows */}
-      <div className="flex w-full flex-col gap-1.5">
+      <div className="flex w-full flex-col gap-1">
         {years.map((year) => (
           <div
             key={year}
@@ -1962,37 +2080,29 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                   year > currentYear ||
                   (year === currentYear && month > currentMonth);
                 const data = monthlyData[year]?.[month];
-                const count = data?.count ?? 0;
-                const innerStyle = isFuture
-                  ? {}
-                  : count === 0
-                    ? {
-                        backgroundColor: "var(--heatmap-0)",
-                        opacity: 0.3,
-                      }
-                    : {
-                        backgroundColor: `var(--heatmap-${count})`,
-                        ...(count === 4
-                          ? { filter: "brightness(1.15) saturate(0.8)" }
-                          : {}),
-                      };
+                const relativeLevel =
+                  data?.totalSessions > 0
+                    ? relativeLevels[year]?.[month] ?? 1
+                    : 0;
+                const cellStyle = getMonthlyCellStyles(
+                  relativeLevel,
+                  isFuture,
+                );
                 return (
                   <div
                     key={month}
-                    className={`rounded-[6px] p-[2px] transition-transform duration-150 ${!isFuture && count > 0 ? "hover:scale-105" : ""}`}
-                    style={{ height: 28 }}
+                    className={`rounded-[8px] transition-transform duration-150 ${!isFuture && relativeLevel > 0 ? "hover:scale-[1.03]" : ""}`}
+                    style={{
+                      height: 26,
+                      ...cellStyle,
+                    }}
                     onMouseOver={
                       !isFuture
                         ? (e) => handleMouseOver(e, year, month, data)
                         : undefined
                     }
                     onMouseLeave={!isFuture ? handleMouseLeave : undefined}
-                  >
-                    <div
-                      className="h-full w-full rounded-[4px]"
-                      style={innerStyle}
-                    />
-                  </div>
+                  />
                 );
               })}
             </div>
@@ -2002,19 +2112,24 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
 
       {/* Legend */}
       <div className="text-muted-foreground mt-3 flex flex-col gap-1 text-[10px]">
-        <span className="font-medium">Active weeks per month</span>
+        <span className="font-medium">Relative monthly activity</span>
         <div className="flex items-center gap-3">
-          {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="flex items-center gap-1.5">
+          {[
+            { level: 1, label: "Low" },
+            { level: 3, label: "Mid" },
+            { level: 6, label: "High" },
+          ].map(({ level, label }) => (
+            <div key={label} className="flex items-center gap-1.5">
               <div
                 className="shrink-0 rounded-[4px]"
                 style={{
                   width: 14,
                   height: 14,
-                  backgroundColor: `var(--heatmap-${n})`,
+                  backgroundColor: getMonthlyShade(level),
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)",
                 }}
               />
-              <span>{n === 4 ? "4+" : n}</span>
+              <span>{label}</span>
             </div>
           ))}
         </div>
@@ -2125,7 +2240,7 @@ function Heatmap({
   }
 
   return (
-    <div className="relative">
+    <div className="border-border/35 relative rounded-xl border bg-background/70 px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
       <CalendarHeatmap
         startDate={startDate}
         endDate={endDate}

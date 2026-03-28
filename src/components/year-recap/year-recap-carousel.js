@@ -12,14 +12,14 @@ import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
-import { TitleCard } from "./cards/title-card";
-import { SessionsCard } from "./cards/sessions-card";
-import { TonnageCard } from "./cards/tonnage-card";
-import { MostTrainedLiftCard } from "./cards/most-trained-lift-card";
-import { LifetimePRsCard } from "./cards/lifetime-prs-card";
-import { NotableLiftsCard } from "./cards/notable-lifts-card";
-import { SeasonalPatternCard } from "./cards/seasonal-pattern-card";
-import { ClosingCard } from "./cards/closing-card";
+import { TitleCard } from "@/components/year-recap/cards/title-card";
+import { SessionsCard } from "@/components/year-recap/cards/sessions-card";
+import { TonnageCard } from "@/components/year-recap/cards/tonnage-card";
+import { MostTrainedLiftCard } from "@/components/year-recap/cards/most-trained-lift-card";
+import { LifetimePRsCard } from "@/components/year-recap/cards/lifetime-prs-card";
+import { NotableLiftsCard } from "@/components/year-recap/cards/notable-lifts-card";
+import { SeasonalPatternCard } from "@/components/year-recap/cards/seasonal-pattern-card";
+import { ClosingCard } from "@/components/year-recap/cards/closing-card";
 
 function fireTitleConfetti() {
   import("canvas-confetti").then((confetti) => {

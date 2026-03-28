@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { PlaylistAdminTools } from "./playlist-admin";
-import { getPlaylistPlatform } from "./playlist-utils";
+import { PlaylistAdminTools } from "@/components/playlist-leaderboard/playlist-admin";
+import { getPlaylistPlatform } from "@/components/playlist-leaderboard/playlist-utils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

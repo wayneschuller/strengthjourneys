@@ -7,7 +7,7 @@ import { RelatedArticles } from "@/components/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
-import { GettingStartedCard } from "@/components/instructions-cards";
+import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
 import { useLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
 import {

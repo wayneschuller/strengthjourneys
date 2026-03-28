@@ -6,14 +6,14 @@
 //
 // All parsers take string[][] (rows with header) and return ParsedData[].
 
-import { parseStrengthJourneysData } from "./strength-journeys-parser";
-import { parseBtwbData } from "./btwb-parser";
-import { parseHevyData } from "./hevy-parser";
-import { parseStrongData } from "./strong-parser";
-import { parseTurnKeyData } from "./turnkey-parser";
-import { parseWodifyData } from "./wodify-parser";
-import { decodeCSV } from "./decode-csv";
-import { decodeWorkbook } from "./decode-workbook";
+import { parseStrengthJourneysData } from "@/lib/data-sources/strength-journeys-parser";
+import { parseBtwbData } from "@/lib/data-sources/btwb-parser";
+import { parseHevyData } from "@/lib/data-sources/hevy-parser";
+import { parseStrongData } from "@/lib/data-sources/strong-parser";
+import { parseTurnKeyData } from "@/lib/data-sources/turnkey-parser";
+import { parseWodifyData } from "@/lib/data-sources/wodify-parser";
+import { decodeCSV } from "@/lib/data-sources/decode-csv";
+import { decodeWorkbook } from "@/lib/data-sources/decode-workbook";
 
 /**
  * A single logged lift after parsing and normalization.
@@ -206,4 +206,4 @@ export async function parseImportedFile(file) {
 }
 
 // Re-export normalization utilities for use by other modules
-export { normalizeLiftTypeNames } from "./parser-utilities";
+export { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";

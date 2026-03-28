@@ -44,16 +44,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GettingStartedCard } from "@/components/instructions-cards";
-import { Testimonials } from "@/components/testimonials";
+import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
+import { Testimonials } from "@/components/homepage/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { Separator } from "@/components/ui/separator";
-import { HeroSection } from "@/components/hero-section";
+import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
-import { BigFourLiftCards } from "@/components/big-four-lift-cards";
+import { BigFourLiftCards } from "@/components/homepage/big-four-lift-cards";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
-import { GoogleSignInInlineButton } from "@/components/google-sign-in";
+import { GoogleSignInInlineButton } from "@/components/onboarding/google-sign-in";
 
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [

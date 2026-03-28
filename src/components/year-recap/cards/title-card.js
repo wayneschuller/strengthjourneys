@@ -1,6 +1,6 @@
 
 import { motion } from "motion/react";
-import { LIFT_SVG_MAP } from "../lift-svg";
+import { LIFT_SVG_MAP } from "@/components/year-recap/lift-svg";
 
 const TOP_LIFTS = ["Back Squat", "Bench Press"];
 const BOTTOM_LIFTS = ["Deadlift", "Strict Press"];

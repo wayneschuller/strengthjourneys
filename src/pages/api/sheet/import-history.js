@@ -14,6 +14,8 @@
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
+import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
+import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { getServerSession } from "next-auth/next";
 import { gunzipSync } from "node:zlib";
 
@@ -51,6 +53,66 @@ function buildGoogleApiFailure(body, fallbackMessage, httpStatus) {
       error: classifiedError.userMessage || fallbackMessage,
       ...(classifiedError.code ? { errorCode: classifiedError.code } : {}),
     },
+  };
+}
+
+function summarizeImportedEntries(entries = []) {
+  const liftTypeCounts = new Map();
+  const unitTypes = new Set();
+  const dateSet = new Set();
+  let minDate = null;
+  let maxDate = null;
+  let bigFourEntryCount = 0;
+  let bigFourLiftCount = 0;
+
+  for (const entry of entries) {
+    const liftType = typeof entry?.liftType === "string" ? entry.liftType.trim() : "";
+    if (liftType) {
+      const nextCount = (liftTypeCounts.get(liftType) || 0) + 1;
+      if (!liftTypeCounts.has(liftType) && BIG_FOUR_LIFT_TYPES.includes(liftType)) {
+        bigFourLiftCount += 1;
+      }
+      liftTypeCounts.set(liftType, nextCount);
+      if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
+        bigFourEntryCount += 1;
+      }
+    }
+
+    const unitType = typeof entry?.unitType === "string" ? entry.unitType.trim() : "";
+    if (unitType) unitTypes.add(unitType);
+
+    const date = typeof entry?.date === "string" ? entry.date.trim() : "";
+    if (date) {
+      dateSet.add(date);
+      if (!minDate || date < minDate) minDate = date;
+      if (!maxDate || date > maxDate) maxDate = date;
+    }
+  }
+
+  const sortedLiftTypes = [...liftTypeCounts.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return a[0].localeCompare(b[0]);
+    })
+    .slice(0, 3)
+    .map(([liftType, count]) => `${liftType} (${count})`);
+
+  let unitSystem = null;
+  if (unitTypes.size === 1) {
+    unitSystem = [...unitTypes][0];
+  } else if (unitTypes.size > 1) {
+    unitSystem = "mixed";
+  }
+
+  return {
+    liftTypeCount: liftTypeCounts.size,
+    bigFourEntryCount,
+    bigFourLiftCount,
+    unitSystem,
+    dateCount: dateSet.size,
+    dateRange:
+      minDate && maxDate ? (minDate === maxDate ? minDate : `${minDate} to ${maxDate}`) : null,
+    topLiftTypes: sortedLiftTypes.length > 0 ? sortedLiftTypes.join(", ") : null,
   };
 }
 
@@ -382,11 +444,25 @@ export default async function handler(req, res) {
       durationMs: Date.now() - startedAt,
     });
 
-    return res.status(200).json({
+    const durationMs = Date.now() - startedAt;
+    // Founder email metadata is intentionally lightweight and support-oriented.
+    // It exists only to help with user support and import health visibility.
+    const founderMeta = summarizeImportedEntries(entries);
+
+    res.status(200).json({
       ok: true,
       insertedRows: totalInserted,
       dateCount: sortedDates.length,
     });
+
+    void promptDeveloper("import-merged", session.user, {
+      entryCount: entries.length,
+      insertedRows: totalInserted,
+      dateCount: sortedDates.length,
+      durationMs,
+      ...founderMeta,
+    });
+    return;
   } catch (err) {
     logImportEvent("write_failed", {
       ssid,

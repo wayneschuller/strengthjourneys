@@ -1,7 +1,7 @@
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TopLiftsTable } from "@/components/analyzer/lift-frequency-pie-card";
+import { TopLiftsTable } from "@/components/lift-explorer/top-lifts-table";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 /**

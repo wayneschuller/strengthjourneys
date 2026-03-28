@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { estimateE1RM } from "./estimate-e1rm";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 // =============================================================================
 // UNIT TYPE SYSTEM — HOW IT WORKS

@@ -32,7 +32,7 @@ import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
-} from "./time-range-select";
+} from "@/components/visualizer/time-range-select";
 
 import {
   AreaChart,
@@ -58,10 +58,10 @@ import {
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { getYearLabels } from "./visualizer-processing";
+import { getYearLabels } from "@/components/visualizer/visualizer-processing";
 import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VisualizerRepsTooltip } from "./visualizer-utils";
+import { VisualizerRepsTooltip } from "@/components/visualizer/visualizer-utils";
 import { Badge } from "@/components/ui/badge";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";

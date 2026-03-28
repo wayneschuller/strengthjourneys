@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { useUserLiftingData } from "./use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 

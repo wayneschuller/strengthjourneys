@@ -26,7 +26,7 @@ import {
 
 import { RelatedArticles } from "@/components/article-cards";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
-import { GoogleSignInButton } from "@/components/google-sign-in";
+import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import {
   PageContainer,
   PageHeader,

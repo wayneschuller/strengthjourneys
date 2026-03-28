@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { NextSeo } from "next-seo";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
-import { E1RMCalculatorMain } from "./index";
+import { E1RMCalculatorMain } from "@/pages/calculator/index";
 
 // ── PAGE CONFIG ──────────────────────────────────────────────────────────────
 // Slugs chosen to match top-impression queries from Search Console.

@@ -9,13 +9,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Upload } from "lucide-react";
-import { GoogleSignInButton } from "@/components/google-sign-in";
+import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
-import { SloganCarousel } from "./slogan-carousel";
-import { Button } from "./ui/button";
+import { SloganCarousel } from "@/components/homepage/slogan-carousel";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
 
 /**

@@ -21,7 +21,7 @@ import {
 } from "react";
 import { Streamdown } from "streamdown";
 
-import { Shimmer } from "./shimmer";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 
 const ReasoningContext = createContext(null);
 

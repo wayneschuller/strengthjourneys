@@ -14,7 +14,7 @@ import {
   E1RMFormulaSelect,
   SpecialHtmlLabel,
   SingleLiftTooltipContent,
-} from "./visualizer-utils";
+} from "@/components/visualizer/visualizer-utils";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,7 @@ import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
-} from "./time-range-select";
+} from "@/components/visualizer/time-range-select";
 
 import {
   Card,
@@ -57,7 +57,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { getYearLabels, processVisualizerData } from "./visualizer-processing";
+import { getYearLabels, processVisualizerData } from "@/components/visualizer/visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 

@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { HomeInspirationCards } from "./home-inspiration-cards";
-import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
+import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
+import { DataSheetStatus, RowProcessingIndicator } from "@/components/home-dashboard/row-processing-indicator";
 import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
 import { TheWeekInIronCard } from "@/components/home-dashboard/the-week-in-iron-card";
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
 import {
   gaTrackHomeDashboardFirstView,
@@ -85,16 +86,14 @@ const WELCOME_QUIPS = [
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
 
-  const quipRef = useRef(null);
-  if (quipRef.current === null) {
-    quipRef.current =
-      WELCOME_QUIPS[Math.floor(Math.random() * WELCOME_QUIPS.length)];
-  }
+  const [welcomeQuip] = useState(
+    () => WELCOME_QUIPS[Math.floor(Math.random() * WELCOME_QUIPS.length)],
+  );
 
   const { sheetInfo, parsedData, rawRows, dataSyncedAt, isValidating, mutate, hasUserData, isImportedData } =
     useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
-  const [hasDataLoaded, setHasDataLoaded] = useState(false);
+  const hasDataLoaded = hasUserData && isProgressDone;
   const previewEntryCount = useMemo(
     () =>
       Array.isArray(parsedData)
@@ -117,14 +116,6 @@ export function HomeDashboard() {
         }),
       [parsedData, rawRows, sheetInfo],
     );
-
-  useEffect(() => {
-    if (isProgressDone) setHasDataLoaded(true);
-  }, [isProgressDone]);
-
-  useEffect(() => {
-    if (!hasUserData) setHasDataLoaded(false);
-  }, [hasUserData]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -209,7 +200,7 @@ export function HomeDashboard() {
                 transition={{ duration: 0.6 }}
               >
                 <span className="text-muted-foreground">
-                  {quipRef.current.split("{name}")[0]}
+                  {welcomeQuip.split("{name}")[0]}
                 </span>
                 <span className="font-bold">
                   {session.user.name?.split(" ")[0]}
@@ -263,6 +254,7 @@ export function HomeDashboard() {
           sessionCount={sessionCount}
         />
       )}
+      {hasUserData && !hasDataLoaded && <HomeDashboardCardsSkeleton />}
       {hasUserData && hasDataLoaded && (
         <>
           <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -288,5 +280,30 @@ export function HomeDashboard() {
         </>
       )}
     </div>
+  );
+}
+
+function HomeDashboardCardsSkeleton() {
+  return (
+    <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div
+          key={`home-dashboard-card-skeleton-${index}`}
+          className="border-border/50 bg-card flex min-h-[28rem] flex-col rounded-xl border p-6"
+        >
+          <div className="space-y-2">
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-5 w-64" />
+          </div>
+          <div className="mt-6 flex-1 space-y-4">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-11/12 rounded-lg" />
+            <Skeleton className="h-36 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+          </div>
+        </div>
+      ))}
+    </section>
   );
 }

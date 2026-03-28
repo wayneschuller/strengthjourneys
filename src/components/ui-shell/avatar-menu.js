@@ -3,7 +3,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signOut } from "next-auth/react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { GoogleSignInButton } from "@/components/google-sign-in";
+import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";

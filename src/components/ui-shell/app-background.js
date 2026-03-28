@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import GridPattern from "./magicui/grid-pattern";
+import GridPattern from "@/components/magicui/grid-pattern";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
 import {
   NeoBrutalistStickerBombLayer,
   StarryNightLayer,
   WarpBackground,
-} from "@/components/theme-backgrounds";
+} from "@/components/ui-shell/theme-backgrounds";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";

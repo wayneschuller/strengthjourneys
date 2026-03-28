@@ -2,7 +2,7 @@ import { Activity, TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { calculateSessionMomentumFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
-import { InspirationCard } from "./inspiration-card";
+import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
 
 const ENCOURAGEMENTS = {
   steady: [

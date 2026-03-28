@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import {
   LiftStrengthLevel,
   LiftTonnageRow,
-} from "@/components/analyzer/session-exercise-block";
+} from "@/components/home-dashboard/session-exercise-block";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
   getReadableDateString,
@@ -36,7 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { InspirationCard } from "@/components/analyzer/inspiration-card";
+import { InspirationCard } from "@/components/log/inspiration-card";
 import { DevActivityMonitorPanel } from "@/components/dev-activity-monitor";
 import Image from "next/image";
 import Link from "next/link";

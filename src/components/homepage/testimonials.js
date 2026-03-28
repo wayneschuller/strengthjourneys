@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { devLog } from "@/lib/processing-utils";
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Marquee from "@/components/magicui/marquee";
 import {

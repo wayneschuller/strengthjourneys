@@ -2,7 +2,7 @@ import { Target } from "lucide-react";
 import { useMemo } from "react";
 
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
-import { InspirationCard } from "./inspiration-card";
+import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
 
 export function FirstWeekGoalCard({
   allSessionDates = [],

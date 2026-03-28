@@ -30,7 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Play } from "lucide-react";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
-import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
+import { LiftStrengthLevel } from "@/components/home-dashboard/session-exercise-block";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { DemoModeBadge } from "@/components/demo-mode-badge";

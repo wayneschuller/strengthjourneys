@@ -5,7 +5,7 @@ import {
   calculateTotalStats,
   formatJourneyLength,
 } from "@/lib/home-dashboard/inspiration-card-metrics";
-import { InspirationCard } from "./inspiration-card";
+import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
 
 export function JourneyProgressCard({ parsedData, liftTypes, animationDelay = 0 }) {
   const totalStats = useMemo(() => calculateTotalStats(liftTypes), [liftTypes]);

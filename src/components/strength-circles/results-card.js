@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { StrengthCirclesChart } from "./strength-circles-chart";
+import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
 import {
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,

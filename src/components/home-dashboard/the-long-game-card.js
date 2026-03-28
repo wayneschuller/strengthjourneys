@@ -1185,7 +1185,7 @@ function GradeCircle({
       <Tooltip>
         <TooltipTrigger asChild>
           <motion.div
-            className="flex flex-col items-center gap-0.5"
+            className="flex flex-col items-center gap-1"
             initial={
               isCaptureMode
                 ? { opacity: targetOpacity, y: 0 }
@@ -1248,7 +1248,7 @@ function GradeCircle({
                 {grade}
               </text>
             </svg>
-            <span className="text-muted-foreground text-[9px] leading-none">
+            <span className="text-muted-foreground text-[11px] leading-none">
               {abbrev}
             </span>
           </motion.div>
@@ -1289,11 +1289,10 @@ function ConsistencyGradesRow({
 
   if (!consistency || consistency.length === 0) return null;
 
-  const circleSize = consistency.length >= 7 ? 42 : 52;
-  const gapPx = consistency.length >= 7 ? 6 : 12;
+  const circleSize = consistency.length >= 7 ? 56 : 64;
 
   return (
-    <div className="flex items-start justify-center" style={{ gap: gapPx }}>
+    <div className="flex flex-wrap items-start justify-center gap-x-3 gap-y-4 sm:gap-x-4">
       {consistency.map((item, index) => (
         <GradeCircle
           key={item.label}

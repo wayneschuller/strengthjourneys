@@ -24,9 +24,9 @@ import {
 } from "@/components/page-header";
 
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
-import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
+import { LiftTypeRepPRsDisplay } from "@/components/lift-explorer/lift-type-prs-display";
 
-import { MostRecentSessionCard } from "@/components/most-recent-session-card";
+import { MostRecentSessionCard } from "@/components/lift-explorer/most-recent-session-card";
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";

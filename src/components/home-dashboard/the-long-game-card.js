@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
 import { motion } from "motion/react";
-import { processConsistency } from "@/components/analyzer/consistency-card";
+import { processConsistency } from "@/lib/consistency";
 import { getGradeAndColor } from "@/lib/consistency-grades";
 import {
   Tooltip,

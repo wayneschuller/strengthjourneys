@@ -16,7 +16,7 @@ import { Sparkles, Palette, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
 import { YearSelector } from "@/components/year-recap/year-selector";
-import { DemoModeSignInCard, ConnectSheetRecapCard } from "@/components/instructions-cards";
+import { DemoModeSignInCard, ConnectSheetRecapCard } from "@/components/onboarding/instructions-cards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 

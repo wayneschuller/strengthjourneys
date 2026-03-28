@@ -21,7 +21,7 @@ import {
   getAnalyzedSessionLifts,
   getSessionDatesContainingLiftType,
 } from "@/lib/processing-utils";
-import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
+import { SessionExerciseBlock } from "@/components/home-dashboard/session-exercise-block";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 

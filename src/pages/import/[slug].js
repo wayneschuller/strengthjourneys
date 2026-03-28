@@ -9,7 +9,7 @@ import {
   Upload,
 } from "lucide-react";
 
-import { ImportWorkflowSection } from "@/components/import-workflow-section";
+import { ImportWorkflowSection } from "@/components/onboarding/import-workflow-section";
 import {
   PageContainer,
   PageHeader,

@@ -3,7 +3,7 @@
 
 import { devLog } from "@/lib/processing-utils";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
-import { GoogleSignInMenuItem } from "@/components/google-sign-in";
+import { GoogleSignInMenuItem } from "@/components/onboarding/google-sign-in";
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useSession } from "next-auth/react";

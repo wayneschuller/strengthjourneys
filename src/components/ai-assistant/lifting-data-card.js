@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "../ui/separator";
-import { GoogleSignInButton } from "@/components/google-sign-in";
+import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { cn } from "@/lib/utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";

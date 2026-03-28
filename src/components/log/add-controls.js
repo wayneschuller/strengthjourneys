@@ -26,7 +26,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { getConsecutiveWorkoutGroups } from "@/components/analyzer/session-exercise-block";
+import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
 import {
   getDisplayWeight,
   getReadableDateString,

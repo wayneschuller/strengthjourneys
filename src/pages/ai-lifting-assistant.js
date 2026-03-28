@@ -69,7 +69,7 @@ import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
-import { processConsistency } from "@/components/analyzer/consistency-card";
+import { processConsistency } from "@/lib/consistency";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";

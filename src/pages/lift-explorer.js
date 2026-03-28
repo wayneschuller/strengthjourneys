@@ -3,12 +3,8 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { RelatedArticles } from "@/components/article-cards";
-
-// Here are the analyzer dashboard cards
-import { ConsistencyCard } from "@/components/analyzer/consistency-card"; // full card, not currently in use — keep
-import { TopLiftsCard } from "@/components/analyzer/top-lifts-card";
-import { InspirationCard } from "@/components/analyzer/inspiration-card"; // not currently in use — keep
-import { LiftDetailPanel } from "@/components/analyzer/lift-detail-panel";
+import { TopLiftsCard } from "@/components/lift-explorer/top-lifts-card";
+import { LiftDetailPanel } from "@/components/lift-explorer/lift-detail-panel";
 import {
   PageContainer,
   PageHeader,
@@ -32,7 +28,7 @@ export async function getStaticProps() {
 }
 
 /**
- * PR Analyzer page. Renders SEO metadata and delegates rendering to AnalyzerMain.
+ * Lift Explorer page. Renders SEO metadata and delegates rendering to the main client component.
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles related to the PR Analyzer topic, fetched via ISR.
  */

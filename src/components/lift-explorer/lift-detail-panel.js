@@ -5,7 +5,7 @@
  */
 
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
-import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
+import { LiftTypeRepPRsDisplay } from "@/components/lift-explorer/lift-type-prs-display";
 import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
 
 /**

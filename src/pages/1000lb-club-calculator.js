@@ -13,7 +13,7 @@ import { RelatedArticles } from "@/components/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
-import { GettingStartedCard } from "@/components/instructions-cards";
+import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -66,7 +66,7 @@ import { gaTrackShareCopy } from "@/lib/analytics";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { ShareCopyButton } from "@/components/share-copy-button";
-import { GoogleSignInButton } from "@/components/google-sign-in";
+import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { findBestE1RM } from "@/lib/processing-utils";

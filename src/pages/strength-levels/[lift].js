@@ -9,7 +9,7 @@ import { motion, useReducedMotion } from "motion/react";
 
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { RelatedArticles } from "@/components/article-cards";
-import { GoogleSignInButton } from "@/components/google-sign-in";
+import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { QuickLinkCard } from "@/components/quick-link-card";
 import { LiftSvg, getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { DrivePickerContainer } from "@/components/drive-picker-container";
+import { DrivePickerContainer } from "@/components/onboarding/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { SESSION_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
@@ -19,11 +19,11 @@ import { motion, useReducedMotion, useAnimationControls } from "motion/react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
-import SampleImage from "../../public/sample_google_sheet_fuzzy_border.png";
+import SampleImage from "../../../public/sample_google_sheet_fuzzy_border.png";
 import {
   GoogleSignInButton,
   GoogleSignInInlineButton,
-} from "@/components/google-sign-in";
+} from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
 import {

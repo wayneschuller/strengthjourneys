@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { ImportWorkflowSection } from "@/components/import-workflow-section";
+import { ImportWorkflowSection } from "@/components/onboarding/import-workflow-section";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { useToast } from "@/hooks/use-toast";
 import {

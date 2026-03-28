@@ -4,7 +4,7 @@ import { motion, animate } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getGradeAndColor } from "@/lib/consistency-grades";
 import { addDaysFromStr, getWeekKeyFromDateStr } from "@/lib/date-utils";
-import { CircularProgressWithLetter } from "@/components/analyzer/circular-progress-with-letter";
+import { CircularProgressWithLetter } from "@/components/year-recap/cards/circular-progress-with-letter";
 import { pickQuirkyPhrase, SESSIONS_PHRASES, CONSISTENCY_PHRASES } from "../phrases";
 import { Calendar } from "lucide-react";
 

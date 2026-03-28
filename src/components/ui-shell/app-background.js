@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import GridPattern from "./magicui/grid-pattern";
+import GridPattern from "@/components/magicui/grid-pattern";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
 import {
   NeoBrutalistStickerBombLayer,

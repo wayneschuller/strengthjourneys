@@ -138,11 +138,8 @@ function ImportAppPage({ page }) {
           <PageHeaderHeading icon={Upload}>
             {page.heroTitle}
           </PageHeaderHeading>
-          <p className="text-primary text-center text-sm font-medium italic">
-            {page.hookLine}
-          </p>
           <PageHeaderDescription>
-            <p>{page.heroDescription}</p>
+            <p>{page.hookLine}. {page.heroDescription}</p>
           </PageHeaderDescription>
         </PageHeader>
 

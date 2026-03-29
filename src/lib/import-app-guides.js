@@ -8,12 +8,13 @@ export const IMPORT_APP_PAGES = [
     appName: "Hevy",
     title: "Import Hevy Data to Google Sheets | Strength Journeys",
     metaDescription:
-      "Export your Hevy workout history, upload the CSV, and see your strength progression instantly. Keep your data in a Google Sheet you own.",
-    keywords:
-      "Hevy export, import Hevy to Google Sheets, Hevy CSV import, merge Hevy and Strong, Hevy workout export",
+      "Export your Hevy workout history and see your strength progression instantly. PRs, trends, and progression charts — all from one CSV upload.",
     heroTitle: "Bring Your Hevy History to Life",
+    hookLine: "The PRs hiding in your Hevy data",
     heroDescription:
-      "Export your workouts from Hevy, drop the file here, and instantly see your full strength timeline — PRs, progression charts, training trends. If you sign in, everything lands in a Google Sheet you own.",
+      "Drop your Hevy export and see every PR and trend instantly.",
+    cardDescription:
+      "Switching apps? See the analytics Hevy never showed you.",
     whyItMatters:
       "Hevy is great for logging, but your training history deserves more than a locked database. Once your data is here, you can visualize years of progress, spot trends Hevy doesn't show you, and keep a permanent copy in your own Google Sheet that no app can take away.",
     exportSteps: [
@@ -23,9 +24,9 @@ export const IMPORT_APP_PAGES = [
       "Instantly see your strength dashboard — or sign in to save it to your own Google Sheet.",
     ],
     whatYouGet: [
-      "Your full lifting timeline with automatic PR detection across every rep range.",
-      "Merge Hevy with Strong, Wodify, BTWB, or any other app — one unified history.",
-      "Preview everything in your browser before anything is saved.",
+      "Progression charts, volume trends, and analytics that go deeper than Hevy's built-in stats.",
+      "Automatic PR detection across every lift and rep range — including ones you forgot about.",
+      "Merge with Strong, Wodify, BTWB, or any other app into one unified timeline.",
       "A Google Sheet you control: edit, share with a coach, or back up whenever you want.",
     ],
     mergeTitle: "Already used other apps too?",
@@ -35,7 +36,7 @@ export const IMPORT_APP_PAGES = [
       {
         question: "How do I export my data from Hevy?",
         answer:
-          "Open Hevy → Profile → Settings → Export & Import Data → Export Data. Save the CSV file, then upload it here. You'll see your strength dashboard within seconds.",
+          "Open Hevy → Profile → Settings → Export & Import Data → Export Data. Save the CSV file, then upload it here.",
       },
       {
         question: "Do I need an account to see my data?",
@@ -48,8 +49,7 @@ export const IMPORT_APP_PAGES = [
           "Yes — import files from Strong, Wodify, BTWB, or any supported format. We'll merge them into one unified training history.",
       },
       {
-        question:
-          "What happens to my data?",
+        question: "What happens to my data?",
         answer: IMPORT_PRIVACY_ANSWER,
       },
     ],
@@ -59,12 +59,13 @@ export const IMPORT_APP_PAGES = [
     appName: "Strong",
     title: "Import Strong CSV to Google Sheets | Strength Journeys",
     metaDescription:
-      "Export your Strong workout data, upload the CSV, and see your strength progression instantly. Keep your lifting history in a Google Sheet you own.",
-    keywords:
-      "Strong CSV export, import Strong to Google Sheets, Strong workout export, merge Strong and Hevy, Strong CSV importer",
+      "Export your Strong workout data and see years of strength progression instantly. Upload your CSV and get PRs, trends, and charts — no account required.",
     heroTitle: "See Your Strong Data in a New Light",
+    hookLine: "Years of gains you've never actually seen",
     heroDescription:
-      "Export your workouts from Strong, drop the CSV here, and get instant access to your full strength timeline — every PR, every progression curve, every trend. Sign in to keep it all in your own Google Sheet.",
+      "Drop your Strong CSV and watch years of progress come alive instantly.",
+    cardDescription:
+      "Got years of Strong data? Finally see your full progression arc.",
     whyItMatters:
       "Strong is a solid tracker, but your training data shouldn't be stuck in one app forever. Import it here to see progression charts, PR history across rep ranges, and training trends that a simple CSV can't show you. Your Google Sheet becomes the permanent home for everything.",
     exportSteps: [
@@ -74,8 +75,8 @@ export const IMPORT_APP_PAGES = [
       "See your full dashboard instantly — or sign in to save it to your own Google Sheet.",
     ],
     whatYouGet: [
-      "Your complete lifting history turned into an interactive strength dashboard.",
-      "Combine Strong with Hevy, Wodify, BTWB, or any other app — duplicates handled automatically.",
+      "See how your squat, bench, and deadlift have tracked over months and years — not just recent sessions.",
+      "Every PR across every rep range, detected automatically from your full Strong history.",
       "We handle Strong's CSV quirks like semicolon delimiters and weight-unit headers.",
       "A portable Google Sheet that you own, not a file sitting forgotten in your Downloads folder.",
     ],
@@ -86,7 +87,7 @@ export const IMPORT_APP_PAGES = [
       {
         question: "How do I export my data from Strong?",
         answer:
-          "Open Strong → Settings → Export Strong Data. Save the CSV, then upload it here. Your strength dashboard loads within seconds.",
+          "Open Strong → Settings → Export Strong Data. Save the CSV, then upload it here.",
       },
       {
         question: "Do I need an account?",
@@ -99,8 +100,7 @@ export const IMPORT_APP_PAGES = [
           "Yes. Import both files and we'll combine them into one history. Duplicates are automatically skipped.",
       },
       {
-        question:
-          "Is my data secure?",
+        question: "Is my data secure?",
         answer: IMPORT_PRIVACY_ANSWER,
       },
     ],
@@ -110,12 +110,13 @@ export const IMPORT_APP_PAGES = [
     appName: "Wodify",
     title: "Import Wodify Data to Google Sheets | Strength Journeys",
     metaDescription:
-      "Import your Wodify workout history and see your strength progression instantly. Upload CSV, XLS, or XLSX exports and keep your data in a Google Sheet you own.",
-    keywords:
-      "Wodify export, import Wodify to Google Sheets, Wodify CSV import, Wodify XLS import, merge Wodify and BTWB",
+      "Rescue your old Wodify workout history. Upload CSV, XLS, or XLSX exports and see your strength progression instantly — even years later.",
     heroTitle: "Rescue Your Wodify Lifting History",
+    hookLine: "That old Wodify export isn't dead weight",
     heroDescription:
-      "Whether you still use Wodify or your gym switched platforms years ago, your training data deserves better than an old spreadsheet file. Import it here to see your full strength timeline and keep it in a Google Sheet you control.",
+      "Drop your Wodify export — even years-old files work. Your data isn't lost.",
+    cardDescription:
+      "Gym switched platforms? Your old Wodify data still has stories to tell.",
     whyItMatters:
       "Wodify exports often end up forgotten in Downloads folders when gyms switch platforms. Instead of letting that history collect dust, bring it here. You'll see your progression over time, discover PRs you forgot about, and have everything in a Google Sheet that's yours regardless of which gym software comes next.",
     exportSteps: [
@@ -125,9 +126,9 @@ export const IMPORT_APP_PAGES = [
       "See your strength dashboard instantly — or sign in to save it to your own Google Sheet.",
     ],
     whatYouGet: [
-      "Old Wodify data turned into a living, interactive strength dashboard.",
-      "Merge Wodify with Hevy, Strong, BTWB, or any other app — one unified history.",
-      "CSV, XLS, and XLSX support means even old spreadsheet exports work.",
+      "Dust off old Wodify exports and see PRs you forgot you ever hit.",
+      "CSV, XLS, and XLSX all supported — even exports from years ago work.",
+      "Merge with Hevy, Strong, BTWB, or any other app into one career-spanning timeline.",
       "A Google Sheet you own that travels with you regardless of gym software.",
     ],
     mergeTitle: "History spread across gyms and apps?",
@@ -150,8 +151,7 @@ export const IMPORT_APP_PAGES = [
           "Absolutely. Import both files and we'll merge them into one timeline. Common for lifters who trained at CrossFit gyms using different platforms over the years.",
       },
       {
-        question:
-          "What happens to my data?",
+        question: "What happens to my data?",
         answer: IMPORT_PRIVACY_ANSWER,
       },
     ],
@@ -161,12 +161,13 @@ export const IMPORT_APP_PAGES = [
     appName: "BTWB",
     title: "Import BTWB Data to Google Sheets | Strength Journeys",
     metaDescription:
-      "Import your Beyond the Whiteboard workout history and see your strength progression instantly. Upload your export and keep your data in a Google Sheet you own.",
-    keywords:
-      "BTWB export, import BTWB to Google Sheets, Beyond the Whiteboard export, merge BTWB and Wodify, BTWB CSV importer",
+      "Import your Beyond the Whiteboard workout history and see your full strength timeline instantly. Merge with Wodify, Hevy, or Strong — one unified view.",
     heroTitle: "Your BTWB History Deserves a Better Home",
+    hookLine: "The training career you've never seen in full",
     heroDescription:
-      "Beyond the Whiteboard holds years of training data for a lot of lifters. Import your export here to see your full strength timeline — PRs, progression, trends — and keep it all in a Google Sheet you actually own.",
+      "Drop your BTWB export and finally see your complete strength timeline.",
+    cardDescription:
+      "Bounced between gyms? Unify years of BTWB history with everything else.",
     whyItMatters:
       "BTWB has tracked your workouts faithfully, but that data is more powerful outside a single platform. Import it here and you'll see your strength progression visualized over time, with PRs automatically detected across every lift and rep range. Your Google Sheet becomes the permanent, portable record.",
     exportSteps: [
@@ -176,10 +177,10 @@ export const IMPORT_APP_PAGES = [
       "See your strength dashboard instantly — or sign in to save it to your own Google Sheet.",
     ],
     whatYouGet: [
-      "Years of BTWB data turned into an interactive strength dashboard with automatic PR detection.",
-      "Merge BTWB with Wodify, Hevy, Strong, or any other app — one complete history.",
+      "Finally see your full BTWB career as one interactive timeline — not a static spreadsheet.",
+      "PRs detected automatically across every lift and rep range, going back as far as your data does.",
       "We handle BTWB-specific quirks like multiline descriptions and weighted set parsing.",
-      "Your data lives in a Google Sheet you own — independent of any single platform.",
+      "Merge with Wodify, Hevy, or Strong to unify your gym-hopping history into one place.",
     ],
     mergeTitle: "Used other trackers too?",
     mergeBody:
@@ -188,7 +189,7 @@ export const IMPORT_APP_PAGES = [
       {
         question: "How do I export my data from BTWB?",
         answer:
-          "Export your workout history from Beyond the Whiteboard as a CSV or spreadsheet file, then upload it here to see your strength dashboard instantly.",
+          "Export your workout history from Beyond the Whiteboard as a CSV or spreadsheet file, then upload it here.",
       },
       {
         question: "Do I need to sign in?",
@@ -201,8 +202,7 @@ export const IMPORT_APP_PAGES = [
           "Yes — very common for CrossFit athletes. Import both files and we'll merge them into one unified training history.",
       },
       {
-        question:
-          "Is my data private?",
+        question: "Is my data private?",
         answer: IMPORT_PRIVACY_ANSWER,
       },
     ],

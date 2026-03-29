@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useIsClient } from "usehooks-ts";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -58,16 +59,19 @@ const PageDescription = () => (
 function HeroPrimaryCta() {
   const { status: authStatus } = useSession();
   const { hasUserData, sheetInfo } = useUserLiftingData();
+  const isClient = useIsClient();
   const hasSsid = !!sheetInfo?.ssid;
 
   if (hasUserData) return null;
 
-  const importCtaLabel = hasSsid
+  const effectiveAuthStatus = isClient ? authStatus : "unauthenticated";
+  const effectiveHasSsid = isClient ? hasSsid : false;
+  const importCtaLabel = effectiveHasSsid
     ? "Import More Lifting History"
     : "Import From Another Fitness App";
   const importCtaDescription =
-    authStatus === "authenticated"
-      ? hasSsid
+    effectiveAuthStatus === "authenticated"
+      ? effectiveHasSsid
         ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
         : "Instant preview first. Save your data into a free Google Sheet when you're ready."
       : "Instant preview. No sign-in required.";
@@ -78,7 +82,7 @@ function HeroPrimaryCta() {
       <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
         {/* Primary CTA column */}
         <div className="flex w-full flex-col items-center sm:w-auto">
-          {authStatus === "authenticated" ? (
+          {effectiveAuthStatus === "authenticated" ? (
             <Button
               size="lg"
               className="w-full hover:ring-2 sm:w-auto"
@@ -110,7 +114,7 @@ function HeroPrimaryCta() {
         </div>
 
         {/* Secondary CTA column */}
-        {authStatus !== "loading" && (
+        {(
           <div className="flex w-full flex-col items-center sm:w-auto">
             <Button
               variant="outline"

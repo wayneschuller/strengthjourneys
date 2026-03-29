@@ -2,7 +2,6 @@ import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import {
-  ArrowRight,
   CheckCircle2,
   GitMerge,
   Shield,
@@ -26,7 +25,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -133,12 +131,6 @@ function ImportAppPage({ page }) {
           type: "article",
           site_name: "Strength Journeys",
         }}
-        additionalMetaTags={[
-          {
-            name: "keywords",
-            content: page.keywords,
-          },
-        ]}
       />
 
       <PageContainer className="pb-16">
@@ -147,14 +139,16 @@ function ImportAppPage({ page }) {
             {page.heroTitle}
           </PageHeaderHeading>
           <PageHeaderDescription>
-            <p>{page.heroDescription}</p>
+            <p>{page.hookLine}. {page.heroDescription}</p>
           </PageHeaderDescription>
         </PageHeader>
 
         {/* Upload area — front and center */}
-        <ImportWorkflowSection
-          title={`Import from ${page.appName}`}
-        />
+        <div id="import-section">
+          <ImportWorkflowSection
+            title={`Import from ${page.appName}`}
+          />
+        </div>
 
         {/* Privacy badge */}
         <p className="text-muted-foreground mx-auto -mt-8 mb-10 max-w-5xl text-center text-xs">
@@ -169,7 +163,7 @@ function ImportAppPage({ page }) {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Why move your {page.appName} data?</CardTitle>
+                <h2 className="text-2xl font-semibold leading-none tracking-tight">Why move your {page.appName} data?</h2>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm leading-7">
@@ -179,7 +173,7 @@ function ImportAppPage({ page }) {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>What you get</CardTitle>
+                <h2 className="text-2xl font-semibold leading-none tracking-tight">What you get</h2>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 text-sm leading-6">
@@ -198,15 +192,18 @@ function ImportAppPage({ page }) {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>
+                <h2 className="text-2xl font-semibold leading-none tracking-tight">
                   How to export from {page.appName}
-                </CardTitle>
+                </h2>
               </CardHeader>
               <CardContent>
                 <ol className="space-y-4 text-sm leading-6">
                   {page.exportSteps.map((step, index) => (
                     <li key={step} className="flex gap-3">
-                      <span className="bg-primary/10 text-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                      <span
+                        className="bg-primary/10 text-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                        aria-label={`Step ${index + 1}`}
+                      >
                         {index + 1}
                       </span>
                       <span className="text-muted-foreground">{step}</span>
@@ -218,7 +215,7 @@ function ImportAppPage({ page }) {
 
             <Card>
               <CardHeader>
-                <CardTitle>{page.mergeTitle}</CardTitle>
+                <h2 className="text-2xl font-semibold leading-none tracking-tight">{page.mergeTitle}</h2>
               </CardHeader>
               <CardContent>
                 <div className="flex items-start gap-3 rounded-lg border p-4">
@@ -234,7 +231,7 @@ function ImportAppPage({ page }) {
           {/* FAQ */}
           <Card>
             <CardHeader>
-              <CardTitle>Common questions</CardTitle>
+              <h2 className="text-2xl font-semibold leading-none tracking-tight">Common questions</h2>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
@@ -250,10 +247,29 @@ function ImportAppPage({ page }) {
             </CardContent>
           </Card>
 
+          {/* Bottom CTA — scroll to import */}
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
+              <h2 className="text-lg font-semibold">
+                Ready to see your {page.appName} data come alive?
+              </h2>
+              <Button
+                onClick={() =>
+                  document
+                    .getElementById("import-section")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Import Now
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Related apps */}
           <Card>
             <CardHeader>
-              <CardTitle>Importing from another app too?</CardTitle>
+              <h2 className="text-2xl font-semibold leading-none tracking-tight">Importing from another app too?</h2>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {relatedPages.map((relatedPage) => (

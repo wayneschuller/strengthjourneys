@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useIsClient } from "usehooks-ts";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -58,21 +59,23 @@ const PageDescription = () => (
 function HeroPrimaryCta() {
   const { status: authStatus } = useSession();
   const { hasUserData, sheetInfo } = useUserLiftingData();
+  const isClient = useIsClient();
   const hasSsid = !!sheetInfo?.ssid;
   const isAuthed = authStatus === "authenticated";
 
   if (hasUserData) return null;
 
-  const importCtaLabel = isAuthed
-    ? hasSsid
-      ? "Import More Lifting History"
-      : "Import From Another Fitness App"
+  const effectiveAuthStatus = isClient ? authStatus : "unauthenticated";
+  const effectiveHasSsid = isClient ? hasSsid : false;
+  const importCtaLabel = effectiveHasSsid
+    ? "Import More Lifting History"
     : "Import From Another Fitness App";
-  const importCtaDescription = isAuthed
-    ? hasSsid
-      ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
-      : "Instant preview first. Save your data into a free Google Sheet when you're ready."
-    : "Instant preview. No sign-in required.";
+  const importCtaDescription =
+    effectiveAuthStatus === "authenticated"
+      ? effectiveHasSsid
+        ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
+        : "Instant preview first. Save your data into a free Google Sheet when you're ready."
+      : "Instant preview. No sign-in required.";
 
   return (
     <div className="flex flex-col items-center gap-4 md:items-start">
@@ -80,7 +83,7 @@ function HeroPrimaryCta() {
       <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
         {/* Primary CTA column */}
         <div className="flex w-full flex-col items-center sm:w-auto">
-          {authStatus === "authenticated" ? (
+          {effectiveAuthStatus === "authenticated" ? (
             <Button
               size="lg"
               className="w-full hover:ring-2 sm:w-auto"
@@ -112,28 +115,30 @@ function HeroPrimaryCta() {
         </div>
 
         {/* Secondary CTA column */}
-        <div className="flex w-full flex-col items-center sm:w-auto">
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full sm:w-auto"
-            asChild
-            onClick={() => gaEvent(GA_EVENT_TAGS.HERO_IMPORT_CLICK, { page: "/" })}
-          >
-            <Link
-              href={{
-                pathname: "/import",
-                query: { from: "hero", returnTo: "/" },
-              }}
+        {(
+          <div className="flex w-full flex-col items-center sm:w-auto">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+              asChild
+              onClick={() => gaEvent(GA_EVENT_TAGS.HERO_IMPORT_CLICK, { page: "/" })}
             >
-              <Upload className="mr-2 h-4 w-4" />
-              {importCtaLabel}
-            </Link>
-          </Button>
-          <p className="mt-1.5 text-center text-xs text-slate-500 sm:text-left">
-            {importCtaDescription}
-          </p>
-        </div>
+              <Link
+                href={{
+                  pathname: "/import",
+                  query: { from: "hero", returnTo: "/" },
+                }}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {importCtaLabel}
+              </Link>
+            </Button>
+            <p className="mt-1.5 text-center text-xs text-slate-500 sm:text-left">
+              {importCtaDescription}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

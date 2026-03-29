@@ -13,6 +13,17 @@ const scopes = [
 ];
 const REQUIRED_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
+function getUserKvKeys(email) {
+  if (!email) return { exactKey: null, normalizedKey: null };
+
+  const exactEmail = String(email);
+  const normalizedEmail = exactEmail.trim().toLowerCase();
+  return {
+    exactKey: `sj:user:${exactEmail}`,
+    normalizedKey: `sj:user:${normalizedEmail}`,
+  };
+}
+
 function getGrantedScopeSupportMeta(account) {
   const grantedScopeString =
     typeof account?.scope === "string" && account.scope.trim().length > 0
@@ -105,8 +116,9 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
-      const signInMeta = await getSignInSupportMeta(user?.email);
       const grantedScopeMeta = getGrantedScopeSupportMeta(account);
+      await persistSignInSupportMeta(user?.email, grantedScopeMeta);
+      const signInMeta = await getSignInSupportMeta(user?.email);
       await promptDeveloper("sign-in", user, {
         ...signInMeta,
         ...grantedScopeMeta,
@@ -202,6 +214,13 @@ const PROMPT_MESSAGES = {
         : null,
       meta.kvLookupFailed ? `KV lookup failed: ${meta.kvLookupFailed}` : null,
       meta.hasKvRecord != null ? `KV record exists: ${meta.hasKvRecord ? "yes" : "no"}` : null,
+      meta.firstSignInAt
+        ? `First sign-in seen: ${friendlyDate(meta.firstSignInAt)}`
+        : null,
+      meta.lastSignInAt
+        ? `Last sign-in seen: ${friendlyDate(meta.lastSignInAt)} (${daysAgo(meta.lastSignInAt)})`
+        : null,
+      meta.signInCount != null ? `Sign-in count: ${meta.signInCount}` : null,
       meta.connectedAt ? `Connected at: ${friendlyDate(meta.connectedAt)}` : null,
       meta.lastSeenAt
         ? `Last seen: ${friendlyDate(meta.lastSeenAt)} (${daysAgo(meta.lastSeenAt)})`
@@ -376,9 +395,7 @@ async function getSignInSupportMeta(email) {
   if (!email) return {};
 
   try {
-    const exactKey = `sj:user:${email}`;
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedKey = `sj:user:${normalizedEmail}`;
+    const { exactKey, normalizedKey } = getUserKvKeys(email);
     const record =
       (await kv.get(exactKey)) ||
       (normalizedKey !== exactKey ? await kv.get(normalizedKey) : null) ||
@@ -393,12 +410,51 @@ async function getSignInSupportMeta(email) {
       provisionedSheetId: record?.provisionedSheetId || null,
       activationPromptedAt: record?.activationPromptedAt || null,
       returnPromptedAt: record?.returnPromptedAt || null,
+      firstSignInAt: record?.firstSignInAt || null,
+      lastSignInAt: record?.lastSignInAt || null,
+      signInCount:
+        typeof record?.signInCount === "number" ? record.signInCount : null,
     };
   } catch (error) {
     return {
       kvLookupFailed: error?.message || "unknown KV error",
     };
   }
+}
+
+async function persistSignInSupportMeta(email, grantedScopeMeta) {
+  if (!email) return;
+
+  const { exactKey, normalizedKey } = getUserKvKeys(email);
+  if (!exactKey) return;
+
+  const existingRecord =
+    (await kv.get(exactKey)) ||
+    (normalizedKey !== exactKey ? await kv.get(normalizedKey) : null) ||
+    {};
+  const nowIso = new Date().toISOString();
+  const currentCount =
+    typeof existingRecord?.signInCount === "number" &&
+    Number.isFinite(existingRecord.signInCount)
+      ? existingRecord.signInCount
+      : 0;
+
+  const nextRecord = {
+    ...existingRecord,
+    firstSignInAt: existingRecord.firstSignInAt || nowIso,
+    lastSignInAt: nowIso,
+    signInCount: currentCount + 1,
+  };
+
+  if (grantedScopeMeta.grantedScopesKnown) {
+    nextRecord.lastGrantedScopes = grantedScopeMeta.grantedScopes || [];
+  }
+  if (grantedScopeMeta.hasRequiredDriveScope != null) {
+    nextRecord.lastRequiredDriveScopeGranted =
+      grantedScopeMeta.hasRequiredDriveScope;
+  }
+
+  await kv.set(exactKey, nextRecord);
 }
 
 export async function promptDeveloper(event, user, meta = {}) {

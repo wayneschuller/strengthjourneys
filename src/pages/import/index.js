@@ -345,7 +345,7 @@ function ImportSeoLinksSection() {
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Takes about 2 minutes. Export your history from apps like Hevy,
-          Strong, Wodify, or BTWB, then import it here.
+          Strong, Wodify, BTWB, or TurnKey, then import it here.
         </p>
       </div>
 
@@ -356,8 +356,7 @@ function ImportSeoLinksSection() {
               <div>
                 <h3 className="font-semibold">{page.appName}</h3>
                 <p className="text-muted-foreground mt-1 text-sm leading-6">
-                  Export your history from {page.appName}, then import it into
-                  Strength Journeys here. We handle the rest.
+                  {page.cardDescription}
                 </p>
               </div>
               <div className="mt-auto pt-2">
@@ -551,17 +550,10 @@ export default function ImportPage() {
             title:
               "Import Your Lifting History - See Your Strength Instantly",
             description:
-              "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required.",
+              "Import workout data from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required.",
             type: "website",
             site_name: "Strength Journeys",
           }}
-          additionalMetaTags={[
-            {
-              name: "keywords",
-              content:
-                "import Hevy data, import Strong CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
-            },
-          ]}
         />
         <PageContainer className="py-16 text-center">
           <Loader2 className="text-muted-foreground mx-auto h-8 w-8 animate-spin" />
@@ -574,7 +566,7 @@ export default function ImportPage() {
     <>
       <NextSeo
         title="Import Your Lifting History - See Your Strength Instantly"
-        description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required."
+        description="Import workout data from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required."
         canonical="https://www.strengthjourneys.xyz/import"
         openGraph={{
           url: "https://www.strengthjourneys.xyz/import",
@@ -596,10 +588,10 @@ export default function ImportPage() {
       <PageContainer>
         <PageHeader>
           <PageHeaderHeading icon={Upload}>
-            Import Your Lifting History
+            Your Lifting Data is Trapped. Let&apos;s Fix That.
           </PageHeaderHeading>
           <PageHeaderDescription>
-            Bring your data from Hevy, Strong, Wodify, BTWB, or any
+            Drop a file from Hevy, Strong, Wodify, BTWB, TurnKey, or any
             spreadsheet and see your full strength dashboard instantly.
             {authStatus !== "authenticated" &&
               " No account required."}

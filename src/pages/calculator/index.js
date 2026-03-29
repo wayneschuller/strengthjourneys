@@ -1520,6 +1520,14 @@ const BIG_FOUR_TO_PERCENTILE_KEY = {
   "Deadlift": "deadlift",
 };
 
+// Maps BIG_FOUR names to the dedicated lift-specific calculator page.
+const BIG_FOUR_TO_CALCULATOR_URL = {
+  "Back Squat": "/calculator/squat-1rm-calculator",
+  "Bench Press": "/calculator/bench-press-1rm-calculator",
+  "Deadlift": "/calculator/deadlift-1rm-calculator",
+  "Strict Press": "/calculator/strict-press-1rm-calculator",
+};
+
 // Maps lift slug page names to the dedicated lift insights page URL.
 const LIFT_SLUG_TO_INSIGHTS_URL = {
   "Squat": "/progress-guide/squat",
@@ -1627,6 +1635,8 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   const renderLiftRow = (liftType, data, featured = false, gymPct = null) => {
     const { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath } = data;
     const percentileLine = gymPct != null ? `Stronger than ${gymPct}% of gym-goers` : null;
+    const calculatorUrl = BIG_FOUR_TO_CALCULATOR_URL[liftType] ?? "/calculator";
+
     return (
       <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
         {/* Row 1 on mobile: SVG + lift name + rating badge */}
@@ -1645,7 +1655,12 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           </Link>
           {/* Rating badge: mobile only (desktop shows it at the end) */}
           <div className={cn("shrink-0 text-right md:hidden", featured ? "text-sm" : "text-xs")}>
-            <span className="font-medium">{emoji} {rating}</span>
+            <Link
+              href={calculatorUrl}
+              className="font-medium transition-opacity hover:opacity-70"
+            >
+              {emoji} {rating}
+            </Link>
             {percentileLine && (
               <div className="text-[10px] text-muted-foreground">{percentileLine}</div>
             )}
@@ -1729,7 +1744,12 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         </div>
         {/* Rating at end — desktop only (shown in row 1 on mobile) */}
         <div className={cn("hidden w-36 shrink-0 text-right md:block", featured ? "text-sm" : "text-xs")}>
-          <span className="font-medium">{emoji} {rating}</span>
+          <Link
+            href={calculatorUrl}
+            className="font-medium transition-opacity hover:opacity-70"
+          >
+            {emoji} {rating}
+          </Link>
           {percentileLine && (
             <div className="text-[10px] text-muted-foreground">{percentileLine}</div>
           )}

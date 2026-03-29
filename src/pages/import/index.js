@@ -345,7 +345,7 @@ function ImportSeoLinksSection() {
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Takes about 2 minutes. Export your history from apps like Hevy,
-          Strong, Wodify, or BTWB, then import it here.
+          Strong, Wodify, BTWB, or TurnKey, then import it here.
         </p>
       </div>
 
@@ -550,7 +550,7 @@ export default function ImportPage() {
             title:
               "Import Your Lifting History - See Your Strength Instantly",
             description:
-              "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required.",
+              "Import workout data from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required.",
             type: "website",
             site_name: "Strength Journeys",
           }}
@@ -566,7 +566,7 @@ export default function ImportPage() {
     <>
       <NextSeo
         title="Import Your Lifting History - See Your Strength Instantly"
-        description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required."
+        description="Import workout data from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required."
         canonical="https://www.strengthjourneys.xyz/import"
         openGraph={{
           url: "https://www.strengthjourneys.xyz/import",
@@ -591,8 +591,8 @@ export default function ImportPage() {
             Your Lifting Data is Trapped. Let&apos;s Fix That.
           </PageHeaderHeading>
           <PageHeaderDescription>
-            Drop a file from Hevy, Strong, Wodify, BTWB, or any spreadsheet
-            and see your full strength dashboard instantly.
+            Drop a file from Hevy, Strong, Wodify, BTWB, TurnKey, or any
+            spreadsheet and see your full strength dashboard instantly.
             {authStatus !== "authenticated" &&
               " No account required."}
           </PageHeaderDescription>

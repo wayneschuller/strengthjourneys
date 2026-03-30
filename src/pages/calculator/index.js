@@ -68,6 +68,7 @@ import {
 
 import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
@@ -1022,6 +1023,10 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   const liftStandard = bigFourName ? standards?.[bigFourName] : null;
   const liftRating = liftStandard?.elite ? getStrengthRatingForE1RM(e1rmWeight, liftStandard) : null;
   const liftRatingEmoji = liftRating ? (STRENGTH_LEVEL_EMOJI[liftRating] ?? "") : null;
+  const strengthStandardsUrl = bigFourName ? STRENGTH_STANDARDS_LINKS[bigFourName] : null;
+  const standardsComparisonCopy = forceLift && liftRating
+    ? `${liftRating} ${forceLift.toLowerCase()} strength for your age, sex, and bodyweight`
+    : null;
 
   // Percentile for the forced lift (squat/bench/deadlift only, not strict press)
   const percentileKey = bigFourName ? BIG_FOUR_TO_PERCENTILE_KEY[bigFourName] : null;
@@ -1057,6 +1062,13 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
           <div className="mt-1 text-center text-sm text-muted-foreground">
             <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70">
               Stronger than {gymGoerPercentile}% of gym-goers your age
+            </Link>
+          </div>
+        )}
+        {gymGoerPercentile == null && standardsComparisonCopy && strengthStandardsUrl && (
+          <div className="mt-1 text-center text-sm text-muted-foreground">
+            <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70">
+              {standardsComparisonCopy}
             </Link>
           </div>
         )}

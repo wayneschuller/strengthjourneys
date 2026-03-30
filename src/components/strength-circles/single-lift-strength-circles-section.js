@@ -230,7 +230,7 @@ export function SingleLiftStrengthCirclesSection({
 
   if (compact) {
     return (
-      <div className="w-full max-w-[340px]">
+      <div className="w-full max-w-[360px] xl:max-w-[420px] 2xl:max-w-[500px]">
         <StrengthCirclesChart
           percentiles={currentPercentiles}
           activeUniverse={activeUniverse}

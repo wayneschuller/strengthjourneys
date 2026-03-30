@@ -748,7 +748,7 @@ export function E1RMCalculatorMain({
               {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
               <div className="relative my-6 flex flex-col items-center gap-3">
                 {forceLift && (
-                  <div className="hidden xl:block absolute left-0 top-1/2 -translate-y-1/2">
+                  <div className="hidden xl:block absolute left-0 2xl:-left-8 top-1/2 -translate-y-1/2">
                     <SingleLiftStrengthCirclesSection
                       liftType={forceLift}
                       e1rmKgOverride={calculatorE1rmKg}

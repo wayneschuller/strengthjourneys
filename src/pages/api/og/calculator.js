@@ -9,19 +9,6 @@ export const config = {
   runtime: "edge",
 };
 
-// ── Theme tokens (light mode from globals.css :root) ─────────────────────────
-const T = {
-  bg: "#ffffff",
-  fg: "#1c1917", // hsl(20 14.3% 4.1%)
-  card: "#ffffff",
-  cardFg: "#1c1917",
-  muted: "#f5f5f4", // hsl(60 4.8% 95.9%)
-  mutedFg: "#78716c", // hsl(25 5.3% 44.7%)
-  primary: "#1c1917", // hsl(24 9.8% 10%)
-  primaryFg: "#fafaf9",
-  border: "#e7e5e4", // hsl(20 5.9% 90%)
-};
-
 const E1RM_FORMULAE = [
   "Brzycki",
   "Epley",
@@ -98,7 +85,7 @@ export default async function handler(req) {
   const reps = Math.max(1, Math.min(Number(searchParams.get("reps")) || 5, 30));
   const isMetric = searchParams.get("calcIsMetric") === "true";
   const formula = searchParams.get("formula") || "Brzycki";
-  const lift = searchParams.get("lift") || null; // e.g. "Bench Press", "Squat"
+  const lift = searchParams.get("lift") || null;
   const bodyWeight = Number(searchParams.get("bodyWeight")) || 0;
   const age = Number(searchParams.get("age")) || 0;
   const sex = searchParams.get("sex") || "male";
@@ -120,7 +107,6 @@ export default async function handler(req) {
     const standard = interpolateStandardKG(age, bwKg, sex, bigFourName, LiftingStandardsKG);
 
     if (standard) {
-      // Convert standard to user's unit for comparison
       const userStandard = isMetric
         ? standard
         : {
@@ -134,7 +120,6 @@ export default async function handler(req) {
       ratingEmoji = strengthRating ? (STRENGTH_LEVEL_EMOJI[strengthRating] ?? "") : "";
     }
 
-    // Percentile (squat/bench/deadlift only, not strict press)
     const percentileKey = LIFT_TO_PERCENTILE_KEY[bigFourName];
     if (percentileKey) {
       const e1rmKg = isMetric ? e1rm : e1rm / 2.2046;
@@ -142,10 +127,20 @@ export default async function handler(req) {
       gymGoerPercentile = percentiles?.["Gym-Goers"] ?? null;
     }
 
-    bwMultiple = (e1rm / bodyWeight).toFixed(2);
+    bwMultiple = (e1rm / bodyWeight).toFixed(1);
   }
 
   const hasLift = Boolean(lift);
+  const topPercentile = gymGoerPercentile != null ? 100 - gymGoerPercentile : null;
+
+  // Radial glow color based on strength level
+  const glowColor = {
+    "Elite": "rgba(234, 179, 8, 0.15)",       // gold
+    "Advanced": "rgba(249, 115, 22, 0.12)",    // orange
+    "Intermediate": "rgba(59, 130, 246, 0.10)", // blue
+    "Beginner": "rgba(34, 197, 94, 0.10)",     // green
+    "Physically Active": "rgba(168, 162, 158, 0.08)",
+  }[strengthRating] ?? "rgba(168, 162, 158, 0.06)";
 
   return new ImageResponse(
     (
@@ -155,197 +150,198 @@ export default async function handler(req) {
           flexDirection: "column",
           width: "100%",
           height: "100%",
-          background: T.bg,
-          color: T.fg,
+          background: "#fafaf9",
+          color: "#1c1917",
           fontFamily: "system-ui, sans-serif",
-          padding: "40px 48px",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
         }}
       >
-        {/* Center: E1RM summary card (matches the real card UI) */}
+        {/* Radial glow behind the number */}
         <div
           style={{
             display: "flex",
-            flex: 1,
+            position: "absolute",
+            width: "600px",
+            height: "600px",
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
+            top: "15px",
+          }}
+        />
+
+        {/* Lift name + context line */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
+            marginBottom: "4px",
+            position: "relative",
           }}
         >
+          {hasLift && (
+            <span
+              style={{
+                fontSize: "22px",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "#a8a29e",
+                marginBottom: "2px",
+              }}
+            >
+              {lift}
+            </span>
+          )}
+          <span
+            style={{
+              fontSize: "18px",
+              color: "#a8a29e",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {reps}@{weight}{unit} {validFormula}
+          </span>
+        </div>
+
+        {/* Dominant E1RM number */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "center",
+            position: "relative",
+            marginBottom: "4px",
+          }}
+        >
+          <span
+            style={{
+              fontSize: "180px",
+              fontWeight: 800,
+              letterSpacing: "-0.04em",
+              lineHeight: 1,
+              color: "#1c1917",
+            }}
+          >
+            {e1rm}
+          </span>
+          <span
+            style={{
+              fontSize: "56px",
+              fontWeight: 700,
+              color: "#a8a29e",
+              marginLeft: "6px",
+            }}
+          >
+            {unit}
+          </span>
+        </div>
+
+        {/* Percentile badge (hero element when available) */}
+        {topPercentile != null && (
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              width: "640px",
-              border: `2px solid ${T.border}`,
-              borderRadius: "12px",
-              padding: "28px 32px 20px",
-              background: T.card,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+              gap: "10px",
+              marginBottom: "8px",
+              position: "relative",
             }}
           >
-            {/* Card title */}
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                marginBottom: "8px",
+                padding: "8px 24px",
+                borderRadius: "9999px",
+                background: "#1c1917",
+                color: "#fafaf9",
+                fontSize: "28px",
+                fontWeight: 700,
+                letterSpacing: "0.02em",
               }}
             >
-              {hasLift ? (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                >
-                  <span style={{ fontSize: "36px", fontWeight: 700 }}>
-                    {lift}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "26px",
-                      fontWeight: 600,
-                      color: T.mutedFg,
-                    }}
-                  >
-                    Estimated 1RM
-                  </span>
-                </div>
-              ) : (
-                <span style={{ fontSize: "32px", fontWeight: 700 }}>
-                  Estimated One Rep Max
-                </span>
-              )}
+              Top {topPercentile}%
             </div>
-
-            {/* Input set: reps@weight */}
-            <div
+            <span
               style={{
-                display: "flex",
-                fontSize: "26px",
-                color: T.mutedFg,
-                marginBottom: "4px",
+                fontSize: "18px",
+                color: "#78716c",
               }}
             >
-              {reps}@{weight}{unit}
-            </div>
+              of gym-goers your age
+            </span>
+          </div>
+        )}
 
-            {/* Big E1RM number */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "center",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "120px",
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  lineHeight: 1,
-                }}
-              >
-                {e1rm}
-              </span>
-              <span
-                style={{
-                  fontSize: "52px",
-                  fontWeight: 700,
-                  opacity: 0.6,
-                  marginLeft: "4px",
-                }}
-              >
-                {unit}
-              </span>
-            </div>
-
-            {/* Strength rating */}
+        {/* Strength level + BW multiple row */}
+        {(strengthRating || bwMultiple) && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "20px",
+              position: "relative",
+            }}
+          >
             {strengthRating && (
-              <div
+              <span
                 style={{
-                  display: "flex",
-                  fontSize: "28px",
+                  fontSize: "24px",
                   fontWeight: 600,
-                  marginTop: "8px",
                 }}
               >
                 {ratingEmoji} {strengthRating}
-              </div>
+              </span>
             )}
-
-            {/* Percentile */}
-            {gymGoerPercentile != null && (
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: "20px",
-                  color: T.mutedFg,
-                  marginTop: "4px",
-                }}
-              >
-                Stronger than {gymGoerPercentile}% of gym-goers your age
-              </div>
+            {strengthRating && bwMultiple && (
+              <span style={{ fontSize: "24px", color: "#d6d3d1" }}>|</span>
             )}
-
-            {/* BW multiple */}
             {bwMultiple && (
-              <div
+              <span
                 style={{
-                  display: "flex",
-                  fontSize: "20px",
-                  color: T.mutedFg,
-                  marginTop: "4px",
+                  fontSize: "22px",
+                  color: "#78716c",
                 }}
               >
                 {bwMultiple}× bodyweight
-              </div>
+              </span>
             )}
-
-            {/* Footer: formula name */}
-            <div
-              style={{
-                display: "flex",
-                fontSize: "20px",
-                color: T.mutedFg,
-                marginTop: "12px",
-                paddingTop: "12px",
-                borderTop: `1px solid ${T.border}`,
-                width: "100%",
-                justifyContent: "center",
-              }}
-            >
-              Using the <span style={{ fontWeight: 700 }}>{validFormula}</span> formula
-            </div>
           </div>
-        </div>
+        )}
 
-        {/* Bottom watermark pill (matches copy-image watermark style) */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginTop: "16px",
-          }}
-        >
+        {/* Fallback: formula + estimated 1RM label when no bio data */}
+        {!strengthRating && !gymGoerPercentile && (
           <div
             style={{
               display: "flex",
-              padding: "6px 20px",
-              borderRadius: "9999px",
-              background: "rgba(15, 23, 42, 0.86)",
-              color: "rgba(248, 250, 252, 0.98)",
-              fontSize: "16px",
-              fontWeight: 500,
-              letterSpacing: "0.03em",
-              boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
+              fontSize: "20px",
+              color: "#a8a29e",
+              position: "relative",
             }}
           >
-            strengthjourneys.xyz
+            Estimated 1RM
           </div>
+        )}
+
+        {/* Bottom watermark pill */}
+        <div
+          style={{
+            display: "flex",
+            position: "absolute",
+            bottom: "24px",
+            padding: "6px 20px",
+            borderRadius: "9999px",
+            background: "rgba(15, 23, 42, 0.86)",
+            color: "rgba(248, 250, 252, 0.98)",
+            fontSize: "15px",
+            fontWeight: 500,
+            letterSpacing: "0.03em",
+            boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
+          }}
+        >
+          strengthjourneys.xyz
         </div>
       </div>
     ),

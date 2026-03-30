@@ -234,14 +234,24 @@ function BarbellInsightsMain({
         </PageHeaderHeading>
         <PageHeaderDescription>
           <p>{liftInsightData.pageDescription}</p>
-          {STRENGTH_STANDARDS_LINKS[liftInsightData.liftType] && (
-            <div className="mt-5">
-              <Link
-                href={STRENGTH_STANDARDS_LINKS[liftInsightData.liftType]}
-                className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                {liftInsightData.liftType} Strength Levels →
-              </Link>
+          {(STRENGTH_STANDARDS_LINKS[liftInsightData.liftType] || liftInsightData.calculatorUrl) && (
+            <div className="mt-5 flex flex-wrap gap-3">
+              {STRENGTH_STANDARDS_LINKS[liftInsightData.liftType] && (
+                <Link
+                  href={STRENGTH_STANDARDS_LINKS[liftInsightData.liftType]}
+                  className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  {liftInsightData.liftType} Strength Levels →
+                </Link>
+              )}
+              {liftInsightData.calculatorUrl && (
+                <Link
+                  href={liftInsightData.calculatorUrl}
+                  className="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+                >
+                  {liftInsightData.liftType} 1RM Calculator →
+                </Link>
+              )}
             </div>
           )}
           <nav
@@ -610,4 +620,3 @@ function VideoCard({ liftType, videos }) {
     </Card>
   );
 }
-

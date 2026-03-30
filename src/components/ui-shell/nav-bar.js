@@ -7,7 +7,10 @@ import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { DarkModeToggle, ThemeChooser } from "@/components/ui-shell/theme-chooser";
+import {
+  DarkModeToggle,
+  ThemeChooser,
+} from "@/components/ui-shell/theme-chooser";
 import { MobileNav } from "@/components/ui-shell/mobile-nav";
 import { AvatarDropdown } from "@/components/ui-shell/avatar-menu";
 import { Table2, Loader2, Github, Layers, LineChart, Plus } from "lucide-react";
@@ -25,9 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Collapsible,
-} from "@/components/ui/collapsible";
+import { Collapsible } from "@/components/ui/collapsible";
 
 import {
   NavigationMenu,
@@ -67,11 +68,6 @@ import { getLogoForTheme } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
-const BIO_SETTINGS_PAGES = [
-  "/calculator",
-  "/big-four-strength-standards-calculator",
-  "/strength-levels",
-];
 const CANNY_APP_ID = "65ae4d4c921071bb0aae99c3";
 
 let cannyLoadPromise = null;
@@ -206,8 +202,7 @@ export function NavBar() {
           {/* Logged-in users always get the bio settings button. For guests we only show it on
               pages where bio data (age, sex, bodyweight) actively changes the output — we don't
               want the pulsing badge distracting first-time visitors on the landing page. */}
-          {(hasUserData ||
-            BIO_SETTINGS_PAGES.includes(pathname)) && <AthleteBioQuickSettings />}
+          <AthleteBioQuickSettings />
           <ThemeChooser />
           {/* <DarkModeToggle /> */}
           <AvatarDropdown />
@@ -680,7 +675,9 @@ function CalculatorsMenu() {
               "hover:text-foreground/80 bg-transparent transition-colors",
               pathname.startsWith("/calculator") ||
                 pathname.startsWith("/warm-up-sets-calculator") ||
-                pathname.startsWith("/big-four-strength-standards-calculator") ||
+                pathname.startsWith(
+                  "/big-four-strength-standards-calculator",
+                ) ||
                 pathname.startsWith("/timer")
                 ? "text-foreground"
                 : "text-foreground/60",

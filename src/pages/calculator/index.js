@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/article-cards";
-import { MiniFeedbackWidget } from "@/components/feedback";
+
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
@@ -51,6 +51,7 @@ import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or
 import { Calculator } from "lucide-react";
 import {
   motion,
+
   useMotionValue,
   useSpring,
   useTransform,
@@ -753,7 +754,12 @@ export function E1RMCalculatorMain({
               <div className="relative my-6 flex flex-col items-center gap-3">
                 <div className="relative flex w-full justify-center">
                   {forceLift && (
-                    <div className="hidden xl:flex absolute left-0 2xl:-left-10 top-1/2 -translate-y-1/2 items-center">
+                    <motion.div
+                      className="hidden xl:flex absolute left-0 2xl:-left-10 top-1/2 -translate-y-1/2 items-center"
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.6, duration: 0.6, ease: "easeOut" }}
+                    >
                       <SingleLiftStrengthCirclesSection
                         liftType={forceLift}
                         e1rmKgOverride={calculatorE1rmKg}
@@ -761,7 +767,7 @@ export function E1RMCalculatorMain({
                         compact={true}
                         compactClassName="aspect-square w-[340px] max-w-none 2xl:w-[420px]"
                       />
-                    </div>
+                    </motion.div>
                   )}
 
                   <E1RMSummaryCard
@@ -809,35 +815,29 @@ export function E1RMCalculatorMain({
                 </div>
 
                 {forceLift && (
-                  <div className="w-full max-w-[340px] xl:hidden">
+                  <motion.div
+                    className="w-full max-w-[340px] xl:hidden"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
+                  >
                     <SingleLiftStrengthCirclesSection
                       liftType={forceLift}
                       e1rmKgOverride={calculatorE1rmKg}
                       showTimeline={false}
                       compact={true}
                     />
-                  </div>
+                  </motion.div>
                 )}
 
-                <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
-                  <div className="justify-self-start">
-                    <MiniFeedbackWidget
-                      prompt="Useful calculator?"
-                      contextId="e1rm_calculator"
-                      page="/calculator"
-                      analyticsExtra={{ context: "e1rm_calculator_card" }}
-                    />
-                  </div>
-                  <ShareCopyButton
-                    label="Copy Text"
-                    successLabel="Copied"
-                    isSuccess={isTextCopied}
-                    className="min-w-[112px] justify-self-center"
-                    onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
-                    onClick={handleCopyToClipboard}
-                  />
-                  <div aria-hidden className="justify-self-end" />
-                </div>
+                <ShareCopyButton
+                  label="Copy Text"
+                  successLabel="Copied"
+                  isSuccess={isTextCopied}
+                  className="min-w-[112px]"
+                  onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
+                  onClick={handleCopyToClipboard}
+                />
               </div>
             </div>
           </div>
@@ -1103,51 +1103,61 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   const gymGoerPercentile = percentiles?.["Gym-Goers"];
 
   return (
-    <Card className="w-full max-w-md border-4">
-      <CardHeader>
-        <CardTitle className="text-center md:text-3xl">
-          {forceLift ? `${forceLift} — Estimated 1RM` : "Estimated One Rep Max"}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="text-center text-lg md:text-xl text-muted-foreground">
-          {reps}@{weight}{isMetric ? "kg" : "lb"}
-        </div>
-        <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-          <motion.span className="tabular-nums">{displayVal}</motion.span>
-          {isMetric ? "kg" : "lb"}
-        </div>
-        {liftRating && (
-          <div className="mt-2 text-center text-base font-semibold">
-            {liftRatingEmoji} {liftRating}
+    <div className="relative w-full max-w-md">
+      {/* Animated pulsating glow border */}
+      <motion.div
+        className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-primary via-primary/60 to-primary opacity-75 blur-sm"
+        animate={{ opacity: [0.4, 0.75, 0.4] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <Card className="relative w-full border-2 border-primary/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-center text-xl md:text-3xl">
+            {forceLift ? `${forceLift} — Estimated 1RM` : "Estimated One Rep Max"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pb-2">
+          <div className="text-center text-lg md:text-xl text-muted-foreground">
+            {reps}@{weight}{isMetric ? "kg" : "lb"}
           </div>
-        )}
-        {gymGoerPercentile != null && (
-          <div className="mt-1 text-center text-sm text-muted-foreground">
-            <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70">
-              Stronger than {gymGoerPercentile}% of gym-goers your age
-            </Link>
+          <div className="text-center text-6xl font-extrabold tracking-tight md:text-7xl xl:text-8xl">
+            <motion.span className="tabular-nums">{displayVal}</motion.span>
+            <span className="text-4xl font-bold opacity-60 md:text-5xl xl:text-6xl">
+              {isMetric ? "kg" : "lb"}
+            </span>
           </div>
-        )}
-        {gymGoerPercentile == null && standardsComparisonCopy && strengthStandardsUrl && (
-          <div className="mt-1 text-center text-sm text-muted-foreground">
-            <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70">
-              {standardsComparisonCopy}
-            </Link>
+          {liftRating && (
+            <div className="mt-2 text-center text-lg font-semibold">
+              {liftRatingEmoji} {liftRating}
+            </div>
+          )}
+          {gymGoerPercentile != null && (
+            <div className="mt-1 text-center text-sm text-muted-foreground">
+              <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70">
+                Stronger than {gymGoerPercentile}% of gym-goers your age
+              </Link>
+            </div>
+          )}
+          {gymGoerPercentile == null && standardsComparisonCopy && strengthStandardsUrl && (
+            <div className="mt-1 text-center text-sm text-muted-foreground">
+              <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70">
+                {standardsComparisonCopy}
+              </Link>
+            </div>
+          )}
+          {!bioDataIsDefault && bodyWeight > 0 && (
+            <div className="mt-1 text-center text-sm text-muted-foreground">
+              {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="text-muted-foreground">
+          <div className="flex-1 text-center">
+            Using the <strong>{e1rmFormula}</strong> formula
           </div>
-        )}
-        {!bioDataIsDefault && bodyWeight > 0 && (
-          <div className="mt-1 text-center text-sm text-muted-foreground">
-            {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="text-muted-foreground">
-        <div className="flex-1 text-center">
-          Using the <strong>{e1rmFormula}</strong> formula
-        </div>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 

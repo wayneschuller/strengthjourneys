@@ -3210,6 +3210,13 @@ const LOG_LIFT_PERCENTILE_KEYS = {
   "Strict Press": "strictPress",
 };
 
+const LOG_LIFT_CALCULATOR_URLS = {
+  "Back Squat": "/calculator/squat-1rm-calculator",
+  "Bench Press": "/calculator/bench-press-1rm-calculator",
+  "Deadlift": "/calculator/deadlift-1rm-calculator",
+  "Strict Press": "/calculator/strict-press-1rm-calculator",
+};
+
 function LogStrengthBar({
   liftType,
   e1rmValue,
@@ -3340,6 +3347,7 @@ function LogLiftPercentileLine({
   isMetric,
 }) {
   const percentileKey = LOG_LIFT_PERCENTILE_KEYS[liftType];
+  const calculatorUrl = LOG_LIFT_CALCULATOR_URLS[liftType] ?? "/calculator";
 
   const gymGoerPercentile = useMemo(() => {
     if (!percentileKey || !e1rmValue || !age || bodyWeight == null || !sex) {
@@ -3361,7 +3369,7 @@ function LogLiftPercentileLine({
 
   return (
     <div className="text-xs text-muted-foreground">
-      <Link href="/how-strong-am-i" className="transition-colors hover:text-foreground">
+      <Link href={calculatorUrl} className="transition-colors hover:text-foreground">
         Stronger than {gymGoerPercentile}% of gym-goers
       </Link>
     </div>

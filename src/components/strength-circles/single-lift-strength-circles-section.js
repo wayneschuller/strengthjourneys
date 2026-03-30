@@ -230,16 +230,18 @@ export function SingleLiftStrengthCirclesSection({
 
   return (
     <Card>
-      <CardHeader className={cn("pb-3", compact ? "px-4 pt-4" : "")}>
-        <CardTitle className="text-base">{liftType} Strength Circles</CardTitle>
-        <p className={cn("text-sm text-muted-foreground", compact ? "text-xs leading-relaxed" : "")}>
-          See how your current {liftType.toLowerCase()} stacks up across four comparison groups.
-        </p>
-      </CardHeader>
+      {!compact && (
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{liftType} Strength Circles</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            See how your current {liftType.toLowerCase()} stacks up across four comparison groups.
+          </p>
+        </CardHeader>
+      )}
       <CardContent
         className={cn(
           "grid grid-cols-1 gap-6",
-          compact ? "px-4 pb-4 pt-0" : "",
+          compact ? "px-3 py-3" : "",
           showTimelinePanel
             ? "lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]"
             : "",
@@ -251,6 +253,8 @@ export function SingleLiftStrengthCirclesSection({
             activeUniverse={activeUniverse}
             onUniverseChange={setSelectedUniverse}
             onUniverseHoverChange={setHoveredUniverse}
+            showLegend={!compact}
+            showTrustLine={!compact}
           />
         </div>
         <div className="flex flex-col justify-start gap-4">

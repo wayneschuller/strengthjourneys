@@ -15,6 +15,7 @@ export const STRENGTH_CIRCLES_LIFT_TYPES = {
   squat: "Back Squat",
   bench: "Bench Press",
   deadlift: "Deadlift",
+  strictPress: "Strict Press",
 };
 
 export function getInterpolatedStandard(age, bodyWeightKg, sex, liftKey) {

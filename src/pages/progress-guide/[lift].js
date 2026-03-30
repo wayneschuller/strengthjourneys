@@ -239,7 +239,7 @@ function BarbellInsightsMain({
               {STRENGTH_STANDARDS_LINKS[liftInsightData.liftType] && (
                 <Link
                   href={STRENGTH_STANDARDS_LINKS[liftInsightData.liftType]}
-                  className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  className="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
                 >
                   {liftInsightData.liftType} Strength Levels →
                 </Link>

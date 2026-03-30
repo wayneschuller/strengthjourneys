@@ -4,7 +4,8 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/article-cards";
-import { MiniFeedbackWidget } from "@/components/feedback";
+
+import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import { UnitChooser } from "@/components/unit-type-chooser";
@@ -50,6 +51,7 @@ import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or
 import { Calculator } from "lucide-react";
 import {
   motion,
+
   useMotionValue,
   useSpring,
   useTransform,
@@ -67,6 +69,10 @@ import {
 } from "@/components/ui/popover";
 
 import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
+import {
+  LIFT_TYPE_TO_PERCENTILE_KEY,
+  LIFT_TYPE_TO_CALCULATOR_URL,
+} from "@/lib/strength-circles/strength-score";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 
@@ -465,7 +471,7 @@ export function E1RMCalculatorMain({
         lines.push(`${bigFourName ?? forceLift}: ${liftData.emoji} ${liftData.rating}`);
         // Add percentile line if bio data is available and lift is supported
         if (!bioDataIsDefault && bodyWeight > 0 && bigFourName) {
-          const pctKey = BIG_FOUR_TO_PERCENTILE_KEY[bigFourName];
+          const pctKey = LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName];
           if (pctKey) {
             const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
             const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
@@ -602,6 +608,7 @@ export function E1RMCalculatorMain({
   const plateBreakdown = calculatePlateBreakdown(e1rmWeight, plateBarWeight, isMetric, storedPlatePreference);
   const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
   const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
+  const calculatorE1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
 
   return (
     <PageContainer>
@@ -707,103 +714,131 @@ export function E1RMCalculatorMain({
             </div>
           </div>
 
-          {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
-          <div
-            ref={portraitRef}
-            style={{
-              position: "fixed",
-              left: "-9999px",
-              top: 0,
-              width: "360px",
-              height: "640px",
-              fontFamily: themeFontFamily,
-            }}
-            className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
-          >
-            <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
-                One Rep Max
+          <div className="mb-6">
+            <div>
+              {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
+              <div
+                ref={portraitRef}
+                style={{
+                  position: "fixed",
+                  left: "-9999px",
+                  top: 0,
+                  width: "360px",
+                  height: "640px",
+                  fontFamily: themeFontFamily,
+                }}
+                className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
+              >
+                <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
+                    One Rep Max
+                  </div>
+                  <div style={{ fontSize: "20px", opacity: 0.6 }}>
+                    {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
+                  </div>
+                </div>
+                <div style={{ textAlign: "center", lineHeight: 1 }}>
+                  <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em" }}>
+                    {e1rmWeight}
+                  </div>
+                  <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
+                    {isMetric ? "kg" : "lb"}
+                  </div>
+                </div>
+                <div style={{ fontSize: "15px", opacity: 0.45 }}>
+                  {e1rmFormula} formula
+                </div>
               </div>
-              <div style={{ fontSize: "20px", opacity: 0.6 }}>
-                {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
-              </div>
-            </div>
-            <div style={{ textAlign: "center", lineHeight: 1 }}>
-              <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em" }}>
-                {e1rmWeight}
-              </div>
-              <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
-                {isMetric ? "kg" : "lb"}
-              </div>
-            </div>
-            <div style={{ fontSize: "15px", opacity: 0.45 }}>
-              {e1rmFormula} formula
-            </div>
-          </div>
 
-          {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
-          <div className="relative my-6 flex flex-col items-center gap-3">
-            <E1RMSummaryCard
-              reps={reps}
-              weight={weight}
-              isMetric={isMetric}
-              e1rmFormula={e1rmFormula}
-              estimateE1RM={estimateE1RM}
-              forceLift={forceLift}
-            />
+              {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
+              <div className="relative my-6 flex flex-col items-center gap-3">
+                <div className="relative flex w-full justify-center">
+                  {forceLift && (
+                    <motion.div
+                      className="hidden xl:flex absolute left-0 2xl:-left-10 top-1/2 -translate-y-1/2 items-center"
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.6, duration: 0.6, ease: "easeOut" }}
+                    >
+                      <SingleLiftStrengthCirclesSection
+                        liftType={forceLift}
+                        e1rmKgOverride={calculatorE1rmKg}
+                        showTimeline={false}
+                        compact={true}
+                        compactClassName="aspect-square w-[340px] max-w-none 2xl:w-[420px]"
+                      />
+                    </motion.div>
+                  )}
 
-            {/* Floating plate annotation: absolute in right whitespace on desktop */}
-            <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
-              <Link href={warmupURL}>
-                <PlateDiagram
-                  platesPerSide={plateBreakdown.platesPerSide}
-                  barWeight={plateBarWeight}
-                  isMetric={isMetric}
-                  hideLabels={true}
-                  animationKey={diagramAnimKey}
-                  useScrollTrigger={false}
+                  <E1RMSummaryCard
+                    reps={reps}
+                    weight={weight}
+                    isMetric={isMetric}
+                    e1rmFormula={e1rmFormula}
+                    estimateE1RM={estimateE1RM}
+                    forceLift={forceLift}
+                  />
+
+                  {/* Floating plate annotation: absolute in right whitespace on desktop */}
+                  <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
+                    <Link href={warmupURL}>
+                      <PlateDiagram
+                        platesPerSide={plateBreakdown.platesPerSide}
+                        barWeight={plateBarWeight}
+                        isMetric={isMetric}
+                        hideLabels={true}
+                        animationKey={diagramAnimKey}
+                        useScrollTrigger={false}
+                      />
+                    </Link>
+                    <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
+                      See warm-up sets →
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Mobile: plate diagram + link below card */}
+                <div className="flex flex-col items-center md:hidden">
+                  <Link href={warmupURL}>
+                    <PlateDiagram
+                      platesPerSide={plateBreakdown.platesPerSide}
+                      barWeight={plateBarWeight}
+                      isMetric={isMetric}
+                      hideLabels={true}
+                      animationKey={diagramAnimKey}
+                      useScrollTrigger={false}
+                    />
+                  </Link>
+                  <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground">
+                    See warm-up sets →
+                  </Link>
+                </div>
+
+                {forceLift && (
+                  <motion.div
+                    className="w-full max-w-[340px] xl:hidden"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
+                  >
+                    <SingleLiftStrengthCirclesSection
+                      liftType={forceLift}
+                      e1rmKgOverride={calculatorE1rmKg}
+                      showTimeline={false}
+                      compact={true}
+                    />
+                  </motion.div>
+                )}
+
+                <ShareCopyButton
+                  label="Copy Text"
+                  successLabel="Copied"
+                  isSuccess={isTextCopied}
+                  className="min-w-[112px]"
+                  onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
+                  onClick={handleCopyToClipboard}
                 />
-              </Link>
-              <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
-                See warm-up sets →
-              </Link>
-            </div>
-
-            {/* Mobile: plate diagram + link below card */}
-            <div className="flex flex-col items-center md:hidden">
-              <Link href={warmupURL}>
-                <PlateDiagram
-                  platesPerSide={plateBreakdown.platesPerSide}
-                  barWeight={plateBarWeight}
-                  isMetric={isMetric}
-                  hideLabels={true}
-                  animationKey={diagramAnimKey}
-                  useScrollTrigger={false}
-                />
-              </Link>
-              <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground">
-                See warm-up sets →
-              </Link>
-            </div>
-
-            <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
-              <div className="justify-self-start">
-                <MiniFeedbackWidget
-                  prompt="Useful calculator?"
-                  contextId="e1rm_calculator"
-                  page="/calculator"
-                  analyticsExtra={{ context: "e1rm_calculator_card" }}
-                />
               </div>
-              <ShareCopyButton
-                label="Copy Text"
-                successLabel="Copied"
-                isSuccess={isTextCopied}
-                className="min-w-[112px] justify-self-center"
-                onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
-                onClick={handleCopyToClipboard}
-              />
-              <div aria-hidden className="justify-self-end" />
             </div>
           </div>
           {/* Algorithm comparison bar */}
@@ -1058,7 +1093,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
     : null;
 
   // Percentile for the forced lift (squat/bench/deadlift only, not strict press)
-  const percentileKey = bigFourName ? BIG_FOUR_TO_PERCENTILE_KEY[bigFourName] : null;
+  const percentileKey = bigFourName ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName] : null;
   const percentiles = useMemo(() => {
     if (!percentileKey || bioDataIsDefault || !bodyWeight || !e1rmWeight) return null;
     const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
@@ -1068,51 +1103,66 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   const gymGoerPercentile = percentiles?.["Gym-Goers"];
 
   return (
-    <Card className="w-full max-w-md border-4">
-      <CardHeader>
-        <CardTitle className="text-center md:text-3xl">
-          {forceLift ? `${forceLift} — Estimated 1RM` : "Estimated One Rep Max"}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="text-center text-lg md:text-xl text-muted-foreground">
-          {reps}@{weight}{isMetric ? "kg" : "lb"}
-        </div>
-        <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-          <motion.span className="tabular-nums">{displayVal}</motion.span>
-          {isMetric ? "kg" : "lb"}
-        </div>
-        {liftRating && (
-          <div className="mt-2 text-center text-base font-semibold">
-            {liftRatingEmoji} {liftRating}
+    <div className="relative w-full max-w-md">
+      {/* Animated pulsating glow border */}
+      <motion.div
+        className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-primary via-primary/60 to-primary opacity-75 blur-sm"
+        animate={{ opacity: [0.4, 0.75, 0.4] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <Card className="relative w-full border-2 border-primary/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-center text-xl md:text-3xl">
+            {forceLift ? (
+              <>
+                <div>{forceLift}</div>
+                <div className="text-lg md:text-2xl font-semibold text-muted-foreground">Estimated 1RM</div>
+              </>
+            ) : "Estimated One Rep Max"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pb-2">
+          <div className="text-center text-lg md:text-xl text-muted-foreground">
+            {reps}@{weight}{isMetric ? "kg" : "lb"}
           </div>
-        )}
-        {gymGoerPercentile != null && (
-          <div className="mt-1 text-center text-sm text-muted-foreground">
-            <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70">
-              Stronger than {gymGoerPercentile}% of gym-goers your age
-            </Link>
+          <div className="text-center text-6xl font-extrabold tracking-tight md:text-7xl xl:text-8xl">
+            <motion.span className="tabular-nums">{displayVal}</motion.span>
+            <span className="text-4xl font-bold opacity-60 md:text-5xl xl:text-6xl">
+              {isMetric ? "kg" : "lb"}
+            </span>
           </div>
-        )}
-        {gymGoerPercentile == null && standardsComparisonCopy && strengthStandardsUrl && (
-          <div className="mt-1 text-center text-sm text-muted-foreground">
-            <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70">
-              {standardsComparisonCopy}
-            </Link>
+          {liftRating && (
+            <div className="mt-2 text-center text-lg font-semibold">
+              {liftRatingEmoji} {liftRating}
+            </div>
+          )}
+          {gymGoerPercentile != null && (
+            <div className="mt-1 text-center text-sm text-muted-foreground">
+              <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70">
+                Stronger than {gymGoerPercentile}% of gym-goers your age
+              </Link>
+            </div>
+          )}
+          {gymGoerPercentile == null && standardsComparisonCopy && strengthStandardsUrl && (
+            <div className="mt-1 text-center text-sm text-muted-foreground">
+              <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70">
+                {standardsComparisonCopy}
+              </Link>
+            </div>
+          )}
+          {!bioDataIsDefault && bodyWeight > 0 && (
+            <div className="mt-1 text-center text-sm text-muted-foreground">
+              {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="text-muted-foreground">
+          <div className="flex-1 text-center">
+            Using the <strong>{e1rmFormula}</strong> formula
           </div>
-        )}
-        {!bioDataIsDefault && bodyWeight > 0 && (
-          <div className="mt-1 text-center text-sm text-muted-foreground">
-            {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="text-muted-foreground">
-        <div className="flex-1 text-center">
-          Using the <strong>{e1rmFormula}</strong> formula
-        </div>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 
@@ -1553,21 +1603,6 @@ const LIFT_SLUG_TO_BIG_FOUR = {
   "Strict Press": "Strict Press",
 };
 
-// Maps BIG_FOUR names to the liftKey used by the percentile model.
-const BIG_FOUR_TO_PERCENTILE_KEY = {
-  "Back Squat": "squat",
-  "Bench Press": "bench",
-  "Deadlift": "deadlift",
-  "Strict Press": "strictPress",
-};
-
-// Maps BIG_FOUR names to the dedicated lift-specific calculator page.
-const BIG_FOUR_TO_CALCULATOR_URL = {
-  "Back Squat": "/calculator/squat-1rm-calculator",
-  "Bench Press": "/calculator/bench-press-1rm-calculator",
-  "Deadlift": "/calculator/deadlift-1rm-calculator",
-  "Strict Press": "/calculator/strict-press-1rm-calculator",
-};
 
 // Maps lift slug page names to the dedicated lift insights page URL.
 const LIFT_SLUG_TO_INSIGHTS_URL = {
@@ -1610,7 +1645,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
     const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
     const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
     const out = {};
-    for (const [bigFourName, pctKey] of Object.entries(BIG_FOUR_TO_PERCENTILE_KEY)) {
+    for (const [bigFourName, pctKey] of Object.entries(LIFT_TYPE_TO_PERCENTILE_KEY)) {
       out[bigFourName] = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);
     }
     return out;
@@ -1676,7 +1711,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   const renderLiftRow = (liftType, data, featured = false, gymPct = null) => {
     const { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath } = data;
     const percentileLine = gymPct != null ? `Stronger than ${gymPct}% of gym-goers` : null;
-    const calculatorUrl = BIG_FOUR_TO_CALCULATOR_URL[liftType] ?? "/calculator";
+    const calculatorUrl = LIFT_TYPE_TO_CALCULATOR_URL[liftType] ?? "/calculator";
 
     return (
       <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">

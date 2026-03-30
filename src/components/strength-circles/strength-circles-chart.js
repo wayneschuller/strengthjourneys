@@ -217,6 +217,8 @@ export function StrengthCirclesChart({
   activeUniverse,
   onUniverseChange,
   onUniverseHoverChange = () => {},
+  showLegend = true,
+  showTrustLine = true,
 }) {
   return (
     <div className="flex flex-col">
@@ -244,17 +246,20 @@ export function StrengthCirclesChart({
       </div>
 
       {/* Legend — tight mt-1 so it feels attached to the chart */}
-      <Legend
-        percentiles={percentiles}
-        activeUniverse={activeUniverse}
-        onUniverseChange={onUniverseChange}
-        onUniverseHoverChange={onUniverseHoverChange}
-      />
+      {showLegend && (
+        <Legend
+          percentiles={percentiles}
+          activeUniverse={activeUniverse}
+          onUniverseChange={onUniverseChange}
+          onUniverseHoverChange={onUniverseHoverChange}
+        />
+      )}
 
-      {/* Trust line */}
-      <p className="mt-2 text-center text-[11px] text-muted-foreground">
-        As the groups become more specialised, the comparison becomes tougher.
-      </p>
+      {showTrustLine && (
+        <p className="mt-2 text-center text-[11px] text-muted-foreground">
+          As the groups become more specialised, the comparison becomes tougher.
+        </p>
+      )}
     </div>
   );
 }

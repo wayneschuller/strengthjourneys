@@ -1,8 +1,8 @@
 /**
- * Lift-specific Strength Circles section for progress guide pages.
- * Uses the user's best logged E1RM for the target lift plus a 90-day rolling
- * percentile timeline, so the guide can show one-lift percentile context
- * without recreating the multi-lift "How Strong Am I?" flow.
+ * Lift-specific Strength Circles section for progress guide pages and calculators.
+ * Can either use a provided live E1RM value or fall back to the user's best
+ * logged E1RM for the target lift, which keeps the percentile UI reusable
+ * across both the historical guide view and the live calculator flow.
  */
 
 import { useMemo, useState } from "react";
@@ -25,13 +25,10 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
-
-const BIG_FOUR_TO_PERCENTILE_KEY = {
-  "Back Squat": "squat",
-  "Bench Press": "bench",
-  "Deadlift": "deadlift",
-  "Strict Press": "strictPress",
-};
+import {
+  LIFT_TYPE_TO_PERCENTILE_KEY,
+  DEFAULT_E1RM_KG,
+} from "@/lib/strength-circles/strength-score";
 
 const TIMELINE_COLORS = {
   "General Population": "var(--chart-1)",
@@ -46,7 +43,13 @@ const TIMELINE_UNIVERSES = [
   "Powerlifting Culture",
 ];
 
-export function SingleLiftStrengthCirclesSection({ liftType }) {
+export function SingleLiftStrengthCirclesSection({
+  liftType,
+  e1rmKgOverride = null,
+  showTimeline = true,
+  compact = false,
+  compactClassName = "",
+}) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
   const { parsedData, hasUserData, isDemoMode } = useUserLiftingData();
   const e1rmFormula =
@@ -56,12 +59,16 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
   const [selectedUniverse, setSelectedUniverse] = useState("Gym-Goers");
   const [hoveredUniverse, setHoveredUniverse] = useState(null);
 
-  const percentileKey = BIG_FOUR_TO_PERCENTILE_KEY[liftType];
+  const percentileKey = LIFT_TYPE_TO_PERCENTILE_KEY[liftType];
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
-  const showTimelinePanel = hasUserData;
+  const showTimelinePanel = showTimeline && hasUserData;
 
   const bestE1rmKg = useMemo(() => {
-    if (!hasUserData || isDemoMode || !parsedData?.length || !liftType) return 0;
+    if (e1rmKgOverride > 0) return e1rmKgOverride;
+    if (!hasUserData || isDemoMode || !parsedData?.length || !liftType) {
+      // Fall back to sensible defaults so anonymous/demo visitors see the circles
+      return DEFAULT_E1RM_KG[liftType] ?? 0;
+    }
 
     let best = 0;
     for (const entry of parsedData) {
@@ -86,7 +93,7 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
     }
 
     return best;
-  }, [e1rmFormula, hasUserData, isDemoMode, liftType, parsedData]);
+  }, [e1rmFormula, e1rmKgOverride, hasUserData, isDemoMode, liftType, parsedData]);
 
   const currentPercentiles = useMemo(() => {
     if (
@@ -222,6 +229,21 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
 
   if (!currentPercentiles) return null;
 
+  if (compact) {
+    return (
+      <div className={cn("w-full max-w-[360px] xl:max-w-[420px] 2xl:max-w-[500px]", compactClassName)}>
+        <StrengthCirclesChart
+          percentiles={currentPercentiles}
+          activeUniverse={activeUniverse}
+          onUniverseChange={setSelectedUniverse}
+          onUniverseHoverChange={setHoveredUniverse}
+          showLegend={false}
+          showTrustLine={false}
+        />
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -238,16 +260,19 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
             : "",
         )}
       >
-        <div className="mx-auto w-full max-w-md">
+        <div className={cn("mx-auto w-full", compact ? "max-w-[280px]" : "max-w-md")}>
           <StrengthCirclesChart
             percentiles={currentPercentiles}
             activeUniverse={activeUniverse}
             onUniverseChange={setSelectedUniverse}
             onUniverseHoverChange={setHoveredUniverse}
+            showLegend={true}
+            showTrustLine={true}
           />
         </div>
-        <div className="flex flex-col justify-start gap-4">
-          {hasUserData && percentileTimeline ? (
+        {showTimelinePanel && (
+          <div className="flex flex-col justify-start gap-4">
+            {percentileTimeline ? (
             <div className="grid gap-4">
               {TIMELINE_UNIVERSES.map((universe) => (
                 <SingleLiftPercentileTimelineChart
@@ -259,12 +284,13 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
                 />
               ))}
             </div>
-          ) : hasUserData ? (
-            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-              Log more {liftType.toLowerCase()} sessions to unlock the long-term percentile chart.
-            </div>
-          ) : null}
-        </div>
+            ) : (
+              <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                Log more {liftType.toLowerCase()} sessions to unlock the long-term percentile chart.
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

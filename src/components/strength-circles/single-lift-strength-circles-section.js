@@ -51,6 +51,7 @@ export function SingleLiftStrengthCirclesSection({
   e1rmKgOverride = null,
   showTimeline = true,
   compact = false,
+  compactClassName = "",
 }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
   const { parsedData, hasUserData, isDemoMode } = useUserLiftingData();
@@ -230,7 +231,7 @@ export function SingleLiftStrengthCirclesSection({
 
   if (compact) {
     return (
-      <div className="w-full max-w-[360px] xl:max-w-[420px] 2xl:max-w-[500px]">
+      <div className={cn("w-full max-w-[360px] xl:max-w-[420px] 2xl:max-w-[500px]", compactClassName)}>
         <StrengthCirclesChart
           percentiles={currentPercentiles}
           activeUniverse={activeUniverse}

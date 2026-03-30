@@ -66,7 +66,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
@@ -461,6 +463,18 @@ export function E1RMCalculatorMain({
       }
       if (liftData) {
         lines.push(`${bigFourName ?? forceLift}: ${liftData.emoji} ${liftData.rating}`);
+        // Add percentile line if bio data is available and lift is supported
+        if (!bioDataIsDefault && bodyWeight > 0 && bigFourName) {
+          const pctKey = BIG_FOUR_TO_PERCENTILE_KEY[bigFourName];
+          if (pctKey) {
+            const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+            const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+            const pcts = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);
+            if (pcts?.["Gym-Goers"] != null) {
+              lines.push(`Stronger than ${pcts["Gym-Goers"]}% of gym-goers`);
+            }
+          }
+        }
         if (liftData.nextTierInfo && liftData.diff) {
           lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[liftData.nextTierInfo.name] ?? ""} ${liftData.nextTierInfo.name} — ${liftData.diff}${unit} away`);
         }
@@ -624,10 +638,6 @@ export function E1RMCalculatorMain({
           </PageHeaderRight>
         )}
       </PageHeader>
-      <CalculatorSupportPanels
-        exampleSnippet={exampleSnippet}
-        formulaSupport={formulaSupport}
-      />
       <Card>
         <CardContent>
           {/* Two main sliders */}
@@ -840,6 +850,10 @@ export function E1RMCalculatorMain({
           </div>
         </CardContent>
       </Card>
+      <CalculatorSupportPanels
+        exampleSnippet={exampleSnippet}
+        formulaSupport={formulaSupport}
+      />
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">One Rep Max Calculator FAQ</h2>
         <div className="space-y-4">
@@ -904,8 +918,37 @@ function flattenAnswer(answer) {
 function CalculatorSupportPanels({ exampleSnippet, formulaSupport }) {
   if (!exampleSnippet && !formulaSupport) return null;
 
+  if (exampleSnippet && !formulaSupport) {
+    return (
+      <section className="mt-10">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              <strong className="text-foreground">Input:</strong>{" "}
+              {renderInlineContent(exampleSnippet.input)}
+            </p>
+            <p>
+              <strong className="text-foreground">Calculation:</strong>{" "}
+              <span className="font-mono text-foreground">
+                {renderInlineContent(exampleSnippet.calculation)}
+              </span>
+            </p>
+            <p>
+              <strong className="text-foreground">Result:</strong>{" "}
+              {renderInlineContent(exampleSnippet.result)}
+            </p>
+            <p>{renderInlineContent(exampleSnippet.takeaway)}</p>
+          </CardContent>
+        </Card>
+      </section>
+    );
+  }
+
   return (
-    <section className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+    <section className="mt-10 grid grid-cols-1 gap-4 xl:grid-cols-3">
       {exampleSnippet && (
         <Card>
           <CardHeader className="pb-3">
@@ -994,7 +1037,7 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport }) {
  */
 const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, forceLift = null }) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
-  const { bodyWeight, bioDataIsDefault, standards } = useAthleteBio();
+  const { bodyWeight, bioDataIsDefault, standards, age, sex } = useAthleteBio();
 
   const motionVal = useMotionValue(e1rmWeight);
   const springVal = useSpring(motionVal, { stiffness: 200, damping: 20 });
@@ -1009,6 +1052,20 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   const liftStandard = bigFourName ? standards?.[bigFourName] : null;
   const liftRating = liftStandard?.elite ? getStrengthRatingForE1RM(e1rmWeight, liftStandard) : null;
   const liftRatingEmoji = liftRating ? (STRENGTH_LEVEL_EMOJI[liftRating] ?? "") : null;
+  const strengthStandardsUrl = bigFourName ? STRENGTH_STANDARDS_LINKS[bigFourName] : null;
+  const standardsComparisonCopy = forceLift && liftRating
+    ? `${liftRating} ${forceLift.toLowerCase()} strength for your age, sex, and bodyweight`
+    : null;
+
+  // Percentile for the forced lift (squat/bench/deadlift only, not strict press)
+  const percentileKey = bigFourName ? BIG_FOUR_TO_PERCENTILE_KEY[bigFourName] : null;
+  const percentiles = useMemo(() => {
+    if (!percentileKey || bioDataIsDefault || !bodyWeight || !e1rmWeight) return null;
+    const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+    const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+    return getLiftPercentiles(age, bwKg, sex, percentileKey, e1rmKg);
+  }, [percentileKey, bioDataIsDefault, bodyWeight, e1rmWeight, isMetric, age, sex]);
+  const gymGoerPercentile = percentiles?.["Gym-Goers"];
 
   return (
     <Card className="w-full max-w-md border-4">
@@ -1028,6 +1085,20 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
         {liftRating && (
           <div className="mt-2 text-center text-base font-semibold">
             {liftRatingEmoji} {liftRating}
+          </div>
+        )}
+        {gymGoerPercentile != null && (
+          <div className="mt-1 text-center text-sm text-muted-foreground">
+            <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70">
+              Stronger than {gymGoerPercentile}% of gym-goers your age
+            </Link>
+          </div>
+        )}
+        {gymGoerPercentile == null && standardsComparisonCopy && strengthStandardsUrl && (
+          <div className="mt-1 text-center text-sm text-muted-foreground">
+            <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70">
+              {standardsComparisonCopy}
+            </Link>
           </div>
         )}
         {!bioDataIsDefault && bodyWeight > 0 && (
@@ -1482,6 +1553,22 @@ const LIFT_SLUG_TO_BIG_FOUR = {
   "Strict Press": "Strict Press",
 };
 
+// Maps BIG_FOUR names to the liftKey used by the percentile model.
+// Strict Press is not in the Kilgore dataset, so no percentile available.
+const BIG_FOUR_TO_PERCENTILE_KEY = {
+  "Back Squat": "squat",
+  "Bench Press": "bench",
+  "Deadlift": "deadlift",
+};
+
+// Maps BIG_FOUR names to the dedicated lift-specific calculator page.
+const BIG_FOUR_TO_CALCULATOR_URL = {
+  "Back Squat": "/calculator/squat-1rm-calculator",
+  "Bench Press": "/calculator/bench-press-1rm-calculator",
+  "Deadlift": "/calculator/deadlift-1rm-calculator",
+  "Strict Press": "/calculator/strict-press-1rm-calculator",
+};
+
 // Maps lift slug page names to the dedicated lift insights page URL.
 const LIFT_SLUG_TO_INSIGHTS_URL = {
   "Squat": "/progress-guide/squat",
@@ -1516,6 +1603,18 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   const { standards, age, sex, bodyWeight, bioDataIsDefault } = useAthleteBio();
   const { toast } = useToast();
   const unit = isMetric ? "kg" : "lb";
+
+  // Pre-compute percentiles for all supported lifts (squat/bench/deadlift)
+  const liftPercentiles = useMemo(() => {
+    if (bioDataIsDefault || !bodyWeight || !e1rmWeight) return {};
+    const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+    const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+    const out = {};
+    for (const [bigFourName, pctKey] of Object.entries(BIG_FOUR_TO_PERCENTILE_KEY)) {
+      out[bigFourName] = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);
+    }
+    return out;
+  }, [bioDataIsDefault, bodyWeight, e1rmWeight, isMetric, age, sex]);
 
   const handleCopyLift = (liftType, rating, emoji, nextTierInfo, diff) => {
     const params = new URLSearchParams({
@@ -1573,8 +1672,12 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   // getLiftBarData is defined at module level; bind the current standards + e1rmWeight.
 
   // Renders a single lift bar row. featured=true uses larger SVG and taller bar.
-  const renderLiftRow = (liftType, data, featured = false) => {
+  // gymPct is the Gym-Goers percentile for this lift (null if unavailable).
+  const renderLiftRow = (liftType, data, featured = false, gymPct = null) => {
     const { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath } = data;
+    const percentileLine = gymPct != null ? `Stronger than ${gymPct}% of gym-goers` : null;
+    const calculatorUrl = BIG_FOUR_TO_CALCULATOR_URL[liftType] ?? "/calculator";
+
     return (
       <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
         {/* Row 1 on mobile: SVG + lift name + rating badge */}
@@ -1592,9 +1695,17 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
             {liftType}
           </Link>
           {/* Rating badge: mobile only (desktop shows it at the end) */}
-          <span className={cn("shrink-0 text-right font-medium md:hidden", featured ? "text-sm" : "text-xs")}>
-            {emoji} {rating}
-          </span>
+          <div className={cn("shrink-0 text-right md:hidden", featured ? "text-sm" : "text-xs")}>
+            <Link
+              href={calculatorUrl}
+              className="font-medium transition-opacity hover:opacity-70"
+            >
+              {emoji} {rating}
+            </Link>
+            {percentileLine && (
+              <div className="text-[10px] text-muted-foreground">{percentileLine}</div>
+            )}
+          </div>
         </div>
         {/* Row 2 on mobile / middle col on desktop: bar + copy button */}
         <div className="flex flex-1 items-center gap-2">
@@ -1622,6 +1733,9 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
               <TooltipContent side="top" className="text-xs">
                 <p className="font-semibold">{liftType}</p>
                 <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                {percentileLine && (
+                  <p className="text-muted-foreground">{percentileLine}</p>
+                )}
                 {nextTierInfo ? (
                   <p className="text-muted-foreground">
                     Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
@@ -1647,6 +1761,9 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
               <PopoverContent side="top" className="w-auto p-2 text-xs">
                 <p className="font-semibold">{liftType}</p>
                 <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                {percentileLine && (
+                  <p className="text-muted-foreground">{percentileLine}</p>
+                )}
                 {nextTierInfo ? (
                   <p className="text-muted-foreground">
                     Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
@@ -1667,9 +1784,17 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           />
         </div>
         {/* Rating at end — desktop only (shown in row 1 on mobile) */}
-        <span className={cn("hidden w-32 shrink-0 text-right font-medium md:block", featured ? "text-sm" : "text-xs")}>
-          {emoji} {rating}
-        </span>
+        <div className={cn("hidden w-36 shrink-0 text-right md:block", featured ? "text-sm" : "text-xs")}>
+          <Link
+            href={calculatorUrl}
+            className="font-medium transition-opacity hover:opacity-70"
+          >
+            {emoji} {rating}
+          </Link>
+          {percentileLine && (
+            <div className="text-[10px] text-muted-foreground">{percentileLine}</div>
+          )}
+        </div>
       </div>
     );
   };
@@ -1697,7 +1822,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         {/* Featured lift (lift slug pages only) */}
         {featuredData && (
           <div className="space-y-3">
-            {renderLiftRow(featuredBigFourName, featuredData, true)}
+            {renderLiftRow(featuredBigFourName, featuredData, true, liftPercentiles[featuredBigFourName]?.["Gym-Goers"])}
           </div>
         )}
 
@@ -1707,7 +1832,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
             {comparisonLifts.map((liftType) => {
               const data = getLiftBarData(liftType, standards, e1rmWeight);
               if (!data) return null;
-              return renderLiftRow(liftType, data, false);
+              return renderLiftRow(liftType, data, false, liftPercentiles[liftType]?.["Gym-Goers"]);
             })}
           </div>
         )}

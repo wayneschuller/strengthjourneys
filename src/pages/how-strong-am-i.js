@@ -88,9 +88,9 @@ const LIFTS = [
 ];
 
 const LIFT_INSIGHT_URLS = {
-  "Back Squat": "/progress-guide/squat",
-  "Bench Press": "/progress-guide/bench-press",
-  Deadlift: "/progress-guide/deadlift",
+  "Back Squat": "/calculator/squat-1rm-calculator",
+  "Bench Press": "/calculator/bench-press-1rm-calculator",
+  Deadlift: "/calculator/deadlift-1rm-calculator",
 };
 
 const NEXT_TOOL_LINKS = [

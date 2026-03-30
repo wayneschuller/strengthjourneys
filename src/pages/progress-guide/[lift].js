@@ -32,6 +32,7 @@ import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
 import { RelatedArticles } from "@/components/article-cards";
+import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 
 import {
   TimeRangeSelect,
@@ -316,6 +317,9 @@ function BarbellInsightsMain({
             <div id="tonnage-chart">
               <TonnageChart liftType={liftInsightData.liftType} />
             </div>
+            <SingleLiftStrengthCirclesSection
+              liftType={liftInsightData.liftType}
+            />
             <div id="strength-potential">
               <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
             </div>
@@ -373,6 +377,9 @@ function BarbellInsightsMain({
             <div id="tonnage-chart">
               <TonnageChart liftType={liftInsightData.liftType} />
             </div>
+            <SingleLiftStrengthCirclesSection
+              liftType={liftInsightData.liftType}
+            />
             <div id="strength-potential">
               <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
             </div>

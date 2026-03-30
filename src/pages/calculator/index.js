@@ -1682,14 +1682,14 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
       <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
         {/* Row 1 on mobile: SVG + lift name + rating badge */}
         <div className="flex items-center gap-3">
-          <Link href={bigFourURLs[liftType] ?? "#"} className="shrink-0 transition-opacity hover:opacity-50">
+          <Link href={calculatorUrl} className="shrink-0 transition-opacity hover:opacity-50">
             {svgPath
               ? <img src={svgPath} alt={liftType} className={cn("object-contain opacity-90", featured ? "h-16 w-16" : "h-12 w-12")} />
               : <div className={featured ? "h-16 w-16" : "h-12 w-12"} />
             }
           </Link>
           <Link
-            href={bigFourURLs[liftType] ?? "#"}
+            href={calculatorUrl}
             className={cn("flex-1 text-muted-foreground transition-opacity hover:opacity-70 md:flex-none md:truncate", featured ? "text-sm font-medium md:w-28" : "text-xs md:w-24")}
           >
             {liftType}

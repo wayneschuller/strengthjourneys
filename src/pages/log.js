@@ -32,6 +32,7 @@ import {
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
 import { generateSessionSets } from "@/lib/warmups";
+import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -3202,6 +3203,13 @@ const LOG_NEXT_TIER = {
   Elite: null,
 };
 
+const LOG_LIFT_PERCENTILE_KEYS = {
+  "Back Squat": "squat",
+  "Bench Press": "bench",
+  "Deadlift": "deadlift",
+  "Strict Press": "strictPress",
+};
+
 function LogStrengthBar({
   liftType,
   e1rmValue,
@@ -3320,6 +3328,43 @@ function LogStrengthBar({
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+function LogLiftPercentileLine({
+  liftType,
+  e1rmValue,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  const percentileKey = LOG_LIFT_PERCENTILE_KEYS[liftType];
+
+  const gymGoerPercentile = useMemo(() => {
+    if (!percentileKey || !e1rmValue || !age || bodyWeight == null || !sex) {
+      return null;
+    }
+
+    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+    const e1rmKg = isMetric ? e1rmValue : e1rmValue / 2.2046;
+    return getLiftPercentiles(
+      age,
+      bodyWeightKg,
+      sex === "female" ? "female" : "male",
+      percentileKey,
+      e1rmKg,
+    )?.["Gym-Goers"] ?? null;
+  }, [age, bodyWeight, e1rmValue, isMetric, percentileKey, sex]);
+
+  if (gymGoerPercentile == null) return null;
+
+  return (
+    <div className="text-xs text-muted-foreground">
+      <Link href="/how-strong-am-i" className="transition-colors hover:text-foreground">
+        Stronger than {gymGoerPercentile}% of gym-goers
+      </Link>
+    </div>
   );
 }
 
@@ -4239,6 +4284,18 @@ function LiftBlock({
             standards={standards}
             age={age}
             sessionDate={sessionDate}
+            bodyWeight={bodyWeight}
+            sex={sex}
+            isMetric={isMetric}
+          />
+        </div>
+      )}
+      {canShowStrength && bestE1rmValue > 0 && (
+        <div className={`mx-4 mt-2 ${desktopIconOffsetClass}`}>
+          <LogLiftPercentileLine
+            liftType={liftType}
+            e1rmValue={bestE1rmValue}
+            age={age}
             bodyWeight={bodyWeight}
             sex={sex}
             isMetric={isMetric}

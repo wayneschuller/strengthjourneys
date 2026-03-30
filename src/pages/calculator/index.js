@@ -1113,7 +1113,12 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
       <Card className="relative w-full border-2 border-primary/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-center text-xl md:text-3xl">
-            {forceLift ? `${forceLift} — Estimated 1RM` : "Estimated One Rep Max"}
+            {forceLift ? (
+              <>
+                <div>{forceLift}</div>
+                <div className="text-lg md:text-2xl font-semibold text-muted-foreground">Estimated 1RM</div>
+              </>
+            ) : "Estimated One Rep Max"}
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-2">

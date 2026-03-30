@@ -39,6 +39,12 @@ const TIMELINE_COLORS = {
   "Barbell Lifters": "var(--chart-3)",
   "Powerlifting Culture": "var(--chart-4)",
 };
+const TIMELINE_UNIVERSES = [
+  "General Population",
+  "Gym-Goers",
+  "Barbell Lifters",
+  "Powerlifting Culture",
+];
 
 export function SingleLiftStrengthCirclesSection({ liftType }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
@@ -240,14 +246,19 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
             onUniverseHoverChange={setHoveredUniverse}
           />
         </div>
-        <div className="flex flex-col justify-center gap-4">
+        <div className="flex flex-col justify-start gap-4">
           {hasUserData && percentileTimeline ? (
-            <SingleLiftPercentileTimelineChart
-              data={percentileTimeline}
-              currentPercentile={currentPercentiles[activeUniverse]}
-              activeUniverse={activeUniverse}
-              liftLabel={liftType}
-            />
+            <div className="grid gap-4">
+              {TIMELINE_UNIVERSES.map((universe) => (
+                <SingleLiftPercentileTimelineChart
+                  key={universe}
+                  data={percentileTimeline}
+                  currentPercentile={currentPercentiles[universe]}
+                  activeUniverse={universe}
+                  liftLabel={liftType}
+                />
+              ))}
+            </div>
           ) : hasUserData ? (
             <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
               Log more {liftType.toLowerCase()} sessions to unlock the long-term percentile chart.
@@ -303,10 +314,17 @@ function SingleLiftPercentileTimelineChart({
 
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-xs text-muted-foreground">
-        {liftLabel} percentile vs. {universeLabel} over time
-      </p>
-      <div className="h-32 w-full">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-xs text-muted-foreground">
+          {liftLabel} percentile vs. {universeLabel} over time
+        </p>
+        {currentPercentile != null ? (
+          <span className="text-xs font-medium text-foreground">
+            {currentPercentile}th now
+          </span>
+        ) : null}
+      </div>
+      <div className="h-24 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}

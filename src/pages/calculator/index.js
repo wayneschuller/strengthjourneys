@@ -638,10 +638,6 @@ export function E1RMCalculatorMain({
           </PageHeaderRight>
         )}
       </PageHeader>
-      <CalculatorSupportPanels
-        exampleSnippet={exampleSnippet}
-        formulaSupport={formulaSupport}
-      />
       <Card>
         <CardContent>
           {/* Two main sliders */}
@@ -854,6 +850,10 @@ export function E1RMCalculatorMain({
           </div>
         </CardContent>
       </Card>
+      <CalculatorSupportPanels
+        exampleSnippet={exampleSnippet}
+        formulaSupport={formulaSupport}
+      />
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">One Rep Max Calculator FAQ</h2>
         <div className="space-y-4">
@@ -918,8 +918,37 @@ function flattenAnswer(answer) {
 function CalculatorSupportPanels({ exampleSnippet, formulaSupport }) {
   if (!exampleSnippet && !formulaSupport) return null;
 
+  if (exampleSnippet && !formulaSupport) {
+    return (
+      <section className="mt-10">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              <strong className="text-foreground">Input:</strong>{" "}
+              {renderInlineContent(exampleSnippet.input)}
+            </p>
+            <p>
+              <strong className="text-foreground">Calculation:</strong>{" "}
+              <span className="font-mono text-foreground">
+                {renderInlineContent(exampleSnippet.calculation)}
+              </span>
+            </p>
+            <p>
+              <strong className="text-foreground">Result:</strong>{" "}
+              {renderInlineContent(exampleSnippet.result)}
+            </p>
+            <p>{renderInlineContent(exampleSnippet.takeaway)}</p>
+          </CardContent>
+        </Card>
+      </section>
+    );
+  }
+
   return (
-    <section className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+    <section className="mt-10 grid grid-cols-1 gap-4 xl:grid-cols-3">
       {exampleSnippet && (
         <Card>
           <CardHeader className="pb-3">

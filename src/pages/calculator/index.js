@@ -5,6 +5,7 @@ import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
+import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import { UnitChooser } from "@/components/unit-type-chooser";
@@ -602,6 +603,7 @@ export function E1RMCalculatorMain({
   const plateBreakdown = calculatePlateBreakdown(e1rmWeight, plateBarWeight, isMetric, storedPlatePreference);
   const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
   const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
+  const calculatorE1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
 
   return (
     <PageContainer>
@@ -707,103 +709,123 @@ export function E1RMCalculatorMain({
             </div>
           </div>
 
-          {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
           <div
-            ref={portraitRef}
-            style={{
-              position: "fixed",
-              left: "-9999px",
-              top: 0,
-              width: "360px",
-              height: "640px",
-              fontFamily: themeFontFamily,
-            }}
-            className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
+            className={cn(
+              "mb-6",
+              forceLift ? "grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)] xl:items-start" : "",
+            )}
           >
-            <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
-                One Rep Max
+            {forceLift && (
+              <div className="order-2 xl:order-1">
+                <SingleLiftStrengthCirclesSection
+                  liftType={forceLift}
+                  e1rmKgOverride={calculatorE1rmKg}
+                  showTimeline={false}
+                  compact={true}
+                />
               </div>
-              <div style={{ fontSize: "20px", opacity: 0.6 }}>
-                {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
-              </div>
-            </div>
-            <div style={{ textAlign: "center", lineHeight: 1 }}>
-              <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em" }}>
-                {e1rmWeight}
-              </div>
-              <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
-                {isMetric ? "kg" : "lb"}
-              </div>
-            </div>
-            <div style={{ fontSize: "15px", opacity: 0.45 }}>
-              {e1rmFormula} formula
-            </div>
-          </div>
+            )}
 
-          {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
-          <div className="relative my-6 flex flex-col items-center gap-3">
-            <E1RMSummaryCard
-              reps={reps}
-              weight={weight}
-              isMetric={isMetric}
-              e1rmFormula={e1rmFormula}
-              estimateE1RM={estimateE1RM}
-              forceLift={forceLift}
-            />
+            <div className={cn(forceLift ? "order-1 xl:order-2" : "")}>
+              {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
+              <div
+                ref={portraitRef}
+                style={{
+                  position: "fixed",
+                  left: "-9999px",
+                  top: 0,
+                  width: "360px",
+                  height: "640px",
+                  fontFamily: themeFontFamily,
+                }}
+                className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
+              >
+                <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
+                    One Rep Max
+                  </div>
+                  <div style={{ fontSize: "20px", opacity: 0.6 }}>
+                    {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
+                  </div>
+                </div>
+                <div style={{ textAlign: "center", lineHeight: 1 }}>
+                  <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em" }}>
+                    {e1rmWeight}
+                  </div>
+                  <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
+                    {isMetric ? "kg" : "lb"}
+                  </div>
+                </div>
+                <div style={{ fontSize: "15px", opacity: 0.45 }}>
+                  {e1rmFormula} formula
+                </div>
+              </div>
 
-            {/* Floating plate annotation: absolute in right whitespace on desktop */}
-            <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
-              <Link href={warmupURL}>
-                <PlateDiagram
-                  platesPerSide={plateBreakdown.platesPerSide}
-                  barWeight={plateBarWeight}
+              {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
+              <div className="relative my-6 flex flex-col items-center gap-3">
+                <E1RMSummaryCard
+                  reps={reps}
+                  weight={weight}
                   isMetric={isMetric}
-                  hideLabels={true}
-                  animationKey={diagramAnimKey}
-                  useScrollTrigger={false}
+                  e1rmFormula={e1rmFormula}
+                  estimateE1RM={estimateE1RM}
+                  forceLift={forceLift}
                 />
-              </Link>
-              <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
-                See warm-up sets →
-              </Link>
-            </div>
 
-            {/* Mobile: plate diagram + link below card */}
-            <div className="flex flex-col items-center md:hidden">
-              <Link href={warmupURL}>
-                <PlateDiagram
-                  platesPerSide={plateBreakdown.platesPerSide}
-                  barWeight={plateBarWeight}
-                  isMetric={isMetric}
-                  hideLabels={true}
-                  animationKey={diagramAnimKey}
-                  useScrollTrigger={false}
-                />
-              </Link>
-              <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground">
-                See warm-up sets →
-              </Link>
-            </div>
+                {/* Floating plate annotation: absolute in right whitespace on desktop */}
+                <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
+                  <Link href={warmupURL}>
+                    <PlateDiagram
+                      platesPerSide={plateBreakdown.platesPerSide}
+                      barWeight={plateBarWeight}
+                      isMetric={isMetric}
+                      hideLabels={true}
+                      animationKey={diagramAnimKey}
+                      useScrollTrigger={false}
+                    />
+                  </Link>
+                  <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
+                    See warm-up sets →
+                  </Link>
+                </div>
 
-            <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
-              <div className="justify-self-start">
-                <MiniFeedbackWidget
-                  prompt="Useful calculator?"
-                  contextId="e1rm_calculator"
-                  page="/calculator"
-                  analyticsExtra={{ context: "e1rm_calculator_card" }}
-                />
+                {/* Mobile: plate diagram + link below card */}
+                <div className="flex flex-col items-center md:hidden">
+                  <Link href={warmupURL}>
+                    <PlateDiagram
+                      platesPerSide={plateBreakdown.platesPerSide}
+                      barWeight={plateBarWeight}
+                      isMetric={isMetric}
+                      hideLabels={true}
+                      animationKey={diagramAnimKey}
+                      useScrollTrigger={false}
+                    />
+                  </Link>
+                  <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground">
+                    See warm-up sets →
+                  </Link>
+                </div>
+
+                <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
+                  <div className="justify-self-start">
+                    <MiniFeedbackWidget
+                      prompt="Useful calculator?"
+                      contextId="e1rm_calculator"
+                      page="/calculator"
+                      analyticsExtra={{ context: "e1rm_calculator_card" }}
+                    />
+                  </div>
+                  <ShareCopyButton
+                    label="Copy Text"
+                    successLabel="Copied"
+                    isSuccess={isTextCopied}
+                    className="min-w-[112px] justify-self-center"
+                    onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
+                    onClick={handleCopyToClipboard}
+                  />
+                  <div aria-hidden className="justify-self-end" />
+                </div>
               </div>
-              <ShareCopyButton
-                label="Copy Text"
-                successLabel="Copied"
-                isSuccess={isTextCopied}
-                className="min-w-[112px] justify-self-center"
-                onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
-                onClick={handleCopyToClipboard}
-              />
-              <div aria-hidden className="justify-self-end" />
             </div>
           </div>
           {/* Algorithm comparison bar */}

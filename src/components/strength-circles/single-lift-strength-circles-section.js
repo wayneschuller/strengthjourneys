@@ -1,8 +1,8 @@
 /**
- * Lift-specific Strength Circles section for progress guide pages.
- * Uses the user's best logged E1RM for the target lift plus a 90-day rolling
- * percentile timeline, so the guide can show one-lift percentile context
- * without recreating the multi-lift "How Strong Am I?" flow.
+ * Lift-specific Strength Circles section for progress guide pages and calculators.
+ * Can either use a provided live E1RM value or fall back to the user's best
+ * logged E1RM for the target lift, which keeps the percentile UI reusable
+ * across both the historical guide view and the live calculator flow.
  */
 
 import { useMemo, useState } from "react";
@@ -46,7 +46,12 @@ const TIMELINE_UNIVERSES = [
   "Powerlifting Culture",
 ];
 
-export function SingleLiftStrengthCirclesSection({ liftType }) {
+export function SingleLiftStrengthCirclesSection({
+  liftType,
+  e1rmKgOverride = null,
+  showTimeline = true,
+  compact = false,
+}) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
   const { parsedData, hasUserData, isDemoMode } = useUserLiftingData();
   const e1rmFormula =
@@ -58,9 +63,10 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
 
   const percentileKey = BIG_FOUR_TO_PERCENTILE_KEY[liftType];
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
-  const showTimelinePanel = hasUserData;
+  const showTimelinePanel = showTimeline && hasUserData;
 
   const bestE1rmKg = useMemo(() => {
+    if (e1rmKgOverride > 0) return e1rmKgOverride;
     if (!hasUserData || isDemoMode || !parsedData?.length || !liftType) return 0;
 
     let best = 0;
@@ -86,7 +92,7 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
     }
 
     return best;
-  }, [e1rmFormula, hasUserData, isDemoMode, liftType, parsedData]);
+  }, [e1rmFormula, e1rmKgOverride, hasUserData, isDemoMode, liftType, parsedData]);
 
   const currentPercentiles = useMemo(() => {
     if (
@@ -224,21 +230,22 @@ export function SingleLiftStrengthCirclesSection({ liftType }) {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className={cn("pb-3", compact ? "px-4 pt-4" : "")}>
         <CardTitle className="text-base">{liftType} Strength Circles</CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className={cn("text-sm text-muted-foreground", compact ? "text-xs leading-relaxed" : "")}>
           See how your current {liftType.toLowerCase()} stacks up across four comparison groups.
         </p>
       </CardHeader>
       <CardContent
         className={cn(
           "grid grid-cols-1 gap-6",
+          compact ? "px-4 pb-4 pt-0" : "",
           showTimelinePanel
             ? "lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]"
             : "",
         )}
       >
-        <div className="mx-auto w-full max-w-md">
+        <div className={cn("mx-auto w-full", compact ? "max-w-[280px]" : "max-w-md")}>
           <StrengthCirclesChart
             percentiles={currentPercentiles}
             activeUniverse={activeUniverse}

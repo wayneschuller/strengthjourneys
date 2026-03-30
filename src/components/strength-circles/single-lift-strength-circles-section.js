@@ -257,8 +257,9 @@ export function SingleLiftStrengthCirclesSection({
             showTrustLine={!compact}
           />
         </div>
-        <div className="flex flex-col justify-start gap-4">
-          {hasUserData && percentileTimeline ? (
+        {showTimelinePanel && (
+          <div className="flex flex-col justify-start gap-4">
+            {percentileTimeline ? (
             <div className="grid gap-4">
               {TIMELINE_UNIVERSES.map((universe) => (
                 <SingleLiftPercentileTimelineChart
@@ -270,12 +271,13 @@ export function SingleLiftStrengthCirclesSection({
                 />
               ))}
             </div>
-          ) : hasUserData ? (
-            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-              Log more {liftType.toLowerCase()} sessions to unlock the long-term percentile chart.
-            </div>
-          ) : null}
-        </div>
+            ) : (
+              <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                Log more {liftType.toLowerCase()} sessions to unlock the long-term percentile chart.
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

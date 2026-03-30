@@ -145,15 +145,6 @@ export default async function handler(req) {
     bwMultiple = (e1rm / bodyWeight).toFixed(2);
   }
 
-  // All formula results for comparison bars
-  const allResults = E1RM_FORMULAE.map((f) => ({
-    name: f,
-    value: estimateE1RM(reps, weight, f),
-  }));
-  const minE1rm = Math.min(...allResults.map((r) => r.value));
-  const maxE1rm = Math.max(...allResults.map((r) => r.value));
-
-  // Card title mirrors the real component
   const hasLift = Boolean(lift);
 
   return new ImageResponse(
@@ -170,54 +161,22 @@ export default async function handler(req) {
           padding: "40px 48px",
         }}
       >
-        {/* Top: branding */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "28px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              fontSize: "22px",
-              fontWeight: 700,
-              letterSpacing: "-0.01em",
-              color: T.mutedFg,
-            }}
-          >
-            STRENGTH JOURNEYS
-          </div>
-          <div
-            style={{
-              display: "flex",
-              fontSize: "18px",
-              color: T.mutedFg,
-            }}
-          >
-            strengthjourneys.xyz
-          </div>
-        </div>
-
-        {/* Main: card + formula bars side by side */}
+        {/* Center: E1RM summary card (matches the real card UI) */}
         <div
           style={{
             display: "flex",
             flex: 1,
-            gap: "40px",
             alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          {/* Left: E1RM summary card (matches the real card UI) */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              flex: 1,
+              width: "640px",
               border: `2px solid ${T.border}`,
               borderRadius: "12px",
               padding: "28px 32px 20px",
@@ -242,12 +201,12 @@ export default async function handler(req) {
                     alignItems: "center",
                   }}
                 >
-                  <span style={{ fontSize: "28px", fontWeight: 700 }}>
+                  <span style={{ fontSize: "36px", fontWeight: 700 }}>
                     {lift}
                   </span>
                   <span
                     style={{
-                      fontSize: "22px",
+                      fontSize: "26px",
                       fontWeight: 600,
                       color: T.mutedFg,
                     }}
@@ -256,7 +215,7 @@ export default async function handler(req) {
                   </span>
                 </div>
               ) : (
-                <span style={{ fontSize: "26px", fontWeight: 700 }}>
+                <span style={{ fontSize: "32px", fontWeight: 700 }}>
                   Estimated One Rep Max
                 </span>
               )}
@@ -266,7 +225,7 @@ export default async function handler(req) {
             <div
               style={{
                 display: "flex",
-                fontSize: "22px",
+                fontSize: "26px",
                 color: T.mutedFg,
                 marginBottom: "4px",
               }}
@@ -284,7 +243,7 @@ export default async function handler(req) {
             >
               <span
                 style={{
-                  fontSize: "96px",
+                  fontSize: "120px",
                   fontWeight: 800,
                   letterSpacing: "-0.03em",
                   lineHeight: 1,
@@ -294,7 +253,7 @@ export default async function handler(req) {
               </span>
               <span
                 style={{
-                  fontSize: "40px",
+                  fontSize: "52px",
                   fontWeight: 700,
                   opacity: 0.6,
                   marginLeft: "4px",
@@ -309,7 +268,7 @@ export default async function handler(req) {
               <div
                 style={{
                   display: "flex",
-                  fontSize: "22px",
+                  fontSize: "28px",
                   fontWeight: 600,
                   marginTop: "8px",
                 }}
@@ -323,7 +282,7 @@ export default async function handler(req) {
               <div
                 style={{
                   display: "flex",
-                  fontSize: "16px",
+                  fontSize: "20px",
                   color: T.mutedFg,
                   marginTop: "4px",
                 }}
@@ -337,7 +296,7 @@ export default async function handler(req) {
               <div
                 style={{
                   display: "flex",
-                  fontSize: "16px",
+                  fontSize: "20px",
                   color: T.mutedFg,
                   marginTop: "4px",
                 }}
@@ -350,7 +309,7 @@ export default async function handler(req) {
             <div
               style={{
                 display: "flex",
-                fontSize: "16px",
+                fontSize: "20px",
                 color: T.mutedFg,
                 marginTop: "12px",
                 paddingTop: "12px",
@@ -359,91 +318,33 @@ export default async function handler(req) {
                 justifyContent: "center",
               }}
             >
-              Using the {validFormula} formula
+              Using the <span style={{ fontWeight: 700 }}>{validFormula}</span> formula
             </div>
           </div>
+        </div>
 
-          {/* Right: formula comparison bars */}
+        {/* Bottom watermark pill (matches copy-image watermark style) */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "16px",
+          }}
+        >
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
-              width: "380px",
-              gap: "12px",
+              padding: "6px 20px",
+              borderRadius: "9999px",
+              background: "rgba(15, 23, 42, 0.86)",
+              color: "rgba(248, 250, 252, 0.98)",
+              fontSize: "16px",
+              fontWeight: 500,
+              letterSpacing: "0.03em",
+              boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                fontSize: "15px",
-                fontWeight: 600,
-                color: T.mutedFg,
-                marginBottom: "4px",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              All 7 Formulas
-            </div>
-            {allResults.map((result) => {
-              const range = maxE1rm - minE1rm || 1;
-              const barWidth = Math.max(
-                30,
-                ((result.value - minE1rm) / range) * 70 + 30,
-              );
-              const isActive = result.name === validFormula;
-
-              return (
-                <div
-                  key={result.name}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "15px",
-                      width: "80px",
-                      textAlign: "right",
-                      color: isActive ? T.fg : T.mutedFg,
-                      fontWeight: isActive ? 700 : 400,
-                    }}
-                  >
-                    {result.name}
-                  </span>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      flex: 1,
-                      height: "26px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${barWidth}%`,
-                        borderRadius: "4px",
-                        background: isActive ? T.primary : T.muted,
-                        border: isActive ? "none" : `1px solid ${T.border}`,
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: isActive ? 700 : 400,
-                        color: isActive ? T.fg : T.mutedFg,
-                        marginLeft: "8px",
-                      }}
-                    >
-                      {result.value}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            strengthjourneys.xyz
           </div>
         </div>
       </div>

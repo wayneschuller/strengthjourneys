@@ -709,24 +709,8 @@ export function E1RMCalculatorMain({
             </div>
           </div>
 
-          <div
-            className={cn(
-              "mb-6",
-              forceLift ? "grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)] xl:items-start" : "",
-            )}
-          >
-            {forceLift && (
-              <div className="order-2 xl:order-1">
-                <SingleLiftStrengthCirclesSection
-                  liftType={forceLift}
-                  e1rmKgOverride={calculatorE1rmKg}
-                  showTimeline={false}
-                  compact={true}
-                />
-              </div>
-            )}
-
-            <div className={cn(forceLift ? "order-1 xl:order-2" : "")}>
+          <div className="mb-6">
+            <div>
               {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
               <div
                 ref={portraitRef}
@@ -763,6 +747,17 @@ export function E1RMCalculatorMain({
 
               {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
               <div className="relative my-6 flex flex-col items-center gap-3">
+                {forceLift && (
+                  <div className="hidden xl:block absolute left-0 top-1/2 -translate-y-1/2">
+                    <SingleLiftStrengthCirclesSection
+                      liftType={forceLift}
+                      e1rmKgOverride={calculatorE1rmKg}
+                      showTimeline={false}
+                      compact={true}
+                    />
+                  </div>
+                )}
+
                 <E1RMSummaryCard
                   reps={reps}
                   weight={weight}
@@ -805,6 +800,17 @@ export function E1RMCalculatorMain({
                     See warm-up sets →
                   </Link>
                 </div>
+
+                {forceLift && (
+                  <div className="w-full max-w-[340px] xl:hidden">
+                    <SingleLiftStrengthCirclesSection
+                      liftType={forceLift}
+                      e1rmKgOverride={calculatorE1rmKg}
+                      showTimeline={false}
+                      compact={true}
+                    />
+                  </div>
+                )}
 
                 <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
                   <div className="justify-self-start">

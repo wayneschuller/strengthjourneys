@@ -228,20 +228,32 @@ export function SingleLiftStrengthCirclesSection({
 
   if (!currentPercentiles) return null;
 
+  if (compact) {
+    return (
+      <div className="w-full max-w-[340px]">
+        <StrengthCirclesChart
+          percentiles={currentPercentiles}
+          activeUniverse={activeUniverse}
+          onUniverseChange={setSelectedUniverse}
+          onUniverseHoverChange={setHoveredUniverse}
+          showLegend={false}
+          showTrustLine={false}
+        />
+      </div>
+    );
+  }
+
   return (
     <Card>
-      {!compact && (
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">{liftType} Strength Circles</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            See how your current {liftType.toLowerCase()} stacks up across four comparison groups.
-          </p>
-        </CardHeader>
-      )}
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">{liftType} Strength Circles</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          See how your current {liftType.toLowerCase()} stacks up across four comparison groups.
+        </p>
+      </CardHeader>
       <CardContent
         className={cn(
           "grid grid-cols-1 gap-6",
-          compact ? "px-3 py-3" : "",
           showTimelinePanel
             ? "lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]"
             : "",
@@ -253,8 +265,8 @@ export function SingleLiftStrengthCirclesSection({
             activeUniverse={activeUniverse}
             onUniverseChange={setSelectedUniverse}
             onUniverseHoverChange={setHoveredUniverse}
-            showLegend={!compact}
-            showTrustLine={!compact}
+            showLegend={true}
+            showTrustLine={true}
           />
         </div>
         {showTimelinePanel && (

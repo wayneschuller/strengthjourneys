@@ -620,6 +620,12 @@ export function E1RMCalculatorMain({
     calcIsMetric: String(isMetric),
     formula: e1rmFormula,
   });
+  if (forceLift) ogParams.set("lift", forceLift);
+  if (!bioDataIsDefault && bodyWeight > 0) {
+    ogParams.set("bodyWeight", String(bodyWeight));
+    ogParams.set("age", String(age));
+    ogParams.set("sex", sex);
+  }
   const dynamicOgImageURL = `https://www.strengthjourneys.xyz/api/og/calculator?${ogParams.toString()}`;
 
   return (

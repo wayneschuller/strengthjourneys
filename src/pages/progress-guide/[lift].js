@@ -265,6 +265,9 @@ function BarbellInsightsMain({
             <Link href="#progress-history" className="hover:text-foreground">
               {navLiftLabel} Progress
             </Link>
+            <Link href="#strength-circles" className="hover:text-foreground">
+              {navLiftLabel} Percentiles
+            </Link>
             <Link href="#strength-potential" className="hover:text-foreground">
               {navLiftLabel} Potential
             </Link>
@@ -317,9 +320,11 @@ function BarbellInsightsMain({
             <div id="tonnage-chart">
               <TonnageChart liftType={liftInsightData.liftType} />
             </div>
-            <SingleLiftStrengthCirclesSection
-              liftType={liftInsightData.liftType}
-            />
+            <div id="strength-circles">
+              <SingleLiftStrengthCirclesSection
+                liftType={liftInsightData.liftType}
+              />
+            </div>
             <div id="strength-potential">
               <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
             </div>
@@ -377,9 +382,11 @@ function BarbellInsightsMain({
             <div id="tonnage-chart">
               <TonnageChart liftType={liftInsightData.liftType} />
             </div>
-            <SingleLiftStrengthCirclesSection
-              liftType={liftInsightData.liftType}
-            />
+            <div id="strength-circles">
+              <SingleLiftStrengthCirclesSection
+                liftType={liftInsightData.liftType}
+              />
+            </div>
             <div id="strength-potential">
               <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
             </div>

@@ -25,13 +25,10 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
-
-const BIG_FOUR_TO_PERCENTILE_KEY = {
-  "Back Squat": "squat",
-  "Bench Press": "bench",
-  "Deadlift": "deadlift",
-  "Strict Press": "strictPress",
-};
+import {
+  LIFT_TYPE_TO_PERCENTILE_KEY,
+  DEFAULT_E1RM_KG,
+} from "@/lib/strength-circles/strength-score";
 
 const TIMELINE_COLORS = {
   "General Population": "var(--chart-1)",
@@ -62,13 +59,16 @@ export function SingleLiftStrengthCirclesSection({
   const [selectedUniverse, setSelectedUniverse] = useState("Gym-Goers");
   const [hoveredUniverse, setHoveredUniverse] = useState(null);
 
-  const percentileKey = BIG_FOUR_TO_PERCENTILE_KEY[liftType];
+  const percentileKey = LIFT_TYPE_TO_PERCENTILE_KEY[liftType];
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
   const showTimelinePanel = showTimeline && hasUserData;
 
   const bestE1rmKg = useMemo(() => {
     if (e1rmKgOverride > 0) return e1rmKgOverride;
-    if (!hasUserData || isDemoMode || !parsedData?.length || !liftType) return 0;
+    if (!hasUserData || isDemoMode || !parsedData?.length || !liftType) {
+      // Fall back to sensible defaults so anonymous/demo visitors see the circles
+      return DEFAULT_E1RM_KG[liftType] ?? 0;
+    }
 
     let best = 0;
     for (const entry of parsedData) {

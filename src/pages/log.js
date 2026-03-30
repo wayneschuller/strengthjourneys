@@ -33,6 +33,10 @@ import {
 } from "@/lib/processing-utils";
 import { generateSessionSets } from "@/lib/warmups";
 import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
+import {
+  LIFT_TYPE_TO_PERCENTILE_KEY,
+  LIFT_TYPE_TO_CALCULATOR_URL,
+} from "@/lib/strength-circles/strength-score";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -3203,19 +3207,6 @@ const LOG_NEXT_TIER = {
   Elite: null,
 };
 
-const LOG_LIFT_PERCENTILE_KEYS = {
-  "Back Squat": "squat",
-  "Bench Press": "bench",
-  "Deadlift": "deadlift",
-  "Strict Press": "strictPress",
-};
-
-const LOG_LIFT_CALCULATOR_URLS = {
-  "Back Squat": "/calculator/squat-1rm-calculator",
-  "Bench Press": "/calculator/bench-press-1rm-calculator",
-  "Deadlift": "/calculator/deadlift-1rm-calculator",
-  "Strict Press": "/calculator/strict-press-1rm-calculator",
-};
 
 function LogStrengthBar({
   liftType,
@@ -3346,8 +3337,8 @@ function LogLiftPercentileLine({
   sex,
   isMetric,
 }) {
-  const percentileKey = LOG_LIFT_PERCENTILE_KEYS[liftType];
-  const calculatorUrl = LOG_LIFT_CALCULATOR_URLS[liftType] ?? "/calculator";
+  const percentileKey = LIFT_TYPE_TO_PERCENTILE_KEY[liftType];
+  const calculatorUrl = LIFT_TYPE_TO_CALCULATOR_URL[liftType] ?? "/calculator";
 
   const gymGoerPercentile = useMemo(() => {
     if (!percentileKey || !e1rmValue || !age || bodyWeight == null || !sex) {

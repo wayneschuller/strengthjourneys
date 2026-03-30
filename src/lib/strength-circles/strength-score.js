@@ -18,6 +18,28 @@ export const STRENGTH_CIRCLES_LIFT_TYPES = {
   strictPress: "Strict Press",
 };
 
+// Reverse map: liftType → percentile key (e.g. "Back Squat" → "squat").
+export const LIFT_TYPE_TO_PERCENTILE_KEY = Object.fromEntries(
+  Object.entries(STRENGTH_CIRCLES_LIFT_TYPES).map(([key, name]) => [name, key]),
+);
+
+// Maps lift types to their dedicated calculator page URLs.
+export const LIFT_TYPE_TO_CALCULATOR_URL = {
+  "Back Squat": "/calculator/squat-1rm-calculator",
+  "Bench Press": "/calculator/bench-press-1rm-calculator",
+  "Deadlift": "/calculator/deadlift-1rm-calculator",
+  "Strict Press": "/calculator/strict-press-1rm-calculator",
+};
+
+// Sensible default E1RM values (in kg) for anonymous/demo renders.
+// Based on calculator defaults (5@225lb ≈ 253lb E1RM) scaled per lift.
+export const DEFAULT_E1RM_KG = {
+  "Back Squat": 115, // ~253lb
+  "Bench Press": 90, // ~198lb
+  "Deadlift": 135, // ~298lb
+  "Strict Press": 60, // ~132lb
+};
+
 export function getInterpolatedStandard(age, bodyWeightKg, sex, liftKey) {
   const liftType = STRENGTH_CIRCLES_LIFT_TYPES[liftKey];
   if (!liftType) return null;

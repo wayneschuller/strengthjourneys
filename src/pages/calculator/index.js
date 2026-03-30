@@ -68,6 +68,10 @@ import {
 } from "@/components/ui/popover";
 
 import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
+import {
+  LIFT_TYPE_TO_PERCENTILE_KEY,
+  LIFT_TYPE_TO_CALCULATOR_URL,
+} from "@/lib/strength-circles/strength-score";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 
@@ -466,7 +470,7 @@ export function E1RMCalculatorMain({
         lines.push(`${bigFourName ?? forceLift}: ${liftData.emoji} ${liftData.rating}`);
         // Add percentile line if bio data is available and lift is supported
         if (!bioDataIsDefault && bodyWeight > 0 && bigFourName) {
-          const pctKey = BIG_FOUR_TO_PERCENTILE_KEY[bigFourName];
+          const pctKey = LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName];
           if (pctKey) {
             const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
             const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
@@ -1089,7 +1093,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
     : null;
 
   // Percentile for the forced lift (squat/bench/deadlift only, not strict press)
-  const percentileKey = bigFourName ? BIG_FOUR_TO_PERCENTILE_KEY[bigFourName] : null;
+  const percentileKey = bigFourName ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName] : null;
   const percentiles = useMemo(() => {
     if (!percentileKey || bioDataIsDefault || !bodyWeight || !e1rmWeight) return null;
     const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
@@ -1584,21 +1588,6 @@ const LIFT_SLUG_TO_BIG_FOUR = {
   "Strict Press": "Strict Press",
 };
 
-// Maps BIG_FOUR names to the liftKey used by the percentile model.
-const BIG_FOUR_TO_PERCENTILE_KEY = {
-  "Back Squat": "squat",
-  "Bench Press": "bench",
-  "Deadlift": "deadlift",
-  "Strict Press": "strictPress",
-};
-
-// Maps BIG_FOUR names to the dedicated lift-specific calculator page.
-const BIG_FOUR_TO_CALCULATOR_URL = {
-  "Back Squat": "/calculator/squat-1rm-calculator",
-  "Bench Press": "/calculator/bench-press-1rm-calculator",
-  "Deadlift": "/calculator/deadlift-1rm-calculator",
-  "Strict Press": "/calculator/strict-press-1rm-calculator",
-};
 
 // Maps lift slug page names to the dedicated lift insights page URL.
 const LIFT_SLUG_TO_INSIGHTS_URL = {
@@ -1641,7 +1630,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
     const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
     const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
     const out = {};
-    for (const [bigFourName, pctKey] of Object.entries(BIG_FOUR_TO_PERCENTILE_KEY)) {
+    for (const [bigFourName, pctKey] of Object.entries(LIFT_TYPE_TO_PERCENTILE_KEY)) {
       out[bigFourName] = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);
     }
     return out;
@@ -1707,7 +1696,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   const renderLiftRow = (liftType, data, featured = false, gymPct = null) => {
     const { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath } = data;
     const percentileLine = gymPct != null ? `Stronger than ${gymPct}% of gym-goers` : null;
-    const calculatorUrl = BIG_FOUR_TO_CALCULATOR_URL[liftType] ?? "/calculator";
+    const calculatorUrl = LIFT_TYPE_TO_CALCULATOR_URL[liftType] ?? "/calculator";
 
     return (
       <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">

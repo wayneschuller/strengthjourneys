@@ -747,42 +747,44 @@ export function E1RMCalculatorMain({
 
               {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
               <div className="relative my-6 flex flex-col items-center gap-3">
-                {forceLift && (
-                  <div className="hidden xl:flex absolute left-0 2xl:-left-10 inset-y-[5%] items-center">
-                    <SingleLiftStrengthCirclesSection
-                      liftType={forceLift}
-                      e1rmKgOverride={calculatorE1rmKg}
-                      showTimeline={false}
-                      compact={true}
-                      compactClassName="h-full aspect-square w-auto max-w-none"
-                    />
+                <div className="relative flex w-full justify-center">
+                  {forceLift && (
+                    <div className="hidden xl:flex absolute left-0 2xl:-left-10 top-1/2 -translate-y-1/2 items-center">
+                      <SingleLiftStrengthCirclesSection
+                        liftType={forceLift}
+                        e1rmKgOverride={calculatorE1rmKg}
+                        showTimeline={false}
+                        compact={true}
+                        compactClassName="aspect-square w-[340px] max-w-none 2xl:w-[420px]"
+                      />
+                    </div>
+                  )}
+
+                  <E1RMSummaryCard
+                    reps={reps}
+                    weight={weight}
+                    isMetric={isMetric}
+                    e1rmFormula={e1rmFormula}
+                    estimateE1RM={estimateE1RM}
+                    forceLift={forceLift}
+                  />
+
+                  {/* Floating plate annotation: absolute in right whitespace on desktop */}
+                  <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
+                    <Link href={warmupURL}>
+                      <PlateDiagram
+                        platesPerSide={plateBreakdown.platesPerSide}
+                        barWeight={plateBarWeight}
+                        isMetric={isMetric}
+                        hideLabels={true}
+                        animationKey={diagramAnimKey}
+                        useScrollTrigger={false}
+                      />
+                    </Link>
+                    <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
+                      See warm-up sets →
+                    </Link>
                   </div>
-                )}
-
-                <E1RMSummaryCard
-                  reps={reps}
-                  weight={weight}
-                  isMetric={isMetric}
-                  e1rmFormula={e1rmFormula}
-                  estimateE1RM={estimateE1RM}
-                  forceLift={forceLift}
-                />
-
-                {/* Floating plate annotation: absolute in right whitespace on desktop */}
-                <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
-                  <Link href={warmupURL}>
-                    <PlateDiagram
-                      platesPerSide={plateBreakdown.platesPerSide}
-                      barWeight={plateBarWeight}
-                      isMetric={isMetric}
-                      hideLabels={true}
-                      animationKey={diagramAnimKey}
-                      useScrollTrigger={false}
-                    />
-                  </Link>
-                  <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
-                    See warm-up sets →
-                  </Link>
                 </div>
 
                 {/* Mobile: plate diagram + link below card */}

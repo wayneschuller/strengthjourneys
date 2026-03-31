@@ -58,7 +58,7 @@ function estimateE1RM(reps, weight, equation) {
       );
     case "OConner":
       return Math.round(weight * (1 + reps / 40));
-    case "Wathen":
+    case "Wathan":
       return Math.round(
         (100 * weight) / (48.8 + 53.8 * Math.pow(Math.E, -0.075 * reps)),
       );

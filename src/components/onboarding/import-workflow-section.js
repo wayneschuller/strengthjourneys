@@ -117,6 +117,21 @@ function ImportedDataOverview({ parsedData }) {
     };
   }, [parsedData, isMetric]);
 
+  const yearIntervals = useMemo(() => {
+    if (!stats?.dateRange?.first || !stats?.dateRange?.last) return [];
+    const startYear = new Date(stats.dateRange.first).getFullYear();
+    const endYear = new Date(stats.dateRange.last).getFullYear();
+    const intervals = [];
+    for (let year = endYear; year >= startYear; year--) {
+      intervals.push({
+        startDate: `${year}-01-01`,
+        endDate: `${year}-12-31`,
+        year,
+      });
+    }
+    return intervals;
+  }, [stats]);
+
   if (!stats) return null;
 
   const buildCalcUrl = (reps, weight, unitType) => {
@@ -125,9 +140,9 @@ function ImportedDataOverview({ parsedData }) {
   };
 
   return (
-    <div className="mt-4 w-full max-w-lg text-left">
+    <div className="mt-4 w-full text-left">
       {/* Summary line */}
-      <div className="text-muted-foreground mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
+      <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
         <span>
           <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
           sessions
@@ -154,78 +169,108 @@ function ImportedDataOverview({ parsedData }) {
         </span>
       </div>
 
-      {/* Activity heatmap */}
-      {stats.dateRange.first && stats.dateRange.last && (
-        <div className="mb-4">
-          <p className="text-muted-foreground mb-2 text-center text-xs font-medium uppercase tracking-wide">
-            Training activity
-          </p>
-          <DailyHeatmap
-            parsedData={parsedData}
-            startDate={stats.dateRange.first}
-            endDate={stats.dateRange.last}
-            isSharing={false}
-            showMonthLabels={true}
-          />
-        </div>
-      )}
-
-      {/* Top lifts with best E1RM */}
-      <div>
-        <p className="text-muted-foreground mb-2 text-center text-xs font-medium uppercase tracking-wide">
-          Top lifts
-        </p>
-        <div className="space-y-2">
-          {stats.topLifts.map((lift) => {
-            const strengthRating =
-              hasBio
-                ? (() => {
-                    const standard = getStandardForLiftDate(
-                      age,
-                      lift.date,
-                      bodyWeight,
-                      sex,
-                      lift.name,
-                      isMetric,
-                    );
-                    return standard
-                      ? getStrengthRatingForE1RM(lift.bestE1RM, standard)
-                      : null;
-                  })()
-                : null;
-
-            return (
-              <div
-                key={lift.name}
-                className="bg-muted/40 flex items-center justify-between rounded-md px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">
-                    {lift.name}
-                  </div>
-                  <div className="text-muted-foreground text-xs">
-                    {lift.count} sets &middot; Best:{" "}
-                    {lift.reps}x{lift.weight}
-                    {lift.unitType} on {getReadableDateShort(lift.date)}
-                  </div>
-                </div>
-                <div className="ml-3 shrink-0 text-right">
-                  <Link
-                    href={buildCalcUrl(lift.reps, lift.weight, lift.unitType)}
-                    className="text-primary text-sm font-semibold tabular-nums hover:underline"
+      {/* Two-column layout: heatmaps + top lifts */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Activity heatmaps — yearly breakdown */}
+        {yearIntervals.length > 0 && (
+          <div>
+            <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+              Training activity
+            </p>
+            <div className="flex flex-col gap-2">
+              {yearIntervals.map((interval) => {
+                const isCurrentYear =
+                  interval.year === new Date().getFullYear();
+                return (
+                  <div
+                    key={interval.year}
+                    className="flex items-start gap-3"
                   >
-                    E1RM: {lift.bestE1RM}
-                    {lift.unitType}
-                  </Link>
-                  {strengthRating && (
-                    <div className="text-muted-foreground text-xs">
-                      {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
+                    <span
+                      className={`shrink-0 pt-1 text-right text-xs tabular-nums ${
+                        isCurrentYear
+                          ? "text-foreground font-semibold"
+                          : "text-muted-foreground/70"
+                      }`}
+                      style={{ width: 36 }}
+                    >
+                      {interval.year}
+                    </span>
+                    <div
+                      className={`min-w-0 flex-1 ${isCurrentYear ? "" : "opacity-80"}`}
+                    >
+                      <DailyHeatmap
+                        parsedData={parsedData}
+                        startDate={interval.startDate}
+                        endDate={interval.endDate}
+                        isSharing={false}
+                        showMonthLabels={true}
+                      />
                     </div>
-                  )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Top lifts with best E1RM */}
+        <div>
+          <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+            Top lifts
+          </p>
+          <div className="space-y-2">
+            {stats.topLifts.map((lift) => {
+              const strengthRating =
+                hasBio
+                  ? (() => {
+                      const standard = getStandardForLiftDate(
+                        age,
+                        lift.date,
+                        bodyWeight,
+                        sex,
+                        lift.name,
+                        isMetric,
+                      );
+                      return standard
+                        ? getStrengthRatingForE1RM(lift.bestE1RM, standard)
+                        : null;
+                    })()
+                  : null;
+
+              return (
+                <div
+                  key={lift.name}
+                  className="bg-muted/40 flex items-center justify-between rounded-md px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">
+                      {lift.name}
+                    </div>
+                    <div className="text-muted-foreground text-xs">
+                      {lift.count} sets &middot; Best:{" "}
+                      {lift.reps}x{lift.weight}
+                      {lift.unitType} on {getReadableDateShort(lift.date)}
+                    </div>
+                  </div>
+                  <div className="ml-3 shrink-0 text-right">
+                    <Link
+                      href={buildCalcUrl(lift.reps, lift.weight, lift.unitType)}
+                      className="text-primary text-sm font-semibold tabular-nums hover:underline"
+                    >
+                      E1RM: {lift.bestE1RM}
+                      {lift.unitType}
+                    </Link>
+                    {strengthRating && (
+                      <div className="text-muted-foreground text-xs">
+                        {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

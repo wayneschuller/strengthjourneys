@@ -6,6 +6,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import {
   ArrowRight,
@@ -18,7 +19,14 @@ import {
 } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import {
+  useAthleteBio,
+  getStandardForLiftDate,
+  getStrengthRatingForE1RM,
+  STRENGTH_LEVEL_EMOJI,
+} from "@/hooks/use-athlete-biodata";
 import { useToast } from "@/hooks/use-toast";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
   analyzeImportedEntries,
   deduplicateImportedEntries,
@@ -41,37 +49,43 @@ function getReadableDateShort(isoDate) {
 }
 
 function ImportedDataOverview({ parsedData }) {
+  const { age, bodyWeight, sex, isMetric } = useAthleteBio();
+  const hasBio = age && bodyWeight && sex;
+
   const stats = useMemo(() => {
     if (!parsedData || parsedData.length === 0) return null;
     const entries = parsedData.filter((e) => !e.isGoal);
     if (entries.length === 0) return null;
 
-    // Unique session dates
     const dates = [...new Set(entries.map((e) => e.date))].sort();
 
-    // Top lifts by frequency and tonnage
+    // Build lift map: frequency + best E1RM set per lift
     const liftMap = {};
     for (const e of entries) {
+      if (!e.weight || e.weight <= 0 || !e.reps || e.reps <= 0) continue;
       if (!liftMap[e.liftType]) {
-        liftMap[e.liftType] = { count: 0, tonnage: 0 };
+        liftMap[e.liftType] = { count: 0, bestE1RM: 0, bestSet: null };
       }
       liftMap[e.liftType].count++;
-      liftMap[e.liftType].tonnage += (e.weight || 0) * (e.reps || 0);
+      const e1rm = estimateE1RM(e.reps, e.weight, "Brzycki");
+      if (e1rm > liftMap[e.liftType].bestE1RM) {
+        liftMap[e.liftType].bestE1RM = e1rm;
+        liftMap[e.liftType].bestSet = e;
+      }
     }
+
     const topLifts = Object.entries(liftMap)
       .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 6)
-      .map(([name, { count, tonnage }]) => ({ name, count, tonnage }));
-
-    // Session date strings for display: first 3 ... last 3
-    const firstDates = dates.slice(0, 3);
-    const lastDates =
-      dates.length > 6
-        ? dates.slice(-3)
-        : dates.length > 3
-          ? dates.slice(3)
-          : [];
-    const showEllipsis = dates.length > 6;
+      .map(([name, { count, bestE1RM, bestSet }]) => ({
+        name,
+        count,
+        bestE1RM,
+        reps: bestSet.reps,
+        weight: bestSet.weight,
+        unitType: bestSet.unitType,
+        date: bestSet.date,
+      }));
 
     return {
       sessionCount: dates.length,
@@ -79,17 +93,14 @@ function ImportedDataOverview({ parsedData }) {
       dateRange: { first: dates[0], last: dates[dates.length - 1] },
       liftTypeCount: Object.keys(liftMap).length,
       topLifts,
-      firstDates,
-      lastDates,
-      showEllipsis,
     };
   }, [parsedData]);
 
   if (!stats) return null;
 
-  const formatTonnage = (t) => {
-    if (t >= 1000) return `${(t / 1000).toFixed(1)}t`;
-    return `${Math.round(t)}kg`;
+  const buildCalcUrl = (reps, weight, unitType) => {
+    const calcIsMetric = unitType === "kg";
+    return `/calculator?reps=${JSON.stringify(reps)}&weight=${JSON.stringify(weight)}&calcIsMetric=${JSON.stringify(calcIsMetric)}&formula=${JSON.stringify("Brzycki")}`;
   };
 
   return (
@@ -122,41 +133,62 @@ function ImportedDataOverview({ parsedData }) {
         </span>
       </div>
 
-      {/* Top lifts */}
-      <div className="mb-3">
-        <p className="text-muted-foreground mb-1.5 text-center text-xs font-medium uppercase tracking-wide">
+      {/* Top lifts with best E1RM */}
+      <div>
+        <p className="text-muted-foreground mb-2 text-center text-xs font-medium uppercase tracking-wide">
           Top lifts
         </p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-          {stats.topLifts.map((lift) => (
-            <div
-              key={lift.name}
-              className="flex items-center justify-between text-sm"
-            >
-              <span className="truncate">{lift.name}</span>
-              <span className="text-muted-foreground ml-2 shrink-0 tabular-nums text-xs">
-                {lift.count} sets &middot; {formatTonnage(lift.tonnage)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+        <div className="space-y-2">
+          {stats.topLifts.map((lift) => {
+            const strengthRating =
+              hasBio
+                ? (() => {
+                    const standard = getStandardForLiftDate(
+                      age,
+                      lift.date,
+                      bodyWeight,
+                      sex,
+                      lift.name,
+                      isMetric,
+                    );
+                    return standard
+                      ? getStrengthRatingForE1RM(lift.bestE1RM, standard)
+                      : null;
+                  })()
+                : null;
 
-      {/* Session timeline */}
-      <div>
-        <p className="text-muted-foreground mb-1.5 text-center text-xs font-medium uppercase tracking-wide">
-          Sessions
-        </p>
-        <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-xs tabular-nums">
-          {stats.firstDates.map((d) => (
-            <span key={d}>{getReadableDateShort(d)}</span>
-          ))}
-          {stats.showEllipsis && (
-            <span className="text-border px-1">&hellip;</span>
-          )}
-          {stats.lastDates.map((d) => (
-            <span key={d}>{getReadableDateShort(d)}</span>
-          ))}
+            return (
+              <div
+                key={lift.name}
+                className="bg-muted/40 flex items-center justify-between rounded-md px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium">
+                    {lift.name}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {lift.count} sets &middot; Best:{" "}
+                    {lift.reps}x{lift.weight}
+                    {lift.unitType} on {getReadableDateShort(lift.date)}
+                  </div>
+                </div>
+                <div className="ml-3 shrink-0 text-right">
+                  <Link
+                    href={buildCalcUrl(lift.reps, lift.weight, lift.unitType)}
+                    className="text-primary text-sm font-semibold tabular-nums hover:underline"
+                  >
+                    E1RM: {lift.bestE1RM}
+                    {lift.unitType}
+                  </Link>
+                  {strengthRating && (
+                    <div className="text-muted-foreground text-xs">
+                      {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -456,7 +488,7 @@ export function ImportWorkflowSection({
                         size="sm"
                         onClick={() => router.push("/")}
                       >
-                        <Dumbbell className="mr-2 h-4 w-4" /> Explore Dashboard
+                        <Dumbbell className="mr-2 h-4 w-4" /> Home Dashboard
                       </Button>
                       <Button
                         variant="outline"

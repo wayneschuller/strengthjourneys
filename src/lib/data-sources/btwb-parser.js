@@ -164,6 +164,44 @@ function parseDescriptionLine(line) {
 }
 
 /**
+ * Parse a complex/bracket line into multiple lift entries.
+ * Format: "1x [ 1 Pause Power Clean + 1 Pause Hang Clean + 1 Split Jerk ] | 40 kg"
+ * Returns an array of { reps, weight, unitType, liftType } or null if not a complex line.
+ */
+function parseComplexLine(line) {
+  if (!line) return null;
+  const trimmed = String(line).trim();
+
+  // Match: optional-multiplier [ movements ] | weight unit
+  const match = trimmed.match(
+    /^(\d+)x?\s*\[\s*(.+?)\s*\]\s*\|\s*([\d.]+)\s*(kg|lb|lbs)$/i,
+  );
+  if (!match) return null;
+
+  const weight = Number.parseFloat(match[3]);
+  const unitType = match[4].toLowerCase().startsWith("kg") ? "kg" : "lb";
+  if (!Number.isFinite(weight) || weight <= 0) return null;
+
+  // Split movements by "+"
+  const movements = match[2].split(/\s*\+\s*/);
+  const results = [];
+
+  for (const movement of movements) {
+    // Each movement: "1 Pause Power Clean" or "2 Front Squats"
+    const movementMatch = movement.match(/^(\d+)\s+(.+)$/);
+    if (!movementMatch) continue;
+
+    const reps = Number.parseInt(movementMatch[1], 10);
+    const liftType = normalizeBtwbLiftType(movementMatch[2]);
+    if (!Number.isFinite(reps) || reps <= 0 || !liftType) continue;
+
+    results.push({ reps, weight, unitType, liftType });
+  }
+
+  return results.length > 0 ? results : null;
+}
+
+/**
  * Extract a round count from a WOD description block.
  * Matches patterns like "5 rounds of:", "3 rounds, each round for time, of:",
  * "5 rounds, 1:30 each, of:".
@@ -260,6 +298,24 @@ export function parseBtwbData(data) {
     const lines = String(description).split(/\r?\n/);
 
     lines.forEach((line) => {
+      // Try complex bracket format first (e.g. "1x [ 1 Power Clean + 1 Jerk ] | 40 kg")
+      const complexEntries = parseComplexLine(line);
+      if (complexEntries) {
+        for (const entry of complexEntries) {
+          for (let r = 0; r < roundCount; r++) {
+            parsedData.push({
+              date,
+              liftType: entry.liftType,
+              reps: entry.reps,
+              weight: entry.weight,
+              unitType: entry.unitType,
+              notes: combinedNotes,
+            });
+          }
+        }
+        return;
+      }
+
       const parsedLine = parseDescriptionLine(line);
       if (!parsedLine) return;
 

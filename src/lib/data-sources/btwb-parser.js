@@ -10,7 +10,7 @@ const TITLE_COLUMN_CANDIDATES = [
   "Title",
   "title",
 ];
-const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "RFT", "RFQ", "AMRAP", "Chipper", "Complex", "Lifting"]);
+const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "RFT", "RFQ", "AMRAP", "Chipper", "Complex", "Lifting", "RemRep", "EMOM", "Tabata"]);
 const BTWB_LIFT_NAME_OVERRIDES = {
   "overhead presses": "Strict Press",
   "strict presses": "Strict Press",
@@ -80,6 +80,7 @@ function extractLiftType(rawTitle) {
 
   const title = String(rawTitle)
     .replace(/^\d+x\s*/i, "")
+    .replace(/^\d+\s*(?:mins?|minutes?|:\d{2})\s*/i, "")
     .replace(/^[^A-Za-z]+/, "")
     .trim();
   if (!title) return null;

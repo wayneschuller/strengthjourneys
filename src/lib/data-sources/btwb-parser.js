@@ -301,6 +301,9 @@ export function parseBtwbData(data) {
       // Try complex bracket format first (e.g. "1x [ 1 Power Clean + 1 Jerk ] | 40 kg")
       const complexEntries = parseComplexLine(line);
       if (complexEntries) {
+        const complexNotes = combinedNotes
+          ? `Complex: ${combinedNotes}`
+          : "Complex";
         for (const entry of complexEntries) {
           for (let r = 0; r < roundCount; r++) {
             parsedData.push({
@@ -309,7 +312,7 @@ export function parseBtwbData(data) {
               reps: entry.reps,
               weight: entry.weight,
               unitType: entry.unitType,
-              notes: combinedNotes,
+              notes: complexNotes,
             });
           }
         }

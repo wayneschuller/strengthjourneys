@@ -118,7 +118,7 @@ const FORMAT_SIGNATURES = [
       headers.includes("Date") &&
       headers.includes("Description") &&
       headers.includes("Workout") &&
-      (headers.includes("Formatted Result") || headers.includes("Pukie")),
+      headers.includes("Formatted Result"),
     parse: parseBtwbData,
   },
   {

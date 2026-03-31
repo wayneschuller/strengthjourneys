@@ -120,6 +120,26 @@ function parseDescriptionLine(line) {
   return { reps, weight, unitType, liftType: null };
 }
 
+/**
+ * Extract a round count from a WOD description block.
+ * Matches patterns like "5 rounds of:", "3 rounds, each round for time, of:",
+ * "5 rounds, 1:30 each, of:".
+ * Returns 1 if no round pattern is found (straight-through sets).
+ */
+function extractRoundCount(descriptionText) {
+  const match = String(descriptionText).match(/^(\d+)\s+rounds?\b/im);
+  return match ? Number.parseInt(match[1], 10) : 1;
+}
+
+/**
+ * Check if a description block is a "Sets" block (explicit set listing)
+ * vs a WOD prescription (rounds of movements).
+ * "Sets" blocks already list each set individually so should NOT be multiplied.
+ */
+function isSetsBlock(descriptionText) {
+  return /^Sets\s*$/m.test(String(descriptionText));
+}
+
 // Parse Beyond the Whiteboard CSV format.
 //
 // Supports two known BTWB export column layouts:
@@ -128,6 +148,9 @@ function parseDescriptionLine(line) {
 //
 // Both share the same Description cell format (multi-line set data).
 // Column positions are resolved by name, so either layout works.
+//
+// For WOD entries ("N rounds of: ..."), weighted exercises are extracted
+// and multiplied by the round count to produce individual sets.
 export function parseBtwbData(data) {
   const startTime = performance.now();
   const columnNames = data[0] || [];
@@ -167,6 +190,10 @@ export function parseBtwbData(data) {
     const combinedNotes =
       [descText, notesText].filter(Boolean).join("\n") || undefined;
 
+    // Determine if this is a round-based WOD vs explicit "Sets" listing
+    const setsBlock = isSetsBlock(description);
+    const roundCount = setsBlock ? 1 : extractRoundCount(description);
+
     const lines = String(description).split(/\r?\n/);
 
     lines.forEach((line) => {
@@ -176,14 +203,17 @@ export function parseBtwbData(data) {
       const liftType = titleLiftType || parsedLine.liftType;
       if (!liftType) return;
 
-      parsedData.push({
-        date,
-        liftType,
-        reps: parsedLine.reps,
-        weight: parsedLine.weight,
-        unitType: parsedLine.unitType,
-        notes: combinedNotes,
-      });
+      // For WOD rounds, emit one set per round
+      for (let r = 0; r < roundCount; r++) {
+        parsedData.push({
+          date,
+          liftType,
+          reps: parsedLine.reps,
+          weight: parsedLine.weight,
+          unitType: parsedLine.unitType,
+          notes: combinedNotes,
+        });
+      }
     });
   }
 

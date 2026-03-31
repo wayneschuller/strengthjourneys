@@ -32,6 +32,8 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { Button } from "@/components/ui/button";
@@ -488,7 +490,8 @@ export function ImportWorkflowSection({
                         size="sm"
                         onClick={() => router.push("/")}
                       >
-                        <Dumbbell className="mr-2 h-4 w-4" /> Home Dashboard
+                        <Dumbbell className="mr-2 h-4 w-4" /> Explore Home
+                        Dashboard
                       </Button>
                       <Button
                         variant="outline"
@@ -498,6 +501,12 @@ export function ImportWorkflowSection({
                         <NotebookText className="mr-2 h-4 w-4" /> Browse Your
                         Sessions
                       </Button>
+                      <GoogleSignInButton
+                        size="sm"
+                        cta="import_overview"
+                      >
+                        Save my data
+                      </GoogleSignInButton>
                     </div>
                   </>
                 )}

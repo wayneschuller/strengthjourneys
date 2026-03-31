@@ -554,17 +554,12 @@ function WeekSessionList({
       ) : (
         rows.map((row) => {
           const className =
-            "grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4 rounded-xl border bg-muted/20 px-4 py-3" +
-            (isReadOnly
-              ? ""
-              : " transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2");
-          const Wrapper = isReadOnly ? "div" : Link;
-          const wrapperProps = isReadOnly
-            ? { className }
-            : {
-                href: { pathname: "/log", query: { date: row.date } },
-                className,
-              };
+            "grid grid-cols-[72px_minmax(0,1fr)] items-start gap-4 rounded-xl border bg-muted/20 px-4 py-3 transition-colors hover:border-primary hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+          const Wrapper = Link;
+          const wrapperProps = {
+            href: { pathname: "/log", query: { date: row.date } },
+            className,
+          };
           return (
             <Wrapper key={row.date} {...wrapperProps}>
               <div className="space-y-0.5">

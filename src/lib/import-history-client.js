@@ -19,7 +19,8 @@ async function gzipJsonString(jsonString) {
   return await new Response(compressedStream).arrayBuffer();
 }
 
-export async function postImportHistory(payload, { source = "unknown" } = {}) {
+export async function postImportHistory(payload, { source = "unknown", formatName } = {}) {
+  if (formatName) payload.formatName = formatName;
   const jsonString = JSON.stringify(payload);
   const payloadBytes = jsonString.length;
   const gzippedBody = await gzipJsonString(jsonString);

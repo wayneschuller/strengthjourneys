@@ -10,7 +10,7 @@ const TITLE_COLUMN_CANDIDATES = [
   "Title",
   "title",
 ];
-const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "RFT", "RFQ", "AMRAP", "Chipper", "Complex", "Lifting"]);
+const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "RFT", "RFQ", "AMRAP", "Chipper", "Complex", "Lifting", "RemRep", "EMOM", "Tabata"]);
 const BTWB_LIFT_NAME_OVERRIDES = {
   "overhead presses": "Strict Press",
   "strict presses": "Strict Press",
@@ -79,13 +79,15 @@ function extractLiftType(rawTitle) {
   if (!rawTitle) return null;
 
   const title = String(rawTitle)
+    .replace(/^\d+x\s*/i, "")
+    .replace(/^\d+\s*(?:mins?|minutes?|:\d{2})\s*/i, "")
     .replace(/^[^A-Za-z]+/, "")
     .trim();
   if (!title) return null;
 
   const match = title.match(/^[A-Za-z][A-Za-z '&/()-]*/);
   const parsed = match?.[0]?.replace(/\s+/g, " ").trim();
-  if (!parsed || SKIP_WORKOUT_TITLES.has(parsed)) return null;
+  if (!parsed || SKIP_WORKOUT_TITLES.has(parsed) || SKIP_WORKOUT_TITLES.has(depluralizeLiftName(parsed))) return null;
 
   return normalizeBtwbLiftType(parsed);
 }

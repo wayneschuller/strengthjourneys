@@ -32,6 +32,7 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { Button } from "@/components/ui/button";
@@ -488,7 +489,8 @@ export function ImportWorkflowSection({
                         size="sm"
                         onClick={() => router.push("/")}
                       >
-                        <Dumbbell className="mr-2 h-4 w-4" /> Home Dashboard
+                        <Dumbbell className="mr-2 h-4 w-4" /> Explore Home
+                        Dashboard
                       </Button>
                       <Button
                         variant="outline"
@@ -497,6 +499,19 @@ export function ImportWorkflowSection({
                       >
                         <NotebookText className="mr-2 h-4 w-4" /> Browse Your
                         Sessions
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCreateSheetFromImport}
+                      >
+                        <img
+                          src={GOOGLE_SHEETS_ICON_URL}
+                          alt=""
+                          className="mr-2 h-4 w-4"
+                          aria-hidden
+                        />
+                        Save to Google Sheets
                       </Button>
                     </div>
                   </>

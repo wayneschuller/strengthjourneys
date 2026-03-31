@@ -167,11 +167,21 @@ function parseDescriptionLine(line) {
  * Extract a round count from a WOD description block.
  * Matches patterns like "5 rounds of:", "3 rounds, each round for time, of:",
  * "5 rounds, 1:30 each, of:".
- * Returns 1 if no round pattern is found (straight-through sets).
+ * Returns 0 if no round pattern is found.
  */
-function extractRoundCount(descriptionText) {
+function extractDescriptionRoundCount(descriptionText) {
   const match = String(descriptionText).match(/^(\d+)\s+rounds?\b/im);
-  return match ? Number.parseInt(match[1], 10) : 1;
+  return match ? Number.parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Extract completed round count from the Formatted Result column.
+ * AMRAP results look like "7 rounds | 140 reps" or "3 rounds + 14 Wall Balls".
+ * The integer part is the number of fully completed rounds.
+ */
+function extractResultRoundCount(formattedResult) {
+  const match = String(formattedResult).match(/^(\d+)\s+rounds?\b/i);
+  return match ? Number.parseInt(match[1], 10) : 0;
 }
 
 /**
@@ -202,6 +212,7 @@ export function parseBtwbData(data) {
   const workoutDateColumnIndex = col("Date");
   const descriptionColumnIndex = col("Description");
   const notesColumnIndex = col("Notes");
+  const formattedResultColumnIndex = col("Formatted Result");
   const workoutTitleColumnIndex = TITLE_COLUMN_CANDIDATES.map((name) =>
     col(name),
   ).find((index) => index >= 0);
@@ -233,9 +244,18 @@ export function parseBtwbData(data) {
     const combinedNotes =
       [descText, notesText].filter(Boolean).join("\n") || undefined;
 
-    // Determine if this is a round-based WOD vs explicit "Sets" listing
+    // Determine round multiplier:
+    // - "Sets" blocks list each set individually, no multiplication
+    // - RFT WODs: round count is in the Description ("5 rounds of:")
+    // - AMRAPs: completed rounds are in Formatted Result ("7 rounds | 140 reps")
     const setsBlock = isSetsBlock(description);
-    const roundCount = setsBlock ? 1 : extractRoundCount(description);
+    const formattedResult =
+      formattedResultColumnIndex >= 0
+        ? row[formattedResultColumnIndex] || ""
+        : "";
+    const descRounds = extractDescriptionRoundCount(description);
+    const resultRounds = extractResultRoundCount(formattedResult);
+    const roundCount = setsBlock ? 1 : descRounds || resultRounds || 1;
 
     const lines = String(description).split(/\r?\n/);
 

@@ -76,18 +76,36 @@ function ImportedDataOverview({ parsedData }) {
       }
     }
 
+    const preferredUnit = isMetric ? "kg" : "lb";
     const topLifts = Object.entries(liftMap)
       .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 6)
-      .map(([name, { count, bestE1RM, bestSet }]) => ({
-        name,
-        count,
-        bestE1RM,
-        reps: bestSet.reps,
-        weight: bestSet.weight,
-        unitType: bestSet.unitType,
-        date: bestSet.date,
-      }));
+      .map(([name, { count, bestE1RM, bestSet }]) => {
+        const needsConversion = bestSet.unitType !== preferredUnit;
+        const displayWeight = needsConversion
+          ? Math.round(
+              (preferredUnit === "kg"
+                ? bestSet.weight / 2.2046
+                : bestSet.weight * 2.2046) * 10,
+            ) / 10
+          : bestSet.weight;
+        const displayE1RM = needsConversion
+          ? Math.round(
+              preferredUnit === "kg"
+                ? bestE1RM / 2.2046
+                : bestE1RM * 2.2046,
+            )
+          : bestE1RM;
+        return {
+          name,
+          count,
+          bestE1RM: displayE1RM,
+          reps: bestSet.reps,
+          weight: displayWeight,
+          unitType: preferredUnit,
+          date: bestSet.date,
+        };
+      });
 
     return {
       sessionCount: dates.length,
@@ -96,7 +114,7 @@ function ImportedDataOverview({ parsedData }) {
       liftTypeCount: Object.keys(liftMap).length,
       topLifts,
     };
-  }, [parsedData]);
+  }, [parsedData, isMetric]);
 
   if (!stats) return null;
 

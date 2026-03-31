@@ -319,7 +319,7 @@ export function ImportWorkflowSection({
 
     const res = await postImportHistory(
       { ssid: targetSsid, entries: apiEntries },
-      { source: "import_workflow" },
+      { source: "import_workflow", formatName: importedFormatName },
     );
     const data = await res.json();
 
@@ -327,7 +327,7 @@ export function ImportWorkflowSection({
       throw new Error(data.error || "Failed to write data to sheet");
     }
     return data;
-  }, []);
+  }, [importedFormatName]);
 
   const handleMerge = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;

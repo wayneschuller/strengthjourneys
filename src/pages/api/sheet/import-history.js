@@ -159,7 +159,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, entries } = requestBody;
+  const { ssid, entries, formatName } = requestBody;
 
   if (!ssid || !Array.isArray(entries) || entries.length === 0) {
     logImportEvent("request_rejected", {
@@ -456,6 +456,7 @@ export default async function handler(req, res) {
     });
 
     void promptDeveloper("import-merged", session.user, {
+      formatName: formatName || "unknown",
       entryCount: entries.length,
       insertedRows: totalInserted,
       dateCount: sortedDates.length,

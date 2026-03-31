@@ -176,7 +176,7 @@ function shouldShowSyncToastOnAutoLink(payload) {
   return ["drive_single", "legacy_drive_relink"].includes(payload?.reason);
 }
 
-async function writeEntriesToSheet(targetSsid, entries) {
+async function writeEntriesToSheet(targetSsid, entries, formatName) {
   const apiEntries = entries.map((entry) => ({
     date: entry.date,
     liftType: entry.liftType,
@@ -192,6 +192,7 @@ async function writeEntriesToSheet(targetSsid, entries) {
     },
     {
       source: "sheet_setup_write",
+      formatName,
     },
   );
   const payload = await response.json().catch(() => ({}));
@@ -305,6 +306,7 @@ export function SheetSetupDialog() {
     clearImportedData,
     isImportedData,
     importedFileName,
+    importedFormatName,
     mutate,
   } = useUserLiftingData();
   const { toast } = useToast();
@@ -907,7 +909,7 @@ export function SheetSetupDialog() {
         return;
       }
 
-      const payload = await writeEntriesToSheet(sheetInfo.ssid, newEntries);
+      const payload = await writeEntriesToSheet(sheetInfo.ssid, newEntries, importedFormatName);
       clearImportedData();
       mutate();
       setOpen(false);
@@ -934,6 +936,7 @@ export function SheetSetupDialog() {
     }
   }, [
     clearImportedData,
+    importedFormatName,
     isLoading,
     mutate,
     parsedData,
@@ -1110,6 +1113,7 @@ export function SheetSetupDialog() {
             },
             {
               source: "sheet_setup_create",
+              formatName,
             },
           );
           const writeData = await writeRes.json();

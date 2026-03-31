@@ -502,6 +502,7 @@ export default function ImportPage() {
         entries: validEntries,
       }, {
         source: "import_page_manual",
+        formatName: "Strength Journeys",
       });
       const data = await res.json();
 

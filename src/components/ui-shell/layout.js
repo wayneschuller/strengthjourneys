@@ -560,6 +560,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         entries: apiEntries,
       }, {
         source: "preview_banner_merge",
+        formatName: importedFormatName,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Merge failed");

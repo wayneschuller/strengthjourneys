@@ -2312,6 +2312,7 @@ function Heatmap({
 }
 
 const MemoizedHeatmap = memo(Heatmap);
+export { MemoizedHeatmap as DailyHeatmap };
 
 // Tooltip body for a daily heatmap cell: date, set/lift counts, PR badges (heaviest per lift type),
 // and per-lift set breakdowns. Shows up to MAX_LIFTS_SHOWN lift types before truncating.

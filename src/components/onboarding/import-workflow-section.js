@@ -36,6 +36,7 @@ import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
+import { DailyHeatmap } from "@/components/home-dashboard/the-long-game-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -152,6 +153,22 @@ function ImportedDataOverview({ parsedData }) {
           {getReadableDateShort(stats.dateRange.last)}
         </span>
       </div>
+
+      {/* Activity heatmap */}
+      {stats.dateRange.first && stats.dateRange.last && (
+        <div className="mb-4">
+          <p className="text-muted-foreground mb-2 text-center text-xs font-medium uppercase tracking-wide">
+            Training activity
+          </p>
+          <DailyHeatmap
+            parsedData={parsedData}
+            startDate={stats.dateRange.first}
+            endDate={stats.dateRange.last}
+            isSharing={false}
+            showMonthLabels={true}
+          />
+        </div>
+      )}
 
       {/* Top lifts with best E1RM */}
       <div>

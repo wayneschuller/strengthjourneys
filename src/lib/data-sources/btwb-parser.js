@@ -12,12 +12,52 @@ const TITLE_COLUMN_CANDIDATES = [
 ];
 const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "AMRAP", "Chipper"]);
 const BTWB_LIFT_NAME_OVERRIDES = {
-  "back squats": "Back Squat",
-  "bench presses": "Bench Press",
-  deadlifts: "Deadlift",
-  "strict presses": "Strict Press",
   "overhead presses": "Strict Press",
+  "strict presses": "Strict Press",
 };
+
+/**
+ * Convert a plural BTWB lift name to singular.
+ * Handles the common English patterns found in BTWB exports:
+ *   "Presses" -> "Press", "Flies" -> "Fly", "Carries" -> "Carry",
+ *   "Snatches" -> "Snatch", "Squats" -> "Squat", etc.
+ *
+ * Only the LAST word is de-pluralized so compound names like
+ * "Dumbbell Hang Power Cleans" -> "Dumbbell Hang Power Clean".
+ */
+function depluralizeLiftName(name) {
+  if (!name) return name;
+  const words = name.split(" ");
+  let last = words[words.length - 1];
+
+  // Don't touch single-character or very short words
+  if (last.length <= 2) return name;
+
+  // Order matters: check more specific suffixes first
+  if (/resses$/i.test(last)) {
+    // Presses -> Press
+    last = last.replace(/es$/i, "");
+  } else if (/lies$/i.test(last)) {
+    // Flies -> Fly
+    last = last.replace(/ies$/i, "y");
+  } else if (/ries$/i.test(last)) {
+    // Carries -> Carry
+    last = last.replace(/ies$/i, "y");
+  } else if (/[csxz]hes$/i.test(last)) {
+    // Snatches, Lunches -> Snatch, Lunch
+    last = last.replace(/es$/i, "");
+  } else if (/[csxz]es$/i.test(last)) {
+    // Raises, Bridges -> Raise, Bridge (but not "Presses" - handled above)
+    last = last.replace(/s$/i, "");
+  } else if (/s$/i.test(last) && !/ss$/i.test(last)) {
+    // Squats -> Squat, Rows -> Row, Curls -> Curl
+    // But not "Press" (no trailing s) or words ending in "ss"
+    last = last.replace(/s$/i, "");
+  }
+
+  words[words.length - 1] = last;
+  return words.join(" ");
+}
 
 function normalizeBtwbLiftType(rawLiftType) {
   if (!rawLiftType) return null;
@@ -29,7 +69,10 @@ function normalizeBtwbLiftType(rawLiftType) {
   if (!cleaned) return null;
 
   const override = BTWB_LIFT_NAME_OVERRIDES[cleaned.toLowerCase()];
-  return normalizeLiftTypeNames(override || cleaned);
+  if (override) return normalizeLiftTypeNames(override);
+
+  const singular = depluralizeLiftName(cleaned);
+  return normalizeLiftTypeNames(singular);
 }
 
 function extractLiftType(rawTitle) {

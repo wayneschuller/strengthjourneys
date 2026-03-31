@@ -55,9 +55,9 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
 export const featurePages = [
   {
     href: "/log",
-    title: "Log",
+    title: "Log & Session Browser",
     description:
-      "Log your lifting session with live strength tracking, warm-up suggestions, and more.",
+      "Log your lifting session or browse past workouts in detail with strength tracking and warm-up suggestions.",
     IconComponent: Plus,
   },
   {

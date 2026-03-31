@@ -10,7 +10,7 @@ const TITLE_COLUMN_CANDIDATES = [
   "Title",
   "title",
 ];
-const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "RFT", "AMRAP", "Chipper"]);
+const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "RFT", "RFQ", "AMRAP", "Chipper"]);
 const BTWB_LIFT_NAME_OVERRIDES = {
   "overhead presses": "Strict Press",
   "strict presses": "Strict Press",

@@ -9,6 +9,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
+import { useRouter } from "next/router";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import {
@@ -820,7 +821,7 @@ export function TheLongGameCard({
                         : "max-h-[52vh] overflow-y-auto pr-1"
                   }
                 >
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
                     {intervals.map((interval, index) => {
                       const year = new Date(interval.startDate).getFullYear();
                       const isCurrentYear = year === new Date().getFullYear();
@@ -831,10 +832,8 @@ export function TheLongGameCard({
                             if (node) yearRowRefs.current[year] = node;
                             else delete yearRowRefs.current[year];
                           }}
-                          className={`group relative flex w-full items-start rounded-2xl border px-2 py-2 transition-colors ${
-                            isCurrentYear
-                              ? "border-primary/20 bg-primary/[0.07] shadow-[0_10px_30px_-24px_var(--color-primary)]"
-                              : "border-border/40 bg-gradient-to-r from-background via-muted/10 to-background"
+                          className={`group relative flex w-full items-start px-1 py-1 ${
+                            isCurrentYear ? "" : "opacity-80"
                           }`}
                         >
                           <div
@@ -846,8 +845,8 @@ export function TheLongGameCard({
                                 data-year-label="true"
                                 className={
                                   isCurrentYear
-                                    ? "text-foreground rounded-full border border-primary/20 bg-background/80 px-2 py-0.5 text-[13px] font-semibold tabular-nums lg:text-sm"
-                                    : "text-muted-foreground rounded-full border border-border/40 bg-background/70 px-2 py-0.5 tabular-nums"
+                                    ? "text-foreground text-[13px] font-semibold tabular-nums lg:text-sm"
+                                    : "text-muted-foreground/70 tabular-nums"
                                 }
                               >
                                 {year}
@@ -2223,6 +2222,7 @@ function Heatmap({
   showMonthLabels = true,
 }) {
   const { isDemoMode } = useUserLiftingData();
+  const router = useRouter();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -2254,6 +2254,14 @@ function Heatmap({
     setHoveredValue(value);
   }, []);
 
+  const handleClick = useCallback(
+    (value) => {
+      if (!value?.date) return;
+      router.push({ pathname: "/log", query: { date: value.date } });
+    },
+    [router],
+  );
+
   const handleMouseLeave = useCallback(() => {
     setHoveredValue(null);
   }, []);
@@ -2263,7 +2271,7 @@ function Heatmap({
   }
 
   return (
-    <div className="border-border/35 relative rounded-xl border bg-background/70 px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+    <div className="relative px-1 py-1">
       <CalendarHeatmap
         startDate={startDate}
         endDate={endDate}
@@ -2274,10 +2282,15 @@ function Heatmap({
           return `color-heatmap-${value.count}`;
         }}
         titleForValue={() => null}
+        onClick={handleClick}
         onMouseOver={handleMouseOver}
         onMouseLeave={handleMouseLeave}
         transformDayElement={(element, value, index) =>
-          cloneElement(element, { rx: 3, ry: 3 })
+          cloneElement(element, {
+            rx: 3,
+            ry: 3,
+            style: value?.date ? { cursor: "pointer" } : undefined,
+          })
         }
       />
       {hoveredValue && !isSharing && (
@@ -2299,6 +2312,7 @@ function Heatmap({
 }
 
 const MemoizedHeatmap = memo(Heatmap);
+export { MemoizedHeatmap as DailyHeatmap };
 
 // Tooltip body for a daily heatmap cell: date, set/lift counts, PR badges (heaviest per lift type),
 // and per-lift set breakdowns. Shows up to MAX_LIFTS_SHOWN lift types before truncating.

@@ -87,7 +87,7 @@ function extractLiftType(rawTitle) {
 
   const match = title.match(/^[A-Za-z][A-Za-z '&/()-]*/);
   const parsed = match?.[0]?.replace(/\s+/g, " ").trim();
-  if (!parsed || SKIP_WORKOUT_TITLES.has(parsed)) return null;
+  if (!parsed || SKIP_WORKOUT_TITLES.has(parsed) || SKIP_WORKOUT_TITLES.has(depluralizeLiftName(parsed))) return null;
 
   return normalizeBtwbLiftType(parsed);
 }

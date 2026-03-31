@@ -610,30 +610,8 @@ export function E1RMCalculatorMain({
   const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
   const calculatorE1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
 
-  // Dynamic OG image URL — overrides the static one from the page wrapper.
-  // Social crawlers that fetch a shared URL (with query params already baked in)
-  // will see this meta tag pointing to /api/og/calculator?weight=...&reps=...
-  // which generates a personalized preview image.
-  const ogParams = new URLSearchParams({
-    weight: String(weight),
-    reps: String(reps),
-    calcIsMetric: String(isMetric),
-    formula: e1rmFormula,
-  });
-  if (forceLift) ogParams.set("lift", forceLift);
-  if (!bioDataIsDefault && bodyWeight > 0) {
-    ogParams.set("bodyWeight", String(bodyWeight));
-    ogParams.set("age", String(age));
-    ogParams.set("sex", sex);
-  }
-  const dynamicOgImageURL = `https://www.strengthjourneys.xyz/api/og/calculator?${ogParams.toString()}`;
-
   return (
     <PageContainer>
-      <Head>
-        <meta property="og:image" content={dynamicOgImageURL} key="og:image" />
-        <meta name="twitter:image" content={dynamicOgImageURL} key="twitter:image" />
-      </Head>
       <PageHeader>
         <PageHeaderHeading icon={Calculator}>
           {pageTitle}

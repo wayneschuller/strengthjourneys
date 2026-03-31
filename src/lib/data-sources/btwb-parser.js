@@ -79,6 +79,7 @@ function extractLiftType(rawTitle) {
   if (!rawTitle) return null;
 
   const title = String(rawTitle)
+    .replace(/^\d+x\s*/i, "")
     .replace(/^[^A-Za-z]+/, "")
     .trim();
   if (!title) return null;

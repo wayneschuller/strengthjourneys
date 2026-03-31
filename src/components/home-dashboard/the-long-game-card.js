@@ -2256,8 +2256,8 @@ function Heatmap({
 
   const handleClick = useCallback(
     (value) => {
-      if (!value?.date) return;
-      router.push({ pathname: "/log", query: { date: value.date } });
+      if (!value?.dateKey) return;
+      router.push({ pathname: "/log", query: { date: value.dateKey } });
     },
     [router],
   );
@@ -2273,8 +2273,8 @@ function Heatmap({
   return (
     <div className="relative px-1 py-1">
       <CalendarHeatmap
-        startDate={startDate}
-        endDate={endDate}
+        startDate={toLocalDate(startDate)}
+        endDate={toLocalDate(endDate)}
         values={heatmapData}
         showMonthLabels={showMonthLabels}
         classForValue={(value) => {
@@ -2289,7 +2289,7 @@ function Heatmap({
           cloneElement(element, {
             rx: 3,
             ry: 3,
-            style: value?.date ? { cursor: "pointer" } : undefined,
+            style: value?.dateKey ? { cursor: "pointer" } : undefined,
           })
         }
       />
@@ -2317,12 +2317,12 @@ export { MemoizedHeatmap as DailyHeatmap };
 // Tooltip body for a daily heatmap cell: date, set/lift counts, PR badges (heaviest per lift type),
 // and per-lift set breakdowns. Shows up to MAX_LIFTS_SHOWN lift types before truncating.
 function HeatmapTooltipContent({ value }) {
-  const { sessionData, date } = value;
+  const { sessionData, dateKey } = value;
   const { isMetric } = useAthleteBio();
   if (!sessionData) return null;
 
   const { totalSets, uniqueLifts, prs, liftsByType } = sessionData;
-  const dateLabel = getReadableDateString(date, true);
+  const dateLabel = getReadableDateString(dateKey, true);
   const liftTypes = Object.keys(liftsByType);
   const visibleLifts = liftTypes.slice(0, MAX_LIFTS_SHOWN);
   const hiddenCount = liftTypes.length - MAX_LIFTS_SHOWN;
@@ -2387,6 +2387,17 @@ function HeatmapTooltipContent({ value }) {
 // Level 0: No activity (no entry)
 // Level 1: Light session (1-3 sets)
 // Level 2: Moderate session (4-8 sets)
+// Parse "YYYY-MM-DD" as local midnight, not UTC.
+// new Date("2025-03-15") is UTC midnight which shifts dates in negative-UTC
+// timezones (US, Americas). This helper avoids that by using the Date constructor
+// with explicit year/month/day in local time.
+function toLocalDate(dateStr) {
+  const y = +dateStr.slice(0, 4);
+  const m = +dateStr.slice(5, 7) - 1;
+  const d = +dateStr.slice(8, 10);
+  return new Date(y, m, d);
+}
+
 // Level 3: Heavy session (9+ sets) OR non-core lift PR
 // Level 4: Core lift PR (strongest visual emphasis)
 function getHeatmapLevel(totalSets, hasPR, hasCoreLiftPR) {
@@ -2404,8 +2415,8 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
   // Generate a full interval of random data for demo mode because it looks good
   if (isDemoMode) {
     const demoHeatmapData = [];
-    const start = new Date(startDate).getTime();
-    const end = new Date(endDate).getTime();
+    const start = toLocalDate(startDate).getTime();
+    const end = toLocalDate(endDate).getTime();
     const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
 
     // Function to get a random count based on specified probabilities
@@ -2420,8 +2431,10 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
 
     for (let currentTime = start; currentTime <= end; currentTime += oneDay) {
       const count = getRandomCount();
+      const d = new Date(currentTime);
       demoHeatmapData.push({
-        date: format(new Date(currentTime), "yyyy-MM-dd"),
+        date: new Date(d.getFullYear(), d.getMonth(), d.getDate()),
+        dateKey: format(d, "yyyy-MM-dd"),
         count: count,
         sessionData: null,
       });
@@ -2475,7 +2488,8 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
   }
 
   const heatmapData = Object.entries(dayMap).map(([date, day]) => ({
-    date,
+    date: toLocalDate(date),
+    dateKey: date,
     count: getHeatmapLevel(day.totalSets, day.hasPR, day.hasCoreLiftPR),
     sessionData: {
       totalSets: day.totalSets,

@@ -9,6 +9,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
+import { useRouter } from "next/router";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import {
@@ -2223,6 +2224,7 @@ function Heatmap({
   showMonthLabels = true,
 }) {
   const { isDemoMode } = useUserLiftingData();
+  const router = useRouter();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -2254,6 +2256,14 @@ function Heatmap({
     setHoveredValue(value);
   }, []);
 
+  const handleClick = useCallback(
+    (value) => {
+      if (!value?.date) return;
+      router.push({ pathname: "/log", query: { date: value.date } });
+    },
+    [router],
+  );
+
   const handleMouseLeave = useCallback(() => {
     setHoveredValue(null);
   }, []);
@@ -2274,10 +2284,15 @@ function Heatmap({
           return `color-heatmap-${value.count}`;
         }}
         titleForValue={() => null}
+        onClick={handleClick}
         onMouseOver={handleMouseOver}
         onMouseLeave={handleMouseLeave}
         transformDayElement={(element, value, index) =>
-          cloneElement(element, { rx: 3, ry: 3 })
+          cloneElement(element, {
+            rx: 3,
+            ry: 3,
+            style: value?.date ? { cursor: "pointer" } : undefined,
+          })
         }
       />
       {hoveredValue && !isSharing && (

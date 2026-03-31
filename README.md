@@ -37,7 +37,7 @@ No user data is stored server-side. Google Sheet reads are authenticated via Goo
 - JavaScript (no TypeScript) with [JSDoc](https://jsdoc.app/) for key function documentation
 - [Next.js 16](https://nextjs.org/) (Pages Router)
 - [React 19](https://react.dev/)
-- Deployed on [Vercel](https://vercel.com/) with [Vercel Analytics](https://vercel.com/analytics) and [Speed Insights](https://vercel.com/docs/speed-insights)
+- Deployed on [Vercel](https://vercel.com/) with [Vercel Analytics](https://vercel.com/analytics)
 
 **UI & styling:**
 - [Tailwind CSS v4](https://tailwindcss.com/) with 8 custom themes via CSS variables

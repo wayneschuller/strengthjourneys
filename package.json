@@ -60,7 +60,6 @@
     "@tailwindcss/typography": "^0.5.16",
     "@vercel/analytics": "^1.5.0",
     "@vercel/kv": "^2.0.0",
-    "@vercel/speed-insights": "^1.2.0",
     "@xyflow/react": "^12.10.0",
     "ai": "^6.0.90",
     "ansi-to-react": "^6.2.6",

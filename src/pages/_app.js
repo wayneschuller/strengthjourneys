@@ -1,7 +1,6 @@
 /** @format */
 
 import "@/styles/globals.css";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/ui-shell/theme-provider";
 import { Layout } from "@/components/ui-shell/layout";
@@ -84,7 +83,6 @@ export default function App({ Component, pageProps, session }) {
         </SessionProvider>
       </ThemeProvider>
       <Analytics />
-      <SpeedInsights />
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
         strategy="afterInteractive"

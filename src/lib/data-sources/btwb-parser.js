@@ -12,12 +12,52 @@ const TITLE_COLUMN_CANDIDATES = [
 ];
 const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "AMRAP", "Chipper"]);
 const BTWB_LIFT_NAME_OVERRIDES = {
-  "back squats": "Back Squat",
-  "bench presses": "Bench Press",
-  deadlifts: "Deadlift",
-  "strict presses": "Strict Press",
   "overhead presses": "Strict Press",
+  "strict presses": "Strict Press",
 };
+
+/**
+ * Convert a plural BTWB lift name to singular.
+ * Handles the common English patterns found in BTWB exports:
+ *   "Presses" -> "Press", "Flies" -> "Fly", "Carries" -> "Carry",
+ *   "Snatches" -> "Snatch", "Squats" -> "Squat", etc.
+ *
+ * Only the LAST word is de-pluralized so compound names like
+ * "Dumbbell Hang Power Cleans" -> "Dumbbell Hang Power Clean".
+ */
+function depluralizeLiftName(name) {
+  if (!name) return name;
+  const words = name.split(" ");
+  let last = words[words.length - 1];
+
+  // Don't touch single-character or very short words
+  if (last.length <= 2) return name;
+
+  // Order matters: check more specific suffixes first
+  if (/resses$/i.test(last)) {
+    // Presses -> Press
+    last = last.replace(/es$/i, "");
+  } else if (/lies$/i.test(last)) {
+    // Flies -> Fly
+    last = last.replace(/ies$/i, "y");
+  } else if (/ries$/i.test(last)) {
+    // Carries -> Carry
+    last = last.replace(/ies$/i, "y");
+  } else if (/[csxz]hes$/i.test(last)) {
+    // Snatches, Lunches -> Snatch, Lunch
+    last = last.replace(/es$/i, "");
+  } else if (/[csxz]es$/i.test(last)) {
+    // Raises, Bridges -> Raise, Bridge (but not "Presses" - handled above)
+    last = last.replace(/s$/i, "");
+  } else if (/s$/i.test(last) && !/ss$/i.test(last)) {
+    // Squats -> Squat, Rows -> Row, Curls -> Curl
+    // But not "Press" (no trailing s) or words ending in "ss"
+    last = last.replace(/s$/i, "");
+  }
+
+  words[words.length - 1] = last;
+  return words.join(" ");
+}
 
 function normalizeBtwbLiftType(rawLiftType) {
   if (!rawLiftType) return null;
@@ -29,7 +69,10 @@ function normalizeBtwbLiftType(rawLiftType) {
   if (!cleaned) return null;
 
   const override = BTWB_LIFT_NAME_OVERRIDES[cleaned.toLowerCase()];
-  return normalizeLiftTypeNames(override || cleaned);
+  if (override) return normalizeLiftTypeNames(override);
+
+  const singular = depluralizeLiftName(cleaned);
+  return normalizeLiftTypeNames(singular);
 }
 
 function extractLiftType(rawTitle) {
@@ -120,20 +163,58 @@ function parseDescriptionLine(line) {
   return { reps, weight, unitType, liftType: null };
 }
 
+/**
+ * Extract a round count from a WOD description block.
+ * Matches patterns like "5 rounds of:", "3 rounds, each round for time, of:",
+ * "5 rounds, 1:30 each, of:".
+ * Returns 0 if no round pattern is found.
+ */
+function extractDescriptionRoundCount(descriptionText) {
+  const match = String(descriptionText).match(/^(\d+)\s+rounds?\b/im);
+  return match ? Number.parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Extract completed round count from the Formatted Result column.
+ * AMRAP results look like "7 rounds | 140 reps" or "3 rounds + 14 Wall Balls".
+ * The integer part is the number of fully completed rounds.
+ */
+function extractResultRoundCount(formattedResult) {
+  const match = String(formattedResult).match(/^(\d+)\s+rounds?\b/i);
+  return match ? Number.parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Check if a description block is a "Sets" block (explicit set listing)
+ * vs a WOD prescription (rounds of movements).
+ * "Sets" blocks already list each set individually so should NOT be multiplied.
+ */
+function isSetsBlock(descriptionText) {
+  return /^Sets\s*$/m.test(String(descriptionText));
+}
+
 // Parse Beyond the Whiteboard CSV format.
 //
-// This follows the legacy BTWB importer logic from the user's existing script:
-// - detect BTWB via its unique `Pukie` column
-// - infer the lift type from the workout title column
-// - split the multi-line `Description` cell into individual sets
+// Supports two known BTWB export column layouts:
+//   Legacy (pre-2026): Date, Workout, Result, Prescribed, Pukie, Work performed, Work time, Formatted Result, Notes, Description
+//   Current (2026+):   Date, Formatted Result, Result, Performed, Workout, Description, Notes
+//
+// Both share the same Description cell format (multi-line set data).
+// Column positions are resolved by name, so either layout works.
+//
+// For WOD entries ("N rounds of: ..."), weighted exercises are extracted
+// and multiplied by the round count to produce individual sets.
 export function parseBtwbData(data) {
   const startTime = performance.now();
   const columnNames = data[0] || [];
-  const workoutDateColumnIndex = columnNames.indexOf("Date");
-  const descriptionColumnIndex = columnNames.indexOf("Description");
-  const notesColumnIndex = columnNames.indexOf("Notes");
+
+  const col = (name) => columnNames.indexOf(name);
+  const workoutDateColumnIndex = col("Date");
+  const descriptionColumnIndex = col("Description");
+  const notesColumnIndex = col("Notes");
+  const formattedResultColumnIndex = col("Formatted Result");
   const workoutTitleColumnIndex = TITLE_COLUMN_CANDIDATES.map((name) =>
-    columnNames.indexOf(name),
+    col(name),
   ).find((index) => index >= 0);
   const localeHint =
     typeof navigator !== "undefined" && typeof navigator.language === "string"
@@ -156,7 +237,26 @@ export function parseBtwbData(data) {
     const description = row[descriptionColumnIndex];
     if (!description) continue;
 
-    const notes = row[notesColumnIndex] || undefined;
+    // Merge Description and Notes into a single notes field
+    const rawNotes = row[notesColumnIndex] || "";
+    const descText = String(description).trim();
+    const notesText = String(rawNotes).replace(/^""+|""+$/g, "").trim();
+    const combinedNotes =
+      [descText, notesText].filter(Boolean).join("\n") || undefined;
+
+    // Determine round multiplier:
+    // - "Sets" blocks list each set individually, no multiplication
+    // - RFT WODs: round count is in the Description ("5 rounds of:")
+    // - AMRAPs: completed rounds are in Formatted Result ("7 rounds | 140 reps")
+    const setsBlock = isSetsBlock(description);
+    const formattedResult =
+      formattedResultColumnIndex >= 0
+        ? row[formattedResultColumnIndex] || ""
+        : "";
+    const descRounds = extractDescriptionRoundCount(description);
+    const resultRounds = extractResultRoundCount(formattedResult);
+    const roundCount = setsBlock ? 1 : descRounds || resultRounds || 1;
+
     const lines = String(description).split(/\r?\n/);
 
     lines.forEach((line) => {
@@ -166,14 +266,17 @@ export function parseBtwbData(data) {
       const liftType = titleLiftType || parsedLine.liftType;
       if (!liftType) return;
 
-      parsedData.push({
-        date,
-        liftType,
-        reps: parsedLine.reps,
-        weight: parsedLine.weight,
-        unitType: parsedLine.unitType,
-        notes,
-      });
+      // For WOD rounds, emit one set per round
+      for (let r = 0; r < roundCount; r++) {
+        parsedData.push({
+          date,
+          liftType,
+          reps: parsedLine.reps,
+          weight: parsedLine.weight,
+          unitType: parsedLine.unitType,
+          notes: combinedNotes,
+        });
+      }
     });
   }
 

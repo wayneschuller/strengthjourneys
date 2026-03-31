@@ -465,6 +465,20 @@ export default function LogSessionPage() {
     return dates;
   }, [parsedData]);
 
+  // In preview mode, if today has no session data, auto-navigate to the most
+  // recent session so the user sees actual data instead of an empty state.
+  const hasAutoNavigatedRef = useRef(false);
+  useEffect(() => {
+    if (hasAutoNavigatedRef.current) return;
+    if (!hasUserData || !isImportedData) return;
+    if (sessionDates.length === 0) return;
+    if (sessionDates.includes(sessionDate)) return;
+    // Navigate to the most recent session date
+    const latestDate = sessionDates[sessionDates.length - 1];
+    hasAutoNavigatedRef.current = true;
+    navigateToDate(latestDate);
+  }, [hasUserData, isImportedData, sessionDates, sessionDate, navigateToDate]);
+
   // Session dates as Date objects for the calendar picker modifier highlights
   const sessionDateObjects = useMemo(
     () => sessionDates.map((d) => new Date(d + "T00:00:00")),
@@ -1975,59 +1989,27 @@ export default function LogSessionPage() {
 
   // --- Render ---
 
-  if (isImportedData) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-        <Dumbbell className="text-muted-foreground h-12 w-12" />
-        <h1 className="text-2xl font-bold">Logging Unavailable</h1>
-        <p className="text-muted-foreground max-w-md">
-          You&apos;re in preview mode with imported data. To log sessions,
-          save your data and connect a Google Sheet.
-        </p>
-        <Button asChild>
-          <Link href="/import">Go to Import</Link>
-        </Button>
-      </div>
-    );
-  }
+  // Preview mode: imported data or unauthenticated with no data at all.
+  // In preview mode the full session browser renders but all write UI is hidden.
+  const previewMode = !hasLinkedSheet;
 
-  if (authStatus === "unauthenticated") {
+  if (!hasUserData && authStatus !== "loading") {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
         <Dumbbell className="text-muted-foreground h-12 w-12" />
-        <h1 className="text-2xl font-bold">Log a Session</h1>
-        <p className="text-muted-foreground">
-          Sign in with Google to log your lifting sessions.
-        </p>
-        <Button asChild>
-          <Link href="/">Get Started</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  if (authStatus === "authenticated" && !hasLinkedSheet) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-        <Dumbbell className="text-muted-foreground h-12 w-12" />
-        <h1 className="text-2xl font-bold">Set up your Google Sheet first</h1>
+        <h1 className="text-2xl font-bold">Session Browser</h1>
         <p className="text-muted-foreground max-w-md">
-          The log works on top of your linked training sheet. Connect or create
-          one first, then you can log sessions here.
+          Import a file to browse your training sessions here, or sign in with
+          Google to log new sessions.
         </p>
-        <Button
-          onClick={() => {
-            openSheetSetupDialog("bootstrap");
-          }}
-        >
-          <img
-            src={GOOGLE_SHEETS_ICON_URL}
-            alt=""
-            className="h-4 w-4 shrink-0"
-            aria-hidden
-          />
-          Set Up Google Sheet
-        </Button>
+        <div className="flex gap-3">
+          <Button asChild variant="outline">
+            <Link href="/import">Import a File</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/">Get Started</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -2132,7 +2114,7 @@ export default function LogSessionPage() {
                 </Popover>
               </div>
 
-              <SyncIndicator state={syncState} />
+              {!previewMode && <SyncIndicator state={syncState} />}
 
               <Button
                 variant="ghost"
@@ -2149,46 +2131,59 @@ export default function LogSessionPage() {
 
             {!showSessionBootstrap && !isLoading && !hasSession && (
               <div className="mt-6 flex flex-col items-center gap-6">
-                <div className="space-y-1 text-center">
-                  <h2 className="text-xl font-semibold">
-                    {isToday
-                      ? "Start today's session"
-                      : "Start a session for this date"}
-                  </h2>
-                  <p className="text-muted-foreground text-sm">
-                    Pick a lift to begin.
-                  </p>
-                </div>
+                {previewMode ? (
+                  <div className="space-y-1 text-center">
+                    <h2 className="text-xl font-semibold">
+                      No session on this date
+                    </h2>
+                    <p className="text-muted-foreground text-sm">
+                      Use the arrows to browse other training days.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-1 text-center">
+                      <h2 className="text-xl font-semibold">
+                        {isToday
+                          ? "Start today's session"
+                          : "Start a session for this date"}
+                      </h2>
+                      <p className="text-muted-foreground text-sm">
+                        Pick a lift to begin.
+                      </p>
+                    </div>
 
-                <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
-                  {BIG_FOUR.map(({ name, icon }) => (
-                    <button
-                      key={name}
-                      title={`Start with ${name}`}
-                      onClick={() => addLift(name)}
-                      className="border-border bg-card hover:border-primary hover:bg-muted/40 flex flex-col items-center gap-4 rounded-xl border px-4 py-6 shadow-sm transition-colors active:scale-95 md:gap-5 md:py-8"
-                    >
-                      <Image
-                        src={icon}
-                        alt={name}
-                        width={80}
-                        height={80}
-                        className="h-20 w-20 md:h-28 md:w-28"
-                      />
-                      <span className="text-sm leading-tight font-medium">
-                        {name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                    <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
+                      {BIG_FOUR.map(({ name, icon }) => (
+                        <button
+                          key={name}
+                          title={`Start with ${name}`}
+                          onClick={() => addLift(name)}
+                          className="border-border bg-card hover:border-primary hover:bg-muted/40 flex flex-col items-center gap-4 rounded-xl border px-4 py-6 shadow-sm transition-colors active:scale-95 md:gap-5 md:py-8"
+                        >
+                          <Image
+                            src={icon}
+                            alt={name}
+                            width={80}
+                            height={80}
+                            className="h-20 w-20 md:h-28 md:w-28"
+                          />
+                          <span className="text-sm leading-tight font-medium">
+                            {name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
 
-                <AddLiftButton
-                  parsedData={parsedData}
-                  onAddLift={addLift}
-                  chips={addLiftChips}
-                  label="Add other lift type"
-                  disabled={isStructuralSaving}
-                />
+                    <AddLiftButton
+                      parsedData={parsedData}
+                      onAddLift={addLift}
+                      chips={addLiftChips}
+                      label="Add other lift type"
+                      disabled={isStructuralSaving}
+                    />
+                  </>
+                )}
               </div>
             )}
 
@@ -2223,65 +2218,70 @@ export default function LogSessionPage() {
                           isPastSession={!isToday}
                           isStructuralSaving={isStructuralSaving}
                           isDeleteCooldownActive={isDeleteCooldownActive}
-                          onUpdateSet={updateSet}
-                          onDeleteSet={deleteSet}
-                          onAddSet={(prevSet) => addSet(liftType, prevSet)}
+                          previewMode={previewMode}
+                          onUpdateSet={previewMode ? undefined : updateSet}
+                          onDeleteSet={previewMode ? undefined : deleteSet}
+                          onAddSet={previewMode ? undefined : (prevSet) => addSet(liftType, prevSet)}
                         />
                       </motion.div>
                     ),
                   )}
                 </AnimatePresence>
 
-                <AddLiftButton
-                  parsedData={parsedData}
-                  onAddLift={addLift}
-                  chips={addLiftChips}
-                  disabled={isStructuralSaving}
-                />
+                {!previewMode && (
+                  <>
+                    <AddLiftButton
+                      parsedData={parsedData}
+                      onAddLift={addLift}
+                      chips={addLiftChips}
+                      disabled={isStructuralSaving}
+                    />
 
-                <div className="flex justify-center pt-2">
-                  {!showDeleteConfirm ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground hover:text-destructive gap-2"
-                      onClick={() => setShowDeleteConfirm(true)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete this session
-                    </Button>
-                  ) : (
-                    <div className="border-destructive/30 bg-destructive/5 flex items-center gap-3 rounded-lg border px-4 py-3">
-                      <p className="text-muted-foreground text-sm">
-                        {isStructuralSaving
-                          ? "Finish the current sheet change, then delete this session."
-                          : `Delete all rows for ${sessionDate}?`}
-                      </p>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={deleteSession}
-                        disabled={isStructuralSaving}
-                      >
-                        {isStructuralSaving ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Waiting...
-                          </>
-                        ) : (
-                          "Delete"
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setShowDeleteConfirm(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    <div className="flex justify-center pt-2">
+                      {!showDeleteConfirm ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-destructive gap-2"
+                          onClick={() => setShowDeleteConfirm(true)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete this session
+                        </Button>
+                      ) : (
+                        <div className="border-destructive/30 bg-destructive/5 flex items-center gap-3 rounded-lg border px-4 py-3">
+                          <p className="text-muted-foreground text-sm">
+                            {isStructuralSaving
+                              ? "Finish the current sheet change, then delete this session."
+                              : `Delete all rows for ${sessionDate}?`}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={deleteSession}
+                            disabled={isStructuralSaving}
+                          >
+                            {isStructuralSaving ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Waiting...
+                              </>
+                            ) : (
+                              "Delete"
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowDeleteConfirm(false)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -3386,6 +3386,7 @@ function LiftBlock({
   onUpdateSet,
   onDeleteSet,
   onAddSet,
+  previewMode = false,
 }) {
   const { hasUserData } = useUserLiftingData();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
@@ -4264,7 +4265,7 @@ function LiftBlock({
             />
           );
         })}
-        {customDraftConfig && (
+        {!previewMode && customDraftConfig && (
           <CustomSetDraftRow
             key={`custom-${liftType}-${customDraftSeed}`}
             unitType={customDraftConfig.unitType}
@@ -4311,18 +4312,20 @@ function LiftBlock({
         </div>
       )}
 
-      {/* Add-set buttons — card footer */}
-      <SmartAddButtons
-        inSessionCoachState={inSessionCoachState}
-        lastRealSet={lastRealSet}
-        liftType={liftType}
-        onAddSet={handleSuggestedAddSet}
-        onStartCustomSet={openCustomSetDraft}
-        showHint={showSuggestionHint}
-        hasBigFourIcon
-        isPastSession={isPastSession}
-        disabled={isStructuralSaving}
-      />
+      {/* Add-set buttons — card footer (hidden in preview mode) */}
+      {!previewMode && (
+        <SmartAddButtons
+          inSessionCoachState={inSessionCoachState}
+          lastRealSet={lastRealSet}
+          liftType={liftType}
+          onAddSet={handleSuggestedAddSet}
+          onStartCustomSet={openCustomSetDraft}
+          showHint={showSuggestionHint}
+          hasBigFourIcon
+          isPastSession={isPastSession}
+          disabled={isStructuralSaving}
+        />
+      )}
     </div>
   );
 }
@@ -4607,6 +4610,7 @@ function SetRow({
   strengthBadge,
 }) {
   const isLocked = Boolean(set._pending);
+  const isReadOnly = !onUpdate;
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -4842,7 +4846,7 @@ function SetRow({
             Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
         <div className="flex items-center">
           <div className="w-7">
-            {editingReps ? (
+            {editingReps && !isReadOnly ? (
               <input
                 type="number"
                 className="border-primary w-10 rounded border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
@@ -4853,7 +4857,7 @@ function SetRow({
                 onKeyDown={(e) => e.key === "Enter" && commitReps()}
                 autoFocus
               />
-            ) : isLocked ? (
+            ) : isLocked || isReadOnly ? (
               <div className="text-foreground/80 w-full py-0.5 text-right text-xl font-semibold tabular-nums">
                 {displayReps}
               </div>
@@ -4867,7 +4871,7 @@ function SetRow({
             )}
           </div>
           <span className="text-muted-foreground mx-0.5 text-base">@</span>
-          {editingWeight ? (
+          {editingWeight && !isReadOnly ? (
             <input
               type="number"
               step="any"
@@ -4879,7 +4883,7 @@ function SetRow({
               onKeyDown={(e) => e.key === "Enter" && commitWeight()}
               autoFocus
             />
-          ) : isLocked ? (
+          ) : isLocked || isReadOnly ? (
             <div className="text-foreground/80 py-0.5 text-left text-xl font-semibold tabular-nums">
               {displayWeight}
             </div>
@@ -4896,7 +4900,7 @@ function SetRow({
 
         {/* Notes — flex-1, tap to edit */}
         <div className="min-w-0 flex-1 md:max-w-[calc(100%-18rem)]">
-          {editingNotes ? (
+          {editingNotes && !isReadOnly ? (
             <input
               type="text"
               className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs focus:outline-none"
@@ -4910,9 +4914,9 @@ function SetRow({
             />
           ) : (
             <div className="space-y-1">
-              {isLocked ? (
+              {isLocked || isReadOnly ? (
                 <div className="text-muted-foreground/50 w-full truncate text-left text-xs italic">
-                  {displayNotes || "notes..."}
+                  {displayNotes || (isReadOnly ? "" : "notes...")}
                 </div>
               ) : (
                 <button

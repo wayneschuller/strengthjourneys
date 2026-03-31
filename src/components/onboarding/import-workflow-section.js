@@ -4,7 +4,7 @@
  * /import after parsing, while hero-driven imports should bounce home in preview mode.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import {
@@ -13,6 +13,7 @@ import {
   Dumbbell,
   FileUp,
   Loader2,
+  NotebookText,
   X,
 } from "lucide-react";
 
@@ -28,6 +29,139 @@ import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+
+function getReadableDateShort(isoDate) {
+  if (!isoDate) return "";
+  const d = new Date(isoDate + "T00:00:00");
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function ImportedDataOverview({ parsedData }) {
+  const stats = useMemo(() => {
+    if (!parsedData || parsedData.length === 0) return null;
+    const entries = parsedData.filter((e) => !e.isGoal);
+    if (entries.length === 0) return null;
+
+    // Unique session dates
+    const dates = [...new Set(entries.map((e) => e.date))].sort();
+
+    // Top lifts by frequency and tonnage
+    const liftMap = {};
+    for (const e of entries) {
+      if (!liftMap[e.liftType]) {
+        liftMap[e.liftType] = { count: 0, tonnage: 0 };
+      }
+      liftMap[e.liftType].count++;
+      liftMap[e.liftType].tonnage += (e.weight || 0) * (e.reps || 0);
+    }
+    const topLifts = Object.entries(liftMap)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 6)
+      .map(([name, { count, tonnage }]) => ({ name, count, tonnage }));
+
+    // Session date strings for display: first 3 ... last 3
+    const firstDates = dates.slice(0, 3);
+    const lastDates =
+      dates.length > 6
+        ? dates.slice(-3)
+        : dates.length > 3
+          ? dates.slice(3)
+          : [];
+    const showEllipsis = dates.length > 6;
+
+    return {
+      sessionCount: dates.length,
+      totalSets: entries.length,
+      dateRange: { first: dates[0], last: dates[dates.length - 1] },
+      liftTypeCount: Object.keys(liftMap).length,
+      topLifts,
+      firstDates,
+      lastDates,
+      showEllipsis,
+    };
+  }, [parsedData]);
+
+  if (!stats) return null;
+
+  const formatTonnage = (t) => {
+    if (t >= 1000) return `${(t / 1000).toFixed(1)}t`;
+    return `${Math.round(t)}kg`;
+  };
+
+  return (
+    <div className="mt-4 w-full max-w-lg text-left">
+      {/* Summary line */}
+      <div className="text-muted-foreground mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
+        <span>
+          <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
+          sessions
+        </span>
+        <span aria-hidden="true" className="text-border">
+          &bull;
+        </span>
+        <span>
+          <strong className="text-foreground">{stats.totalSets}</strong> sets
+        </span>
+        <span aria-hidden="true" className="text-border">
+          &bull;
+        </span>
+        <span>
+          <strong className="text-foreground">{stats.liftTypeCount}</strong>{" "}
+          exercises
+        </span>
+        <span aria-hidden="true" className="text-border">
+          &bull;
+        </span>
+        <span>
+          {getReadableDateShort(stats.dateRange.first)} to{" "}
+          {getReadableDateShort(stats.dateRange.last)}
+        </span>
+      </div>
+
+      {/* Top lifts */}
+      <div className="mb-3">
+        <p className="text-muted-foreground mb-1.5 text-center text-xs font-medium uppercase tracking-wide">
+          Top lifts
+        </p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          {stats.topLifts.map((lift) => (
+            <div
+              key={lift.name}
+              className="flex items-center justify-between text-sm"
+            >
+              <span className="truncate">{lift.name}</span>
+              <span className="text-muted-foreground ml-2 shrink-0 tabular-nums text-xs">
+                {lift.count} sets &middot; {formatTonnage(lift.tonnage)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Session timeline */}
+      <div>
+        <p className="text-muted-foreground mb-1.5 text-center text-xs font-medium uppercase tracking-wide">
+          Sessions
+        </p>
+        <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-xs tabular-nums">
+          {stats.firstDates.map((d) => (
+            <span key={d}>{getReadableDateShort(d)}</span>
+          ))}
+          {stats.showEllipsis && (
+            <span className="text-border px-1">&hellip;</span>
+          )}
+          {stats.lastDates.map((d) => (
+            <span key={d}>{getReadableDateShort(d)}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ImportWorkflowSection({
   title = "Import from Another App",
@@ -314,15 +448,26 @@ export function ImportWorkflowSection({
                 )}
 
                 {!isAuthenticated && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push("/")}
-                    >
-                      <Dumbbell className="mr-2 h-4 w-4" /> Explore Dashboard
-                    </Button>
-                  </div>
+                  <>
+                    <ImportedDataOverview parsedData={parsedData} />
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => router.push("/")}
+                      >
+                        <Dumbbell className="mr-2 h-4 w-4" /> Explore Dashboard
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push("/log")}
+                      >
+                        <NotebookText className="mr-2 h-4 w-4" /> Browse Your
+                        Sessions
+                      </Button>
+                    </div>
+                  </>
                 )}
 
                 <Separator className="my-5 w-full" />

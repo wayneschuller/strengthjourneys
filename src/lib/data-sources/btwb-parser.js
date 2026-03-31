@@ -122,18 +122,22 @@ function parseDescriptionLine(line) {
 
 // Parse Beyond the Whiteboard CSV format.
 //
-// This follows the legacy BTWB importer logic from the user's existing script:
-// - detect BTWB via its unique `Pukie` column
-// - infer the lift type from the workout title column
-// - split the multi-line `Description` cell into individual sets
+// Supports two known BTWB export column layouts:
+//   Legacy (pre-2026): Date, Workout, Result, Prescribed, Pukie, Work performed, Work time, Formatted Result, Notes, Description
+//   Current (2026+):   Date, Formatted Result, Result, Performed, Workout, Description, Notes
+//
+// Both share the same Description cell format (multi-line set data).
+// Column positions are resolved by name, so either layout works.
 export function parseBtwbData(data) {
   const startTime = performance.now();
   const columnNames = data[0] || [];
-  const workoutDateColumnIndex = columnNames.indexOf("Date");
-  const descriptionColumnIndex = columnNames.indexOf("Description");
-  const notesColumnIndex = columnNames.indexOf("Notes");
+
+  const col = (name) => columnNames.indexOf(name);
+  const workoutDateColumnIndex = col("Date");
+  const descriptionColumnIndex = col("Description");
+  const notesColumnIndex = col("Notes");
   const workoutTitleColumnIndex = TITLE_COLUMN_CANDIDATES.map((name) =>
-    columnNames.indexOf(name),
+    col(name),
   ).find((index) => index >= 0);
   const localeHint =
     typeof navigator !== "undefined" && typeof navigator.language === "string"
@@ -156,7 +160,13 @@ export function parseBtwbData(data) {
     const description = row[descriptionColumnIndex];
     if (!description) continue;
 
-    const notes = row[notesColumnIndex] || undefined;
+    // Merge Description and Notes into a single notes field
+    const rawNotes = row[notesColumnIndex] || "";
+    const descText = String(description).trim();
+    const notesText = String(rawNotes).replace(/^""+|""+$/g, "").trim();
+    const combinedNotes =
+      [descText, notesText].filter(Boolean).join("\n") || undefined;
+
     const lines = String(description).split(/\r?\n/);
 
     lines.forEach((line) => {
@@ -172,7 +182,7 @@ export function parseBtwbData(data) {
         reps: parsedLine.reps,
         weight: parsedLine.weight,
         unitType: parsedLine.unitType,
-        notes,
+        notes: combinedNotes,
       });
     });
   }

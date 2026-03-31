@@ -4,8 +4,9 @@
  * /import after parsing, while hero-driven imports should bounce home in preview mode.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import {
   ArrowRight,
@@ -13,11 +14,19 @@ import {
   Dumbbell,
   FileUp,
   Loader2,
+  NotebookText,
   X,
 } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import {
+  useAthleteBio,
+  getStandardForLiftDate,
+  getStrengthRatingForE1RM,
+  STRENGTH_LEVEL_EMOJI,
+} from "@/hooks/use-athlete-biodata";
 import { useToast } from "@/hooks/use-toast";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
   analyzeImportedEntries,
   deduplicateImportedEntries,
@@ -28,6 +37,163 @@ import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+
+function getReadableDateShort(isoDate) {
+  if (!isoDate) return "";
+  const d = new Date(isoDate + "T00:00:00");
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function ImportedDataOverview({ parsedData }) {
+  const { age, bodyWeight, sex, isMetric } = useAthleteBio();
+  const hasBio = age && bodyWeight && sex;
+
+  const stats = useMemo(() => {
+    if (!parsedData || parsedData.length === 0) return null;
+    const entries = parsedData.filter((e) => !e.isGoal);
+    if (entries.length === 0) return null;
+
+    const dates = [...new Set(entries.map((e) => e.date))].sort();
+
+    // Build lift map: frequency + best E1RM set per lift
+    const liftMap = {};
+    for (const e of entries) {
+      if (!e.weight || e.weight <= 0 || !e.reps || e.reps <= 0) continue;
+      if (!liftMap[e.liftType]) {
+        liftMap[e.liftType] = { count: 0, bestE1RM: 0, bestSet: null };
+      }
+      liftMap[e.liftType].count++;
+      const e1rm = estimateE1RM(e.reps, e.weight, "Brzycki");
+      if (e1rm > liftMap[e.liftType].bestE1RM) {
+        liftMap[e.liftType].bestE1RM = e1rm;
+        liftMap[e.liftType].bestSet = e;
+      }
+    }
+
+    const topLifts = Object.entries(liftMap)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 6)
+      .map(([name, { count, bestE1RM, bestSet }]) => ({
+        name,
+        count,
+        bestE1RM,
+        reps: bestSet.reps,
+        weight: bestSet.weight,
+        unitType: bestSet.unitType,
+        date: bestSet.date,
+      }));
+
+    return {
+      sessionCount: dates.length,
+      totalSets: entries.length,
+      dateRange: { first: dates[0], last: dates[dates.length - 1] },
+      liftTypeCount: Object.keys(liftMap).length,
+      topLifts,
+    };
+  }, [parsedData]);
+
+  if (!stats) return null;
+
+  const buildCalcUrl = (reps, weight, unitType) => {
+    const calcIsMetric = unitType === "kg";
+    return `/calculator?reps=${JSON.stringify(reps)}&weight=${JSON.stringify(weight)}&calcIsMetric=${JSON.stringify(calcIsMetric)}&formula=${JSON.stringify("Brzycki")}`;
+  };
+
+  return (
+    <div className="mt-4 w-full max-w-lg text-left">
+      {/* Summary line */}
+      <div className="text-muted-foreground mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
+        <span>
+          <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
+          sessions
+        </span>
+        <span aria-hidden="true" className="text-border">
+          &bull;
+        </span>
+        <span>
+          <strong className="text-foreground">{stats.totalSets}</strong> sets
+        </span>
+        <span aria-hidden="true" className="text-border">
+          &bull;
+        </span>
+        <span>
+          <strong className="text-foreground">{stats.liftTypeCount}</strong>{" "}
+          exercises
+        </span>
+        <span aria-hidden="true" className="text-border">
+          &bull;
+        </span>
+        <span>
+          {getReadableDateShort(stats.dateRange.first)} to{" "}
+          {getReadableDateShort(stats.dateRange.last)}
+        </span>
+      </div>
+
+      {/* Top lifts with best E1RM */}
+      <div>
+        <p className="text-muted-foreground mb-2 text-center text-xs font-medium uppercase tracking-wide">
+          Top lifts
+        </p>
+        <div className="space-y-2">
+          {stats.topLifts.map((lift) => {
+            const strengthRating =
+              hasBio
+                ? (() => {
+                    const standard = getStandardForLiftDate(
+                      age,
+                      lift.date,
+                      bodyWeight,
+                      sex,
+                      lift.name,
+                      isMetric,
+                    );
+                    return standard
+                      ? getStrengthRatingForE1RM(lift.bestE1RM, standard)
+                      : null;
+                  })()
+                : null;
+
+            return (
+              <div
+                key={lift.name}
+                className="bg-muted/40 flex items-center justify-between rounded-md px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium">
+                    {lift.name}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {lift.count} sets &middot; Best:{" "}
+                    {lift.reps}x{lift.weight}
+                    {lift.unitType} on {getReadableDateShort(lift.date)}
+                  </div>
+                </div>
+                <div className="ml-3 shrink-0 text-right">
+                  <Link
+                    href={buildCalcUrl(lift.reps, lift.weight, lift.unitType)}
+                    className="text-primary text-sm font-semibold tabular-nums hover:underline"
+                  >
+                    E1RM: {lift.bestE1RM}
+                    {lift.unitType}
+                  </Link>
+                  {strengthRating && (
+                    <div className="text-muted-foreground text-xs">
+                      {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ImportWorkflowSection({
   title = "Import from Another App",
@@ -314,15 +480,26 @@ export function ImportWorkflowSection({
                 )}
 
                 {!isAuthenticated && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push("/")}
-                    >
-                      <Dumbbell className="mr-2 h-4 w-4" /> Explore Dashboard
-                    </Button>
-                  </div>
+                  <>
+                    <ImportedDataOverview parsedData={parsedData} />
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => router.push("/")}
+                      >
+                        <Dumbbell className="mr-2 h-4 w-4" /> Home Dashboard
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push("/log")}
+                      >
+                        <NotebookText className="mr-2 h-4 w-4" /> Browse Your
+                        Sessions
+                      </Button>
+                    </div>
+                  </>
                 )}
 
                 <Separator className="my-5 w-full" />

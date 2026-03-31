@@ -13,7 +13,7 @@ import {
 } from "@/components/ui-shell/theme-chooser";
 import { MobileNav } from "@/components/ui-shell/mobile-nav";
 import { AvatarDropdown } from "@/components/ui-shell/avatar-menu";
-import { Table2, Loader2, Github, Layers, LineChart, Plus } from "lucide-react";
+import { Table2, Loader2, Github, Layers, LineChart, NotebookText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
@@ -148,8 +148,8 @@ function ensureCannyChangelog() {
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
-  const { hasUserData, isReadOnly } = useUserLiftingData();
-  const canOpenLog = !isReadOnly;
+  const { hasUserData, isReadOnly, isImportedData } = useUserLiftingData();
+  const canOpenLog = !isReadOnly || isImportedData;
 
   return (
     <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
@@ -166,9 +166,17 @@ export function NavBar() {
               className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
             >
               <Link href="/log">
-                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                <span className="xl:hidden">Log</span>
-                <span className="hidden xl:inline">Log Session</span>
+                {isImportedData ? (
+                  <NotebookText className="h-3.5 w-3.5" strokeWidth={2.5} />
+                ) : (
+                  <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                )}
+                <span className="xl:hidden">
+                  {isImportedData ? "Sessions" : "Log"}
+                </span>
+                <span className="hidden xl:inline">
+                  {isImportedData ? "Browse Sessions" : "Log Session"}
+                </span>
               </Link>
             </Button>
           )}

@@ -256,7 +256,7 @@ function ImportHero({ parsedData, fileName, formatName }) {
       <h3 className="mb-1 text-xl font-bold">
         Your {source} data is ready to explore
       </h3>
-      <div className="text-muted-foreground mb-6 space-y-1 text-sm">
+      <div className="text-muted-foreground mb-3 space-y-0.5 text-sm">
         {displayName && (
           <p>
             We parsed{" "}
@@ -290,7 +290,7 @@ function ImportHero({ parsedData, fileName, formatName }) {
 
       {/* Strength rating row */}
       {strength && (
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
+        <div className="flex flex-col items-center gap-2 sm:flex-row">
           <div className="w-36 shrink-0 sm:w-40">
             <SinglePercentileRing percentile={strength.pct} />
           </div>
@@ -298,7 +298,7 @@ function ImportHero({ parsedData, fileName, formatName }) {
             <p className="text-2xl font-bold">
               Stronger than {strength.pct}% of the general population
             </p>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <p className="text-muted-foreground mt-0.5 text-sm">
               {getMotivationalPhrase(strength.pct)}
             </p>
           </div>
@@ -306,18 +306,18 @@ function ImportHero({ parsedData, fileName, formatName }) {
       )}
 
       {thousandClub && (
-        <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row">
+        <div className="mt-1.5 flex flex-col items-center gap-2 sm:flex-row">
           <div className="min-w-0 flex-1 text-center sm:pr-2 sm:text-right">
             <p className="text-2xl font-bold">
               Your 1000lb Club total is {thousandClub.total} lbs
             </p>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <p className="text-muted-foreground mt-0.5 text-sm">
               {thousandClub.inClub
                 ? `You’re in the 1000lb Club. You’re ${thousandClub.delta} lbs past 1000.`
                 : `You’re ${thousandClub.delta} lbs away from the 1000lb Club.`}
             </p>
             {thousandClub.biggestOpportunity && !thousandClub.inClub && (
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p className="text-muted-foreground mt-0.5 text-sm">
                 Biggest opportunity: Add ~
                 {thousandClub.biggestOpportunity.gapLbs} lb to your{" "}
                 {thousandClub.biggestOpportunity.lift.toLowerCase()}.

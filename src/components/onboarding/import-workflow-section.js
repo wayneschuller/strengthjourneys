@@ -552,8 +552,8 @@ export function ImportWorkflowSection({
                 )}
 
                 {showMerge && (
-                  <div className="w-full max-w-md space-y-3">
-                    <p className="text-muted-foreground text-sm">
+                  <div className="w-full space-y-3">
+                    <p className="text-muted-foreground mx-auto max-w-md text-sm">
                       {isSheetComparisonPending
                         ? "Checking your linked Strength Journeys sheet for duplicates before merge."
                         : isFullyDuplicate
@@ -569,7 +569,7 @@ export function ImportWorkflowSection({
                         )}
                         <Button
                           onClick={handleMerge}
-                          className="w-full gap-2"
+                          className="mx-auto flex w-full max-w-md gap-2"
                           disabled={isSheetComparisonPending}
                         >
                           <ArrowRight className="h-4 w-4" />

@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 
+import Image from "next/image";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBio,
@@ -32,14 +33,25 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
+import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { DailyHeatmap } from "@/components/home-dashboard/the-long-game-card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+
+const BIG_FOUR_PROGRESS_URLS = {
+  "Back Squat": "/progress-guide/squat",
+  "Bench Press": "/progress-guide/bench-press",
+  Deadlift: "/progress-guide/deadlift",
+  "Strict Press": "/progress-guide/strict-press",
+};
 
 function getReadableDateShort(isoDate) {
   if (!isoDate) return "";
@@ -238,19 +250,39 @@ function ImportedDataOverview({ parsedData }) {
                     })()
                   : null;
 
+              const svgPath = getLiftSvgPath(lift.name);
+              const progressUrl = BIG_FOUR_PROGRESS_URLS[lift.name];
+              const liftExplorerUrl = `/lift-explorer?liftType=${encodeURIComponent(lift.name)}`;
+              const liftUrl = progressUrl || liftExplorerUrl;
+              const strengthLevelUrl = STRENGTH_STANDARDS_LINKS[lift.name];
+
               return (
                 <div
                   key={lift.name}
                   className="bg-muted/40 flex items-center justify-between rounded-md px-3 py-2"
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">
-                      {lift.name}
-                    </div>
-                    <div className="text-muted-foreground text-xs">
-                      {lift.count} sets &middot; Best:{" "}
-                      {lift.reps}x{lift.weight}
-                      {lift.unitType} on {getReadableDateShort(lift.date)}
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {svgPath && (
+                      <Image
+                        src={svgPath}
+                        alt={lift.name}
+                        width={32}
+                        height={32}
+                        className="shrink-0 dark:invert"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <Link
+                        href={liftUrl}
+                        className="truncate text-sm font-medium hover:underline"
+                      >
+                        {lift.name}
+                      </Link>
+                      <div className="text-muted-foreground text-xs">
+                        {lift.count} sets &middot; Best:{" "}
+                        {lift.reps}x{lift.weight}
+                        {lift.unitType} on {getReadableDateShort(lift.date)}
+                      </div>
                     </div>
                   </div>
                   <div className="ml-3 shrink-0 text-right">
@@ -261,7 +293,19 @@ function ImportedDataOverview({ parsedData }) {
                       E1RM: {lift.bestE1RM}
                       {lift.unitType}
                     </Link>
-                    {strengthRating && (
+                    {strengthRating && strengthLevelUrl && (
+                      <div className="mt-0.5">
+                        <Link href={strengthLevelUrl}>
+                          <Badge
+                            variant={getRatingBadgeVariant(strengthRating)}
+                            className="inline-flex items-center gap-1"
+                          >
+                            {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
+                          </Badge>
+                        </Link>
+                      </div>
+                    )}
+                    {strengthRating && !strengthLevelUrl && (
                       <div className="text-muted-foreground text-xs">
                         {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
                       </div>

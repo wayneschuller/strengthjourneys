@@ -364,8 +364,9 @@ function ImportedDataOverview({ parsedData, label }) {
 
   return (
     <div className="mt-4 w-full text-left">
-      {/* Summary line */}
-      <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
+      {/* Summary line — only shown when label is set (merge preview) since
+          the ImportHero already covers these stats for the main view */}
+      {label && <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
         <span>
           <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
           sessions
@@ -390,7 +391,7 @@ function ImportedDataOverview({ parsedData, label }) {
           {getReadableDateShort(stats.dateRange.first)} to{" "}
           {getReadableDateShort(stats.dateRange.last)}
         </span>
-      </div>
+      </div>}
 
       {/* Two-column layout: heatmaps + top lifts */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

@@ -309,12 +309,6 @@ export function ImportWorkflowSection({
   const isSheetComparisonPending =
     mergeMode && isLoading && !Array.isArray(sheetParsedData);
   const sheetName = sheetInfo?.filename || "your Google Sheet";
-  const returnToPath =
-    typeof router.query?.returnTo === "string"
-      ? router.query.returnTo
-      : router.query?.from === "hero"
-        ? "/"
-        : null;
 
   const handleFile = useCallback(
     async (file) => {
@@ -332,15 +326,6 @@ export function ImportWorkflowSection({
       try {
         const { count, formatName } = await importFile(file);
 
-        if (returnToPath) {
-          toast({
-            title: "Data loaded!",
-            description: `Parsed ${count} entries from ${formatName} format. Exploring in preview mode.`,
-          });
-          router.push(returnToPath);
-          return;
-        }
-
         toast({
           title: "Data loaded!",
           description: `Parsed ${count} entries from ${formatName} format.`,
@@ -351,7 +336,7 @@ export function ImportWorkflowSection({
         setImporting(false);
       }
     },
-    [importFile, returnToPath, router, toast],
+    [importFile, toast],
   );
 
   const onDrop = useCallback(

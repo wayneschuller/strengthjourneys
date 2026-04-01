@@ -600,7 +600,7 @@ export default function ImportPage() {
         </PageHeader>
 
         {/* Value proposition - show what they'll get before asking for a file */}
-        <BenefitsRow />
+        {!isImportedData && <BenefitsRow />}
 
         {/* File Import Section - always visible, no auth required */}
         <ImportWorkflowSection />

@@ -306,8 +306,8 @@ function ImportHero({ parsedData, fileName, formatName }) {
       )}
 
       {thousandClub && (
-        <div className="mt-1.5 flex flex-col items-center gap-2 sm:flex-row">
-          <div className="min-w-0 flex-1 text-center sm:pr-2 sm:text-right">
+        <div className="-mt-3 flex flex-col items-center gap-0.5 sm:-mt-10 sm:flex-row">
+          <div className="min-w-0 flex-1 text-center sm:-mr-3 sm:pr-0 sm:text-right">
             <p className="text-2xl font-bold">
               Your 1000lb Club total is {thousandClub.total} lbs
             </p>

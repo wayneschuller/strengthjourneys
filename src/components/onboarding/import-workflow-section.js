@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 
+import Image from "next/image";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBio,
@@ -25,6 +26,8 @@ import {
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
+import { computeStrengthResults } from "@/lib/strength-circles/universe-percentiles";
+import { findBestE1RM } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
@@ -32,11 +35,16 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { getLiftDetailUrl } from "@/components/lift-type-indicator";
+import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
+import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { DailyHeatmap } from "@/components/home-dashboard/the-long-game-card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -51,7 +59,222 @@ function getReadableDateShort(isoDate) {
   });
 }
 
-function ImportedDataOverview({ parsedData }) {
+function clampFileName(rawName) {
+  if (!rawName) return null;
+  const fileNameOnly = rawName.split(/[\\/]/).pop() || rawName;
+  const extensionMatch = fileNameOnly.match(/(\.[^.]{1,4})$/);
+  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : "";
+  const withoutExtension = extension
+    ? fileNameOnly.slice(0, -extension.length)
+    : fileNameOnly;
+  const normalized = withoutExtension.replace(/\s+/g, " ").trim();
+  if (!normalized) return null;
+  const MAX = 34;
+  const reserved = extension ? extension.length + 3 : 3;
+  const visible = Math.max(8, MAX - reserved);
+  const base =
+    normalized.length > visible
+      ? `${normalized.slice(0, visible).trimEnd()}...`
+      : normalized;
+  return `${base}${extension}`;
+}
+
+function getMotivationalPhrase(percentile) {
+  if (percentile >= 95) return "You're in rare company. Elite strength.";
+  if (percentile >= 85) return "Seriously strong. Most people never get here.";
+  if (percentile >= 70) return "Stronger than most. Your hard work shows.";
+  if (percentile >= 50) return "Above average. You're building real strength.";
+  if (percentile >= 30) return "A solid foundation. Keep pushing.";
+  return "Every journey starts somewhere. You're on your way.";
+}
+
+function SinglePercentileRing({ percentile }) {
+  const RADIUS = 70;
+  const STROKE = 12;
+  const SIZE = (RADIUS + STROKE) * 2;
+  const CENTER = SIZE / 2;
+  const circumference = 2 * Math.PI * RADIUS;
+  const offset = circumference * (1 - (percentile ?? 0) / 100);
+
+  return (
+    <Link href="/how-strong-am-i" className="relative block">
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full">
+        {/* Background track */}
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS}
+          fill="none"
+          style={{ stroke: "var(--muted-foreground)", opacity: 0.12 }}
+          strokeWidth={STROKE}
+        />
+        {/* Filled arc */}
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS}
+          fill="none"
+          style={{ stroke: "var(--chart-1)" }}
+          strokeWidth={STROKE}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform={`rotate(-90, ${CENTER}, ${CENTER})`}
+        />
+      </svg>
+      {/* Center label */}
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-muted-foreground text-[10px] leading-snug">
+          Stronger than
+        </span>
+        <span className="text-3xl font-bold leading-none tabular-nums">
+          {percentile}%
+        </span>
+        <span
+          className="mt-0.5 text-[10px] font-semibold leading-snug"
+          style={{ color: "var(--chart-1)" }}
+        >
+          of Gen. Pop.
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function ImportHero({ parsedData, fileName, formatName }) {
+  const { age, sex, bodyWeight, isMetric } = useAthleteBio();
+  const { topLiftsByTypeAndReps } = useUserLiftingData();
+
+  const stats = useMemo(() => {
+    if (!parsedData?.length) return null;
+    const entries = parsedData.filter((e) => !e.isGoal);
+    if (!entries.length) return null;
+    const dates = [...new Set(entries.map((e) => e.date))].sort();
+    const liftTypes = new Set(entries.map((e) => e.liftType));
+    return {
+      sessionCount: dates.length,
+      totalSets: entries.length,
+      exerciseCount: liftTypes.size,
+      first: dates[0],
+      last: dates[dates.length - 1],
+    };
+  }, [parsedData]);
+
+  const strength = useMemo(() => {
+    if (!topLiftsByTypeAndReps) return null;
+
+    const toKg = (w, unit) => (unit === "kg" ? w : w / 2.2046);
+    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+    const liftKgs = {};
+
+    for (const [key, liftType] of Object.entries({
+      squat: "Back Squat",
+      bench: "Bench Press",
+      deadlift: "Deadlift",
+    })) {
+      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
+      liftKgs[key] =
+        best.bestE1RMWeight > 0 ? toKg(best.bestE1RMWeight, best.unitType) : null;
+    }
+
+    if (!liftKgs.squat && !liftKgs.bench && !liftKgs.deadlift) return null;
+
+    const results = computeStrengthResults({ age, sex, bodyWeightKg }, liftKgs);
+
+    // Average the Gen Pop percentile across all available SBD lifts
+    const pcts = [];
+    const liftLabels = [];
+    for (const [key, label] of [
+      ["squat", "Back Squat"],
+      ["bench", "Bench Press"],
+      ["deadlift", "Deadlift"],
+    ]) {
+      const pct = results.lifts[key]?.percentiles?.["General Population"];
+      if (pct != null) {
+        pcts.push(pct);
+        liftLabels.push(label);
+      }
+    }
+
+    if (!pcts.length) return null;
+
+    const avgPct = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
+
+    return {
+      pct: avgPct,
+      liftCount: pcts.length,
+      liftLabels,
+    };
+  }, [topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric]);
+
+  if (!stats) return null;
+
+  const displayName = clampFileName(fileName);
+  const source = formatName || "your file";
+
+  return (
+    <div className="mb-2 w-full">
+      {/* Storytelling headline */}
+      <h3 className="mb-1 text-xl font-bold">
+        Your {source} data is ready to explore
+      </h3>
+      <div className="text-muted-foreground mb-6 space-y-1 text-sm">
+        {displayName && (
+          <p>
+            We parsed{" "}
+            <span className="text-foreground font-medium">{displayName}</span>{" "}
+            and found{" "}
+            <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
+            sessions across{" "}
+            <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
+            exercises.
+          </p>
+        )}
+        {!displayName && (
+          <p>
+            We found{" "}
+            <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
+            sessions across{" "}
+            <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
+            exercises.
+          </p>
+        )}
+        <p>
+          Your training spans {getReadableDateShort(stats.first)} to{" "}
+          {getReadableDateShort(stats.last)}.
+        </p>
+        <p>
+          That&apos;s{" "}
+          <strong className="text-foreground">{stats.totalSets.toLocaleString()}</strong>{" "}
+          sets of work.
+        </p>
+      </div>
+
+      {/* Strength rating row */}
+      {strength && (
+        <div className="flex flex-col items-center gap-5 sm:flex-row">
+          <div className="w-36 shrink-0 sm:w-40">
+            <SinglePercentileRing percentile={strength.pct} />
+          </div>
+          <div className="text-center sm:text-left">
+            <p className="text-2xl font-bold">
+              Stronger than {strength.pct}% of the general population
+            </p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {getMotivationalPhrase(strength.pct)}
+            </p>
+            <p className="text-muted-foreground mt-2 text-xs">
+              Based on your {strength.liftLabels.join(", ")}{" "}
+              {strength.liftCount === 1 ? "E1RM" : "E1RMs"}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ImportedDataOverview({ parsedData, label }) {
   const { age, bodyWeight, sex, isMetric } = useAthleteBio();
   const hasBio = age && bodyWeight && sex;
 
@@ -141,8 +364,9 @@ function ImportedDataOverview({ parsedData }) {
 
   return (
     <div className="mt-4 w-full text-left">
-      {/* Summary line */}
-      <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
+      {/* Summary line — only shown when label is set (merge preview) since
+          the ImportHero already covers these stats for the main view */}
+      {label && <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
         <span>
           <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
           sessions
@@ -167,7 +391,7 @@ function ImportedDataOverview({ parsedData }) {
           {getReadableDateShort(stats.dateRange.first)} to{" "}
           {getReadableDateShort(stats.dateRange.last)}
         </span>
-      </div>
+      </div>}
 
       {/* Two-column layout: heatmaps + top lifts */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -175,7 +399,7 @@ function ImportedDataOverview({ parsedData }) {
         {yearIntervals.length > 0 && (
           <div>
             <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-              Training activity
+              Training activity{label && ` (${label})`}
             </p>
             <div className="flex flex-col gap-2">
               {yearIntervals.map((interval) => {
@@ -217,7 +441,7 @@ function ImportedDataOverview({ parsedData }) {
         {/* Top lifts with best E1RM */}
         <div>
           <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-            Top lifts
+            Top lifts{label && ` (${label})`}
           </p>
           <div className="space-y-2">
             {stats.topLifts.map((lift) => {
@@ -238,19 +462,42 @@ function ImportedDataOverview({ parsedData }) {
                     })()
                   : null;
 
+              const svgPath = getLiftSvgPath(lift.name);
+              const liftUrl = getLiftDetailUrl(lift.name);
+              const strengthLevelUrl = STRENGTH_STANDARDS_LINKS[lift.name];
+
               return (
                 <div
                   key={lift.name}
                   className="bg-muted/40 flex items-center justify-between rounded-md px-3 py-2"
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">
-                      {lift.name}
-                    </div>
-                    <div className="text-muted-foreground text-xs">
-                      {lift.count} sets &middot; Best:{" "}
-                      {lift.reps}x{lift.weight}
-                      {lift.unitType} on {getReadableDateShort(lift.date)}
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {svgPath && (
+                      <Image
+                        src={svgPath}
+                        alt={lift.name}
+                        width={32}
+                        height={32}
+                        className="shrink-0 dark:invert"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <Link
+                        href={liftUrl}
+                        className="truncate text-sm font-medium hover:underline"
+                      >
+                        {lift.name}
+                      </Link>
+                      <div className="text-muted-foreground text-xs">
+                        {lift.count} sets &middot;{" "}
+                        <Link
+                          href={`/log?date=${lift.date}`}
+                          className="hover:text-foreground hover:underline"
+                        >
+                          Best: {lift.reps}x{lift.weight}
+                          {lift.unitType} on {getReadableDateShort(lift.date)}
+                        </Link>
+                      </div>
                     </div>
                   </div>
                   <div className="ml-3 shrink-0 text-right">
@@ -261,7 +508,19 @@ function ImportedDataOverview({ parsedData }) {
                       E1RM: {lift.bestE1RM}
                       {lift.unitType}
                     </Link>
-                    {strengthRating && (
+                    {strengthRating && strengthLevelUrl && (
+                      <div className="mt-0.5">
+                        <Link href={strengthLevelUrl}>
+                          <Badge
+                            variant={getRatingBadgeVariant(strengthRating)}
+                            className="inline-flex items-center gap-1"
+                          >
+                            {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
+                          </Badge>
+                        </Link>
+                      </div>
+                    )}
+                    {strengthRating && !strengthLevelUrl && (
                       <div className="text-muted-foreground text-xs">
                         {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
                       </div>
@@ -293,6 +552,7 @@ export function ImportWorkflowSection({
     clearImportedData,
     isImportedData,
     importedFormatName,
+    importedFileName,
     sheetParsedData,
   } = useUserLiftingData();
 
@@ -484,17 +744,18 @@ export function ImportWorkflowSection({
               </>
             ) : (
               <>
-                <CheckCircle2 className="text-primary mb-3 h-10 w-10" />
-                <h3 className="mb-1 font-semibold">
-                  {showMerge && isFullyDuplicate
-                    ? "Already in your linked sheet"
-                    : importedFormatName + " data loaded"}
-                </h3>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  {showMerge && isFullyDuplicate
-                    ? `All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} from this file already exist in your linked sheet.`
-                    : `${entryCount} ${entryCount === 1 ? "entry" : "entries"} parsed and ready.`}
-                </p>
+                <ImportHero
+                  parsedData={parsedData}
+                  fileName={importedFileName}
+                  formatName={importedFormatName}
+                />
+
+                {showMerge && isFullyDuplicate && (
+                  <p className="text-muted-foreground mb-4 text-sm">
+                    All {skippedCount} {skippedCount === 1 ? "entry" : "entries"}{" "}
+                    from this file already exist in your linked sheet.
+                  </p>
+                )}
 
                 {showCreateSheet && (
                   <div className="w-full max-w-md space-y-3">
@@ -516,8 +777,8 @@ export function ImportWorkflowSection({
                 )}
 
                 {showMerge && (
-                  <div className="w-full max-w-md space-y-3">
-                    <p className="text-muted-foreground text-sm">
+                  <div className="w-full space-y-3">
+                    <p className="text-muted-foreground mx-auto max-w-md text-sm">
                       {isSheetComparisonPending
                         ? "Checking your linked Strength Journeys sheet for duplicates before merge."
                         : isFullyDuplicate
@@ -527,16 +788,21 @@ export function ImportWorkflowSection({
                           : `Merge this data into your linked Strength Journeys sheet.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}`}
                     </p>
                     {newEntries.length > 0 ? (
-                      <Button
-                        onClick={handleMerge}
-                        className="w-full gap-2"
-                        disabled={isSheetComparisonPending}
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                        {isSheetComparisonPending
-                          ? "Checking linked sheet..."
-                          : `Merge ${newEntries.length} ${newEntries.length === 1 ? "entry" : "entries"} into linked sheet`}
-                      </Button>
+                      <>
+                        {!isSheetComparisonPending && (
+                          <ImportedDataOverview parsedData={newEntries} label="new entries only" />
+                        )}
+                        <Button
+                          onClick={handleMerge}
+                          className="mx-auto flex w-full max-w-md gap-2"
+                          disabled={isSheetComparisonPending}
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                          {isSheetComparisonPending
+                            ? "Checking linked sheet..."
+                            : `Merge ${newEntries.length} ${newEntries.length === 1 ? "entry" : "entries"} into linked sheet`}
+                        </Button>
+                      </>
                     ) : (
                       <p className="text-muted-foreground text-xs">
                         No merge is needed. You can clear this preview or import

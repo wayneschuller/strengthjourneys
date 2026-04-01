@@ -26,7 +26,7 @@ import {
 } from "@/components/page-header";
 
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
-import { bigFourURLs } from "@/components/lift-type-indicator";
+import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import Link from "next/link";
 
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
@@ -1843,7 +1843,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         <div className="border-t pt-3">
           <h2 className="text-center text-base font-semibold">
             <Link
-              href={featuredBigFourName ? (bigFourURLs[featuredBigFourName] ?? "/strength-levels") : "/strength-levels"}
+              href={featuredBigFourName ? (getLiftDetailUrl(featuredBigFourName) ?? "/strength-levels") : "/strength-levels"}
               className="transition-opacity hover:opacity-70"
             >
               {featuredBigFourName ? `${forceLift} Strength Standards` : "Strength Levels"}

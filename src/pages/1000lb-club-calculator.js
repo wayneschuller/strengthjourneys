@@ -71,13 +71,7 @@ import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-
-const BIG_FOUR_URLS = {
-  "Back Squat": "/progress-guide/squat",
-  "Bench Press": "/progress-guide/bench-press",
-  Deadlift: "/progress-guide/deadlift",
-  "Strict Press": "/progress-guide/strict-press",
-};
+import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 
 const LIFT_GRAPHICS = {
   "Back Squat": "/back_squat.svg",
@@ -805,7 +799,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   }}
                 >
                   <Link
-                    href={BIG_FOUR_URLS[liftType]}
+                    href={getLiftDetailUrl(liftType)}
                     className="flex-shrink-0"
                     aria-hidden
                   >
@@ -835,7 +829,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   <div className="min-w-0 flex-1">
                     <div className="text-lg font-semibold">
                       <Link
-                        href={BIG_FOUR_URLS[liftType]}
+                        href={getLiftDetailUrl(liftType)}
                         className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
                       >
                         {liftType}
@@ -957,14 +951,14 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </Link>
             . Explore:{" "}
             <Link
-              href={BIG_FOUR_URLS["Back Squat"]}
+              href={getLiftDetailUrl("Back Squat")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
               Squat
             </Link>
             {" · "}
             <Link
-              href={BIG_FOUR_URLS["Bench Press"]}
+              href={getLiftDetailUrl("Bench Press")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
               Bench
@@ -978,7 +972,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </Link>
             {" · "}
             <Link
-              href={BIG_FOUR_URLS["Strict Press"]}
+              href={getLiftDetailUrl("Strict Press")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
               Strict Press

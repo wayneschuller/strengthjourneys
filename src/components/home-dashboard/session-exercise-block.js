@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import {
   LiftTypeIndicator,
-  bigFourURLs,
+  getLiftDetailUrl,
 } from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import {
@@ -498,17 +498,14 @@ export function SessionExerciseBlock({
           hideSvg ? "px-2 py-1.5 gap-2" : "p-3"
         }`}
       >
-        {liftTypeArea &&
-          (bigFourURLs[liftType] ? (
-            <Link
-              href={bigFourURLs[liftType]}
-              className="flex shrink-0 justify-center transition-opacity hover:opacity-80 sm:justify-start"
-            >
-              {liftTypeArea}
-            </Link>
-          ) : (
-            liftTypeArea
-          ))}
+        {liftTypeArea && (
+          <Link
+            href={getLiftDetailUrl(liftType)}
+            className="flex shrink-0 justify-center transition-opacity hover:opacity-80 sm:justify-start"
+          >
+            {liftTypeArea}
+          </Link>
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           {!hideSvg && (
             <LiftTypeIndicator
@@ -580,7 +577,7 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
     pctDiff !== null &&
     (shouldShowComparison ?? true);
   const textClass = compact ? "text-xs" : pctDiff > 0 ? "text-sm" : "text-xs";
-  const tonnageHref = bigFourURLs[liftType] ? `${bigFourURLs[liftType]}#tonnage-chart` : null;
+  const tonnageHref = getLiftDetailUrl(liftType, "#tonnage-chart");
 
   if (!currentLiftTonnage) {
     return (

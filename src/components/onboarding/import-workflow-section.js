@@ -26,6 +26,9 @@ import {
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
+import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
+import { computeStrengthResults } from "@/lib/strength-circles/universe-percentiles";
+import { findBestE1RM } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
@@ -55,6 +58,171 @@ function getReadableDateShort(isoDate) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function clampFileName(rawName) {
+  if (!rawName) return null;
+  const fileNameOnly = rawName.split(/[\\/]/).pop() || rawName;
+  const extensionMatch = fileNameOnly.match(/(\.[^.]{1,4})$/);
+  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : "";
+  const withoutExtension = extension
+    ? fileNameOnly.slice(0, -extension.length)
+    : fileNameOnly;
+  const normalized = withoutExtension.replace(/\s+/g, " ").trim();
+  if (!normalized) return null;
+  const MAX = 34;
+  const reserved = extension ? extension.length + 3 : 3;
+  const visible = Math.max(8, MAX - reserved);
+  const base =
+    normalized.length > visible
+      ? `${normalized.slice(0, visible).trimEnd()}...`
+      : normalized;
+  return `${base}${extension}`;
+}
+
+function getMotivationalPhrase(percentile) {
+  if (percentile >= 95) return "You're in rare company. Elite strength.";
+  if (percentile >= 85) return "Seriously strong. Most people never get here.";
+  if (percentile >= 70) return "Stronger than most. Your hard work shows.";
+  if (percentile >= 50) return "Above average. You're building real strength.";
+  if (percentile >= 30) return "A solid foundation. Keep pushing.";
+  return "Every journey starts somewhere. You're on your way.";
+}
+
+function ImportHero({ parsedData, fileName, formatName }) {
+  const { age, sex, bodyWeight, isMetric } = useAthleteBio();
+  const { topLiftsByTypeAndReps } = useUserLiftingData();
+
+  const stats = useMemo(() => {
+    if (!parsedData?.length) return null;
+    const entries = parsedData.filter((e) => !e.isGoal);
+    if (!entries.length) return null;
+    const dates = [...new Set(entries.map((e) => e.date))].sort();
+    return {
+      sessionCount: dates.length,
+      totalSets: entries.length,
+      first: dates[0],
+      last: dates[dates.length - 1],
+    };
+  }, [parsedData]);
+
+  const strength = useMemo(() => {
+    if (!topLiftsByTypeAndReps) return null;
+
+    const toKg = (w, unit) => (unit === "kg" ? w : w / 2.2046);
+    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+    const liftKgs = {};
+
+    for (const [key, liftType] of Object.entries({
+      squat: "Back Squat",
+      bench: "Bench Press",
+      deadlift: "Deadlift",
+    })) {
+      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
+      liftKgs[key] =
+        best.bestE1RMWeight > 0 ? toKg(best.bestE1RMWeight, best.unitType) : null;
+    }
+
+    if (!liftKgs.squat && !liftKgs.bench && !liftKgs.deadlift) return null;
+
+    const results = computeStrengthResults({ age, sex, bodyWeightKg }, liftKgs);
+
+    let bestKey = null;
+    let bestLabel = null;
+    let bestPct = null;
+
+    for (const [key, label] of [
+      ["squat", "Back Squat"],
+      ["bench", "Bench Press"],
+      ["deadlift", "Deadlift"],
+    ]) {
+      const pct = results.lifts[key]?.percentiles?.["General Population"];
+      if (pct != null && (bestPct == null || pct > bestPct)) {
+        bestPct = pct;
+        bestKey = key;
+        bestLabel = label;
+      }
+    }
+
+    if (bestPct == null) return null;
+
+    // Build single-universe percentiles object with just General Population
+    return {
+      percentiles: { "General Population": bestPct },
+      liftLabel: bestLabel,
+      pct: bestPct,
+    };
+  }, [topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric]);
+
+  const [activeUniverse, setActiveUniverse] = useState("General Population");
+
+  if (!stats) return null;
+
+  const displayName = clampFileName(fileName);
+
+  return (
+    <div className="mb-6 w-full">
+      {/* Filename + format badge */}
+      {displayName && (
+        <p className="text-muted-foreground mb-3 text-center text-sm">
+          Imported from{" "}
+          <span className="text-foreground font-medium">{displayName}</span>
+          {formatName && (
+            <Badge variant="secondary" className="ml-2 text-xs">
+              {formatName}
+            </Badge>
+          )}
+        </p>
+      )}
+
+      {/* Stats + Strength Circle side by side */}
+      <div
+        className={`flex flex-col items-center gap-6 ${strength ? "sm:flex-row sm:items-start sm:justify-center" : ""}`}
+      >
+        {/* Stats column */}
+        <div className={`text-center ${strength ? "sm:text-left" : ""}`}>
+          <h3 className="text-3xl font-bold tabular-nums">
+            {stats.sessionCount.toLocaleString()}{" "}
+            <span className="text-muted-foreground text-lg font-normal">
+              sessions
+            </span>
+          </h3>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {stats.totalSets.toLocaleString()} sets from{" "}
+            {getReadableDateShort(stats.first)} to{" "}
+            {getReadableDateShort(stats.last)}
+          </p>
+
+          {strength && (
+            <div className="mt-4">
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                Your {strength.liftLabel}
+              </p>
+              <p className="mt-1 text-xl font-bold">
+                Stronger than {strength.pct}% of the general population
+              </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {getMotivationalPhrase(strength.pct)}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Single strength circle */}
+        {strength && (
+          <div className="w-40 shrink-0 sm:w-48">
+            <StrengthCirclesChart
+              percentiles={strength.percentiles}
+              activeUniverse={activeUniverse}
+              onUniverseChange={setActiveUniverse}
+              showLegend={false}
+              showTrustLine={false}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function ImportedDataOverview({ parsedData, label }) {
@@ -334,6 +502,7 @@ export function ImportWorkflowSection({
     clearImportedData,
     isImportedData,
     importedFormatName,
+    importedFileName,
     sheetParsedData,
   } = useUserLiftingData();
 
@@ -525,17 +694,18 @@ export function ImportWorkflowSection({
               </>
             ) : (
               <>
-                <CheckCircle2 className="text-primary mb-3 h-10 w-10" />
-                <h3 className="mb-1 font-semibold">
-                  {showMerge && isFullyDuplicate
-                    ? "Already in your linked sheet"
-                    : importedFormatName + " data loaded"}
-                </h3>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  {showMerge && isFullyDuplicate
-                    ? `All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} from this file already exist in your linked sheet.`
-                    : `${entryCount} ${entryCount === 1 ? "entry" : "entries"} parsed and ready.`}
-                </p>
+                <ImportHero
+                  parsedData={parsedData}
+                  fileName={importedFileName}
+                  formatName={importedFormatName}
+                />
+
+                {showMerge && isFullyDuplicate && (
+                  <p className="text-muted-foreground mb-4 text-sm">
+                    All {skippedCount} {skippedCount === 1 ? "entry" : "entries"}{" "}
+                    from this file already exist in your linked sheet.
+                  </p>
+                )}
 
                 {showCreateSheet && (
                   <div className="w-full max-w-md space-y-3">

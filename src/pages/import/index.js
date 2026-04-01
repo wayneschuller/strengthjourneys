@@ -10,10 +10,7 @@ import Link from "next/link";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { ImportWorkflowSection } from "@/components/onboarding/import-workflow-section";
-import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
 import { UnitChooser } from "@/components/unit-type-chooser";
-import { computeStrengthResults } from "@/lib/strength-circles/universe-percentiles";
-import { findBestE1RM } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import {
   PageContainer,
@@ -295,120 +292,6 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
         </CardContent>
       )}
     </Card>
-  );
-}
-
-function getMotivationalPhrase(percentile) {
-  if (percentile >= 95) return "You're in rare company. Elite strength.";
-  if (percentile >= 85) return "Seriously strong. Most people never get here.";
-  if (percentile >= 70) return "Stronger than most. Your hard work shows.";
-  if (percentile >= 50) return "Above average. You're building real strength.";
-  if (percentile >= 30) return "A solid foundation. Keep pushing.";
-  return "Every journey starts somewhere. You're on your way.";
-}
-
-function StrengthPreview() {
-  const { topLiftsByTypeAndReps, hasUserData } = useUserLiftingData();
-  const { age, sex, bodyWeight, isMetric } = useAthleteBio();
-
-  const result = useMemo(() => {
-    if (!hasUserData || !topLiftsByTypeAndReps) return null;
-
-    const toKg = (w, unit) => (unit === "kg" ? w : w / 2.2046);
-    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
-
-    const liftKgs = {};
-    let bestLiftLabel = null;
-    let bestPercentile = null;
-
-    for (const [key, liftType] of Object.entries({
-      squat: "Back Squat",
-      bench: "Bench Press",
-      deadlift: "Deadlift",
-    })) {
-      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
-      if (best.bestE1RMWeight && best.bestE1RMWeight > 0) {
-        liftKgs[key] = toKg(best.bestE1RMWeight, best.unitType);
-      } else {
-        liftKgs[key] = null;
-      }
-    }
-
-    // Need at least one lift
-    if (!liftKgs.squat && !liftKgs.bench && !liftKgs.deadlift) return null;
-
-    const strengthResults = computeStrengthResults(
-      { age, sex, bodyWeightKg },
-      liftKgs,
-    );
-
-    // Find the best single-lift percentile for the headline
-    for (const [key, label] of [
-      ["squat", "Back Squat"],
-      ["bench", "Bench Press"],
-      ["deadlift", "Deadlift"],
-    ]) {
-      const lift = strengthResults.lifts[key];
-      if (!lift?.percentiles) continue;
-      const pct = lift.percentiles["General Population"];
-      if (pct != null && (bestPercentile == null || pct > bestPercentile)) {
-        bestPercentile = pct;
-        bestLiftLabel = label;
-      }
-    }
-
-    if (bestPercentile == null) return null;
-
-    // Use the best single lift's percentiles for the circle
-    const bestKey = Object.entries({ squat: "Back Squat", bench: "Bench Press", deadlift: "Deadlift" })
-      .find(([, v]) => v === bestLiftLabel)?.[0];
-
-    return {
-      percentiles: strengthResults.lifts[bestKey].percentiles,
-      liftLabel: bestLiftLabel,
-      genPopPercentile: bestPercentile,
-    };
-  }, [hasUserData, topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric]);
-
-  const [activeUniverse, setActiveUniverse] = useState("General Population");
-
-  if (!result) return null;
-
-  return (
-    <section className="mx-auto mb-8 max-w-5xl">
-      <Card>
-        <CardContent className="flex flex-col items-center gap-4 py-8 sm:flex-row sm:gap-8">
-          {/* Strength circle - constrained size */}
-          <div className="w-48 shrink-0 sm:w-56">
-            <StrengthCirclesChart
-              percentiles={result.percentiles}
-              activeUniverse={activeUniverse}
-              onUniverseChange={setActiveUniverse}
-              showLegend={false}
-              showTrustLine={false}
-            />
-          </div>
-
-          {/* Motivational text */}
-          <div className="text-center sm:text-left">
-            <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide">
-              Your {result.liftLabel}
-            </p>
-            <p className="mt-1 text-2xl font-bold">
-              Stronger than {result.genPopPercentile}% of the general population
-            </p>
-            <p className="text-muted-foreground mt-2 text-base">
-              {getMotivationalPhrase(result.genPopPercentile)}
-            </p>
-            <Button asChild variant="outline" size="sm" className="mt-4">
-              <Link href="/how-strong-am-i">
-                See full strength breakdown <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </section>
   );
 }
 
@@ -721,9 +604,6 @@ export default function ImportPage() {
 
         {/* File Import Section - always visible, no auth required */}
         <ImportWorkflowSection />
-
-        {/* Strength preview - appears after data is loaded */}
-        <StrengthPreview />
 
         {/* Privacy reassurance */}
         <p className="text-muted-foreground mx-auto -mt-8 mb-12 max-w-5xl text-center text-xs">

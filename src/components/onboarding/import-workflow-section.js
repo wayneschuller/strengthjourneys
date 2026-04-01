@@ -271,9 +271,14 @@ function ImportedDataOverview({ parsedData }) {
                         {lift.name}
                       </Link>
                       <div className="text-muted-foreground text-xs">
-                        {lift.count} sets &middot; Best:{" "}
-                        {lift.reps}x{lift.weight}
-                        {lift.unitType} on {getReadableDateShort(lift.date)}
+                        {lift.count} sets &middot;{" "}
+                        <Link
+                          href={`/log?date=${lift.date}`}
+                          className="hover:text-foreground hover:underline"
+                        >
+                          Best: {lift.reps}x{lift.weight}
+                          {lift.unitType} on {getReadableDateShort(lift.date)}
+                        </Link>
                       </div>
                     </div>
                   </div>

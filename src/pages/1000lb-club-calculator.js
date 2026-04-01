@@ -66,6 +66,7 @@ import { ShareCopyButton } from "@/components/share-copy-button";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { ThousandDonut } from "@/components/thousand-club-donut";
+import { getWeakestLiftHint } from "@/lib/thousand-club";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
@@ -1189,36 +1190,6 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       </section>
     </PageContainer>
   );
-}
-
-
-// Ideal SBD proportions (% of total) — consensus from powerlifting averages.
-// Squat ~36%, Bench ~24%, Deadlift ~40%.
-const IDEAL_SBD_RATIO = { squat: 0.36, bench: 0.24, deadlift: 0.4 };
-const LIFT_LABELS = { squat: "Squat", bench: "Bench", deadlift: "Deadlift" };
-
-function getWeakestLiftHint(squat, bench, deadlift) {
-  const total = squat + bench + deadlift;
-  if (total === 0) return null;
-
-  // How far each lift is below its ideal share of the total (as lbs deficit).
-  const gaps = {
-    squat: IDEAL_SBD_RATIO.squat * total - squat,
-    bench: IDEAL_SBD_RATIO.bench * total - bench,
-    deadlift: IDEAL_SBD_RATIO.deadlift * total - deadlift,
-  };
-
-  // Largest positive gap = most under-developed relative to ideal ratios.
-  const worst = Object.entries(gaps).reduce(
-    (best, [k, v]) => (v > best.gap ? { key: k, gap: v } : best),
-    { key: null, gap: 0 },
-  );
-
-  if (!worst.key || worst.gap < 10) return null; // <10 lb gap = balanced enough
-  return {
-    lift: LIFT_LABELS[worst.key],
-    gapLbs: Math.round(worst.gap),
-  };
 }
 
 function TimelineTooltipContent({ active, payload, label }) {

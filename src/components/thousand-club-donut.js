@@ -16,6 +16,7 @@ export function ThousandDonut({
   isAdjusting = false,
   prefersReducedMotion = false,
   className,
+  compact = false,
 }) {
   const gradientId = `thousand-donut-progress-${useId().replace(/:/g, "")}`;
   const capped = Math.min(total, target);
@@ -119,20 +120,53 @@ export function ThousandDonut({
         >
           {inClub ? (
             <>
-              <div className="text-3xl font-bold text-green-500 xl:text-4xl">
-                {total} lbs
+              <div
+                className={cn(
+                  "font-bold text-green-500",
+                  compact ? "text-[1.8rem] leading-none" : "text-3xl xl:text-4xl",
+                )}
+              >
+                {total}
+                <span className={cn(compact ? "ml-1 text-xl" : "ml-1 text-[0.75em]")}>
+                  lbs
+                </span>
               </div>
-              <div className="text-sm font-semibold text-green-400 xl:text-base">
+              <div
+                className={cn(
+                  "font-semibold text-green-400",
+                  compact ? "mt-1 text-xs leading-tight" : "text-sm xl:text-base",
+                )}
+              >
                 1000lb Club!
               </div>
             </>
           ) : (
             <>
-              <div className="text-2xl font-bold xl:text-4xl">{total} lbs</div>
-              <div className="text-muted-foreground text-xs xl:text-sm">
+              <div
+                className={cn(
+                  "font-bold leading-none",
+                  compact ? "text-[1.8rem]" : "text-2xl xl:text-4xl",
+                )}
+              >
+                {total}
+                <span className={cn(compact ? "ml-1 text-xl" : "ml-1 text-[0.75em]")}>
+                  lbs
+                </span>
+              </div>
+              <div
+                className={cn(
+                  "text-muted-foreground",
+                  compact ? "mt-1 text-[11px] leading-tight" : "text-xs xl:text-sm",
+                )}
+              >
                 of {target}
               </div>
-              <div className="text-muted-foreground text-sm xl:text-lg">
+              <div
+                className={cn(
+                  "text-muted-foreground",
+                  compact ? "mt-1 text-lg font-medium leading-none" : "text-sm xl:text-lg",
+                )}
+              >
                 {percent}%
               </div>
             </>

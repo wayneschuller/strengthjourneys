@@ -218,28 +218,41 @@ function ImportHero({ parsedData, fileName, formatName }) {
       <h3 className="mb-1 text-xl font-bold">
         Your {source} data is ready to explore
       </h3>
-      <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
-        We parsed{" "}
+      <div className="text-muted-foreground mb-6 space-y-1 text-sm">
         {displayName && (
-          <>
-            <span className="text-foreground font-medium">{displayName}</span>
-            {" and found "}
-          </>
+          <p>
+            We parsed{" "}
+            <span className="text-foreground font-medium">{displayName}</span>{" "}
+            and found{" "}
+            <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
+            sessions across{" "}
+            <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
+            exercises.
+          </p>
         )}
-        {!displayName && ""}
-        <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
-        sessions across{" "}
-        <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
-        exercises, spanning{" "}
-        {getReadableDateShort(stats.first)} to {getReadableDateShort(stats.last)}.
-        That&apos;s{" "}
-        <strong className="text-foreground">{stats.totalSets.toLocaleString()}</strong>{" "}
-        sets of work.
-      </p>
+        {!displayName && (
+          <p>
+            We found{" "}
+            <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
+            sessions across{" "}
+            <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
+            exercises.
+          </p>
+        )}
+        <p>
+          Your training spans {getReadableDateShort(stats.first)} to{" "}
+          {getReadableDateShort(stats.last)}.
+        </p>
+        <p>
+          That&apos;s{" "}
+          <strong className="text-foreground">{stats.totalSets.toLocaleString()}</strong>{" "}
+          sets of work.
+        </p>
+      </div>
 
       {/* Strength rating row */}
       {strength && (
-        <div className="bg-muted/40 flex flex-col items-center gap-5 rounded-xl px-6 py-6 sm:flex-row">
+        <div className="flex flex-col items-center gap-5 sm:flex-row">
           <div className="w-36 shrink-0 sm:w-40">
             <SinglePercentileRing percentile={strength.pct} />
           </div>

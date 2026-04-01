@@ -35,6 +35,7 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
@@ -353,22 +354,7 @@ function ImportedDataOverview({ parsedData, label }) {
     if (entries.length === 0) return null;
 
     const dates = [...new Set(entries.map((e) => e.date))].sort();
-    let longestStreak = 0;
-    let currentStreak = 0;
-    let previousDate = null;
-
-    for (const isoDate of dates) {
-      if (!previousDate) {
-        currentStreak = 1;
-      } else {
-        const prev = new Date(`${previousDate}T00:00:00`);
-        const curr = new Date(`${isoDate}T00:00:00`);
-        const diffDays = Math.round((curr - prev) / 86400000);
-        currentStreak = diffDays === 1 ? currentStreak + 1 : 1;
-      }
-      longestStreak = Math.max(longestStreak, currentStreak);
-      previousDate = isoDate;
-    }
+    const { bestStreak } = calculateStreakFromDates(dates);
 
     // Build lift map: frequency + best E1RM set per lift
     const liftMap = {};
@@ -421,7 +407,7 @@ function ImportedDataOverview({ parsedData, label }) {
       totalSets: entries.length,
       dateRange: { first: dates[0], last: dates[dates.length - 1] },
       liftTypeCount: Object.keys(liftMap).length,
-      longestStreak,
+      bestStreak,
       topLifts,
     };
   }, [parsedData, isMetric]);
@@ -485,16 +471,14 @@ function ImportedDataOverview({ parsedData, label }) {
         {yearIntervals.length > 0 && (
           <div>
             <div className="mb-2">
-              <p className="text-sm font-semibold">Your consistency over time</p>
-              {stats.longestStreak > 1 && (
+              <p className="text-sm font-semibold">Your strength journey</p>
+              {stats.bestStreak > 0 && (
                 <p className="text-muted-foreground text-xs">
-                  Longest streak: {stats.longestStreak} days
+                  Longest streak: {stats.bestStreak} week
+                  {stats.bestStreak === 1 ? "" : "s"}
                 </p>
               )}
             </div>
-            <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-              Training activity{label && ` (${label})`}
-            </p>
             <div className="flex flex-col gap-2">
               {yearIntervals.map((interval) => {
                 const isCurrentYear =

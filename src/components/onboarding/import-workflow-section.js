@@ -353,6 +353,22 @@ function ImportedDataOverview({ parsedData, label }) {
     if (entries.length === 0) return null;
 
     const dates = [...new Set(entries.map((e) => e.date))].sort();
+    let longestStreak = 0;
+    let currentStreak = 0;
+    let previousDate = null;
+
+    for (const isoDate of dates) {
+      if (!previousDate) {
+        currentStreak = 1;
+      } else {
+        const prev = new Date(`${previousDate}T00:00:00`);
+        const curr = new Date(`${isoDate}T00:00:00`);
+        const diffDays = Math.round((curr - prev) / 86400000);
+        currentStreak = diffDays === 1 ? currentStreak + 1 : 1;
+      }
+      longestStreak = Math.max(longestStreak, currentStreak);
+      previousDate = isoDate;
+    }
 
     // Build lift map: frequency + best E1RM set per lift
     const liftMap = {};
@@ -405,6 +421,7 @@ function ImportedDataOverview({ parsedData, label }) {
       totalSets: entries.length,
       dateRange: { first: dates[0], last: dates[dates.length - 1] },
       liftTypeCount: Object.keys(liftMap).length,
+      longestStreak,
       topLifts,
     };
   }, [parsedData, isMetric]);
@@ -467,6 +484,14 @@ function ImportedDataOverview({ parsedData, label }) {
         {/* Activity heatmaps — yearly breakdown */}
         {yearIntervals.length > 0 && (
           <div>
+            <div className="mb-2">
+              <p className="text-sm font-semibold">Your consistency over time</p>
+              {stats.longestStreak > 1 && (
+                <p className="text-muted-foreground text-xs">
+                  Longest streak: {stats.longestStreak} days
+                </p>
+              )}
+            </div>
             <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
               Training activity{label && ` (${label})`}
             </p>

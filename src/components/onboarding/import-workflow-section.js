@@ -318,7 +318,10 @@ function ImportHero({ parsedData, fileName, formatName }) {
             </p>
             {thousandClub.biggestOpportunity && !thousandClub.inClub && (
               <p className="text-muted-foreground mt-0.5 text-sm">
-                Biggest opportunity: Add ~
+                <span className="font-semibold text-foreground">
+                  Biggest opportunity:
+                </span>{" "}
+                Add ~
                 {thousandClub.biggestOpportunity.gapLbs} lb to your{" "}
                 {thousandClub.biggestOpportunity.lift.toLowerCase()}.
               </p>

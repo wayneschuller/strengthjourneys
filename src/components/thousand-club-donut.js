@@ -134,7 +134,7 @@ export function ThousandDonut({
                 {total}
                 <span
                   className={cn(
-                    compact ? "ml-1 text-base font-semibold" : "ml-1 text-[0.75em]",
+                    compact ? "text-base font-semibold" : "text-[0.75em]",
                   )}
                 >
                   lbs
@@ -160,7 +160,7 @@ export function ThousandDonut({
                 {total}
                 <span
                   className={cn(
-                    compact ? "ml-1 text-base font-semibold" : "ml-1 text-[0.75em]",
+                    compact ? "text-base font-semibold" : "text-[0.75em]",
                   )}
                 >
                   lbs

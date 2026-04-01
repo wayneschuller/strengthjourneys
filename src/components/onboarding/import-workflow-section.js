@@ -97,7 +97,7 @@ function SinglePercentileRing({ percentile }) {
   const offset = circumference * (1 - (percentile ?? 0) / 100);
 
   return (
-    <div className="relative">
+    <Link href="/how-strong-am-i" className="relative block">
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full">
         {/* Background track */}
         <circle
@@ -137,7 +137,7 @@ function SinglePercentileRing({ percentile }) {
           of Gen. Pop.
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 

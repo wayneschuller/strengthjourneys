@@ -4138,7 +4138,7 @@ function LiftBlock({
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
         <div className="absolute top-4 left-4 hidden md:block">
-          <Link href={`/${bigFourEntry.slug}`}>
+          <Link href={getLiftDetailUrl(liftType)}>
             <Image
               src={bigFourEntry.icon}
               alt=""
@@ -4154,7 +4154,7 @@ function LiftBlock({
       <div className={`flex gap-3 px-4 pt-4 ${desktopIconInsetClass}`}>
         {bigFourEntry && (
           <Link
-            href={`/${bigFourEntry.slug}`}
+            href={getLiftDetailUrl(liftType)}
             className="shrink-0 self-start md:hidden"
           >
             <Image src={bigFourEntry.icon} alt="" width={52} height={52} />
@@ -4174,19 +4174,13 @@ function LiftBlock({
                 {liftType}
               </span>
             </div>
-            {bigFourEntry ? (
-              <Link
-                href={`/${bigFourEntry.slug}`}
-                className="text-foreground text-base font-semibold hover:underline"
-                style={{ textDecorationColor: liftColor }}
-              >
-                {liftType}
-              </Link>
-            ) : (
-              <h2 className="text-foreground text-base font-semibold">
-                {liftType}
-              </h2>
-            )}
+            <Link
+              href={getLiftDetailUrl(liftType)}
+              className="text-foreground text-base font-semibold hover:underline"
+              style={{ textDecorationColor: liftColor }}
+            >
+              {liftType}
+            </Link>
           </div>
           <LiftSuggestions
             liftType={liftType}

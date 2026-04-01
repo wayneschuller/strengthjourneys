@@ -1560,14 +1560,13 @@ function BigFourCriteriaTable({
       {!!sessions && (() => {
         const rowHighlighted = revealedRows >= 1;
         const isCurrentMonthView = boundaries?.isCurrentMonthView;
-        const previousSessionsCompared = isCurrentMonthView
-          ? (sessions.lastSameDay ?? 0)
-          : (sessions.last ?? 0);
+        const previousSessionsCompared = sessions.last ?? 0;
         const baseline = previousSessionsCompared === 0;
-        const passed = baseline || passesTonnageThreshold(
-          sessions.current ?? 0,
-          previousSessionsCompared,
-        );
+        const sessionPace = isCurrentMonthView
+          ? getLiftPaceStatus(sessions.current ?? 0, previousSessionsCompared, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
+          : "no-data";
+        const passed = baseline
+          || (isCurrentMonthView ? sessionPace === "ahead" || sessionPace === "on-pace" : passesTonnageThreshold(sessions.current ?? 0, previousSessionsCompared));
         const currentSessionsReporting = formatCurrentSessionsReporting(
           sessions.current ?? 0,
           boundaries,
@@ -1600,18 +1599,14 @@ function BigFourCriteriaTable({
                       value={previousSessionsCompared}
                       className={`tabular-nums text-2xl font-semibold tracking-tight transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
                     />
-                    {isCurrentMonthView && (
-                      <div className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
-                        of {sessions.last ?? 0} total
-                      </div>
-                    )}
+                    <div className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
+                      total
+                    </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
-                    {isCurrentMonthView
-                      ? `${boundaries.prevMonthName} sessions through day ${boundaries.dayOfMonth}, counted from unique logged training dates.`
-                      : `Total sessions logged in ${boundaries.prevMonthName}.`}
+                    Total sessions logged in {boundaries.prevMonthName}, counted from unique training dates.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -1645,9 +1640,7 @@ function BigFourCriteriaTable({
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
-                    {isCurrentMonthView
-                      ? "Compared with last month&apos;s same-day count; being within 10% still counts as on track."
-                      : "Compared with the full previous month total; being within 10% still counts as on track."}
+                    Compared with {boundaries.prevMonthName}&apos;s total of {previousSessionsCompared}; being within 10% of pace counts as on track.
                   </p>
                 </TooltipContent>
               </Tooltip>

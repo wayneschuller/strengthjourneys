@@ -57,7 +57,7 @@ function getReadableDateShort(isoDate) {
   });
 }
 
-function ImportedDataOverview({ parsedData }) {
+function ImportedDataOverview({ parsedData, label }) {
   const { age, bodyWeight, sex, isMetric } = useAthleteBio();
   const hasBio = age && bodyWeight && sex;
 
@@ -181,7 +181,7 @@ function ImportedDataOverview({ parsedData }) {
         {yearIntervals.length > 0 && (
           <div>
             <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-              Training activity
+              Training activity{label && ` (${label})`}
             </p>
             <div className="flex flex-col gap-2">
               {yearIntervals.map((interval) => {
@@ -223,7 +223,7 @@ function ImportedDataOverview({ parsedData }) {
         {/* Top lifts with best E1RM */}
         <div>
           <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-            Top lifts
+            Top lifts{label && ` (${label})`}
           </p>
           <div className="space-y-2">
             {stats.topLifts.map((lift) => {
@@ -570,7 +570,7 @@ export function ImportWorkflowSection({
                     {newEntries.length > 0 ? (
                       <>
                         {!isSheetComparisonPending && (
-                          <ImportedDataOverview parsedData={newEntries} />
+                          <ImportedDataOverview parsedData={newEntries} label="new entries only" />
                         )}
                         <Button
                           onClick={handleMerge}

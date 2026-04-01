@@ -301,17 +301,13 @@ function ImportHero({ parsedData, fileName, formatName }) {
             <p className="text-muted-foreground mt-1 text-sm">
               {getMotivationalPhrase(strength.pct)}
             </p>
-            <p className="text-muted-foreground mt-1.5 text-xs">
-              From your {strength.liftLabels.join(", ")}{" "}
-              {strength.liftCount === 1 ? "E1RM" : "E1RMs"}
-            </p>
           </div>
         </div>
       )}
 
       {thousandClub && (
         <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row">
-          <div className="min-w-0 flex-1 text-center sm:text-left">
+          <div className="min-w-0 flex-1 text-center sm:pr-2 sm:text-right">
             <p className="text-2xl font-bold">
               Your 1000lb Club total is {thousandClub.total} lbs
             </p>
@@ -327,11 +323,6 @@ function ImportHero({ parsedData, fileName, formatName }) {
                 {thousandClub.biggestOpportunity.lift.toLowerCase()}.
               </p>
             )}
-            <p className="text-muted-foreground mt-1.5 text-xs">
-              From E1RMs of Back Squat {thousandClub.lifts.squat} lbs, Bench
-              Press {thousandClub.lifts.bench} lbs, and Deadlift{" "}
-              {thousandClub.lifts.deadlift} lbs.
-            </p>
           </div>
           <div className="w-36 shrink-0 sm:w-40">
             <ThousandDonut

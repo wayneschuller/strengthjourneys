@@ -465,19 +465,22 @@ export default function LogSessionPage() {
     return dates;
   }, [parsedData]);
 
-  // In preview mode, if today has no session data, auto-navigate to the most
-  // recent session so the user sees actual data instead of an empty state.
+  // In preview mode, if no date was requested and today has no session data,
+  // auto-navigate to the most recent session so the user sees actual data
+  // instead of an empty state.  Skip when a date query param is present —
+  // the user (or heatmap link) explicitly asked for that date.
   const hasAutoNavigatedRef = useRef(false);
   useEffect(() => {
     if (hasAutoNavigatedRef.current) return;
     if (!hasUserData || !isImportedData) return;
     if (sessionDates.length === 0) return;
+    if (router.query.date) return;
     if (sessionDates.includes(sessionDate)) return;
     // Navigate to the most recent session date
     const latestDate = sessionDates[sessionDates.length - 1];
     hasAutoNavigatedRef.current = true;
     navigateToDate(latestDate);
-  }, [hasUserData, isImportedData, sessionDates, sessionDate, navigateToDate]);
+  }, [hasUserData, isImportedData, sessionDates, sessionDate, navigateToDate, router.query.date]);
 
   // Session dates as Date objects for the calendar picker modifier highlights
   const sessionDateObjects = useMemo(

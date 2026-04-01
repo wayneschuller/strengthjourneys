@@ -330,7 +330,7 @@ function ImportHero({ parsedData, fileName, formatName }) {
               prefersReducedMotion={true}
               compact={true}
               href="/1000lb-club-calculator"
-              className="my-0 h-auto w-full"
+              className="my-0 h-[144px] w-full max-w-[144px] xl:h-[144px] xl:max-w-[144px]"
             />
           </div>
         </div>

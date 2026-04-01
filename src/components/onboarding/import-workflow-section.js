@@ -37,6 +37,7 @@ import {
 import { postImportHistory } from "@/lib/import-history-client";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
+import { addDaysFromStr, getWeekKeyFromDateStr } from "@/lib/date-utils";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
@@ -355,6 +356,45 @@ function ImportedDataOverview({ parsedData, label }) {
 
     const dates = [...new Set(entries.map((e) => e.date))].sort();
     const { bestStreak } = calculateStreakFromDates(dates);
+    let bestStreakStart = null;
+
+    if (bestStreak > 0) {
+      const weekMap = new Map();
+      for (const dateStr of dates) {
+        const weekKey = getWeekKeyFromDateStr(dateStr);
+        if (!weekMap.has(weekKey)) weekMap.set(weekKey, new Set());
+        weekMap.get(weekKey).add(dateStr);
+      }
+
+      const qualifiedWeekKeys = Array.from(weekMap.entries())
+        .filter(([, weekDates]) => weekDates.size >= 3)
+        .map(([weekKey]) => weekKey)
+        .sort();
+
+      let currentRun = 0;
+      let currentRunStart = null;
+      let bestRun = 0;
+      let bestRunStart = null;
+      let previousWeekKey = null;
+
+      for (const weekKey of qualifiedWeekKeys) {
+        if (previousWeekKey && weekKey === addDaysFromStr(previousWeekKey, 7)) {
+          currentRun += 1;
+        } else {
+          currentRun = 1;
+          currentRunStart = weekKey;
+        }
+
+        if (currentRun > bestRun) {
+          bestRun = currentRun;
+          bestRunStart = currentRunStart;
+        }
+
+        previousWeekKey = weekKey;
+      }
+
+      bestStreakStart = bestRunStart;
+    }
 
     // Build lift map: frequency + best E1RM set per lift
     const liftMap = {};
@@ -408,6 +448,7 @@ function ImportedDataOverview({ parsedData, label }) {
       dateRange: { first: dates[0], last: dates[dates.length - 1] },
       liftTypeCount: Object.keys(liftMap).length,
       bestStreak,
+      bestStreakStart,
       topLifts,
     };
   }, [parsedData, isMetric]);
@@ -476,6 +517,9 @@ function ImportedDataOverview({ parsedData, label }) {
                 <p className="text-muted-foreground text-xs">
                   Longest streak: {stats.bestStreak} week
                   {stats.bestStreak === 1 ? "" : "s"}
+                  {stats.bestStreakStart
+                    ? ` (${getReadableDateShort(stats.bestStreakStart)})`
+                    : ""}
                 </p>
               )}
             </div>
@@ -518,7 +562,7 @@ function ImportedDataOverview({ parsedData, label }) {
 
         {/* Top lifts with best E1RM */}
         <div>
-          <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+          <p className="mb-2 text-sm font-semibold">
             Top lifts{label && ` (${label})`}
           </p>
           <div className="space-y-2">

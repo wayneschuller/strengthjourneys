@@ -105,7 +105,10 @@ export function ThousandDonut({
 
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <motion.div
-          className="text-center tabular-nums"
+          className={cn(
+            "text-center tabular-nums",
+            compact ? "-mt-1" : "",
+          )}
           animate={
             prefersReducedMotion
               ? undefined
@@ -166,7 +169,7 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "text-muted-foreground",
-                  compact ? "mt-3 text-[10px] leading-none" : "text-xs xl:text-sm",
+                  compact ? "mt-1 text-[10px] leading-none" : "text-xs xl:text-sm",
                 )}
               >
                 of {target}
@@ -174,7 +177,7 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "text-muted-foreground",
-                  compact ? "mt-2 text-sm font-medium leading-none" : "text-sm xl:text-lg",
+                  compact ? "mt-1 text-sm font-medium leading-none" : "text-sm xl:text-lg",
                 )}
               >
                 {percent}%

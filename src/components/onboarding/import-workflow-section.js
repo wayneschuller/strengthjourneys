@@ -26,7 +26,6 @@ import {
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
 import { computeStrengthResults } from "@/lib/strength-circles/universe-percentiles";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -89,6 +88,59 @@ function getMotivationalPhrase(percentile) {
   return "Every journey starts somewhere. You're on your way.";
 }
 
+function SinglePercentileRing({ percentile }) {
+  const RADIUS = 70;
+  const STROKE = 12;
+  const SIZE = (RADIUS + STROKE) * 2;
+  const CENTER = SIZE / 2;
+  const circumference = 2 * Math.PI * RADIUS;
+  const offset = circumference * (1 - (percentile ?? 0) / 100);
+
+  return (
+    <div className="relative">
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full">
+        {/* Background track */}
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS}
+          fill="none"
+          style={{ stroke: "var(--muted-foreground)", opacity: 0.12 }}
+          strokeWidth={STROKE}
+        />
+        {/* Filled arc */}
+        <circle
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS}
+          fill="none"
+          style={{ stroke: "var(--chart-1)" }}
+          strokeWidth={STROKE}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform={`rotate(-90, ${CENTER}, ${CENTER})`}
+        />
+      </svg>
+      {/* Center label */}
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-muted-foreground text-[10px] leading-snug">
+          Stronger than
+        </span>
+        <span className="text-3xl font-bold leading-none tabular-nums">
+          {percentile}%
+        </span>
+        <span
+          className="mt-0.5 text-[10px] font-semibold leading-snug"
+          style={{ color: "var(--chart-1)" }}
+        >
+          of Gen. Pop.
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ImportHero({ parsedData, fileName, formatName }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
   const { topLiftsByTypeAndReps } = useUserLiftingData();
@@ -98,9 +150,11 @@ function ImportHero({ parsedData, fileName, formatName }) {
     const entries = parsedData.filter((e) => !e.isGoal);
     if (!entries.length) return null;
     const dates = [...new Set(entries.map((e) => e.date))].sort();
+    const liftTypes = new Set(entries.map((e) => e.liftType));
     return {
       sessionCount: dates.length,
       totalSets: entries.length,
+      exerciseCount: liftTypes.size,
       first: dates[0],
       last: dates[dates.length - 1],
     };
@@ -127,100 +181,82 @@ function ImportHero({ parsedData, fileName, formatName }) {
 
     const results = computeStrengthResults({ age, sex, bodyWeightKg }, liftKgs);
 
-    let bestKey = null;
-    let bestLabel = null;
-    let bestPct = null;
-
+    // Average the Gen Pop percentile across all available SBD lifts
+    const pcts = [];
+    const liftLabels = [];
     for (const [key, label] of [
       ["squat", "Back Squat"],
       ["bench", "Bench Press"],
       ["deadlift", "Deadlift"],
     ]) {
       const pct = results.lifts[key]?.percentiles?.["General Population"];
-      if (pct != null && (bestPct == null || pct > bestPct)) {
-        bestPct = pct;
-        bestKey = key;
-        bestLabel = label;
+      if (pct != null) {
+        pcts.push(pct);
+        liftLabels.push(label);
       }
     }
 
-    if (bestPct == null) return null;
+    if (!pcts.length) return null;
 
-    // Build single-universe percentiles object with just General Population
+    const avgPct = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
+
     return {
-      percentiles: { "General Population": bestPct },
-      liftLabel: bestLabel,
-      pct: bestPct,
+      pct: avgPct,
+      liftCount: pcts.length,
+      liftLabels,
     };
   }, [topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric]);
-
-  const [activeUniverse, setActiveUniverse] = useState("General Population");
 
   if (!stats) return null;
 
   const displayName = clampFileName(fileName);
+  const source = formatName || "your file";
 
   return (
-    <div className="mb-6 w-full">
-      {/* Filename + format badge */}
-      {displayName && (
-        <p className="text-muted-foreground mb-3 text-center text-sm">
-          Imported from{" "}
-          <span className="text-foreground font-medium">{displayName}</span>
-          {formatName && (
-            <Badge variant="secondary" className="ml-2 text-xs">
-              {formatName}
-            </Badge>
-          )}
-        </p>
-      )}
-
-      {/* Stats + Strength Circle side by side */}
-      <div
-        className={`flex flex-col items-center gap-6 ${strength ? "sm:flex-row sm:items-start sm:justify-center" : ""}`}
-      >
-        {/* Stats column */}
-        <div className={`text-center ${strength ? "sm:text-left" : ""}`}>
-          <h3 className="text-3xl font-bold tabular-nums">
-            {stats.sessionCount.toLocaleString()}{" "}
-            <span className="text-muted-foreground text-lg font-normal">
-              sessions
-            </span>
-          </h3>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {stats.totalSets.toLocaleString()} sets from{" "}
-            {getReadableDateShort(stats.first)} to{" "}
-            {getReadableDateShort(stats.last)}
-          </p>
-
-          {strength && (
-            <div className="mt-4">
-              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                Your {strength.liftLabel}
-              </p>
-              <p className="mt-1 text-xl font-bold">
-                Stronger than {strength.pct}% of the general population
-              </p>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {getMotivationalPhrase(strength.pct)}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Single strength circle */}
-        {strength && (
-          <div className="w-40 shrink-0 sm:w-48">
-            <StrengthCirclesChart
-              percentiles={strength.percentiles}
-              activeUniverse={activeUniverse}
-              onUniverseChange={setActiveUniverse}
-              showLegend={false}
-              showTrustLine={false}
-            />
-          </div>
+    <div className="mb-2 w-full">
+      {/* Storytelling headline */}
+      <h3 className="mb-1 text-xl font-bold">
+        Your {source} data is ready to explore
+      </h3>
+      <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
+        We parsed{" "}
+        {displayName && (
+          <>
+            <span className="text-foreground font-medium">{displayName}</span>
+            {" and found "}
+          </>
         )}
-      </div>
+        {!displayName && ""}
+        <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
+        sessions across{" "}
+        <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
+        exercises, spanning{" "}
+        {getReadableDateShort(stats.first)} to {getReadableDateShort(stats.last)}.
+        That&apos;s{" "}
+        <strong className="text-foreground">{stats.totalSets.toLocaleString()}</strong>{" "}
+        sets of work.
+      </p>
+
+      {/* Strength rating row */}
+      {strength && (
+        <div className="bg-muted/40 flex flex-col items-center gap-5 rounded-xl px-6 py-6 sm:flex-row">
+          <div className="w-36 shrink-0 sm:w-40">
+            <SinglePercentileRing percentile={strength.pct} />
+          </div>
+          <div className="text-center sm:text-left">
+            <p className="text-2xl font-bold">
+              Stronger than {strength.pct}% of the general population
+            </p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {getMotivationalPhrase(strength.pct)}
+            </p>
+            <p className="text-muted-foreground mt-2 text-xs">
+              Based on your {strength.liftLabels.join(", ")}{" "}
+              {strength.liftCount === 1 ? "E1RM" : "E1RMs"}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -35,6 +35,7 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { getWeakestLiftHint } from "@/lib/thousand-club";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
@@ -44,6 +45,7 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { DailyHeatmap } from "@/components/home-dashboard/the-long-game-card";
+import { ThousandDonut } from "@/components/thousand-club-donut";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -207,6 +209,42 @@ function ImportHero({ parsedData, fileName, formatName }) {
     };
   }, [topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric]);
 
+  const thousandClub = useMemo(() => {
+    if (!topLiftsByTypeAndReps) return null;
+
+    const toLb = (weight, unitType) =>
+      unitType === "lb" ? weight : weight * 2.2046;
+    const sbdLifts = [
+      ["Back Squat", "squat"],
+      ["Bench Press", "bench"],
+      ["Deadlift", "deadlift"],
+    ];
+    const liftTotals = {};
+
+    for (const [liftType, key] of sbdLifts) {
+      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
+      if (!best?.bestE1RMWeight || !best.unitType) return null;
+      liftTotals[key] = Math.round(toLb(best.bestE1RMWeight, best.unitType));
+    }
+
+    const total = liftTotals.squat + liftTotals.bench + liftTotals.deadlift;
+    const inClub = total >= 1000;
+    const delta = Math.abs(total - 1000);
+    const biggestOpportunity = getWeakestLiftHint(
+      liftTotals.squat,
+      liftTotals.bench,
+      liftTotals.deadlift,
+    );
+
+    return {
+      total,
+      inClub,
+      delta,
+      lifts: liftTotals,
+      biggestOpportunity,
+    };
+  }, [topLiftsByTypeAndReps]);
+
   if (!stats) return null;
 
   const displayName = clampFileName(fileName);
@@ -218,7 +256,7 @@ function ImportHero({ parsedData, fileName, formatName }) {
       <h3 className="mb-1 text-xl font-bold">
         Your {source} data is ready to explore
       </h3>
-      <div className="text-muted-foreground mb-6 space-y-1 text-sm">
+      <div className="text-muted-foreground mb-3 space-y-0.5 text-sm">
         {displayName && (
           <p>
             We parsed{" "}
@@ -252,7 +290,7 @@ function ImportHero({ parsedData, fileName, formatName }) {
 
       {/* Strength rating row */}
       {strength && (
-        <div className="flex flex-col items-center gap-5 sm:flex-row">
+        <div className="flex flex-col items-center gap-2 sm:flex-row">
           <div className="w-36 shrink-0 sm:w-40">
             <SinglePercentileRing percentile={strength.pct} />
           </div>
@@ -260,13 +298,44 @@ function ImportHero({ parsedData, fileName, formatName }) {
             <p className="text-2xl font-bold">
               Stronger than {strength.pct}% of the general population
             </p>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <p className="text-muted-foreground mt-0.5 text-sm">
               {getMotivationalPhrase(strength.pct)}
             </p>
-            <p className="text-muted-foreground mt-2 text-xs">
-              Based on your {strength.liftLabels.join(", ")}{" "}
-              {strength.liftCount === 1 ? "E1RM" : "E1RMs"}
+          </div>
+        </div>
+      )}
+
+      {thousandClub && (
+        <div className="mt-1.5 flex flex-col items-center gap-2 sm:flex-row">
+          <div className="min-w-0 flex-1 text-center sm:pr-2 sm:text-right">
+            <p className="text-2xl font-bold">
+              Your 1000lb Club total is {thousandClub.total} lbs
             </p>
+            <p className="text-muted-foreground mt-0.5 text-sm">
+              {thousandClub.inClub
+                ? `You’re in the 1000lb Club. You’re ${thousandClub.delta} lbs past 1000.`
+                : `You’re ${thousandClub.delta} lbs away from the 1000lb Club.`}
+            </p>
+            {thousandClub.biggestOpportunity && !thousandClub.inClub && (
+              <p className="text-muted-foreground mt-0.5 text-sm">
+                <span className="font-semibold text-foreground">
+                  Biggest opportunity:
+                </span>{" "}
+                Add ~{thousandClub.biggestOpportunity.gapLbs} lb (
+                {Math.round(thousandClub.biggestOpportunity.gapLbs * 0.453592)}{" "}
+                kg) to your{" "}
+                {thousandClub.biggestOpportunity.lift.toLowerCase()}.
+              </p>
+            )}
+          </div>
+          <div className="w-36 shrink-0 sm:w-40">
+            <ThousandDonut
+              total={thousandClub.total}
+              prefersReducedMotion={true}
+              compact={true}
+              href="/1000lb-club-calculator"
+              className="my-0 h-[144px] w-full max-w-[144px] xl:h-[144px] xl:max-w-[144px]"
+            />
           </div>
         </div>
       )}

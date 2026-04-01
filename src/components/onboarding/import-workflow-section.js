@@ -11,6 +11,8 @@ import { useRouter } from "next/router";
 import {
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Dumbbell,
   FileUp,
   Loader2,
@@ -55,6 +57,117 @@ function getReadableDateShort(isoDate) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function MergePreview({ newEntries, isMetric }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const stats = useMemo(() => {
+    if (!newEntries || newEntries.length === 0) return null;
+    const entries = newEntries.filter((e) => !e.isGoal);
+    if (entries.length === 0) return null;
+
+    const dates = [...new Set(entries.map((e) => e.date))].sort();
+    const preferredUnit = isMetric ? "kg" : "lb";
+
+    const liftMap = {};
+    for (const e of entries) {
+      if (!e.weight || e.weight <= 0 || !e.reps || e.reps <= 0) continue;
+      if (!liftMap[e.liftType]) {
+        liftMap[e.liftType] = { count: 0, bestWeight: 0, bestSet: null };
+      }
+      liftMap[e.liftType].count++;
+      if (e.weight > liftMap[e.liftType].bestWeight) {
+        liftMap[e.liftType].bestWeight = e.weight;
+        liftMap[e.liftType].bestSet = e;
+      }
+    }
+
+    const topLifts = Object.entries(liftMap)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 6)
+      .map(([name, { count, bestSet }]) => {
+        const needsConversion = bestSet.unitType !== preferredUnit;
+        const displayWeight = needsConversion
+          ? Math.round(
+              (preferredUnit === "kg"
+                ? bestSet.weight / 2.2046
+                : bestSet.weight * 2.2046) * 10,
+            ) / 10
+          : bestSet.weight;
+        return {
+          name,
+          count,
+          weight: displayWeight,
+          reps: bestSet.reps,
+          unitType: preferredUnit,
+        };
+      });
+
+    return {
+      sessionCount: dates.length,
+      totalSets: entries.length,
+      dateRange: { first: dates[0], last: dates[dates.length - 1] },
+      liftTypeCount: Object.keys(liftMap).length,
+      topLifts,
+    };
+  }, [newEntries, isMetric]);
+
+  if (!stats) return null;
+
+  return (
+    <div className="w-full max-w-md">
+      <button
+        className="text-muted-foreground hover:text-foreground flex w-full items-center justify-center gap-1 text-xs transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
+        {expanded ? (
+          <ChevronUp className="h-3.5 w-3.5" />
+        ) : (
+          <ChevronDown className="h-3.5 w-3.5" />
+        )}
+        {expanded ? "Hide" : "Preview"}: {stats.sessionCount} sessions,{" "}
+        {stats.liftTypeCount} exercises, {getReadableDateShort(stats.dateRange.first)}{" "}
+        to {getReadableDateShort(stats.dateRange.last)}
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-1.5 rounded-md border p-3">
+          {stats.topLifts.map((lift) => {
+            const svgPath = getLiftSvgPath(lift.name);
+            return (
+              <div
+                key={lift.name}
+                className="flex items-center justify-between text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  {svgPath && (
+                    <Image
+                      src={svgPath}
+                      alt={lift.name}
+                      width={20}
+                      height={20}
+                      className="shrink-0 dark:invert"
+                    />
+                  )}
+                  <span className="truncate">{lift.name}</span>
+                </div>
+                <span className="text-muted-foreground shrink-0 pl-2 text-xs">
+                  {lift.count} sets &middot; best {lift.reps}x{lift.weight}
+                  {lift.unitType}
+                </span>
+              </div>
+            );
+          })}
+          {stats.liftTypeCount > 6 && (
+            <p className="text-muted-foreground text-xs">
+              + {stats.liftTypeCount - 6} more exercises
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ImportedDataOverview({ parsedData }) {
@@ -332,6 +445,7 @@ export function ImportWorkflowSection({
     sheetParsedData,
   } = useUserLiftingData();
 
+  const { isMetric } = useAthleteBio();
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -563,16 +677,24 @@ export function ImportWorkflowSection({
                           : `Merge this data into your linked Strength Journeys sheet.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}`}
                     </p>
                     {newEntries.length > 0 ? (
-                      <Button
-                        onClick={handleMerge}
-                        className="w-full gap-2"
-                        disabled={isSheetComparisonPending}
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                        {isSheetComparisonPending
-                          ? "Checking linked sheet..."
-                          : `Merge ${newEntries.length} ${newEntries.length === 1 ? "entry" : "entries"} into linked sheet`}
-                      </Button>
+                      <>
+                        {!isSheetComparisonPending && (
+                          <MergePreview
+                            newEntries={newEntries}
+                            isMetric={isMetric}
+                          />
+                        )}
+                        <Button
+                          onClick={handleMerge}
+                          className="w-full gap-2"
+                          disabled={isSheetComparisonPending}
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                          {isSheetComparisonPending
+                            ? "Checking linked sheet..."
+                            : `Merge ${newEntries.length} ${newEntries.length === 1 ? "entry" : "entries"} into linked sheet`}
+                        </Button>
+                      </>
                     ) : (
                       <p className="text-muted-foreground text-xs">
                         No merge is needed. You can clear this preview or import

@@ -290,7 +290,7 @@ function ImportHero({ parsedData, fileName, formatName }) {
 
       {/* Strength rating row */}
       {strength && (
-        <div className="flex flex-col items-center gap-5 sm:flex-row">
+        <div className="flex flex-col items-center gap-4 sm:flex-row">
           <div className="w-36 shrink-0 sm:w-40">
             <SinglePercentileRing percentile={strength.pct} />
           </div>
@@ -301,8 +301,8 @@ function ImportHero({ parsedData, fileName, formatName }) {
             <p className="text-muted-foreground mt-1 text-sm">
               {getMotivationalPhrase(strength.pct)}
             </p>
-            <p className="text-muted-foreground mt-2 text-xs">
-              Based on your {strength.liftLabels.join(", ")}{" "}
+            <p className="text-muted-foreground mt-1.5 text-xs">
+              From your {strength.liftLabels.join(", ")}{" "}
               {strength.liftCount === 1 ? "E1RM" : "E1RMs"}
             </p>
           </div>
@@ -310,38 +310,37 @@ function ImportHero({ parsedData, fileName, formatName }) {
       )}
 
       {thousandClub && (
-        <div className="mt-5 rounded-xl border bg-muted/10 px-4 py-3 sm:px-5 sm:py-3">
-          <div className="grid items-center gap-3 md:grid-cols-[minmax(0,1fr)_160px]">
-            <div className="min-w-0 text-center md:text-left">
-              <p className="text-xl font-bold sm:text-2xl">
-                Your 1000lb Club total is {thousandClub.total} lbs
-              </p>
+        <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row">
+          <div className="min-w-0 flex-1 text-center sm:text-left">
+            <p className="text-2xl font-bold">
+              Your 1000lb Club total is {thousandClub.total} lbs
+            </p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {thousandClub.inClub
+                ? `You’re in the 1000lb Club. You’re ${thousandClub.delta} lbs past 1000.`
+                : `You’re ${thousandClub.delta} lbs away from the 1000lb Club.`}
+            </p>
+            {thousandClub.biggestOpportunity && !thousandClub.inClub && (
               <p className="text-muted-foreground mt-1 text-sm">
-                {thousandClub.inClub
-                  ? `You’re in the 1000lb Club. You’re ${thousandClub.delta} lbs past 1000.`
-                  : `You’re ${thousandClub.delta} lbs away from the 1000lb Club.`}
+                Biggest opportunity: Add ~
+                {thousandClub.biggestOpportunity.gapLbs} lb to your{" "}
+                {thousandClub.biggestOpportunity.lift.toLowerCase()}.
               </p>
-              {thousandClub.biggestOpportunity && !thousandClub.inClub && (
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Biggest opportunity: Add ~
-                  {thousandClub.biggestOpportunity.gapLbs} lb to your{" "}
-                  {thousandClub.biggestOpportunity.lift.toLowerCase()}.
-                </p>
-              )}
-              <p className="text-muted-foreground mt-2 text-xs">
-                Based on E1RMs of Back Squat {thousandClub.lifts.squat} lbs,
-                Bench Press {thousandClub.lifts.bench} lbs, and Deadlift{" "}
-                {thousandClub.lifts.deadlift} lbs.
-              </p>
-            </div>
-            <div className="mx-auto w-full max-w-[160px] shrink-0 md:mx-0">
-              <ThousandDonut
-                total={thousandClub.total}
-                prefersReducedMotion={true}
-                compact={true}
-                className="my-0 h-[160px] max-w-[160px]"
-              />
-            </div>
+            )}
+            <p className="text-muted-foreground mt-1.5 text-xs">
+              From E1RMs of Back Squat {thousandClub.lifts.squat} lbs, Bench
+              Press {thousandClub.lifts.bench} lbs, and Deadlift{" "}
+              {thousandClub.lifts.deadlift} lbs.
+            </p>
+          </div>
+          <div className="w-36 shrink-0 sm:w-40">
+            <ThousandDonut
+              total={thousandClub.total}
+              prefersReducedMotion={true}
+              compact={true}
+              href="/1000lb-club-calculator"
+              className="my-0 h-auto w-full"
+            />
           </div>
         </div>
       )}

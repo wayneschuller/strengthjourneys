@@ -1,5 +1,6 @@
 
 import { useState, useRef } from "react";
+import Link from "next/link";
 import { useReadLocalStorage, useResizeObserver } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -255,82 +256,88 @@ const RepRangeDetailView = ({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {repRange.map((lift, liftIndex) => (
-          <Card
+          <Link
             key={liftIndex}
-            className={cn(
-              liftIndex === 0 && "ring-2 ring-foreground/50"
-            )}
+            href={`/log?date=${lift.date}`}
+            className="block transition-opacity hover:opacity-80"
           >
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                {/* Rank and Weight */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-lg font-semibold">
-                        {getCelebrationEmoji(liftIndex)} #{liftIndex + 1}
-                      </span>
-                      <span className="text-xl font-bold text-foreground">
-                        {repCount}@{getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).value}
-                        {getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).unit}
-                      </span>
-                      {bioForDateRating && (
-                        <LiftStrengthLevel
-                          liftType={liftType}
-                          workouts={[
-                            {
-                              reps: repCount,
-                              weight: lift.weight,
-                              unitType: lift.unitType,
-                            },
-                          ]}
-                          standards={standards}
-                          e1rmFormula={e1rmFormula}
-                          sessionDate={lift.date}
-                          age={bioForDateRating.age}
-                          bodyWeight={bioForDateRating.bodyWeight}
-                          sex={bioForDateRating.sex}
-                          isMetric={bioForDateRating.isMetric}
-                          inline
-                          asBadge
-                        />
-                      )}
-                      {lift.URL && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <a
-                                href={lift.URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-primary hover:text-primary/80 transition-all duration-200 hover:scale-110"
-                                aria-label="Open video in new tab"
-                              >
-                                <Play className="h-5 w-5" />
-                              </a>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Open video in new tab</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {getReadableDateString(lift.date)}
+            <Card
+              className={cn(
+                liftIndex === 0 && "ring-2 ring-foreground/50",
+                "h-full",
+              )}
+            >
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  {/* Rank and Weight */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-lg font-semibold">
+                          {getCelebrationEmoji(liftIndex)} #{liftIndex + 1}
+                        </span>
+                        <span className="text-xl font-bold text-foreground">
+                          {repCount}@{getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).value}
+                          {getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).unit}
+                        </span>
+                        {bioForDateRating && (
+                          <LiftStrengthLevel
+                            liftType={liftType}
+                            workouts={[
+                              {
+                                reps: repCount,
+                                weight: lift.weight,
+                                unitType: lift.unitType,
+                              },
+                            ]}
+                            standards={standards}
+                            e1rmFormula={e1rmFormula}
+                            sessionDate={lift.date}
+                            age={bioForDateRating.age}
+                            bodyWeight={bioForDateRating.bodyWeight}
+                            sex={bioForDateRating.sex}
+                            isMetric={bioForDateRating.isMetric}
+                            inline
+                            asBadge
+                          />
+                        )}
+                        {lift.URL && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <a
+                                  href={lift.URL}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-primary hover:text-primary/80 transition-all duration-200 hover:scale-110"
+                                  aria-label="Open video in new tab"
+                                >
+                                  <Play className="h-5 w-5" />
+                                </a>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Open video in new tab</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {getReadableDateString(lift.date)}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Notes */}
+                  {lift.notes && (
+                    <TruncatedText text={lift.notes} className="mt-2" />
+                  )}
+
                 </div>
-
-                {/* Notes */}
-                {lift.notes && (
-                  <TruncatedText text={lift.notes} className="mt-2" />
-                )}
-
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>

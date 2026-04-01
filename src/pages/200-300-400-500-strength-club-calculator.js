@@ -636,7 +636,7 @@ function StrengthClubMain({ relatedArticles }) {
               </Link>
               {" · "}
               <Link
-                href={BIG_FOUR_URLS.Deadlift}
+                href={getLiftDetailUrl("Deadlift")}
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
                 Deadlift

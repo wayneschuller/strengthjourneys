@@ -114,6 +114,20 @@ All lifting analysis is client-side. The server does store limited operational
 metadata in KV for onboarding, recovery, and support visibility, but not the
 user's analyzed training state.
 
+### Sanity CMS
+
+- Blog content lives in the sibling repo `/home/schuller/hacking/strength-journeys-sanity-studio`, not in this app repo
+- The front-end reads Sanity content via `src/lib/sanity-io.js`
+- Verified studio target: project `czypnl5j`, dataset `production`
+- For browsing or writing articles, prefer running Sanity CLI commands from the sibling studio repo because that environment may already have authenticated local access even when this app repo only has public read config
+- A quick read-access check that worked from the studio repo was:
+
+```
+npx sanity documents query '*[_type == "post"][0...3]{_id,title,publishedAt}'
+```
+
+- If an agent needs to create or edit content programmatically, do it from the sibling studio repo first and treat the app repo as the rendering client unless the user explicitly wants front-end integration changes too
+
 ### Global Provider Order
 
 Defined in `src/pages/_app.js`, nested in this order:

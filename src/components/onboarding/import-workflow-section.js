@@ -44,6 +44,7 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { DailyHeatmap } from "@/components/home-dashboard/the-long-game-card";
+import { ThousandDonut } from "@/components/thousand-club-donut";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -207,6 +208,36 @@ function ImportHero({ parsedData, fileName, formatName }) {
     };
   }, [topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric]);
 
+  const thousandClub = useMemo(() => {
+    if (!topLiftsByTypeAndReps) return null;
+
+    const toLb = (weight, unitType) =>
+      unitType === "lb" ? weight : weight * 2.2046;
+    const sbdLifts = [
+      ["Back Squat", "squat"],
+      ["Bench Press", "bench"],
+      ["Deadlift", "deadlift"],
+    ];
+    const liftTotals = {};
+
+    for (const [liftType, key] of sbdLifts) {
+      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
+      if (!best?.bestE1RMWeight || !best.unitType) return null;
+      liftTotals[key] = Math.round(toLb(best.bestE1RMWeight, best.unitType));
+    }
+
+    const total = liftTotals.squat + liftTotals.bench + liftTotals.deadlift;
+    const inClub = total >= 1000;
+    const delta = Math.abs(total - 1000);
+
+    return {
+      total,
+      inClub,
+      delta,
+      lifts: liftTotals,
+    };
+  }, [topLiftsByTypeAndReps]);
+
   if (!stats) return null;
 
   const displayName = clampFileName(fileName);
@@ -267,6 +298,35 @@ function ImportHero({ parsedData, fileName, formatName }) {
               Based on your {strength.liftLabels.join(", ")}{" "}
               {strength.liftCount === 1 ? "E1RM" : "E1RMs"}
             </p>
+          </div>
+        </div>
+      )}
+
+      {thousandClub && (
+        <div className="mt-6 rounded-xl border bg-muted/20 p-4 sm:p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0 flex-1 text-center md:text-left">
+              <p className="text-2xl font-bold">
+                Your 1000lb Club total is {thousandClub.total} lbs
+              </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {thousandClub.inClub
+                  ? `You’re in the 1000lb Club. You’re ${thousandClub.delta} lbs past 1000.`
+                  : `You’re ${thousandClub.delta} lbs away from the 1000lb Club.`}
+              </p>
+              <p className="text-muted-foreground mt-2 text-xs">
+                Based on E1RMs of Back Squat {thousandClub.lifts.squat} lbs,
+                Bench Press {thousandClub.lifts.bench} lbs, and Deadlift{" "}
+                {thousandClub.lifts.deadlift} lbs.
+              </p>
+            </div>
+            <div className="mx-auto w-full max-w-[220px] shrink-0 md:mx-0">
+              <ThousandDonut
+                total={thousandClub.total}
+                prefersReducedMotion={true}
+                className="my-0 h-[180px] max-w-[220px]"
+              />
+            </div>
           </div>
         </div>
       )}

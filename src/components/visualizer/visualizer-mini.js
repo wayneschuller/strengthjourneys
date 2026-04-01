@@ -206,7 +206,11 @@ export function VisualizerMini({ liftType }) {
 
   const strengthRanges = standards?.[liftType] || null;
 
-  const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
+  // The chart ceiling must cover the data AND the highest visible strength
+  // standard so reference lines don't get clipped.  The old hardcoded
+  // Math.max(100, ...) crushed lighter lifts into the bottom of the chart.
+  const dataBasedMax = weightMax * (width > 1280 ? 1.3 : 1.5);
+  const roundedMaxWeightValue = dataBasedMax;
 
   // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = { [liftType]: { label: liftType } };
@@ -219,7 +223,15 @@ export function VisualizerMini({ liftType }) {
     }
   };
 
-  let tickJump = isMetric ? 50 : 100; // 50 for kg, 100 for lb
+  // Dynamic tick spacing based on the data range so lighter lifts get
+  // a readable Y-axis instead of 50kg jumps that compress everything.
+  const dataRange = roundedMaxWeightValue - 0; // min is 0 in this chart
+  let tickJump;
+  if (dataRange <= 30) tickJump = 5;
+  else if (dataRange <= 60) tickJump = 10;
+  else if (dataRange <= 150) tickJump = 20;
+  else if (dataRange <= 300) tickJump = isMetric ? 50 : 50;
+  else tickJump = isMetric ? 50 : 100;
 
   // FIXME: We need more dynamic x-axis ticks
   const formatXAxisDateString = (tickItem) => {
@@ -254,6 +266,12 @@ export function VisualizerMini({ liftType }) {
   const visibleStandards = orderedStandards.slice(0, visibleStandardCount);
   // Bands: one per zone the user has passed through (not including the next target's zone)
   const visibleBandCount = nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex;
+
+  // Ensure the chart ceiling covers the highest visible standard (with padding)
+  const highestVisibleStandard = visibleStandards.length > 0
+    ? visibleStandards[visibleStandards.length - 1].val
+    : 0;
+  const effectiveMax = Math.max(roundedMaxWeightValue, highestVisibleStandard * 1.15);
 
   return (
     <Card className="">
@@ -343,16 +361,15 @@ export function VisualizerMini({ liftType }) {
                   tickFormatter={formatXAxisDateString}
                   // interval="equidistantPreserveStart"
                 />
-                {/* FIXME: fix the domain height to always incorporate the height of elite standard */}
                 <YAxis
-                  domain={[0, Math.max(100, roundedMaxWeightValue)]}
+                  domain={[0, effectiveMax]}
                   hide={width < 1280}
                   axisLine={false}
                   tickFormatter={
                     (value) => `${value}${chartData[0]?.displayUnit || ""}` // Default to first item's displayUnit
                   }
                   ticks={Array.from(
-                    { length: Math.ceil(roundedMaxWeightValue / tickJump) },
+                    { length: Math.ceil(effectiveMax / tickJump) + 1 },
                     (v, i) => i * tickJump,
                   )}
                   // allowDataOverflow

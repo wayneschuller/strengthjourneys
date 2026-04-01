@@ -321,8 +321,9 @@ function ImportHero({ parsedData, fileName, formatName }) {
                 <span className="font-semibold text-foreground">
                   Biggest opportunity:
                 </span>{" "}
-                Add ~
-                {thousandClub.biggestOpportunity.gapLbs} lb to your{" "}
+                Add ~{thousandClub.biggestOpportunity.gapLbs} lb (
+                {Math.round(thousandClub.biggestOpportunity.gapLbs * 0.453592)}{" "}
+                kg) to your{" "}
                 {thousandClub.biggestOpportunity.lift.toLowerCase()}.
               </p>
             )}

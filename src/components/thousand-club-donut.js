@@ -125,18 +125,22 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "font-bold text-green-500",
-                  compact ? "text-[1.45rem] leading-none" : "text-3xl xl:text-4xl",
+                  compact ? "text-[1.45rem] leading-[0.95]" : "text-3xl xl:text-4xl",
                 )}
               >
                 {total}
-                <span className={cn(compact ? "ml-1 text-base" : "ml-1 text-[0.75em]")}>
+                <span
+                  className={cn(
+                    compact ? "ml-1 text-base font-semibold" : "ml-1 text-[0.75em]",
+                  )}
+                >
                   lbs
                 </span>
               </div>
               <div
                 className={cn(
                   "font-semibold text-green-400",
-                  compact ? "mt-1 text-[10px] leading-tight" : "text-sm xl:text-base",
+                  compact ? "mt-2 text-[10px] leading-tight" : "text-sm xl:text-base",
                 )}
               >
                 1000lb Club!
@@ -147,18 +151,22 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "font-bold leading-none",
-                  compact ? "text-[1.45rem]" : "text-2xl xl:text-4xl",
+                  compact ? "text-[1.45rem] leading-[0.95]" : "text-2xl xl:text-4xl",
                 )}
               >
                 {total}
-                <span className={cn(compact ? "ml-1 text-base" : "ml-1 text-[0.75em]")}>
+                <span
+                  className={cn(
+                    compact ? "ml-1 text-base font-semibold" : "ml-1 text-[0.75em]",
+                  )}
+                >
                   lbs
                 </span>
               </div>
               <div
                 className={cn(
                   "text-muted-foreground",
-                  compact ? "mt-1 text-[10px] leading-tight" : "text-xs xl:text-sm",
+                  compact ? "mt-3 text-[10px] leading-none" : "text-xs xl:text-sm",
                 )}
               >
                 of {target}
@@ -166,7 +174,7 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "text-muted-foreground",
-                  compact ? "mt-1 text-sm font-medium leading-none" : "text-sm xl:text-lg",
+                  compact ? "mt-2 text-sm font-medium leading-none" : "text-sm xl:text-lg",
                 )}
               >
                 {percent}%

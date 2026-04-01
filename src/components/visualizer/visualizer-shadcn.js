@@ -205,7 +205,15 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const tooltipDebounceMs = Math.min(50, Math.floor(chartData.length / 12));
   devLog(`VisualizerShadcn: ${chartData.length} chart data points, debounceMs=${tooltipDebounceMs}`);
 
-  let tickJump = isMetric ? 50 : 100; // 50 for kg, 100 for lb
+  // Dynamic tick spacing based on the data range so lighter lifts get
+  // a readable Y-axis instead of 50kg jumps that compress everything.
+  const dataRange = roundedMaxWeightValue;
+  let tickJump;
+  if (dataRange <= 30) tickJump = 5;
+  else if (dataRange <= 60) tickJump = 10;
+  else if (dataRange <= 150) tickJump = 20;
+  else if (dataRange <= 300) tickJump = isMetric ? 50 : 50;
+  else tickJump = isMetric ? 50 : 100;
 
   // FIXME: We need more dynamic x-axis ticks
   const formatXAxisDateString = (tickItem) => {
@@ -271,7 +279,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
             <YAxis
               domain={[
                 Math.floor(weightMin / tickJump) * tickJump,
-                Math.max(100, roundedMaxWeightValue),
+                roundedMaxWeightValue,
               ]}
               hide={width < 1280}
               axisLine={false}
@@ -279,7 +287,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 (value) => `${value}${chartData[0]?.displayUnit || ""}` // Use displayUnit from processed chart data
               }
               ticks={Array.from(
-                { length: Math.ceil(roundedMaxWeightValue / tickJump) },
+                { length: Math.ceil(roundedMaxWeightValue / tickJump) + 1 },
                 (v, i) => i * tickJump,
               )}
               // allowDataOverflow

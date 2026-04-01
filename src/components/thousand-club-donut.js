@@ -107,7 +107,7 @@ export function ThousandDonut({
         <motion.div
           className={cn(
             "text-center tabular-nums",
-            compact ? "-mt-1" : "",
+            compact ? "mt-1" : "",
           )}
           animate={
             prefersReducedMotion

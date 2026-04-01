@@ -10,6 +10,23 @@ export const bigFourURLs = {
 };
 
 /**
+ * Returns the best detail-page URL for any lift type.
+ * Big four lifts get their dedicated progress guide; everything else
+ * goes to the lift explorer with the lift pre-selected.
+ *
+ * @param {string} liftType - e.g. "Back Squat", "Front Squat"
+ * @param {string} [hash] - Optional hash fragment (e.g. "#lift-prs", "#tonnage-chart")
+ * @returns {string|null} URL string, or null if liftType is falsy.
+ */
+export function getLiftDetailUrl(liftType, hash = "") {
+  if (!liftType) return null;
+  const base =
+    bigFourURLs[liftType] ||
+    `/lift-explorer?liftType=${encodeURIComponent(liftType)}`;
+  return hash ? `${base}${hash}` : base;
+}
+
+/**
  * Renders a small colored square followed by the lift type name. For the four
  * main barbell lifts the entire element is wrapped in a link to its insight page.
  *
@@ -32,9 +49,9 @@ export const LiftTypeIndicator = ({ liftType, className = "" }) => {
     </div>
   );
 
-  // Conditionally wrap content in a Link for big four lifts
-  return bigFourURLs[liftType] ? (
-    <Link href={bigFourURLs[liftType]} className="underline transition-opacity hover:opacity-70">
+  const href = getLiftDetailUrl(liftType);
+  return href ? (
+    <Link href={href} className="underline transition-opacity hover:opacity-70">
       {content}
     </Link>
   ) : (

@@ -4,13 +4,7 @@
  */
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-
-const BIG_FOUR_URLS = {
-  "Back Squat": "/progress-guide/squat",
-  "Bench Press": "/progress-guide/bench-press",
-  Deadlift: "/progress-guide/deadlift",
-  "Strict Press": "/progress-guide/strict-press",
-};
+import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 
 /**
  * Tabular list of top lifts with optional aggregate stats.
@@ -54,17 +48,13 @@ export function TopLiftsTable({
                     className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
                     style={{ background: item.color }}
                   />
-                  {BIG_FOUR_URLS[item.liftType] ? (
-                    <Link
-                      href={BIG_FOUR_URLS[item.liftType]}
-                      className="truncate text-sm underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {item.liftType}
-                    </Link>
-                  ) : (
-                    <span className="truncate text-sm">{item.liftType}</span>
-                  )}
+                  <Link
+                    href={getLiftDetailUrl(item.liftType)}
+                    className="truncate text-sm underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {item.liftType}
+                  </Link>
                 </div>
               </td>
               {showStats && (

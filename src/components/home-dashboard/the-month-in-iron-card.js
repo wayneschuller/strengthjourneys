@@ -42,14 +42,8 @@ import {
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
+import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";
-
-const BIG_FOUR_INSIGHT_HREFS = {
-  "Back Squat": "/progress-guide/squat",
-  "Bench Press": "/progress-guide/bench-press",
-  Deadlift: "/progress-guide/deadlift",
-  "Strict Press": "/progress-guide/strict-press",
-};
 
 // ─── Main component ────────────────────────────────────────────────────────
 
@@ -657,7 +651,7 @@ function WeekPlanSession({ title, items }) {
           ) : (
             <p key={`${title}-${item.liftType}-${item.prescription}`}>
               <Link
-                href={BIG_FOUR_INSIGHT_HREFS[item.liftType]}
+                href={getLiftDetailUrl(item.liftType)}
                 className="font-medium text-primary hover:underline"
               >
                 {item.liftType}
@@ -677,7 +671,7 @@ function WeekPlanLiftSession({ title, lifts }) {
       <p className="mb-3 text-sm font-semibold text-foreground">{title}</p>
       <div className="space-y-3">
         {lifts.map(({ liftType, prescription }) => {
-          const href = BIG_FOUR_INSIGHT_HREFS[liftType];
+          const href = getLiftDetailUrl(liftType);
 
           return (
             <div key={`${title}-${liftType}`} className="flex items-center gap-3">

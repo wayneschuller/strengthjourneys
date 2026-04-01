@@ -43,6 +43,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { InspirationCard } from "@/components/log/inspiration-card";
 import { DevActivityMonitorPanel } from "@/components/dev-activity-monitor";
+import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -109,9 +110,6 @@ const BIG_FOUR = [
     slug: "progress-guide/strict-press",
   },
 ];
-const BIG_FOUR_INSIGHT_URLS = Object.fromEntries(
-  BIG_FOUR.map((lift) => [lift.name, `/${lift.slug}`]),
-);
 
 const COACHED_LIFTS = [
   {
@@ -4359,16 +4357,12 @@ function UnitLabel({ unitType, mismatch }) {
 }
 
 function getLogPRBadgeHref(liftType) {
-  if (!liftType) return null;
-  if (BIG_FOUR_INSIGHT_URLS[liftType])
-    return `${BIG_FOUR_INSIGHT_URLS[liftType]}#lift-prs`;
-  return `/lift-explorer?liftType=${encodeURIComponent(liftType)}#lift-prs`;
+  return getLiftDetailUrl(liftType, "#lift-prs");
 }
 
 function getLogPRBadgeTooltip(liftType) {
   if (!liftType) return "Open lift details";
-  if (BIG_FOUR_INSIGHT_URLS[liftType]) return `Open ${liftType} insights`;
-  return `Open Lift Explorer for ${liftType}`;
+  return `Open ${liftType} details`;
 }
 
 /**

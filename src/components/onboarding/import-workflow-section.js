@@ -33,6 +33,7 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
@@ -45,13 +46,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
-const BIG_FOUR_PROGRESS_URLS = {
-  "Back Squat": "/progress-guide/squat",
-  "Bench Press": "/progress-guide/bench-press",
-  Deadlift: "/progress-guide/deadlift",
-  "Strict Press": "/progress-guide/strict-press",
-};
 
 function getReadableDateShort(isoDate) {
   if (!isoDate) return "";
@@ -251,9 +245,7 @@ function ImportedDataOverview({ parsedData }) {
                   : null;
 
               const svgPath = getLiftSvgPath(lift.name);
-              const progressUrl = BIG_FOUR_PROGRESS_URLS[lift.name];
-              const liftExplorerUrl = `/lift-explorer?liftType=${encodeURIComponent(lift.name)}`;
-              const liftUrl = progressUrl || liftExplorerUrl;
+              const liftUrl = getLiftDetailUrl(lift.name);
               const strengthLevelUrl = STRENGTH_STANDARDS_LINKS[lift.name];
 
               return (

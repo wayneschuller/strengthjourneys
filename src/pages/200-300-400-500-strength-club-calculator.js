@@ -43,12 +43,7 @@ import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 
-const BIG_FOUR_URLS = {
-  "Strict Press": "/progress-guide/strict-press",
-  "Bench Press": "/progress-guide/bench-press",
-  "Back Squat": "/progress-guide/squat",
-  Deadlift: "/progress-guide/deadlift",
-};
+import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 
 const LIFT_GRAPHICS = {
   "Strict Press": "/strict_press.svg",
@@ -620,21 +615,21 @@ function StrengthClubMain({ relatedArticles }) {
               </Link>
               . Explore:{" "}
               <Link
-                href={BIG_FOUR_URLS["Strict Press"]}
+                href={getLiftDetailUrl("Strict Press")}
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
                 Press
               </Link>
               {" · "}
               <Link
-                href={BIG_FOUR_URLS["Bench Press"]}
+                href={getLiftDetailUrl("Bench Press")}
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
                 Bench
               </Link>
               {" · "}
               <Link
-                href={BIG_FOUR_URLS["Back Squat"]}
+                href={getLiftDetailUrl("Back Squat")}
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
                 Squat
@@ -815,7 +810,7 @@ function MilestoneCard({
         {/* Header: target number + lift name + SVG */}
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={BIG_FOUR_URLS[liftType]} className="flex-shrink-0">
+            <Link href={getLiftDetailUrl(liftType)} className="flex-shrink-0">
               <motion.img
                 src={LIFT_GRAPHICS[liftType]}
                 alt={`${liftType} illustration`}
@@ -843,7 +838,7 @@ function MilestoneCard({
                 </span>
               </div>
               <Link
-                href={BIG_FOUR_URLS[liftType]}
+                href={getLiftDetailUrl(liftType)}
                 className="text-muted-foreground text-sm font-semibold underline decoration-dotted underline-offset-2 hover:text-blue-600"
               >
                 {liftType}

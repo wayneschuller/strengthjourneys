@@ -93,7 +93,7 @@ function parseResultString(resultText, fallbackUnitType) {
 //
 // Anything that doesn't match (text like "poor form", "Failed 105",
 // "single sets", "In-house comp") is silently skipped.
-function parseWarmupNotes(notesText, fallbackUnitType) {
+function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps) {
   if (!notesText) return [];
 
   const text = String(notesText).trim();
@@ -145,7 +145,7 @@ function parseWarmupNotes(notesText, fallbackUnitType) {
     if (bareWeightMatch) {
       const weight = parseNumber(bareWeightMatch[1]);
       if (weight && weight > 0) {
-        results.push({ reps: 1, weight, unitType: fallbackUnitType });
+        results.push({ reps: fallbackReps || 1, weight, unitType: fallbackUnitType });
         continue;
       }
     }
@@ -273,7 +273,7 @@ export function parseWodifyData(data) {
     if (!mainSets) continue;
 
     // Parse warmup/buildup sets from the Notes column (added before top set)
-    const warmups = parseWarmupNotes(rawNotes, mainUnitType);
+    const warmups = parseWarmupNotes(rawNotes, mainUnitType, mainSets.reps);
     for (const warmup of warmups) {
       parsedData.push({
         date,

@@ -561,7 +561,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         entries: apiEntries,
       }, {
         source: "preview_banner_merge",
-        formatName: importedFormatName,
+        formatName,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Merge failed");
@@ -591,6 +591,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     sheetInfo,
     isSheetComparisonPending,
     clearImportedData,
+    formatName,
     mutate,
     toast,
   ]);

@@ -458,7 +458,7 @@ function ImportedDataOverview({ parsedData, label }) {
     const startYear = new Date(stats.dateRange.first).getFullYear();
     const endYear = new Date(stats.dateRange.last).getFullYear();
     const intervals = [];
-    for (let year = endYear; year >= startYear; year--) {
+    for (let year = startYear; year <= endYear; year++) {
       intervals.push({
         startDate: `${year}-01-01`,
         endDate: `${year}-12-31`,

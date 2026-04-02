@@ -265,7 +265,8 @@ export default async function handler(req, res) {
 
       // Build sheet rows (sparse encoding)
       const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      const importNote = `Strength Journeys import ${today}`;
+      const sourceName = formatName && formatName !== "unknown" ? formatName : "External";
+      const importTag = `(${sourceName} import to Strength Journeys ${today})`;
       const rows = [];
       for (let li = 0; li < liftOrder.length; li++) {
         const liftType = liftOrder[li];
@@ -274,12 +275,15 @@ export default async function handler(req, res) {
           const s = sets[si];
           const isSessionAnchor = li === 0 && si === 0;
           const isLiftAnchor = si === 0 && li > 0;
+          const notes = isSessionAnchor
+            ? [s.notes, importTag].filter(Boolean).join(" ")
+            : s.notes || "";
           rows.push([
             isSessionAnchor ? date : "",
             isSessionAnchor || isLiftAnchor ? liftType : "",
             String(s.reps || 1),
             `${s.weight}${s.unitType || "kg"}`,
-            importNote,
+            notes,
             "", // url
           ]);
         }

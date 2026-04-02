@@ -554,13 +554,14 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         reps: e.reps,
         weight: e.weight,
         unitType: e.unitType || "kg",
+        ...(e.notes ? { notes: e.notes } : {}),
       }));
       const res = await postImportHistory({
         ssid: sheetInfo.ssid,
         entries: apiEntries,
       }, {
         source: "preview_banner_merge",
-        formatName: importedFormatName,
+        formatName,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Merge failed");
@@ -590,6 +591,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     sheetInfo,
     isSheetComparisonPending,
     clearImportedData,
+    formatName,
     mutate,
     toast,
   ]);

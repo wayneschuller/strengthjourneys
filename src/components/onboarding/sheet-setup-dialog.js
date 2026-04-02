@@ -183,6 +183,7 @@ async function writeEntriesToSheet(targetSsid, entries, formatName) {
     reps: entry.reps,
     weight: entry.weight,
     unitType: entry.unitType || "kg",
+    ...(entry.notes ? { notes: entry.notes } : {}),
   }));
 
   const response = await postImportHistory(
@@ -1105,6 +1106,7 @@ export function SheetSetupDialog() {
             reps: e.reps,
             weight: e.weight,
             unitType: e.unitType || "kg",
+            ...(e.notes ? { notes: e.notes } : {}),
           }));
           const writeRes = await postImportHistory(
             {

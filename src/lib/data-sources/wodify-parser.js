@@ -272,21 +272,7 @@ export function parseWodifyData(data) {
 
     if (!mainSets) continue;
 
-    // Add the main (top) set entries
-    parsedData.push(
-      ...createSetEntries({
-        date,
-        liftType,
-        rawLiftType,
-        sets: mainSets.sets,
-        reps: mainSets.reps,
-        weight: mainSets.weight,
-        unitType: mainSets.unitType,
-        notes,
-      }),
-    );
-
-    // Parse warmup/buildup sets from the Notes column
+    // Parse warmup/buildup sets from the Notes column (added before top set)
     const warmups = parseWarmupNotes(rawNotes, mainUnitType);
     for (const warmup of warmups) {
       parsedData.push({
@@ -299,6 +285,20 @@ export function parseWodifyData(data) {
         notes: buildNotes("Warmup (from Wodify notes)", rawNotes),
       });
     }
+
+    // Add the main (top) set entries last
+    parsedData.push(
+      ...createSetEntries({
+        date,
+        liftType,
+        rawLiftType,
+        sets: mainSets.sets,
+        reps: mainSets.reps,
+        weight: mainSets.weight,
+        unitType: mainSets.unitType,
+        notes,
+      }),
+    );
   }
 
   parsedData.sort((a, b) => a.date.localeCompare(b.date));

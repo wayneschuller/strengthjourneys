@@ -11,10 +11,11 @@ import { useRouter } from "next/router";
 import {
   ArrowRight,
   CheckCircle2,
-  Dumbbell,
   FileUp,
+  Layers,
   Loader2,
   NotebookText,
+  TrendingUp,
   X,
 } from "lucide-react";
 
@@ -42,6 +43,7 @@ import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
+import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
@@ -458,7 +460,7 @@ function ImportedDataOverview({ parsedData, label }) {
     const startYear = new Date(stats.dateRange.first).getFullYear();
     const endYear = new Date(stats.dateRange.last).getFullYear();
     const intervals = [];
-    for (let year = endYear; year >= startYear; year--) {
+    for (let year = startYear; year <= endYear; year++) {
       intervals.push({
         startDate: `${year}-01-01`,
         endDate: `${year}-12-31`,
@@ -937,29 +939,81 @@ export function ImportWorkflowSection({
                 {!isAuthenticated && (
                   <>
                     <ImportedDataOverview parsedData={parsedData} />
-                    <div className="mt-4 flex flex-wrap justify-center gap-2">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => router.push("/")}
-                      >
-                        <Dumbbell className="mr-2 h-4 w-4" /> Explore Home
-                        Dashboard
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push("/log")}
-                      >
-                        <NotebookText className="mr-2 h-4 w-4" /> Browse Your
-                        Sessions
-                      </Button>
+
+                    {/* Explore buttons — data-aware */}
+                    <div className="mt-5 flex flex-wrap justify-center gap-4">
+                      {(() => {
+                        // Find the user's most-logged big-four lift for a dynamic progress guide link
+                        const liftCounts = {};
+                        for (const e of parsedData || []) {
+                          if (e.isGoal) continue;
+                          liftCounts[e.liftType] = (liftCounts[e.liftType] || 0) + 1;
+                        }
+                        const bigFourMatch = bigFourLiftInsightData
+                          .map((b) => ({ ...b, count: liftCounts[b.liftType] || 0 }))
+                          .filter((b) => b.count > 0)
+                          .sort((a, b) => b.count - a.count)[0];
+
+                        return bigFourMatch ? (
+                          <div className="flex flex-col items-center">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => router.push(`/progress-guide/${bigFourMatch.slug}`)}
+                            >
+                              <TrendingUp className="mr-2 h-4 w-4" />
+                              Your {bigFourMatch.liftType} Progress
+                            </Button>
+                            <p className="text-muted-foreground mt-1.5 text-xs">
+                              Charts, PRs, and strength levels
+                            </p>
+                          </div>
+                        ) : null;
+                      })()}
+
+                      <div className="flex flex-col items-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push("/lift-explorer")}
+                        >
+                          <Layers className="mr-2 h-4 w-4" />
+                          Explore All Your Lifts
+                        </Button>
+                        <p className="text-muted-foreground mt-1.5 text-xs">
+                          Every movement, organized
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push("/log")}
+                        >
+                          <NotebookText className="mr-2 h-4 w-4" />
+                          Browse Your Sessions
+                        </Button>
+                        <p className="text-muted-foreground mt-1.5 text-xs">
+                          Your workouts, organized by date
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Sign-in CTA — separated, reward-framed */}
+                    <div className="mt-6 flex flex-col items-center">
+                      <p className="text-muted-foreground mb-2 text-sm">
+                        This preview will disappear when you close the tab.
+                      </p>
                       <GoogleSignInButton
                         size="sm"
                         cta="import_overview"
                       >
-                        Save my data
+                        Save &amp; keep my progress
                       </GoogleSignInButton>
+                      <p className="text-muted-foreground mt-1.5 text-xs">
+                        Your data saves to a Google Sheet you own. Free forever.
+                      </p>
                     </div>
                   </>
                 )}

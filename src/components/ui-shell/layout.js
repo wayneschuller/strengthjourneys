@@ -554,6 +554,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         reps: e.reps,
         weight: e.weight,
         unitType: e.unitType || "kg",
+        ...(e.notes ? { notes: e.notes } : {}),
       }));
       const res = await postImportHistory({
         ssid: sheetInfo.ssid,

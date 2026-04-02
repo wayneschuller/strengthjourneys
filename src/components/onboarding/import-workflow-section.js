@@ -746,6 +746,7 @@ export function ImportWorkflowSection({
       reps: entry.reps,
       weight: entry.weight,
       unitType: entry.unitType || "kg",
+      ...(entry.notes ? { notes: entry.notes } : {}),
     }));
 
     const res = await postImportHistory(

@@ -81,6 +81,81 @@ function parseResultString(resultText, fallbackUnitType) {
   return null;
 }
 
+// Parse warmup/buildup sets from freeform Wodify Notes text.
+// Returns an array of { reps, weight, unitType? } objects.
+//
+// Recognised fragment patterns (after splitting on comma / "then"):
+//   "70"          → bare weight, 1 rep assumed
+//   "72.5"        → bare decimal weight
+//   "7@50"        → explicit reps @ weight
+//   "5@75kg"      → reps @ weight with unit
+//   "3x5@80"      → sets × reps @ weight
+//
+// Anything that doesn't match (text like "poor form", "Failed 105",
+// "single sets", "In-house comp") is silently skipped.
+function parseWarmupNotes(notesText, fallbackUnitType) {
+  if (!notesText) return [];
+
+  const text = String(notesText).trim();
+  if (!text) return [];
+
+  // Split on commas or the word "then" (with optional surrounding whitespace)
+  const fragments = text.split(/,|\bthen\b/i).map((f) => f.trim()).filter(Boolean);
+
+  const results = [];
+
+  for (const fragment of fragments) {
+    // Strip trailing punctuation (exclamation marks, periods, etc.)
+    const cleaned = fragment.replace(/[!.;:]+$/, "").trim();
+    if (!cleaned) continue;
+
+    // Pattern: sets x reps @ weight [unit]  e.g. "3x5@80kg"
+    const setsRepsWeightMatch = cleaned.match(
+      /^(\d+)\s*x\s*(\d+)\s*@\s*([\d.]+)\s*(kg|lb|lbs)?$/i,
+    );
+    if (setsRepsWeightMatch) {
+      const sets = parseInteger(setsRepsWeightMatch[1]) || 1;
+      const reps = parseInteger(setsRepsWeightMatch[2]);
+      const weight = parseNumber(setsRepsWeightMatch[3]);
+      const unitType = parseUnit(setsRepsWeightMatch[4]) || fallbackUnitType;
+      if (reps && weight && weight > 0) {
+        for (let s = 0; s < sets; s++) {
+          results.push({ reps, weight, unitType });
+        }
+        continue;
+      }
+    }
+
+    // Pattern: reps @ weight [unit]  e.g. "7@50", "5@75kg"
+    const repsWeightMatch = cleaned.match(
+      /^(\d+)\s*@\s*([\d.]+)\s*(kg|lb|lbs)?$/i,
+    );
+    if (repsWeightMatch) {
+      const reps = parseInteger(repsWeightMatch[1]);
+      const weight = parseNumber(repsWeightMatch[2]);
+      const unitType = parseUnit(repsWeightMatch[3]) || fallbackUnitType;
+      if (reps && weight && weight > 0) {
+        results.push({ reps, weight, unitType });
+        continue;
+      }
+    }
+
+    // Pattern: bare weight  e.g. "70", "72.5"
+    const bareWeightMatch = cleaned.match(/^([\d.]+)$/);
+    if (bareWeightMatch) {
+      const weight = parseNumber(bareWeightMatch[1]);
+      if (weight && weight > 0) {
+        results.push({ reps: 1, weight, unitType: fallbackUnitType });
+        continue;
+      }
+    }
+
+    // Anything else is not a parseable warmup — skip silently.
+  }
+
+  return results;
+}
+
 function createSetEntries({
   date,
   liftType,
@@ -177,41 +252,53 @@ export function parseWodifyData(data) {
     const sets = parseInteger(row[setsColumnIndex]);
     const reps = parseInteger(row[repsColumnIndex]);
     const weight = parseNumber(row[weightColumnIndex]);
+    const rawNotes = String(row[notesColumnIndex] || "").trim();
+
+    let mainSets = null;
+    let mainUnitType = unitTypeFromColumn;
 
     if (sets && reps && weight && weight > 0 && unitTypeFromColumn) {
-      parsedData.push(
-        ...createSetEntries({
-          date,
-          liftType,
-          rawLiftType,
-          sets,
-          reps,
-          weight,
-          unitType: unitTypeFromColumn,
-          notes,
-        }),
+      mainSets = { sets, reps, weight, unitType: unitTypeFromColumn };
+    } else {
+      const parsedResult = parseResultString(
+        row[resultColumnIndex],
+        unitTypeFromColumn,
       );
-      continue;
+      if (parsedResult) {
+        mainSets = parsedResult;
+        mainUnitType = parsedResult.unitType;
+      }
     }
 
-    const parsedResult = parseResultString(
-      row[resultColumnIndex],
-      unitTypeFromColumn,
-    );
-    if (!parsedResult) continue;
+    if (!mainSets) continue;
 
+    // Add the main (top) set entries
     parsedData.push(
       ...createSetEntries({
         date,
         liftType,
         rawLiftType,
-        sets: parsedResult.sets,
-        reps: parsedResult.reps,
-        weight: parsedResult.weight,
-        unitType: parsedResult.unitType,
+        sets: mainSets.sets,
+        reps: mainSets.reps,
+        weight: mainSets.weight,
+        unitType: mainSets.unitType,
         notes,
       }),
     );
+
+    // Parse warmup/buildup sets from the Notes column
+    const warmups = parseWarmupNotes(rawNotes, mainUnitType);
+    for (const warmup of warmups) {
+      parsedData.push({
+        date,
+        liftType,
+        rawLiftType,
+        reps: warmup.reps,
+        weight: warmup.weight,
+        unitType: warmup.unitType || mainUnitType,
+        notes: buildNotes("Warmup (from Wodify notes)", rawNotes),
+      });
+    }
   }
 
   parsedData.sort((a, b) => a.date.localeCompare(b.date));

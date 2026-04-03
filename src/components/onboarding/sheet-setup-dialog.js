@@ -40,6 +40,7 @@ import {
 import { motion } from "motion/react";
 import {
   AlertTriangle,
+  ArrowRight,
   CheckCircle2,
   FolderOpen,
   LoaderCircle,
@@ -1780,26 +1781,23 @@ function CreatedSheetPanel({ sheetInfo, reason, action, onGoToDashboard }) {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 pb-2">
       <motion.div
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="text-center text-5xl"
+        aria-hidden
+      >
+        🎉
+      </motion.div>
+      <motion.div
         initial={{ opacity: 0, scale: 0.97, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
+        transition={{ duration: 0.35, ease: "easeOut", delay: 0.1 }}
         className="mx-auto w-full max-w-2xl"
       >
-        {sheetUrl ? (
-          <a
-            href={sheetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border-border/70 hover:border-primary/35 hover:bg-primary/[0.03] block rounded-lg border bg-[#fafafa] p-5 text-left transition-colors"
-            aria-label={`Open ${sheetLabel} in Google Sheets`}
-          >
-            {sheetCard}
-          </a>
-        ) : (
-          <div className="border-border/70 rounded-lg border bg-[#fafafa] p-5 text-left">
-            {sheetCard}
-          </div>
-        )}
+        <div className="border-border/70 rounded-lg border bg-[#fafafa] p-5 text-left">
+          {sheetCard}
+        </div>
       </motion.div>
       <p className="text-foreground/80 text-center text-sm font-medium italic">
         {subtitleText}
@@ -1822,25 +1820,14 @@ function CreatedSheetPanel({ sheetInfo, reason, action, onGoToDashboard }) {
           .
         </div>
       ) : null}
-      <div className="flex flex-col justify-center gap-3 sm:flex-row">
-        {sheetUrl ? (
-          <Button asChild size="lg" className="gap-2 shadow-sm">
-            <a href={sheetUrl} target="_blank" rel="noopener noreferrer">
-              Open My Lifting Log
-            </a>
-          </Button>
-        ) : (
-          <Button size="lg" className="gap-2 shadow-sm" disabled>
-            Open My Lifting Log
-          </Button>
-        )}
+      <div className="flex justify-center">
         <Button
           size="lg"
-          variant="outline"
-          className="gap-2"
+          className="gap-2 shadow-sm"
           onClick={onGoToDashboard}
         >
-          Go to Strength Dashboard
+          Go to Home Dashboard
+          <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
     </div>

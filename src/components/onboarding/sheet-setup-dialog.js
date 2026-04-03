@@ -1680,11 +1680,35 @@ function ScopeRepairPanel({
           Google Drive access needed
         </div>
         <CardTitle>
-          Strength Journeys needs permission to save your sheet.
+          Strength Journeys needs permission to save your lifting log.
         </CardTitle>
-        <CardDescription className="text-base leading-relaxed">
-          {errorMessage ||
-            "Your current Google connection is missing the Drive access needed to create and save your lifting log."}
+        <CardDescription className="space-y-3 text-base leading-relaxed">
+          <p>
+            During sign-in, Google asks you to approve access to Drive files.
+            That checkbox needs to be checked for Strength Journeys to create
+            and manage your lifting log spreadsheet.
+          </p>
+          <div className="bg-muted/60 flex items-start gap-3 rounded-lg border px-3 py-2.5">
+            <img
+              src="https://fonts.gstatic.com/s/i/productlogos/drive_2020q4/v8/web-16dp/logo_drive_2020q4_color_1x_web_16dp.png"
+              alt=""
+              width={16}
+              height={16}
+              className="mt-0.5 shrink-0"
+            />
+            <p className="text-muted-foreground text-sm">
+              <span className="text-foreground font-medium">
+                &ldquo;See, edit, create and delete only the specific Google
+                Drive files that you use with this app&rdquo;
+              </span>{" "}
+              must be checked.
+            </p>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            This does not give Strength Journeys access to your other Google
+            Drive files. We can only see the one spreadsheet we create for your
+            lifting log.
+          </p>
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row">
@@ -1696,7 +1720,7 @@ function ScopeRepairPanel({
             onBeforeReauth?.();
           }}
         >
-          Continue with Google
+          Sign in again with Drive access
         </GoogleSignInButton>
         <Button variant="outline" onClick={onDismiss}>
           Not now

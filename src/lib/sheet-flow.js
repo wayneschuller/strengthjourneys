@@ -276,6 +276,11 @@ export async function listRecentSpreadsheetCandidates(headers) {
   );
   if (!response.ok) {
     devLog("[sheet-flow] drive scan failed:", response.status);
+    if (response.status === 403) {
+      const body = await response.json().catch(() => ({}));
+      const message = body?.error?.message || "Drive access denied";
+      throw new Error(message);
+    }
     return [];
   }
 

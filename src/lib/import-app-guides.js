@@ -165,7 +165,7 @@ export const IMPORT_APP_PAGES = [
     heroTitle: "Your CrossFit Strength Data Deserves Better Analytics",
     hookLine: "Years of CrossFit strength work you've never truly seen",
     heroDescription:
-      "Drop your BTWB export and finally see your complete barbell progression. Many of our most dedicated users come from CrossFit backgrounds, and they tell us this is the view of their training they always wanted.",
+      "Drop your Beyond the Whiteboard (BTWB) export and finally see your complete barbell progression. Many of our most dedicated users come from CrossFit backgrounds, and they tell us this is the view of their training they always wanted.",
     cardDescription:
       "CrossFit athlete? Unify years of BTWB history with everything else.",
     whyItMatters:

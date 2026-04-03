@@ -1706,8 +1706,8 @@ function ScopeRepairPanel({
           </div>
           <p className="text-muted-foreground text-sm">
             This does not give Strength Journeys access to your other Google
-            Drive files. We can only see the one spreadsheet we create for your
-            lifting log.
+            Drive files. We can only see spreadsheets you choose to use with
+            this app.
           </p>
         </CardDescription>
       </CardHeader>

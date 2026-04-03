@@ -159,17 +159,17 @@ export const IMPORT_APP_PAGES = [
   {
     slug: "btwb",
     appName: "BTWB",
-    title: "Import BTWB Data to Google Sheets | Strength Journeys",
+    title: "Import BTWB (CrossFit) Data to Google Sheets | Strength Journeys",
     metaDescription:
-      "Import your Beyond the Whiteboard workout history and see your full strength timeline instantly. Merge with Wodify, Hevy, or Strong for one unified view.",
-    heroTitle: "Your BTWB History Deserves a Better Home",
-    hookLine: "The training career you've never seen in full",
+      "Import your Beyond the Whiteboard (BTWB) CrossFit workout history and see your full strength timeline instantly. Many CrossFit athletes use Strength Journeys to track barbell progression.",
+    heroTitle: "Your CrossFit Strength Data Deserves Better Analytics",
+    hookLine: "Years of CrossFit strength work you've never truly seen",
     heroDescription:
-      "Drop your BTWB export and finally see your complete strength timeline.",
+      "Drop your BTWB export and finally see your complete barbell progression. Many of our most dedicated users come from CrossFit backgrounds, and they tell us this is the view of their training they always wanted.",
     cardDescription:
-      "Bounced between gyms? Unify years of BTWB history with everything else.",
+      "CrossFit athlete? Unify years of BTWB history with everything else.",
     whyItMatters:
-      "BTWB has tracked your workouts faithfully, but that data is more powerful outside a single platform. Import it here and you'll see your strength progression visualized over time, with PRs automatically detected across every lift and rep range. Your Google Sheet becomes the permanent, portable record.",
+      "CrossFit athletes build serious barbell strength over years of training, but BTWB's analytics focus on metcons and benchmarks rather than long-term strength progression. Strength Journeys was built for exactly this. Many of our users come from CrossFit backgrounds and use us to track their squat, clean, snatch, and deadlift PRs across years of box-hopping. Import your BTWB data and see your strength journey visualized the way it deserves.",
     exportSteps: [
       "Export your BTWB workout history as a CSV or spreadsheet file.",
       "Save the file to your device.",
@@ -177,19 +177,30 @@ export const IMPORT_APP_PAGES = [
       "See your strength dashboard instantly, or sign in to save it to your own Google Sheet.",
     ],
     whatYouGet: [
-      "Finally see your full BTWB career as one interactive timeline, not a static spreadsheet.",
-      "PRs detected automatically across every lift and rep range, going back as far as your data does.",
-      "We handle BTWB-specific quirks like multiline descriptions and weighted set parsing.",
-      "Merge with Wodify, Hevy, or Strong to unify your gym-hopping history into one place.",
+      "See your full CrossFit strength career as one interactive timeline, not a static spreadsheet.",
+      "PRs detected automatically across every lift and rep range, going back as far as your BTWB data does.",
+      "We handle BTWB-specific quirks like multiline WOD descriptions and weighted set parsing.",
+      "Merge with Wodify, Hevy, or Strong to unify years of box-hopping history into one place.",
     ],
-    mergeTitle: "Used other trackers too?",
+    mergeTitle: "Trained at multiple CrossFit boxes?",
     mergeBody:
-      "If your training career spans BTWB, Wodify, and a solo app like Strong or Hevy, import each file. We'll normalize everything into one continuous timeline so you can see your full journey.",
+      "CrossFit athletes often have data scattered across BTWB, Wodify, and personal trackers from different boxes over the years. Import each file and we'll normalize everything into one continuous timeline so you can finally see your full training career in one place.",
+    articleLink: {
+      href: "/articles/greg-glassman-s-blueprint-quotes-that-shaped-crossfit",
+      title: "Greg Glassman's Blueprint: Quotes That Shaped CrossFit",
+      description:
+        "Explore the ideas and philosophy behind CrossFit through the words of its founder. A collection of our favourite Greg Glassman quotes on fitness, health, and training.",
+    },
     faqItems: [
       {
         question: "How do I export my data from BTWB?",
         answer:
           "Export your workout history from Beyond the Whiteboard as a CSV or spreadsheet file, then upload it here.",
+      },
+      {
+        question: "Is Strength Journeys good for CrossFit athletes?",
+        answer:
+          "Yes. Many of our most active users come from CrossFit backgrounds. While CrossFit programming covers much more than barbell work, the strength component is a huge part of long-term progress. Strength Journeys helps you track your squat, deadlift, clean, snatch, and press PRs across years of training in a way that BTWB and Wodify don't focus on.",
       },
       {
         question: "Do I need to sign in?",
@@ -199,7 +210,7 @@ export const IMPORT_APP_PAGES = [
       {
         question: "Can I combine BTWB with Wodify data?",
         answer:
-          "Yes, very common for CrossFit athletes. Import both files and we'll merge them into one unified training history.",
+          "Yes, very common for CrossFit athletes who have trained at different boxes over the years. Import both files and we'll merge them into one unified training history.",
       },
       {
         question: "Is my data private?",

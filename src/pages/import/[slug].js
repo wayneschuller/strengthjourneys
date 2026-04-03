@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import {
+  BookOpen,
   CheckCircle2,
   GitMerge,
   Shield,
@@ -227,6 +228,26 @@ function ImportAppPage({ page }) {
               </CardContent>
             </Card>
           </div>
+
+          {/* Optional article link */}
+          {page.articleLink && (
+            <Card className="border-primary/20">
+              <CardContent className="flex items-start gap-4 py-6">
+                <BookOpen className="text-primary mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <Link
+                    href={page.articleLink.href}
+                    className="text-primary hover:underline font-semibold"
+                  >
+                    {page.articleLink.title}
+                  </Link>
+                  <p className="text-muted-foreground mt-1 text-sm leading-6">
+                    {page.articleLink.description}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* FAQ */}
           <Card>

@@ -164,11 +164,16 @@ function getSheetUrl(ssid, url) {
   return null;
 }
 
-function shouldShowCreatedConfirmation(payload) {
-  if (payload?.action !== "create_new_user_sheet") return false;
-  return ["true_new_user", "reprovision_after_missing_sheet"].includes(
-    payload?.reason,
-  );
+function shouldShowConfirmation(payload) {
+  if (payload?.action === "create_new_user_sheet") {
+    return ["true_new_user", "reprovision_after_missing_sheet"].includes(
+      payload?.reason,
+    );
+  }
+  if (payload?.action === "link_existing") {
+    return true;
+  }
+  return false;
 }
 
 function shouldShowSyncToastOnAutoLink(payload) {
@@ -331,6 +336,7 @@ export function SheetSetupDialog() {
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
   const [createdSheetInfo, setCreatedSheetInfo] = useState(null);
   const [createdSheetReason, setCreatedSheetReason] = useState(null);
+  const [createdSheetAction, setCreatedSheetAction] = useState(null);
   const [dialogAction, setDialogAction] = useState(null);
   const [isDisconnectingCurrentSheet, setIsDisconnectingCurrentSheet] =
     useState(false);
@@ -360,6 +366,7 @@ export function SheetSetupDialog() {
     setHadLocalSheetBefore(false);
     setCreatedSheetInfo(null);
     setCreatedSheetReason(null);
+    setCreatedSheetAction(null);
     setDialogAction(null);
     setIsDisconnectingCurrentSheet(false);
     onboardingFlowTokenRef.current = null;
@@ -681,9 +688,10 @@ export function SheetSetupDialog() {
           window.sessionStorage.setItem(FORCE_SHEET_SYNC_TOAST_KEY, "true");
         }
         selectSheet(payload.ssid, nextSheetInfo);
-        if (shouldShowCreatedConfirmation(payload)) {
+        if (shouldShowConfirmation(payload)) {
           setCreatedSheetInfo(nextSheetInfo);
           setCreatedSheetReason(payload?.reason || null);
+          setCreatedSheetAction(payload?.action || null);
           setSheetDiscoveryStatusMessage("");
           setOnboardingState("created_confirmation");
         } else {
@@ -1561,6 +1569,7 @@ export function SheetSetupDialog() {
                 <CreatedSheetPanel
                   sheetInfo={createdSheetInfo || sheetInfo}
                   reason={createdSheetReason}
+                  action={createdSheetAction}
                   onGoToDashboard={closeDialog}
                 />
               )}
@@ -1730,11 +1739,43 @@ function ScopeRepairPanel({
   );
 }
 
-function CreatedSheetPanel({ sheetInfo, reason, onGoToDashboard }) {
+function CreatedSheetPanel({ sheetInfo, reason, action, onGoToDashboard }) {
   const sheetUrl = getSheetUrl(sheetInfo?.ssid, sheetInfo?.url);
   const sheetLabel =
     sheetInfo?.filename || "Your Strength Journeys lifting log";
   const showRecoveryHint = reason === "reprovision_after_missing_sheet";
+  const isLinked = action === "link_existing";
+  const badgeText = isLinked
+    ? "Connected from your Google Drive"
+    : "Created in your Google Drive";
+  const subtitleText = isLinked
+    ? "Your lifting data is ready. Let's see what you've built."
+    : "Every set you log becomes part of your strength story.";
+  const infoText = isLinked
+    ? "Your dashboards will load with your existing data."
+    : "Log lifts in your sheet. Your dashboards update automatically.";
+
+  const sheetCard = (
+    <div className="flex items-start gap-4">
+      <div className="border-border bg-background rounded-md border p-4">
+        <img
+          src={GOOGLE_SHEETS_ICON_URL}
+          alt=""
+          className="h-16 w-16"
+          aria-hidden
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-foreground truncate text-xl font-extrabold md:text-2xl">
+          {sheetLabel}
+        </p>
+        <p className="bg-primary/10 text-primary mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          {badgeText}
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 pb-2">
@@ -1752,55 +1793,19 @@ function CreatedSheetPanel({ sheetInfo, reason, onGoToDashboard }) {
             className="border-border/70 hover:border-primary/35 hover:bg-primary/[0.03] block rounded-lg border bg-[#fafafa] p-5 text-left transition-colors"
             aria-label={`Open ${sheetLabel} in Google Sheets`}
           >
-            <div className="flex items-start gap-4">
-              <div className="border-border bg-background rounded-md border p-4">
-                <img
-                  src={GOOGLE_SHEETS_ICON_URL}
-                  alt=""
-                  className="h-16 w-16"
-                  aria-hidden
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-foreground truncate text-xl font-extrabold md:text-2xl">
-                  {sheetLabel}
-                </p>
-                <p className="bg-primary/10 text-primary mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Created in your Google Drive
-                </p>
-              </div>
-            </div>
+            {sheetCard}
           </a>
         ) : (
           <div className="border-border/70 rounded-lg border bg-[#fafafa] p-5 text-left">
-            <div className="flex items-start gap-4">
-              <div className="border-border bg-background rounded-md border p-4">
-                <img
-                  src={GOOGLE_SHEETS_ICON_URL}
-                  alt=""
-                  className="h-16 w-16"
-                  aria-hidden
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-foreground truncate text-xl font-extrabold md:text-2xl">
-                  {sheetLabel}
-                </p>
-                <p className="bg-primary/10 text-primary mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Created in your Google Drive
-                </p>
-              </div>
-            </div>
+            {sheetCard}
           </div>
         )}
       </motion.div>
       <p className="text-foreground/80 text-center text-sm font-medium italic">
-        Every set you log becomes part of your strength story.
+        {subtitleText}
       </p>
       <div className="border-border/70 bg-card/20 text-muted-foreground rounded-lg border px-4 py-3 text-center text-sm leading-relaxed">
-        Log lifts in your sheet. Your dashboards update automatically.
+        {infoText}
       </div>
       {showRecoveryHint ? (
         <div className="border-border/70 bg-muted/20 text-muted-foreground rounded-lg border px-4 py-3 text-center text-sm leading-relaxed">

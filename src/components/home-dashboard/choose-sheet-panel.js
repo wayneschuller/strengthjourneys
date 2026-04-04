@@ -1,3 +1,7 @@
+/**
+ * Sheet chooser cards summarize candidate logs during onboarding and recovery.
+ * Keep sheet selection separate from "open in Google Sheets" so titles are not mistaken for primary CTAs.
+ */
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { useState, useRef } from "react";
@@ -13,6 +17,7 @@ import { LiftSvg } from "@/components/year-recap/lift-svg";
 import {
   ChevronDown,
   ChevronUp,
+  ExternalLink,
   FileUp,
   FolderOpen,
   Link2,
@@ -165,6 +170,31 @@ function getCandidateUrl(candidate) {
     : null;
 }
 
+function SheetNameWithExternalLink({
+  name,
+  url,
+  textClassName,
+  linkClassName,
+  iconClassName = "h-4 w-4",
+}) {
+  return (
+    <div className="flex min-w-0 items-start gap-2">
+      <p className={textClassName}>{name}</p>
+      {url ? (
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Open ${name} in Google Sheets`}
+          className={`${linkClassName} mt-0.5`}
+        >
+          <ExternalLink className={iconClassName} />
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
 export function ChooseSheetPanel({
   intent = "recovery",
   candidates,
@@ -292,20 +322,12 @@ export function ChooseSheetPanel({
                   <div className="max-w-2xl space-y-5">
                     <div className="min-w-0 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        {getCandidateUrl(primaryCandidate) ? (
-                          <a
-                            href={getCandidateUrl(primaryCandidate)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-foreground hover:text-primary truncate text-lg font-semibold underline-offset-2 hover:underline"
-                          >
-                            {primaryCandidate.name}
-                          </a>
-                        ) : (
-                          <p className="text-foreground truncate text-lg font-semibold">
-                            {primaryCandidate.name}
-                          </p>
-                        )}
+                        <SheetNameWithExternalLink
+                          name={primaryCandidate.name}
+                          url={getCandidateUrl(primaryCandidate)}
+                          textClassName="text-foreground truncate text-lg font-semibold"
+                          linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
+                        />
                         {freshnessLabel && (
                           <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[11px] font-semibold">
                             {freshnessLabel}
@@ -420,22 +442,15 @@ export function ChooseSheetPanel({
                               <p className="text-foreground/80 text-sm font-semibold">
                                 Current data source
                               </p>
-                              {currentSheetInfo?.url ? (
-                                <a
-                                  href={currentSheetInfo.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-foreground hover:text-primary block truncate text-base font-semibold underline-offset-2 hover:underline"
-                                >
-                                  {currentSheetInfo.filename ||
-                                    "Connected lifting log"}
-                                </a>
-                              ) : (
-                                <p className="text-foreground truncate text-base font-semibold">
-                                  {currentSheetInfo.filename ||
-                                    "Connected lifting log"}
-                                </p>
-                              )}
+                              <SheetNameWithExternalLink
+                                name={
+                                  currentSheetInfo.filename ||
+                                  "Connected lifting log"
+                                }
+                                url={currentSheetInfo?.url || null}
+                                textClassName="text-foreground truncate text-base font-semibold"
+                                linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
+                              />
                               <p className="text-muted-foreground text-sm">
                                 Disconnect it if you want to remove it without
                                 switching to another sheet.
@@ -534,22 +549,15 @@ export function ChooseSheetPanel({
                             <p className="text-foreground/80 text-sm font-semibold">
                               Current data source
                             </p>
-                            {currentSheetInfo?.url ? (
-                              <a
-                                href={currentSheetInfo.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-foreground hover:text-primary block truncate text-base font-semibold underline-offset-2 hover:underline"
-                              >
-                                {currentSheetInfo.filename ||
-                                  "Connected lifting log"}
-                              </a>
-                            ) : (
-                              <p className="text-foreground truncate text-base font-semibold">
-                                {currentSheetInfo.filename ||
-                                  "Connected lifting log"}
-                              </p>
-                            )}
+                            <SheetNameWithExternalLink
+                              name={
+                                currentSheetInfo.filename ||
+                                "Connected lifting log"
+                              }
+                              url={currentSheetInfo?.url || null}
+                              textClassName="text-foreground truncate text-base font-semibold"
+                              linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
+                            />
                             <p className="text-muted-foreground text-sm">
                               Disconnect it if you want to remove it without
                               switching to another sheet.
@@ -660,20 +668,12 @@ export function ChooseSheetPanel({
                               className="h-4 w-4 shrink-0"
                               aria-hidden
                             />
-                            {getCandidateUrl(candidate) ? (
-                              <a
-                                href={getCandidateUrl(candidate)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-foreground hover:text-primary text-sm leading-snug font-semibold break-words underline-offset-2 hover:underline"
-                              >
-                                {candidate.name}
-                              </a>
-                            ) : (
-                              <p className="text-foreground text-sm leading-snug font-semibold break-words">
-                                {candidate.name}
-                              </p>
-                            )}
+                            <SheetNameWithExternalLink
+                              name={candidate.name}
+                              url={getCandidateUrl(candidate)}
+                              textClassName="text-foreground text-sm leading-snug font-semibold break-words"
+                              linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
+                            />
                           </div>
                           <p className="text-muted-foreground text-sm">
                             {formatCandidateMeta(candidate, isEnriching)}

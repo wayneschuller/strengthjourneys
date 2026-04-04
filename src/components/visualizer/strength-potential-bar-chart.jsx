@@ -1,4 +1,9 @@
+/**
+ * Compares achieved best lifts against projected potential by rep range and
+ * links the headline best-set reference back to the original logged session.
+ */
 import { useId, useMemo } from "react";
+import Link from "next/link";
 import { useLocalStorage } from "usehooks-ts";
 import { Bar, BarChart, XAxis, YAxis, Legend } from "recharts";
 import { LoaderCircle } from "lucide-react";
@@ -22,6 +27,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+
+function getLogHref(date) {
+  return date ? `/log?date=${date}` : "/log";
+}
 
 /**
  * Stacked bar chart comparing the user's best achieved lift against their estimated potential max
@@ -120,7 +129,18 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
         </CardTitle>
         <CardDescription>
           {bestLift
-            ? `Your best set: ${bestLift.reps}@${getDisplayWeight(bestLift, isMetric).value}${getDisplayWeight(bestLift, isMetric).unit} (${formatDate(bestLift.date)})`
+            ? (
+              <>
+                Your best set:{" "}
+                <Link
+                  href={getLogHref(bestLift.date)}
+                  className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
+                >
+                  {bestLift.reps}@{getDisplayWeight(bestLift, isMetric).value}
+                  {getDisplayWeight(bestLift, isMetric).unit} ({formatDate(bestLift.date)})
+                </Link>
+              </>
+            )
             : "No data yet"}
           {isValidating && (
             <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />

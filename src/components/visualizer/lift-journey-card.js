@@ -1,4 +1,8 @@
 
+/**
+ * Summarizes one lift's long-term journey and links dated milestones back to
+ * the session log so exploration can jump from aggregate insight to raw context.
+ */
 import { motion } from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
 
@@ -21,6 +25,10 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+
+function getLogHref(date) {
+  return date ? `/log?date=${date}` : "/log";
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tier system
@@ -351,7 +359,7 @@ export function LiftJourneyCard({
                   return (
                     <Link
                       key={label}
-                      href="#lift-prs"
+                      href={getLogHref(prLift.date)}
                       className="rounded-lg border bg-card p-3 text-center block transition-colors hover:bg-muted/50"
                       style={{ borderTopWidth: 3, borderTopColor: liftColor }}
                     >
@@ -378,10 +386,16 @@ export function LiftJourneyCard({
                 <span className="font-semibold text-foreground">
                   {e1rmDisplay.value}
                   {e1rmDisplay.unit}
-                </span>{" "}
-                · based on {bestLift.reps}@{bestLiftDisplay.value}
-                {bestLiftDisplay.unit} ({getReadableDateString(bestLift.date)},{" "}
-                {e1rmFormula})
+                </span>
+                {" · based on "}
+                <Link
+                  href={getLogHref(bestLift.date)}
+                  className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
+                >
+                  {bestLift.reps}@{bestLiftDisplay.value}
+                  {bestLiftDisplay.unit} ({getReadableDateString(bestLift.date)},{" "}
+                  {e1rmFormula})
+                </Link>
               </p>
             )}
 
@@ -418,9 +432,10 @@ export function LiftJourneyCard({
                   {recentHighlights.map((entry, i) => {
                     const w = getDisplayWeight(entry, isMetric);
                     return (
-                      <div
+                      <Link
                         key={i}
-                        className="flex items-center gap-3 rounded px-2 py-1 text-sm even:bg-muted/40"
+                        href={getLogHref(entry.date)}
+                        className="flex items-center gap-3 rounded px-2 py-1 text-sm transition-colors even:bg-muted/40 hover:bg-muted/70"
                       >
                         <span className="w-24 shrink-0 font-mono font-medium">
                           {entry.reps}@{w.value}
@@ -436,7 +451,7 @@ export function LiftJourneyCard({
                           </span>{" "}
                           ever
                         </span>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
@@ -447,24 +462,30 @@ export function LiftJourneyCard({
             {(heaviestSession || showHeaviestLast12) && (
               <div className="space-y-0.5 text-sm text-muted-foreground">
                 {heaviestSession && heaviestSessionDisplay && (
-                  <div>
+                  <Link
+                    href={getLogHref(heaviestSession.date)}
+                    className="block rounded px-2 py-1 transition-colors hover:bg-muted/50"
+                  >
                     Heaviest session:{" "}
                     <span className="font-medium text-foreground">
                       {Math.round(heaviestSessionDisplay.value).toLocaleString()}
                       {heaviestSessionDisplay.unit}
                     </span>{" "}
                     ({getReadableDateString(heaviestSession.date)})
-                  </div>
+                  </Link>
                 )}
                 {showHeaviestLast12 && heaviestLast12Display && (
-                  <div>
+                  <Link
+                    href={getLogHref(heaviestLast12.date)}
+                    className="block rounded px-2 py-1 transition-colors hover:bg-muted/50"
+                  >
                     Heaviest (last 12 months):{" "}
                     <span className="font-medium text-foreground">
                       {Math.round(heaviestLast12Display.value).toLocaleString()}
                       {heaviestLast12Display.unit}
                     </span>{" "}
                     ({getReadableDateString(heaviestLast12.date)})
-                  </div>
+                  </Link>
                 )}
               </div>
             )}

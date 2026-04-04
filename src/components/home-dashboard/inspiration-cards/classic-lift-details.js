@@ -1,3 +1,6 @@
+// Shows the compact context line and optional note for a remembered classic lift.
+// Keep the date tied to the log page so dashboard nostalgia can jump back into the session.
+import Link from "next/link";
 import { useState } from "react";
 import { format } from "date-fns";
 
@@ -14,12 +17,15 @@ export function ClassicLiftDetails({ classicLiftMemory }) {
   const isLongNote = note.length > maxPreviewChars;
   const previewNote =
     isLongNote && !isExpanded ? `${note.slice(0, maxPreviewChars).trim()}...` : note;
+  const logDateHref = `/log?date=${classicLiftMemory.lift.date}`;
 
   return (
     <div className="space-y-0.5">
       <div className="line-clamp-1">
         {classicLiftMemory.reasonLabel} ·{" "}
-        {format(new Date(classicLiftMemory.lift.date), "d MMM yyyy")}
+        <Link href={logDateHref} className="hover:text-foreground hover:underline">
+          {format(new Date(classicLiftMemory.lift.date), "d MMM yyyy")}
+        </Link>
         {classicLiftMemory.strengthRating
           ? ` · ${STRENGTH_LEVEL_EMOJI[classicLiftMemory.strengthRating] ?? ""} ${classicLiftMemory.strengthRating}`
           : ""}

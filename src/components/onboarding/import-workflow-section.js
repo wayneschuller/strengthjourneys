@@ -50,6 +50,7 @@ import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { DailyHeatmap } from "@/components/home-dashboard/the-long-game-card";
 import { ThousandDonut } from "@/components/thousand-club-donut";
+import { useScrollToLatestYear } from "@/hooks/use-scroll-to-latest-year";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -350,6 +351,7 @@ function ImportHero({ parsedData, fileName, formatName }) {
 function ImportedDataOverview({ parsedData, label }) {
   const { age, bodyWeight, sex, isMetric } = useAthleteBio();
   const hasBio = age && bodyWeight && sex;
+  const dailyHeatmapScrollRef = useRef(null);
 
   const stats = useMemo(() => {
     if (!parsedData || parsedData.length === 0) return null;
@@ -470,6 +472,12 @@ function ImportedDataOverview({ parsedData, label }) {
     return intervals;
   }, [stats]);
 
+  useScrollToLatestYear(
+    dailyHeatmapScrollRef,
+    yearIntervals[yearIntervals.length - 1]?.endDate ?? null,
+    yearIntervals.length > 0,
+  );
+
   if (!stats) return null;
 
   const buildCalcUrl = (reps, weight, unitType) => {
@@ -525,7 +533,11 @@ function ImportedDataOverview({ parsedData, label }) {
                 </p>
               )}
             </div>
-            <div className="flex flex-col gap-2">
+            <div
+              ref={dailyHeatmapScrollRef}
+              className="max-h-[52vh] overflow-y-auto pr-1"
+            >
+              <div className="flex flex-col gap-2">
               {yearIntervals.map((interval) => {
                 const isCurrentYear =
                   interval.year === new Date().getFullYear();
@@ -558,6 +570,7 @@ function ImportedDataOverview({ parsedData, label }) {
                   </div>
                 );
               })}
+              </div>
             </div>
           </div>
         )}

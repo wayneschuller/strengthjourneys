@@ -44,6 +44,7 @@ import {
   getWeekKeyFromDateStr,
   parseYmdUtc,
 } from "@/lib/date-utils";
+import { useScrollToLatestYear } from "@/hooks/use-scroll-to-latest-year";
 import {
   Tooltip,
   TooltipContent,
@@ -82,6 +83,7 @@ export function TheLongGameCard({
   const { status: authStatus } = useSession();
   const { theme } = useTheme();
   const shareRef = useRef(null);
+  const dailyHeatmapScrollRef = useRef(null);
   const yearRowRefs = useRef({});
   const yearShareTimerRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -169,6 +171,12 @@ export function TheLongGameCard({
       }
     };
   }, []);
+
+  useScrollToLatestYear(
+    dailyHeatmapScrollRef,
+    intervals?.[intervals.length - 1]?.endDate ?? null,
+    !!intervals && !isSharing && effectiveViewMode === "daily",
+  );
 
   const writePngToClipboard = useCallback(async (blobPromise) => {
     await navigator.clipboard.write([
@@ -811,6 +819,7 @@ export function TheLongGameCard({
               )}
               {!isFirstMonthFocusState && effectiveViewMode === "daily" && (
                 <div
+                  ref={dailyHeatmapScrollRef}
                   className={
                     isSharing
                       ? ""

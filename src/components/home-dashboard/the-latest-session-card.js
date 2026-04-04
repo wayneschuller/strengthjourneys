@@ -1,4 +1,8 @@
 
+/**
+ * Renders a single-session drilldown card that stays in sync with the hovered
+ * visualizer date while preserving session-specific cached copy per linked sheet.
+ */
 import {
   useRef,
   useState,
@@ -48,19 +52,19 @@ import {
   getAnalyzedSessionLifts,
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
-import { LoaderCircle, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { LoaderCircle, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { SessionExerciseBlock } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
-// "The Latest Session" when on the most recent date.
-// "The Feb 6 Session" for an earlier date in the current year.
-// "Feb 6, 2024 Session" (no "The") for a date in a previous year.
+// "Latest Session" when on the most recent date.
+// "Feb 6 Session" for an earlier date in the current year.
+// "Feb 6, 2024 Session" for a date in a previous year.
 function getSessionCardTitle(sessionDate, isLastDate) {
-  if (isLastDate || !sessionDate) return "The Latest Session";
+  if (isLastDate || !sessionDate) return "Latest Session";
   const sessionYear = parseInt(sessionDate.substring(0, 4), 10);
   const currentYear = new Date().getFullYear();
   const d = new Date(sessionDate + "T00:00:00");
-  if (sessionYear === currentYear) return `The ${format(d, "MMM d")} Session`;
+  if (sessionYear === currentYear) return `${format(d, "MMM d")} Session`;
   return `${format(d, "MMM d, yyyy")} Session`;
 }
 
@@ -464,8 +468,8 @@ export function TheLatestSessionCard({
           {!isReadOnly && hasLoggedSessions && sessionDate && (
             <Button asChild variant="outline" className="gap-2">
               <Link href={`/log?date=${sessionDate}`}>
-                <Pencil className="h-4 w-4" />
-                Edit session
+                <Eye className="h-4 w-4" />
+                View Session Details
               </Link>
             </Button>
           )}

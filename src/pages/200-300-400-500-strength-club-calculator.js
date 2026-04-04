@@ -1,3 +1,8 @@
+/**
+ * 200/300/400/500 Strength Club calculator page.
+ * Mirrors the 1000lb calculator's user-data-aware slider markers so linked or imported
+ * training history can drive PR and 90-day best notches inside the Pages Router.
+ */
 import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react";
@@ -8,8 +13,9 @@ import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -34,6 +40,7 @@ import {
   Bot,
   CircleDashed,
   Anvil,
+  RotateCcw,
 } from "lucide-react";
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
@@ -42,6 +49,9 @@ import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { findBestE1RM } from "@/lib/processing-utils";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 
@@ -310,6 +320,9 @@ export default function StrengthClubCalculator({ relatedArticles }) {
 // Helpers: dual lb/kg display (lb-primary, same as 1000lb club)
 const KG_PER_LB = 0.453592;
 const toKgF = (lbs) => (Number(lbs) * KG_PER_LB).toFixed(1);
+const toLb = (weight, unitType) => (unitType === "lb" ? weight : weight * 2.2046);
+const roundTo5 = (value) => Math.round(value / 5) * 5;
+const clampLbToMax = (value, max) => Math.min(max, Math.max(0, roundTo5(value)));
 const getStrengthClubPlateBreakdown = (totalWeightLb) =>
   calculatePlateBreakdown(
     totalWeightLb,
@@ -317,6 +330,57 @@ const getStrengthClubPlateBreakdown = (totalWeightLb) =>
     STRENGTH_CLUB_DIAGRAM_IS_METRIC,
     STRENGTH_CLUB_PLATE_PREFERENCE,
   );
+
+function SliderWithMarkers({
+  value,
+  max,
+  prVal,
+  r90Val,
+  onValueChange,
+  onValueCommit,
+  className,
+}) {
+  const showPr = prVal != null && prVal > 0 && prVal <= max;
+  const showR90 = r90Val != null && r90Val > 0 && r90Val <= max && r90Val !== prVal;
+  const prPercent = showPr ? (prVal / max) * 100 : 0;
+  const r90Percent = showR90 ? (r90Val / max) * 100 : 0;
+
+  return (
+    <div className="relative pb-6">
+      <Slider
+        value={[value]}
+        min={0}
+        max={max}
+        step={5}
+        onValueChange={onValueChange}
+        onValueCommit={onValueCommit}
+        className={`mt-2 ${className}`}
+      />
+      {showPr && (
+        <div
+          className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+          style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
+        >
+          <div className="h-3 w-px bg-primary/40" />
+          <span className="text-primary/60 text-[9px] leading-none font-medium">
+            PR
+          </span>
+        </div>
+      )}
+      {showR90 && (
+        <div
+          className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+          style={{ left: `${r90Percent}%`, transform: "translateX(-50%)" }}
+        >
+          <div className="h-3 w-px bg-amber-500/40" />
+          <span className="text-[9px] leading-none font-medium text-amber-600/60">
+            90d
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Thor celebration: screen shake + lightning flash
 const SHAKE_KEYFRAMES = `
@@ -350,13 +414,22 @@ function StrengthClubMain({ relatedArticles }) {
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
+  const { topLiftsByTypeAndReps, parsedData, isDemoMode } = useUserLiftingData();
+  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+    initializeWithValue: false,
+  });
+  const e1rmFormula = storedFormula ?? "Brzycki";
   const [isShaking, setIsShaking] = useState(false);
   const [flashingCard, setFlashingCard] = useState(null);
   const prevValuesRef = useRef(null);
   const celebratedRef = useRef(new Set());
   const activeLiftTimeoutRef = useRef(null);
   const celebrationFrameRef = useRef(null);
+  const hasAutoPopulatedRef = useRef(false);
   const [activeLiftKey, setActiveLiftKey] = useState(null);
+  const [recent90dCutoffDate] = useState(() =>
+    new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10),
+  );
 
   const [press, setPress] = useLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
@@ -379,10 +452,133 @@ function StrengthClubMain({ relatedArticles }) {
     { initializeWithValue: false },
   );
 
-  const setters = { press: setPress, bench: setBench, squat: setSquat, deadlift: setDeadlift };
+  const setters = useMemo(
+    () => ({
+      press: setPress,
+      bench: setBench,
+      squat: setSquat,
+      deadlift: setDeadlift,
+    }),
+    [setBench, setDeadlift, setPress, setSquat],
+  );
   const values = useMemo(() => ({ press, bench, squat, deadlift }), [press, bench, squat, deadlift]);
   const total = press + bench + squat + deadlift;
   const allAchieved = MILESTONES.every((m) => values[m.key] >= m.target);
+  const prWeightsLb = useMemo(() => {
+    if (!topLiftsByTypeAndReps || isDemoMode) return null;
+
+    const nextPrWeights = {};
+
+    for (const milestone of MILESTONES) {
+      const result = findBestE1RM(
+        milestone.liftType,
+        topLiftsByTypeAndReps,
+        e1rmFormula,
+      );
+      const bestWeight = result?.bestE1RMWeight;
+      nextPrWeights[milestone.key] = bestWeight
+        ? clampLbToMax(toLb(bestWeight, result.unitType), milestone.max)
+        : null;
+    }
+
+    return Object.values(nextPrWeights).some((value) => value != null)
+      ? nextPrWeights
+      : null;
+  }, [e1rmFormula, isDemoMode, topLiftsByTypeAndReps]);
+  const usingUserData = Boolean(prWeightsLb);
+
+  useEffect(() => {
+    if (hasAutoPopulatedRef.current || !prWeightsLb) {
+      return;
+    }
+
+    hasAutoPopulatedRef.current = true;
+
+    for (const milestone of MILESTONES) {
+      const nextValue = prWeightsLb[milestone.key];
+      if (nextValue != null) {
+        setters[milestone.key](nextValue);
+      }
+    }
+  }, [prWeightsLb, setters]);
+
+  const recent90dLb = useMemo(() => {
+    if (!prWeightsLb || !parsedData?.length || isDemoMode) return null;
+
+    const liftKeyByType = Object.fromEntries(
+      MILESTONES.map((milestone) => [milestone.liftType, milestone.key]),
+    );
+    const best = Object.fromEntries(
+      MILESTONES.map((milestone) => [milestone.key, 0]),
+    );
+
+    for (const entry of parsedData) {
+      const key = liftKeyByType[entry.liftType];
+      if (!key || entry.isGoal || entry.reps <= 0 || entry.weight <= 0) continue;
+      if (entry.date < recent90dCutoffDate) continue;
+      const weightLb = toLb(entry.weight, entry.unitType);
+      const e1rm =
+        entry.reps === 1
+          ? weightLb
+          : estimateE1RM(entry.reps, weightLb, e1rmFormula);
+      if (e1rm > best[key]) best[key] = e1rm;
+    }
+
+    const result = Object.fromEntries(
+      MILESTONES.map((milestone) => [
+        milestone.key,
+        best[milestone.key] > 0
+          ? clampLbToMax(best[milestone.key], milestone.max)
+          : null,
+      ]),
+    );
+
+    const hasDistinct = MILESTONES.some(
+      (milestone) =>
+        result[milestone.key] != null &&
+        result[milestone.key] !== prWeightsLb?.[milestone.key],
+    );
+
+    return hasDistinct ? result : null;
+  }, [e1rmFormula, isDemoMode, parsedData, prWeightsLb, recent90dCutoffDate]);
+
+  const handleResetToPRs = useCallback(() => {
+    if (!prWeightsLb) return;
+    for (const milestone of MILESTONES) {
+      const nextValue = prWeightsLb[milestone.key];
+      if (nextValue != null) {
+        setters[milestone.key](nextValue);
+      }
+    }
+  }, [prWeightsLb, setters]);
+
+  const handleResetTo90d = useCallback(() => {
+    if (!recent90dLb) return;
+    for (const milestone of MILESTONES) {
+      const nextValue = recent90dLb[milestone.key];
+      if (nextValue != null) {
+        setters[milestone.key](nextValue);
+      }
+    }
+  }, [recent90dLb, setters]);
+
+  const hasMovedFromPR =
+    usingUserData &&
+    prWeightsLb &&
+    MILESTONES.some(
+      (milestone) =>
+        prWeightsLb[milestone.key] != null &&
+        values[milestone.key] !== prWeightsLb[milestone.key],
+    );
+
+  const hasMovedFrom90d =
+    usingUserData &&
+    recent90dLb &&
+    MILESTONES.some(
+      (milestone) =>
+        recent90dLb[milestone.key] != null &&
+        values[milestone.key] !== recent90dLb[milestone.key],
+    );
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -399,7 +595,18 @@ function StrengthClubMain({ relatedArticles }) {
   const handleLiftValueChange = useCallback(
     (liftKey, setter) =>
       ([v]) => {
-        setter(v);
+        const milestone = MILESTONES.find((item) => item.key === liftKey);
+        const nextValue = milestone ? clampLbToMax(v, milestone.max) : v;
+        const prVal = prWeightsLb?.[liftKey];
+        const r90Val = recent90dLb?.[liftKey];
+
+        if (prVal != null && Math.abs(nextValue - prVal) <= 5) {
+          setter(prVal);
+        } else if (r90Val != null && Math.abs(nextValue - r90Val) <= 5) {
+          setter(r90Val);
+        } else {
+          setter(nextValue);
+        }
         if (prefersReducedMotion) return;
         setActiveLiftKey(liftKey);
         if (activeLiftTimeoutRef.current) {
@@ -409,7 +616,7 @@ function StrengthClubMain({ relatedArticles }) {
           setActiveLiftKey(null);
         }, 120);
       },
-    [prefersReducedMotion],
+    [prefersReducedMotion, prWeightsLb, recent90dLb],
   );
 
   const handleLiftValueCommit = useCallback(() => {
@@ -557,6 +764,8 @@ function StrengthClubMain({ relatedArticles }) {
                   onValueChange={handleLiftValueChange}
                   onValueCommit={handleLiftValueCommit}
                   prefersReducedMotion={prefersReducedMotion}
+                  prVal={prWeightsLb?.[milestone.key]}
+                  r90Val={recent90dLb?.[milestone.key]}
                 />
               ))}
             </div>
@@ -579,6 +788,30 @@ function StrengthClubMain({ relatedArticles }) {
                 {allAchieved
                   ? "All four milestones achieved! You're in the 200/300/400/500 club!"
                   : `${MILESTONES.filter((m) => values[m.key] >= m.target).length} of 4 milestones achieved`}
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                {hasMovedFromPR && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={handleResetToPRs}
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset to PRs
+                  </Button>
+                )}
+                {hasMovedFrom90d && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={handleResetTo90d}
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset to 90-day bests
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -740,6 +973,8 @@ function MilestoneCard({
   onValueChange,
   onValueCommit,
   prefersReducedMotion,
+  prVal,
+  r90Val,
 }) {
   const { key, liftType, target, max } = milestone;
   const percent = Math.min(100, Math.round((value / target) * 100));
@@ -889,11 +1124,11 @@ function MilestoneCard({
               {percent}%
             </span>
           </div>
-          <Slider
-            value={[value]}
-            min={0}
+          <SliderWithMarkers
+            value={value}
             max={max}
-            step={5}
+            prVal={prVal}
+            r90Val={r90Val}
             onValueChange={onValueChange(key, setter)}
             onValueCommit={onValueCommit}
             className={`${prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}`}

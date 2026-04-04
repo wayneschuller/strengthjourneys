@@ -827,7 +827,7 @@ export function TheLongGameCard({
                           dashboardStage === "first_real_week" ||
                           dashboardStage === "first_month"
                         ? ""
-                        : "max-h-[52vh] overflow-y-auto pr-1"
+                        : "max-h-[39vh] overflow-y-auto pr-1"
                   }
                 >
                   <div className="flex flex-col gap-2">

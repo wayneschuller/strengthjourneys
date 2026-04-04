@@ -535,7 +535,7 @@ function ImportedDataOverview({ parsedData, label }) {
             </div>
             <div
               ref={dailyHeatmapScrollRef}
-              className="max-h-[52vh] overflow-y-auto pr-1"
+              className="max-h-[39vh] overflow-y-auto pr-1"
             >
               <div className="flex flex-col gap-2">
               {yearIntervals.map((interval) => {

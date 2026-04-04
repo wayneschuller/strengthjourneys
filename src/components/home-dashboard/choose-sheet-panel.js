@@ -186,7 +186,7 @@ function SheetNameWithExternalLink({
           target="_blank"
           rel="noreferrer"
           aria-label={`Open ${name} in Google Sheets`}
-          className={linkClassName}
+          className={`${linkClassName} mt-0.5`}
         >
           <ExternalLink className={iconClassName} />
         </a>

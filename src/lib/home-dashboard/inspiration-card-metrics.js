@@ -271,7 +271,10 @@ export function calculateSessionMomentumFromDates(allSessionDates) {
   };
 }
 
-export function calculateStreakFromDates(allSessionDates) {
+export function calculateStreakFromDates(
+  allSessionDates,
+  { referenceDate = null } = {},
+) {
   if (!allSessionDates || allSessionDates.length === 0) {
     return { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 };
   }
@@ -301,8 +304,8 @@ export function calculateStreakFromDates(allSessionDates) {
   }
 
   const oldestWeek = weekKeys[0];
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const thisWeekKey = getWeekKeyFromDateStr(todayStr);
+  const effectiveReferenceDate = referenceDate || format(new Date(), "yyyy-MM-dd");
+  const thisWeekKey = getWeekKeyFromDateStr(effectiveReferenceDate);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 
   let currentStreak = 0;

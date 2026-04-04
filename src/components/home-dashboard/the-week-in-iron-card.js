@@ -18,6 +18,7 @@ import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import {
@@ -338,7 +339,13 @@ export function TheWeekInIronCard({
   sessionCount = 0,
 }) {
   const { status: authStatus } = useSession();
-  const { isDemoMode, isImportedData, isReadOnly, parsedData } =
+  const {
+    isDemoMode,
+    isImportedData,
+    isReadOnly,
+    parsedData,
+    sessionTonnageLookup,
+  } =
     useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
@@ -360,6 +367,19 @@ export function TheWeekInIronCard({
     if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
     return computeWeeklyStats(parsedData, boundaries);
   }, [parsedData, boundaries]);
+  const allSessionDates = useMemo(
+    () => sessionTonnageLookup?.allSessionDates ?? [],
+    [sessionTonnageLookup],
+  );
+  const streakStats = useMemo(
+    () =>
+      allSessionDates.length
+        ? calculateStreakFromDates(allSessionDates, {
+            referenceDate: boundaries.effectiveEnd,
+          })
+        : { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 },
+    [allSessionDates, boundaries.effectiveEnd],
+  );
   const weeklySessionRows = useMemo(
     () => getWeeklySessionRows(parsedData, boundaries, isMetric),
     [parsedData, boundaries, isMetric],
@@ -480,11 +500,15 @@ export function TheWeekInIronCard({
                     title="Looking ahead"
                     description={getNextStepCopy(
                       stats,
+                      streakStats,
                       boundaries,
                       weeklySessionRows,
                     )}
                   >
-                    <StartLiftPrompt showIntro={false} />
+                    <StartLiftPrompt
+                      showIntro={false}
+                      showStarterButtons={stats.sessions.current < 3}
+                    />
                   </WeekSection>
                 </>
               )}
@@ -740,9 +764,11 @@ function ReadOnlyWeekCta({
               });
             }}
           >
-            <img
+            <Image
               src={GOOGLE_SHEETS_ICON_URL}
               alt=""
+              width={16}
+              height={16}
               className="h-4 w-4"
               aria-hidden
             />
@@ -781,7 +807,26 @@ function getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows) {
   return `${sessionsLabel} so far, with ${volumeLabel} of total volume across the week.`;
 }
 
-function getNextStepCopy(stats, boundaries, weeklySessionRows) {
+function getStreakMotivationCopy(streakStats) {
+  if (!streakStats || streakStats.currentStreak <= 0) return null;
+
+  const sessionsNeededThisWeek = Math.max(0, 3 - (streakStats.sessionsThisWeek ?? 0));
+  const weekLabel = `week${streakStats.currentStreak === 1 ? "" : "s"}`;
+
+  if (sessionsNeededThisWeek === 0) {
+    return `That locks in ${streakStats.currentStreak} ${weekLabel} in a row.`;
+  }
+
+  const nextStreak = streakStats.currentStreak + 1;
+  const sessionsLabel = `session${sessionsNeededThisWeek === 1 ? "" : "s"}`;
+  const nextWeekLabel = `week${nextStreak === 1 ? "" : "s"}`;
+
+  return `You're on a ${streakStats.currentStreak}-${weekLabel} streak, and ${sessionsNeededThisWeek} more ${sessionsLabel} this week makes it ${nextStreak} ${nextWeekLabel}.`;
+}
+
+function getNextStepCopy(stats, streakStats, boundaries, weeklySessionRows) {
+  const streakMotivation = getStreakMotivationCopy(streakStats);
+
   if (stats.sessions.current === 0) {
     return boundaries.isCurrentWeek
       ? "Start the week by logging the first lift you want to train."
@@ -794,24 +839,42 @@ function getNextStepCopy(stats, boundaries, weeklySessionRows) {
 
   if (boundaries.isCurrentWeek && hasLiftedToday) {
     if (stats.prs > 0) {
-      return "Nice work getting today’s session in. That’s a strong note for the week. Take the win, recover well, and start thinking about what you’ll want to train next.";
+      const baseCopy =
+        "Nice work getting today’s session in. That’s a strong note for the week. Take the win, recover well, and start thinking about what you’ll want to train next.";
+      return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
     }
 
-    return "Nice work getting today’s session in. That’s another day in the bank this week. Recover well, and when you’re ready, start thinking about when you want to lift next and what you want to train.";
+    const baseCopy =
+      stats.sessions.current >= 3
+        ? "Nice work getting today’s session in. You’ve already stacked a strong week. Recover well, enjoy that momentum, and keep the log open if you’re training again."
+        : "Nice work getting today’s session in. That’s another day in the bank this week. Recover well, and when you’re ready, start thinking about when you want to lift next and what you want to train.";
+    return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
   }
 
   if (boundaries.isCurrentWeek && stats.dayActivity.some((active) => !active)) {
-    return "You’ve already put work into this week. If today is a rest day, let it be one. When you’re ready, think about when you want to lift next and what you want to train.";
+    const baseCopy =
+      stats.sessions.current >= 3
+        ? "You’ve already put together a strong week. If today is a rest day, let it be one. If you’re on a higher-frequency split, the general log is there when you’re ready."
+        : "You’ve already put work into this week. If today is a rest day, let it be one. When you’re ready, think about when you want to lift next and what you want to train.";
+    return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
   }
 
   if (stats.prs > 0) {
-    return "Strong week so far. Take a moment to recover, reflect on how it felt, and decide what you want to train next.";
+    const baseCopy =
+      stats.sessions.current >= 3
+        ? "Strong week. You’ve already done enough to call this one a win, so recover well and log more only if the plan says so."
+        : "Strong week so far. Take a moment to recover, reflect on how it felt, and decide what you want to train next.";
+    return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
   }
 
-  return "This week is underway. Take stock of how you’re feeling, and when the time is right, choose the next lift you want to log.";
+  const baseCopy =
+    stats.sessions.current >= 3
+      ? "This week is already in good shape. Take stock of how you’re feeling, enjoy the work you’ve banked, and use the general log if you’re training again."
+      : "This week is underway. Take stock of how you’re feeling, and when the time is right, choose the next lift you want to log.";
+  return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
 }
 
-function StartLiftPrompt({ showIntro = true }) {
+function StartLiftPrompt({ showIntro = true, showStarterButtons = true }) {
   return (
     <div className="space-y-3">
       {showIntro && (
@@ -824,29 +887,31 @@ function StartLiftPrompt({ showIntro = true }) {
           </p>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        {BIG_FOUR_STARTERS.map(({ liftType, icon }) => (
-          <Link
-            key={liftType}
-            href={`/log?startLift=${encodeURIComponent(liftType)}#${encodeURIComponent(
-              `lift-${liftType
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/^-|-$/g, "")}`,
-            )}`}
-            className="border-border bg-card hover:border-primary hover:bg-muted/40 flex items-center gap-3 rounded-xl border px-3 py-3 transition-colors"
-          >
-            <Image
-              src={icon}
-              alt=""
-              width={40}
-              height={40}
-              className="h-10 w-10 shrink-0"
-            />
-            <span className="text-sm leading-tight font-medium">{`Log ${liftType} activity`}</span>
-          </Link>
-        ))}
-      </div>
+      {showStarterButtons ? (
+        <div className="grid grid-cols-2 gap-3">
+          {BIG_FOUR_STARTERS.map(({ liftType, icon }) => (
+            <Link
+              key={liftType}
+              href={`/log?startLift=${encodeURIComponent(liftType)}#${encodeURIComponent(
+                `lift-${liftType
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/^-|-$/g, "")}`,
+              )}`}
+              className="border-border bg-card hover:border-primary hover:bg-muted/40 flex items-center gap-3 rounded-xl border px-3 py-3 transition-colors"
+            >
+              <Image
+                src={icon}
+                alt=""
+                width={40}
+                height={40}
+                className="h-10 w-10 shrink-0"
+              />
+              <span className="text-sm leading-tight font-medium">{`Log ${liftType} activity`}</span>
+            </Link>
+          ))}
+        </div>
+      ) : null}
       <Button
         asChild
         className="w-full justify-center gap-2 rounded-full bg-zinc-700 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"

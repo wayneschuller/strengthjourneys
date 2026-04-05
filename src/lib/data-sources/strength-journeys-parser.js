@@ -136,6 +136,7 @@ export function parseStrengthJourneysData(data) {
 
     // Process required fields
     obj.reps = convertStringToInt(row[repsCol]);
+    if (row[weightCol]) obj.rawWeight = row[weightCol]; // Store raw before normalization
     const { value, unitType, _explicitUnit } = convertWeightAndUnitType(
       row[weightCol],
     );

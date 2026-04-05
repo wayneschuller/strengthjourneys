@@ -2751,7 +2751,23 @@ function buildSheetSnapshotFromFields(fields, identity = {}) {
 function buildSheetSnapshotFromSetLike(set) {
   if (!set) return null;
   if (set._serverSnapshot) return set._serverSnapshot;
-  return buildSheetSnapshotFromFields(getEditableSetFields(set), set);
+  const fields = getEditableSetFields(set);
+  return {
+    date: set.date ?? "",
+    // Use rawLiftType to match exact sheet label (e.g. "OHP") not normalized form
+    liftType: set.rawLiftType ?? set.liftType ?? "",
+    reps: fields.reps != null ? String(fields.reps) : "",
+    // Use rawWeight (original sheet string) to avoid unit-suffix mismatch:
+    // old data has "100" in the sheet; normalized weight + unitType gives "100lb", causing 409.
+    weight:
+      set.rawWeight != null
+        ? set.rawWeight
+        : fields.weight != null
+          ? `${fields.weight}${fields.unitType ?? ""}`
+          : "",
+    notes: fields.notes ?? "",
+    url: fields.url ?? "",
+  };
 }
 
 function snapshotToEditableFields(snapshot) {

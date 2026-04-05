@@ -59,6 +59,7 @@ import {
   Info,
   Loader2,
   X,
+  Link2,
 } from "lucide-react";
 import {
   Tooltip,
@@ -4608,6 +4609,8 @@ function SetRow({
   const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
   const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
   const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
+  const [draftUrl, setDraftUrl] = useState(set.URL ?? "");
+  const urlInputRef = useRef(null);
   const prefUnit = isMetric ? "kg" : "lb";
   const unitMismatch = set.unitType && set.unitType !== prefUnit;
 
@@ -4615,6 +4618,7 @@ function SetRow({
   const [pendingReps, setPendingReps] = useState(null);
   const [pendingWeight, setPendingWeight] = useState(null);
   const [pendingNotes, setPendingNotes] = useState(null);
+  const [pendingUrl, setPendingUrl] = useState(null);
   const latestFieldsRef = useRef(getEditableSetFields(set));
 
   // Debounced update: coalesce rapid changes (spinner arrows, keyboard arrows)
@@ -4667,6 +4671,7 @@ function SetRow({
   useEffect(() => {
     setDraftNotes(set.notes ?? "");
   }, [set.notes]);
+  useEffect(() => { setDraftUrl(set.URL ?? ""); }, [set.URL]);
 
   // Clear pending once parsedData reflects the committed value
   useEffect(() => {
@@ -4688,12 +4693,18 @@ function SetRow({
     }
   }, [set.notes, pendingNotes]);
   useEffect(() => {
+    if (pendingUrl !== null && (set.URL ?? "") === pendingUrl) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- optimistic local state clears when server data catches up
+      setPendingUrl(null);
+    }
+  }, [set.URL, pendingUrl]);
+  useEffect(() => {
     latestFieldsRef.current = {
       reps: pendingReps ?? set.reps,
       weight: pendingWeight ?? set.weight,
       unitType: set.unitType ?? "",
       notes: pendingNotes ?? set.notes ?? "",
-      url: set.URL ?? "",
+      url: pendingUrl ?? set.URL ?? "",
     };
   }, [
     set.reps,
@@ -4704,6 +4715,7 @@ function SetRow({
     pendingReps,
     pendingWeight,
     pendingNotes,
+    pendingUrl,
   ]);
 
   const displayReps = pendingReps !== null ? pendingReps : set.reps;
@@ -4723,7 +4735,7 @@ function SetRow({
   const rowKey = getSetIdentityKey(set);
   const optimisticFields = useMemo(() => {
     const hasOptimisticOverride =
-      pendingReps !== null || pendingWeight !== null || pendingNotes !== null;
+      pendingReps !== null || pendingWeight !== null || pendingNotes !== null || pendingUrl !== null;
 
     if (!hasOptimisticOverride) return null;
 
@@ -4732,12 +4744,13 @@ function SetRow({
       weight: pendingWeight ?? set.weight,
       unitType: set.unitType ?? "",
       notes: pendingNotes ?? set.notes ?? "",
-      url: set.URL ?? "",
+      url: pendingUrl ?? set.URL ?? "",
     };
   }, [
     pendingReps,
     pendingWeight,
     pendingNotes,
+    pendingUrl,
     set.reps,
     set.weight,
     set.unitType,
@@ -4785,7 +4798,6 @@ function SetRow({
 
   function commitNotes() {
     if (isLocked) return;
-    setEditingNotes(false);
     const trimmed = draftNotes.trim();
     if (trimmed !== (latestFieldsRef.current.notes ?? "").trim()) {
       const beforeFields = latestFieldsRef.current;
@@ -4796,6 +4808,40 @@ function SetRow({
         beforeFields,
         nextFields,
       });
+    }
+  }
+
+  function commitUrl() {
+    if (isLocked) return;
+    const trimmed = draftUrl.trim();
+    if (trimmed !== (latestFieldsRef.current.url ?? "").trim()) {
+      const beforeFields = latestFieldsRef.current;
+      const nextFields = { ...beforeFields, url: trimmed };
+      setPendingUrl(trimmed);
+      flushUpdate({
+        field: "url",
+        beforeFields,
+        nextFields,
+      });
+    }
+  }
+
+  function closeNotesEdit() {
+    setEditingNotes(false);
+    commitNotes();
+    commitUrl();
+  }
+
+  function openNotesEdit() {
+    setEditingNotes(true);
+    // Try to pre-fill URL from clipboard if the field is currently empty
+    if (!draftUrl && navigator?.clipboard?.readText) {
+      navigator.clipboard.readText().then((text) => {
+        const trimmed = text?.trim() ?? "";
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+          setDraftUrl(trimmed);
+        }
+      }).catch(() => {});
     }
   }
 
@@ -4890,22 +4936,55 @@ function SetRow({
           <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
         </div>
 
-        {/* Notes — flex-1, tap to edit */}
+        {/* Notes + URL — flex-1, tap to edit */}
         <div className="min-w-0 flex-1 md:max-w-[calc(100%-18rem)]">
           {editingNotes && !isReadOnly ? (
-            <input
-              type="text"
-              className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs focus:outline-none"
-              value={draftNotes}
-              disabled={isLocked}
-              onChange={(e) => setDraftNotes(e.target.value)}
-              onBlur={commitNotes}
-              onKeyDown={(e) => e.key === "Enter" && commitNotes()}
-              placeholder="notes..."
-              autoFocus
-            />
-          ) : (
             <div className="space-y-1">
+              <input
+                type="text"
+                className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs focus:outline-none"
+                value={draftNotes}
+                disabled={isLocked}
+                onChange={(e) => setDraftNotes(e.target.value)}
+                onBlur={(e) => {
+                  commitNotes();
+                  // Only close if focus isn't moving to the URL input
+                  if (e.relatedTarget !== urlInputRef.current) {
+                    setEditingNotes(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    urlInputRef.current?.focus();
+                  } else if (e.key === "Escape") {
+                    closeNotesEdit();
+                  }
+                }}
+                placeholder="notes..."
+                autoFocus
+              />
+              <div className="flex items-center gap-1">
+                <Link2 className="text-muted-foreground/40 h-3 w-3 shrink-0" />
+                <input
+                  ref={urlInputRef}
+                  type="url"
+                  className="border-input text-muted-foreground focus:border-primary min-w-0 flex-1 border-b bg-transparent py-0.5 text-xs focus:outline-none"
+                  value={draftUrl}
+                  disabled={isLocked}
+                  onChange={(e) => setDraftUrl(e.target.value)}
+                  onBlur={() => { commitUrl(); setEditingNotes(false); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === "Escape") {
+                      closeNotesEdit();
+                    }
+                  }}
+                  placeholder="video link..."
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-0.5">
               {isLocked || isReadOnly ? (
                 <div className="text-muted-foreground/50 w-full text-left text-xs italic">
                   {displayNotes || (isReadOnly ? "" : "notes...")}
@@ -4913,7 +4992,7 @@ function SetRow({
               ) : (
                 <button
                   className="text-muted-foreground/50 hover:text-muted-foreground w-full text-left text-xs italic"
-                  onClick={() => setEditingNotes(true)}
+                  onClick={openNotesEdit}
                 >
                   {displayNotes || "notes..."}
                 </button>

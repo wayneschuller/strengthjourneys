@@ -4605,7 +4605,6 @@ function SetRow({
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
-  const [notesExpanded, setNotesExpanded] = useState(false);
   const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
   const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
   const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
@@ -4907,38 +4906,16 @@ function SetRow({
           ) : (
             <div className="space-y-1">
               {isLocked || isReadOnly ? (
-                <div
-                  className={cn(
-                    "text-muted-foreground/50 w-full text-left text-xs italic",
-                    notesExpanded ? "whitespace-normal" : "truncate",
-                  )}
-                  onClick={() => setNotesExpanded((v) => !v)}
-                  role={displayNotes ? "button" : undefined}
-                  tabIndex={displayNotes ? 0 : undefined}
-                  onKeyDown={displayNotes ? (e) => e.key === "Enter" && setNotesExpanded((v) => !v) : undefined}
-                >
+                <div className="text-muted-foreground/50 w-full text-left text-xs italic">
                   {displayNotes || (isReadOnly ? "" : "notes...")}
                 </div>
               ) : (
-                <div
-                  className={cn(
-                    "text-muted-foreground/50 w-full text-left text-xs italic md:hover:whitespace-normal md:hover:overflow-visible",
-                    notesExpanded ? "whitespace-normal" : "truncate",
-                  )}
-                  onClick={() => {
-                    if (notesExpanded) {
-                      setNotesExpanded(false);
-                      setEditingNotes(true);
-                    } else {
-                      setNotesExpanded(true);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && setEditingNotes(true)}
+                <button
+                  className="text-muted-foreground/50 hover:text-muted-foreground w-full text-left text-xs italic"
+                  onClick={() => setEditingNotes(true)}
                 >
                   {displayNotes || "notes..."}
-                </div>
+                </button>
               )}
             </div>
           )}

@@ -5,7 +5,6 @@ import { useMemo, useRef } from "react";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getBigFourPrSectionHref } from "@/lib/classic-lift-memory";
 import { pickClassicLiftMemory } from "@/lib/home-dashboard/classic-lift-highlight-selection";
-import { Button } from "@/components/ui/button";
 import { ClassicLiftDetails } from "@/components/home-dashboard/inspiration-cards/classic-lift-details";
 import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
 
@@ -61,7 +60,7 @@ export function ClassicLiftHighlightCard({
       title={
         classicLiftMemory && displayWeight
           ? (
-              <>
+              <span className="inline-flex items-center gap-1.5">
                 {bigFourPrHref ? (
                   <Link
                     href={bigFourPrHref}
@@ -75,7 +74,19 @@ export function ClassicLiftHighlightCard({
                 {classicLiftMemory.lift.reps}@
                 {displayWeight.value}
                 {displayWeight.unit}
-              </>
+                {(classicLiftMemory.lift.URL || classicLiftMemory.lift.url) && (
+                  <a
+                    href={classicLiftMemory.lift.URL || classicLiftMemory.lift.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Watch video"
+                    className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <PlayCircle className="h-4 w-4" />
+                  </a>
+                )}
+              </span>
             )
           : "No classic lifts yet"
       }
@@ -85,27 +96,6 @@ export function ClassicLiftHighlightCard({
         ) : null
       }
       footerMultiline
-      action={
-        classicLiftMemory?.lift?.URL || classicLiftMemory?.lift?.url ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5"
-            aria-label="Open lift video"
-            title="Open lift video"
-            onClick={() =>
-              window.open(
-                classicLiftMemory.lift.URL || classicLiftMemory.lift.url,
-                "_blank",
-                "noopener,noreferrer",
-              )
-            }
-          >
-            <PlayCircle className="h-3.5 w-3.5" />
-          </Button>
-        ) : null
-      }
       animationDelay={animationDelay}
     />
   );

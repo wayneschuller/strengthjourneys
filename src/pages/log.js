@@ -4921,6 +4921,28 @@ function SetRow({
           )}
         </div>
 
+        {/* Video link — only shown when URL is populated */}
+        {set.URL && (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={set.URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground/50 hover:text-foreground shrink-0 rounded p-1 transition-colors"
+                  aria-label="Watch video"
+                >
+                  <PlayCircle className="h-4 w-4" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Watch video</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
         <div className="hidden w-[17rem] shrink-0 items-center justify-end gap-2 md:flex">
           {set._pending ? (
             <Loader2 className="text-muted-foreground/50 h-3 w-3 animate-spin" />

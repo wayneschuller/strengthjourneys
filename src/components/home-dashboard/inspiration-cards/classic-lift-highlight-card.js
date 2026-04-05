@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Trophy, Video } from "lucide-react";
+import { Trophy, PlayCircle } from "lucide-react";
 import { useMemo, useRef } from "react";
 
 import { getDisplayWeight } from "@/lib/processing-utils";
@@ -102,7 +102,7 @@ export function ClassicLiftHighlightCard({
               )
             }
           >
-            <Video className="h-3.5 w-3.5" />
+            <PlayCircle className="h-3.5 w-3.5" />
           </Button>
         ) : null
       }

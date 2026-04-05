@@ -4834,8 +4834,9 @@ function SetRow({
       {/* Main row: reps@weight + notes + desktop meta rail */}
       <div className="flex items-center gap-4">
         {/* Reps @ Weight unit — tight visual unit.
-            Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
-        <div className="flex items-center">
+            Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width.
+            min-w keeps notes aligned across rows with different weight widths. */}
+        <div className="flex min-w-[7.5rem] items-center">
           <div className="w-7">
             {editingReps && !isReadOnly ? (
               <input

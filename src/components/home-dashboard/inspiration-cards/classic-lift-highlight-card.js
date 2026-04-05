@@ -7,6 +7,12 @@ import { getBigFourPrSectionHref } from "@/lib/classic-lift-memory";
 import { pickClassicLiftMemory } from "@/lib/home-dashboard/classic-lift-highlight-selection";
 import { ClassicLiftDetails } from "@/components/home-dashboard/inspiration-cards/classic-lift-details";
 import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function ClassicLiftHighlightCard({
   parsedData,
@@ -75,16 +81,25 @@ export function ClassicLiftHighlightCard({
                 {displayWeight.value}
                 {displayWeight.unit}
                 {(classicLiftMemory.lift.URL || classicLiftMemory.lift.url) && (
-                  <a
-                    href={classicLiftMemory.lift.URL || classicLiftMemory.lift.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Watch video"
-                    className="text-muted-foreground/50 hover:text-foreground transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <PlayCircle className="h-4 w-4" />
-                  </a>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={classicLiftMemory.lift.URL || classicLiftMemory.lift.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Watch video"
+                          className="text-muted-foreground/50 hover:text-foreground transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <PlayCircle className="h-4 w-4" />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Watch video</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </span>
             )

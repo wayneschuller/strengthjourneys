@@ -90,15 +90,6 @@ export function AvatarDropdown() {
       </GoogleSignInButton>
     );
 
-  // I don't know how we could be authenticated and not have session.user.image but it happens occasionally
-  // Possibly due to stale next-auth JWT token
-  // Forced signOut() seems to reset everything
-  if (authStatus === "authenticated" && !session?.user?.image) {
-    console.error(`Next-auth being a silly-billy again.`);
-    signOut();
-    return null;
-  }
-
   return (
     <>
       <DropdownMenu>
@@ -107,8 +98,8 @@ export function AvatarDropdown() {
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild aria-label="User menu">
                 <Avatar className="ml-2 h-8 w-8 ring-muted-foreground hover:ring-2">
-                  <AvatarImage src={session.user.image} />
-                  <AvatarFallback>{session.user.name}</AvatarFallback>
+                  {session.user.image && <AvatarImage src={session.user.image} />}
+                  <AvatarFallback>{session.user.name?.[0] || "?"}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
             </TooltipTrigger>

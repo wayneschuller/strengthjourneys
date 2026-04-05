@@ -4721,6 +4721,7 @@ function SetRow({
   const displayReps = pendingReps !== null ? pendingReps : set.reps;
   const displayWeight = pendingWeight !== null ? pendingWeight : set.weight;
   const displayNotes = pendingNotes !== null ? pendingNotes : (set.notes ?? "");
+  const displayUrl = pendingUrl !== null ? pendingUrl : (set.URL ?? "");
   const prToneClass =
     prMeta?.status === "lifetime"
       ? "text-amber-600"
@@ -5002,12 +5003,12 @@ function SetRow({
         </div>
 
         {/* Video link — only shown when URL is populated */}
-        {set.URL && (
+        {displayUrl && (
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <a
-                  href={set.URL}
+                  href={displayUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground/50 hover:text-foreground shrink-0 rounded p-1 transition-colors"

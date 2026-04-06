@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect } from "react";
-import { useIsClient } from "usehooks-ts";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -59,23 +58,21 @@ const PageDescription = () => (
 function HeroPrimaryCta() {
   const { status: authStatus } = useSession();
   const { hasUserData, sheetInfo } = useUserLiftingData();
-  const isClient = useIsClient();
-  const hasSsid = !!sheetInfo?.ssid;
-  const isAuthed = authStatus === "authenticated";
 
   if (hasUserData) return null;
 
-  const effectiveAuthStatus = isClient ? authStatus : "unauthenticated";
-  const effectiveHasSsid = isClient ? hasSsid : false;
-  const importCtaLabel = effectiveHasSsid
+  // Treat "loading" the same as "unauthenticated" — this matches SSR output so
+  // there's no hydration mismatch, then React updates once auth resolves.
+  const isAuthed = authStatus === "authenticated";
+  const hasSsid = isAuthed && !!sheetInfo?.ssid;
+  const importCtaLabel = hasSsid
     ? "Import More Lifting History"
     : "Import From Another Fitness App";
-  const importCtaDescription =
-    effectiveAuthStatus === "authenticated"
-      ? effectiveHasSsid
-        ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
-        : "Instant preview first. Save your data into a free Google Sheet when you're ready."
-      : "Instant preview. No sign-in required.";
+  const importCtaDescription = isAuthed
+    ? hasSsid
+      ? "Instant preview first. Merge new entries into your linked sheet when you're ready."
+      : "Instant preview first. Save your data into a free Google Sheet when you're ready."
+    : "Instant preview. No sign-in required.";
 
   return (
     <div className="flex flex-col items-center gap-4 md:items-start">
@@ -83,7 +80,7 @@ function HeroPrimaryCta() {
       <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
         {/* Primary CTA column */}
         <div className="flex w-full flex-col items-center sm:w-auto">
-          {effectiveAuthStatus === "authenticated" ? (
+          {isAuthed ? (
             <Button
               size="lg"
               className="w-full hover:ring-2 sm:w-auto"

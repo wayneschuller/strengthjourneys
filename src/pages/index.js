@@ -385,7 +385,7 @@ export default function Home() {
         ]}
       />
       <main className="mb-4 px-3 md:px-0">
-        <div className="flex flex-col items-center justify-center transition-all duration-800">
+        <div className="flex flex-col items-center justify-center transition-all duration-800 min-h-[480px]">
           {showHeroSection && !isReturningUserLoading ? (
             <div
               className={`inset-0 h-full w-full transition-all duration-800 ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}

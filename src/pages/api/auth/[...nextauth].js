@@ -371,6 +371,7 @@ const PROMPT_MESSAGES = {
     subject: `[SJ] Import merged — ${name}`,
     text: [
       `${name} (${email}) merged imported history at ${timeStr}.`,
+      meta.formatName ? `Format: ${meta.formatName}` : null,
       meta.entryCount != null ? `Imported entries: ${meta.entryCount}` : null,
       meta.insertedRows != null ? `Inserted rows: ${meta.insertedRows}` : null,
       meta.dateCount != null ? `Imported dates: ${meta.dateCount}` : null,

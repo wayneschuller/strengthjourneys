@@ -1333,6 +1333,15 @@ export default function LogSessionPage() {
         // row-shift guard active until that refresh lands so queued edits/adds
         // do not resume against stale positions.
         await mutate();
+        // Clear the hide-flag now that parsedData has settled. If we leave the
+        // rowIndex in deletedRowIndices indefinitely, a future insert that gets
+        // assigned the same rowIndex (sheets renumber after deletion) will be
+        // immediately hidden by the cleanup effect and sessionLiftsWithPending.
+        setDeletedRowIndices((prev) => {
+          const next = new Set(prev);
+          next.delete(set.rowIndex);
+          return next;
+        });
         startDeleteCooldown();
         markStructuralSaved();
       } catch (err) {

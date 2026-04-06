@@ -1508,13 +1508,17 @@ export default function LogSessionPage() {
           firstRowIndex: data?.firstRowIndex ?? null,
         });
         const { firstRowIndex } = data;
-        // Promote pending → confirmed with the real rowIndex before revalidation
-        // so the optimistic row dedupes cleanly when parsedData catches up.
+        // Promote pending → confirmed with the real rowIndex so the optimistic
+        // row dedupes cleanly when parsedData catches up.
         promoteFirstPending(liftType, firstRowIndex);
-        // Keep the row-shift guard active until fresh sheet data lands; queued
-        // follow-up actions should only resume once canonical row indices exist.
-        await mutate();
+        // Release the structural guard immediately — the promoted row already has
+        // the correct rowIndex, so queued follow-ups can compute positions safely.
+        // Fire revalidation in the background (no await) to avoid a race where a
+        // concurrent focus-triggered SWR fetch overwrites fresh data with stale
+        // data and removes the confirmed-pending row from both pendingSets and
+        // sessionLifts.
         markStructuralSaved();
+        void mutate();
       } catch (err) {
         console.error("[sheet/insert-row] addSet failed:", err);
         recordDevSyncTrace({
@@ -1728,8 +1732,8 @@ export default function LogSessionPage() {
         });
         const { firstRowIndex } = data;
         promoteFirstPending(liftType, firstRowIndex);
-        await mutate();
         markStructuralSaved();
+        void mutate();
       } catch (err) {
         console.error("[sheet/insert-row] addLift failed:", err);
         recordDevSyncTrace({

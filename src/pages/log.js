@@ -559,6 +559,16 @@ export default function LogSessionPage() {
   }, [sessionLifts, pendingSets, deletedRowIndices]);
 
   const hasSession = Object.keys(sessionLiftsWithPending).length > 0;
+  const usedSessionUrls = useMemo(
+    () =>
+      new Set(
+        Object.values(sessionLiftsWithPending)
+          .flat()
+          .map((s) => s.URL?.trim())
+          .filter(Boolean),
+      ),
+    [sessionLiftsWithPending],
+  );
   const perLiftTonnageStats = useMemo(() => {
     if (!sessionDate || !sessionTonnageLookup) return null;
 
@@ -2237,6 +2247,7 @@ export default function LogSessionPage() {
                           onUpdateSet={previewMode ? undefined : updateSet}
                           onDeleteSet={previewMode ? undefined : deleteSet}
                           onAddSet={previewMode ? undefined : (prevSet) => addSet(liftType, prevSet)}
+                          usedSessionUrls={usedSessionUrls}
                         />
                       </motion.div>
                     ),
@@ -3418,6 +3429,7 @@ function LiftBlock({
   onDeleteSet,
   onAddSet,
   previewMode = false,
+  usedSessionUrls,
 }) {
   const { hasUserData } = useUserLiftingData();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
@@ -4270,6 +4282,7 @@ function LiftBlock({
                 set._pending || !set.rowIndex ? null : () => onDeleteSet(set)
               }
               isDeleteDisabled={isStructuralSaving || isDeleteCooldownActive}
+              usedSessionUrls={usedSessionUrls}
               strengthBadge={
                 idx === bestE1rmIndex ? (
                   <LiftStrengthLevel
@@ -4629,6 +4642,7 @@ function SetRow({
   onDelete,
   isDeleteDisabled = false,
   strengthBadge,
+  usedSessionUrls,
 }) {
   const isLocked = Boolean(set._pending);
   const isReadOnly = !onUpdate;
@@ -4865,11 +4879,14 @@ function SetRow({
   function openNotesEdit() {
     setEditingNotes(true);
     // Try to pre-fill URL from clipboard if the field is currently empty
+    // and the URL hasn't already been assigned to another set this session.
     if (!draftUrl && navigator?.clipboard?.readText) {
       navigator.clipboard.readText().then((text) => {
         const trimmed = text?.trim() ?? "";
         if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-          setDraftUrl(trimmed);
+          if (!usedSessionUrls?.has(trimmed)) {
+            setDraftUrl(trimmed);
+          }
         }
       }).catch(() => {});
     }

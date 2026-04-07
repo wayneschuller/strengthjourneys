@@ -406,6 +406,20 @@ const defaultMessages = [
   "Give me a riddle about lifting weights.",
 ];
 
+function XAILogo({ className }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M14.258 10.152L23.176 0h-2.113l-7.747 8.813L7.133 0H0l9.352 13.328L0 23.973h2.113l8.176-9.309 6.531 9.309H24L14.258 10.152zm-2.895 3.293l-.949-1.328L2.875 1.56h3.246l6.086 8.523.945 1.328 7.91 11.078h-3.246l-6.453-9.044z" />
+    </svg>
+  );
+}
+
 /**
  * Icon button that copies the provided text to the clipboard and shows a checkmark tick for 2 seconds
  * as visual confirmation of the copy action.
@@ -567,6 +581,12 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             Discussions are streamed to your device and not stored on our
             servers.
           </CardDescription>
+          <div className="mt-2 flex items-center gap-1.5">
+            <XAILogo className="size-3.5 opacity-70" />
+            <span className="text-muted-foreground text-xs">
+              Powered by xAI Grok 3 Mini
+            </span>
+          </div>
         </div>
         {messages.length > 0 && (
           <div className="mr-4 flex items-start gap-2">

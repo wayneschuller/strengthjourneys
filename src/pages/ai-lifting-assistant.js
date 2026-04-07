@@ -584,7 +584,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             <CardTitle className="text-2xl font-bold text-balance">
               Your Personal Lifting AI Assistant
             </CardTitle>
-            <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-1.5 pr-4">
+            <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-1.5 pr-4 md:flex">
               <XAILogo className="size-5" />
               <span className="text-sm font-medium">Powered by xAI Grok</span>
             </div>
@@ -593,6 +593,10 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             Discussions are streamed to your device and not stored on our
             servers.
           </CardDescription>
+          <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 md:hidden">
+            <XAILogo className="size-4" />
+            <span className="text-xs font-medium">Powered by xAI Grok</span>
+          </div>
         </div>
         {messages.length > 0 && (
           <div className="mr-4 flex items-start gap-2">

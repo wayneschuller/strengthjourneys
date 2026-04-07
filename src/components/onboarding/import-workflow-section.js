@@ -1028,6 +1028,10 @@ export function ImportWorkflowSection({
                       <p className="text-muted-foreground mt-1.5 text-xs">
                         Your data saves to a Google Sheet you own. Free forever.
                       </p>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        Google will ask for Drive access. Approve it to create
+                        your sheet.
+                      </p>
                     </div>
                   </>
                 )}

@@ -20,6 +20,12 @@ import { SheetSetupDialog } from "@/components/onboarding/sheet-setup-dialog";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { FileUp, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
@@ -636,13 +642,23 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         <div className="flex flex-wrap items-center justify-center gap-2">
           {/* Not signed in: primary save CTA */}
           {!isAuthenticated && authStatus !== "loading" && (
-            <GoogleSignInButton
-              size="sm"
-              cta="preview_banner"
-              className="h-7 text-xs"
-            >
-              Save my data
-            </GoogleSignInButton>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <GoogleSignInButton
+                    size="sm"
+                    cta="preview_banner"
+                    className="h-7 text-xs"
+                  >
+                    Save my data
+                  </GoogleSignInButton>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Google will ask for Drive access. Approve it to save your
+                  sheet.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {/* Signed in + has sheet: merge */}
           {isAuthenticated && hasSsid && !isFullyDuplicate && (

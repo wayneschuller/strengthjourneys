@@ -54,7 +54,7 @@ const Testimonials = dynamic(
   },
 );
 const GettingStartedCard = dynamic(
-  () => import("@/components/onboarding/instructions-cards"),
+  () => import("@/components/onboarding/instructions-cards").then((m) => m.GettingStartedCard),
   {
     ssr: false,
     loading: () => (

@@ -29,6 +29,8 @@ import {
 
 import dynamic from "next/dynamic";
 
+import { motion } from "motion/react";
+
 import {
   Card,
   CardContent,
@@ -64,7 +66,6 @@ const GettingStartedCard = dynamic(
     ),
   },
 );
-
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";

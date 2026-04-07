@@ -13,17 +13,12 @@ import {
   Timer,
   LineChart,
   Layers,
-  Newspaper,
   BicepsFlexed,
   Music,
   LibraryBig,
   Bot,
   Anvil,
   Bus,
-  Crown,
-  Shield,
-  Skull,
-  Luggage,
   Flame,
   Sparkles,
   CircleDashed,
@@ -167,48 +162,30 @@ export const featurePages = [
 
 // The main barbell lifts are the main lifts that have dedicated pages
 // Defined again here for static generation SEO benefits
-// One day we might add power clean and power snatch.
 const mainBarbellLifts = [
   {
     slug: "progress-guide/squat",
     liftType: "Back Squat",
     liftDescription:
       "A barbell squat to full depth, resting across the upper back.",
-    IconComponent: Crown,
   },
   {
     slug: "progress-guide/bench-press",
     liftType: "Bench Press",
     liftDescription:
       "A horizontal press from the chest while lying on a bench.",
-    IconComponent: Shield,
   },
   {
     slug: "progress-guide/deadlift",
     liftType: "Deadlift",
     liftDescription: "Lifting a barbell from the floor to a standing lockout.",
-    IconComponent: Skull,
   },
   {
     slug: "progress-guide/strict-press",
     liftType: "Strict Press",
     liftDescription: "A standing overhead press with no leg drive.",
-    IconComponent: Luggage,
   },
 ];
-
-// {
-//   href: "/articles/why-it-s-good-to-be-a-barbell-weirdo",
-//   title: `Feature Article: Why It's Good To Be A Barbell Weirdo`,
-//   description: "Embrace your inner weirdo.",
-//   IconComponent: Newspaper,
-// },
-// {
-//   href: "/articles/the-iron-and-the-soul-author-henry-rollins",
-//   title: "Feature Article: The Iron and the Soul",
-//   description: "The classic inspirational lifting essay by Henry Rollins.",
-//   IconComponent: Newspaper,
-// },
 
 /**
  * Home page and landing page for Strength Journeys. Shows the hero section or user dashboard,
@@ -385,7 +362,7 @@ export default function Home() {
         ]}
       />
       <main className="mb-4 px-3 md:px-0">
-        <div className="flex flex-col items-center justify-center transition-all duration-800 min-h-[480px]">
+        <div className="flex min-h-[480px] flex-col items-center justify-center transition-all duration-800">
           {showHeroSection && !isReturningUserLoading ? (
             <div
               className={`inset-0 h-full w-full transition-all duration-800 ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
@@ -444,7 +421,14 @@ export default function Home() {
  * @param {React.ComponentType} props.IconComponent - Lucide icon component rendered as the card illustration.
  * @param {number} [props.index=0] - Card position in the grid, used to assign a chart color and stagger the animation.
  */
-function FeatureCard({ href, title, description, IconComponent, badgeLabel, index = 0 }) {
+function FeatureCard({
+  href,
+  title,
+  description,
+  IconComponent,
+  badgeLabel,
+  index = 0,
+}) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
   const isAnalyzer = href === "/lift-explorer";
   const isGorillaCalculator = href === "/how-strong-is-a-gorilla";
@@ -487,9 +471,7 @@ function FeatureCard({ href, title, description, IconComponent, badgeLabel, inde
       <Link href={href}>
         <CardHeader className="min-h-28">
           <CardTitle className="">{title}</CardTitle>
-          <CardDescription className="h-[2rem]">
-            {description}
-          </CardDescription>
+          <CardDescription className="h-[2rem]">{description}</CardDescription>
         </CardHeader>
         <CardContent
           className="flex justify-center transition-transform group-hover:scale-110"
@@ -506,11 +488,7 @@ function FeatureCard({ href, title, description, IconComponent, badgeLabel, inde
               delay: (index % 12) * 0.04,
             }}
           >
-            <IconComponent
-              size={64}
-              strokeWidth={1.25}
-              className="shrink-0"
-            />
+            <IconComponent size={64} strokeWidth={1.25} className="shrink-0" />
           </motion.div>
         </CardContent>
       </Link>

@@ -477,9 +477,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   // Biggest opportunity hint for the main UI
   const biggestOpportunity = useMemo(() => {
-    if (!usingUserData) return null;
     return getWeakestLiftHint(squat, bench, deadlift);
-  }, [usingUserData, squat, bench, deadlift]);
+  }, [squat, bench, deadlift]);
 
   const handleResetToPRs = () => {
     const pr = prWeightsLbRef.current;

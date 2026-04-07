@@ -182,6 +182,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const {
     parsedData,
     isLoading,
+    isDemoMode,
     liftTypes,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
@@ -197,6 +198,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   );
 
   const userProvidedProfileData = useMemo(() => {
+    if (isDemoMode) return "";
     const metadataSections = [];
     const recentSessionDate = getMostRecentSessionDate(parsedData);
     const prioritizedLifts = getPrioritizedLiftTypes({
@@ -332,6 +334,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     age,
     bodyWeight,
     height,
+    isDemoMode,
     isMetric,
     liftTypes,
     parsedData,

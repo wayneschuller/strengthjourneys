@@ -610,6 +610,7 @@ export function E1RMCalculatorMain({
   const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
   const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
   const calculatorE1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+  const circlesLiftType = forceLift ? (LIFT_SLUG_TO_BIG_FOUR[forceLift] ?? forceLift) : null;
 
   return (
     <PageContainer>
@@ -762,7 +763,7 @@ export function E1RMCalculatorMain({
                       transition={{ delay: 0.6, duration: 0.6, ease: "easeOut" }}
                     >
                       <SingleLiftStrengthCirclesSection
-                        liftType={forceLift}
+                        liftType={circlesLiftType}
                         e1rmKgOverride={calculatorE1rmKg}
                         showTimeline={false}
                         compact={true}
@@ -823,7 +824,7 @@ export function E1RMCalculatorMain({
                     transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
                   >
                     <SingleLiftStrengthCirclesSection
-                      liftType={forceLift}
+                      liftType={circlesLiftType}
                       e1rmKgOverride={calculatorE1rmKg}
                       showTimeline={false}
                       compact={true}

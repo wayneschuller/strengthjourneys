@@ -27,7 +27,8 @@ import {
   Upload,
 } from "lucide-react";
 
-import { motion } from "motion/react";
+import dynamic from "next/dynamic";
+
 import {
   Card,
   CardContent,
@@ -36,8 +37,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+const Testimonials = dynamic(
+  () => import("@/components/homepage/testimonials"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mx-4 mt-10 md:mx-10">
+        <div className="text-muted-foreground flex h-32 items-center justify-center rounded-lg border p-4 text-center text-sm">
+          Loading testimonials...
+        </div>
+      </div>
+    ),
+  },
+);
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
-import { Testimonials } from "@/components/homepage/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";

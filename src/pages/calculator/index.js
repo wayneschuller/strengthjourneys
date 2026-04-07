@@ -302,6 +302,7 @@ export function E1RMCalculatorMain({
   formulaBlurb = null,
   exampleSnippet = null,
   formulaSupport = null,
+  liftLinks = null,
   faqItems = CALCULATOR_FAQ,
 }) {
   const router = useRouter();
@@ -888,6 +889,7 @@ export function E1RMCalculatorMain({
       <CalculatorSupportPanels
         exampleSnippet={exampleSnippet}
         formulaSupport={formulaSupport}
+        liftLinks={liftLinks}
       />
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">One Rep Max Calculator FAQ</h2>
@@ -950,10 +952,10 @@ function flattenAnswer(answer) {
   return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
 }
 
-function CalculatorSupportPanels({ exampleSnippet, formulaSupport }) {
-  if (!exampleSnippet && !formulaSupport) return null;
+function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) {
+  if (!exampleSnippet && !formulaSupport && !liftLinks) return null;
 
-  if (exampleSnippet && !formulaSupport) {
+  if (exampleSnippet && !formulaSupport && !liftLinks) {
     return (
       <section className="mt-10">
         <Card>
@@ -976,6 +978,52 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport }) {
               {renderInlineContent(exampleSnippet.result)}
             </p>
             <p>{renderInlineContent(exampleSnippet.takeaway)}</p>
+          </CardContent>
+        </Card>
+      </section>
+    );
+  }
+
+  if (exampleSnippet && !formulaSupport && liftLinks) {
+    return (
+      <section className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              <strong className="text-foreground">Input:</strong>{" "}
+              {renderInlineContent(exampleSnippet.input)}
+            </p>
+            <p>
+              <strong className="text-foreground">Calculation:</strong>{" "}
+              <span className="font-mono text-foreground">
+                {renderInlineContent(exampleSnippet.calculation)}
+              </span>
+            </p>
+            <p>
+              <strong className="text-foreground">Result:</strong>{" "}
+              {renderInlineContent(exampleSnippet.result)}
+            </p>
+            <p>{renderInlineContent(exampleSnippet.takeaway)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Go Deeper</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {liftLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+              >
+                <div className="font-medium text-foreground">{link.label}</div>
+                <div className="text-muted-foreground">{link.description}</div>
+              </Link>
+            ))}
           </CardContent>
         </Card>
       </section>
@@ -1843,7 +1891,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         <div className="border-t pt-3">
           <h2 className="text-center text-base font-semibold">
             <Link
-              href={featuredBigFourName ? (getLiftDetailUrl(featuredBigFourName) ?? "/strength-levels") : "/strength-levels"}
+              href={featuredBigFourName ? (STRENGTH_STANDARDS_LINKS[featuredBigFourName] ?? "/strength-levels") : "/strength-levels"}
               className="transition-opacity hover:opacity-70"
             >
               {featuredBigFourName ? `${forceLift} Strength Standards` : "Strength Levels"}

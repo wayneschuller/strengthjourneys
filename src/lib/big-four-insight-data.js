@@ -6,12 +6,12 @@ export const bigFourLiftInsightData = [
     liftType: "Back Squat",
     hubDescription: "The king of lower-body strength.",
     canonicalURL: "https://www.strengthjourneys.xyz/progress-guide/squat",
-    seoTitle: "Back Squat Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Back Squat Strength Guide & Progress Tracker",
+    seoTitle: "Back Squat Guide: Videos, PR Tracking & E1RM Progress Charts",
+    pageTitle: "Back Squat Complete Guide & Progress Tracker",
     pageDescription:
-      "Check back squat strength standards, explore squat progress charts, compare rep PRs, and dive into back squat videos, FAQs, and related articles.",
+      "Hand-picked squat tutorial videos, programming resources from elite coaches, and for logged-in lifters: your squat E1RM progression chart, rep PRs, tonnage history, strength percentile rank, and a 19-tier commitment tracker. Free, no app download.",
     pageKeywords:
-      "back squat, barbell squat, squat strength standards, squat strength levels, squat progress tracker, E1RM squat, squat PR",
+      "back squat guide, squat technique videos, squat progress tracker, squat PR tracker, squat E1RM chart, barbell squat coaching, squat tonnage, squat percentile",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_back_squat_insights.png",
     quoteSectionTitle: "Why the back squat became the King of Lifts",
@@ -101,12 +101,12 @@ export const bigFourLiftInsightData = [
     hubDescription: "The lift everyone asks about first.",
     canonicalURL:
       "https://www.strengthjourneys.xyz/progress-guide/bench-press",
-    seoTitle: "Bench Press Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Bench Press Strength Guide & Progress Tracker",
+    seoTitle: "Bench Press Guide: Videos, PR Tracking & E1RM Progress Charts",
+    pageTitle: "Bench Press Complete Guide & Progress Tracker",
     pageDescription:
-      "Check bench press strength standards, explore bench progress charts, compare rep PRs, and dive into bench press videos, FAQs, and related articles.",
+      "Curated bench press technique videos, expert coaching resources, and for logged-in lifters: your personal E1RM chart over time, rep-range PRs, tonnage tracking, strength percentile rank, and a 19-tier progression system. Free, no app download.",
     pageKeywords:
-      "bench press, barbell bench press, bench press strength standards, bench press strength levels, bench press progress tracker, E1RM bench, bench PR",
+      "bench press guide, bench press technique videos, bench press progress tracker, bench press PR tracker, bench press E1RM chart, barbell bench press coaching, bench press tonnage, bench press percentile",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_bench_insights.png",
     quoteSectionTitle: "Why the bench press became the classic upper-body test",
@@ -203,12 +203,12 @@ export const bigFourLiftInsightData = [
     liftType: "Deadlift",
     hubDescription: "The heaviest bar you will ever move.",
     canonicalURL: "https://www.strengthjourneys.xyz/progress-guide/deadlift",
-    seoTitle: "Deadlift Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Deadlift Strength Guide & Progress Tracker",
+    seoTitle: "Deadlift Guide: Videos, PR Tracking & E1RM Progress Charts",
+    pageTitle: "Deadlift Complete Guide & Progress Tracker",
     pageDescription:
-      "Check deadlift strength standards, explore deadlift progress charts, compare rep PRs, and dive into deadlift videos, FAQs, and related articles.",
+      "Curated deadlift technique videos, expert coaching resources, and for logged-in lifters: your deadlift E1RM chart over time, rep-range PRs, tonnage tracking, strength percentile rank, and a 19-tier progression system. Free, no app download.",
     pageKeywords:
-      "deadlift, barbell deadlift, deadlift strength standards, deadlift strength levels, deadlift progress tracker, E1RM deadlift, deadlift PR",
+      "deadlift guide, deadlift technique videos, deadlift progress tracker, deadlift PR tracker, deadlift E1RM chart, barbell deadlift coaching, deadlift tonnage, deadlift percentile",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_deadlift_insights.png",
     quoteSectionTitle: "Why the deadlift still defines raw strength",
@@ -301,12 +301,12 @@ export const bigFourLiftInsightData = [
     hubDescription: "The slowest to climb and the most rewarding.",
     canonicalURL:
       "https://www.strengthjourneys.xyz/progress-guide/strict-press",
-    seoTitle: "Overhead Press Strength Standards & Progress Tracker",
-    pageTitle: "Barbell Strict Press Strength Guide & Progress Tracker",
+    seoTitle: "Strict Press Guide: Videos, PR Tracking & E1RM Progress Charts",
+    pageTitle: "Strict Press Complete Guide & Progress Tracker",
     pageDescription:
-      "Check strict press strength standards, explore press progress charts, compare rep PRs, and dive into strict press videos, FAQs, and related articles.",
+      "Curated strict press tutorial videos, programming resources, and for logged-in lifters: your OHP E1RM progression chart, rep PRs, tonnage history, strength percentile rank, and a 19-tier commitment tracker. Free, no app download.",
     pageKeywords:
-      "overhead press, strict press, barbell press, OHP strength standards, overhead press strength levels, press progress tracker, E1RM press, OHP PR",
+      "strict press guide, overhead press guide, OHP technique videos, strict press progress tracker, OHP PR tracker, strict press E1RM chart, overhead press coaching, OHP tonnage, OHP percentile",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_strict_press_insights.png",
     quoteSectionTitle: "Why the strict press remains the purest overhead test",

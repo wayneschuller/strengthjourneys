@@ -29,9 +29,9 @@ export default function ProgressGuideHub() {
 
   const title = "Lift Insights and Progress Tracking";
   const description =
-    "Video guides, strength standards, progress charts, and session history for the big four barbell lifts. Sign in to track your own journey.";
+    "Technique videos, expert coaching resources, and full personal progress tracking for the big four barbell lifts. Sign in to see your E1RM charts, rep PRs, tonnage, and lift tier progression.";
   const keywords =
-    "barbell progress tracker, squat progress, bench press progress, deadlift progress, strict press guide, barbell training guide";
+    "barbell progress tracker, barbell training guide, squat guide, bench press guide, deadlift guide, strict press guide, lift PR tracker, E1RM progress";
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -88,9 +88,9 @@ export default function ProgressGuideHub() {
             Lift Insights and Progress Tracking
           </PageHeaderHeading>
           <PageHeaderDescription>
-            Everything you need for each of the big four barbell lifts — video
-            technique guides, strength standards, progress charts, and session
-            history. Pick a lift to get started.
+            Everything for each of the big four barbell lifts in one place:
+            curated technique videos, expert coaching resources, and full
+            personal progress tracking. Pick a lift to get started.
           </PageHeaderDescription>
         </PageHeader>
 

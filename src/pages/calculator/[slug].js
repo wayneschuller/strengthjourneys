@@ -577,6 +577,26 @@ const PAGE_CONFIG = {
       takeaway:
         "A hard set of 5 is a practical input for most squat estimates because it is heavy enough to be meaningful without the risk of true max testing.",
     },
+    liftLinks: [
+      {
+        href: "/strength-levels/squat",
+        label: "Squat Strength Standards",
+        description:
+          "See where your squat ranks by bodyweight, age, and sex.",
+      },
+      {
+        href: "/progress-guide/squat",
+        label: "Squat Guide & PR Tracker",
+        description:
+          "Technique videos, E1RM history, rep PRs, and tonnage tracking.",
+      },
+      {
+        href: "/warm-up-sets-calculator",
+        label: "Build Warm-Up Sets",
+        description:
+          "Generate warm-up percentages from your estimated max.",
+      },
+    ],
   },
   "bench-press-1rm-calculator": {
     type: "lift",
@@ -615,6 +635,26 @@ const PAGE_CONFIG = {
         ],
       },
     ],
+    liftLinks: [
+      {
+        href: "/strength-levels/bench-press",
+        label: "Bench Press Strength Standards",
+        description:
+          "See where your bench ranks by bodyweight, age, and sex.",
+      },
+      {
+        href: "/progress-guide/bench-press",
+        label: "Bench Press Guide & PR Tracker",
+        description:
+          "Technique videos, E1RM history, rep PRs, and tonnage tracking.",
+      },
+      {
+        href: "/warm-up-sets-calculator",
+        label: "Build Warm-Up Sets",
+        description:
+          "Generate warm-up percentages from your estimated max.",
+      },
+    ],
   },
   "deadlift-1rm-calculator": {
     type: "lift",
@@ -634,6 +674,26 @@ const PAGE_CONFIG = {
       takeaway:
         "Deadlift estimates usually hold up best when the set is heavy but not grindy, which is why many lifters use a clean set of 3-5 reps.",
     },
+    liftLinks: [
+      {
+        href: "/strength-levels/deadlift",
+        label: "Deadlift Strength Standards",
+        description:
+          "See where your deadlift ranks by bodyweight, age, and sex.",
+      },
+      {
+        href: "/progress-guide/deadlift",
+        label: "Deadlift Guide & PR Tracker",
+        description:
+          "Technique videos, E1RM history, rep PRs, and tonnage tracking.",
+      },
+      {
+        href: "/warm-up-sets-calculator",
+        label: "Build Warm-Up Sets",
+        description:
+          "Generate warm-up percentages from your estimated max.",
+      },
+    ],
   },
   "strict-press-1rm-calculator": {
     type: "lift",
@@ -653,6 +713,26 @@ const PAGE_CONFIG = {
       takeaway:
         "Strict press estimates get noisy faster than squat or deadlift, so moderate rep sets with clean form tend to give the most useful signal.",
     },
+    liftLinks: [
+      {
+        href: "/strength-levels/strict-press",
+        label: "Strict Press Strength Standards",
+        description:
+          "See where your press ranks by bodyweight, age, and sex.",
+      },
+      {
+        href: "/progress-guide/strict-press",
+        label: "Strict Press Guide & PR Tracker",
+        description:
+          "Technique videos, E1RM history, rep PRs, and tonnage tracking.",
+      },
+      {
+        href: "/warm-up-sets-calculator",
+        label: "Build Warm-Up Sets",
+        description:
+          "Generate warm-up percentages from your estimated max.",
+      },
+    ],
   },
 };
 
@@ -793,6 +873,7 @@ export default function FormulaOrLiftCalculatorPage({
         }
         exampleSnippet={pageConfig.exampleSnippet ?? null}
         formulaSupport={isFormula ? pageConfig.formulaSupport : null}
+        liftLinks={pageConfig.liftLinks ?? null}
         faqItems={pageConfig.faqItems}
       />
     </>

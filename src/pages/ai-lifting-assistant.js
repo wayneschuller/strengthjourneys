@@ -587,7 +587,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           <div className="mt-2 flex items-center gap-1.5">
             <XAILogo className="size-3.5 opacity-70" />
             <span className="text-muted-foreground text-xs">
-              Powered by xAI Grok 3 Mini
+              Powered by xAI Grok
             </span>
           </div>
         </div>

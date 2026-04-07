@@ -51,7 +51,20 @@ const Testimonials = dynamic(
     ),
   },
 );
-import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
+const GettingStartedCard = dynamic(
+  () => import("@/components/onboarding/instructions-cards"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mx-4 mt-10 md:mx-10">
+        <div className="text-muted-foreground flex h-32 items-center justify-center rounded-lg border p-4 text-center text-sm">
+          Loading getting started guide...
+        </div>
+      </div>
+    ),
+  },
+);
+
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";

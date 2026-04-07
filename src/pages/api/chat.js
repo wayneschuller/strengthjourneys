@@ -97,6 +97,8 @@ export default async function handler(req, res) {
 
   const modelMessages = [...systemMessages, ...convertedUserMessages];
 
+  devLog(`AI model: ${AI_model.modelId}`);
+
   const result = await streamText({
     // model: openai("gpt-4o-mini"),
     // model: openai("gpt-4o"),

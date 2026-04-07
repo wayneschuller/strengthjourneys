@@ -77,7 +77,7 @@ export default async function handler(req, res) {
 
   let AI_model;
   if (useXai) {
-    AI_model = isAdvancedModel ? xai("grok-3") : xai("grok-3-mini");
+    AI_model = xai("grok-3-mini");
   } else {
     // 2026-03-15: GPT-4.1 is the default here for stronger formatting and lower-latency chat quality.
     AI_model = openai("gpt-4.1");

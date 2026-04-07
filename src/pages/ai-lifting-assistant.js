@@ -581,7 +581,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             <CardTitle className="text-2xl font-bold text-balance">
               Your Personal Lifting AI Assistant
             </CardTitle>
-            <div className="text-muted-foreground flex shrink-0 items-center gap-1.5">
+            <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-1.5">
               <XAILogo className="size-5" />
               <span className="text-sm font-medium">Powered by xAI Grok</span>
             </div>

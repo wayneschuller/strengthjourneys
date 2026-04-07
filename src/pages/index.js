@@ -41,7 +41,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 const Testimonials = dynamic(
-  () => import("@/components/homepage/testimonials"),
+  () => import("@/components/homepage/testimonials").then((m) => m.Testimonials),
   {
     ssr: false,
     loading: () => (

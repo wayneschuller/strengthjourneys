@@ -1,4 +1,5 @@
 import { openai } from "@ai-sdk/openai";
+import { xai } from "@ai-sdk/xai";
 import { streamText, convertToModelMessages } from "ai";
 import { devLog } from "@/lib/processing-utils";
 import { getServerSession } from "next-auth/next";
@@ -23,7 +24,11 @@ export default async function handler(req, res) {
 
   let isAdvancedModel = false;
 
-  if (!process.env.OPENAI_API_KEY) {
+  const AI_PROVIDER = process.env.AI_PROVIDER ?? "openai";
+
+  if (AI_PROVIDER === "xai" && !process.env.XAI_API_KEY) {
+    return res.status(500).json({ error: "XAI API key is not set" });
+  } else if (AI_PROVIDER !== "xai" && !process.env.OPENAI_API_KEY) {
     return res.status(500).json({ error: "OpenAI API key is not set" });
   }
 
@@ -72,10 +77,13 @@ export default async function handler(req, res) {
     });
   }
 
-  // 2026-03-15: GPT-4.1 is the default here for stronger formatting and lower-latency chat quality.
-  const AI_model = isAdvancedModel
-    ? openai("gpt-4.1")
-    : openai("gpt-4.1");
+  let AI_model;
+  if (AI_PROVIDER === "xai") {
+    AI_model = isAdvancedModel ? xai("grok-3") : xai("grok-3-mini");
+  } else {
+    // 2026-03-15: GPT-4.1 is the default here for stronger formatting and lower-latency chat quality.
+    AI_model = openai("gpt-4.1");
+  }
 
   // Convert UI messages (from client) to model messages, then combine with system messages
   // In AI SDK v6, convertToModelMessages is async and must be awaited

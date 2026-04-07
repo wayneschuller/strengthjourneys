@@ -24,12 +24,10 @@ export default async function handler(req, res) {
 
   let isAdvancedModel = false;
 
-  const AI_PROVIDER = process.env.AI_PROVIDER ?? "openai";
+  const useXai = !!process.env.XAI_API_KEY;
 
-  if (AI_PROVIDER === "xai" && !process.env.XAI_API_KEY) {
-    return res.status(500).json({ error: "XAI API key is not set" });
-  } else if (AI_PROVIDER !== "xai" && !process.env.OPENAI_API_KEY) {
-    return res.status(500).json({ error: "OpenAI API key is not set" });
+  if (!useXai && !process.env.OPENAI_API_KEY) {
+    return res.status(500).json({ error: "No AI API key is set" });
   }
 
   const paidUsers = process.env.SJ_PAID_USERS;
@@ -78,7 +76,7 @@ export default async function handler(req, res) {
   }
 
   let AI_model;
-  if (AI_PROVIDER === "xai") {
+  if (useXai) {
     AI_model = isAdvancedModel ? xai("grok-3") : xai("grok-3-mini");
   } else {
     // 2026-03-15: GPT-4.1 is the default here for stronger formatting and lower-latency chat quality.

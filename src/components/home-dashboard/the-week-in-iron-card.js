@@ -7,7 +7,14 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus, FileUp } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  FileUp,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -41,6 +48,7 @@ import {
   formatDateToYmdLocal,
   addDaysFromStr,
   subtractDaysFromStr,
+  getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
 
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
@@ -50,6 +58,30 @@ const BIG_FOUR_STARTERS = [
   { liftType: "Bench Press", icon: "/bench_press.svg" },
   { liftType: "Deadlift", icon: "/deadlift.svg" },
   { liftType: "Strict Press", icon: "/strict_press.svg" },
+];
+
+// Shown for historical weeks with 3+ sessions — sober, pro-consistency tone
+const CONSISTENCY_PHRASES = [
+  "Another week in the bank.",
+  "Consistency compounds.",
+  "Three sessions. That's the standard.",
+  "Showed up and did the work.",
+  "Week handled.",
+  "The reps don't lie.",
+  "Discipline over motivation.",
+  "Brick by brick.",
+  "You kept the streak alive.",
+  "Punched the clock, moved the weight.",
+  "No drama. Just training.",
+  "Solid week. Solid lifter.",
+  "The work speaks for itself.",
+  "Built different, one week at a time.",
+  "Put the time in. That's what counts.",
+  "Quiet consistency. Loud results.",
+  "Another seven days of doing the thing.",
+  "The bar was there. You showed up.",
+  "This is what progress looks like.",
+  "Week after week. That's the whole secret.",
 ];
 
 const LOGGING_FEATURES_BLURB =
@@ -259,6 +291,41 @@ function getTonnageDelta(current, prev) {
   return pct;
 }
 
+/** Pick a deterministic phrase from a pool based on the week's Monday string. */
+function pickPhrase(pool, mondayStr) {
+  let hash = 0;
+  for (let i = 0; i < mondayStr.length; i++) {
+    hash = (hash * 31 + mondayStr.charCodeAt(i)) >>> 0;
+  }
+  return pool[hash % pool.length];
+}
+
+/**
+ * Compute average weekly tonnage for the 52 weeks preceding the given week.
+ * Returns { avg, unit } or null if insufficient data.
+ */
+function computeAvgWeeklyTonnage(sessionTonnageLookup, boundaries, nativeUnit) {
+  if (!sessionTonnageLookup?.sessionTonnageByDate) return null;
+  const byDate = sessionTonnageLookup.sessionTonnageByDate;
+
+  // 52 weeks before this week's Monday
+  const yearAgoStr = subtractDaysFromStr(boundaries.mondayStr, 364);
+
+  const weekTonnages = new Map();
+  for (const [date, unitMap] of Object.entries(byDate)) {
+    if (date < yearAgoStr || date >= boundaries.mondayStr) continue;
+    const tonnage = unitMap[nativeUnit] ?? 0;
+    if (tonnage <= 0) continue;
+    const weekKey = getWeekKeyFromDateStr(date);
+    weekTonnages.set(weekKey, (weekTonnages.get(weekKey) ?? 0) + tonnage);
+  }
+
+  if (weekTonnages.size < 4) return null; // need at least 4 weeks of data
+  let total = 0;
+  for (const t of weekTonnages.values()) total += t;
+  return { avg: total / weekTonnages.size, unit: nativeUnit };
+}
+
 function formatLiftSummary(liftTypes) {
   if (!Array.isArray(liftTypes) || liftTypes.length === 0) {
     return "Session logged";
@@ -384,6 +451,15 @@ export function TheWeekInIronCard({
     () => getWeeklySessionRows(parsedData, boundaries, isMetric),
     [parsedData, boundaries, isMetric],
   );
+  const avgTonnage = useMemo(
+    () =>
+      computeAvgWeeklyTonnage(
+        sessionTonnageLookup,
+        boundaries,
+        stats?.nativeUnit ?? (isMetric ? "kg" : "lb"),
+      ),
+    [sessionTonnageLookup, boundaries, stats?.nativeUnit, isMetric],
+  );
 
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
 
@@ -491,35 +567,53 @@ export function TheWeekInIronCard({
                 />
               </WeekSection>
 
-              {!isReadOnly && (
+              {!isReadOnly && boundaries.isCurrentWeek && (
                 <>
                   <Separator />
-
                   <WeekSection
                     stepLabel="B"
-                    title={
-                      boundaries.isCurrentWeek ? "Looking ahead" : "Streak"
-                    }
+                    title="Looking ahead"
                     streakCallout={getStreakCallout(
                       streakStats,
-                      boundaries.isCurrentWeek,
+                      true,
                     )}
-                    description={
-                      boundaries.isCurrentWeek
-                        ? getNextStepCopy(
-                            stats,
-                            streakStats,
-                            boundaries,
-                            weeklySessionRows,
-                          )
-                        : null
-                    }
+                    description={getNextStepCopy(
+                      stats,
+                      streakStats,
+                      boundaries,
+                      weeklySessionRows,
+                    )}
                   >
-                    {boundaries.isCurrentWeek && (
-                      <StartLiftPrompt
-                        showIntro={false}
-                        showStarterButtons={stats.sessions.current < 3}
-                        trainedLiftTypes={stats.liftTypes}
+                    <StartLiftPrompt
+                      showIntro={false}
+                      showStarterButtons={stats.sessions.current < 3}
+                      trainedLiftTypes={stats.liftTypes}
+                    />
+                  </WeekSection>
+                </>
+              )}
+
+              {!boundaries.isCurrentWeek && (
+                <>
+                  <Separator />
+                  <WeekSection
+                    stepLabel="B"
+                    title="Week in review"
+                    streakCallout={getStreakCallout(
+                      streakStats,
+                      false,
+                    )}
+                    description={getWeekReviewCopy(
+                      stats,
+                      avgTonnage,
+                      unit,
+                      boundaries,
+                    )}
+                  >
+                    {stats.sessions.current >= 3 && avgTonnage && (
+                      <WeekTonnageComparison
+                        weekTonnage={stats.tonnage.current}
+                        avgTonnage={avgTonnage}
                       />
                     )}
                   </WeekSection>
@@ -829,6 +923,55 @@ function getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows) {
   const volumeLabel = formatTonnage(stats.tonnage.current, unit);
 
   return `${sessionsLabel} so far, with ${volumeLabel} of total volume across the week.`;
+}
+
+function getWeekReviewCopy(stats, avgTonnage, unit, boundaries) {
+  if (stats.sessions.current === 0) return "No sessions logged this week.";
+
+  const qualified = stats.sessions.current >= 3;
+  const phrase = qualified
+    ? pickPhrase(CONSISTENCY_PHRASES, boundaries.mondayStr)
+    : `${stats.sessions.current} session${stats.sessions.current === 1 ? "" : "s"} this week.`;
+
+  const volumeLabel = formatTonnage(stats.tonnage.current, unit);
+
+  if (!avgTonnage) return `${phrase} ${volumeLabel} total volume.`;
+
+  const delta = getTonnageDelta(stats.tonnage.current, avgTonnage.avg);
+  if (delta === null) return `${phrase} ${volumeLabel} total volume.`;
+
+  const direction = delta >= 0 ? "above" : "below";
+  const pct = Math.abs(Math.round(delta));
+
+  return `${phrase} ${volumeLabel} total volume, ${pct}% ${direction} your trailing year average.`;
+}
+
+function WeekTonnageComparison({ weekTonnage, avgTonnage }) {
+  if (!avgTonnage) return null;
+  const delta = getTonnageDelta(weekTonnage, avgTonnage.avg);
+  if (delta === null) return null;
+
+  const isUp = delta >= 0;
+  const pct = Math.abs(Math.round(delta));
+  const Icon = isUp ? TrendingUp : TrendingDown;
+  const colorClass = isUp
+    ? "text-emerald-600 dark:text-emerald-400"
+    : "text-amber-600 dark:text-amber-400";
+
+  return (
+    <div className="bg-muted/30 flex items-center gap-3 rounded-xl border px-4 py-3">
+      <Icon className={`h-5 w-5 shrink-0 ${colorClass}`} />
+      <div className="min-w-0 flex-1">
+        <p className="text-foreground text-sm font-medium">
+          {formatTonnage(weekTonnage, avgTonnage.unit)} this week
+        </p>
+        <p className="text-muted-foreground text-xs">
+          {pct}% {isUp ? "above" : "below"} your trailing year average of{" "}
+          {formatTonnage(avgTonnage.avg, avgTonnage.unit)}/week
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function getStreakCallout(streakStats, isCurrentWeek) {

@@ -6,6 +6,7 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, logTiming, getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
+import { addDaysFromStr, formatDateToYmdLocal } from "@/lib/date-utils";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -232,7 +233,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   strokeWidth={2}
                   fill={`url(#fill)`}
                   fillOpacity={0.4}
-                  dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
+                  dot={
+                  ["3M", "6M"].includes(timeRange)
+                    ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
+                    : false
+                }
                   connectNulls
                 >
                   {showLabelValues && (
@@ -330,7 +335,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 dataKey="tonnage"
                 stroke="var(--chart-1)"
                 fill="url(#fillTonnage)"
-                dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
+                dot={
+                  ["3M", "6M"].includes(timeRange)
+                    ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
+                    : false
+                }
                 connectNulls
               >
                 {showLabelValues && (
@@ -787,7 +796,36 @@ const TonnageTooltipContent = ({
   isMetric = false,
 }) => {
   // Sync hover → TheLatestSessionCard via Tooltip content (more reliable than onMouseMove in recharts v3)
-  const highlightDateStr = payload?.length > 0 ? payload[0]?.payload?.date : null;
+  // For weekly/monthly views, find the last actual session date within the period
+  // so the session card shows a real session instead of the period-start date.
+  const rawDateStr = payload?.length > 0 ? payload[0]?.payload?.date : null;
+  const highlightDateStr = useMemo(() => {
+    if (!rawDateStr || !parsedData || aggregationType === "perSession") {
+      return rawDateStr;
+    }
+    let periodEnd;
+    if (aggregationType === "perWeek") {
+      periodEnd = addDaysFromStr(rawDateStr, 6);
+    } else {
+      // perMonth: end of month
+      const d = new Date(rawDateStr + "T00:00:00");
+      d.setMonth(d.getMonth() + 1);
+      d.setDate(0); // last day of original month
+      periodEnd = formatDateToYmdLocal(d);
+    }
+    // Walk backwards through parsedData to find the last session in the period
+    let lastDate = null;
+    for (let i = parsedData.length - 1; i >= 0; i--) {
+      const e = parsedData[i];
+      if (e.isGoal) continue;
+      if (e.date >= rawDateStr && e.date <= periodEnd) {
+        lastDate = e.date;
+        break;
+      }
+      if (e.date < rawDateStr) break;
+    }
+    return lastDate || rawDateStr;
+  }, [rawDateStr, parsedData, aggregationType]);
   useEffect(() => {
     if (!highlightDateStr || !setHighlightDate) return;
     const timer = setTimeout(() => setHighlightDate(highlightDateStr), debounceMs);

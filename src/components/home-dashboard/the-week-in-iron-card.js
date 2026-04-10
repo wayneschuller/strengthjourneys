@@ -498,6 +498,11 @@ export function TheWeekInIronCard({
                   <WeekSection
                     stepLabel="B"
                     title="Looking ahead"
+                    streakCallout={
+                      boundaries.isCurrentWeek
+                        ? getStreakCallout(streakStats)
+                        : null
+                    }
                     description={getNextStepCopy(
                       stats,
                       streakStats,
@@ -508,6 +513,7 @@ export function TheWeekInIronCard({
                     <StartLiftPrompt
                       showIntro={false}
                       showStarterButtons={stats.sessions.current < 3}
+                      trainedLiftTypes={stats.liftTypes}
                     />
                   </WeekSection>
                 </>
@@ -537,13 +543,24 @@ export function TheWeekInIronCard({
 
 // ─── Supporting components ─────────────────────────────────────────────────
 
-function WeekSection({ stepLabel, title, description, children }) {
+function WeekSection({
+  stepLabel,
+  title,
+  streakCallout,
+  description,
+  children,
+}) {
   return (
     <section className="space-y-3">
       <div className="space-y-1">
         <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.22em] uppercase">
           {stepLabel}. {title}
         </p>
+        {streakCallout ? (
+          <p className="text-foreground text-sm leading-6 font-semibold">
+            {streakCallout}
+          </p>
+        ) : null}
         {description ? (
           <p className="text-muted-foreground text-sm leading-6">
             {description}
@@ -807,26 +824,38 @@ function getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows) {
   return `${sessionsLabel} so far, with ${volumeLabel} of total volume across the week.`;
 }
 
-function getStreakMotivationCopy(streakStats) {
+function getStreakCallout(streakStats) {
   if (!streakStats || streakStats.currentStreak <= 0) return null;
 
-  const sessionsNeededThisWeek = Math.max(0, 3 - (streakStats.sessionsThisWeek ?? 0));
+  const sessionsNeeded = Math.max(
+    0,
+    3 - (streakStats.sessionsThisWeek ?? 0),
+  );
   const weekLabel = `week${streakStats.currentStreak === 1 ? "" : "s"}`;
 
-  if (sessionsNeededThisWeek === 0) {
-    return `That locks in ${streakStats.currentStreak} ${weekLabel} in a row.`;
+  if (sessionsNeeded === 0) {
+    return `${streakStats.currentStreak}-${weekLabel} streak locked in.`;
   }
 
   const nextStreak = streakStats.currentStreak + 1;
-  const sessionsLabel = `session${sessionsNeededThisWeek === 1 ? "" : "s"}`;
-  const nextWeekLabel = `week${nextStreak === 1 ? "" : "s"}`;
+  const sessionsLabel = sessionsNeeded === 1 ? "session" : "sessions";
 
-  return `You're on a ${streakStats.currentStreak}-${weekLabel} streak, and ${sessionsNeededThisWeek} more ${sessionsLabel} this week makes it ${nextStreak} ${nextWeekLabel}.`;
+  return `${streakStats.currentStreak}-${weekLabel} streak. ${sessionsNeeded} more ${sessionsLabel} this week makes it ${nextStreak}.`;
+}
+
+function getMissingBigFourCopy(trainedLiftTypes) {
+  const missing = BIG_FOUR_LIFT_TYPES.filter(
+    (lt) => !trainedLiftTypes.includes(lt),
+  );
+  if (missing.length === 0 || missing.length === 4) return null;
+  const list =
+    missing.length === 1
+      ? missing[0]
+      : `${missing.slice(0, -1).join(", ")} or ${missing[missing.length - 1]}`;
+  return `You haven’t touched ${list} this week.`;
 }
 
 function getNextStepCopy(stats, streakStats, boundaries, weeklySessionRows) {
-  const streakMotivation = getStreakMotivationCopy(streakStats);
-
   if (stats.sessions.current === 0) {
     return boundaries.isCurrentWeek
       ? "Start the week by logging the first lift you want to train."
@@ -836,45 +865,44 @@ function getNextStepCopy(stats, streakStats, boundaries, weeklySessionRows) {
   const hasLiftedToday = weeklySessionRows.some(
     (session) => session.date === boundaries.todayStr,
   );
+  const missingCopy = boundaries.isCurrentWeek
+    ? getMissingBigFourCopy(stats.liftTypes)
+    : null;
 
   if (boundaries.isCurrentWeek && hasLiftedToday) {
-    if (stats.prs > 0) {
-      const baseCopy =
-        "Nice work getting today’s session in. That’s a strong note for the week. Take the win, recover well, and start thinking about what you’ll want to train next.";
-      return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
-    }
-
-    const baseCopy =
+    const base =
       stats.sessions.current >= 3
-        ? "Nice work getting today’s session in. You’ve already stacked a strong week. Recover well, enjoy that momentum, and keep the log open if you’re training again."
-        : "Nice work getting today’s session in. That’s another day in the bank this week. Recover well, and when you’re ready, start thinking about when you want to lift next and what you want to train.";
-    return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
+        ? "Strong week so far. Recover well and keep the log open if you’re training again."
+        : "Good session today. Recover well and plan your next one.";
+    return missingCopy ? `${base} ${missingCopy}` : base;
   }
 
-  if (boundaries.isCurrentWeek && stats.dayActivity.some((active) => !active)) {
-    const baseCopy =
+  if (boundaries.isCurrentWeek) {
+    const base =
       stats.sessions.current >= 3
-        ? "You’ve already put together a strong week. If today is a rest day, let it be one. If you’re on a higher-frequency split, the general log is there when you’re ready."
-        : "You’ve already put work into this week. If today is a rest day, let it be one. When you’re ready, think about when you want to lift next and what you want to train.";
-    return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
+        ? "Solid week already. Rest if you need it, or log another session if your programming calls for it."
+        : "You’ve put work in this week. When you’re ready, pick your next session.";
+    return missingCopy ? `${base} ${missingCopy}` : base;
   }
 
-  if (stats.prs > 0) {
-    const baseCopy =
-      stats.sessions.current >= 3
-        ? "Strong week. You’ve already done enough to call this one a win, so recover well and log more only if the plan says so."
-        : "Strong week so far. Take a moment to recover, reflect on how it felt, and decide what you want to train next.";
-    return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
-  }
-
-  const baseCopy =
-    stats.sessions.current >= 3
-      ? "This week is already in good shape. Take stock of how you’re feeling, enjoy the work you’ve banked, and use the general log if you’re training again."
-      : "This week is underway. Take stock of how you’re feeling, and when the time is right, choose the next lift you want to log.";
-  return streakMotivation ? `${baseCopy} ${streakMotivation}` : baseCopy;
+  return stats.sessions.current >= 3
+    ? "Strong week in the books."
+    : "A couple of sessions logged this week.";
 }
 
-function StartLiftPrompt({ showIntro = true, showStarterButtons = true }) {
+function StartLiftPrompt({
+  showIntro = true,
+  showStarterButtons = true,
+  trainedLiftTypes = [],
+}) {
+  // Show only untrained big four lifts when the user has already trained some
+  const starters =
+    trainedLiftTypes.length > 0
+      ? BIG_FOUR_STARTERS.filter(
+          ({ liftType }) => !trainedLiftTypes.includes(liftType),
+        )
+      : BIG_FOUR_STARTERS;
+
   return (
     <div className="space-y-3">
       {showIntro && (
@@ -887,9 +915,9 @@ function StartLiftPrompt({ showIntro = true, showStarterButtons = true }) {
           </p>
         </div>
       )}
-      {showStarterButtons ? (
+      {showStarterButtons && starters.length > 0 ? (
         <div className="grid grid-cols-2 gap-3">
-          {BIG_FOUR_STARTERS.map(({ liftType, icon }) => (
+          {starters.map(({ liftType, icon }) => (
             <Link
               key={liftType}
               href={`/log?startLift=${encodeURIComponent(liftType)}#${encodeURIComponent(

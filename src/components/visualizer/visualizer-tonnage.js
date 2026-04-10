@@ -1,12 +1,11 @@
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, logTiming, getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
-import { addDaysFromStr, formatDateToYmdLocal } from "@/lib/date-utils";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -129,6 +128,57 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   // Formula: ~10ms at 120 pts, ~25ms at 300 pts, capped at 50ms at 600+ pts.
   const tooltipDebounceMs = Math.min(50, Math.floor((chartData?.length ?? 0) / 12));
 
+  // Sorted unique session date timestamps for nearest-session lookup during mouse hover.
+  // This lets the session card on the right follow individual sessions even when the
+  // chart is aggregated to weekly or monthly view.
+  const sessionTimestamps = useMemo(() => {
+    if (!parsedData || parsedData.length === 0) return [];
+    const seen = new Set();
+    const timestamps = [];
+    for (const e of parsedData) {
+      if (e.isGoal || !e.date || seen.has(e.date)) continue;
+      if (liftType && e.liftType !== liftType) continue;
+      seen.add(e.date);
+      timestamps.push({ date: e.date, ts: new Date(e.date + "T00:00:00").getTime() });
+    }
+    timestamps.sort((a, b) => a.ts - b.ts);
+    return timestamps;
+  }, [parsedData, liftType]);
+
+  const highlightTimerRef = useRef(null);
+  const handleChartMouseMove = useCallback(
+    (state) => {
+      if (!setHighlightDate || !state?.activeCoordinate || sessionTimestamps.length === 0) return;
+      // state.activeLabel is the rechartsDate (numeric timestamp) of the nearest data point
+      const ts = state.activeLabel;
+      if (ts == null) return;
+
+      // Binary search for nearest session date
+      let lo = 0;
+      let hi = sessionTimestamps.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (sessionTimestamps[mid].ts < ts) lo = mid + 1;
+        else hi = mid;
+      }
+      // Check lo and lo-1 to find the closest
+      let nearest = sessionTimestamps[lo];
+      if (lo > 0) {
+        const prev = sessionTimestamps[lo - 1];
+        if (Math.abs(prev.ts - ts) < Math.abs(nearest.ts - ts)) {
+          nearest = prev;
+        }
+      }
+
+      clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = setTimeout(
+        () => setHighlightDate(nearest.date),
+        tooltipDebounceMs,
+      );
+    },
+    [setHighlightDate, sessionTimestamps, tooltipDebounceMs],
+  );
+
   const displayUnit = isMetric ? "kg" : "lb";
 
   const formatXAxisDate = (tickItem) => {
@@ -172,6 +222,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               <AreaChart
                 data={chartData}
                 margin={{ left: 5, right: 20 }}
+                onMouseMove={handleChartMouseMove}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -200,8 +251,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                       aggregationType={aggregationType}
                       parsedData={parsedData}
                       liftColor={liftColor}
-                      setHighlightDate={setHighlightDate}
-                      debounceMs={tooltipDebounceMs}
                       isMetric={isMetric}
                     />
                   )}
@@ -281,6 +330,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
             <AreaChart
               data={chartData}
               margin={{ left: 5, right: 20 }}
+              onMouseMove={handleChartMouseMove}
             >
               <CartesianGrid vertical={false} />
               <XAxis
@@ -309,8 +359,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     aggregationType={aggregationType}
                     parsedData={parsedData}
                     liftColor={liftColor}
-                    setHighlightDate={setHighlightDate}
-                    debounceMs={Math.min(50, Math.floor(chartData.length / 12))}
                     isMetric={isMetric}
                   />
                 )}
@@ -783,7 +831,8 @@ function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
   };
 }
 
-// Recharts tooltip for the tonnage chart; renders session/week/month details and syncs hover date.
+// Recharts tooltip for the tonnage chart; renders session/week/month details.
+// Session card highlight is driven by onMouseMove at the chart level, not here.
 const TonnageTooltipContent = ({
   payload,
   label,
@@ -791,46 +840,8 @@ const TonnageTooltipContent = ({
   aggregationType = "perSession",
   parsedData,
   liftColor,
-  setHighlightDate,
-  debounceMs = 0,
   isMetric = false,
 }) => {
-  // Sync hover → TheLatestSessionCard via Tooltip content (more reliable than onMouseMove in recharts v3)
-  // For weekly/monthly views, find the last actual session date within the period
-  // so the session card shows a real session instead of the period-start date.
-  const rawDateStr = payload?.length > 0 ? payload[0]?.payload?.date : null;
-  const highlightDateStr = useMemo(() => {
-    if (!rawDateStr || !parsedData || aggregationType === "perSession") {
-      return rawDateStr;
-    }
-    let periodEnd;
-    if (aggregationType === "perWeek") {
-      periodEnd = addDaysFromStr(rawDateStr, 6);
-    } else {
-      // perMonth: end of month
-      const d = new Date(rawDateStr + "T00:00:00");
-      d.setMonth(d.getMonth() + 1);
-      d.setDate(0); // last day of original month
-      periodEnd = formatDateToYmdLocal(d);
-    }
-    // Walk backwards through parsedData to find the last session in the period
-    let lastDate = null;
-    for (let i = parsedData.length - 1; i >= 0; i--) {
-      const e = parsedData[i];
-      if (e.isGoal) continue;
-      if (e.date >= rawDateStr && e.date <= periodEnd) {
-        lastDate = e.date;
-        break;
-      }
-      if (e.date < rawDateStr) break;
-    }
-    return lastDate || rawDateStr;
-  }, [rawDateStr, parsedData, aggregationType]);
-  useEffect(() => {
-    if (!highlightDateStr || !setHighlightDate) return;
-    const timer = setTimeout(() => setHighlightDate(highlightDateStr), debounceMs);
-    return () => clearTimeout(timer);
-  }, [highlightDateStr, setHighlightDate, debounceMs]);
 
   if (!payload || payload.length === 0) return null;
 

@@ -38,7 +38,8 @@ import {
 import {
   CartesianGrid,
   Area,
-  AreaChart,
+  ComposedChart,
+  Line,
   LabelList,
   XAxis,
   YAxis,
@@ -100,6 +101,21 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     );
   }, [parsedData, rangeFirstDate, timeRange, liftType, aggregationType, isMetric]);
 
+  // Per-session data used as an invisible hover layer in weekly/monthly mode.
+  // This lets the mouse snap to individual session dates for the session card.
+  const perSessionData = useMemo(() => {
+    if (!parsedData || parsedData.length === 0 || aggregationType === "perSession")
+      return null;
+    return processTonnageData(
+      parsedData,
+      rangeFirstDate,
+      timeRange,
+      liftType,
+      "perSession",
+      isMetric,
+    );
+  }, [parsedData, rangeFirstDate, timeRange, liftType, aggregationType, isMetric]);
+
   // Calculate Y-axis values with nice round numbers
   const yAxisConfig = useMemo(() => {
     if (!chartData || chartData.length === 0) {
@@ -128,82 +144,37 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   // Formula: ~10ms at 120 pts, ~25ms at 300 pts, capped at 50ms at 600+ pts.
   const tooltipDebounceMs = Math.min(50, Math.floor((chartData?.length ?? 0) / 12));
 
-  // Sorted unique session date timestamps for nearest-session lookup during mouse hover.
-  // This lets the session card on the right follow individual sessions even when the
-  // chart is aggregated to weekly or monthly view.
-  const sessionTimestamps = useMemo(() => {
-    if (!parsedData || parsedData.length === 0) return [];
-    const seen = new Set();
-    const timestamps = [];
-    for (const e of parsedData) {
-      if (e.isGoal || !e.date || seen.has(e.date)) continue;
-      if (liftType && e.liftType !== liftType) continue;
-      seen.add(e.date);
-      timestamps.push({ date: e.date, ts: new Date(e.date + "T00:00:00").getTime() });
-    }
-    timestamps.sort((a, b) => a.ts - b.ts);
-    return timestamps;
-  }, [parsedData, liftType]);
-
-  // Sync chart hover to session card. In per-session mode the data point date
-  // maps 1:1 to a session. In weekly/monthly mode, each data point covers a
-  // range; we pick the last session in that range so the user can then use
-  // prev/next arrows on the session card to browse the others.
+  // When the invisible per-session hover layer is active, Recharts snaps to
+  // individual session dates. We just forward that date to the session card.
   const lastHighlightRef = useRef(null);
   const highlightTimerRef = useRef(null);
   const handleChartMouseMove = useCallback(
     (state) => {
-      if (!setHighlightDate || sessionTimestamps.length === 0) return;
-      const ts = state?.activeLabel;
-      if (ts == null) return;
+      if (!setHighlightDate) return;
+      // activePayload comes from the invisible per-session layer (or the
+      // main layer in perSession mode). Extract the date string.
+      const payload = state?.activePayload;
+      if (!payload || payload.length === 0) return;
 
-      // For weekly/monthly, find last session within the period
-      let periodEndTs = ts;
-      if (aggregationType === "perWeek") {
-        periodEndTs = ts + 6 * 24 * 60 * 60 * 1000;
-      } else if (aggregationType === "perMonth") {
-        const d = new Date(ts);
-        d.setMonth(d.getMonth() + 1);
-        d.setDate(0);
-        periodEndTs = d.getTime();
-      }
-
-      // Find the last session within [ts, periodEndTs]
-      let best = null;
-      for (let i = sessionTimestamps.length - 1; i >= 0; i--) {
-        const s = sessionTimestamps[i];
-        if (s.ts >= ts && s.ts <= periodEndTs) {
-          best = s;
+      // Prefer the hoverDate from the invisible layer; fall back to the
+      // visible layer's date.
+      let dateStr = null;
+      for (const p of payload) {
+        if (p.payload?.date) {
+          dateStr = p.payload.date;
           break;
         }
-        if (s.ts < ts) break;
       }
-      // Fallback: nearest session to the period start
-      if (!best) {
-        let lo = 0;
-        let hi = sessionTimestamps.length - 1;
-        while (lo < hi) {
-          const mid = (lo + hi) >> 1;
-          if (sessionTimestamps[mid].ts < ts) lo = mid + 1;
-          else hi = mid;
-        }
-        best = sessionTimestamps[lo];
-        if (lo > 0) {
-          const prev = sessionTimestamps[lo - 1];
-          if (Math.abs(prev.ts - ts) < Math.abs(best.ts - ts)) best = prev;
-        }
-      }
+      if (!dateStr || dateStr === lastHighlightRef.current) return;
 
-      if (best && best.date !== lastHighlightRef.current) {
-        lastHighlightRef.current = best.date;
-        clearTimeout(highlightTimerRef.current);
-        highlightTimerRef.current = setTimeout(
-          () => setHighlightDate(best.date),
-          tooltipDebounceMs,
-        );
-      }
+      lastHighlightRef.current = dateStr;
+      clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = setTimeout(
+        () => setHighlightDate(dateStr),
+        tooltipDebounceMs,
+      );
     },
-    [setHighlightDate, sessionTimestamps, aggregationType, tooltipDebounceMs],
+    [setHighlightDate, tooltipDebounceMs],
   );
 
   const displayUnit = isMetric ? "kg" : "lb";
@@ -246,8 +217,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
           <Skeleton className="h-[400px] w-full" />
         ) : liftType ? (
           <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
-              <AreaChart
-                data={chartData}
+              <ComposedChart
+                data={perSessionData || chartData}
                 margin={{ left: 5, right: 20 }}
                 onMouseMove={handleChartMouseMove}
               >
@@ -261,6 +232,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
                   ]}
                   tickFormatter={formatXAxisDate}
+                  allowDuplicatedCategory={false}
                 />
                 <YAxis
                   tickFormatter={(value) => `${value}${displayUnit}`}
@@ -300,8 +272,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     />
                   </linearGradient>
                 </defs>
+
+                {/* Visible aggregated area */}
                 <Area
                   key={liftType}
+                  data={chartData}
                   type="monotone"
                   dataKey="tonnage"
                   stroke={liftColor}
@@ -310,10 +285,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   fill={`url(#fill)`}
                   fillOpacity={0.4}
                   dot={
-                  ["3M", "6M"].includes(timeRange)
-                    ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
-                    : false
-                }
+                    ["3M", "6M"].includes(timeRange)
+                      ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
+                      : false
+                  }
                   connectNulls
                 >
                   {showLabelValues && (
@@ -336,12 +311,26 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   )}
                 </Area>
 
+                {/* Invisible per-session line for hover snapping */}
+                {perSessionData && (
+                  <Line
+                    data={perSessionData}
+                    type="monotone"
+                    dataKey="tonnage"
+                    stroke="none"
+                    dot={false}
+                    activeDot={false}
+                    legendType="none"
+                    tooltipType="none"
+                  />
+                )}
+
                 {/* Year labels to show year start */}
                 {yearLabels.map(({ date, label }) => (
                   <ReferenceLine
                     key={`label-${date}`}
-                    x={date} // Position label at January 1 of each year
-                    stroke="none" // No visible line
+                    x={date}
+                    stroke="none"
                     label={{
                       value: label,
                       position: "insideBottom",
@@ -350,12 +339,12 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     }}
                   />
                 ))}
-              </AreaChart>
+              </ComposedChart>
             </ChartContainer>
         ) : (
           <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
-            <AreaChart
-              data={chartData}
+            <ComposedChart
+              data={perSessionData || chartData}
               margin={{ left: 5, right: 20 }}
               onMouseMove={handleChartMouseMove}
             >
@@ -369,6 +358,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
                 ]}
                 tickFormatter={formatXAxisDate}
+                allowDuplicatedCategory={false}
               />
               <YAxis
                 tickFormatter={(value) => `${value}${displayUnit}`}
@@ -405,7 +395,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   />
                 </linearGradient>
               </defs>
+
+              {/* Visible aggregated area */}
               <Area
+                data={chartData}
                 type="monotone"
                 dataKey="tonnage"
                 stroke="var(--chart-1)"
@@ -437,12 +430,26 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 )}
               </Area>
 
+              {/* Invisible per-session line for hover snapping */}
+              {perSessionData && (
+                <Line
+                  data={perSessionData}
+                  type="monotone"
+                  dataKey="tonnage"
+                  stroke="none"
+                  dot={false}
+                  activeDot={false}
+                  legendType="none"
+                  tooltipType="none"
+                />
+              )}
+
               {/* Year labels to show year start */}
               {yearLabels.map(({ date, label }) => (
                 <ReferenceLine
                   key={`label-${date}`}
-                  x={date} // Position label at January 1 of each year
-                  stroke="none" // No visible line
+                  x={date}
+                  stroke="none"
                   label={{
                     value: label,
                     position: "insideBottom",
@@ -451,7 +458,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   }}
                 />
               ))}
-            </AreaChart>
+            </ComposedChart>
           </ChartContainer>
         )}
       </CardContent>

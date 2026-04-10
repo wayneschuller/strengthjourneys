@@ -834,7 +834,7 @@ function getStreakCallout(streakStats) {
   const weekLabel = `week${streakStats.currentStreak === 1 ? "" : "s"}`;
 
   if (sessionsNeeded === 0) {
-    return `${streakStats.currentStreak}-${weekLabel} streak locked in.`;
+    return `${streakStats.currentStreak}-${weekLabel} streak. This week is locked in.`;
   }
 
   const nextStreak = streakStats.currentStreak + 1;

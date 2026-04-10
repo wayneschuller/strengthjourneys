@@ -497,24 +497,31 @@ export function TheWeekInIronCard({
 
                   <WeekSection
                     stepLabel="B"
-                    title="Looking ahead"
-                    streakCallout={
+                    title={
+                      boundaries.isCurrentWeek ? "Looking ahead" : "Streak"
+                    }
+                    streakCallout={getStreakCallout(
+                      streakStats,
+                      boundaries.isCurrentWeek,
+                    )}
+                    description={
                       boundaries.isCurrentWeek
-                        ? getStreakCallout(streakStats)
+                        ? getNextStepCopy(
+                            stats,
+                            streakStats,
+                            boundaries,
+                            weeklySessionRows,
+                          )
                         : null
                     }
-                    description={getNextStepCopy(
-                      stats,
-                      streakStats,
-                      boundaries,
-                      weeklySessionRows,
-                    )}
                   >
-                    <StartLiftPrompt
-                      showIntro={false}
-                      showStarterButtons={stats.sessions.current < 3}
-                      trainedLiftTypes={stats.liftTypes}
-                    />
+                    {boundaries.isCurrentWeek && (
+                      <StartLiftPrompt
+                        showIntro={false}
+                        showStarterButtons={stats.sessions.current < 3}
+                        trainedLiftTypes={stats.liftTypes}
+                      />
+                    )}
                   </WeekSection>
                 </>
               )}
@@ -824,14 +831,28 @@ function getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows) {
   return `${sessionsLabel} so far, with ${volumeLabel} of total volume across the week.`;
 }
 
-function getStreakCallout(streakStats) {
-  if (!streakStats || streakStats.currentStreak <= 0) return null;
+function getStreakCallout(streakStats, isCurrentWeek) {
+  if (!streakStats || streakStats.currentStreak <= 0) {
+    if (!isCurrentWeek) return "No active streak this week.";
+    return null;
+  }
 
   const sessionsNeeded = Math.max(
     0,
     3 - (streakStats.sessionsThisWeek ?? 0),
   );
   const weekLabel = `week${streakStats.currentStreak === 1 ? "" : "s"}`;
+
+  if (!isCurrentWeek) {
+    // Historical week: report what the streak was at that point
+    if (sessionsNeeded === 0) {
+      return `${streakStats.currentStreak}-${weekLabel} streak at this point.`;
+    }
+    // Week didn't qualify -- streak was from prior consecutive weeks only
+    return streakStats.currentStreak > 0
+      ? `${streakStats.currentStreak}-${weekLabel} streak heading into this week.`
+      : "No active streak this week.";
+  }
 
   if (sessionsNeeded === 0) {
     return `${streakStats.currentStreak}-${weekLabel} streak. This week is locked in.`;

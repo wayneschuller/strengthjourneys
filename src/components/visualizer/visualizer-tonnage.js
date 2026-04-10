@@ -151,20 +151,13 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const handleChartMouseMove = useCallback(
     (state) => {
       if (!setHighlightDate) return;
-      // activePayload comes from the invisible per-session layer (or the
-      // main layer in perSession mode). Extract the date string.
-      const payload = state?.activePayload;
-      if (!payload || payload.length === 0) return;
 
-      // Prefer the hoverDate from the invisible layer; fall back to the
-      // visible layer's date.
-      let dateStr = null;
-      for (const p of payload) {
-        if (p.payload?.date) {
-          dateStr = p.payload.date;
-          break;
-        }
-      }
+      // Prefer the _hover (per-session) layer's date for session card sync.
+      // Fall back to the first payload entry for perSession mode.
+      const payloads = state?.activePayload;
+      if (!payloads || payloads.length === 0) return;
+      const hoverEntry = payloads.find((p) => p.name === "_hover") || payloads[0];
+      const dateStr = hoverEntry?.payload?.date;
       if (!dateStr || dateStr === lastHighlightRef.current) return;
 
       lastHighlightRef.current = dateStr;
@@ -436,11 +429,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   data={perSessionData}
                   type="monotone"
                   dataKey="tonnage"
+                  name="_hover"
                   stroke="none"
                   dot={false}
                   activeDot={false}
                   legendType="none"
-                  tooltipType="none"
                 />
               )}
 
@@ -877,9 +870,11 @@ const TonnageTooltipContent = ({
   isMetric = false,
 }) => {
 
-  if (!payload || payload.length === 0) return null;
+  // Filter out the invisible hover layer from the tooltip display
+  const visiblePayload = payload?.filter((p) => p.name !== "_hover");
+  if (!visiblePayload || visiblePayload.length === 0) return null;
 
-  const tonnage = payload[0].value;
+  const tonnage = visiblePayload[0].value;
   const date = new Date(label);
 
   let dateLabel;

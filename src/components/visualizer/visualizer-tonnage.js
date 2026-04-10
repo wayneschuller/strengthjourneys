@@ -1,18 +1,16 @@
 
-import { useMemo, useEffect, useState, useCallback, useRef } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, logTiming, getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
-import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ReferenceLine } from "recharts";
 import {
   TimeRangeSelect,
@@ -38,7 +36,7 @@ import {
 import {
   CartesianGrid,
   Area,
-  ComposedChart,
+  AreaChart,
   Line,
   LabelList,
   XAxis,
@@ -51,8 +49,9 @@ import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 /**
- * Chart showing session tonnage (weight × reps) over time. Supports per-session or per-week
- * aggregation. Optional setHighlightDate syncs with TheLatestSessionCard for date hover.
+ * Chart showing session tonnage (weight × reps) over time with a rolling average trend line.
+ * Every data point is a single session, so hover snaps to each session individually.
+ * Optional setHighlightDate syncs with TheLatestSessionCard for date hover.
  *
  * @param {Object} props
  * @param {function(string)} [props.setHighlightDate] - Callback when user hovers a point; receives
@@ -75,11 +74,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     false,
     { initializeWithValue: false },
   );
-  const [aggregationType, setAggregationType] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.TONNAGE_AGGREGATION_TYPE,
-    "perWeek",
-    { initializeWithValue: false },
-  );
 
   // Used to hide the y-axis and other UI elements on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
@@ -89,23 +83,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")}`;
 
+  // Always per-session so every data point is a hoverable session
   const chartData = useMemo(() => {
     if (!parsedData || parsedData.length === 0) return null;
-    return processTonnageData(
-      parsedData,
-      rangeFirstDate,
-      timeRange,
-      liftType,
-      aggregationType,
-      isMetric,
-    );
-  }, [parsedData, rangeFirstDate, timeRange, liftType, aggregationType, isMetric]);
-
-  // Per-session data used as an invisible hover layer in weekly/monthly mode.
-  // This lets the mouse snap to individual session dates for the session card.
-  const perSessionData = useMemo(() => {
-    if (!parsedData || parsedData.length === 0 || aggregationType === "perSession")
-      return null;
     return processTonnageData(
       parsedData,
       rangeFirstDate,
@@ -114,7 +94,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       "perSession",
       isMetric,
     );
-  }, [parsedData, rangeFirstDate, timeRange, liftType, aggregationType, isMetric]);
+  }, [parsedData, rangeFirstDate, timeRange, liftType, isMetric]);
 
   // Calculate Y-axis values with nice round numbers
   const yAxisConfig = useMemo(() => {
@@ -141,34 +121,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   // Scale debounce with dataset size so small datasets feel instant while large datasets
   // avoid cascading TheLatestSessionCard re-renders during fast mouse scrubbing.
-  // Formula: ~10ms at 120 pts, ~25ms at 300 pts, capped at 50ms at 600+ pts.
   const tooltipDebounceMs = Math.min(50, Math.floor((chartData?.length ?? 0) / 12));
-
-  // When the invisible per-session hover layer is active, Recharts snaps to
-  // individual session dates. We just forward that date to the session card.
-  const lastHighlightRef = useRef(null);
-  const highlightTimerRef = useRef(null);
-  const handleChartMouseMove = useCallback(
-    (state) => {
-      if (!setHighlightDate) return;
-
-      // Prefer the _hover (per-session) layer's date for session card sync.
-      // Fall back to the first payload entry for perSession mode.
-      const payloads = state?.activePayload;
-      if (!payloads || payloads.length === 0) return;
-      const hoverEntry = payloads.find((p) => p.name === "_hover") || payloads[0];
-      const dateStr = hoverEntry?.payload?.date;
-      if (!dateStr || dateStr === lastHighlightRef.current) return;
-
-      lastHighlightRef.current = dateStr;
-      clearTimeout(highlightTimerRef.current);
-      highlightTimerRef.current = setTimeout(
-        () => setHighlightDate(dateStr),
-        tooltipDebounceMs,
-      );
-    },
-    [setHighlightDate, tooltipDebounceMs],
-  );
 
   const displayUnit = isMetric ? "kg" : "lb";
 
@@ -210,10 +163,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
           <Skeleton className="h-[400px] w-full" />
         ) : liftType ? (
           <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
-              <ComposedChart
-                data={perSessionData || chartData}
+              <AreaChart
+                data={chartData}
                 margin={{ left: 5, right: 20 }}
-                onMouseMove={handleChartMouseMove}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -225,7 +177,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
                   ]}
                   tickFormatter={formatXAxisDate}
-                  allowDuplicatedCategory={false}
                 />
                 <YAxis
                   tickFormatter={(value) => `${value}${displayUnit}`}
@@ -240,9 +191,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     <TonnageTooltipContent
                       {...props}
                       liftType={liftType}
-                      aggregationType={aggregationType}
                       parsedData={parsedData}
                       liftColor={liftColor}
+                      setHighlightDate={setHighlightDate}
+                      debounceMs={tooltipDebounceMs}
                       isMetric={isMetric}
                     />
                   )}
@@ -265,11 +217,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     />
                   </linearGradient>
                 </defs>
-
-                {/* Visible aggregated area */}
                 <Area
                   key={liftType}
-                  data={chartData}
                   type="monotone"
                   dataKey="tonnage"
                   stroke={liftColor}
@@ -303,22 +252,19 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     />
                   )}
                 </Area>
+                <Line
+                  type="monotone"
+                  dataKey="rollingAverageTonnage"
+                  stroke={liftColor}
+                  strokeWidth={2}
+                  strokeOpacity={0.6}
+                  strokeDasharray="6 3"
+                  dot={false}
+                  connectNulls
+                  legendType="none"
+                  tooltipType="none"
+                />
 
-                {/* Invisible per-session line for hover snapping */}
-                {perSessionData && (
-                  <Line
-                    data={perSessionData}
-                    type="monotone"
-                    dataKey="tonnage"
-                    stroke="none"
-                    dot={false}
-                    activeDot={false}
-                    legendType="none"
-                    tooltipType="none"
-                  />
-                )}
-
-                {/* Year labels to show year start */}
                 {yearLabels.map(({ date, label }) => (
                   <ReferenceLine
                     key={`label-${date}`}
@@ -332,14 +278,13 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     }}
                   />
                 ))}
-              </ComposedChart>
+              </AreaChart>
             </ChartContainer>
         ) : (
           <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
-            <ComposedChart
-              data={perSessionData || chartData}
+            <AreaChart
+              data={chartData}
               margin={{ left: 5, right: 20 }}
-              onMouseMove={handleChartMouseMove}
             >
               <CartesianGrid vertical={false} />
               <XAxis
@@ -351,7 +296,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
                 ]}
                 tickFormatter={formatXAxisDate}
-                allowDuplicatedCategory={false}
               />
               <YAxis
                 tickFormatter={(value) => `${value}${displayUnit}`}
@@ -366,9 +310,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   <TonnageTooltipContent
                     {...props}
                     liftType={liftType}
-                    aggregationType={aggregationType}
                     parsedData={parsedData}
                     liftColor={liftColor}
+                    setHighlightDate={setHighlightDate}
+                    debounceMs={tooltipDebounceMs}
                     isMetric={isMetric}
                   />
                 )}
@@ -389,9 +334,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 </linearGradient>
               </defs>
 
-              {/* Visible aggregated area */}
               <Area
-                data={chartData}
                 type="monotone"
                 dataKey="tonnage"
                 stroke="var(--chart-1)"
@@ -423,21 +366,19 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 )}
               </Area>
 
-              {/* Invisible per-session line for hover snapping */}
-              {perSessionData && (
-                <Line
-                  data={perSessionData}
-                  type="monotone"
-                  dataKey="tonnage"
-                  name="_hover"
-                  stroke="none"
-                  dot={false}
-                  activeDot={false}
-                  legendType="none"
-                />
-              )}
+              <Line
+                type="monotone"
+                dataKey="rollingAverageTonnage"
+                stroke="var(--chart-1)"
+                strokeWidth={2}
+                strokeOpacity={0.6}
+                strokeDasharray="6 3"
+                dot={false}
+                connectNulls
+                legendType="none"
+                tooltipType="none"
+              />
 
-              {/* Year labels to show year start */}
               {yearLabels.map(({ date, label }) => (
                 <ReferenceLine
                   key={`label-${date}`}
@@ -451,25 +392,23 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   }}
                 />
               ))}
-            </ComposedChart>
+            </AreaChart>
           </ChartContainer>
         )}
       </CardContent>
 
       <CardFooter>
-        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 md:items-center">
-          <div className="justify-self-start">
-            <MiniFeedbackWidget
-              prompt="Useful chart?"
-              contextId={feedbackContextId}
-              page={liftType ? "/visualizer" : "/tonnage"}
-              analyticsExtra={{
-                context: liftType ? "lift_tonnage_chart" : "tonnage_chart",
-                lift_type: liftType || "all_lifts",
-              }}
-            />
-          </div>
-          <div className="flex items-center space-x-2 md:justify-self-center">
+        <div className="flex w-full items-center justify-between">
+          <MiniFeedbackWidget
+            prompt="Useful chart?"
+            contextId={feedbackContextId}
+            page={liftType ? "/visualizer" : "/tonnage"}
+            analyticsExtra={{
+              context: liftType ? "lift_tonnage_chart" : "tonnage_chart",
+              lift_type: liftType || "all_lifts",
+            }}
+          />
+          <div className="flex items-center space-x-2">
             <Label className="font-light" htmlFor="show-values">
               Show Values
             </Label>
@@ -479,26 +418,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               checked={showLabelValues}
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
-          </div>
-          <div className="md:justify-self-end">
-            <ToggleGroup
-              type="single"
-              value={aggregationType}
-              onValueChange={(value) => {
-                if (value) setAggregationType(value);
-              }}
-              variant="outline"
-            >
-              <ToggleGroupItem value="perSession" aria-label="Per Session">
-                Per Session
-              </ToggleGroupItem>
-              <ToggleGroupItem value="perWeek" aria-label="Per Week">
-                Per Week
-              </ToggleGroupItem>
-              <ToggleGroupItem value="perMonth" aria-label="Per Month">
-                Per Month
-              </ToggleGroupItem>
-            </ToggleGroup>
           </div>
         </div>
       </CardFooter>
@@ -560,74 +479,46 @@ function calculateNiceYAxis(maxValue) {
 }
 
 /**
- * Aggregates total tonnage per date, per week, or per month from parsedData
- * If liftType is provided, filters to only that lift type
- * aggregationType: "perSession" (default), "perWeek", or "perMonth"
+ * Aggregates total tonnage per session date from parsedData.
+ * If liftType is provided, filters to only that lift type.
+ * Includes a 7-session rolling average for the trend line.
  */
-
 function processTonnageData(
   parsedData,
   thresholdDateStr,
   timeRange,
   liftType,
-  aggregationType = "perSession",
+  _aggregationType = "perSession",
   isMetric = false,
 ) {
   const startTime = performance.now();
   const tonnageMap = new Map();
 
   parsedData.forEach((tuple) => {
-    // Filter by liftType if provided
-    if (liftType && tuple.liftType !== liftType) {
-      return;
-    }
+    if (liftType && tuple.liftType !== liftType) return;
 
-    const dateKey = tuple.date; // already "YYYY-MM-DD"
+    const dateKey = tuple.date;
     if (dateKey >= thresholdDateStr) {
       const { value: displayWeight } = getDisplayWeight(tuple, isMetric);
       const tonnage = displayWeight * tuple.reps;
-
-      if (aggregationType === "perWeek") {
-        // Group by week (Monday as start of week)
-        const entryDate = parseISO(dateKey);
-        const weekStart = format(
-          startOfWeek(entryDate, { weekStartsOn: 1 }),
-          "yyyy-MM-dd",
-        );
-        tonnageMap.set(weekStart, (tonnageMap.get(weekStart) || 0) + tonnage);
-      } else if (aggregationType === "perMonth") {
-        // Group by month (first day of month)
-        const entryDate = parseISO(dateKey);
-        const monthStart = format(startOfMonth(entryDate), "yyyy-MM-dd");
-        tonnageMap.set(monthStart, (tonnageMap.get(monthStart) || 0) + tonnage);
-      } else {
-        // Group by session (per date)
-        tonnageMap.set(dateKey, (tonnageMap.get(dateKey) || 0) + tonnage);
-      }
+      tonnageMap.set(dateKey, (tonnageMap.get(dateKey) || 0) + tonnage);
     }
   });
 
   const chartData = Array.from(tonnageMap.entries())
     .map(([date, tonnage]) => ({
-      date, // keep string date for use in setHighlightDate on mouseover
-      rechartsDate: new Date(date).getTime(), // numeric timestamp for X-axis
+      date,
+      rechartsDate: new Date(date).getTime(),
       tonnage,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Add rolling average
-  // Note: chartData elements represent different time periods based on aggregationType:
-  // - "perSession": each element = 1 day
-  // - "perWeek": each element = 1 week (Monday-Sunday)
-  // - "perMonth": each element = 1 month
-  // The windowSize below is the number of these aggregated periods to include in the rolling average
-  const windowSize =
-    aggregationType === "perWeek" ? 4 : aggregationType === "perMonth" ? 3 : 7; // 4-week moving average for weekly, 3-month for monthly, 7-day for daily
+  // 7-session rolling average for the trend line
+  const windowSize = 7;
   for (let i = 0; i < chartData.length; i++) {
     const windowData = chartData.slice(Math.max(0, i - windowSize + 1), i + 1);
     const avg =
       windowData.reduce((sum, d) => sum + d.tonnage, 0) / windowData.length;
-
     chartData[i].rollingAverageTonnage = isNaN(avg) ? null : Math.round(avg);
   }
 
@@ -660,259 +551,45 @@ function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
   return liftsByType;
 }
 
-// Helper function to get week data aggregated
-function getWeekLiftsData(parsedData, weekStartStr, chartLiftType) {
-  if (!parsedData || !weekStartStr) {
-    return {
-      sessions: [],
-      liftTypes: [],
-      sessionDetails: [],
-      totalSessions: 0,
-      totalSets: 0,
-      avgTonnagePerSession: 0,
-      liftsByType: {},
-    };
-  }
 
-  const weekStart = parseISO(weekStartStr);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  const weekEndStr = format(weekEnd, "yyyy-MM-dd");
-
-  // Filter lifts for the week, excluding goals
-  const weekLifts = parsedData.filter(
-    (lift) =>
-      lift.date >= weekStartStr &&
-      lift.date <= weekEndStr &&
-      lift.isGoal !== true &&
-      (!chartLiftType || lift.liftType === chartLiftType),
-  );
-
-  // Get unique session dates
-  const sessionDates = [...new Set(weekLifts.map((lift) => lift.date))].sort();
-
-  // Calculate session details (tonnage per session with lifts)
-  const sessionDetails = sessionDates.map((date) => {
-    const sessionLifts = weekLifts.filter((lift) => lift.date === date);
-    const sessionTonnage = sessionLifts.reduce(
-      (sum, lift) => sum + lift.weight * lift.reps,
-      0,
-    );
-    return {
-      date,
-      tonnage: sessionTonnage,
-      liftCount: sessionLifts.length,
-      lifts: sessionLifts,
-    };
-  });
-
-  // Get lift types
-  const liftTypes = [...new Set(weekLifts.map((lift) => lift.liftType))];
-
-  // Group by lift type
-  const liftsByType = {};
-  weekLifts.forEach((lift) => {
-    if (!liftsByType[lift.liftType]) {
-      liftsByType[lift.liftType] = [];
-    }
-    liftsByType[lift.liftType].push(lift);
-  });
-
-  const totalSessions = sessionDates.length;
-  const totalSets = weekLifts.length;
-  const totalTonnage = sessionDetails.reduce(
-    (sum, session) => sum + session.tonnage,
-    0,
-  );
-  const avgTonnagePerSession =
-    totalSessions > 0 ? totalTonnage / totalSessions : 0;
-
-  return {
-    sessions: sessionDates,
-    liftTypes,
-    sessionDetails,
-    totalSessions,
-    totalSets,
-    avgTonnagePerSession,
-    liftsByType,
-  };
-}
-
-// Helper function to get month data aggregated
-function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
-  if (!parsedData || !monthStartStr) {
-    return {
-      sessions: [],
-      liftTypes: [],
-      weeklyBreakdown: [],
-      sessionDetails: [],
-      totalSessions: 0,
-      totalSets: 0,
-      avgTonnagePerSession: 0,
-      liftsByType: {},
-    };
-  }
-
-  const monthStart = parseISO(monthStartStr);
-  const monthEnd = new Date(
-    monthStart.getFullYear(),
-    monthStart.getMonth() + 1,
-    0,
-  );
-  const monthEndStr = format(monthEnd, "yyyy-MM-dd");
-
-  // Filter lifts for the month, excluding goals
-  const monthLifts = parsedData.filter(
-    (lift) =>
-      lift.date >= monthStartStr &&
-      lift.date <= monthEndStr &&
-      lift.isGoal !== true &&
-      (!chartLiftType || lift.liftType === chartLiftType),
-  );
-
-  // Get unique session dates
-  const sessionDates = [...new Set(monthLifts.map((lift) => lift.date))].sort();
-
-  // Calculate session details (tonnage per session with lifts)
-  const sessionDetails = sessionDates.map((date) => {
-    const sessionLifts = monthLifts.filter((lift) => lift.date === date);
-    const sessionTonnage = sessionLifts.reduce(
-      (sum, lift) => sum + lift.weight * lift.reps,
-      0,
-    );
-    return {
-      date,
-      tonnage: sessionTonnage,
-      liftCount: sessionLifts.length,
-      lifts: sessionLifts,
-    };
-  });
-
-  // Get lift types
-  const liftTypes = [...new Set(monthLifts.map((lift) => lift.liftType))];
-
-  // Calculate weekly breakdown
-  const weeklyBreakdown = [];
-  let currentWeekStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-
-  while (currentWeekStart <= monthEnd) {
-    const currentWeekEnd = new Date(currentWeekStart);
-    currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
-
-    // Only include weeks that overlap with the month
-    if (currentWeekEnd >= monthStart && currentWeekStart <= monthEnd) {
-      const weekStartStr = format(currentWeekStart, "yyyy-MM-dd");
-      const weekEndStr = format(
-        currentWeekEnd > monthEnd ? monthEnd : currentWeekEnd,
-        "yyyy-MM-dd",
-      );
-
-      const weekLifts = monthLifts.filter(
-        (lift) => lift.date >= weekStartStr && lift.date <= weekEndStr,
-      );
-      const weekTonnage = weekLifts.reduce(
-        (sum, lift) => sum + lift.weight * lift.reps,
-        0,
-      );
-      const weekSessionDates = [...new Set(weekLifts.map((lift) => lift.date))];
-
-      weeklyBreakdown.push({
-        weekStart: weekStartStr,
-        weekEnd: weekEndStr,
-        tonnage: weekTonnage,
-        sessionCount: weekSessionDates.length,
-      });
-    }
-
-    // Move to next week
-    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-  }
-
-  // Group by lift type
-  const liftsByType = {};
-  monthLifts.forEach((lift) => {
-    if (!liftsByType[lift.liftType]) {
-      liftsByType[lift.liftType] = [];
-    }
-    liftsByType[lift.liftType].push(lift);
-  });
-
-  const totalSessions = sessionDates.length;
-  const totalSets = monthLifts.length;
-  const totalTonnage = sessionDetails.reduce(
-    (sum, session) => sum + session.tonnage,
-    0,
-  );
-  const avgTonnagePerSession =
-    totalSessions > 0 ? totalTonnage / totalSessions : 0;
-
-  return {
-    sessions: sessionDates,
-    liftTypes,
-    weeklyBreakdown,
-    sessionDetails,
-    totalSessions,
-    totalSets,
-    avgTonnagePerSession,
-    liftsByType,
-  };
-}
-
-// Recharts tooltip for the tonnage chart; renders session/week/month details.
-// Session card highlight is driven by onMouseMove at the chart level, not here.
+// Recharts tooltip for the tonnage chart; renders per-session details and
+// drives the session card highlight via setHighlightDate.
 const TonnageTooltipContent = ({
   payload,
   label,
   liftType,
-  aggregationType = "perSession",
   parsedData,
   liftColor,
+  setHighlightDate,
+  debounceMs = 0,
   isMetric = false,
 }) => {
+  const dateStr = payload?.[0]?.payload?.date || null;
 
-  // Filter out the invisible hover layer from the tooltip display
-  const visiblePayload = payload?.filter((p) => p.name !== "_hover");
-  if (!visiblePayload || visiblePayload.length === 0) return null;
+  // Drive session card highlight on hover (must be before early return)
+  useEffect(() => {
+    if (!dateStr || !setHighlightDate) return;
+    const timer = setTimeout(() => setHighlightDate(dateStr), debounceMs);
+    return () => clearTimeout(timer);
+  }, [dateStr, setHighlightDate, debounceMs]);
 
-  const tonnage = visiblePayload[0].value;
+  if (!payload || payload.length === 0) return null;
+
+  const tonnage = payload[0].value;
   const date = new Date(label);
 
-  let dateLabel;
-  if (aggregationType === "perWeek") {
-    // Show week range (Monday to Sunday)
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6);
-
-    dateLabel = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
-  } else if (aggregationType === "perMonth") {
-    // Show month (e.g., "January 2024")
-    dateLabel = format(date, "MMMM yyyy");
-  } else {
-    dateLabel = date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  }
+  const dateLabel = date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 
   const unitType = isMetric ? "kg" : "lb";
 
-  // Extract date string from payload (format: "YYYY-MM-DD")
-  const dateStr = payload[0]?.payload?.date || null;
-
-  // Get data based on aggregation type
-  let sessionLiftsByType = null;
-  let weekData = null;
-  let monthData = null;
-
-  if (aggregationType === "perSession" && parsedData && dateStr) {
-    sessionLiftsByType = getSessionLiftsByType(parsedData, dateStr, liftType);
-  } else if (aggregationType === "perWeek" && parsedData && dateStr) {
-    weekData = getWeekLiftsData(parsedData, dateStr, liftType);
-  } else if (aggregationType === "perMonth" && parsedData && dateStr) {
-    monthData = getMonthLiftsData(parsedData, dateStr, liftType);
-  }
+  const sessionLiftsByType =
+    parsedData && dateStr
+      ? getSessionLiftsByType(parsedData, dateStr, liftType)
+      : null;
 
   return (
     <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
@@ -928,7 +605,6 @@ const TonnageTooltipContent = ({
         <div className="ml-2">{`${tonnage.toFixed(0)}${unitType}`}</div>
       </div>
 
-      {/* Per Session: Show lifts */}
       {sessionLiftsByType && Object.keys(sessionLiftsByType).length > 0 && (
         <div className="mt-2">
           {Object.entries(sessionLiftsByType).map(([liftTypeName, lifts]) => (
@@ -944,146 +620,6 @@ const TonnageTooltipContent = ({
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Per Week: Show rich data */}
-      {weekData && weekData.totalSessions > 0 && (
-        <div className="mt-2">
-          {liftType && weekData.sessionDetails.length > 0 ? (
-            // Per-lift chart: show one row per session with sets
-            <div className="max-h-64 space-y-1 overflow-y-auto">
-              {weekData.sessionDetails.map((session) => {
-                const sessionDate = new Date(session.date);
-                const formattedDate = sessionDate.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                });
-                return (
-                  <SessionRow
-                    key={session.date}
-                    date={session.date}
-                    lifts={session.lifts}
-                    isMetric={isMetric}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            // Total tonnage chart: show summary stats
-            <div className="space-y-2">
-              <div className="text-xs">
-                <span className="font-semibold">{weekData.totalSessions}</span>{" "}
-                {weekData.totalSessions === 1 ? "session" : "sessions"}
-                {weekData.totalSessions > 0 && (
-                  <span className="ml-2 text-muted-foreground">
-                    Avg: {weekData.avgTonnagePerSession.toFixed(0)}
-                    {unitType}/session
-                  </span>
-                )}
-              </div>
-
-              {weekData.liftTypes.length > 0 && (
-                <div>
-                  <div className="mb-1 text-xs font-semibold">Lift Types:</div>
-                  <div className="flex flex-wrap gap-1">
-                    {weekData.liftTypes.map((liftTypeName) => (
-                      <LiftTypeIndicator
-                        key={liftTypeName}
-                        liftType={liftTypeName}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Per Month: Show rich data */}
-      {monthData && monthData.totalSessions > 0 && (
-        <div className="mt-2">
-          {liftType && monthData.sessionDetails.length > 0 ? (
-            // Per-lift chart: show one row per session with sets
-            <div className="max-h-64 space-y-1 overflow-y-auto">
-              {monthData.sessionDetails.map((session) => {
-                const sessionDate = new Date(session.date);
-                const formattedDate = sessionDate.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                });
-                return (
-                  <SessionRow
-                    key={session.date}
-                    date={session.date}
-                    lifts={session.lifts}
-                    isMetric={isMetric}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            // Total tonnage chart: show summary stats
-            <div className="space-y-2">
-              <div className="text-xs">
-                <span className="font-semibold">{monthData.totalSessions}</span>{" "}
-                {monthData.totalSessions === 1 ? "session" : "sessions"}
-                {monthData.totalSessions > 0 && (
-                  <span className="ml-2 text-muted-foreground">
-                    Avg: {monthData.avgTonnagePerSession.toFixed(0)}
-                    {unitType}/session
-                  </span>
-                )}
-              </div>
-
-              {monthData.liftTypes.length > 0 && (
-                <div>
-                  <div className="mb-1 text-xs font-semibold">Lift Types:</div>
-                  <div className="flex flex-wrap gap-1">
-                    {monthData.liftTypes.map((liftTypeName) => (
-                      <LiftTypeIndicator
-                        key={liftTypeName}
-                        liftType={liftTypeName}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {monthData.weeklyBreakdown.length > 0 && (
-                <div>
-                  <div className="mb-1 text-xs font-semibold">
-                    Weekly Breakdown:
-                  </div>
-                  <div className="space-y-0.5">
-                    {monthData.weeklyBreakdown.map((week, index) => {
-                      const weekStartDate = new Date(week.weekStart);
-                      const weekEndDate = new Date(week.weekEnd);
-                      const weekLabel = `${format(weekStartDate, "MMM d")} - ${format(weekEndDate, "MMM d")}`;
-                      return (
-                        <div
-                          key={week.weekStart}
-                          className="flex justify-between text-xs"
-                        >
-                          <span>
-                            Week {index + 1} ({weekLabel}): {week.sessionCount}{" "}
-                            {week.sessionCount === 1 ? "session" : "sessions"}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {week.tonnage.toFixed(0)}
-                            {unitType}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
     </div>

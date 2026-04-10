@@ -148,24 +148,43 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const highlightTimerRef = useRef(null);
   const handleChartMouseMove = useCallback(
     (state) => {
-      if (!setHighlightDate || !state?.activeCoordinate || sessionTimestamps.length === 0) return;
-      // state.activeLabel is the rechartsDate (numeric timestamp) of the nearest data point
-      const ts = state.activeLabel;
-      if (ts == null) return;
+      if (
+        !setHighlightDate ||
+        sessionTimestamps.length === 0 ||
+        !chartData ||
+        chartData.length < 2
+      )
+        return;
+
+      // Use the raw mouse X and the plot area bounds to interpolate a timestamp.
+      // state.chartX is the unsnapped mouse X relative to the SVG container.
+      // state.offset describes the plot area within the SVG.
+      if (state.chartX == null || !state.offset) return;
+      const { left, width: plotWidth } = state.offset;
+      if (plotWidth <= 0) return;
+
+      const ratio = (state.chartX - left) / plotWidth;
+      if (ratio < -0.05 || ratio > 1.05) return;
+      const clampedRatio = Math.max(0, Math.min(1, ratio));
+
+      // The XAxis domain pads 2 days on each side
+      const pad = 2 * 24 * 60 * 60 * 1000;
+      const domainMin = chartData[0].rechartsDate - pad;
+      const domainMax = chartData[chartData.length - 1].rechartsDate + pad;
+      const targetTs = domainMin + clampedRatio * (domainMax - domainMin);
 
       // Binary search for nearest session date
       let lo = 0;
       let hi = sessionTimestamps.length - 1;
       while (lo < hi) {
         const mid = (lo + hi) >> 1;
-        if (sessionTimestamps[mid].ts < ts) lo = mid + 1;
+        if (sessionTimestamps[mid].ts < targetTs) lo = mid + 1;
         else hi = mid;
       }
-      // Check lo and lo-1 to find the closest
       let nearest = sessionTimestamps[lo];
       if (lo > 0) {
         const prev = sessionTimestamps[lo - 1];
-        if (Math.abs(prev.ts - ts) < Math.abs(nearest.ts - ts)) {
+        if (Math.abs(prev.ts - targetTs) < Math.abs(nearest.ts - targetTs)) {
           nearest = prev;
         }
       }
@@ -176,7 +195,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
         tooltipDebounceMs,
       );
     },
-    [setHighlightDate, sessionTimestamps, tooltipDebounceMs],
+    [setHighlightDate, sessionTimestamps, chartData, tooltipDebounceMs],
   );
 
   const displayUnit = isMetric ? "kg" : "lb";

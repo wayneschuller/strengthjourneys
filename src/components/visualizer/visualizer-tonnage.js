@@ -76,7 +76,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   );
   const [aggregationType, setAggregationType] = useLocalStorage(
     LOCAL_STORAGE_KEYS.TONNAGE_AGGREGATION_TYPE,
-    "perSession",
+    "perWeek",
     { initializeWithValue: false },
   );
 

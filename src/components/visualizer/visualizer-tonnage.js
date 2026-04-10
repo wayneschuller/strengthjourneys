@@ -130,12 +130,23 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  // Define a valid chartConfig for shadcnui
-  // Use lift color when liftType is provided, otherwise use default theme color
+  const tonnageColor = liftColor || "var(--chart-1)";
+
+  const DashedLineIcon = () => (
+    <svg width="12" height="12" viewBox="0 0 12 12">
+      <line x1="0" y1="6" x2="12" y2="6" stroke={tonnageColor} strokeWidth="2" strokeDasharray="3 2" strokeOpacity="0.6" />
+    </svg>
+  );
+
   const chartConfig = {
     tonnage: {
-      label: liftType ? `${liftType} Tonnage` : "Tonnage",
-      color: liftColor || "var(--chart-2)", // uses theme's chart color or lift-specific color
+      label: liftType ? `${liftType} Tonnage` : "Session Tonnage",
+      color: tonnageColor,
+    },
+    rollingAverageTonnage: {
+      label: "7-Session Average",
+      color: tonnageColor,
+      icon: DashedLineIcon,
     },
   };
 
@@ -217,12 +228,12 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     />
                   </linearGradient>
                 </defs>
+                <ChartLegend content={<ChartLegendContent />} />
                 <Area
                   key={liftType}
                   type="monotone"
                   dataKey="tonnage"
                   stroke={liftColor}
-                  name={liftType}
                   strokeWidth={2}
                   fill={`url(#fill)`}
                   fillOpacity={0.4}
@@ -261,7 +272,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   strokeDasharray="6 3"
                   dot={false}
                   connectNulls
-                  legendType="none"
                   tooltipType="none"
                 />
 
@@ -323,22 +333,24 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 <linearGradient id="fillTonnage" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
-                    stopColor="var(--chart-2)"
-                    stopOpacity={0.9}
+                    stopColor={tonnageColor}
+                    stopOpacity={0.8}
                   />
                   <stop
                     offset="50%"
-                    stopColor="var(--chart-2)"
-                    stopOpacity={0.09}
+                    stopColor={tonnageColor}
+                    stopOpacity={0.05}
                   />
                 </linearGradient>
               </defs>
 
+              <ChartLegend content={<ChartLegendContent />} />
               <Area
                 type="monotone"
                 dataKey="tonnage"
-                stroke="var(--chart-1)"
+                stroke={tonnageColor}
                 fill="url(#fillTonnage)"
+                fillOpacity={0.4}
                 dot={
                   ["3M", "6M"].includes(timeRange)
                     ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
@@ -369,13 +381,12 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               <Line
                 type="monotone"
                 dataKey="rollingAverageTonnage"
-                stroke="var(--chart-1)"
+                stroke={tonnageColor}
                 strokeWidth={2}
                 strokeOpacity={0.6}
                 strokeDasharray="6 3"
                 dot={false}
                 connectNulls
-                legendType="none"
                 tooltipType="none"
               />
 
@@ -597,7 +608,7 @@ const TonnageTooltipContent = ({
       <div className="flex flex-row items-center">
         <div
           className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-          style={{ backgroundColor: liftColor || "var(--chart-2)" }}
+          style={{ backgroundColor: liftColor || "var(--chart-1)" }}
         />
         <div className="font-semibold">
           {liftType ? `${liftType} Tonnage` : "Total Tonnage"}

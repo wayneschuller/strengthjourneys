@@ -145,57 +145,65 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     return timestamps;
   }, [parsedData, liftType]);
 
+  // Sync chart hover to session card. In per-session mode the data point date
+  // maps 1:1 to a session. In weekly/monthly mode, each data point covers a
+  // range; we pick the last session in that range so the user can then use
+  // prev/next arrows on the session card to browse the others.
+  const lastHighlightRef = useRef(null);
   const highlightTimerRef = useRef(null);
   const handleChartMouseMove = useCallback(
     (state) => {
-      if (
-        !setHighlightDate ||
-        sessionTimestamps.length === 0 ||
-        !chartData ||
-        chartData.length < 2
-      )
-        return;
+      if (!setHighlightDate || sessionTimestamps.length === 0) return;
+      const ts = state?.activeLabel;
+      if (ts == null) return;
 
-      // Use the raw mouse X and the plot area bounds to interpolate a timestamp.
-      // state.chartX is the unsnapped mouse X relative to the SVG container.
-      // state.offset describes the plot area within the SVG.
-      if (state.chartX == null || !state.offset) return;
-      const { left, width: plotWidth } = state.offset;
-      if (plotWidth <= 0) return;
-
-      const ratio = (state.chartX - left) / plotWidth;
-      if (ratio < -0.05 || ratio > 1.05) return;
-      const clampedRatio = Math.max(0, Math.min(1, ratio));
-
-      // The XAxis domain pads 2 days on each side
-      const pad = 2 * 24 * 60 * 60 * 1000;
-      const domainMin = chartData[0].rechartsDate - pad;
-      const domainMax = chartData[chartData.length - 1].rechartsDate + pad;
-      const targetTs = domainMin + clampedRatio * (domainMax - domainMin);
-
-      // Binary search for nearest session date
-      let lo = 0;
-      let hi = sessionTimestamps.length - 1;
-      while (lo < hi) {
-        const mid = (lo + hi) >> 1;
-        if (sessionTimestamps[mid].ts < targetTs) lo = mid + 1;
-        else hi = mid;
+      // For weekly/monthly, find last session within the period
+      let periodEndTs = ts;
+      if (aggregationType === "perWeek") {
+        periodEndTs = ts + 6 * 24 * 60 * 60 * 1000;
+      } else if (aggregationType === "perMonth") {
+        const d = new Date(ts);
+        d.setMonth(d.getMonth() + 1);
+        d.setDate(0);
+        periodEndTs = d.getTime();
       }
-      let nearest = sessionTimestamps[lo];
-      if (lo > 0) {
-        const prev = sessionTimestamps[lo - 1];
-        if (Math.abs(prev.ts - targetTs) < Math.abs(nearest.ts - targetTs)) {
-          nearest = prev;
+
+      // Find the last session within [ts, periodEndTs]
+      let best = null;
+      for (let i = sessionTimestamps.length - 1; i >= 0; i--) {
+        const s = sessionTimestamps[i];
+        if (s.ts >= ts && s.ts <= periodEndTs) {
+          best = s;
+          break;
+        }
+        if (s.ts < ts) break;
+      }
+      // Fallback: nearest session to the period start
+      if (!best) {
+        let lo = 0;
+        let hi = sessionTimestamps.length - 1;
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1;
+          if (sessionTimestamps[mid].ts < ts) lo = mid + 1;
+          else hi = mid;
+        }
+        best = sessionTimestamps[lo];
+        if (lo > 0) {
+          const prev = sessionTimestamps[lo - 1];
+          if (Math.abs(prev.ts - ts) < Math.abs(best.ts - ts)) best = prev;
         }
       }
 
-      clearTimeout(highlightTimerRef.current);
-      highlightTimerRef.current = setTimeout(
-        () => setHighlightDate(nearest.date),
-        tooltipDebounceMs,
-      );
+      if (best && best.date !== lastHighlightRef.current) {
+        lastHighlightRef.current = best.date;
+        clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = setTimeout(
+          () => setHighlightDate(best.date),
+          tooltipDebounceMs,
+        );
+      }
     },
-    [setHighlightDate, sessionTimestamps, chartData, tooltipDebounceMs],
+    [setHighlightDate, sessionTimestamps, aggregationType, tooltipDebounceMs],
   );
 
   const displayUnit = isMetric ? "kg" : "lb";

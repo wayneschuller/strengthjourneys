@@ -603,17 +603,13 @@ export function TheWeekInIronCard({
                       streakStats,
                       false,
                     )}
-                    description={getWeekReviewCopy(
-                      stats,
-                      avgTonnage,
-                      unit,
-                      boundaries,
-                    )}
+                    description={getWeekReviewCopy(stats, boundaries)}
                   >
-                    {stats.sessions.current >= 3 && avgTonnage && (
+                    {stats.sessions.current > 0 && stats.tonnage.current > 0 && (
                       <WeekTonnageComparison
                         weekTonnage={stats.tonnage.current}
                         avgTonnage={avgTonnage}
+                        unit={unit}
                       />
                     )}
                   </WeekSection>
@@ -925,52 +921,58 @@ function getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows) {
   return `${sessionsLabel} so far, with ${volumeLabel} of total volume across the week.`;
 }
 
-function getWeekReviewCopy(stats, avgTonnage, unit, boundaries) {
+function getWeekReviewCopy(stats, boundaries) {
   if (stats.sessions.current === 0) return "No sessions logged this week.";
 
-  const qualified = stats.sessions.current >= 3;
-  const phrase = qualified
-    ? pickPhrase(CONSISTENCY_PHRASES, boundaries.mondayStr)
-    : `${stats.sessions.current} session${stats.sessions.current === 1 ? "" : "s"} this week.`;
+  if (stats.sessions.current >= 3) {
+    return pickPhrase(CONSISTENCY_PHRASES, boundaries.mondayStr);
+  }
 
-  const volumeLabel = formatTonnage(stats.tonnage.current, unit);
-
-  if (!avgTonnage) return `${phrase} ${volumeLabel} total volume.`;
-
-  const delta = getTonnageDelta(stats.tonnage.current, avgTonnage.avg);
-  if (delta === null) return `${phrase} ${volumeLabel} total volume.`;
-
-  const direction = delta >= 0 ? "above" : "below";
-  const pct = Math.abs(Math.round(delta));
-
-  return `${phrase} ${volumeLabel} total volume, ${pct}% ${direction} your trailing year average.`;
+  return `${stats.sessions.current} session${stats.sessions.current === 1 ? "" : "s"} this week.`;
 }
 
-function WeekTonnageComparison({ weekTonnage, avgTonnage }) {
-  if (!avgTonnage) return null;
-  const delta = getTonnageDelta(weekTonnage, avgTonnage.avg);
-  if (delta === null) return null;
-
-  const isUp = delta >= 0;
-  const pct = Math.abs(Math.round(delta));
-  const Icon = isUp ? TrendingUp : TrendingDown;
-  const colorClass = isUp
-    ? "text-emerald-600 dark:text-emerald-400"
-    : "text-amber-600 dark:text-amber-400";
+function WeekTonnageComparison({ weekTonnage, avgTonnage, unit }) {
+  const delta = avgTonnage ? getTonnageDelta(weekTonnage, avgTonnage.avg) : null;
+  const isUp = delta !== null ? delta >= 0 : null;
+  const pct = delta !== null ? Math.abs(Math.round(delta)) : null;
 
   return (
-    <div className="bg-muted/30 flex items-center gap-3 rounded-xl border px-4 py-3">
-      <Icon className={`h-5 w-5 shrink-0 ${colorClass}`} />
+    <Link
+      href="/tonnage"
+      className="bg-muted/20 hover:border-primary hover:bg-muted/35 flex w-full items-center gap-4 rounded-xl border px-4 py-3 transition-colors"
+    >
+      {isUp !== null && (
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+            isUp
+              ? "bg-emerald-100 dark:bg-emerald-950"
+              : "bg-amber-100 dark:bg-amber-950"
+          }`}
+        >
+          {isUp ? (
+            <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          ) : (
+            <TrendingDown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          )}
+        </div>
+      )}
       <div className="min-w-0 flex-1">
-        <p className="text-foreground text-sm font-medium">
-          {formatTonnage(weekTonnage, avgTonnage.unit)} this week
+        <p className="text-foreground text-lg font-semibold tabular-nums">
+          {formatTonnage(weekTonnage, unit)}
         </p>
-        <p className="text-muted-foreground text-xs">
-          {pct}% {isUp ? "above" : "below"} your trailing year average of{" "}
-          {formatTonnage(avgTonnage.avg, avgTonnage.unit)}/week
-        </p>
+        {pct !== null && avgTonnage ? (
+          <p className="text-muted-foreground text-xs">
+            {pct}% {isUp ? "above" : "below"} your{" "}
+            {formatTonnage(avgTonnage.avg, avgTonnage.unit)}/wk average
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-xs">
+            Total volume this week
+          </p>
+        )}
       </div>
-    </div>
+      <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" />
+    </Link>
   );
 }
 

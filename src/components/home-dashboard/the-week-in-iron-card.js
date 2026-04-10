@@ -939,26 +939,26 @@ function WeekTonnageComparison({ weekTonnage, avgTonnage, unit }) {
   return (
     <Link
       href="/tonnage"
-      className="bg-muted/20 hover:border-primary hover:bg-muted/35 flex w-full items-center gap-4 rounded-xl border px-4 py-3 transition-colors"
+      className="bg-muted/20 hover:border-primary hover:bg-muted/35 inline-flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
     >
       {isUp !== null && (
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
             isUp
               ? "bg-emerald-100 dark:bg-emerald-950"
               : "bg-amber-100 dark:bg-amber-950"
           }`}
         >
           {isUp ? (
-            <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           ) : (
-            <TrendingDown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <TrendingDown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           )}
         </div>
       )}
-      <div className="min-w-0 flex-1">
-        <p className="text-foreground text-lg font-semibold tabular-nums">
-          {formatTonnage(weekTonnage, unit)}
+      <div className="min-w-0">
+        <p className="text-foreground text-sm font-semibold tabular-nums">
+          {formatTonnage(weekTonnage, unit)} Weekly Tonnage
         </p>
         {pct !== null && avgTonnage ? (
           <p className="text-muted-foreground text-xs">
@@ -971,7 +971,6 @@ function WeekTonnageComparison({ weekTonnage, avgTonnage, unit }) {
           </p>
         )}
       </div>
-      <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" />
     </Link>
   );
 }

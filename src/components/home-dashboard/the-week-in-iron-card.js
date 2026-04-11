@@ -569,16 +569,6 @@ export function TheWeekInIronCard({
 
               {!isReadOnly && boundaries.isCurrentWeek && (
                 <>
-                  {stats.sessions.current > 0 && stats.tonnage.current > 0 && (
-                    <>
-                      <Separator />
-                      <WeekTonnageComparison
-                        weekTonnage={stats.tonnage.current}
-                        avgTonnage={avgTonnage}
-                        unit={unit}
-                      />
-                    </>
-                  )}
                   <Separator />
                   <WeekSection
                     stepLabel="B"
@@ -594,6 +584,13 @@ export function TheWeekInIronCard({
                       weeklySessionRows,
                     )}
                   >
+                    {stats.sessions.current > 0 && stats.tonnage.current > 0 && (
+                      <WeekTonnageComparison
+                        weekTonnage={stats.tonnage.current}
+                        avgTonnage={avgTonnage}
+                        unit={unit}
+                      />
+                    )}
                     <StartLiftPrompt
                       showIntro={false}
                       showStarterButtons={stats.sessions.current < 3}

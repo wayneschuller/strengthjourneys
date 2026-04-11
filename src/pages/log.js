@@ -3925,19 +3925,13 @@ function LiftBlock({
       }
 
       // Secondary: algorithmic suggestion (standard warmup calculator)
-      // If the algorithmic track is exhausted, offer the top set instead
       if (nextSet) {
         addButton(nextSet, "warmup", "outline");
-      } else {
-        const topProgSet = progression[progression.length - 1];
-        addButton(topProgSet, "top set", "outline");
       }
 
-      // If neither replay nor algorithmic produced anything, fall through to top set
-      if (buttons.length === 0) {
-        const topProgSet = progression[progression.length - 1];
-        addButton(topProgSet, "top set", "primary");
-      }
+      // Always offer the top set as an option (skip-ahead or the only option)
+      const topProgSet = progression[progression.length - 1];
+      addButton(topProgSet, "top set", "outline");
     } else if (inDropSetMode) {
       // Drop set mode: weight is descending — only offer repeat at current drop weight
       const dropRankingMeta = getSuggestionRankingMeta(

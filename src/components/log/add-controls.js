@@ -241,7 +241,7 @@ function SmartAddButtonGrid({
   showHint,
   disabled = false,
 }) {
-  const visibleButtons = buttons.slice(0, 2);
+  const visibleButtons = buttons.slice(0, 3);
 
   return (
     <>

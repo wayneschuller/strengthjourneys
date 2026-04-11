@@ -44,7 +44,7 @@ import {
   Anvil,
   Mountain,
   RotateCcw,
-  Weight,
+  Disc,
 } from "lucide-react";
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
@@ -617,7 +617,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   return (
     <PageContainer>
       <PageHeader>
-        <PageHeaderHeading icon={Weight}>
+        <PageHeaderHeading icon={Disc}>
           Plate Milestones
         </PageHeaderHeading>
         <PageHeaderDescription>

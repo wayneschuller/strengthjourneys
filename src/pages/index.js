@@ -25,6 +25,7 @@ import {
   Plus,
   Mountain,
   Upload,
+  Disc,
 } from "lucide-react";
 
 import dynamic from "next/dynamic";
@@ -130,6 +131,13 @@ export const featurePages = [
     description:
       "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
     IconComponent: Mountain,
+  },
+  {
+    href: "/plate-milestones",
+    title: "Plate Milestones",
+    description:
+      "How many plates can you lift? Track your 1/2/3/4 plate club progress. Plates get dates.",
+    IconComponent: Disc,
     badgeLabel: "New",
   },
   {

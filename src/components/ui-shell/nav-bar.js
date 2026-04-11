@@ -13,7 +13,7 @@ import {
 } from "@/components/ui-shell/theme-chooser";
 import { MobileNav } from "@/components/ui-shell/mobile-nav";
 import { AvatarDropdown } from "@/components/ui-shell/avatar-menu";
-import { Table2, Loader2, Github, Layers, LineChart, NotebookText, Plus } from "lucide-react";
+import { Table2, Loader2, Github, Layers, LineChart, NotebookText, Plus, Disc } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
@@ -637,7 +637,7 @@ function CalculatorsMenu() {
     {
       title: "Plate Milestones",
       href: "/plate-milestones",
-      icon: <Layers className="h-5 w-5" />,
+      icon: <Disc className="h-5 w-5" />,
     },
     {
       title: "Lifting Set Timer",

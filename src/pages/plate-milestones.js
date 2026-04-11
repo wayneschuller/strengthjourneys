@@ -622,10 +622,9 @@ function PlateMilestonesMain({ relatedArticles }) {
         </PageHeaderHeading>
         <PageHeaderDescription>
           How many plates can you lift? Track your progress toward the
-          classic <strong>1/2/3/4 plate club</strong> and beyond. Whether
-          you call them <strong>plates</strong>, <strong>wheels</strong>,{" "}
-          <strong>45s</strong>, or <strong>blues</strong>, these are the
-          milestones every barbell lifter chases.
+          classic <strong>1/2/3/4 plate club</strong>. Plates, wheels,
+          45s, blues. Whatever you call them, plates get dates and PRs
+          get high-fives.
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">

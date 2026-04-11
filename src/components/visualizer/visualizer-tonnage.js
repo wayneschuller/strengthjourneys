@@ -142,38 +142,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     </svg>
   );
 
-  const renderLegend = ({ payload }) => {
-    if (!payload?.length) return null;
-    return (
-      <div className="flex items-center justify-center gap-4 pt-3">
-        {payload.map((entry) => {
-          const key = entry.dataKey;
-          const isHidden = hiddenSeries[key];
-          const cfg = chartConfig[key];
-          return (
-            <button
-              key={key}
-              type="button"
-              className="flex items-center gap-1.5 text-sm transition-opacity"
-              style={{ opacity: isHidden ? 0.35 : 1 }}
-              onClick={() => toggleSeries(key)}
-            >
-              {cfg?.icon ? (
-                <cfg.icon opacity={isHidden ? 0.35 : 1} />
-              ) : (
-                <div
-                  className="h-2 w-2 shrink-0 rounded-[2px]"
-                  style={{ backgroundColor: entry.color }}
-                />
-              )}
-              {cfg?.label || key}
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
   const chartConfig = {
     tonnage: {
       label: liftType ? `${liftType} Tonnage` : "Session Tonnage",
@@ -185,6 +153,35 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       icon: DashedLineIcon,
     },
   };
+
+  const seriesKeys = Object.keys(chartConfig);
+  const renderLegend = () => (
+    <div className="flex items-center justify-center gap-4 pt-3">
+      {seriesKeys.map((key) => {
+        const cfg = chartConfig[key];
+        const isHidden = hiddenSeries[key];
+        return (
+          <button
+            key={key}
+            type="button"
+            className="flex items-center gap-1.5 text-sm transition-opacity"
+            style={{ opacity: isHidden ? 0.35 : 1 }}
+            onClick={() => toggleSeries(key)}
+          >
+            {cfg.icon ? (
+              <cfg.icon opacity={isHidden ? 0.35 : 1} />
+            ) : (
+              <div
+                className="h-2 w-2 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: cfg.color }}
+              />
+            )}
+            {cfg.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 
   const yearLabels = getYearLabels(chartData);
 

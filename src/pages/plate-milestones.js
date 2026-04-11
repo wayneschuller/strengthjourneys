@@ -75,8 +75,8 @@ const BAR_LB = 45;
 const plateTotal = (n, isMetric) =>
   isMetric ? BAR_KG + n * 2 * PLATE_KG : BAR_LB + n * 2 * PLATE_LB;
 
-// All plate tiers we track (1 through 5)
-const ALL_TIERS = [1, 2, 3, 4, 5];
+// All plate tiers we track (1 through 4)
+const ALL_TIERS = [1, 2, 3, 4];
 
 // The "classic" targets per lift
 const CLASSIC_TARGETS = {
@@ -86,12 +86,12 @@ const CLASSIC_TARGETS = {
   deadlift: 4,
 };
 
-// Which plate tiers to show as sub-milestones for each lift
+// Which plate tiers to show as sub-milestones for each lift (capped at classic target)
 const LIFT_TIERS = {
-  press: [1, 2],
-  bench: [1, 2, 3],
-  squat: [1, 2, 3, 4],
-  deadlift: [1, 2, 3, 4, 5],
+  press: [1],
+  bench: [1, 2],
+  squat: [1, 2, 3],
+  deadlift: [1, 2, 3, 4],
 };
 
 const MILESTONES = [
@@ -102,7 +102,7 @@ const MILESTONES = [
     tiers: LIFT_TIERS.press,
     storageKey: LOCAL_STORAGE_KEYS.PLATE_MILESTONE_PRESS,
     defaultValue: 95,
-    maxLb: 315,
+    maxLb: 225,
   },
   {
     key: "bench",
@@ -111,7 +111,7 @@ const MILESTONES = [
     tiers: LIFT_TIERS.bench,
     storageKey: LOCAL_STORAGE_KEYS.PLATE_MILESTONE_BENCH,
     defaultValue: 155,
-    maxLb: 495,
+    maxLb: 315,
   },
   {
     key: "squat",
@@ -120,7 +120,7 @@ const MILESTONES = [
     tiers: LIFT_TIERS.squat,
     storageKey: LOCAL_STORAGE_KEYS.PLATE_MILESTONE_SQUAT,
     defaultValue: 225,
-    maxLb: 585,
+    maxLb: 405,
   },
   {
     key: "deadlift",
@@ -129,7 +129,7 @@ const MILESTONES = [
     tiers: LIFT_TIERS.deadlift,
     storageKey: LOCAL_STORAGE_KEYS.PLATE_MILESTONE_DEADLIFT,
     defaultValue: 275,
-    maxLb: 585,
+    maxLb: 495,
   },
 ];
 
@@ -161,11 +161,6 @@ const FAQ_ITEMS = [
     question: "How rare is a 4 plate deadlift?",
     answer:
       "A 405 lb (180 kg) deadlift puts you well into advanced territory. Most dedicated lifters can reach it within 2 to 4 years of serious training. It is the classic \"big boy\" milestone and the sound of four plates rattling off the floor is unmistakable.",
-  },
-  {
-    question: "What about a 5 plate deadlift?",
-    answer:
-      "A 495 lb (220 kg) deadlift is elite-level for natural lifters. Very few people outside of competitive powerlifting ever pull 5 plates. If you get there, you have earned serious bragging rights.",
   },
   {
     question: "Why are they called \"blues\"?",
@@ -799,7 +794,6 @@ function PlateMilestonesMain({ relatedArticles }) {
                     {n === 2 && "\"Two wheels\" / \"two blues\""}
                     {n === 3 && "\"Three plates\" / \"three wheels\""}
                     {n === 4 && "\"Four plates\" / \"four 45s\""}
-                    {n === 5 && "\"Five plates\" / \"five wheels\""}
                   </td>
                 </tr>
               ))}
@@ -839,8 +833,7 @@ function PlateMilestonesMain({ relatedArticles }) {
             first barbell was loaded. A <strong>plate</strong> means a
             standard 45 lb (20 kg) weight on each side of the bar. One plate
             per side totals 135 lb (60 kg). Two plates: 225 lb (100 kg).
-            Three: 315 lb (140 kg). Four: 405 lb (180 kg). Five: 495 lb
-            (220 kg).
+            Three: 315 lb (140 kg). Four: 405 lb (180 kg).
           </p>
           <p>
             The <strong>1/2/3/4 plate club</strong> sets the benchmark: a 1

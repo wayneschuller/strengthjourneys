@@ -644,7 +644,7 @@ function PlateMilestonesMain({ relatedArticles }) {
             >
               <h3 className="text-base font-semibold">200/300/400/500</h3>
               <p className="text-sm">
-                The classic lb-based barbell milestones.
+                Advanced lifetime barbell goals.
               </p>
             </Link>
           </div>

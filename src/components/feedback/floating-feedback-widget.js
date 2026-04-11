@@ -276,6 +276,7 @@ export function FeedbackWidget({ labels = {} }) {
     "/strength-levels": "the Strength Levels page",
     "/1000lb-club-calculator": "the 1000lb Club Calculator",
     "/warm-up-sets-calculator": "the Warm-up Calculator",
+    "/plate-milestones": "the Plate Milestones tracker",
     "/strength-year-in-review": "your Year in Review",
     "/ai-lifting-assistant": "the AI Lifting Assistant",
     "/timer": "the Gym Timer",

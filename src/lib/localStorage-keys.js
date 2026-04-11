@@ -86,6 +86,12 @@ export const LOCAL_STORAGE_KEYS = {
   STRENGTH_CLUB_SQUAT: "SJ_strength_club_squat",
   STRENGTH_CLUB_DEADLIFT: "SJ_strength_club_deadlift",
 
+  // Plate milestones (1/2/3/4 plate club)
+  PLATE_MILESTONE_PRESS: "SJ_plate_milestone_press",
+  PLATE_MILESTONE_BENCH: "SJ_plate_milestone_bench",
+  PLATE_MILESTONE_SQUAT: "SJ_plate_milestone_squat",
+  PLATE_MILESTONE_DEADLIFT: "SJ_plate_milestone_deadlift",
+
   // Gorilla comparison
   GORILLA_IS_METRIC: "SJ_gorilla_is_metric",
   GORILLA_BODY_WEIGHT: "SJ_gorilla_body_weight",

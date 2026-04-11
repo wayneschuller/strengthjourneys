@@ -635,6 +635,11 @@ function CalculatorsMenu() {
       icon: <Mountain className="h-5 w-5" />,
     },
     {
+      title: "Plate Milestones",
+      href: "/plate-milestones",
+      icon: <Layers className="h-5 w-5" />,
+    },
+    {
       title: "Lifting Set Timer",
       href: "/timer",
       icon: <Timer className="h-5 w-5" />,

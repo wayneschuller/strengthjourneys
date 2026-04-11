@@ -36,6 +36,7 @@ const STRENGTH_STANDARDS_LINKS = [
   { href: "/strength-levels/strict-press", label: "Strict Press Strength Levels" },
   { href: "/1000lb-club-calculator", label: "1000lb Club" },
   { href: "/200-300-400-500-strength-club-calculator", label: "200/300/400/500 Club" },
+  { href: "/plate-milestones", label: "Plate Milestones" },
 ];
 
 const PROGRESS_GUIDES = [

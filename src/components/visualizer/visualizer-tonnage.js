@@ -144,7 +144,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       color: tonnageColor,
     },
     rollingAverageTonnage: {
-      label: "7-Session Average",
+      label: "30-Day Average",
       color: tonnageColor,
       icon: DashedLineIcon,
     },
@@ -492,7 +492,7 @@ function calculateNiceYAxis(maxValue) {
 /**
  * Aggregates total tonnage per session date from parsedData.
  * If liftType is provided, filters to only that lift type.
- * Includes a 7-session rolling average for the trend line.
+ * Includes a 30-day rolling average for the trend line.
  */
 function processTonnageData(
   parsedData,
@@ -524,13 +524,16 @@ function processTonnageData(
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // 7-session rolling average for the trend line
-  const windowSize = 7;
+  // 30-day calendar rolling average for the trend line
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+  let windowStart = 0;
   for (let i = 0; i < chartData.length; i++) {
-    const windowData = chartData.slice(Math.max(0, i - windowSize + 1), i + 1);
-    const avg =
-      windowData.reduce((sum, d) => sum + d.tonnage, 0) / windowData.length;
-    chartData[i].rollingAverageTonnage = isNaN(avg) ? null : Math.round(avg);
+    const cutoff = chartData[i].rechartsDate - THIRTY_DAYS_MS;
+    while (chartData[windowStart].rechartsDate < cutoff) windowStart++;
+    let sum = 0;
+    for (let j = windowStart; j <= i; j++) sum += chartData[j].tonnage;
+    const count = i - windowStart + 1;
+    chartData[i].rollingAverageTonnage = Math.round(sum / count);
   }
 
   logTiming("processTonnageData", performance.now() - startTime);

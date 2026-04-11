@@ -623,8 +623,7 @@ function PlateMilestonesMain({ relatedArticles }) {
         <PageHeaderDescription>
           How many plates can you lift? Track your progress toward the
           classic <strong>1/2/3/4 plate club</strong>. Plates, wheels,
-          45s, blues. Whatever you call them, plates get dates and PRs
-          get high-fives.
+          45s, blues. Whatever you call them, plates get dates.
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">

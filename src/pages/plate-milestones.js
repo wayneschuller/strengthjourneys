@@ -429,6 +429,66 @@ function SliderWithMarkers({
   );
 }
 
+// --- Blue plate icon (45 lb / 20 kg bumper plate) ---
+function BluePlateIcon({ achieved }) {
+  return (
+    <svg
+      width="28"
+      height="40"
+      viewBox="0 0 28 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="transition-opacity duration-300"
+      style={{ opacity: achieved ? 1 : 0.25 }}
+    >
+      {/* Outer plate shape */}
+      <rect
+        x="2"
+        y="1"
+        width="24"
+        height="38"
+        rx="3"
+        fill={achieved ? "#2563EB" : "#94a3b8"}
+        stroke={achieved ? "#1d4ed8" : "#64748b"}
+        strokeWidth="1.5"
+      />
+      {/* Inner ring */}
+      <rect
+        x="6"
+        y="5"
+        width="16"
+        height="30"
+        rx="2"
+        fill="none"
+        stroke={achieved ? "#3b82f6" : "#94a3b8"}
+        strokeWidth="1"
+        opacity="0.5"
+      />
+      {/* Center hole */}
+      <circle
+        cx="14"
+        cy="20"
+        r="3.5"
+        fill={achieved ? "#1e3a5f" : "#475569"}
+        stroke={achieved ? "#1d4ed8" : "#64748b"}
+        strokeWidth="1"
+      />
+      {/* Weight label */}
+      <text
+        x="14"
+        y="35"
+        textAnchor="middle"
+        fontSize="6"
+        fontWeight="bold"
+        fill="white"
+        opacity="0.9"
+      >
+        20
+      </text>
+    </svg>
+  );
+}
+
 // --- Tier progress dots ---
 function TierDots({ tiers, currentWeightLb, targetPlates }) {
   return (
@@ -917,45 +977,21 @@ function PlateMilestonesMain({ relatedArticles }) {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-2 text-sm">
-            <p>
-              See your beginner-to-elite standards per lift at our{" "}
-              <Link
-                href="/strength-levels"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                Strength Levels
-              </Link>
-              . Explore:{" "}
-              <Link
-                href={getLiftDetailUrl("Strict Press")}
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                Press
-              </Link>
-              {" \u00b7 "}
-              <Link
-                href={getLiftDetailUrl("Bench Press")}
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                Bench
-              </Link>
-              {" \u00b7 "}
-              <Link
-                href={getLiftDetailUrl("Back Squat")}
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                Squat
-              </Link>
-              {" \u00b7 "}
-              <Link
-                href={getLiftDetailUrl("Deadlift")}
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                Deadlift
-              </Link>
-            </p>
-          </CardFooter>
+          {classicClubAchieved && (
+            <CardFooter className="flex flex-col gap-2 text-sm">
+              <p>
+                You have conquered the 1/2/3/4 Plate Club. Ready for the next
+                challenge? See if your squat, bench, and deadlift total hits{" "}
+                <Link
+                  href="/1000lb-club-calculator"
+                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                >
+                  the 1000 lb Club
+                </Link>
+                .
+              </p>
+            </CardFooter>
+          )}
         </Card>
 
         {/* Plate reference table */}
@@ -1168,62 +1204,65 @@ function MilestoneCard({
         />
       )}
 
-      {/* Content */}
-      <div className="relative z-[1]">
-        {/* Header: plate count target + lift name + SVG */}
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href={getLiftDetailUrl(liftType)} className="flex-shrink-0">
-              <motion.img
-                src={LIFT_GRAPHICS[liftType]}
-                alt={`${liftType} illustration`}
-                className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24"
-                animate={
-                  prefersReducedMotion
-                    ? undefined
-                    : isActive
-                      ? { scale: 1.1, y: -3 }
-                      : { scale: 1, y: 0 }
-                }
-                transition={{
-                  type: "spring",
-                  stiffness: 360,
-                  damping: 16,
-                  mass: 0.6,
-                }}
-              />
-            </Link>
-            <div>
-              <div className="flex items-baseline gap-1.5 text-3xl font-black sm:text-4xl">
-                {targetPlates}
-                <span className="text-muted-foreground text-sm font-semibold sm:text-base">
-                  {targetPlates === 1 ? "plate" : "plates"}
-                </span>
-              </div>
-              <Link
-                href={getLiftDetailUrl(liftType)}
-                className="text-muted-foreground text-sm font-semibold underline decoration-dotted underline-offset-2 hover:text-blue-600"
-              >
-                {liftType}
-              </Link>
-              <div className="text-muted-foreground mt-0.5 text-xs tabular-nums">
-                {targetWeightLb} lb / {plateTotal(targetPlates, true)} kg
-              </div>
-            </div>
-          </div>
-          {achieved && (
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            >
-              <Trophy className="h-8 w-8 text-amber-500" />
-            </motion.div>
-          )}
+      {/* Content — column layout */}
+      <div className="relative z-[1] flex flex-col items-center text-center">
+        {/* Lift SVG — centered hero */}
+        <Link href={getLiftDetailUrl(liftType)} className="mb-2">
+          <motion.img
+            src={LIFT_GRAPHICS[liftType]}
+            alt={`${liftType} illustration`}
+            className="h-24 w-24 origin-bottom object-contain sm:h-28 sm:w-28"
+            animate={
+              prefersReducedMotion
+                ? undefined
+                : isActive
+                  ? { scale: 1.1, y: -3 }
+                  : { scale: 1, y: 0 }
+            }
+            transition={{
+              type: "spring",
+              stiffness: 360,
+              damping: 16,
+              mass: 0.6,
+            }}
+          />
+        </Link>
+
+        {/* Blue plate icons — one per target plate */}
+        <div className="mb-2 flex items-center justify-center gap-1">
+          {Array.from({ length: targetPlates }, (_, i) => (
+            <BluePlateIcon
+              key={i}
+              achieved={value >= plateTotal(i + 1, false)}
+            />
+          ))}
         </div>
 
+        {/* Lift name + target weight */}
+        <Link
+          href={getLiftDetailUrl(liftType)}
+          className="text-base font-bold underline decoration-dotted underline-offset-2 hover:text-blue-600"
+        >
+          {liftType}
+        </Link>
+        <div className="text-muted-foreground mt-0.5 text-xs tabular-nums">
+          {plateLabel(targetPlates)}: {targetWeightLb} lb / {plateTotal(targetPlates, true)} kg
+        </div>
+
+        {/* Trophy for achieved */}
+        {achieved && (
+          <motion.div
+            className="mt-1"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+          >
+            <Trophy className="h-7 w-7 text-amber-500" />
+          </motion.div>
+        )}
+
         {/* Tier progress dots */}
-        <div className="mb-3">
+        <div className="mt-3 mb-3 flex justify-center">
           <TierDots
             tiers={tiers}
             currentWeightLb={value}
@@ -1232,7 +1271,7 @@ function MilestoneCard({
         </div>
 
         {/* Plate diagram */}
-        <div className="mb-3">
+        <div className="mb-3 w-full">
           <PlateDiagram
             platesPerSide={breakdown.platesPerSide}
             barWeight={BAR_LB}
@@ -1244,7 +1283,7 @@ function MilestoneCard({
         </div>
 
         {/* Slider */}
-        <div className="mb-2">
+        <div className="mb-2 w-full text-left">
           <div className="mb-1 flex items-baseline justify-between">
             <span className="text-xl font-bold tabular-nums">
               {value} lbs{" "}

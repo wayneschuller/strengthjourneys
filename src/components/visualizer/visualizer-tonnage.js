@@ -354,11 +354,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               <Tooltip
                 position={{ y: 40 }}
                 content={(props) => (
-                  <TonnageTooltipContent
+                  <TonnageTooltipMinimal
                     {...props}
-                    liftType={liftType}
-                    parsedData={parsedData}
-                    liftColor={liftColor}
                     setHighlightDate={setHighlightDate}
                     debounceMs={tooltipDebounceMs}
                     isMetric={isMetric}
@@ -581,6 +578,41 @@ function processTonnageData(
 
   return chartData;
 }
+
+// Minimal tooltip for the tonnage page where the session card shows details.
+const TonnageTooltipMinimal = ({
+  payload,
+  label,
+  setHighlightDate,
+  debounceMs = 0,
+  isMetric = false,
+}) => {
+  const dateStr = payload?.[0]?.payload?.date || null;
+
+  useEffect(() => {
+    if (!dateStr || !setHighlightDate) return;
+    const timer = setTimeout(() => setHighlightDate(dateStr), debounceMs);
+    return () => clearTimeout(timer);
+  }, [dateStr, setHighlightDate, debounceMs]);
+
+  if (!payload || payload.length === 0) return null;
+
+  const tonnage = payload[0].value;
+  const date = new Date(label);
+  const dateLabel = date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const unitType = isMetric ? "kg" : "lb";
+
+  return (
+    <div className="rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">{dateLabel}</p>
+      <p>{`${tonnage.toFixed(0)}${unitType}`}</p>
+    </div>
+  );
+};
 
 // Helper function to get session lifts grouped by lift type
 function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {

@@ -3925,11 +3925,15 @@ function LiftBlock({
       }
 
       // Secondary: algorithmic suggestion (standard warmup calculator)
+      // If the algorithmic track is exhausted, offer the top set instead
       if (nextSet) {
         addButton(nextSet, "warmup", "outline");
+      } else {
+        const topProgSet = progression[progression.length - 1];
+        addButton(topProgSet, "top set", "outline");
       }
 
-      // If neither replay nor algorithmic matched yet, fall through to top set
+      // If neither replay nor algorithmic produced anything, fall through to top set
       if (buttons.length === 0) {
         const topProgSet = progression[progression.length - 1];
         addButton(topProgSet, "top set", "primary");

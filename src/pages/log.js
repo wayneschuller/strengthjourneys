@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -2067,6 +2068,9 @@ export default function LogSessionPage() {
 
   return (
     <div className="mx-auto max-w-[116rem] px-3 pb-24 sm:px-4">
+      <Head>
+        <link rel="canonical" href="https://www.strengthjourneys.xyz/log" />
+      </Head>
       <style dangerouslySetInnerHTML={{ __html: LOG_CELEBRATION_KEYFRAMES }} />
       <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:gap-20">
         <aside className="hidden xl:block">

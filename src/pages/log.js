@@ -3919,9 +3919,9 @@ function LiftBlock({
         });
       };
 
-      // Primary: replay suggestion (what the user actually did last time)
+      // Primary: replay suggestion (based on what the user actually did last time)
       if (nextReplaySet) {
-        addButton(nextReplaySet, "last time", "secondary");
+        addButton(nextReplaySet, "warmup", "secondary");
       }
 
       // Secondary: algorithmic suggestion (standard warmup calculator)

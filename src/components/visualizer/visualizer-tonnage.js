@@ -30,7 +30,6 @@ import {
 import {
   ChartContainer,
   ChartLegend,
-  ChartLegendContent,
 } from "@/components/ui/chart";
 
 import {
@@ -131,12 +130,49 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   };
 
   const tonnageColor = liftColor || "var(--chart-1)";
+  const [hiddenSeries, setHiddenSeries] = useState({});
 
-  const DashedLineIcon = () => (
-    <svg width="12" height="12" viewBox="0 0 12 12">
+  const toggleSeries = (dataKey) => {
+    setHiddenSeries((prev) => ({ ...prev, [dataKey]: !prev[dataKey] }));
+  };
+
+  const DashedLineIcon = ({ opacity = 1 }) => (
+    <svg width="12" height="12" viewBox="0 0 12 12" style={{ opacity }}>
       <line x1="0" y1="6" x2="12" y2="6" stroke={tonnageColor} strokeWidth="2" strokeDasharray="3 2" strokeOpacity="0.6" />
     </svg>
   );
+
+  const renderLegend = ({ payload }) => {
+    if (!payload?.length) return null;
+    return (
+      <div className="flex items-center justify-center gap-4 pt-3">
+        {payload.map((entry) => {
+          const key = entry.dataKey;
+          const isHidden = hiddenSeries[key];
+          const cfg = chartConfig[key];
+          return (
+            <button
+              key={key}
+              type="button"
+              className="flex items-center gap-1.5 text-sm transition-opacity"
+              style={{ opacity: isHidden ? 0.35 : 1 }}
+              onClick={() => toggleSeries(key)}
+            >
+              {cfg?.icon ? (
+                <cfg.icon opacity={isHidden ? 0.35 : 1} />
+              ) : (
+                <div
+                  className="h-2 w-2 shrink-0 rounded-[2px]"
+                  style={{ backgroundColor: entry.color }}
+                />
+              )}
+              {cfg?.label || key}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   const chartConfig = {
     tonnage: {
@@ -228,52 +264,56 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     />
                   </linearGradient>
                 </defs>
-                <ChartLegend content={<ChartLegendContent />} />
-                <Area
-                  key={liftType}
-                  type="monotone"
-                  dataKey="tonnage"
-                  stroke={liftColor}
-                  strokeWidth={2}
-                  fill={`url(#fill)`}
-                  fillOpacity={0.4}
-                  dot={
-                    ["3M", "6M"].includes(timeRange)
-                      ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
-                      : false
-                  }
-                  connectNulls
-                >
-                  {showLabelValues && (
-                    <LabelList
-                      position="top"
-                      offset={12}
-                      content={({ x, y, value }) => (
-                        <text
-                          x={x}
-                          y={y}
-                          dy={-10}
-                          fontSize={12}
-                          textAnchor="middle"
-                          className="fill-foreground"
-                        >
-                          {`${Math.round(value)}${displayUnit}`}
-                        </text>
-                      )}
-                    />
-                  )}
-                </Area>
-                <Line
-                  type="monotone"
-                  dataKey="rollingAverageTonnage"
-                  stroke={liftColor}
-                  strokeWidth={2}
-                  strokeOpacity={0.6}
-                  strokeDasharray="6 3"
-                  dot={false}
-                  connectNulls
-                  tooltipType="none"
-                />
+                <ChartLegend content={renderLegend} />
+                {!hiddenSeries.tonnage && (
+                  <Area
+                    key={liftType}
+                    type="monotone"
+                    dataKey="tonnage"
+                    stroke={liftColor}
+                    strokeWidth={2}
+                    fill={`url(#fill)`}
+                    fillOpacity={0.4}
+                    dot={
+                      ["3M", "6M"].includes(timeRange)
+                        ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
+                        : false
+                    }
+                    connectNulls
+                  >
+                    {showLabelValues && (
+                      <LabelList
+                        position="top"
+                        offset={12}
+                        content={({ x, y, value }) => (
+                          <text
+                            x={x}
+                            y={y}
+                            dy={-10}
+                            fontSize={12}
+                            textAnchor="middle"
+                            className="fill-foreground"
+                          >
+                            {`${Math.round(value)}${displayUnit}`}
+                          </text>
+                        )}
+                      />
+                    )}
+                  </Area>
+                )}
+                {!hiddenSeries.rollingAverageTonnage && (
+                  <Line
+                    type="monotone"
+                    dataKey="rollingAverageTonnage"
+                    stroke={liftColor}
+                    strokeWidth={2}
+                    strokeOpacity={0.6}
+                    strokeDasharray="6 3"
+                    dot={false}
+                    connectNulls
+                    tooltipType="none"
+                  />
+                )}
 
                 {yearLabels.map(({ date, label }) => (
                   <ReferenceLine
@@ -344,51 +384,55 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 </linearGradient>
               </defs>
 
-              <ChartLegend content={<ChartLegendContent />} />
-              <Area
-                type="monotone"
-                dataKey="tonnage"
-                stroke={tonnageColor}
-                fill="url(#fillTonnage)"
-                fillOpacity={0.4}
-                dot={
-                  ["3M", "6M"].includes(timeRange)
-                    ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
-                    : false
-                }
-                connectNulls
-              >
-                {showLabelValues && (
-                  <LabelList
-                    position="top"
-                    offset={12}
-                    content={({ x, y, value }) => (
-                      <text
-                        x={x}
-                        y={y}
-                        dy={-10}
-                        fontSize={12}
-                        textAnchor="middle"
-                        className="fill-foreground"
-                      >
-                        {`${Math.round(value)}${displayUnit}`}
-                      </text>
-                    )}
-                  />
-                )}
-              </Area>
+              <ChartLegend content={renderLegend} />
+              {!hiddenSeries.tonnage && (
+                <Area
+                  type="monotone"
+                  dataKey="tonnage"
+                  stroke={tonnageColor}
+                  fill="url(#fillTonnage)"
+                  fillOpacity={0.4}
+                  dot={
+                    ["3M", "6M"].includes(timeRange)
+                      ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
+                      : false
+                  }
+                  connectNulls
+                >
+                  {showLabelValues && (
+                    <LabelList
+                      position="top"
+                      offset={12}
+                      content={({ x, y, value }) => (
+                        <text
+                          x={x}
+                          y={y}
+                          dy={-10}
+                          fontSize={12}
+                          textAnchor="middle"
+                          className="fill-foreground"
+                        >
+                          {`${Math.round(value)}${displayUnit}`}
+                        </text>
+                      )}
+                    />
+                  )}
+                </Area>
+              )}
 
-              <Line
-                type="monotone"
-                dataKey="rollingAverageTonnage"
-                stroke={tonnageColor}
-                strokeWidth={2}
-                strokeOpacity={0.6}
-                strokeDasharray="6 3"
-                dot={false}
-                connectNulls
-                tooltipType="none"
-              />
+              {!hiddenSeries.rollingAverageTonnage && (
+                <Line
+                  type="monotone"
+                  dataKey="rollingAverageTonnage"
+                  stroke={tonnageColor}
+                  strokeWidth={2}
+                  strokeOpacity={0.6}
+                  strokeDasharray="6 3"
+                  dot={false}
+                  connectNulls
+                  tooltipType="none"
+                />
+              )}
 
               {yearLabels.map(({ date, label }) => (
                 <ReferenceLine

@@ -927,19 +927,30 @@ function MilestoneRow({
           />
         </Link>
 
-        {/* Center: blue plate images — one per target plate */}
+        {/* Center: blue plate images — fill left-to-right like a thermometer */}
         <div className="flex flex-shrink-0 items-center justify-center gap-0.5">
           {Array.from({ length: targetPlates }, (_, i) => {
-            const tierAchieved = value >= plateTotal(i + 1, false);
+            // Each plate represents one equal slice of the range from bar to target
+            const sliceStart = BAR_LB + i * (2 * PLATE_LB);
+            const sliceEnd = BAR_LB + (i + 1) * (2 * PLATE_LB);
+            const sliceProgress =
+              value <= sliceStart
+                ? 0
+                : value >= sliceEnd
+                  ? 1
+                  : (value - sliceStart) / (sliceEnd - sliceStart);
+            // Map progress to opacity: 0.15 (empty) to 1.0 (full)
+            const opacity = 0.15 + sliceProgress * 0.85;
             return (
               <img
                 key={i}
                 src="/blue_plate.svg"
                 alt="20 kg plate"
-                className={cn(
-                  "h-12 w-12 transition-opacity duration-300 sm:h-14 sm:w-14",
-                  tierAchieved ? "opacity-100" : "opacity-20",
-                )}
+                className="h-12 w-12 sm:h-14 sm:w-14"
+                style={{
+                  opacity,
+                  transition: "opacity 300ms ease",
+                }}
               />
             );
           })}

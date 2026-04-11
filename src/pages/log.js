@@ -32,7 +32,10 @@ import {
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
 import { generateSessionSets } from "@/lib/warmups";
-import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
+import {
+  getLiftPercentiles,
+  UNIVERSES,
+} from "@/lib/strength-circles/universe-percentiles";
 import {
   LIFT_TYPE_TO_PERCENTILE_KEY,
   LIFT_TYPE_TO_CALCULATOR_URL,
@@ -3382,28 +3385,46 @@ function LogLiftPercentileLine({
   const percentileKey = LIFT_TYPE_TO_PERCENTILE_KEY[liftType];
   const calculatorUrl = LIFT_TYPE_TO_CALCULATOR_URL[liftType] ?? "/calculator";
 
-  const gymGoerPercentile = useMemo(() => {
+  const bestUniverse = useMemo(() => {
     if (!percentileKey || !e1rmValue || !age || bodyWeight == null || !sex) {
       return null;
     }
 
     const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
     const e1rmKg = isMetric ? e1rmValue : e1rmValue / 2.2046;
-    return getLiftPercentiles(
+    const allPercentiles = getLiftPercentiles(
       age,
       bodyWeightKg,
       sex === "female" ? "female" : "male",
       percentileKey,
       e1rmKg,
-    )?.["Gym-Goers"] ?? null;
+    );
+    if (!allPercentiles) return null;
+
+    // Pick the most elite (rightmost) universe where percentile >= 60
+    const labels = {
+      "General Population": "the general population",
+      "Gym-Goers": "gym-goers",
+      "Barbell Lifters": "barbell lifters",
+      "Powerlifting Culture": "the powerlifting community",
+    };
+
+    let best = null;
+    for (const universe of UNIVERSES) {
+      const pct = allPercentiles[universe];
+      if (pct != null && pct >= 60) {
+        best = { universe, percentile: pct, label: labels[universe] };
+      }
+    }
+    return best;
   }, [age, bodyWeight, e1rmValue, isMetric, percentileKey, sex]);
 
-  if (gymGoerPercentile == null) return null;
+  if (!bestUniverse) return null;
 
   return (
     <div className="text-xs text-muted-foreground">
       <Link href={calculatorUrl} className="transition-colors hover:text-foreground">
-        Stronger than {gymGoerPercentile}% of gym-goers
+        Stronger than {bestUniverse.percentile}% of {bestUniverse.label}
       </Link>
     </div>
   );
@@ -3781,6 +3802,33 @@ function LiftBlock({
       storedPlatePreference,
     );
 
+    // Build a "replay" progression from the user's actual last session sets.
+    // Lower warmups (below 80% of last top) stay at the same weight.
+    // Upper warmups (at or above 80%) shift by the increment delta.
+    const incrementDelta = topWeight - lastTopWeight; // usually minIncrement
+    const upperThreshold = lastTopWeight * 0.8;
+    const seenReplayWeights = new Set();
+    const replayProgression = [];
+    for (const s of lastSets) {
+      const { value: w } = getDisplayWeight(s, isMetric);
+      if (w <= 0) continue;
+      const isUpper = w >= upperThreshold;
+      const replayWeight = isUpper
+        ? Math.round((w + incrementDelta) / minIncrement) * minIncrement
+        : w;
+      // Deduplicate: only keep the first occurrence at each weight
+      if (seenReplayWeights.has(replayWeight)) continue;
+      seenReplayWeights.add(replayWeight);
+      const isTop = replayWeight >= topWeight;
+      replayProgression.push({
+        weight: isTop ? topWeight : replayWeight,
+        reps: isTop ? topReps : s.reps,
+        isTopSet: isTop,
+      });
+    }
+    // Sort ascending and ensure the top set is last
+    replayProgression.sort((a, b) => a.weight - b.weight);
+
     // Determine where the lifter is based on already-logged sets
     const loggedWeights = realSets
       .filter((s) => s.weight > 0)
@@ -3789,17 +3837,24 @@ function LiftBlock({
         return value;
       });
 
-    // Find the next warmup set they haven't done yet
-    // Match by finding the first progression set whose weight exceeds all logged weights
+    // Find the next warmup set they haven't done yet (algorithmic)
     let nextWarmupIdx = 0;
     if (loggedWeights.length > 0) {
       const maxLogged = Math.max(...loggedWeights);
-      // Find first progression set with weight > maxLogged
       nextWarmupIdx = progression.findIndex((s) => s.weight > maxLogged);
-      if (nextWarmupIdx === -1) nextWarmupIdx = progression.length; // past the top
+      if (nextWarmupIdx === -1) nextWarmupIdx = progression.length;
+    }
+
+    // Find the next replay set they haven't done yet
+    let nextReplayIdx = 0;
+    if (loggedWeights.length > 0) {
+      const maxLogged = Math.max(...loggedWeights);
+      nextReplayIdx = replayProgression.findIndex((s) => s.weight > maxLogged);
+      if (nextReplayIdx === -1) nextReplayIdx = replayProgression.length;
     }
 
     const atOrPastTop = nextWarmupIdx >= progression.length;
+    const replayAtOrPastTop = nextReplayIdx >= replayProgression.length;
     const maxLogged = loggedWeights.length > 0 ? Math.max(...loggedWeights) : 0;
     const lastLoggedSets = realSets.filter((s) => s.weight > 0);
     const lastLoggedWeight =
@@ -3810,6 +3865,8 @@ function LiftBlock({
     const lastLoggedReps =
       lastLoggedSets[lastLoggedSets.length - 1]?.reps ?? topReps;
     const nextSet = !atOrPastTop ? progression[nextWarmupIdx] : null;
+    const nextReplaySet =
+      !replayAtOrPastTop ? replayProgression[nextReplayIdx] : null;
     const nearMissTopGapRatio =
       nextSet?.isTopSet && nextSet.weight > 0 && lastLoggedWeight > 0
         ? (nextSet.weight - lastLoggedWeight) / nextSet.weight
@@ -3820,7 +3877,9 @@ function LiftBlock({
       nearMissTopGapRatio !== null &&
       nearMissTopGapRatio > 0 &&
       nearMissTopGapRatio <= 0.03;
-    const effectiveAtOrPastTop = atOrPastTop || treatNearMissAsTopSet;
+    // Consider past top if BOTH tracks agree (or one is exhausted)
+    const effectiveAtOrPastTop =
+      (atOrPastTop || treatNearMissAsTopSet) && replayAtOrPastTop;
 
     // Detect drop set mode: last logged weight is below the session's peak
     const inDropSetMode = effectiveAtOrPastTop && lastLoggedWeight < maxLogged;
@@ -3841,39 +3900,39 @@ function LiftBlock({
     const buttons = [];
 
     if (!effectiveAtOrPastTop) {
-      // Warmup phase: suggest next warmup set
-      const rankingMeta = getSuggestionRankingMeta(
-        nextSet.reps,
-        nextSet.weight,
-      );
-      buttons.push({
-        label: `${nextSet.reps}@${nextSet.weight}${unitType}`,
-        sublabel: nextSet.isTopSet ? "top set" : "warmup",
-        rankingMessage: rankingMeta?.message ?? null,
-        rankingScope: rankingMeta?.scope ?? null,
-        reps: nextSet.reps,
-        weight: nextSet.weight,
-        unitType,
-        variant: nextSet.isTopSet ? "primary" : "secondary",
-      });
-
-      // Also offer skipping ahead to the top set if not already the next suggestion
-      if (!nextSet.isTopSet) {
-        const topProgSet = progression[progression.length - 1];
-        const topRankingMeta = getSuggestionRankingMeta(
-          topProgSet.reps,
-          topProgSet.weight,
-        );
+      // Warmup phase: offer replay (what you did last time) and algorithmic suggestions
+      // Pick the replay suggestion as primary when available
+      const addButton = (set, sublabel, variant) => {
+        if (!set) return;
+        // Deduplicate: skip if we already have a button at this weight
+        if (buttons.some((b) => b.weight === set.weight)) return;
+        const rankingMeta = getSuggestionRankingMeta(set.reps, set.weight);
         buttons.push({
-          label: `${topProgSet.reps}@${topProgSet.weight}${unitType}`,
-          sublabel: "top set",
-          rankingMessage: topRankingMeta?.message ?? null,
-          rankingScope: topRankingMeta?.scope ?? null,
-          reps: topProgSet.reps,
-          weight: topProgSet.weight,
+          label: `${set.reps}@${set.weight}${unitType}`,
+          sublabel: set.isTopSet ? "top set" : sublabel,
+          rankingMessage: rankingMeta?.message ?? null,
+          rankingScope: rankingMeta?.scope ?? null,
+          reps: set.reps,
+          weight: set.weight,
           unitType,
-          variant: "outline",
+          variant: set.isTopSet ? "primary" : variant,
         });
+      };
+
+      // Primary: replay suggestion (what the user actually did last time)
+      if (nextReplaySet) {
+        addButton(nextReplaySet, "last time", "secondary");
+      }
+
+      // Secondary: algorithmic suggestion (standard warmup calculator)
+      if (nextSet) {
+        addButton(nextSet, "warmup", "outline");
+      }
+
+      // If neither replay nor algorithmic matched yet, fall through to top set
+      if (buttons.length === 0) {
+        const topProgSet = progression[progression.length - 1];
+        addButton(topProgSet, "top set", "primary");
       }
     } else if (inDropSetMode) {
       // Drop set mode: weight is descending — only offer repeat at current drop weight
@@ -4204,23 +4263,15 @@ function LiftBlock({
         )}
         <div className="min-w-0 flex-1">
           <div className="pb-1">
-            <div className="mb-2 flex items-center gap-2">
+            <Link
+              href={getLiftDetailUrl(liftType)}
+              className="text-foreground flex items-center gap-2 text-base font-semibold hover:underline"
+              style={{ textDecorationColor: liftColor }}
+            >
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: liftColor }}
               />
-              <span
-                className="text-[10px] font-semibold tracking-[0.22em] uppercase"
-                style={{ color: hexToRgba(liftColor, 0.9) }}
-              >
-                {liftType}
-              </span>
-            </div>
-            <Link
-              href={getLiftDetailUrl(liftType)}
-              className="text-foreground text-base font-semibold hover:underline"
-              style={{ textDecorationColor: liftColor }}
-            >
               {liftType}
             </Link>
           </div>

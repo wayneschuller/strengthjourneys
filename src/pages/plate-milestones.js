@@ -54,6 +54,7 @@ import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
@@ -222,7 +223,9 @@ const WHATS_NEXT_FEATURES = [
 // --- Helpers ---
 const KG_PER_LB = 0.453592;
 const LB_PER_KG = 2.20462;
-const toKg = (lbs) => (Number(lbs) * KG_PER_LB).toFixed(1);
+const toKg = (lbs) => Math.round(Number(lbs) * KG_PER_LB);
+const displayWeight = (lbs, isMetric) =>
+  isMetric ? `${toKg(lbs)} kg` : `${lbs} lb`;
 const toLb = (weight, unitType) =>
   unitType === "lb" ? weight : weight * LB_PER_KG;
 const roundTo5 = (value) => Math.round(value / 5) * 5;
@@ -400,6 +403,7 @@ function PlateMilestonesMain({ relatedArticles }) {
     useTransientSuccess();
   const { topLiftsByTypeAndReps, parsedData, isDemoMode } =
     useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
     initializeWithValue: false,
   });
@@ -600,7 +604,7 @@ function PlateMilestonesMain({ relatedArticles }) {
               `${values[m.key] >= plateTotal(n, false) ? "\u2705" : "\u2b1c"}${n}`,
           )
           .join(" ");
-        return `${m.liftType}: ${values[m.key]} lbs (${toKg(values[m.key])} kg) ${tierStr}`;
+        return `${m.liftType}: ${displayWeight(values[m.key], isMetric)} ${tierStr}`;
       }),
       "",
       "Strength Journeys",
@@ -662,6 +666,7 @@ function PlateMilestonesMain({ relatedArticles }) {
                 onValueChange={handleLiftValueChange}
                 prVal={prWeightsLb?.[milestone.key]}
                 r90Val={recent90dLb?.[milestone.key]}
+                isMetric={isMetric}
               />
             ))}
           </div>
@@ -889,6 +894,7 @@ function MilestoneRow({
   onValueChange,
   prVal,
   r90Val,
+  isMetric,
 }) {
   const { key, liftType, targetPlates, tiers, maxLb } = milestone;
   const targetWeightLb = plateTotal(targetPlates, false);
@@ -963,7 +969,7 @@ function MilestoneRow({
                 {liftType}
               </Link>
               <span className="text-muted-foreground text-xs tabular-nums">
-                {value} lbs ({toKg(value)} kg)
+                {displayWeight(value, isMetric)}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -980,7 +986,7 @@ function MilestoneRow({
                   ? tiersAchieved === tiers.length
                     ? "Done!"
                     : `${tiersAchieved}/${tiers.length}`
-                  : `${targetWeightLb - value} lb to go`}
+                  : `${isMetric ? toKg(targetWeightLb) - toKg(value) : targetWeightLb - value} ${isMetric ? "kg" : "lb"} to go`}
               </span>
             </div>
           </div>

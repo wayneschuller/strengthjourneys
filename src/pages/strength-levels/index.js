@@ -9,7 +9,6 @@ import {
   BookOpen,
   Calculator,
   CircleDashed,
-  Disc,
   Mountain,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
@@ -352,7 +351,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                 href="/plate-milestones"
                 title="Plate Milestones"
                 description="Track your progress toward 1/2/3/4 plate milestones."
-                icon={<Disc className="h-5 w-5" />}
+                icon={<img src="/blue_plate.svg" alt="" className="h-5 w-5" aria-hidden />}
               />
               <QuickLinkCard
                 href="/1000lb-club-calculator"

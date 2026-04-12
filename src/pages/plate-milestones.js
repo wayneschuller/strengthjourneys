@@ -911,22 +911,23 @@ function MilestoneRow({
         achieved && "border-green-500/40 bg-green-500/5",
       )}
     >
-      {/* Row layout: lift SVG | plate icons | slider + info */}
+      {/* Row layout: lift SVG + plate icons (fixed width) | slider + info */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        {/* Left: lift SVG */}
-        <Link
-          href={getLiftDetailUrl(liftType)}
-          className="flex flex-shrink-0 justify-center sm:justify-start"
-        >
-          <img
-            src={LIFT_GRAPHICS[liftType]}
-            alt={`${liftType} illustration`}
-            className="h-20 w-20 object-contain"
-          />
-        </Link>
+        {/* Left: lift SVG + plate icons in a fixed-width container */}
+        <div className="flex flex-shrink-0 items-center gap-3 sm:w-[280px]">
+          <Link
+            href={getLiftDetailUrl(liftType)}
+            className="flex flex-shrink-0"
+          >
+            <img
+              src={LIFT_GRAPHICS[liftType]}
+              alt={`${liftType} illustration`}
+              className="h-20 w-20 object-contain"
+            />
+          </Link>
 
-        {/* Center: blue plate images — fill left-to-right like a thermometer */}
-        <div className="flex flex-shrink-0 items-center justify-center gap-0.5">
+          {/* Blue plate images — fill left-to-right like a thermometer */}
+          <div className="flex items-center gap-0.5">
           {Array.from({ length: targetPlates }, (_, i) => {
             // Each plate represents one equal slice of the range from bar to target
             const sliceStart = BAR_LB + i * (2 * PLATE_LB);
@@ -952,6 +953,7 @@ function MilestoneRow({
               />
             );
           })}
+          </div>
         </div>
 
         {/* Right: info + slider */}

@@ -114,12 +114,21 @@ const PRCard = ({
   const repCount = repIndex + 1; // 1-10 reps
   const celebrationEmoji = getCelebrationEmoji(0); // PR is always #1
 
+  // Check if this PR was set within the last 30 days
+  const isRecent = (() => {
+    if (!pr.date) return false;
+    const prDate = new Date(pr.date + "T00:00:00");
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return prDate >= thirtyDaysAgo;
+  })();
+
   return (
     <Card
       className={cn(
         "cursor-pointer transition-all duration-200 border-2",
-        isExpanded 
-          ? "ring-2" 
+        isExpanded
+          ? "ring-2"
           : "border-transparent hover:border-foreground/50"
       )}
       style={{
@@ -133,6 +142,11 @@ const PRCard = ({
             {repCount}RM
           </CardTitle>
           <div className="flex items-center gap-2">
+            {isRecent && (
+              <Badge variant="secondary" className="text-xs">
+                ⚡ Recent
+              </Badge>
+            )}
             {hasBioData && (
               <LiftStrengthLevel
                 liftType={liftType}
@@ -280,6 +294,18 @@ const RepRangeDetailView = ({
                           {repCount}@{getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).value}
                           {getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).unit}
                         </span>
+                        {(() => {
+                          if (!lift.date) return null;
+                          const d = new Date(lift.date + "T00:00:00");
+                          const cutoff = new Date();
+                          cutoff.setDate(cutoff.getDate() - 30);
+                          if (d < cutoff) return null;
+                          return (
+                            <Badge variant="secondary" className="text-xs">
+                              ⚡ Recent
+                            </Badge>
+                          );
+                        })()}
                         {bioForDateRating && (
                           <LiftStrengthLevel
                             liftType={liftType}

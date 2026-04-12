@@ -909,10 +909,10 @@ function MilestoneRow({
         achieved && "border-green-500/40 bg-green-500/5",
       )}
     >
-      {/* Row layout: lift SVG + plate icons (fixed width) | slider + info */}
+      {/* Row layout: lift SVG + plates (half) | slider + info (half) */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        {/* Left: lift SVG + plate icons */}
-        <div className="flex flex-shrink-0 items-center gap-2 sm:w-[320px]">
+        {/* Left half: lift SVG + plate icons */}
+        <div className="flex items-center justify-center gap-3 sm:w-1/2">
           <Link
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"
@@ -920,7 +920,7 @@ function MilestoneRow({
             <img
               src={LIFT_GRAPHICS[liftType]}
               alt={`${liftType} illustration`}
-              className="h-14 w-14 object-contain"
+              className="h-16 w-16 object-contain sm:h-20 sm:w-20"
             />
           </Link>
 
@@ -952,8 +952,8 @@ function MilestoneRow({
           </div>
         </div>
 
-        {/* Right: info + slider (capped width) */}
-        <div className="min-w-0 flex-1 sm:max-w-sm">
+        {/* Right half: info + slider */}
+        <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
               <Link

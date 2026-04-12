@@ -915,10 +915,10 @@ function MilestoneRow({
         achieved && "border-green-500/40 bg-green-500/5",
       )}
     >
-      {/* Row layout: lift SVG + plates (half) | slider + info (half) */}
+      {/* Row layout: lift SVG + plates (fixed) | slider + info (fills rest) */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        {/* Left half: lift SVG + plate icons */}
-        <div className="flex items-center gap-3 sm:w-1/2">
+        {/* Left: lift SVG + plate icons — fixed width sized for the widest row (deadlift) */}
+        <div className="flex flex-shrink-0 items-center gap-3 sm:w-[400px]">
           <Link
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"

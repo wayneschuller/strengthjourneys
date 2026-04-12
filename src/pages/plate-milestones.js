@@ -911,8 +911,8 @@ function MilestoneRow({
     >
       {/* Row layout: lift SVG + plate icons (fixed width) | slider + info */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        {/* Left: lift SVG + plate icons in a fixed-width container */}
-        <div className="flex flex-shrink-0 items-center gap-2 sm:w-[220px]">
+        {/* Left: lift SVG + plate icons */}
+        <div className="flex flex-shrink-0 items-center gap-2 sm:w-[320px]">
           <Link
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"
@@ -925,7 +925,7 @@ function MilestoneRow({
           </Link>
 
           {/* Blue plate images — fill left-to-right like a thermometer */}
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1">
           {Array.from({ length: targetPlates }, (_, i) => {
             const sliceStart = BAR_LB + i * (2 * PLATE_LB);
             const sliceEnd = BAR_LB + (i + 1) * (2 * PLATE_LB);
@@ -941,7 +941,7 @@ function MilestoneRow({
                 key={i}
                 src="/blue_plate.svg"
                 alt="20 kg plate"
-                className="h-9 w-9 sm:h-10 sm:w-10"
+                className="h-14 w-14 sm:h-16 sm:w-16"
                 style={{
                   opacity,
                   transition: "opacity 300ms ease",
@@ -952,8 +952,8 @@ function MilestoneRow({
           </div>
         </div>
 
-        {/* Right: info + slider */}
-        <div className="min-w-0 flex-1">
+        {/* Right: info + slider (capped width) */}
+        <div className="min-w-0 flex-1 sm:max-w-sm">
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
               <Link

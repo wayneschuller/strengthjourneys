@@ -649,10 +649,10 @@ function PlateMilestonesMain({ relatedArticles }) {
         </PageHeaderRight>
       </PageHeader>
 
-      <Card className="pt-4">
-        <CardContent className="pt-4">
+      <Card className="pt-2">
+        <CardContent className="pt-2">
           {/* Four stacked rows — one per lift */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             {MILESTONES.map((milestone) => (
               <MilestoneRow
                 key={milestone.key}
@@ -667,54 +667,52 @@ function PlateMilestonesMain({ relatedArticles }) {
           </div>
 
           {/* Combined summary */}
-          <div className="mt-6 rounded-lg border p-4 text-center">
-            <div className="text-muted-foreground text-sm">
-              Plate Tiers Achieved
-            </div>
-            <div className="text-3xl font-bold tabular-nums">
-              {totalTiersAchieved}{" "}
-              <span className="text-muted-foreground text-lg font-normal">
-                / {totalTiersPossible}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-lg border px-3 py-2 text-center">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-muted-foreground text-xs">Plate Tiers</span>
+              <span className="text-xl font-bold tabular-nums">
+                {totalTiersAchieved}
+                <span className="text-muted-foreground text-sm font-normal">
+                  /{totalTiersPossible}
+                </span>
               </span>
             </div>
-            <div
-              className={cn("mt-1 text-sm font-semibold", {
+            <span
+              className={cn("text-xs font-semibold", {
                 "text-green-600": classicClubAchieved,
                 "text-muted-foreground": !classicClubAchieved,
               })}
             >
               {classicClubAchieved
-                ? "1/2/3/4 Plate Club achieved! You are in the club."
-                : `${MILESTONES.filter((m) => values[m.key] >= plateTotal(m.targetPlates, false)).length} of 4 classic milestones (1/2/3/4) achieved`}
-            </div>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-              {hasMovedFromPR && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 px-2 text-xs"
-                  onClick={handleResetToPRs}
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Reset to PRs
-                </Button>
-              )}
-              {hasMovedFrom90d && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 px-2 text-xs"
-                  onClick={handleResetTo90d}
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Reset to 90-day bests
-                </Button>
-              )}
-            </div>
+                ? "1/2/3/4 Plate Club achieved!"
+                : `${MILESTONES.filter((m) => values[m.key] >= plateTotal(m.targetPlates, false)).length} of 4 classic milestones achieved`}
+            </span>
+            {hasMovedFromPR && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs"
+                onClick={handleResetToPRs}
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset to PRs
+              </Button>
+            )}
+            {hasMovedFrom90d && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs"
+                onClick={handleResetTo90d}
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset to 90-day bests
+              </Button>
+            )}
           </div>
 
-          <div className="mt-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <MiniFeedbackWidget
                 prompt="Useful?"
                 contextId="plate_milestones"
@@ -907,14 +905,14 @@ function MilestoneRow({
   return (
     <div
       className={cn(
-        "rounded-lg border p-4 transition-colors",
+        "rounded-lg border px-3 py-2 transition-colors",
         achieved && "border-green-500/40 bg-green-500/5",
       )}
     >
       {/* Row layout: lift SVG + plate icons (fixed width) | slider + info */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         {/* Left: lift SVG + plate icons in a fixed-width container */}
-        <div className="flex flex-shrink-0 items-center gap-3 sm:w-[280px]">
+        <div className="flex flex-shrink-0 items-center gap-2 sm:w-[220px]">
           <Link
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"
@@ -922,14 +920,13 @@ function MilestoneRow({
             <img
               src={LIFT_GRAPHICS[liftType]}
               alt={`${liftType} illustration`}
-              className="h-20 w-20 object-contain"
+              className="h-14 w-14 object-contain"
             />
           </Link>
 
           {/* Blue plate images — fill left-to-right like a thermometer */}
           <div className="flex items-center gap-0.5">
           {Array.from({ length: targetPlates }, (_, i) => {
-            // Each plate represents one equal slice of the range from bar to target
             const sliceStart = BAR_LB + i * (2 * PLATE_LB);
             const sliceEnd = BAR_LB + (i + 1) * (2 * PLATE_LB);
             const sliceProgress =
@@ -938,14 +935,13 @@ function MilestoneRow({
                 : value >= sliceEnd
                   ? 1
                   : (value - sliceStart) / (sliceEnd - sliceStart);
-            // Map progress to opacity: 0.15 (empty) to 1.0 (full)
             const opacity = 0.15 + sliceProgress * 0.85;
             return (
               <img
                 key={i}
                 src="/blue_plate.svg"
                 alt="20 kg plate"
-                className="h-12 w-12 sm:h-14 sm:w-14"
+                className="h-9 w-9 sm:h-10 sm:w-10"
                 style={{
                   opacity,
                   transition: "opacity 300ms ease",
@@ -958,40 +954,35 @@ function MilestoneRow({
 
         {/* Right: info + slider */}
         <div className="min-w-0 flex-1">
-          <div className="mb-1 flex items-baseline justify-between gap-2">
-            <div>
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="flex items-baseline gap-2">
               <Link
                 href={getLiftDetailUrl(liftType)}
                 className="text-sm font-bold underline decoration-dotted underline-offset-2 hover:text-blue-600"
               >
                 {liftType}
               </Link>
-              <span className="text-muted-foreground ml-2 text-xs tabular-nums">
-                {plateLabel(targetPlates)}: {targetWeightLb} lb /{" "}
-                {plateTotal(targetPlates, true)} kg
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {value} lbs ({toKg(value)} kg)
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {achieved && (
-                <Trophy className="h-5 w-5 text-amber-500" />
+                <Trophy className="h-4 w-4 text-amber-500" />
               )}
               <span
-                className={cn("text-sm font-semibold tabular-nums", {
+                className={cn("text-xs font-semibold tabular-nums", {
                   "text-green-600": achieved,
                   "text-muted-foreground": !achieved,
                 })}
               >
-                {percent}%
+                {achieved
+                  ? tiersAchieved === tiers.length
+                    ? "Done!"
+                    : `${tiersAchieved}/${tiers.length}`
+                  : `${targetWeightLb - value} lb to go`}
               </span>
             </div>
-          </div>
-
-          {/* Current weight display */}
-          <div className="mb-1 text-lg font-bold tabular-nums">
-            {value} lbs{" "}
-            <span className="text-muted-foreground text-sm font-normal">
-              ({toKg(value)} kg)
-            </span>
           </div>
 
           {/* Slider */}
@@ -1003,20 +994,6 @@ function MilestoneRow({
             onValueChange={onValueChange(key, setter)}
             onValueCommit={() => {}}
           />
-
-          {/* Status text */}
-          <div
-            className={cn("text-xs font-medium", {
-              "text-green-600": achieved,
-              "text-muted-foreground": !achieved,
-            })}
-          >
-            {achieved
-              ? tiersAchieved === tiers.length
-                ? `All ${tiers.length} plate tiers conquered!`
-                : `${plateLabel(targetPlates)} achieved! ${tiers.length - tiersAchieved} more tier${tiers.length - tiersAchieved === 1 ? "" : "s"} to go`
-              : `${targetWeightLb - value} lbs to ${plateLabel(targetPlates)}`}
-          </div>
         </div>
       </div>
     </div>

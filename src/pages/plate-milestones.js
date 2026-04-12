@@ -916,9 +916,9 @@ function MilestoneRow({
       )}
     >
       {/* Row layout: lift SVG + plates (fixed) | slider + info (fills rest) */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center">
         {/* Left: lift SVG + plate icons — fixed width sized for the widest row (deadlift) */}
-        <div className="flex flex-shrink-0 items-center gap-3 sm:w-[400px]">
+        <div className="flex flex-shrink-0 items-center gap-3 md:w-[400px]">
           <Link
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"
@@ -926,7 +926,7 @@ function MilestoneRow({
             <img
               src={LIFT_GRAPHICS[liftType]}
               alt={`${liftType} illustration`}
-              className="h-20 w-20 object-contain sm:h-24 sm:w-24"
+              className="h-20 w-20 object-contain md:h-24 md:w-24"
             />
           </Link>
 
@@ -947,7 +947,7 @@ function MilestoneRow({
                 key={i}
                 src="/blue_plate.svg"
                 alt="20 kg plate"
-                className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]"
+                className="h-16 w-16 md:h-[4.5rem] md:w-[4.5rem]"
                 style={{
                   opacity,
                   transition: "opacity 300ms ease",

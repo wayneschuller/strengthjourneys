@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
-import { BicepsFlexed, BookOpen, Calculator, CircleDashed } from "lucide-react";
+import { Anvil, BicepsFlexed, BookOpen, Calculator, CircleDashed, Disc, Mountain } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
@@ -439,6 +439,32 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
               </AccordionItem>
             ))}
           </Accordion>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">
+            Strength Club Calculators
+          </h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <QuickLinkCard
+              href="/plate-milestones"
+              title="Plate Milestones"
+              description="Track your progress toward 1/2/3/4 plate milestones."
+              icon={<Disc className="h-5 w-5" />}
+            />
+            <QuickLinkCard
+              href="/1000lb-club-calculator"
+              title="1000lb Club Calculator"
+              description="See if your squat, bench, and deadlift total crosses the classic milestone."
+              icon={<Anvil className="h-5 w-5" />}
+            />
+            <QuickLinkCard
+              href="/200-300-400-500-strength-club-calculator"
+              title="200/300/400/500 Club"
+              description="An advanced milestone: hit 200/300/400/500 across the big four lifts."
+              icon={<Mountain className="h-5 w-5" />}
+            />
+          </div>
         </section>
 
         <section className="rounded-lg border p-4">

@@ -15,9 +15,10 @@
   <circle cx="100" cy="100" r="30" fill="#1e3a8a" stroke="#1e3a8a" stroke-width="2"/>
   <!-- Center hole -->
   <circle cx="100" cy="100" r="14" fill="#0f172a" stroke="#1e3a8a" stroke-width="2"/>
-  <!-- Weight text -->
-  <text x="100" y="80" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold" fill="white" opacity="0.95">20</text>
-  <text x="100" y="93" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" fill="white" opacity="0.7">KG</text>
-  <!-- Bottom text -->
-  <text x="100" y="156" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="600" fill="white" opacity="0.5">45 LB</text>
+  <!-- 9 o'clock: 20 KG -->
+  <text x="55" y="98" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="white" opacity="0.85">20</text>
+  <text x="55" y="110" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" fill="white" opacity="0.6">KG</text>
+  <!-- 3 o'clock: 45 LB -->
+  <text x="145" y="98" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="white" opacity="0.85">45</text>
+  <text x="145" y="110" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" fill="white" opacity="0.6">LB</text>
 </svg>

@@ -29,9 +29,9 @@
   <!-- Hole inner bevel -->
   <circle cx="100" cy="100" r="11.5" fill="none" stroke="#4b5060" stroke-width="0.8" opacity="0.6"/>
   <!-- 9 o'clock: 20 KG -->
-  <text x="38" y="98" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold" fill="white" opacity="0.9">20</text>
-  <text x="38" y="113" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="white" opacity="0.65">KG</text>
+  <text x="38" y="98" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="bold" fill="white" opacity="0.9">20</text>
+  <text x="38" y="115" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="white" opacity="0.65">KG</text>
   <!-- 3 o'clock: 45 LB -->
-  <text x="162" y="98" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold" fill="white" opacity="0.9">45</text>
-  <text x="162" y="113" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="white" opacity="0.65">LB</text>
+  <text x="162" y="98" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="bold" fill="white" opacity="0.9">45</text>
+  <text x="162" y="115" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="white" opacity="0.65">LB</text>
 </svg>

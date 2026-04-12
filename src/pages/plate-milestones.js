@@ -912,7 +912,7 @@ function MilestoneRow({
       {/* Row layout: lift SVG + plates (half) | slider + info (half) */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         {/* Left half: lift SVG + plate icons */}
-        <div className="flex items-center justify-center gap-3 sm:w-1/2">
+        <div className="flex items-center gap-3 sm:w-1/2">
           <Link
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"

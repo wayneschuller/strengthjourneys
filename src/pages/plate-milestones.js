@@ -920,7 +920,7 @@ function MilestoneRow({
             <img
               src={LIFT_GRAPHICS[liftType]}
               alt={`${liftType} illustration`}
-              className="h-16 w-16 object-contain sm:h-20 sm:w-20"
+              className="h-20 w-20 object-contain sm:h-24 sm:w-24"
             />
           </Link>
 
@@ -941,7 +941,7 @@ function MilestoneRow({
                 key={i}
                 src="/blue_plate.svg"
                 alt="20 kg plate"
-                className="h-14 w-14 sm:h-16 sm:w-16"
+                className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]"
                 style={{
                   opacity,
                   transition: "opacity 300ms ease",

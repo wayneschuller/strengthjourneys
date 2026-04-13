@@ -562,8 +562,16 @@ const PAGE_CONFIG = {
   "squat-1rm-calculator": {
     type: "lift",
     liftName: "Squat",
-    blurb:
-      "Enter your squat working weight and reps below. The back squat 1RM is a primary strength metric in powerlifting, tested at legal depth. A working set of 3–10 reps gives the most reliable estimate.",
+    blurb: [
+      "Enter your squat working weight and reps. The back squat 1RM is a primary strength metric in powerlifting, tested at legal depth. A ",
+      {
+        text: "2006 prediction accuracy study",
+        href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf",
+      },
+      " found that 5RM data produced the greatest prediction accuracy, so a hard set of 3-8 reps gives the most reliable estimate.",
+    ],
+    pageIntro:
+      "Run your squat through all 7 major 1RM formulas, compare the estimates side by side, and see your strength level rating by age, sex, and bodyweight. A clean set of 3-8 reps gives the most useful signal.",
     title: "Squat 1RM Calculator | Max Squat Calculator — Free Tool",
     description:
       "Calculate your max squat using 7 proven 1RM formulas (Epley, Brzycki & more). Get squat rep-max tables, percentage training guides, and strength level ratings by age, sex, and bodyweight. Free, no login.",
@@ -577,6 +585,29 @@ const PAGE_CONFIG = {
       takeaway:
         "A hard set of 5 is a practical input for most squat estimates because it is heavy enough to be meaningful without the risk of true max testing.",
     },
+    faqItems: [
+      {
+        question: "What rep range gives the most accurate squat 1RM estimate?",
+        answer: [
+          "For most lifters, a hard set of 3-8 reps gives the best estimate. A ",
+          {
+            text: "2006 Journal of Strength and Conditioning Research study",
+            href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf",
+          },
+          " found that 5RM data produced the greatest prediction accuracy. Above 10 reps, fatigue and form breakdown introduce more noise into the projection.",
+        ],
+      },
+      {
+        question: "How accurate are squat 1RM calculators?",
+        answer:
+          "Squat 1RM calculators are typically within 5-10% of a true max when the input set is in the 3-8 rep range with good form. Accuracy drops as reps increase, which is why comparing multiple formulas side by side helps you find a realistic range rather than relying on a single number.",
+      },
+      {
+        question: "What is a good squat 1RM for my bodyweight?",
+        answer:
+          "Squat strength varies widely by bodyweight, age, sex, and training experience. As a rough guide, an intermediate male lifter might squat around 1.25-1.5x bodyweight. Use our strength level ratings on this page or check the full squat strength standards for a more precise comparison.",
+      },
+    ],
     liftLinks: [
       {
         href: "/strength-levels/squat",
@@ -601,6 +632,8 @@ const PAGE_CONFIG = {
   "bench-press-1rm-calculator": {
     type: "lift",
     liftName: "Bench Press",
+    pageIntro:
+      "Run your bench press through all 7 major 1RM formulas, compare estimates side by side, and see your strength level rating by age, sex, and bodyweight. A hard set of 3-10 reps with consistent form gives the most reliable result.",
     blurb: [
       "Enter your bench press working weight and reps. Using a set of 3-10 reps gives the most accurate 1RM estimate. A 2006 ",
       {
@@ -634,6 +667,16 @@ const PAGE_CONFIG = {
           " on chest press and leg press, 5RM data produced the strongest 1RM prediction accuracy.",
         ],
       },
+      {
+        question: "What is a good bench press 1RM for my bodyweight?",
+        answer:
+          "Bench press strength depends on bodyweight, age, sex, and training experience. As a rough guide, an intermediate male lifter might bench around 1.0-1.25x bodyweight. Use the strength level ratings on this page or check the full bench press strength standards for a detailed comparison.",
+      },
+      {
+        question: "Does bench press arch affect 1RM calculator accuracy?",
+        answer:
+          "A larger arch shortens the range of motion, which can allow more weight or reps on the same set. The calculator does not account for arch. For consistent tracking, use the same setup every time so your estimates reflect real progress rather than technique changes.",
+      },
     ],
     liftLinks: [
       {
@@ -659,8 +702,16 @@ const PAGE_CONFIG = {
   "deadlift-1rm-calculator": {
     type: "lift",
     liftName: "Deadlift",
-    blurb:
-      "Enter your deadlift working weight and reps. The deadlift 1RM is the king of raw strength metrics. Sets of 3–8 reps typically give the most reliable estimates.",
+    blurb: [
+      "Enter your deadlift working weight and reps. The deadlift 1RM is the king of raw strength metrics. A ",
+      {
+        text: "2006 prediction accuracy study",
+        href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf",
+      },
+      " recommended using no more than 10 repetitions for 1RM predictions, and deadlift estimates tend to hold up best with sets of 3-5 reps where grip and form stay solid.",
+    ],
+    pageIntro:
+      "Run your deadlift through all 7 major 1RM formulas and compare the estimates side by side. Deadlift predictions tend to be most reliable from heavy, clean sets of 3-5 reps where grip fatigue and form breakdown are not distorting the result.",
     title: "Deadlift 1RM Calculator | Max Deadlift Calculator — Free Tool",
     description:
       "Calculate your deadlift one rep max using 7 proven formulas. Get rep-max tables, percentage guides, and strength level ratings. Free deadlift 1RM calculator, no login required.",
@@ -674,6 +725,24 @@ const PAGE_CONFIG = {
       takeaway:
         "Deadlift estimates usually hold up best when the set is heavy but not grindy, which is why many lifters use a clean set of 3-5 reps.",
     },
+    faqItems: [
+      {
+        question:
+          "Why are deadlift 1RM estimates less reliable at higher reps?",
+        answer:
+          "Deadlifts accumulate grip fatigue and lower back fatigue faster than most lifts. By the time you reach 8-10+ reps, form breakdown and grip failure can cut a set short before the muscles are truly exhausted, which causes the calculator to underestimate your real max.",
+      },
+      {
+        question: "Should I use a belt or straps when testing my deadlift 1RM?",
+        answer:
+          "For calculator input, use whatever setup matches how you normally train. If you always pull with a belt, use belted numbers. The calculator estimates your max under the same conditions as the input set. Just be consistent so you can track progress over time.",
+      },
+      {
+        question: "What is a good deadlift 1RM for my bodyweight?",
+        answer:
+          "Deadlift strength varies by bodyweight, age, sex, and training history. As a rough guide, an intermediate male lifter might deadlift around 1.5-2x bodyweight. Use the strength level ratings on this page or check the full deadlift strength standards for a detailed comparison.",
+      },
+    ],
     liftLinks: [
       {
         href: "/strength-levels/deadlift",
@@ -698,8 +767,16 @@ const PAGE_CONFIG = {
   "strict-press-1rm-calculator": {
     type: "lift",
     liftName: "Strict Press",
-    blurb:
-      "Enter your strict press working weight and reps. The strict press 1RM is a key upper body strength benchmark. Sets of 3–8 reps give the most reliable estimates.",
+    blurb: [
+      "Enter your strict press working weight and reps. The strict press (overhead press) is the hardest of the big four lifts to estimate because small form changes have a large effect on the result. A ",
+      {
+        text: "2006 prediction accuracy study",
+        href: "/reynolds-gordon-robergs-2006-1rm-strength-prediction.pdf",
+      },
+      " recommended keeping rep counts moderate for 1RM predictions, and strict press benefits from this more than any other lift.",
+    ],
+    pageIntro:
+      "Run your strict press through all 7 major 1RM formulas and compare the estimates side by side. Strict press estimates get noisy faster than the other big lifts, so a clean set of 3-6 reps with no leg drive gives the most trustworthy result.",
     title: "Strict Press 1RM Calculator | OHP Max Calculator — Free Tool",
     description:
       "Calculate your strict press one rep max using 7 proven formulas. Rep-max tables, percentage guides, and strength ratings. Free overhead press / OHP 1RM calculator, no login required.",
@@ -713,6 +790,25 @@ const PAGE_CONFIG = {
       takeaway:
         "Strict press estimates get noisy faster than squat or deadlift, so moderate rep sets with clean form tend to give the most useful signal.",
     },
+    faqItems: [
+      {
+        question:
+          "Why are strict press 1RM estimates less accurate than other lifts?",
+        answer:
+          "The strict press involves smaller muscle groups and is more sensitive to small form variations. A slight lean-back or leg drive can add 10-15 lb to a set, which inflates the estimated max. Keeping reps in the 3-6 range with strict form gives the cleanest signal.",
+      },
+      {
+        question:
+          "What is the difference between strict press and push press for 1RM?",
+        answer:
+          "A strict press uses no leg drive at all. A push press uses a dip-and-drive from the legs to initiate the lift. Push press numbers are typically 15-25% higher than strict press for the same lifter. This calculator is designed for strict press. If you use push press numbers, the estimate will overstate your strict press max.",
+      },
+      {
+        question: "What is a good strict press 1RM for my bodyweight?",
+        answer:
+          "The strict press is the lightest of the big four lifts. An intermediate male lifter might press around 0.6-0.75x bodyweight. Use the strength level ratings on this page or check the full strict press strength standards for a detailed comparison by age, sex, and bodyweight.",
+      },
+    ],
     liftLinks: [
       {
         href: "/strength-levels/strict-press",

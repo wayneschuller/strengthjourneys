@@ -584,7 +584,7 @@ export function TheWeekInIronCard({
                       weeklySessionRows,
                     )}
                   >
-                    {stats.sessions.current > 0 && stats.tonnage.current > 0 && (
+                    {stats.sessions.current >= 3 && stats.tonnage.current > 0 && (
                       <WeekTonnageComparison
                         weekTonnage={stats.tonnage.current}
                         avgTonnage={avgTonnage}
@@ -612,7 +612,7 @@ export function TheWeekInIronCard({
                     )}
                     description={getWeekReviewCopy(stats, boundaries)}
                   >
-                    {stats.sessions.current > 0 && stats.tonnage.current > 0 && (
+                    {stats.sessions.current >= 3 && stats.tonnage.current > 0 && (
                       <WeekTonnageComparison
                         weekTonnage={stats.tonnage.current}
                         avgTonnage={avgTonnage}

@@ -239,9 +239,20 @@ const structuredData = {
       "@type": "Organization",
       name: "Strength Journeys",
       url: "https://www.strengthjourneys.xyz",
+      description:
+        "Free barbell lifting analysis tools. PR tracking, 1RM calculators, strength standards, and training insights powered by your Google Sheet data.",
       logo: {
         "@type": "ImageObject",
         url: "https://www.strengthjourneys.xyz/nav_logo_light.png",
+      },
+      sameAs: [
+        "https://x.com/wayneschuller",
+        "https://github.com/wayneschuller/strengthjourneys",
+      ],
+      founder: {
+        "@type": "Person",
+        name: "Wayne Schuller",
+        sameAs: ["https://x.com/wayneschuller"],
       },
     },
   ],

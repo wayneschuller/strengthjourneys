@@ -140,6 +140,11 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
         operatingSystem: "Any",
         description,
         url: canonicalURL,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
       },
       {
         "@type": "BreadcrumbList",

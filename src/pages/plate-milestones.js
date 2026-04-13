@@ -918,7 +918,7 @@ function MilestoneRow({
       {/* Row layout: lift SVG + plates (fixed) | slider + info (fills rest) */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center">
         {/* Left: lift SVG + plate icons — fixed width sized for the widest row (deadlift) */}
-        <div className="flex flex-shrink-0 items-center gap-3 md:w-[400px]">
+        <div className="flex flex-shrink-0 items-center gap-3 md:w-[440px]">
           <Link
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"

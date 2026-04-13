@@ -1,0 +1,81 @@
+# Strength Journeys
+
+> Free, privacy-first barbell lifting analysis tools. Connect your Google Sheet training log and get visual insights, strength benchmarks, and PR tracking. No data stored server-side.
+
+## Core Tools
+
+- [One Rep Max Calculator](https://www.strengthjourneys.xyz/calculator): Estimate your 1RM using 7 proven formulas (Epley, Brzycki, Mayhew, Wathan, McGlothin, Lombardi, O'Conner). Includes rep-max projection tables, percentage-based training guides, and strength level ratings by age, sex, and bodyweight.
+- [Strength Percentile Calculator](https://www.strengthjourneys.xyz/how-strong-am-i): Compare your lifts across four population groups, from general population to competitive powerlifters, adjusted for age, sex, and bodyweight.
+- [Strength Standards and Levels](https://www.strengthjourneys.xyz/strength-levels): Personalized strength benchmarks for the big four barbell lifts (squat, bench press, deadlift, strict press) by bodyweight, age, and sex.
+- [Warm Up Sets Calculator](https://www.strengthjourneys.xyz/warm-up-sets-calculator): Generate warm-up set progressions for any working weight.
+- [1000lb Club Calculator](https://www.strengthjourneys.xyz/1000lb-club-calculator): Check if your squat, bench, and deadlift total qualifies for the 1000lb club and other milestone clubs.
+- [Strength Club Calculator](https://www.strengthjourneys.xyz/200-300-400-500-strength-club-calculator): Track progress toward single-lift milestone clubs (200/300/400/500 lb).
+- [Plate Milestones](https://www.strengthjourneys.xyz/plate-milestones): Track progress toward iconic plate-loading milestones.
+
+## Tracking and Visualization (requires Google Sheet connection)
+
+- [Session Logger](https://www.strengthjourneys.xyz/log): Log sets directly to your Google Sheet from the browser.
+- [Lift Explorer](https://www.strengthjourneys.xyz/lift-explorer): Browse and search your full lifting history.
+- [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer): Interactive charts of your estimated 1RM trends over time.
+- [Tonnage Tracker](https://www.strengthjourneys.xyz/tonnage): Weekly and monthly training volume analysis.
+- [Strength Year in Review](https://www.strengthjourneys.xyz/strength-year-in-review): Annual recap of PRs, consistency, and milestones.
+- [Import Data](https://www.strengthjourneys.xyz/import): Import lifting history from Strong, Hevy, BTWB, or Wodify.
+
+## Other Tools
+
+- [AI Lifting Assistant](https://www.strengthjourneys.xyz/ai-lifting-assistant): AI-powered chat for strength training questions.
+- [Gym Timer](https://www.strengthjourneys.xyz/timer): Configurable rest timer with audio alerts.
+- [Gym Playlist Leaderboard](https://www.strengthjourneys.xyz/gym-playlist-leaderboard): Community-ranked gym music playlists.
+- [How Strong Is a Gorilla?](https://www.strengthjourneys.xyz/how-strong-is-a-gorilla): Fun comparison of human vs gorilla strength.
+
+## Lift-Specific Calculators
+
+- [Squat 1RM Calculator](https://www.strengthjourneys.xyz/calculator/squat-one-rep-max-calculator)
+- [Bench Press 1RM Calculator](https://www.strengthjourneys.xyz/calculator/bench-press-one-rep-max-calculator)
+- [Deadlift 1RM Calculator](https://www.strengthjourneys.xyz/calculator/deadlift-one-rep-max-calculator)
+- [Strict Press 1RM Calculator](https://www.strengthjourneys.xyz/calculator/strict-press-one-rep-max-calculator)
+
+## Formula-Specific Calculators
+
+- [Epley Formula Calculator](https://www.strengthjourneys.xyz/calculator/epley-one-rep-max-formula)
+- [Brzycki Formula Calculator](https://www.strengthjourneys.xyz/calculator/brzycki-one-rep-max-formula)
+- [Mayhew Formula Calculator](https://www.strengthjourneys.xyz/calculator/mayhew-one-rep-max-formula)
+- [Wathan Formula Calculator](https://www.strengthjourneys.xyz/calculator/wathan-one-rep-max-formula)
+- [McGlothin Formula Calculator](https://www.strengthjourneys.xyz/calculator/mcglothin-one-rep-max-formula)
+- [Lombardi Formula Calculator](https://www.strengthjourneys.xyz/calculator/lombardi-one-rep-max-formula)
+- [O'Conner Formula Calculator](https://www.strengthjourneys.xyz/calculator/oconner-one-rep-max-formula)
+
+## Strength Level Pages
+
+- [Squat Strength Levels](https://www.strengthjourneys.xyz/strength-levels/squat-strength-levels)
+- [Bench Press Strength Levels](https://www.strengthjourneys.xyz/strength-levels/bench-press-strength-levels)
+- [Deadlift Strength Levels](https://www.strengthjourneys.xyz/strength-levels/deadlift-strength-levels)
+- [Strict Press Strength Levels](https://www.strengthjourneys.xyz/strength-levels/strict-press-strength-levels)
+
+## Progress Guides
+
+- [Squat Progress Guide](https://www.strengthjourneys.xyz/progress-guide/squat)
+- [Bench Press Progress Guide](https://www.strengthjourneys.xyz/progress-guide/bench-press)
+- [Deadlift Progress Guide](https://www.strengthjourneys.xyz/progress-guide/deadlift)
+- [Strict Press Progress Guide](https://www.strengthjourneys.xyz/progress-guide/strict-press)
+
+## Articles
+
+- [How Strong Am I? How Do I Work Out My Strength Level?](https://www.strengthjourneys.xyz/articles/how-strong-am-i-how-do-i-work-out-my-strength-level)
+- [How to Calculate Your E1RM: 7 Formulas + Free Calculator](https://www.strengthjourneys.xyz/articles/how-do-i-calculate-my-e1rm-estimated-one-rep-max)
+- [What Is an E1RM (Estimated One Rep Max)?](https://www.strengthjourneys.xyz/articles/what-is-an-e1rm-estimated-one-rep-max)
+- [What Is a Good Bench Press? (By Age, Weight & Experience)](https://www.strengthjourneys.xyz/articles/what-is-a-good-bench-press-by-age-weight-and-experience)
+- [How Often Should I Test My One Rep Max?](https://www.strengthjourneys.xyz/articles/how-often-should-i-test-my-one-rep-max)
+- [Tracking Tonnage As a Simple Programming Guide](https://www.strengthjourneys.xyz/articles/tracking-tonnage-as-a-simple-programming-guide)
+- [The Power of Owning Your Lifting Data with Google Sheets](https://www.strengthjourneys.xyz/articles/the-power-of-owning-your-lifting-data-with-google-sheets)
+- [Using AI in Barbell Strength Training](https://www.strengthjourneys.xyz/articles/using-ai-in-barbell-strength-training)
+- [What Are Barbells Good For?](https://www.strengthjourneys.xyz/articles/what-are-barbells-good-for)
+- [What Barbell Should I Start With?](https://www.strengthjourneys.xyz/articles/what-barbell-should-i-start-with)
+- [How Much Does a Standard Barbell Weigh?](https://www.strengthjourneys.xyz/articles/how-much-does-a-standard-barbell-weigh)
+- [The Magic Numbers of Strength: Iconic Milestones for Lifters](https://www.strengthjourneys.xyz/articles/the-magic-numbers-of-strength-iconic-milestones-for-lifters)
+- [Strength Training Helps You Live Longer](https://www.strengthjourneys.xyz/articles/strength-training-helps-you-live-longer)
+- [Should Runners Do Strength Training?](https://www.strengthjourneys.xyz/articles/should-runners-do-strength-training)
+- [Muscle Is the Medication: Strength Training and Insulin Resistance](https://www.strengthjourneys.xyz/articles/muscle-is-the-medication-strength-training-and-insulin-resistance)
+- [What Is the Difference Between Strength Training and Resistance Training?](https://www.strengthjourneys.xyz/articles/what-is-the-difference-between-strength-training-and-resistance-training)
+- [The Iron and the Soul by Henry Rollins](https://www.strengthjourneys.xyz/articles/the-iron-and-the-soul-author-henry-rollins)
+- [Greg Glassman's Blueprint: Quotes That Shaped CrossFit](https://www.strengthjourneys.xyz/articles/greg-glassman-s-blueprint-quotes-that-shaped-crossfit)

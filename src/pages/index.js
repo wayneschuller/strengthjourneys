@@ -72,6 +72,7 @@ import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/homepage/big-four-lift-cards";
+import { FeatureShowcase } from "@/components/homepage/feature-showcase";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
@@ -196,6 +197,129 @@ export const featurePages = [
   },
 ];
 
+// Landing page tiers: group feature cards by purpose for visual hierarchy.
+// "Your Training" tools become richer with user data, "Calculators & Standards"
+// are the try-before-you-sign-in SEO workhorses, and "More" is a compact strip.
+const insightTools = [
+  {
+    href: "/log",
+    title: "Log & Session Browser",
+    description:
+      "Log your lifting session or browse past workouts with strength tracking and warm-up suggestions.",
+    IconComponent: Plus,
+  },
+  {
+    href: "/lift-explorer",
+    title: "Lift Explorer",
+    description:
+      "Explore your lifting history lift by lift. PRs across every rep range, your journey, and training frequency.",
+    IconComponent: Layers,
+  },
+  {
+    href: "/visualizer",
+    title: "Strength Visualizer",
+    description:
+      "Chart lifts beyond the Big Four with full-range E1RM history over time.",
+    IconComponent: LineChart,
+  },
+  {
+    href: "/tonnage",
+    title: "Tonnage Metrics",
+    description:
+      "Ever wondered how many buses you've lifted? Your lifting volume, visualized.",
+    IconComponent: Bus,
+  },
+  {
+    href: "/ai-lifting-assistant",
+    title: "AI Lifting Assistant",
+    description:
+      "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
+    IconComponent: Bot,
+  },
+  {
+    href: "/strength-year-in-review",
+    title: "Strength Unwrapped",
+    description:
+      "Your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more.",
+    IconComponent: Sparkles,
+  },
+];
+
+const calculatorTools = [
+  {
+    href: "/calculator",
+    title: "One Rep Max Calculator",
+    description: "The greatest e1rm multi-formula one rep max calculations.",
+    IconComponent: Calculator,
+  },
+  {
+    href: "/how-strong-am-i",
+    title: "How Strong Am I?",
+    description:
+      "See your percentile rank across four groups, from the general population to powerlifting culture.",
+    IconComponent: CircleDashed,
+  },
+  {
+    href: "/strength-levels",
+    title: "Strength Levels",
+    description:
+      "Beginner, intermediate, advanced, and elite benchmarks for squat, bench, deadlift, and press.",
+    IconComponent: BicepsFlexed,
+  },
+  {
+    href: "/1000lb-club-calculator",
+    title: "1000lb Club Calculator",
+    description:
+      "Are you in the 1000lb club? Track your progress to this milestone.",
+    IconComponent: Anvil,
+  },
+  {
+    href: "/200-300-400-500-strength-club-calculator",
+    title: "200/300/400/500 Club",
+    description:
+      "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
+    IconComponent: Mountain,
+  },
+  {
+    href: "/plate-milestones",
+    title: "Plate Milestones",
+    description:
+      "How many plates can you lift? Track your 1/2/3/4 plate club progress. Plates get dates.",
+    IconComponent: Disc,
+    badgeLabel: "New",
+  },
+  {
+    href: "/warm-up-sets-calculator",
+    title: "Warm Ups Calculator",
+    description:
+      "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
+    IconComponent: Flame,
+  },
+];
+
+const moreTools = [
+  {
+    href: "/articles",
+    title: "Strength Articles",
+    IconComponent: LibraryBig,
+  },
+  {
+    href: "/gym-playlist-leaderboard",
+    title: "Gym Music",
+    IconComponent: Music,
+  },
+  {
+    href: "/timer",
+    title: "Set Timer",
+    IconComponent: Timer,
+  },
+  {
+    href: "/how-strong-is-a-gorilla",
+    title: "Gorilla Strength",
+    IconComponent: GorillaIcon,
+  },
+];
+
 // The main barbell lifts are the main lifts that have dedicated pages
 // Defined again here for static generation SEO benefits
 const mainBarbellLifts = [
@@ -316,22 +440,6 @@ export default function Home() {
       IconComponent: Upload,
     };
   })();
-  const homepageFeatureCards = useMemo(() => {
-    const visibleCards = featurePages.filter(
-      (card) => !card.authRequired || hasUserData,
-    );
-    const logCardIndex = visibleCards.findIndex((card) => card.href === "/log");
-
-    if (logCardIndex === -1) {
-      return [importFeatureCard, ...visibleCards];
-    }
-
-    return [
-      ...visibleCards.slice(0, logCardIndex + 1),
-      importFeatureCard,
-      ...visibleCards.slice(logCardIndex + 1),
-    ];
-  }, [hasUserData, importFeatureCard]);
   // Keep the Big Four cards visible for early users, but delay the personalized
   // stats treatment until they have enough history for those comparisons to land.
   const showEnhancedBigFourStats =
@@ -437,15 +545,48 @@ export default function Home() {
             animated={bigFourAnimated}
             enhancedStats={showEnhancedBigFourStats}
           />
-          <Separator className="my-8" />
         </>
 
+        {/* Scroll-driven feature showcase (public landing only) */}
+        {!hasUserData && <FeatureShowcase />}
+
+        <Separator className="my-8" />
+
+        {/* Tier 1: Training insight tools */}
         <h2 className="mt-8 text-xl font-semibold">
-          🛠️ Strength Insights & Tools
+          📊 Your Training
         </h2>
-        <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {homepageFeatureCards.map((card, index) => (
-            <FeatureCard key={index} index={index} {...card} />
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {insightTools.map((card, index) => (
+            <FeatureCard key={card.href} index={index} {...card} />
+          ))}
+        </div>
+
+        <Separator className="my-8" />
+
+        {/* Tier 2: Calculators and strength standards */}
+        <h2 className="text-xl font-semibold">
+          🧮 Calculators & Standards
+        </h2>
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[importFeatureCard, ...calculatorTools].map((card, index) => (
+            <FeatureCard key={card.href} index={index + insightTools.length} {...card} />
+          ))}
+        </div>
+
+        <Separator className="my-8" />
+
+        {/* Tier 3: Compact strip for supplementary tools */}
+        <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
+          {moreTools.map((tool) => (
+            <Link
+              key={tool.href}
+              href={tool.href}
+              className="border-border bg-card hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+            >
+              <tool.IconComponent size={16} strokeWidth={1.5} />
+              {tool.title}
+            </Link>
           ))}
         </div>
 
@@ -476,37 +617,10 @@ function FeatureCard({
   badgeLabel,
   index = 0,
 }) {
-  const isWarmupsCalculator = href === "/warm-up-sets-calculator";
-  const isAnalyzer = href === "/lift-explorer";
-  const isGorillaCalculator = href === "/how-strong-is-a-gorilla";
   const chartColorVar = `--chart-${(index % 5) + 1}`;
 
   return (
     <Card className="group ring-ring relative shadow-lg ring-0 hover:ring-1">
-      {isAnalyzer && (
-        <Badge
-          variant="outline"
-          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
-        >
-          Updated! ✨
-        </Badge>
-      )}
-      {isWarmupsCalculator && (
-        <Badge
-          variant="outline"
-          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
-        >
-          New
-        </Badge>
-      )}
-      {isGorillaCalculator && (
-        <Badge
-          variant="outline"
-          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
-        >
-          Bananas 🍌
-        </Badge>
-      )}
       {badgeLabel && (
         <Badge
           variant="outline"

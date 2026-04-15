@@ -276,6 +276,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 55,
     unitType: "lb",
+    notes: "First time adding weight to bench. Small win.",
   },
   {
     date: "2022-05-06",
@@ -297,6 +298,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 170,
     unitType: "lb",
+    notes: "Pulled 170. Back felt fine. Focused on keeping it close.",
   },
   {
     date: "2022-05-09",
@@ -339,6 +341,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 160,
     unitType: "lb",
+    notes: "Legs still sore from Friday. Warm-ups helped.",
   },
   {
     date: "2022-05-09",
@@ -367,6 +370,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 55,
     unitType: "lb",
+    notes: "Press at 55 now. Every pound is earned on this lift.",
   },
   {
     date: "2022-05-11",
@@ -438,6 +442,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
+    notes: "Bench at 65. Learning to use leg drive.",
   },
   {
     date: "2022-05-11",
@@ -466,6 +471,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 190,
     unitType: "lb",
+    notes: "Almost at two plates. Can feel it coming.",
   },
   {
     date: "2022-05-13",
@@ -508,6 +514,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 170,
     unitType: "lb",
+    notes: "170 felt heavy today. Need more sleep.",
   },
   {
     date: "2022-05-13",
@@ -536,6 +543,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 60,
     unitType: "lb",
+    notes: "Finally got 60 overhead for all sets.",
   },
   {
     date: "2022-05-16",
@@ -585,6 +593,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 175,
     unitType: "lb",
+    notes: "175. Slow grind on the last rep.",
   },
   {
     date: "2022-05-16",
@@ -613,6 +622,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 75,
     unitType: "lb",
+    notes: "Bench is crawling but at least it is moving.",
   },
   {
     date: "2022-05-16",
@@ -691,6 +701,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 180,
     unitType: "lb",
+    notes: "180. Getting comfortable in the hole.",
   },
   {
     date: "2022-05-18",
@@ -719,6 +730,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 60,
     unitType: "lb",
+    notes: "Press stuck at 60 again. Third session in a row.",
   },
   {
     date: "2022-05-20",
@@ -770,6 +782,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 185,
     unitType: "lb",
+    notes: "185 for fives. A plate and change.",
   },
   {
     date: "2022-05-20",
@@ -798,6 +811,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 80,
     unitType: "lb",
+    notes: "Bench at 80. Tried pausing reps. Harder but cleaner.",
   },
   {
     date: "2022-05-20",
@@ -890,6 +904,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 195,
     unitType: "lb",
+    notes: "Almost at 200. Can taste it.",
   },
   {
     date: "2022-05-23",
@@ -918,6 +933,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
+    notes: "Finally broke through 65. Microplates would help.",
   },
   {
     date: "2022-05-25",
@@ -1003,6 +1019,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 95,
     unitType: "lb",
+    notes: "Bench at 95. One plate per side on bench soon.",
   },
   {
     date: "2022-05-25",
@@ -1124,6 +1141,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
+    notes: "Press still at 65. Not giving up.",
   },
   {
     date: "2022-05-30",
@@ -1173,6 +1191,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 235,
     unitType: "lb",
+    notes: "235. Every set felt solid. Recovery is good.",
   },
   {
     date: "2022-05-30",
@@ -1201,6 +1220,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 105,
     unitType: "lb",
+    notes: "Bench at 105. Slow and steady.",
   },
   {
     date: "2022-06-01",
@@ -1250,6 +1270,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 245,
     unitType: "lb",
+    notes: "245 felt like a wall. Finished but ugly.",
   },
   {
     date: "2022-06-01",
@@ -1314,6 +1335,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 235,
     unitType: "lb",
+    notes: "Deadlift at 235. Chalk makes a difference.",
   },
   {
     date: "2022-06-03",
@@ -1363,6 +1385,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 255,
     unitType: "lb",
+    notes: "255. New PR. Had to grind the last rep.",
   },
   {
     date: "2022-06-03",
@@ -1398,6 +1421,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 115,
     unitType: "lb",
+    notes: "Bench 115. Getting serious about arch and setup.",
   },
   {
     date: "2022-06-06",
@@ -1454,6 +1478,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 265,
     unitType: "lb",
+    notes: "265! Heaviest squat ever. Walked it out clean.",
   },
   {
     date: "2022-06-06",
@@ -1482,6 +1507,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 70,
     unitType: "lb",
+    notes: "Press finally at 70. Microplates arrived.",
   },
   {
     date: "2022-06-08",
@@ -1574,6 +1600,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 115,
     unitType: "lb",
+    notes: "Bench holding at 115. Not forcing it today.",
   },
   {
     date: "2022-06-08",
@@ -1609,6 +1636,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 245,
     unitType: "lb",
+    notes: "245 deadlift. Straps on back-off sets.",
   },
   {
     date: "2022-06-10",
@@ -1665,6 +1693,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 255,
     unitType: "lb",
+    notes: "255 again. Rebuilt after the deload. Felt better this time.",
   },
   {
     date: "2022-06-10",
@@ -1693,6 +1722,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 75,
     unitType: "lb",
+    notes: "Press hit 75! Five pounds from a plate.",
   },
   {
     date: "2022-06-13",
@@ -1749,6 +1779,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 260,
     unitType: "lb",
+    notes: "260. Inching forward.",
   },
   {
     date: "2022-06-13",
@@ -1841,6 +1872,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 265,
     unitType: "lb",
+    notes: "265 again. Matched my PR. Felt easier this time.",
   },
   {
     date: "2022-06-15",
@@ -1869,6 +1901,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 75,
     unitType: "lb",
+    notes: "Held at 75. Not every session is a PR.",
   },
   {
     date: "2022-06-15",
@@ -1961,6 +1994,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 270,
     unitType: "lb",
+    notes: "270. New territory. Walked it out with confidence.",
   },
   {
     date: "2022-06-17",
@@ -1996,6 +2030,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 125,
     unitType: "lb",
+    notes: "Bench at 125. Ten pounds from a plate per side.",
   },
   {
     date: "2022-06-20",
@@ -2052,6 +2087,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 275,
     unitType: "lb",
+    notes: "275. Five more pounds to three plates.",
   },
   {
     date: "2022-06-20",
@@ -2080,6 +2116,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 75,
     unitType: "lb",
+    notes: "Press holding at 75. Patience.",
   },
   {
     date: "2022-06-22",
@@ -2179,6 +2216,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 125,
     unitType: "lb",
+    notes: "Filmed bench for form check. Setup is getting dialed in.",
     URL: "https://www.youtube.com/watch?v=jTQTiW_g2pU",
   },
   {
@@ -2215,6 +2253,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 265,
     unitType: "lb",
+    notes: "265 again. Smooth lockout. Filmed it.",
     URL: "https://www.youtube.com/watch?v=2kEC7X1FUIg",
   },
   {
@@ -2311,6 +2350,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
+    notes: "Press dropped back to 65 after the deload. Filmed for form review.",
     URL: "https://www.youtube.com/watch?v=WnJd42b3EfI",
   },
 ];

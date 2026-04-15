@@ -521,7 +521,7 @@ export default function Home() {
         <h2 className="mt-8 text-xl font-semibold">
           📊 Your Training
         </h2>
-        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {insightTools.map((card, index) => (
             <FeatureCard key={card.href} index={index} {...card} />
           ))}

@@ -204,7 +204,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
-    notes: "Saw a girl doing front squats with perfect form. Tried not to stare.",
+    notes: "Big dude in a singlet squatted 500 like it was nothing. Life goals.",
   },
   {
     date: "2022-05-04",
@@ -357,7 +357,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 55,
     unitType: "lb",
-    notes: "Front squat girl is here again. She squats more than me.",
+    notes: "Guy next to me was grunting so loud I almost laughed mid-set.",
   },
   {
     date: "2022-05-09",
@@ -430,7 +430,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
-    notes: "Pretty girl walked past my bench. Lost count of my reps.",
+    notes: "Older guy gave me a nod after my set. Felt like a graduation.",
   },
   {
     date: "2022-05-11",
@@ -611,7 +611,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 75,
     unitType: "lb",
-    notes: "Front squat girl smiled at the water fountain. Forgot to fill my bottle.",
+    notes: "Saw someone benching with their feet up. Chaotic energy.",
   },
   {
     date: "2022-05-16",
@@ -720,7 +720,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 60,
     unitType: "lb",
-    notes: "Pretty girl was pressing next to me. I definitely pressed harder than normal.",
+    notes: "Dude doing curls in the squat rack. Classic.",
   },
   {
     date: "2022-05-18",
@@ -802,7 +802,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 80,
     unitType: "lb",
-    notes: "Saw pretty girl but did not talk to her. Focused on bench instead.",
+    notes: "Guy in the corner deadlifting 600. The whole floor shook.",
   },
   {
     date: "2022-05-20",
@@ -925,7 +925,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
-    notes: "Pretty girl nodded at me when I walked in. Progress??",
+    notes: "Regular crew is starting to recognize me. Head nods all around.",
   },
   {
     date: "2022-05-23",
@@ -1012,7 +1012,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 95,
     unitType: "lb",
-    notes: "Pretty girl asked me to spot her bench. Hands were shaking the whole time.",
+    notes: "Someone asked ME for a spot. I have officially made it.",
   },
   {
     date: "2022-05-25",
@@ -1135,7 +1135,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
-    notes: "Spotted her bench and managed not to drop the bar. Hands only shook a little.",
+    notes: "Old guy in knee wraps told me my squat depth was good. Made my week.",
   },
   {
     date: "2022-05-27",
@@ -1215,7 +1215,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 105,
     unitType: "lb",
-    notes: "Pretty girl waved at me from across the gym. Waved back too enthusiastically.",
+    notes: "Gym buddy offered me chalk. This is what community feels like.",
   },
   {
     date: "2022-05-30",
@@ -1410,7 +1410,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    notes: "Pretty girl and I ended up at the squat rack at the same time. She asked how my squats were going.",
+    notes: "Big dude asked to work in on squats. We pushed each other. Best session yet.",
   },
   {
     date: "2022-06-03",
@@ -1590,7 +1590,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    notes: "Pretty girl showed me a tip for bench grip width. She's been lifting for three years apparently.",
+    notes: "Older lifter showed me how to set my shoulder blades for bench. Game changer.",
   },
   {
     date: "2022-06-08",
@@ -1806,7 +1806,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    notes: "Pretty girl and I warmed up at the same time again. Starting to feel like our thing.",
+    notes: "Morning crew is the best crew. Everyone just gets after it.",
   },
   {
     date: "2022-06-13",
@@ -2022,7 +2022,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    notes: "Pretty girl was wearing a Rippetoe shirt. I said nice shirt. She laughed. Heart rate: 180.",
+    notes: "Guy complimented my Rippetoe shirt. We talked programming for 20 minutes.",
   },
   {
     date: "2022-06-17",
@@ -2209,7 +2209,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    notes: "Pretty girl asked what program I'm running. We talked for like 10 minutes between sets.",
+    notes: "The regulars cheer when someone hits a PR. This gym rules.",
   },
   {
     date: "2022-06-22",
@@ -2351,7 +2351,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
-    notes: "Definitely going to ask her name next time. Definitely.",
+    notes: "This gym is home now. Can't imagine not doing this.",
   },
   {
     date: "2022-06-26",

@@ -242,13 +242,6 @@ const insightTools = [
       "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
     IconComponent: Bot,
   },
-  {
-    href: "/strength-year-in-review",
-    title: "Strength Unwrapped",
-    description:
-      "Your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more.",
-    IconComponent: Sparkles,
-  },
 ];
 
 const calculatorTools = [
@@ -318,6 +311,11 @@ const moreTools = [
     href: "/timer",
     title: "Set Timer",
     IconComponent: Timer,
+  },
+  {
+    href: "/strength-year-in-review",
+    title: "Strength Unwrapped",
+    IconComponent: Sparkles,
   },
   {
     href: "/how-strong-is-a-gorilla",

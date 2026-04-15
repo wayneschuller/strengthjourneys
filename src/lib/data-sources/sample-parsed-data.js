@@ -109,7 +109,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 135,
     unitType: "lb",
-    notes: "First session complete!",
+    notes: "First time under a barbell. Nervous but it felt natural.",
   },
   {
     date: "2022-05-02",
@@ -131,6 +131,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Just the bar for now. Need to work on bar path.",
   },
   {
     date: "2022-05-02",
@@ -152,6 +153,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 145,
     unitType: "lb",
+    notes: "Grip was the limiting factor, not legs.",
   },
   {
     date: "2022-05-04",
@@ -187,7 +189,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 145,
     unitType: "lb",
-    notes: "Back squats making feel strong.",
+    notes: "Added 10lb since Monday. Feels like I could keep going.",
   },
   {
     date: "2022-05-04",
@@ -209,6 +211,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Press is humbling. Hardest lift to progress.",
   },
   {
     date: "2022-05-06",
@@ -244,7 +247,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 155,
     unitType: "lb",
-    notes: "Now wearing lever belt.",
+    notes: "Bought a belt. Bracing feels way more solid now.",
   },
   {
     date: "2022-05-06",
@@ -406,6 +409,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 165,
     unitType: "lb",
+    notes: "Two weeks in. Starting to understand what bracing really means.",
   },
   {
     date: "2022-05-11",
@@ -637,6 +641,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 200,
     unitType: "lb",
+    notes: "200lb deadlift. Two plates next week?",
   },
   {
     date: "2022-05-18",
@@ -721,7 +726,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
-    notes: "",
+    notes: "Filmed my warm-up set for a form check.",
     URL: "https://youtu.be/2kEC7X1FUIg?t=36",
   },
   {
@@ -828,6 +833,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 215,
     unitType: "lb",
+    notes: "Switched to mixed grip. Night and day difference.",
   },
   {
     date: "2022-05-23",
@@ -968,6 +974,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 205,
     unitType: "lb",
+    notes: "Two plates on squat! Huge milestone. Took a month.",
   },
   {
     date: "2022-05-25",
@@ -1031,6 +1038,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 225,
     unitType: "lb",
+    notes: "Two plates on deadlift too. Good day.",
   },
   {
     date: "2022-05-27",
@@ -1087,6 +1095,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 225,
     unitType: "lb",
+    notes: "225 for reps. A month ago I was squatting 135.",
   },
   {
     date: "2022-05-27",
@@ -1269,6 +1278,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
+    notes: "Press stuck at 65. Going to try microplates.",
   },
   {
     date: "2022-06-01",
@@ -1528,6 +1538,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 245,
     unitType: "lb",
+    notes: "Slept terribly. Dropped weight 20lb and focused on form.",
   },
   {
     date: "2022-06-08",
@@ -1773,6 +1784,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 120,
     unitType: "lb",
+    notes: "Bench moving again. 135 feels close.",
   },
   {
     date: "2022-06-15",
@@ -1892,6 +1904,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 265,
     unitType: "lb",
+    notes: "Deadlift flying past squat now. Three plates is the goal.",
   },
   {
     date: "2022-06-17",
@@ -2130,6 +2143,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 280,
     unitType: "lb",
+    notes: "280 squat. 300 by end of summer is happening.",
   },
   {
     date: "2022-06-22",
@@ -2209,8 +2223,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
-    notes:
-      'Use "Insert Rows" to always insert new data at the top of the spreadsheet',
+    notes: "Eight weeks in. This program is working.",
   },
   {
     date: "2022-06-26",
@@ -2218,7 +2231,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 95,
     unitType: "lb",
-    notes: "Enter data anytime on mobile via the Google Sheets app.",
+    notes: "",
   },
   {
     date: "2022-06-26",
@@ -2268,7 +2281,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 285,
     unitType: "lb",
-    notes: "Some like to record all warm up sets, others just top sets.",
+    notes: "285 for triples. 300 is right there. Best session yet.",
     URL: "https://www.youtube.com/watch?v=qgbnLdH4qjc",
   },
   {

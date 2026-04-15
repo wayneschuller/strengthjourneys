@@ -81,6 +81,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar feels heavier than I expected.",
   },
   {
     date: "2022-05-02",
@@ -117,6 +118,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Watched a YouTube tutorial on bench setup during rest. Arch, retract, leg drive.",
   },
   {
     date: "2022-05-02",
@@ -146,6 +148,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 95,
     unitType: "lb",
+    notes: "Deadlift grip already slipping at 95. Need chalk or something.",
   },
   {
     date: "2022-05-02",
@@ -161,6 +164,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "6am session. Gym was empty. Just me and the janitor.",
   },
   {
     date: "2022-05-04",
@@ -175,6 +179,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 145,
     unitType: "lb",
+    notes: "Knees caving on the way up. Gotta push them out.",
   },
   {
     date: "2022-05-04",
@@ -197,6 +202,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Why is the empty bar so heavy overhead??",
   },
   {
     date: "2022-05-04",
@@ -220,6 +226,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Morning crew is growing on me. Same five guys every day.",
   },
   {
     date: "2022-05-06",
@@ -256,6 +263,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Bench arch feels weird but it works. Trust the process.",
   },
   {
     date: "2022-05-06",
@@ -292,6 +300,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 95,
     unitType: "lb",
+    notes: "Hook grip hurts but it holds. Pain is temporary.",
   },
   {
     date: "2022-05-06",
@@ -307,6 +316,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Slept 9 hours. Warm-ups feel like butter today.",
   },
   {
     date: "2022-05-09",
@@ -321,6 +331,7 @@ export const sampleParsedData = [
     reps: 3,
     weight: 135,
     unitType: "lb",
+    notes: "135 is starting to feel light on squats. Wild.",
   },
   {
     date: "2022-05-09",
@@ -350,6 +361,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Strict press warm-up is basically my working weight from last week.",
   },
   {
     date: "2022-05-09",
@@ -380,6 +392,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Forgot my belt at home. Bracing without it feels naked.",
   },
   {
     date: "2022-05-11",
@@ -453,6 +466,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Deadlift day is best day. Fight me.",
   },
   {
     date: "2022-05-11",
@@ -467,6 +481,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 135,
     unitType: "lb",
+    notes: "Mixed grip kicks in at 135. Need to train double overhand more.",
   },
   {
     date: "2022-05-11",
@@ -482,6 +497,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Pre-workout hitting different today. Tingling everywhere.",
   },
   {
     date: "2022-05-13",
@@ -525,6 +541,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Press warm-ups are basically meditation. Slow, controlled, painful.",
   },
   {
     date: "2022-05-13",
@@ -539,6 +556,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 60,
     unitType: "lb",
+    notes: "Third set of press warm-ups. Arms already shaking. This lift humbles everyone.",
   },
   {
     date: "2022-05-13",
@@ -554,6 +572,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Foam rolled for 10 minutes before squats. Hips feel open.",
   },
   {
     date: "2022-05-16",
@@ -604,6 +623,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Bench warm-up felt smooth. Good day incoming.",
   },
   {
     date: "2022-05-16",
@@ -648,6 +668,7 @@ export const sampleParsedData = [
     reps: 3,
     weight: 135,
     unitType: "lb",
+    notes: "135 deadlift used to be hard. Now it's a warm-up. Progress is real.",
   },
   {
     date: "2022-05-16",
@@ -663,6 +684,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Forgot headphones. Gym music is... questionable.",
   },
   {
     date: "2022-05-18",
@@ -684,6 +706,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 160,
     unitType: "lb",
+    notes: "160 double feels crispy. Good speed off the bottom.",
   },
   {
     date: "2022-05-18",
@@ -713,6 +736,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar press. Honestly this is still kind of hard.",
   },
   {
     date: "2022-05-18",
@@ -752,6 +776,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 95,
     unitType: "lb",
+    notes: "Wrist wraps for squat day. Elbows thank me.",
   },
   {
     date: "2022-05-20",
@@ -795,6 +820,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar bench. 50 reps to warm up the shoulders. Prehab is real.",
   },
   {
     date: "2022-05-20",
@@ -839,6 +865,7 @@ export const sampleParsedData = [
     reps: 3,
     weight: 135,
     unitType: "lb",
+    notes: "135 deadlift triple. Beltless. Working on that brace.",
   },
   {
     date: "2022-05-20",
@@ -861,6 +888,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Coffee plus creatine plus a banana. The holy trinity.",
   },
   {
     date: "2022-05-23",
@@ -882,6 +910,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 160,
     unitType: "lb",
+    notes: "160 double. Paused at the bottom. Depth check: passed.",
   },
   {
     date: "2022-05-23",
@@ -918,6 +947,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar press. It's a relationship. We tolerate each other.",
   },
   {
     date: "2022-05-23",
@@ -948,6 +978,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Knee sleeves on. War paint basically.",
   },
   {
     date: "2022-05-25",
@@ -1005,6 +1036,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar bench. Shoulders clicking less these days. Warm-ups work.",
   },
   {
     date: "2022-05-25",
@@ -1056,6 +1088,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 185,
     unitType: "lb",
+    notes: "185 deadlift double. Straps or chalk? The eternal debate.",
   },
   {
     date: "2022-05-25",
@@ -1071,6 +1104,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Saturday morning. Gym is packed. Had to wait for a rack.",
   },
   {
     date: "2022-05-27",
@@ -1099,6 +1133,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 185,
     unitType: "lb",
+    notes: "185 double squat. Two plates is close. So close.",
   },
   {
     date: "2022-05-27",
@@ -1128,6 +1163,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Press warm-up. Deep breath. Brace like your life depends on it.",
   },
   {
     date: "2022-05-27",
@@ -1158,6 +1194,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Holiday Monday. Gym was a ghost town. Had the whole place.",
   },
   {
     date: "2022-05-30",
@@ -1172,6 +1209,7 @@ export const sampleParsedData = [
     reps: 3,
     weight: 135,
     unitType: "lb",
+    notes: "135 squat triple feels like a feather now. Body adapts fast.",
   },
   {
     date: "2022-05-30",
@@ -1208,6 +1246,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar bench. Thinking about grip width. Pinkies on the rings.",
   },
   {
     date: "2022-05-30",
@@ -1238,6 +1277,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "New playlist. PR energy. Let's go.",
   },
   {
     date: "2022-06-01",
@@ -1288,6 +1328,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar press. If you can press your bodyweight you're basically a god.",
   },
   {
     date: "2022-06-01",
@@ -1324,6 +1365,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 95,
     unitType: "lb",
+    notes: "Deadlift warm-ups feel snappy. Must be the sleep.",
   },
   {
     date: "2022-06-01",
@@ -1353,6 +1395,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Brought a buddy today. He lasted 45 minutes. Rookie.",
   },
   {
     date: "2022-06-03",
@@ -1403,6 +1446,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Bench warm-up. Spotted a guy doing 315. Someday.",
   },
   {
     date: "2022-06-03",
@@ -1425,6 +1469,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 115,
     unitType: "lb",
+    notes: "Second set of bench. Groove is locked in today.",
   },
   {
     date: "2022-06-03",
@@ -1440,6 +1485,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Started stretching hip flexors before squats. Why didn't I do this sooner.",
   },
   {
     date: "2022-06-06",
@@ -1468,6 +1514,7 @@ export const sampleParsedData = [
     reps: 1,
     weight: 225,
     unitType: "lb",
+    notes: "225 single. Two plates on the bar for the first time in squats. Paused for a photo.",
   },
   {
     date: "2022-06-06",
@@ -1497,6 +1544,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Press warm-up. Elbows tucked. Squeeze glutes. Whole body lift.",
   },
   {
     date: "2022-06-06",
@@ -1526,6 +1574,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Deload week but still showing up. Discipline over motivation.",
   },
   {
     date: "2022-06-08",
@@ -1583,6 +1632,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar bench. Recovery week. Ego stays at the door.",
   },
   {
     date: "2022-06-08",
@@ -1620,6 +1670,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Deadlift warm-ups on deload feel like playing with toys.",
   },
   {
     date: "2022-06-08",
@@ -1656,6 +1707,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Back from deload. Feeling fresh and angry. Good combo.",
   },
   {
     date: "2022-06-10",
@@ -1713,6 +1765,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Press warm-up. The bar path is finally starting to make sense.",
   },
   {
     date: "2022-06-10",
@@ -1727,6 +1780,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 75,
     unitType: "lb",
+    notes: "Second press warm-up. Lockout is getting stronger.",
   },
   {
     date: "2022-06-10",
@@ -1742,6 +1796,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Gym smells like victory and old rubber. Wouldn't have it any other way.",
   },
   {
     date: "2022-06-13",
@@ -1799,6 +1854,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar bench. Scapula pinch is automatic now. Muscle memory.",
   },
   {
     date: "2022-06-13",
@@ -1821,6 +1877,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 120,
     unitType: "lb",
+    notes: "Bench is clicking. Elbows at 45 degrees. Smooth.",
   },
   {
     date: "2022-06-13",
@@ -1836,6 +1893,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "5am alarm. No snooze. This is who I am now.",
   },
   {
     date: "2022-06-15",
@@ -1893,6 +1951,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Press warm-up. Breathing and bracing pattern finally feels natural.",
   },
   {
     date: "2022-06-15",
@@ -1922,6 +1981,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Deadlift warm-up. Hinging feels completely different than week one.",
   },
   {
     date: "2022-06-15",
@@ -1958,6 +2018,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Put chalk on before warm-ups now. It's a ritual.",
   },
   {
     date: "2022-06-17",
@@ -2015,6 +2076,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar bench. Focused on tempo. 2 seconds down, pause, explode up.",
   },
   {
     date: "2022-06-17",
@@ -2037,6 +2099,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 125,
     unitType: "lb",
+    notes: "Third set bench warm-up. Shoulder health has never been better.",
   },
   {
     date: "2022-06-17",
@@ -2052,6 +2115,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Rest day yesterday. Legs feel springy. Squats gonna move today.",
   },
   {
     date: "2022-06-20",
@@ -2109,6 +2173,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar press. Starting to enjoy this lift. Stockholm syndrome maybe.",
   },
   {
     date: "2022-06-20",
@@ -2123,6 +2188,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 75,
     unitType: "lb",
+    notes: "Press warm-up. 75 used to be my working weight. Now it's a warm-up set.",
   },
   {
     date: "2022-06-20",
@@ -2138,6 +2204,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Wore my lucky socks. Yes it matters. Don't question it.",
   },
   {
     date: "2022-06-22",
@@ -2240,6 +2307,7 @@ export const sampleParsedData = [
     reps: 10,
     weight: 45,
     unitType: "lb",
+    notes: "Deadlift warm-up. Lat engagement cue finally clicked. Pull the slack out.",
   },
   {
     date: "2022-06-22",
@@ -2261,6 +2329,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 185,
     unitType: "lb",
+    notes: "185 deadlift double. This is just a warm-up now. Absolutely wild.",
   },
   {
     date: "2022-06-22",
@@ -2293,6 +2362,7 @@ export const sampleParsedData = [
     reps: 3,
     weight: 135,
     unitType: "lb",
+    notes: "Last session of the month. Look how far we've come.",
   },
   {
     date: "2022-06-26",
@@ -2307,6 +2377,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 225,
     unitType: "lb",
+    notes: "225 double squat. Two plates for reps. First month complete.",
   },
   {
     date: "2022-06-26",
@@ -2344,6 +2415,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 45,
     unitType: "lb",
+    notes: "Empty bar press. Still humbling. Always humbling. But I keep showing up.",
   },
   {
     date: "2022-06-26",

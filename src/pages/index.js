@@ -259,6 +259,24 @@ const calculatorTools = [
     IconComponent: BicepsFlexed,
   },
   {
+    href: "/warm-up-sets-calculator",
+    title: "Warm Ups Calculator",
+    description:
+      "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
+    IconComponent: Flame,
+  },
+];
+
+const milestoneTools = [
+  {
+    href: "/plate-milestones",
+    title: "Plate Milestones",
+    description:
+      "How many plates can you lift? Track your 1/2/3/4 plate club progress. Plates get dates.",
+    IconComponent: Disc,
+    badgeLabel: "New",
+  },
+  {
     href: "/1000lb-club-calculator",
     title: "1000lb Club Calculator",
     description:
@@ -271,21 +289,6 @@ const calculatorTools = [
     description:
       "Track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift.",
     IconComponent: Mountain,
-  },
-  {
-    href: "/plate-milestones",
-    title: "Plate Milestones",
-    description:
-      "How many plates can you lift? Track your 1/2/3/4 plate club progress. Plates get dates.",
-    IconComponent: Disc,
-    badgeLabel: "New",
-  },
-  {
-    href: "/warm-up-sets-calculator",
-    title: "Warm Ups Calculator",
-    description:
-      "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
-    IconComponent: Flame,
   },
 ];
 
@@ -541,7 +544,19 @@ export default function Home() {
 
         <Separator className="my-8" />
 
-        {/* Tier 3: Compact strip for supplementary tools */}
+        {/* Tier 3: Strength journey milestones */}
+        <h2 className="text-xl font-semibold">
+          🏆 Strength Journey Milestones
+        </h2>
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {milestoneTools.map((card, index) => (
+            <FeatureCard key={card.href} index={index + insightTools.length + calculatorTools.length} {...card} />
+          ))}
+        </div>
+
+        <Separator className="my-8" />
+
+        {/* Tier 4: Compact strip for supplementary tools */}
         <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
           {moreTools.map((tool) => (
             <Link

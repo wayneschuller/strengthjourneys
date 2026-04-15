@@ -475,7 +475,8 @@ export default function LogSessionPage() {
   const hasAutoNavigatedRef = useRef(false);
   useEffect(() => {
     if (hasAutoNavigatedRef.current) return;
-    if (!hasUserData || !isImportedData) return;
+    // Auto-navigate for imported data or demo mode when today has no session
+    if (!isImportedData && !isDemoMode) return;
     if (sessionDates.length === 0) return;
     if (router.query.date) return;
     if (sessionDates.includes(sessionDate)) return;
@@ -483,7 +484,7 @@ export default function LogSessionPage() {
     const latestDate = sessionDates[sessionDates.length - 1];
     hasAutoNavigatedRef.current = true;
     navigateToDate(latestDate);
-  }, [hasUserData, isImportedData, sessionDates, sessionDate, navigateToDate, router.query.date]);
+  }, [isImportedData, isDemoMode, sessionDates, sessionDate, navigateToDate, router.query.date]);
 
   // Session dates as Date objects for the calendar picker modifier highlights
   const sessionDateObjects = useMemo(
@@ -2018,30 +2019,9 @@ export default function LogSessionPage() {
 
   // --- Render ---
 
-  // Preview mode: imported data or unauthenticated with no data at all.
+  // Preview mode: imported data, demo data, or unauthenticated.
   // In preview mode the full session browser renders but all write UI is hidden.
   const previewMode = !hasLinkedSheet;
-
-  if (!hasUserData && authStatus !== "loading") {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-        <Dumbbell className="text-muted-foreground h-12 w-12" />
-        <h1 className="text-2xl font-bold">Session Browser</h1>
-        <p className="text-muted-foreground max-w-md">
-          Import a file to browse your training sessions here, or sign in with
-          Google to log new sessions.
-        </p>
-        <div className="flex gap-3">
-          <Button asChild variant="outline">
-            <Link href="/import">Import a File</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/">Get Started</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   const liftCardTransition = prefersReducedMotion
     ? { duration: 0 }

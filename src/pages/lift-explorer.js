@@ -10,7 +10,9 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
+  PageHeaderRight,
 } from "@/components/page-header";
+import Link from "next/link";
 import { Layers } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
@@ -109,6 +111,19 @@ function LiftExplorerMain({ relatedArticles }) {
           your personal journey, records across every rep range, and how often
           you train it.
         </PageHeaderDescription>
+        <PageHeaderRight>
+          <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col">
+            <Link
+              href="/log"
+              className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <h3 className="text-base font-semibold">Log Session</h3>
+              <p className="text-sm">
+                Log your workout and track sets in real time.
+              </p>
+            </Link>
+          </div>
+        </PageHeaderRight>
       </PageHeader>
       <section className="mt-4 flex flex-col gap-6 xl:flex-row">
         {/* Left: narrow lift list */}

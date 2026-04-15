@@ -3436,7 +3436,7 @@ function LiftBlock({
   previewMode = false,
   usedSessionUrls,
 }) {
-  const { hasUserData } = useUserLiftingData();
+  const { hasUserData, isDemoMode, isImportedData } = useUserLiftingData();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const { getColor } = useLiftColors();
   const prefersReducedMotion = useReducedMotion();
@@ -4006,7 +4006,7 @@ function LiftBlock({
   ]);
 
   // Find the set index with the heaviest e1RM for the strength badge
-  const canShowStrength = hasUserData && hasBioData;
+  const canShowStrength = (hasUserData || isDemoMode || isImportedData) && hasBioData;
   const { bestE1rmIndex, bestE1rmValue } = useMemo(() => {
     if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;

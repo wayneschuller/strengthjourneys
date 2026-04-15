@@ -149,22 +149,23 @@ function ensureCannyChangelog() {
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
-  const { hasUserData, isReadOnly, isImportedData, parsedData, rawRows, sheetInfo } = useUserLiftingData();
+  const { hasUserData, isReadOnly, isImportedData, isLoading, isValidating, parsedData, rawRows, sheetInfo } = useUserLiftingData();
   const canOpenLog = !isReadOnly || isImportedData;
 
   // Show a standalone "Import / Merge Data" button for signed-in users who
   // haven't yet built up a mature training history. Once they're "established"
   // (60+ sessions) the nudge disappears -- they're committed to SJ.
-  // Default to hidden so it doesn't flash during initial auth/data loading.
+  // Default to hidden and wait until data has fully loaded to avoid flashing
+  // during the auth/fetch sequence.
   const [showImportNudge, setShowImportNudge] = useState(false);
   useEffect(() => {
-    if (authStatus !== "authenticated" || !hasUserData) {
+    if (authStatus !== "authenticated" || !hasUserData || isLoading || isValidating) {
       setShowImportNudge(false);
       return;
     }
     const { dashboardStage } = getDashboardStage({ parsedData, rawRows, sheetInfo });
     setShowImportNudge(dashboardStage !== "established");
-  }, [authStatus, hasUserData, parsedData, rawRows, sheetInfo]);
+  }, [authStatus, hasUserData, isLoading, isValidating, parsedData, rawRows, sheetInfo]);
 
   return (
     <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">

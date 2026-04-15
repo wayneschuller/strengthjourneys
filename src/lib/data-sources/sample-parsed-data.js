@@ -1135,7 +1135,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
-    note: "Her name is Sarah. Found out during the spot. Kept saying it in my head the whole session.",
+    note: "Spotted her bench and managed not to drop the bar. Hands only shook a little.",
   },
   {
     date: "2022-05-27",
@@ -1215,7 +1215,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 105,
     unitType: "lb",
-    note: "Sarah waved at me from across the gym. Waved back too enthusiastically.",
+    note: "Pretty girl waved at me from across the gym. Waved back too enthusiastically.",
   },
   {
     date: "2022-05-30",
@@ -1410,7 +1410,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    note: "Sarah and I ended up at the squat rack at the same time. She asked how my squats were going.",
+    note: "Pretty girl and I ended up at the squat rack at the same time. She asked how my squats were going.",
   },
   {
     date: "2022-06-03",
@@ -1590,7 +1590,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    note: "Sarah showed me a tip for bench grip width. She's been lifting for three years apparently.",
+    note: "Pretty girl showed me a tip for bench grip width. She's been lifting for three years apparently.",
   },
   {
     date: "2022-06-08",
@@ -1806,7 +1806,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    note: "Sarah and I warmed up at the same time again. Starting to feel like our thing.",
+    note: "Pretty girl and I warmed up at the same time again. Starting to feel like our thing.",
   },
   {
     date: "2022-06-13",
@@ -2022,7 +2022,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    note: "Sarah was wearing a Rippetoe shirt. I said nice shirt. She laughed. Heart rate: 180.",
+    note: "Pretty girl was wearing a Rippetoe shirt. I said nice shirt. She laughed. Heart rate: 180.",
   },
   {
     date: "2022-06-17",
@@ -2209,7 +2209,7 @@ export const sampleParsedData = [
     reps: 2,
     weight: 95,
     unitType: "lb",
-    note: "Sarah asked what program I'm running. We talked for like 10 minutes between sets.",
+    note: "Pretty girl asked what program I'm running. We talked for like 10 minutes between sets.",
   },
   {
     date: "2022-06-22",
@@ -2351,7 +2351,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
-    note: "Definitely going to ask Sarah to grab coffee next time. Definitely.",
+    note: "Definitely going to ask her name next time. Definitely.",
   },
   {
     date: "2022-06-26",

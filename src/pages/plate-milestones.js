@@ -11,6 +11,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { NextSeo } from "next-seo";
+import { useSession } from "next-auth/react";
 import { RelatedArticles } from "@/components/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -22,7 +23,10 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 
 import {
@@ -45,6 +49,8 @@ import {
   Mountain,
   RotateCcw,
   Disc,
+  FileUp,
+  Loader2,
 } from "lucide-react";
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
@@ -401,7 +407,8 @@ function PlateMilestonesMain({ relatedArticles }) {
   const { toast } = useToast();
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
-  const { topLiftsByTypeAndReps, parsedData, isDemoMode } =
+  const { status: authStatus } = useSession();
+  const { topLiftsByTypeAndReps, parsedData, isDemoMode, sheetInfo } =
     useUserLiftingData();
   const { isMetric } = useAthleteBio();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
@@ -755,6 +762,12 @@ function PlateMilestonesMain({ relatedArticles }) {
         )}
       </Card>
 
+      {/* Import CTA for non-auth visitors */}
+      {(authStatus === "unauthenticated" ||
+        (authStatus === "authenticated" && !sheetInfo?.ssid)) && (
+        <PlateImportCtaCard />
+      )}
+
       {/* Plate reference table */}
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">
@@ -1003,5 +1016,184 @@ function MilestoneRow({
         </div>
       </div>
     </div>
+  );
+}
+
+// --- Import CTA for non-auth visitors ---
+function PlateImportCtaCard() {
+  const { toast } = useToast();
+  const { importFile } = useUserLiftingData();
+  const fileInputRef = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState(null);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["csv", "txt", "xls", "xlsx"].includes(ext)) {
+      setImportError(
+        "Unsupported file type. Use a .csv, .xls, or .xlsx export.",
+      );
+      return;
+    }
+
+    setImporting(true);
+    setImportError(null);
+
+    try {
+      const { count, formatName } = await importFile(file);
+      toast({
+        title: "Data loaded",
+        description: `Parsed ${count} entries from ${formatName}. Your plate milestones are ready.`,
+      });
+    } catch (err) {
+      setImportError(err.message || "Could not parse that export.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    setDragOver(false);
+    await handleFile(event.dataTransfer?.files?.[0]);
+  };
+
+  const handleBrowseClick = () => {
+    if (importing) return;
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <Card className="mt-6 overflow-hidden">
+      <CardHeader className="pb-2">
+        <div className="space-y-1">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Disc className="h-5 w-5" />
+            Drop in your data to see your real plate milestones
+          </CardTitle>
+          <CardDescription>
+            Import your workout data from Hevy, Strong, Wodify, BTWB, or
+            TurnKey. We&apos;ll parse it in your browser and auto-fill your
+            estimated 1RMs.
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] lg:items-stretch">
+          {/* Drop zone */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleBrowseClick}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleBrowseClick();
+              }
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            className={cn(
+              "from-muted/20 via-background to-muted/30 flex h-full flex-col justify-between rounded-xl border border-dashed bg-gradient-to-br p-4 text-left transition-colors sm:p-5",
+              dragOver && "border-primary bg-primary/5",
+              importing && "cursor-wait opacity-80",
+              !importing && "cursor-pointer hover:border-primary/60",
+            )}
+            aria-label="Upload workout export file"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.txt,.xls,.xlsx"
+              className="hidden"
+              onChange={(event) => {
+                handleFile(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+
+            <div className="space-y-4">
+              <div className="bg-primary/10 text-primary flex h-11 w-11 items-center justify-center rounded-full border">
+                {importing ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <FileUp className="h-5 w-5" />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold sm:text-base">
+                  {importing ? "Parsing your data..." : "Add your workout data"}
+                </p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Drop in a Hevy, Strong, Wodify, BTWB, or TurnKey export to
+                  auto-fill your plate milestones.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleBrowseClick();
+                }}
+                disabled={importing}
+              >
+                Choose file
+              </Button>
+
+              {importError ? (
+                <p className="text-sm font-medium text-red-600">
+                  {importError}
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Parsed locally in your browser for preview mode.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Decorative plate preview */}
+          <div className="from-muted/20 via-background to-muted/30 flex flex-col items-center justify-center gap-4 rounded-xl border bg-gradient-to-br p-4 opacity-55 saturate-[0.85] sm:p-6">
+            <div className="flex items-center gap-2">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: n }, (_, i) => (
+                      <img
+                        key={i}
+                        src="/blue_plate.svg"
+                        alt=""
+                        className="h-10 w-10 sm:h-12 sm:w-12"
+                        style={{ opacity: 0.3 + i * 0.2 }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-muted-foreground text-[10px] tabular-nums">
+                    {plateTotal(n, false)} lb
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-muted-foreground text-center text-xs">
+              Your data fills in the sliders above so you can see exactly where
+              you stand on each plate milestone.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -72,7 +72,6 @@ import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/homepage/big-four-lift-cards";
-import { FeatureShowcase } from "@/components/homepage/feature-showcase";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
@@ -546,9 +545,6 @@ export default function Home() {
             enhancedStats={showEnhancedBigFourStats}
           />
         </>
-
-        {/* Scroll-driven feature showcase (public landing only) */}
-        {!hasUserData && <FeatureShowcase />}
 
         <Separator className="my-8" />
 

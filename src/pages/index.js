@@ -208,13 +208,6 @@ export const featurePages = [
 // are the try-before-you-sign-in SEO workhorses, and "More" is a compact strip.
 const insightTools = [
   {
-    href: "/log",
-    title: "Log & Session Browser",
-    description:
-      "Log your lifting session or browse past workouts with strength tracking and warm-up suggestions.",
-    IconComponent: Plus,
-  },
-  {
     href: "/lift-explorer",
     title: "Lift Explorer",
     description:
@@ -222,11 +215,11 @@ const insightTools = [
     IconComponent: Layers,
   },
   {
-    href: "/visualizer",
-    title: "Strength Visualizer",
+    href: "/ai-lifting-assistant",
+    title: "AI Lifting Assistant",
     description:
-      "Chart lifts beyond the Big Four with full-range E1RM history over time.",
-    IconComponent: LineChart,
+      "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
+    IconComponent: Bot,
   },
   {
     href: "/tonnage",
@@ -236,11 +229,11 @@ const insightTools = [
     IconComponent: Bus,
   },
   {
-    href: "/ai-lifting-assistant",
-    title: "AI Lifting Assistant",
+    href: "/visualizer",
+    title: "Strength Visualizer",
     description:
-      "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
-    IconComponent: Bot,
+      "Chart lifts beyond the Big Four with full-range E1RM history over time.",
+    IconComponent: LineChart,
   },
 ];
 

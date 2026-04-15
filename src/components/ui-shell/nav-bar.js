@@ -13,7 +13,7 @@ import {
 } from "@/components/ui-shell/theme-chooser";
 import { MobileNav } from "@/components/ui-shell/mobile-nav";
 import { AvatarDropdown } from "@/components/ui-shell/avatar-menu";
-import { Table2, Loader2, Github, Layers, LineChart, NotebookText, Plus, Disc } from "lucide-react";
+import { Table2, Loader2, Github, Layers, LineChart, NotebookText, Plus, Disc, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
@@ -21,6 +21,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 
 import {
   Tooltip,
@@ -148,8 +149,17 @@ function ensureCannyChangelog() {
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
-  const { hasUserData, isReadOnly, isImportedData } = useUserLiftingData();
+  const { hasUserData, isReadOnly, isImportedData, parsedData, rawRows, sheetInfo } = useUserLiftingData();
   const canOpenLog = !isReadOnly || isImportedData;
+
+  // Show a standalone "Import / Merge Data" button for signed-in users who
+  // haven't yet built up a mature training history. Once they're "established"
+  // (60+ sessions) the nudge disappears -- they're committed to SJ.
+  const { dashboardStage } = hasUserData
+    ? getDashboardStage({ parsedData, rawRows, sheetInfo })
+    : {};
+  const showImportNudge =
+    authStatus === "authenticated" && hasUserData && dashboardStage !== "established";
 
   return (
     <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
@@ -177,6 +187,20 @@ export function NavBar() {
                 <span className="hidden xl:inline">
                   {isImportedData ? "Browse Sessions" : "Log Session"}
                 </span>
+              </Link>
+            </Button>
+          )}
+          {showImportNudge && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="mr-2 hidden h-9 shrink-0 rounded-full px-3 md:inline-flex"
+            >
+              <Link href="/import">
+                <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
+                <span className="xl:hidden">Import</span>
+                <span className="hidden xl:inline">Import / Merge Data</span>
               </Link>
             </Button>
           )}
@@ -500,6 +524,7 @@ function BigFourBarbellInsightsMenu() {
 // Internal dropdown menu for strength insight tools (Analyzer, Visualizer, AI assistant, etc.).
 function StrengthInsightsMenu() {
   const pathname = usePathname();
+  const { status: authStatus } = useSession();
 
   const insights = [
     {
@@ -531,6 +556,11 @@ function StrengthInsightsMenu() {
       title: "Strength Unwrapped",
       href: "/strength-year-in-review",
       icon: <Sparkles className="h-5 w-5" />,
+    },
+    {
+      title: authStatus === "authenticated" ? "Import / Merge Data" : "Import Data",
+      href: "/import",
+      icon: <Upload className="h-5 w-5" />,
     },
   ];
 

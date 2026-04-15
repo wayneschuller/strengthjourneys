@@ -169,6 +169,13 @@ export const featurePages = [
     IconComponent: Sparkles,
   },
   {
+    href: "/import",
+    title: "Import Data",
+    description:
+      "Import from Hevy, Strong, Wodify, BTWB, or spreadsheets. Preview first, then merge into your data.",
+    IconComponent: Upload,
+  },
+  {
     href: "/tonnage",
     title: "Tonnage Metrics",
     description:
@@ -410,35 +417,6 @@ export default function Home() {
       }),
     [parsedData, rawRows, sheetInfo],
   );
-  const importFeatureCard = (() => {
-    if (authStatus === "authenticated" && sheetInfo?.ssid) {
-      return {
-        href: "/import",
-        title: "Import From Fitness Apps",
-        description:
-          "Preview imports from Hevy, Strong, Wodify, BTWB, or spreadsheets - then merge what you want into your data.",
-        IconComponent: Upload,
-      };
-    }
-
-    if (authStatus === "authenticated") {
-      return {
-        href: "/import",
-        title: "Import Your Lifting History",
-        description:
-          "Preview your file first, then create your free Google Sheet and keep the data you import.",
-        IconComponent: Upload,
-      };
-    }
-
-    return {
-      href: "/import",
-      title: "Import From Another App",
-      description:
-        "Preview Hevy, Strong, Wodify, BTWB, or spreadsheet exports instantly. No sign-in required.",
-      IconComponent: Upload,
-    };
-  })();
   // Keep the Big Four cards visible for early users, but delay the personalized
   // stats treatment until they have enough history for those comparisons to land.
   const showEnhancedBigFourStats =
@@ -565,7 +543,7 @@ export default function Home() {
           🧮 Calculators & Standards
         </h2>
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[importFeatureCard, ...calculatorTools].map((card, index) => (
+          {calculatorTools.map((card, index) => (
             <FeatureCard key={card.href} index={index + insightTools.length} {...card} />
           ))}
         </div>

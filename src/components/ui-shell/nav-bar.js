@@ -155,11 +155,16 @@ export function NavBar() {
   // Show a standalone "Import / Merge Data" button for signed-in users who
   // haven't yet built up a mature training history. Once they're "established"
   // (60+ sessions) the nudge disappears -- they're committed to SJ.
-  const { dashboardStage } = hasUserData
-    ? getDashboardStage({ parsedData, rawRows, sheetInfo })
-    : {};
-  const showImportNudge =
-    authStatus === "authenticated" && hasUserData && dashboardStage !== "established";
+  // Default to hidden so it doesn't flash during initial auth/data loading.
+  const [showImportNudge, setShowImportNudge] = useState(false);
+  useEffect(() => {
+    if (authStatus !== "authenticated" || !hasUserData) {
+      setShowImportNudge(false);
+      return;
+    }
+    const { dashboardStage } = getDashboardStage({ parsedData, rawRows, sheetInfo });
+    setShowImportNudge(dashboardStage !== "established");
+  }, [authStatus, hasUserData, parsedData, rawRows, sheetInfo]);
 
   return (
     <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">

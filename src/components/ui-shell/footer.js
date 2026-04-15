@@ -10,7 +10,7 @@ const TOOLS = [
   { href: "/how-strong-am-i", label: "How Strong Am I?" },
   { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },
   { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
-  { href: "/import", label: "Import/Export" },
+  { href: "/import", label: "Import / Export Data" },
 ];
 
 const LIFT_CALCULATORS = [

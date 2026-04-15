@@ -347,6 +347,7 @@ function getTodayInviteMessage(now = new Date()) {
 // so demo visitors understand they are seeing sample output and can either sign
 // in or jump straight to preview-mode import.
 const PERSONALIZED_DATA_CTA_PATHS = [
+  "/log",
   "/visualizer",
   "/lift-explorer",
   "/tonnage",

@@ -30,9 +30,16 @@ const PAGE_CONFIG = {
     // weight x (1 + reps/30). Enter your set, compare Epley vs 6 other 1RM
     // equations, and get rep max tables."
     // GSC review 2026-03-25: test challenge-based SERP copy to improve CTR.
-    title: "Epley Formula 1RM Calculator | Does Epley Overestimate?",
+    // Previous title: "Epley Formula 1RM Calculator | Does Epley Overestimate?"
+    // Previous meta: "Epley can overestimate above 10 reps. Enter your set,
+    // compare all 7 formulas, and see which one is actually honest about your max."
+    // GSC review 2026-04-17: previous "Does Epley Overestimate?" was too mild
+    // for a query dominated by AI Overviews and dozens of identical calculator
+    // listings. Going deliberately provocative with gym-app callout to break
+    // the wallpaper effect. Monitor CTR over 2-3 weeks.
+    title: "Epley Formula 1RM Calculator | The Lie Your Gym App Tells You",
     description:
-      "Epley can overestimate above 10 reps. Enter your set, compare all 7 formulas, and see which one is actually honest about your max.",
+      "Your gym app uses Epley because it's easy, not because it's right. We run all 7 formulas on the same set so you can see how much your max depends on which equation you trust.",
     keywords:
       "epley formula 1rm, epley formula 1rm calculation, epley formula one rep max, epley 1rm calculator",
     formulaSupport: {

@@ -1280,21 +1280,21 @@ function SparklineTooltipContent({ active, payload, isMetric }) {
   );
 }
 
-// --- Per-lift E1RM sparkline with plate tier reference lines ---
+// --- Per-lift E1RM sparkline with single plate target reference line ---
 function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
   if (!timeline || timeline.length < 2) return null;
 
-  const tierWeights = tiers.map((n) => plateTotal(n, false));
-  const maxTierWeight = Math.max(...tierWeights);
-  const minTierWeight = Math.min(...tierWeights);
+  // Only show the classic target tier (last/highest tier for this lift)
+  const targetTier = tiers[tiers.length - 1];
+  const targetWeight = plateTotal(targetTier, false);
   const maxE1rm = Math.max(...timeline.map((p) => p.e1rm));
   const minE1rm = Math.min(...timeline.map((p) => p.e1rm));
 
   const yMax =
-    Math.ceil(Math.max(maxE1rm + 10, maxTierWeight + 20) / 25) * 25;
+    Math.ceil(Math.max(maxE1rm + 10, targetWeight + 20) / 25) * 25;
   const yMin =
     Math.floor(
-      Math.max(0, Math.min(minE1rm - 10, minTierWeight - 20)) / 25,
+      Math.max(0, Math.min(minE1rm - 10, targetWeight - 20)) / 25,
     ) * 25;
 
   const spanDays =
@@ -1313,14 +1313,16 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
     return d.toLocaleDateString("en-US", { year: "numeric" });
   };
 
-  const formatYTick = (v) => (isMetric ? `${toKg(v)}` : `${v}`);
+  const targetLabel = isMetric
+    ? `${plateLabel(targetTier)} (${toKg(targetWeight)} kg)`
+    : `${plateLabel(targetTier)} (${targetWeight} lb)`;
 
   return (
     <div className="h-[110px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={timeline}
-          margin={{ top: 4, right: 36, bottom: 0, left: -16 }}
+          margin={{ top: 4, right: 8, bottom: 0, left: 8 }}
         >
           <defs>
             <linearGradient
@@ -1344,32 +1346,22 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
             tickLine={false}
             axisLine={false}
           />
-          <YAxis
-            domain={[yMin, yMax]}
-            tick={{ fontSize: 10 }}
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={formatYTick}
-            width={36}
+          <YAxis domain={[yMin, yMax]} hide />
+          <ReferenceLine
+            y={targetWeight}
+            stroke="#10B981"
+            strokeDasharray="4 3"
+            strokeWidth={1.5}
+            label={{
+              value: targetLabel,
+              position: "insideTopRight",
+              offset: -4,
+              dy: -2,
+              fill: "#10B981",
+              fontSize: 10,
+              fontWeight: 600,
+            }}
           />
-          {tierWeights.map((w, i) => (
-            <ReferenceLine
-              key={tiers[i]}
-              y={w}
-              stroke="#10B981"
-              strokeDasharray="4 3"
-              strokeWidth={1.5}
-              label={{
-                value: `${plateLabel(tiers[i])}`,
-                position: "insideRight",
-                offset: -4,
-                dy: -8,
-                fill: "#10B981",
-                fontSize: 10,
-                fontWeight: 600,
-              }}
-            />
-          ))}
           <RechartsTooltip
             content={<SparklineTooltipContent isMetric={isMetric} />}
           />

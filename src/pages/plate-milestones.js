@@ -1255,9 +1255,9 @@ function MilestoneRow({
 }
 
 // --- Sparkline tooltip ---
-function SparklineTooltipContent({ active, payload, isMetric }) {
+function SparklineTooltipContent({ active, payload, unit }) {
   if (!active || !payload?.[0]) return null;
-  const { timestamp, e1rm } = payload[0].payload;
+  const { timestamp, displayE1rm } = payload[0].payload;
   const dateStr = new Date(timestamp).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -1266,7 +1266,9 @@ function SparklineTooltipContent({ active, payload, isMetric }) {
   return (
     <div className="bg-popover rounded-lg border px-2 py-1.5 text-xs shadow-md">
       <div className="font-medium">{dateStr}</div>
-      <div>E1RM: {displayWeight(e1rm, isMetric)}</div>
+      <div>
+        E1RM: {displayE1rm} {unit}
+      </div>
     </div>
   );
 }
@@ -1277,16 +1279,28 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
 
   // Only show the classic target tier (last/highest tier for this lift)
   const targetTier = tiers[tiers.length - 1];
-  const targetWeight = plateTotal(targetTier, false);
-  const maxE1rm = Math.max(...timeline.map((p) => p.e1rm));
-  const minE1rm = Math.min(...timeline.map((p) => p.e1rm));
 
-  const yMax =
-    Math.ceil(Math.max(maxE1rm + 10, targetWeight + 20) / 25) * 25;
+  // Use the correct plate target for the unit system:
+  // 4 plates metric = 180kg (bar 20 + 4x2x20), NOT toKg(405) = 184kg
+  const targetDisplay = plateTotal(targetTier, isMetric);
+
+  // Convert timeline to display units so the reference line aligns correctly
+  const toDisplay = isMetric ? (lb) => Math.round(lb * KG_PER_LB) : (lb) => lb;
+  const displayData = timeline.map((p) => ({
+    ...p,
+    displayE1rm: toDisplay(p.e1rm),
+  }));
+  const unit = isMetric ? "kg" : "lb";
+
+  const maxVal = Math.max(...displayData.map((p) => p.displayE1rm));
+  const minVal = Math.min(...displayData.map((p) => p.displayE1rm));
+  const step = isMetric ? 10 : 25;
+
+  const yMax = Math.ceil(Math.max(maxVal + 5, targetDisplay + 10) / step) * step;
   const yMin =
     Math.floor(
-      Math.max(0, Math.min(minE1rm - 10, targetWeight - 20)) / 25,
-    ) * 25;
+      Math.max(0, Math.min(minVal - 5, targetDisplay - 10)) / step,
+    ) * step;
 
   const spanDays =
     (timeline[timeline.length - 1].timestamp - timeline[0].timestamp) /
@@ -1304,15 +1318,13 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
     return d.toLocaleDateString("en-US", { year: "numeric" });
   };
 
-  const targetLabel = isMetric
-    ? `${plateLabel(targetTier)} (${toKg(targetWeight)} kg)`
-    : `${plateLabel(targetTier)} (${targetWeight} lb)`;
+  const targetLabel = `${plateLabel(targetTier)} (${targetDisplay} ${unit})`;
 
   return (
     <div className="h-[110px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
-          data={timeline}
+          data={displayData}
           margin={{ top: 4, right: 8, bottom: 0, left: 8 }}
         >
           <defs>
@@ -1339,7 +1351,7 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
           />
           <YAxis domain={[yMin, yMax]} hide />
           <ReferenceLine
-            y={targetWeight}
+            y={targetDisplay}
             stroke="#10B981"
             strokeDasharray="4 3"
             strokeWidth={1.5}
@@ -1354,11 +1366,11 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
             }}
           />
           <RechartsTooltip
-            content={<SparklineTooltipContent isMetric={isMetric} />}
+            content={<SparklineTooltipContent unit={unit} />}
           />
           <Area
             type="monotone"
-            dataKey="e1rm"
+            dataKey="displayE1rm"
             stroke="#6366F1"
             strokeWidth={2}
             fill={`url(#spark-${liftKey})`}
@@ -1391,23 +1403,34 @@ function PlateTimelinesSection({ liftTimelines, isMetric }) {
             const timeline = liftTimelines[milestone.key];
             if (!timeline || timeline.length < 2) return null;
             return (
-              <div key={milestone.key} className="space-y-1">
-                <div className="flex items-center gap-2">
+              <div
+                key={milestone.key}
+                className="flex items-stretch gap-3 rounded-lg border p-2"
+              >
+                <Link
+                  href={getLiftDetailUrl(milestone.liftType)}
+                  className="flex flex-shrink-0 items-center"
+                >
                   <img
                     src={LIFT_GRAPHICS[milestone.liftType]}
-                    alt=""
-                    className="h-8 w-8 object-contain"
+                    alt={`${milestone.liftType} illustration`}
+                    className="h-24 w-24 object-contain md:h-28 md:w-28"
                   />
-                  <span className="text-sm font-semibold">
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={getLiftDetailUrl(milestone.liftType)}
+                    className="text-sm font-semibold underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                  >
                     {milestone.liftType}
-                  </span>
+                  </Link>
+                  <MilestoneSparkline
+                    timeline={timeline}
+                    tiers={milestone.tiers}
+                    liftKey={milestone.key}
+                    isMetric={isMetric}
+                  />
                 </div>
-                <MilestoneSparkline
-                  timeline={timeline}
-                  tiers={milestone.tiers}
-                  liftKey={milestone.key}
-                  isMetric={isMetric}
-                />
               </div>
             );
           })}

@@ -819,7 +819,6 @@ function PlateMilestonesMain({ relatedArticles }) {
                 prVal={prWeightsLb?.[milestone.key]}
                 r90Val={recent90dLb?.[milestone.key]}
                 isMetric={isMetric}
-                timeline={liftTimelines?.[milestone.key]}
                 tierDates={milestoneDates?.[milestone.key]}
               />
             ))}
@@ -909,10 +908,17 @@ function PlateMilestonesMain({ relatedArticles }) {
         )}
       </Card>
 
-      {/* Import CTA for non-auth visitors */}
-      {(authStatus === "unauthenticated" ||
-        (authStatus === "authenticated" && !sheetInfo?.ssid)) && (
-        <PlateImportCtaCard />
+      {/* Charts section: real sparklines when data exists, mockup + import CTA otherwise */}
+      {liftTimelines ? (
+        <PlateTimelinesSection
+          liftTimelines={liftTimelines}
+          isMetric={isMetric}
+        />
+      ) : (
+        (authStatus === "unauthenticated" ||
+          (authStatus === "authenticated" && !sheetInfo?.ssid)) && (
+          <PlateImportCtaCard />
+        )
       )}
 
       {/* Plate reference table */}
@@ -1100,7 +1106,6 @@ function MilestoneRow({
   prVal,
   r90Val,
   isMetric,
-  timeline,
   tierDates,
 }) {
   const { key, liftType, targetPlates, tiers, maxLb } = milestone;
@@ -1113,7 +1118,6 @@ function MilestoneRow({
   ).length;
 
   const hasDates = tierDates && Object.keys(tierDates).length > 0;
-  const hasTimeline = timeline && timeline.length >= 2;
 
   return (
     <div
@@ -1210,53 +1214,40 @@ function MilestoneRow({
         </div>
       </div>
 
-      {/* Personal milestone dates + sparkline (only with user data) */}
-      {(hasDates || hasTimeline) && (
-        <div className="mt-2 space-y-2 border-t pt-2">
-          {hasDates && (
-            <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
-              {tiers.map((n) => {
-                const info = tierDates[n];
-                if (!info) return null;
-                const firstStr = formatMonthYear(info.first);
-                const lastStr = formatMonthYear(info.last);
-                const sameMonth = firstStr === lastStr;
-                return (
-                  <span key={n} className="flex items-center gap-1">
-                    <span
-                      className={cn(
-                        "inline-block h-1.5 w-1.5 rounded-full",
-                        info.currentlyAbove
-                          ? "bg-green-500"
-                          : "bg-amber-500",
-                      )}
-                    />
-                    <span className="text-foreground font-medium">
-                      {plateLabel(n)}
-                    </span>
-                    {info.currentlyAbove ? (
-                      <span>since {firstStr}</span>
-                    ) : sameMonth ? (
-                      <span>{firstStr}</span>
-                    ) : (
-                      <span>
-                        first {firstStr}, last {lastStr}
-                      </span>
-                    )}
+      {/* Personal milestone dates (only with user data) */}
+      {hasDates && (
+        <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-[11px]">
+          {tiers.map((n) => {
+            const info = tierDates[n];
+            if (!info) return null;
+            const firstStr = formatMonthYear(info.first);
+            const lastStr = formatMonthYear(info.last);
+            const sameMonth = firstStr === lastStr;
+            return (
+              <span key={n} className="flex items-center gap-1">
+                <span
+                  className={cn(
+                    "inline-block h-1.5 w-1.5 rounded-full",
+                    info.currentlyAbove
+                      ? "bg-green-500"
+                      : "bg-amber-500",
+                  )}
+                />
+                <span className="text-foreground font-medium">
+                  {plateLabel(n)}
+                </span>
+                {info.currentlyAbove ? (
+                  <span>since {firstStr}</span>
+                ) : sameMonth ? (
+                  <span>{firstStr}</span>
+                ) : (
+                  <span>
+                    first {firstStr}, last {lastStr}
                   </span>
-                );
-              })}
-            </div>
-          )}
-
-          {hasTimeline && (
-            <MilestoneSparkline
-              timeline={timeline}
-              tiers={tiers}
-              liftKey={key}
-              isMetric={isMetric}
-            />
-          )}
+                )}
+              </span>
+            );
+          })}
         </div>
       )}
     </div>
@@ -1380,7 +1371,53 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
   );
 }
 
-// --- Import CTA for non-auth visitors ---
+// --- Charts section: shows real sparklines when data exists ---
+function PlateTimelinesSection({ liftTimelines, isMetric }) {
+  return (
+    <Card className="mt-6">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <LineChart className="h-5 w-5" />
+          Your E1RM over time
+        </CardTitle>
+        <CardDescription>
+          Rolling 90-day best estimated 1RM for each lift. The dashed line
+          marks the classic plate target.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-2">
+          {MILESTONES.map((milestone) => {
+            const timeline = liftTimelines[milestone.key];
+            if (!timeline || timeline.length < 2) return null;
+            return (
+              <div key={milestone.key} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <img
+                    src={LIFT_GRAPHICS[milestone.liftType]}
+                    alt=""
+                    className="h-8 w-8 object-contain"
+                  />
+                  <span className="text-sm font-semibold">
+                    {milestone.liftType}
+                  </span>
+                </div>
+                <MilestoneSparkline
+                  timeline={timeline}
+                  tiers={milestone.tiers}
+                  liftKey={milestone.key}
+                  isMetric={isMetric}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- Import CTA with mockup chart for non-auth visitors ---
 function PlateImportCtaCard() {
   const { toast } = useToast();
   const { importFile } = useUserLiftingData();
@@ -1432,13 +1469,12 @@ function PlateImportCtaCard() {
       <CardHeader className="pb-2">
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Disc className="h-5 w-5" />
-            Drop in your data to see your real plate milestones
+            <LineChart className="h-5 w-5" />
+            Your E1RM over time
           </CardTitle>
           <CardDescription>
-            Import your workout data from Hevy, Strong, Wodify, BTWB, or
-            TurnKey. We&apos;ll parse it in your browser and auto-fill your
-            estimated 1RMs.
+            Import your workout data to see your rolling 90-day E1RM for
+            each lift and how you track toward each plate milestone.
           </CardDescription>
         </div>
       </CardHeader>
@@ -1526,31 +1562,46 @@ function PlateImportCtaCard() {
             </div>
           </div>
 
-          {/* Decorative plate preview */}
-          <div className="from-muted/20 via-background to-muted/30 flex flex-col items-center justify-center gap-4 rounded-xl border bg-gradient-to-br p-4 opacity-55 saturate-[0.85] sm:p-6">
-            <div className="flex items-center gap-2">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({ length: n }, (_, i) => (
-                      <img
-                        key={i}
-                        src="/blue_plate.svg"
-                        alt=""
-                        className="h-10 w-10 sm:h-12 sm:w-12"
-                        style={{ opacity: 0.3 + i * 0.2 }}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-muted-foreground text-[10px] tabular-nums">
-                    {plateTotal(n, false)} lb
+          {/* Mockup sparkline charts */}
+          <div className="from-muted/20 via-background to-muted/30 flex flex-col justify-center gap-3 rounded-xl border bg-gradient-to-br p-4 opacity-55 saturate-[0.85] sm:p-6">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Press", target: 135, path: "M0,58 C20,55 40,48 60,42 C80,38 100,35 120,30 C140,28 160,32 180,27 C200,24 220,22 240,20" },
+                { label: "Bench", target: 225, path: "M0,62 C20,58 40,50 60,44 C80,40 100,36 120,38 C140,34 160,30 180,26 C200,22 220,20 240,18" },
+                { label: "Squat", target: 315, path: "M0,55 C20,52 40,46 60,42 C80,36 100,32 120,28 C140,24 160,22 180,20 C200,18 220,16 240,14" },
+                { label: "Deadlift", target: 405, path: "M0,60 C20,56 40,48 60,40 C80,34 100,30 120,26 C140,22 160,20 180,18 C200,16 220,14 240,12" },
+              ].map(({ label, path }) => (
+                <div key={label} className="space-y-0.5">
+                  <span className="text-muted-foreground text-[10px] font-medium">
+                    {label}
                   </span>
+                  <svg
+                    viewBox="0 0 240 70"
+                    className="h-[50px] w-full"
+                    preserveAspectRatio="none"
+                    aria-hidden
+                  >
+                    <line
+                      x1="0" y1="30" x2="240" y2="30"
+                      stroke="#10B981"
+                      strokeWidth="1.5"
+                      strokeDasharray="4 3"
+                      opacity="0.6"
+                    />
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke="#6366F1"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
                 </div>
               ))}
             </div>
             <p className="text-muted-foreground text-center text-xs">
-              Your data fills in the sliders above so you can see exactly where
-              you stand on each plate milestone.
+              Your data unlocks E1RM charts for each lift with plate
+              milestone markers.
             </p>
           </div>
         </div>

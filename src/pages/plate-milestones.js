@@ -1607,10 +1607,10 @@ function PlateImportCtaCard() {
           <div className="from-muted/20 via-background to-muted/30 flex flex-col justify-center gap-3 rounded-xl border bg-gradient-to-br p-4 opacity-55 saturate-[0.85] sm:p-6">
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Press", target: 135, path: "M0,62 C20,60 40,58 60,56 C80,54 100,52 120,50 C140,48 160,46 180,44 C200,42 220,40 240,38" },
-                { label: "Bench", target: 225, path: "M0,55 C20,50 40,44 60,38 C80,35 100,40 120,44 C140,38 160,32 180,28 C200,24 220,22 240,18" },
-                { label: "Squat", target: 315, path: "M0,60 C20,54 40,46 60,38 C80,32 100,28 120,26 C140,24 160,22 180,20 C200,18 220,16 240,14" },
-                { label: "Deadlift", target: 405, path: "M0,50 C20,44 40,36 60,28 C80,24 100,22 120,20 C140,18 160,18 180,16 C200,16 220,14 240,14" },
+                { label: "Press", target: 135, path: "M0,58 C15,54 30,50 50,46 C65,50 80,54 100,48 C115,44 130,48 150,42 C170,38 190,42 210,36 C225,34 235,36 240,34" },
+                { label: "Bench", target: 225, path: "M0,56 C15,50 35,44 55,40 C70,44 85,48 100,42 C120,36 135,32 155,28 C170,34 190,30 210,24 C225,20 235,18 240,16" },
+                { label: "Squat", target: 315, path: "M0,62 C15,56 35,52 50,44 C65,40 80,44 100,38 C115,34 135,30 155,26 C170,30 185,24 205,20 C220,16 232,18 240,14" },
+                { label: "Deadlift", target: 405, path: "M0,52 C15,46 35,40 50,34 C65,30 80,36 100,30 C115,26 135,22 150,18 C170,22 185,18 205,14 C220,12 232,14 240,10" },
               ].map(({ label, path }) => (
                 <div key={label} className="space-y-0.5">
                   <span className="text-muted-foreground text-[10px] font-medium">

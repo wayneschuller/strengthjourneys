@@ -1510,11 +1510,12 @@ function PlateImportCtaCard() {
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-lg">
             <LineChart className="h-5 w-5" />
-            Your E1RM over time
+            Chase the plates
           </CardTitle>
           <CardDescription>
-            Import your workout data to see your rolling 90-day E1RM for
-            each lift and how you track toward each plate milestone.
+            Import your lifting history to track your journey toward each
+            plate milestone. See when you first loaded two wheels, three
+            plates, or joined the four-plate club.
           </CardDescription>
         </div>
       </CardHeader>
@@ -1606,10 +1607,10 @@ function PlateImportCtaCard() {
           <div className="from-muted/20 via-background to-muted/30 flex flex-col justify-center gap-3 rounded-xl border bg-gradient-to-br p-4 opacity-55 saturate-[0.85] sm:p-6">
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Press", target: 135, path: "M0,58 C20,55 40,48 60,42 C80,38 100,35 120,30 C140,28 160,32 180,27 C200,24 220,22 240,20" },
-                { label: "Bench", target: 225, path: "M0,62 C20,58 40,50 60,44 C80,40 100,36 120,38 C140,34 160,30 180,26 C200,22 220,20 240,18" },
-                { label: "Squat", target: 315, path: "M0,55 C20,52 40,46 60,42 C80,36 100,32 120,28 C140,24 160,22 180,20 C200,18 220,16 240,14" },
-                { label: "Deadlift", target: 405, path: "M0,60 C20,56 40,48 60,40 C80,34 100,30 120,26 C140,22 160,20 180,18 C200,16 220,14 240,12" },
+                { label: "Press", target: 135, path: "M0,62 C20,60 40,58 60,56 C80,54 100,52 120,50 C140,48 160,46 180,44 C200,42 220,40 240,38" },
+                { label: "Bench", target: 225, path: "M0,55 C20,50 40,44 60,38 C80,35 100,40 120,44 C140,38 160,32 180,28 C200,24 220,22 240,18" },
+                { label: "Squat", target: 315, path: "M0,60 C20,54 40,46 60,38 C80,32 100,28 120,26 C140,24 160,22 180,20 C200,18 220,16 240,14" },
+                { label: "Deadlift", target: 405, path: "M0,50 C20,44 40,36 60,28 C80,24 100,22 120,20 C140,18 160,18 180,16 C200,16 220,14 240,14" },
               ].map(({ label, path }) => (
                 <div key={label} className="space-y-0.5">
                   <span className="text-muted-foreground text-[10px] font-medium">
@@ -1640,8 +1641,7 @@ function PlateImportCtaCard() {
               ))}
             </div>
             <p className="text-muted-foreground text-center text-xs">
-              Your data unlocks E1RM charts for each lift with plate
-              milestone markers.
+              See exactly when you earned each plate milestone.
             </p>
           </div>
         </div>

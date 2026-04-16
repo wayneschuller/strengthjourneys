@@ -257,6 +257,14 @@ const getPlateBreakdown = (totalWeightLb) =>
 
 const plateLabel = (n) => `${n} plate${n === 1 ? "" : "s"}`;
 
+// Unit-aware plate threshold check.
+// In metric mode, compare displayed kg against the true metric plate target
+// (4 plates = 180 kg, NOT toKg(405) = 184 kg).
+const meetsPlateTarget = (valueLb, tierN, isMetric) =>
+  isMetric
+    ? toKg(valueLb) >= plateTotal(tierN, true)
+    : valueLb >= plateTotal(tierN, false);
+
 const formatMonthYear = (dateStr) => {
   const d = new Date(dateStr + "T00:00:00Z");
   return d.toLocaleDateString("en-US", {
@@ -483,7 +491,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
   // Check if classic 1/2/3/4 is complete
   const classicClubAchieved = MILESTONES.every(
-    (m) => values[m.key] >= plateTotal(m.targetPlates, false),
+    (m) => meetsPlateTarget(values[m.key], m.targetPlates, isMetric),
   );
 
   // Count total plate tiers achieved across all lifts
@@ -491,11 +499,11 @@ function PlateMilestonesMain({ relatedArticles }) {
     let count = 0;
     for (const m of MILESTONES) {
       for (const n of m.tiers) {
-        if (values[m.key] >= plateTotal(n, false)) count++;
+        if (meetsPlateTarget(values[m.key], n, isMetric)) count++;
       }
     }
     return count;
-  }, [values]);
+  }, [values, isMetric]);
 
   const totalTiersPossible = MILESTONES.reduce(
     (sum, m) => sum + m.tiers.length,
@@ -653,7 +661,8 @@ function PlateMilestonesMain({ relatedArticles }) {
     return Object.keys(timelines).length > 0 ? timelines : null;
   }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
 
-  // First/last dates the user crossed each plate tier (derived from timelines)
+  // First/last dates the user crossed each plate tier (derived from timelines).
+  // Checks ALL_TIERS (not just classic targets) so bonus tiers are shown.
   const milestoneDates = useMemo(() => {
     if (!liftTimelines) return null;
 
@@ -663,20 +672,24 @@ function PlateMilestonesMain({ relatedArticles }) {
       if (!timeline) continue;
 
       const tierInfo = {};
-      for (const tierN of milestone.tiers) {
-        const threshold = plateTotal(tierN, false);
+      for (const tierN of ALL_TIERS) {
+        const threshold = isMetric
+          ? plateTotal(tierN, true)
+          : plateTotal(tierN, false);
         let first = null;
         let last = null;
 
         for (const point of timeline) {
-          if (point.e1rm >= threshold) {
+          const displayVal = isMetric ? toKg(point.e1rm) : point.e1rm;
+          if (displayVal >= threshold) {
             if (!first) first = point.date;
             last = point.date;
           }
         }
 
-        const currentlyAbove =
-          timeline[timeline.length - 1].e1rm >= threshold;
+        const lastPoint = timeline[timeline.length - 1];
+        const lastDisplay = isMetric ? toKg(lastPoint.e1rm) : lastPoint.e1rm;
+        const currentlyAbove = lastDisplay >= threshold;
 
         if (first) {
           tierInfo[tierN] = { first, last, currentlyAbove };
@@ -689,7 +702,7 @@ function PlateMilestonesMain({ relatedArticles }) {
     }
 
     return Object.keys(dates).length > 0 ? dates : null;
-  }, [liftTimelines]);
+  }, [liftTimelines, isMetric]);
 
   const handleResetToPRs = useCallback(() => {
     if (!prWeightsLb) return;
@@ -843,7 +856,7 @@ function PlateMilestonesMain({ relatedArticles }) {
             >
               {classicClubAchieved
                 ? "1/2/3/4 Plate Club achieved!"
-                : `${MILESTONES.filter((m) => values[m.key] >= plateTotal(m.targetPlates, false)).length} of 4 classic milestones achieved`}
+                : `${MILESTONES.filter((m) => meetsPlateTarget(values[m.key], m.targetPlates, isMetric)).length} of 4 classic milestones achieved`}
             </span>
             {hasMovedFromPR && (
               <Button
@@ -951,17 +964,16 @@ function PlateMilestonesMain({ relatedArticles }) {
             </thead>
             <tbody>
               {ALL_TIERS.map((n) => {
-                const threshold = plateTotal(n, false);
                 const liftsAtTier = usingUserData
                   ? MILESTONES.filter(
-                      (m) => values[m.key] >= threshold,
+                      (m) => meetsPlateTarget(values[m.key], n, isMetric),
                     ).map((m) => SHORT_LIFT_NAMES[m.liftType])
                   : [];
                 const liftsBelow = usingUserData
                   ? MILESTONES.filter(
                       (m) =>
                         m.tiers.includes(n) &&
-                        values[m.key] < threshold,
+                        !meetsPlateTarget(values[m.key], n, isMetric),
                     )
                   : [];
 
@@ -995,9 +1007,11 @@ function PlateMilestonesMain({ relatedArticles }) {
                             {liftsBelow.length > 0
                               ? liftsBelow
                                   .map((m) => {
-                                    const gap = isMetric
-                                      ? `${toKg(threshold) - toKg(values[m.key])} kg`
-                                      : `${threshold - values[m.key]} lb`;
+                                    const target = plateTotal(n, isMetric);
+                                    const current = isMetric
+                                      ? toKg(values[m.key])
+                                      : values[m.key];
+                                    const gap = `${target - current} ${isMetric ? "kg" : "lb"}`;
                                     return `${SHORT_LIFT_NAMES[m.liftType]}: ${gap} to go`;
                                   })
                                   .join("; ")
@@ -1109,15 +1123,18 @@ function MilestoneRow({
   tierDates,
 }) {
   const { key, liftType, targetPlates, tiers, maxLb } = milestone;
-  const targetWeightLb = plateTotal(targetPlates, false);
-  const achieved = value >= targetWeightLb;
+  const achieved = meetsPlateTarget(value, targetPlates, isMetric);
 
-  // Count how many tiers this lift has achieved
+  // Count how many classic tiers this lift has achieved
   const tiersAchieved = tiers.filter(
-    (n) => value >= plateTotal(n, false),
+    (n) => meetsPlateTarget(value, n, isMetric),
   ).length;
 
   const hasDates = tierDates && Object.keys(tierDates).length > 0;
+  // Show all tiers that have dates (includes bonus tiers beyond classic target)
+  const displayTiers = hasDates
+    ? ALL_TIERS.filter((n) => tierDates[n])
+    : [];
 
   return (
     <div
@@ -1197,7 +1214,7 @@ function MilestoneRow({
                   ? tiersAchieved === tiers.length
                     ? "Done!"
                     : `${tiersAchieved}/${tiers.length}`
-                  : `${isMetric ? toKg(targetWeightLb) - toKg(value) : targetWeightLb - value} ${isMetric ? "kg" : "lb"} to go`}
+                  : `${isMetric ? plateTotal(targetPlates, true) - toKg(value) : plateTotal(targetPlates, false) - value} ${isMetric ? "kg" : "lb"} to go`}
               </span>
             </div>
           </div>
@@ -1215,9 +1232,9 @@ function MilestoneRow({
       </div>
 
       {/* Personal milestone dates (only with user data) */}
-      {hasDates && (
+      {displayTiers.length > 0 && (
         <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-[11px]">
-          {tiers.map((n) => {
+          {displayTiers.map((n) => {
             const info = tierDates[n];
             if (!info) return null;
             const firstStr = formatMonthYear(info.first);

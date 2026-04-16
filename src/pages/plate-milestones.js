@@ -65,6 +65,16 @@ import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  ReferenceLine,
+  Tooltip as RechartsTooltip,
+} from "recharts";
+
 const LIFT_GRAPHICS = {
   "Strict Press": "/strict_press.svg",
   "Bench Press": "/bench_press.svg",
@@ -246,6 +256,22 @@ const getPlateBreakdown = (totalWeightLb) =>
   );
 
 const plateLabel = (n) => `${n} plate${n === 1 ? "" : "s"}`;
+
+const formatMonthYear = (dateStr) => {
+  const d = new Date(dateStr + "T00:00:00Z");
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+};
+
+const SHORT_LIFT_NAMES = {
+  "Strict Press": "Press",
+  "Bench Press": "Bench",
+  "Back Squat": "Squat",
+  Deadlift: "Deadlift",
+};
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Milestones";
@@ -546,6 +572,125 @@ function PlateMilestonesMain({ relatedArticles }) {
     return hasDistinct ? result : null;
   }, [e1rmFormula, isDemoMode, parsedData, prWeightsLb, recent90dCutoffDate]);
 
+  // Rolling 90-day best E1RM timeline per lift (same approach as 1000lb page)
+  const liftTimelines = useMemo(() => {
+    if (!parsedData?.length || isDemoMode || !usingUserData) return null;
+
+    const WINDOW_DAYS = 90;
+    const timelines = {};
+
+    for (const milestone of MILESTONES) {
+      const entries = [];
+      for (const d of parsedData) {
+        if (
+          d.liftType !== milestone.liftType ||
+          d.isGoal ||
+          d.reps <= 0 ||
+          d.weight <= 0
+        )
+          continue;
+        entries.push({
+          ms: new Date(d.date).getTime(),
+          weightLb: toLb(d.weight, d.unitType),
+          reps: d.reps,
+        });
+      }
+      entries.sort((a, b) => a.ms - b.ms);
+      if (entries.length < 2) continue;
+
+      const firstMs = entries[0].ms;
+      const lastMs = entries[entries.length - 1].ms;
+      const spanDays = (lastMs - firstMs) / 86400000;
+
+      let intervalDays;
+      if (spanDays <= 180) intervalDays = 7;
+      else if (spanDays <= 730) intervalDays = 14;
+      else intervalDays = 30;
+
+      const sampleTimestamps = [];
+      let cursorMs = firstMs + WINDOW_DAYS * 86400000;
+      while (cursorMs <= lastMs) {
+        sampleTimestamps.push(cursorMs);
+        cursorMs += intervalDays * 86400000;
+      }
+      if (
+        sampleTimestamps.length === 0 ||
+        (lastMs - sampleTimestamps[sampleTimestamps.length - 1]) / 86400000 > 7
+      ) {
+        sampleTimestamps.push(lastMs);
+      }
+      if (sampleTimestamps.length < 2) continue;
+
+      const points = [];
+      for (const sampleMs of sampleTimestamps) {
+        const cutoff = sampleMs - WINDOW_DAYS * 86400000;
+        let bestE1rm = 0;
+
+        for (const entry of entries) {
+          if (entry.ms > sampleMs) break;
+          if (entry.ms < cutoff) continue;
+          const e1rm =
+            entry.reps === 1
+              ? entry.weightLb
+              : estimateE1RM(entry.reps, entry.weightLb, e1rmFormula);
+          if (e1rm > bestE1rm) bestE1rm = e1rm;
+        }
+
+        if (bestE1rm === 0) continue;
+
+        points.push({
+          date: new Date(sampleMs).toISOString().slice(0, 10),
+          timestamp: sampleMs,
+          e1rm: Math.round(bestE1rm),
+        });
+      }
+
+      if (points.length >= 2) {
+        timelines[milestone.key] = points;
+      }
+    }
+
+    return Object.keys(timelines).length > 0 ? timelines : null;
+  }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
+
+  // First/last dates the user crossed each plate tier (derived from timelines)
+  const milestoneDates = useMemo(() => {
+    if (!liftTimelines) return null;
+
+    const dates = {};
+    for (const milestone of MILESTONES) {
+      const timeline = liftTimelines[milestone.key];
+      if (!timeline) continue;
+
+      const tierInfo = {};
+      for (const tierN of milestone.tiers) {
+        const threshold = plateTotal(tierN, false);
+        let first = null;
+        let last = null;
+
+        for (const point of timeline) {
+          if (point.e1rm >= threshold) {
+            if (!first) first = point.date;
+            last = point.date;
+          }
+        }
+
+        const currentlyAbove =
+          timeline[timeline.length - 1].e1rm >= threshold;
+
+        if (first) {
+          tierInfo[tierN] = { first, last, currentlyAbove };
+        }
+      }
+
+      if (Object.keys(tierInfo).length > 0) {
+        dates[milestone.key] = tierInfo;
+      }
+    }
+
+    return Object.keys(dates).length > 0 ? dates : null;
+  }, [liftTimelines]);
+
   const handleResetToPRs = useCallback(() => {
     if (!prWeightsLb) return;
     for (const m of MILESTONES) {
@@ -674,6 +819,8 @@ function PlateMilestonesMain({ relatedArticles }) {
                 prVal={prWeightsLb?.[milestone.key]}
                 r90Val={recent90dLb?.[milestone.key]}
                 isMetric={isMetric}
+                timeline={liftTimelines?.[milestone.key]}
+                tierDates={milestoneDates?.[milestone.key]}
               />
             ))}
           </div>
@@ -789,28 +936,73 @@ function PlateMilestonesMain({ relatedArticles }) {
                 <th className="px-3 py-2 text-left font-semibold">
                   Gym talk
                 </th>
+                {usingUserData && (
+                  <th className="px-3 py-2 text-left font-semibold">
+                    Your lifts
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
-              {ALL_TIERS.map((n) => (
-                <tr key={n} className="border-b last:border-0">
-                  <td className="px-3 py-2 font-medium">
-                    {n} {n === 1 ? "plate" : "plates"}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {plateTotal(n, false)} lb
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {plateTotal(n, true)} kg
-                  </td>
-                  <td className="text-muted-foreground px-3 py-2">
-                    {n === 1 && "\"Got my first plate\""}
-                    {n === 2 && "\"Two wheels\" / \"two blues\""}
-                    {n === 3 && "\"Three plates\" / \"three wheels\""}
-                    {n === 4 && "\"Four plates\" / \"four 45s\""}
-                  </td>
-                </tr>
-              ))}
+              {ALL_TIERS.map((n) => {
+                const threshold = plateTotal(n, false);
+                const liftsAtTier = usingUserData
+                  ? MILESTONES.filter(
+                      (m) => values[m.key] >= threshold,
+                    ).map((m) => SHORT_LIFT_NAMES[m.liftType])
+                  : [];
+                const liftsBelow = usingUserData
+                  ? MILESTONES.filter(
+                      (m) =>
+                        m.tiers.includes(n) &&
+                        values[m.key] < threshold,
+                    )
+                  : [];
+
+                return (
+                  <tr key={n} className="border-b last:border-0">
+                    <td className="px-3 py-2 font-medium">
+                      {n} {n === 1 ? "plate" : "plates"}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {plateTotal(n, false)} lb
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {plateTotal(n, true)} kg
+                    </td>
+                    <td className="text-muted-foreground px-3 py-2">
+                      {n === 1 && "\"Got my first plate\""}
+                      {n === 2 && "\"Two wheels\" / \"two blues\""}
+                      {n === 3 && "\"Three plates\" / \"three wheels\""}
+                      {n === 4 && "\"Four plates\" / \"four 45s\""}
+                    </td>
+                    {usingUserData && (
+                      <td className="px-3 py-2">
+                        {liftsAtTier.length > 0 ? (
+                          <span className="text-xs font-medium text-green-600">
+                            {liftsAtTier.length === 4
+                              ? "All 4 lifts"
+                              : liftsAtTier.join(", ")}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">
+                            {liftsBelow.length > 0
+                              ? liftsBelow
+                                  .map((m) => {
+                                    const gap = isMetric
+                                      ? `${toKg(threshold) - toKg(values[m.key])} kg`
+                                      : `${threshold - values[m.key]} lb`;
+                                    return `${SHORT_LIFT_NAMES[m.liftType]}: ${gap} to go`;
+                                  })
+                                  .join("; ")
+                              : "\u2014"}
+                          </span>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -908,18 +1100,20 @@ function MilestoneRow({
   prVal,
   r90Val,
   isMetric,
+  timeline,
+  tierDates,
 }) {
   const { key, liftType, targetPlates, tiers, maxLb } = milestone;
   const targetWeightLb = plateTotal(targetPlates, false);
-  const percent = Math.min(100, Math.round((value / targetWeightLb) * 100));
   const achieved = value >= targetWeightLb;
-
-  const breakdown = getPlateBreakdown(value);
 
   // Count how many tiers this lift has achieved
   const tiersAchieved = tiers.filter(
     (n) => value >= plateTotal(n, false),
   ).length;
+
+  const hasDates = tierDates && Object.keys(tierDates).length > 0;
+  const hasTimeline = timeline && timeline.length >= 2;
 
   return (
     <div
@@ -1015,6 +1209,181 @@ function MilestoneRow({
           />
         </div>
       </div>
+
+      {/* Personal milestone dates + sparkline (only with user data) */}
+      {(hasDates || hasTimeline) && (
+        <div className="mt-2 space-y-2 border-t pt-2">
+          {hasDates && (
+            <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+              {tiers.map((n) => {
+                const info = tierDates[n];
+                if (!info) return null;
+                const firstStr = formatMonthYear(info.first);
+                const lastStr = formatMonthYear(info.last);
+                const sameMonth = firstStr === lastStr;
+                return (
+                  <span key={n} className="flex items-center gap-1">
+                    <span
+                      className={cn(
+                        "inline-block h-1.5 w-1.5 rounded-full",
+                        info.currentlyAbove
+                          ? "bg-green-500"
+                          : "bg-amber-500",
+                      )}
+                    />
+                    <span className="text-foreground font-medium">
+                      {plateLabel(n)}
+                    </span>
+                    {info.currentlyAbove ? (
+                      <span>since {firstStr}</span>
+                    ) : sameMonth ? (
+                      <span>{firstStr}</span>
+                    ) : (
+                      <span>
+                        first {firstStr}, last {lastStr}
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {hasTimeline && (
+            <MilestoneSparkline
+              timeline={timeline}
+              tiers={tiers}
+              liftKey={key}
+              isMetric={isMetric}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Sparkline tooltip ---
+function SparklineTooltipContent({ active, payload, isMetric }) {
+  if (!active || !payload?.[0]) return null;
+  const { timestamp, e1rm } = payload[0].payload;
+  const dateStr = new Date(timestamp).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  return (
+    <div className="bg-popover rounded-lg border px-2 py-1.5 text-xs shadow-md">
+      <div className="font-medium">{dateStr}</div>
+      <div>E1RM: {displayWeight(e1rm, isMetric)}</div>
+    </div>
+  );
+}
+
+// --- Per-lift E1RM sparkline with plate tier reference lines ---
+function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
+  if (!timeline || timeline.length < 2) return null;
+
+  const tierWeights = tiers.map((n) => plateTotal(n, false));
+  const maxTierWeight = Math.max(...tierWeights);
+  const minTierWeight = Math.min(...tierWeights);
+  const maxE1rm = Math.max(...timeline.map((p) => p.e1rm));
+  const minE1rm = Math.min(...timeline.map((p) => p.e1rm));
+
+  const yMax =
+    Math.ceil(Math.max(maxE1rm + 10, maxTierWeight + 20) / 25) * 25;
+  const yMin =
+    Math.floor(
+      Math.max(0, Math.min(minE1rm - 10, minTierWeight - 20)) / 25,
+    ) * 25;
+
+  const spanDays =
+    (timeline[timeline.length - 1].timestamp - timeline[0].timestamp) /
+    86400000;
+
+  const formatXTick = (ts) => {
+    const d = new Date(ts);
+    if (spanDays <= 365)
+      return d.toLocaleDateString("en-US", { month: "short" });
+    if (spanDays <= 1095)
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        year: "2-digit",
+      });
+    return d.toLocaleDateString("en-US", { year: "numeric" });
+  };
+
+  const formatYTick = (v) => (isMetric ? `${toKg(v)}` : `${v}`);
+
+  return (
+    <div className="h-[110px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={timeline}
+          margin={{ top: 4, right: 36, bottom: 0, left: -16 }}
+        >
+          <defs>
+            <linearGradient
+              id={`spark-${liftKey}`}
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="0%" stopColor="#6366F1" stopOpacity={0.15} />
+              <stop offset="100%" stopColor="#6366F1" stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <XAxis
+            dataKey="timestamp"
+            type="number"
+            scale="time"
+            domain={["dataMin", "dataMax"]}
+            tickFormatter={formatXTick}
+            tick={{ fontSize: 10 }}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis
+            domain={[yMin, yMax]}
+            tick={{ fontSize: 10 }}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={formatYTick}
+            width={36}
+          />
+          {tierWeights.map((w, i) => (
+            <ReferenceLine
+              key={tiers[i]}
+              y={w}
+              stroke="#10B981"
+              strokeDasharray="4 3"
+              strokeWidth={1.5}
+              label={{
+                value: `${plateLabel(tiers[i])}`,
+                position: "insideRight",
+                offset: -4,
+                dy: -8,
+                fill: "#10B981",
+                fontSize: 10,
+                fontWeight: 600,
+              }}
+            />
+          ))}
+          <RechartsTooltip
+            content={<SparklineTooltipContent isMetric={isMetric} />}
+          />
+          <Area
+            type="monotone"
+            dataKey="e1rm"
+            stroke="#6366F1"
+            strokeWidth={2}
+            fill={`url(#spark-${liftKey})`}
+            dot={false}
+            activeDot={{ r: 3, strokeWidth: 1.5 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }

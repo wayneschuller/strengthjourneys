@@ -7,11 +7,11 @@ import {
   NOTABLE_LIFTS_EMPTY_PHRASES,
 } from "@/components/year-recap/phrases";
 import {
-  getReadableDateString,
   getPRHighlightsForYear,
   getLifetimePRsAchievedInYear,
   getDisplayWeight,
 } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";

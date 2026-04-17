@@ -9,10 +9,8 @@ import {
   getStrengthRatingForE1RM,
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
-import {
-  getReadableDateString,
-  getCelebrationEmoji,
-} from "@/lib/processing-utils";
+import { getCelebrationEmoji } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
   Card,

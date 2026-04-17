@@ -27,10 +27,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
-import {
-  getDisplayWeight,
-  getReadableDateString,
-} from "@/lib/processing-utils";
+import { getDisplayWeight } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import {
   getYouTubeThumbnailSrc,
   getYouTubeWatchHref,

@@ -9,9 +9,9 @@ import { useReadLocalStorage } from "usehooks-ts";
 import {
   getCelebrationEmoji,
   getDisplayWeight,
-  getReadableDateString,
   findBestE1RM,
 } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";

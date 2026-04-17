@@ -9,11 +9,8 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { LOCAL_STORAGE_KEYS, getSelectedLiftsKey } from "@/lib/localStorage-keys";
-import {
-  BIG_FOUR_LIFT_TYPES,
-  devLog,
-  getReadableDateString,
-} from "@/lib/processing-utils";
+import { BIG_FOUR_LIFT_TYPES, devLog } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { DemoModeBadge } from "@/components/demo-mode-badge";

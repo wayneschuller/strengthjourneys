@@ -25,13 +25,13 @@ import {
 } from "@/components/home-dashboard/session-exercise-block";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
-  getReadableDateString,
   getDisplayWeight,
   getCelebrationEmoji,
   PRIORITY_REP_SCHEMES,
   devLog,
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { generateSessionSets } from "@/lib/warmups";
 import {
   getLiftPercentiles,

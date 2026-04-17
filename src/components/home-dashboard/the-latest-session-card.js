@@ -48,10 +48,10 @@ import {
 import {
   findLiftPositionInTopLifts,
   getCelebrationEmoji,
-  getReadableDateString,
   getAnalyzedSessionLifts,
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { LoaderCircle, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { SessionExerciseBlock } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";

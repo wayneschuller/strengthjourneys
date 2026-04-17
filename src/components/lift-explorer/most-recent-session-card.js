@@ -17,10 +17,10 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { differenceInDays } from "date-fns";
 import {
-  getReadableDateString,
   getAnalyzedSessionLifts,
   getSessionDatesContainingLiftType,
 } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { SessionExerciseBlock } from "@/components/home-dashboard/session-exercise-block";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { DemoModeBadge } from "@/components/demo-mode-badge";

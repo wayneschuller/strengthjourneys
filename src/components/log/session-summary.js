@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getReadableDateString } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { getLiftAnchorId } from "@/components/log/utils";
 
 export function getSessionSidebarSummary(

@@ -83,6 +83,60 @@ export function formatDateToYmdUtc(date) {
   return `${y}-${m}-${day}`;
 }
 
+const READABLE_DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+const READABLE_MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/**
+ * Convert "YYYY-MM-DD" to a short readable date string (e.g. "Apr 16" or
+ * "Thursday, Apr 16"). The year is appended only when it's not the current
+ * calendar year.
+ *
+ * Uses the UTC round-trip (parse at UTC midnight, read back via UTC getters)
+ * so every locale renders the same calendar day the user logged. Do NOT mix
+ * in local getters here — see the timezone model at the top of this file.
+ */
+export function getReadableDateString(ISOdate, includeDayOfWeek = false) {
+  const date = parseYmdUtc(ISOdate);
+
+  const dayOfWeek = READABLE_DAY_NAMES[date.getUTCDay()];
+  const dayOfMonth = date.getUTCDate();
+  const month = READABLE_MONTH_NAMES[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
+
+  let dateString = includeDayOfWeek
+    ? `${dayOfWeek}, ${month} ${dayOfMonth}`
+    : `${month} ${dayOfMonth}`;
+  const currentYear = new Date().getFullYear();
+
+  if (year !== currentYear) {
+    dateString += `, ${year}`;
+  }
+
+  return dateString;
+}
+
 export function getYearFromYmd(dateStr) {
   if (!dateStr || dateStr.length < 4) return null;
   const year = Number.parseInt(dateStr.slice(0, 4), 10);

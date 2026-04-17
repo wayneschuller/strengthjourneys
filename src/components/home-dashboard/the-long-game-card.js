@@ -1426,39 +1426,27 @@ function findStartEndDates(parsedData) {
     return null; // Return null for an empty array or invalid input
   }
 
-  // Initialize start and end dates with the date of the first item in the array
-  let startDate = new Date(parsedData[0].date);
-  let endDate = new Date(parsedData[0].date);
+  // parsedData[].date is already "YYYY-MM-DD", so string compare gives us the
+  // min/max calendar date without constructing Dates (which would tempt local
+  // getters and re-introduce the USA/EU off-by-one bug).
+  let startDate = parsedData[0].date;
+  let endDate = parsedData[0].date;
 
-  // Iterate through the array to find the actual start and end dates
   parsedData.forEach((item) => {
-    const currentDate = new Date(item.date);
-
-    if (currentDate < startDate) {
-      startDate = currentDate;
-    }
-
-    if (currentDate > endDate) {
-      endDate = currentDate;
-    }
+    if (item.date < startDate) startDate = item.date;
+    if (item.date > endDate) endDate = item.date;
   });
 
-  return {
-    startDate: format(startDate, "yyyy-MM-dd"),
-    endDate: format(endDate, "yyyy-MM-dd"),
-  };
+  return { startDate, endDate };
 }
 
 // Produces one Jan 1–Dec 31 interval per calendar year spanned by the user's data.
 // Input strings are "yyyy-MM-dd". Each interval drives one Heatmap row in the daily view.
 function generateYearRanges(startDateStr, endDateStr) {
-  // Convert input date strings to Date objects
-  const startDate = new Date(startDateStr);
-  const endDate = new Date(endDateStr);
-
-  // Get the year of the start and end dates
-  const startYear = startDate.getFullYear();
-  const endYear = endDate.getFullYear();
+  // Parse year directly from "YYYY-MM-DD" — avoids the UTC-parse-plus-local-getter
+  // off-by-one that shifts Jan 1 entries to the prior year for USA/EU users.
+  const startYear = parseInt(startDateStr.slice(0, 4), 10);
+  const endYear = parseInt(endDateStr.slice(0, 4), 10);
 
   // Generate one range per calendar year
   const yearRanges = [];

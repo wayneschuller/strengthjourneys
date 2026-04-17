@@ -999,16 +999,17 @@ function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "Ge
 
   const formatTick = (dateStr) => {
     const d = new Date(dateStr);
+    const tz = "UTC"; // dateStr parses as UTC midnight; format in UTC to avoid local day-shift
     if (spanDays <= 365) {
       // Short: show "Mar", "Apr", etc.
-      return d.toLocaleDateString("en-US", { month: "short" });
+      return d.toLocaleDateString("en-US", { month: "short", timeZone: tz });
     }
     if (spanDays <= 365 * 4) {
       // Medium: show "Mar '24"
-      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit", timeZone: tz });
     }
     // Long: show "'20", "'21", etc.
-    return "\u2019" + d.toLocaleDateString("en-US", { year: "2-digit" });
+    return "\u2019" + d.toLocaleDateString("en-US", { year: "2-digit", timeZone: tz });
   };
 
   // Thin out tick labels to avoid overlap — show ~5-7 labels max
@@ -1020,7 +1021,11 @@ function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "Ge
 
   const formatTooltipDate = (dateStr) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    });
   };
 
   // Compute Y domain: floor to nearest 10 below min, cap at 100

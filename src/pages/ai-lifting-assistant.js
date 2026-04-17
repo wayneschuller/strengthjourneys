@@ -1004,8 +1004,10 @@ function buildRecentSessionWindowSections({
 function getRecentWindowDates(parsedData, recentSessionDate, windowDays = 28) {
   if (!parsedData || !recentSessionDate) return [];
 
+  // Use UTC date math — new Date("YYYY-MM-DD") is UTC midnight, so setDate
+  // (local) would shift the cutoff by a day in USA/EU timezones.
   const cutoffDate = new Date(recentSessionDate);
-  cutoffDate.setDate(cutoffDate.getDate() - (windowDays - 1));
+  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - (windowDays - 1));
 
   const dateSet = new Set();
 

@@ -14,7 +14,7 @@ export function getYearsWithData(parsedData) {
   const years = new Set();
   parsedData.forEach((entry) => {
     if (entry.isGoal || !entry.date) return;
-    const year = new Date(entry.date + "T00:00:00Z").getFullYear();
+    const year = new Date(entry.date + "T00:00:00Z").getUTCFullYear();
     years.add(year);
   });
 

@@ -312,9 +312,12 @@ const CustomTooltip = ({
 };
 
 // Format dates (assuming ISO format, e.g., "2018-08-31" -> "31 Aug 2018")
+// Parse as local midnight so toLocaleDateString doesn't shift the day in
+// USA/EU timezones (plain new Date("YYYY-MM-DD") is UTC midnight).
 const formatDate = (dateStr) => {
   if (!dateStr) return "Unknown Date";
-  const date = new Date(dateStr);
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
   return date.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",

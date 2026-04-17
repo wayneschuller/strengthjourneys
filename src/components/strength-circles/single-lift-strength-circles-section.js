@@ -316,16 +316,18 @@ function SingleLiftPercentileTimelineChart({
 
   const formatTick = (dateStr) => {
     const date = new Date(dateStr);
+    const tz = "UTC"; // dateStr parses as UTC midnight; format in UTC to avoid local day-shift
     if (spanDays <= 365) {
-      return date.toLocaleDateString("en-US", { month: "short" });
+      return date.toLocaleDateString("en-US", { month: "short", timeZone: tz });
     }
     if (spanDays <= 365 * 4) {
       return date.toLocaleDateString("en-US", {
         month: "short",
         year: "2-digit",
+        timeZone: tz,
       });
     }
-    return `’${date.toLocaleDateString("en-US", { year: "2-digit" })}`;
+    return `’${date.toLocaleDateString("en-US", { year: "2-digit", timeZone: tz })}`;
   };
 
   const maxTicks = spanDays <= 365 ? 6 : spanDays <= 365 * 4 ? 7 : 8;
@@ -390,6 +392,7 @@ function SingleLiftPercentileTimelineChart({
                 new Date(dateStr).toLocaleDateString("en-US", {
                   month: "short",
                   year: "numeric",
+                  timeZone: "UTC",
                 })
               }
               formatter={(value) => [`${value}%`, universeLabel]}

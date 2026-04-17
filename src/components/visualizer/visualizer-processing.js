@@ -80,14 +80,13 @@ export function processVisualizerData(
   // Convert to recharts date oriented array of data tuples
   const dataset = [];
   dataMap.forEach((lifts, date) => {
+    // Parse the YYYY-MM-DD parts directly — new Date("YYYY-MM-DD") is UTC midnight,
+    // and local getters on it give the previous calendar day in USA/EU timezones.
+    const [y, m, d] = date.split("-").map(Number);
     dataset.push({
       date,
       ...lifts,
-      rechartsDate: Date.UTC(
-        new Date(date).getFullYear(),
-        new Date(date).getMonth(),
-        new Date(date).getDate(),
-      ),
+      rechartsDate: Date.UTC(y, m - 1, d),
     });
   });
   // devLog(`${dataset.length} points of chart data`);
@@ -101,8 +100,8 @@ export function processVisualizerData(
 export const getYearLabels = (data) => {
   if (!data || data.length === 0) return []; // Handle null or empty data
   const years = [];
-  const startYear = new Date(data[0].date).getFullYear();
-  const endYear = new Date(data[data.length - 1].date).getFullYear();
+  const startYear = parseInt(data[0].date.slice(0, 4), 10);
+  const endYear = parseInt(data[data.length - 1].date.slice(0, 4), 10);
 
   for (let year = startYear; year <= endYear; year++) {
     const yearStart = new Date(`${year}-01-01`).getTime();

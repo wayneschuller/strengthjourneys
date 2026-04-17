@@ -150,12 +150,13 @@ export function VisualizerReps({ data, liftType }) {
       entry[`reps${t.reps}`] = found ? getDisplayWeight(found, isMetric).value : null;
       entry[`reps${t.reps}_tuple`] = found || null; // Store the full tuple (raw) for tooltip
     });
-    // Add rechartsDate field for consistency with visualizer-processing.js
-    entry.rechartsDate = Date.UTC(
-      new Date(date).getFullYear(),
-      new Date(date).getMonth(),
-      new Date(date).getDate(),
-    );
+    // Add rechartsDate field for consistency with visualizer-processing.js.
+    // Parse parts directly — new Date("YYYY-MM-DD") is UTC midnight, and local
+    // getters on it give the previous calendar day in USA/EU timezones.
+    {
+      const [y, m, d] = date.split("-").map(Number);
+      entry.rechartsDate = Date.UTC(y, m - 1, d);
+    }
     return entry;
   });
 

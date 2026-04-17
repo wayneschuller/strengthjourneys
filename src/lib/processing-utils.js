@@ -253,10 +253,12 @@ export function getReadableDateString(ISOdate, includeDayOfWeek = false) {
     "Dec",
   ];
 
-  const dayOfWeek = dayNames[date.getDay()];
-  const dayOfMonth = date.getDate();
-  const month = monthNames[date.getMonth()];
-  const year = date.getFullYear();
+  // Use UTC getters — the date was constructed at UTC midnight, so local
+  // getters produce off-by-one in USA/EU timezones (UTC-4 renders as prev day).
+  const dayOfWeek = dayNames[date.getUTCDay()];
+  const dayOfMonth = date.getUTCDate();
+  const month = monthNames[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
 
   let dateString = includeDayOfWeek
     ? `${dayOfWeek}, ${month} ${dayOfMonth}`

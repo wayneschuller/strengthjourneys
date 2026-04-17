@@ -1,4 +1,5 @@
 import { devLog, getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
+import { parseYmdLocal } from "@/lib/date-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { brightenHexColor, saturateHexColor } from "@/lib/color-tools";
 import {
@@ -25,7 +26,7 @@ export const SessionRow = ({ date, lifts, isMetric, showDate = true }) => {
   if (!lifts || lifts.length === 0) return null;
 
   const formattedDate = date
-    ? new Date(date).toLocaleDateString("en-US", {
+    ? parseYmdLocal(date).toLocaleDateString("en-US", {
         weekday: "short",
         month: "short",
         day: "numeric",

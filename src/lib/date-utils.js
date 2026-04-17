@@ -6,6 +6,15 @@ export function parseYmdUtc(dateStr) {
   return new Date(dateStr + "T00:00:00Z");
 }
 
+// Parse "YYYY-MM-DD" as a local calendar date (local midnight).
+// Use this when downstream formatting relies on local getters — toLocaleDateString,
+// date-fns format, .getDate/.getDay/.getMonth — so USA/EU timezones don't render
+// the previous day. Plain new Date("YYYY-MM-DD") parses as UTC midnight.
+export function parseYmdLocal(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export function formatDateToYmdLocal(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");

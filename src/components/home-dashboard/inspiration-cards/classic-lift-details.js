@@ -5,6 +5,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 
 import { STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
+import { parseYmdLocal } from "@/lib/date-utils";
 
 export function ClassicLiftDetails({ classicLiftMemory }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -24,7 +25,7 @@ export function ClassicLiftDetails({ classicLiftMemory }) {
       <div className="line-clamp-1">
         {classicLiftMemory.reasonLabel} ·{" "}
         <Link href={logDateHref} className="hover:text-foreground hover:underline">
-          {format(new Date(classicLiftMemory.lift.date), "d MMM yyyy")}
+          {format(parseYmdLocal(classicLiftMemory.lift.date), "d MMM yyyy")}
         </Link>
         {classicLiftMemory.strengthRating
           ? ` · ${STRENGTH_LEVEL_EMOJI[classicLiftMemory.strengthRating] ?? ""} ${classicLiftMemory.strengthRating}`

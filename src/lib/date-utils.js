@@ -1,20 +1,70 @@
 /**
  * Shared date helpers for the dashboard's YYYY-MM-DD data model.
  * Keep week math canonical here so cards and heatmaps agree on Monday-first buckets.
+ *
+ * ──────────────────────────────────────────────────────────────────────────
+ *  YYYY-MM-DD TIMEZONE MODEL (read before touching date code)
+ * ──────────────────────────────────────────────────────────────────────────
+ *  Lift dates flow through the app as "YYYY-MM-DD" strings with **no
+ *  timezone**: whatever calendar day the user typed in their Google Sheet.
+ *  We assume the user views the app in the same locale they logged in, so
+ *  there is a single right answer for "what day is this?".
+ *
+ *  The bug pattern to avoid is **mixing round-trips**:
+ *
+ *    new Date("2026-04-16")           // UTC midnight per ECMA-262
+ *    new Date("2026-04-16T00:00:00Z") // UTC midnight (explicit)
+ *    date.getDate()                   // LOCAL calendar day
+ *    date.toLocaleDateString(...)     // LOCAL calendar day (no timeZone opt)
+ *    format(date, "d MMM yyyy")       // LOCAL calendar day (date-fns)
+ *
+ *  Parsing a YMD string is UTC by default, but every "plain" getter is
+ *  local. In USA/EU (negative UTC offset), UTC midnight Apr 16 is still
+ *  Apr 15 locally — so "Apr 15" renders for a lift stored as "2026-04-16".
+ *
+ *  Pick **one** of these two round-trips and stay inside it:
+ *
+ *    1. UTC round-trip:   parseYmdUtc(str)   + .getUTC*() / timeZone:"UTC"
+ *                       + formatDateToYmdUtc(date)
+ *    2. Local round-trip: parseYmdLocal(str) + .get*()      / date-fns format
+ *                       + formatDateToYmdLocal(date)
+ *
+ *  Either is correct; both round-trip the same string unchanged. What
+ *  breaks is UTC-in / local-out (or vice-versa) — that's the off-by-one
+ *  fixed in commits 7cfb908b + 9d634a60.
+ *
+ *  When only the year/month/day is needed, prefer the string helpers
+ *  (getYearFromYmd, addDaysFromStr, subtractDaysFromStr, getWeekKeyFromDateStr)
+ *  — they sidestep Date entirely and are timezone-invariant by construction.
+ * ──────────────────────────────────────────────────────────────────────────
+ */
+
+/**
+ * Parse "YYYY-MM-DD" as UTC midnight.
+ * Pair with UTC getters (.getUTCFullYear, .getUTCMonth, .getUTCDate, .getUTCDay)
+ * or `toLocaleDateString(..., { timeZone: "UTC" })`. Do NOT read back with
+ * local getters or date-fns `format` — that re-introduces the USA/EU off-by-one.
  */
 export function parseYmdUtc(dateStr) {
   return new Date(dateStr + "T00:00:00Z");
 }
 
-// Parse "YYYY-MM-DD" as a local calendar date (local midnight).
-// Use this when downstream formatting relies on local getters — toLocaleDateString,
-// date-fns format, .getDate/.getDay/.getMonth — so USA/EU timezones don't render
-// the previous day. Plain new Date("YYYY-MM-DD") parses as UTC midnight.
+/**
+ * Parse "YYYY-MM-DD" as local midnight.
+ * Pair with local getters (.getFullYear, .getMonth, .getDate, .getDay),
+ * `toLocaleDateString()` without `timeZone`, or date-fns `format()`. Use this
+ * when the downstream formatter is locked to local — `new Date("YYYY-MM-DD")`
+ * would parse as UTC and render the previous day in USA/EU.
+ */
 export function parseYmdLocal(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
+/**
+ * Serialize a Date to "YYYY-MM-DD" using its LOCAL calendar day.
+ * Pair with `parseYmdLocal` — same round-trip, string goes in unchanged.
+ */
 export function formatDateToYmdLocal(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -22,6 +72,10 @@ export function formatDateToYmdLocal(date) {
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * Serialize a Date to "YYYY-MM-DD" using its UTC calendar day.
+ * Pair with `parseYmdUtc` — same round-trip, string goes in unchanged.
+ */
 export function formatDateToYmdUtc(date) {
   const y = date.getUTCFullYear();
   const m = String(date.getUTCMonth() + 1).padStart(2, "0");

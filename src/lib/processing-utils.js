@@ -222,11 +222,17 @@ export function getCelebrationEmoji(position) {
   return positionEmojis[position];
 }
 
-// Convert ISO "YYYY-MM-DD" to readable date string
+/**
+ * Convert ISO "YYYY-MM-DD" to a readable date string (e.g. "Apr 16" or
+ * "Thursday, Apr 16"). The year is appended only when it's not the current
+ * calendar year.
+ *
+ * Uses the UTC round-trip (parse at UTC midnight, read back via UTC getters)
+ * so every locale renders the same calendar day the user logged. Do NOT mix
+ * in local getters here — see the timezone model in src/lib/date-utils.js.
+ */
 export function getReadableDateString(ISOdate, includeDayOfWeek = false) {
-  // const date = new Date(ISOdate);
-
-  const date = new Date(ISOdate + "T00:00:00Z"); // Force midnight UTC time
+  const date = new Date(ISOdate + "T00:00:00Z");
 
   const dayNames = [
     "Sunday",
@@ -253,8 +259,6 @@ export function getReadableDateString(ISOdate, includeDayOfWeek = false) {
     "Dec",
   ];
 
-  // Use UTC getters — the date was constructed at UTC midnight, so local
-  // getters produce off-by-one in USA/EU timezones (UTC-4 renders as prev day).
   const dayOfWeek = dayNames[date.getUTCDay()];
   const dayOfMonth = date.getUTCDate();
   const month = monthNames[date.getUTCMonth()];

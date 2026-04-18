@@ -77,9 +77,8 @@ export function SignInEducationDialog({
         <DialogHeader>
           <DialogTitle>Signing in with Google</DialogTitle>
           <DialogDescription className="pt-1">
-            Google is about to ask for Drive access. The wording can look
-            broad, something like &ldquo;view and manage files&rdquo;. Here is
-            what that actually means for Strength Journeys:
+            When you sign in with Google, it will ask to &ldquo;view and manage
+            Google Drive files&rdquo;. For Strength Journeys, that means:
           </DialogDescription>
         </DialogHeader>
 

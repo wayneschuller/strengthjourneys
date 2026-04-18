@@ -1,18 +1,18 @@
 /**
- * First-time sign-in education dialog.
+ * First-time Drive-permission primer.
  *
- * Shown before Google's OAuth consent screen on high-intent CTAs (hero, demo
- * banner, preview banner) for first-time lifters. Returning lifters are
- * filtered out at the CTA layer via `isReturningLifter()` so this component
- * only has to worry about the first-time experience.
+ * Shown once per browser before Google's OAuth consent screen. Its one job is
+ * to reassure the user that the Drive permission Google is about to ask for
+ * is narrow — we only touch the sheet we create. Keep the copy short and on
+ * that single topic; broader app pitching belongs on the landing page.
  *
- * Copy voice matches landing + import pages: privacy-first, Google Sheet
- * ownership, no subscriptions.
+ * The gate (`isReturningLifter()` + `markReturningLifter()`) lives in
+ * `lib/sign-in-dialog-gate.js`; this component just renders the UI.
  */
 
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
-import { ShieldCheck, LineChart, Trophy } from "lucide-react";
+import { ShieldCheck, FileText, EyeOff } from "lucide-react";
 
 import {
   Dialog,
@@ -27,21 +27,18 @@ import { GoogleLogo } from "@/components/onboarding/google-sign-in";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { markReturningLifter } from "@/lib/sign-in-dialog-gate";
 
-const BENEFITS = [
+const POINTS = [
   {
-    Icon: Trophy,
-    title: "Every PR, detected automatically",
-    body: "By lift, by reps, by date. Your history becomes a timeline of wins.",
+    Icon: FileText,
+    text: "We only read and write the Google Sheet we create for your lifts.",
   },
   {
-    Icon: LineChart,
-    title: "Your strength, visualized",
-    body: "E1RM trends, tonnage, consistency grades. Progress you can see, not just feel.",
+    Icon: EyeOff,
+    text: "Nothing else in your Drive is visible to Strength Journeys.",
   },
   {
     Icon: ShieldCheck,
-    title: "Your data stays yours",
-    body: "We save every session into a free Google Sheet in your own Drive. No subscriptions. Ever.",
+    text: "Your data lives in your account, and you can revoke access anytime.",
   },
 ];
 
@@ -61,38 +58,26 @@ export function SignInEducationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
-            Built by lifters, for lifters.
-          </DialogTitle>
-          <DialogDescription className="pt-1 text-base">
-            Strength Journeys turns every session you log into PRs, trends, and
-            standards. Free forever. Your data stays yours.
+          <DialogTitle>About the Google Drive access</DialogTitle>
+          <DialogDescription className="pt-1">
+            In a moment, Google will ask Strength Journeys for Drive access.
+            Here is what that actually means.
           </DialogDescription>
         </DialogHeader>
 
         <ul className="space-y-3 py-2">
-          {BENEFITS.map(({ Icon, title, body }) => (
-            <li key={title} className="flex items-start gap-3">
+          {POINTS.map(({ Icon, text }) => (
+            <li key={text} className="flex items-start gap-3">
               <Icon
-                className="text-primary mt-0.5 h-5 w-5 shrink-0"
+                className="text-primary mt-0.5 h-4 w-4 shrink-0"
                 strokeWidth={1.75}
               />
-              <div>
-                <p className="text-sm font-semibold">{title}</p>
-                <p className="text-muted-foreground text-sm leading-snug">
-                  {body}
-                </p>
-              </div>
+              <p className="text-sm leading-snug">{text}</p>
             </li>
           ))}
         </ul>
-
-        <p className="text-muted-foreground text-xs">
-          We&apos;ll ask Google for access to one sheet: the one we create for you.
-          Nothing else in your Drive.
-        </p>
 
         <DialogFooter className="mt-2 sm:justify-between sm:gap-3">
           <Button
@@ -100,7 +85,7 @@ export function SignInEducationDialog({
             onClick={() => onOpenChange(false)}
             className="text-muted-foreground"
           >
-            Just show me the app
+            Cancel
           </Button>
           <Button
             onClick={handleContinue}

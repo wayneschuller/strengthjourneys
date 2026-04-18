@@ -1726,6 +1726,7 @@ function ScopeRepairPanel({
           cta="sheet_scope_repair"
           callbackUrl={callbackUrl || "/"}
           className="gap-2"
+          skipEducation
           onClick={() => {
             onBeforeReauth?.();
           }}

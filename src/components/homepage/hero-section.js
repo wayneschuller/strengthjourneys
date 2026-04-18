@@ -101,7 +101,6 @@ function HeroPrimaryCta() {
               size="lg"
               className="w-full hover:ring-2 sm:w-auto"
               cta="hero"
-              showEducation
             >
               <span className="hidden sm:inline">Start Your Strength Journey</span>
               <span className="sm:hidden">Start Your Journey</span>

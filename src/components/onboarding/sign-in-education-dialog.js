@@ -27,6 +27,8 @@ import { GoogleLogo } from "@/components/onboarding/google-sign-in";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { markReturningLifter } from "@/lib/sign-in-dialog-gate";
 
+const GOOGLE_PERMISSIONS_URL = "https://myaccount.google.com/permissions";
+
 const POINTS = [
   {
     Icon: FileText,
@@ -38,7 +40,20 @@ const POINTS = [
   },
   {
     Icon: ShieldCheck,
-    text: "You can revoke access anytime from your Google account.",
+    text: (
+      <>
+        You can{" "}
+        <a
+          href={GOOGLE_PERMISSIONS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline underline-offset-2 hover:no-underline"
+        >
+          revoke access anytime
+        </a>{" "}
+        from your Google account.
+      </>
+    ),
   },
 ];
 
@@ -69,8 +84,8 @@ export function SignInEducationDialog({
         </DialogHeader>
 
         <ul className="space-y-3 py-2">
-          {POINTS.map(({ Icon, text }) => (
-            <li key={text} className="flex items-start gap-3">
+          {POINTS.map(({ Icon, text }, idx) => (
+            <li key={idx} className="flex items-start gap-3">
               <Icon
                 className="text-primary mt-0.5 h-4 w-4 shrink-0"
                 strokeWidth={1.75}

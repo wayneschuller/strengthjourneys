@@ -87,7 +87,7 @@ export function SignInEducationDialog({
             size="lg"
           >
             <GoogleLogo size={16} />
-            Continue with Google
+            Sign in with Google and save your lifts
           </Button>
         </DialogFooter>
       </DialogContent>

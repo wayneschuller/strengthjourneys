@@ -10,6 +10,7 @@
  * `lib/sign-in-dialog-gate.js`; this component just renders the UI.
  */
 
+import { useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { ShieldCheck, FileText, EyeOff, Sparkles } from "lucide-react";
@@ -24,7 +25,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { GoogleLogo } from "@/components/onboarding/google-sign-in";
-import { gaTrackSignInClick } from "@/lib/analytics";
+import {
+  gaTrackSignInClick,
+  gaTrackSignInPrimerShown,
+  gaTrackSignInPrimerDismissed,
+  gaTrackSignInPrimerContinued,
+} from "@/lib/analytics";
 import { markReturningLifter } from "@/lib/sign-in-dialog-gate";
 
 const GOOGLE_PERMISSIONS_URL = "https://myaccount.google.com/permissions";
@@ -68,15 +74,35 @@ export function SignInEducationDialog({
   callbackUrl = "/",
 }) {
   const router = useRouter();
+  // Tracks whether the user left the dialog by clicking Continue (true) or
+  // by closing it (false). Lets the single onOpenChange handler pick the
+  // right dismissed/continued event without double-firing.
+  const didContinueRef = useRef(false);
+
+  useEffect(() => {
+    if (open) {
+      didContinueRef.current = false;
+      gaTrackSignInPrimerShown(router.pathname, cta);
+    }
+  }, [open, router.pathname, cta]);
 
   const handleContinue = () => {
+    didContinueRef.current = true;
     markReturningLifter();
+    gaTrackSignInPrimerContinued(router.pathname, cta);
     gaTrackSignInClick(router.pathname, cta);
     signIn("google", { callbackUrl });
   };
 
+  const handleOpenChange = (nextOpen) => {
+    if (!nextOpen && open && !didContinueRef.current) {
+      gaTrackSignInPrimerDismissed(router.pathname, cta);
+    }
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Signing in with Google</DialogTitle>

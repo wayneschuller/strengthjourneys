@@ -7,12 +7,9 @@ import {
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import {
-  getReadableDateString,
-  getDisplayWeight,
-} from "@/lib/processing-utils";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { formatDateToYmdLocal } from "@/lib/date-utils";
+import { formatDateToYmdLocal, getReadableDateString } from "@/lib/date-utils";
 import {
   Tooltip,
   TooltipContent,

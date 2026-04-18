@@ -5,7 +5,8 @@ import {
   PR_HIGHLIGHTS_PHRASES,
   PR_EMPTY_PHRASES,
 } from "@/components/year-recap/phrases";
-import { getReadableDateString, getLifetimePRsAchievedInYear, getDisplayWeight } from "@/lib/processing-utils";
+import { getLifetimePRsAchievedInYear, getDisplayWeight } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Trophy } from "lucide-react";

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -5,20 +7,31 @@ import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { isReturningLifter } from "@/lib/sign-in-dialog-gate";
+
+// Lazy-load the education dialog. First-time lifters are the only ones who
+// instantiate it; returners are filtered before this module resolves.
+const SignInEducationDialog = dynamic(
+  () =>
+    import("@/components/onboarding/sign-in-education-dialog").then(
+      (m) => m.SignInEducationDialog,
+    ),
+  { ssr: false },
+);
 
 /**
  * Shared Google sign-in primitives for Strength Journeys.
  *
- * Future sign-in UI should use these components instead of calling `signIn()`
- * directly at each callsite. That keeps analytics tagging, CTA wiring, and the
- * intentional redirect to the root page (`callbackUrl: "/"`) consistent across
- * the app. The root redirect is deliberate because post-auth onboarding starts
- * from the home dashboard flow.
+ * All sign-in CTAs funnel through here so analytics tagging, callback URL,
+ * and the first-time Drive-permission primer dialog stay consistent. The
+ * dialog is shown once per browser on the first sign-in attempt, then never
+ * again. Callers can opt out with `skipEducation` — reserved for recovery
+ * rails like `ScopeRepairPanel` where the user has already been through OAuth
+ * once and is re-consenting after a scope denial.
  */
 
 /**
  * Inline SVG rendering of the Google "G" logo in its official four-color form.
- * Kept in this module so every shared sign-in component ships with the same icon.
  */
 export function GoogleLogo({ size = 20, className = "" }) {
   return (
@@ -49,7 +62,7 @@ export function GoogleLogo({ size = 20, className = "" }) {
   );
 }
 
-function useGoogleSignInAction({ cta, callbackUrl = "/" }) {
+function useDirectSignIn({ cta, callbackUrl = "/" }) {
   const router = useRouter();
 
   return () => {
@@ -59,8 +72,48 @@ function useGoogleSignInAction({ cta, callbackUrl = "/" }) {
 }
 
 /**
- * Standard button CTA for Google sign-in. Use this for primary and secondary
- * buttons anywhere a normal shadcn `Button` would fit.
+ * Intercepts the click for first-time lifters so we can show the
+ * Drive-permission primer before Google's consent screen. Returning browsers
+ * and `skipEducation` callers (recovery rails) always go straight to Google.
+ */
+function useMaybeEducateSignIn({ cta, callbackUrl, skipEducation }) {
+  const directSignIn = useDirectSignIn({ cta, callbackUrl });
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const shouldEducate =
+    !skipEducation && typeof window !== "undefined" && !isReturningLifter();
+
+  const trigger = () => {
+    if (shouldEducate) {
+      setDialogOpen(true);
+      return;
+    }
+    directSignIn();
+  };
+
+  return { trigger, dialogOpen, setDialogOpen, shouldEducate };
+}
+
+function EducationDialogMount({
+  shouldEducate,
+  dialogOpen,
+  setDialogOpen,
+  cta,
+  callbackUrl,
+}) {
+  if (!shouldEducate) return null;
+  return (
+    <SignInEducationDialog
+      open={dialogOpen}
+      onOpenChange={setDialogOpen}
+      cta={cta}
+      callbackUrl={callbackUrl}
+    />
+  );
+}
+
+/**
+ * Standard button CTA for Google sign-in.
  */
 export function GoogleSignInButton({
   cta,
@@ -69,29 +122,39 @@ export function GoogleSignInButton({
   iconSize = 16,
   className,
   onClick,
+  skipEducation = false,
   ...props
 }) {
-  const handleGoogleSignIn = useGoogleSignInAction({ cta, callbackUrl });
+  const { trigger, dialogOpen, setDialogOpen, shouldEducate } =
+    useMaybeEducateSignIn({ cta, callbackUrl, skipEducation });
 
   return (
-    <Button
-      className={cn("flex items-center gap-2", className)}
-      onClick={(event) => {
-        onClick?.(event);
-        if (event.defaultPrevented) return;
-        handleGoogleSignIn();
-      }}
-      {...props}
-    >
-      <GoogleLogo size={iconSize} />
-      {children}
-    </Button>
+    <>
+      <Button
+        className={cn("flex items-center gap-2", className)}
+        onClick={(event) => {
+          onClick?.(event);
+          if (event.defaultPrevented) return;
+          trigger();
+        }}
+        {...props}
+      >
+        <GoogleLogo size={iconSize} />
+        {children}
+      </Button>
+      <EducationDialogMount
+        shouldEducate={shouldEducate}
+        dialogOpen={dialogOpen}
+        setDialogOpen={setDialogOpen}
+        cta={cta}
+        callbackUrl={callbackUrl}
+      />
+    </>
   );
 }
 
 /**
- * Dropdown-menu variant for places like avatar menus and settings menus where
- * sign-in should look like a first-class menu action.
+ * Dropdown-menu variant for avatar and settings menus.
  */
 export function GoogleSignInMenuItem({
   cta,
@@ -100,29 +163,39 @@ export function GoogleSignInMenuItem({
   iconSize = 16,
   className,
   onSelect,
+  skipEducation = false,
   ...props
 }) {
-  const handleGoogleSignIn = useGoogleSignInAction({ cta, callbackUrl });
+  const { trigger, dialogOpen, setDialogOpen, shouldEducate } =
+    useMaybeEducateSignIn({ cta, callbackUrl, skipEducation });
 
   return (
-    <DropdownMenuItem
-      className={cn("cursor-pointer", className)}
-      onSelect={(event) => {
-        onSelect?.(event);
-        if (event.defaultPrevented) return;
-        handleGoogleSignIn();
-      }}
-      {...props}
-    >
-      <GoogleLogo size={iconSize} />
-      {children}
-    </DropdownMenuItem>
+    <>
+      <DropdownMenuItem
+        className={cn("cursor-pointer", className)}
+        onSelect={(event) => {
+          onSelect?.(event);
+          if (event.defaultPrevented) return;
+          trigger();
+        }}
+        {...props}
+      >
+        <GoogleLogo size={iconSize} />
+        {children}
+      </DropdownMenuItem>
+      <EducationDialogMount
+        shouldEducate={shouldEducate}
+        dialogOpen={dialogOpen}
+        setDialogOpen={setDialogOpen}
+        cta={cta}
+        callbackUrl={callbackUrl}
+      />
+    </>
   );
 }
 
 /**
- * Toast action variant for delayed nudges and banners that render inside the
- * shared toast system rather than directly on the page.
+ * Toast action variant for delayed nudges and banners inside the toast system.
  */
 export function GoogleSignInToastAction({
   cta,
@@ -132,30 +205,40 @@ export function GoogleSignInToastAction({
   iconSize = 14,
   className,
   onClick,
+  skipEducation = false,
   ...props
 }) {
-  const handleGoogleSignIn = useGoogleSignInAction({ cta, callbackUrl });
+  const { trigger, dialogOpen, setDialogOpen, shouldEducate } =
+    useMaybeEducateSignIn({ cta, callbackUrl, skipEducation });
 
   return (
-    <ToastAction
-      altText={altText}
-      className={cn("inline-flex items-center gap-2", className)}
-      onClick={(event) => {
-        onClick?.(event);
-        if (event.defaultPrevented) return;
-        handleGoogleSignIn();
-      }}
-      {...props}
-    >
-      <GoogleLogo size={iconSize} />
-      {children}
-    </ToastAction>
+    <>
+      <ToastAction
+        altText={altText}
+        className={cn("inline-flex items-center gap-2", className)}
+        onClick={(event) => {
+          onClick?.(event);
+          if (event.defaultPrevented) return;
+          trigger();
+        }}
+        {...props}
+      >
+        <GoogleLogo size={iconSize} />
+        {children}
+      </ToastAction>
+      <EducationDialogMount
+        shouldEducate={shouldEducate}
+        dialogOpen={dialogOpen}
+        setDialogOpen={setDialogOpen}
+        cta={cta}
+        callbackUrl={callbackUrl}
+      />
+    </>
   );
 }
 
 /**
- * Lightweight inline text-link style sign-in control for sentence-level copy
- * such as "Sign in and connect your sheet".
+ * Lightweight inline text-link style sign-in control.
  */
 export function GoogleSignInInlineButton({
   cta,
@@ -163,25 +246,36 @@ export function GoogleSignInInlineButton({
   children = "Sign in",
   className,
   onClick,
+  skipEducation = false,
   ...props
 }) {
-  const handleGoogleSignIn = useGoogleSignInAction({ cta, callbackUrl });
+  const { trigger, dialogOpen, setDialogOpen, shouldEducate } =
+    useMaybeEducateSignIn({ cta, callbackUrl, skipEducation });
 
   return (
-    <button
-      className={cn(
-        "text-blue-600 underline visited:text-purple-600 hover:text-blue-800",
-        className,
-      )}
-      onClick={(event) => {
-        onClick?.(event);
-        if (event.defaultPrevented) return;
-        handleGoogleSignIn();
-      }}
-      type="button"
-      {...props}
-    >
-      {children}
-    </button>
+    <>
+      <button
+        className={cn(
+          "text-blue-600 underline visited:text-purple-600 hover:text-blue-800",
+          className,
+        )}
+        onClick={(event) => {
+          onClick?.(event);
+          if (event.defaultPrevented) return;
+          trigger();
+        }}
+        type="button"
+        {...props}
+      >
+        {children}
+      </button>
+      <EducationDialogMount
+        shouldEducate={shouldEducate}
+        dialogOpen={dialogOpen}
+        setDialogOpen={setDialogOpen}
+        cta={cta}
+        callbackUrl={callbackUrl}
+      />
+    </>
   );
 }

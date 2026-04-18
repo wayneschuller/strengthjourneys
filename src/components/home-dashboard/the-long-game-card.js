@@ -16,7 +16,6 @@ import {
   coreLiftTypes,
   devLog,
   logTiming,
-  getReadableDateString,
   getDisplayWeight,
 } from "@/lib/processing-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -41,6 +40,7 @@ import { getGradeAndColor } from "@/lib/consistency-grades";
 import {
   getCalendarYearWeekIndexFromWeekKey,
   getCalendarYearWeekStartFromIndex,
+  getReadableDateString,
   getWeekKeyFromDateStr,
   parseYmdUtc,
 } from "@/lib/date-utils";

@@ -41,6 +41,9 @@
 export const GA_EVENT_TAGS = Object.freeze({
   FUNNEL_SIGN_IN_CLICK: "funnel_sign_in_click", // ~Feb 2026: User clicked a Google sign-in CTA.
   FUNNEL_SIGN_IN_SUCCESS: "funnel_sign_in_success", // ~Feb 2026: Session transitioned to authenticated.
+  FUNNEL_SIGN_IN_PRIMER_SHOWN: "funnel_sign_in_primer_shown", // ~Apr 2026: First-time Drive-permission primer dialog opened before OAuth.
+  FUNNEL_SIGN_IN_PRIMER_DISMISSED: "funnel_sign_in_primer_dismissed", // ~Apr 2026: User closed the primer without continuing to Google.
+  FUNNEL_SIGN_IN_PRIMER_CONTINUED: "funnel_sign_in_primer_continued", // ~Apr 2026: User clicked Continue inside the primer and proceeded to OAuth.
   FUNNEL_SHEET_CONNECT_CLICK: "funnel_sheet_connect_click", // ~Feb 2026: User clicked connect/select sheet.
   FUNNEL_SHEET_PICKER_CANCELLED: "funnel_sheet_picker_cancelled", // ~Feb 2026: User closed Drive picker without selecting.
   FUNNEL_SHEET_SELECTED: "funnel_sheet_selected", // ~Feb 2026: User selected a spreadsheet in Drive picker.
@@ -163,6 +166,18 @@ export function pageView(fullURL) {
  *   "ai_assistant", "getting_started_card", "lift_page_card", "sign_in_invite",
  *   "year_recap_card", "playlist".
  */
+export function gaTrackSignInPrimerShown(page, cta) {
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SIGN_IN_PRIMER_SHOWN, { page, cta });
+}
+
+export function gaTrackSignInPrimerDismissed(page, cta) {
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SIGN_IN_PRIMER_DISMISSED, { page, cta });
+}
+
+export function gaTrackSignInPrimerContinued(page, cta) {
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SIGN_IN_PRIMER_CONTINUED, { page, cta });
+}
+
 export function gaTrackSignInClick(page, cta) {
   const params = {};
   if (typeof page === "string") params.page = page;

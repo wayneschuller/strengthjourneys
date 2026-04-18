@@ -30,15 +30,15 @@ import { markReturningLifter } from "@/lib/sign-in-dialog-gate";
 const POINTS = [
   {
     Icon: FileText,
-    text: "We only read and write the Google Sheet we create for your lifts.",
+    text: "We only access the one spreadsheet we create for your lifts.",
   },
   {
     Icon: EyeOff,
-    text: "Nothing else in your Drive is visible to Strength Journeys.",
+    text: "We cannot access anything else in your Drive.",
   },
   {
     Icon: ShieldCheck,
-    text: "Your data lives in your account, and you can revoke access anytime.",
+    text: "You can revoke access anytime from your Google account.",
   },
 ];
 
@@ -62,8 +62,9 @@ export function SignInEducationDialog({
         <DialogHeader>
           <DialogTitle>Signing in with Google</DialogTitle>
           <DialogDescription className="pt-1">
-            In a moment, Google will ask Strength Journeys for Drive access.
-            Here is what that actually means.
+            Google is about to ask for Drive access. The wording can look
+            broad, something like &ldquo;view and manage files&rdquo;. Here is
+            what that actually means for Strength Journeys:
           </DialogDescription>
         </DialogHeader>
 

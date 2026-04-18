@@ -67,6 +67,9 @@ export const LOCAL_STORAGE_KEYS = {
   // Google Sheet / data source
   SHEET_INFO: "SJ_sheetInfo",
   SIGNED_IN_DEMO_MODE: "SJ_signedInDemoMode",
+  // Marks a browser that has completed (or attempted) a Google sign-in before.
+  // Read at module load to suppress the sign-in education dialog for returners.
+  SIGNED_IN_BEFORE: "SJ_signedInBefore",
   // Rare recovery rail only: stores the interrupted save intent long enough to
   // resume after Google re-consent. Do not expand this into a general workflow
   // state machine.

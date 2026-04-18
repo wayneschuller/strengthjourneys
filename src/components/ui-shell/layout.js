@@ -426,7 +426,7 @@ function DataAccessBanner({ pathname, currentPath }) {
           {showSignInCta ? (
             <div className="flex flex-col items-center gap-2 sm:flex-row">
               <div className="flex flex-col items-center">
-                <GoogleSignInButton size="sm" cta="demo_banner">
+                <GoogleSignInButton size="sm" cta="demo_banner" showEducation>
                   Sign in with Google
                 </GoogleSignInButton>
                 <p className="mt-1.5 text-center text-xs text-amber-900/70">
@@ -650,6 +650,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
                     size="sm"
                     cta="preview_banner"
                     className="h-7 text-xs"
+                    showEducation
                   >
                     Save my data
                   </GoogleSignInButton>

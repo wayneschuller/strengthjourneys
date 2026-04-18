@@ -1,3 +1,5 @@
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -5,6 +7,18 @@ import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { isReturningLifter } from "@/lib/sign-in-dialog-gate";
+
+// Lazy-load the education dialog so the marketing surfaces that embed
+// GoogleSignInButton (hero, banners) don't pay for it on first paint. Only
+// first-time visitors ever instantiate the dialog module.
+const SignInEducationDialog = dynamic(
+  () =>
+    import("@/components/onboarding/sign-in-education-dialog").then(
+      (m) => m.SignInEducationDialog,
+    ),
+  { ssr: false },
+);
 
 /**
  * Shared Google sign-in primitives for Strength Journeys.
@@ -59,6 +73,32 @@ function useGoogleSignInAction({ cta, callbackUrl = "/" }) {
 }
 
 /**
+ * Education-dialog interceptor hook for high-intent sign-in CTAs.
+ *
+ * If `showEducation` is on and the browser has no prior sign-in evidence, we
+ * open the shared `SignInEducationDialog` instead of jumping straight into
+ * Google's OAuth screen. Returning lifters and opt-out callers (e.g. the
+ * ScopeRepairPanel safety net) always go straight to `signIn()`.
+ */
+function useEducationGatedSignIn({ cta, callbackUrl, showEducation }) {
+  const directSignIn = useGoogleSignInAction({ cta, callbackUrl });
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const shouldEducate =
+    showEducation && typeof window !== "undefined" && !isReturningLifter();
+
+  const trigger = () => {
+    if (shouldEducate) {
+      setDialogOpen(true);
+      return;
+    }
+    directSignIn();
+  };
+
+  return { trigger, dialogOpen, setDialogOpen, shouldEducate };
+}
+
+/**
  * Standard button CTA for Google sign-in. Use this for primary and secondary
  * buttons anywhere a normal shadcn `Button` would fit.
  */
@@ -69,23 +109,35 @@ export function GoogleSignInButton({
   iconSize = 16,
   className,
   onClick,
+  showEducation = false,
   ...props
 }) {
-  const handleGoogleSignIn = useGoogleSignInAction({ cta, callbackUrl });
+  const { trigger, dialogOpen, setDialogOpen, shouldEducate } =
+    useEducationGatedSignIn({ cta, callbackUrl, showEducation });
 
   return (
-    <Button
-      className={cn("flex items-center gap-2", className)}
-      onClick={(event) => {
-        onClick?.(event);
-        if (event.defaultPrevented) return;
-        handleGoogleSignIn();
-      }}
-      {...props}
-    >
-      <GoogleLogo size={iconSize} />
-      {children}
-    </Button>
+    <>
+      <Button
+        className={cn("flex items-center gap-2", className)}
+        onClick={(event) => {
+          onClick?.(event);
+          if (event.defaultPrevented) return;
+          trigger();
+        }}
+        {...props}
+      >
+        <GoogleLogo size={iconSize} />
+        {children}
+      </Button>
+      {shouldEducate && (
+        <SignInEducationDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          cta={cta}
+          callbackUrl={callbackUrl}
+        />
+      )}
+    </>
   );
 }
 

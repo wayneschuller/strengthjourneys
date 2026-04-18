@@ -12,7 +12,7 @@
 
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
-import { ShieldCheck, FileText, EyeOff } from "lucide-react";
+import { ShieldCheck, FileText, EyeOff, Sparkles } from "lucide-react";
 
 import {
   Dialog,
@@ -54,6 +54,10 @@ const POINTS = [
         from your Google account.
       </>
     ),
+  },
+  {
+    Icon: Sparkles,
+    text: "We will create your Google Sheet to store your lifelong barbell strength journey.",
   },
 ];
 

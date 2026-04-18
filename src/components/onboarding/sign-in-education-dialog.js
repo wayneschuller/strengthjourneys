@@ -60,7 +60,7 @@ export function SignInEducationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>About the Google Drive access</DialogTitle>
+          <DialogTitle>Signing in with Google</DialogTitle>
           <DialogDescription className="pt-1">
             In a moment, Google will ask Strength Journeys for Drive access.
             Here is what that actually means.
@@ -79,14 +79,7 @@ export function SignInEducationDialog({
           ))}
         </ul>
 
-        <DialogFooter className="mt-2 sm:justify-between sm:gap-3">
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            className="text-muted-foreground"
-          >
-            Cancel
-          </Button>
+        <DialogFooter className="mt-2">
           <Button
             onClick={handleContinue}
             className="flex items-center gap-2"

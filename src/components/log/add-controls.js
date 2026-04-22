@@ -34,7 +34,13 @@ import {
   getYouTubeWatchHref,
 } from "@/components/log/utils";
 
-export function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
+export function LiftSuggestions({
+  liftType,
+  sessionDate,
+  parsedData,
+  isMetric,
+  onNavigateToDate,
+}) {
   const lastSets = useMemo(() => {
     if (!parsedData) return null;
     const prior = parsedData.filter(
@@ -56,9 +62,24 @@ export function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric })
     })
     .join("  ·  ");
 
+  const lastDate = lastSets[0].date;
+  const dateLabel = getReadableDateString(lastDate);
+
   return (
     <p className="pb-1 text-xs italic text-muted-foreground/70">
-      Last {getReadableDateString(lastSets[0].date)}: {summary}
+      Last{" "}
+      {onNavigateToDate ? (
+        <button
+          type="button"
+          onClick={() => onNavigateToDate(lastDate)}
+          className="font-medium not-italic underline decoration-dotted underline-offset-2 hover:text-foreground"
+        >
+          {dateLabel}
+        </button>
+      ) : (
+        dateLabel
+      )}
+      : {summary}
     </p>
   );
 }

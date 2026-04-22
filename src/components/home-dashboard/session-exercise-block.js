@@ -73,6 +73,7 @@ export function getConsecutiveWorkoutGroups(workouts = []) {
  * @param {boolean} [props.isMetric] - Whether to use kg for strength standards.
  * @param {boolean} [props.hideSvg=false] - When true, hides the lift type SVG/diagram in compact variant.
  * @param {string} [props.label] - Optional label (e.g. date string) shown before the pills.
+ * @param {string} [props.labelHref] - Optional href. When provided, renders the label as a Next.js Link.
  * @param {boolean} [props.showPerLiftTonnage=true] - Whether to render the per-lift tonnage summary row.
  */
 export function SessionExerciseBlock({
@@ -90,6 +91,7 @@ export function SessionExerciseBlock({
   isMetric,
   hideSvg = false,
   label,
+  labelHref,
   showPerLiftTonnage = true,
 }) {
   const formula = e1rmFormula || "Brzycki";
@@ -514,9 +516,18 @@ export function SessionExerciseBlock({
             />
           )}
           {label && (
-            <span className="text-muted-foreground shrink-0 text-xs font-medium">
-              {label}
-            </span>
+            labelHref ? (
+              <Link
+                href={labelHref}
+                className="text-muted-foreground hover:text-foreground shrink-0 text-xs font-medium underline decoration-dotted underline-offset-2"
+              >
+                {label}
+              </Link>
+            ) : (
+              <span className="text-muted-foreground shrink-0 text-xs font-medium">
+                {label}
+              </span>
+            )
           )}
           {compactPills}
           {showPerLiftTonnage && perLiftTonnageStats?.[liftType] && (

@@ -251,6 +251,7 @@ export function MostRecentSessionCard({
                           sex={sex}
                           isMetric={isMetric}
                           label={getReadableDateString(sessionDate, true)}
+                          labelHref={`/log?date=${sessionDate}`}
                         />
                       ))}
                     </motion.div>

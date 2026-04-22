@@ -2234,6 +2234,7 @@ export default function LogSessionPage() {
                           onUpdateSet={previewMode ? undefined : updateSet}
                           onDeleteSet={previewMode ? undefined : deleteSet}
                           onAddSet={previewMode ? undefined : (prevSet) => addSet(liftType, prevSet)}
+                          onNavigateToDate={previewMode ? undefined : navigateToDate}
                           usedSessionUrls={usedSessionUrls}
                         />
                       </motion.div>
@@ -3433,6 +3434,7 @@ function LiftBlock({
   onUpdateSet,
   onDeleteSet,
   onAddSet,
+  onNavigateToDate,
   previewMode = false,
   usedSessionUrls,
 }) {
@@ -4262,6 +4264,7 @@ function LiftBlock({
             sessionDate={sessionDate}
             parsedData={parsedData}
             isMetric={isMetric}
+            onNavigateToDate={onNavigateToDate}
           />
         </div>
       </div>

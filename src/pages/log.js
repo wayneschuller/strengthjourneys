@@ -8,9 +8,6 @@ import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import {
   getTopLiftStats,
   useAthleteBio,
-  getStrengthRatingForE1RM,
-  STRENGTH_LEVEL_EMOJI,
-  getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { hexToRgba } from "@/lib/color-tools";
@@ -26,12 +23,13 @@ import {
 import {
   CELEBRATION_KEYFRAMES,
   CELEBRATION_TIERS,
-  NEXT_TIER,
   getTrainingAgeYears,
   getCelebrationTier,
   getCelebrationStyles,
   fireSetCelebrationConfetti,
 } from "@/lib/celebration";
+import { StrengthBar } from "@/components/strength-level/strength-bar";
+import { LiftPercentileLine } from "@/components/strength-level/lift-percentile-line";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
@@ -52,14 +50,6 @@ import {
 } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { generateSessionSets } from "@/lib/warmups";
-import {
-  getLiftPercentiles,
-  UNIVERSES,
-} from "@/lib/strength-circles/universe-percentiles";
-import {
-  LIFT_TYPE_TO_PERCENTILE_KEY,
-  LIFT_TYPE_TO_CALCULATOR_URL,
-} from "@/lib/strength-circles/strength-score";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -2818,185 +2808,6 @@ async function readApiError(response, fallbackMessage) {
 
 
 
-// --- Strength bar for log page ---
-
-function LogStrengthBar({
-  liftType,
-  e1rmValue,
-  standards,
-  age,
-  sessionDate,
-  bodyWeight,
-  sex,
-  isMetric,
-}) {
-  const standard =
-    sessionDate && age && bodyWeight != null && sex != null
-      ? getStandardForLiftDate(
-          age,
-          sessionDate,
-          bodyWeight,
-          sex,
-          liftType,
-          isMetric ?? false,
-        )
-      : standards?.[liftType];
-
-  if (!standard?.elite || !e1rmValue) return null;
-
-  const rating = getStrengthRatingForE1RM(e1rmValue, standard);
-  if (!rating) return null;
-
-  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
-  const { physicallyActive, elite } = standard;
-  const range = elite - physicallyActive;
-  const pct =
-    range > 0
-      ? Math.min(
-          98,
-          Math.max(2, ((e1rmValue - physicallyActive) / range) * 100),
-        )
-      : 50;
-
-  const nextTierInfo = NEXT_TIER[rating];
-  const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
-  const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmValue) : null;
-  const unit = isMetric ? "kg" : "lb";
-
-  // Tier divider positions
-  const tiers = [standard.beginner, standard.intermediate, standard.advanced]
-    .map((val) => ((val - physicallyActive) / range) * 100)
-    .filter((p) => p > 0 && p < 100);
-
-  const LIFT_STRENGTH_SLUGS = {
-    "Back Squat": "squat",
-    "Bench Press": "bench-press",
-    "Deadlift": "deadlift",
-    "Strict Press": "strict-press",
-  };
-  const strengthHref = LIFT_STRENGTH_SLUGS[liftType]
-    ? `/strength-levels/${LIFT_STRENGTH_SLUGS[liftType]}`
-    : "/strength-levels";
-
-  return (
-    <TooltipProvider>
-      <div className="flex items-center gap-2">
-        <Link
-          href={strengthHref}
-          className="text-muted-foreground hover:text-foreground shrink-0 text-[10px] font-medium transition-colors"
-        >
-          {emoji} {rating}
-        </Link>
-        <div className="relative flex-1">
-          <div
-            className="h-2 w-full rounded-full"
-            style={{
-              background:
-                "linear-gradient(to right, #EAB308, #86EFAC, #166534)",
-            }}
-          />
-          {tiers.map((p, i) => (
-            <div
-              key={i}
-              className="absolute top-0 h-2 w-px"
-              style={{
-                left: `${p}%`,
-                backgroundColor: "var(--background)",
-                opacity: 0.7,
-              }}
-            />
-          ))}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className="bg-foreground ring-background absolute top-1/2 h-3.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm ring-1 transition-[left] duration-300"
-                style={{ left: `${pct}%` }}
-              />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
-              <p className="font-semibold">{liftType}</p>
-              <p>
-                {emoji} {rating} · E1RM {Math.round(e1rmValue)}
-                {unit}
-              </p>
-              {nextTierInfo && diff > 0 ? (
-                <p className="text-muted-foreground">
-                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
-                  {nextTierInfo.name} — {diff}
-                  {unit} away
-                </p>
-              ) : nextTierInfo && diff <= 0 ? (
-                <p className="text-muted-foreground">
-                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
-                  {nextTierInfo.name} — you&apos;re there!
-                </p>
-              ) : (
-                <p className="text-muted-foreground">Top of the chart!</p>
-              )}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-    </TooltipProvider>
-  );
-}
-
-function LogLiftPercentileLine({
-  liftType,
-  e1rmValue,
-  age,
-  bodyWeight,
-  sex,
-  isMetric,
-}) {
-  const percentileKey = LIFT_TYPE_TO_PERCENTILE_KEY[liftType];
-  const calculatorUrl = LIFT_TYPE_TO_CALCULATOR_URL[liftType] ?? "/calculator";
-
-  const bestUniverse = useMemo(() => {
-    if (!percentileKey || !e1rmValue || !age || bodyWeight == null || !sex) {
-      return null;
-    }
-
-    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
-    const e1rmKg = isMetric ? e1rmValue : e1rmValue / 2.2046;
-    const allPercentiles = getLiftPercentiles(
-      age,
-      bodyWeightKg,
-      sex === "female" ? "female" : "male",
-      percentileKey,
-      e1rmKg,
-    );
-    if (!allPercentiles) return null;
-
-    // Pick the most elite (rightmost) universe where percentile >= 60
-    const labels = {
-      "General Population": "the general population",
-      "Gym-Goers": "gym-goers",
-      "Barbell Lifters": "barbell lifters",
-      "Powerlifting Culture": "the powerlifting community",
-    };
-
-    let best = null;
-    for (const universe of UNIVERSES) {
-      const pct = allPercentiles[universe];
-      if (pct != null && pct >= 60) {
-        best = { universe, percentile: pct, label: labels[universe] };
-      }
-    }
-    return best;
-  }, [age, bodyWeight, e1rmValue, isMetric, percentileKey, sex]);
-
-  if (!bestUniverse) return null;
-
-  return (
-    <div className="text-xs text-muted-foreground">
-      <Link href={calculatorUrl} className="transition-colors hover:text-foreground">
-        Stronger than {bestUniverse.percentile}% of {bestUniverse.label}
-      </Link>
-    </div>
-  );
-}
-
 // --- Lift block ---
 
 function LiftBlock({
@@ -3934,7 +3745,7 @@ function LiftBlock({
       </div>
       {canShowStrength && bestE1rmValue > 0 && (
         <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
-          <LogStrengthBar
+          <StrengthBar
             liftType={liftType}
             e1rmValue={bestE1rmValue}
             standards={standards}
@@ -3948,7 +3759,7 @@ function LiftBlock({
       )}
       {canShowStrength && bestE1rmValue > 0 && (
         <div className={`mx-4 mt-2 ${desktopIconOffsetClass}`}>
-          <LogLiftPercentileLine
+          <LiftPercentileLine
             liftType={liftType}
             e1rmValue={bestE1rmValue}
             age={age}

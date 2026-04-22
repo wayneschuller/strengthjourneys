@@ -7,6 +7,10 @@
  * Brighten a hex color by scaling each RGB channel by `factor` (clamped to 255).
  * Used when a theme's base lift color needs a lighter variant for dark-mode strokes
  * or hover states without defining a second palette.
+ *
+ * @param {string} hex - Hex color, with or without leading `#` (e.g. "#1e40af" or "1e40af").
+ * @param {number} [factor=1.2] - Channel multiplier. >1 brightens, <1 darkens.
+ * @returns {string} Hex string with leading `#`.
  */
 export function brightenHexColor(hex, factor = 1.2) {
   // Remove # if present
@@ -30,6 +34,10 @@ export function brightenHexColor(hex, factor = 1.2) {
  * Increase saturation of a hex color via HSL round-trip, scaling S by `factor`.
  * Used when a theme color reads muted against chart backgrounds and needs
  * more visual pop without shifting hue or lightness.
+ *
+ * @param {string} hex - Hex color, with or without leading `#`.
+ * @param {number} [factor=1.2] - Saturation multiplier (clamped to 1.0).
+ * @returns {string} Hex string with leading `#`.
  */
 export function saturateHexColor(hex, factor = 1.2) {
   // Remove # if present
@@ -102,6 +110,10 @@ export function saturateHexColor(hex, factor = 1.2) {
  * Convert a hex color (#rgb or #rrggbb) to an `rgba(...)` string with the given alpha.
  * Needed wherever CSS demands transparency (glows, overlays, box-shadow tints) —
  * falls back to transparent black on malformed input rather than throwing.
+ *
+ * @param {string} hexColor - Hex color with leading `#`. Accepts 3 or 6 digit forms.
+ * @param {number} alpha - Alpha 0..1 (not validated — pass valid CSS alpha).
+ * @returns {string} CSS `rgba(r, g, b, a)` string.
  */
 export function hexToRgba(hexColor, alpha) {
   if (typeof hexColor !== "string" || !hexColor.startsWith("#")) {

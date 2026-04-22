@@ -40,6 +40,10 @@ export const NEXT_TIER = {
  * Years between a user's first logged lift and the given reference date.
  * Feeds the celebration-tier policy: a 10-year veteran hitting a PR deserves
  * a bigger party than a 3-month beginner who's still on the beginner growth curve.
+ *
+ * @param {Array<{ date?: string, isGoal?: boolean }>} parsedData - Output of parse-data.js.
+ * @param {string} referenceDate - `YYYY-MM-DD` (usually the current set's session date).
+ * @returns {number} Fractional years; 0 if no data or reference date precedes first lift.
  */
 export function getTrainingAgeYears(parsedData, referenceDate) {
   const firstLoggedDate = parsedData?.find((entry) => !entry.isGoal)?.date;
@@ -60,6 +64,13 @@ export function getTrainingAgeYears(parsedData, referenceDate) {
  * Tuned so novices still get confetti for early wins, while veterans need
  * genuine lifetime PRs to earn the biggest effect — otherwise every session
  * would fire the shake animation and the celebration loses meaning.
+ *
+ * @param {object} args
+ * @param {{ lifetime?: { rank: number }, yearly?: { rank: number } } | null} args.rankingMeta -
+ *   Output of `getRankingMeta` or `getOptimisticRankingMeta`.
+ * @param {number} args.reps - Used with `PRIORITY_REP_SCHEMES` to gate some tiers.
+ * @param {number} args.trainingAgeYears - From `getTrainingAgeYears`.
+ * @returns {{ tier: string, score: number, reason: string|null }} Tier key from `CELEBRATION_TIERS`.
  */
 export function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
   const lifetimeRank = rankingMeta?.lifetime?.rank ?? null;
@@ -152,6 +163,9 @@ export function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
  * Tailwind class bundles for a celebrated row — border + glow tinted by scope
  * (lifetime = amber/gold, yearly = blue). Returned as separate classNames so
  * callers can apply the border to the row and the glow to a wrapper/sibling.
+ *
+ * @param {{ tier: string, scope?: "lifetime"|"yearly" } | null | undefined} celebration
+ * @returns {{ rowClassName: string, glowClassName: string }}
  */
 export function getCelebrationStyles(celebration) {
   if (!celebration || celebration.tier === "none") {
@@ -180,6 +194,9 @@ export function getCelebrationStyles(celebration) {
  * Convert a DOM element's bounding rect into normalized viewport coordinates
  * (0..1) for canvas-confetti's `origin`. Makes confetti burst from the actual
  * set row the user just edited rather than the middle of the screen.
+ *
+ * @param {HTMLElement|null} element
+ * @returns {{ x: number, y: number }} Normalized coords; safe fallback `{0.5, 0.55}` on null.
  */
 export function getCelebrationOriginFromElement(element) {
   if (!element) return { x: 0.5, y: 0.55 };
@@ -194,6 +211,11 @@ export function getCelebrationOriginFromElement(element) {
  * Fire a canvas-confetti burst keyed to the given tier, originating at the
  * supplied element. Dynamically imports canvas-confetti so it stays out of
  * the main bundle — the library is only pulled in when a celebration actually fires.
+ *
+ * @param {"confettiSmall"|"confettiLarge"|"confettiLargeShake"|string} tier - From `CELEBRATION_TIERS`.
+ *   Other values (e.g. "none", "border") are a no-op.
+ * @param {HTMLElement|null} element - Origin anchor for the burst.
+ * @returns {void}
  */
 export function fireSetCelebrationConfetti(tier, element) {
   if (typeof window === "undefined") return;

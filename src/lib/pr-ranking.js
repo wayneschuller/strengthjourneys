@@ -12,6 +12,11 @@ import {
  * Find the 0-indexed rank a given weight would occupy in a precomputed top-lifts
  * array (already sorted heaviest-first). Returns null if the weight doesn't
  * crack the top 20. Used to badge a set as "Lifetime #3" / "12-month #7" etc.
+ *
+ * @param {Array<object>} topLifts - Sorted array of lift objects (heaviest first).
+ * @param {number} weight - The candidate weight, in the user's display unit.
+ * @param {boolean} isMetric - True if `weight` is in kg, false if lb.
+ * @returns {number|null} 0-based rank (0..19), or null if outside the top 20.
  */
 export function getTop20Rank(topLifts, weight, isMetric) {
   if (!topLifts?.length || !weight) return null;
@@ -32,6 +37,10 @@ export function getTop20Rank(topLifts, weight, isMetric) {
  * Stable identity key for a set across persisted and in-flight states.
  * Prefers `rowIndex` (sheet-backed) then `_tempId` (optimistic) so the same
  * set maps to the same key before and after it syncs to Google Sheets.
+ *
+ * @param {object} set - Set object (may have `rowIndex` or `_tempId`).
+ * @param {string} [fallback="pending"] - Returned when neither id is present.
+ * @returns {string} A stable key usable in Maps/Sets/object keys.
  */
 export function getSetIdentityKey(set, fallback = "pending") {
   if (set?.rowIndex != null) return `row:${set.rowIndex}`;
@@ -43,6 +52,10 @@ export function getSetIdentityKey(set, fallback = "pending") {
  * Overlay optimistic in-page field edits on a persisted set for ranking purposes.
  * The log page lets users edit reps/weight/unit before they sync to the sheet —
  * we want ranks to reflect the *displayed* values, not the last-saved ones.
+ *
+ * @param {object} set - Persisted set.
+ * @param {{ reps?: number, weight?: number, unitType?: string, notes?: string, url?: string }} [optimisticFields]
+ * @returns {object} The set with optimistic fields shallow-merged in (or the set unchanged).
  */
 export function getEffectiveSetForRanking(set, optimisticFields) {
   if (!optimisticFields) return set;
@@ -61,6 +74,9 @@ export function getEffectiveSetForRanking(set, optimisticFields) {
  * Is the given YYYY-MM-DD date within the last 365 days from now? Used to
  * decide whether a set belongs in the rolling-year top-lifts lane alongside
  * the all-time lifetime lane.
+ *
+ * @param {string} date - `YYYY-MM-DD` date string.
+ * @returns {boolean}
  */
 export function isWithinRollingYear(date) {
   if (!date) return false;
@@ -74,6 +90,11 @@ export function isWithinRollingYear(date) {
  * Sort comparator for ranking lanes: heavier first, then earlier date (PR goes
  * to the lift who reached the weight first), then row/temp id as a stable
  * tiebreaker so rankings don't jitter between renders.
+ *
+ * @param {object} a - Lift entry.
+ * @param {object} b - Lift entry.
+ * @param {boolean} isMetric - True if weights should be compared in kg, false lb.
+ * @returns {number} Standard comparator result.
  */
 export function compareRankingEntries(a, b, isMetric) {
   const aWeight = getDisplayWeight(a, isMetric).value;
@@ -95,6 +116,18 @@ export function compareRankingEntries(a, b, isMetric) {
  * We therefore rank against the precomputed SWR top-lift arrays as a baseline,
  * then locally replace current-session rows with their optimistic in-page values.
  * After a full SWR cycle, parsedData/topLifts* naturally converge to the same result.
+ *
+ * @param {object} args
+ * @param {object} args.set - The set being ranked (needs liftType, reps, weight).
+ * @param {Array<object>} args.sets - All sets in the current session (for optimistic overlay).
+ * @param {Record<string, object>} args.optimisticFieldsByKey - Keyed by `getSetIdentityKey(set)`.
+ * @param {boolean} args.isMetric
+ * @param {Record<string, Array<Array<object>>>} args.topLiftsByTypeAndReps -
+ *   SWR-precomputed lifetime tops, indexed `[liftType][reps-1]`.
+ * @param {Record<string, Array<Array<object>>>} args.topLiftsByTypeAndRepsLast12Months -
+ *   Same shape, rolling 12-month window.
+ * @returns {{ best: object|null, lifetime: object|null, yearly: object|null } | null}
+ *   `best = lifetime ?? yearly`. Null if the set can't be ranked (bad input or reps out of 1..10).
  */
 export function getOptimisticRankingMeta({
   set,
@@ -206,6 +239,15 @@ export function getOptimisticRankingMeta({
  * lift/reps/weight triple against the precomputed top-lift arrays directly.
  * Use this outside the log page (e.g. analyzer, history) where there are no
  * in-flight session edits to overlay.
+ *
+ * @param {object} args
+ * @param {string} args.liftType
+ * @param {number} args.reps - Must be 1..10.
+ * @param {number} args.weight - In the user's display unit.
+ * @param {boolean} args.isMetric
+ * @param {Record<string, Array<Array<object>>>} args.topLiftsByTypeAndReps
+ * @param {Record<string, Array<Array<object>>>} args.topLiftsByTypeAndRepsLast12Months
+ * @returns {{ best: object|null, lifetime: object|null, yearly: object|null } | null}
  */
 export function getRankingMeta({
   liftType,

@@ -13,6 +13,7 @@ import {
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { hexToRgba } from "@/lib/color-tools";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
@@ -2707,29 +2708,6 @@ function logSheetTimings(label, timings, totalMs, addLogEntry) {
         : "";
     addLogEntry({ type: "timing", label, total, detail, color });
   }
-}
-
-function hexToRgba(hexColor, alpha) {
-  if (typeof hexColor !== "string" || !hexColor.startsWith("#")) {
-    return `rgba(0, 0, 0, ${alpha})`;
-  }
-
-  let hex = hexColor.slice(1);
-  if (hex.length === 3) {
-    hex = hex
-      .split("")
-      .map((char) => char + char)
-      .join("");
-  }
-  if (hex.length !== 6) {
-    return `rgba(0, 0, 0, ${alpha})`;
-  }
-
-  const red = Number.parseInt(hex.slice(0, 2), 16);
-  const green = Number.parseInt(hex.slice(2, 4), 16);
-  const blue = Number.parseInt(hex.slice(4, 6), 16);
-
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
 function getAutoTimestampNotes() {

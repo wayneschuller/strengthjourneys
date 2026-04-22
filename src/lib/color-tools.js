@@ -3,6 +3,11 @@
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
 
+/**
+ * Brighten a hex color by scaling each RGB channel by `factor` (clamped to 255).
+ * Used when a theme's base lift color needs a lighter variant for dark-mode strokes
+ * or hover states without defining a second palette.
+ */
 export function brightenHexColor(hex, factor = 1.2) {
   // Remove # if present
   hex = hex.replace("#", "");
@@ -21,7 +26,11 @@ export function brightenHexColor(hex, factor = 1.2) {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
-// Simple function to increase saturation of a hex color
+/**
+ * Increase saturation of a hex color via HSL round-trip, scaling S by `factor`.
+ * Used when a theme color reads muted against chart backgrounds and needs
+ * more visual pop without shifting hue or lightness.
+ */
 export function saturateHexColor(hex, factor = 1.2) {
   // Remove # if present
   hex = hex.replace("#", "");
@@ -89,6 +98,11 @@ export function saturateHexColor(hex, factor = 1.2) {
     .padStart(2, "0")}`;
 }
 
+/**
+ * Convert a hex color (#rgb or #rrggbb) to an `rgba(...)` string with the given alpha.
+ * Needed wherever CSS demands transparency (glows, overlays, box-shadow tints) —
+ * falls back to transparent black on malformed input rather than throwing.
+ */
 export function hexToRgba(hexColor, alpha) {
   if (typeof hexColor !== "string" || !hexColor.startsWith("#")) {
     return `rgba(0, 0, 0, ${alpha})`;

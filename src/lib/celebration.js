@@ -36,6 +36,11 @@ export const NEXT_TIER = {
   Elite: null,
 };
 
+/**
+ * Years between a user's first logged lift and the given reference date.
+ * Feeds the celebration-tier policy: a 10-year veteran hitting a PR deserves
+ * a bigger party than a 3-month beginner who's still on the beginner growth curve.
+ */
 export function getTrainingAgeYears(parsedData, referenceDate) {
   const firstLoggedDate = parsedData?.find((entry) => !entry.isGoal)?.date;
   if (!firstLoggedDate || !referenceDate) return 0;
@@ -49,6 +54,13 @@ export function getTrainingAgeYears(parsedData, referenceDate) {
   return diffMs / (1000 * 60 * 60 * 24 * 365.25);
 }
 
+/**
+ * Map a set's ranking + reps + training age to a celebration tier
+ * (none / border / confettiSmall / confettiLarge / confettiLargeShake).
+ * Tuned so novices still get confetti for early wins, while veterans need
+ * genuine lifetime PRs to earn the biggest effect — otherwise every session
+ * would fire the shake animation and the celebration loses meaning.
+ */
 export function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
   const lifetimeRank = rankingMeta?.lifetime?.rank ?? null;
   const yearlyRank = rankingMeta?.yearly?.rank ?? null;
@@ -136,6 +148,11 @@ export function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
   };
 }
 
+/**
+ * Tailwind class bundles for a celebrated row — border + glow tinted by scope
+ * (lifetime = amber/gold, yearly = blue). Returned as separate classNames so
+ * callers can apply the border to the row and the glow to a wrapper/sibling.
+ */
 export function getCelebrationStyles(celebration) {
   if (!celebration || celebration.tier === "none") {
     return {
@@ -159,6 +176,11 @@ export function getCelebrationStyles(celebration) {
   };
 }
 
+/**
+ * Convert a DOM element's bounding rect into normalized viewport coordinates
+ * (0..1) for canvas-confetti's `origin`. Makes confetti burst from the actual
+ * set row the user just edited rather than the middle of the screen.
+ */
 export function getCelebrationOriginFromElement(element) {
   if (!element) return { x: 0.5, y: 0.55 };
   const rect = element.getBoundingClientRect();
@@ -168,6 +190,11 @@ export function getCelebrationOriginFromElement(element) {
   };
 }
 
+/**
+ * Fire a canvas-confetti burst keyed to the given tier, originating at the
+ * supplied element. Dynamically imports canvas-confetti so it stays out of
+ * the main bundle — the library is only pulled in when a celebration actually fires.
+ */
 export function fireSetCelebrationConfetti(tier, element) {
   if (typeof window === "undefined") return;
 

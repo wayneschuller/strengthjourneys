@@ -8,6 +8,11 @@ import {
   getCelebrationEmoji,
 } from "@/lib/processing-utils";
 
+/**
+ * Find the 0-indexed rank a given weight would occupy in a precomputed top-lifts
+ * array (already sorted heaviest-first). Returns null if the weight doesn't
+ * crack the top 20. Used to badge a set as "Lifetime #3" / "12-month #7" etc.
+ */
 export function getTop20Rank(topLifts, weight, isMetric) {
   if (!topLifts?.length || !weight) return null;
 
@@ -23,12 +28,22 @@ export function getTop20Rank(topLifts, weight, isMetric) {
   return topLifts.length < 20 ? topLifts.length : null;
 }
 
+/**
+ * Stable identity key for a set across persisted and in-flight states.
+ * Prefers `rowIndex` (sheet-backed) then `_tempId` (optimistic) so the same
+ * set maps to the same key before and after it syncs to Google Sheets.
+ */
 export function getSetIdentityKey(set, fallback = "pending") {
   if (set?.rowIndex != null) return `row:${set.rowIndex}`;
   if (set?._tempId) return `tmp:${set._tempId}`;
   return fallback;
 }
 
+/**
+ * Overlay optimistic in-page field edits on a persisted set for ranking purposes.
+ * The log page lets users edit reps/weight/unit before they sync to the sheet —
+ * we want ranks to reflect the *displayed* values, not the last-saved ones.
+ */
 export function getEffectiveSetForRanking(set, optimisticFields) {
   if (!optimisticFields) return set;
 
@@ -42,6 +57,11 @@ export function getEffectiveSetForRanking(set, optimisticFields) {
   };
 }
 
+/**
+ * Is the given YYYY-MM-DD date within the last 365 days from now? Used to
+ * decide whether a set belongs in the rolling-year top-lifts lane alongside
+ * the all-time lifetime lane.
+ */
 export function isWithinRollingYear(date) {
   if (!date) return false;
   const now = new Date();
@@ -50,6 +70,11 @@ export function isWithinRollingYear(date) {
   return new Date(`${date}T00:00:00Z`) >= cutoff;
 }
 
+/**
+ * Sort comparator for ranking lanes: heavier first, then earlier date (PR goes
+ * to the lift who reached the weight first), then row/temp id as a stable
+ * tiebreaker so rankings don't jitter between renders.
+ */
 export function compareRankingEntries(a, b, isMetric) {
   const aWeight = getDisplayWeight(a, isMetric).value;
   const bWeight = getDisplayWeight(b, isMetric).value;
@@ -176,6 +201,12 @@ export function getOptimisticRankingMeta({
   };
 }
 
+/**
+ * Non-optimistic variant of `getOptimisticRankingMeta` — ranks a raw
+ * lift/reps/weight triple against the precomputed top-lift arrays directly.
+ * Use this outside the log page (e.g. analyzer, history) where there are no
+ * in-flight session edits to overlay.
+ */
 export function getRankingMeta({
   liftType,
   reps,

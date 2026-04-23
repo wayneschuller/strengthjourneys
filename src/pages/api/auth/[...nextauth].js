@@ -115,16 +115,9 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      const grantedScopeMeta = getGrantedScopeSupportMeta(account);
-      await persistSignInSupportMeta(user?.email, grantedScopeMeta);
-      const signInMeta = await getSignInSupportMeta(user?.email);
-      await promptDeveloper("sign-in", user, {
-        ...signInMeta,
-        ...grantedScopeMeta,
-      });
-      return true;
-    },
+    // NOTE: signIn is injected per-request in the default export below so the
+    // callback can close over `req` and read cookies (e.g. sj_signin_source).
+    // NextAuth v4 does not pass req into the signIn callback directly.
     async jwt({ token, user, account }) {
       // account && user will be active on first time log in only
       // See: https://next-auth.js.org/configuration/callbacks
@@ -170,7 +163,31 @@ export const authOptions = {
   },
 };
 
-export default NextAuth(authOptions);
+// Per-request wrapper so the signIn callback can read cookies off `req`
+// (NextAuth v4 does not pass req into callbacks). We use this to attribute
+// each OAuth attempt to a specific CTA via the sj_signin_source cookie.
+export default async function auth(req, res) {
+  return NextAuth(req, res, {
+    ...authOptions,
+    callbacks: {
+      ...authOptions.callbacks,
+      async signIn({ user, account }) {
+        const signInSource = req?.cookies?.sj_signin_source
+          ? decodeURIComponent(req.cookies.sj_signin_source)
+          : null;
+        const grantedScopeMeta = getGrantedScopeSupportMeta(account);
+        await persistSignInSupportMeta(user?.email, grantedScopeMeta);
+        const signInMeta = await getSignInSupportMeta(user?.email);
+        await promptDeveloper("sign-in", user, {
+          ...signInMeta,
+          ...grantedScopeMeta,
+          signInSource,
+        });
+        return true;
+      },
+    },
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Prompts the developer to offer personal support to users at key moments
@@ -204,6 +221,7 @@ const PROMPT_MESSAGES = {
         : `[SJ] Sign-in — ${name}`,
     text: [
       `${name} (${email}) signed in at ${timeStr}.`,
+      meta.signInSource ? `Sign-in source: ${meta.signInSource}` : null,
       meta.hasRequiredDriveScope != null
         ? `Drive scope granted: ${meta.hasRequiredDriveScope ? "yes" : "no"}`
         : meta.grantedScopesKnown === false

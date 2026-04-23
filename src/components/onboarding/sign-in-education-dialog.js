@@ -24,7 +24,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { GoogleLogo } from "@/components/onboarding/google-sign-in";
+import {
+  GoogleLogo,
+  tagSignInSource,
+} from "@/components/onboarding/google-sign-in";
 import {
   gaTrackSignInClick,
   gaTrackSignInPrimerShown,
@@ -91,6 +94,7 @@ export function SignInEducationDialog({
     markReturningLifter();
     gaTrackSignInPrimerContinued(router.pathname, cta);
     gaTrackSignInClick(router.pathname, cta);
+    tagSignInSource(cta);
     signIn("google", { callbackUrl });
   };
 

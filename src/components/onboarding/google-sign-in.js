@@ -62,19 +62,25 @@ export function GoogleLogo({ size = 20, className = "" }) {
   );
 }
 
+/**
+ * Writes a short-lived cookie so the NextAuth signIn callback can attribute
+ * this OAuth attempt to a specific CTA in founder telemetry. SameSite=Lax is
+ * required so the cookie survives the Google → callback redirect. Call this
+ * immediately before `signIn("google", ...)` from any sign-in entry point.
+ */
+export function tagSignInSource(cta) {
+  if (typeof document === "undefined") return;
+  document.cookie = `sj_signin_source=${encodeURIComponent(
+    cta || "untagged",
+  )}; path=/; max-age=120; samesite=lax`;
+}
+
 function useDirectSignIn({ cta, callbackUrl = "/" }) {
   const router = useRouter();
 
   return () => {
     gaTrackSignInClick(router.pathname, cta);
-    // Short-lived cookie so the NextAuth signIn callback can attribute this
-    // OAuth attempt to a specific CTA in founder telemetry. SameSite=Lax is
-    // required so the cookie survives the Google → callback redirect.
-    if (typeof document !== "undefined") {
-      document.cookie = `sj_signin_source=${encodeURIComponent(
-        cta || "untagged",
-      )}; path=/; max-age=120; samesite=lax`;
-    }
+    tagSignInSource(cta);
     signIn("google", { callbackUrl });
   };
 }

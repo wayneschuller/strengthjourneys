@@ -278,15 +278,25 @@ export default async function handler(req, res) {
           connectionMethod: "reprovision_after_missing_sheet",
           provisioningMethod: "bootstrap_sheet_seeded",
         });
-        await promptDeveloper("reprovisioned", base.session.user, {
-          connectionMethod: "reprovision_after_missing_sheet",
-          provisioningMethod: "bootstrap_sheet_seeded",
-          sheetName: created.name || sheetName,
-          previousProvisionedSheetId,
-          previousSheetState: priorSheetCheck.state,
-          previousSheetName: priorSheetCheck.metadata?.name || null,
-          previousSheetHttpStatus: priorSheetCheck.httpStatus,
-        });
+        const hadPriorSheetEvidence = Boolean(
+          existingRecord?.connectedAt ||
+            existingRecord?.provisionedSheetId ||
+            existingRecord?.connectionMethod ||
+            existingRecord?.lastSeenAt,
+        );
+        await promptDeveloper(
+          hadPriorSheetEvidence ? "reprovisioned" : "first-time-provisioned",
+          base.session.user,
+          {
+            connectionMethod: "reprovision_after_missing_sheet",
+            provisioningMethod: "bootstrap_sheet_seeded",
+            sheetName: created.name || sheetName,
+            previousProvisionedSheetId,
+            previousSheetState: priorSheetCheck.state,
+            previousSheetName: priorSheetCheck.metadata?.name || null,
+            previousSheetHttpStatus: priorSheetCheck.httpStatus,
+          },
+        );
         return respondCreateNewUserSheet(res, created, debug, {
           reason: "reprovision_after_missing_sheet",
           onboardingFlowToken,

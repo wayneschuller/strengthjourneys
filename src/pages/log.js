@@ -8,11 +8,28 @@ import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import {
   getTopLiftStats,
   useAthleteBio,
-  getStrengthRatingForE1RM,
-  STRENGTH_LEVEL_EMOJI,
-  getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { hexToRgba } from "@/lib/color-tools";
+import {
+  getTop20Rank,
+  getSetIdentityKey,
+  getEffectiveSetForRanking,
+  isWithinRollingYear,
+  compareRankingEntries,
+  getOptimisticRankingMeta,
+  getRankingMeta,
+} from "@/lib/pr-ranking";
+import {
+  CELEBRATION_KEYFRAMES,
+  CELEBRATION_TIERS,
+  getTrainingAgeYears,
+  getCelebrationTier,
+  getCelebrationStyles,
+  fireSetCelebrationConfetti,
+} from "@/lib/celebration";
+import { StrengthBar } from "@/components/strength-level/strength-bar";
+import { LiftPercentileLine } from "@/components/strength-level/lift-percentile-line";
 import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
@@ -33,14 +50,6 @@ import {
 } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { generateSessionSets } from "@/lib/warmups";
-import {
-  getLiftPercentiles,
-  UNIVERSES,
-} from "@/lib/strength-circles/universe-percentiles";
-import {
-  LIFT_TYPE_TO_PERCENTILE_KEY,
-  LIFT_TYPE_TO_CALCULATOR_URL,
-} from "@/lib/strength-circles/strength-score";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -2051,7 +2060,7 @@ export default function LogSessionPage() {
       <Head>
         <link rel="canonical" href="https://www.strengthjourneys.xyz/log" />
       </Head>
-      <style dangerouslySetInnerHTML={{ __html: LOG_CELEBRATION_KEYFRAMES }} />
+      <style dangerouslySetInnerHTML={{ __html: CELEBRATION_KEYFRAMES }} />
       <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:gap-20">
         <aside className="hidden xl:block">
           <div className="sticky top-20 mr-auto w-full max-w-[9rem] space-y-4 pt-3 2xl:max-w-[10rem]">
@@ -2709,29 +2718,6 @@ function logSheetTimings(label, timings, totalMs, addLogEntry) {
   }
 }
 
-function hexToRgba(hexColor, alpha) {
-  if (typeof hexColor !== "string" || !hexColor.startsWith("#")) {
-    return `rgba(0, 0, 0, ${alpha})`;
-  }
-
-  let hex = hexColor.slice(1);
-  if (hex.length === 3) {
-    hex = hex
-      .split("")
-      .map((char) => char + char)
-      .join("");
-  }
-  if (hex.length !== 6) {
-    return `rgba(0, 0, 0, ${alpha})`;
-  }
-
-  const red = Number.parseInt(hex.slice(0, 2), 16);
-  const green = Number.parseInt(hex.slice(2, 4), 16);
-  const blue = Number.parseInt(hex.slice(4, 6), 16);
-
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-}
-
 function getAutoTimestampNotes() {
   return `${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} `;
 }
@@ -2820,600 +2806,7 @@ async function readApiError(response, fallbackMessage) {
   };
 }
 
-function getTop20Rank(topLifts, weight, isMetric) {
-  if (!topLifts?.length || !weight) return null;
 
-  const rank = topLifts.findIndex((lift) => {
-    const { value } = getDisplayWeight(lift, isMetric);
-    return weight > value;
-  });
-
-  if (rank !== -1) {
-    return rank < 20 ? rank : null;
-  }
-
-  return topLifts.length < 20 ? topLifts.length : null;
-}
-
-function getSetIdentityKey(set, fallback = "pending") {
-  if (set?.rowIndex != null) return `row:${set.rowIndex}`;
-  if (set?._tempId) return `tmp:${set._tempId}`;
-  return fallback;
-}
-
-function getEffectiveSetForRanking(set, optimisticFields) {
-  if (!optimisticFields) return set;
-
-  return {
-    ...set,
-    reps: optimisticFields.reps,
-    weight: optimisticFields.weight,
-    unitType: optimisticFields.unitType ?? set.unitType,
-    notes: optimisticFields.notes ?? set.notes,
-    URL: optimisticFields.url ?? set.URL,
-  };
-}
-
-function isWithinRollingYear(date) {
-  if (!date) return false;
-  const now = new Date();
-  const cutoff = new Date(now);
-  cutoff.setFullYear(cutoff.getFullYear() - 1);
-  return new Date(`${date}T00:00:00Z`) >= cutoff;
-}
-
-function compareRankingEntries(a, b, isMetric) {
-  const aWeight = getDisplayWeight(a, isMetric).value;
-  const bWeight = getDisplayWeight(b, isMetric).value;
-
-  if (aWeight !== bWeight) return bWeight - aWeight;
-
-  const aDate = a?.date ?? "";
-  const bDate = b?.date ?? "";
-  if (aDate !== bDate) return aDate.localeCompare(bDate);
-
-  return String(a?.rowIndex ?? a?._tempId ?? "").localeCompare(
-    String(b?.rowIndex ?? b?._tempId ?? ""),
-  );
-}
-
-/**
- * The log page treats newly entered/edited sets as "already done" for UX.
- * We therefore rank against the precomputed SWR top-lift arrays as a baseline,
- * then locally replace current-session rows with their optimistic in-page values.
- * After a full SWR cycle, parsedData/topLifts* naturally converge to the same result.
- */
-function getOptimisticRankingMeta({
-  set,
-  sets,
-  optimisticFieldsByKey,
-  isMetric,
-  topLiftsByTypeAndReps,
-  topLiftsByTypeAndRepsLast12Months,
-}) {
-  const effectiveSet = getEffectiveSetForRanking(
-    set,
-    optimisticFieldsByKey[getSetIdentityKey(set)],
-  );
-
-  if (
-    !effectiveSet?.liftType ||
-    !effectiveSet?.reps ||
-    effectiveSet.reps < 1 ||
-    effectiveSet.reps > 10 ||
-    !effectiveSet?.weight
-  ) {
-    return null;
-  }
-
-  const currentSessionSets = sets
-    .map((sessionSet, index) =>
-      getEffectiveSetForRanking(
-        sessionSet,
-        optimisticFieldsByKey[getSetIdentityKey(sessionSet, `set-${index}`)],
-      ),
-    )
-    .filter(
-      (sessionSet) =>
-        (sessionSet?.reps ?? 0) > 0 && (sessionSet?.weight ?? 0) > 0,
-    );
-
-  const currentSessionRowIndices = new Set(
-    currentSessionSets
-      .map((sessionSet) => sessionSet?.rowIndex)
-      .filter(Boolean),
-  );
-
-  const buildOptimisticLane = (baselineEntries, filterToYear = false) => {
-    const baseline = (baselineEntries ?? []).filter(
-      (entry) => !currentSessionRowIndices.has(entry?.rowIndex),
-    );
-    const optimisticSessionEntries = currentSessionSets.filter((sessionSet) => {
-      if (sessionSet.reps !== effectiveSet.reps) return false;
-      if (filterToYear && !isWithinRollingYear(sessionSet.date)) return false;
-      return true;
-    });
-
-    return [...baseline, ...optimisticSessionEntries].sort((a, b) =>
-      compareRankingEntries(a, b, isMetric),
-    );
-  };
-
-  const lifetimeLane = buildOptimisticLane(
-    topLiftsByTypeAndReps?.[effectiveSet.liftType]?.[effectiveSet.reps - 1],
-  );
-  const yearlyLane = buildOptimisticLane(
-    topLiftsByTypeAndRepsLast12Months?.[effectiveSet.liftType]?.[
-      effectiveSet.reps - 1
-    ],
-    true,
-  );
-
-  const effectiveKey = getSetIdentityKey(effectiveSet);
-  const getRankForLane = (lane) => {
-    const rank = lane.findIndex((entry, index) => {
-      const entryKey = getSetIdentityKey(entry, `lane-${index}`);
-      return entryKey === effectiveKey;
-    });
-    return rank !== -1 && rank < 20 ? rank : null;
-  };
-
-  const lifetimeRank = getRankForLane(lifetimeLane);
-  const yearlyRank = getRankForLane(yearlyLane);
-
-  const lifetime =
-    lifetimeRank != null
-      ? {
-          scope: "lifetime",
-          rank: lifetimeRank,
-          emoji: getCelebrationEmoji(lifetimeRank),
-          message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${effectiveSet.reps}RM`,
-        }
-      : null;
-
-  const yearly =
-    yearlyRank != null
-      ? {
-          scope: "yearly",
-          rank: yearlyRank,
-          emoji: getCelebrationEmoji(yearlyRank),
-          message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${effectiveSet.reps}RM`,
-        }
-      : null;
-
-  return {
-    best: lifetime ?? yearly,
-    lifetime,
-    yearly,
-  };
-}
-
-const LOG_CELEBRATION_KEYFRAMES = `
-@keyframes log-pr-shake {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  12% { transform: translate3d(-8px, 2px, 0); }
-  24% { transform: translate3d(7px, -3px, 0); }
-  36% { transform: translate3d(-6px, 4px, 0); }
-  48% { transform: translate3d(5px, -2px, 0); }
-  60% { transform: translate3d(-4px, 3px, 0); }
-  72% { transform: translate3d(6px, -1px, 0); }
-  84% { transform: translate3d(-3px, 2px, 0); }
-}
-`;
-
-const CELEBRATION_TIERS = {
-  none: 0,
-  border: 1,
-  confettiSmall: 2,
-  confettiLarge: 3,
-  confettiLargeShake: 4,
-};
-
-function getTrainingAgeYears(parsedData, referenceDate) {
-  const firstLoggedDate = parsedData?.find((entry) => !entry.isGoal)?.date;
-  if (!firstLoggedDate || !referenceDate) return 0;
-
-  const start = new Date(`${firstLoggedDate}T00:00:00Z`);
-  const end = new Date(`${referenceDate}T00:00:00Z`);
-  const diffMs = end.getTime() - start.getTime();
-
-  if (Number.isNaN(diffMs) || diffMs <= 0) return 0;
-
-  return diffMs / (1000 * 60 * 60 * 24 * 365.25);
-}
-
-function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
-  const lifetimeRank = rankingMeta?.lifetime?.rank ?? null;
-  const yearlyRank = rankingMeta?.yearly?.rank ?? null;
-  const isPriorityRep = PRIORITY_REP_SCHEMES.includes(reps);
-
-  if (lifetimeRank === 0) {
-    return {
-      tier: trainingAgeYears <= 2 ? "confettiLarge" : "confettiLargeShake",
-      score:
-        trainingAgeYears <= 2
-          ? CELEBRATION_TIERS.confettiLarge
-          : CELEBRATION_TIERS.confettiLargeShake,
-      reason:
-        trainingAgeYears <= 2 ? "Lifetime best without shake" : "Lifetime best",
-    };
-  }
-
-  if (trainingAgeYears >= 5) {
-    if (lifetimeRank != null && lifetimeRank < 5) {
-      return {
-        tier: "confettiLarge",
-        score: CELEBRATION_TIERS.confettiLarge,
-        reason: "Lifetime top 5",
-      };
-    }
-    if (lifetimeRank != null && lifetimeRank < 10) {
-      return {
-        tier: "confettiSmall",
-        score: CELEBRATION_TIERS.confettiSmall,
-        reason: "Lifetime top 10",
-      };
-    }
-    if (yearlyRank === 0) {
-      return {
-        tier: "border",
-        score: CELEBRATION_TIERS.border,
-        reason: "12-month best",
-      };
-    }
-  }
-
-  if (trainingAgeYears >= 2) {
-    if (lifetimeRank != null && lifetimeRank < 5) {
-      return {
-        tier: "confettiSmall",
-        score: CELEBRATION_TIERS.confettiSmall,
-        reason: "Lifetime top 5",
-      };
-    }
-    if (
-      (lifetimeRank != null && lifetimeRank < 10 && isPriorityRep) ||
-      yearlyRank === 0
-    ) {
-      return {
-        tier: "border",
-        score: CELEBRATION_TIERS.border,
-        reason:
-          lifetimeRank != null && lifetimeRank < 10
-            ? "Priority lifetime top 10"
-            : "12-month best",
-      };
-    }
-  }
-
-  if (lifetimeRank != null && lifetimeRank < 3 && isPriorityRep) {
-    return {
-      tier: "confettiSmall",
-      score: CELEBRATION_TIERS.confettiSmall,
-      reason: "Early-phase lifetime top 3",
-    };
-  }
-
-  if (yearlyRank === 0 && isPriorityRep) {
-    return {
-      tier: "border",
-      score: CELEBRATION_TIERS.border,
-      reason: "12-month best",
-    };
-  }
-
-  return {
-    tier: "none",
-    score: CELEBRATION_TIERS.none,
-    reason: null,
-  };
-}
-
-function getCelebrationStyles(celebration) {
-  if (!celebration || celebration.tier === "none") {
-    return {
-      rowClassName: "",
-      glowClassName: "",
-    };
-  }
-
-  const isLifetime = celebration.scope === "lifetime";
-  const baseBorder = isLifetime
-    ? "border-amber-300/80 bg-amber-50/30 dark:border-amber-500/40 dark:bg-amber-500/5"
-    : "border-blue-300/80 bg-blue-50/30 dark:border-blue-500/40 dark:bg-blue-500/5";
-
-  const glowClassName = isLifetime
-    ? "shadow-[0_0_0_1px_rgba(251,191,36,0.2),0_12px_28px_-20px_rgba(245,158,11,0.7)]"
-    : "shadow-[0_0_0_1px_rgba(96,165,250,0.18),0_12px_28px_-20px_rgba(59,130,246,0.65)]";
-
-  return {
-    rowClassName: cn("rounded-lg border", baseBorder),
-    glowClassName,
-  };
-}
-
-function getCelebrationOriginFromElement(element) {
-  if (!element) return { x: 0.5, y: 0.55 };
-  const rect = element.getBoundingClientRect();
-  return {
-    x: (rect.left + rect.width / 2) / window.innerWidth,
-    y: (rect.top + rect.height / 2) / window.innerHeight,
-  };
-}
-
-function fireSetCelebrationConfetti(tier, element) {
-  if (typeof window === "undefined") return;
-
-  const origin = getCelebrationOriginFromElement(element);
-
-  import("canvas-confetti")
-    .then(({ default: confetti }) => {
-      if (tier === "confettiLargeShake" || tier === "confettiLarge") {
-        confetti({
-          particleCount: 85,
-          spread: 80,
-          startVelocity: 40,
-          scalar: 1.05,
-          origin,
-        });
-        confetti({
-          particleCount: 50,
-          spread: 120,
-          startVelocity: 30,
-          decay: 0.92,
-          origin,
-        });
-        return;
-      }
-
-      if (tier === "confettiSmall") {
-        confetti({
-          particleCount: 28,
-          spread: 42,
-          startVelocity: 22,
-          scalar: 0.9,
-          origin,
-        });
-      }
-    })
-    .catch((error) => {
-      console.error("[log-celebration] confetti failed", error);
-    });
-}
-
-function getRankingMeta({
-  liftType,
-  reps,
-  weight,
-  isMetric,
-  topLiftsByTypeAndReps,
-  topLiftsByTypeAndRepsLast12Months,
-}) {
-  if (!liftType || !reps || reps < 1 || reps > 10 || !weight) return null;
-
-  const lifetimeRank = getTop20Rank(
-    topLiftsByTypeAndReps?.[liftType]?.[reps - 1],
-    weight,
-    isMetric,
-  );
-  const yearlyRank = getTop20Rank(
-    topLiftsByTypeAndRepsLast12Months?.[liftType]?.[reps - 1],
-    weight,
-    isMetric,
-  );
-
-  const lifetime =
-    lifetimeRank != null
-      ? {
-          scope: "lifetime",
-          rank: lifetimeRank,
-          emoji: getCelebrationEmoji(lifetimeRank),
-          message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
-        }
-      : null;
-
-  const yearly =
-    yearlyRank != null
-      ? {
-          scope: "yearly",
-          rank: yearlyRank,
-          emoji: getCelebrationEmoji(yearlyRank),
-          message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
-        }
-      : null;
-
-  const best = lifetime ?? yearly;
-
-  return { best, lifetime, yearly };
-}
-
-// --- Strength bar for log page ---
-
-const LOG_NEXT_TIER = {
-  "Physically Active": { name: "Beginner", key: "beginner" },
-  Beginner: { name: "Intermediate", key: "intermediate" },
-  Intermediate: { name: "Advanced", key: "advanced" },
-  Advanced: { name: "Elite", key: "elite" },
-  Elite: null,
-};
-
-
-function LogStrengthBar({
-  liftType,
-  e1rmValue,
-  standards,
-  age,
-  sessionDate,
-  bodyWeight,
-  sex,
-  isMetric,
-}) {
-  const standard =
-    sessionDate && age && bodyWeight != null && sex != null
-      ? getStandardForLiftDate(
-          age,
-          sessionDate,
-          bodyWeight,
-          sex,
-          liftType,
-          isMetric ?? false,
-        )
-      : standards?.[liftType];
-
-  if (!standard?.elite || !e1rmValue) return null;
-
-  const rating = getStrengthRatingForE1RM(e1rmValue, standard);
-  if (!rating) return null;
-
-  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
-  const { physicallyActive, elite } = standard;
-  const range = elite - physicallyActive;
-  const pct =
-    range > 0
-      ? Math.min(
-          98,
-          Math.max(2, ((e1rmValue - physicallyActive) / range) * 100),
-        )
-      : 50;
-
-  const nextTierInfo = LOG_NEXT_TIER[rating];
-  const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
-  const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmValue) : null;
-  const unit = isMetric ? "kg" : "lb";
-
-  // Tier divider positions
-  const tiers = [standard.beginner, standard.intermediate, standard.advanced]
-    .map((val) => ((val - physicallyActive) / range) * 100)
-    .filter((p) => p > 0 && p < 100);
-
-  const LIFT_STRENGTH_SLUGS = {
-    "Back Squat": "squat",
-    "Bench Press": "bench-press",
-    "Deadlift": "deadlift",
-    "Strict Press": "strict-press",
-  };
-  const strengthHref = LIFT_STRENGTH_SLUGS[liftType]
-    ? `/strength-levels/${LIFT_STRENGTH_SLUGS[liftType]}`
-    : "/strength-levels";
-
-  return (
-    <TooltipProvider>
-      <div className="flex items-center gap-2">
-        <Link
-          href={strengthHref}
-          className="text-muted-foreground hover:text-foreground shrink-0 text-[10px] font-medium transition-colors"
-        >
-          {emoji} {rating}
-        </Link>
-        <div className="relative flex-1">
-          <div
-            className="h-2 w-full rounded-full"
-            style={{
-              background:
-                "linear-gradient(to right, #EAB308, #86EFAC, #166534)",
-            }}
-          />
-          {tiers.map((p, i) => (
-            <div
-              key={i}
-              className="absolute top-0 h-2 w-px"
-              style={{
-                left: `${p}%`,
-                backgroundColor: "var(--background)",
-                opacity: 0.7,
-              }}
-            />
-          ))}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className="bg-foreground ring-background absolute top-1/2 h-3.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm ring-1 transition-[left] duration-300"
-                style={{ left: `${pct}%` }}
-              />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
-              <p className="font-semibold">{liftType}</p>
-              <p>
-                {emoji} {rating} · E1RM {Math.round(e1rmValue)}
-                {unit}
-              </p>
-              {nextTierInfo && diff > 0 ? (
-                <p className="text-muted-foreground">
-                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
-                  {nextTierInfo.name} — {diff}
-                  {unit} away
-                </p>
-              ) : nextTierInfo && diff <= 0 ? (
-                <p className="text-muted-foreground">
-                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
-                  {nextTierInfo.name} — you&apos;re there!
-                </p>
-              ) : (
-                <p className="text-muted-foreground">Top of the chart!</p>
-              )}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-    </TooltipProvider>
-  );
-}
-
-function LogLiftPercentileLine({
-  liftType,
-  e1rmValue,
-  age,
-  bodyWeight,
-  sex,
-  isMetric,
-}) {
-  const percentileKey = LIFT_TYPE_TO_PERCENTILE_KEY[liftType];
-  const calculatorUrl = LIFT_TYPE_TO_CALCULATOR_URL[liftType] ?? "/calculator";
-
-  const bestUniverse = useMemo(() => {
-    if (!percentileKey || !e1rmValue || !age || bodyWeight == null || !sex) {
-      return null;
-    }
-
-    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
-    const e1rmKg = isMetric ? e1rmValue : e1rmValue / 2.2046;
-    const allPercentiles = getLiftPercentiles(
-      age,
-      bodyWeightKg,
-      sex === "female" ? "female" : "male",
-      percentileKey,
-      e1rmKg,
-    );
-    if (!allPercentiles) return null;
-
-    // Pick the most elite (rightmost) universe where percentile >= 60
-    const labels = {
-      "General Population": "the general population",
-      "Gym-Goers": "gym-goers",
-      "Barbell Lifters": "barbell lifters",
-      "Powerlifting Culture": "the powerlifting community",
-    };
-
-    let best = null;
-    for (const universe of UNIVERSES) {
-      const pct = allPercentiles[universe];
-      if (pct != null && pct >= 60) {
-        best = { universe, percentile: pct, label: labels[universe] };
-      }
-    }
-    return best;
-  }, [age, bodyWeight, e1rmValue, isMetric, percentileKey, sex]);
-
-  if (!bestUniverse) return null;
-
-  return (
-    <div className="text-xs text-muted-foreground">
-      <Link href={calculatorUrl} className="transition-colors hover:text-foreground">
-        Stronger than {bestUniverse.percentile}% of {bestUniverse.label}
-      </Link>
-    </div>
-  );
-}
 
 // --- Lift block ---
 
@@ -4352,7 +3745,7 @@ function LiftBlock({
       </div>
       {canShowStrength && bestE1rmValue > 0 && (
         <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
-          <LogStrengthBar
+          <StrengthBar
             liftType={liftType}
             e1rmValue={bestE1rmValue}
             standards={standards}
@@ -4366,7 +3759,7 @@ function LiftBlock({
       )}
       {canShowStrength && bestE1rmValue > 0 && (
         <div className={`mx-4 mt-2 ${desktopIconOffsetClass}`}>
-          <LogLiftPercentileLine
+          <LiftPercentileLine
             liftType={liftType}
             e1rmValue={bestE1rmValue}
             age={age}

@@ -64,15 +64,6 @@ Use this when making focused changes.
 
 There is currently **no test framework configured**.
 
-- No unit tests
-- No integration tests
-- No Playwright/Cypress setup
-
-If adding tests:
-
-- Prefer Vitest or Jest
-- Co-locate tests as `*.test.js`
-- Add a `npm run test` script
 
 Until then, validation = lint. Only run `npm run build` when the user asks or
 when you specifically need production-build confirmation.
@@ -108,7 +99,7 @@ Important supporting flows:
 1. `src/pages/api/sheet/resolve.js` decides bootstrap/recovery/switch-sheet flow
 2. `src/lib/sheet-flow.js` contains the shared sheet-linking/provisioning logic
 3. `src/pages/api/sheet/import-history.js` handles authenticated import merges into the linked sheet
-4. `src/components/import-workflow-section.js` and `src/components/sheet-setup-dialog.js` are the main import entry points
+4. `src/components/onboarding/import-workflow-section.js` and `src/components/onboarding/sheet-setup-dialog.js` are the main import entry points
 
 All lifting analysis is client-side. The server does store limited operational
 metadata in KV for onboarding, recovery, and support visibility, but not the

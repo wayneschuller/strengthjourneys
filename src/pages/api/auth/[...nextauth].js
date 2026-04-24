@@ -297,6 +297,7 @@ const PROMPT_MESSAGES = {
     subject: `[SJ] Reprovisioned after missing sheet — ${name}`,
     text: [
       `${name} (${email}) was reprovisioned at ${timeStr}.`,
+      `Their previously linked sheet is gone (deleted or trashed) — a fresh sheet was created so they can keep going.`,
       meta.connectionMethod
         ? `Connection method: ${meta.connectionMethod}`
         : null,
@@ -316,6 +317,19 @@ const PROMPT_MESSAGES = {
       meta.previousSheetHttpStatus != null
         ? `Previous sheet check status: ${meta.previousSheetHttpStatus}`
         : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
+  "first-time-provisioned": (name, email, timeStr, meta) => ({
+    subject: `[SJ] First-time provisioned — ${name}`,
+    text: [
+      `${name} (${email}) was provisioned a fresh sheet at ${timeStr}.`,
+      `This is their first sheet — KV had sign-in metadata only (no prior sheet), so a new sheet was seeded.`,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
+      meta.sheetName ? `New sheet: ${meta.sheetName}` : null,
     ]
       .filter(Boolean)
       .join("\n"),

@@ -231,7 +231,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 />
 
                 <Tooltip
-                  position={{ y: 240 }}
+                  position={{ y: 180 }}
                   content={(props) => (
                     <TonnageTooltipContent
                       {...props}
@@ -353,7 +353,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               />
 
               <Tooltip
-                position={{ y: 240 }}
+                position={{ y: 180 }}
                 content={(props) => (
                   <TonnageTooltipMinimal
                     {...props}

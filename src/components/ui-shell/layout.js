@@ -73,18 +73,21 @@ export function Layout({ children }) {
     router.pathname === "/log"
       ? {
           triggerLabels: [
-            "Logging is new. Feedback?",
-            "Logging is in beta. Thoughts?",
-            "New logging feature. Comments?",
+            "How's the logging?",
+            "Log feel right?",
+            "Set tracking thoughts?",
+            "Logging working for you?",
           ],
           tooltipMessages: [
-            "Logging is in beta. Leave feedback or bug reports.",
+            "How's logging your sets feeling? Tell us.",
+            "Spot a rough edge in the log? Let us know.",
+            "Logging ideas, bugs, or wishes welcome.",
           ],
-          introTitle: "Logging is in beta. How's it feeling?",
+          introTitle: "How's the logging treating you?",
           introDescription:
-            "If anything feels confusing, broken, or worth polishing in the log, please leave feedback.",
+            "Anything awkward between sets, missing from the flow, or worth polishing? We tweak this page often and your notes go straight to the top of the list.",
           commentPlaceholder:
-            "Bug report, rough edge, or idea about logging...",
+            "What's working, what's clunky, what's missing in the log...",
         }
       : undefined;
 

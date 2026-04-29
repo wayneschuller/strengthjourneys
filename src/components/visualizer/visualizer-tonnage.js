@@ -231,7 +231,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 />
 
                 <Tooltip
-                  position={{ y: 40 }}
+                  position={{ y: 180 }}
                   content={(props) => (
                     <TonnageTooltipContent
                       {...props}
@@ -353,7 +353,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               />
 
               <Tooltip
-                position={{ y: 40 }}
+                position={{ y: 180 }}
                 content={(props) => (
                   <TonnageTooltipMinimal
                     {...props}
@@ -664,6 +664,7 @@ const TonnageTooltipContent = ({
   if (!payload || payload.length === 0) return null;
 
   const tonnage = payload[0].value;
+  const rollingAverageTonnage = payload[0].payload?.rollingAverageTonnage;
   const date = new Date(label);
 
   const dateLabel = date.toLocaleDateString("en-US", {
@@ -673,6 +674,7 @@ const TonnageTooltipContent = ({
   });
 
   const unitType = isMetric ? "kg" : "lb";
+  const seriesColor = liftColor || "var(--chart-1)";
 
   const sessionLiftsByType =
     parsedData && dateStr
@@ -680,18 +682,41 @@ const TonnageTooltipContent = ({
       : null;
 
   return (
-    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
         <div
           className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-          style={{ backgroundColor: liftColor || "var(--chart-1)" }}
+          style={{ backgroundColor: seriesColor }}
         />
         <div className="font-semibold">
           {liftType ? `${liftType} Tonnage` : "Total Tonnage"}
         </div>
         <div className="ml-2">{`${tonnage.toFixed(0)}${unitType}`}</div>
       </div>
+      {rollingAverageTonnage != null && (
+        <div className="flex flex-row items-center">
+          <svg
+            className="mr-1 shrink-0"
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+          >
+            <line
+              x1="0"
+              y1="5"
+              x2="10"
+              y2="5"
+              stroke={seriesColor}
+              strokeWidth="2"
+              strokeDasharray="3 2"
+              strokeOpacity="0.6"
+            />
+          </svg>
+          <div className="font-semibold">30-Day Avg</div>
+          <div className="ml-2">{`${Math.round(rollingAverageTonnage)}${unitType}`}</div>
+        </div>
+      )}
 
       {sessionLiftsByType && Object.keys(sessionLiftsByType).length > 0 && (
         <div className="mt-2">

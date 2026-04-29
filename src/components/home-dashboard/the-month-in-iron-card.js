@@ -44,6 +44,7 @@ import { LiftSvg } from "@/components/year-recap/lift-svg";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";
+import { gaTrackCoffeeNudgeClick } from "@/lib/analytics";
 
 // ─── Main component ────────────────────────────────────────────────────────
 
@@ -185,6 +186,19 @@ export function TheMonthInIronCard({
       pastMonthNoBaselineHeadline,
     ],
   );
+
+  // Buy-Me-a-Coffee nudge: only on the current month, in its final week, when the user is clearly winning.
+  // Copy is hashed by today's date so it stays stable across same-day visits but varies day-to-day.
+  const showCoffeeNudge =
+    !isDemoMode &&
+    !!boundaries?.isCurrentMonthView &&
+    typeof boundaries?.daysRemainingInCurrentMonth === "number" &&
+    boundaries.daysRemainingInCurrentMonth <= 7 &&
+    verdictHeadline?.tone === "win" &&
+    highlightsComplete;
+  const coffeeNudgeText = showCoffeeNudge
+    ? pickPhraseForMonth(COFFEE_WIN_NUDGES, boundaries.todayStr)
+    : "";
 
   useEffect(() => {
     if (!isCardInView || !stats || totalRevealRows === 0) {
@@ -375,6 +389,28 @@ export function TheMonthInIronCard({
                 )}
               </p>
             </motion.div>
+
+            {showCoffeeNudge && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.7 }}
+                className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
+              >
+                <p className="leading-snug">{coffeeNudgeText}</p>
+                <a
+                  href="https://buymeacoffee.com/lrhvbjxzqr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() =>
+                    gaTrackCoffeeNudgeClick("month_win_last_week")
+                  }
+                  className="mt-2 inline-flex items-center gap-2 rounded-md bg-amber-400 px-3 py-1.5 text-sm font-medium text-amber-950 transition-colors hover:bg-amber-500"
+                >
+                  ☕ Buy me a coffee
+                </a>
+              </motion.div>
+            )}
           </>
         )}
       </CardContent>
@@ -750,6 +786,20 @@ const PAST_MONTH_NO_BASELINE_HEADLINES = [
   "No prior month to beat. Baseline set.",
   "First month on record. Benchmark logged.",
   "No month-versus-month baseline yet.",
+];
+
+// Surface only in the final week of a month the user is winning. Hashed by today's date for daily variety.
+const COFFEE_WIN_NUDGES = [
+  "Crushing this month? Solo dev here. A coffee keeps me coding.",
+  "A winning month deserves a small thank-you. Buy me a coffee?",
+  "You're closing out a strong month. Want to fuel the next one?",
+  "Solo dev watching you crush your month. A coffee would make my week.",
+  "If this app helped you win the month, I'd love a coffee.",
+  "Big month, small ask. Buy me a coffee?",
+  "You're winning. I'm caffeinated. Let's keep both going.",
+  "Free app, one developer, lots of coffee. You know what to do.",
+  "Built this for people exactly like you. A coffee says thanks.",
+  "Strong month. No ads, no tracking, just one dev and a coffee habit.",
 ];
 
 const BIG_FOUR_LIFT_URLS = {

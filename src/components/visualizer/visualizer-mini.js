@@ -387,7 +387,7 @@ export function VisualizerMini({ liftType }) {
                   formatter={(value, name, props) =>
                     `${value} ${props.payload.displayUnit || ""}`
                   }
-                  position={{ y: 10 }}
+                  position={{ y: 180 }}
                   cursor={{
                     stroke: "#8884d8",
                     strokeWidth: 2,

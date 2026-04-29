@@ -65,6 +65,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   HOME_DASHBOARD_STAGE_ENTERED: "SJ_home_dashboard_stage_entered", // ~Mar 2026: User entered a staged onboarding/dashboard phase.
   HERO_IMPORT_CLICK: "SJ_hero_import_click", // ~Mar 2026: User clicked "Import Your Lifting Data" CTA on hero.
   IMPORT_PROCESS: "SJ_import_process", // ~Mar 2026: Client-side import/save lifecycle for preview and history imports.
+  COFFEE_NUDGE_CLICK: "SJ_coffee_nudge_click", // ~Apr 2026: User clicked a Buy-Me-a-Coffee link in an in-app nudge surface.
 });
 
 const UTM_STORAGE_KEY = "ga_utm";
@@ -333,4 +334,14 @@ export function gaTrackImportProcess({
     params.error_code = errorCode;
   }
   gaEvent(GA_EVENT_TAGS.IMPORT_PROCESS, params);
+}
+
+/**
+ * Track clicks on in-app Buy-Me-a-Coffee nudges so different placements can be compared.
+ * @param {string} surface - Where the nudge fired (e.g. "month_win_last_week", "avatar_menu", "footer").
+ * @param {object} [extra] - Optional extra params (e.g. { variant }).
+ */
+export function gaTrackCoffeeNudgeClick(surface, extra = {}) {
+  if (typeof surface !== "string" || surface.length === 0) return;
+  gaEvent(GA_EVENT_TAGS.COFFEE_NUDGE_CLICK, { surface, ...extra });
 }

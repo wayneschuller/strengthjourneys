@@ -2,6 +2,7 @@ import { devLog, getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString, parseYmdLocal } from "@/lib/date-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { brightenHexColor, saturateHexColor } from "@/lib/color-tools";
+import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,8 @@ export const SessionRow = ({ date, lifts, isMetric, showDate = true }) => {
       })
     : null;
 
+  const groups = getConsecutiveWorkoutGroups(lifts);
+
   return (
     <div className="text-xs">
       {showDate && formattedDate && (
@@ -41,13 +44,18 @@ export const SessionRow = ({ date, lifts, isMetric, showDate = true }) => {
         </>
       )}
       <span className="mr-1 font-semibold">Sets:</span>
-      {lifts.map((lift, index) => {
-        const { value, unit } = getDisplayWeight(lift, isMetric ?? false);
+      {groups.map((group, index) => {
+        const firstLift = lifts[group[0]];
+        const count = group.length;
+        const { value, unit } = getDisplayWeight(firstLift, isMetric ?? false);
+        const text =
+          count > 1
+            ? `${count}×${firstLift.reps}@${value}${unit}`
+            : `${firstLift.reps}@${value}${unit}`;
         return (
           <span key={index}>
-            {lift.reps}@{value}
-            {unit}
-            {index < lifts.length - 1 && ", "}
+            {text}
+            {index < groups.length - 1 && ", "}
           </span>
         );
       })}
@@ -80,7 +88,7 @@ const createLiftTooltipContent = (liftType, tuple, color) => {
 
 // Shared tooltip UI component
 const TooltipUI = ({ dateLabel, tooltipsPerLift }) => (
-  <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+  <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
     <p className="font-bold">{dateLabel}</p>
     {tooltipsPerLift.map(({ liftType, label, color, reps }) => (
       <div key={liftType}>
@@ -195,7 +203,7 @@ export const SingleLiftTooltipContent = ({
   if (!tooltipContent) return null;
 
   return (
-    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
         <div
@@ -335,7 +343,7 @@ export const VisualizerRepsTooltip = ({ active, payload, label, isMetric }) => {
   // devLog(tuple);
 
   return (
-    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <div className="font-bold">
         <span>{dateLabel}</span>
         {liftType && (

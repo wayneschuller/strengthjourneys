@@ -3,6 +3,22 @@ import { getReadableDateString, parseYmdLocal } from "@/lib/date-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { brightenHexColor, saturateHexColor } from "@/lib/color-tools";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
+
+/**
+ * Returns a CSS transform that flips a tooltip to the opposite side of the cursor
+ * to keep it from covering the active data point. Pair with Recharts <Tooltip position={{ y }} />
+ * so the y stays pinned and only the horizontal side is computed here.
+ */
+export function getTooltipFlipStyle({ coordinate, viewBox, gap = 12 }) {
+  if (!coordinate || !viewBox) return undefined;
+  const midpoint = (viewBox.x ?? 0) + (viewBox.width ?? 0) / 2;
+  const isRightHalf = coordinate.x > midpoint;
+  return {
+    transform: isRightHalf
+      ? `translateX(calc(-100% - ${gap}px))`
+      : `translateX(${gap}px)`,
+  };
+}
 import {
   Select,
   SelectContent,
@@ -179,6 +195,8 @@ export const SingleLiftTooltipContent = ({
   parsedData,
   liftColor,
   isMetric,
+  coordinate,
+  viewBox,
 }) => {
   const { getColor } = useLiftColors();
   if (!active || !payload?.length) return null;
@@ -202,8 +220,13 @@ export const SingleLiftTooltipContent = ({
 
   if (!tooltipContent) return null;
 
+  const flipStyle = getTooltipFlipStyle({ coordinate, viewBox });
+
   return (
-    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div
+      style={flipStyle}
+      className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl"
+    >
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
         <div

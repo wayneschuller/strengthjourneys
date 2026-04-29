@@ -88,7 +88,7 @@ const createLiftTooltipContent = (liftType, tuple, color) => {
 
 // Shared tooltip UI component
 const TooltipUI = ({ dateLabel, tooltipsPerLift }) => (
-  <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+  <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
     <p className="font-bold">{dateLabel}</p>
     {tooltipsPerLift.map(({ liftType, label, color, reps }) => (
       <div key={liftType}>
@@ -203,7 +203,7 @@ export const SingleLiftTooltipContent = ({
   if (!tooltipContent) return null;
 
   return (
-    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
         <div
@@ -343,7 +343,7 @@ export const VisualizerRepsTooltip = ({ active, payload, label, isMetric }) => {
   // devLog(tuple);
 
   return (
-    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <div className="font-bold">
         <span>{dateLabel}</span>
         {liftType && (

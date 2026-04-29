@@ -1,47 +1,8 @@
-import { useState, useEffect } from "react";
 import { devLog, getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString, parseYmdLocal } from "@/lib/date-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { brightenHexColor, saturateHexColor } from "@/lib/color-tools";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
-
-/**
- * Returns a CSS transform that flips a tooltip to the opposite side of the cursor
- * to keep it from covering the active data point. Pair with Recharts <Tooltip position={{ y }} />
- * so the y stays pinned and only the horizontal side is computed here.
- *
- * Recharts' Tooltip content does not pass viewBox, so callers should measure the chart
- * container width (via ref + ResizeObserver) and pass it as chartWidth.
- */
-/**
- * Tracks the width of an element (typically a chart container) via ResizeObserver.
- * Returns a [setRef, width] tuple where setRef is a callback ref to attach.
- */
-export function useElementWidth() {
-  const [el, setEl] = useState(null);
-  const [width, setWidth] = useState(0);
-
-  useEffect(() => {
-    if (!el) return;
-    const update = () => setWidth(el.offsetWidth);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [el]);
-
-  return [setEl, width];
-}
-
-export function getTooltipFlipStyle({ coordinate, chartWidth, gap = 12 }) {
-  if (!coordinate || !chartWidth) return undefined;
-  const isRightHalf = coordinate.x > chartWidth / 2;
-  return {
-    transform: isRightHalf
-      ? `translateX(calc(-100% - ${gap}px))`
-      : `translateX(${gap}px)`,
-  };
-}
 import {
   Select,
   SelectContent,
@@ -218,8 +179,6 @@ export const SingleLiftTooltipContent = ({
   parsedData,
   liftColor,
   isMetric,
-  coordinate,
-  chartWidth,
 }) => {
   const { getColor } = useLiftColors();
   if (!active || !payload?.length) return null;
@@ -243,13 +202,8 @@ export const SingleLiftTooltipContent = ({
 
   if (!tooltipContent) return null;
 
-  const flipStyle = getTooltipFlipStyle({ coordinate, chartWidth });
-
   return (
-    <div
-      style={flipStyle}
-      className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl"
-    >
+    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
         <div

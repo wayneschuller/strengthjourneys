@@ -7,7 +7,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, logTiming, getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
-import { SessionRow, getTooltipFlipStyle, useElementWidth } from "@/components/visualizer/visualizer-utils";
+import { SessionRow } from "@/components/visualizer/visualizer-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
@@ -132,7 +132,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   const tonnageColor = liftColor || "var(--chart-1)";
   const [hiddenSeries, setHiddenSeries] = useState({});
-  const [setChartEl, chartContainerWidth] = useElementWidth();
 
   const toggleSeries = (dataKey) => {
     setHiddenSeries((prev) => ({ ...prev, [dataKey]: !prev[dataKey] }));
@@ -205,7 +204,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        <div ref={setChartEl}>
         {isLoading || !parsedData || !isMounted || !chartData ? (
           <Skeleton className="h-[400px] w-full" />
         ) : liftType ? (
@@ -233,7 +231,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 />
 
                 <Tooltip
-                  position={{ y: 40 }}
+                  position={{ y: 240 }}
                   content={(props) => (
                     <TonnageTooltipContent
                       {...props}
@@ -243,7 +241,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                       setHighlightDate={setHighlightDate}
                       debounceMs={tooltipDebounceMs}
                       isMetric={isMetric}
-                      chartWidth={chartContainerWidth}
                     />
                   )}
                 />
@@ -356,14 +353,13 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               />
 
               <Tooltip
-                position={{ y: 40 }}
+                position={{ y: 240 }}
                 content={(props) => (
                   <TonnageTooltipMinimal
                     {...props}
                     setHighlightDate={setHighlightDate}
                     debounceMs={tooltipDebounceMs}
                     isMetric={isMetric}
-                    chartWidth={chartContainerWidth}
                   />
                 )}
               />
@@ -449,7 +445,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
             </AreaChart>
           </ChartContainer>
         )}
-        </div>
       </CardContent>
 
       <CardFooter>
@@ -592,8 +587,6 @@ const TonnageTooltipMinimal = ({
   setHighlightDate,
   debounceMs = 0,
   isMetric = false,
-  coordinate,
-  chartWidth,
 }) => {
   const dateStr = payload?.[0]?.payload?.date || null;
 
@@ -613,13 +606,9 @@ const TonnageTooltipMinimal = ({
     day: "numeric",
   });
   const unitType = isMetric ? "kg" : "lb";
-  const flipStyle = getTooltipFlipStyle({ coordinate, chartWidth });
 
   return (
-    <div
-      style={flipStyle}
-      className="rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl"
-    >
+    <div className="rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <p>{`${tonnage.toFixed(0)}${unitType}`}</p>
     </div>
@@ -662,8 +651,6 @@ const TonnageTooltipContent = ({
   setHighlightDate,
   debounceMs = 0,
   isMetric = false,
-  coordinate,
-  chartWidth,
 }) => {
   const dateStr = payload?.[0]?.payload?.date || null;
 
@@ -694,13 +681,8 @@ const TonnageTooltipContent = ({
       ? getSessionLiftsByType(parsedData, dateStr, liftType)
       : null;
 
-  const flipStyle = getTooltipFlipStyle({ coordinate, chartWidth });
-
   return (
-    <div
-      style={flipStyle}
-      className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl"
-    >
+    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
         <div

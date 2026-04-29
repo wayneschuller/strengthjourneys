@@ -14,7 +14,6 @@ import {
   E1RMFormulaSelect,
   SpecialHtmlLabel,
   SingleLiftTooltipContent,
-  useElementWidth,
 } from "@/components/visualizer/visualizer-utils";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,7 +74,6 @@ export function VisualizerMini({ liftType }) {
   useEffect(() => { setIsMounted(true); }, []);
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
-  const [setChartEl, chartContainerWidth] = useElementWidth();
 
   const { isMetric, bodyWeight, standards } = useAthleteBio();
 
@@ -316,7 +314,6 @@ export function VisualizerMini({ liftType }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        <div ref={setChartEl}>
         {isLoading || !parsedData || !isMounted ? (
           <Skeleton className="h-[400px] w-full" />
         ) : chartData && (
@@ -385,13 +382,12 @@ export function VisualizerMini({ liftType }) {
                       parsedData={parsedData}
                       liftColor={liftColor}
                       isMetric={isMetric}
-                      chartWidth={chartContainerWidth}
                     />
                   )}
                   formatter={(value, name, props) =>
                     `${value} ${props.payload.displayUnit || ""}`
                   }
-                  position={{ y: 10 }}
+                  position={{ y: 240 }}
                   cursor={{
                     stroke: "#8884d8",
                     strokeWidth: 2,
@@ -539,7 +535,6 @@ export function VisualizerMini({ liftType }) {
               </AreaChart>
             </ChartContainer>
         )}
-        </div>
       </CardContent>
       <CardFooter>
         <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-4 md:items-center">

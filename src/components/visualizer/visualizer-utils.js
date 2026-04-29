@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { devLog, getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString, parseYmdLocal } from "@/lib/date-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
@@ -8,11 +9,33 @@ import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session
  * Returns a CSS transform that flips a tooltip to the opposite side of the cursor
  * to keep it from covering the active data point. Pair with Recharts <Tooltip position={{ y }} />
  * so the y stays pinned and only the horizontal side is computed here.
+ *
+ * Recharts' Tooltip content does not pass viewBox, so callers should measure the chart
+ * container width (via ref + ResizeObserver) and pass it as chartWidth.
  */
-export function getTooltipFlipStyle({ coordinate, viewBox, gap = 12 }) {
-  if (!coordinate || !viewBox) return undefined;
-  const midpoint = (viewBox.x ?? 0) + (viewBox.width ?? 0) / 2;
-  const isRightHalf = coordinate.x > midpoint;
+/**
+ * Tracks the width of an element (typically a chart container) via ResizeObserver.
+ * Returns a [setRef, width] tuple where setRef is a callback ref to attach.
+ */
+export function useElementWidth() {
+  const [el, setEl] = useState(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    if (!el) return;
+    const update = () => setWidth(el.offsetWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+
+  return [setEl, width];
+}
+
+export function getTooltipFlipStyle({ coordinate, chartWidth, gap = 12 }) {
+  if (!coordinate || !chartWidth) return undefined;
+  const isRightHalf = coordinate.x > chartWidth / 2;
   return {
     transform: isRightHalf
       ? `translateX(calc(-100% - ${gap}px))`
@@ -196,7 +219,7 @@ export const SingleLiftTooltipContent = ({
   liftColor,
   isMetric,
   coordinate,
-  viewBox,
+  chartWidth,
 }) => {
   const { getColor } = useLiftColors();
   if (!active || !payload?.length) return null;
@@ -220,7 +243,7 @@ export const SingleLiftTooltipContent = ({
 
   if (!tooltipContent) return null;
 
-  const flipStyle = getTooltipFlipStyle({ coordinate, viewBox });
+  const flipStyle = getTooltipFlipStyle({ coordinate, chartWidth });
 
   return (
     <div

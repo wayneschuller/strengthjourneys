@@ -3250,15 +3250,19 @@ function LiftBlock({
       nextSet?.isTopSet && nextSet.weight > 0 && lastLoggedWeight > 0
         ? (nextSet.weight - lastLoggedWeight) / nextSet.weight
         : null;
+    // If the user logs within 5% under the forecasted top, treat it as
+    // them picking a different (slightly lighter) top set rather than a
+    // missed warmup — we'll surface a "repeat" suggestion at their chosen
+    // weight and keep the original forecast as a push-higher alternative.
     const treatNearMissAsTopSet =
       nextSet?.isTopSet &&
       lastLoggedWeight < nextSet.weight &&
       nearMissTopGapRatio !== null &&
       nearMissTopGapRatio > 0 &&
-      nearMissTopGapRatio <= 0.03;
-    // Consider past top if BOTH tracks agree (or one is exhausted)
+      nearMissTopGapRatio <= 0.05;
+    // Past top if a near-miss top set was logged, or both tracks are exhausted.
     const effectiveAtOrPastTop =
-      (atOrPastTop || treatNearMissAsTopSet) && replayAtOrPastTop;
+      treatNearMissAsTopSet || (atOrPastTop && replayAtOrPastTop);
 
     // Detect drop set mode: last logged weight is below the session's peak
     const inDropSetMode = effectiveAtOrPastTop && lastLoggedWeight < maxLogged;
@@ -3328,7 +3332,8 @@ function LiftBlock({
         variant: "secondary",
       });
     } else {
-      // Working phase: suggest repeat, increment, and drop set
+      // Working phase: suggest repeat, push-higher (forecast top if the user
+      // chose a lighter top, otherwise +increment), and drop set
       const repeatRankingMeta = getSuggestionRankingMeta(
         lastLoggedReps,
         lastLoggedWeight,
@@ -3343,21 +3348,41 @@ function LiftBlock({
         unitType,
         variant: "secondary",
       });
-      const incrWeight = lastLoggedWeight + minIncrement;
-      const incrRankingMeta = getSuggestionRankingMeta(
-        lastLoggedReps,
-        incrWeight,
-      );
-      buttons.push({
-        label: `${lastLoggedReps}@${incrWeight}${unitType}`,
-        sublabel: `+${minIncrement}`,
-        rankingMessage: incrRankingMeta?.message ?? null,
-        rankingScope: incrRankingMeta?.scope ?? null,
-        reps: lastLoggedReps,
-        weight: incrWeight,
-        unitType,
-        variant: "outline",
-      });
+      const targetTopSet = treatNearMissAsTopSet
+        ? progression[progression.length - 1]
+        : null;
+      if (targetTopSet && targetTopSet.weight > lastLoggedWeight) {
+        const targetRankingMeta = getSuggestionRankingMeta(
+          targetTopSet.reps,
+          targetTopSet.weight,
+        );
+        buttons.push({
+          label: `${targetTopSet.reps}@${targetTopSet.weight}${unitType}`,
+          sublabel: "top set",
+          rankingMessage: targetRankingMeta?.message ?? null,
+          rankingScope: targetRankingMeta?.scope ?? null,
+          reps: targetTopSet.reps,
+          weight: targetTopSet.weight,
+          unitType,
+          variant: "outline",
+        });
+      } else {
+        const incrWeight = lastLoggedWeight + minIncrement;
+        const incrRankingMeta = getSuggestionRankingMeta(
+          lastLoggedReps,
+          incrWeight,
+        );
+        buttons.push({
+          label: `${lastLoggedReps}@${incrWeight}${unitType}`,
+          sublabel: `+${minIncrement}`,
+          rankingMessage: incrRankingMeta?.message ?? null,
+          rankingScope: incrRankingMeta?.scope ?? null,
+          reps: lastLoggedReps,
+          weight: incrWeight,
+          unitType,
+          variant: "outline",
+        });
+      }
       // Drop set: ~80% of current weight, rounded to nearest increment
       const dropWeight =
         Math.round((lastLoggedWeight * 0.8) / minIncrement) * minIncrement;

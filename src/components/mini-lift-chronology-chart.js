@@ -192,30 +192,20 @@ export function buildLiftChronology(
 
     let bucket = aggregates.get(key);
     if (!bucket) {
-      bucket = { reps: 0, dates: new Set(), tonnage: 0, bestSet: null };
+      bucket = { reps: 0, sets: [] };
       aggregates.set(key, bucket);
     }
 
     const reps = entry.reps ?? 0;
     bucket.reps += reps;
-    bucket.dates.add(entry.date);
 
     const display = getDisplayWeight(entry, isMetric);
-    const displayWeight = display?.value ?? entry.weight ?? 0;
-    bucket.tonnage += displayWeight * reps;
-
-    const isBetter =
-      !bucket.bestSet ||
-      displayWeight > bucket.bestSet.weight ||
-      (displayWeight === bucket.bestSet.weight && reps > bucket.bestSet.reps);
-    if (isBetter) {
-      bucket.bestSet = {
-        reps,
-        weight: displayWeight,
-        unit: display?.unit ?? entry.unitType ?? (isMetric ? "kg" : "lb"),
-        date: entry.date,
-      };
-    }
+    bucket.sets.push({
+      reps,
+      weight: display?.value ?? entry.weight ?? 0,
+      unit: display?.unit ?? entry.unitType ?? (isMetric ? "kg" : "lb"),
+      date: entry.date,
+    });
   });
 
   const bars = [];
@@ -225,14 +215,16 @@ export function buildLiftChronology(
   while (cursor <= end && i < 5000) {
     const key = cursor.toISOString().slice(0, 10);
     const agg = aggregates.get(key);
+    const topSets = (agg?.sets ?? [])
+      .slice()
+      .sort((a, b) => b.weight - a.weight || b.reps - a.reps)
+      .slice(0, 5);
     bars.push({
       bucket: key,
       label: formatDateShortUTC(cursor, cadence),
       rangeLabel: formatBucketRangeUTC(cursor, cadence),
       reps: agg?.reps ?? 0,
-      sessions: agg?.dates.size ?? 0,
-      tonnage: agg ? Math.round(agg.tonnage) : 0,
-      bestSet: agg?.bestSet ?? null,
+      topSets,
       index: i,
     });
     cursor = addBucketUTC(cursor, cadence, 1);
@@ -249,7 +241,6 @@ export function buildLiftChronology(
     bars,
     maxReps,
     nonZeroBars,
-    displayUnit: isMetric ? "kg" : "lb",
     startLabel: formatDateShortUTC(
       bars[0] ? parseDateUTC(bars[0].bucket) : firstDate,
       cadence,
@@ -313,12 +304,7 @@ export function MiniLiftChronologyChart({
             </linearGradient>
           </defs>
           <XAxis dataKey="label" hide />
-          <ChartTooltip
-            cursor={false}
-            content={
-              <ChronologyBarTooltip displayUnit={chronology.displayUnit ?? ""} />
-            }
-          />
+          <ChartTooltip cursor={false} content={<ChronologyBarTooltip />} />
           <Bar
             dataKey="reps"
             radius={[2, 2, 0, 0]}
@@ -345,12 +331,12 @@ export function MiniLiftChronologyChart({
   );
 }
 
-function ChronologyBarTooltip({ active, payload, displayUnit }) {
+function ChronologyBarTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const bar = payload[0].payload;
   if (!bar) return null;
 
-  const empty = !bar.reps;
+  const topSets = Array.isArray(bar.topSets) ? bar.topSets : [];
 
   return (
     <div className="rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-xs shadow-lg">
@@ -358,38 +344,33 @@ function ChronologyBarTooltip({ active, payload, displayUnit }) {
       {bar.rangeLabel && (
         <p className="mb-1 text-[10px] text-muted-foreground">{bar.rangeLabel}</p>
       )}
-      {empty ? (
+      {topSets.length === 0 ? (
         <p className="text-muted-foreground">No sets logged</p>
       ) : (
-        <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5">
-          <dt className="text-muted-foreground">Sessions</dt>
-          <dd className="text-right tabular-nums">
-            {bar.sessions.toLocaleString()}
-          </dd>
-          <dt className="text-muted-foreground">Reps</dt>
-          <dd className="text-right tabular-nums">
-            {bar.reps.toLocaleString()}
-          </dd>
-          {bar.tonnage > 0 && (
-            <>
-              <dt className="text-muted-foreground">Tonnage</dt>
-              <dd className="text-right tabular-nums">
-                {bar.tonnage.toLocaleString()}
-                {displayUnit}
-              </dd>
-            </>
-          )}
-          {bar.bestSet && (
-            <>
-              <dt className="text-muted-foreground">Best set</dt>
-              <dd className="text-right tabular-nums">
-                {bar.bestSet.reps}@{bar.bestSet.weight}
-                {bar.bestSet.unit}
-              </dd>
-            </>
-          )}
-        </dl>
+        <ol className="space-y-0.5">
+          {topSets.map((set, idx) => (
+            <li
+              key={`${set.date}-${idx}`}
+              className="flex justify-between gap-3 tabular-nums"
+            >
+              <span>
+                {idx + 1}. {set.reps}@{set.weight}
+                {set.unit}
+              </span>
+              <span className="text-muted-foreground">
+                {formatTooltipDate(set.date)}
+              </span>
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   );
+}
+
+function formatTooltipDate(dateStr) {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-").map(Number);
+  if (!y) return dateStr;
+  return `${MONTH_NAMES[m - 1]} ${d}, ${String(y).slice(-2)}`;
 }

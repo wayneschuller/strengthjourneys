@@ -101,6 +101,16 @@ export function TonnageChart({
     );
   }, [parsedData, rangeFirstDate, timeRange, liftType, isMetric]);
 
+  // If the chosen range has no data for this lift, fall back to MAX so users
+  // hopping between high- and low-frequency lifts always see something.
+  useEffect(() => {
+    if (timeRange === "MAX") return;
+    if (!Array.isArray(parsedData) || parsedData.length === 0) return;
+    if (Array.isArray(chartData) && chartData.length === 0) {
+      setTimeRange("MAX");
+    }
+  }, [chartData, timeRange, parsedData, setTimeRange]);
+
   // Calculate Y-axis values with nice round numbers
   const yAxisConfig = useMemo(() => {
     if (!chartData || chartData.length === 0) {

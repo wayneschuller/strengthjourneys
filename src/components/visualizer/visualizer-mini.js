@@ -152,6 +152,16 @@ export function VisualizerMini({
     [parsedData, e1rmFormula, liftType, rangeFirstDate, showAllData, isMetric],
   );
 
+  // If the chosen range has no data for this lift, fall back to MAX so users
+  // hopping between high- and low-frequency lifts always see something.
+  useEffect(() => {
+    if (timeRange === "MAX") return;
+    if (!Array.isArray(parsedData) || parsedData.length === 0) return;
+    if (!chartData || chartData.length === 0) {
+      setTimeRange("MAX");
+    }
+  }, [chartData, timeRange, parsedData, setTimeRange]);
+
   // if (authStatus !== "authenticated") return; // Don't show at all for anon mode
   // devLog(chartData);
 

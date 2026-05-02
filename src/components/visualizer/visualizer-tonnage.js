@@ -214,7 +214,7 @@ export function TonnageChart({
           </CardDescription>
         </div>
         <div className="grid grid-cols-1 space-x-1">
-          <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
+          <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
         </div>
       </CardHeader>
 

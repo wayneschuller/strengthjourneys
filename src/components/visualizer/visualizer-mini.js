@@ -324,7 +324,7 @@ export function VisualizerMini({
             </div>
           </div>
         )}
-        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
+        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">

@@ -228,7 +228,7 @@ export function VisualizerReps({ data, liftType }) {
             New!
           </Badge>
         </CardTitle>
-        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
+        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
       </CardHeader>
       <CardContent className="pl-0 pr-2">
         {isLoading || !parsedData || !isMounted || !chartData ? (

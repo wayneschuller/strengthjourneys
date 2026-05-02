@@ -48,17 +48,24 @@ export const periodTargets = [
  * @param {Object} props
  * @param {string} props.timeRange - Current selection (e.g. "3M", "1Y", "MAX").
  * @param {function(string)} props.setTimeRange - Callback to update the selection.
+ * @param {string} [props.liftType] - When set, only shows periods that contain at least one
+ *   set of this lift, and that aren't entirely covered by an even shorter period. Avoids
+ *   teasing the user with empty time ranges for low-frequency lifts.
  */
-export function TimeRangeSelect({ timeRange, setTimeRange }) {
+export function TimeRangeSelect({ timeRange, setTimeRange, liftType }) {
   const { parsedData } = useUserLiftingData();
 
   if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
 
-  // This is the first date in "YYYY-MM-DD" format
-  // FIXME: Should we find the first date for selected lifts only?
-  const firstDateStr = parsedData[0].date;
+  const relevantData = liftType
+    ? parsedData.filter((entry) => entry.liftType === liftType && !entry.isGoal)
+    : parsedData;
 
-  const todayStr = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
+  if (relevantData.length === 0) return null;
+
+  // First/last lift date in "YYYY-MM-DD" format. parsedData is chronological,
+  // and filter() preserves order, so first/last entries are the bounds.
+  const firstDateStr = relevantData[0].date;
 
   let validSelectTimeDomains = [];
 
@@ -66,13 +73,18 @@ export function TimeRangeSelect({ timeRange, setTimeRange }) {
     const dateMonthsAgo = subMonths(new Date(), period.months);
     const thresholdDateStr = format(dateMonthsAgo, "yyyy-MM-dd");
 
-    if (firstDateStr < thresholdDateStr) {
-      validSelectTimeDomains.push({
-        label: period.label,
-        shortLabel: period.shortLabel,
-        timeRangeThreshold: thresholdDateStr,
-      });
-    }
+    // Period must extend the user's history (data older than the threshold)
+    // AND contain at least one set within the threshold window — otherwise the
+    // option exists only to show an empty chart.
+    if (firstDateStr >= thresholdDateStr) return;
+    const hasDataInPeriod = relevantData.some((e) => e.date >= thresholdDateStr);
+    if (!hasDataInPeriod) return;
+
+    validSelectTimeDomains.push({
+      label: period.label,
+      shortLabel: period.shortLabel,
+      timeRangeThreshold: thresholdDateStr,
+    });
   });
 
   // Manually push "All Time" option every time

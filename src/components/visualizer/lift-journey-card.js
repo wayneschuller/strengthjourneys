@@ -258,6 +258,7 @@ export function LiftJourneyCard({
           preferHigherResolution: true,
         }
       : 10,
+    isMetric,
   );
 
   // ── Recent highlights (last 4 weeks) ─────────────────────────────────────

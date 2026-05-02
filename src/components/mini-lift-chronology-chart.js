@@ -1,10 +1,10 @@
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, Cell } from "recharts";
+import { getDisplayWeight } from "@/lib/processing-utils";
 
 const BAR_OUTLINE = "var(--muted-foreground)";
 
@@ -28,6 +28,36 @@ function formatDateShortUTC(date, cadence) {
     year: "2-digit",
     timeZone: "UTC",
   });
+}
+
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function formatBucketRangeUTC(start, cadence) {
+  if (!(start instanceof Date)) return "";
+  const year = start.getUTCFullYear();
+  if (cadence === "year") return String(year);
+  if (cadence === "quarter") {
+    const qStart = start.getUTCMonth();
+    return `${MONTH_NAMES[qStart]} – ${MONTH_NAMES[qStart + 2]} ${year}`;
+  }
+  if (cadence === "month") {
+    return `${MONTH_NAMES[start.getUTCMonth()]} ${year}`;
+  }
+  // week: 7-day span starting Mon
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  const sameMonth = start.getUTCMonth() === end.getUTCMonth();
+  const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+  const startStr = `${MONTH_NAMES[start.getUTCMonth()]} ${start.getUTCDate()}`;
+  const endStr = sameMonth
+    ? `${end.getUTCDate()}`
+    : `${MONTH_NAMES[end.getUTCMonth()]} ${end.getUTCDate()}`;
+  return sameYear
+    ? `${startStr} – ${endStr}, ${year}`
+    : `${startStr} ${year} – ${endStr} ${end.getUTCFullYear()}`;
 }
 
 function startOfBucketUTC(date, cadence) {
@@ -123,11 +153,18 @@ function chooseCadence(firstDate, lastDate, targetBarsOrOptions = 10) {
  *
  * @param {Array} parsedData - Full parsed lifting data from UserLiftingDataProvider.
  * @param {string} liftType - The lift to aggregate.
- * @param {number} [targetBars=10] - Preferred number of bars; cadence is chosen to get close.
+ * @param {number|Object} [targetBarsOrOptions=10] - Preferred bar count or chooseCadence options.
+ * @param {boolean} [isMetric=false] - When true, weights/tonnage are stored in kg; otherwise lb.
  * @returns {Object|null} Chronology object with `bars`, `cadence`, `maxReps`, `nonZeroBars`,
- *   `startLabel`, `endLabel` — or null if there is insufficient data.
+ *   `startLabel`, `endLabel`, `displayUnit` — or null if there is insufficient data.
+ *   Each bar carries `reps`, `sessions`, `tonnage`, `bestSet`, `rangeLabel` for tooltips.
  */
-export function buildLiftChronology(parsedData, liftType, targetBarsOrOptions = 10) {
+export function buildLiftChronology(
+  parsedData,
+  liftType,
+  targetBarsOrOptions = 10,
+  isMetric = false,
+) {
   if (!parsedData?.length || !liftType) return null;
 
   const validEntries = parsedData.filter(
@@ -143,7 +180,7 @@ export function buildLiftChronology(parsedData, liftType, targetBarsOrOptions = 
   if (totalWeeks < 10) return null;
 
   const cadence = chooseCadence(firstDate, lastDate, targetBarsOrOptions);
-  const sums = new Map();
+  const aggregates = new Map();
 
   parsedData.forEach((entry) => {
     if (entry.isGoal) return;
@@ -152,7 +189,33 @@ export function buildLiftChronology(parsedData, liftType, targetBarsOrOptions = 
     const d = parseDateUTC(entry.date);
     if (!d) return;
     const key = bucketKeyUTC(d, cadence);
-    sums.set(key, (sums.get(key) ?? 0) + (entry.reps ?? 0));
+
+    let bucket = aggregates.get(key);
+    if (!bucket) {
+      bucket = { reps: 0, dates: new Set(), tonnage: 0, bestSet: null };
+      aggregates.set(key, bucket);
+    }
+
+    const reps = entry.reps ?? 0;
+    bucket.reps += reps;
+    bucket.dates.add(entry.date);
+
+    const display = getDisplayWeight(entry, isMetric);
+    const displayWeight = display?.value ?? entry.weight ?? 0;
+    bucket.tonnage += displayWeight * reps;
+
+    const isBetter =
+      !bucket.bestSet ||
+      displayWeight > bucket.bestSet.weight ||
+      (displayWeight === bucket.bestSet.weight && reps > bucket.bestSet.reps);
+    if (isBetter) {
+      bucket.bestSet = {
+        reps,
+        weight: displayWeight,
+        unit: display?.unit ?? entry.unitType ?? (isMetric ? "kg" : "lb"),
+        date: entry.date,
+      };
+    }
   });
 
   const bars = [];
@@ -161,10 +224,15 @@ export function buildLiftChronology(parsedData, liftType, targetBarsOrOptions = 
   let i = 0;
   while (cursor <= end && i < 5000) {
     const key = cursor.toISOString().slice(0, 10);
+    const agg = aggregates.get(key);
     bars.push({
       bucket: key,
       label: formatDateShortUTC(cursor, cadence),
-      reps: sums.get(key) ?? 0,
+      rangeLabel: formatBucketRangeUTC(cursor, cadence),
+      reps: agg?.reps ?? 0,
+      sessions: agg?.dates.size ?? 0,
+      tonnage: agg ? Math.round(agg.tonnage) : 0,
+      bestSet: agg?.bestSet ?? null,
       index: i,
     });
     cursor = addBucketUTC(cursor, cadence, 1);
@@ -181,6 +249,7 @@ export function buildLiftChronology(parsedData, liftType, targetBarsOrOptions = 
     bars,
     maxReps,
     nonZeroBars,
+    displayUnit: isMetric ? "kg" : "lb",
     startLabel: formatDateShortUTC(
       bars[0] ? parseDateUTC(bars[0].bucket) : firstDate,
       cadence,
@@ -247,21 +316,7 @@ export function MiniLiftChronologyChart({
           <ChartTooltip
             cursor={false}
             content={
-              <ChartTooltipContent
-                labelFormatter={(_, payload) => {
-                  const item = payload?.[0]?.payload;
-                  if (!item) return "";
-                  return item.label;
-                }}
-                formatter={(value) => (
-                  <div className="flex w-full items-center justify-between gap-3">
-                    <span className="text-muted-foreground">Reps</span>
-                    <span className="font-mono font-medium tabular-nums">
-                      {Number(value).toLocaleString()}
-                    </span>
-                  </div>
-                )}
-              />
+              <ChronologyBarTooltip displayUnit={chronology.displayUnit ?? ""} />
             }
           />
           <Bar
@@ -286,6 +341,55 @@ export function MiniLiftChronologyChart({
         </BarChart>
       </ChartContainer>
       <p className="text-center text-xs text-muted-foreground">{header}</p>
+    </div>
+  );
+}
+
+function ChronologyBarTooltip({ active, payload, displayUnit }) {
+  if (!active || !payload?.length) return null;
+  const bar = payload[0].payload;
+  if (!bar) return null;
+
+  const empty = !bar.reps;
+
+  return (
+    <div className="rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-xs shadow-lg">
+      <p className="font-semibold">{bar.label}</p>
+      {bar.rangeLabel && (
+        <p className="mb-1 text-[10px] text-muted-foreground">{bar.rangeLabel}</p>
+      )}
+      {empty ? (
+        <p className="text-muted-foreground">No sets logged</p>
+      ) : (
+        <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5">
+          <dt className="text-muted-foreground">Sessions</dt>
+          <dd className="text-right tabular-nums">
+            {bar.sessions.toLocaleString()}
+          </dd>
+          <dt className="text-muted-foreground">Reps</dt>
+          <dd className="text-right tabular-nums">
+            {bar.reps.toLocaleString()}
+          </dd>
+          {bar.tonnage > 0 && (
+            <>
+              <dt className="text-muted-foreground">Tonnage</dt>
+              <dd className="text-right tabular-nums">
+                {bar.tonnage.toLocaleString()}
+                {displayUnit}
+              </dd>
+            </>
+          )}
+          {bar.bestSet && (
+            <>
+              <dt className="text-muted-foreground">Best set</dt>
+              <dd className="text-right tabular-nums">
+                {bar.bestSet.reps}@{bar.bestSet.weight}
+                {bar.bestSet.unit}
+              </dd>
+            </>
+          )}
+        </dl>
+      )}
     </div>
   );
 }

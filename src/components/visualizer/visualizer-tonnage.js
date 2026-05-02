@@ -59,14 +59,19 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
  * @param {string} [props.liftType] - Display name of the lift to filter tonnage. When omitted,
  *   shows total tonnage across all lifts.
  */
-export function TonnageChart({ setHighlightDate, liftType }) {
+export function TonnageChart({
+  setHighlightDate,
+  liftType,
+  timeRangeStorageKey = LOCAL_STORAGE_KEYS.TIME_RANGE,
+  defaultTimeRange = "MAX",
+}) {
   const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
   const { getColor } = useLiftColors();
   const { isMetric } = useAthleteBio();
   const liftColor = liftType ? getColor(liftType) : null;
-  const [timeRange, setTimeRange] = useLocalStorage(LOCAL_STORAGE_KEYS.TIME_RANGE, "MAX", {
+  const [timeRange, setTimeRange] = useLocalStorage(timeRangeStorageKey, defaultTimeRange, {
     initializeWithValue: false,
   });
   const [showLabelValues, setShowLabelValues] = useLocalStorage(

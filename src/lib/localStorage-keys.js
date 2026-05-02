@@ -107,6 +107,7 @@ export const LOCAL_STORAGE_KEYS = {
 
   // Visualizer
   TIME_RANGE: "SJ_timeRange",
+  LIFT_EXPLORER_TIME_RANGE: "SJ_liftExplorerTimeRange",
   SHOW_LABEL_VALUES: "SJ_showLabelValues",
   SHOW_ALL_DATA: "SJ_showAllData",
   VIS_MINI_SHOW_STANDARDS: "SJ_VisMiniShowStandards",

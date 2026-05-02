@@ -68,7 +68,11 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
  * @param {Object} props
  * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
  */
-export function VisualizerMini({ liftType }) {
+export function VisualizerMini({
+  liftType,
+  timeRangeStorageKey = LOCAL_STORAGE_KEYS.TIME_RANGE,
+  defaultTimeRange = "MAX",
+}) {
   const { parsedData, topLiftsByTypeAndReps, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
@@ -80,8 +84,8 @@ export function VisualizerMini({ liftType }) {
   // devLog(parsedData);
 
   const [timeRange, setTimeRange] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.TIME_RANGE,
-    "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
+    timeRangeStorageKey,
+    defaultTimeRange, // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
     {
       initializeWithValue: false,
     },

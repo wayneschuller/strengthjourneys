@@ -11,6 +11,7 @@ import { StrengthPotentialBarChart } from "@/components/visualizer/strength-pote
 import { MostRecentSessionCard } from "@/components/lift-explorer/most-recent-session-card";
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
 /**
  * Detail panel shown when a lift is selected in the lift list.
@@ -32,8 +33,16 @@ export function LiftDetailPanel({ liftType }) {
         liftType={liftType}
         defaultVisibleCount={5}
       />
-      <VisualizerMini liftType={liftType} />
-      <TonnageChart liftType={liftType} />
+      <VisualizerMini
+        liftType={liftType}
+        timeRangeStorageKey={LOCAL_STORAGE_KEYS.LIFT_EXPLORER_TIME_RANGE}
+        defaultTimeRange="MAX"
+      />
+      <TonnageChart
+        liftType={liftType}
+        timeRangeStorageKey={LOCAL_STORAGE_KEYS.LIFT_EXPLORER_TIME_RANGE}
+        defaultTimeRange="MAX"
+      />
       <StrengthPotentialBarChart liftType={liftType} />
       <LiftTypeRepPRsDisplay liftType={liftType} />
     </div>

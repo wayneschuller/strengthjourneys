@@ -17,6 +17,7 @@ import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
+  snapTimeRangeToData,
 } from "@/components/visualizer/time-range-select";
 
 import {
@@ -59,21 +60,22 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
  * @param {string} [props.liftType] - Display name of the lift to filter tonnage. When omitted,
  *   shows total tonnage across all lifts.
  */
-export function TonnageChart({
-  setHighlightDate,
-  liftType,
-  timeRangeStorageKey = LOCAL_STORAGE_KEYS.TIME_RANGE,
-  defaultTimeRange = "MAX",
-}) {
+export function TonnageChart({ setHighlightDate, liftType }) {
   const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
   const { getColor } = useLiftColors();
   const { isMetric } = useAthleteBio();
   const liftColor = liftType ? getColor(liftType) : null;
-  const [timeRange, setTimeRange] = useLocalStorage(timeRangeStorageKey, defaultTimeRange, {
+  const [storedTimeRange, setTimeRange] = useLocalStorage(LOCAL_STORAGE_KEYS.TIME_RANGE, "MAX", {
     initializeWithValue: false,
   });
+  // Snap up to the nearest period that has data for this lift, without
+  // overwriting the user's global preference.
+  const timeRange = useMemo(
+    () => snapTimeRangeToData(parsedData, liftType, storedTimeRange),
+    [parsedData, liftType, storedTimeRange],
+  );
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
     false,
@@ -100,16 +102,6 @@ export function TonnageChart({
       isMetric,
     );
   }, [parsedData, rangeFirstDate, timeRange, liftType, isMetric]);
-
-  // If the chosen range has no data for this lift, fall back to MAX so users
-  // hopping between high- and low-frequency lifts always see something.
-  useEffect(() => {
-    if (timeRange === "MAX") return;
-    if (!Array.isArray(parsedData) || parsedData.length === 0) return;
-    if (Array.isArray(chartData) && chartData.length === 0) {
-      setTimeRange("MAX");
-    }
-  }, [chartData, timeRange, parsedData, setTimeRange]);
 
   // Calculate Y-axis values with nice round numbers
   const yAxisConfig = useMemo(() => {

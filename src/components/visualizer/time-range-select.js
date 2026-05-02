@@ -119,6 +119,35 @@ export function TimeRangeSelect({ timeRange, setTimeRange, liftType }) {
   );
 }
 
+/**
+ * Snap a stored time-range preference to the smallest valid period for a given lift.
+ * "Valid" = at least one logged set inside the window. Walks from the preferred period
+ * upward through 3M → 6M → 1Y → 2Y → 5Y → MAX. Returns the preferred range untouched
+ * if it already has data, or if there is no data to compare against.
+ */
+export function snapTimeRangeToData(parsedData, liftType, preferredRange) {
+  if (preferredRange === "MAX") return "MAX";
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return preferredRange;
+
+  const relevantData = liftType
+    ? parsedData.filter((e) => e.liftType === liftType && !e.isGoal)
+    : parsedData;
+  if (relevantData.length === 0) return preferredRange;
+
+  const startIdx = periodTargets.findIndex((p) => p.shortLabel === preferredRange);
+  if (startIdx === -1) return preferredRange;
+
+  for (let i = startIdx; i < periodTargets.length; i++) {
+    const period = periodTargets[i];
+    const dateMonthsAgo = subMonths(new Date(), period.months);
+    const thresholdDateStr = format(dateMonthsAgo, "yyyy-MM-dd");
+    if (relevantData.some((e) => e.date >= thresholdDateStr)) {
+      return period.shortLabel;
+    }
+  }
+  return "MAX";
+}
+
 // Calculate start YYYY-MM-DD for the user desired time range for chart
 export const calculateThresholdDate = (timeRange, setTimeRange) => {
   if (timeRange === "MAX") {

@@ -30,6 +30,7 @@ import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
+  snapTimeRangeToData,
 } from "@/components/visualizer/time-range-select";
 
 import {
@@ -68,11 +69,7 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
  * @param {Object} props
  * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
  */
-export function VisualizerMini({
-  liftType,
-  timeRangeStorageKey = LOCAL_STORAGE_KEYS.TIME_RANGE,
-  defaultTimeRange = "MAX",
-}) {
+export function VisualizerMini({ liftType }) {
   const { parsedData, topLiftsByTypeAndReps, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
@@ -83,12 +80,19 @@ export function VisualizerMini({
 
   // devLog(parsedData);
 
-  const [timeRange, setTimeRange] = useLocalStorage(
-    timeRangeStorageKey,
-    defaultTimeRange, // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
+  const [storedTimeRange, setTimeRange] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.TIME_RANGE,
+    "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
     {
       initializeWithValue: false,
     },
+  );
+  // Snap up to the nearest period that has data for this lift, without
+  // overwriting the user's global preference. Lets a "3M" power user keep
+  // their setting while rare lifts transparently widen to whatever fits.
+  const timeRange = useMemo(
+    () => snapTimeRangeToData(parsedData, liftType, storedTimeRange),
+    [parsedData, liftType, storedTimeRange],
   );
 
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
@@ -151,16 +155,6 @@ export function VisualizerMini({
       ),
     [parsedData, e1rmFormula, liftType, rangeFirstDate, showAllData, isMetric],
   );
-
-  // If the chosen range has no data for this lift, fall back to MAX so users
-  // hopping between high- and low-frequency lifts always see something.
-  useEffect(() => {
-    if (timeRange === "MAX") return;
-    if (!Array.isArray(parsedData) || parsedData.length === 0) return;
-    if (!chartData || chartData.length === 0) {
-      setTimeRange("MAX");
-    }
-  }, [chartData, timeRange, parsedData, setTimeRange]);
 
   // if (authStatus !== "authenticated") return; // Don't show at all for anon mode
   // devLog(chartData);

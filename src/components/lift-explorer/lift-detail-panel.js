@@ -1,17 +1,19 @@
 /**
  * Lift-detail panel for Lift Explorer.
- * Keep the single-lift strength-potential chart directly above the PR block so
- * the progression story stays in one vertical flow for the selected movement.
+ * Mirrors the authenticated layout from /progress-guide/[lift] minus the
+ * big-four-only cards (strength standards, strength circles, editorial copy)
+ * so any lift the user has logged gets the same set of analytical tools.
  */
 
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
 import { LiftTypeRepPRsDisplay } from "@/components/lift-explorer/lift-type-prs-display";
 import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
+import { MostRecentSessionCard } from "@/components/lift-explorer/most-recent-session-card";
+import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
+import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 
 /**
- * Email-style detail panel shown when a lift is selected in the pie card table.
- * Renders LiftJourneyCard and LiftTypeRepPRsDisplay side by side at 50/50.
- *
+ * Detail panel shown when a lift is selected in the lift list.
  * @param {Object} props
  * @param {string|null} props.liftType - The selected lift type to display details for.
  */
@@ -25,12 +27,15 @@ export function LiftDetailPanel({ liftType }) {
         asCard={false}
         chartDensity="dense"
       />
-      <div id="strength-potential">
-        <StrengthPotentialBarChart liftType={liftType} />
-      </div>
-      <div id="lift-prs">
-        <LiftTypeRepPRsDisplay liftType={liftType} />
-      </div>
+      <MostRecentSessionCard
+        key={liftType}
+        liftType={liftType}
+        defaultVisibleCount={5}
+      />
+      <VisualizerMini liftType={liftType} />
+      <TonnageChart liftType={liftType} />
+      <StrengthPotentialBarChart liftType={liftType} />
+      <LiftTypeRepPRsDisplay liftType={liftType} />
     </div>
   );
 }

@@ -105,7 +105,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
           : 0;
         const potentialMax = getDisplayWeight({ weight: rawPotentialMax, unitType: nativeUnit }, isMetric).value;
         const extension = Math.max(0, potentialMax - actualWeight);
-        const topSets = (topLifts[i] || []).slice(0, 5);
 
         return {
           reps: `${reps} ${reps === 1 ? "rep" : "reps"}`,
@@ -114,7 +113,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
           extension,
           actualLift: topLiftAtReps,
           bestLift: best,
-          topSets,
         };
       });
     }
@@ -271,10 +269,8 @@ const CustomTooltip = ({
       ? getDisplayWeight(bestLift, isMetric).value
       : 0;
 
-    const topSets = Array.isArray(data.topSets) ? data.topSets : [];
-
     return (
-      <div className="w-56 rounded border border-border bg-card p-2 shadow-lg md:w-72">
+      <div className="w-48 rounded border border-border bg-card p-2 shadow-lg md:w-64">
         {/* Title */}
         <p className="font-bold">
           {reps} Rep {bestLift.liftType}
@@ -310,29 +306,6 @@ const CustomTooltip = ({
           </>
         )}
 
-        {topSets.length > 0 && (
-          <div className="mt-2 border-t border-border pt-2">
-            <p className="mb-1 text-xs font-semibold text-muted-foreground">
-              Top {topSets.length} {reps}-rep {topSets.length === 1 ? "set" : "sets"}
-            </p>
-            <ol className="space-y-0.5 text-xs">
-              {topSets.map((set, idx) => {
-                const display = getDisplayWeight(set, isMetric);
-                return (
-                  <li key={`${set.date}-${idx}`} className="flex justify-between gap-2">
-                    <span className="tabular-nums">
-                      {idx + 1}. {set.reps}@{display.value}
-                      {display.unit}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {formatDate(set.date)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        )}
       </div>
     );
   }

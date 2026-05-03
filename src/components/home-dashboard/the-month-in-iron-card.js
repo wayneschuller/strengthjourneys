@@ -403,6 +403,7 @@ export function TheMonthInIronCard({
 
             {showCoffeeNudge && (
               <motion.div
+                key={boundaries?.currentMonthStart}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.7 }}

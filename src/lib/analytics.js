@@ -60,7 +60,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   GDRIVE_PICKER_OPENED: "gdrive_picker_opened", // ~Apr 2024: Drive picker returned a selected document.
   CALC_SHARE_CLIPBOARD: "calc_share_clipboard", // ~Apr 2024: E1RM calculator result copied to clipboard.
   HEATMAP_SHARE_CLIPBOARD: "heatmap_share_clipboard", // ~Apr 2024: Analyzer heatmap image copied to clipboard.
-  FEEDBACK_SENTIMENT: "SJ_feedback_sentiment", // ~Feb 2026: Feedback thumbs sentiment (explicit SJ-prefixed new tag).
+  FEEDBACK_SENTIMENT: "SJ_feedback_sentiment", // ~Feb 2026: Feedback thumbs sentiment. Note: briefly fired as "feedback_sentiment" on 2026-02-13 between commits bd1e16c4 (promote) and dc44eaa2 (rename); ignored — meaningful traffic only began March 2026.
   HOME_DASHBOARD_FIRST_VIEW: "SJ_home_dashboard_first_view", // ~Mar 2026: First time user sees loaded home dashboard.
   HOME_DASHBOARD_STAGE_ENTERED: "SJ_home_dashboard_stage_entered", // ~Mar 2026: User entered a staged onboarding/dashboard phase.
   HERO_IMPORT_CLICK: "SJ_hero_import_click", // ~Mar 2026: User clicked "Import Your Lifting Data" CTA on hero.

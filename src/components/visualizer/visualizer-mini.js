@@ -30,6 +30,7 @@ import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
+  snapTimeRangeToData,
 } from "@/components/visualizer/time-range-select";
 
 import {
@@ -79,12 +80,19 @@ export function VisualizerMini({ liftType }) {
 
   // devLog(parsedData);
 
-  const [timeRange, setTimeRange] = useLocalStorage(
+  const [storedTimeRange, setTimeRange] = useLocalStorage(
     LOCAL_STORAGE_KEYS.TIME_RANGE,
     "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
     {
       initializeWithValue: false,
     },
+  );
+  // Snap up to the nearest period that has data for this lift, without
+  // overwriting the user's global preference. Lets a "3M" power user keep
+  // their setting while rare lifts transparently widen to whatever fits.
+  const timeRange = useMemo(
+    () => snapTimeRangeToData(parsedData, liftType, storedTimeRange),
+    [parsedData, liftType, storedTimeRange],
   );
 
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
@@ -310,7 +318,7 @@ export function VisualizerMini({ liftType }) {
             </div>
           </div>
         )}
-        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
+        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">

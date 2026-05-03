@@ -48,17 +48,24 @@ export const periodTargets = [
  * @param {Object} props
  * @param {string} props.timeRange - Current selection (e.g. "3M", "1Y", "MAX").
  * @param {function(string)} props.setTimeRange - Callback to update the selection.
+ * @param {string} [props.liftType] - When set, only shows periods that contain at least one
+ *   set of this lift, and that aren't entirely covered by an even shorter period. Avoids
+ *   teasing the user with empty time ranges for low-frequency lifts.
  */
-export function TimeRangeSelect({ timeRange, setTimeRange }) {
+export function TimeRangeSelect({ timeRange, setTimeRange, liftType }) {
   const { parsedData } = useUserLiftingData();
 
   if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
 
-  // This is the first date in "YYYY-MM-DD" format
-  // FIXME: Should we find the first date for selected lifts only?
-  const firstDateStr = parsedData[0].date;
+  const relevantData = liftType
+    ? parsedData.filter((entry) => entry.liftType === liftType && !entry.isGoal)
+    : parsedData;
 
-  const todayStr = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
+  if (relevantData.length === 0) return null;
+
+  // First/last lift date in "YYYY-MM-DD" format. parsedData is chronological,
+  // and filter() preserves order, so first/last entries are the bounds.
+  const firstDateStr = relevantData[0].date;
 
   let validSelectTimeDomains = [];
 
@@ -66,13 +73,18 @@ export function TimeRangeSelect({ timeRange, setTimeRange }) {
     const dateMonthsAgo = subMonths(new Date(), period.months);
     const thresholdDateStr = format(dateMonthsAgo, "yyyy-MM-dd");
 
-    if (firstDateStr < thresholdDateStr) {
-      validSelectTimeDomains.push({
-        label: period.label,
-        shortLabel: period.shortLabel,
-        timeRangeThreshold: thresholdDateStr,
-      });
-    }
+    // Period must extend the user's history (data older than the threshold)
+    // AND contain at least one set within the threshold window — otherwise the
+    // option exists only to show an empty chart.
+    if (firstDateStr >= thresholdDateStr) return;
+    const hasDataInPeriod = relevantData.some((e) => e.date >= thresholdDateStr);
+    if (!hasDataInPeriod) return;
+
+    validSelectTimeDomains.push({
+      label: period.label,
+      shortLabel: period.shortLabel,
+      timeRangeThreshold: thresholdDateStr,
+    });
   });
 
   // Manually push "All Time" option every time
@@ -105,6 +117,35 @@ export function TimeRangeSelect({ timeRange, setTimeRange }) {
       </SelectContent>
     </Select>
   );
+}
+
+/**
+ * Snap a stored time-range preference to the smallest valid period for a given lift.
+ * "Valid" = at least one logged set inside the window. Walks from the preferred period
+ * upward through 3M → 6M → 1Y → 2Y → 5Y → MAX. Returns the preferred range untouched
+ * if it already has data, or if there is no data to compare against.
+ */
+export function snapTimeRangeToData(parsedData, liftType, preferredRange) {
+  if (preferredRange === "MAX") return "MAX";
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return preferredRange;
+
+  const relevantData = liftType
+    ? parsedData.filter((e) => e.liftType === liftType && !e.isGoal)
+    : parsedData;
+  if (relevantData.length === 0) return preferredRange;
+
+  const startIdx = periodTargets.findIndex((p) => p.shortLabel === preferredRange);
+  if (startIdx === -1) return preferredRange;
+
+  for (let i = startIdx; i < periodTargets.length; i++) {
+    const period = periodTargets[i];
+    const dateMonthsAgo = subMonths(new Date(), period.months);
+    const thresholdDateStr = format(dateMonthsAgo, "yyyy-MM-dd");
+    if (relevantData.some((e) => e.date >= thresholdDateStr)) {
+      return period.shortLabel;
+    }
+  }
+  return "MAX";
 }
 
 // Calculate start YYYY-MM-DD for the user desired time range for chart

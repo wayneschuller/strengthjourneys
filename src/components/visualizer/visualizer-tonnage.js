@@ -17,6 +17,7 @@ import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
+  snapTimeRangeToData,
 } from "@/components/visualizer/time-range-select";
 
 import {
@@ -66,9 +67,15 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const { getColor } = useLiftColors();
   const { isMetric } = useAthleteBio();
   const liftColor = liftType ? getColor(liftType) : null;
-  const [timeRange, setTimeRange] = useLocalStorage(LOCAL_STORAGE_KEYS.TIME_RANGE, "MAX", {
+  const [storedTimeRange, setTimeRange] = useLocalStorage(LOCAL_STORAGE_KEYS.TIME_RANGE, "MAX", {
     initializeWithValue: false,
   });
+  // Snap up to the nearest period that has data for this lift, without
+  // overwriting the user's global preference.
+  const timeRange = useMemo(
+    () => snapTimeRangeToData(parsedData, liftType, storedTimeRange),
+    [parsedData, liftType, storedTimeRange],
+  );
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
     false,
@@ -199,7 +206,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
           </CardDescription>
         </div>
         <div className="grid grid-cols-1 space-x-1">
-          <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
+          <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
         </div>
       </CardHeader>
 

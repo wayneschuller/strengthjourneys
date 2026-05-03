@@ -187,17 +187,28 @@ export function TheMonthInIronCard({
     ],
   );
 
-  // Buy-Me-a-Coffee nudge: only on the current month, in its final week, when the user is clearly winning.
-  // Copy is hashed by today's date so it stays stable across same-day visits but varies day-to-day.
-  const showCoffeeNudge =
-    !isDemoMode &&
+  // Buy-Me-a-Coffee nudge: shown when the user is clearly winning a month.
+  // Current month: only in the final week (avoid false positives mid-month).
+  // Past month: any winning historical month qualifies.
+  // Copy is hashed by a stable per-month seed so a given month always shows the same phrase.
+  const isCurrentMonthLastWeekWin =
     !!boundaries?.isCurrentMonthView &&
     typeof boundaries?.daysRemainingInCurrentMonth === "number" &&
-    boundaries.daysRemainingInCurrentMonth <= 7 &&
+    boundaries.daysRemainingInCurrentMonth <= 7;
+  const isPastMonthWin = !!boundaries && !boundaries.isCurrentMonthView;
+  const showCoffeeNudge =
+    !isDemoMode &&
     verdictHeadline?.tone === "win" &&
-    highlightsComplete;
+    highlightsComplete &&
+    (isCurrentMonthLastWeekWin || isPastMonthWin);
+  const coffeeNudgeSurface = isPastMonthWin
+    ? "month_win_past"
+    : "month_win_last_week";
+  const coffeeNudgeSeed = isPastMonthWin
+    ? boundaries?.currentMonthStart
+    : boundaries?.todayStr;
   const coffeeNudgeText = showCoffeeNudge
-    ? pickPhraseForMonth(COFFEE_WIN_NUDGES, boundaries.todayStr)
+    ? pickPhraseForMonth(COFFEE_WIN_NUDGES, coffeeNudgeSeed)
     : "";
 
   useEffect(() => {
@@ -402,9 +413,7 @@ export function TheMonthInIronCard({
                   href="https://buymeacoffee.com/lrhvbjxzqr"
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() =>
-                    gaTrackCoffeeNudgeClick("month_win_last_week")
-                  }
+                  onClick={() => gaTrackCoffeeNudgeClick(coffeeNudgeSurface)}
                   className="mt-2 inline-flex items-center gap-2 rounded-md bg-amber-400 px-3 py-1.5 text-sm font-medium text-amber-950 transition-colors hover:bg-amber-500"
                 >
                   ☕ Buy me a coffee

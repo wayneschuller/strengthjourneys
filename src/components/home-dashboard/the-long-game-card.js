@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/router";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
+import { LoaderCircle } from "lucide-react";
 import {
   coreLiftTypes,
   devLog,
@@ -604,13 +605,21 @@ export function TheLongGameCard({
         if (!usedFastPath) {
           devLog("[heatmap-copy][full] using html2canvas fallback");
           const fallbackStart = performance.now();
+          // Capture at devicePixelRatio (capped at 3) so weekly/monthly/streaks
+          // exports look crisp on hi-DPI screens. Default html2canvas scale=1
+          // produced visibly blurry month tiles.
+          const exportScale = Math.max(
+            2,
+            Math.min(3, window.devicePixelRatio || 1),
+          );
           // Keep copied image deterministic via `data-capture="light"` CSS contract.
           await copyNodeToClipboard(
             shareRef.current,
             (element) => element.id === "ignoreCopy",
+            { scale: exportScale },
           );
           devLog(
-            `[heatmap-copy][full] fallback total: ${Math.round(performance.now() - fallbackStart)}ms`,
+            `[heatmap-copy][full] fallback total: ${Math.round(performance.now() - fallbackStart)}ms (scale=${exportScale})`,
           );
         }
         console.log("Heatmap copied to clipboard");
@@ -687,7 +696,7 @@ export function TheLongGameCard({
   );
 
   return (
-    <>
+    <div className="relative h-full">
       <Card
         ref={shareRef}
         className="flex h-full flex-col"
@@ -945,7 +954,10 @@ export function TheLongGameCard({
               {!isFirstMonthFocusState &&
                 effectiveViewMode === "streaks" &&
                 showStreaksToggle && (
-                  <StreaksLeaderboard streaks={streakLeaderboard} />
+                  <StreaksLeaderboard
+                    streaks={streakLeaderboard}
+                    isSharing={isSharing}
+                  />
                 )}
               {/* Footer with app branding - only visible during image capture */}
               {isSharing && (
@@ -995,7 +1007,19 @@ export function TheLongGameCard({
           </CardFooter>
         )}
       </Card>
-    </>
+      {/* Cover the visible card during capture so the layout swap (light
+          theme, hidden selector, branding footer, streaks heading, etc.)
+          doesn't flash on screen. The overlay is a sibling, not a child of
+          shareRef, so html2canvas does not include it in the snapshot. */}
+      {isSharing && (
+        <div className="bg-card/95 absolute inset-0 z-10 flex items-center justify-center rounded-xl backdrop-blur-sm">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+            <span>Generating image…</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1877,7 +1901,7 @@ function getMonthlyShade(level) {
   return `color-mix(in srgb, var(--heatmap-4) ${mixPercent}%, var(--heatmap-1))`;
 }
 
-function getMonthlyCellStyles(level, isFuture) {
+function getMonthlyCellStyles(level, isFuture, isSharing = false) {
   if (isFuture) {
     return {};
   }
@@ -1886,7 +1910,18 @@ function getMonthlyCellStyles(level, isFuture) {
     return {
       backgroundColor: "var(--heatmap-0)",
       opacity: 0.38,
-      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
+      // Drop inset highlight during capture — html2canvas-pro renders inset
+      // shadows as offset shapes that visually "double up" the tile.
+      boxShadow: isSharing ? "none" : "inset 0 1px 0 rgba(255,255,255,0.35)",
+    };
+  }
+
+  if (isSharing) {
+    // Clean flat fill for capture: no box-shadow (inset highlight + 1px outer
+    // ring both rasterize as misaligned rectangles in html2canvas-pro,
+    // producing the double-tile look we saw in the exported PNG).
+    return {
+      backgroundColor: getMonthlyShade(level),
     };
   }
 
@@ -2129,11 +2164,12 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                 const cellStyle = getMonthlyCellStyles(
                   relativeLevel,
                   isFuture,
+                  isSharing,
                 );
                 return (
                   <div
                     key={month}
-                    className={`rounded-[8px] transition-transform duration-150 ${!isFuture && relativeLevel > 0 ? "hover:scale-[1.03]" : ""}`}
+                    className={`rounded-[8px] ${isSharing ? "" : "transition-transform duration-150"} ${!isFuture && relativeLevel > 0 && !isSharing ? "hover:scale-[1.03]" : ""}`}
                     style={{
                       height: 26,
                       ...cellStyle,
@@ -2168,7 +2204,9 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                   width: 14,
                   height: 14,
                   backgroundColor: getMonthlyShade(level),
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)",
+                  boxShadow: isSharing
+                    ? "none"
+                    : "inset 0 1px 0 rgba(255,255,255,0.22)",
                 }}
               />
               <span>{label}</span>

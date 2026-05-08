@@ -900,6 +900,10 @@
   --muted: hsl(60 4.8% 95.9%);
   --muted-foreground: hsl(25 5.3% 44.7%);
   --border: hsl(20 5.9% 90%);
+  --primary: hsl(24 9.8% 10%);
+  --primary-foreground: hsl(60 9.1% 97.8%);
+  --accent: hsl(60 4.8% 95.9%);
+  --accent-foreground: hsl(24 9.8% 10%);
   --heatmap-0: #eeeeee;
   --heatmap-1: #a3b18a;
   --heatmap-2: #3a6b3e;

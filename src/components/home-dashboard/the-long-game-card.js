@@ -51,6 +51,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { StreaksLeaderboard } from "@/components/home-dashboard/streaks-leaderboard";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -76,7 +77,8 @@ export function TheLongGameCard({
   dataMaturityStage: stageFromParent = null,
   sessionCount: sessionCountFromParent = null,
 }) {
-  const { parsedData, isLoading, sheetInfo } = useUserLiftingData();
+  const { parsedData, isLoading, sheetInfo, streakLeaderboard } =
+    useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
@@ -123,12 +125,6 @@ export function TheLongGameCard({
     "daily",
     { initializeWithValue: false },
   );
-  const effectiveViewMode = useMemo(() => {
-    if (dashboardStage === "starter_sample") return "daily";
-    if (dashboardStage === "first_real_week") return "daily";
-    if (dashboardStage === "first_month") return "daily";
-    return viewMode;
-  }, [dashboardStage, viewMode]);
   const isFirstWeekIntroState =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
   const isFirstMonthFocusState = dashboardStage === "first_month";
@@ -138,6 +134,26 @@ export function TheLongGameCard({
     intervals?.length > 2;
   const showMonthlyToggle =
     dashboardStage === "established" && intervals?.length >= 5;
+  const showStreaksToggle =
+    dashboardStage === "established" &&
+    Array.isArray(streakLeaderboard) &&
+    streakLeaderboard.length >= 1;
+  const effectiveViewMode = useMemo(() => {
+    if (dashboardStage === "starter_sample") return "daily";
+    if (dashboardStage === "first_real_week") return "daily";
+    if (dashboardStage === "first_month") return "daily";
+    // Fall back to daily when the persisted choice is no longer available
+    if (viewMode === "weekly" && !showWeeklyToggle) return "daily";
+    if (viewMode === "monthly" && !showMonthlyToggle) return "daily";
+    if (viewMode === "streaks" && !showStreaksToggle) return "daily";
+    return viewMode;
+  }, [
+    dashboardStage,
+    viewMode,
+    showWeeklyToggle,
+    showMonthlyToggle,
+    showStreaksToggle,
+  ]);
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -787,7 +803,7 @@ export function TheLongGameCard({
               {/* View selector — right-justified, anchored just above the heatmap grid */}
               {!isSharing &&
                 !isFirstMonthFocusState &&
-                (showWeeklyToggle || showMonthlyToggle) && (
+                (showWeeklyToggle || showMonthlyToggle || showStreaksToggle) && (
                   <div className="mb-2 flex justify-end">
                     <div className="border-border/40 flex flex-row rounded border p-px text-[10px]">
                       {[
@@ -797,6 +813,9 @@ export function TheLongGameCard({
                           : []),
                         ...(showMonthlyToggle
                           ? [{ key: "monthly", label: "Monthly" }]
+                          : []),
+                        ...(showStreaksToggle
+                          ? [{ key: "streaks", label: "Streaks" }]
                           : []),
                       ].map(({ key, label }) => (
                         <button
@@ -923,6 +942,11 @@ export function TheLongGameCard({
                   isSharing={isSharing}
                 />
               )}
+              {!isFirstMonthFocusState &&
+                effectiveViewMode === "streaks" &&
+                showStreaksToggle && (
+                  <StreaksLeaderboard streaks={streakLeaderboard} />
+                )}
               {/* Footer with app branding - only visible during image capture */}
               {isSharing && (
                 <div

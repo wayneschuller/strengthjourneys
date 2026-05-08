@@ -605,13 +605,21 @@ export function TheLongGameCard({
         if (!usedFastPath) {
           devLog("[heatmap-copy][full] using html2canvas fallback");
           const fallbackStart = performance.now();
+          // Capture at devicePixelRatio (capped at 3) so weekly/monthly/streaks
+          // exports look crisp on hi-DPI screens. Default html2canvas scale=1
+          // produced visibly blurry month tiles.
+          const exportScale = Math.max(
+            2,
+            Math.min(3, window.devicePixelRatio || 1),
+          );
           // Keep copied image deterministic via `data-capture="light"` CSS contract.
           await copyNodeToClipboard(
             shareRef.current,
             (element) => element.id === "ignoreCopy",
+            { scale: exportScale },
           );
           devLog(
-            `[heatmap-copy][full] fallback total: ${Math.round(performance.now() - fallbackStart)}ms`,
+            `[heatmap-copy][full] fallback total: ${Math.round(performance.now() - fallbackStart)}ms (scale=${exportScale})`,
           );
         }
         console.log("Heatmap copied to clipboard");

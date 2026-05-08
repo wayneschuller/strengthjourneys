@@ -21,8 +21,8 @@ const TIER_META = {
 };
 
 const MAX_VISIBLE_STREAKS = 8;
-const MIN_BAR_HEIGHT_PX = 16;
-const MAX_BAR_HEIGHT_PX = 24;
+const MIN_BAR_HEIGHT_PX = 14;
+const MAX_BAR_HEIGHT_PX = 38;
 
 function formatStreakRange(startWeek, endWeek) {
   const s = parseISO(startWeek);

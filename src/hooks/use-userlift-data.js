@@ -24,6 +24,7 @@ import {
   markHigherWeightAsHistoricalPRs,
   calculateLiftTypes,
 } from "@/lib/processing-utils";
+import { processStreakLeaderboard } from "@/lib/home-dashboard/streak-leaderboard-metrics";
 import { useLocalStorage } from "usehooks-ts";
 
 // ---------------------------------------------------------------------------
@@ -504,11 +505,26 @@ export const UserLiftingDataProvider = ({ children }) => {
     return processSessionTonnageLookup(activeParsedData);
   }, [activeParsedData]);
 
+  // Streak leaderboard: all qualifying streaks (>=3 weeks, each with >=3 sessions),
+  // each enriched with tonnage and a top-5 ranked PR list. Drives the Streaks
+  // view inside TheLongGameCard.
+  const streakLeaderboard = useMemo(() => {
+    if (!activeParsedData || !sessionTonnageLookup || !topLiftsByTypeAndReps) {
+      return null;
+    }
+    return processStreakLeaderboard({
+      parsedData: activeParsedData,
+      allSessionDates: sessionTonnageLookup.allSessionDates,
+      topLiftsByTypeAndReps,
+    });
+  }, [activeParsedData, sessionTonnageLookup, topLiftsByTypeAndReps]);
+
   // Flush accumulated pipeline timings once all processing is done
   useEffect(() => {
     if (!activeParsedData || !sessionTonnageLookup) return;
+    if (streakLeaderboard === null) return;
     flushTimings();
-  }, [activeParsedData, sessionTonnageLookup]);
+  }, [activeParsedData, sessionTonnageLookup, streakLeaderboard]);
 
   return (
     <UserLiftingDataContext.Provider
@@ -533,6 +549,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         topTonnageByType,
         topTonnageByTypeLast12Months,
         sessionTonnageLookup,
+        streakLeaderboard,
         rawRows,
         hasCachedSheetData,
         dataSyncedAt: lastDataReceivedAt,

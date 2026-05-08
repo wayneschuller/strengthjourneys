@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/router";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
+import { LoaderCircle } from "lucide-react";
 import {
   coreLiftTypes,
   devLog,
@@ -687,7 +688,7 @@ export function TheLongGameCard({
   );
 
   return (
-    <>
+    <div className="relative h-full">
       <Card
         ref={shareRef}
         className="flex h-full flex-col"
@@ -998,7 +999,19 @@ export function TheLongGameCard({
           </CardFooter>
         )}
       </Card>
-    </>
+      {/* Cover the visible card during capture so the layout swap (light
+          theme, hidden selector, branding footer, streaks heading, etc.)
+          doesn't flash on screen. The overlay is a sibling, not a child of
+          shareRef, so html2canvas does not include it in the snapshot. */}
+      {isSharing && (
+        <div className="bg-card/95 absolute inset-0 z-10 flex items-center justify-center rounded-xl backdrop-blur-sm">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+            <span>Generating image…</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

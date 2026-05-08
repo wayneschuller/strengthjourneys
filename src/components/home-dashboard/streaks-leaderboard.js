@@ -33,7 +33,7 @@ function formatStreakRange(startWeek, endWeek) {
   return `${format(s, "MMM yyyy")} → ${format(e, "MMM yyyy")}`;
 }
 
-export function StreaksLeaderboard({ streaks }) {
+export function StreaksLeaderboard({ streaks, isSharing = false }) {
   const { isMetric } = useAthleteBio();
 
   const ranked = useMemo(() => {
@@ -86,6 +86,7 @@ export function StreaksLeaderboard({ streaks }) {
               lengthPct={lengthPct}
               heightPx={heightPx}
               isMetric={isMetric}
+              isSharing={isSharing}
             />
           );
         })}
@@ -99,17 +100,20 @@ export function StreaksLeaderboard({ streaks }) {
   );
 }
 
-function StreakBar({ streak, lengthPct, heightPx, isMetric }) {
+function StreakBar({ streak, lengthPct, heightPx, isMetric, isSharing }) {
   const dateLabel = formatStreakRange(streak.startWeek, streak.endWeek);
 
   const barClass = streak.isActive
     ? "bg-primary"
     : "bg-muted-foreground/40";
+  // mask-image is unsupported by html2canvas-pro, so skip the active-streak
+  // fade-trail during capture — the bar would otherwise still get the mask
+  // computed-style and the captured image would clip the right edge.
   const barStyle = {
     width: `${lengthPct}%`,
     height: `${heightPx}px`,
     borderRadius: "3px",
-    ...(streak.isActive
+    ...(streak.isActive && !isSharing
       ? {
           maskImage:
             "linear-gradient(to right, black 65%, transparent 100%)",
@@ -122,33 +126,44 @@ function StreakBar({ streak, lengthPct, heightPx, isMetric }) {
     ? "text-primary-foreground"
     : "text-foreground/85";
 
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="flex cursor-default items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <div
-              className={`${barClass} relative flex items-center overflow-hidden`}
-              style={barStyle}
-            >
-              <span
-                className={`truncate px-2 text-[10px] leading-none font-medium ${labelClass}`}
-              >
-                {dateLabel}
-              </span>
-            </div>
-          </div>
+  const row = (
+    <div className="flex cursor-default items-center gap-2">
+      <div className="relative min-w-0 flex-1">
+        <div
+          className={`${barClass} relative flex items-center overflow-hidden`}
+          style={barStyle}
+        >
           <span
-            className={`shrink-0 text-[10px] tabular-nums ${
-              streak.isActive
-                ? "text-foreground font-semibold"
-                : "text-muted-foreground/80"
-            }`}
+            className={`truncate px-2 text-[10px] leading-none font-medium ${labelClass}`}
           >
-            {streak.weeks}wk
+            {dateLabel}
           </span>
         </div>
-      </TooltipTrigger>
+      </div>
+      <span
+        className={`shrink-0 text-[10px] tabular-nums ${
+          streak.isActive
+            ? "text-foreground font-semibold"
+            : "text-muted-foreground/80"
+        }`}
+      >
+        {streak.weeks}wk
+      </span>
+    </div>
+  );
+
+  if (isSharing) {
+    return (
+      <div className="flex flex-col gap-1">
+        {row}
+        <StreakInlineSummary streak={streak} isMetric={isMetric} />
+      </div>
+    );
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{row}</TooltipTrigger>
       <TooltipContent side="top" align="start" className="max-w-[18rem]">
         <StreakTooltipContent
           streak={streak}
@@ -157,6 +172,36 @@ function StreakBar({ streak, lengthPct, heightPx, isMetric }) {
         />
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+function StreakInlineSummary({ streak, isMetric }) {
+  const avgWeekly = Math.round((streak.avgWeeklyTonnage || 0) / 1000);
+  const topPrs = (streak.prs || []).slice(0, 3);
+  return (
+    <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 pl-1 text-[10px] leading-tight">
+      <span>~{avgWeekly.toLocaleString()}k/wk</span>
+      {topPrs.map((pr, idx) => {
+        const w = getDisplayWeight(pr, isMetric);
+        const meta = TIER_META[pr.tier] || TIER_META[3];
+        return (
+          <span
+            key={`${pr.date}-${pr.liftType}-${pr.reps}-${idx}`}
+            className="text-foreground/80"
+          >
+            <span aria-hidden>{meta.emoji}</span> {pr.liftType} {pr.reps}@
+            {w.value}
+            {w.unit}
+          </span>
+        );
+      })}
+      {streak.prCount > topPrs.length && (
+        <span className="italic">
+          +{streak.prCount - topPrs.length} more PR
+          {streak.prCount - topPrs.length === 1 ? "" : "s"}
+        </span>
+      )}
+    </div>
   );
 }
 

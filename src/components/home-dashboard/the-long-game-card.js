@@ -945,7 +945,10 @@ export function TheLongGameCard({
               {!isFirstMonthFocusState &&
                 effectiveViewMode === "streaks" &&
                 showStreaksToggle && (
-                  <StreaksLeaderboard streaks={streakLeaderboard} />
+                  <StreaksLeaderboard
+                    streaks={streakLeaderboard}
+                    isSharing={isSharing}
+                  />
                 )}
               {/* Footer with app branding - only visible during image capture */}
               {isSharing && (

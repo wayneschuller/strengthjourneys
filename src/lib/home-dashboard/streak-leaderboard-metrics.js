@@ -247,6 +247,8 @@ export function enrichStreaks(
       return c.e1rm - a.e1rm;
     });
     b.streak.tonnage = b.tonnage;
+    b.streak.avgWeeklyTonnage =
+      b.streak.weeks > 0 ? b.tonnage / b.streak.weeks : 0;
     b.streak.prs = b.candidates.slice(0, TOP_PRS_PER_STREAK);
     b.streak.prCount = b.candidates.length;
   });

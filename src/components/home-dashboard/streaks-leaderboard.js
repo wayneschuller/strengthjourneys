@@ -48,9 +48,11 @@ export function StreaksLeaderboard({ streaks }) {
   const stats = useMemo(() => {
     if (!ranked.length) return null;
     const maxWeeks = ranked[0].weeks;
-    const tonnages = ranked.map((s) => s.tonnage || 0);
-    const minT = Math.min(...tonnages);
-    const maxT = Math.max(...tonnages);
+    // Bar thickness encodes avg weekly tonnage so it's comparable across
+    // streaks of different lengths (otherwise long streaks always look fat).
+    const weeklyTonnages = ranked.map((s) => s.avgWeeklyTonnage || 0);
+    const minT = Math.min(...weeklyTonnages);
+    const maxT = Math.max(...weeklyTonnages);
     const range = Math.max(maxT - minT, 1);
     return { maxWeeks, minT, range };
   }, [ranked]);
@@ -74,7 +76,7 @@ export function StreaksLeaderboard({ streaks }) {
           const heightPx =
             MIN_BAR_HEIGHT_PX +
             Math.round(
-              (((s.tonnage || 0) - stats.minT) / stats.range) *
+              (((s.avgWeeklyTonnage || 0) - stats.minT) / stats.range) *
                 (MAX_BAR_HEIGHT_PX - MIN_BAR_HEIGHT_PX),
             );
           return (
@@ -159,7 +161,7 @@ function StreakBar({ streak, lengthPct, heightPx, isMetric }) {
 }
 
 function StreakTooltipContent({ streak, dateLabel, isMetric }) {
-  const tonnage = Math.round((streak.tonnage || 0) / 1000);
+  const avgWeekly = Math.round((streak.avgWeeklyTonnage || 0) / 1000);
   return (
     <div className="space-y-1.5 text-xs">
       <div className="flex items-baseline justify-between gap-2">
@@ -170,7 +172,7 @@ function StreakTooltipContent({ streak, dateLabel, isMetric }) {
         <span className="text-muted-foreground text-[10px]">{dateLabel}</span>
       </div>
       <div className="text-muted-foreground">
-        Tonnage during streak: ~{tonnage.toLocaleString()}k
+        Avg weekly tonnage: ~{avgWeekly.toLocaleString()}k
       </div>
       {streak.prs?.length > 0 ? (
         <ul className="space-y-0.5">

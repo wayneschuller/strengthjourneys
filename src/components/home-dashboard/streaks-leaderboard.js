@@ -71,6 +71,16 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
   return (
     <TooltipProvider delayDuration={120}>
       <div className="flex flex-col gap-2 px-1 pb-2">
+        {isSharing && (
+          <div className="mb-1 flex items-baseline justify-between gap-2 border-b pb-1">
+            <h3 className="text-foreground text-sm font-semibold">
+              Training Streaks
+            </h3>
+            <span className="text-muted-foreground text-[10px]">
+              3+ weeks · 3+ sessions/week
+            </span>
+          </div>
+        )}
         {visible.map((s) => {
           const lengthPct = (s.weeks / stats.maxWeeks) * 100;
           const heightPx =

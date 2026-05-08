@@ -21,8 +21,17 @@ const TIER_META = {
 };
 
 const MAX_VISIBLE_STREAKS = 8;
-const MIN_BAR_HEIGHT_PX = 8;
-const MAX_BAR_HEIGHT_PX = 22;
+const MIN_BAR_HEIGHT_PX = 16;
+const MAX_BAR_HEIGHT_PX = 24;
+
+function formatStreakRange(startWeek, endWeek) {
+  const s = parseISO(startWeek);
+  const e = parseISO(endWeek);
+  if (s.getFullYear() === e.getFullYear()) {
+    return `${format(s, "MMM")} → ${format(e, "MMM yyyy")}`;
+  }
+  return `${format(s, "MMM yyyy")} → ${format(e, "MMM yyyy")}`;
+}
 
 export function StreaksLeaderboard({ streaks }) {
   const { isMetric } = useAthleteBio();
@@ -60,7 +69,7 @@ export function StreaksLeaderboard({ streaks }) {
   return (
     <TooltipProvider delayDuration={120}>
       <div className="flex flex-col gap-2 px-1 pb-2">
-        {visible.map((s, idx) => {
+        {visible.map((s) => {
           const lengthPct = (s.weeks / stats.maxWeeks) * 100;
           const heightPx =
             MIN_BAR_HEIGHT_PX +
@@ -72,7 +81,6 @@ export function StreaksLeaderboard({ streaks }) {
             <StreakBar
               key={`${s.startWeek}-${s.endWeek}`}
               streak={s}
-              rank={idx + 1}
               lengthPct={lengthPct}
               heightPx={heightPx}
               isMetric={isMetric}
@@ -89,11 +97,8 @@ export function StreaksLeaderboard({ streaks }) {
   );
 }
 
-function StreakBar({ streak, rank, lengthPct, heightPx, isMetric }) {
-  const startLabel = format(parseISO(streak.startWeek), "MMM yyyy");
-  const endLabel = format(parseISO(streak.endWeek), "MMM yyyy");
-  const dateLabel =
-    startLabel === endLabel ? startLabel : `${startLabel}–${endLabel}`;
+function StreakBar({ streak, lengthPct, heightPx, isMetric }) {
+  const dateLabel = formatStreakRange(streak.startWeek, streak.endWeek);
 
   const barClass = streak.isActive
     ? "bg-primary"
@@ -111,27 +116,30 @@ function StreakBar({ streak, rank, lengthPct, heightPx, isMetric }) {
         }
       : null),
   };
+  const labelClass = streak.isActive
+    ? "text-primary-foreground"
+    : "text-foreground/85";
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex cursor-default items-center gap-2">
-          <span
-            className={`w-4 shrink-0 text-right text-[10px] tabular-nums ${
-              streak.isActive
-                ? "text-primary font-semibold"
-                : "text-muted-foreground/70"
-            }`}
-          >
-            {rank}
-          </span>
           <div className="relative min-w-0 flex-1">
-            <div className={barClass} style={barStyle} />
+            <div
+              className={`${barClass} relative flex items-center overflow-hidden`}
+              style={barStyle}
+            >
+              <span
+                className={`truncate px-2 text-[10px] leading-none font-medium ${labelClass}`}
+              >
+                {dateLabel}
+              </span>
+            </div>
           </div>
           <span
             className={`shrink-0 text-[10px] tabular-nums ${
               streak.isActive
-                ? "text-foreground font-medium"
+                ? "text-foreground font-semibold"
                 : "text-muted-foreground/80"
             }`}
           >

@@ -3,8 +3,10 @@ import {
   getWeekKeyFromDateStr,
   subtractDaysFromStr,
 } from "@/lib/date-utils";
-import { recordTiming } from "@/lib/processing-utils";
+import { recordTiming, BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+
+const BIG_FOUR_SET = new Set(BIG_FOUR_LIFT_TYPES);
 
 const MIN_STREAK_WEEKS = 3;
 const MIN_SESSIONS_PER_WEEK = 3;
@@ -230,13 +232,17 @@ export function enrichStreaks(
         unitType: lift.unitType,
         tier,
         e1rm,
+        isBigFour: BIG_FOUR_SET.has(lift.liftType),
       });
     }
   }
 
-  // Rank + trim per streak
+  // Rank + trim per streak.
+  // A Big Four PR at any tier ranks above any non-Big-Four PR — a 12-month
+  // squat PR is more memorable than a still-standing curl PR.
   buckets.forEach((b) => {
     b.candidates.sort((a, c) => {
+      if (a.isBigFour !== c.isBigFour) return a.isBigFour ? -1 : 1;
       if (a.tier !== c.tier) return a.tier - c.tier;
       return c.e1rm - a.e1rm;
     });

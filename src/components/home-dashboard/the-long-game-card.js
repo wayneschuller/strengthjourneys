@@ -1901,7 +1901,7 @@ function getMonthlyShade(level) {
   return `color-mix(in srgb, var(--heatmap-4) ${mixPercent}%, var(--heatmap-1))`;
 }
 
-function getMonthlyCellStyles(level, isFuture) {
+function getMonthlyCellStyles(level, isFuture, isSharing = false) {
   if (isFuture) {
     return {};
   }
@@ -1910,7 +1910,18 @@ function getMonthlyCellStyles(level, isFuture) {
     return {
       backgroundColor: "var(--heatmap-0)",
       opacity: 0.38,
-      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
+      // Drop inset highlight during capture — html2canvas-pro renders inset
+      // shadows as offset shapes that visually "double up" the tile.
+      boxShadow: isSharing ? "none" : "inset 0 1px 0 rgba(255,255,255,0.35)",
+    };
+  }
+
+  if (isSharing) {
+    // Clean flat fill for capture: no box-shadow (inset highlight + 1px outer
+    // ring both rasterize as misaligned rectangles in html2canvas-pro,
+    // producing the double-tile look we saw in the exported PNG).
+    return {
+      backgroundColor: getMonthlyShade(level),
     };
   }
 
@@ -2153,11 +2164,12 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                 const cellStyle = getMonthlyCellStyles(
                   relativeLevel,
                   isFuture,
+                  isSharing,
                 );
                 return (
                   <div
                     key={month}
-                    className={`rounded-[8px] transition-transform duration-150 ${!isFuture && relativeLevel > 0 ? "hover:scale-[1.03]" : ""}`}
+                    className={`rounded-[8px] ${isSharing ? "" : "transition-transform duration-150"} ${!isFuture && relativeLevel > 0 && !isSharing ? "hover:scale-[1.03]" : ""}`}
                     style={{
                       height: 26,
                       ...cellStyle,
@@ -2192,7 +2204,9 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                   width: 14,
                   height: 14,
                   backgroundColor: getMonthlyShade(level),
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)",
+                  boxShadow: isSharing
+                    ? "none"
+                    : "inset 0 1px 0 rgba(255,255,255,0.22)",
                 }}
               />
               <span>{label}</span>

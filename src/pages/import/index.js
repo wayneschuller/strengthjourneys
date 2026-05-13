@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { ImportWorkflowSection } from "@/components/onboarding/import-workflow-section";
+import { ImporterFeedbackCard } from "@/components/feedback";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -614,6 +615,11 @@ export default function ImportPage() {
           Journeys writes it into a Google Sheet in your own Drive and does not
           keep a server-side copy.
         </p>
+
+        {/* Explicit feedback CTA — we can't test every export format ourselves */}
+        <section className="mx-auto mb-12 max-w-5xl">
+          <ImporterFeedbackCard />
+        </section>
 
         <ImportSeoLinksSection />
 

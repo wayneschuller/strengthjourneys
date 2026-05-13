@@ -345,7 +345,8 @@ function ImportSeoLinksSection() {
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Takes about 2 minutes. Export your history from apps like Hevy,
-          Strong, Wodify, BTWB, or TurnKey, then import it here.
+          Strong, StrongLifts 5x5, Wodify, BTWB, or TurnKey, then import it
+          here.
         </p>
       </div>
 
@@ -544,14 +545,14 @@ export default function ImportPage() {
       <>
         <NextSeo
           title="Import Your Lifting History - See Your Strength Instantly"
-          description="Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required."
+          description="Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required."
           canonical="https://www.strengthjourneys.xyz/import"
           openGraph={{
             url: "https://www.strengthjourneys.xyz/import",
             title:
               "Import Your Lifting History - See Your Strength Instantly",
             description:
-              "Import workout data from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required.",
+              "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required.",
             type: "website",
             site_name: "Strength Journeys",
           }}
@@ -567,14 +568,14 @@ export default function ImportPage() {
     <>
       <NextSeo
         title="Import Your Lifting History - See Your Strength Instantly"
-        description="Import workout data from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required."
+        description="Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required."
         canonical="https://www.strengthjourneys.xyz/import"
         openGraph={{
           url: "https://www.strengthjourneys.xyz/import",
           title:
             "Import Your Lifting History - See Your Strength Instantly",
           description:
-            "Import workout data from Hevy, Strong, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required.",
+            "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required.",
           type: "website",
           site_name: "Strength Journeys",
         }}
@@ -582,7 +583,7 @@ export default function ImportPage() {
           {
             name: "keywords",
             content:
-              "import Hevy data, import Strong CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
+              "import Hevy data, import Strong CSV, import StrongLifts 5x5 CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
           },
         ]}
       />
@@ -592,8 +593,9 @@ export default function ImportPage() {
             Your Lifting Data is Trapped. Let&apos;s Fix That.
           </PageHeaderHeading>
           <PageHeaderDescription>
-            Drop a file from Hevy, Strong, Wodify, BTWB, TurnKey, or any
-            spreadsheet and see your full strength dashboard instantly.
+            Drop a file from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB,
+            TurnKey, or any spreadsheet and see your full strength dashboard
+            instantly.
             {authStatus !== "authenticated" &&
               " No account required."}
           </PageHeaderDescription>

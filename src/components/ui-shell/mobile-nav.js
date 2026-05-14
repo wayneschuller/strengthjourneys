@@ -89,8 +89,8 @@ export function MobileNav() {
           className="px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
           aria-expanded={open}
         >
-          <Menu className="mr-2 h-7 w-7" />
-          <div className="tracking-tight">Strength Journeys</div>
+          <Menu className="h-7 w-7 sm:mr-2" />
+          <div className="hidden tracking-tight sm:block">Strength Journeys</div>
           <span className="sr-only">Toggle Menu</span>
         </Button>
       </SheetTrigger>

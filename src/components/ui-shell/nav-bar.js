@@ -181,7 +181,7 @@ export function NavBar() {
                 <Button
                   asChild
                   size="sm"
-                  className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+                  className="mr-2 hidden h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:inline-flex dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
                 >
                   <Link href="/log">
                     {canOpenLog && !isImportedData ? (

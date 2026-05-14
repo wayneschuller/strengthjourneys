@@ -106,6 +106,62 @@ export const IMPORT_APP_PAGES = [
     ],
   },
   {
+    slug: "stronglifts",
+    appName: "StrongLifts 5x5",
+    title: "Import StrongLifts 5x5 Data to Google Sheets | Strength Journeys",
+    metaDescription:
+      "Export your StrongLifts 5x5 workout history and see your full linear progression instantly. PRs, plateaus, and comeback arcs in seconds. No account required.",
+    heroTitle: "Your StrongLifts 5x5 Data Deserves a Real Strength Chart",
+    hookLine: "Linear progression is more interesting than the StrongLifts chart shows",
+    heroDescription:
+      "Drop your StrongLifts 5x5 export and finally see every PR, every stall, and every comeback in one timeline.",
+    cardDescription:
+      "Started with 5x5? See the full arc of your linear progression.",
+    whyItMatters:
+      "StrongLifts 5x5 is how many lifters fall in love with the barbell, but the app's built-in chart barely scratches the surface of what your data is telling you. Once you graduate from 5x5 to your own programming, that early history shouldn't get left behind. Import it here to see your linear progression, the stalls, the deload comebacks, and the long-term strength curve. Your Google Sheet then becomes the permanent home for everything that comes next.",
+    exportSteps: [
+      "Open the StrongLifts 5x5 app and go to Settings, then look for Export Workouts. The app emails you a CSV file.",
+      "Save the CSV file to your device from the email.",
+      "Drop the file on the Strength Journeys import page.",
+      "See your full strength dashboard instantly, or sign in to save it to your own Google Sheet.",
+    ],
+    whatYouGet: [
+      "Every workout pivoted into a proper timeline instead of StrongLifts' wide CSV rows.",
+      "Automatic PR detection across squat, bench, row, press, and deadlift at every rep range.",
+      "See the stalls and deloads inside your linear progression that the StrongLifts chart hides.",
+      "Merge with Hevy, Strong, or any other app to track your full lifting career past 5x5.",
+    ],
+    mergeTitle: "Graduated from 5x5 to another program?",
+    mergeBody:
+      "Most lifters use StrongLifts 5x5 for their first year and then move to other apps when they outgrow linear progression. Import every CSV you have. We normalize the lift names, deduplicate overlapping sessions, and stitch your full training career into one continuous timeline.",
+    faqItems: [
+      {
+        question: "How do I export my data from the StrongLifts 5x5 app?",
+        answer:
+          "Open the StrongLifts 5x5 app, tap Settings, and look for the Export Workouts option. The app emails you a CSV file, which you can then upload here.",
+      },
+      {
+        question: "Do I need an account to see my data?",
+        answer:
+          "No. Preview mode shows your full dashboard without signing in. Sign in only when you want to save your data permanently to a Google Sheet in your own Drive.",
+      },
+      {
+        question: "Will old StrongLifts exports still work?",
+        answer:
+          "Yes. The StrongLifts wide CSV format has been stable for years. Exports going back to 2018 parse correctly. If you have a newer export with extra columns, drop it anyway and we'll do our best to handle it.",
+      },
+      {
+        question: "Can I merge StrongLifts data with another app?",
+        answer:
+          "Yes. Import each app's CSV and we will merge them into one timeline. A common path is StrongLifts for year one, then Hevy or Strong for the years after.",
+      },
+      {
+        question: "Is my data private?",
+        answer: IMPORT_PRIVACY_ANSWER,
+      },
+    ],
+  },
+  {
     slug: "wodify",
     appName: "Wodify",
     title: "Import Wodify Data to Google Sheets | Strength Journeys",

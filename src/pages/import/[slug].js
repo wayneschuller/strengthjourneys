@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { ImportWorkflowSection } from "@/components/onboarding/import-workflow-section";
+import { ImporterFeedbackCard } from "@/components/feedback";
 import {
   PageContainer,
   PageHeader,
@@ -267,6 +268,9 @@ function ImportAppPage({ page }) {
               </Accordion>
             </CardContent>
           </Card>
+
+          {/* Explicit feedback CTA — we can't test every export format ourselves */}
+          <ImporterFeedbackCard appName={page.appName} />
 
           {/* Bottom CTA — scroll to import */}
           <Card className="bg-primary/5 border-primary/20">

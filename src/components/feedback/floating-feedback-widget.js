@@ -154,11 +154,25 @@ export function FeedbackWidget({ labels = {} }) {
     setSuccessCountdown(null);
   }
 
-  // Subscribes once to the avatar-menu event and opens the dialog in "menu" mode.
+  // Stable ref so the event listener (which is subscribed once) can route into
+  // the latest version of handleThumbClick when an external trigger pre-sets sentiment.
+  const thumbHandlerRef = useRef(null);
+
+  // Subscribes once to the cross-app open event. Event detail (optional):
+  //   { triggerLabel?: string, sentiment?: "positive" | "negative" }
+  // If sentiment is provided, the dialog skips the thumbs step.
   useEffect(() => {
-    const handleOpen = () => {
-      clickedTriggerLabelRef.current = "menu";
+    const handleOpen = (event) => {
+      const detail = event?.detail || {};
+      clickedTriggerLabelRef.current = detail.triggerLabel || "menu";
       setOpen(true);
+      if (
+        (detail.sentiment === "positive" ||
+          detail.sentiment === "negative") &&
+        thumbHandlerRef.current
+      ) {
+        thumbHandlerRef.current(detail.sentiment);
+      }
     };
     window.addEventListener("open-feedback", handleOpen);
     return () => window.removeEventListener("open-feedback", handleOpen);
@@ -289,6 +303,13 @@ export function FeedbackWidget({ labels = {} }) {
     deadlift: "Deadlift Insights",
     "strict-press": "Strict Press Insights",
   };
+  const IMPORTER_SLUG_NAMES = {
+    hevy: "the Hevy importer",
+    strong: "the Strong importer",
+    stronglifts: "the StrongLifts 5x5 importer",
+    wodify: "the Wodify importer",
+    btwb: "the BTWB importer",
+  };
   const STRENGTH_LEVELS_LIFT_NAMES = {
     squat: "Squat Strength Levels",
     "bench-press": "Bench Press Strength Levels",
@@ -327,6 +348,10 @@ export function FeedbackWidget({ labels = {} }) {
       ? LIFT_SLUG_NAMES[router.query.lift] || "Lift Insights"
       : router.pathname === "/strength-levels/[lift]"
         ? STRENGTH_LEVELS_LIFT_NAMES[router.query.lift] || "the Strength Levels page"
+      : router.pathname === "/import"
+        ? "the Import page"
+        : router.pathname === "/import/[slug]"
+          ? IMPORTER_SLUG_NAMES[router.query.slug] || "our importers"
       : PAGE_NAMES[router.pathname] || "Strength Journeys";
 
   function getUserType() {
@@ -355,6 +380,10 @@ export function FeedbackWidget({ labels = {} }) {
       startCountdown();
     }
   }
+
+  // Keep ref pointed at the latest closure so the once-subscribed event listener
+  // can route into it with fresh router/session bindings.
+  thumbHandlerRef.current = handleThumbClick;
 
   async function handleSubmit() {
     if (!message.trim()) return;

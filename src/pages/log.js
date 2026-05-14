@@ -3903,6 +3903,15 @@ function CelebrationReveal({ animationKey, className, children }) {
   );
 }
 
+// Accept comma-as-decimal for European locale users whose iOS numeric keyboard
+// only offers `,` (e.g. German, French). Only convert when there's no `.` to
+// avoid mis-parsing thousands separators like "1,234".
+function parseWeightInput(value) {
+  if (typeof value !== "string") return Number.NaN;
+  const normalized = value.includes(".") ? value : value.replace(",", ".");
+  return Number.parseFloat(normalized);
+}
+
 function CustomSetDraftRow({
   unitType,
   defaultNotes,
@@ -3925,7 +3934,7 @@ function CustomSetDraftRow({
   }, [disabled]);
 
   const parsedReps = Number.parseInt(draftReps, 10);
-  const parsedWeight = Number.parseFloat(draftWeight);
+  const parsedWeight = parseWeightInput(draftWeight);
   const hasValidReps = Number.isInteger(parsedReps) && parsedReps > 0;
   const hasValidWeight = Number.isFinite(parsedWeight) && parsedWeight > 0;
   const canSubmit = !disabled && hasValidReps && hasValidWeight;
@@ -3991,9 +4000,8 @@ function CustomSetDraftRow({
           <span className="text-muted-foreground mx-0.5 text-base">@</span>
           <input
             ref={weightInputRef}
-            type="number"
+            type="text"
             inputMode="decimal"
-            step="any"
             className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
             value={draftWeight}
             disabled={disabled}
@@ -4281,7 +4289,7 @@ function SetRow({
   function commitWeight() {
     if (isLocked) return;
     setEditingWeight(false);
-    const num = parseFloat(draftWeight);
+    const num = parseWeightInput(draftWeight);
     if (!isNaN(num) && num !== latestFieldsRef.current.weight) {
       const beforeFields = latestFieldsRef.current;
       const nextFields = { ...beforeFields, weight: num };
@@ -4412,8 +4420,8 @@ function SetRow({
           <span className="text-muted-foreground mx-0.5 text-base">@</span>
           {editingWeight && !isReadOnly ? (
             <input
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
               className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
               value={draftWeight}
               disabled={isLocked}

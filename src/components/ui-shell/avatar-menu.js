@@ -86,7 +86,7 @@ export function AvatarDropdown() {
         cta="nav_avatar"
         aria-label="Sign in with Google"
       >
-        <span className="hidden sm:inline">Sign in with Google</span>
+        <span className="hidden lg:inline">Sign in with Google</span>
       </GoogleSignInButton>
     );
 

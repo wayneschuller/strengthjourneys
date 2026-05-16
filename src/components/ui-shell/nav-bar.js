@@ -315,7 +315,7 @@ export function DesktopNav() {
             pathname === "/gym-playlist-leaderboard"
               ? "text-foreground"
               : "text-foreground/60",
-            "hidden md:block",
+            "hidden lg:block",
           )}
         >
           Music

@@ -1235,9 +1235,18 @@ function PlateMilestonesMain({ relatedArticles }) {
       };
 
       if (achievementMode === "actual") {
-        // Actual mode: bar-load semantics, position by weightLb
+        // Actual mode: bar-load semantics, position by weightLb.
+        // Skip the "Single" notch when it points to the same set as Best
+        // (the common case when a 1-rep IS the heaviest bar load — "Single"
+        // adds nothing on top of "Best" in Actual mode).
         if (stats.bestWeightSet) addRole("bestBar", stats.bestWeightSet);
-        if (stats.single) addRole("single", stats.single);
+        if (
+          stats.single &&
+          (!stats.bestWeightSet ||
+            setId(stats.single) !== setId(stats.bestWeightSet))
+        ) {
+          addRole("single", stats.single);
+        }
         if (stats.nowByWeight) {
           const isNewBest =
             stats.bestWeightSet &&

@@ -38,6 +38,8 @@ import {
 } from "@/components/page-header";
 
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
@@ -635,7 +637,7 @@ function clusterNotches(notches, max) {
   const visible = notches
     .filter((n) => n.valueLb > 0 && n.valueLb <= max)
     .sort((a, b) => a.valueLb - b.valueLb);
-  const MERGE_THRESHOLD_PCT = 6;
+  const MERGE_THRESHOLD_PCT = 10;
   const clusters = [];
   for (const n of visible) {
     const percent = (n.valueLb / max) * 100;
@@ -908,19 +910,24 @@ function PlateMilestonesMain({ relatedArticles }) {
 
       let pr = null;
       let single = null;
-      let bestWeightLb = 0;
+      let bestWeightSet = null;
       for (const e of entries) {
         if (!pr || e.e1rm > pr.e1rm) pr = e;
         if (e.reps === 1 && (!single || e.weightLb > single.weightLb))
           single = e;
-        if (e.weightLb > bestWeightLb) bestWeightLb = e.weightLb;
+        if (!bestWeightSet || e.weightLb > bestWeightSet.weightLb)
+          bestWeightSet = e;
       }
+      const bestWeightLb = bestWeightSet?.weightLb ?? 0;
 
       const latestDate = entries[entries.length - 1].date;
       let nowSet = null;
+      let nowByWeight = null;
       for (const e of entries) {
         if (e.date !== latestDate) continue;
         if (!nowSet || e.e1rm > nowSet.e1rm) nowSet = e;
+        if (!nowByWeight || e.weightLb > nowByWeight.weightLb)
+          nowByWeight = e;
       }
 
       const periodBests = { "1M": null, "6M": null, "1Y": null };
@@ -987,7 +994,9 @@ function PlateMilestonesMain({ relatedArticles }) {
         pr,
         single,
         bestWeightLb,
+        bestWeightSet,
         now: nowSet,
+        nowByWeight,
         periodBests,
         latestDate,
         daysSinceLatest,
@@ -1179,22 +1188,30 @@ function PlateMilestonesMain({ relatedArticles }) {
     return Object.keys(timelines).length > 0 ? timelines : null;
   }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
 
-  // Per-lift notch arrays (Single, 1M, 6M, 1Y, PR, Now) with tooltip content.
-  // Notches are deduped by set identity: if the same underlying set fills more
-  // than one role (common: the lifetime PR is itself a single rep), the roles
-  // are merged into one notch with a combined label like "Single · PR".
+  // Per-lift notch arrays, mode-aware so the slider only shows pills that fit
+  // the user's chosen lens.
+  // - Actual mode: Best (heaviest bar load), Single (heaviest 1-rep), Now
+  //   (latest session's top set by weight). Positioned by actual weightLb.
+  // - E1RM mode: PR (lifetime E1RM), 1Y/6M/1M (period bests), Now (latest
+  //   session's best E1RM). Positioned by E1RM.
+  // Notches with identical underlying sets dedup to one merged-label pill.
   const notchesByLift = useMemo(() => {
     if (!liftStats || !prWeightsLb) return null;
     const result = {};
 
     const ROLE_CONFIG = {
+      // Actual-mode roles
+      bestBar: { label: "Best", priority: 2, accent: "default", zIndex: 30, isDominant: false },
+      single: { label: "Single", priority: 3, accent: "single", zIndex: 25, isDominant: false },
+      nowActual: { label: "Now", priority: 4, accent: "now", zIndex: 40, isDominant: true },
+      newPRActual: { label: "🎉 New best!", priority: 5, accent: "newPR", zIndex: 40, isDominant: true },
+      // E1RM-mode roles
       "1M": { label: "1M", priority: 1, accent: "default", zIndex: 10, isDominant: false },
       "6M": { label: "6M", priority: 1, accent: "default", zIndex: 10, isDominant: false },
       "1Y": { label: "1Y", priority: 1, accent: "default", zIndex: 10, isDominant: false },
       pr: { label: "PR", priority: 2, accent: "default", zIndex: 30, isDominant: false },
-      single: { label: "Single", priority: 3, accent: "single", zIndex: 25, isDominant: false },
-      now: { label: "Now", priority: 4, accent: "now", zIndex: 40, isDominant: true },
-      newPR: { label: "🎉 New PR!", priority: 5, accent: "newPR", zIndex: 40, isDominant: true },
+      nowE1rm: { label: "Now", priority: 4, accent: "now", zIndex: 40, isDominant: true },
+      newPRE1rm: { label: "🎉 New PR!", priority: 5, accent: "newPR", zIndex: 40, isDominant: true },
     };
     const PERIOD_LABEL = { "1M": "Last month", "6M": "Last 6 months", "1Y": "Last year" };
     const setId = (s) => `${s.date}-${s.reps}-${s.weightLb}`;
@@ -1204,10 +1221,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       const prValueLb = prWeightsLb[milestone.key];
       if (!stats || !stats.pr || prValueLb == null) continue;
 
-      const isNowAlsoPR =
-        stats.now && setId(stats.now) === setId(stats.pr);
-
-      // Collect roles by set identity
+      // Collect roles by set identity (per-mode)
       const setsById = {};
       const rolesById = {};
       const addRole = (role, set) => {
@@ -1220,54 +1234,82 @@ function PlateMilestonesMain({ relatedArticles }) {
         rolesById[id].push(role);
       };
 
-      addRole("pr", stats.pr);
-      if (stats.single) addRole("single", stats.single);
-      for (const key of ["1Y", "6M", "1M"]) {
-        addRole(key, stats.periodBests?.[key]);
+      if (achievementMode === "actual") {
+        // Actual mode: bar-load semantics, position by weightLb
+        if (stats.bestWeightSet) addRole("bestBar", stats.bestWeightSet);
+        if (stats.single) addRole("single", stats.single);
+        if (stats.nowByWeight) {
+          const isNewBest =
+            stats.bestWeightSet &&
+            setId(stats.nowByWeight) === setId(stats.bestWeightSet);
+          addRole(isNewBest ? "newPRActual" : "nowActual", stats.nowByWeight);
+        }
+      } else {
+        // E1RM mode: E1RM semantics, position by e1rm
+        addRole("pr", stats.pr);
+        for (const key of ["1Y", "6M", "1M"]) {
+          addRole(key, stats.periodBests?.[key]);
+        }
+        if (stats.now) {
+          const isNewPR = setId(stats.now) === setId(stats.pr);
+          addRole(isNewPR ? "newPRE1rm" : "nowE1rm", stats.now);
+        }
       }
-      if (stats.now) addRole(isNowAlsoPR ? "newPR" : "now", stats.now);
 
       const detailFor = (s) =>
         `${s.reps} × ${formatLb(s.weightLb, isMetric)} on ${formatFullDate(s.date)}`;
 
       const headlineFor = (primaryRole, set) => {
-        if (primaryRole === "newPR")
-          return `🎉 New personal record: ~${formatLb(set.e1rm, isMetric)}`;
-        if (primaryRole === "now")
-          return `Most recent session E1RM: ~${formatLb(set.e1rm, isMetric)}`;
-        if (primaryRole === "single")
-          return `Heaviest actual single: ${formatLb(set.weightLb, isMetric)}`;
-        if (primaryRole === "pr")
-          return `Lifetime E1RM: ~${formatLb(set.e1rm, isMetric)}`;
-        if (PERIOD_LABEL[primaryRole])
-          return `${PERIOD_LABEL[primaryRole]} E1RM: ~${formatLb(set.e1rm, isMetric)}`;
-        return formatLb(set.weightLb, isMetric);
+        switch (primaryRole) {
+          case "bestBar":
+            return `Heaviest weight on bar: ${formatLb(set.weightLb, isMetric)}`;
+          case "single":
+            return `Heaviest actual single: ${formatLb(set.weightLb, isMetric)}`;
+          case "nowActual":
+            return `Most recent top set: ${formatLb(set.weightLb, isMetric)}`;
+          case "newPRActual":
+            return `🎉 New heaviest bar load: ${formatLb(set.weightLb, isMetric)}`;
+          case "pr":
+            return `Lifetime E1RM: ~${formatLb(set.e1rm, isMetric)}`;
+          case "nowE1rm":
+            return `Most recent session E1RM: ~${formatLb(set.e1rm, isMetric)}`;
+          case "newPRE1rm":
+            return `🎉 New personal record: ~${formatLb(set.e1rm, isMetric)}`;
+          default:
+            if (PERIOD_LABEL[primaryRole])
+              return `${PERIOD_LABEL[primaryRole]} E1RM: ~${formatLb(set.e1rm, isMetric)}`;
+            return formatLb(set.weightLb, isMetric);
+        }
       };
+
+      // Roles that should drop their "secondary" label when a "newPR" variant
+      // is already in the cluster (avoids "🎉 New PR! · PR" redundancy).
+      const REDUNDANT_WITH_NEWPR = {
+        newPRE1rm: ["pr"],
+        newPRActual: ["bestBar"],
+      };
+
+      const positionFor = (primaryRole, set) =>
+        achievementMode === "actual" ? set.weightLb : set.e1rm;
 
       const notches = [];
       for (const id of Object.keys(rolesById)) {
         const roles = rolesById[id];
         const set = setsById[id];
-        // Sort by priority desc to pick primary
         roles.sort((a, b) => ROLE_CONFIG[b].priority - ROLE_CONFIG[a].priority);
         const primaryRole = roles[0];
         const primary = ROLE_CONFIG[primaryRole];
 
-        // Drop redundant "PR" label when "newPR" already in cluster
-        const labelRoles = roles.filter(
-          (r) => !(r === "pr" && roles.includes("newPR")),
-        );
+        const dropList =
+          (REDUNDANT_WITH_NEWPR[primaryRole] || []).slice();
+        const labelRoles = roles.filter((r) => !dropList.includes(r));
         const mergedLabel = labelRoles
           .map((r) => ROLE_CONFIG[r].label)
           .join(" · ");
 
-        // Position single-rep sets by their actual weight; others by e1rm
-        const positionWeight =
-          primaryRole === "single" ? set.weightLb : set.e1rm;
-
         notches.push({
           key: `${milestone.key}-${id}`,
-          valueLb: clampToMax(positionWeight, milestone.maxLb),
+          valueLb: clampToMax(positionFor(primaryRole, set), milestone.maxLb),
           shortLabel: mergedLabel,
           headline: headlineFor(primaryRole, set),
           detail: detailFor(set),
@@ -1281,7 +1323,7 @@ function PlateMilestonesMain({ relatedArticles }) {
     }
 
     return Object.keys(result).length > 0 ? result : null;
-  }, [liftStats, prWeightsLb, isMetric]);
+  }, [liftStats, prWeightsLb, isMetric, achievementMode]);
 
   // Per-lift status sentence (one line, varied phrasing per branch).
   const statusSentences = useMemo(() => {
@@ -1438,35 +1480,36 @@ function PlateMilestonesMain({ relatedArticles }) {
           {/* Achievement mode toggle (only when user has data to anchor it) */}
           {actualBestByLift && prWeightsLb && (
             <div className="mb-2 flex items-center justify-end gap-2 text-xs">
-              <span className="text-muted-foreground">Show:</span>
-              <div className="inline-flex rounded-md border bg-muted/30 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setAchievementMode("actual")}
-                  className={cn(
-                    "rounded px-2.5 py-1 font-medium transition-colors",
-                    achievementMode === "actual"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                  aria-pressed={achievementMode === "actual"}
-                >
-                  Actual lifts
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAchievementMode("e1rm")}
-                  className={cn(
-                    "rounded px-2.5 py-1 font-medium transition-colors",
-                    achievementMode === "e1rm"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                  aria-pressed={achievementMode === "e1rm"}
-                >
-                  E1RM potential
-                </button>
-              </div>
+              <Label
+                htmlFor="plate-milestone-mode"
+                className={cn(
+                  "cursor-pointer",
+                  achievementMode === "actual"
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground",
+                )}
+              >
+                Actual lifts
+              </Label>
+              <Switch
+                id="plate-milestone-mode"
+                checked={achievementMode === "e1rm"}
+                onCheckedChange={(checked) =>
+                  setAchievementMode(checked ? "e1rm" : "actual")
+                }
+                aria-label="Toggle between actual lifts and E1RM potential"
+              />
+              <Label
+                htmlFor="plate-milestone-mode"
+                className={cn(
+                  "cursor-pointer",
+                  achievementMode === "e1rm"
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground",
+                )}
+              >
+                E1RM potential
+              </Label>
             </div>
           )}
 

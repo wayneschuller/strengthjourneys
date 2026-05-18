@@ -9,7 +9,7 @@
  */
 import Head from "next/head";
 import Link from "next/link";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { RelatedArticles } from "@/components/article-cards";
@@ -38,6 +38,12 @@ import {
 } from "@/components/page-header";
 
 import { Slider } from "@/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Trophy,
   LineChart,
@@ -274,12 +280,240 @@ const formatMonthYear = (dateStr) => {
   });
 };
 
+const formatMonthDay = (dateStr) => {
+  const d = new Date(dateStr + "T00:00:00Z");
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+};
+
+const formatFullDate = (dateStr) => {
+  const d = new Date(dateStr + "T00:00:00Z");
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+};
+
+const formatLb = (lbs, isMetric) =>
+  isMetric ? `${toKg(lbs)} kg` : `${Math.round(lbs)} lb`;
+
+const formatSet = (set, isMetric) =>
+  `${set.reps} × ${formatLb(set.weightLb, isMetric)}`;
+
+const hashString = (s) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+};
+
+const pickVariant = (variants, seed) =>
+  variants[hashString(seed) % variants.length];
+
+const daysBetween = (laterYmd, earlierYmd) => {
+  const later = new Date(laterYmd + "T00:00:00Z").getTime();
+  const earlier = new Date(earlierYmd + "T00:00:00Z").getTime();
+  return Math.floor((later - earlier) / 86400000);
+};
+
 const SHORT_LIFT_NAMES = {
   "Strict Press": "Press",
   "Bench Press": "Bench",
   "Back Squat": "Squat",
   Deadlift: "Deadlift",
 };
+
+const LIFT_VERBS = {
+  "Strict Press": "press",
+  "Bench Press": "bench",
+  "Back Squat": "squat",
+  Deadlift: "deadlift",
+};
+
+function tierLabel(n) {
+  return `${n} plate${n === 1 ? "" : "s"}`;
+}
+
+// Builds a one-line, lifter-to-lifter status sentence based on the user's actual
+// data for this lift. Chooses one of seven branches in priority order, then
+// picks one of 6 deterministic phrasings (seeded by lift + latest-session date
+// so the line stabilises until the user logs a new session).
+function buildStatusSentence({ milestone, stats, isMetric }) {
+  if (!stats) return null;
+  const { pr, single, now: nowSet, periodBests, latestDate, daysSinceLatest, progress6mDelta, tierCrossings } = stats;
+  if (!pr || !nowSet || !latestDate) return null;
+
+  const liftType = milestone.liftType;
+  const liftKey = milestone.key;
+  const liftVerb = LIFT_VERBS[liftType] || "lift";
+  const wStr = (lb) => formatLb(lb, isMetric);
+  const setStr = (s) => formatSet(s, isMetric);
+  const seedBase = `${liftKey}-${latestDate ?? "none"}`;
+
+  // Latest tier crossed (by first-crossing date)
+  let latestCrossedTier = 0;
+  let latestCrossedDate = null;
+  for (const t of ALL_TIERS) {
+    const c = tierCrossings?.[t];
+    if (!c) continue;
+    if (!latestCrossedDate || c.first.date > latestCrossedDate) {
+      latestCrossedTier = t;
+      latestCrossedDate = c.first.date;
+    }
+  }
+  const nextTierAfterLatest = latestCrossedTier > 0 ? latestCrossedTier + 1 : 1;
+
+  // BRANCH: Just crossed (latest tier crossed within 30 days)
+  if (latestCrossedDate) {
+    const todayYmd = new Date().toISOString().slice(0, 10);
+    const daysSinceCross = daysBetween(todayYmd, latestCrossedDate);
+    if (daysSinceCross >= 0 && daysSinceCross <= 30) {
+      const crossing = tierCrossings[latestCrossedTier];
+      const tStr = tierLabel(latestCrossedTier);
+      const nextStr =
+        nextTierAfterLatest <= 4 ? tierLabel(nextTierAfterLatest) : "the next milestone";
+      return pickVariant(
+        [
+          `🎉 Crossed ${tStr} on ${formatMonthDay(crossing.first.date)} with ${setStr(crossing.first)} · ${nextStr} to go`,
+          `🥳 First ${tStr} on ${formatMonthDay(crossing.first.date)} · the bar finally cleared with ${setStr(crossing.first)}`,
+          `🎉 Welcome to ${tStr} (since ${formatMonthDay(crossing.first.date)}) · next stop ${nextStr}`,
+          `💪 Just earned ${tStr} on ${formatMonthDay(crossing.first.date)} with ${setStr(crossing.first)}`,
+          `🔥 ${tStr} unlocked ${formatMonthDay(crossing.first.date)} · the bar rattles different now`,
+          `🎉 Crossed ${tStr} on ${formatMonthDay(crossing.first.date)} · keep grinding for ${nextStr}`,
+        ],
+        `${seedBase}-just-crossed-${latestCrossedTier}`,
+      );
+    }
+  }
+
+  // BRANCH: Returning from layoff (>30 days since last session)
+  if (daysSinceLatest > 30) {
+    return pickVariant(
+      [
+        `First ${liftVerb} in ${daysSinceLatest} days · welcome back to the bar`,
+        `Back at it after ${daysSinceLatest} days · last logged ${setStr(nowSet)}`,
+        `It's been ${daysSinceLatest} days · ease in and the strength comes back fast`,
+        `Layoff was ${daysSinceLatest} days · muscle memory has your back`,
+        `First ${liftVerb} in ${daysSinceLatest} days · the bar missed you`,
+        `${daysSinceLatest} days since your last ${liftVerb} · time to make some noise`,
+      ],
+      `${seedBase}-returning`,
+    );
+  }
+
+  // BRANCH: Long anchor (target tier crossed >=2 years ago, currently above, minimal recent gain)
+  const targetTier = milestone.targetPlates;
+  const targetCrossing = tierCrossings?.[targetTier];
+  if (targetCrossing?.currentlyAbove) {
+    const todayYmd = new Date().toISOString().slice(0, 10);
+    const daysSinceTarget = daysBetween(todayYmd, targetCrossing.first.date);
+    const years = Math.floor(daysSinceTarget / 365.25);
+    const significantGainLb = isMetric ? 11 : 11; // ~5kg
+    if (years >= 2 && Math.abs(progress6mDelta) < significantGainLb) {
+      const tStr = tierLabel(targetTier);
+      return pickVariant(
+        [
+          `Anchored at ${tStr} for ${years} years · classic dependable ${liftVerb}`,
+          `${tStr} since ${formatMonthDay(targetCrossing.first.date)} · ${years} years of solid lifting`,
+          `${years} years at ${tStr} · the kind of consistency most lifters envy`,
+          `Holding ${tStr} since ${formatMonthDay(targetCrossing.first.date)} · iron old guard`,
+          `${years} year veteran of the ${tStr} club · respect`,
+          `Locked in at ${tStr} for ${years} years · this lift is your bread and butter`,
+        ],
+        `${seedBase}-anchor`,
+      );
+    }
+  }
+
+  // BRANCH: AFAF stuck — recent actual single is meaningfully below PR E1RM, 6m progress is small
+  const todayYmd2 = new Date().toISOString().slice(0, 10);
+  const singleIsRecent = single && daysBetween(todayYmd2, single.date) <= 365;
+  const meaningfulGapLb = isMetric ? 5 : 5; // ~2.5 kg
+  const smallProgressLb = isMetric ? 11 : 11; // ~5 kg
+  if (
+    singleIsRecent &&
+    pr.e1rm - single.weightLb >= meaningfulGapLb &&
+    progress6mDelta < smallProgressLb
+  ) {
+    const gapLb = pr.e1rm - single.weightLb;
+    return pickVariant(
+      [
+        `Heaviest real single ${wStr(single.weightLb)} on ${formatMonthDay(single.date)} · E1RM says ${wStr(pr.e1rm)} · ${wStr(gapLb)} gap to close`,
+        `Calculator is teasing you: ${wStr(pr.e1rm)} E1RM, ${wStr(single.weightLb)} actually lifted · close that ${wStr(gapLb)} gap`,
+        `Real best single ${wStr(single.weightLb)}, estimated ${wStr(pr.e1rm)} · the ${liftVerb} is the slowest lift, this is normal`,
+        `Stuck between ${wStr(single.weightLb)} (real) and ${wStr(pr.e1rm)} (E1RM) · grind through it`,
+        `${wStr(single.weightLb)} is your honest single · ${wStr(pr.e1rm)} is what your back-off sets predict · go take the real number`,
+        `${SHORT_LIFT_NAMES[liftType]} is stubborn · you've got ${wStr(single.weightLb)} on the bar, your reps say you have ${wStr(pr.e1rm)} in you`,
+      ],
+      `${seedBase}-afaf`,
+    );
+  }
+
+  // BRANCH: Climbing (6m E1RM gain >= ~5 kg / 11 lb)
+  if (progress6mDelta >= smallProgressLb) {
+    const gainStr = wStr(progress6mDelta);
+    return pickVariant(
+      [
+        `Climbing well · +${gainStr} E1RM over 6 months`,
+        `Last set ${setStr(nowSet)} on ${formatMonthDay(nowSet.date)} · +${gainStr} in 6 months, keep stacking`,
+        `+${gainStr} over the last 6 months · this is what progress looks like`,
+        `On a tear · ${gainStr} added to your E1RM in 6 months`,
+        `Steady climb: +${gainStr} in 6 months · last set ${setStr(nowSet)}`,
+        `Six months, ${gainStr} added · keep the trend going`,
+      ],
+      `${seedBase}-climbing`,
+    );
+  }
+
+  // BRANCH: Close to next tier (within ~10 lb / 4.5 kg of next un-crossed tier)
+  let nextUncrossedTier = null;
+  for (const t of ALL_TIERS) {
+    if (!tierCrossings?.[t]?.currentlyAbove) {
+      nextUncrossedTier = t;
+      break;
+    }
+  }
+  if (nextUncrossedTier) {
+    const thresholdLb = BAR_LB + nextUncrossedTier * 2 * PLATE_LB;
+    const currentBest = Math.max(pr.e1rm, nowSet.e1rm);
+    const gapLb = thresholdLb - currentBest;
+    const nearThresholdLb = isMetric ? 11 : 11; // ~5 kg
+    if (gapLb > 0 && gapLb <= nearThresholdLb) {
+      const tStr = tierLabel(nextUncrossedTier);
+      const gStr = wStr(gapLb);
+      return pickVariant(
+        [
+          `${gStr} from ${tStr} · keep stacking`,
+          `Just ${gStr} short of ${tStr} · the next session might do it`,
+          `Almost at ${tStr} · only ${gStr} to go`,
+          `${tStr} is ${gStr} away · close enough to taste`,
+          `Last few kilos to ${tStr} · ${gStr} stands between you and the next plate`,
+          `Within ${gStr} of ${tStr} · time to send it`,
+        ],
+        `${seedBase}-close`,
+      );
+    }
+  }
+
+  // BRANCH: Steady default
+  return pickVariant(
+    [
+      `Last logged ${setStr(nowSet)} on ${formatMonthDay(nowSet.date)} · holding steady`,
+      `Most recent ${setStr(nowSet)} on ${formatMonthDay(nowSet.date)} · keep showing up`,
+      `${setStr(nowSet)} last logged on ${formatMonthDay(nowSet.date)} · solid`,
+      `Last session ${setStr(nowSet)} on ${formatMonthDay(nowSet.date)} · iron in the bank`,
+      `Holding at ${setStr(nowSet)} as of ${formatMonthDay(nowSet.date)} · consistency is a strength too`,
+      `Last on the bar: ${setStr(nowSet)} on ${formatMonthDay(nowSet.date)} · keep at it`,
+    ],
+    `${seedBase}-steady`,
+  );
+}
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Milestones";
@@ -383,24 +617,56 @@ export default function PlateMilestonesPage({ relatedArticles }) {
   );
 }
 
-// --- Slider with PR/90d markers ---
-function SliderWithMarkers({
+// --- Tooltip body for a single notch ---
+function NotchTooltipBody({ notch }) {
+  return (
+    <div className="space-y-0.5">
+      <div className="font-semibold">{notch.headline}</div>
+      {notch.detail && (
+        <div className="text-muted-foreground">{notch.detail}</div>
+      )}
+    </div>
+  );
+}
+
+// Cluster notches that sit within MERGE_THRESHOLD_PCT of each other so their
+// pill labels don't visually collide. Sorted ascending by valueLb in.
+function clusterNotches(notches, max) {
+  const visible = notches
+    .filter((n) => n.valueLb > 0 && n.valueLb <= max)
+    .sort((a, b) => a.valueLb - b.valueLb);
+  const MERGE_THRESHOLD_PCT = 6;
+  const clusters = [];
+  for (const n of visible) {
+    const percent = (n.valueLb / max) * 100;
+    const last = clusters[clusters.length - 1];
+    const lastPercent = last
+      ? (last[last.length - 1].valueLb / max) * 100
+      : -Infinity;
+    if (last && Math.abs(percent - lastPercent) <= MERGE_THRESHOLD_PCT) {
+      last.push(n);
+    } else {
+      clusters.push([n]);
+    }
+  }
+  return clusters;
+}
+
+// --- Slider with clustered notches + per-pill tooltips ---
+// Notches: { key, valueLb, shortLabel, headline, detail, zIndex, isDominant, accent }
+// accent: "default" | "single" | "now" | "newPR"
+function NotchedMilestoneSlider({
   value,
   max,
-  prVal,
-  r90Val,
+  notches,
   onValueChange,
   onValueCommit,
   className,
 }) {
-  const showPr = prVal != null && prVal > 0 && prVal <= max;
-  const showR90 =
-    r90Val != null && r90Val > 0 && r90Val <= max && r90Val !== prVal;
-  const prPercent = showPr ? (prVal / max) * 100 : 0;
-  const r90Percent = showR90 ? (r90Val / max) * 100 : 0;
+  const clusters = clusterNotches(notches || [], max);
 
   return (
-    <div className="relative pb-6">
+    <div className={cn("relative pb-9", className)}>
       <Slider
         value={[value]}
         min={0}
@@ -408,29 +674,96 @@ function SliderWithMarkers({
         step={5}
         onValueChange={onValueChange}
         onValueCommit={onValueCommit}
-        className={`mt-2 ${className}`}
+        className="mt-2"
       />
-      {showPr && (
-        <div
-          className="pointer-events-none absolute bottom-0 flex flex-col items-center"
-          style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
-        >
-          <div className="h-3 w-px bg-primary/40" />
-          <span className="text-primary/60 text-[9px] leading-none font-medium">
-            PR
-          </span>
-        </div>
-      )}
-      {showR90 && (
-        <div
-          className="pointer-events-none absolute bottom-0 flex flex-col items-center"
-          style={{ left: `${r90Percent}%`, transform: "translateX(-50%)" }}
-        >
-          <div className="h-3 w-px bg-amber-500/40" />
-          <span className="text-[9px] leading-none font-medium text-amber-600/60">
-            90d
-          </span>
-        </div>
+      {clusters.length > 0 && (
+        <TooltipProvider delayDuration={150}>
+          {clusters.map((cluster) => {
+            const centerPercent =
+              cluster.reduce(
+                (sum, n) => sum + (n.valueLb / max) * 100,
+                0,
+              ) / cluster.length;
+            const maxZ = Math.max(...cluster.map((n) => n.zIndex));
+            const hasNewPR = cluster.some((n) => n.accent === "newPR");
+            const hasDominant = cluster.some((n) => n.isDominant);
+            const hasSingle = cluster.some((n) => n.accent === "single");
+            const mergedLabel = cluster.map((n) => n.shortLabel).join(" · ");
+            const clusterKey = cluster.map((n) => n.key).join("-");
+
+            const pillClass = hasNewPR
+              ? "bg-yellow-400 text-yellow-950 ring-1 ring-yellow-600/30"
+              : hasDominant
+                ? "bg-foreground text-background"
+                : hasSingle
+                  ? "bg-blue-500/15 text-blue-700 ring-1 ring-blue-500/30 dark:text-blue-300"
+                  : "bg-muted text-muted-foreground ring-1 ring-border";
+
+            return (
+              <Fragment key={clusterKey}>
+                {cluster.map((n) => {
+                  const tickPercent = (n.valueLb / max) * 100;
+                  const tickClass =
+                    n.accent === "newPR"
+                      ? "bg-yellow-500"
+                      : n.accent === "single"
+                        ? "bg-blue-500"
+                        : n.isDominant
+                          ? "bg-foreground"
+                          : "bg-muted-foreground/60";
+                  return (
+                    <div
+                      key={`tick-${n.key}`}
+                      className={cn(
+                        "pointer-events-none absolute h-2 w-px",
+                        tickClass,
+                      )}
+                      style={{
+                        left: `${tickPercent}%`,
+                        bottom: "18px",
+                        transform: "translateX(-50%)",
+                        zIndex: n.zIndex,
+                      }}
+                    />
+                  );
+                })}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        "absolute -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none whitespace-nowrap shadow-sm transition-colors hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        pillClass,
+                      )}
+                      style={{
+                        left: `${centerPercent}%`,
+                        bottom: 0,
+                        zIndex: maxZ,
+                      }}
+                    >
+                      {mergedLabel}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    sideOffset={6}
+                    className="max-w-xs text-xs"
+                  >
+                    {cluster.length === 1 ? (
+                      <NotchTooltipBody notch={cluster[0]} />
+                    ) : (
+                      <div className="space-y-2">
+                        {cluster.map((n) => (
+                          <NotchTooltipBody key={n.key} notch={n} />
+                        ))}
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </Fragment>
+            );
+          })}
+        </TooltipProvider>
       )}
     </div>
   );
@@ -450,9 +783,6 @@ function PlateMilestonesMain({ relatedArticles }) {
   });
   const e1rmFormula = storedFormula ?? "Brzycki";
   const hasAutoPopulatedRef = useRef(false);
-  const [recent90dCutoffDate] = useState(() =>
-    new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10),
-  );
 
   const [press, setPress] = useLocalStorage(
     LOCAL_STORAGE_KEYS.PLATE_MILESTONE_PRESS,
@@ -543,42 +873,168 @@ function PlateMilestonesMain({ relatedArticles }) {
     }
   }, [prWeightsLb, setters]);
 
-  // 90-day bests
-  const recent90dLb = useMemo(() => {
-    if (!prWeightsLb || !parsedData?.length || isDemoMode) return null;
+  // Consolidated per-lift stats: lifetime PR/single, period bests (1M/6M/1Y),
+  // most-recent-session E1RM, 6-month E1RM delta, and first/last sets crossing each tier.
+  // All weights normalized to lb (display layer converts).
+  const liftStats = useMemo(() => {
+    if (!parsedData?.length || isDemoMode || !usingUserData) return null;
 
-    const liftKeyByType = Object.fromEntries(
-      MILESTONES.map((m) => [m.liftType, m.key]),
-    );
-    const best = Object.fromEntries(MILESTONES.map((m) => [m.key, 0]));
+    const now = new Date();
+    const ymd = (date) => date.toISOString().slice(0, 10);
+    const cutoff1M = ymd(new Date(now.getTime() - 30 * 86400000));
+    const cutoff6M = ymd(new Date(now.getTime() - 183 * 86400000));
+    const cutoff1Y = ymd(new Date(now.getTime() - 365 * 86400000));
+    const todayStr = ymd(now);
 
-    for (const entry of parsedData) {
-      const key = liftKeyByType[entry.liftType];
-      if (!key || entry.isGoal || entry.reps <= 0 || entry.weight <= 0)
-        continue;
-      if (entry.date < recent90dCutoffDate) continue;
-      const weightLb = toLb(entry.weight, entry.unitType);
-      const e1rm =
-        entry.reps === 1
-          ? weightLb
-          : estimateE1RM(entry.reps, weightLb, e1rmFormula);
-      if (e1rm > best[key]) best[key] = e1rm;
+    const result = {};
+
+    for (const milestone of MILESTONES) {
+      const entries = [];
+      for (const d of parsedData) {
+        if (
+          d.liftType !== milestone.liftType ||
+          d.isGoal ||
+          d.reps <= 0 ||
+          d.weight <= 0 ||
+          !d.date
+        )
+          continue;
+        const weightLb = toLb(d.weight, d.unitType);
+        const e1rm =
+          d.reps === 1
+            ? weightLb
+            : estimateE1RM(d.reps, weightLb, e1rmFormula);
+        entries.push({
+          date: d.date,
+          reps: d.reps,
+          weightLb,
+          e1rm,
+          unitType: d.unitType,
+        });
+      }
+      if (entries.length === 0) continue;
+
+      entries.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
+      let pr = null;
+      let single = null;
+      for (const e of entries) {
+        if (!pr || e.e1rm > pr.e1rm) pr = e;
+        if (e.reps === 1 && (!single || e.weightLb > single.weightLb))
+          single = e;
+      }
+
+      const latestDate = entries[entries.length - 1].date;
+      let nowSet = null;
+      for (const e of entries) {
+        if (e.date !== latestDate) continue;
+        if (!nowSet || e.e1rm > nowSet.e1rm) nowSet = e;
+      }
+
+      const periodBests = { "1M": null, "6M": null, "1Y": null };
+      for (const e of entries) {
+        if (e.date === latestDate) continue;
+        if (e.date >= cutoff1M) {
+          if (!periodBests["1M"] || e.e1rm > periodBests["1M"].e1rm)
+            periodBests["1M"] = e;
+        }
+        if (e.date >= cutoff6M) {
+          if (!periodBests["6M"] || e.e1rm > periodBests["6M"].e1rm)
+            periodBests["6M"] = e;
+        }
+        if (e.date >= cutoff1Y) {
+          if (!periodBests["1Y"] || e.e1rm > periodBests["1Y"].e1rm)
+            periodBests["1Y"] = e;
+        }
+      }
+
+      let sixMonthsAgoE1rm = 0;
+      for (const e of entries) {
+        if (e.date > cutoff6M) break;
+        if (e.e1rm > sixMonthsAgoE1rm) sixMonthsAgoE1rm = e.e1rm;
+      }
+      const progress6mDelta =
+        pr && sixMonthsAgoE1rm > 0 ? pr.e1rm - sixMonthsAgoE1rm : 0;
+
+      // currentE1rm = rolling 90-day best ending at the latest log (matches the
+      // pre-existing tier-badge semantics from milestoneDates so green/amber dots
+      // behave as before).
+      const window90Cutoff = ymd(
+        new Date(
+          new Date(latestDate + "T00:00:00Z").getTime() - 90 * 86400000,
+        ),
+      );
+      let currentE1rm = 0;
+      for (const e of entries) {
+        if (e.date < window90Cutoff || e.date > latestDate) continue;
+        if (e.e1rm > currentE1rm) currentE1rm = e.e1rm;
+      }
+
+      const tierCrossings = {};
+      for (const tierN of ALL_TIERS) {
+        const thresholdLb = BAR_LB + tierN * 2 * PLATE_LB;
+        let firstSet = null;
+        let lastSet = null;
+        for (const e of entries) {
+          if (e.e1rm < thresholdLb) continue;
+          if (!firstSet) firstSet = e;
+          lastSet = e;
+        }
+        if (firstSet) {
+          tierCrossings[tierN] = {
+            first: firstSet,
+            last: lastSet,
+            currentlyAbove: currentE1rm >= thresholdLb,
+          };
+        }
+      }
+
+      const daysSinceLatest = daysBetween(todayStr, latestDate);
+
+      result[milestone.key] = {
+        pr,
+        single,
+        now: nowSet,
+        periodBests,
+        latestDate,
+        daysSinceLatest,
+        progress6mDelta,
+        currentE1rm,
+        tierCrossings,
+      };
     }
 
-    const result = Object.fromEntries(
-      MILESTONES.map((m) => [
-        m.key,
-        best[m.key] > 0 ? clampToMax(best[m.key], m.maxLb) : null,
-      ]),
-    );
+    return Object.keys(result).length > 0 ? result : null;
+  }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
 
-    const hasDistinct = MILESTONES.some(
-      (m) =>
-        result[m.key] != null && result[m.key] !== prWeightsLb?.[m.key],
-    );
-
+  // 6-month bests in lb (for snap targets + reset button)
+  const recent6mLb = useMemo(() => {
+    if (!liftStats || !prWeightsLb) return null;
+    const result = {};
+    let hasDistinct = false;
+    for (const m of MILESTONES) {
+      const p = liftStats[m.key]?.periodBests?.["6M"];
+      if (p) {
+        const clamped = clampToMax(p.e1rm, m.maxLb);
+        result[m.key] = clamped;
+        if (clamped !== prWeightsLb[m.key]) hasDistinct = true;
+      } else {
+        result[m.key] = null;
+      }
+    }
     return hasDistinct ? result : null;
-  }, [e1rmFormula, isDemoMode, parsedData, prWeightsLb, recent90dCutoffDate]);
+  }, [liftStats, prWeightsLb]);
+
+  // Heaviest actual single per lift in lb (for snap)
+  const singleWeightsLb = useMemo(() => {
+    if (!liftStats) return null;
+    const result = {};
+    for (const m of MILESTONES) {
+      const s = liftStats[m.key]?.single;
+      result[m.key] = s ? clampToMax(s.weightLb, m.maxLb) : null;
+    }
+    return result;
+  }, [liftStats]);
 
   // Rolling 90-day best E1RM timeline per lift (same approach as 1000lb page)
   const liftTimelines = useMemo(() => {
@@ -661,48 +1117,117 @@ function PlateMilestonesMain({ relatedArticles }) {
     return Object.keys(timelines).length > 0 ? timelines : null;
   }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
 
-  // First/last dates the user crossed each plate tier (derived from timelines).
-  // Checks ALL_TIERS (not just classic targets) so bonus tiers are shown.
-  const milestoneDates = useMemo(() => {
-    if (!liftTimelines) return null;
+  // Per-lift notch arrays (Single, 1M, 6M, 1Y, PR, Now) with tooltip content.
+  const notchesByLift = useMemo(() => {
+    if (!liftStats || !prWeightsLb) return null;
+    const result = {};
 
-    const dates = {};
     for (const milestone of MILESTONES) {
-      const timeline = liftTimelines[milestone.key];
-      if (!timeline) continue;
+      const stats = liftStats[milestone.key];
+      const prValueLb = prWeightsLb[milestone.key];
+      if (!stats || !stats.pr || prValueLb == null) continue;
 
-      const tierInfo = {};
-      for (const tierN of ALL_TIERS) {
-        const threshold = isMetric
-          ? plateTotal(tierN, true)
-          : plateTotal(tierN, false);
-        let first = null;
-        let last = null;
+      const notches = [];
+      const seenIds = new Set();
+      const setId = (s) => `${s.date}-${s.reps}-${s.weightLb}`;
+      const prId = setId(stats.pr);
+      seenIds.add(prId);
 
-        for (const point of timeline) {
-          const displayVal = isMetric ? toKg(point.e1rm) : point.e1rm;
-          if (displayVal >= threshold) {
-            if (!first) first = point.date;
-            last = point.date;
-          }
-        }
+      const detailFor = (s) =>
+        `${s.reps} × ${formatLb(s.weightLb, isMetric)} on ${formatFullDate(s.date)}`;
 
-        const lastPoint = timeline[timeline.length - 1];
-        const lastDisplay = isMetric ? toKg(lastPoint.e1rm) : lastPoint.e1rm;
-        const currentlyAbove = lastDisplay >= threshold;
-
-        if (first) {
-          tierInfo[tierN] = { first, last, currentlyAbove };
-        }
+      if (stats.single) {
+        const sId = setId(stats.single);
+        notches.push({
+          key: "single",
+          valueLb: clampToMax(stats.single.weightLb, milestone.maxLb),
+          shortLabel: "Single",
+          headline: `Heaviest actual single: ${formatLb(stats.single.weightLb, isMetric)}`,
+          detail: `1 × ${formatLb(stats.single.weightLb, isMetric)} on ${formatFullDate(stats.single.date)}`,
+          zIndex: 25,
+          isDominant: false,
+          accent: "single",
+        });
+        seenIds.add(sId);
       }
 
-      if (Object.keys(tierInfo).length > 0) {
-        dates[milestone.key] = tierInfo;
+      // Detect if "Now" set is also the lifetime PR
+      const nowSet = stats.now;
+      const isNowAlsoPR =
+        nowSet && setId(nowSet) === prId;
+
+      // Period bests, deduped against PR + each other by set identity
+      const periodMeta = {
+        "1Y": { label: "Last year", short: "1Y" },
+        "6M": { label: "Last 6 months", short: "6M" },
+        "1M": { label: "Last month", short: "1M" },
+      };
+      for (const key of ["1Y", "6M", "1M"]) {
+        const p = stats.periodBests?.[key];
+        if (!p) continue;
+        const pId = setId(p);
+        if (seenIds.has(pId)) continue;
+        seenIds.add(pId);
+        notches.push({
+          key: `period-${key}`,
+          valueLb: clampToMax(p.e1rm, milestone.maxLb),
+          shortLabel: periodMeta[key].short,
+          headline: `${periodMeta[key].label} E1RM: ~${formatLb(p.e1rm, isMetric)}`,
+          detail: detailFor(p),
+          zIndex: 10,
+          isDominant: false,
+          accent: "default",
+        });
       }
+
+      // PR notch (skip if it's the same set as Now — Now will absorb it)
+      if (!isNowAlsoPR) {
+        notches.push({
+          key: "pr",
+          valueLb: clampToMax(prValueLb, milestone.maxLb),
+          shortLabel: "PR",
+          headline: `Lifetime E1RM: ~${formatLb(stats.pr.e1rm, isMetric)}`,
+          detail: detailFor(stats.pr),
+          zIndex: 30,
+          isDominant: false,
+          accent: "default",
+        });
+      }
+
+      // Now pill — dominant. If it IS the PR, mark as newPR (yellow).
+      if (nowSet) {
+        notches.push({
+          key: "now",
+          valueLb: clampToMax(nowSet.e1rm, milestone.maxLb),
+          shortLabel: isNowAlsoPR ? "🎉 New PR!" : "Now",
+          headline: isNowAlsoPR
+            ? `New personal record: ~${formatLb(nowSet.e1rm, isMetric)}`
+            : `Most recent session E1RM: ~${formatLb(nowSet.e1rm, isMetric)}`,
+          detail: detailFor(nowSet),
+          zIndex: 40,
+          isDominant: true,
+          accent: isNowAlsoPR ? "newPR" : "now",
+        });
+      }
+
+      result[milestone.key] = notches;
     }
 
-    return Object.keys(dates).length > 0 ? dates : null;
-  }, [liftTimelines, isMetric]);
+    return Object.keys(result).length > 0 ? result : null;
+  }, [liftStats, prWeightsLb, isMetric]);
+
+  // Per-lift status sentence (one line, varied phrasing per branch).
+  const statusSentences = useMemo(() => {
+    if (!liftStats) return null;
+    const result = {};
+    for (const milestone of MILESTONES) {
+      const stats = liftStats[milestone.key];
+      if (!stats) continue;
+      const sentence = buildStatusSentence({ milestone, stats, isMetric });
+      if (sentence) result[milestone.key] = sentence;
+    }
+    return Object.keys(result).length > 0 ? result : null;
+  }, [liftStats, isMetric]);
 
   const handleResetToPRs = useCallback(() => {
     if (!prWeightsLb) return;
@@ -712,13 +1237,13 @@ function PlateMilestonesMain({ relatedArticles }) {
     }
   }, [prWeightsLb, setters]);
 
-  const handleResetTo90d = useCallback(() => {
-    if (!recent90dLb) return;
+  const handleResetTo6m = useCallback(() => {
+    if (!recent6mLb) return;
     for (const m of MILESTONES) {
-      const v = recent90dLb[m.key];
+      const v = recent6mLb[m.key];
       if (v != null) setters[m.key](v);
     }
-  }, [recent90dLb, setters]);
+  }, [recent6mLb, setters]);
 
   const hasMovedFromPR =
     usingUserData &&
@@ -728,12 +1253,12 @@ function PlateMilestonesMain({ relatedArticles }) {
         prWeightsLb[m.key] != null && values[m.key] !== prWeightsLb[m.key],
     );
 
-  const hasMovedFrom90d =
+  const hasMovedFrom6m =
     usingUserData &&
-    recent90dLb &&
+    recent6mLb &&
     MILESTONES.some(
       (m) =>
-        recent90dLb[m.key] != null && values[m.key] !== recent90dLb[m.key],
+        recent6mLb[m.key] != null && values[m.key] !== recent6mLb[m.key],
     );
 
   const handleLiftValueChange = useCallback(
@@ -741,18 +1266,22 @@ function PlateMilestonesMain({ relatedArticles }) {
       ([v]) => {
         const milestone = MILESTONES.find((item) => item.key === liftKey);
         const nextValue = milestone ? clampToMax(v, milestone.maxLb) : v;
-        const prVal = prWeightsLb?.[liftKey];
-        const r90Val = recent90dLb?.[liftKey];
 
-        if (prVal != null && Math.abs(nextValue - prVal) <= 5) {
-          setter(prVal);
-        } else if (r90Val != null && Math.abs(nextValue - r90Val) <= 5) {
-          setter(r90Val);
-        } else {
-          setter(nextValue);
+        // Snap to known landmarks within 5 lb (in priority order).
+        const candidates = [
+          prWeightsLb?.[liftKey],
+          singleWeightsLb?.[liftKey],
+          recent6mLb?.[liftKey],
+        ];
+        for (const target of candidates) {
+          if (target != null && Math.abs(nextValue - target) <= 5) {
+            setter(target);
+            return;
+          }
         }
+        setter(nextValue);
       },
-    [prWeightsLb, recent90dLb],
+    [prWeightsLb, singleWeightsLb, recent6mLb],
   );
 
   const handleCopyResult = () => {
@@ -829,10 +1358,10 @@ function PlateMilestonesMain({ relatedArticles }) {
                 value={values[milestone.key]}
                 setter={setters[milestone.key]}
                 onValueChange={handleLiftValueChange}
-                prVal={prWeightsLb?.[milestone.key]}
-                r90Val={recent90dLb?.[milestone.key]}
                 isMetric={isMetric}
-                tierDates={milestoneDates?.[milestone.key]}
+                notches={notchesByLift?.[milestone.key]}
+                tierCrossings={liftStats?.[milestone.key]?.tierCrossings}
+                statusSentence={statusSentences?.[milestone.key]}
               />
             ))}
           </div>
@@ -869,15 +1398,15 @@ function PlateMilestonesMain({ relatedArticles }) {
                 Reset to PRs
               </Button>
             )}
-            {hasMovedFrom90d && (
+            {hasMovedFrom6m && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-6 gap-1 px-2 text-xs"
-                onClick={handleResetTo90d}
+                onClick={handleResetTo6m}
               >
                 <RotateCcw className="h-3 w-3" />
-                Reset to 90-day bests
+                Reset to 6-month bests
               </Button>
             )}
           </div>
@@ -1117,10 +1646,10 @@ function MilestoneRow({
   value,
   setter,
   onValueChange,
-  prVal,
-  r90Val,
   isMetric,
-  tierDates,
+  notches,
+  tierCrossings,
+  statusSentence,
 }) {
   const { key, liftType, targetPlates, tiers, maxLb } = milestone;
   const achieved = meetsPlateTarget(value, targetPlates, isMetric);
@@ -1130,10 +1659,11 @@ function MilestoneRow({
     (n) => meetsPlateTarget(value, n, isMetric),
   ).length;
 
-  const hasDates = tierDates && Object.keys(tierDates).length > 0;
-  // Show all tiers that have dates (includes bonus tiers beyond classic target)
-  const displayTiers = hasDates
-    ? ALL_TIERS.filter((n) => tierDates[n])
+  const hasCrossings =
+    tierCrossings && Object.keys(tierCrossings).length > 0;
+  // Show all tiers with a crossing record (including bonus tiers beyond the classic target)
+  const displayTiers = hasCrossings
+    ? ALL_TIERS.filter((n) => tierCrossings[n])
     : [];
 
   return (
@@ -1219,52 +1749,62 @@ function MilestoneRow({
             </div>
           </div>
 
-          {/* Slider */}
-          <SliderWithMarkers
+          {/* Slider with clustered notch labels (Single, 1M, 6M, 1Y, PR, Now) */}
+          <NotchedMilestoneSlider
             value={value}
             max={maxLb}
-            prVal={prVal}
-            r90Val={r90Val}
+            notches={notches}
             onValueChange={onValueChange(key, setter)}
             onValueCommit={() => {}}
           />
         </div>
       </div>
 
-      {/* Personal milestone dates (only with user data) */}
-      {displayTiers.length > 0 && (
-        <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-[11px]">
-          {displayTiers.map((n) => {
-            const info = tierDates[n];
-            if (!info) return null;
-            const firstStr = formatMonthYear(info.first);
-            const lastStr = formatMonthYear(info.last);
-            const sameMonth = firstStr === lastStr;
-            return (
-              <span key={n} className="flex items-center gap-1">
-                <span
-                  className={cn(
-                    "inline-block h-1.5 w-1.5 rounded-full",
-                    info.currentlyAbove
-                      ? "bg-green-500"
-                      : "bg-amber-500",
-                  )}
-                />
-                <span className="text-foreground font-medium">
-                  {plateLabel(n)}
-                </span>
-                {info.currentlyAbove ? (
-                  <span>since {firstStr}</span>
-                ) : sameMonth ? (
-                  <span>{firstStr}</span>
-                ) : (
-                  <span>
-                    first {firstStr}, last {lastStr}
+      {/* Personal milestone history: tier crossings + smart status sentence */}
+      {(displayTiers.length > 0 || statusSentence) && (
+        <div className="mt-2 space-y-1 border-t pt-2">
+          {displayTiers.length > 0 && (
+            <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+              {displayTiers.map((n) => {
+                const info = tierCrossings[n];
+                if (!info) return null;
+                const firstStr = formatMonthYear(info.first.date);
+                const lastStr = formatMonthYear(info.last.date);
+                const sameMonth = firstStr === lastStr;
+                const setSummary = `${info.first.reps} × ${formatLb(info.first.weightLb, isMetric)}`;
+                return (
+                  <span key={n} className="flex items-center gap-1">
+                    <span
+                      className={cn(
+                        "inline-block h-1.5 w-1.5 rounded-full",
+                        info.currentlyAbove ? "bg-green-500" : "bg-amber-500",
+                      )}
+                    />
+                    <span className="text-foreground font-medium">
+                      {plateLabel(n)}
+                    </span>
+                    {info.currentlyAbove ? (
+                      <span>since {firstStr}</span>
+                    ) : sameMonth ? (
+                      <span>{firstStr}</span>
+                    ) : (
+                      <span>
+                        first {firstStr}, last {lastStr}
+                      </span>
+                    )}
+                    <span className="text-muted-foreground/70">
+                      ({setSummary})
+                    </span>
                   </span>
-                )}
-              </span>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
+          {statusSentence && (
+            <div className="text-foreground/80 text-xs">
+              {statusSentence}
+            </div>
+          )}
         </div>
       )}
     </div>

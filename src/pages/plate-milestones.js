@@ -805,6 +805,15 @@ function PlateMilestonesMain({ relatedArticles }) {
     { initializeWithValue: false },
   );
 
+  // Achievement display mode: "actual" (heaviest bar load — honest default) or
+  // "e1rm" (PR-derived estimated 1RM — optimistic, what your reps predict).
+  // Toggle is visible only for users with parsed lifting data.
+  const [achievementMode, setAchievementMode] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.PLATE_MILESTONE_MODE,
+    "actual",
+    { initializeWithValue: false },
+  );
+
   const setters = useMemo(
     () => ({
       press: setPress,
@@ -1040,28 +1049,37 @@ function PlateMilestonesMain({ relatedArticles }) {
     return any ? result : null;
   }, [liftStats]);
 
-  // Effective achievement value for a lift: actual bar load when available,
-  // slider value otherwise (guest/demo).
+  // Effective achievement value for a lift: depends on the user-selected mode.
+  // - "actual" (default): heaviest weight ever loaded on the bar (honest)
+  // - "e1rm": PR-derived estimated 1RM (optimistic, reps-extrapolated)
+  // Guest/demo users always fall through to slider value (no data to anchor).
   const effectiveAchievementValue = useCallback(
-    (liftKey) =>
-      actualBestByLift && actualBestByLift[liftKey] != null
-        ? actualBestByLift[liftKey]
-        : values[liftKey],
-    [actualBestByLift, values],
+    (liftKey) => {
+      const actual = actualBestByLift?.[liftKey];
+      const pr = prWeightsLb?.[liftKey];
+      if (achievementMode === "e1rm") {
+        return pr ?? actual ?? values[liftKey];
+      }
+      return actual ?? pr ?? values[liftKey];
+    },
+    [achievementMode, actualBestByLift, prWeightsLb, values],
   );
 
-  // Auto-populate slider from user data on first load. Prefer actual bar load
-  // (the honest measure) over PR-E1RM (the extrapolated number).
+  // Auto-populate slider from user data on first load. The slider lands on the
+  // currently-selected mode's basis (actual best or PR-E1RM); afterwards the
+  // slider is free-floating, so mode-toggling mid-session doesn't yank it.
   useEffect(() => {
     if (hasAutoPopulatedRef.current) return;
     if (!prWeightsLb && !actualBestByLift) return;
     hasAutoPopulatedRef.current = true;
     for (const milestone of MILESTONES) {
+      const actual = actualBestByLift?.[milestone.key];
+      const pr = prWeightsLb?.[milestone.key];
       const nextValue =
-        actualBestByLift?.[milestone.key] ?? prWeightsLb?.[milestone.key];
+        achievementMode === "e1rm" ? (pr ?? actual) : (actual ?? pr);
       if (nextValue != null) setters[milestone.key](nextValue);
     }
-  }, [actualBestByLift, prWeightsLb, setters]);
+  }, [actualBestByLift, prWeightsLb, achievementMode, setters]);
 
   // Check if classic 1/2/3/4 is complete — based on actual bar load when
   // available, falling back to slider value for unauthenticated/demo users.
@@ -1417,6 +1435,41 @@ function PlateMilestonesMain({ relatedArticles }) {
 
       <Card className="pt-2">
         <CardContent className="pt-2">
+          {/* Achievement mode toggle (only when user has data to anchor it) */}
+          {actualBestByLift && prWeightsLb && (
+            <div className="mb-2 flex items-center justify-end gap-2 text-xs">
+              <span className="text-muted-foreground">Show:</span>
+              <div className="inline-flex rounded-md border bg-muted/30 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setAchievementMode("actual")}
+                  className={cn(
+                    "rounded px-2.5 py-1 font-medium transition-colors",
+                    achievementMode === "actual"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  aria-pressed={achievementMode === "actual"}
+                >
+                  Actual lifts
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAchievementMode("e1rm")}
+                  className={cn(
+                    "rounded px-2.5 py-1 font-medium transition-colors",
+                    achievementMode === "e1rm"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  aria-pressed={achievementMode === "e1rm"}
+                >
+                  E1RM potential
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Four stacked rows — one per lift */}
           <div className="flex flex-col gap-2">
             {MILESTONES.map((milestone) => (
@@ -1432,6 +1485,7 @@ function PlateMilestonesMain({ relatedArticles }) {
                 statusSentence={statusSentences?.[milestone.key]}
                 actualBestLb={actualBestByLift?.[milestone.key]}
                 prE1rmLb={prWeightsLb?.[milestone.key]}
+                achievementMode={achievementMode}
               />
             ))}
           </div>
@@ -1733,32 +1787,51 @@ function MilestoneRow({
   statusSentence,
   actualBestLb,
   prE1rmLb,
+  achievementMode = "actual",
 }) {
   const { key, liftType, targetPlates, tiers, maxLb } = milestone;
 
-  // Achievement is grounded in actual bar load (the honest "have you loaded N
-  // plates on the bar" measure) when user data is available; otherwise falls
-  // back to the slider value for guest/demo users.
+  // Achievement basis depends on user-selected mode. Guest/demo users (no
+  // actualBestLb) fall back to slider value either way.
   const hasActualData = actualBestLb != null && actualBestLb > 0;
-  const checkActualLb = hasActualData ? actualBestLb : value;
-  const checkE1rmLb =
-    prE1rmLb != null && prE1rmLb > 0 ? prE1rmLb : checkActualLb;
+  const hasE1rmData = prE1rmLb != null && prE1rmLb > 0;
+  const fallbackLb = hasActualData ? actualBestLb : value;
+  const actualLb = hasActualData ? actualBestLb : fallbackLb;
+  const e1rmLb = hasE1rmData ? prE1rmLb : fallbackLb;
+  const primaryLb = achievementMode === "e1rm" ? e1rmLb : actualLb;
+  const secondaryLb = achievementMode === "e1rm" ? actualLb : e1rmLb;
 
-  const achieved = meetsPlateTarget(checkActualLb, targetPlates, isMetric);
-  const tiersAchieved = tiers.filter(
-    (n) => meetsPlateTarget(checkActualLb, n, isMetric),
+  const achieved = meetsPlateTarget(primaryLb, targetPlates, isMetric);
+  const tiersAchieved = tiers.filter((n) =>
+    meetsPlateTarget(primaryLb, n, isMetric),
   ).length;
-  const tiersAchievedE1rm = tiers.filter(
-    (n) => meetsPlateTarget(checkE1rmLb, n, isMetric),
+  const tiersAchievedSecondary = tiers.filter((n) =>
+    meetsPlateTarget(secondaryLb, n, isMetric),
   ).length;
 
-  // Show the E1RM hint only when reps-extrapolated E1RM has crossed beyond
-  // what the user has actually loaded on the bar — addresses the AFAF case.
-  const showE1rmHint = hasActualData && tiersAchievedE1rm > tiersAchieved;
-  const e1rmHintText =
-    tiers.length === 1
-      ? "(E1RM crossed)"
-      : `(E1RM at ${tiersAchievedE1rm}/${tiers.length})`;
+  // Bracket hint: surfaces the OTHER measure's state when it disagrees with
+  // the primary, so users see both honesty and optimism at a glance.
+  // - Actual mode + E1RM ahead: "(E1RM crossed)" — your reps say you could.
+  // - E1RM mode + actual lags: "(actual lags)" — but you haven't done it yet.
+  let hintText = null;
+  if (hasActualData && hasE1rmData) {
+    if (achievementMode === "actual" && tiersAchievedSecondary > tiersAchieved) {
+      hintText =
+        tiers.length === 1
+          ? "(E1RM crossed)"
+          : `(E1RM at ${tiersAchievedSecondary}/${tiers.length})`;
+    } else if (
+      achievementMode === "e1rm" &&
+      tiersAchievedSecondary < tiersAchieved
+    ) {
+      hintText =
+        tiers.length === 1
+          ? "(actual lags)"
+          : `(actual at ${tiersAchievedSecondary}/${tiers.length})`;
+    }
+  }
+  const showE1rmHint = hintText != null;
+  const e1rmHintText = hintText;
 
   const hasCrossings =
     tierCrossings && Object.keys(tierCrossings).length > 0;
@@ -1845,7 +1918,7 @@ function MilestoneRow({
                   ? "Done!"
                   : tiersAchieved > 0
                     ? `${tiersAchieved}/${tiers.length}`
-                    : `${isMetric ? plateTotal(targetPlates, true) - toKg(checkActualLb) : plateTotal(targetPlates, false) - checkActualLb} ${isMetric ? "kg" : "lb"} to go`}
+                    : `${isMetric ? plateTotal(targetPlates, true) - toKg(primaryLb) : plateTotal(targetPlates, false) - primaryLb} ${isMetric ? "kg" : "lb"} to go`}
               </span>
               {showE1rmHint && (
                 <span className="text-[10px] font-normal text-amber-600/80 italic">

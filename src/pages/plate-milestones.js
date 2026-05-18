@@ -631,8 +631,10 @@ function NotchTooltipBody({ notch }) {
   );
 }
 
-// Cluster notches that sit within MERGE_THRESHOLD_PCT of each other so their
-// pill labels don't visually collide. Sorted ascending by valueLb in.
+// Cluster notches within MERGE_THRESHOLD_PCT so their pill labels don't
+// visually collide. Dominant notches (Now, 🎉 New best) never participate in
+// clustering — they stay their own pill even when adjacent to period bests so
+// the user sees NOW climbing through previous peaks.
 function clusterNotches(notches, max) {
   const visible = notches
     .filter((n) => n.valueLb > 0 && n.valueLb <= max)
@@ -642,10 +644,14 @@ function clusterNotches(notches, max) {
   for (const n of visible) {
     const percent = (n.valueLb / max) * 100;
     const last = clusters[clusters.length - 1];
-    const lastPercent = last
-      ? (last[last.length - 1].valueLb / max) * 100
-      : -Infinity;
-    if (last && Math.abs(percent - lastPercent) <= MERGE_THRESHOLD_PCT) {
+    const lastNotch = last ? last[last.length - 1] : null;
+    const lastPercent = lastNotch ? (lastNotch.valueLb / max) * 100 : -Infinity;
+    const canMerge =
+      last &&
+      !n.isDominant &&
+      !lastNotch.isDominant &&
+      Math.abs(percent - lastPercent) <= MERGE_THRESHOLD_PCT;
+    if (canMerge) {
       last.push(n);
     } else {
       clusters.push([n]);
@@ -930,20 +936,39 @@ function PlateMilestonesMain({ relatedArticles }) {
           nowByWeight = e;
       }
 
+      // Period bests track both metrics in parallel so the mode toggle can
+      // pick the right lens without re-scanning parsedData. All exclude the
+      // latest session date so NOW can climb past them visually.
       const periodBests = { "1M": null, "6M": null, "1Y": null };
+      const periodBestsByWeight = { "1M": null, "6M": null, "1Y": null };
       for (const e of entries) {
         if (e.date === latestDate) continue;
         if (e.date >= cutoff1M) {
           if (!periodBests["1M"] || e.e1rm > periodBests["1M"].e1rm)
             periodBests["1M"] = e;
+          if (
+            !periodBestsByWeight["1M"] ||
+            e.weightLb > periodBestsByWeight["1M"].weightLb
+          )
+            periodBestsByWeight["1M"] = e;
         }
         if (e.date >= cutoff6M) {
           if (!periodBests["6M"] || e.e1rm > periodBests["6M"].e1rm)
             periodBests["6M"] = e;
+          if (
+            !periodBestsByWeight["6M"] ||
+            e.weightLb > periodBestsByWeight["6M"].weightLb
+          )
+            periodBestsByWeight["6M"] = e;
         }
         if (e.date >= cutoff1Y) {
           if (!periodBests["1Y"] || e.e1rm > periodBests["1Y"].e1rm)
             periodBests["1Y"] = e;
+          if (
+            !periodBestsByWeight["1Y"] ||
+            e.weightLb > periodBestsByWeight["1Y"].weightLb
+          )
+            periodBestsByWeight["1Y"] = e;
         }
       }
 
@@ -998,6 +1023,7 @@ function PlateMilestonesMain({ relatedArticles }) {
         now: nowSet,
         nowByWeight,
         periodBests,
+        periodBestsByWeight,
         latestDate,
         daysSinceLatest,
         progress6mDelta,
@@ -1188,30 +1214,23 @@ function PlateMilestonesMain({ relatedArticles }) {
     return Object.keys(timelines).length > 0 ? timelines : null;
   }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
 
-  // Per-lift notch arrays, mode-aware so the slider only shows pills that fit
-  // the user's chosen lens.
-  // - Actual mode: Best (heaviest bar load), Single (heaviest 1-rep), Now
-  //   (latest session's top set by weight). Positioned by actual weightLb.
-  // - E1RM mode: PR (lifetime E1RM), 1Y/6M/1M (period bests), Now (latest
-  //   session's best E1RM). Positioned by E1RM.
-  // Notches with identical underlying sets dedup to one merged-label pill.
+  // Unified 5-slot notch system: NOW, 1M, 6M, 1Y, BEST. Both modes share the
+  // same temporal slots; the toggle picks which underlying values fill them.
+  // - Actual mode: each slot's value is heaviest bar load in that window
+  // - E1RM mode: each slot's value is highest E1RM in that window
+  // Position = weightLb in actual mode, e1rm in E1RM mode. Notches sharing a
+  // setId merge into one pill with a combined label.
   const notchesByLift = useMemo(() => {
     if (!liftStats || !prWeightsLb) return null;
     const result = {};
 
     const ROLE_CONFIG = {
-      // Actual-mode roles
-      bestBar: { label: "Best", priority: 2, accent: "default", zIndex: 30, isDominant: false },
-      single: { label: "Single", priority: 3, accent: "single", zIndex: 25, isDominant: false },
-      nowActual: { label: "Now", priority: 4, accent: "now", zIndex: 40, isDominant: true },
-      newPRActual: { label: "🎉 New best!", priority: 5, accent: "newPR", zIndex: 40, isDominant: true },
-      // E1RM-mode roles
       "1M": { label: "1M", priority: 1, accent: "default", zIndex: 10, isDominant: false },
       "6M": { label: "6M", priority: 1, accent: "default", zIndex: 10, isDominant: false },
       "1Y": { label: "1Y", priority: 1, accent: "default", zIndex: 10, isDominant: false },
-      pr: { label: "PR", priority: 2, accent: "default", zIndex: 30, isDominant: false },
-      nowE1rm: { label: "Now", priority: 4, accent: "now", zIndex: 40, isDominant: true },
-      newPRE1rm: { label: "🎉 New PR!", priority: 5, accent: "newPR", zIndex: 40, isDominant: true },
+      best: { label: "Best", priority: 2, accent: "default", zIndex: 30, isDominant: false },
+      now: { label: "Now", priority: 4, accent: "now", zIndex: 40, isDominant: true },
+      newBest: { label: "🎉 New best!", priority: 5, accent: "newPR", zIndex: 40, isDominant: true },
     };
     const PERIOD_LABEL = { "1M": "Last month", "6M": "Last 6 months", "1Y": "Last year" };
     const setId = (s) => `${s.date}-${s.reps}-${s.weightLb}`;
@@ -1221,7 +1240,20 @@ function PlateMilestonesMain({ relatedArticles }) {
       const prValueLb = prWeightsLb[milestone.key];
       if (!stats || !stats.pr || prValueLb == null) continue;
 
-      // Collect roles by set identity (per-mode)
+      // Pick source data per mode
+      const isActual = achievementMode === "actual";
+      const bestSet = isActual ? stats.bestWeightSet : stats.pr;
+      const nowSet = isActual ? stats.nowByWeight : stats.now;
+      const periodsForMode = isActual
+        ? stats.periodBestsByWeight
+        : stats.periodBests;
+
+      if (!bestSet) continue;
+
+      // Collect roles by set identity. Period bests already exclude latest
+      // session date upstream, so NOW can never share a setId with 1M/6M/1Y.
+      // NOW can match BEST when the lifter's latest session set IS their
+      // lifetime peak — that fires the "newBest" celebration variant.
       const setsById = {};
       const rolesById = {};
       const addRole = (role, set) => {
@@ -1234,72 +1266,51 @@ function PlateMilestonesMain({ relatedArticles }) {
         rolesById[id].push(role);
       };
 
-      if (achievementMode === "actual") {
-        // Actual mode: bar-load semantics, position by weightLb.
-        // Skip the "Single" notch when it points to the same set as Best
-        // (the common case when a 1-rep IS the heaviest bar load — "Single"
-        // adds nothing on top of "Best" in Actual mode).
-        if (stats.bestWeightSet) addRole("bestBar", stats.bestWeightSet);
-        if (
-          stats.single &&
-          (!stats.bestWeightSet ||
-            setId(stats.single) !== setId(stats.bestWeightSet))
-        ) {
-          addRole("single", stats.single);
-        }
-        if (stats.nowByWeight) {
-          const isNewBest =
-            stats.bestWeightSet &&
-            setId(stats.nowByWeight) === setId(stats.bestWeightSet);
-          addRole(isNewBest ? "newPRActual" : "nowActual", stats.nowByWeight);
-        }
-      } else {
-        // E1RM mode: E1RM semantics, position by e1rm
-        addRole("pr", stats.pr);
-        for (const key of ["1Y", "6M", "1M"]) {
-          addRole(key, stats.periodBests?.[key]);
-        }
-        if (stats.now) {
-          const isNewPR = setId(stats.now) === setId(stats.pr);
-          addRole(isNewPR ? "newPRE1rm" : "nowE1rm", stats.now);
-        }
+      addRole("best", bestSet);
+      for (const key of ["1Y", "6M", "1M"]) {
+        addRole(key, periodsForMode?.[key]);
+      }
+      if (nowSet) {
+        const isNewBest = setId(nowSet) === setId(bestSet);
+        addRole(isNewBest ? "newBest" : "now", nowSet);
       }
 
       const detailFor = (s) =>
         `${s.reps} × ${formatLb(s.weightLb, isMetric)} on ${formatFullDate(s.date)}`;
 
+      const valueStr = (set) =>
+        isActual
+          ? formatLb(set.weightLb, isMetric)
+          : `~${formatLb(set.e1rm, isMetric)}`;
+
       const headlineFor = (primaryRole, set) => {
         switch (primaryRole) {
-          case "bestBar":
-            return `Heaviest weight on bar: ${formatLb(set.weightLb, isMetric)}`;
-          case "single":
-            return `Heaviest actual single: ${formatLb(set.weightLb, isMetric)}`;
-          case "nowActual":
-            return `Most recent top set: ${formatLb(set.weightLb, isMetric)}`;
-          case "newPRActual":
-            return `🎉 New heaviest bar load: ${formatLb(set.weightLb, isMetric)}`;
-          case "pr":
-            return `Lifetime E1RM: ~${formatLb(set.e1rm, isMetric)}`;
-          case "nowE1rm":
-            return `Most recent session E1RM: ~${formatLb(set.e1rm, isMetric)}`;
-          case "newPRE1rm":
-            return `🎉 New personal record: ~${formatLb(set.e1rm, isMetric)}`;
+          case "best":
+            return isActual
+              ? `Lifetime heaviest bar load: ${valueStr(set)}`
+              : `Lifetime best E1RM: ${valueStr(set)}`;
+          case "now":
+            return isActual
+              ? `Most recent top set: ${valueStr(set)}`
+              : `Most recent session E1RM: ${valueStr(set)}`;
+          case "newBest":
+            return isActual
+              ? `🎉 New heaviest bar load: ${valueStr(set)}`
+              : `🎉 New personal record: ${valueStr(set)}`;
           default:
-            if (PERIOD_LABEL[primaryRole])
-              return `${PERIOD_LABEL[primaryRole]} E1RM: ~${formatLb(set.e1rm, isMetric)}`;
-            return formatLb(set.weightLb, isMetric);
+            if (PERIOD_LABEL[primaryRole]) {
+              const subject = isActual ? "heaviest bar load" : "best E1RM";
+              return `${PERIOD_LABEL[primaryRole]} ${subject}: ${valueStr(set)}`;
+            }
+            return valueStr(set);
         }
       };
 
-      // Roles that should drop their "secondary" label when a "newPR" variant
-      // is already in the cluster (avoids "🎉 New PR! · PR" redundancy).
-      const REDUNDANT_WITH_NEWPR = {
-        newPRE1rm: ["pr"],
-        newPRActual: ["bestBar"],
-      };
+      // Drop redundant "best" label when "newBest" is already in the cluster
+      // (avoids "🎉 New best! · Best" redundancy).
+      const REDUNDANT_WITH_NEWBEST = { newBest: ["best"] };
 
-      const positionFor = (primaryRole, set) =>
-        achievementMode === "actual" ? set.weightLb : set.e1rm;
+      const positionFor = (set) => (isActual ? set.weightLb : set.e1rm);
 
       const notches = [];
       for (const id of Object.keys(rolesById)) {
@@ -1309,8 +1320,7 @@ function PlateMilestonesMain({ relatedArticles }) {
         const primaryRole = roles[0];
         const primary = ROLE_CONFIG[primaryRole];
 
-        const dropList =
-          (REDUNDANT_WITH_NEWPR[primaryRole] || []).slice();
+        const dropList = REDUNDANT_WITH_NEWBEST[primaryRole] || [];
         const labelRoles = roles.filter((r) => !dropList.includes(r));
         const mergedLabel = labelRoles
           .map((r) => ROLE_CONFIG[r].label)
@@ -1318,7 +1328,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
         notches.push({
           key: `${milestone.key}-${id}`,
-          valueLb: clampToMax(positionFor(primaryRole, set), milestone.maxLb),
+          valueLb: clampToMax(positionFor(set), milestone.maxLb),
           shortLabel: mergedLabel,
           headline: headlineFor(primaryRole, set),
           detail: detailFor(set),

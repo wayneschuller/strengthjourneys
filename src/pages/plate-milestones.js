@@ -632,9 +632,9 @@ function NotchTooltipBody({ notch }) {
 }
 
 // Cluster notches within MERGE_THRESHOLD_PCT so their pill labels don't
-// visually collide. Dominant notches (Now, 🎉 New best) never participate in
-// clustering — they stay their own pill even when adjacent to period bests so
-// the user sees NOW climbing through previous peaks.
+// visually collide. Now and period bests merge into one pill when they're
+// close — the "climbing past previous peaks" visual emerges naturally from
+// horizontal distance once Now is clearly above the period bests.
 function clusterNotches(notches, max) {
   const visible = notches
     .filter((n) => n.valueLb > 0 && n.valueLb <= max)
@@ -646,12 +646,7 @@ function clusterNotches(notches, max) {
     const last = clusters[clusters.length - 1];
     const lastNotch = last ? last[last.length - 1] : null;
     const lastPercent = lastNotch ? (lastNotch.valueLb / max) * 100 : -Infinity;
-    const canMerge =
-      last &&
-      !n.isDominant &&
-      !lastNotch.isDominant &&
-      Math.abs(percent - lastPercent) <= MERGE_THRESHOLD_PCT;
-    if (canMerge) {
+    if (last && Math.abs(percent - lastPercent) <= MERGE_THRESHOLD_PCT) {
       last.push(n);
     } else {
       clusters.push([n]);
@@ -694,31 +689,19 @@ function NotchedMilestoneSlider({
               ) / cluster.length;
             const maxZ = Math.max(...cluster.map((n) => n.zIndex));
             const hasNewPR = cluster.some((n) => n.accent === "newPR");
-            const hasDominant = cluster.some((n) => n.isDominant);
-            const hasSingle = cluster.some((n) => n.accent === "single");
             const mergedLabel = cluster.map((n) => n.shortLabel).join(" · ");
             const clusterKey = cluster.map((n) => n.key).join("-");
 
             const pillClass = hasNewPR
               ? "bg-yellow-400 text-yellow-950 ring-1 ring-yellow-600/30"
-              : hasDominant
-                ? "bg-foreground text-background"
-                : hasSingle
-                  ? "bg-blue-500/15 text-blue-700 ring-1 ring-blue-500/30 dark:text-blue-300"
-                  : "bg-muted text-muted-foreground ring-1 ring-border";
+              : "bg-foreground text-background";
 
             return (
               <Fragment key={clusterKey}>
                 {cluster.map((n) => {
                   const tickPercent = (n.valueLb / max) * 100;
                   const tickClass =
-                    n.accent === "newPR"
-                      ? "bg-yellow-500"
-                      : n.accent === "single"
-                        ? "bg-blue-500"
-                        : n.isDominant
-                          ? "bg-foreground"
-                          : "bg-muted-foreground/60";
+                    n.accent === "newPR" ? "bg-yellow-500" : "bg-foreground";
                   return (
                     <div
                       key={`tick-${n.key}`}

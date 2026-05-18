@@ -819,21 +819,8 @@ function PlateMilestonesMain({ relatedArticles }) {
     [press, bench, squat, deadlift],
   );
 
-  // Check if classic 1/2/3/4 is complete
-  const classicClubAchieved = MILESTONES.every(
-    (m) => meetsPlateTarget(values[m.key], m.targetPlates, isMetric),
-  );
-
-  // Count total plate tiers achieved across all lifts
-  const totalTiersAchieved = useMemo(() => {
-    let count = 0;
-    for (const m of MILESTONES) {
-      for (const n of m.tiers) {
-        if (meetsPlateTarget(values[m.key], n, isMetric)) count++;
-      }
-    }
-    return count;
-  }, [values, isMetric]);
+  // Classic-club + total-tier counts are computed further down, once
+  // `actualBestByLift` is in scope. See after `actualBestByLift` definition.
 
   const totalTiersPossible = MILESTONES.reduce(
     (sum, m) => sum + m.tiers.length,
@@ -863,15 +850,9 @@ function PlateMilestonesMain({ relatedArticles }) {
   }, [e1rmFormula, isDemoMode, topLiftsByTypeAndReps]);
   const usingUserData = Boolean(prWeightsLb);
 
-  // Auto-populate from user data on first load
-  useEffect(() => {
-    if (hasAutoPopulatedRef.current || !prWeightsLb) return;
-    hasAutoPopulatedRef.current = true;
-    for (const milestone of MILESTONES) {
-      const nextValue = prWeightsLb[milestone.key];
-      if (nextValue != null) setters[milestone.key](nextValue);
-    }
-  }, [prWeightsLb, setters]);
+  // Auto-populate effect is defined further down once `actualBestByLift` is in
+  // scope (prefers actual bar load over PR-E1RM so the slider lands on
+  // reality, not an inflated extrapolation).
 
   // Consolidated per-lift stats: lifetime PR/single, period bests (1M/6M/1Y),
   // most-recent-session E1RM, 6-month E1RM delta, and first/last sets crossing each tier.
@@ -918,10 +899,12 @@ function PlateMilestonesMain({ relatedArticles }) {
 
       let pr = null;
       let single = null;
+      let bestWeightLb = 0;
       for (const e of entries) {
         if (!pr || e.e1rm > pr.e1rm) pr = e;
         if (e.reps === 1 && (!single || e.weightLb > single.weightLb))
           single = e;
+        if (e.weightLb > bestWeightLb) bestWeightLb = e.weightLb;
       }
 
       const latestDate = entries[entries.length - 1].date;
@@ -994,6 +977,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       result[milestone.key] = {
         pr,
         single,
+        bestWeightLb,
         now: nowSet,
         periodBests,
         latestDate,
@@ -1035,6 +1019,66 @@ function PlateMilestonesMain({ relatedArticles }) {
     }
     return result;
   }, [liftStats]);
+
+  // Heaviest actual weight on the bar per lift in lb (any reps). This is the
+  // "honest" measure for plate-milestone achievement: did you actually load N
+  // plates on the bar and move it? Drives the slider auto-populate, the Done!
+  // trophy, and the parent-level club/tier counts.
+  const actualBestByLift = useMemo(() => {
+    if (!liftStats) return null;
+    const result = {};
+    let any = false;
+    for (const m of MILESTONES) {
+      const lb = liftStats[m.key]?.bestWeightLb;
+      if (lb && lb > 0) {
+        result[m.key] = clampToMax(lb, m.maxLb);
+        any = true;
+      } else {
+        result[m.key] = null;
+      }
+    }
+    return any ? result : null;
+  }, [liftStats]);
+
+  // Effective achievement value for a lift: actual bar load when available,
+  // slider value otherwise (guest/demo).
+  const effectiveAchievementValue = useCallback(
+    (liftKey) =>
+      actualBestByLift && actualBestByLift[liftKey] != null
+        ? actualBestByLift[liftKey]
+        : values[liftKey],
+    [actualBestByLift, values],
+  );
+
+  // Auto-populate slider from user data on first load. Prefer actual bar load
+  // (the honest measure) over PR-E1RM (the extrapolated number).
+  useEffect(() => {
+    if (hasAutoPopulatedRef.current) return;
+    if (!prWeightsLb && !actualBestByLift) return;
+    hasAutoPopulatedRef.current = true;
+    for (const milestone of MILESTONES) {
+      const nextValue =
+        actualBestByLift?.[milestone.key] ?? prWeightsLb?.[milestone.key];
+      if (nextValue != null) setters[milestone.key](nextValue);
+    }
+  }, [actualBestByLift, prWeightsLb, setters]);
+
+  // Check if classic 1/2/3/4 is complete — based on actual bar load when
+  // available, falling back to slider value for unauthenticated/demo users.
+  const classicClubAchieved = MILESTONES.every((m) =>
+    meetsPlateTarget(effectiveAchievementValue(m.key), m.targetPlates, isMetric),
+  );
+
+  const totalTiersAchieved = useMemo(() => {
+    let count = 0;
+    for (const m of MILESTONES) {
+      const v = effectiveAchievementValue(m.key);
+      for (const n of m.tiers) {
+        if (meetsPlateTarget(v, n, isMetric)) count++;
+      }
+    }
+    return count;
+  }, [effectiveAchievementValue, isMetric]);
 
   // Rolling 90-day best E1RM timeline per lift (same approach as 1000lb page)
   const liftTimelines = useMemo(() => {
@@ -1250,6 +1294,14 @@ function PlateMilestonesMain({ relatedArticles }) {
     }
   }, [recent6mLb, setters]);
 
+  const handleResetToActual = useCallback(() => {
+    if (!actualBestByLift) return;
+    for (const m of MILESTONES) {
+      const v = actualBestByLift[m.key];
+      if (v != null) setters[m.key](v);
+    }
+  }, [actualBestByLift, setters]);
+
   const hasMovedFromPR =
     usingUserData &&
     prWeightsLb &&
@@ -1266,6 +1318,15 @@ function PlateMilestonesMain({ relatedArticles }) {
         recent6mLb[m.key] != null && values[m.key] !== recent6mLb[m.key],
     );
 
+  const hasMovedFromActual =
+    usingUserData &&
+    actualBestByLift &&
+    MILESTONES.some(
+      (m) =>
+        actualBestByLift[m.key] != null &&
+        values[m.key] !== actualBestByLift[m.key],
+    );
+
   const handleLiftValueChange = useCallback(
     (liftKey, setter) =>
       ([v]) => {
@@ -1274,6 +1335,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
         // Snap to known landmarks within 5 lb (in priority order).
         const candidates = [
+          actualBestByLift?.[liftKey],
           prWeightsLb?.[liftKey],
           singleWeightsLb?.[liftKey],
           recent6mLb?.[liftKey],
@@ -1286,7 +1348,7 @@ function PlateMilestonesMain({ relatedArticles }) {
         }
         setter(nextValue);
       },
-    [prWeightsLb, singleWeightsLb, recent6mLb],
+    [actualBestByLift, prWeightsLb, singleWeightsLb, recent6mLb],
   );
 
   const handleCopyResult = () => {
@@ -1297,13 +1359,14 @@ function PlateMilestonesMain({ relatedArticles }) {
         : `Plate milestones: ${totalTiersAchieved} of ${totalTiersPossible} tiers achieved!`,
       "",
       ...MILESTONES.map((m) => {
+        const v = effectiveAchievementValue(m.key);
         const tierStr = m.tiers
           .map(
             (n) =>
-              `${values[m.key] >= plateTotal(n, false) ? "\u2705" : "\u2b1c"}${n}`,
+              `${meetsPlateTarget(v, n, false) ? "\u2705" : "\u2b1c"}${n}`,
           )
           .join(" ");
-        return `${m.liftType}: ${displayWeight(values[m.key], isMetric)} ${tierStr}`;
+        return `${m.liftType}: ${displayWeight(v, isMetric)} ${tierStr}`;
       }),
       "",
       "Strength Journeys",
@@ -1367,6 +1430,8 @@ function PlateMilestonesMain({ relatedArticles }) {
                 notches={notchesByLift?.[milestone.key]}
                 tierCrossings={liftStats?.[milestone.key]?.tierCrossings}
                 statusSentence={statusSentences?.[milestone.key]}
+                actualBestLb={actualBestByLift?.[milestone.key]}
+                prE1rmLb={prWeightsLb?.[milestone.key]}
               />
             ))}
           </div>
@@ -1390,8 +1455,19 @@ function PlateMilestonesMain({ relatedArticles }) {
             >
               {classicClubAchieved
                 ? "1/2/3/4 Plate Club achieved!"
-                : `${MILESTONES.filter((m) => meetsPlateTarget(values[m.key], m.targetPlates, isMetric)).length} of 4 classic milestones achieved`}
+                : `${MILESTONES.filter((m) => meetsPlateTarget(effectiveAchievementValue(m.key), m.targetPlates, isMetric)).length} of 4 classic milestones achieved`}
             </span>
+            {hasMovedFromActual && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs"
+                onClick={handleResetToActual}
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset to actual bests
+              </Button>
+            )}
             {hasMovedFromPR && (
               <Button
                 variant="ghost"
@@ -1400,7 +1476,7 @@ function PlateMilestonesMain({ relatedArticles }) {
                 onClick={handleResetToPRs}
               >
                 <RotateCcw className="h-3 w-3" />
-                Reset to PRs
+                Reset to E1RM PRs
               </Button>
             )}
             {hasMovedFrom6m && (
@@ -1655,14 +1731,34 @@ function MilestoneRow({
   notches,
   tierCrossings,
   statusSentence,
+  actualBestLb,
+  prE1rmLb,
 }) {
   const { key, liftType, targetPlates, tiers, maxLb } = milestone;
-  const achieved = meetsPlateTarget(value, targetPlates, isMetric);
 
-  // Count how many classic tiers this lift has achieved
+  // Achievement is grounded in actual bar load (the honest "have you loaded N
+  // plates on the bar" measure) when user data is available; otherwise falls
+  // back to the slider value for guest/demo users.
+  const hasActualData = actualBestLb != null && actualBestLb > 0;
+  const checkActualLb = hasActualData ? actualBestLb : value;
+  const checkE1rmLb =
+    prE1rmLb != null && prE1rmLb > 0 ? prE1rmLb : checkActualLb;
+
+  const achieved = meetsPlateTarget(checkActualLb, targetPlates, isMetric);
   const tiersAchieved = tiers.filter(
-    (n) => meetsPlateTarget(value, n, isMetric),
+    (n) => meetsPlateTarget(checkActualLb, n, isMetric),
   ).length;
+  const tiersAchievedE1rm = tiers.filter(
+    (n) => meetsPlateTarget(checkE1rmLb, n, isMetric),
+  ).length;
+
+  // Show the E1RM hint only when reps-extrapolated E1RM has crossed beyond
+  // what the user has actually loaded on the bar — addresses the AFAF case.
+  const showE1rmHint = hasActualData && tiersAchievedE1rm > tiersAchieved;
+  const e1rmHintText =
+    tiers.length === 1
+      ? "(E1RM crossed)"
+      : `(E1RM at ${tiersAchievedE1rm}/${tiers.length})`;
 
   const hasCrossings =
     tierCrossings && Object.keys(tierCrossings).length > 0;
@@ -1745,12 +1841,17 @@ function MilestoneRow({
                   "text-muted-foreground": !achieved,
                 })}
               >
-                {achieved
-                  ? tiersAchieved === tiers.length
-                    ? "Done!"
-                    : `${tiersAchieved}/${tiers.length}`
-                  : `${isMetric ? plateTotal(targetPlates, true) - toKg(value) : plateTotal(targetPlates, false) - value} ${isMetric ? "kg" : "lb"} to go`}
+                {tiersAchieved === tiers.length
+                  ? "Done!"
+                  : tiersAchieved > 0
+                    ? `${tiersAchieved}/${tiers.length}`
+                    : `${isMetric ? plateTotal(targetPlates, true) - toKg(checkActualLb) : plateTotal(targetPlates, false) - checkActualLb} ${isMetric ? "kg" : "lb"} to go`}
               </span>
+              {showE1rmHint && (
+                <span className="text-[10px] font-normal text-amber-600/80 italic">
+                  {e1rmHintText}
+                </span>
+              )}
             </div>
           </div>
 

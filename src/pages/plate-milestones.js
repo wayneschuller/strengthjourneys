@@ -1118,99 +1118,104 @@ function PlateMilestonesMain({ relatedArticles }) {
   }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
 
   // Per-lift notch arrays (Single, 1M, 6M, 1Y, PR, Now) with tooltip content.
+  // Notches are deduped by set identity: if the same underlying set fills more
+  // than one role (common: the lifetime PR is itself a single rep), the roles
+  // are merged into one notch with a combined label like "Single · PR".
   const notchesByLift = useMemo(() => {
     if (!liftStats || !prWeightsLb) return null;
     const result = {};
+
+    const ROLE_CONFIG = {
+      "1M": { label: "1M", priority: 1, accent: "default", zIndex: 10, isDominant: false },
+      "6M": { label: "6M", priority: 1, accent: "default", zIndex: 10, isDominant: false },
+      "1Y": { label: "1Y", priority: 1, accent: "default", zIndex: 10, isDominant: false },
+      pr: { label: "PR", priority: 2, accent: "default", zIndex: 30, isDominant: false },
+      single: { label: "Single", priority: 3, accent: "single", zIndex: 25, isDominant: false },
+      now: { label: "Now", priority: 4, accent: "now", zIndex: 40, isDominant: true },
+      newPR: { label: "🎉 New PR!", priority: 5, accent: "newPR", zIndex: 40, isDominant: true },
+    };
+    const PERIOD_LABEL = { "1M": "Last month", "6M": "Last 6 months", "1Y": "Last year" };
+    const setId = (s) => `${s.date}-${s.reps}-${s.weightLb}`;
 
     for (const milestone of MILESTONES) {
       const stats = liftStats[milestone.key];
       const prValueLb = prWeightsLb[milestone.key];
       if (!stats || !stats.pr || prValueLb == null) continue;
 
-      const notches = [];
-      const seenIds = new Set();
-      const setId = (s) => `${s.date}-${s.reps}-${s.weightLb}`;
-      const prId = setId(stats.pr);
-      seenIds.add(prId);
+      const isNowAlsoPR =
+        stats.now && setId(stats.now) === setId(stats.pr);
+
+      // Collect roles by set identity
+      const setsById = {};
+      const rolesById = {};
+      const addRole = (role, set) => {
+        if (!set) return;
+        const id = setId(set);
+        if (!rolesById[id]) {
+          rolesById[id] = [];
+          setsById[id] = set;
+        }
+        rolesById[id].push(role);
+      };
+
+      addRole("pr", stats.pr);
+      if (stats.single) addRole("single", stats.single);
+      for (const key of ["1Y", "6M", "1M"]) {
+        addRole(key, stats.periodBests?.[key]);
+      }
+      if (stats.now) addRole(isNowAlsoPR ? "newPR" : "now", stats.now);
 
       const detailFor = (s) =>
         `${s.reps} × ${formatLb(s.weightLb, isMetric)} on ${formatFullDate(s.date)}`;
 
-      if (stats.single) {
-        const sId = setId(stats.single);
-        notches.push({
-          key: "single",
-          valueLb: clampToMax(stats.single.weightLb, milestone.maxLb),
-          shortLabel: "Single",
-          headline: `Heaviest actual single: ${formatLb(stats.single.weightLb, isMetric)}`,
-          detail: `1 × ${formatLb(stats.single.weightLb, isMetric)} on ${formatFullDate(stats.single.date)}`,
-          zIndex: 25,
-          isDominant: false,
-          accent: "single",
-        });
-        seenIds.add(sId);
-      }
-
-      // Detect if "Now" set is also the lifetime PR
-      const nowSet = stats.now;
-      const isNowAlsoPR =
-        nowSet && setId(nowSet) === prId;
-
-      // Period bests, deduped against PR + each other by set identity
-      const periodMeta = {
-        "1Y": { label: "Last year", short: "1Y" },
-        "6M": { label: "Last 6 months", short: "6M" },
-        "1M": { label: "Last month", short: "1M" },
+      const headlineFor = (primaryRole, set) => {
+        if (primaryRole === "newPR")
+          return `🎉 New personal record: ~${formatLb(set.e1rm, isMetric)}`;
+        if (primaryRole === "now")
+          return `Most recent session E1RM: ~${formatLb(set.e1rm, isMetric)}`;
+        if (primaryRole === "single")
+          return `Heaviest actual single: ${formatLb(set.weightLb, isMetric)}`;
+        if (primaryRole === "pr")
+          return `Lifetime E1RM: ~${formatLb(set.e1rm, isMetric)}`;
+        if (PERIOD_LABEL[primaryRole])
+          return `${PERIOD_LABEL[primaryRole]} E1RM: ~${formatLb(set.e1rm, isMetric)}`;
+        return formatLb(set.weightLb, isMetric);
       };
-      for (const key of ["1Y", "6M", "1M"]) {
-        const p = stats.periodBests?.[key];
-        if (!p) continue;
-        const pId = setId(p);
-        if (seenIds.has(pId)) continue;
-        seenIds.add(pId);
+
+      const notches = [];
+      for (const id of Object.keys(rolesById)) {
+        const roles = rolesById[id];
+        const set = setsById[id];
+        // Sort by priority desc to pick primary
+        roles.sort((a, b) => ROLE_CONFIG[b].priority - ROLE_CONFIG[a].priority);
+        const primaryRole = roles[0];
+        const primary = ROLE_CONFIG[primaryRole];
+
+        // Drop redundant "PR" label when "newPR" already in cluster
+        const labelRoles = roles.filter(
+          (r) => !(r === "pr" && roles.includes("newPR")),
+        );
+        const mergedLabel = labelRoles
+          .map((r) => ROLE_CONFIG[r].label)
+          .join(" · ");
+
+        // Position single-rep sets by their actual weight; others by e1rm
+        const positionWeight =
+          primaryRole === "single" ? set.weightLb : set.e1rm;
+
         notches.push({
-          key: `period-${key}`,
-          valueLb: clampToMax(p.e1rm, milestone.maxLb),
-          shortLabel: periodMeta[key].short,
-          headline: `${periodMeta[key].label} E1RM: ~${formatLb(p.e1rm, isMetric)}`,
-          detail: detailFor(p),
-          zIndex: 10,
-          isDominant: false,
-          accent: "default",
+          key: `${milestone.key}-${id}`,
+          valueLb: clampToMax(positionWeight, milestone.maxLb),
+          shortLabel: mergedLabel,
+          headline: headlineFor(primaryRole, set),
+          detail: detailFor(set),
+          zIndex: primary.zIndex,
+          isDominant: primary.isDominant,
+          accent: primary.accent,
         });
       }
 
-      // PR notch (skip if it's the same set as Now — Now will absorb it)
-      if (!isNowAlsoPR) {
-        notches.push({
-          key: "pr",
-          valueLb: clampToMax(prValueLb, milestone.maxLb),
-          shortLabel: "PR",
-          headline: `Lifetime E1RM: ~${formatLb(stats.pr.e1rm, isMetric)}`,
-          detail: detailFor(stats.pr),
-          zIndex: 30,
-          isDominant: false,
-          accent: "default",
-        });
-      }
-
-      // Now pill — dominant. If it IS the PR, mark as newPR (yellow).
-      if (nowSet) {
-        notches.push({
-          key: "now",
-          valueLb: clampToMax(nowSet.e1rm, milestone.maxLb),
-          shortLabel: isNowAlsoPR ? "🎉 New PR!" : "Now",
-          headline: isNowAlsoPR
-            ? `New personal record: ~${formatLb(nowSet.e1rm, isMetric)}`
-            : `Most recent session E1RM: ~${formatLb(nowSet.e1rm, isMetric)}`,
-          detail: detailFor(nowSet),
-          zIndex: 40,
-          isDominant: true,
-          accent: isNowAlsoPR ? "newPR" : "now",
-        });
-      }
-
-      result[milestone.key] = notches;
+      if (notches.length > 0) result[milestone.key] = notches;
     }
 
     return Object.keys(result).length > 0 ? result : null;

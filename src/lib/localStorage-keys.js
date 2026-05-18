@@ -94,6 +94,7 @@ export const LOCAL_STORAGE_KEYS = {
   PLATE_MILESTONE_BENCH: "SJ_plate_milestone_bench",
   PLATE_MILESTONE_SQUAT: "SJ_plate_milestone_squat",
   PLATE_MILESTONE_DEADLIFT: "SJ_plate_milestone_deadlift",
+  PLATE_MILESTONE_MODE: "SJ_plate_milestone_mode",
 
   // Gorilla comparison
   GORILLA_IS_METRIC: "SJ_gorilla_is_metric",

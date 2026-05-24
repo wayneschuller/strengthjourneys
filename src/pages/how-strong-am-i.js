@@ -1,4 +1,10 @@
+/**
+ * Strength percentile calculator page.
+ * Keeps the interactive comparison client-side while exposing stable SEO metadata
+ * and crawlable FAQ answers for the public tool page.
+ */
 import { useEffect, useMemo, useRef, useState } from "react";
+import Head from "next/head";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useReadLocalStorage } from "usehooks-ts";
@@ -132,8 +138,62 @@ const DESCRIPTION =
   "Compare your squat, bench press, and deadlift to the general population, gym-goers, barbell lifters, and competitive powerlifters. Free strength percentile calculator — no login required.";
 
 export default function HowStrongAmIPage({ relatedArticles }) {
+  // GSC review 2026-05-24: this top-click page already has visible FAQ content;
+  // keep JSON-LD generated from the same source so schema stays aligned.
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        name: TITLE,
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
+        description: DESCRIPTION,
+        url: CANONICAL,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.strengthjourneys.xyz",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "How Strong Am I?",
+            item: CANONICAL,
+          },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+          "@type": "Question",
+          name: q,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: a,
+          },
+        })),
+      },
+    ],
+  };
+
   return (
     <>
+      <Head>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Head>
       <NextSeo
         title={TITLE}
         description={DESCRIPTION}
@@ -1147,6 +1207,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Should I enter my true 1RM or an estimate?",
+    a: "Enter your best 1-rep max. If you only know a recent heavy set, use the One Rep Max Calculator to estimate it first.",
     renderAnswer: (
       <>
         Enter your best 1-rep max. If you only know a recent heavy set, use the{" "}

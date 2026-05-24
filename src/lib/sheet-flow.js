@@ -2,6 +2,10 @@ import { kv } from "@vercel/kv";
 import { getServerSession } from "next-auth/next";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { normalizeDateInput } from "@/lib/date-utils";
+import {
+  normalizeBigFourLiftType,
+  STANDARD_BIG_FOUR_LIFT_TYPES,
+} from "@/lib/data-sources/parser-utilities";
 import { devLog } from "@/lib/processing-utils";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
@@ -10,7 +14,7 @@ export const PROVISION_VERSION = 2;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 12;
 const METADATA_SCAN_ROW_CAP = 10000;
-const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
+const BIG_FOUR_LIFTS = STANDARD_BIG_FOUR_LIFT_TYPES;
 const BIG_FOUR_LIFTS_SET = new Set(BIG_FOUR_LIFTS);
 const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
@@ -335,22 +339,7 @@ function parseYmd(value, localeHint) {
 }
 
 function normalizeLiftTypeForPreview(liftTypeRaw) {
-  const key = String(liftTypeRaw || "")
-    .trim()
-    .toLowerCase();
-  const map = {
-    "back squat": "Back Squat",
-    squat: "Back Squat",
-    "bench press": "Bench Press",
-    bench: "Bench Press",
-    deadlift: "Deadlift",
-    "strict press": "Strict Press",
-    "overhead press": "Strict Press",
-    "military press": "Strict Press",
-    press: "Strict Press",
-    ohp: "Strict Press",
-  };
-  return map[key] || null;
+  return normalizeBigFourLiftType(liftTypeRaw);
 }
 
 function parseReps(value) {

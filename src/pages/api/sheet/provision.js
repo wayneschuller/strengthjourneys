@@ -33,6 +33,10 @@ import { kv } from "@vercel/kv";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { devLog } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import {
+  normalizeBigFourLiftType,
+  STANDARD_BIG_FOUR_LIFT_TYPES,
+} from "@/lib/data-sources/parser-utilities";
 
 const TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 const PROVISION_VERSION = 1;
@@ -48,7 +52,7 @@ const REQUIRED_HEADERS = [
   "Label",
   "URL",
 ];
-const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
+const BIG_FOUR_LIFTS = STANDARD_BIG_FOUR_LIFT_TYPES;
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
 const isDevEnv =
   process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
@@ -62,23 +66,7 @@ function normalizeHeader(value) {
 }
 
 function normalizeLiftTypeForPreview(liftTypeRaw) {
-  const key = String(liftTypeRaw || "")
-    .trim()
-    .toLowerCase();
-
-  const map = {
-    "back squat": "Back Squat",
-    squat: "Back Squat",
-    "bench press": "Bench Press",
-    bench: "Bench Press",
-    deadlift: "Deadlift",
-    "strict press": "Strict Press",
-    "overhead press": "Strict Press",
-    "military press": "Strict Press",
-    press: "Strict Press",
-    ohp: "Strict Press",
-  };
-  return map[key] || null;
+  return normalizeBigFourLiftType(liftTypeRaw);
 }
 
 function parseReps(value) {

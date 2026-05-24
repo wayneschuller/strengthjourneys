@@ -1,3 +1,8 @@
+/**
+ * Add controls for the training log, including last-session context,
+ * in-session coaching, smart set suggestions, and custom lift entry.
+ */
+
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -261,55 +266,79 @@ function SmartAddButtonGrid({
   disabled = false,
 }) {
   const visibleButtons = buttons.slice(0, 3);
+  const buttonBorderClass = (index, count) =>
+    [
+      "border-border/40",
+      index % 2 === 0 && index < count - 1 ? "border-r" : "",
+      index < count - 2 ? "border-b" : "",
+      "sm:border-b-0",
+      index < count - 1 ? "sm:border-r" : "sm:border-r-0",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  const buttonRadiusClass = (index, count) => {
+    const mobileRow = Math.floor(index / 2);
+    const mobileLastRow = Math.ceil(count / 2) - 1;
+    const isMobileBottomLeft = mobileRow === mobileLastRow && index % 2 === 0;
+
+    return [
+      isMobileBottomLeft ? "rounded-bl-xl" : "",
+      index === 0 ? "sm:rounded-bl-xl" : "sm:rounded-bl-none",
+      index === count - 1 ? "sm:rounded-br-xl" : "sm:rounded-br-none",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  };
 
   return (
     <>
-      <div className="flex items-stretch divide-x divide-border/40">
+      <div className="grid grid-cols-2 overflow-hidden rounded-b-xl sm:grid-cols-4">
         {visibleButtons.map((s, i) => {
           const { Icon, className: iconClassName } = getSuggestionIcon(s, lastRealSet);
+          const totalButtonCount = visibleButtons.length + 1;
 
           return (
-          <button
-            key={i}
-            type="button"
-            disabled={disabled}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3.5 text-sm transition-colors ${
-              disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
-            } ${
-              s.variant === "primary"
-                ? "bg-accent/20 font-semibold text-foreground"
-                : s.variant === "secondary"
-                  ? "font-medium text-foreground"
-                  : "text-muted-foreground"
-            }`}
-            onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
-          >
-            <span className="flex items-center gap-1.5">
-              <Icon className={`h-3.5 w-3.5 ${iconClassName}`} />
-              {s.label}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
-              {s.sublabel}
-            </span>
-            {s.rankingMessage && (
-              <span className={`text-[10px] uppercase tracking-wide ${s.rankingScope === "lifetime" ? "text-amber-500" : "text-blue-500"}`}>
-                {s.rankingMessage}
+            <button
+              key={i}
+              type="button"
+              disabled={disabled}
+              className={`flex min-w-0 flex-col items-center justify-center gap-0.5 px-2 py-3.5 text-center text-sm transition-colors ${buttonBorderClass(i, totalButtonCount)} ${buttonRadiusClass(i, totalButtonCount)} ${
+                disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
+              } ${
+                s.variant === "primary"
+                  ? "bg-accent/20 font-semibold text-foreground"
+                  : s.variant === "secondary"
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground"
+              }`}
+              onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
+            >
+              <span className="flex min-w-0 items-center justify-center gap-1.5">
+                <Icon className={`h-3.5 w-3.5 ${iconClassName}`} />
+                <span className="min-w-0 break-words">{s.label}</span>
               </span>
-            )}
-          </button>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                {s.sublabel}
+              </span>
+              {s.rankingMessage && (
+                <span className={`text-[10px] uppercase tracking-wide ${s.rankingScope === "lifetime" ? "text-amber-500" : "text-blue-500"}`}>
+                  {s.rankingMessage}
+                </span>
+              )}
+            </button>
           );
         })}
         <button
           type="button"
           disabled={disabled}
-          className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3.5 text-sm transition-colors ${
+          className={`flex min-w-0 flex-col items-center justify-center gap-0.5 px-2 py-3.5 text-center text-sm transition-colors ${buttonBorderClass(visibleButtons.length, visibleButtons.length + 1)} ${buttonRadiusClass(visibleButtons.length, visibleButtons.length + 1)} ${
             disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
           } text-muted-foreground`}
           onClick={onStartCustomSet}
         >
-          <span className="flex items-center gap-1.5">
+          <span className="flex min-w-0 items-center justify-center gap-1.5">
             <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
-            Custom set
+            <span className="min-w-0 break-words">Custom set</span>
           </span>
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
             any reps or weight

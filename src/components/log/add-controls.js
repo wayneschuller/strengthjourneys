@@ -280,12 +280,9 @@ function SmartAddButtonGrid({
     const mobileRow = Math.floor(index / 2);
     const mobileLastRow = Math.ceil(count / 2) - 1;
     const isMobileBottomLeft = mobileRow === mobileLastRow && index % 2 === 0;
-    const isMobileBottomRight =
-      mobileRow === mobileLastRow && (index % 2 === 1 || index === count - 1);
 
     return [
       isMobileBottomLeft ? "rounded-bl-xl" : "",
-      isMobileBottomRight ? "rounded-br-xl" : "",
       index === 0 ? "sm:rounded-bl-xl" : "sm:rounded-bl-none",
       index === count - 1 ? "sm:rounded-br-xl" : "sm:rounded-br-none",
     ]
@@ -295,7 +292,7 @@ function SmartAddButtonGrid({
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 overflow-hidden rounded-b-xl sm:grid-cols-4">
         {visibleButtons.map((s, i) => {
           const { Icon, className: iconClassName } = getSuggestionIcon(s, lastRealSet);
           const totalButtonCount = visibleButtons.length + 1;

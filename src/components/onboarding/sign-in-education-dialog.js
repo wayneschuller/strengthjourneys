@@ -94,7 +94,7 @@ export function SignInEducationDialog({
     markReturningLifter();
     gaTrackSignInPrimerContinued(router.pathname, cta);
     gaTrackSignInClick(router.pathname, cta);
-    tagSignInSource(cta);
+    tagSignInSource(cta, callbackUrl);
     signIn("google", { callbackUrl });
   };
 

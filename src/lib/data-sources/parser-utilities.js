@@ -1,23 +1,92 @@
 // Shared normalization utilities for all import parsers.
 
-// Allow variations of some lift names and capitalization but harmonize for output
-export function normalizeLiftTypeNames(liftType) {
-  // The user data will be put in toLowerCase so just work with lower case samples
-  const standardLiftTypes = {
-    "bench press": "Bench Press",
-    bench: "Bench Press",
-    press: "Strict Press",
-    "strict press": "Strict Press",
-    "overhead press": "Strict Press",
-    "military press": "Strict Press",
-    ohp: "Strict Press",
-    squat: "Back Squat",
-    "back squat": "Back Squat",
-    deadlift: "Deadlift",
-  };
+export const STANDARD_BIG_FOUR_LIFT_TYPES = [
+  "Back Squat",
+  "Bench Press",
+  "Deadlift",
+  "Strict Press",
+];
 
-  const key = liftType.toLowerCase();
-  return standardLiftTypes[key] || liftType; // Defaults to original if no match
+export const STANDARD_BIG_FOUR_LIFT_TYPE_SET = new Set(
+  STANDARD_BIG_FOUR_LIFT_TYPES,
+);
+
+const BIG_FOUR_LIFT_TYPE_ALIASES = {
+  // English
+  "back squat": "Back Squat",
+  squat: "Back Squat",
+  squats: "Back Squat",
+  "bench press": "Bench Press",
+  bench: "Bench Press",
+  deadlift: "Deadlift",
+  deadlifts: "Deadlift",
+  press: "Strict Press",
+  "strict press": "Strict Press",
+  "overhead press": "Strict Press",
+  "military press": "Strict Press",
+  ohp: "Strict Press",
+
+  // German and Dutch
+  kniebeuge: "Back Squat",
+  kniebeugen: "Back Squat",
+  bankdrucken: "Bench Press",
+  bankdrukken: "Bench Press",
+  kreuzheben: "Deadlift",
+  schulterdrucken: "Strict Press",
+  schouderdrukken: "Strict Press",
+  uberkopfdrucken: "Strict Press",
+
+  // Spanish
+  sentadilla: "Back Squat",
+  sentadillas: "Back Squat",
+  "press de banca": "Bench Press",
+  banca: "Bench Press",
+  "peso muerto": "Deadlift",
+  "press militar": "Strict Press",
+  "press de hombros": "Strict Press",
+
+  // French
+  "developpe couche": "Bench Press",
+  "souleve de terre": "Deadlift",
+  "developpe militaire": "Strict Press",
+  "developpe epaules": "Strict Press",
+
+  // Portuguese
+  agachamento: "Back Squat",
+  supino: "Bench Press",
+  "levantamento terra": "Deadlift",
+  "peso morto": "Deadlift",
+  "desenvolvimento militar": "Strict Press",
+
+  // Italian
+  "panca piana": "Bench Press",
+  "distensione su panca": "Bench Press",
+  "stacco da terra": "Deadlift",
+  "lento avanti": "Strict Press",
+};
+
+function normalizeLiftTypeLookupKey(liftType) {
+  return String(liftType || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ß/g, "ss")
+    .replace(/ł/g, "l")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Allow variations of common big-four lift names and capitalization but harmonize for output.
+export function normalizeLiftTypeNames(liftType) {
+  const key = normalizeLiftTypeLookupKey(liftType);
+  return BIG_FOUR_LIFT_TYPE_ALIASES[key] || liftType; // Defaults to original if no match
+}
+
+export function normalizeBigFourLiftType(liftType) {
+  const normalized = normalizeLiftTypeNames(liftType);
+  return STANDARD_BIG_FOUR_LIFT_TYPE_SET.has(normalized) ? normalized : null;
 }
 
 // Used to normalize column names to a standard format

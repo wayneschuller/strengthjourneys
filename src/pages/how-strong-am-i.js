@@ -1191,19 +1191,19 @@ function ExplainerSection() {
 const FAQ_ITEMS = [
   {
     q: "What does 'stronger than X%' mean?",
-    a: "It means your 1-rep max is higher than that percentage of people in the selected group after adjusting for your sex, age, and bodyweight. The universe changes the comparison pool, not the fact that the result is personalised to you.",
+    a: "It means your estimated 1-rep max is higher than that percentage of people in the selected group after adjusting for your sex, age, and bodyweight. The universe changes the comparison pool, not the fact that the result is personalised to you.",
   },
   {
     q: "Which group should I care about?",
-    a: "Most people find the Barbell Lifters ring most meaningful. It compares you to a barbell-trained population, while still adjusting for your sex, age, and bodyweight, so it is usually the fairest peer group for strength athletes.",
+    a: "Most lifters should start with Barbell Lifters. It compares you to people who actually train with a barbell, while still adjusting for sex, age, and bodyweight, so it is usually the fairest peer group for strength athletes.",
   },
   {
     q: "How do you estimate percentiles?",
-    a: "We use the Kilgore strength standards as anchor points, calibrated by age, sex, and bodyweight, then map your lift into each universe's estimated distribution. So the universes change how tough the comparison is, while your personal profile still shapes the result.",
+    a: "We use Kilgore strength standards as anchor points, calibrated by age, sex, and bodyweight, then map your lift into each universe's estimated distribution. The result is an informed benchmark, not a literal leaderboard of every person alive.",
   },
   {
     q: "Am I being compared to everyone, or only people like me?",
-    a: "Only partially to everyone. General Population, Gym-Goers, Barbell Lifters, and Powerlifting Culture describe the broader group, but your percentile is still adjusted for your sex, age, and bodyweight. So you are not being ranked against all men and women combined with no adjustment.",
+    a: "Both. General Population, Gym-Goers, Barbell Lifters, and Powerlifting Culture describe the broader pool, but your score is still adjusted for sex, age, and bodyweight. You are not being thrown into one giant pile with no context.",
   },
   {
     q: "Should I enter my true 1RM or an estimate?",
@@ -1225,15 +1225,31 @@ const FAQ_ITEMS = [
     q: "Does age matter?",
     a: "Yes. Age is part of the model, alongside sex and bodyweight, so a 55-year-old and a 25-year-old at the same relative strength level can land on similar percentiles within the same universe.",
   },
+  {
+    q: "Can I be strong without squat, bench, and deadlift?",
+    a: "Yes, but you are ducking the cleanest scoreboard. Machines, dumbbells, kettlebells, calisthenics, and sport work can build real strength, but squat, bench, and deadlift are still the simplest shared test: fixed lifts, measurable load, clear range of motion, and fewer excuses.",
+  },
+  {
+    q: "Why does this calculator focus on barbell lifts?",
+    a: "Because barbells are brutally honest. A barbell does not care how the stack is labeled, whether the machine path suits your build, or whether the cable pulley is flattering you. You either move the weight through the lift or you do not.",
+  },
+  {
+    q: "What if I only care about looking athletic?",
+    a: "That is fine. Hypertrophy, conditioning, mobility, and sport skill all matter. But if you ask how strong you are, eventually the conversation has to touch heavy repeatable lifts. Otherwise you are measuring vibes with a pump cover on.",
+  },
+  {
+    q: "Do I need all three lifts for a useful score?",
+    a: "No. You can adjust one lift at a time and still get useful feedback. The full squat, bench, and deadlift set gives the cleanest picture because it covers lower-body drive, upper-body pressing strength, and hip/back pulling strength.",
+  },
 ];
 
 function FAQSection() {
   return (
     <div className="mt-6">
       <h2 className="mb-3 text-base font-semibold">Frequently asked questions</h2>
-      <div className="flex flex-col gap-3">
+      <div className="grid gap-3 lg:grid-cols-2">
         {FAQ_ITEMS.map(({ q, a, renderAnswer }) => (
-          <div key={q} className="rounded-md border p-3">
+          <div key={q} className="rounded-md border p-4">
             <p className="text-sm font-medium">{q}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {renderAnswer || a}

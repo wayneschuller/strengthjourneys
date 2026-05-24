@@ -276,6 +276,22 @@ function SmartAddButtonGrid({
     ]
       .filter(Boolean)
       .join(" ");
+  const buttonRadiusClass = (index, count) => {
+    const mobileRow = Math.floor(index / 2);
+    const mobileLastRow = Math.ceil(count / 2) - 1;
+    const isMobileBottomLeft = mobileRow === mobileLastRow && index % 2 === 0;
+    const isMobileBottomRight =
+      mobileRow === mobileLastRow && (index % 2 === 1 || index === count - 1);
+
+    return [
+      isMobileBottomLeft ? "rounded-bl-xl" : "",
+      isMobileBottomRight ? "rounded-br-xl" : "",
+      index === 0 ? "sm:rounded-bl-xl" : "sm:rounded-bl-none",
+      index === count - 1 ? "sm:rounded-br-xl" : "sm:rounded-br-none",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  };
 
   return (
     <>
@@ -289,7 +305,7 @@ function SmartAddButtonGrid({
               key={i}
               type="button"
               disabled={disabled}
-              className={`flex min-w-0 flex-col items-center justify-center gap-0.5 px-2 py-3.5 text-center text-sm transition-colors ${buttonBorderClass(i, totalButtonCount)} ${
+              className={`flex min-w-0 flex-col items-center justify-center gap-0.5 px-2 py-3.5 text-center text-sm transition-colors ${buttonBorderClass(i, totalButtonCount)} ${buttonRadiusClass(i, totalButtonCount)} ${
                 disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
               } ${
                 s.variant === "primary"
@@ -318,7 +334,7 @@ function SmartAddButtonGrid({
         <button
           type="button"
           disabled={disabled}
-          className={`flex min-w-0 flex-col items-center justify-center gap-0.5 px-2 py-3.5 text-center text-sm transition-colors ${buttonBorderClass(visibleButtons.length, visibleButtons.length + 1)} ${
+          className={`flex min-w-0 flex-col items-center justify-center gap-0.5 px-2 py-3.5 text-center text-sm transition-colors ${buttonBorderClass(visibleButtons.length, visibleButtons.length + 1)} ${buttonRadiusClass(visibleButtons.length, visibleButtons.length + 1)} ${
             disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
           } text-muted-foreground`}
           onClick={onStartCustomSet}

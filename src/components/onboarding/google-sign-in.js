@@ -71,6 +71,10 @@ function getCurrentPathname() {
  * Writes a short-lived cookie so the NextAuth signIn callback can attribute
  * this OAuth attempt to a specific CTA/page in founder telemetry. SameSite=Lax
  * is required so the cookie survives the Google → callback redirect.
+ *
+ * Privacy boundary: this is support metadata for understanding where a user
+ * started Google OAuth. Keep it limited to CTA + pathname + callback path. Do
+ * not add training data, sheet data, full URLs, query strings, or page history.
  */
 export function tagSignInSource(cta, callbackUrl = "/") {
   if (typeof document === "undefined") return;

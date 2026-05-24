@@ -239,8 +239,10 @@ export const authOptions = {
 };
 
 // Per-request wrapper so the signIn callback can read cookies off `req`
-// (NextAuth v4 does not pass req into callbacks). We use this to attribute
-// each OAuth attempt to a specific CTA via the sj_signin_source cookie.
+// (NextAuth v4 does not pass req into callbacks). The sign-in source cookie is
+// only used as lightweight support metadata: it tells founder emails and KV
+// counters which page/CTA started OAuth, without storing app usage history or
+// any lifting/sheet contents.
 export default async function auth(req, res) {
   return NextAuth(req, res, {
     ...authOptions,
@@ -567,6 +569,9 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
     signInCount: currentCount + 1,
   };
 
+  // Privacy boundary: per-user KV keeps only first/last OAuth entry metadata so
+  // support emails have context. It must not become a clickstream, browsing
+  // profile, or storage for training data / Google Sheet contents.
   if (signInSource?.page) {
     nextRecord.firstSignInPage =
       existingRecord.firstSignInPage || signInSource.page;

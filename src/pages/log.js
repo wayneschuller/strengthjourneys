@@ -3626,7 +3626,7 @@ function LiftBlock({
   return (
     <div
       ref={liftBlockRef}
-      className="bg-card relative overflow-hidden rounded-xl border shadow-md"
+      className="bg-card relative overflow-hidden rounded-xl border"
       style={{
         backgroundImage: `linear-gradient(135deg, ${hexToRgba(liftColor, 0.12)} 0%, ${hexToRgba(liftColor, 0.06)} 18%, rgba(255, 255, 255, 0) 42%)`,
         animation: isCelebrationShaking

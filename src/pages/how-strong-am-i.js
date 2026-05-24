@@ -1,4 +1,10 @@
+/**
+ * Strength percentile calculator page.
+ * Keeps the interactive comparison client-side while exposing stable SEO metadata
+ * and crawlable FAQ answers for the public tool page.
+ */
 import { useEffect, useMemo, useRef, useState } from "react";
+import Head from "next/head";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useReadLocalStorage } from "usehooks-ts";
@@ -56,6 +62,7 @@ import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { cn } from "@/lib/utils";
 import {
   computeStrengthResults,
   UNIVERSES,
@@ -132,8 +139,62 @@ const DESCRIPTION =
   "Compare your squat, bench press, and deadlift to the general population, gym-goers, barbell lifters, and competitive powerlifters. Free strength percentile calculator — no login required.";
 
 export default function HowStrongAmIPage({ relatedArticles }) {
+  // GSC review 2026-05-24: this top-click page already has visible FAQ content;
+  // keep JSON-LD generated from the same source so schema stays aligned.
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        name: TITLE,
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
+        description: DESCRIPTION,
+        url: CANONICAL,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.strengthjourneys.xyz",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "How Strong Am I?",
+            item: CANONICAL,
+          },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+          "@type": "Question",
+          name: q,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: a,
+          },
+        })),
+      },
+    ],
+  };
+
   return (
     <>
+      <Head>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Head>
       <NextSeo
         title={TITLE}
         description={DESCRIPTION}
@@ -570,12 +631,13 @@ function HowStrongAmIPageMain() {
             </div>
           </div>
 
-          <section className="mx-auto mt-10 max-w-2xl lg:max-w-4xl">
-            <ExplainerSection />
-            <FAQSection />
-          </section>
         </CardContent>
       </Card>
+
+      <section className="mx-auto mt-10 w-full max-w-6xl">
+        <ExplainerSection />
+        <FAQSection />
+      </section>
 
       <NextToolsSection />
     </PageContainer>
@@ -1101,7 +1163,7 @@ function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "Ge
 
 function ExplainerSection() {
   return (
-    <div className="rounded-lg border bg-muted/30 p-5">
+    <div className="rounded-lg border bg-muted/30 p-6 shadow-sm">
       <h2 className="mb-2 text-base font-semibold">What these circles mean</h2>
       <p className="text-sm text-muted-foreground">
         Each ring compares you to a different group. As the group gets more
@@ -1131,22 +1193,23 @@ function ExplainerSection() {
 const FAQ_ITEMS = [
   {
     q: "What does 'stronger than X%' mean?",
-    a: "It means your 1-rep max is higher than that percentage of people in the selected group after adjusting for your sex, age, and bodyweight. The universe changes the comparison pool, not the fact that the result is personalised to you.",
+    a: "It means your estimated 1-rep max is higher than that percentage of people in the selected group after adjusting for your sex, age, and bodyweight. The universe changes the comparison pool, not the fact that the result is personalised to you.",
   },
   {
     q: "Which group should I care about?",
-    a: "Most people find the Barbell Lifters ring most meaningful. It compares you to a barbell-trained population, while still adjusting for your sex, age, and bodyweight, so it is usually the fairest peer group for strength athletes.",
+    a: "Most lifters should start with Barbell Lifters. It compares you to people who actually train with a barbell, while still adjusting for sex, age, and bodyweight, so it is usually the fairest peer group for strength athletes.",
   },
   {
     q: "How do you estimate percentiles?",
-    a: "We use the Kilgore strength standards as anchor points, calibrated by age, sex, and bodyweight, then map your lift into each universe's estimated distribution. So the universes change how tough the comparison is, while your personal profile still shapes the result.",
+    a: "We use Kilgore strength standards as anchor points, calibrated by age, sex, and bodyweight, then map your lift into each universe's estimated distribution. The result is an informed benchmark, not a literal leaderboard of every person alive.",
   },
   {
     q: "Am I being compared to everyone, or only people like me?",
-    a: "Only partially to everyone. General Population, Gym-Goers, Barbell Lifters, and Powerlifting Culture describe the broader group, but your percentile is still adjusted for your sex, age, and bodyweight. So you are not being ranked against all men and women combined with no adjustment.",
+    a: "Both. General Population, Gym-Goers, Barbell Lifters, and Powerlifting Culture describe the broader pool, but your score is still adjusted for sex, age, and bodyweight. You are not being thrown into one giant pile with no context.",
   },
   {
     q: "Should I enter my true 1RM or an estimate?",
+    a: "Enter your best 1-rep max. If you only know a recent heavy set, use the One Rep Max Calculator to estimate it first.",
     renderAnswer: (
       <>
         Enter your best 1-rep max. If you only know a recent heavy set, use the{" "}
@@ -1164,20 +1227,55 @@ const FAQ_ITEMS = [
     q: "Does age matter?",
     a: "Yes. Age is part of the model, alongside sex and bodyweight, so a 55-year-old and a 25-year-old at the same relative strength level can land on similar percentiles within the same universe.",
   },
+  {
+    q: "Can I be strong without squat, bench, and deadlift?",
+    a: "Yes, but you are ducking the cleanest scoreboard. Machines, dumbbells, kettlebells, calisthenics, and sport work can build real strength, but squat, bench, and deadlift are still the simplest shared test: fixed lifts, measurable load, clear range of motion, and fewer excuses.",
+  },
+  {
+    q: "Why does this calculator focus on barbell lifts?",
+    a: "Because barbells are brutally honest. A barbell does not care how the stack is labeled, whether the machine path suits your build, or whether the cable pulley is flattering you. You either move the weight through the lift or you do not.",
+  },
+  {
+    q: "What if I only care about looking athletic?",
+    a: "That is fine. Hypertrophy, conditioning, mobility, and sport skill all matter. But if you ask how strong you are, eventually the conversation has to touch heavy repeatable lifts. Otherwise you are measuring vibes with a pump cover on.",
+  },
+  {
+    q: "Do I need all three lifts for a useful score?",
+    a: "No. You can adjust one lift at a time and still get useful feedback. The full squat, bench, and deadlift set gives the cleanest picture because it covers lower-body drive, upper-body pressing strength, and hip/back pulling strength.",
+  },
 ];
 
 function FAQSection() {
   return (
-    <div className="mt-6">
-      <h2 className="mb-3 text-base font-semibold">Frequently asked questions</h2>
-      <div className="flex flex-col gap-3">
-        {FAQ_ITEMS.map(({ q, a, renderAnswer }) => (
-          <div key={q} className="rounded-md border p-3">
-            <p className="text-sm font-medium">{q}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+    <div className="mt-8">
+      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            How Strong Am I?
+          </p>
+          <h2 className="text-2xl font-semibold leading-tight">
+            Frequently asked questions
+          </h2>
+        </div>
+        <p className="max-w-xl text-sm text-muted-foreground">
+          Strength comparisons get cleaner when the lifts are measurable,
+          repeatable, and hard to negotiate with.
+        </p>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {FAQ_ITEMS.map(({ q, a, renderAnswer }, index) => (
+          <article
+            key={q}
+            className={cn(
+              "rounded-lg border bg-background/80 p-5 shadow-sm transition-colors hover:bg-muted/30",
+              index < 2 && "lg:p-6",
+            )}
+          >
+            <h3 className="text-base font-semibold leading-snug">{q}</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {renderAnswer || a}
             </p>
-          </div>
+          </article>
         ))}
       </div>
     </div>

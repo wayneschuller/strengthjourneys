@@ -62,6 +62,7 @@ import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { cn } from "@/lib/utils";
 import {
   computeStrengthResults,
   UNIVERSES,
@@ -630,12 +631,13 @@ function HowStrongAmIPageMain() {
             </div>
           </div>
 
-          <section className="mx-auto mt-10 max-w-2xl lg:max-w-4xl">
-            <ExplainerSection />
-            <FAQSection />
-          </section>
         </CardContent>
       </Card>
+
+      <section className="mx-auto mt-10 w-full max-w-6xl">
+        <ExplainerSection />
+        <FAQSection />
+      </section>
 
       <NextToolsSection />
     </PageContainer>
@@ -1161,7 +1163,7 @@ function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "Ge
 
 function ExplainerSection() {
   return (
-    <div className="rounded-lg border bg-muted/30 p-5">
+    <div className="rounded-lg border bg-muted/30 p-6 shadow-sm">
       <h2 className="mb-2 text-base font-semibold">What these circles mean</h2>
       <p className="text-sm text-muted-foreground">
         Each ring compares you to a different group. As the group gets more
@@ -1245,16 +1247,35 @@ const FAQ_ITEMS = [
 
 function FAQSection() {
   return (
-    <div className="mt-6">
-      <h2 className="mb-3 text-base font-semibold">Frequently asked questions</h2>
-      <div className="grid gap-3 lg:grid-cols-2">
-        {FAQ_ITEMS.map(({ q, a, renderAnswer }) => (
-          <div key={q} className="rounded-md border p-4">
-            <p className="text-sm font-medium">{q}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+    <div className="mt-8">
+      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            How Strong Am I?
+          </p>
+          <h2 className="text-2xl font-semibold leading-tight">
+            Frequently asked questions
+          </h2>
+        </div>
+        <p className="max-w-xl text-sm text-muted-foreground">
+          Strength comparisons get cleaner when the lifts are measurable,
+          repeatable, and hard to negotiate with.
+        </p>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {FAQ_ITEMS.map(({ q, a, renderAnswer }, index) => (
+          <article
+            key={q}
+            className={cn(
+              "rounded-lg border bg-background/80 p-5 shadow-sm transition-colors hover:bg-muted/30",
+              index < 2 && "lg:p-6",
+            )}
+          >
+            <h3 className="text-base font-semibold leading-snug">{q}</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {renderAnswer || a}
             </p>
-          </div>
+          </article>
         ))}
       </div>
     </div>

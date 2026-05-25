@@ -10,10 +10,9 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useIsClient, useReadLocalStorage } from "usehooks-ts";
+import { useIsClient } from "usehooks-ts";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useDevActivityMonitor } from "@/hooks/use-dev-activity-monitor";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { CELEBRATION_KEYFRAMES } from "@/lib/celebration";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -21,7 +20,6 @@ import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { InspirationCard } from "@/components/log/inspiration-card";
-import { DevActivityMonitorPanel } from "@/components/dev-activity-monitor";
 import { AddLiftButton } from "@/components/log/add-controls";
 import { LogSessionSkeleton } from "@/components/log/session-summary";
 import { getLiftAnchorId } from "@/components/log/utils";
@@ -48,7 +46,6 @@ const BIG_FOUR = BIG_FOUR_LIFT_META.map(
   }),
 );
 
-const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 const LOG_PAGE_TITLE = "Workout Log and Session Tracker | Strength Journeys";
 const LOG_PAGE_DESCRIPTION =
   "Log barbell sets, browse sessions by date, use smart warm-up suggestions, and connect Google Sheets for a free strength training log with PR context.";
@@ -138,7 +135,6 @@ export default function LogSessionPage({
     isError,
     fetchFailed,
     rawRows,
-    dataSyncedAt,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
@@ -147,7 +143,6 @@ export default function LogSessionPage({
     hasUserData,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
-  const { addEntry: addLogEntry, clearEntries } = useDevActivityMonitor();
   const { toast } = useToast();
   const persistedSheetInfo = useMemo(() => {
     if (!isClient) return null;
@@ -160,88 +155,6 @@ export default function LogSessionPage({
   }, [isClient]);
   const hasLinkedSheet = hasUserData && !isImportedData;
 
-  // Reset the in-page instrumentation panel whenever the log route mounts.
-  // The cleanup clears stale entries when the user navigates away.
-  useEffect(() => {
-    clearEntries();
-
-    return () => {
-      clearEntries();
-    };
-  }, [clearEntries]);
-
-  // --- SWR lifecycle logging ---
-  const prevValidatingRef = useRef(isValidating);
-  const revalidateStartRef = useRef(null);
-  // Record SWR validation transitions so the dev monitor shows sheet refresh
-  // timing and whether the latest provider fetch succeeded.
-  useEffect(() => {
-    const was = prevValidatingRef.current;
-    prevValidatingRef.current = isValidating;
-    if (isValidating && !was) {
-      revalidateStartRef.current = performance.now();
-      addLogEntry({
-        type: "sync",
-        label: "SWR revalidating",
-        detail: "Fetching fresh sheet data for the log page.",
-      });
-    }
-    if (!isValidating && was) {
-      const elapsed = revalidateStartRef.current
-        ? Math.round(performance.now() - revalidateStartRef.current)
-        : null;
-      const suffix = elapsed != null ? ` · ${elapsed}ms` : "";
-      if (isError || fetchFailed) {
-        addLogEntry({
-          type: "swr-error",
-          label: "SWR revalidation failed",
-          detail: `The latest sheet fetch failed. error=${isError} fetchFailed=${fetchFailed}${suffix}`,
-        });
-      } else {
-        addLogEntry({
-          type: "swr-ok",
-          label: "SWR revalidation done",
-          detail: `${rawRows ?? "?"} raw rows fetched from the sheet${suffix}`,
-        });
-      }
-    }
-  }, [isValidating, isError, fetchFailed, rawRows, addLogEntry]);
-
-  const prevParsedLenRef = useRef(parsedData?.length ?? null);
-  // Report parser readiness and row-count changes after sheet/demo/imported
-  // data is normalized into canonical lift rows.
-  useEffect(() => {
-    const prevLen = prevParsedLenRef.current;
-    const newLen = parsedData?.length ?? null;
-    prevParsedLenRef.current = newLen;
-    if (newLen == null) return;
-    if (prevLen == null) {
-      addLogEntry({
-        type: "sync",
-        label: "parsedData ready",
-        detail: `The client parser built ${newLen} lift rows from the sheet response.`,
-      });
-    } else if (newLen !== prevLen) {
-      addLogEntry({
-        type: "sync",
-        label: "parsedData updated",
-        detail: `Parsed lift rows changed from ${prevLen} to ${newLen}.`,
-      });
-    }
-  }, [parsedData?.length, addLogEntry]);
-
-  // Mirror the latest provider sync timestamp into instrumentation so writes
-  // can be correlated with the last successful refresh.
-  useEffect(() => {
-    if (dataSyncedAt) {
-      addLogEntry({
-        type: "swr-ok",
-        label: "dataSyncedAt",
-        detail: `Latest sync marker: ${new Date(dataSyncedAt).toLocaleTimeString()}`,
-      });
-    }
-  }, [dataSyncedAt, addLogEntry]);
-
   // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
   const todayIso = useMemo(() => {
     const now = new Date();
@@ -252,11 +165,6 @@ export default function LogSessionPage({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const autoStartedLiftRef = useRef("");
-  const devActivityMonitorVisible =
-    useReadLocalStorage(LOCAL_STORAGE_KEYS.DEV_ACTIVITY_MONITOR_VISIBLE, {
-      initializeWithValue: false,
-    }) ?? false;
-  const showActivityMonitor = isDev && devActivityMonitorVisible;
 
   // Sync date from URL param after hydration.
   // Heatmap/deep links make the router query the external date source of truth.
@@ -289,7 +197,6 @@ export default function LogSessionPage({
     todayIso,
     isMetric,
     mutate,
-    addLogEntry,
     toast,
   });
 
@@ -705,12 +612,6 @@ export default function LogSessionPage({
                       />
                     </>
                   )}
-                </div>
-              )}
-
-              {showActivityMonitor && (
-                <div className="border-border/40 mt-8 border-t pt-6">
-                  <DevActivityMonitorPanel className="max-h-[70vh]" />
                 </div>
               )}
 

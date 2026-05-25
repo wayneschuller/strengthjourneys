@@ -1,16 +1,15 @@
 /**
- * Development timing logs for log-page sheet API operations.
+ * Development console timing logs for log-page sheet API operations.
  */
 
-const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
+import { devLog } from "@/lib/processing-utils";
 
-export function logSheetTimings(label, timings, totalMs, addLogEntry) {
-  if (!isDev) return;
+export function logSheetTimings(label, timings, totalMs) {
   const total = Math.round(totalMs);
   const color = total < 500 ? "#22c55e" : total < 1500 ? "#f59e0b" : "#ef4444";
 
   if (timings.length <= 1) {
-    console.log(
+    devLog(
       `%c📡 ${label}%c  %c${total}ms`,
       "font-weight:bold",
       "color:inherit",
@@ -18,7 +17,7 @@ export function logSheetTimings(label, timings, totalMs, addLogEntry) {
     );
   } else {
     const nameWidth = Math.max(...timings.map((timing) => timing.name.length));
-    console.groupCollapsed(
+    devLog(
       `%c📡 ${label}%c  %c${total}ms`,
       "font-weight:bold",
       "color:inherit",
@@ -27,7 +26,7 @@ export function logSheetTimings(label, timings, totalMs, addLogEntry) {
     timings.forEach((timing) => {
       const ms = Math.round(timing.ms);
       const c = ms < 500 ? "#22c55e" : ms < 1500 ? "#f59e0b" : "#ef4444";
-      console.log(
+      devLog(
         `  %c${timing.name.padEnd(nameWidth)}%c  %c${String(ms).padStart(5)}ms`,
         "font-weight:bold",
         "color:inherit",
@@ -35,23 +34,12 @@ export function logSheetTimings(label, timings, totalMs, addLogEntry) {
       );
     });
     const divider = "─".repeat(nameWidth + 10);
-    console.log(`  ${divider}`);
-    console.log(
+    devLog(`  ${divider}`);
+    devLog(
       `  %c${"Total".padEnd(nameWidth)}%c  %c${String(total).padStart(5)}ms`,
       "font-weight:bold",
       "color:inherit",
       `color:${color};font-weight:bold`,
     );
-    console.groupEnd();
-  }
-
-  if (addLogEntry) {
-    const detail =
-      timings.length > 1
-        ? timings
-            .map((timing) => `${timing.name} ${Math.round(timing.ms)}ms`)
-            .join(" → ")
-        : "";
-    addLogEntry({ type: "timing", label, total, detail, color });
   }
 }

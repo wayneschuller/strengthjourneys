@@ -23,8 +23,6 @@ import {
 } from "@/components/log/sheet-snapshot-utils";
 import { logSheetTimings } from "@/components/log/timing-log";
 
-const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
-
 export function useLogSheetSync({
   sheetInfo,
   parsedData,
@@ -33,7 +31,6 @@ export function useLogSheetSync({
   todayIso,
   isMetric,
   mutate,
-  addLogEntry,
   toast,
 }) {
   const [syncState, setSyncState] = useState("idle"); // idle | saving | saved | error
@@ -89,33 +86,9 @@ export function useLogSheetSync({
     setDeletedRowIndices(new Set());
   }, [setPendingSetsSync]);
 
-  const queueStructuralAction = useCallback(
-    (action) => {
-      queuedStructuralActionRef.current = action;
-      addLogEntry({
-        type: "sync",
-        label: "Queued structural action",
-        detail:
-          action.kind === "addSet"
-            ? `Will add the next ${action.liftType} set as soon as the current row-shifting write finishes.`
-            : `Will add the ${action.liftType} lift block as soon as the current row-shifting write finishes.`,
-      });
-    },
-    [addLogEntry],
-  );
-
-  const recordDevSyncTrace = useCallback(
-    (entry) => {
-      if (!isDev) return;
-      addLogEntry({
-        type: "trace",
-        sessionDate,
-        ...entry,
-        label: entry.label ?? entry.op,
-      });
-    },
-    [addLogEntry, sessionDate],
-  );
+  const queueStructuralAction = useCallback((action) => {
+    queuedStructuralActionRef.current = action;
+  }, []);
 
   const sessionLifts = useMemo(
     () => groupSessionLifts(parsedData, sessionDate, deletedRowIndices),
@@ -150,15 +123,9 @@ export function useLogSheetSync({
   // deliberately skip mutate() to avoid mid-session flicker (see addSet).
   useEffect(() => {
     return () => {
-      addLogEntry({
-        type: "sync",
-        label: "Log page closed",
-        detail:
-          "Calling mutate() so the dashboard picks up any sheet writes from this session.",
-      });
       mutate();
     };
-  }, [mutate, addLogEntry]);
+  }, [mutate]);
 
   // --- Sync helpers ---
   // Sync strategy note:
@@ -198,12 +165,6 @@ export function useLogSheetSync({
     structuralSavingRef.current = true;
     setIsStructuralSaving(true);
     setSyncState("saving");
-    addLogEntry({
-      type: "sync",
-      label: "Index-shift guard enabled",
-      detail:
-        "A structural sheet write is in flight, so fixed-row edits will queue until row positions settle.",
-    });
   }
 
   function markStructuralSaved() {
@@ -211,12 +172,6 @@ export function useLogSheetSync({
     setIsStructuralSaving(false);
     setSyncState("saved");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
-    addLogEntry({
-      type: "sync",
-      label: "Structural write finished",
-      detail:
-        "Row positions can be trusted again, so any queued edits may resume.",
-    });
     // Flush any queued sync that was waiting for the structural op to finish
     flushQueuedSync();
   }
@@ -226,12 +181,6 @@ export function useLogSheetSync({
     setIsStructuralSaving(false);
     setSyncState("error");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
-    addLogEntry({
-      type: "warning",
-      label: "Structural write failed",
-      detail:
-        "The row-shifting operation did not complete cleanly. Queued edits will be rechecked before they resume.",
-    });
     // Still attempt to flush — the structural op failed but queued edits
     // to already-confirmed rows are independent and should still land.
     flushQueuedSync();
@@ -367,14 +316,6 @@ export function useLogSheetSync({
       if (!sheetInfo?.ssid) return;
       markSaving();
       const t0 = performance.now();
-      recordDevSyncTrace({
-        op: "edit-cell",
-        phase: "request",
-        rowIndex,
-        field,
-        beforeSnapshot,
-        value,
-      });
       try {
         const res = await fetch("/api/sheet/edit-cell", {
           method: "POST",
@@ -389,16 +330,6 @@ export function useLogSheetSync({
         });
         if (!res.ok) {
           const apiError = await readApiError(res, "Update failed");
-          recordDevSyncTrace({
-            op: "edit-cell",
-            phase: "response",
-            rowIndex,
-            field,
-            ok: false,
-            code: apiError.code,
-            message: apiError.message,
-            actual: apiError.actual,
-          });
           if (apiError.code === "PRECONDITION_FAILED") {
             console.error("[sheet/edit-cell] preflight verification failed", {
               rowIndex,
@@ -406,11 +337,6 @@ export function useLogSheetSync({
               beforeSnapshot,
               actual: apiError.actual,
               message: apiError.message,
-            });
-            addLogEntry({
-              type: "warning",
-              label: "Edit blocked by index-shift protection",
-              detail: apiError.message,
             });
             toast({
               title: "Sheet changed before the edit landed",
@@ -424,35 +350,19 @@ export function useLogSheetSync({
           }
           throw new Error(apiError.message || "Update failed");
         }
-        recordDevSyncTrace({
-          op: "edit-cell",
-          phase: "response",
-          rowIndex,
-          field,
-          ok: true,
-        });
         markSaved();
       } catch (err) {
         console.error("[sheet/edit-cell] updateSet failed:", err);
-        recordDevSyncTrace({
-          op: "edit-cell",
-          phase: "response",
-          rowIndex,
-          field,
-          ok: false,
-          message: err?.message || "Update failed",
-        });
         markError();
       }
       logSheetTimings(
         "updateSet",
         [{ name: "POST /api/sheet/edit-cell", ms: performance.now() - t0 }],
         performance.now() - t0,
-        addLogEntry,
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
-    [sheetInfo?.ssid, addLogEntry, toast, recordDevSyncTrace],
+    [sheetInfo?.ssid, toast],
   );
 
   const persistSetRowUpdate = useCallback(
@@ -460,13 +370,6 @@ export function useLogSheetSync({
       if (!sheetInfo?.ssid) return;
       markSaving();
       const t0 = performance.now();
-      recordDevSyncTrace({
-        op: "edit-row",
-        phase: "request",
-        rowIndex,
-        beforeSnapshot,
-        afterSnapshot,
-      });
       try {
         const res = await fetch("/api/sheet/edit-row", {
           method: "POST",
@@ -480,15 +383,6 @@ export function useLogSheetSync({
         });
         if (!res.ok) {
           const apiError = await readApiError(res, "Update failed");
-          recordDevSyncTrace({
-            op: "edit-row",
-            phase: "response",
-            rowIndex,
-            ok: false,
-            code: apiError.code,
-            message: apiError.message,
-            actual: apiError.actual,
-          });
           if (apiError.code === "PRECONDITION_FAILED") {
             console.error("[sheet/edit-row] preflight verification failed", {
               rowIndex,
@@ -496,11 +390,6 @@ export function useLogSheetSync({
               afterSnapshot,
               actual: apiError.actual,
               message: apiError.message,
-            });
-            addLogEntry({
-              type: "warning",
-              label: "Edit blocked by index-shift protection",
-              detail: apiError.message,
             });
             toast({
               title: "Sheet changed before the edit landed",
@@ -516,23 +405,10 @@ export function useLogSheetSync({
           }
           throw new Error(apiError.message || "Update failed");
         }
-        recordDevSyncTrace({
-          op: "edit-row",
-          phase: "response",
-          rowIndex,
-          ok: true,
-        });
         clearPendingQueuedSync(tempId, snapshotToEditableFields(afterSnapshot));
         markSaved();
       } catch (err) {
         console.error("[sheet/edit-row] updateSet failed:", err);
-        recordDevSyncTrace({
-          op: "edit-row",
-          phase: "response",
-          rowIndex,
-          ok: false,
-          message: err?.message || "Update failed",
-        });
         abandonPendingQueuedSync(tempId, beforeSnapshot);
         if (tempId) void mutate();
         markError();
@@ -541,7 +417,6 @@ export function useLogSheetSync({
         "updateSet",
         [{ name: "POST /api/sheet/edit-row", ms: performance.now() - t0 }],
         performance.now() - t0,
-        addLogEntry,
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
@@ -549,9 +424,7 @@ export function useLogSheetSync({
       sheetInfo?.ssid,
       clearPendingQueuedSync,
       abandonPendingQueuedSync,
-      addLogEntry,
       toast,
-      recordDevSyncTrace,
       mutate,
     ],
   );
@@ -560,11 +433,6 @@ export function useLogSheetSync({
     if (structuralSavingRef.current) return;
     const queuedOp = queuedEditOpsRef.current.shift();
     if (!queuedOp) return;
-    addLogEntry({
-      type: "sync",
-      label: "Queued edit resumed",
-      detail: `Replaying the queued ${queuedOp.kind} edit now that row ${queuedOp.rowIndex} is safe to target again.`,
-    });
     if (queuedOp.kind === "cell") {
       void persistSetCellUpdate(
         queuedOp.rowIndex,
@@ -580,7 +448,7 @@ export function useLogSheetSync({
       queuedOp.afterSnapshot,
       queuedOp.tempId ?? null,
     );
-  }, [addLogEntry, persistSetCellUpdate, persistSetRowUpdate]);
+  }, [persistSetCellUpdate, persistSetRowUpdate]);
 
   // Drain queued sync: find the first pending set that has a real rowIndex
   // and a queued edit, then fire the verified row update. Called from the
@@ -593,11 +461,6 @@ export function useLogSheetSync({
       .flat()
       .find((s) => !s._pending && s.rowIndex && s._queuedSync);
     if (queuedSet) {
-      addLogEntry({
-        type: "sync",
-        label: "Queued optimistic row edit resumed",
-        detail: `The optimistic set now has real row ${queuedSet.rowIndex}, so its queued row update can be sent.`,
-      });
       void persistSetRowUpdate(
         queuedSet.rowIndex,
         queuedSet._serverSnapshot ??
@@ -614,7 +477,7 @@ export function useLogSheetSync({
       return;
     }
     drainQueuedEditOp();
-  }, [addLogEntry, drainQueuedEditOp, persistSetRowUpdate]);
+  }, [drainQueuedEditOp, persistSetRowUpdate]);
 
   // Also trigger on pendingSets changes (e.g. when a row gets promoted and
   // its queued edit can now fire).
@@ -672,11 +535,6 @@ export function useLogSheetSync({
         setRef.set,
       );
       if (structuralSavingRef.current) {
-        addLogEntry({
-          type: "sync",
-          label: "Queued fixed-row edit",
-          detail: `Held the ${update.field} edit for row ${rowIndex} until the structural write stops shifting rows.`,
-        });
         queuedEditOpsRef.current.push({
           kind: "cell",
           rowIndex,
@@ -699,7 +557,6 @@ export function useLogSheetSync({
       updatePendingSet,
       persistSetCellUpdate,
       persistSetRowUpdate,
-      addLogEntry,
     ],
   );
 
@@ -716,11 +573,6 @@ export function useLogSheetSync({
       let removedPendingRows = [];
 
       // Optimistically hide the row immediately
-      addLogEntry({
-        type: "ui",
-        label: "deleteSet",
-        detail: `You deleted ${set.liftType} ${set.reps}×${set.weight}${set.unitType ?? ""} from row ${set.rowIndex}.`,
-      });
       setDeletedRowIndices((prev) => new Set([...prev, set.rowIndex]));
       setPendingSetsSync((prev) => {
         let changed = false;
@@ -746,12 +598,6 @@ export function useLogSheetSync({
         getEditableSetFields(set),
         set,
       );
-      recordDevSyncTrace({
-        op: "delete-row",
-        phase: "request",
-        rowIndex: set.rowIndex,
-        beforeSnapshot,
-      });
       try {
         const tApi = performance.now();
         const res = await fetch("/api/sheet/delete-row", {
@@ -769,15 +615,6 @@ export function useLogSheetSync({
         });
         const data = await res.json();
         if (!res.ok) {
-          recordDevSyncTrace({
-            op: "delete-row",
-            phase: "response",
-            rowIndex: set.rowIndex,
-            ok: false,
-            code: data?.code || null,
-            message: data?.error || "Delete failed",
-            actual: data?.actual || null,
-          });
           if (data?.code === "PRECONDITION_FAILED") {
             console.error("[sheet/delete-row] preflight verification failed", {
               rowIndex: set.rowIndex,
@@ -787,11 +624,6 @@ export function useLogSheetSync({
               ),
               actual: data?.actual ?? null,
               message: data?.error || "Delete failed",
-            });
-            addLogEntry({
-              type: "warning",
-              label: "Delete blocked by index-shift protection",
-              detail: data?.error || "Delete failed",
             });
             setDeletedRowIndices((prev) => {
               const next = new Set(prev);
@@ -820,12 +652,6 @@ export function useLogSheetSync({
           }
           throw new Error(data.error || "Delete failed");
         }
-        recordDevSyncTrace({
-          op: "delete-row",
-          phase: "response",
-          rowIndex: set.rowIndex,
-          ok: true,
-        });
 
         // The deletedRowIndices filter keeps the row hidden in the UI while the
         // background revalidation refreshes canonical row indices. Keep the
@@ -845,13 +671,6 @@ export function useLogSheetSync({
         markStructuralSaved();
       } catch (err) {
         console.error("[sheet/delete-row] deleteSet failed:", err);
-        recordDevSyncTrace({
-          op: "delete-row",
-          phase: "response",
-          rowIndex: set.rowIndex,
-          ok: false,
-          message: err?.message || "Delete failed",
-        });
         // Restore the row on failure
         setDeletedRowIndices((prev) => {
           const next = new Set(prev);
@@ -870,22 +689,10 @@ export function useLogSheetSync({
         }
         markStructuralError();
       }
-      logSheetTimings(
-        "deleteSet",
-        timings,
-        performance.now() - t0,
-        addLogEntry,
-      );
+      logSheetTimings("deleteSet", timings, performance.now() - t0);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [
-      sheetInfo?.ssid,
-      toast,
-      addLogEntry,
-      recordDevSyncTrace,
-      setPendingSetsSync,
-      mutate,
-    ],
+    [sheetInfo?.ssid, toast, setPendingSetsSync, mutate],
   );
 
   // Add a new set to an existing lift block.
@@ -937,11 +744,6 @@ export function useLogSheetSync({
           : getAutoTimestampNotes();
 
       // Show optimistic row immediately (in-flight)
-      addLogEntry({
-        type: "ui",
-        label: "addSet",
-        detail: `You added ${reps}×${weight}${unitType} to ${liftType}. The new row will be inserted after row ${insertAfterRowIndex ?? "the session header"}.`,
-      });
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
@@ -968,14 +770,6 @@ export function useLogSheetSync({
       const timings = [];
       const t0 = performance.now();
       markStructuralSaving();
-      recordDevSyncTrace({
-        op: "insert-row",
-        phase: "request",
-        rowIndex: insertAfterRowIndex,
-        insertAfterRowIndex,
-        rows: [["", "", String(reps), `${weight}${unitType}`, notes, ""]],
-        before: beforeSnapshot,
-      });
 
       try {
         const tApi = performance.now();
@@ -1008,13 +802,6 @@ export function useLogSheetSync({
           }
           throw new Error(data.error || "Add set failed");
         }
-        recordDevSyncTrace({
-          op: "insert-row",
-          phase: "response",
-          rowIndex: data?.firstRowIndex ?? null,
-          ok: true,
-          firstRowIndex: data?.firstRowIndex ?? null,
-        });
         const { firstRowIndex } = data;
         // Promote pending → confirmed with the real rowIndex so the optimistic
         // row dedupes cleanly when parsedData catches up.
@@ -1029,13 +816,6 @@ export function useLogSheetSync({
         void mutate();
       } catch (err) {
         console.error("[sheet/insert-row] addSet failed:", err);
-        recordDevSyncTrace({
-          op: "insert-row",
-          phase: "response",
-          rowIndex: insertAfterRowIndex,
-          ok: false,
-          message: err?.message || "Add set failed",
-        });
         // Remove the failed pending row
         setPendingSetsSync((prev) => {
           const next = { ...prev };
@@ -1046,7 +826,7 @@ export function useLogSheetSync({
         });
         markStructuralError();
       }
-      logSheetTimings("addSet", timings, performance.now() - t0, addLogEntry);
+      logSheetTimings("addSet", timings, performance.now() - t0);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
     [
@@ -1056,8 +836,6 @@ export function useLogSheetSync({
       isMetric,
       setPendingSetsSync,
       promoteFirstPending,
-      addLogEntry,
-      recordDevSyncTrace,
       queueStructuralAction,
       mutate,
     ],
@@ -1151,11 +929,6 @@ export function useLogSheetSync({
       const notes = getAutoTimestampNotes();
 
       // Show optimistic lift block immediately (in-flight)
-      addLogEntry({
-        type: "ui",
-        label: "addLift",
-        detail: `You added a new ${liftType} block with ${reps}×${weight}${unitType}. It will be inserted after row ${insertAfterRowIndex ?? "the previous sheet content"} as ${hasExistingSession ? "part of the current session" : "a brand-new session"}.`,
-      });
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
@@ -1191,15 +964,6 @@ export function useLogSheetSync({
         notes,
         "",
       ];
-      recordDevSyncTrace({
-        op: "insert-row",
-        phase: "request",
-        rowIndex: insertAfterRowIndex,
-        insertAfterRowIndex,
-        rows: [row],
-        newSession: !hasExistingSession,
-        before: beforeSnapshot,
-      });
 
       try {
         const tApi = performance.now();
@@ -1231,26 +995,12 @@ export function useLogSheetSync({
           }
           throw new Error(data.error || "Failed");
         }
-        recordDevSyncTrace({
-          op: "insert-row",
-          phase: "response",
-          rowIndex: data?.firstRowIndex ?? null,
-          ok: true,
-          firstRowIndex: data?.firstRowIndex ?? null,
-        });
         const { firstRowIndex } = data;
         promoteFirstPending(liftType, firstRowIndex);
         markStructuralSaved();
         void mutate();
       } catch (err) {
         console.error("[sheet/insert-row] addLift failed:", err);
-        recordDevSyncTrace({
-          op: "insert-row",
-          phase: "response",
-          rowIndex: insertAfterRowIndex,
-          ok: false,
-          message: err?.message || "Failed",
-        });
         setPendingSetsSync((prev) => {
           const next = { ...prev };
           if (next[liftType])
@@ -1260,7 +1010,7 @@ export function useLogSheetSync({
         });
         markStructuralError();
       }
-      logSheetTimings("addLift", timings, performance.now() - t0, addLogEntry);
+      logSheetTimings("addLift", timings, performance.now() - t0);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
     [
@@ -1270,8 +1020,6 @@ export function useLogSheetSync({
       isMetric,
       setPendingSetsSync,
       promoteFirstPending,
-      addLogEntry,
-      recordDevSyncTrace,
       sessionLiftsWithPending,
       addSet,
       queueStructuralAction,
@@ -1291,14 +1039,6 @@ export function useLogSheetSync({
     if (!queuedAction) return;
 
     queuedStructuralActionRef.current = null;
-    addLogEntry({
-      type: "sync",
-      label: "Queued structural action resumed",
-      detail:
-        queuedAction.kind === "addSet"
-          ? `Resuming the queued ${queuedAction.liftType} set add after the previous structural write finished.`
-          : `Resuming the queued ${queuedAction.liftType} lift-block add after the previous structural write finished.`,
-    });
 
     if (queuedAction.kind === "addSet") {
       void addSet(queuedAction.liftType, queuedAction.prevSet ?? null);
@@ -1306,7 +1046,7 @@ export function useLogSheetSync({
     }
 
     void addLift(queuedAction.liftType);
-  }, [syncState, addSet, addLift, addLogEntry]);
+  }, [syncState, addSet, addLift]);
 
   const deleteSession = useCallback(async () => {
     if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) {
@@ -1334,22 +1074,9 @@ export function useLogSheetSync({
     const nearestAfter = rowsAfter.length ? Math.min(...rowsAfter) : null;
     const endRow = nearestAfter ? nearestAfter - 1 : maxRow;
 
-    addLogEntry({
-      type: "ui",
-      label: "deleteSession",
-      detail: `You deleted the ${sessionDate} session, which spans rows ${minRow}-${endRow} (${endRow - minRow + 1} rows).`,
-    });
     const timings = [];
     const t0 = performance.now();
     let result = { deleted: false, nextDate: null };
-    recordDevSyncTrace({
-      op: "delete-session",
-      phase: "request",
-      startRowIndex: minRow,
-      endRowIndex: endRow,
-      expectedDate: sessionDate,
-      rowIndex: minRow,
-    });
 
     try {
       const tApi = performance.now();
@@ -1369,39 +1096,9 @@ export function useLogSheetSync({
       });
       const data = await res.json();
       if (!res.ok) {
-        recordDevSyncTrace({
-          op: "delete-session",
-          phase: "response",
-          startRowIndex: minRow,
-          endRowIndex: endRow,
-          rowIndex: minRow,
-          ok: false,
-          code: data?.code || null,
-          message: data?.error || "Delete failed",
-        });
-        if (data.warning) {
-          addLogEntry({
-            type: "warning",
-            label: "Session delete warning",
-            detail: data.warning,
-          });
-        }
+        if (data.warning) console.warn("[sheet/delete]", data.warning);
         throw new Error(data.error || "Delete failed");
       }
-      recordDevSyncTrace({
-        op: "delete-session",
-        phase: "response",
-        startRowIndex: minRow,
-        endRowIndex: endRow,
-        rowIndex: minRow,
-        ok: true,
-      });
-      addLogEntry({
-        type: "sync",
-        label: "Full revalidation requested",
-        detail:
-          "Calling mutate() after the session delete so the in-memory log matches the sheet immediately.",
-      });
       await mutate();
       markStructuralSaved();
       const remainingDates = sessionDates.filter((d) => d !== sessionDate);
@@ -1413,23 +1110,9 @@ export function useLogSheetSync({
       };
     } catch (err) {
       console.error("[sheet/delete] deleteSession failed:", err);
-      recordDevSyncTrace({
-        op: "delete-session",
-        phase: "response",
-        startRowIndex: minRow,
-        endRowIndex: endRow,
-        rowIndex: minRow,
-        ok: false,
-        message: err?.message || "Delete failed",
-      });
       markStructuralError();
     }
-    logSheetTimings(
-      "deleteSession",
-      timings,
-      performance.now() - t0,
-      addLogEntry,
-    );
+    logSheetTimings("deleteSession", timings, performance.now() - t0);
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
   }, [
@@ -1439,7 +1122,6 @@ export function useLogSheetSync({
     sessionDates,
     todayIso,
     mutate,
-    addLogEntry,
   ]);
 
   return {

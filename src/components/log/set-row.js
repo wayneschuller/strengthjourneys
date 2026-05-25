@@ -617,3 +617,12 @@ export function SetRow({
     </motion.div>
   );
 }
+
+function getLogPRBadgeHref(liftType) {
+  return getLiftDetailUrl(liftType, "#lift-prs");
+}
+
+function getLogPRBadgeTooltip(liftType) {
+  if (!liftType) return "Open lift details";
+  return `Open ${liftType} details`;
+}

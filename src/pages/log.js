@@ -99,31 +99,15 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 
-// --- Big Four lifts with SVG icons ---
-
-const BIG_FOUR = [
-  {
-    name: "Back Squat",
-    icon: "/back_squat.svg",
-    slug: "progress-guide/squat",
-  },
-  {
-    name: "Bench Press",
-    icon: "/bench_press.svg",
-    slug: "progress-guide/bench-press",
-  },
-  {
-    name: "Deadlift",
-    icon: "/deadlift.svg",
-    slug: "progress-guide/deadlift",
-  },
-  {
-    name: "Strict Press",
-    icon: "/strict_press.svg",
-    slug: "progress-guide/strict-press",
-  },
-];
+const BIG_FOUR = BIG_FOUR_LIFT_META.map(
+  ({ liftType, iconSrc, progressGuidePath }) => ({
+    name: liftType,
+    icon: iconSrc,
+    slug: progressGuidePath.replace(/^\//, ""),
+  }),
+);
 
 const COACHED_LIFTS = [
   {

@@ -5,21 +5,15 @@ import {
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import {
+  BIG_FOUR_LIFT_TYPES,
+  BIG_FOUR_PROGRESS_GUIDE_PATHS,
+} from "@/lib/big-four-lifts";
 import { devLog, logTiming } from "@/lib/processing-utils";
 
-export const BIG_FOUR_LIFTS = [
-  "Back Squat",
-  "Bench Press",
-  "Deadlift",
-  "Strict Press",
-];
+export const BIG_FOUR_LIFTS = BIG_FOUR_LIFT_TYPES;
 
-const BIG_FOUR_INSIGHT_PATHS = {
-  "Back Squat": "/progress-guide/squat",
-  "Bench Press": "/progress-guide/bench-press",
-  Deadlift: "/progress-guide/deadlift",
-  "Strict Press": "/progress-guide/strict-press",
-};
+const BIG_FOUR_INSIGHT_PATHS = BIG_FOUR_PROGRESS_GUIDE_PATHS;
 
 const STRENGTH_RATING_SCORE = {
   "Physically Active": 1,

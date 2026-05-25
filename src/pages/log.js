@@ -121,6 +121,10 @@ const LOG_PAGE_STRUCTURED_DATA = [
 export default function LogSessionPage({
   staticContent = LOG_PAGE_STATIC_CONTENT,
 }) {
+  // Route-level orchestration lives here: user data, URL date state, optimistic
+  // sheet writes, and the static SEO block all meet in this page component.
+  // Keep row mutation details in useLogSheetSync and rendering details in
+  // src/components/log so this file remains a readable page surface.
   const { status: authStatus } = useSession();
   const router = useRouter();
   const isClient = useIsClient();
@@ -156,6 +160,8 @@ export default function LogSessionPage({
   }, [isClient]);
   const hasLinkedSheet = hasUserData && !isImportedData;
 
+  // Reset the in-page instrumentation panel whenever the log route mounts.
+  // The cleanup clears stale entries when the user navigates away.
   useEffect(() => {
     clearEntries();
 
@@ -167,6 +173,8 @@ export default function LogSessionPage({
   // --- SWR lifecycle logging ---
   const prevValidatingRef = useRef(isValidating);
   const revalidateStartRef = useRef(null);
+  // Record SWR validation transitions so the dev monitor shows sheet refresh
+  // timing and whether the latest provider fetch succeeded.
   useEffect(() => {
     const was = prevValidatingRef.current;
     prevValidatingRef.current = isValidating;
@@ -200,6 +208,8 @@ export default function LogSessionPage({
   }, [isValidating, isError, fetchFailed, rawRows, addLogEntry]);
 
   const prevParsedLenRef = useRef(parsedData?.length ?? null);
+  // Report parser readiness and row-count changes after sheet/demo/imported
+  // data is normalized into canonical lift rows.
   useEffect(() => {
     const prevLen = prevParsedLenRef.current;
     const newLen = parsedData?.length ?? null;
@@ -220,6 +230,8 @@ export default function LogSessionPage({
     }
   }, [parsedData?.length, addLogEntry]);
 
+  // Mirror the latest provider sync timestamp into instrumentation so writes
+  // can be correlated with the last successful refresh.
   useEffect(() => {
     if (dataSyncedAt) {
       addLogEntry({
@@ -246,7 +258,8 @@ export default function LogSessionPage({
     }) ?? false;
   const showActivityMonitor = isDev && devActivityMonitorVisible;
 
-  // Sync date from URL param after hydration
+  // Sync date from URL param after hydration.
+  // Heatmap/deep links make the router query the external date source of truth.
   useEffect(() => {
     if (router.query.date && typeof router.query.date === "string") {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- URL state is the external source of truth after hydration
@@ -309,6 +322,8 @@ export default function LogSessionPage({
   // instead of an empty state.  Skip when a date query param is present —
   // the user (or heatmap link) explicitly asked for that date.
   const hasAutoNavigatedRef = useRef(false);
+  // Demo/import views should open on a real training day instead of today's
+  // empty state, but only when the URL did not request a specific date.
   useEffect(() => {
     if (hasAutoNavigatedRef.current) return;
     // Auto-navigate for imported data or demo mode when today has no session
@@ -409,6 +424,8 @@ export default function LogSessionPage({
   // If 100% of the user's sheet data is in one unit but their SJ preference is
   // the opposite, show a one-time toast so they can switch back easily.
   const unitNudgeShown = useRef(false);
+  // Detect the all-kg/all-lb sheet case after data loads and offer a one-time
+  // preference correction before new rows are written in the other unit.
   useEffect(() => {
     if (!parsedData?.length || unitNudgeShown.current) return;
     const realEntries = parsedData.filter((e) => !e.isGoal && e.unitType);
@@ -436,6 +453,8 @@ export default function LogSessionPage({
     });
   }, [parsedData, isMetric, toast, toggleIsMetric]);
 
+  // Handle /log?startLift=... links from other pages by creating or focusing
+  // the requested lift block after auth, sheet, and parsed data are ready.
   useEffect(() => {
     if (!router.isReady) return;
     if (authStatus !== "authenticated") return;
@@ -489,6 +508,8 @@ export default function LogSessionPage({
     todayIso,
   ]);
 
+  // Keep hash navigation working after async lift blocks or optimistic rows
+  // render; the target anchor may not exist on the first route paint.
   useEffect(() => {
     if (typeof window === "undefined") return;
 

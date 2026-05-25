@@ -369,6 +369,18 @@ The project is intentionally committed to the Pages Router.
 - Unless the user explicitly asks to work on `stable`, switch to `main` before
   making changes, then keep commits and pushes flowing to `main`
 
+### Deploy Shortcut
+
+When the user says "deploy", they mean:
+
+1. Ensure the worktree is clean.
+2. Fetch `origin main stable`.
+3. Switch to `stable`.
+4. Merge `main` into `stable`.
+5. Push `stable` to origin.
+6. Switch back to `main`.
+7. Confirm the worktree is clean and report the resulting `stable` commit.
+
 ---
 
 ## 6. Agent Behavior Guidelines

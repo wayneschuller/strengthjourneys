@@ -12,6 +12,8 @@ const scopes = [
   "https://www.googleapis.com/auth/drive.file",
 ];
 const REQUIRED_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const SIGN_IN_ATTRIBUTION_COOKIE = "sj_signin_source";
+const SIGN_IN_METRICS_PREFIX = "sj:metrics:signin:daily";
 
 function getUserKvKeys(email) {
   if (!email) return { exactKey: null, normalizedKey: null };
@@ -47,6 +49,79 @@ function getGrantedScopeSupportMeta(account) {
     grantedScopes,
     hasRequiredDriveScope: grantedScopes.includes(REQUIRED_DRIVE_SCOPE),
   };
+}
+
+function normalizeSourceSlug(value, fallback) {
+  if (typeof value !== "string") return fallback;
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_/-]+/g, "_")
+    .replace(/_+/g, "_")
+    .slice(0, 80);
+  return normalized || fallback;
+}
+
+function normalizeSourcePath(value, fallback = "/unknown") {
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+
+  try {
+    const parsed = trimmed.startsWith("http")
+      ? new URL(trimmed)
+      : new URL(trimmed, "https://strengthjourneys.local");
+    const pathname = parsed.pathname || fallback;
+    return pathname.startsWith("/") ? pathname.slice(0, 120) : fallback;
+  } catch {
+    const pathOnly = trimmed.split("?")[0].split("#")[0];
+    if (!pathOnly.startsWith("/")) return fallback;
+    return pathOnly.slice(0, 120) || fallback;
+  }
+}
+
+function parseSignInSourceCookie(rawValue) {
+  if (typeof rawValue !== "string" || !rawValue.trim()) return null;
+
+  try {
+    const parsed = JSON.parse(decodeURIComponent(rawValue));
+    return {
+      cta: normalizeSourceSlug(parsed?.cta, "untagged"),
+      page: normalizeSourcePath(parsed?.page),
+      callbackUrl: normalizeSourcePath(parsed?.callbackUrl, "/"),
+    };
+  } catch {
+    let legacyValue = "untagged";
+    try {
+      legacyValue = decodeURIComponent(rawValue);
+    } catch {
+      legacyValue = rawValue;
+    }
+    return {
+      cta: normalizeSourceSlug(legacyValue, "untagged"),
+      page: "/unknown",
+      callbackUrl: "/",
+    };
+  }
+}
+
+function getUtcDateKey(now = new Date()) {
+  return now.toISOString().slice(0, 10);
+}
+
+async function incrementSignInAttributionMetric(source) {
+  if (!source?.page || !source?.cta) return;
+
+  // Privacy boundary: this KV metric is intentionally aggregate-only. It stores
+  // sanitized OAuth entry page + CTA counts, never training data, sheet IDs,
+  // full URLs, query strings, user agent details, or browsing history.
+  const metricKey = `${SIGN_IN_METRICS_PREFIX}:${getUtcDateKey()}`;
+  const field = `${source.page}|${source.cta}`;
+  try {
+    await kv.hincrby(metricKey, field, 1);
+  } catch (error) {
+    console.error("[sign-in-attribution] KV metric increment failed:", error);
+  }
 }
 
 /**
@@ -164,24 +239,29 @@ export const authOptions = {
 };
 
 // Per-request wrapper so the signIn callback can read cookies off `req`
-// (NextAuth v4 does not pass req into callbacks). We use this to attribute
-// each OAuth attempt to a specific CTA via the sj_signin_source cookie.
+// (NextAuth v4 does not pass req into callbacks). The sign-in source cookie is
+// only used as lightweight support metadata: it tells founder emails and KV
+// counters which page/CTA started OAuth, without storing app usage history or
+// any lifting/sheet contents.
 export default async function auth(req, res) {
   return NextAuth(req, res, {
     ...authOptions,
     callbacks: {
       ...authOptions.callbacks,
       async signIn({ user, account }) {
-        const signInSource = req?.cookies?.sj_signin_source
-          ? decodeURIComponent(req.cookies.sj_signin_source)
-          : null;
+        const signInSource = parseSignInSourceCookie(
+          req?.cookies?.[SIGN_IN_ATTRIBUTION_COOKIE],
+        );
         const grantedScopeMeta = getGrantedScopeSupportMeta(account);
-        await persistSignInSupportMeta(user?.email, grantedScopeMeta);
+        await persistSignInSupportMeta(user?.email, grantedScopeMeta, signInSource);
+        await incrementSignInAttributionMetric(signInSource);
         const signInMeta = await getSignInSupportMeta(user?.email);
         await promptDeveloper("sign-in", user, {
           ...signInMeta,
           ...grantedScopeMeta,
-          signInSource,
+          signInSourceCta: signInSource?.cta || null,
+          signInSourcePage: signInSource?.page || null,
+          signInCallbackUrl: signInSource?.callbackUrl || null,
         });
         return true;
       },
@@ -221,7 +301,9 @@ const PROMPT_MESSAGES = {
         : `[SJ] Sign-in — ${name}`,
     text: [
       `${name} (${email}) signed in at ${timeStr}.`,
-      meta.signInSource ? `Sign-in source: ${meta.signInSource}` : null,
+      meta.signInSourcePage ? `Sign-in page: ${meta.signInSourcePage}` : null,
+      meta.signInSourceCta ? `Sign-in CTA: ${meta.signInSourceCta}` : null,
+      meta.signInCallbackUrl ? `Callback URL: ${meta.signInCallbackUrl}` : null,
       meta.hasRequiredDriveScope != null
         ? `Drive scope granted: ${meta.hasRequiredDriveScope ? "yes" : "no"}`
         : meta.grantedScopesKnown === false
@@ -239,6 +321,10 @@ const PROMPT_MESSAGES = {
         ? `Last sign-in seen: ${friendlyDate(meta.lastSignInAt)} (${daysAgo(meta.lastSignInAt)})`
         : null,
       meta.signInCount != null ? `Sign-in count: ${meta.signInCount}` : null,
+      meta.firstSignInPage ? `First sign-in page: ${meta.firstSignInPage}` : null,
+      meta.firstSignInCta ? `First sign-in CTA: ${meta.firstSignInCta}` : null,
+      meta.lastSignInPage ? `Last sign-in page: ${meta.lastSignInPage}` : null,
+      meta.lastSignInCta ? `Last sign-in CTA: ${meta.lastSignInCta}` : null,
       meta.connectedAt ? `Connected at: ${friendlyDate(meta.connectedAt)}` : null,
       meta.lastSeenAt
         ? `Last seen: ${friendlyDate(meta.lastSeenAt)} (${daysAgo(meta.lastSeenAt)})`
@@ -447,6 +533,10 @@ async function getSignInSupportMeta(email) {
       lastSignInAt: record?.lastSignInAt || null,
       signInCount:
         typeof record?.signInCount === "number" ? record.signInCount : null,
+      firstSignInPage: record?.firstSignInPage || null,
+      firstSignInCta: record?.firstSignInCta || null,
+      lastSignInPage: record?.lastSignInPage || null,
+      lastSignInCta: record?.lastSignInCta || null,
     };
   } catch (error) {
     return {
@@ -455,7 +545,7 @@ async function getSignInSupportMeta(email) {
   }
 }
 
-async function persistSignInSupportMeta(email, grantedScopeMeta) {
+async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
   if (!email) return;
 
   const { exactKey, normalizedKey } = getUserKvKeys(email);
@@ -478,6 +568,20 @@ async function persistSignInSupportMeta(email, grantedScopeMeta) {
     lastSignInAt: nowIso,
     signInCount: currentCount + 1,
   };
+
+  // Privacy boundary: per-user KV keeps only first/last OAuth entry metadata so
+  // support emails have context. It must not become a clickstream, browsing
+  // profile, or storage for training data / Google Sheet contents.
+  if (signInSource?.page) {
+    nextRecord.firstSignInPage =
+      existingRecord.firstSignInPage || signInSource.page;
+    nextRecord.lastSignInPage = signInSource.page;
+  }
+  if (signInSource?.cta) {
+    nextRecord.firstSignInCta =
+      existingRecord.firstSignInCta || signInSource.cta;
+    nextRecord.lastSignInCta = signInSource.cta;
+  }
 
   if (grantedScopeMeta.grantedScopesKnown) {
     nextRecord.lastGrantedScopes = grantedScopeMeta.grantedScopes || [];

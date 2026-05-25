@@ -73,15 +73,15 @@ export function useLogSheetSync({
     };
   }, []);
 
-  // Wrapper that keeps pendingSetsRef synchronously in sync.
-  // Using the setState callback form means the updater runs synchronously inside
-  // React's reconciler, so the ref is always current before the next render.
+  // Wrapper that keeps pendingSetsRef synchronously in sync. Queue draining reads
+  // the ref immediately after state changes, so update it before scheduling the
+  // React state update.
   const setPendingSetsSync = useCallback((updater) => {
-    setPendingSets((prev) => {
-      const next = typeof updater === "function" ? updater(prev) : updater;
-      pendingSetsRef.current = next;
-      return next;
-    });
+    const next =
+      typeof updater === "function" ? updater(pendingSetsRef.current) : updater;
+    pendingSetsRef.current = next;
+    setPendingSets(next);
+    return next;
   }, []);
 
   const resetOptimisticSessionState = useCallback(() => {
@@ -302,6 +302,47 @@ export function useLogSheetSync({
     [setPendingSetsSync],
   );
 
+  const abandonPendingQueuedSync = useCallback(
+    (tempId, fallbackSnapshot = null) => {
+      if (!tempId) return;
+      const fallbackFields = fallbackSnapshot
+        ? snapshotToEditableFields(fallbackSnapshot)
+        : null;
+
+      setPendingSetsSync((prev) => {
+        let changed = false;
+        const next = {};
+        for (const [lt, sets] of Object.entries(prev)) {
+          next[lt] = sets.map((s) => {
+            if (s._tempId !== tempId) return s;
+            if (!s._queuedSync && !fallbackFields) return s;
+            changed = true;
+
+            if (!fallbackFields) {
+              return {
+                ...s,
+                _queuedSync: false,
+              };
+            }
+
+            return {
+              ...s,
+              reps: fallbackFields.reps,
+              weight: fallbackFields.weight,
+              unitType: fallbackFields.unitType ?? s.unitType,
+              notes: fallbackFields.notes ?? "",
+              URL: fallbackFields.url ?? "",
+              _queuedSync: false,
+              _serverSnapshot: fallbackSnapshot,
+            };
+          });
+        }
+        return changed ? next : prev;
+      });
+    },
+    [setPendingSetsSync],
+  );
+
   // Promote the first still-pending row for a liftType to confirmed with a real rowIndex.
   const promoteFirstPending = useCallback(
     (liftType, rowIndex) => {
@@ -468,6 +509,8 @@ export function useLogSheetSync({
               variant: "destructive",
               duration: 8000,
             });
+            abandonPendingQueuedSync(tempId, beforeSnapshot);
+            if (tempId) void mutate();
             markError();
             return;
           }
@@ -490,6 +533,8 @@ export function useLogSheetSync({
           ok: false,
           message: err?.message || "Update failed",
         });
+        abandonPendingQueuedSync(tempId, beforeSnapshot);
+        if (tempId) void mutate();
         markError();
       }
       logSheetTimings(
@@ -503,9 +548,11 @@ export function useLogSheetSync({
     [
       sheetInfo?.ssid,
       clearPendingQueuedSync,
+      abandonPendingQueuedSync,
       addLogEntry,
       toast,
       recordDevSyncTrace,
+      mutate,
     ],
   );
 

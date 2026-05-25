@@ -67,7 +67,7 @@ const GettingStartedCard = dynamic(
     ),
   },
 );
-import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
@@ -320,32 +320,14 @@ const moreTools = [
   },
 ];
 
-// The main barbell lifts are the main lifts that have dedicated pages
-// Defined again here for static generation SEO benefits
-const mainBarbellLifts = [
-  {
-    slug: "progress-guide/squat",
-    liftType: "Back Squat",
-    liftDescription:
-      "A barbell squat to full depth, resting across the upper back.",
-  },
-  {
-    slug: "progress-guide/bench-press",
-    liftType: "Bench Press",
-    liftDescription:
-      "A horizontal press from the chest while lying on a bench.",
-  },
-  {
-    slug: "progress-guide/deadlift",
-    liftType: "Deadlift",
-    liftDescription: "Lifting a barbell from the floor to a standing lockout.",
-  },
-  {
-    slug: "progress-guide/strict-press",
-    liftType: "Strict Press",
-    liftDescription: "A standing overhead press with no leg drive.",
-  },
-];
+const mainBarbellLifts = BIG_FOUR_LIFT_META.map(
+  ({ liftType, progressGuidePath, homepageDescription, iconSrc }) => ({
+    slug: progressGuidePath.replace(/^\//, ""),
+    liftType,
+    liftDescription: homepageDescription,
+    iconSrc,
+  }),
+);
 
 /**
  * Home page and landing page for Strength Journeys. Shows the hero section or user dashboard,

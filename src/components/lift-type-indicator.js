@@ -1,13 +1,9 @@
 
 import Link from "next/link";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { BIG_FOUR_PROGRESS_GUIDE_PATHS } from "@/lib/big-four-lifts";
 
-export const bigFourURLs = {
-  "Back Squat": "/progress-guide/squat",
-  "Bench Press": "/progress-guide/bench-press",
-  Deadlift: "/progress-guide/deadlift",
-  "Strict Press": "/progress-guide/strict-press",
-};
+export const bigFourURLs = BIG_FOUR_PROGRESS_GUIDE_PATHS;
 
 /**
  * Returns the best detail-page URL for any lift type.

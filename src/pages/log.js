@@ -99,31 +99,15 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 
-// --- Big Four lifts with SVG icons ---
-
-const BIG_FOUR = [
-  {
-    name: "Back Squat",
-    icon: "/back_squat.svg",
-    slug: "progress-guide/squat",
-  },
-  {
-    name: "Bench Press",
-    icon: "/bench_press.svg",
-    slug: "progress-guide/bench-press",
-  },
-  {
-    name: "Deadlift",
-    icon: "/deadlift.svg",
-    slug: "progress-guide/deadlift",
-  },
-  {
-    name: "Strict Press",
-    icon: "/strict_press.svg",
-    slug: "progress-guide/strict-press",
-  },
-];
+const BIG_FOUR = BIG_FOUR_LIFT_META.map(
+  ({ liftType, iconSrc, progressGuidePath }) => ({
+    name: liftType,
+    icon: iconSrc,
+    slug: progressGuidePath.replace(/^\//, ""),
+  }),
+);
 
 const COACHED_LIFTS = [
   {
@@ -526,22 +510,20 @@ export default function LogSessionPage() {
   }, [parsedData, sessionDate, deletedRowIndices]);
 
   // When parsedData catches up, remove confirmed (non-pending) rows from pendingSets
-  // to avoid doubling once the real data arrives.
+  // to avoid doubling once the real data arrives. Match more than rowIndex here:
+  // stale SWR data can still contain the pre-insert row at the new rowIndex
+  // for a short window after Google Sheets has accepted an insert.
   useEffect(() => {
-    const realRowIndices = new Set(
-      Object.values(sessionLifts).flatMap((sets) =>
-        sets.map((s) => s.rowIndex).filter(Boolean),
-      ),
-    );
     setPendingSetsSync((prev) => {
       let changed = false;
       const next = {};
       for (const [lt, sets] of Object.entries(prev)) {
-        // Keep rows that are still in-flight OR whose rowIndex isn't in real data yet
+        // Keep rows that are still in-flight OR whose real row has not actually
+        // arrived in parsedData yet.
         const remaining = sets.filter(
           (s) =>
             !deletedRowIndices.has(s.rowIndex) &&
-            (s._pending || !realRowIndices.has(s.rowIndex)),
+            (s._pending || !hasMatchingRealSetForPendingSet(s, sessionLifts)),
         );
         if (remaining.length !== sets.length) changed = true;
         if (remaining.length) next[lt] = remaining;
@@ -551,19 +533,15 @@ export default function LogSessionPage() {
   }, [sessionLifts, deletedRowIndices, setPendingSetsSync]);
 
   // Merge real data with optimistic pending sets.
-  // Deduplication: skip confirmed-pending rows whose rowIndex is already in sessionLifts.
+  // Deduplication: skip confirmed-pending rows only after the matching real set
+  // has reached sessionLifts. Row index alone is not enough during insert races.
   const sessionLiftsWithPending = useMemo(() => {
-    const realRowIndices = new Set(
-      Object.values(sessionLifts).flatMap((sets) =>
-        sets.map((s) => s.rowIndex).filter(Boolean),
-      ),
-    );
     const merged = { ...sessionLifts };
     for (const [lt, sets] of Object.entries(pendingSets)) {
       const unique = sets.filter(
         (s) =>
           !deletedRowIndices.has(s.rowIndex) &&
-          (s._pending || !realRowIndices.has(s.rowIndex)),
+          (s._pending || !hasMatchingRealSetForPendingSet(s, sessionLifts)),
       );
       if (unique.length) {
         merged[lt] = [...(merged[lt] ?? []), ...unique];
@@ -2784,6 +2762,36 @@ function snapshotToEditableFields(snapshot) {
     notes: snapshot?.notes ?? "",
     url: snapshot?.url ?? "",
   };
+}
+
+function hasMatchingRealSetForPendingSet(pendingSet, sessionLifts) {
+  if (!pendingSet?.rowIndex) return false;
+
+  return Object.values(sessionLifts).some((sets) =>
+    sets.some((realSet) => doSetsRepresentSameLoggedSet(pendingSet, realSet)),
+  );
+}
+
+function doSetsRepresentSameLoggedSet(pendingSet, realSet) {
+  if (!pendingSet?.rowIndex || pendingSet.rowIndex !== realSet?.rowIndex) {
+    return false;
+  }
+
+  return (
+    pendingSet.date === realSet.date &&
+    pendingSet.liftType === realSet.liftType &&
+    Number(pendingSet.reps) === Number(realSet.reps) &&
+    Number(pendingSet.weight) === Number(realSet.weight) &&
+    (pendingSet.unitType ?? "") === (realSet.unitType ?? "") &&
+    normalizeOptionalSheetText(pendingSet.notes) ===
+      normalizeOptionalSheetText(realSet.notes) &&
+    normalizeOptionalSheetText(pendingSet.URL) ===
+      normalizeOptionalSheetText(realSet.URL)
+  );
+}
+
+function normalizeOptionalSheetText(value) {
+  return String(value ?? "").trim();
 }
 
 function getCellValueForField(field, fields) {

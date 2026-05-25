@@ -1,15 +1,13 @@
 // Shared normalization utilities for all import parsers.
 
-export const STANDARD_BIG_FOUR_LIFT_TYPES = [
-  "Back Squat",
-  "Bench Press",
-  "Deadlift",
-  "Strict Press",
-];
+import {
+  BIG_FOUR_LIFT_TYPES,
+  BIG_FOUR_LIFT_TYPE_SET,
+} from "@/lib/big-four-lifts";
 
-export const STANDARD_BIG_FOUR_LIFT_TYPE_SET = new Set(
-  STANDARD_BIG_FOUR_LIFT_TYPES,
-);
+export const STANDARD_BIG_FOUR_LIFT_TYPES = BIG_FOUR_LIFT_TYPES;
+
+export const STANDARD_BIG_FOUR_LIFT_TYPE_SET = BIG_FOUR_LIFT_TYPE_SET;
 
 const BIG_FOUR_LIFT_TYPE_ALIASES = {
   // English

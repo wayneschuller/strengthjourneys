@@ -1,5 +1,8 @@
 import { format } from "date-fns";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import {
+  BIG_FOUR_LIFT_TYPES as CANONICAL_BIG_FOUR_LIFT_TYPES,
+} from "@/lib/big-four-lifts";
 
 // =============================================================================
 // UNIT TYPE SYSTEM — HOW IT WORKS
@@ -174,12 +177,7 @@ export const coreLiftTypes = [
 ];
 
 // Big Four lifts in canonical order (used for year recap PR prioritization)
-export const BIG_FOUR_LIFT_TYPES = [
-  "Back Squat",
-  "Bench Press",
-  "Deadlift",
-  "Strict Press",
-];
+export const BIG_FOUR_LIFT_TYPES = CANONICAL_BIG_FOUR_LIFT_TYPES;
 
 // Rep schemes to prioritize in year recap (1RM, 3RM, 5RM)
 export const PRIORITY_REP_SCHEMES = [1, 3, 5];

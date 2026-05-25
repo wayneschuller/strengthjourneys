@@ -812,13 +812,6 @@ const COFFEE_WIN_NUDGES = [
   "Strong month. No ads, no tracking, just one dev and a coffee habit.",
 ];
 
-const BIG_FOUR_LIFT_URLS = {
-  "Back Squat": "/progress-guide/squat",
-  "Bench Press": "/progress-guide/bench-press",
-  Deadlift: "/progress-guide/deadlift",
-  "Strict Press": "/progress-guide/strict-press",
-};
-
 const HIGHLIGHT_REVEAL_DELAY_MS = 650;
 const HIGHLIGHT_ROW_STAGGER_MS = 170;
 const CONFETTI_AFTER_HIGHLIGHT_DELAY_MS = 200;
@@ -1784,7 +1777,7 @@ function BigFourCriteriaTable({
           isCurrentMonthView,
         });
         const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType);
-        const liftInsightHref = BIG_FOUR_LIFT_URLS[liftType];
+        const liftInsightHref = getLiftDetailUrl(liftType);
 
         return (
           <motion.div

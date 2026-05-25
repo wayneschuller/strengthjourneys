@@ -112,6 +112,9 @@ export function LiftBlock({
         ]),
       ),
   );
+  const canEditSets = !previewMode && typeof onUpdateSet === "function";
+  const canDeleteSets = !previewMode && typeof onDeleteSet === "function";
+  const canAddSets = !previewMode && typeof onAddSet === "function";
   const trainingAgeYears = useMemo(
     () => getTrainingAgeYears(parsedData, sessionDate),
     [parsedData, sessionDate],
@@ -179,7 +182,8 @@ export function LiftBlock({
       (sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0),
       0,
     );
-    if (optimisticTonnage === tonnageStats.currentLiftTonnage) return tonnageStats;
+    if (optimisticTonnage === tonnageStats.currentLiftTonnage)
+      return tonnageStats;
     const { avgLiftTonnage } = tonnageStats;
     return {
       ...tonnageStats,
@@ -195,27 +199,30 @@ export function LiftBlock({
   }, [tonnageStats, optimisticSetsForStrength]);
 
   const openCustomSetDraft = useCallback(() => {
+    if (!canAddSets) return;
     setCustomDraftSeed((prev) => prev + 1);
     setCustomDraftConfig({
       unitType: lastRealSet?.unitType ?? (isMetric ? "kg" : "lb"),
       notes: getAutoTimestampNotes(),
     });
-  }, [isMetric, lastRealSet?.unitType]);
+  }, [canAddSets, isMetric, lastRealSet?.unitType]);
 
   const handleSuggestedAddSet = useCallback(
     async (setFields) => {
+      if (!canAddSets) return;
       setCustomDraftConfig(null);
       await onAddSet(setFields);
     },
-    [onAddSet],
+    [canAddSets, onAddSet],
   );
 
   const handleCustomDraftCommit = useCallback(
     async (setFields) => {
+      if (!canAddSets) return;
       setCustomDraftConfig(null);
       await onAddSet(setFields);
     },
-    [onAddSet],
+    [canAddSets, onAddSet],
   );
 
   // Read warmup settings from localStorage (shared with warmup calculator page)
@@ -261,7 +268,8 @@ export function LiftBlock({
   );
 
   // Find the set index with the heaviest e1RM for the strength badge
-  const canShowStrength = (hasUserData || isDemoMode || isImportedData) && hasBioData;
+  const canShowStrength =
+    (hasUserData || isDemoMode || isImportedData) && hasBioData;
   const { bestE1rmIndex, bestE1rmValue } = useMemo(() => {
     if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;
@@ -557,18 +565,23 @@ export function LiftBlock({
               shouldPassiveAnimate={shouldPassiveAnimate}
               passiveDelay={passiveDelay}
               onOptimisticFieldsChange={handleOptimisticFieldsChange}
-              onUpdate={(update) =>
-                onUpdateSet(
-                  {
-                    rowIndex: set.rowIndex,
-                    tempId: set._tempId ?? null,
-                    set,
-                  },
-                  update,
-                )
+              onUpdate={
+                canEditSets
+                  ? (update) =>
+                      onUpdateSet(
+                        {
+                          rowIndex: set.rowIndex,
+                          tempId: set._tempId ?? null,
+                          set,
+                        },
+                        update,
+                      )
+                  : undefined
               }
               onDelete={
-                set._pending || !set.rowIndex ? null : () => onDeleteSet(set)
+                canDeleteSets && !set._pending && set.rowIndex
+                  ? () => onDeleteSet(set)
+                  : null
               }
               isDeleteDisabled={isStructuralSaving || isDeleteCooldownActive}
               usedSessionUrls={usedSessionUrls}
@@ -592,7 +605,7 @@ export function LiftBlock({
             />
           );
         })}
-        {!previewMode && customDraftConfig && (
+        {canAddSets && customDraftConfig && (
           <CustomSetDraftRow
             key={`custom-${liftType}-${customDraftSeed}`}
             unitType={customDraftConfig.unitType}
@@ -640,7 +653,7 @@ export function LiftBlock({
       )}
 
       {/* Add-set buttons — card footer (hidden in preview mode) */}
-      {!previewMode && (
+      {canAddSets && (
         <SmartAddButtons
           inSessionCoachState={inSessionCoachState}
           lastRealSet={lastRealSet}

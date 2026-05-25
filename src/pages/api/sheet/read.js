@@ -18,7 +18,9 @@
 //
 // Post-response side effect: updates a KV record (sj:user:<email>) to track
 // last-seen time and trigger a one-time "returning user" founder notification
-// within 7 days of first connection and after a 12-hour gap.
+// within 7 days of first connection and after a 12-hour gap. It also keeps
+// lightweight sheet-read date/count metadata for support and Google Sheets API
+// usage optimisation; it must not store lift data or sheet contents.
 
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
@@ -132,13 +134,39 @@ export default async function handler(req, res) {
       const record = (await kv.get(kvKey)) || {};
       const now = new Date();
       const nowIso = now.toISOString();
+      const todayKey = nowIso.slice(0, 10);
       const meta = { rowCount: data.values?.length ?? 0 };
+      const sheetReadDays =
+        record.sheetReadDays && typeof record.sheetReadDays === "object"
+          ? record.sheetReadDays
+          : {};
+      const currentDayReads =
+        typeof sheetReadDays[todayKey] === "number" &&
+        Number.isFinite(sheetReadDays[todayKey])
+          ? sheetReadDays[todayKey]
+          : 0;
+      const currentTotalReads =
+        typeof record.sheetReadCount === "number" &&
+        Number.isFinite(record.sheetReadCount)
+          ? record.sheetReadCount
+          : 0;
 
       const nextRecord = {
         ...record,
         connectedAt: record.connectedAt || nowIso,
         connectionMethod: record.connectionMethod || "manual_picker",
         lastSeenAt: nowIso,
+        lastSheetReadAt: nowIso,
+        lastSheetReadDate: todayKey,
+        sheetReadCount: currentTotalReads + 1,
+        // Privacy boundary: this is per-user support metadata for debugging
+        // data-loading issues and optimising Google Sheets API usage. Store
+        // successful read dates/counts only; never store lift data, sheet
+        // contents, full request history, or anything read from the sheet.
+        sheetReadDays: {
+          ...sheetReadDays,
+          [todayKey]: currentDayReads + 1,
+        },
       };
 
       // Missing KV on a successful sheet read usually means a pre-KV legacy user

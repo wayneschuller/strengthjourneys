@@ -31,6 +31,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
 function getLogHref(date) {
   return date ? `/log?date=${date}` : "/log";
@@ -74,8 +75,9 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   }, [getColor, liftType]);
 
   const topLifts = topLiftsByTypeAndReps?.[liftType];
+  const isBodyweightLoadChart = isBodyweightLoadLift(liftType);
 
-  const { chartData, bestLift, displayUnit, usesBodyweightEstimate } = useMemo(() => {
+  const { chartData, bestLift, displayUnit } = useMemo(() => {
     let bestE1RMWeight = 0;
     let best = null;
     let nativeUnit = "lb";
@@ -83,7 +85,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
     let data = [];
     const effectiveBodyWeight = bodyWeightIsDefault ? null : bodyWeight;
     const bodyWeightUnitType = isMetric ? "kg" : "lb";
-    const usesBodyweight = isBodyweightLoadLift(liftType) && !!effectiveBodyWeight;
 
     if (parsedData && topLifts) {
       for (let reps = 0; reps < 10; reps++) {
@@ -145,41 +146,57 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       chartData: data,
       bestLift: best,
       displayUnit: isMetric ? "kg" : "lb",
-      usesBodyweightEstimate: usesBodyweight,
     };
-  }, [parsedData, topLifts, e1rmFormula, isMetric, liftType, bodyWeight, bodyWeightIsDefault]);
+  }, [
+    parsedData,
+    topLifts,
+    e1rmFormula,
+    isMetric,
+    liftType,
+    bodyWeight,
+    bodyWeightIsDefault,
+  ]);
 
   return (
     <Card className="shadow-lg md:mx-2">
       <CardHeader>
-        <CardTitle className="flex flex-wrap items-center gap-2">
-          {isDemoMode && <DemoModeBadge size="sm" />}
-          {liftType} Strength Potential By Rep Range
-        </CardTitle>
-        <CardDescription>
-          {bestLift
-            ? (
-              <>
-                Your best set:{" "}
-                <Link
-                  href={getLogHref(bestLift.date)}
-                  className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
-                >
-                  {bestLift.reps}@{getDisplayWeight(bestLift, isMetric).value}
-                  {getDisplayWeight(bestLift, isMetric).unit} ({formatDate(bestLift.date)})
-                </Link>
-              </>
-            )
-            : "No data yet"}
-          {isValidating && (
-            <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex flex-wrap items-center gap-2">
+              {isDemoMode && <DemoModeBadge size="sm" />}
+              {liftType} Strength Potential By Rep Range
+            </CardTitle>
+            <CardDescription>
+              {bestLift
+                ? (
+                  <>
+                    Your best set:{" "}
+                    <Link
+                      href={getLogHref(bestLift.date)}
+                      className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
+                    >
+                      {bestLift.reps}@{getDisplayWeight(bestLift, isMetric).value}
+                      {getDisplayWeight(bestLift, isMetric).unit} ({formatDate(bestLift.date)})
+                    </Link>
+                  </>
+                )
+                : "No data yet"}
+              {isValidating && (
+                <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+              )}
+            </CardDescription>
+          </div>
+          {isBodyweightLoadChart && (
+            <div className="shrink-0 self-end sm:ml-4 sm:self-start">
+              <AthleteBioInlineSettings
+                bodyweightOnly
+                compactBodyweightSummary
+                expandDirection="down"
+                defaultBioPrompt="Set bodyweight"
+              />
+            </div>
           )}
-          {usesBodyweightEstimate && (
-            <span className="block">
-              Bodyweight-loaded estimates use your current bodyweight.
-            </span>
-          )}
-        </CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading || !topLiftsByTypeAndReps ? (

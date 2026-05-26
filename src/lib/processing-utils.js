@@ -1,5 +1,10 @@
+/**
+ * Shared lifting-data aggregation utilities used after parsing user history.
+ * Keep these functions schema-aware: most downstream charts and summaries
+ * consume their derived PR, tonnage, and E1RM structures directly.
+ */
 import { format } from "date-fns";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { estimateE1RM, estimateLiftE1RM } from "@/lib/estimate-e1rm";
 import {
   BIG_FOUR_LIFT_TYPES as CANONICAL_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/big-four-lifts";
@@ -1081,7 +1086,12 @@ export function getAnalyzedSessionLifts(
 }
 
 // Find the best e1RM across all rep schemes inside topLiftsByTypeAndReps
-export function findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula) {
+export function findBestE1RM(
+  liftType,
+  topLiftsByTypeAndReps,
+  e1rmFormula,
+  e1rmOptions = {},
+) {
   const topLifts = topLiftsByTypeAndReps[liftType];
   let bestE1RMWeight = 0;
   let bestLift = null;
@@ -1095,16 +1105,20 @@ export function findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula) {
   for (let reps = 0; reps < 10; reps++) {
     if (topLifts[reps]?.[0]) {
       const lift = topLifts[reps][0];
-      const currentE1RMweight = estimateE1RM(
-        reps + 1,
-        lift.weight,
-        e1rmFormula,
-      );
+      const currentE1RMweight = estimateLiftE1RM({
+        reps: reps + 1,
+        weight: lift.weight,
+        equation: e1rmFormula,
+        liftType,
+        bodyWeight: e1rmOptions.bodyWeight,
+        bodyWeightUnitType: e1rmOptions.bodyWeightUnitType,
+        liftUnitType: lift.unitType,
+      });
       if (currentE1RMweight > bestE1RMWeight) {
         bestE1RMWeight = currentE1RMweight;
         bestLift = lift;
+        if (lift.unitType) unitType = lift.unitType;
       }
-      if (lift.unitType) unitType = lift.unitType;
     }
   }
 

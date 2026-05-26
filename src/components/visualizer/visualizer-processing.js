@@ -1,4 +1,8 @@
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+/**
+ * Converts parsed lift history into Recharts-ready E1RM time-series data.
+ * Formula handling stays here so full visualizer and mini charts agree.
+ */
+import { estimateLiftE1RM } from "@/lib/estimate-e1rm";
 import { devLog, logTiming, getDisplayWeight } from "@/lib/processing-utils";
 
 export function processVisualizerData(
@@ -8,6 +12,8 @@ export function processVisualizerData(
   timeRange,
   showAllData = false,
   isMetric = false,
+  bodyWeight = null,
+  bodyWeightIsDefault = true,
 ) {
   if (!Array.isArray(parsedData) || parsedData.length === 0) {
     return { dataset: [], weightMax: 0, weightMin: 0 };
@@ -35,7 +41,17 @@ export function processVisualizerData(
       }
 
       const { value: displayWeight, unit: displayUnit } = getDisplayWeight(lift, isMetric);
-      const oneRepMax = Math.round(estimateE1RM(reps, displayWeight, e1rmFormula));
+      const oneRepMax = Math.round(
+        estimateLiftE1RM({
+          reps,
+          weight: displayWeight,
+          equation: e1rmFormula,
+          liftType,
+          bodyWeight: bodyWeightIsDefault ? null : bodyWeight,
+          bodyWeightUnitType: isMetric ? "kg" : "lb",
+          liftUnitType: displayUnit,
+        }),
+      );
 
       if (!dataMap.has(date)) {
         dataMap.set(date, {});

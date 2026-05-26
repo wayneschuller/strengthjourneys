@@ -1,4 +1,10 @@
-/** @format */
+/**
+ * Shared one-rep-max estimate helpers.
+ *
+ * Most lifts use the logged weight as the full load. Bodyweight-loaded movements
+ * use logged weight as external load, so current bodyweight is added for formula
+ * math and subtracted again before displaying external-load projections.
+ */
 
 // FIXME: add more formulae from the Wikipedia article?
 export const e1rmFormulae = [
@@ -10,6 +16,145 @@ export const e1rmFormulae = [
   "OConner",
   "Wathan",
 ];
+
+export const BODYWEIGHT_LOAD_LIFT_TYPES = [
+  "Chin-up",
+  "Chin Up",
+  "Pull-up",
+  "Pull Up",
+  "Dip",
+  "Ring Dip",
+  "Muscle-up",
+  "Muscle Up",
+];
+
+const BODYWEIGHT_LOAD_LIFT_KEYS = new Set([
+  "chin up",
+  "chinup",
+  "chin ups",
+  "chinups",
+  "pull up",
+  "pullup",
+  "pull ups",
+  "pullups",
+  "dip",
+  "dips",
+  "ring dip",
+  "ring dips",
+  "bar dip",
+  "bar dips",
+  "parallel bar dip",
+  "parallel bar dips",
+  "muscle up",
+  "muscleup",
+  "muscle ups",
+  "muscleups",
+]);
+
+const LB_PER_KG = 2.2046;
+
+function normalizeBodyweightLiftKey(liftType) {
+  return String(liftType || "")
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\bweighted\b/g, " ")
+    .replace(/\bbodyweight\b|\bbw\b/g, " ")
+    .replace(/[-_/]+/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeUnitType(unitType) {
+  return unitType === "kg" ? "kg" : "lb";
+}
+
+function convertWeightUnit(weight, fromUnitType, toUnitType) {
+  const numericWeight = Number(weight);
+  if (!Number.isFinite(numericWeight)) return null;
+
+  const from = normalizeUnitType(fromUnitType);
+  const to = normalizeUnitType(toUnitType);
+  if (from === to) return numericWeight;
+  return from === "kg" ? numericWeight * LB_PER_KG : numericWeight / LB_PER_KG;
+}
+
+export function isBodyweightLoadLift(liftType) {
+  return BODYWEIGHT_LOAD_LIFT_KEYS.has(normalizeBodyweightLiftKey(liftType));
+}
+
+export function getBodyWeightForLiftUnit({
+  bodyWeight,
+  bodyWeightUnitType = "lb",
+  liftUnitType = "lb",
+}) {
+  if (!bodyWeight) return null;
+  return convertWeightUnit(bodyWeight, bodyWeightUnitType, liftUnitType);
+}
+
+export function estimateLiftE1RM({
+  reps,
+  weight,
+  equation,
+  liftType,
+  bodyWeight,
+  bodyWeightUnitType = "lb",
+  liftUnitType = "lb",
+}) {
+  const numericWeight = Number(weight);
+  if (!Number.isFinite(numericWeight)) return 0;
+
+  if (!isBodyweightLoadLift(liftType)) {
+    return estimateE1RM(reps, numericWeight, equation);
+  }
+
+  const bodyWeightForLift = getBodyWeightForLiftUnit({
+    bodyWeight,
+    bodyWeightUnitType,
+    liftUnitType,
+  });
+
+  if (!bodyWeightForLift || bodyWeightForLift <= 0) {
+    return estimateE1RM(reps, numericWeight, equation);
+  }
+
+  return Math.round(
+    estimateE1RM(reps, numericWeight + bodyWeightForLift, equation) -
+      bodyWeightForLift,
+  );
+}
+
+export function estimateLiftWeightForReps({
+  e1rm,
+  reps,
+  equation,
+  liftType,
+  bodyWeight,
+  bodyWeightUnitType = "lb",
+  liftUnitType = "lb",
+}) {
+  const numericE1RM = Number(e1rm);
+  if (!Number.isFinite(numericE1RM)) return 0;
+
+  if (!isBodyweightLoadLift(liftType)) {
+    return estimateWeightForReps(numericE1RM, reps, equation);
+  }
+
+  const bodyWeightForLift = getBodyWeightForLiftUnit({
+    bodyWeight,
+    bodyWeightUnitType,
+    liftUnitType,
+  });
+
+  if (!bodyWeightForLift || bodyWeightForLift <= 0) {
+    return estimateWeightForReps(numericE1RM, reps, equation);
+  }
+
+  return Math.round(
+    estimateWeightForReps(numericE1RM + bodyWeightForLift, reps, equation) -
+      bodyWeightForLift,
+  );
+}
 
 // Return a rounded 1 rep max
 // For theory see: https://en.wikipedia.org/wiki/One-repetition_maximum

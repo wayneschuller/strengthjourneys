@@ -6,7 +6,7 @@ import { useId, useMemo } from "react";
 import Link from "next/link";
 import { useLocalStorage } from "usehooks-ts";
 import { Bar, BarChart, XAxis, YAxis, Legend } from "recharts";
-import { LoaderCircle } from "lucide-react";
+import { Info, LoaderCircle } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -166,23 +166,36 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
               {isDemoMode && <DemoModeBadge size="sm" />}
               {liftType} Strength Potential By Rep Range
             </CardTitle>
-            <CardDescription>
-              {bestLift
-                ? (
-                  <>
-                    Your best set:{" "}
-                    <Link
-                      href={getLogHref(bestLift.date)}
-                      className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
-                    >
-                      {bestLift.reps}@{getDisplayWeight(bestLift, isMetric).value}
-                      {getDisplayWeight(bestLift, isMetric).unit} ({formatDate(bestLift.date)})
-                    </Link>
-                  </>
-                )
-                : "No data yet"}
-              {isValidating && (
-                <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+            <CardDescription className="space-y-1">
+              <div>
+                {bestLift
+                  ? (
+                    <>
+                      Your best set:{" "}
+                      <Link
+                        href={getLogHref(bestLift.date)}
+                        className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
+                      >
+                        {bestLift.reps}@{getDisplayWeight(bestLift, isMetric).value}
+                        {getDisplayWeight(bestLift, isMetric).unit} ({formatDate(bestLift.date)})
+                      </Link>
+                    </>
+                  )
+                  : "No data yet"}
+                {isValidating && (
+                  <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+                )}
+              </div>
+              {isBodyweightLoadChart && (
+                <div className="flex max-w-3xl items-start gap-2 text-xs leading-relaxed">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-foreground/70" aria-hidden="true" />
+                  <p>
+                    {bodyWeightIsDefault
+                      ? "Set your bodyweight to calculate potential from total system load. "
+                      : "This chart treats logged weight as added load. It adds your bodyweight for the E1RM formula, then subtracts bodyweight again to show projected added load. "}
+                    Bodyweight-only sets should be logged as 0{displayUnit}.
+                  </p>
+                </div>
               )}
             </CardDescription>
           </div>

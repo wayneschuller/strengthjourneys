@@ -1,4 +1,7 @@
-
+/**
+ * Full multi-lift E1RM visualizer with lift selection, time range controls,
+ * and shared processing for historical training charts.
+ */
 import { useMemo, useEffect, useState } from "react";
 import {
   SidePanelSelectLiftsButton,
@@ -92,7 +95,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const { isDemoMode, parsedData, liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
-  const { isMetric } = useAthleteBio();
+  const { isMetric, bodyWeight, bodyWeightIsDefault } = useAthleteBio();
 
   const [selectedLiftTypes, setSelectedLiftTypes] = useState(BIG_FOUR_LIFT_TYPES);
 
@@ -174,8 +177,19 @@ export function VisualizerShadcn({ setHighlightDate }) {
         rangeFirstDate,
         showAllData,
         isMetric,
+        bodyWeight,
+        bodyWeightIsDefault,
       ),
-    [parsedData, e1rmFormula, selectedLiftTypes, rangeFirstDate, showAllData, isMetric],
+    [
+      parsedData,
+      e1rmFormula,
+      selectedLiftTypes,
+      rangeFirstDate,
+      showAllData,
+      isMetric,
+      bodyWeight,
+      bodyWeightIsDefault,
+    ],
   );
 
   // devLog("Rendering <VisualizerShadcn />...");

@@ -13,6 +13,7 @@ import {
 } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { isBodyweightLoadLift } from "@/lib/estimate-e1rm";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -209,13 +210,15 @@ export function LiftJourneyCard({
     isLoading,
     isDemoMode,
   } = useUserLiftingData();
-  const { isMetric } = useAthleteBio();
+  const { isMetric, bodyWeight, bodyWeightIsDefault } = useAthleteBio();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
     }) ?? "Brzycki";
+  const usesBodyweightEstimate =
+    isBodyweightLoadLift(liftType) && !bodyWeightIsDefault;
 
   // ── Derived data ─────────────────────────────────────────────────────────
   const liftEntry = liftTypes?.find((l) => l.liftType === liftType);
@@ -229,7 +232,10 @@ export function LiftJourneyCard({
 
   const { bestLift, bestE1RMWeight } =
     (topLiftsByTypeAndReps
-      ? findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula)
+      ? findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula, {
+          bodyWeight: bodyWeightIsDefault ? null : bodyWeight,
+          bodyWeightUnitType: isMetric ? "kg" : "lb",
+        })
       : null) ?? {};
 
   const heaviestSession = topTonnageByType?.[liftType]?.[0];
@@ -383,7 +389,7 @@ export function LiftJourneyCard({
             {/* E1RM estimate */}
             {bestLift && e1rmDisplay && (
               <p className="text-sm text-muted-foreground">
-                Est. 1RM:{" "}
+                {usesBodyweightEstimate ? "Est. added-load 1RM" : "Est. 1RM"}:{" "}
                 <span className="font-semibold text-foreground">
                   {e1rmDisplay.value}
                   {e1rmDisplay.unit}

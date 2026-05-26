@@ -10,7 +10,11 @@ import { LoaderCircle } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
+import {
+  estimateLiftE1RM,
+  estimateLiftWeightForReps,
+  isBodyweightLoadLift,
+} from "@/lib/estimate-e1rm";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -42,7 +46,7 @@ function getLogHref(date) {
 export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const { parsedData, topLiftsByTypeAndReps, isValidating, isLoading, isDemoMode } =
     useUserLiftingData();
-  const { isMetric } = useAthleteBio();
+  const { isMetric, bodyWeight, bodyWeightIsDefault } = useAthleteBio();
   const { getColor } = useLiftColors();
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
@@ -71,24 +75,34 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
 
   const topLifts = topLiftsByTypeAndReps?.[liftType];
 
-  const { chartData, bestLift, displayUnit } = useMemo(() => {
+  const { chartData, bestLift, displayUnit, usesBodyweightEstimate } = useMemo(() => {
     let bestE1RMWeight = 0;
     let best = null;
     let nativeUnit = "lb";
+    let bestUnit = "lb";
     let data = [];
+    const effectiveBodyWeight = bodyWeightIsDefault ? null : bodyWeight;
+    const bodyWeightUnitType = isMetric ? "kg" : "lb";
+    const usesBodyweight = isBodyweightLoadLift(liftType) && !!effectiveBodyWeight;
 
     if (parsedData && topLifts) {
       for (let reps = 0; reps < 10; reps++) {
         if (topLifts[reps]?.[0]) {
           const lift = topLifts[reps][0];
-          const currentE1RMweight = estimateE1RM(
-            reps + 1,
-            lift.weight,
-            e1rmFormula,
-          );
+          const liftUnitType = lift.unitType || nativeUnit;
+          const currentE1RMweight = estimateLiftE1RM({
+            reps: reps + 1,
+            weight: lift.weight,
+            equation: e1rmFormula,
+            liftType,
+            bodyWeight: effectiveBodyWeight,
+            bodyWeightUnitType,
+            liftUnitType,
+          });
           if (currentE1RMweight > bestE1RMWeight) {
             bestE1RMWeight = currentE1RMweight;
             best = lift;
+            bestUnit = liftUnitType;
           }
           if (lift.unitType) nativeUnit = lift.unitType;
         }
@@ -97,13 +111,23 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       data = Array.from({ length: 10 }, (_, i) => {
         const reps = i + 1;
         const topLiftAtReps = topLifts[i]?.[0] || null;
-        const rawWeight = topLiftAtReps?.weight || 0;
-        const rawPotentialMax = estimateWeightForReps(bestE1RMWeight, reps, e1rmFormula);
+        const rawPotentialMax = estimateLiftWeightForReps({
+          e1rm: bestE1RMWeight,
+          reps,
+          equation: e1rmFormula,
+          liftType,
+          bodyWeight: effectiveBodyWeight,
+          bodyWeightUnitType,
+          liftUnitType: bestUnit,
+        });
 
-        const actualWeight = rawWeight > 0
-          ? getDisplayWeight({ weight: rawWeight, unitType: nativeUnit }, isMetric).value
+        const actualWeight = topLiftAtReps
+          ? getDisplayWeight(topLiftAtReps, isMetric).value
           : 0;
-        const potentialMax = getDisplayWeight({ weight: rawPotentialMax, unitType: nativeUnit }, isMetric).value;
+        const potentialMax = getDisplayWeight(
+          { weight: rawPotentialMax, unitType: bestUnit },
+          isMetric,
+        ).value;
         const extension = Math.max(0, potentialMax - actualWeight);
 
         return {
@@ -117,8 +141,13 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       });
     }
 
-    return { chartData: data, bestLift: best, displayUnit: isMetric ? "kg" : "lb" };
-  }, [parsedData, topLifts, e1rmFormula, isMetric]);
+    return {
+      chartData: data,
+      bestLift: best,
+      displayUnit: isMetric ? "kg" : "lb",
+      usesBodyweightEstimate: usesBodyweight,
+    };
+  }, [parsedData, topLifts, e1rmFormula, isMetric, liftType, bodyWeight, bodyWeightIsDefault]);
 
   return (
     <Card className="shadow-lg md:mx-2">
@@ -144,6 +173,11 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
             : "No data yet"}
           {isValidating && (
             <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+          )}
+          {usesBodyweightEstimate && (
+            <span className="block">
+              Bodyweight-loaded estimates use your current bodyweight.
+            </span>
           )}
         </CardDescription>
       </CardHeader>
@@ -265,6 +299,7 @@ const CustomTooltip = ({
     // Use already-converted chart values for display (data.weight and data.potentialMax
     // are pre-converted in the useMemo above)
     const actualWeight = data.weight || 0;
+    const hasActualLift = !!data.actualLift;
     const bestDisplayWeight = bestLift.weight
       ? getDisplayWeight(bestLift, isMetric).value
       : 0;
@@ -277,7 +312,7 @@ const CustomTooltip = ({
         </p>
 
         {/* Actual Lift (Blue) */}
-        {actualWeight > 0 && (
+        {hasActualLift && (
           <p className="flex items-center">
             <span
               className="mr-2 inline-block h-3 w-3 rounded"

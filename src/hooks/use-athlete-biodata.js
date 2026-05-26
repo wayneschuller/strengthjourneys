@@ -1,3 +1,8 @@
+/**
+ * Provides athlete bio settings and strength-standard helpers across the app.
+ * Bodyweight defaults must stay distinguishable from user-entered values
+ * because several calculations should not infer intent from fallback bio data.
+ */
 import {
   useEffect,
   useState,
@@ -571,6 +576,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     sex,
     setSex,
     bodyWeight,
+    bodyWeightIsDefault,
     setBodyWeight,
     bioDataIsDefault,
     bioDataIsInitialized,

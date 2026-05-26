@@ -1,4 +1,7 @@
-
+/**
+ * Single-lift E1RM visualizer used inside lift-specific detail pages.
+ * Shares chart processing with the full visualizer so estimates stay aligned.
+ */
 import { useMemo, useState, useEffect } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { format } from "date-fns";
@@ -7,7 +10,7 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
-import { e1rmFormulae, estimateE1RM } from "@/lib/estimate-e1rm";
+import { e1rmFormulae, estimateLiftE1RM } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
 
 import {
@@ -76,7 +79,7 @@ export function VisualizerMini({ liftType }) {
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
 
-  const { isMetric, bodyWeight, standards } = useAthleteBio();
+  const { isMetric, bodyWeight, standards, bodyWeightIsDefault } = useAthleteBio();
 
   // devLog(parsedData);
 
@@ -152,8 +155,19 @@ export function VisualizerMini({ liftType }) {
         rangeFirstDate,
         showAllData,
         isMetric,
+        bodyWeight,
+        bodyWeightIsDefault,
       ),
-    [parsedData, e1rmFormula, liftType, rangeFirstDate, showAllData, isMetric],
+    [
+      parsedData,
+      e1rmFormula,
+      liftType,
+      rangeFirstDate,
+      showAllData,
+      isMetric,
+      bodyWeight,
+      bodyWeightIsDefault,
+    ],
   );
 
   // if (authStatus !== "authenticated") return; // Don't show at all for anon mode
@@ -174,7 +188,15 @@ export function VisualizerMini({ liftType }) {
     for (let repIndex = 0; repIndex < Math.min(5, repArrays?.length ?? 0); repIndex++) {
       const entry = repArrays[repIndex]?.[0];
       if (!entry) continue;
-      const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+      const e1rm = estimateLiftE1RM({
+        reps: entry.reps,
+        weight: entry.weight,
+        equation: e1rmFormula,
+        liftType,
+        bodyWeight: bodyWeightIsDefault ? null : bodyWeight,
+        bodyWeightUnitType: isMetric ? "kg" : "lb",
+        liftUnitType: entry.unitType,
+      });
       const dateStr =
         typeof entry.date === "number"
           ? format(new Date(entry.date), "yyyy-MM-dd")
@@ -210,6 +232,9 @@ export function VisualizerMini({ liftType }) {
     liftType,
     chartData,
     e1rmFormula,
+    bodyWeight,
+    bodyWeightIsDefault,
+    isMetric,
   ]);
 
   const strengthRanges = standards?.[liftType] || null;

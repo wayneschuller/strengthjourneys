@@ -128,7 +128,7 @@ function LiftSearchCombobox({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[--radix-popover-trigger-width] p-0"
+        className="w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] p-0 md:w-[var(--radix-popover-trigger-width)]"
       >
         <Command>
           <CommandInput placeholder="Search lifts..." />

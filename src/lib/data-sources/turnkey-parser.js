@@ -1,5 +1,8 @@
 import { devLog, recordTiming } from "@/lib/processing-utils";
-import { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
+import {
+  isValidLiftWeight,
+  normalizeLiftTypeNames,
+} from "@/lib/data-sources/parser-utilities";
 
 // Parse Turnkey data format
 //
@@ -56,15 +59,15 @@ export function parseTurnKeyData(data) {
       lifted_weight = parseFloat(row[actual_weight_COL]);
     }
 
-    if (isNaN(lifted_reps) || lifted_reps === 0) return;
-    if (isNaN(lifted_weight) || lifted_weight === 0) return;
-
     let unitType = row[units_COL]; // Record the units type global for later. (we assume it won't change in the data)
 
     const liftURL = `https://app.turnkey.coach/workout/${row[workout_id_COL]}`;
 
     const rawLiftType = row[exercise_name_COL];
     const liftType = normalizeLiftTypeNames(rawLiftType);
+
+    if (isNaN(lifted_reps) || lifted_reps === 0) return;
+    if (!isValidLiftWeight(liftType, lifted_weight)) return;
 
     // Expand TurnKey sets into separate liftEntry tuples
     // This makes no difference to the graph, but it benefits a user wanting to convert their TurnKey data to our bespoke format

@@ -1,6 +1,9 @@
 import { normalizeDateInput } from "@/lib/date-utils";
 import { recordTiming } from "@/lib/processing-utils";
-import { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
+import {
+  isValidLiftWeight,
+  normalizeLiftTypeNames,
+} from "@/lib/data-sources/parser-utilities";
 
 const TITLE_COLUMN_CANDIDATES = [
   "Workout",
@@ -92,7 +95,7 @@ function extractLiftType(rawTitle) {
   return normalizeBtwbLiftType(parsed);
 }
 
-function parseDescriptionLine(line) {
+function parseDescriptionLine(line, fallbackLiftType = null) {
   if (!line) return null;
 
   const trimmed = String(line).trim();
@@ -110,7 +113,7 @@ function parseDescriptionLine(line) {
       : "lb";
 
     if (!Number.isFinite(reps) || reps <= 0 || !liftType) return null;
-    if (!Number.isFinite(weight) || weight <= 0) return null;
+    if (!isValidLiftWeight(liftType, weight)) return null;
 
     return { reps, weight, unitType, liftType };
   }
@@ -127,7 +130,7 @@ function parseDescriptionLine(line) {
       : "lb";
 
     if (!Number.isFinite(reps) || reps <= 0 || !liftType) return null;
-    if (!Number.isFinite(weight) || weight <= 0) return null;
+    if (!isValidLiftWeight(liftType, weight)) return null;
 
     return { reps, weight, unitType, liftType };
   }
@@ -144,7 +147,7 @@ function parseDescriptionLine(line) {
       : "lb";
 
     if (!Number.isFinite(reps) || reps <= 0 || !liftType) return null;
-    if (!Number.isFinite(weight) || weight <= 0) return null;
+    if (!isValidLiftWeight(liftType, weight)) return null;
 
     return { reps, weight, unitType, liftType };
   }
@@ -160,7 +163,7 @@ function parseDescriptionLine(line) {
   const unitType = weightMatch[2].toLowerCase().startsWith("kg") ? "kg" : "lb";
 
   if (!Number.isFinite(reps) || reps <= 0) return null;
-  if (!Number.isFinite(weight) || weight <= 0) return null;
+  if (!isValidLiftWeight(fallbackLiftType, weight)) return null;
 
   return { reps, weight, unitType, liftType: null };
 }
@@ -321,7 +324,7 @@ export function parseBtwbData(data) {
         return;
       }
 
-      const parsedLine = parseDescriptionLine(line);
+      const parsedLine = parseDescriptionLine(line, titleLiftType);
       if (!parsedLine) return;
 
       const liftType = titleLiftType || parsedLine.liftType;

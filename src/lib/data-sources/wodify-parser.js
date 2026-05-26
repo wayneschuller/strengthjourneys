@@ -1,6 +1,9 @@
 import { normalizeDateInput } from "@/lib/date-utils";
 import { recordTiming } from "@/lib/processing-utils";
-import { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
+import {
+  isValidLiftWeight,
+  normalizeLiftTypeNames,
+} from "@/lib/data-sources/parser-utilities";
 
 function getColumnIndex(headers, candidates) {
   for (const candidate of candidates) {
@@ -37,7 +40,7 @@ function parseInteger(value) {
 }
 
 function parseNumber(value) {
-  const parsed = Number.parseFloat(String(value || "").trim());
+  const parsed = Number.parseFloat(String(value ?? "").trim());
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -61,7 +64,7 @@ function buildNotes(...parts) {
   return unique.length > 0 ? unique.join(" | ") : undefined;
 }
 
-function parseResultString(resultText, fallbackUnitType) {
+function parseResultString(resultText, fallbackUnitType, liftType) {
   const normalized = String(resultText || "").trim();
   if (!normalized) return null;
 
@@ -73,7 +76,7 @@ function parseResultString(resultText, fallbackUnitType) {
     const reps = parseInteger(standardMatch[2]);
     const weight = parseNumber(standardMatch[3]);
     const unitType = parseUnit(standardMatch[4]) || fallbackUnitType;
-    if (sets && reps && weight && weight > 0 && unitType) {
+    if (sets && reps && isValidLiftWeight(liftType, weight) && unitType) {
       return { sets, reps, weight, unitType };
     }
   }
@@ -93,7 +96,7 @@ function parseResultString(resultText, fallbackUnitType) {
 //
 // Anything that doesn't match (text like "poor form", "Failed 105",
 // "single sets", "In-house comp") is silently skipped.
-function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps) {
+function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps, liftType) {
   if (!notesText) return [];
 
   const text = String(notesText).trim();
@@ -118,7 +121,7 @@ function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps) {
       const reps = parseInteger(setsRepsWeightMatch[2]);
       const weight = parseNumber(setsRepsWeightMatch[3]);
       const unitType = parseUnit(setsRepsWeightMatch[4]) || fallbackUnitType;
-      if (reps && weight && weight > 0) {
+      if (reps && isValidLiftWeight(liftType, weight)) {
         for (let s = 0; s < sets; s++) {
           results.push({ reps, weight, unitType });
         }
@@ -134,7 +137,7 @@ function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps) {
       const reps = parseInteger(repsWeightMatch[1]);
       const weight = parseNumber(repsWeightMatch[2]);
       const unitType = parseUnit(repsWeightMatch[3]) || fallbackUnitType;
-      if (reps && weight && weight > 0) {
+      if (reps && isValidLiftWeight(liftType, weight)) {
         results.push({ reps, weight, unitType });
         continue;
       }
@@ -144,7 +147,7 @@ function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps) {
     const bareWeightMatch = cleaned.match(/^([\d.]+)$/);
     if (bareWeightMatch) {
       const weight = parseNumber(bareWeightMatch[1]);
-      if (weight && weight > 0) {
+      if (isValidLiftWeight(liftType, weight)) {
         results.push({ reps: fallbackReps || 1, weight, unitType: fallbackUnitType });
         continue;
       }
@@ -257,12 +260,18 @@ export function parseWodifyData(data) {
     let mainSets = null;
     let mainUnitType = unitTypeFromColumn;
 
-    if (sets && reps && weight && weight > 0 && unitTypeFromColumn) {
+    if (
+      sets &&
+      reps &&
+      isValidLiftWeight(liftType, weight) &&
+      unitTypeFromColumn
+    ) {
       mainSets = { sets, reps, weight, unitType: unitTypeFromColumn };
     } else {
       const parsedResult = parseResultString(
         row[resultColumnIndex],
         unitTypeFromColumn,
+        liftType,
       );
       if (parsedResult) {
         mainSets = parsedResult;
@@ -273,7 +282,12 @@ export function parseWodifyData(data) {
     if (!mainSets) continue;
 
     // Parse warmup/buildup sets from the Notes column (added before top set)
-    const warmups = parseWarmupNotes(rawNotes, mainUnitType, mainSets.reps);
+    const warmups = parseWarmupNotes(
+      rawNotes,
+      mainUnitType,
+      mainSets.reps,
+      liftType,
+    );
     for (const warmup of warmups) {
       parsedData.push({
         date,

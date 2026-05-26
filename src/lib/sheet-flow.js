@@ -953,7 +953,7 @@ export async function createBootstrapSheet(
           {
             repeatCell: {
               range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 3, endColumnIndex: 4 },
-              cell: { note: "The weight lifted, including the unit — kg or lb (e.g. 100kg or 225lb). Always include the unit so Strength Journeys knows which system you use." },
+              cell: { note: "The weight lifted, including the unit — kg or lb (e.g. 100kg or 225lb). For bodyweight-only pull-ups, chin-ups, dips, or muscle-ups, enter 0kg or 0lb. Always include the unit so Strength Journeys knows which system you use." },
               fields: "note",
             },
           },

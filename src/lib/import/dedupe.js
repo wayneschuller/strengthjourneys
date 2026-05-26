@@ -6,6 +6,7 @@
  */
 
 import { normalizeLiftTypeNames } from "@/lib/data-sources/import-dispatcher";
+import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
 
 function normalizeComparableEntry(entry) {
   if (!entry || entry.isGoal) return null;
@@ -13,12 +14,15 @@ function normalizeComparableEntry(entry) {
   const date = String(entry.date || "").trim();
   const liftType = normalizeLiftTypeNames(String(entry.liftType || "").trim());
   const reps = Number(entry.reps) || 0;
-  const weight = Math.round(Number(entry.weight || 0) * 100);
+  const numericWeight = Number(entry.weight);
+  const weight = Math.round(numericWeight * 100);
   const unitType = String(entry.unitType || "kg")
     .trim()
     .toLowerCase();
 
-  if (!date || !liftType || !reps || !weight) return null;
+  if (!date || !liftType || !reps || !isValidLiftWeight(liftType, numericWeight)) {
+    return null;
+  }
 
   return {
     date,

@@ -28,6 +28,7 @@ import {
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
 import { StrengthBar } from "@/components/strength-level/strength-bar";
 import { LiftPercentileLine } from "@/components/strength-level/lift-percentile-line";
 import {
@@ -302,7 +303,11 @@ export function LiftBlock({
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
       });
-      if (s._pending || !effectiveSet.reps || !effectiveSet.weight) {
+      if (
+        s._pending ||
+        !effectiveSet.reps ||
+        !isValidLiftWeight(liftType, effectiveSet.weight)
+      ) {
         return {
           status: null,
           message: null,
@@ -608,6 +613,7 @@ export function LiftBlock({
         {canAddSets && customDraftConfig && (
           <CustomSetDraftRow
             key={`custom-${liftType}-${customDraftSeed}`}
+            liftType={liftType}
             unitType={customDraftConfig.unitType}
             defaultNotes={customDraftConfig.notes}
             onCommit={handleCustomDraftCommit}

@@ -7,6 +7,7 @@ import {
   getDisplayWeight,
   getCelebrationEmoji,
 } from "@/lib/processing-utils";
+import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
 
 /**
  * Find the 0-indexed rank a given weight would occupy in a precomputed top-lifts
@@ -19,7 +20,7 @@ import {
  * @returns {number|null} 0-based rank (0..19), or null if outside the top 20.
  */
 export function getTop20Rank(topLifts, weight, isMetric) {
-  if (!topLifts?.length || !weight) return null;
+  if (!topLifts?.length || !Number.isFinite(Number(weight))) return null;
 
   const rank = topLifts.findIndex((lift) => {
     const { value } = getDisplayWeight(lift, isMetric);
@@ -147,7 +148,7 @@ export function getOptimisticRankingMeta({
     !effectiveSet?.reps ||
     effectiveSet.reps < 1 ||
     effectiveSet.reps > 10 ||
-    !effectiveSet?.weight
+    !isValidLiftWeight(effectiveSet.liftType, effectiveSet.weight)
   ) {
     return null;
   }
@@ -161,7 +162,8 @@ export function getOptimisticRankingMeta({
     )
     .filter(
       (sessionSet) =>
-        (sessionSet?.reps ?? 0) > 0 && (sessionSet?.weight ?? 0) > 0,
+        (sessionSet?.reps ?? 0) > 0 &&
+        isValidLiftWeight(sessionSet?.liftType, sessionSet?.weight),
     );
 
   const currentSessionRowIndices = new Set(
@@ -257,7 +259,15 @@ export function getRankingMeta({
   topLiftsByTypeAndReps,
   topLiftsByTypeAndRepsLast12Months,
 }) {
-  if (!liftType || !reps || reps < 1 || reps > 10 || !weight) return null;
+  if (
+    !liftType ||
+    !reps ||
+    reps < 1 ||
+    reps > 10 ||
+    !isValidLiftWeight(liftType, weight)
+  ) {
+    return null;
+  }
 
   const lifetimeRank = getTop20Rank(
     topLiftsByTypeAndReps?.[liftType]?.[reps - 1],

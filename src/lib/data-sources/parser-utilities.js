@@ -9,6 +9,18 @@ export const STANDARD_BIG_FOUR_LIFT_TYPES = BIG_FOUR_LIFT_TYPES;
 
 export const STANDARD_BIG_FOUR_LIFT_TYPE_SET = BIG_FOUR_LIFT_TYPE_SET;
 
+export const STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES = [
+  "Chin-up",
+  "Pull-up",
+  "Dip",
+  "Ring Dip",
+  "Muscle-up",
+];
+
+export const STANDARD_BODYWEIGHT_LOAD_LIFT_TYPE_SET = new Set(
+  STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES,
+);
+
 const BIG_FOUR_LIFT_TYPE_ALIASES = {
   // English
   "back squat": "Back Squat",
@@ -63,6 +75,29 @@ const BIG_FOUR_LIFT_TYPE_ALIASES = {
   "lento avanti": "Strict Press",
 };
 
+const BODYWEIGHT_LOAD_LIFT_TYPE_ALIASES = {
+  "chin up": "Chin-up",
+  "chin ups": "Chin-up",
+  chinup: "Chin-up",
+  chinups: "Chin-up",
+  "pull up": "Pull-up",
+  "pull ups": "Pull-up",
+  pullup: "Pull-up",
+  pullups: "Pull-up",
+  dip: "Dip",
+  dips: "Dip",
+  "bar dip": "Dip",
+  "bar dips": "Dip",
+  "parallel bar dip": "Dip",
+  "parallel bar dips": "Dip",
+  "ring dip": "Ring Dip",
+  "ring dips": "Ring Dip",
+  "muscle up": "Muscle-up",
+  "muscle ups": "Muscle-up",
+  muscleup: "Muscle-up",
+  muscleups: "Muscle-up",
+};
+
 function normalizeLiftTypeLookupKey(liftType) {
   return String(liftType || "")
     .trim()
@@ -76,10 +111,40 @@ function normalizeLiftTypeLookupKey(liftType) {
     .trim();
 }
 
-// Allow variations of common big-four lift names and capitalization but harmonize for output.
+function normalizeBodyweightLoadLiftTypeLookupKey(liftType) {
+  return normalizeLiftTypeLookupKey(liftType)
+    .replace(/\b(?:weighted|bodyweight|body weight|bw|strict)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function normalizeBodyweightLoadLiftType(liftType) {
+  if (STANDARD_BODYWEIGHT_LOAD_LIFT_TYPE_SET.has(liftType)) return liftType;
+  const key = normalizeBodyweightLoadLiftTypeLookupKey(liftType);
+  return BODYWEIGHT_LOAD_LIFT_TYPE_ALIASES[key] || null;
+}
+
+export function isBodyweightLoadLiftName(liftType) {
+  if (STANDARD_BODYWEIGHT_LOAD_LIFT_TYPE_SET.has(liftType)) return true;
+  return Boolean(normalizeBodyweightLoadLiftType(liftType));
+}
+
+export function isValidLiftWeight(liftType, weight) {
+  if (weight == null || String(weight).trim() === "") return false;
+  const numericWeight = Number(weight);
+  if (!Number.isFinite(numericWeight)) return false;
+  if (numericWeight > 0) return true;
+  return numericWeight === 0 && isBodyweightLoadLiftName(liftType);
+}
+
+// Allow variations of common lift names and capitalization but harmonize for output.
 export function normalizeLiftTypeNames(liftType) {
   const key = normalizeLiftTypeLookupKey(liftType);
-  return BIG_FOUR_LIFT_TYPE_ALIASES[key] || liftType; // Defaults to original if no match
+  return (
+    BIG_FOUR_LIFT_TYPE_ALIASES[key] ||
+    normalizeBodyweightLoadLiftType(liftType) ||
+    liftType
+  ); // Defaults to original if no match
 }
 
 export function normalizeBigFourLiftType(liftType) {
@@ -221,12 +286,12 @@ export function convertStringToInt(repsString) {
 // Returns _explicitUnit: true if unit was explicitly stated, null if ambiguous (no suffix)
 export function convertWeightAndUnitType(weightString) {
   // Google Sheets API returns empty string for empty cells
-  if (!weightString || weightString === "") {
+  if (weightString == null || weightString === "") {
     return { value: undefined, unitType: undefined, _explicitUnit: null };
   }
 
   // Trim whitespace
-  weightString = weightString.trim();
+  weightString = String(weightString).trim();
 
   // Try to parse the number part
   const num = parseFloat(weightString);

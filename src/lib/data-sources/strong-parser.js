@@ -1,5 +1,8 @@
 import { recordTiming } from "@/lib/processing-utils";
-import { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
+import {
+  isValidLiftWeight,
+  normalizeLiftTypeNames,
+} from "@/lib/data-sources/parser-utilities";
 
 function getColumnIndex(headers, candidates) {
   for (const candidate of candidates) {
@@ -21,7 +24,7 @@ function findHeaderByPrefix(headers, prefixes) {
 }
 
 function parseNumber(value) {
-  const parsed = Number.parseFloat(String(value || "").trim());
+  const parsed = Number.parseFloat(String(value ?? "").trim());
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -128,7 +131,7 @@ export function parseStrongData(data) {
     const weight = parseNumber(row[weightColumnIndex]);
 
     if (!date || !liftType) continue;
-    if (!reps || reps <= 0 || !weight || weight <= 0) continue;
+    if (!reps || reps <= 0 || !isValidLiftWeight(liftType, weight)) continue;
 
     parsedData.push({
       date,

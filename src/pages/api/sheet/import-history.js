@@ -16,6 +16,7 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
 import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
+import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
 import { getServerSession } from "next-auth/next";
 import { gunzipSync } from "node:zlib";
 
@@ -240,7 +241,8 @@ export default async function handler(req, res) {
     // Step 3: Group entries by date, sort oldest-first
     const byDate = {};
     for (const entry of entries) {
-      if (!entry.date || !entry.liftType || !entry.weight) continue;
+      if (!entry.date || !entry.liftType) continue;
+      if (!isValidLiftWeight(entry.liftType, entry.weight)) continue;
       if (!byDate[entry.date]) byDate[entry.date] = [];
       byDate[entry.date].push(entry);
     }

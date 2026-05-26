@@ -6,10 +6,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Check, X } from "lucide-react";
 
+import {
+  isBodyweightLoadLiftName,
+  isValidLiftWeight,
+} from "@/lib/data-sources/parser-utilities";
 import { parseWeightInput } from "@/components/log/sheet-snapshot-utils";
 import { UnitLabel } from "@/components/log/unit-label";
 
 export function CustomSetDraftRow({
+  liftType,
   unitType,
   defaultNotes,
   onCommit,
@@ -33,7 +38,12 @@ export function CustomSetDraftRow({
   const parsedReps = Number.parseInt(draftReps, 10);
   const parsedWeight = parseWeightInput(draftWeight);
   const hasValidReps = Number.isInteger(parsedReps) && parsedReps > 0;
-  const hasValidWeight = Number.isFinite(parsedWeight) && parsedWeight > 0;
+  const hasValidWeight = isValidLiftWeight(liftType, parsedWeight);
+  const weightPlaceholder = isBodyweightLoadLiftName(liftType)
+    ? "0"
+    : unitType === "kg"
+      ? "20"
+      : "45";
   const canSubmit = !disabled && hasValidReps && hasValidWeight;
 
   const moveToWeight = useCallback(() => {
@@ -102,7 +112,7 @@ export function CustomSetDraftRow({
             className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
             value={draftWeight}
             disabled={disabled}
-            placeholder={unitType === "kg" ? "20" : "45"}
+            placeholder={weightPlaceholder}
             onChange={(e) => setDraftWeight(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {

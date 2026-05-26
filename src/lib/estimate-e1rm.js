@@ -5,6 +5,10 @@
  * use logged weight as external load, so current bodyweight is added for formula
  * math and subtracted again before displaying external-load projections.
  */
+import {
+  isBodyweightLoadLiftName,
+  STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES,
+} from "@/lib/data-sources/parser-utilities";
 
 // FIXME: add more formulae from the Wikipedia article?
 export const e1rmFormulae = [
@@ -17,53 +21,9 @@ export const e1rmFormulae = [
   "Wathan",
 ];
 
-export const BODYWEIGHT_LOAD_LIFT_TYPES = [
-  "Chin-up",
-  "Chin Up",
-  "Pull-up",
-  "Pull Up",
-  "Dip",
-  "Ring Dip",
-  "Muscle-up",
-  "Muscle Up",
-];
-
-const BODYWEIGHT_LOAD_LIFT_KEYS = new Set([
-  "chin up",
-  "chinup",
-  "chin ups",
-  "chinups",
-  "pull up",
-  "pullup",
-  "pull ups",
-  "pullups",
-  "dip",
-  "dips",
-  "ring dip",
-  "ring dips",
-  "bar dip",
-  "bar dips",
-  "parallel bar dip",
-  "parallel bar dips",
-  "muscle up",
-  "muscleup",
-  "muscle ups",
-  "muscleups",
-]);
+export const BODYWEIGHT_LOAD_LIFT_TYPES = STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES;
 
 const LB_PER_KG = 2.2046;
-
-function normalizeBodyweightLiftKey(liftType) {
-  return String(liftType || "")
-    .toLowerCase()
-    .replace(/\([^)]*\)/g, " ")
-    .replace(/\bweighted\b/g, " ")
-    .replace(/\bbodyweight\b|\bbw\b/g, " ")
-    .replace(/[-_/]+/g, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function normalizeUnitType(unitType) {
   return unitType === "kg" ? "kg" : "lb";
@@ -80,7 +40,7 @@ function convertWeightUnit(weight, fromUnitType, toUnitType) {
 }
 
 export function isBodyweightLoadLift(liftType) {
-  return BODYWEIGHT_LOAD_LIFT_KEYS.has(normalizeBodyweightLiftKey(liftType));
+  return isBodyweightLoadLiftName(liftType);
 }
 
 export function getBodyWeightForLiftUnit({

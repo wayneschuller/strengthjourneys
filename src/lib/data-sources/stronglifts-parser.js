@@ -1,5 +1,8 @@
 import { recordTiming } from "@/lib/processing-utils";
-import { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
+import {
+  isValidLiftWeight,
+  normalizeLiftTypeNames,
+} from "@/lib/data-sources/parser-utilities";
 
 // Parse StrongLifts 5x5 app CSV exports.
 //
@@ -20,7 +23,7 @@ import { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
 // LiftEntry. Empty exercises and empty sets are skipped.
 
 function parseNumber(value) {
-  const parsed = Number.parseFloat(String(value || "").trim());
+  const parsed = Number.parseFloat(String(value ?? "").trim());
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -138,15 +141,15 @@ export function parseStrongliftsData(data) {
 
       let weight = null;
       let unitType = null;
-      if (weightKg && weightKg > 0) {
+      if (isValidLiftWeight(liftType, weightKg)) {
         weight = weightKg;
         unitType = "kg";
-      } else if (weightLb && weightLb > 0) {
+      } else if (isValidLiftWeight(liftType, weightLb)) {
         weight = weightLb;
         unitType = "lb";
       }
 
-      if (!weight) continue;
+      if (!isValidLiftWeight(liftType, weight)) continue;
 
       for (const setIndex of block.setIndices) {
         const reps = parseInteger(row[setIndex]);

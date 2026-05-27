@@ -39,7 +39,6 @@ export function HeroSection() {
             Free barbell lifting analysis tools that turn your lifting data
             into powerful, visual insights.
           </h1>
-          <PageDescription />
           <HeroPrimaryCta />
         </div>
         <SpreadsheetShowcase />
@@ -47,15 +46,6 @@ export function HeroSection() {
     </div>
   );
 }
-
-// Internal helper: paragraph describing the app's core value proposition.
-const PageDescription = () => (
-  <p className="text-muted-foreground mb-6 max-w-2xl text-center text-base leading-7 lg:text-left">
-    Import from Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey, or any
-    spreadsheet. Strength Journeys turns scattered app exports into one clean
-    lifting timeline, backed by a Google Sheet you own.
-  </p>
-);
 
 // Internal helper: prominent hero CTA area for unauthenticated visitors and
 // authenticated demo-mode users who still need to set up a sheet.

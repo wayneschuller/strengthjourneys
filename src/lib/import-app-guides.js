@@ -55,6 +55,11 @@ export const IMPORT_APP_PAGES = [
           "Yes. Import files from Strong, Wodify, BTWB, or any supported format. We'll merge them into one unified training history.",
       },
       {
+        question: "How can I merge my Hevy and Strong app history?",
+        answer:
+          "Export your Hevy data and your Strong CSV, then upload one file at a time. Strength Journeys previews each import, normalizes the lift names, skips duplicate sessions, and can save the merged Hevy and Strong history into one Google Sheet you own.",
+      },
+      {
         question: "What happens to my data?",
         answer: IMPORT_PRIVACY_ANSWER,
       },
@@ -101,9 +106,9 @@ export const IMPORT_APP_PAGES = [
           "No. Preview mode shows your full dashboard without signing in. Sign in only when you want to save to your own Google Sheet.",
       },
       {
-        question: "Can I merge Strong with Hevy?",
+        question: "How can I merge my Hevy and Strong app history?",
         answer:
-          "Yes. Import both files and we'll combine them into one history. Duplicates are automatically skipped.",
+          "Export your Strong CSV and your Hevy workout data, then import the files one at a time. Strength Journeys converts both exports into the same lifting format, checks for duplicate sessions, and lets you merge the clean history into one Google Sheet in your Drive.",
       },
       {
         question: "Is my data secure?",
@@ -211,6 +216,11 @@ export const IMPORT_APP_PAGES = [
         question: "Can I combine Wodify with BTWB data?",
         answer:
           "Absolutely. Import both files and we'll merge them into one timeline. Common for lifters who trained at CrossFit gyms using different platforms over the years.",
+      },
+      {
+        question: "How can I merge Wodify with Hevy and Strong app history?",
+        answer:
+          "Upload your Wodify export first, then import your Hevy or Strong exports the same way. Strength Journeys turns each file into one consistent barbell timeline, skips overlapping entries, and saves the combined history to a Google Sheet you control.",
       },
       {
         question: "What happens to my data?",

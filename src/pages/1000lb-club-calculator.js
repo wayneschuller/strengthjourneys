@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
+import { ImportDataOwnershipPromo } from "@/components/import-data-ownership-promo";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
@@ -1161,6 +1162,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           </div>
         </div>
       </section>
+
+      <ImportDataOwnershipPromo
+        className="mt-10"
+        title="Bring every old total into one lifting archive."
+        description="Your 1000lb total probably was not built in one app. Import Hevy, Strong, Wodify, BTWB, or spreadsheet exports, merge them into one Google Sheet you own, and let Strength Journeys find the PRs and timelines that got you here."
+      />
 
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">1000lb Club FAQ</h2>

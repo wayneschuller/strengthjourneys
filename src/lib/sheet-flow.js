@@ -10,7 +10,7 @@ import { devLog } from "@/lib/processing-utils";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
 export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
-export const PROVISION_VERSION = 2;
+export const PROVISION_VERSION = 3;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 12;
 const METADATA_SCAN_ROW_CAP = 10000;
@@ -18,14 +18,12 @@ const BIG_FOUR_LIFTS = STANDARD_BIG_FOUR_LIFT_TYPES;
 const BIG_FOUR_LIFTS_SET = new Set(BIG_FOUR_LIFTS);
 const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
-const REQUIRED_HEADERS = [
+const BOOTSTRAP_HEADERS = [
   "Date",
   "Lift Type",
   "Reps",
   "Weight",
   "Notes",
-  "isGoal",
-  "Label",
   "URL",
 ];
 
@@ -123,14 +121,6 @@ function getRequestLocale(req) {
   }
 
   return "en-US";
-}
-
-function formatStarterDateYmd(nowIso) {
-  const date = nowIso ? new Date(nowIso) : new Date();
-  const y = date.getUTCFullYear();
-  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(date.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
 }
 
 function toTimestamp(iso) {
@@ -778,7 +768,7 @@ export async function createBlankSheet(sheetName, headers) {
   const { ssid } = await createSpreadsheet(sheetName, headers);
 
   const headerResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:H1?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
@@ -786,9 +776,9 @@ export async function createBlankSheet(sheetName, headers) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A1:H1",
+        range: "A1:F1",
         majorDimension: "ROWS",
-        values: [REQUIRED_HEADERS],
+        values: [BOOTSTRAP_HEADERS],
       }),
     },
   );
@@ -806,37 +796,11 @@ export async function createBlankSheet(sheetName, headers) {
   };
 }
 
-export async function createBootstrapSheet(
-  sheetName,
-  headers,
-  nowIso,
-  {
-    preferredUnitType = "lb",
-    locale = "en-US",
-    starterDateText = null,
-  } = {},
-) {
+export async function createBootstrapSheet(sheetName, headers) {
   const { ssid, sheetId } = await createSpreadsheet(sheetName, headers);
-  const unitType = preferredUnitType === "kg" ? "kg" : "lb";
-  const starterWeight = unitType === "kg" ? "20kg" : "45lb";
-  const starterDate = formatStarterDateYmd(nowIso);
-  const starterRows = [
-    ["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"],
-    [
-      starterDate,
-      "Back Squat",
-      "5",
-      starterWeight,
-      "Start each new session by inserting 5-10 new rows at the top.",
-      "",
-    ],
-    ["", "", "5", starterWeight, "Log one set per row as you lift.", ""],
-    ["", "", "5", starterWeight, "Leave Date blank on the extra rows for the same session.", ""],
-    ["", "", "", "", "Put all your sets here, including warmups.", ""],
-  ];
 
   const valuesResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F5?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
@@ -844,15 +808,15 @@ export async function createBootstrapSheet(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A1:F5",
+        range: "A1:F1",
         majorDimension: "ROWS",
-        values: starterRows,
+        values: [BOOTSTRAP_HEADERS],
       }),
     },
   );
   if (!valuesResponse.ok) {
     const body = await valuesResponse.json().catch(() => ({}));
-    throw new Error(body?.error?.message || "Failed to seed bootstrap sheet");
+    throw new Error(body?.error?.message || "Failed to seed sheet headers");
   }
 
   const formatResponse = await fetch(
@@ -997,7 +961,7 @@ export async function createBootstrapSheet(
     },
   );
   if (!formatResponse.ok) {
-    devLog("[sheet-flow] bootstrap formatting failed; continuing with seeded values");
+    devLog("[sheet-flow] bootstrap formatting failed; continuing with headers only");
   }
 
   const metadata = await fetchDriveMetadata(ssid, headers);

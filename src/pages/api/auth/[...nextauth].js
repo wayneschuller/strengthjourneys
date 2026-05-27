@@ -411,7 +411,7 @@ const PROMPT_MESSAGES = {
     subject: `[SJ] First-time provisioned — ${name}`,
     text: [
       `${name} (${email}) was provisioned a fresh sheet at ${timeStr}.`,
-      `This is their first sheet — KV had sign-in metadata only (no prior sheet), so a new sheet was seeded.`,
+      `This is their first sheet — KV had sign-in metadata only (no prior sheet), so a headers-only sheet was created.`,
       meta.provisioningMethod
         ? `Provisioning method: ${meta.provisioningMethod}`
         : null,

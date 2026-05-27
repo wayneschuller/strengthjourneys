@@ -82,7 +82,6 @@ export default async function handler(req, res) {
     ? req.body.intent
     : "bootstrap";
   const hadLocalSheetBefore = Boolean(req.body?.hadLocalSheetBefore);
-  const preferredUnitType = req.body?.preferredUnitType === "kg" ? "kg" : "lb";
   const debug = createDebug(intent, "discover");
   const existingRecord = await getExistingRecord(base.kvKey);
   const sheetName = buildSheetName(base.session.user.name);
@@ -181,33 +180,23 @@ export default async function handler(req, res) {
       debug.path.push("resolve:true_new_user:create_bootstrap");
       devLog("[sheet/resolve] resolve:action create_new_user_sheet", {
         sheetName,
-        preferredUnitType,
       });
       const nowIso = new Date().toISOString();
-      const created = await createBootstrapSheet(
-        sheetName,
-        base.headers,
-        nowIso,
-        {
-          preferredUnitType,
-          locale: base.locale,
-          starterDateText: req.body?.starterDateText || null,
-        },
-      );
+      const created = await createBootstrapSheet(sheetName, base.headers);
       await persistLinkedSheet({
         kvKey: base.kvKey,
         existingRecord,
         nowIso,
         metadata: created,
         connectionMethod: "auto_provision",
-        provisioningMethod: "bootstrap_sheet_seeded",
+        provisioningMethod: "bootstrap_sheet_headers",
       });
       const prompted = await maybePromptActivation({
         existingRecord,
         session: base.session,
         meta: {
           connectionMethod: "auto_provision",
-          provisioningMethod: "bootstrap_sheet_seeded",
+          provisioningMethod: "bootstrap_sheet_headers",
           sheetName: created.name || sheetName,
         },
       });
@@ -219,13 +208,13 @@ export default async function handler(req, res) {
             connectedAt: nowIso,
             connectionMethod: "auto_provision",
             provisionedSheetId: created.id,
-            provisioningMethod: "bootstrap_sheet_seeded",
+            provisioningMethod: "bootstrap_sheet_headers",
             lastSeenAt: nowIso,
           },
           nowIso,
         });
       }
-      devLog("[sheet/resolve] founder activation after bootstrap template", { prompted });
+      devLog("[sheet/resolve] founder activation after bootstrap headers", { prompted });
       return respondCreateNewUserSheet(res, created, debug, {
         onboardingFlowToken,
       });
@@ -257,26 +246,16 @@ export default async function handler(req, res) {
           previousProvisionedSheetId,
           previousSheetState: priorSheetCheck.state,
           sheetName,
-          preferredUnitType,
         });
         const nowIso = new Date().toISOString();
-        const created = await createBootstrapSheet(
-          sheetName,
-          base.headers,
-          nowIso,
-          {
-            preferredUnitType,
-            locale: base.locale,
-            starterDateText: req.body?.starterDateText || null,
-          },
-        );
+        const created = await createBootstrapSheet(sheetName, base.headers);
         await persistLinkedSheet({
           kvKey: base.kvKey,
           existingRecord,
           nowIso,
           metadata: created,
           connectionMethod: "reprovision_after_missing_sheet",
-          provisioningMethod: "bootstrap_sheet_seeded",
+          provisioningMethod: "bootstrap_sheet_headers",
         });
         const hadPriorSheetEvidence = Boolean(
           existingRecord?.connectedAt ||
@@ -289,7 +268,7 @@ export default async function handler(req, res) {
           base.session.user,
           {
             connectionMethod: "reprovision_after_missing_sheet",
-            provisioningMethod: "bootstrap_sheet_seeded",
+            provisioningMethod: "bootstrap_sheet_headers",
             sheetName: created.name || sheetName,
             previousProvisionedSheetId,
             previousSheetState: priorSheetCheck.state,

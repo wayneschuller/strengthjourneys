@@ -381,7 +381,8 @@ export function TheLatestSessionCard({
         <CardContent className="flex-1 space-y-6 pt-0">
           {!hasLoggedSessions && (
             <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
-              Start simple: add one training session in your sheet with Date, Lift Type, Reps, and Weight.
+              Start simple: use the Log page to add one training session. Your
+              Google Sheet will stay in sync with the units you choose.
             </p>
           )}
           {hasLoggedSessions && !analyzedSessionLifts && (

@@ -39,17 +39,15 @@ import {
 } from "@/lib/data-sources/parser-utilities";
 
 const TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
-const PROVISION_VERSION = 1;
+const PROVISION_VERSION = 2;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 6;
-const REQUIRED_HEADERS = [
+const BOOTSTRAP_HEADERS = [
   "Date",
   "Lift Type",
   "Reps",
   "Weight",
   "Notes",
-  "isGoal",
-  "Label",
   "URL",
 ];
 const BIG_FOUR_LIFTS = STANDARD_BIG_FOUR_LIFT_TYPES;
@@ -664,7 +662,7 @@ async function createBlankSheet(sheetName, headers) {
   if (!ssid) throw new Error("Sheet was created but spreadsheetId was missing");
 
   const headerResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:H1?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
@@ -672,9 +670,9 @@ async function createBlankSheet(sheetName, headers) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A1:H1",
+        range: "A1:F1",
         majorDimension: "ROWS",
-        values: [REQUIRED_HEADERS],
+        values: [BOOTSTRAP_HEADERS],
       }),
     },
   );
@@ -888,7 +886,7 @@ export default async function handler(req, res) {
         metadata: created,
         connectionMethod: "auto_provision",
         provisioningMethod:
-          mode === "create_sample" ? "template_copy" : "blank_seeded",
+          mode === "create_sample" ? "template_copy" : "blank_headers",
       });
 
       await maybePromptActivation({
@@ -897,7 +895,7 @@ export default async function handler(req, res) {
         meta: {
           connectionMethod: "auto_provision",
           provisioningMethod:
-            mode === "create_sample" ? "template_copy" : "blank_seeded",
+            mode === "create_sample" ? "template_copy" : "blank_headers",
           sheetName: created.name || sheetName,
         },
       });
@@ -908,7 +906,7 @@ export default async function handler(req, res) {
         ssid: created.id,
         name: created.name || sheetName,
         provisioningMethod:
-          mode === "create_sample" ? "template_copy" : "blank_seeded",
+          mode === "create_sample" ? "template_copy" : "blank_headers",
       };
 
       res.status(200).json(

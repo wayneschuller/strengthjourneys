@@ -45,6 +45,7 @@ import {
   Trophy,
   BarChart3,
   Shield,
+  GitMerge,
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { postImportHistory } from "@/lib/import-history-client";
@@ -313,11 +314,16 @@ function BenefitsRow() {
       title: "Training Trends",
       desc: "Weekly volume, tonnage, consistency grades, and more",
     },
+    {
+      icon: GitMerge,
+      title: "One Sheet You Own",
+      desc: "Merge each app export into a permanent Google Sheet in your Drive",
+    },
   ];
 
   return (
     <section className="mx-auto mb-8 max-w-5xl">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {benefits.map((b) => (
           <div
             key={b.title}
@@ -546,14 +552,14 @@ export default function ImportPage() {
       <>
         <NextSeo
           title="Import Your Lifting History - See Your Strength Instantly"
-          description="Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required."
+          description="Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own."
           canonical="https://www.strengthjourneys.xyz/import"
           openGraph={{
             url: "https://www.strengthjourneys.xyz/import",
             title:
               "Import Your Lifting History - See Your Strength Instantly",
             description:
-              "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required.",
+              "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own.",
             type: "website",
             site_name: "Strength Journeys",
           }}
@@ -569,14 +575,14 @@ export default function ImportPage() {
     <>
       <NextSeo
         title="Import Your Lifting History - See Your Strength Instantly"
-        description="Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. See your strength progression, PRs, and training trends instantly - no account required."
+        description="Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own."
         canonical="https://www.strengthjourneys.xyz/import"
         openGraph={{
           url: "https://www.strengthjourneys.xyz/import",
           title:
             "Import Your Lifting History - See Your Strength Instantly",
           description:
-            "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, or any spreadsheet. See your strength progression, PRs, and training trends in seconds - no account required.",
+            "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own.",
           type: "website",
           site_name: "Strength Journeys",
         }}
@@ -596,7 +602,9 @@ export default function ImportPage() {
           <PageHeaderDescription>
             Drop a file from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB,
             TurnKey, or any spreadsheet and see your full strength dashboard
-            instantly.
+            instantly. Use Strength Journeys as the migration layer for your
+            lifting life: preview first, then merge every export into one
+            Google Sheet you own.
             {authStatus !== "authenticated" &&
               " No account required."}
           </PageHeaderDescription>

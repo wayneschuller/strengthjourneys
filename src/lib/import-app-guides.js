@@ -1,6 +1,12 @@
+/*
+ * SEO and marketing copy for app-specific import guides.
+ * Keep these entries plain data so /import/[slug] can statically generate one
+ * consistent migration story for every supported fitness app.
+ */
+
 const IMPORT_PAGE_BASE_URL = "https://www.strengthjourneys.xyz/import";
 const IMPORT_PRIVACY_ANSWER =
-  "Your file is parsed in your browser first. If you choose to save it, Strength Journeys sends the parsed data to write into a Google Sheet in your own Google Drive. We do not keep a server-side copy of your workout history.";
+  "Your file is parsed in your browser first. If you choose to save it, Strength Journeys sends the parsed data to write into a Google Sheet in your own Google Drive. You can keep merging future app exports into that same Sheet, and we do not keep a server-side copy of your workout history.";
 
 export const IMPORT_APP_PAGES = [
   {

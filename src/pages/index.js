@@ -1,5 +1,11 @@
 /** @format */
 
+/**
+ * Public home page for Strength Journeys.
+ * Keep this Pages Router entry focused on the marketing landing experience and
+ * the signed-in dashboard handoff without moving user data analysis server-side.
+ */
+
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
@@ -172,7 +178,7 @@ export const featurePages = [
     href: "/import",
     title: "Import Data",
     description:
-      "Import from Hevy, Strong, Wodify, BTWB, or spreadsheets. Preview first, then merge into your data.",
+      "Import from Hevy, Strong, Wodify, BTWB, or spreadsheets. Merge everything into your own Sheet.",
     IconComponent: Upload,
   },
   {
@@ -329,6 +335,27 @@ const mainBarbellLifts = BIG_FOUR_LIFT_META.map(
   }),
 );
 
+const dataArchiveBenefits = [
+  {
+    title: "Rescue the messy past",
+    description:
+      "Drop exports from Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey, or old spreadsheets.",
+    IconComponent: Upload,
+  },
+  {
+    title: "Normalize the whole timeline",
+    description:
+      "Strength Journeys cleans lift names, detects PRs, skips duplicates, and stitches sessions together.",
+    IconComponent: Layers,
+  },
+  {
+    title: "Keep the source of truth",
+    description:
+      "Save the merged history to a Google Sheet in your Drive, then keep using it with every analysis tool here.",
+    IconComponent: LineChart,
+  },
+];
+
 /**
  * Home page and landing page for Strength Journeys. Shows the hero section or user dashboard,
  * the Big Four barbell lift cards, a grid of feature tool cards, testimonials, and a getting-started card.
@@ -346,7 +373,7 @@ const structuredData = {
       name: "Strength Journeys",
       url: "https://www.strengthjourneys.xyz",
       description:
-        "Free barbell lifting analysis tools. PR tracking, 1RM calculators, strength standards, and training insights powered by your Google Sheet data.",
+        "Free barbell lifting analysis tools. Import app exports into a Google Sheet you own, then unlock PR tracking, 1RM calculators, strength standards, and training insights.",
       logo: {
         "@type": "ImageObject",
         url: "https://www.strengthjourneys.xyz/nav_logo_light.png",
@@ -368,9 +395,9 @@ export default function Home() {
   const title = "Free Barbell Lifting Analysis Tools | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/";
   const description =
-    "Track and analyze your barbell lifting with Strength Journeys. Free PR analyzer, 1RM calculator, and more. Integrates with Google Sheets. Open source.";
+    "Track, import, and analyze your barbell lifting data. Merge app exports into a Google Sheet you own, then explore PRs, 1RM calculators, and visual insights.";
   const keywords =
-    "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
+    "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, workout data import, fitness app export, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
   const {
@@ -488,6 +515,8 @@ export default function Home() {
 
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
+        <DataArchiveSection />
+
         <>
           <h2 className="mt-8 mb-4 text-xl font-semibold">
             🏋️ The Big Four Barbell Lifts
@@ -559,6 +588,53 @@ export default function Home() {
         </div>
       </main>
     </>
+  );
+}
+
+function DataArchiveSection() {
+  return (
+    <section className="mx-auto mt-8 max-w-6xl border-y border-border py-8">
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <div>
+          <Badge variant="secondary" className="mb-3">
+            Data ownership, not app lock-in
+          </Badge>
+          <h2 className="text-2xl font-bold leading-tight md:text-3xl">
+            Turn app-hopping into one Google Sheet you own.
+          </h2>
+          <p className="text-muted-foreground mt-3 max-w-3xl text-sm leading-6 md:text-base md:leading-7">
+            Strength Journeys can be the merge lane for your whole barbell
+            history. Pull the data out of the apps that logged it, bring it
+            together in one editable Sheet, and run the fun stuff on top: PRs,
+            strength standards, tonnage, timelines, year recaps, and AI
+            questions about your own training.
+          </p>
+          <Link
+            href="/import"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors"
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Merge Your App History
+          </Link>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+          {dataArchiveBenefits.map((benefit) => (
+            <div key={benefit.title} className="flex items-start gap-3">
+              <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-md">
+                <benefit.IconComponent className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold">{benefit.title}</h3>
+                <p className="text-muted-foreground mt-1 text-sm leading-6">
+                  {benefit.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

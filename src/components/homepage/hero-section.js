@@ -48,9 +48,13 @@ export function HeroSection() {
   );
 }
 
-// Internal helper: paragraph describing the app's core value proposition with links.
+// Internal helper: paragraph describing the app's core value proposition.
 const PageDescription = () => (
-  <></>
+  <p className="text-muted-foreground mb-6 max-w-2xl text-center text-base leading-7 lg:text-left">
+    Import from Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey, or any
+    spreadsheet. Strength Journeys turns scattered app exports into one clean
+    lifting timeline, backed by a Google Sheet you own.
+  </p>
 );
 
 // Internal helper: prominent hero CTA area for unauthenticated visitors and
@@ -147,7 +151,7 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "📊 Raw data",
+    caption: "📊 One clean lifting archive",
   },
   {
     src: "/app1.png",
@@ -157,7 +161,7 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "📊 Own your data forever",
+    caption: "📊 Merge app exports into one Google Sheet you own",
   },
   {
     src: "/app2.png",
@@ -167,7 +171,7 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "No subscriptions. Ever.",
+    caption: "No subscriptions. No data lock-in.",
   },
   {
     src: "/app3.png",
@@ -226,7 +230,7 @@ export default function SpreadsheetShowcase() {
                 delay: 0.3,
                 ease: "easeOut",
               }}
-              className="rounded-full border border-border bg-card px-6 py-3 shadow-lg"
+              className="w-max max-w-[calc(100vw-3rem)] rounded-full border border-border bg-card px-6 py-3 text-center shadow-lg"
             >
               <p className="text-xs font-semibold text-foreground md:text-sm">
                 {images[index].caption}

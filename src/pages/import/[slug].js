@@ -1,3 +1,9 @@
+/*
+ * App-specific import landing pages.
+ * These pages pair SEO export instructions with the shared import workflow so
+ * each app can feed the same user-owned Google Sheet timeline.
+ */
+
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
@@ -141,7 +147,10 @@ function ImportAppPage({ page }) {
             {page.heroTitle}
           </PageHeaderHeading>
           <PageHeaderDescription>
-            <p>{page.hookLine}. {page.heroDescription}</p>
+            <p>
+              {page.hookLine}. {page.heroDescription} Merge it with your other
+              tracker exports into one Google Sheet you own.
+            </p>
           </PageHeaderDescription>
         </PageHeader>
 
@@ -149,6 +158,7 @@ function ImportAppPage({ page }) {
         <div id="import-section">
           <ImportWorkflowSection
             title={`Import from ${page.appName}`}
+            description={`Preview the export first. Then save or merge ${page.appName} into the same Google Sheet you use for the rest of your lifting history.`}
           />
         </div>
 
@@ -276,7 +286,7 @@ function ImportAppPage({ page }) {
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
               <h2 className="text-lg font-semibold">
-                Ready to see your {page.appName} data come alive?
+                Ready to add your {page.appName} history to the Sheet you own?
               </h2>
               <Button
                 onClick={() =>

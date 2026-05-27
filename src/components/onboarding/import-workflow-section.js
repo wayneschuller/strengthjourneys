@@ -673,9 +673,12 @@ function ImportedDataOverview({ parsedData, label }) {
   );
 }
 
+const DEFAULT_IMPORT_DESCRIPTION =
+  "Use Strength Journeys as your lifting data merge lane: preview app exports, then save the clean timeline to one Google Sheet you own.";
+
 export function ImportWorkflowSection({
   title = "Import from Another App",
-  description,
+  description = DEFAULT_IMPORT_DESCRIPTION,
 }) {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -901,7 +904,8 @@ export function ImportWorkflowSection({
                       We&apos;ll create a new Google Sheet in your Drive and
                       populate it with your {entryCount}{" "}
                       {entryCount === 1 ? "entry" : "entries"}. This becomes
-                      your permanent data backend - fully yours.
+                      your permanent lifting archive, ready for every future
+                      app import too.
                     </p>
                     <Button
                       onClick={handleCreateSheetFromImport}
@@ -922,8 +926,8 @@ export function ImportWorkflowSection({
                         : isFullyDuplicate
                         ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.`
                         : isPartialOverlap
-                          ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Strength Journeys sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.`
-                          : `Merge this data into your linked Strength Journeys sheet.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}`}
+                          ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Google Sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.`
+                          : `Merge this data into the Google Sheet you own.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}`}
                     </p>
                     {newEntries.length > 0 ? (
                       <>
@@ -1026,7 +1030,8 @@ export function ImportWorkflowSection({
                         Save &amp; keep my progress
                       </GoogleSignInButton>
                       <p className="text-muted-foreground mt-1.5 text-xs">
-                        Your data saves to a Google Sheet you own. Free forever.
+                        Save this preview to your own Google Sheet, then keep
+                        merging future exports there.
                       </p>
                       <p className="text-muted-foreground mt-1 text-xs">
                         Google will ask for Drive access. Approve it to create
@@ -1087,9 +1092,9 @@ export function ImportWorkflowSection({
                     Preview your data before merging into your sheet.
                   </>
                 ) : createMode ? (
-                  "We'll create a Google Sheet in your Drive and populate it with your data — ready to explore."
+                  "We'll create a Google Sheet in your Drive and populate it with your data, ready for every future import."
                 ) : (
-                  "CSV or Excel from Hevy, Strong, Wodify, BTWB, TurnKey, or any spreadsheet export."
+                  "CSV or Excel from Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey, or any spreadsheet export. Bring every export home."
                 )}
               </p>
               {mergeMode && (

@@ -39,7 +39,6 @@ export function HeroSection() {
             Free barbell lifting analysis tools that turn your lifting data
             into powerful, visual insights.
           </h1>
-          <PageDescription />
           <HeroPrimaryCta />
         </div>
         <SpreadsheetShowcase />
@@ -47,11 +46,6 @@ export function HeroSection() {
     </div>
   );
 }
-
-// Internal helper: paragraph describing the app's core value proposition with links.
-const PageDescription = () => (
-  <></>
-);
 
 // Internal helper: prominent hero CTA area for unauthenticated visitors and
 // authenticated demo-mode users who still need to set up a sheet.
@@ -147,7 +141,7 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "📊 Raw data",
+    caption: "📊 One clean lifting archive",
   },
   {
     src: "/app1.png",
@@ -157,7 +151,7 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "📊 Own your data forever",
+    caption: "📊 Merge app exports into one Google Sheet you own",
   },
   {
     src: "/app2.png",
@@ -167,7 +161,7 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "No subscriptions. Ever.",
+    caption: "No subscriptions. No data lock-in.",
   },
   {
     src: "/app3.png",
@@ -226,7 +220,7 @@ export default function SpreadsheetShowcase() {
                 delay: 0.3,
                 ease: "easeOut",
               }}
-              className="rounded-full border border-border bg-card px-6 py-3 shadow-lg"
+              className="w-max max-w-[calc(100vw-3rem)] rounded-full border border-border bg-card px-6 py-3 text-center shadow-lg"
             >
               <p className="text-xs font-semibold text-foreground md:text-sm">
                 {images[index].caption}

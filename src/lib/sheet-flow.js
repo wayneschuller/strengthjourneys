@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { normalizeDateInput } from "@/lib/date-utils";
 import {
+  normalizeColumnName,
   normalizeBigFourLiftType,
   STANDARD_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/data-sources/parser-utilities";
@@ -10,7 +11,7 @@ import { devLog } from "@/lib/processing-utils";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
 export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
-export const PROVISION_VERSION = 2;
+export const PROVISION_VERSION = 3;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 12;
 const METADATA_SCAN_ROW_CAP = 10000;
@@ -18,14 +19,12 @@ const BIG_FOUR_LIFTS = STANDARD_BIG_FOUR_LIFT_TYPES;
 const BIG_FOUR_LIFTS_SET = new Set(BIG_FOUR_LIFTS);
 const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
-const REQUIRED_HEADERS = [
+const BOOTSTRAP_HEADERS = [
   "Date",
   "Lift Type",
   "Reps",
   "Weight",
   "Notes",
-  "isGoal",
-  "Label",
   "URL",
 ];
 
@@ -125,14 +124,6 @@ function getRequestLocale(req) {
   return "en-US";
 }
 
-function formatStarterDateYmd(nowIso) {
-  const date = nowIso ? new Date(nowIso) : new Date();
-  const y = date.getUTCFullYear();
-  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(date.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 function toTimestamp(iso) {
   const t = new Date(iso || 0).getTime();
   return Number.isFinite(t) ? t : 0;
@@ -224,7 +215,7 @@ export function toClientCandidate(candidate) {
     dateRangeEnd: candidate.dateRangeEnd || null,
     metadataSampled: Boolean(candidate.metadataSampled),
     bigFourPreview: Array.isArray(candidate.bigFourPreview)
-      ? candidate.bigFourPreview
+      ? candidate.bigFourPreview.map(toClientPreviewSet).filter(Boolean)
       : [],
     headerHint:
       candidate?.headerHint &&
@@ -232,8 +223,24 @@ export function toClientCandidate(candidate) {
       Number.isInteger(candidate.headerHint.repsColumnIndex) &&
       Number.isInteger(candidate.headerHint.weightColumnIndex) &&
       Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
-        ? candidate.headerHint
+        ? {
+            ...candidate.headerHint,
+            goalColumnIndex: Number.isInteger(candidate.headerHint.goalColumnIndex)
+              ? candidate.headerHint.goalColumnIndex
+              : -1,
+          }
         : null,
+  };
+}
+
+function toClientPreviewSet(preview) {
+  if (!preview || typeof preview !== "object") return null;
+  return {
+    liftType: preview.liftType,
+    reps: preview.reps,
+    weight: preview.weight,
+    unitType: preview.unitType || null,
+    date: preview.date || null,
   };
 }
 
@@ -321,6 +328,7 @@ export async function readHeaderInfo(ssid, headers) {
   const json = await response.json().catch(() => ({}));
   const row = Array.isArray(json?.values?.[0]) ? json.values[0] : [];
   const normalized = row.map(normalizeHeader);
+  const canonical = row.map(normalizeColumnName);
 
   return {
     valid: REQUIRED_HEADER_CORE.every((required) => normalized.includes(required)),
@@ -331,9 +339,15 @@ export async function readHeaderInfo(ssid, headers) {
     repsColumnIndex: normalized.indexOf("reps"),
     weightColumnIndex: normalized.indexOf("weight"),
     liftTypeColumnIndex: normalized.indexOf("lift type"),
+    goalColumnIndex: canonical.indexOf("isGoal"),
   };
 }
 
+// Keep this server-side scanner in lockstep with parseStrengthJourneysData().
+// It does a fast raw Sheets API scan instead of calling the client-oriented
+// parser, so it must manually mirror sparse Date/Lift Type inheritance and
+// optional row semantics such as isGoal. The 2026-05 chooser regression showed
+// why this matters: a goal row can otherwise appear as a "best actual set".
 function parseYmd(value, localeHint) {
   return normalizeDateInput(value, localeHint);
 }
@@ -373,7 +387,12 @@ function parseWeightAndUnit(value) {
   return { weight: parsed, unitType: hasKg ? "kg" : hasLb ? "lb" : null };
 }
 
+function isGoalCellValue(value) {
+  return String(value || "").trim().toLowerCase() === "true";
+}
+
 function shouldReplacePreviewSet(current, candidate) {
+  // Use e1RM only as a ranking score; client previews show the actual set.
   if (!current) return true;
   if (candidate.e1rm > current.e1rm) {
     const relativeDelta = (candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
@@ -395,6 +414,7 @@ export async function enrichCandidateMetadata(
   repsColumnIndex,
   weightColumnIndex,
   liftTypeColumnIndex,
+  goalColumnIndex = -1,
 ) {
   const response = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values/A2:Z${METADATA_SCAN_ROW_CAP + 1}?dateTimeRenderOption=FORMATTED_STRING`,
@@ -447,6 +467,11 @@ export async function enrichCandidateMetadata(
       weightColumnIndex >= 0 &&
       String(row?.[weightColumnIndex] || "").trim() !== "";
     if (!hasReps || !hasWeight) continue;
+
+    if (goalColumnIndex >= 0 && isGoalCellValue(row?.[goalColumnIndex])) {
+      continue;
+    }
+
     approxRows += 1;
 
     const parsedDate = parsedDateFromCell || previousDate;
@@ -600,6 +625,7 @@ export async function discoverValidCandidates(headers, debug) {
           repsColumnIndex: headerInfo.repsColumnIndex,
           weightColumnIndex: headerInfo.weightColumnIndex,
           liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
+          goalColumnIndex: headerInfo.goalColumnIndex,
         },
       });
     }
@@ -641,6 +667,7 @@ export async function enrichCandidatesByIds({
         repsColumnIndex: headerInfo.repsColumnIndex,
         weightColumnIndex: headerInfo.weightColumnIndex,
         liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
+        goalColumnIndex: headerInfo.goalColumnIndex,
       };
     }
     enriched.push(
@@ -652,6 +679,7 @@ export async function enrichCandidatesByIds({
         headerHint.repsColumnIndex,
         headerHint.weightColumnIndex,
         headerHint.liftTypeColumnIndex,
+        headerHint.goalColumnIndex,
       ),
     );
   }
@@ -778,7 +806,7 @@ export async function createBlankSheet(sheetName, headers) {
   const { ssid } = await createSpreadsheet(sheetName, headers);
 
   const headerResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:H1?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
@@ -786,9 +814,9 @@ export async function createBlankSheet(sheetName, headers) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A1:H1",
+        range: "A1:F1",
         majorDimension: "ROWS",
-        values: [REQUIRED_HEADERS],
+        values: [BOOTSTRAP_HEADERS],
       }),
     },
   );
@@ -806,37 +834,11 @@ export async function createBlankSheet(sheetName, headers) {
   };
 }
 
-export async function createBootstrapSheet(
-  sheetName,
-  headers,
-  nowIso,
-  {
-    preferredUnitType = "lb",
-    locale = "en-US",
-    starterDateText = null,
-  } = {},
-) {
+export async function createBootstrapSheet(sheetName, headers) {
   const { ssid, sheetId } = await createSpreadsheet(sheetName, headers);
-  const unitType = preferredUnitType === "kg" ? "kg" : "lb";
-  const starterWeight = unitType === "kg" ? "20kg" : "45lb";
-  const starterDate = formatStarterDateYmd(nowIso);
-  const starterRows = [
-    ["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"],
-    [
-      starterDate,
-      "Back Squat",
-      "5",
-      starterWeight,
-      "Start each new session by inserting 5-10 new rows at the top.",
-      "",
-    ],
-    ["", "", "5", starterWeight, "Log one set per row as you lift.", ""],
-    ["", "", "5", starterWeight, "Leave Date blank on the extra rows for the same session.", ""],
-    ["", "", "", "", "Put all your sets here, including warmups.", ""],
-  ];
 
   const valuesResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F5?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
@@ -844,15 +846,15 @@ export async function createBootstrapSheet(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A1:F5",
+        range: "A1:F1",
         majorDimension: "ROWS",
-        values: starterRows,
+        values: [BOOTSTRAP_HEADERS],
       }),
     },
   );
   if (!valuesResponse.ok) {
     const body = await valuesResponse.json().catch(() => ({}));
-    throw new Error(body?.error?.message || "Failed to seed bootstrap sheet");
+    throw new Error(body?.error?.message || "Failed to seed sheet headers");
   }
 
   const formatResponse = await fetch(
@@ -997,7 +999,7 @@ export async function createBootstrapSheet(
     },
   );
   if (!formatResponse.ok) {
-    devLog("[sheet-flow] bootstrap formatting failed; continuing with seeded values");
+    devLog("[sheet-flow] bootstrap formatting failed; continuing with headers only");
   }
 
   const metadata = await fetchDriveMetadata(ssid, headers);

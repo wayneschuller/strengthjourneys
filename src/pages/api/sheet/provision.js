@@ -34,22 +34,21 @@ import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { devLog } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
+  normalizeColumnName,
   normalizeBigFourLiftType,
   STANDARD_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/data-sources/parser-utilities";
 
 const TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
-const PROVISION_VERSION = 1;
+const PROVISION_VERSION = 2;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 6;
-const REQUIRED_HEADERS = [
+const BOOTSTRAP_HEADERS = [
   "Date",
   "Lift Type",
   "Reps",
   "Weight",
   "Notes",
-  "isGoal",
-  "Label",
   "URL",
 ];
 const BIG_FOUR_LIFTS = STANDARD_BIG_FOUR_LIFT_TYPES;
@@ -57,6 +56,7 @@ const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
 const isDevEnv =
   process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 const METADATA_SCAN_ROW_CAP = 10000;
+const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -117,6 +117,25 @@ function parseWeightAndUnit(value) {
     weight: parsed,
     unitType: hasKg ? "kg" : hasLb ? "lb" : null,
   };
+}
+
+function isGoalCellValue(value) {
+  return String(value || "").trim().toLowerCase() === "true";
+}
+
+function shouldReplacePreviewSet(current, candidate) {
+  // Use e1RM only as a ranking score; client previews show the actual set.
+  if (!current) return true;
+  if (candidate.e1rm > current.e1rm) {
+    const relativeDelta = (candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
+    if (relativeDelta > PREVIEW_E1RM_TIE_TOLERANCE_RATIO) return true;
+  }
+  const relativeGap = Math.abs(candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
+  if (relativeGap <= PREVIEW_E1RM_TIE_TOLERANCE_RATIO) {
+    if (candidate.reps < current.reps) return true;
+    if (candidate.reps === current.reps && candidate.weight > current.weight) return true;
+  }
+  return false;
 }
 
 function getNameTokens(fullName) {
@@ -210,7 +229,7 @@ function toClientCandidate(candidate) {
     dateRangeEnd: candidate.dateRangeEnd || null,
     metadataSampled: Boolean(candidate.metadataSampled),
     bigFourPreview: Array.isArray(candidate.bigFourPreview)
-      ? candidate.bigFourPreview
+      ? candidate.bigFourPreview.map(toClientPreviewSet).filter(Boolean)
       : [],
     headerHint:
       candidate?.headerHint &&
@@ -218,8 +237,24 @@ function toClientCandidate(candidate) {
       Number.isInteger(candidate.headerHint.repsColumnIndex) &&
       Number.isInteger(candidate.headerHint.weightColumnIndex) &&
       Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
-        ? candidate.headerHint
+        ? {
+            ...candidate.headerHint,
+            goalColumnIndex: Number.isInteger(candidate.headerHint.goalColumnIndex)
+              ? candidate.headerHint.goalColumnIndex
+              : -1,
+          }
         : null,
+  };
+}
+
+function toClientPreviewSet(preview) {
+  if (!preview || typeof preview !== "object") return null;
+  return {
+    liftType: preview.liftType,
+    reps: preview.reps,
+    weight: preview.weight,
+    unitType: preview.unitType || null,
+    date: preview.date || null,
   };
 }
 
@@ -301,6 +336,7 @@ async function readHeaderInfo(ssid, headers) {
   const json = await response.json().catch(() => ({}));
   const row = Array.isArray(json?.values?.[0]) ? json.values[0] : [];
   const normalized = row.map(normalizeHeader);
+  const canonical = row.map(normalizeColumnName);
   const valid = REQUIRED_HEADER_CORE.every((required) =>
     normalized.includes(required),
   );
@@ -308,6 +344,7 @@ async function readHeaderInfo(ssid, headers) {
   const repsColumnIndex = normalized.indexOf("reps");
   const weightColumnIndex = normalized.indexOf("weight");
   const liftTypeColumnIndex = normalized.indexOf("lift type");
+  const goalColumnIndex = canonical.indexOf("isGoal");
 
   return {
     valid,
@@ -318,9 +355,13 @@ async function readHeaderInfo(ssid, headers) {
     repsColumnIndex,
     weightColumnIndex,
     liftTypeColumnIndex,
+    goalColumnIndex,
   };
 }
 
+// Legacy copy of the sheet chooser scanner. Keep this behavior aligned with
+// src/lib/sheet-flow.js and parseStrengthJourneysData(), especially sparse
+// Date/Lift Type inheritance and optional row semantics such as isGoal.
 function parseYmd(value) {
   if (!value) return null;
   const str = String(value).trim();
@@ -337,6 +378,7 @@ async function enrichCandidateMetadata(
   repsColumnIndex,
   weightColumnIndex,
   liftTypeColumnIndex,
+  goalColumnIndex = -1,
 ) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values/A2:Z${METADATA_SCAN_ROW_CAP + 1}?dateTimeRenderOption=FORMATTED_STRING`;
   const response = await fetch(url, { method: "GET", headers });
@@ -365,25 +407,31 @@ async function enrichCandidateMetadata(
   const safeRepsCol = repsColumnIndex >= 0 ? repsColumnIndex : -1;
   const safeWeightCol = weightColumnIndex >= 0 ? weightColumnIndex : -1;
   const safeLiftTypeCol = liftTypeColumnIndex >= 0 ? liftTypeColumnIndex : -1;
+  const safeGoalCol = goalColumnIndex >= 0 ? goalColumnIndex : -1;
   let previousDate = null;
   let previousLiftType = null;
   const bestByLift = {};
 
   for (const row of nonEmptyRows) {
+    const parsed = parseYmd(row?.[safeDateCol]) || previousDate;
+    if (parsed) previousDate = parsed;
+
+    const normalizedLiftType =
+      normalizeLiftTypeForPreview(row?.[safeLiftTypeCol]) || previousLiftType;
+    if (normalizedLiftType) previousLiftType = normalizedLiftType;
+
     const hasReps =
       safeRepsCol >= 0 && String(row?.[safeRepsCol] || "").trim() !== "";
     const hasWeight =
       safeWeightCol >= 0 && String(row?.[safeWeightCol] || "").trim() !== "";
     if (!hasReps || !hasWeight) continue;
+
+    if (safeGoalCol >= 0 && isGoalCellValue(row?.[safeGoalCol])) continue;
+
     approxRows += 1;
 
-    const parsed = parseYmd(row?.[safeDateCol]) || previousDate;
     if (!parsed) continue;
-    previousDate = parsed;
 
-    const normalizedLiftType =
-      normalizeLiftTypeForPreview(row?.[safeLiftTypeCol]) || previousLiftType;
-    if (normalizedLiftType) previousLiftType = normalizedLiftType;
     sessions.add(parsed);
     if (!minDate || parsed < minDate) minDate = parsed;
     if (!maxDate || parsed > maxDate) maxDate = parsed;
@@ -398,7 +446,14 @@ async function enrichCandidateMetadata(
 
     const e1rm = estimateE1RM(reps, weightInfo.weight, "Brzycki");
     const current = bestByLift[normalizedLiftType];
-    if (!current || e1rm > current.e1rm) {
+    if (
+      shouldReplacePreviewSet(current, {
+        liftType: normalizedLiftType,
+        e1rm,
+        reps,
+        weight: weightInfo.weight,
+      })
+    ) {
       bestByLift[normalizedLiftType] = {
         liftType: normalizedLiftType,
         e1rm,
@@ -543,6 +598,7 @@ async function discoverValidCandidates(headers, debug) {
           repsColumnIndex: headerInfo.repsColumnIndex,
           weightColumnIndex: headerInfo.weightColumnIndex,
           liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
+          goalColumnIndex: headerInfo.goalColumnIndex,
         },
       });
     }
@@ -615,6 +671,7 @@ async function enrichCandidatesByIds({
       hasHeaderHint ? hinted.repsColumnIndex : headerInfo.repsColumnIndex,
       hasHeaderHint ? hinted.weightColumnIndex : headerInfo.weightColumnIndex,
       hasHeaderHint ? hinted.liftTypeColumnIndex : headerInfo.liftTypeColumnIndex,
+      hasHeaderHint ? hinted.goalColumnIndex : headerInfo.goalColumnIndex,
     );
     enriched.push(candidateWithMeta);
   }
@@ -664,7 +721,7 @@ async function createBlankSheet(sheetName, headers) {
   if (!ssid) throw new Error("Sheet was created but spreadsheetId was missing");
 
   const headerResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:H1?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
@@ -672,9 +729,9 @@ async function createBlankSheet(sheetName, headers) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A1:H1",
+        range: "A1:F1",
         majorDimension: "ROWS",
-        values: [REQUIRED_HEADERS],
+        values: [BOOTSTRAP_HEADERS],
       }),
     },
   );
@@ -888,7 +945,7 @@ export default async function handler(req, res) {
         metadata: created,
         connectionMethod: "auto_provision",
         provisioningMethod:
-          mode === "create_sample" ? "template_copy" : "blank_seeded",
+          mode === "create_sample" ? "template_copy" : "blank_headers",
       });
 
       await maybePromptActivation({
@@ -897,7 +954,7 @@ export default async function handler(req, res) {
         meta: {
           connectionMethod: "auto_provision",
           provisioningMethod:
-            mode === "create_sample" ? "template_copy" : "blank_seeded",
+            mode === "create_sample" ? "template_copy" : "blank_headers",
           sheetName: created.name || sheetName,
         },
       });
@@ -908,7 +965,7 @@ export default async function handler(req, res) {
         ssid: created.id,
         name: created.name || sheetName,
         provisioningMethod:
-          mode === "create_sample" ? "template_copy" : "blank_seeded",
+          mode === "create_sample" ? "template_copy" : "blank_headers",
       };
 
       res.status(200).json(

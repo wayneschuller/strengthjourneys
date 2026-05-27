@@ -1,3 +1,9 @@
+/**
+ * Landing hero slogan carousel.
+ * Keep slogans short enough to survive mobile wrapping inside the fixed-height
+ * carousel while reinforcing data ownership and long-term training continuity.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import Autoplay from "embla-carousel-autoplay";
 
@@ -22,6 +28,9 @@ const SLOGANS = [
   "Progress you can see, not just feel.",
   "From spreadsheet rows to PR momentum.",
   "Own your numbers. Own your training.",
+  "Merge your fitness app exports into one Google Sheet you own.",
+  "Hevy, Strong, Wodify, BTWB, spreadsheets: one lifting timeline.",
+  "Your training history deserves a permanent home.",
   "Simple logging. Serious lifting insights.",
   "Turn every session into measurable progress.",
   "Clarity for your next block of training.",
@@ -74,7 +83,7 @@ export function SloganCarousel() {
       <CarouselContent>
         {slogans.map((slogan) => (
           <CarouselItem key={slogan}>
-            <p className="flex items-center justify-center h-20 text-center text-3xl tracking-tighter text-balance text-amber-500">
+            <p className="flex h-20 items-center justify-center px-2 text-balance text-center text-2xl leading-tight text-amber-500 md:text-3xl">
               {slogan}
             </p>
           </CarouselItem>

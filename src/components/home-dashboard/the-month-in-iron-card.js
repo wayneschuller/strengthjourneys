@@ -492,23 +492,29 @@ function EarlyMonthMomentumCard({
           : "Log your first session and this card will start scoring your month.";
 
   const guidanceItems =
-    dashboardStage === "starter_sample"
+    dataMaturityStage === "no_sessions"
       ? [
-          "Open the sheet and replace the sample row.",
-          "Aim for three simple sessions this week.",
-          "Keep weights easy enough that technique stays clean.",
+          "Set your preferred units in your bio settings.",
+          "Open the Log page and add your first training session.",
+          "Already have history? Import it and merge it into this sheet.",
         ]
-      : dashboardStage === "first_real_week"
+      : dashboardStage === "starter_sample"
         ? [
-            "Repeat the same basic lifts before adding variety.",
-            "Log every set so the habit becomes automatic.",
-            "Leave a rep in reserve instead of chasing grinders.",
+            "Open the sheet and replace the sample row.",
+            "Aim for three simple sessions this week.",
+            "Keep weights easy enough that technique stays clean.",
           ]
-        : [
-            "Squat and press regularly, deadlift once a week, and recover hard.",
-            "Let consistency lead load. Good weeks compound faster than big swings.",
-            "The goal this month is repeatable training, not dramatic heroics.",
-          ];
+        : dashboardStage === "first_real_week"
+          ? [
+              "Repeat the same basic lifts before adding variety.",
+              "Log every set so the habit becomes automatic.",
+              "Leave a rep in reserve instead of chasing grinders.",
+            ]
+          : [
+              "Squat and press regularly, deadlift once a week, and recover hard.",
+              "Let consistency lead load. Good weeks compound faster than big swings.",
+              "The goal this month is repeatable training, not dramatic heroics.",
+            ];
   const showWeekTemplate =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
   const showFirstMonthTemplate = dashboardStage === "first_month";

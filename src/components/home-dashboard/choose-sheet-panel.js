@@ -139,15 +139,6 @@ function formatPreviewWeight(preview) {
   return `${roundedWeight}${preview.unitType || ""}`;
 }
 
-function formatPreviewE1RM(preview) {
-  if (!preview || typeof preview.e1rm !== "number") return "";
-  const roundedE1RM =
-    Math.abs(preview.e1rm - Math.round(preview.e1rm)) < 0.05
-      ? String(Math.round(preview.e1rm))
-      : preview.e1rm.toFixed(1);
-  return `~${roundedE1RM}${preview.unitType || ""} e1rm`;
-}
-
 function formatPreviewPrimaryValue(preview) {
   const weight = formatPreviewWeight(preview);
   if (!weight || !preview?.reps) return weight;
@@ -157,10 +148,7 @@ function formatPreviewPrimaryValue(preview) {
 function formatPreviewSetDetail(preview) {
   if (!preview) return "";
   const date = formatPreviewDate(preview.date);
-  if (preview.reps === 1) return date ? `(${date})` : "";
-  const e1rm = formatPreviewE1RM(preview);
-  if (!e1rm) return date ? `(${date})` : "";
-  return `${e1rm}${date ? ` (${date})` : ""}`;
+  return date ? `(${date})` : "";
 }
 
 function getCandidateUrl(candidate) {
@@ -365,7 +353,7 @@ export function ChooseSheetPanel({
                         primaryCandidate.bigFourPreview.length > 0 && (
                           <div className="space-y-2 pt-1">
                             <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                              Best sets detected
+                              Best actual sets detected
                             </p>
                             <div className="flex flex-wrap gap-2">
                               {primaryCandidate.bigFourPreview.map(

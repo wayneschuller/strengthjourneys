@@ -1,5 +1,11 @@
 /** @format */
 
+/**
+ * Public home page for Strength Journeys.
+ * Keep this Pages Router entry focused on the marketing landing experience and
+ * the signed-in dashboard handoff without moving user data analysis server-side.
+ */
+
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
@@ -172,7 +178,7 @@ export const featurePages = [
     href: "/import",
     title: "Import Data",
     description:
-      "Import from Hevy, Strong, Wodify, BTWB, or spreadsheets. Preview first, then merge into your data.",
+      "Import from Hevy, Strong, Wodify, BTWB, or spreadsheets. Merge everything into your own Sheet.",
     IconComponent: Upload,
   },
   {
@@ -346,7 +352,7 @@ const structuredData = {
       name: "Strength Journeys",
       url: "https://www.strengthjourneys.xyz",
       description:
-        "Free barbell lifting analysis tools. PR tracking, 1RM calculators, strength standards, and training insights powered by your Google Sheet data.",
+        "Free barbell lifting analysis tools. Import app exports into a Google Sheet you own, then unlock PR tracking, 1RM calculators, strength standards, and training insights.",
       logo: {
         "@type": "ImageObject",
         url: "https://www.strengthjourneys.xyz/nav_logo_light.png",
@@ -368,9 +374,9 @@ export default function Home() {
   const title = "Free Barbell Lifting Analysis Tools | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/";
   const description =
-    "Track and analyze your barbell lifting with Strength Journeys. Free PR analyzer, 1RM calculator, and more. Integrates with Google Sheets. Open source.";
+    "Track, import, and analyze your barbell lifting data. Merge app exports into a Google Sheet you own, then explore PRs, 1RM calculators, and visual insights.";
   const keywords =
-    "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
+    "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, workout data import, fitness app export, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
   const {

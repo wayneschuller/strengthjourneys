@@ -16,7 +16,6 @@
 //   mode: "select_existing" | "create_blank" | "create_sample",
 //   selectedSsid?: string,      // required when mode = select_existing
 //   hadLocalSheetBefore?: bool, // hint for lifecycle classification
-//   preferredUnitType?: "kg" | "lb",
 // }
 //
 // Returns: { ssid, url, filename, modifiedTime, modifiedByMeTime }
@@ -59,7 +58,6 @@ export default async function handler(req, res) {
   const selectedSsid = req.body?.selectedSsid || null;
   const importedFileName = req.body?.importedFileName || null;
   const hadLocalSheetBefore = Boolean(req.body?.hadLocalSheetBefore);
-  const preferredUnitType = req.body?.preferredUnitType === "kg" ? "kg" : "lb";
   const debug = createDebug(intent, mode || "link");
   const existingRecord = await getExistingRecord(base.kvKey);
   const sheetName =
@@ -89,7 +87,6 @@ export default async function handler(req, res) {
       mode,
       selectedSsid,
       hadLocalSheetBefore,
-      preferredUnitType,
       lifecycle,
     });
 
@@ -110,19 +107,10 @@ export default async function handler(req, res) {
     }
 
     if (mode === "create_blank") {
-      metadata = await createBootstrapSheet(
-        sheetName,
-        base.headers,
-        new Date().toISOString(),
-        {
-          preferredUnitType,
-          locale: base.locale,
-          starterDateText: req.body?.starterDateText || null,
-        },
-      );
+      metadata = await createBootstrapSheet(sheetName, base.headers);
       connectionMethod =
         intent === "switch_sheet" ? "switch_sheet_selection" : "user_created_blank";
-      provisioningMethod = "bootstrap_sheet_seeded";
+      provisioningMethod = "bootstrap_sheet_headers";
       reason = "created_blank";
       wasCreated = true;
     }

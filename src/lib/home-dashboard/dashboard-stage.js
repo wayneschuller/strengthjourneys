@@ -2,15 +2,16 @@
  * Home dashboard staging rules.
  *
  * The dashboard needs two related but distinct concepts:
- * - starterSheetState: whether the linked sheet still looks like the seeded
+ * - starterSheetState: whether the linked sheet still looks like the legacy
  *   onboarding example
  * - dashboardStage: which home-dashboard experience should be shown
  *
  * Keep this logic centralized so analytics and UI stay in sync.
  *
  * Stage taxonomy:
- * - `starter_sample`: the linked sheet still looks like the seeded auto-provisioned sample
- * - `first_real_week`: the sample has been replaced, and the real log is still within its first 7-day window
+ * - `starter_sample`: the linked sheet is still in first-run setup, either
+ *   empty or still showing the legacy auto-provisioned sample
+ * - `first_real_week`: at least one real session exists, and the log is still within its first 7-day window
  * - `first_month`: early real data, enough to coach but not enough to compare meaningfully
  * - `early_base`: real training base exists; some mature visualizations can unlock
  * - `established`: enough history for the full dashboard experience
@@ -54,7 +55,7 @@ function getTrainingSpanDays(parsedData) {
 }
 
 /**
- * Detect whether the currently linked sheet still looks like the seeded
+ * Detect whether the currently linked sheet still looks like the legacy
  * auto-provisioned starter sample.
  *
  * @param {object} params
@@ -78,18 +79,18 @@ export function detectStarterSheetState({ parsedData, rawRows, sheetInfo } = {})
       (entry) =>
         entry?.liftType === "Back Squat" &&
         entry?.reps === 5 &&
-        entry?.weight === 20 &&
-        entry?.unitType === "kg",
+        ((entry?.weight === 20 && entry?.unitType === "kg") ||
+          (entry?.weight === 45 && entry?.unitType === "lb")),
     );
 
   // This heuristic is intentionally strict. We only want to call something a
-  // starter sample when it still closely resembles the seeded auto-provisioned
-  // example, not merely because the user is new.
+  // legacy starter sample when it still closely resembles the old
+  // auto-provisioned example, not merely because the user is new.
   //
-  // The current starter sheet seeds a single Back Squat session at 4x5@20kg,
-  // which arrives in parsedData as multiple non-goal rows on the same date.
-  // Match that exact shape so the onboarding dashboard only appears when the
-  // sample has not yet been meaningfully personalized.
+  // Older starter sheets seeded a single Back Squat session at 3x5@20kg or
+  // 3x5@45lb, which arrives in parsedData as multiple non-goal rows on the
+  // same date. Match that exact shape so the onboarding dashboard only treats
+  // real rows as sample data when they have not been personalized.
   const looksLikeSeededSample =
     nonGoalEntries.length <= 4 &&
     sessionCount === 1 &&
@@ -146,10 +147,8 @@ export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
     };
   }
 
-  // A personalized or newly linked sheet with no real sessions should still
-  // behave like onboarding. It is no longer the literal seeded sample, but the
-  // home dashboard should stay in the same starter-style experience until the
-  // first real session is logged.
+  // A headers-only new sheet has no real sessions yet. Keep it in the
+  // starter-style experience until the first real session is logged.
   if (sessionCount === 0) {
     return {
       dashboardStage: "starter_sample",

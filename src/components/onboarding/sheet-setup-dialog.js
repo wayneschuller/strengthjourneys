@@ -8,6 +8,7 @@ import { useRouter } from "next/router";
 import { DrivePickerContainer } from "@/components/onboarding/drive-picker-container";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel";
+import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { deduplicateImportedEntries } from "@/lib/import/dedupe";
@@ -44,6 +45,7 @@ import {
   CheckCircle2,
   FolderOpen,
   LoaderCircle,
+  Activity,
   Sparkles,
 } from "lucide-react";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
@@ -139,22 +141,6 @@ function getPreferredUnitTypeFromClient() {
   } catch {
     return "lb";
   }
-}
-
-function getClientLocale() {
-  if (typeof window === "undefined") return "en-US";
-  const locale = window.navigator?.language;
-  return typeof locale === "string" && locale.trim().length > 0
-    ? locale
-    : "en-US";
-}
-
-function getStarterDateTextForClientLocale() {
-  return new Intl.DateTimeFormat(getClientLocale(), {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-  }).format(new Date());
 }
 
 function getSheetUrl(ssid, url) {
@@ -763,9 +749,6 @@ export function SheetSetupDialog() {
           body: JSON.stringify({
             intent: intent || "bootstrap",
             hadLocalSheetBefore: Boolean(hadLocalBefore),
-            preferredUnitType: getPreferredUnitTypeFromClient(),
-            locale: getClientLocale(),
-            starterDateText: getStarterDateTextForClientLocale(),
           }),
         });
         const payload = await response.json().catch(() => ({}));
@@ -827,9 +810,6 @@ export function SheetSetupDialog() {
             mode,
             selectedSsid,
             hadLocalSheetBefore,
-            preferredUnitType: getPreferredUnitTypeFromClient(),
-            locale: getClientLocale(),
-            starterDateText: getStarterDateTextForClientLocale(),
           }),
         });
         const payload = await response.json().catch(() => ({}));
@@ -980,9 +960,6 @@ export function SheetSetupDialog() {
             intent: "bootstrap",
             mode: "create_blank",
             importedFileName,
-            preferredUnitType: getPreferredUnitTypeFromClient(),
-            locale: getClientLocale(),
-            starterDateText: getStarterDateTextForClientLocale(),
           }),
         });
         const linkPayload = await linkRes.json().catch(() => ({}));
@@ -1089,9 +1066,6 @@ export function SheetSetupDialog() {
           body: JSON.stringify({
             intent: "bootstrap",
             mode: "create_blank",
-            preferredUnitType: getPreferredUnitTypeFromClient(),
-            locale: getClientLocale(),
-            starterDateText: getStarterDateTextForClientLocale(),
           }),
         });
         const linkPayload = await linkRes.json().catch(() => ({}));
@@ -1571,6 +1545,7 @@ export function SheetSetupDialog() {
                   sheetInfo={createdSheetInfo || sheetInfo}
                   reason={createdSheetReason}
                   action={createdSheetAction}
+                  intent={flowIntent}
                   onGoToDashboard={closeDialog}
                 />
               )}
@@ -1741,7 +1716,13 @@ function ScopeRepairPanel({
   );
 }
 
-function CreatedSheetPanel({ sheetInfo, reason, action, onGoToDashboard }) {
+function CreatedSheetPanel({
+  sheetInfo,
+  reason,
+  action,
+  intent,
+  onGoToDashboard,
+}) {
   const sheetUrl = getSheetUrl(sheetInfo?.ssid, sheetInfo?.url);
   const sheetLabel =
     sheetInfo?.filename || "Your Strength Journeys lifting log";
@@ -1756,6 +1737,7 @@ function CreatedSheetPanel({ sheetInfo, reason, action, onGoToDashboard }) {
   const infoText = isLinked
     ? "Your dashboards will load with your existing data."
     : "Log lifts in your sheet. Your dashboards update automatically.";
+  const showBioSetupPrompt = intent !== "switch_sheet";
 
   const sheetCard = (
     <div className="flex items-start gap-4">
@@ -1806,6 +1788,24 @@ function CreatedSheetPanel({ sheetInfo, reason, action, onGoToDashboard }) {
       <div className="border-border/70 bg-card/20 text-muted-foreground rounded-lg border px-4 py-3 text-center text-sm leading-relaxed">
         {infoText}
       </div>
+      {showBioSetupPrompt ? (
+        <div className="border-primary/20 bg-background/80 rounded-lg border px-4 py-4 text-left">
+          <div className="mb-4 space-y-2">
+            <p className="text-foreground flex items-center gap-2 text-base font-semibold">
+              <Activity className="text-primary h-4 w-4" aria-hidden />
+              Add your bio details
+            </p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Set age, sex, and bodyweight now so strength standards and
+              coaching context use your actual profile. The unit switch here
+              also chooses your app display units between kg and lb. Each Google
+              Sheet row still keeps its own unit, so direct sheet edits can mix
+              kg and lb entries when you need them.
+            </p>
+          </div>
+          <AthleteBioSliderSettings className="bg-muted/20 rounded-md p-3" />
+        </div>
+      ) : null}
       {showRecoveryHint ? (
         <div className="border-border/70 bg-muted/20 text-muted-foreground rounded-lg border px-4 py-3 text-center text-sm leading-relaxed">
           We created a new lifting log for you. If you deleted your old one

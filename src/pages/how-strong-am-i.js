@@ -32,6 +32,7 @@ import {
 
 import { RelatedArticles } from "@/components/article-cards";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
+import { ImportDataOwnershipPromo } from "@/components/import-data-ownership-promo";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import {
   PageContainer,
@@ -638,6 +639,12 @@ function HowStrongAmIPageMain() {
         <ExplainerSection />
         <FAQSection />
       </section>
+
+      <ImportDataOwnershipPromo
+        className="mx-auto mt-10 w-full max-w-6xl"
+        title="Find out how strong you are across your whole training history."
+        description="A single manual estimate is useful. Your full archive is better. Import Hevy, Strong, Wodify, BTWB, or spreadsheet exports, merge them into one Google Sheet you own, and use that timeline to track PRs, percentiles, and long-term strength."
+      />
 
       <NextToolsSection />
     </PageContainer>

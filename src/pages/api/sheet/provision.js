@@ -55,6 +55,7 @@ const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
 const isDevEnv =
   process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 const METADATA_SCAN_ROW_CAP = 10000;
+const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -115,6 +116,21 @@ function parseWeightAndUnit(value) {
     weight: parsed,
     unitType: hasKg ? "kg" : hasLb ? "lb" : null,
   };
+}
+
+function shouldReplacePreviewSet(current, candidate) {
+  // Use e1RM only as a ranking score; client previews show the actual set.
+  if (!current) return true;
+  if (candidate.e1rm > current.e1rm) {
+    const relativeDelta = (candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
+    if (relativeDelta > PREVIEW_E1RM_TIE_TOLERANCE_RATIO) return true;
+  }
+  const relativeGap = Math.abs(candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
+  if (relativeGap <= PREVIEW_E1RM_TIE_TOLERANCE_RATIO) {
+    if (candidate.reps < current.reps) return true;
+    if (candidate.reps === current.reps && candidate.weight > current.weight) return true;
+  }
+  return false;
 }
 
 function getNameTokens(fullName) {
@@ -208,7 +224,7 @@ function toClientCandidate(candidate) {
     dateRangeEnd: candidate.dateRangeEnd || null,
     metadataSampled: Boolean(candidate.metadataSampled),
     bigFourPreview: Array.isArray(candidate.bigFourPreview)
-      ? candidate.bigFourPreview
+      ? candidate.bigFourPreview.map(toClientPreviewSet).filter(Boolean)
       : [],
     headerHint:
       candidate?.headerHint &&
@@ -218,6 +234,17 @@ function toClientCandidate(candidate) {
       Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
         ? candidate.headerHint
         : null,
+  };
+}
+
+function toClientPreviewSet(preview) {
+  if (!preview || typeof preview !== "object") return null;
+  return {
+    liftType: preview.liftType,
+    reps: preview.reps,
+    weight: preview.weight,
+    unitType: preview.unitType || null,
+    date: preview.date || null,
   };
 }
 
@@ -396,7 +423,14 @@ async function enrichCandidateMetadata(
 
     const e1rm = estimateE1RM(reps, weightInfo.weight, "Brzycki");
     const current = bestByLift[normalizedLiftType];
-    if (!current || e1rm > current.e1rm) {
+    if (
+      shouldReplacePreviewSet(current, {
+        liftType: normalizedLiftType,
+        e1rm,
+        reps,
+        weight: weightInfo.weight,
+      })
+    ) {
       bestByLift[normalizedLiftType] = {
         liftType: normalizedLiftType,
         e1rm,

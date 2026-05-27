@@ -214,7 +214,7 @@ export function toClientCandidate(candidate) {
     dateRangeEnd: candidate.dateRangeEnd || null,
     metadataSampled: Boolean(candidate.metadataSampled),
     bigFourPreview: Array.isArray(candidate.bigFourPreview)
-      ? candidate.bigFourPreview
+      ? candidate.bigFourPreview.map(toClientPreviewSet).filter(Boolean)
       : [],
     headerHint:
       candidate?.headerHint &&
@@ -224,6 +224,17 @@ export function toClientCandidate(candidate) {
       Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
         ? candidate.headerHint
         : null,
+  };
+}
+
+function toClientPreviewSet(preview) {
+  if (!preview || typeof preview !== "object") return null;
+  return {
+    liftType: preview.liftType,
+    reps: preview.reps,
+    weight: preview.weight,
+    unitType: preview.unitType || null,
+    date: preview.date || null,
   };
 }
 
@@ -364,6 +375,7 @@ function parseWeightAndUnit(value) {
 }
 
 function shouldReplacePreviewSet(current, candidate) {
+  // Use e1RM only as a ranking score; client previews show the actual set.
   if (!current) return true;
   if (candidate.e1rm > current.e1rm) {
     const relativeDelta = (candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);

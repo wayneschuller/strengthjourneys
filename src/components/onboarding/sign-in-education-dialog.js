@@ -66,7 +66,12 @@ const POINTS = [
   },
   {
     Icon: Sparkles,
-    text: "We will create a Google Sheet you own, where you can merge all your lifting data from other fitness apps and keep it forever.",
+    text: (
+      <strong className="font-semibold text-foreground">
+        We will create a Google Sheet you own, where you can merge all your
+        lifting data from other fitness apps and keep it forever.
+      </strong>
+    ),
   },
 ];
 

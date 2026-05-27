@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { normalizeDateInput } from "@/lib/date-utils";
 import {
+  normalizeColumnName,
   normalizeBigFourLiftType,
   STANDARD_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/data-sources/parser-utilities";
@@ -222,7 +223,12 @@ export function toClientCandidate(candidate) {
       Number.isInteger(candidate.headerHint.repsColumnIndex) &&
       Number.isInteger(candidate.headerHint.weightColumnIndex) &&
       Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
-        ? candidate.headerHint
+        ? {
+            ...candidate.headerHint,
+            goalColumnIndex: Number.isInteger(candidate.headerHint.goalColumnIndex)
+              ? candidate.headerHint.goalColumnIndex
+              : -1,
+          }
         : null,
   };
 }
@@ -322,6 +328,7 @@ export async function readHeaderInfo(ssid, headers) {
   const json = await response.json().catch(() => ({}));
   const row = Array.isArray(json?.values?.[0]) ? json.values[0] : [];
   const normalized = row.map(normalizeHeader);
+  const canonical = row.map(normalizeColumnName);
 
   return {
     valid: REQUIRED_HEADER_CORE.every((required) => normalized.includes(required)),
@@ -332,9 +339,15 @@ export async function readHeaderInfo(ssid, headers) {
     repsColumnIndex: normalized.indexOf("reps"),
     weightColumnIndex: normalized.indexOf("weight"),
     liftTypeColumnIndex: normalized.indexOf("lift type"),
+    goalColumnIndex: canonical.indexOf("isGoal"),
   };
 }
 
+// Keep this server-side scanner in lockstep with parseStrengthJourneysData().
+// It does a fast raw Sheets API scan instead of calling the client-oriented
+// parser, so it must manually mirror sparse Date/Lift Type inheritance and
+// optional row semantics such as isGoal. The 2026-05 chooser regression showed
+// why this matters: a goal row can otherwise appear as a "best actual set".
 function parseYmd(value, localeHint) {
   return normalizeDateInput(value, localeHint);
 }
@@ -374,6 +387,10 @@ function parseWeightAndUnit(value) {
   return { weight: parsed, unitType: hasKg ? "kg" : hasLb ? "lb" : null };
 }
 
+function isGoalCellValue(value) {
+  return String(value || "").trim().toLowerCase() === "true";
+}
+
 function shouldReplacePreviewSet(current, candidate) {
   // Use e1RM only as a ranking score; client previews show the actual set.
   if (!current) return true;
@@ -397,6 +414,7 @@ export async function enrichCandidateMetadata(
   repsColumnIndex,
   weightColumnIndex,
   liftTypeColumnIndex,
+  goalColumnIndex = -1,
 ) {
   const response = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values/A2:Z${METADATA_SCAN_ROW_CAP + 1}?dateTimeRenderOption=FORMATTED_STRING`,
@@ -449,6 +467,11 @@ export async function enrichCandidateMetadata(
       weightColumnIndex >= 0 &&
       String(row?.[weightColumnIndex] || "").trim() !== "";
     if (!hasReps || !hasWeight) continue;
+
+    if (goalColumnIndex >= 0 && isGoalCellValue(row?.[goalColumnIndex])) {
+      continue;
+    }
+
     approxRows += 1;
 
     const parsedDate = parsedDateFromCell || previousDate;
@@ -602,6 +625,7 @@ export async function discoverValidCandidates(headers, debug) {
           repsColumnIndex: headerInfo.repsColumnIndex,
           weightColumnIndex: headerInfo.weightColumnIndex,
           liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
+          goalColumnIndex: headerInfo.goalColumnIndex,
         },
       });
     }
@@ -643,6 +667,7 @@ export async function enrichCandidatesByIds({
         repsColumnIndex: headerInfo.repsColumnIndex,
         weightColumnIndex: headerInfo.weightColumnIndex,
         liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
+        goalColumnIndex: headerInfo.goalColumnIndex,
       };
     }
     enriched.push(
@@ -654,6 +679,7 @@ export async function enrichCandidatesByIds({
         headerHint.repsColumnIndex,
         headerHint.weightColumnIndex,
         headerHint.liftTypeColumnIndex,
+        headerHint.goalColumnIndex,
       ),
     );
   }

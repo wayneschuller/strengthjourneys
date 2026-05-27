@@ -34,6 +34,7 @@ import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { devLog } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
+  normalizeColumnName,
   normalizeBigFourLiftType,
   STANDARD_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/data-sources/parser-utilities";
@@ -116,6 +117,10 @@ function parseWeightAndUnit(value) {
     weight: parsed,
     unitType: hasKg ? "kg" : hasLb ? "lb" : null,
   };
+}
+
+function isGoalCellValue(value) {
+  return String(value || "").trim().toLowerCase() === "true";
 }
 
 function shouldReplacePreviewSet(current, candidate) {
@@ -232,7 +237,12 @@ function toClientCandidate(candidate) {
       Number.isInteger(candidate.headerHint.repsColumnIndex) &&
       Number.isInteger(candidate.headerHint.weightColumnIndex) &&
       Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
-        ? candidate.headerHint
+        ? {
+            ...candidate.headerHint,
+            goalColumnIndex: Number.isInteger(candidate.headerHint.goalColumnIndex)
+              ? candidate.headerHint.goalColumnIndex
+              : -1,
+          }
         : null,
   };
 }
@@ -326,6 +336,7 @@ async function readHeaderInfo(ssid, headers) {
   const json = await response.json().catch(() => ({}));
   const row = Array.isArray(json?.values?.[0]) ? json.values[0] : [];
   const normalized = row.map(normalizeHeader);
+  const canonical = row.map(normalizeColumnName);
   const valid = REQUIRED_HEADER_CORE.every((required) =>
     normalized.includes(required),
   );
@@ -333,6 +344,7 @@ async function readHeaderInfo(ssid, headers) {
   const repsColumnIndex = normalized.indexOf("reps");
   const weightColumnIndex = normalized.indexOf("weight");
   const liftTypeColumnIndex = normalized.indexOf("lift type");
+  const goalColumnIndex = canonical.indexOf("isGoal");
 
   return {
     valid,
@@ -343,9 +355,13 @@ async function readHeaderInfo(ssid, headers) {
     repsColumnIndex,
     weightColumnIndex,
     liftTypeColumnIndex,
+    goalColumnIndex,
   };
 }
 
+// Legacy copy of the sheet chooser scanner. Keep this behavior aligned with
+// src/lib/sheet-flow.js and parseStrengthJourneysData(), especially sparse
+// Date/Lift Type inheritance and optional row semantics such as isGoal.
 function parseYmd(value) {
   if (!value) return null;
   const str = String(value).trim();
@@ -362,6 +378,7 @@ async function enrichCandidateMetadata(
   repsColumnIndex,
   weightColumnIndex,
   liftTypeColumnIndex,
+  goalColumnIndex = -1,
 ) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values/A2:Z${METADATA_SCAN_ROW_CAP + 1}?dateTimeRenderOption=FORMATTED_STRING`;
   const response = await fetch(url, { method: "GET", headers });
@@ -390,25 +407,31 @@ async function enrichCandidateMetadata(
   const safeRepsCol = repsColumnIndex >= 0 ? repsColumnIndex : -1;
   const safeWeightCol = weightColumnIndex >= 0 ? weightColumnIndex : -1;
   const safeLiftTypeCol = liftTypeColumnIndex >= 0 ? liftTypeColumnIndex : -1;
+  const safeGoalCol = goalColumnIndex >= 0 ? goalColumnIndex : -1;
   let previousDate = null;
   let previousLiftType = null;
   const bestByLift = {};
 
   for (const row of nonEmptyRows) {
+    const parsed = parseYmd(row?.[safeDateCol]) || previousDate;
+    if (parsed) previousDate = parsed;
+
+    const normalizedLiftType =
+      normalizeLiftTypeForPreview(row?.[safeLiftTypeCol]) || previousLiftType;
+    if (normalizedLiftType) previousLiftType = normalizedLiftType;
+
     const hasReps =
       safeRepsCol >= 0 && String(row?.[safeRepsCol] || "").trim() !== "";
     const hasWeight =
       safeWeightCol >= 0 && String(row?.[safeWeightCol] || "").trim() !== "";
     if (!hasReps || !hasWeight) continue;
+
+    if (safeGoalCol >= 0 && isGoalCellValue(row?.[safeGoalCol])) continue;
+
     approxRows += 1;
 
-    const parsed = parseYmd(row?.[safeDateCol]) || previousDate;
     if (!parsed) continue;
-    previousDate = parsed;
 
-    const normalizedLiftType =
-      normalizeLiftTypeForPreview(row?.[safeLiftTypeCol]) || previousLiftType;
-    if (normalizedLiftType) previousLiftType = normalizedLiftType;
     sessions.add(parsed);
     if (!minDate || parsed < minDate) minDate = parsed;
     if (!maxDate || parsed > maxDate) maxDate = parsed;
@@ -575,6 +598,7 @@ async function discoverValidCandidates(headers, debug) {
           repsColumnIndex: headerInfo.repsColumnIndex,
           weightColumnIndex: headerInfo.weightColumnIndex,
           liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
+          goalColumnIndex: headerInfo.goalColumnIndex,
         },
       });
     }
@@ -647,6 +671,7 @@ async function enrichCandidatesByIds({
       hasHeaderHint ? hinted.repsColumnIndex : headerInfo.repsColumnIndex,
       hasHeaderHint ? hinted.weightColumnIndex : headerInfo.weightColumnIndex,
       hasHeaderHint ? hinted.liftTypeColumnIndex : headerInfo.liftTypeColumnIndex,
+      hasHeaderHint ? hinted.goalColumnIndex : headerInfo.goalColumnIndex,
     );
     enriched.push(candidateWithMeta);
   }

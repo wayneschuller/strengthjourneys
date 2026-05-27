@@ -66,7 +66,7 @@ const POINTS = [
   },
   {
     Icon: Sparkles,
-    text: "We will create your Google Sheet to store your lifelong barbell strength journey.",
+    text: "We will create a Google Sheet you own, where you can merge all your lifting data from other fitness apps and keep it forever.",
   },
 ];
 

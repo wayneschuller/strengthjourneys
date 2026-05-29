@@ -164,6 +164,9 @@ export default function LogSessionPage({
   const [sessionDate, setSessionDate] = useState(todayIso);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [acceptedSessionUrls, setAcceptedSessionUrls] = useState(
+    () => new Set(),
+  );
   const autoStartedLiftRef = useRef("");
 
   // Sync date from URL param after hydration.
@@ -266,9 +269,23 @@ export default function LogSessionPage({
 
   const hasSession = Object.keys(sessionLiftsWithPending).length > 0;
   const usedSessionUrls = useMemo(
-    () => getUsedSessionUrls(sessionLiftsWithPending),
-    [sessionLiftsWithPending],
+    () =>
+      new Set([
+        ...getUsedSessionUrls(sessionLiftsWithPending),
+        ...acceptedSessionUrls,
+      ]),
+    [sessionLiftsWithPending, acceptedSessionUrls],
   );
+  const handleSessionUrlAccepted = useCallback((url) => {
+    const trimmed = url?.trim();
+    if (!trimmed) return;
+    setAcceptedSessionUrls((prev) => {
+      if (prev.has(trimmed)) return prev;
+      const next = new Set(prev);
+      next.add(trimmed);
+      return next;
+    });
+  }, []);
   const perLiftTonnageStats = useMemo(
     () =>
       getPerLiftTonnageStats({
@@ -587,6 +604,7 @@ export default function LogSessionPage({
                               previewMode ? undefined : navigateToDate
                             }
                             usedSessionUrls={usedSessionUrls}
+                            onSessionUrlAccepted={handleSessionUrlAccepted}
                           />
                         </motion.div>
                       ),

@@ -44,6 +44,7 @@ export function SetRow({
   isDeleteDisabled = false,
   strengthBadge,
   usedSessionUrls,
+  onSessionUrlAccepted,
 }) {
   const isLocked = Boolean(set._pending);
   const isReadOnly = !onUpdate;
@@ -266,6 +267,7 @@ export function SetRow({
       const beforeFields = latestFieldsRef.current;
       const nextFields = { ...beforeFields, url: trimmed };
       setPendingUrl(trimmed);
+      onSessionUrlAccepted?.(trimmed);
       flushUpdate({
         field: "url",
         beforeFields,
@@ -287,7 +289,7 @@ export function SetRow({
     if (!draftUrl && navigator?.clipboard?.readText) {
       navigator.clipboard.readText().then((text) => {
         const trimmed = text?.trim() ?? "";
-        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        if (isHttpUrl(trimmed)) {
           if (!usedSessionUrls?.has(trimmed)) {
             setDraftUrl(trimmed);
           }
@@ -616,6 +618,15 @@ export function SetRow({
       )}
     </motion.div>
   );
+}
+
+function isHttpUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function getLogPRBadgeHref(liftType) {

@@ -112,6 +112,7 @@ export const LOCAL_STORAGE_KEYS = {
   SHOW_ALL_DATA: "SJ_showAllData",
   VIS_MINI_SHOW_STANDARDS: "SJ_VisMiniShowStandards",
   VIS_MINI_SHOW_BODYWEIGHT_MULTIPLES: "SJ_VisMiniShowBodyweightMultiples",
+  VIS_MINI_TREND_MODE: "SJ_VisMiniTrendMode",
   TONNAGE_AGGREGATION_TYPE: "SJ_tonnageAggregationType",
 
   // AI assistant

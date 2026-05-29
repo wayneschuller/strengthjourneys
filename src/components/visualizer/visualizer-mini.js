@@ -2,30 +2,29 @@
  * Single-lift E1RM visualizer used inside lift-specific detail pages.
  * Shares chart processing with the full visualizer so estimates stay aligned.
  */
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { format } from "date-fns";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { useIsClient, useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog } from "@/lib/processing-utils";
-import { e1rmFormulae, estimateLiftE1RM } from "@/lib/estimate-e1rm";
-import { subMonths } from "date-fns";
+import { estimateLiftE1RM } from "@/lib/estimate-e1rm";
+import { cn } from "@/lib/utils";
 
 import {
   E1RMFormulaSelect,
-  SpecialHtmlLabel,
   SingleLiftTooltipContent,
 } from "@/components/visualizer/visualizer-utils";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   ReferenceLine,
   ReferenceArea,
-  ResponsiveContainer,
 } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -47,14 +46,13 @@ import {
 
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
 } from "@/components/ui/chart";
 
 import {
   CartesianGrid,
   Area,
   AreaChart,
+  Line,
   LabelList,
   XAxis,
   YAxis,
@@ -62,8 +60,15 @@ import {
 } from "recharts";
 
 import { getYearLabels, processVisualizerData } from "@/components/visualizer/visualizer-processing";
+import { buildStrengthTrendProjection } from "@/components/visualizer/strength-trend-utils";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+
+const TREND_MODES = [
+  { value: "actual", label: "Actual" },
+  { value: "trend", label: "Trend" },
+  { value: "forecast", label: "Forecast" },
+];
 
 /**
  * E1RM over time chart for a single lift. Shows estimated 1RM progression with optional formula
@@ -74,8 +79,7 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
  */
 export function VisualizerMini({ liftType }) {
   const { parsedData, topLiftsByTypeAndReps, isDemoMode, isLoading } = useUserLiftingData();
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => { setIsMounted(true); }, []);
+  const isMounted = useIsClient();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
 
@@ -134,6 +138,14 @@ export function VisualizerMini({ liftType }) {
     },
   );
 
+  const [trendMode, setTrendMode] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.VIS_MINI_TREND_MODE,
+    "actual",
+    {
+      initializeWithValue: false,
+    },
+  );
+
   // Used to hide the y-axis and other UI elements on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
 
@@ -170,10 +182,54 @@ export function VisualizerMini({ liftType }) {
     ],
   );
 
+  const trendProjection = useMemo(
+    () => buildStrengthTrendProjection(chartData, liftType),
+    [chartData, liftType],
+  );
+  const trendAvailable = Boolean(trendProjection);
+  const effectiveTrendMode = trendAvailable ? trendMode : "actual";
+  const showTrendOverlay = effectiveTrendMode === "trend" || effectiveTrendMode === "forecast";
+  const showForecastOverlay = effectiveTrendMode === "forecast";
+
+  const displayedChartData = useMemo(() => {
+    if (!chartData?.length) return [];
+
+    const historicalData = chartData.map((point) => ({
+      ...point,
+      trendValue:
+        showTrendOverlay && trendProjection
+          ? trendProjection.trendByDate.get(point.date) ?? null
+          : null,
+    }));
+
+    if (!showForecastOverlay || !trendProjection?.futurePoints?.length) {
+      return historicalData;
+    }
+
+    const lastPoint = historicalData[historicalData.length - 1];
+    const forecastBridge = {
+      ...lastPoint,
+      trendValue: trendProjection.trendByDate.get(lastPoint.date) ?? lastPoint[liftType],
+      isForecastBridge: true,
+    };
+
+    return [
+      ...historicalData.slice(0, -1),
+      forecastBridge,
+      ...trendProjection.futurePoints,
+    ];
+  }, [chartData, liftType, showForecastOverlay, showTrendOverlay, trendProjection]);
+
+  const forecastStartDate = chartData?.[chartData.length - 1]?.rechartsDate ?? null;
+  const forecastEndDate =
+    showForecastOverlay && trendProjection?.futurePoints?.length
+      ? trendProjection.futurePoints[trendProjection.futurePoints.length - 1].rechartsDate
+      : null;
+
   // if (authStatus !== "authenticated") return; // Don't show at all for anon mode
   // devLog(chartData);
 
-  const yearLabels = getYearLabels(chartData);
+  const yearLabels = getYearLabels(displayedChartData);
 
   // Significant lifts: best per rep range (1–5 RM) that appear on the chart, one per date
   const significantLiftsForChart = useMemo(() => {
@@ -242,19 +298,15 @@ export function VisualizerMini({ liftType }) {
   // The chart ceiling must cover the data AND the highest visible strength
   // standard so reference lines don't get clipped.  The old hardcoded
   // Math.max(100, ...) crushed lighter lifts into the bottom of the chart.
-  const dataBasedMax = weightMax * (width > 1280 ? 1.3 : 1.5);
+  const trendCeiling =
+    showForecastOverlay && trendProjection?.oneYearForecast
+      ? trendProjection.oneYearForecast
+      : trendProjection?.currentTrend ?? 0;
+  const dataBasedMax = Math.max(weightMax, trendCeiling) * (width > 1280 ? 1.3 : 1.5);
   const roundedMaxWeightValue = dataBasedMax;
 
   // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = { [liftType]: { label: liftType } };
-
-  const handleMouseMove = (event) => {
-    if (event && event.activePayload) {
-      const activeIndex = event.activeTooltipIndex;
-      // devLog(event);
-      // setHighlightDate(event.activeLabel);
-    }
-  };
 
   // Dynamic tick spacing based on the data range so lighter lifts get
   // a readable Y-axis instead of 50kg jumps that compress everything.
@@ -343,6 +395,11 @@ export function VisualizerMini({ liftType }) {
             </div>
           </div>
         )}
+        <TrendModeControl
+          value={effectiveTrendMode}
+          onChange={setTrendMode}
+          disabled={!trendAvailable}
+        />
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
       </CardHeader>
 
@@ -353,11 +410,19 @@ export function VisualizerMini({ liftType }) {
             <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 accessibilityLayer
-                data={chartData}
+                data={displayedChartData}
                 margin={{ left: 5, right: 20 }}
-                // onMouseMove={handleMouseMove}
               >
                 <CartesianGrid vertical={false} />
+                {forecastStartDate && forecastEndDate && (
+                  <ReferenceArea
+                    x1={forecastStartDate}
+                    x2={forecastEndDate}
+                    fill={liftColor}
+                    fillOpacity={0.05}
+                    stroke="none"
+                  />
+                )}
                 {/* Strength standard background bands — rendered first so they sit behind
                     the chart data. Only zones the user has passed through are shown;
                     the next unreached standard gets a line but no band beyond it. */}
@@ -409,13 +474,22 @@ export function VisualizerMini({ liftType }) {
                 />
                 <Tooltip
                   content={(props) => (
-                    <SingleLiftTooltipContent
-                      {...props}
-                      liftType={liftType}
-                      parsedData={parsedData}
-                      liftColor={liftColor}
-                      isMetric={isMetric}
-                    />
+                    props.payload?.[0]?.payload?.isForecast ? (
+                      <StrengthTrendTooltip
+                        {...props}
+                        liftType={liftType}
+                        liftColor={liftColor}
+                        isMetric={isMetric}
+                      />
+                    ) : (
+                      <SingleLiftTooltipContent
+                        {...props}
+                        liftType={liftType}
+                        parsedData={parsedData}
+                        liftColor={liftColor}
+                        isMetric={isMetric}
+                      />
+                    )
                   )}
                   formatter={(value, name, props) =>
                     `${value} ${props.payload.displayUnit || ""}`
@@ -475,6 +549,35 @@ export function VisualizerMini({ liftType }) {
                     />
                   )}
                 </Area>
+                {showTrendOverlay && trendAvailable && (
+                  <Line
+                    type="monotone"
+                    dataKey="trendValue"
+                    name={`${liftType} long-term trend`}
+                    stroke={liftColor}
+                    strokeWidth={2}
+                    strokeDasharray={showForecastOverlay ? "8 6" : "6 5"}
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                )}
+                {showForecastOverlay && trendProjection?.futurePoints?.map((point) => (
+                  <ReferenceLine
+                    key={`forecast-${point.forecastLabel}`}
+                    x={point.rechartsDate}
+                    stroke={liftColor}
+                    strokeOpacity={0.18}
+                    strokeDasharray="2 8"
+                    label={{
+                      value: point.forecastLabel,
+                      position: "insideTop",
+                      fontSize: 11,
+                      fill: liftColor,
+                    }}
+                  />
+                ))}
                 {/* Significant lift highlights: vertical line from bottom up to the data point */}
                 {significantLiftsForChart.map((lift, idx) => (
                   <ReferenceLine
@@ -617,4 +720,81 @@ export function VisualizerMini({ liftType }) {
       </CardFooter>
     </Card>
   );
+}
+
+function TrendModeControl({ value, onChange, disabled }) {
+  return (
+    <ButtonGroup
+      className="shrink-0"
+      aria-label="Select E1RM chart trend mode"
+    >
+      {TREND_MODES.map((mode) => {
+        const isActive = value === mode.value;
+        const isDisabled = disabled && mode.value !== "actual";
+        return (
+          <Button
+            key={mode.value}
+            type="button"
+            size="sm"
+            variant={isActive ? "secondary" : "outline"}
+            disabled={isDisabled}
+            aria-pressed={isActive}
+            title={
+              isDisabled
+                ? "Trend needs at least 8 data points across 90 days"
+                : undefined
+            }
+            className={cn(
+              "h-9 px-3",
+              isActive && "border-primary text-foreground",
+            )}
+            onClick={() => onChange(mode.value)}
+          >
+            {mode.label}
+          </Button>
+        );
+      })}
+    </ButtonGroup>
+  );
+}
+
+function StrengthTrendTooltip({
+  active,
+  payload,
+  liftType,
+  liftColor,
+  isMetric,
+}) {
+  if (!active || !payload?.length) return null;
+
+  const tuple = payload[0].payload;
+  const value = tuple.trendValue;
+  if (!Number.isFinite(value)) return null;
+
+  return (
+    <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">{formatChartDate(tuple.date)}</p>
+      <div className="flex flex-row items-center">
+        <div
+          className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+          style={{ backgroundColor: liftColor }}
+        />
+        <div className="font-semibold">{liftType}</div>
+      </div>
+      <div>
+        Forecast trend: ~{value}
+        {tuple.displayUnit || (isMetric ? "kg" : "lb")}
+      </div>
+    </div>
+  );
+}
+
+function formatChartDate(dateStr) {
+  if (!dateStr) return "Forecast";
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }

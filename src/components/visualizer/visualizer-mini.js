@@ -6,11 +6,15 @@ import { useMemo } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { format } from "date-fns";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import {
+  getStandardForLiftDate,
+  useAthleteBio,
+} from "@/hooks/use-athlete-biodata";
 import { useIsClient, useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateLiftE1RM } from "@/lib/estimate-e1rm";
 import { cn } from "@/lib/utils";
+import { getKilgorePosition } from "@/lib/strength-circles/strength-score";
 
 import {
   E1RMFormulaSelect,
@@ -88,7 +92,22 @@ const TREND_MODES = [
     tooltip:
       "Extends the trend 3, 6, and 12 months ahead. This is a rough trajectory estimate, not a strength limit.",
   },
+  {
+    value: "level",
+    label: "Level",
+    tooltip:
+      "Shows your best-so-far capability as a strength-standard position adjusted for your age, sex, and bodyweight.",
+  },
 ];
+
+const STRENGTH_LEVEL_AXIS_TICKS = [0, 1, 2, 3, 4];
+const STRENGTH_LEVEL_AXIS_LABELS = {
+  0: "Active",
+  1: "Beginner",
+  2: "Intermediate",
+  3: "Advanced",
+  4: "Elite",
+};
 
 /**
  * E1RM over time chart for a single lift. Shows estimated 1RM progression with optional formula
@@ -103,7 +122,14 @@ export function VisualizerMini({ liftType }) {
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
 
-  const { isMetric, bodyWeight, standards, bodyWeightIsDefault } = useAthleteBio();
+  const {
+    age,
+    sex,
+    isMetric,
+    bodyWeight,
+    standards,
+    bodyWeightIsDefault,
+  } = useAthleteBio();
 
   // devLog(parsedData);
 
@@ -206,10 +232,36 @@ export function VisualizerMini({ liftType }) {
     () => buildStrengthTrendProjection(chartData, liftType),
     [chartData, liftType],
   );
+  const levelTrajectory = useMemo(
+    () =>
+      buildStrengthLevelTrajectory(chartData, liftType, {
+        age,
+        bodyWeight,
+        bodyWeightIsDefault,
+        isMetric,
+        sex,
+      }),
+    [
+      age,
+      bodyWeight,
+      bodyWeightIsDefault,
+      chartData,
+      isMetric,
+      liftType,
+      sex,
+    ],
+  );
   const trendAvailable = Boolean(trendProjection);
-  const effectiveTrendMode = trendAvailable ? trendMode : "actual";
+  const levelAvailable = Boolean(levelTrajectory);
+  const effectiveTrendMode =
+    (trendMode === "trend" || trendMode === "forecast") && !trendAvailable
+      ? "actual"
+      : trendMode === "level" && !levelAvailable
+        ? "actual"
+        : trendMode;
   const showTrendOverlay = effectiveTrendMode === "trend" || effectiveTrendMode === "forecast";
   const showForecastOverlay = effectiveTrendMode === "forecast";
+  const showLevelTrajectory = effectiveTrendMode === "level";
 
   const displayedChartData = useMemo(() => {
     if (!chartData?.length) return [];
@@ -240,6 +292,11 @@ export function VisualizerMini({ liftType }) {
     ];
   }, [chartData, liftType, showForecastOverlay, showTrendOverlay, trendProjection]);
 
+  const activeChartData = showLevelTrajectory
+    ? levelTrajectory.chartData
+    : displayedChartData;
+  const primaryDataKey = showLevelTrajectory ? "levelPosition" : liftType;
+
   const forecastStartDate = chartData?.[chartData.length - 1]?.rechartsDate ?? null;
   const forecastEndDate =
     showForecastOverlay && trendProjection?.futurePoints?.length
@@ -249,7 +306,7 @@ export function VisualizerMini({ liftType }) {
   // if (authStatus !== "authenticated") return; // Don't show at all for anon mode
   // devLog(chartData);
 
-  const yearLabels = getYearLabels(displayedChartData);
+  const yearLabels = getYearLabels(activeChartData);
 
   // Significant lifts: best per rep range (1–5 RM) that appear on the chart, one per date
   const significantLiftsForChart = useMemo(() => {
@@ -322,7 +379,12 @@ export function VisualizerMini({ liftType }) {
     showForecastOverlay && trendProjection?.oneYearForecast
       ? trendProjection.oneYearForecast
       : trendProjection?.currentTrend ?? 0;
-  const dataBasedMax = Math.max(weightMax, trendCeiling) * (width > 1280 ? 1.3 : 1.5);
+  const levelCeiling = showLevelTrajectory
+    ? Math.max(4.25, Math.ceil((levelTrajectory?.maxPosition ?? 4) * 2) / 2)
+    : 0;
+  const dataBasedMax = showLevelTrajectory
+    ? levelCeiling
+    : Math.max(weightMax, trendCeiling) * (width > 1280 ? 1.3 : 1.5);
   const roundedMaxWeightValue = dataBasedMax;
 
   // Shadcn charts needs this for theming but we just do custom colors anyway
@@ -332,7 +394,8 @@ export function VisualizerMini({ liftType }) {
   // a readable Y-axis instead of 50kg jumps that compress everything.
   const dataRange = roundedMaxWeightValue - 0; // min is 0 in this chart
   let tickJump;
-  if (dataRange <= 30) tickJump = 5;
+  if (showLevelTrajectory) tickJump = 1;
+  else if (dataRange <= 30) tickJump = 5;
   else if (dataRange <= 60) tickJump = 10;
   else if (dataRange <= 150) tickJump = 20;
   else if (dataRange <= 300) tickJump = isMetric ? 50 : 50;
@@ -376,7 +439,9 @@ export function VisualizerMini({ liftType }) {
   const highestVisibleStandard = visibleStandards.length > 0
     ? visibleStandards[visibleStandards.length - 1].val
     : 0;
-  const effectiveMax = Math.max(roundedMaxWeightValue, highestVisibleStandard * 1.15);
+  const effectiveMax = showLevelTrajectory
+    ? roundedMaxWeightValue
+    : Math.max(roundedMaxWeightValue, highestVisibleStandard * 1.15);
 
   return (
     <Card className="">
@@ -418,7 +483,11 @@ export function VisualizerMini({ liftType }) {
         <TrendModeControl
           value={effectiveTrendMode}
           onChange={setTrendMode}
-          disabled={!trendAvailable}
+          availability={{
+            trend: trendAvailable,
+            forecast: trendAvailable,
+            level: levelAvailable,
+          }}
         />
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
       </CardHeader>
@@ -430,11 +499,11 @@ export function VisualizerMini({ liftType }) {
             <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 accessibilityLayer
-                data={displayedChartData}
+                data={activeChartData}
                 margin={{ left: 5, right: 20 }}
               >
                 <CartesianGrid vertical={false} />
-                {forecastStartDate && forecastEndDate && (
+                {!showLevelTrajectory && forecastStartDate && forecastEndDate && (
                   <ReferenceArea
                     x1={forecastStartDate}
                     x2={forecastEndDate}
@@ -446,7 +515,7 @@ export function VisualizerMini({ liftType }) {
                 {/* Strength standard background bands — rendered first so they sit behind
                     the chart data. Only zones the user has passed through are shown;
                     the next unreached standard gets a line but no band beyond it. */}
-                {strengthRanges && showStandards && width > 768 &&
+                {!showLevelTrajectory && strengthRanges && showStandards && width > 768 &&
                   Array.from({ length: visibleBandCount }, (_, i) => ({
                     y1: visibleStandards[i].val,
                     y2: visibleStandards[i + 1]?.val ?? Math.max(100, roundedMaxWeightValue),
@@ -483,18 +552,31 @@ export function VisualizerMini({ liftType }) {
                   domain={[0, effectiveMax]}
                   hide={width < 1280}
                   axisLine={false}
-                  tickFormatter={
-                    (value) => `${value}${chartData[0]?.displayUnit || ""}` // Default to first item's displayUnit
+                  tickFormatter={(value) =>
+                    showLevelTrajectory
+                      ? STRENGTH_LEVEL_AXIS_LABELS[value] ?? ""
+                      : `${value}${chartData[0]?.displayUnit || ""}`
                   }
-                  ticks={Array.from(
-                    { length: Math.ceil(effectiveMax / tickJump) + 1 },
-                    (v, i) => i * tickJump,
-                  )}
+                  ticks={
+                    showLevelTrajectory
+                      ? STRENGTH_LEVEL_AXIS_TICKS
+                      : Array.from(
+                          { length: Math.ceil(effectiveMax / tickJump) + 1 },
+                          (v, i) => i * tickJump,
+                        )
+                  }
                   // allowDataOverflow
                 />
                 <Tooltip
                   content={(props) => (
-                    props.payload?.[0]?.payload?.isForecast ? (
+                    showLevelTrajectory ? (
+                      <StrengthLevelTrajectoryTooltip
+                        {...props}
+                        liftType={liftType}
+                        liftColor={liftColor}
+                        isMetric={isMetric}
+                      />
+                    ) : props.payload?.[0]?.payload?.isForecast ? (
                       <StrengthTrendTooltip
                         {...props}
                         liftType={liftType}
@@ -541,9 +623,9 @@ export function VisualizerMini({ liftType }) {
                 <Area
                   key={liftType}
                   type="monotone"
-                  dataKey={liftType}
+                  dataKey={primaryDataKey}
                   stroke={liftColor}
-                  name={liftType}
+                  name={showLevelTrajectory ? `${liftType} strength level` : liftType}
                   strokeWidth={2}
                   fill={`url(#fill)`}
                   fillOpacity={0.4}
@@ -563,13 +645,15 @@ export function VisualizerMini({ liftType }) {
                           textAnchor="middle"
                           className="fill-foreground"
                         >
-                          {`${value}${chartData[index].displayUnit || ""}`}
+                          {showLevelTrajectory
+                            ? formatStrengthPosition(value)
+                            : `${value}${activeChartData[index].displayUnit || ""}`}
                         </text>
                       )}
                     />
                   )}
                 </Area>
-                {showTrendOverlay && trendAvailable && (
+                {!showLevelTrajectory && showTrendOverlay && trendAvailable && (
                   <Line
                     type="monotone"
                     dataKey="trendValue"
@@ -583,7 +667,7 @@ export function VisualizerMini({ liftType }) {
                     isAnimationActive={false}
                   />
                 )}
-                {showForecastOverlay && trendProjection?.futurePoints?.map((point) => (
+                {!showLevelTrajectory && showForecastOverlay && trendProjection?.futurePoints?.map((point) => (
                   <ReferenceLine
                     key={`forecast-${point.forecastLabel}`}
                     x={point.rechartsDate}
@@ -598,8 +682,31 @@ export function VisualizerMini({ liftType }) {
                     }}
                   />
                 ))}
+                {showLevelTrajectory && STRENGTH_LEVEL_AXIS_TICKS.map((position) => (
+                  <ReferenceLine
+                    key={`level-${position}`}
+                    y={position}
+                    stroke={liftColor}
+                    strokeOpacity={position === 4 ? 0.36 : 0.2}
+                    strokeDasharray="4 6"
+                    label={{
+                      content: ({ viewBox }) => (
+                        <text
+                          x={viewBox.x + viewBox.width - 4}
+                          y={viewBox.y - 4}
+                          textAnchor="end"
+                          fontSize={11}
+                          fontWeight="500"
+                          style={{ fill: liftColor }}
+                        >
+                          {STRENGTH_LEVEL_AXIS_LABELS[position]}
+                        </text>
+                      ),
+                    }}
+                  />
+                ))}
                 {/* Significant lift highlights: vertical line from bottom up to the data point */}
-                {significantLiftsForChart.map((lift, idx) => (
+                {!showLevelTrajectory && significantLiftsForChart.map((lift, idx) => (
                   <ReferenceLine
                     key={`pr-${lift.dateStr}-${idx}`}
                     segment={[
@@ -628,7 +735,7 @@ export function VisualizerMini({ liftType }) {
                 ))}
 
                 {/* Strength standards: color-coded lines for all reached levels + one next target. */}
-                {strengthRanges && showStandards && width > 768 &&
+                {!showLevelTrajectory && strengthRanges && showStandards && width > 768 &&
                   visibleStandards.map(({ key, val }) => {
                     const unitType = isMetric ? "kg" : "lb";
                     const color = strengthStandardColors[key];
@@ -658,7 +765,7 @@ export function VisualizerMini({ liftType }) {
                   })
                 }
                 {/* Bodyweight multiples: use liftColor so lines feel tied to the chart area. */}
-                {showBodyweightMultiples && bodyWeight > 0 && width >= 1280 &&
+                {!showLevelTrajectory && showBodyweightMultiples && bodyWeight > 0 && width >= 1280 &&
                   [0.5, 1.0, 1.5, 2.0, 2.5, 3.0].map((multiple) => {
                     const weightValue = Math.round(multiple * bodyWeight);
                     if (weightValue > roundedMaxWeightValue || weightValue <= 0) return null;
@@ -742,7 +849,64 @@ export function VisualizerMini({ liftType }) {
   );
 }
 
-function TrendModeControl({ value, onChange, disabled }) {
+function buildStrengthLevelTrajectory(
+  chartData,
+  liftType,
+  { age, bodyWeight, bodyWeightIsDefault, isMetric, sex },
+) {
+  if (
+    !Array.isArray(chartData) ||
+    !chartData.length ||
+    !age ||
+    !sex ||
+    bodyWeight == null ||
+    bodyWeightIsDefault
+  ) {
+    return null;
+  }
+
+  let bestE1RM = 0;
+  let bestDate = null;
+  const levelData = chartData
+    .filter((point) => Number.isFinite(point?.[liftType]) && point?.date)
+    .map((point) => {
+      const e1rm = point[liftType];
+      if (e1rm > bestE1RM) {
+        bestE1RM = e1rm;
+        bestDate = point.date;
+      }
+
+      const standard = getStandardForLiftDate(
+        age,
+        point.date,
+        bodyWeight,
+        sex,
+        liftType,
+        isMetric,
+      );
+      if (!standard) return null;
+
+      const levelPosition = getKilgorePosition(bestE1RM, standard);
+      return {
+        ...point,
+        levelPosition,
+        bestE1RM,
+        bestDate,
+      };
+    })
+    .filter(Boolean);
+
+  if (levelData.length < 2) return null;
+
+  const positions = levelData.map((point) => point.levelPosition);
+  return {
+    chartData: levelData,
+    minPosition: Math.min(...positions),
+    maxPosition: Math.max(...positions),
+  };
+}
+
+function TrendModeControl({ value, onChange, availability }) {
   return (
     <TooltipProvider delayDuration={250}>
       <ButtonGroup
@@ -751,9 +915,9 @@ function TrendModeControl({ value, onChange, disabled }) {
       >
         {TREND_MODES.map((mode) => {
           const isActive = value === mode.value;
-          const isDisabled = disabled && mode.value !== "actual";
-          const tooltipText = isDisabled
-            ? "Trend needs at least 8 data points across 90 days and several best-lift steps."
+          const isAvailable = mode.value === "actual" || availability?.[mode.value] !== false;
+          const tooltipText = !isAvailable
+            ? getUnavailableModeTooltip(mode.value)
             : mode.tooltip;
 
           return (
@@ -764,7 +928,7 @@ function TrendModeControl({ value, onChange, disabled }) {
                     type="button"
                     size="sm"
                     variant={isActive ? "secondary" : "outline"}
-                    disabled={isDisabled}
+                    disabled={!isAvailable}
                     aria-pressed={isActive}
                     className={cn(
                       "h-9 px-3",
@@ -784,6 +948,49 @@ function TrendModeControl({ value, onChange, disabled }) {
         })}
       </ButtonGroup>
     </TooltipProvider>
+  );
+}
+
+function getUnavailableModeTooltip(mode) {
+  if (mode === "level") {
+    return "Level needs a supported strength-standard lift plus saved age, sex, and bodyweight.";
+  }
+
+  return "Trend needs at least 8 data points across 90 days and several best-lift steps.";
+}
+
+function StrengthLevelTrajectoryTooltip({
+  active,
+  payload,
+  liftType,
+  liftColor,
+  isMetric,
+}) {
+  if (!active || !payload?.length) return null;
+
+  const tuple = payload[0].payload;
+  const value = tuple.levelPosition;
+  if (!Number.isFinite(value)) return null;
+
+  return (
+    <div className="grid min-w-[10rem] max-w-[18rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">{formatChartDate(tuple.date)}</p>
+      <div className="flex flex-row items-center">
+        <div
+          className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+          style={{ backgroundColor: liftColor }}
+        />
+        <div className="font-semibold">{liftType}</div>
+      </div>
+      <div>
+        Level position: {formatStrengthPosition(value)}
+      </div>
+      <div className="text-muted-foreground">
+        Best-so-far E1RM: ~{Math.round(tuple.bestE1RM)}
+        {tuple.displayUnit || (isMetric ? "kg" : "lb")}
+        {tuple.bestDate ? ` from ${formatChartDate(tuple.bestDate)}` : ""}
+      </div>
+    </div>
   );
 }
 
@@ -816,6 +1023,19 @@ function StrengthTrendTooltip({
       </div>
     </div>
   );
+}
+
+function formatStrengthPosition(value) {
+  if (!Number.isFinite(value)) return "";
+
+  const lower = Math.floor(value);
+  const upper = Math.ceil(value);
+  if (lower === upper) return STRENGTH_LEVEL_AXIS_LABELS[value] ?? value.toFixed(1);
+
+  const lowerLabel = STRENGTH_LEVEL_AXIS_LABELS[lower] ?? "Below Active";
+  const upperLabel = STRENGTH_LEVEL_AXIS_LABELS[upper] ?? "Beyond Elite";
+  const progress = Math.round((value - lower) * 100);
+  return `${lowerLabel} → ${upperLabel} (${progress}%)`;
 }
 
 function formatChartDate(dateStr) {

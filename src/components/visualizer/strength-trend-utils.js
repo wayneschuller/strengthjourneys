@@ -1,11 +1,14 @@
 /**
  * Builds logarithmic strength trend overlays for single-lift E1RM charts.
- * The fitted model is intentionally descriptive: it estimates long-term shape
- * from the user's own history without presenting the result as a hard ceiling.
+ * The fitted model uses the user's capability envelope rather than every
+ * session point, so deloads and ordinary training variance don't dominate the
+ * long-term projection.
  */
 
 const MIN_TREND_POINTS = 8;
+const MIN_CAPABILITY_POINTS = 4;
 const MIN_TREND_SPAN_DAYS = 90;
+const MIN_CAPABILITY_STEP_RATIO = 0.01;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 
@@ -35,12 +38,16 @@ export function buildStrengthTrendProjection(chartData, liftType) {
   const spanDays = (lastTimestamp - firstTimestamp) / DAY_MS;
   if (spanDays < MIN_TREND_SPAN_DAYS) return null;
 
-  const samples = points.map((point) => ({
+  const capabilityPoints = buildCapabilityEnvelopePoints(points);
+  if (capabilityPoints.length < MIN_CAPABILITY_POINTS) return null;
+
+  const samples = capabilityPoints.map((point) => ({
     x: getLogTrainingAge(point.timestamp, firstTimestamp),
-    y: point.value,
+    y: point.capabilityValue,
   }));
   const regression = fitLinearRegression(samples);
   if (!regression) return null;
+  regression.slope = Math.max(0, regression.slope);
 
   const trendByDate = new Map(
     points.map((point) => [
@@ -71,9 +78,37 @@ export function buildStrengthTrendProjection(chartData, liftType) {
     currentTrend,
     oneYearForecast,
     pointCount: points.length,
+    capabilityPointCount: capabilityPoints.length,
     spanDays,
     slope: regression.slope,
   };
+}
+
+function buildCapabilityEnvelopePoints(points) {
+  let bestValue = 0;
+  const capabilityPoints = [];
+
+  points.forEach((point, index) => {
+    if (point.value <= 0) return;
+
+    const isFirstPoint = capabilityPoints.length === 0;
+    const improvementRatio = bestValue > 0 ? (point.value - bestValue) / bestValue : 1;
+    const isMeaningfulNewBest = improvementRatio >= MIN_CAPABILITY_STEP_RATIO;
+    const isLastPoint = index === points.length - 1;
+
+    if (point.value > bestValue) {
+      bestValue = point.value;
+    }
+
+    if (isFirstPoint || isMeaningfulNewBest || isLastPoint) {
+      capabilityPoints.push({
+        ...point,
+        capabilityValue: bestValue,
+      });
+    }
+  });
+
+  return capabilityPoints;
 }
 
 function fitLinearRegression(samples) {

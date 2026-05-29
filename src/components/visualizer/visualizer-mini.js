@@ -553,7 +553,7 @@ export function VisualizerMini({ liftType }) {
                   <Line
                     type="monotone"
                     dataKey="trendValue"
-                    name={`${liftType} long-term trend`}
+                    name={`${liftType} capability trend`}
                     stroke={liftColor}
                     strokeWidth={2}
                     strokeDasharray={showForecastOverlay ? "8 6" : "6 5"}
@@ -741,7 +741,7 @@ function TrendModeControl({ value, onChange, disabled }) {
             aria-pressed={isActive}
             title={
               isDisabled
-                ? "Trend needs at least 8 data points across 90 days"
+                ? "Trend needs at least 8 data points across 90 days and several best-lift steps"
                 : undefined
             }
             className={cn(
@@ -782,7 +782,7 @@ function StrengthTrendTooltip({
         <div className="font-semibold">{liftType}</div>
       </div>
       <div>
-        Forecast trend: ~{value}
+        Capability forecast: ~{value}
         {tuple.displayUnit || (isMetric ? "kg" : "lb")}
       </div>
     </div>

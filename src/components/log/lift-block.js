@@ -71,6 +71,7 @@ export function LiftBlock({
   onNavigateToDate,
   previewMode = false,
   usedSessionUrls,
+  onSessionUrlAccepted,
 }) {
   const { hasUserData, isDemoMode, isImportedData } = useUserLiftingData();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
@@ -590,6 +591,7 @@ export function LiftBlock({
               }
               isDeleteDisabled={isStructuralSaving || isDeleteCooldownActive}
               usedSessionUrls={usedSessionUrls}
+              onSessionUrlAccepted={onSessionUrlAccepted}
               strengthBadge={
                 idx === bestE1rmIndex ? (
                   <LiftStrengthLevel

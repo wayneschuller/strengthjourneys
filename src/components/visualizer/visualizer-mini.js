@@ -23,6 +23,12 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  Tooltip as UiTooltip,
+} from "@/components/ui/tooltip";
+import {
   ReferenceLine,
   ReferenceArea,
 } from "recharts";
@@ -65,9 +71,23 @@ import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 const TREND_MODES = [
-  { value: "actual", label: "Actual" },
-  { value: "trend", label: "Trend" },
-  { value: "forecast", label: "Forecast" },
+  {
+    value: "actual",
+    label: "Actual",
+    tooltip: "Show the estimated 1RM recorded from your training history.",
+  },
+  {
+    value: "trend",
+    label: "Trend",
+    tooltip:
+      "Fits a logarithmic curve to your best-so-far strength envelope, so normal deloads and session variance have less influence.",
+  },
+  {
+    value: "forecast",
+    label: "Forecast",
+    tooltip:
+      "Extends the trend 3, 6, and 12 months ahead. This is a rough trajectory estimate, not a strength limit.",
+  },
 ];
 
 /**
@@ -724,37 +744,46 @@ export function VisualizerMini({ liftType }) {
 
 function TrendModeControl({ value, onChange, disabled }) {
   return (
-    <ButtonGroup
-      className="shrink-0"
-      aria-label="Select E1RM chart trend mode"
-    >
-      {TREND_MODES.map((mode) => {
-        const isActive = value === mode.value;
-        const isDisabled = disabled && mode.value !== "actual";
-        return (
-          <Button
-            key={mode.value}
-            type="button"
-            size="sm"
-            variant={isActive ? "secondary" : "outline"}
-            disabled={isDisabled}
-            aria-pressed={isActive}
-            title={
-              isDisabled
-                ? "Trend needs at least 8 data points across 90 days and several best-lift steps"
-                : undefined
-            }
-            className={cn(
-              "h-9 px-3",
-              isActive && "border-primary text-foreground",
-            )}
-            onClick={() => onChange(mode.value)}
-          >
-            {mode.label}
-          </Button>
-        );
-      })}
-    </ButtonGroup>
+    <TooltipProvider delayDuration={250}>
+      <ButtonGroup
+        className="shrink-0"
+        aria-label="Select E1RM chart trend mode"
+      >
+        {TREND_MODES.map((mode) => {
+          const isActive = value === mode.value;
+          const isDisabled = disabled && mode.value !== "actual";
+          const tooltipText = isDisabled
+            ? "Trend needs at least 8 data points across 90 days and several best-lift steps."
+            : mode.tooltip;
+
+          return (
+            <UiTooltip key={mode.value}>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={isActive ? "secondary" : "outline"}
+                    disabled={isDisabled}
+                    aria-pressed={isActive}
+                    className={cn(
+                      "h-9 px-3",
+                      isActive && "border-primary text-foreground",
+                    )}
+                    onClick={() => onChange(mode.value)}
+                  >
+                    {mode.label}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[260px] text-pretty text-xs leading-relaxed">
+                {tooltipText}
+              </TooltipContent>
+            </UiTooltip>
+          );
+        })}
+      </ButtonGroup>
+    </TooltipProvider>
   );
 }
 

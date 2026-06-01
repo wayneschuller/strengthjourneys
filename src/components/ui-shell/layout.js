@@ -364,7 +364,6 @@ const PERSONALIZED_DATA_CTA_PATHS = [
   "/progress-guide/[lift]",
   "/strength-year-in-review",
 ];
-const DATA_QUALITY_BANNER_PATHS = ["/", ...PERSONALIZED_DATA_CTA_PATHS];
 const DEMO_MODE_NUDGE_DELAY_MIN_MS = 20000;
 const DEMO_MODE_NUDGE_DELAY_MAX_MS = 30000;
 const DEMO_MODE_NUDGE_TOAST_DURATION_MS = 12000;
@@ -510,7 +509,6 @@ function DataAccessBanner({ pathname, currentPath }) {
 }
 
 function DataQualityBanner({ warnings, onFix }) {
-  const router = useRouter();
   const { toast } = useToast();
   const [dismissed, setDismissed] = useState(null);
   const [workingSignature, setWorkingSignature] = useState(null);
@@ -529,11 +527,10 @@ function DataQualityBanner({ warnings, onFix }) {
     }
   }, []);
 
-  const isDataPage = DATA_QUALITY_BANNER_PATHS.includes(router.pathname);
   const warning = useMemo(() => {
-    if (!isDataPage || !dismissed || !Array.isArray(warnings)) return null;
+    if (!dismissed || !Array.isArray(warnings)) return null;
     return warnings.find((item) => !dismissed[item.signature]) || null;
-  }, [dismissed, isDataPage, warnings]);
+  }, [dismissed, warnings]);
 
   const dismissWarning = useCallback(() => {
     if (!warning?.signature) return;
@@ -580,9 +577,10 @@ function DataQualityBanner({ warnings, onFix }) {
 
   const isWorking = workingSignature === warning.signature;
   const affectedLabel =
-    warning.affectedSetCount === 1
+    warning.actionLabel ||
+    (warning.affectedSetCount === 1
       ? "Fix date"
-      : `Fix ${warning.affectedSetCount.toLocaleString()} sets`;
+      : `Fix ${warning.affectedSetCount.toLocaleString()} sets`);
 
   return (
     <section className="mb-3 border-y border-amber-300 bg-amber-50/90 dark:border-amber-800/70 dark:bg-amber-950/70">

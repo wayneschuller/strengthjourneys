@@ -50,6 +50,7 @@ export function getDateOutlierWarnings(parsedData, options = {}) {
       affectedSetCount: current.entries.length,
       affectedLiftTypes: [...current.liftTypes],
       title: "Possible date typo",
+      actionLabel: `Fix year to ${suggestion.slice(0, 4)}`,
       message: buildDateOutlierMessage({
         currentDate: current.date,
         suggestedDate: suggestion,
@@ -163,8 +164,24 @@ function buildDateOutlierMessage({
   nextDate,
   affectedSetCount,
 }) {
-  const setLabel = affectedSetCount === 1 ? "set is" : "sets are";
-  return `${affectedSetCount.toLocaleString()} ${setLabel} dated ${getReadableDateString(currentDate)}, but this workout sits between ${getReadableDateString(previousDate)} and ${getReadableDateString(nextDate)}. Did you mean ${getReadableDateString(suggestedDate)}?`;
+  const setLabel = affectedSetCount === 1 ? "set" : "sets";
+  const suggestedYear = suggestedDate.slice(0, 4);
+  const currentYear = currentDate.slice(0, 4);
+  const sequenceLabel = getMonthYearLabel(suggestedDate);
+
+  return `We found ${affectedSetCount.toLocaleString()} ${setLabel} in your ${sequenceLabel} sequence with the year set to ${currentYear}. ${formatReadableDateWithYear(suggestedDate)} would fit between ${formatReadableDateWithYear(previousDate)} and ${formatReadableDateWithYear(nextDate)}. Did you mean to use ${suggestedYear} instead?`;
+}
+
+function getMonthYearLabel(date) {
+  return formatReadableDateWithYear(date)
+    .replace(/\s+\d{1,2},?\s+/, " ")
+    .trim();
+}
+
+function formatReadableDateWithYear(date) {
+  const readable = getReadableDateString(date);
+  const year = date.slice(0, 4);
+  return readable.includes(year) ? readable : `${readable}, ${year}`;
 }
 
 function isBetweenInclusive(date, a, b) {

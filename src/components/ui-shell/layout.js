@@ -364,6 +364,7 @@ const PERSONALIZED_DATA_CTA_PATHS = [
   "/progress-guide/[lift]",
   "/strength-year-in-review",
 ];
+const DATA_QUALITY_BANNER_PATHS = ["/", ...PERSONALIZED_DATA_CTA_PATHS];
 const DEMO_MODE_NUDGE_DELAY_MIN_MS = 20000;
 const DEMO_MODE_NUDGE_DELAY_MAX_MS = 30000;
 const DEMO_MODE_NUDGE_TOAST_DURATION_MS = 12000;
@@ -528,7 +529,7 @@ function DataQualityBanner({ warnings, onFix }) {
     }
   }, []);
 
-  const isDataPage = PERSONALIZED_DATA_CTA_PATHS.includes(router.pathname);
+  const isDataPage = DATA_QUALITY_BANNER_PATHS.includes(router.pathname);
   const warning = useMemo(() => {
     if (!isDataPage || !dismissed || !Array.isArray(warnings)) return null;
     return warnings.find((item) => !dismissed[item.signature]) || null;

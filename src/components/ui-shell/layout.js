@@ -26,13 +26,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { FileUp, X } from "lucide-react";
+import { AlertTriangle, FileUp, Loader2, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { analyzeImportedEntries } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   isToday,
   parseISO,
@@ -65,6 +66,8 @@ export function Layout({ children }) {
     hasCachedSheetData,
     dataSyncedAt,
     sheetInfo,
+    dataQualityWarnings,
+    fixDataQualityWarning,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -243,6 +246,10 @@ export function Layout({ children }) {
             currentPath={router.asPath}
           />
         )}
+        <DataQualityBanner
+          warnings={dataQualityWarnings}
+          onFix={fixDataQualityWarning}
+        />
         <SheetSetupDialog />
         <main className="mx-0 md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           {children}
@@ -498,6 +505,113 @@ function DataAccessBanner({ pathname, currentPath }) {
         </div>
       </section>
     </>
+  );
+}
+
+function DataQualityBanner({ warnings, onFix }) {
+  const { toast } = useToast();
+  const [dismissed, setDismissed] = useState(null);
+  const [workingSignature, setWorkingSignature] = useState(null);
+
+  useEffect(() => {
+    try {
+      setDismissed(
+        JSON.parse(
+          localStorage.getItem(
+            LOCAL_STORAGE_KEYS.DISMISSED_DATA_QUALITY_WARNINGS,
+          ) || "{}",
+        ),
+      );
+    } catch {
+      setDismissed({});
+    }
+  }, []);
+
+  const warning = useMemo(() => {
+    if (!dismissed || !Array.isArray(warnings)) return null;
+    return warnings.find((item) => !dismissed[item.signature]) || null;
+  }, [dismissed, warnings]);
+
+  const dismissWarning = useCallback(() => {
+    if (!warning?.signature) return;
+    setDismissed((prev) => {
+      const next = {
+        ...(prev || {}),
+        [warning.signature]: Date.now(),
+      };
+      try {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEYS.DISMISSED_DATA_QUALITY_WARNINGS,
+          JSON.stringify(next),
+        );
+      } catch {
+        // localStorage unavailable — still dismiss for this render tree
+      }
+      return next;
+    });
+  }, [warning]);
+
+  const handleFix = useCallback(async () => {
+    if (!warning || !onFix) return;
+    setWorkingSignature(warning.signature);
+    try {
+      await onFix(warning);
+      toast({
+        title: "Date fixed",
+        description: `Updated ${warning.affectedSetCount.toLocaleString()} ${warning.affectedSetCount === 1 ? "set" : "sets"}.`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Could not fix date",
+        description:
+          error?.message ||
+          "Refresh your data and try again. If it still fails, send feedback.",
+      });
+    } finally {
+      setWorkingSignature(null);
+    }
+  }, [onFix, toast, warning]);
+
+  if (!warning) return null;
+
+  const isWorking = workingSignature === warning.signature;
+  const affectedLabel =
+    warning.actionLabel ||
+    (warning.affectedSetCount === 1
+      ? "Fix date"
+      : `Fix ${warning.affectedSetCount.toLocaleString()} sets`);
+
+  return (
+    <section className="mb-3 border-y border-amber-300 bg-amber-50/90 dark:border-amber-800/70 dark:bg-amber-950/70">
+      <div className="mx-0 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-2.5 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
+        <p className="max-w-4xl text-sm leading-tight text-amber-950 dark:text-amber-100">
+          <AlertTriangle className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
+          {warning.message}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button
+            size="sm"
+            className="h-7 bg-amber-700 text-xs text-white hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500"
+            disabled={isWorking}
+            onClick={handleFix}
+          >
+            {isWorking && <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />}
+            {isWorking ? "Fixing..." : affectedLabel}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-amber-900/70 hover:bg-amber-100 hover:text-amber-950 dark:text-amber-200/70 dark:hover:bg-amber-900/50"
+            disabled={isWorking}
+            onClick={dismissWarning}
+          >
+            <X className="mr-1 h-3.5 w-3.5" />
+            Dismiss
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }
 

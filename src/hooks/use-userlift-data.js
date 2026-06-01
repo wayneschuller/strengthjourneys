@@ -25,6 +25,10 @@ import {
   calculateLiftTypes,
 } from "@/lib/processing-utils";
 import { processStreakLeaderboard } from "@/lib/home-dashboard/streak-leaderboard-metrics";
+import {
+  applyDateOutlierPreviewFix,
+  getDateOutlierWarnings,
+} from "@/lib/data-quality/date-outliers";
 import { useLocalStorage } from "usehooks-ts";
 
 // ---------------------------------------------------------------------------
@@ -473,6 +477,57 @@ export const UserLiftingDataProvider = ({ children }) => {
   // All downstream computations (liftTypes, PRs, tonnage, etc.) derive from activeParsedData.
   const activeParsedData = importedParsedData || parsedData;
 
+  const dataQualityWarnings = useMemo(
+    () => getDateOutlierWarnings(activeParsedData, { isDemoMode }),
+    [activeParsedData, isDemoMode],
+  );
+  const linkedSheetId = sheetInfo?.ssid;
+
+  const fixDataQualityWarning = useCallback(
+    async (warning) => {
+      if (warning?.type !== "date-outlier") {
+        throw new Error("Unsupported data quality warning.");
+      }
+
+      if (importedParsedData) {
+        const corrected = markHigherWeightAsHistoricalPRs(
+          applyDateOutlierPreviewFix(importedParsedData, warning),
+        );
+        setImportedParsedData(corrected);
+        try {
+          sessionStorage.setItem("sj_importedData", JSON.stringify(corrected));
+        } catch {
+          // sessionStorage unavailable — preview state is still corrected in memory
+        }
+        return { updated: true, mode: "preview" };
+      }
+
+      if (!linkedSheetId) {
+        throw new Error("No linked data source is available to update.");
+      }
+
+      const res = await fetch("/api/sheet/fix-date-outlier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ssid: linkedSheetId,
+          startRowIndex: warning.startRowIndex,
+          endRowIndex: warning.endRowIndex,
+          currentDate: warning.currentDate,
+          suggestedDate: warning.suggestedDate,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body?.error || "Could not update the date.");
+      }
+
+      await mutate();
+      return { ...body, mode: "linked" };
+    },
+    [importedParsedData, linkedSheetId, mutate],
+  );
+
   // Calculate liftTypes from activeParsedData (computed automatically when data changes)
   const liftTypes = useMemo(
     () => (activeParsedData ? calculateLiftTypes(activeParsedData) : []),
@@ -553,6 +608,8 @@ export const UserLiftingDataProvider = ({ children }) => {
         rawRows,
         hasCachedSheetData,
         dataSyncedAt: lastDataReceivedAt,
+        dataQualityWarnings,
+        fixDataQualityWarning,
         mutate,
         sheetInfo,
         selectSheet,

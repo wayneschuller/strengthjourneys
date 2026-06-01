@@ -74,6 +74,7 @@ export const LOCAL_STORAGE_KEYS = {
   // resume after Google re-consent. Do not expand this into a general workflow
   // state machine.
   PENDING_SHEET_ACTION: "SJ_pendingSheetAction",
+  DISMISSED_DATA_QUALITY_WARNINGS: "SJ_dismissedDataQualityWarnings",
   SSID: "ssid", // deprecated — migrated to SHEET_INFO
   SHEET_URL: "sheetURL", // deprecated — migrated to SHEET_INFO
   SHEET_FILENAME: "sheetFilename", // deprecated — migrated to SHEET_INFO

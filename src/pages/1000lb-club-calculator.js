@@ -922,11 +922,23 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       onValueCommit={handleLiftValueCommit}
                       className={prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}
                     />
-                    {visibleE1rmSources?.[key] ? (
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        {formatE1RMSourceText(visibleE1rmSources[key])}.
-                      </p>
-                    ) : null}
+                    <p
+                      className={cn(
+                        "text-muted-foreground mt-1 min-h-4 text-xs",
+                        !visibleE1rmSources?.[key] && "invisible",
+                      )}
+                    >
+                      {visibleE1rmSources?.[key] ? (
+                        <Link
+                          href={`/log?date=${visibleE1rmSources[key].date}`}
+                          className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+                        >
+                          {formatE1RMSourceText(visibleE1rmSources[key])}.
+                        </Link>
+                      ) : (
+                        "Source set reserved"
+                      )}
+                    </p>
                   </div>
                 </motion.div>
               ))}

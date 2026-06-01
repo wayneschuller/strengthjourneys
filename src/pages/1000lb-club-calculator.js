@@ -81,6 +81,12 @@ const LIFT_GRAPHICS = {
 const TARGET_TOTAL = 1000;
 const roundTo5 = (v) => Math.round(v / 5) * 5;
 const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
+const SOURCE_DATE_FORMATTER = new Intl.DateTimeFormat("en-AU", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 const FAQ_ITEMS = [
   {
@@ -296,6 +302,31 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
 const toKg = (lbs) => (lbs * 0.453592).toFixed(1);
 const KG_PER_LB = 0.453592;
 
+function buildE1RMSource(result) {
+  const lift = result?.bestLift;
+  if (!lift?.date || !lift?.reps || !lift?.weight) return null;
+
+  return {
+    date: lift.date,
+    reps: lift.reps,
+    weight: lift.weight,
+    unitType: lift.unitType || result.unitType || "lb",
+  };
+}
+
+function formatE1RMSourceText(source) {
+  const weight = Number(source.weight);
+  const weightText = Number.isInteger(weight)
+    ? String(weight)
+    : weight.toFixed(1).replace(/\.0$/, "");
+  const unitText = source.unitType === "lb" ? "lbs" : source.unitType;
+  const dateText = SOURCE_DATE_FORMATTER.format(
+    new Date(`${source.date}T00:00:00Z`),
+  );
+
+  return `Based on your ${source.reps}@${weightText} ${unitText} set on ${dateText}`;
+}
+
 function SliderWithMarkers({ value, prVal, r90Val, onValueChange, onValueCommit, className }) {
   const MAX = 700;
   const showPr = prVal != null && prVal > 0 && prVal <= MAX;
@@ -389,6 +420,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   // PR auto-populate for authenticated users with real data
   const [usingUserData, setUsingUserData] = useState(false);
+  const [e1rmSources, setE1rmSources] = useState(null);
   const hasAutoPopulatedRef = useRef(false);
   const prWeightsLbRef = useRef(null);
 
@@ -422,6 +454,11 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       bench: prBench,
       deadlift: prDeadlift,
     };
+    setE1rmSources({
+      squat: buildE1RMSource(sq),
+      bench: buildE1RMSource(bp),
+      deadlift: buildE1RMSource(dl),
+    });
 
     if (prSquat != null) setSquat(prSquat);
     if (prBench != null) setBench(prBench);
@@ -841,6 +878,11 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       onValueCommit={handleLiftValueCommit}
                       className={prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}
                     />
+                    {usingUserData && e1rmSources?.[key] ? (
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {formatE1RMSourceText(e1rmSources[key])}.
+                      </p>
+                    ) : null}
                   </div>
                 </motion.div>
               ))}

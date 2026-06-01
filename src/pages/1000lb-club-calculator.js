@@ -558,10 +558,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       samples.push(new Date(cursor));
       cursor.setDate(cursor.getDate() + intervalDays);
     }
-    if (
-      samples.length === 0 ||
-      (lastDate - samples[samples.length - 1]) / 86400000 > 7
-    ) {
+    const latestSample = samples[samples.length - 1];
+    if (!latestSample || latestSample.getTime() !== lastDate.getTime()) {
       samples.push(new Date(lastDate));
     }
     if (samples.length < 2) return null;

@@ -9,6 +9,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
@@ -20,7 +21,11 @@ import {
   getDisplayWeight,
 } from "@/lib/processing-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import {
+  gaEvent,
+  GA_EVENT_TAGS,
+  gaTrackHomeImportNudge,
+} from "@/lib/analytics";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
@@ -78,7 +83,7 @@ export function TheLongGameCard({
   dataMaturityStage: stageFromParent = null,
   sessionCount: sessionCountFromParent = null,
 }) {
-  const { parsedData, isLoading, sheetInfo, streakLeaderboard } =
+  const { parsedData, isLoading, sheetInfo, streakLeaderboard, isImportedData } =
     useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -92,6 +97,7 @@ export function TheLongGameCard({
   const [isSharing, setIsSharing] = useState(false);
   const [sharingYear, setSharingYear] = useState(null);
   const [sharedYear, setSharedYear] = useState(null);
+  const trackedImportNudgeKeyRef = useRef(null);
   const { isSuccess: isShareSuccess, triggerSuccess: triggerShareSuccess } =
     useTransientSuccess();
   // SSR default = first stage-1 title; randomised client-side once intervals load
@@ -139,6 +145,12 @@ export function TheLongGameCard({
     dashboardStage === "established" &&
     Array.isArray(streakLeaderboard) &&
     streakLeaderboard.length >= 1;
+  const showImportMergeNudge =
+    !isSharing &&
+    !isImportedData &&
+    dashboardStage !== "starter_sample" &&
+    dashboardStage !== "first_real_week" &&
+    dashboardStage !== "established";
   const effectiveViewMode = useMemo(() => {
     if (dashboardStage === "starter_sample") return "daily";
     if (dashboardStage === "first_real_week") return "daily";
@@ -194,6 +206,24 @@ export function TheLongGameCard({
     intervals?.[intervals.length - 1]?.endDate ?? null,
     !!intervals && !isSharing && effectiveViewMode === "daily",
   );
+
+  useEffect(() => {
+    if (!showImportMergeNudge) return;
+    const trackingKey = `${sheetInfo?.ssid || "no-sheet"}:${dashboardStage}`;
+    if (trackedImportNudgeKeyRef.current === trackingKey) return;
+    gaTrackHomeImportNudge({
+      action: "impression",
+      surface: "long_game_card",
+      dashboardStage,
+      sessionCount,
+    });
+    trackedImportNudgeKeyRef.current = trackingKey;
+  }, [
+    showImportMergeNudge,
+    sheetInfo?.ssid,
+    dashboardStage,
+    sessionCount,
+  ]);
 
   const writePngToClipboard = useCallback(async (blobPromise) => {
     await navigator.clipboard.write([
@@ -615,7 +645,9 @@ export function TheLongGameCard({
           // Keep copied image deterministic via `data-capture="light"` CSS contract.
           await copyNodeToClipboard(
             shareRef.current,
-            (element) => element.id === "ignoreCopy",
+            (element) =>
+              element.id === "ignoreCopy" ||
+              element.dataset.shareIgnore === "true",
             { scale: exportScale },
           );
           devLog(
@@ -660,7 +692,9 @@ export function TheLongGameCard({
           const fallbackStart = performance.now();
           await copyNodeToClipboard(
             yearNode,
-            (element) => element.dataset.shareIgnore === "true",
+            (element) =>
+              element.id === "ignoreCopy" ||
+              element.dataset.shareIgnore === "true",
             captureWidth
               ? {
                   width: captureWidth,
@@ -983,6 +1017,12 @@ export function TheLongGameCard({
         {intervals && !isFirstWeekIntroState && (
           <CardFooter id="ignoreCopy">
             <div className="flex w-full flex-col gap-2">
+              {showImportMergeNudge && (
+                <LongGameImportNudge
+                  dashboardStage={dashboardStage}
+                  sessionCount={sessionCount}
+                />
+              )}
               {canShareHeatmaps && (
                 <div className="flex justify-end">
                   <ShareCopyButton
@@ -1020,6 +1060,35 @@ export function TheLongGameCard({
         </div>
       )}
     </div>
+  );
+}
+
+function LongGameImportNudge({ dashboardStage, sessionCount }) {
+  const trackClick = () => {
+    gaTrackHomeImportNudge({
+      action: "click",
+      surface: "long_game_card",
+      dashboardStage,
+      sessionCount,
+    });
+  };
+
+  return (
+    <p
+      className="text-muted-foreground text-left text-xs leading-5 sm:text-center"
+      data-share-ignore="true"
+    >
+      Your strength journey did not start here. Bring in lifting history from
+      other fitness apps and{" "}
+      <Link
+        href="/import?source=long-game-card"
+        onClick={trackClick}
+        className="text-foreground font-medium underline underline-offset-2"
+      >
+        merge it into this timeline
+      </Link>
+      .
+    </p>
   );
 }
 

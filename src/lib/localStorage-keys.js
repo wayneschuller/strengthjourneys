@@ -128,6 +128,7 @@ export const LOCAL_STORAGE_KEYS = {
   // Analytics flags
   HOME_DASHBOARD_FIRST_VIEW_TRACKED: "SJ_homeDashboardFirstViewTracked",
   HOME_DASHBOARD_LAST_TRACKED_STAGE: "SJ_homeDashboardLastTrackedStage",
+  HOME_DASHBOARD_IMPORT_NUDGE_DISMISSED: "SJ_homeDashboardImportNudgeDismissed",
 };
 
 export const SESSION_STORAGE_KEYS = {

@@ -1,5 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { FileUp, X } from "lucide-react";
+import { useLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
 import { DataSheetStatus, RowProcessingIndicator } from "@/components/home-dashboard/row-processing-indicator";
@@ -11,12 +14,14 @@ import { motion } from "motion/react";
 import {
   gaTrackHomeDashboardFirstView,
   gaTrackHomeDashboardStageEntered,
+  gaTrackHomeImportNudge,
 } from "@/lib/analytics";
 import {
   LOCAL_STORAGE_KEYS,
   getSheetScopedStorageKey,
 } from "@/lib/localStorage-keys";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
+import { Button } from "@/components/ui/button";
 
 // Short, subtle quips that incorporate the user's first name.
 // {name} is replaced at render time.
@@ -92,6 +97,7 @@ export function HomeDashboard() {
   const { sheetInfo, parsedData, rawRows, dataSyncedAt, isValidating, mutate, hasUserData, isImportedData } =
     useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
+  const trackedImportNudgeKeyRef = useRef(null);
   const hasDataLoaded = hasUserData && isProgressDone;
   const previewEntryCount = useMemo(
     () =>
@@ -115,6 +121,54 @@ export function HomeDashboard() {
         }),
       [parsedData, rawRows, sheetInfo],
     );
+  const importNudgeStorageKey = useMemo(
+    () =>
+      getSheetScopedStorageKey(
+        LOCAL_STORAGE_KEYS.HOME_DASHBOARD_IMPORT_NUDGE_DISMISSED,
+        sheetInfo?.ssid,
+      ),
+    [sheetInfo?.ssid],
+  );
+  const [isImportNudgeDismissed, setIsImportNudgeDismissed] = useLocalStorage(
+    importNudgeStorageKey,
+    false,
+    { initializeWithValue: false },
+  );
+  const showImportMergeNudge =
+    hasDataLoaded &&
+    !isImportedData &&
+    !isImportNudgeDismissed &&
+    dashboardStage !== "starter_sample" &&
+    dashboardStage !== "first_real_week" &&
+    dashboardStage !== "established";
+
+  useEffect(() => {
+    if (!showImportMergeNudge) return;
+    const trackingKey = `${importNudgeStorageKey}:${dashboardStage}`;
+    if (trackedImportNudgeKeyRef.current === trackingKey) return;
+    gaTrackHomeImportNudge({
+      action: "impression",
+      surface: "dashboard_banner",
+      dashboardStage,
+      sessionCount,
+    });
+    trackedImportNudgeKeyRef.current = trackingKey;
+  }, [
+    showImportMergeNudge,
+    importNudgeStorageKey,
+    dashboardStage,
+    sessionCount,
+  ]);
+
+  const dismissImportNudge = () => {
+    setIsImportNudgeDismissed(true);
+    gaTrackHomeImportNudge({
+      action: "dismiss",
+      surface: "dashboard_banner",
+      dashboardStage,
+      sessionCount,
+    });
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -244,6 +298,13 @@ export function HomeDashboard() {
           setIsProgressDone={setIsProgressDone}
         />
       )}
+      {showImportMergeNudge && (
+        <HomeImportMergeNudge
+          dashboardStage={dashboardStage}
+          sessionCount={sessionCount}
+          onDismiss={dismissImportNudge}
+        />
+      )}
       {/* The first week is intentionally quieter: skip the inspiration row until
           the user has enough real data for those cards to feel earned. */}
       {hasUserData && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
@@ -305,4 +366,63 @@ function HomeDashboardCardsSkeleton() {
       ))}
     </section>
   );
+}
+
+function HomeImportMergeNudge({ dashboardStage, sessionCount, onDismiss }) {
+  const copy = getHomeImportNudgeCopy(dashboardStage);
+
+  const trackClick = () => {
+    gaTrackHomeImportNudge({
+      action: "click",
+      surface: "dashboard_banner",
+      dashboardStage,
+      sessionCount,
+    });
+  };
+
+  return (
+    <section className="mb-4 border-y border-amber-300 bg-amber-50/90 dark:border-amber-800/70 dark:bg-amber-950/70 2xl:mb-6">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-2.5 text-center">
+        <p className="max-w-4xl text-sm leading-tight text-amber-950 dark:text-amber-100">
+          <FileUp className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
+          <span className="font-semibold">{copy.title}</span>{" "}
+          <span>{copy.body}</span>
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button
+            asChild
+            size="sm"
+            className="h-7 bg-amber-700 text-xs text-white hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500"
+          >
+            <Link
+              href="/import?source=home-dashboard-banner"
+              onClick={trackClick}
+            >
+              Import / Merge Data
+            </Link>
+          </Button>
+          <button
+            type="button"
+            className="inline-flex h-7 items-center rounded-md px-2 text-xs text-amber-900/70 transition-colors hover:bg-amber-100 hover:text-amber-950 dark:text-amber-200/70 dark:hover:bg-amber-900/50"
+            onClick={onDismiss}
+            aria-label="Dismiss import reminder"
+          >
+            <X className="mr-1 h-3.5 w-3.5" />
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function getHomeImportNudgeCopy(dashboardStage) {
+  return {
+    title:
+      dashboardStage === "early_base"
+        ? "Your long-term dashboard gets better with more history."
+        : "Already trained in another app?",
+    body:
+      "Import Hevy, Strong, StrongLifts, Wodify, BTWB, or another spreadsheet. Add files one at a time and merge them into one timeline.",
+  };
 }

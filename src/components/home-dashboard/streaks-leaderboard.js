@@ -1,3 +1,7 @@
+/**
+ * Ranked streak-bar view for The Long Game card.
+ * Streak length drives bar width; average weekly tonnage drives bar thickness.
+ */
 import { useMemo } from "react";
 import { format, parseISO } from "date-fns";
 import {
@@ -40,6 +44,9 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
     if (!streaks?.length) return [];
     return [...streaks].sort((a, b) => {
       if (b.weeks !== a.weeks) return b.weeks - a.weeks;
+      if ((b.avgWeeklyTonnage || 0) !== (a.avgWeeklyTonnage || 0)) {
+        return (b.avgWeeklyTonnage || 0) - (a.avgWeeklyTonnage || 0);
+      }
       // tiebreak: more recent first
       return b.endWeek.localeCompare(a.endWeek);
     });

@@ -481,6 +481,7 @@ export default function LogSessionPage({
       revealDelayMs={1500}
     />
   );
+  const showStaticContent = authStatus !== "authenticated";
 
   return (
     <>
@@ -641,7 +642,7 @@ export default function LogSessionPage({
 
           <aside className="hidden xl:block" aria-hidden="true" />
         </div>
-        <LogStaticContent content={staticContent} />
+        {showStaticContent && <LogStaticContent content={staticContent} />}
       </div>
     </>
   );

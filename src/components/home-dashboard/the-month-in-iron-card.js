@@ -815,45 +815,45 @@ const PAST_MONTH_NO_BASELINE_HEADLINES = [
 ];
 
 const EARLY_MONTH_ON_TRACK_HEADLINES = [
-  "Good start — keep stacking sessions",
-  "On track early — build the month",
-  "First week looks solid — keep going",
-  "The month is open — stay with it",
+  "Strong start.",
+  "Good first week.",
+  "Keep stacking sessions.",
+  "Stay with it.",
 ];
 
 const EARLY_MONTH_CATCH_UP_HEADLINES = [
-  "Plenty of month left — start closing the gap",
-  "Still early — one good week can flip this",
-  "Time to get on track — the month is still there",
-  "Early days — log the next session and move",
+  "Plenty of month left.",
+  "One good week flips this.",
+  "Get the next session in.",
+  "Start closing the gap.",
 ];
 
 const MID_MONTH_ON_TRACK_HEADLINES = [
-  "On track — keep pressure on last month",
-  "Keep going — the month is there to win",
-  "Good pace — hold the line",
-  "Still in front of the work — keep building",
+  "On track.",
+  "Keep going.",
+  "Good pace.",
+  "Hold the line.",
 ];
 
 const MID_MONTH_CATCH_UP_HEADLINES = [
-  "Catch-up window is open — go get it",
-  "Behind pace — make the next sessions count",
-  "Still winnable — close the gap this week",
-  "Time to rally — last month is reachable",
+  "Still winnable.",
+  "Close the gap this week.",
+  "Make the next sessions count.",
+  "Last month is reachable.",
 ];
 
 const LAST_WEEK_ON_TRACK_HEADLINES = [
-  "Likely win — finish the month",
-  "Win in sight — close it out",
-  "Nearly there — hold the line",
-  "Month is there to take — finish strong",
+  "Win in sight.",
+  "Close it out.",
+  "Nearly there.",
+  "Finish strong.",
 ];
 
 const LAST_WEEK_CATCH_UP_HEADLINES = [
-  "Final week — one push can still change it",
+  "Final push.",
   "Last chance to catch last month",
-  "Still time — make the final week count",
-  "Close the gap now — month ends soon",
+  "Make the week count.",
+  "Close the gap now.",
 ];
 
 // Surface only in the final week of a month the user is winning. Hashed by today's date for daily variety.
@@ -1270,7 +1270,7 @@ function getVerdictHeadline({
     return {
       tone: "progress",
       text: checksText
-        ? `⚒️ ${checksText} checks green — ${text}`
+        ? `⚒️ ${checksText} green. ${text}`
         : `⚒️ ${text}`,
       scoreText: null,
     };
@@ -1285,7 +1285,7 @@ function getVerdictHeadline({
   return {
     tone: "neutral",
     text: checksText
-      ? `⚒️ ${checksText} checks green — ${text}`
+      ? `⚒️ ${checksText} green. ${text}`
       : `⚒️ ${text}`,
     scoreText: null,
   };

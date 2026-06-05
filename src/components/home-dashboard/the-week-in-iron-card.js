@@ -3,7 +3,7 @@
  * Keep the empty-state CTA tailored to the user's setup state so the logging
  * pitch stays clear before the full logging workflow is available.
  */
-import { useMemo, useState } from "react";
+import { Children, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -668,6 +668,9 @@ function WeekSection({
   description,
   children,
 }) {
+  const hasChildren = Boolean(children);
+  const childItems = hasChildren ? Children.toArray(children) : [];
+
   return (
     <section className="space-y-3">
       <div className="space-y-1">
@@ -679,12 +682,8 @@ function WeekSection({
             {streakCallout}
           </p>
         ) : null}
-        {streakCelebration ? (
-          <p
-            className={`text-sm leading-6 font-bold ${streakCelebration.className}`}
-          >
-            {streakCelebration.text}
-          </p>
+        {streakCelebration && !hasChildren ? (
+          <StreakCelebrationBox streakCelebration={streakCelebration} />
         ) : null}
         {description ? (
           <p className="text-muted-foreground text-sm leading-6">
@@ -692,8 +691,28 @@ function WeekSection({
           </p>
         ) : null}
       </div>
-      <div className="space-y-4">{children}</div>
+      {hasChildren ? (
+        streakCelebration ? (
+          <div className="flex flex-wrap items-stretch gap-3">
+            {childItems.slice(0, 1)}
+            <StreakCelebrationBox streakCelebration={streakCelebration} />
+            {childItems.slice(1)}
+          </div>
+        ) : (
+          <div className="space-y-4">{children}</div>
+        )
+      ) : null}
     </section>
+  );
+}
+
+function StreakCelebrationBox({ streakCelebration }) {
+  return (
+    <div
+      className={`bg-muted/20 flex max-w-sm items-center rounded-xl border px-4 py-3 text-sm leading-5 font-bold ${streakCelebration.className}`}
+    >
+      {streakCelebration.text}
+    </div>
   );
 }
 
@@ -1058,7 +1077,7 @@ function getStreakCelebration({
   }
 
   return {
-    text: `🏆 Top ${rank} all-time streak. This run is on the board.`,
+    text: `🏆 Top ${rank} all-time streak.`,
     className: "text-primary",
   };
 }

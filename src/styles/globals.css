@@ -101,6 +101,29 @@
   }
 }
 
+@keyframes streak-leader-shake {
+  0%,
+  82%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  85% {
+    transform: translate3d(-4px, 1px, 0);
+  }
+  88% {
+    transform: translate3d(4px, -1px, 0);
+  }
+  91% {
+    transform: translate3d(-3px, 1px, 0);
+  }
+  94% {
+    transform: translate3d(2px, -1px, 0);
+  }
+  97% {
+    transform: translate3d(-1px, 0, 0);
+  }
+}
+
 .thumb-spring [role="slider"] {
   animation: thumb-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
@@ -796,6 +819,11 @@
   /* Fade-in animation used by dashboard stat cards */
   .animate-fade {
     animation: fade 0.8s ease-out forwards;
+  }
+
+  .animate-streak-leader-shake {
+    animation: streak-leader-shake 3.6s ease-in-out infinite;
+    will-change: transform;
   }
 
   .shadow-2xs {

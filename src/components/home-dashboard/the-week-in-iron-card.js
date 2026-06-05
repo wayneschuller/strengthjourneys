@@ -3,7 +3,7 @@
  * Keep the empty-state CTA tailored to the user's setup state so the logging
  * pitch stays clear before the full logging workflow is available.
  */
-import { useMemo, useState } from "react";
+import { Children, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -412,6 +412,7 @@ export function TheWeekInIronCard({
     isReadOnly,
     parsedData,
     sessionTonnageLookup,
+    streakLeaderboard,
   } =
     useUserLiftingData();
   const { isMetric } = useAthleteBio();
@@ -446,6 +447,16 @@ export function TheWeekInIronCard({
           })
         : { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 },
     [allSessionDates, boundaries.effectiveEnd],
+  );
+  const streakCelebration = useMemo(
+    () =>
+      getStreakCelebration({
+        streakLeaderboard,
+        streakStats,
+        allSessionDates,
+        boundaries,
+      }),
+    [streakLeaderboard, streakStats, allSessionDates, boundaries],
   );
   const weeklySessionRows = useMemo(
     () => getWeeklySessionRows(parsedData, boundaries, isMetric),
@@ -577,6 +588,7 @@ export function TheWeekInIronCard({
                       streakStats,
                       true,
                     )}
+                    streakCelebration={streakCelebration}
                     description={getNextStepCopy(
                       stats,
                       streakStats,
@@ -610,6 +622,7 @@ export function TheWeekInIronCard({
                       streakStats,
                       false,
                     )}
+                    streakCelebration={streakCelebration}
                     description={getWeekReviewCopy(stats, boundaries)}
                   >
                     {stats.sessions.current >= 3 && stats.tonnage.current > 0 && (
@@ -651,9 +664,13 @@ function WeekSection({
   stepLabel,
   title,
   streakCallout,
+  streakCelebration,
   description,
   children,
 }) {
+  const hasChildren = Boolean(children);
+  const childItems = hasChildren ? Children.toArray(children) : [];
+
   return (
     <section className="space-y-3">
       <div className="space-y-1">
@@ -665,14 +682,37 @@ function WeekSection({
             {streakCallout}
           </p>
         ) : null}
+        {streakCelebration && !hasChildren ? (
+          <StreakCelebrationBox streakCelebration={streakCelebration} />
+        ) : null}
         {description ? (
           <p className="text-muted-foreground text-sm leading-6">
             {description}
           </p>
         ) : null}
       </div>
-      <div className="space-y-4">{children}</div>
+      {hasChildren ? (
+        streakCelebration ? (
+          <div className="flex flex-wrap items-stretch gap-3">
+            {childItems.slice(0, 1)}
+            <StreakCelebrationBox streakCelebration={streakCelebration} />
+            {childItems.slice(1)}
+          </div>
+        ) : (
+          <div className="space-y-4">{children}</div>
+        )
+      ) : null}
     </section>
+  );
+}
+
+function StreakCelebrationBox({ streakCelebration }) {
+  return (
+    <div
+      className={`bg-muted/20 flex max-w-sm items-center rounded-xl border px-4 py-3 text-sm leading-5 font-bold ${streakCelebration.className}`}
+    >
+      {streakCelebration.text}
+    </div>
   );
 }
 
@@ -980,6 +1020,84 @@ function WeekTonnageComparison({ weekTonnage, avgTonnage, unit }) {
       </div>
     </Link>
   );
+}
+
+function getStreakCelebration({
+  streakLeaderboard,
+  streakStats,
+  allSessionDates,
+  boundaries,
+}) {
+  if (!Array.isArray(streakLeaderboard) || streakLeaderboard.length === 0) {
+    return null;
+  }
+  if (!hasTwelveMonthsOfTrainingData(allSessionDates, boundaries.effectiveEnd)) {
+    return null;
+  }
+  if (!streakStats || streakStats.currentStreak <= 0) {
+    return null;
+  }
+
+  const sessionsNeeded = Math.max(
+    0,
+    3 - (streakStats.sessionsThisWeek ?? 0),
+  );
+  if (sessionsNeeded > 0) {
+    return null;
+  }
+
+  const viewedWeek = getWeekKeyFromDateStr(boundaries.effectiveEnd);
+  const viewedStreak = streakLeaderboard.find(
+    (streak) =>
+      streak.startWeek <= viewedWeek &&
+      streak.endWeek >= viewedWeek &&
+      streak.weeks === streakStats.currentStreak,
+  );
+  if (!viewedStreak) {
+    return null;
+  }
+
+  const ranked = [...streakLeaderboard].sort(compareStreakLeaderboardEntries);
+  const rank =
+    ranked.findIndex(
+      (streak) =>
+        streak.startWeek === viewedStreak.startWeek &&
+        streak.endWeek === viewedStreak.endWeek,
+    ) + 1;
+
+  if (rank < 1 || rank > 5) {
+    return null;
+  }
+
+  if (rank === 1) {
+    return {
+      text: "🔥🏆 LIFETIME RUN. This is your longest streak ever.",
+      className: "text-amber-600 dark:text-amber-400",
+    };
+  }
+
+  return {
+    text: `🏆 Top ${rank} all-time streak.`,
+    className: "text-primary",
+  };
+}
+
+function compareStreakLeaderboardEntries(a, b) {
+  if (b.weeks !== a.weeks) return b.weeks - a.weeks;
+  if ((b.avgWeeklyTonnage || 0) !== (a.avgWeeklyTonnage || 0)) {
+    return (b.avgWeeklyTonnage || 0) - (a.avgWeeklyTonnage || 0);
+  }
+  return b.endWeek.localeCompare(a.endWeek);
+}
+
+function hasTwelveMonthsOfTrainingData(allSessionDates, referenceDate) {
+  if (!Array.isArray(allSessionDates) || allSessionDates.length === 0) {
+    return false;
+  }
+  const earliestSessionDate = allSessionDates.reduce((earliest, date) =>
+    date < earliest ? date : earliest,
+  );
+  return earliestSessionDate <= subtractDaysFromStr(referenceDate, 364);
 }
 
 function getStreakCallout(streakStats, isCurrentWeek) {

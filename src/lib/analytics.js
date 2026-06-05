@@ -63,6 +63,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   FEEDBACK_SENTIMENT: "SJ_feedback_sentiment", // ~Feb 2026: Feedback thumbs sentiment. Note: briefly fired as "feedback_sentiment" on 2026-02-13 between commits bd1e16c4 (promote) and dc44eaa2 (rename); ignored — meaningful traffic only began March 2026.
   HOME_DASHBOARD_FIRST_VIEW: "SJ_home_dashboard_first_view", // ~Mar 2026: First time user sees loaded home dashboard.
   HOME_DASHBOARD_STAGE_ENTERED: "SJ_home_dashboard_stage_entered", // ~Mar 2026: User entered a staged onboarding/dashboard phase.
+  HOME_IMPORT_NUDGE: "SJ_home_import_nudge", // ~Jun 2026: User saw/clicked/dismissed an in-app import/merge nudge.
   HERO_IMPORT_CLICK: "SJ_hero_import_click", // ~Mar 2026: User clicked "Import Your Lifting Data" CTA on hero.
   IMPORT_PROCESS: "SJ_import_process", // ~Mar 2026: Client-side import/save lifecycle for preview and history imports.
   COFFEE_NUDGE_CLICK: "SJ_coffee_nudge_click", // ~Apr 2026: User clicked a Buy-Me-a-Coffee link in an in-app nudge surface.
@@ -299,6 +300,30 @@ export function gaTrackHomeDashboardStageEntered({
   }
   if (typeof sessionCount === "number") params.session_count = sessionCount;
   gaEvent(GA_EVENT_TAGS.HOME_DASHBOARD_STAGE_ENTERED, params);
+}
+
+/**
+ * Track home-dashboard import/merge nudges without fragmenting the event names.
+ * @param {object} params
+ * @param {"impression"|"click"|"dismiss"} params.action
+ * @param {"dashboard_banner"|"long_game_card"} params.surface
+ * @param {string} [params.dashboardStage]
+ * @param {number} [params.sessionCount]
+ */
+export function gaTrackHomeImportNudge({
+  action,
+  surface,
+  dashboardStage,
+  sessionCount,
+} = {}) {
+  if (typeof action !== "string" || action.length === 0) return;
+  if (typeof surface !== "string" || surface.length === 0) return;
+
+  const params = { action, surface };
+  if (typeof dashboardStage === "string") params.dashboard_stage = dashboardStage;
+  if (typeof sessionCount === "number") params.session_count = sessionCount;
+
+  gaEvent(GA_EVENT_TAGS.HOME_IMPORT_NUDGE, params);
 }
 
 /**

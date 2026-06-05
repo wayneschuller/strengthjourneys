@@ -81,6 +81,12 @@ const LIFT_GRAPHICS = {
 const TARGET_TOTAL = 1000;
 const roundTo5 = (v) => Math.round(v / 5) * 5;
 const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
+const SOURCE_DATE_FORMATTER = new Intl.DateTimeFormat("en-AU", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 const FAQ_ITEMS = [
   {
@@ -296,6 +302,35 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
 const toKg = (lbs) => (lbs * 0.453592).toFixed(1);
 const KG_PER_LB = 0.453592;
 
+function buildE1RMSource(result) {
+  const lift = result?.bestLift;
+  return buildE1RMSourceFromLift(lift, result?.unitType);
+}
+
+function buildE1RMSourceFromLift(lift, fallbackUnitType = "lb") {
+  if (!lift?.date || !lift?.reps || !lift?.weight) return null;
+
+  return {
+    date: lift.date,
+    reps: lift.reps,
+    weight: lift.weight,
+    unitType: lift.unitType || fallbackUnitType,
+  };
+}
+
+function formatE1RMSourceText(source) {
+  const weight = Number(source.weight);
+  const weightText = Number.isInteger(weight)
+    ? String(weight)
+    : weight.toFixed(1).replace(/\.0$/, "");
+  const unitText = source.unitType === "lb" ? "lbs" : source.unitType;
+  const dateText = SOURCE_DATE_FORMATTER.format(
+    new Date(`${source.date}T00:00:00Z`),
+  );
+
+  return `Based on your ${source.reps}@${weightText} ${unitText} set on ${dateText}`;
+}
+
 function SliderWithMarkers({ value, prVal, r90Val, onValueChange, onValueCommit, className }) {
   const MAX = 700;
   const showPr = prVal != null && prVal > 0 && prVal <= MAX;
@@ -389,6 +424,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   // PR auto-populate for authenticated users with real data
   const [usingUserData, setUsingUserData] = useState(false);
+  const [prE1rmSources, setPrE1rmSources] = useState(null);
   const hasAutoPopulatedRef = useRef(false);
   const prWeightsLbRef = useRef(null);
 
@@ -422,6 +458,11 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       bench: prBench,
       deadlift: prDeadlift,
     };
+    setPrE1rmSources({
+      squat: buildE1RMSource(sq),
+      bench: buildE1RMSource(bp),
+      deadlift: buildE1RMSource(dl),
+    });
 
     if (prSquat != null) setSquat(prSquat);
     if (prBench != null) setBench(prBench);
@@ -437,7 +478,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   ]);
 
   // Recent 90-day best E1RM per lift (in lbs, rounded to 5)
-  const recent90dLb = useMemo(() => {
+  const recent90dData = useMemo(() => {
     if (!usingUserData || !parsedData?.length || isDemoMode) return null;
 
     const SBD_TYPES = {
@@ -450,6 +491,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     ).toISOString().slice(0, 10);
 
     const best = { squat: 0, bench: 0, deadlift: 0 };
+    const sources = { squat: null, bench: null, deadlift: null };
 
     for (const d of parsedData) {
       const key = SBD_TYPES[d.liftType];
@@ -458,10 +500,13 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       const weightLb = d.unitType === "lb" ? d.weight : d.weight * 2.2046;
       const e1rm =
         d.reps === 1 ? weightLb : estimateE1RM(d.reps, weightLb, e1rmFormula);
-      if (e1rm > best[key]) best[key] = e1rm;
+      if (e1rm > best[key]) {
+        best[key] = e1rm;
+        sources[key] = buildE1RMSourceFromLift(d);
+      }
     }
 
-    const result = {
+    const values = {
       squat: best.squat > 0 ? clampLb(best.squat) : null,
       bench: best.bench > 0 ? clampLb(best.bench) : null,
       deadlift: best.deadlift > 0 ? clampLb(best.deadlift) : null,
@@ -471,10 +516,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     const pr = prWeightsLbRef.current;
     if (!pr) return null;
     const hasDistinct = ["squat", "bench", "deadlift"].some(
-      (k) => result[k] != null && result[k] !== pr[k],
+      (k) => values[k] != null && values[k] !== pr[k],
     );
-    return hasDistinct ? result : null;
+    return hasDistinct ? { values, sources } : null;
   }, [usingUserData, parsedData, isDemoMode, e1rmFormula]);
+  const recent90dLb = recent90dData?.values;
+  const recent90dE1rmSources = recent90dData?.sources;
 
   // Biggest opportunity hint for the main UI
   const biggestOpportunity = useMemo(() => {
@@ -512,6 +559,40 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     ((recent90dLb.squat != null && squat !== recent90dLb.squat) ||
       (recent90dLb.bench != null && bench !== recent90dLb.bench) ||
       (recent90dLb.deadlift != null && deadlift !== recent90dLb.deadlift));
+
+  const visibleE1rmSources = useMemo(() => {
+    if (!usingUserData) return null;
+
+    const valuesByKey = { squat, bench, deadlift };
+    const sources = {};
+
+    for (const key of ["squat", "bench", "deadlift"]) {
+      if (
+        recent90dLb?.[key] != null &&
+        recent90dLb[key] !== prWeightsLbRef.current?.[key] &&
+        valuesByKey[key] === recent90dLb[key]
+      ) {
+        sources[key] = recent90dE1rmSources?.[key] || null;
+      } else if (
+        prWeightsLbRef.current?.[key] != null &&
+        valuesByKey[key] === prWeightsLbRef.current[key]
+      ) {
+        sources[key] = prE1rmSources?.[key] || null;
+      } else {
+        sources[key] = null;
+      }
+    }
+
+    return sources;
+  }, [
+    usingUserData,
+    squat,
+    bench,
+    deadlift,
+    recent90dLb,
+    recent90dE1rmSources,
+    prE1rmSources,
+  ]);
 
   // Rolling 90-day SBD total timeline
   const totalTimeline = useMemo(() => {
@@ -558,10 +639,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       samples.push(new Date(cursor));
       cursor.setDate(cursor.getDate() + intervalDays);
     }
-    if (
-      samples.length === 0 ||
-      (lastDate - samples[samples.length - 1]) / 86400000 > 7
-    ) {
+    const latestSample = samples[samples.length - 1];
+    if (!latestSample || latestSample.getTime() !== lastDate.getTime()) {
       samples.push(new Date(lastDate));
     }
     if (samples.length < 2) return null;
@@ -843,6 +922,23 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       onValueCommit={handleLiftValueCommit}
                       className={prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}
                     />
+                    <p
+                      className={cn(
+                        "text-muted-foreground mt-1 min-h-4 text-xs",
+                        !visibleE1rmSources?.[key] && "invisible",
+                      )}
+                    >
+                      {visibleE1rmSources?.[key] ? (
+                        <Link
+                          href={`/log?date=${visibleE1rmSources[key].date}`}
+                          className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+                        >
+                          {formatE1RMSourceText(visibleE1rmSources[key])}.
+                        </Link>
+                      ) : (
+                        "Source set reserved"
+                      )}
+                    </p>
                   </div>
                 </motion.div>
               ))}

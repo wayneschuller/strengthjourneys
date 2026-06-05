@@ -1,4 +1,7 @@
-
+/**
+ * Month-in-progress dashboard card that compares the current calendar month
+ * against the previous month for sessions, Big Four tonnage, and strength tiers.
+ */
 import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
@@ -268,8 +271,15 @@ export function TheMonthInIronCard({
   }, []);
 
   useEffect(() => {
+    const isPastMonthView = !!boundaries && !boundaries.isCurrentMonthView;
+    const isLastWeekCurrentMonth =
+      !!boundaries?.isCurrentMonthView &&
+      typeof boundaries.daysRemainingInCurrentMonth === "number" &&
+      boundaries.daysRemainingInCurrentMonth <= 7;
     const shouldCelebrate =
-      checksSummary?.checksTotal === 9 && checksSummary.checksMet >= 7;
+      checksSummary?.checksTotal === 9 &&
+      checksSummary.checksMet >= 7 &&
+      (isPastMonthView || isLastWeekCurrentMonth);
 
     if (!shouldCelebrate) {
       confettiFiredRef.current = false;
@@ -287,7 +297,7 @@ export function TheMonthInIronCard({
       CONFETTI_AFTER_HIGHLIGHT_DELAY_MS,
     );
     return () => clearTimeout(timer);
-  }, [checksSummary, highlightsComplete, safeMonthOffset]);
+  }, [boundaries, checksSummary, highlightsComplete, safeMonthOffset]);
 
   const viewPreviousMonth = () => {
     setMonthOffset((prev) => Math.min(maxMonthOffset, prev + 1));
@@ -804,6 +814,48 @@ const PAST_MONTH_NO_BASELINE_HEADLINES = [
   "No month-versus-month baseline yet.",
 ];
 
+const EARLY_MONTH_ON_TRACK_HEADLINES = [
+  "Strong start.",
+  "Good first week.",
+  "Keep stacking sessions.",
+  "Stay with it.",
+];
+
+const EARLY_MONTH_CATCH_UP_HEADLINES = [
+  "Plenty of month left.",
+  "One good week flips this.",
+  "Get the next session in.",
+  "Start closing the gap.",
+];
+
+const MID_MONTH_ON_TRACK_HEADLINES = [
+  "On track.",
+  "Keep going.",
+  "Good pace.",
+  "Hold the line.",
+];
+
+const MID_MONTH_CATCH_UP_HEADLINES = [
+  "Still winnable.",
+  "Close the gap this week.",
+  "Make the next sessions count.",
+  "Last month is reachable.",
+];
+
+const LAST_WEEK_ON_TRACK_HEADLINES = [
+  "Win in sight.",
+  "Close it out.",
+  "Nearly there.",
+  "Finish strong.",
+];
+
+const LAST_WEEK_CATCH_UP_HEADLINES = [
+  "Final push.",
+  "Last chance to catch last month",
+  "Make the week count.",
+  "Close the gap now.",
+];
+
 // Surface only in the final week of a month the user is winning. Hashed by today's date for daily variety.
 const COFFEE_WIN_NUDGES = [
   "Crushing this month? Solo dev here. A coffee keeps me coding.",
@@ -1161,6 +1213,7 @@ function getVerdictHeadline({
     ? `${checksSummary.checksMet}/${checksSummary.checksTotal}`
     : null;
   const isPastMonthView = !boundaries?.isCurrentMonthView;
+  const monthPhase = getCurrentMonthPhase(boundaries);
   const hasFullChecks = checksSummary?.checksTotal === 9;
   const monthWon = hasFullChecks
     ? checksSummary.checksMet >= 7
@@ -1184,7 +1237,7 @@ function getVerdictHeadline({
     };
   }
 
-  if (hasFullChecks && checksSummary.checksMet >= 7) {
+  if (monthPhase === "last-week" && hasFullChecks && checksSummary.checksMet >= 7) {
     return {
       tone: "win",
       text: topTierPhrase || "Month Won ✅",
@@ -1192,7 +1245,7 @@ function getVerdictHeadline({
     };
   }
 
-  if (verdict?.won) {
+  if (monthPhase === "last-week" && verdict?.won) {
     return {
       tone: "win",
       text: verdict.label === "Month Crushed"
@@ -1203,23 +1256,65 @@ function getVerdictHeadline({
   }
 
   const onPace = (s) => s?.status === "ahead" || s?.status === "on-pace";
-  if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
+  const phraseSeed = `${boundaries?.todayStr || ""}:${checksText || ""}`;
+  const currentMonthIsOnPace =
+    verdict?.won || (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus));
+
+  if (currentMonthIsOnPace) {
+    const text = getCurrentMonthEncouragement({
+      phase: monthPhase,
+      onTrack: true,
+      phraseSeed,
+    });
+
     return {
       tone: "progress",
       text: checksText
-        ? `⚒️ ${checksText} checks green — on track to win the month`
-        : "⚒️ On track to win the month",
+        ? `⚒️ ${checksText} green. ${text}`
+        : `⚒️ ${text}`,
       scoreText: null,
     };
   }
 
+  const text = getCurrentMonthEncouragement({
+    phase: monthPhase,
+    onTrack: false,
+    phraseSeed,
+  });
+
   return {
     tone: "neutral",
     text: checksText
-      ? `⚒️ ${checksText} checks green — keep forging`
-      : "⚒️ Keep forging",
+      ? `⚒️ ${checksText} green. ${text}`
+      : `⚒️ ${text}`,
     scoreText: null,
   };
+}
+
+function getCurrentMonthPhase(boundaries) {
+  if (!boundaries?.isCurrentMonthView) return "past";
+  if (boundaries.dayOfMonth <= 7) return "first-week";
+  if (boundaries.daysRemainingInCurrentMonth <= 7) return "last-week";
+  return "middle";
+}
+
+function getCurrentMonthEncouragement({ phase, onTrack, phraseSeed }) {
+  const phraseMap = {
+    "first-week": onTrack
+      ? EARLY_MONTH_ON_TRACK_HEADLINES
+      : EARLY_MONTH_CATCH_UP_HEADLINES,
+    middle: onTrack
+      ? MID_MONTH_ON_TRACK_HEADLINES
+      : MID_MONTH_CATCH_UP_HEADLINES,
+    "last-week": onTrack
+      ? LAST_WEEK_ON_TRACK_HEADLINES
+      : LAST_WEEK_CATCH_UP_HEADLINES,
+  };
+
+  return pickPhraseForMonth(
+    phraseMap[phase] || MID_MONTH_CATCH_UP_HEADLINES,
+    phraseSeed,
+  );
 }
 
 function hashString(value = "") {

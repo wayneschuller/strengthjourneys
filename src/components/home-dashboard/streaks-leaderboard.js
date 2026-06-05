@@ -1,3 +1,7 @@
+/**
+ * Ranked streak-bar view for The Long Game card.
+ * Streak length drives bar width; average weekly tonnage drives bar thickness.
+ */
 import { useMemo } from "react";
 import { format, parseISO } from "date-fns";
 import {
@@ -13,6 +17,7 @@ import {
   PR_TIER_LIFETIME_AT_TIME,
   PR_TIER_TWELVE_MONTH_AT_TIME,
 } from "@/lib/home-dashboard/streak-leaderboard-metrics";
+import { cn } from "@/lib/utils";
 
 const TIER_META = {
   [PR_TIER_STILL_STANDING]: { emoji: "⭐", label: "still stands" },
@@ -40,6 +45,9 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
     if (!streaks?.length) return [];
     return [...streaks].sort((a, b) => {
       if (b.weeks !== a.weeks) return b.weeks - a.weeks;
+      if ((b.avgWeeklyTonnage || 0) !== (a.avgWeeklyTonnage || 0)) {
+        return (b.avgWeeklyTonnage || 0) - (a.avgWeeklyTonnage || 0);
+      }
       // tiebreak: more recent first
       return b.endWeek.localeCompare(a.endWeek);
     });
@@ -81,7 +89,7 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
             </span>
           </div>
         )}
-        {visible.map((s) => {
+        {visible.map((s, index) => {
           const lengthPct = (s.weeks / stats.maxWeeks) * 100;
           const heightPx =
             MIN_BAR_HEIGHT_PX +
@@ -97,6 +105,7 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
               heightPx={heightPx}
               isMetric={isMetric}
               isSharing={isSharing}
+              isLeader={index === 0}
             />
           );
         })}
@@ -110,7 +119,14 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
   );
 }
 
-function StreakBar({ streak, lengthPct, heightPx, isMetric, isSharing }) {
+function StreakBar({
+  streak,
+  lengthPct,
+  heightPx,
+  isMetric,
+  isSharing,
+  isLeader,
+}) {
   const dateLabel = formatStreakRange(streak.startWeek, streak.endWeek);
 
   const barClass = streak.isActive
@@ -137,7 +153,12 @@ function StreakBar({ streak, lengthPct, heightPx, isMetric, isSharing }) {
     : "text-foreground/85";
 
   const row = (
-    <div className="flex cursor-default items-center gap-2">
+    <div
+      className={cn(
+        "flex cursor-default items-center gap-2",
+        isLeader && !isSharing && "animate-streak-leader-shake",
+      )}
+    >
       <div className="relative min-w-0 flex-1">
         <div
           className={`${barClass} relative flex items-center overflow-hidden`}

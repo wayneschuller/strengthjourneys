@@ -99,26 +99,26 @@ export function getFirstTimeEmptyButtons({
 
   return [
     {
-      label: `10@${barWeight}${unitType}`,
-      sublabel: "empty bar",
-      reps: 10,
-      weight: barWeight,
-      unitType,
-      variant: "primary",
-    },
-    {
       label: `5@${barWeight}${unitType}`,
-      sublabel: "groove reps",
+      sublabel: "empty bar",
       reps: 5,
       weight: barWeight,
       unitType,
-      variant: "secondary",
+      variant: "primary",
     },
     {
       label: `5@${lightJumpWeight}${unitType}`,
       sublabel: "light starter",
       reps: 5,
       weight: lightJumpWeight,
+      unitType,
+      variant: "secondary",
+    },
+    {
+      label: `10@${barWeight}${unitType}`,
+      sublabel: "more reps",
+      reps: 10,
+      weight: barWeight,
       unitType,
       variant: "outline",
     },

@@ -1049,9 +1049,7 @@ function getStreakCelebration({
   const viewedWeek = getWeekKeyFromDateStr(boundaries.effectiveEnd);
   const viewedStreak = streakLeaderboard.find(
     (streak) =>
-      streak.startWeek <= viewedWeek &&
-      streak.endWeek >= viewedWeek &&
-      streak.weeks === streakStats.currentStreak,
+      streak.startWeek <= viewedWeek && streak.endWeek >= viewedWeek,
   );
   if (!viewedStreak) {
     return null;

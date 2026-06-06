@@ -15,6 +15,19 @@ import {
   getNonBigFourThreeByFiveCoaching,
 } from "@/components/log/coaching-utils";
 
+const HEAVIER_SET_SUBLABELS = [
+  "ambitious",
+  "send it",
+  "for Instagram",
+  "spicy one",
+  "hero set",
+  "big swing",
+  "stretch goal",
+  "on a heater",
+  "bold move",
+  "if feeling good",
+];
+
 export function getLiftBlockCoachingState({
   dashboardStage,
   isMetric,
@@ -195,10 +208,21 @@ export function getLiftBlockCoachingState({
 
   const lastDate = prior[prior.length - 1].date;
   const lastSets = prior.filter((e) => e.date === lastDate);
+  const orderedLastSets = [...lastSets].sort((a, b) => {
+    if (Number.isFinite(a.rowIndex) && Number.isFinite(b.rowIndex)) {
+      return a.rowIndex - b.rowIndex;
+    }
+
+    return lastSets.indexOf(a) - lastSets.indexOf(b);
+  });
+  const previousOpeningSet = orderedLastSets.find((set) => {
+    const { value } = getDisplayWeight(set, isMetric);
+    return value > 0 && (set.reps ?? 0) > 0;
+  });
 
   // Find the top set from last session (heaviest weight)
   let topSet = lastSets[0];
-  for (const s of lastSets) {
+  for (const s of orderedLastSets) {
     // Convert to user's current unit for comparison
     const { value } = getDisplayWeight(s, isMetric);
     const { value: topValue } = getDisplayWeight(topSet, isMetric);
@@ -286,6 +310,14 @@ export function getLiftBlockCoachingState({
   const nextSet = !atOrPastTop ? progression[nextWarmupIdx] : null;
   const nextReplaySet =
     !replayAtOrPastTop ? replayProgression[nextReplayIdx] : null;
+  const nextActualWarmupSet =
+    realSets.length === 0 && previousOpeningSet
+      ? {
+          reps: previousOpeningSet.reps,
+          weight: getDisplayWeight(previousOpeningSet, isMetric).value,
+          isTopSet: false,
+        }
+      : nextReplaySet;
   const nearMissTopGapRatio =
     nextSet?.isTopSet && nextSet.weight > 0 && lastLoggedWeight > 0
       ? (nextSet.weight - lastLoggedWeight) / nextSet.weight
@@ -321,127 +353,161 @@ export function getLiftBlockCoachingState({
   };
 
   const buttons = [];
+  const seenButtonKeys = new Set();
+
+  const pushSuggestionButton = ({
+    reps,
+    weight,
+    sublabel,
+    variant,
+  }) => {
+    if (!reps || !weight || buttons.length >= 3) return;
+    const key = `${reps}-${weight}`;
+    if (seenButtonKeys.has(key)) return;
+    seenButtonKeys.add(key);
+    const rankingMeta = getSuggestionRankingMeta(reps, weight);
+    buttons.push({
+      label: `${reps}@${weight}${unitType}`,
+      sublabel,
+      rankingMessage: rankingMeta?.message ?? null,
+      rankingScope: rankingMeta?.scope ?? null,
+      reps,
+      weight,
+      unitType,
+      variant,
+    });
+  };
 
   if (!effectiveAtOrPastTop) {
-    // Warmup phase: offer replay (what you did last time) and algorithmic suggestions
-    // Pick the replay suggestion as primary when available
-    const addButton = (set, sublabel, variant) => {
+    // Warmup phase: replay the user's actual previous warmup first, then fill
+    // the remaining slots with repeat/heavier/top-set choices.
+    const addWarmupButton = (set, sublabel, variant) => {
       if (!set) return;
-      // Deduplicate: skip if we already have a button at this weight
-      if (buttons.some((b) => b.weight === set.weight)) return;
-      const rankingMeta = getSuggestionRankingMeta(set.reps, set.weight);
-      buttons.push({
-        label: `${set.reps}@${set.weight}${unitType}`,
-        sublabel: set.isTopSet ? "top set" : sublabel,
-        rankingMessage: rankingMeta?.message ?? null,
-        rankingScope: rankingMeta?.scope ?? null,
+      pushSuggestionButton({
         reps: set.reps,
         weight: set.weight,
-        unitType,
+        sublabel,
         variant: set.isTopSet ? "primary" : variant,
       });
     };
 
-    // Primary: replay suggestion (based on what the user actually did last time)
-    if (nextReplaySet) {
-      addButton(nextReplaySet, "warmup", "secondary");
-    }
-
-    // Secondary: algorithmic suggestion (standard warmup calculator)
-    if (nextSet) {
-      addButton(nextSet, "warmup", "outline");
-    }
-
-    // Always offer the top set as an option (skip-ahead or the only option)
     const topProgSet = progression[progression.length - 1];
-    addButton(topProgSet, "top set", "outline");
+    const previousTopOption =
+      lastTopWeight > maxLogged && lastTopWeight < topProgSet.weight
+        ? {
+            reps: topReps,
+            weight: lastTopWeight,
+          }
+        : null;
+
+    addWarmupButton(nextActualWarmupSet, "last warmup", "primary");
+
+    if (lastLoggedWeight > 0) {
+      pushSuggestionButton({
+        reps: lastLoggedReps,
+        weight: lastLoggedWeight,
+        sublabel: "repeat",
+        variant: "secondary",
+      });
+    }
+
+    addWarmupButton(
+      nextSet,
+      getHeavierSetSublabel({
+        liftType,
+        sessionDate,
+        reps: nextSet?.reps,
+        weight: nextSet?.weight,
+        lastLoggedWeight,
+        loggedSetCount: lastLoggedSets.length,
+      }),
+      "outline",
+    );
+    addWarmupButton(previousTopOption, "repeat top", "outline");
+    addWarmupButton(topProgSet, "top set", "outline");
   } else if (inDropSetMode) {
     // Drop set mode: weight is descending — only offer repeat at current drop weight
-    const dropRankingMeta = getSuggestionRankingMeta(
-      lastLoggedReps,
-      lastLoggedWeight,
-    );
-    buttons.push({
-      label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
-      sublabel: "drop set",
-      rankingMessage: dropRankingMeta?.message ?? null,
-      rankingScope: dropRankingMeta?.scope ?? null,
+    pushSuggestionButton({
       reps: lastLoggedReps,
       weight: lastLoggedWeight,
-      unitType,
+      sublabel: "drop set",
       variant: "secondary",
+    });
+    pushSuggestionButton({
+      reps: lastLoggedReps,
+      weight: maxLogged,
+      sublabel: "back up",
+      variant: "outline",
+    });
+    pushSuggestionButton({
+      reps: topReps,
+      weight: lastTopWeight,
+      sublabel: "repeat top",
+      variant: "outline",
+    });
+    pushSuggestionButton({
+      reps: topReps,
+      weight: topWeight,
+      sublabel: "top set",
+      variant: "outline",
     });
   } else {
-    // Working phase: suggest repeat, push-higher (forecast top if the user
-    // chose a lighter top, otherwise +increment), and drop set
-    const repeatRankingMeta = getSuggestionRankingMeta(
-      lastLoggedReps,
-      lastLoggedWeight,
-    );
-    buttons.push({
-      label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
-      sublabel: "repeat",
-      rankingMessage: repeatRankingMeta?.message ?? null,
-      rankingScope: repeatRankingMeta?.scope ?? null,
+    // Working phase: suggest repeat, a lighter top repeat when useful,
+    // push-higher, and drop set.
+    pushSuggestionButton({
       reps: lastLoggedReps,
       weight: lastLoggedWeight,
-      unitType,
+      sublabel: "repeat",
       variant: "secondary",
     });
+
+    if (lastLoggedWeight < topWeight && lastTopWeight > lastLoggedWeight) {
+      pushSuggestionButton({
+        reps: topReps,
+        weight: lastTopWeight,
+        sublabel: "repeat top",
+        variant: "outline",
+      });
+    }
+
     const targetTopSet = treatNearMissAsTopSet
       ? progression[progression.length - 1]
       : null;
     if (targetTopSet && targetTopSet.weight > lastLoggedWeight) {
-      const targetRankingMeta = getSuggestionRankingMeta(
-        targetTopSet.reps,
-        targetTopSet.weight,
-      );
-      buttons.push({
-        label: `${targetTopSet.reps}@${targetTopSet.weight}${unitType}`,
-        sublabel: "top set",
-        rankingMessage: targetRankingMeta?.message ?? null,
-        rankingScope: targetRankingMeta?.scope ?? null,
+      pushSuggestionButton({
         reps: targetTopSet.reps,
         weight: targetTopSet.weight,
-        unitType,
+        sublabel: "top set",
         variant: "outline",
       });
     } else {
       const incrWeight = lastLoggedWeight + minIncrement;
-      const incrRankingMeta = getSuggestionRankingMeta(
-        lastLoggedReps,
-        incrWeight,
-      );
-      buttons.push({
-        label: `${lastLoggedReps}@${incrWeight}${unitType}`,
-        sublabel: `+${minIncrement}`,
-        rankingMessage: incrRankingMeta?.message ?? null,
-        rankingScope: incrRankingMeta?.scope ?? null,
+      pushSuggestionButton({
         reps: lastLoggedReps,
         weight: incrWeight,
-        unitType,
+        sublabel: `+${minIncrement}`,
         variant: "outline",
       });
     }
+
     // Drop set: ~80% of current weight, rounded to nearest increment
     const dropWeight =
       Math.round((lastLoggedWeight * 0.8) / minIncrement) * minIncrement;
     if (dropWeight >= barWeight && dropWeight < lastLoggedWeight) {
-      const dropRankingMeta = getSuggestionRankingMeta(
-        lastLoggedReps,
-        dropWeight,
-      );
-      buttons.push({
-        label: `${lastLoggedReps}@${dropWeight}${unitType}`,
-        sublabel: "drop set",
-        rankingMessage: dropRankingMeta?.message ?? null,
-        rankingScope: dropRankingMeta?.scope ?? null,
+      pushSuggestionButton({
         reps: lastLoggedReps,
         weight: dropWeight,
-        unitType,
+        sublabel: "drop set",
         variant: "outline",
       });
     }
+
+    pushSuggestionButton({
+      reps: topReps,
+      weight: topWeight,
+      sublabel: "top set",
+      variant: "outline",
+    });
   }
 
   return {
@@ -450,4 +516,41 @@ export function getLiftBlockCoachingState({
     inSessionCoaching: inSessionFallbackCoaching,
     journeyTechniqueAssist,
   };
+}
+
+function getHeavierSetSublabel({
+  liftType,
+  sessionDate,
+  reps,
+  weight,
+  lastLoggedWeight,
+  loggedSetCount,
+}) {
+  if (!weight || !lastLoggedWeight || weight <= lastLoggedWeight) {
+    return "next warmup";
+  }
+
+  const seed = [
+    liftType,
+    sessionDate,
+    reps,
+    weight,
+    lastLoggedWeight,
+    loggedSetCount,
+  ].join("|");
+
+  return HEAVIER_SET_SUBLABELS[
+    getStableIndex(seed, HEAVIER_SET_SUBLABELS.length)
+  ];
+}
+
+function getStableIndex(seed, length) {
+  if (!length) return 0;
+
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) % length;
+  }
+
+  return hash;
 }

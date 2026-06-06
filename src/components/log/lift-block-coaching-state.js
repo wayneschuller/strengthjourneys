@@ -15,6 +15,19 @@ import {
   getNonBigFourThreeByFiveCoaching,
 } from "@/components/log/coaching-utils";
 
+const HEAVIER_SET_SUBLABELS = [
+  "ambitious",
+  "send it",
+  "for Instagram",
+  "spicy one",
+  "hero set",
+  "big swing",
+  "stretch goal",
+  "on a heater",
+  "bold move",
+  "if feeling good",
+];
+
 export function getLiftBlockCoachingState({
   dashboardStage,
   isMetric,
@@ -348,7 +361,7 @@ export function getLiftBlockCoachingState({
 
   if (!effectiveAtOrPastTop) {
     // Warmup phase: replay the user's actual previous warmup first, then fill
-    // the remaining slots with repeat/next-warmup/top-set choices.
+    // the remaining slots with repeat/heavier/top-set choices.
     const addWarmupButton = (set, sublabel, variant) => {
       if (!set) return;
       pushSuggestionButton({
@@ -379,7 +392,18 @@ export function getLiftBlockCoachingState({
       });
     }
 
-    addWarmupButton(nextSet, "next warmup", "outline");
+    addWarmupButton(
+      nextSet,
+      getHeavierSetSublabel({
+        liftType,
+        sessionDate,
+        reps: nextSet?.reps,
+        weight: nextSet?.weight,
+        lastLoggedWeight,
+        loggedSetCount: lastLoggedSets.length,
+      }),
+      "outline",
+    );
     addWarmupButton(previousTopOption, "repeat top", "outline");
     addWarmupButton(topProgSet, "top set", "outline");
   } else if (inDropSetMode) {
@@ -473,4 +497,41 @@ export function getLiftBlockCoachingState({
     inSessionCoaching: inSessionFallbackCoaching,
     journeyTechniqueAssist,
   };
+}
+
+function getHeavierSetSublabel({
+  liftType,
+  sessionDate,
+  reps,
+  weight,
+  lastLoggedWeight,
+  loggedSetCount,
+}) {
+  if (!weight || !lastLoggedWeight || weight <= lastLoggedWeight) {
+    return "next warmup";
+  }
+
+  const seed = [
+    liftType,
+    sessionDate,
+    reps,
+    weight,
+    lastLoggedWeight,
+    loggedSetCount,
+  ].join("|");
+
+  return HEAVIER_SET_SUBLABELS[
+    getStableIndex(seed, HEAVIER_SET_SUBLABELS.length)
+  ];
+}
+
+function getStableIndex(seed, length) {
+  if (!length) return 0;
+
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) % length;
+  }
+
+  return hash;
 }

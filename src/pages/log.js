@@ -312,6 +312,9 @@ export default function LogSessionPage({
     (authStatus === "authenticated" &&
       !!effectiveSsid &&
       (isLoading || parsedData === null));
+  // Keep row-writing controls quiet while SWR is refreshing Google Sheet rows:
+  // the small disabled window is preferable to racing against stale rowIndex
+  // data, but keep this narrowly scoped so normal logging does not feel sticky.
   const isSheetWriteBlocked =
     showSessionBootstrap ||
     isStructuralSaving ||

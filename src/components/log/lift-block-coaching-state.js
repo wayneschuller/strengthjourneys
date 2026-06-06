@@ -208,10 +208,21 @@ export function getLiftBlockCoachingState({
 
   const lastDate = prior[prior.length - 1].date;
   const lastSets = prior.filter((e) => e.date === lastDate);
+  const orderedLastSets = [...lastSets].sort((a, b) => {
+    if (Number.isFinite(a.rowIndex) && Number.isFinite(b.rowIndex)) {
+      return a.rowIndex - b.rowIndex;
+    }
+
+    return lastSets.indexOf(a) - lastSets.indexOf(b);
+  });
+  const previousOpeningSet = orderedLastSets.find((set) => {
+    const { value } = getDisplayWeight(set, isMetric);
+    return value > 0 && (set.reps ?? 0) > 0;
+  });
 
   // Find the top set from last session (heaviest weight)
   let topSet = lastSets[0];
-  for (const s of lastSets) {
+  for (const s of orderedLastSets) {
     // Convert to user's current unit for comparison
     const { value } = getDisplayWeight(s, isMetric);
     const { value: topValue } = getDisplayWeight(topSet, isMetric);
@@ -299,6 +310,14 @@ export function getLiftBlockCoachingState({
   const nextSet = !atOrPastTop ? progression[nextWarmupIdx] : null;
   const nextReplaySet =
     !replayAtOrPastTop ? replayProgression[nextReplayIdx] : null;
+  const nextActualWarmupSet =
+    realSets.length === 0 && previousOpeningSet
+      ? {
+          reps: previousOpeningSet.reps,
+          weight: getDisplayWeight(previousOpeningSet, isMetric).value,
+          isTopSet: false,
+        }
+      : nextReplaySet;
   const nearMissTopGapRatio =
     nextSet?.isTopSet && nextSet.weight > 0 && lastLoggedWeight > 0
       ? (nextSet.weight - lastLoggedWeight) / nextSet.weight
@@ -381,7 +400,7 @@ export function getLiftBlockCoachingState({
           }
         : null;
 
-    addWarmupButton(nextReplaySet, "last warmup", "primary");
+    addWarmupButton(nextActualWarmupSet, "last warmup", "primary");
 
     if (lastLoggedWeight > 0) {
       pushSuggestionButton({

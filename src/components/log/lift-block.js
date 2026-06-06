@@ -342,7 +342,7 @@ export function LiftBlock({
 
       if (s.isHistoricalPR) {
         return {
-          status: "lifetime",
+          status: active?.scope ?? "lifetime",
           message: active?.message ?? null,
           scope: active?.scope ?? "lifetime",
           celebration,

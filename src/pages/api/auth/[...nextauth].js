@@ -1,3 +1,8 @@
+/**
+ * Configures Google OAuth, session token refresh, and founder-facing support
+ * notifications for account lifecycle events.
+ */
+
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { kv } from "@vercel/kv";
@@ -179,6 +184,16 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          firstName: profile.given_name || null,
+          lastName: profile.family_name || null,
+        };
+      },
       authorization: {
         params: {
           scope: scopes.join(" "),
@@ -510,6 +525,18 @@ const PROMPT_MESSAGES = {
   }),
 };
 
+function getOAuthNameLines(user) {
+  const firstName = typeof user?.firstName === "string" ? user.firstName.trim() : "";
+  const lastName = typeof user?.lastName === "string" ? user.lastName.trim() : "";
+
+  if (!firstName && !lastName) return [];
+
+  return [
+    firstName ? `OAuth first name: ${firstName}` : null,
+    lastName ? `OAuth last name: ${lastName}` : null,
+  ].filter(Boolean);
+}
+
 async function getSignInSupportMeta(email) {
   if (!email) return {};
 
@@ -615,12 +642,15 @@ export async function promptDeveloper(event, user, meta = {}) {
     if (!builder) return;
 
     const { subject, text } = builder(name, user.email, timeStr, meta);
+    const identityLines = getOAuthNameLines(user);
     const resend = new Resend(apiKey);
     await resend.emails.send({
       from: "Strength Journeys <feedback@updates.strengthjourneys.xyz>",
       to,
       subject,
-      text,
+      text: [...identityLines, identityLines.length > 0 ? "" : null, text]
+        .filter((line) => line != null)
+        .join("\n"),
     });
   } catch (err) {
     console.error(`[personal-support] promptDeveloper(${event}) failed:`, err);

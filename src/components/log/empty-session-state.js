@@ -39,8 +39,9 @@ export function EmptySessionState({
               <button
                 key={name}
                 title={`Start with ${name}`}
+                disabled={isStructuralSaving}
                 onClick={() => onAddLift(name)}
-                className="border-border bg-card hover:border-primary hover:bg-muted/40 flex flex-col items-center gap-4 rounded-xl border px-4 py-6 shadow-sm transition-colors active:scale-95 md:gap-5 md:py-8"
+                className="border-border bg-card hover:border-primary hover:bg-muted/40 flex flex-col items-center gap-4 rounded-xl border px-4 py-6 shadow-sm transition-colors active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-card md:gap-5 md:py-8"
               >
                 <Image
                   src={icon}

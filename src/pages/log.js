@@ -312,6 +312,14 @@ export default function LogSessionPage({
     (authStatus === "authenticated" &&
       !!effectiveSsid &&
       (isLoading || parsedData === null));
+  const isSheetWriteBlocked =
+    showSessionBootstrap ||
+    isStructuralSaving ||
+    isLoading ||
+    isValidating ||
+    isError ||
+    fetchFailed ||
+    !Array.isArray(parsedData);
 
   const prevSessionDate = useMemo(
     () => getPrevSessionDate(sessionDates, sessionDate),
@@ -550,7 +558,7 @@ export default function LogSessionPage({
               {!showSessionBootstrap && !isLoading && !hasSession && (
                 <EmptySessionState
                   addLiftChips={addLiftChips}
-                  isStructuralSaving={isStructuralSaving}
+                  isStructuralSaving={isSheetWriteBlocked}
                   isToday={isToday}
                   onAddLift={addLift}
                   parsedData={parsedData}
@@ -590,7 +598,7 @@ export default function LogSessionPage({
                             dashboardStage={dashboardStage}
                             sessionCount={sessionCount}
                             isPastSession={!isToday}
-                            isStructuralSaving={isStructuralSaving}
+                            isStructuralSaving={isSheetWriteBlocked}
                             isDeleteCooldownActive={isDeleteCooldownActive}
                             previewMode={previewMode}
                             onUpdateSet={previewMode ? undefined : updateSet}
@@ -617,11 +625,11 @@ export default function LogSessionPage({
                         parsedData={parsedData}
                         onAddLift={addLift}
                         chips={addLiftChips}
-                        disabled={isStructuralSaving}
+                        disabled={isSheetWriteBlocked}
                       />
 
                       <DeleteSessionControls
-                        isStructuralSaving={isStructuralSaving}
+                        isStructuralSaving={isSheetWriteBlocked}
                         onCancel={() => setShowDeleteConfirm(false)}
                         onConfirm={handleDeleteSession}
                         onRequestConfirm={() => setShowDeleteConfirm(true)}

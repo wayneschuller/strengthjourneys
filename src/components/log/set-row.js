@@ -170,13 +170,19 @@ export function SetRow({
   const displayWeight = pendingWeight !== null ? pendingWeight : set.weight;
   const displayNotes = pendingNotes !== null ? pendingNotes : (set.notes ?? "");
   const displayUrl = pendingUrl !== null ? pendingUrl : (set.URL ?? "");
-  const prToneClass =
-    prMeta?.status === "lifetime"
-      ? "text-amber-600"
-      : prMeta?.status === "yearly"
-        ? "text-blue-500"
-        : "text-muted-foreground/45";
   const rankingSummary = prMeta?.message ?? null;
+  const rankingBadges = prMeta?.badges?.length
+    ? prMeta.badges
+    : rankingSummary
+      ? [
+          {
+            scope: prMeta?.scope ?? prMeta?.status ?? null,
+            message: rankingSummary,
+          },
+        ]
+      : [];
+  const hasRankingBadges = rankingBadges.length > 0;
+  const rankingBadgeMaxClass = "max-w-[10.5rem]";
   const celebrationStyles = getCelebrationStyles({
     ...celebration,
     scope: prMeta?.scope ?? null,
@@ -494,25 +500,28 @@ export function SetRow({
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {rankingSummary && (
+                {hasRankingBadges && (
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Link href={prBadgeHref} className="inline-flex">
-                          <CelebrationReveal
-                            animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
-                          >
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                metaBadgeClassName,
-                                "max-w-[10.5rem]",
-                                prToneClass,
-                              )}
+                        <Link href={prBadgeHref} className="inline-flex flex-col items-end gap-1">
+                          {rankingBadges.map((badge) => (
+                            <CelebrationReveal
+                              key={`${badge.scope}-${badge.message}`}
+                              animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
                             >
-                              <span className="truncate">{rankingSummary}</span>
-                            </Badge>
-                          </CelebrationReveal>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  metaBadgeClassName,
+                                  rankingBadgeMaxClass,
+                                  getPrToneClass(badge.scope),
+                                )}
+                              >
+                                <span className="truncate">{badge.message}</span>
+                              </Badge>
+                            </CelebrationReveal>
+                          ))}
                         </Link>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
@@ -547,7 +556,7 @@ export function SetRow({
       </div>
 
       {/* Mobile: badges + ranking + trash on second row */}
-      {(hasBadges || rankingSummary || onDelete || set._pending) && (
+      {(hasBadges || hasRankingBadges || onDelete || set._pending) && (
         <div className="mt-1 flex items-center gap-2 pl-7 md:hidden">
           {set._pending ? (
             <Loader2 className="text-muted-foreground/50 h-3 w-3 animate-spin" />
@@ -565,25 +574,28 @@ export function SetRow({
                   </Tooltip>
                 </TooltipProvider>
               )}
-              {rankingSummary && (
+              {hasRankingBadges && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Link href={prBadgeHref} className="inline-flex">
-                        <CelebrationReveal
-                          animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${rankingSummary}`}
-                        >
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              metaBadgeClassName,
-                              "max-w-[11rem]",
-                              prToneClass,
-                            )}
+                      <Link href={prBadgeHref} className="inline-flex flex-col items-start gap-1">
+                        {rankingBadges.map((badge) => (
+                          <CelebrationReveal
+                            key={`${badge.scope}-${badge.message}`}
+                            animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
                           >
-                            <span className="truncate">{rankingSummary}</span>
-                          </Badge>
-                        </CelebrationReveal>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                metaBadgeClassName,
+                                "max-w-[11rem]",
+                                getPrToneClass(badge.scope),
+                              )}
+                            >
+                              <span className="truncate">{badge.message}</span>
+                            </Badge>
+                          </CelebrationReveal>
+                        ))}
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
@@ -636,4 +648,10 @@ function getLogPRBadgeHref(liftType) {
 function getLogPRBadgeTooltip(liftType) {
   if (!liftType) return "Open lift details";
   return `Open ${liftType} details`;
+}
+
+function getPrToneClass(scope) {
+  if (scope === "lifetime") return "text-amber-600";
+  if (scope === "yearly") return "text-blue-500";
+  return "text-muted-foreground/45";
 }

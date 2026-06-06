@@ -258,15 +258,6 @@ const RepRangeDetailView = ({
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <h3 className="text-xl font-semibold text-foreground">
-          All {repCount}RM Lifts
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {repRange.length} total {repCount}RM{repRange.length > 1 ? "s" : ""} recorded
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {repRange.map((lift, liftIndex) => (
           <Link

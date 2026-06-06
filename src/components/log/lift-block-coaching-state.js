@@ -348,7 +348,7 @@ export function getLiftBlockCoachingState({
 
   if (!effectiveAtOrPastTop) {
     // Warmup phase: replay the user's actual previous warmup first, then fill
-    // the remaining slots with repeat/calculator/top-set choices.
+    // the remaining slots with repeat/next-warmup/top-set choices.
     const addWarmupButton = (set, sublabel, variant) => {
       if (!set) return;
       pushSuggestionButton({
@@ -379,7 +379,7 @@ export function getLiftBlockCoachingState({
       });
     }
 
-    addWarmupButton(nextSet, "calculator", "outline");
+    addWarmupButton(nextSet, "next warmup", "outline");
     addWarmupButton(previousTopOption, "repeat top", "outline");
     addWarmupButton(topProgSet, "top set", "outline");
   } else if (inDropSetMode) {

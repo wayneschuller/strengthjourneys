@@ -11,6 +11,7 @@ import {
   mergeSessionLiftsWithPending,
   pruneSyncedPendingSets,
 } from "@/lib/log-session-selectors";
+import { getDisplayWeight } from "@/lib/processing-utils";
 
 import {
   buildSheetSnapshotFromFields,
@@ -22,6 +23,44 @@ import {
   snapshotToEditableFields,
 } from "@/components/log/sheet-snapshot-utils";
 import { logSheetTimings } from "@/components/log/timing-log";
+
+function getPriorOpeningSet({ parsedData, liftType, sessionDate, isMetric }) {
+  if (!Array.isArray(parsedData)) return null;
+
+  const priorLiftRows = parsedData.filter(
+    (entry) =>
+      entry.liftType === liftType &&
+      entry.date < sessionDate &&
+      !entry.isGoal &&
+      (entry.reps ?? 0) > 0 &&
+      (entry.weight ?? 0) > 0,
+  );
+  if (!priorLiftRows.length) return null;
+
+  const lastDate = priorLiftRows.reduce(
+    (latest, entry) => (!latest || entry.date > latest ? entry.date : latest),
+    null,
+  );
+  const openingSet = priorLiftRows
+    .filter((entry) => entry.date === lastDate)
+    .sort((a, b) => {
+      if (Number.isFinite(a.rowIndex) && Number.isFinite(b.rowIndex)) {
+        return a.rowIndex - b.rowIndex;
+      }
+
+      return priorLiftRows.indexOf(a) - priorLiftRows.indexOf(b);
+    })[0];
+
+  if (!openingSet) return null;
+
+  const { value, unit } = getDisplayWeight(openingSet, isMetric);
+
+  return {
+    reps: openingSet.reps,
+    weight: value,
+    unitType: unit,
+  };
+}
 
 export function useLogSheetSync({
   sheetInfo,
@@ -860,9 +899,12 @@ export function useLogSheetSync({
         return;
       }
 
-      const unitType = isMetric ? "kg" : "lb";
-      const weight = isMetric ? 20 : 45;
-      const reps = 5;
+      const openingSet =
+        getPriorOpeningSet({ parsedData, liftType, sessionDate, isMetric }) ??
+        null;
+      const unitType = openingSet?.unitType ?? (isMetric ? "kg" : "lb");
+      const weight = openingSet?.weight ?? (isMetric ? 20 : 45);
+      const reps = openingSet?.reps ?? 5;
 
       // Read pending state BEFORE updating it, so hasPendingForDate accurately
       // reflects whether any prior lift has already been added to this session.

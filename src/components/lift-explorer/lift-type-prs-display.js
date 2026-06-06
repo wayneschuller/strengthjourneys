@@ -1,6 +1,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useReadLocalStorage, useResizeObserver } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -379,8 +380,22 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
   const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, isDemoMode } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [prScope, setPrScope] = useState("lifetime"); // "lifetime" | "yearly"
+  const router = useRouter();
+  const requestedPrScope =
+    router.query.prScope === "yearly" || router.query.prScope === "lifetime"
+      ? router.query.prScope
+      : null;
+  const requestedPrReps = Number(router.query.prReps);
+  const requestedPrTab =
+    Number.isInteger(requestedPrReps) &&
+    requestedPrReps >= 1 &&
+    requestedPrReps <= 10
+      ? `rep-${requestedPrReps - 1}`
+      : null;
+  const [activeTabOverride, setActiveTabOverride] = useState(null);
+  const [prScopeOverride, setPrScopeOverride] = useState(null);
+  const activeTab = activeTabOverride ?? requestedPrTab ?? "overview";
+  const prScope = prScopeOverride ?? requestedPrScope ?? "lifetime"; // "lifetime" | "yearly"
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
@@ -429,7 +444,15 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
   }
 
   const handleCardClick = (repIndex) => {
-    setActiveTab(`rep-${repIndex}`);
+    setActiveTabOverride(`rep-${repIndex}`);
+  };
+
+  const handleScopeChange = (nextScope) => {
+    setPrScopeOverride(nextScope);
+  };
+
+  const handleTabChange = (nextTab) => {
+    setActiveTabOverride(nextTab);
   };
 
   // Featured rep ranges for smaller screens
@@ -448,7 +471,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
 
   return (
     <div ref={containerRef} className="space-y-4">
-      <Tabs value={effectiveTab} onValueChange={setActiveTab}>
+      <Tabs value={effectiveTab} onValueChange={handleTabChange}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold sm:text-2xl">
             {isDemoMode && <DemoModeBadge size="sm" />}
@@ -463,7 +486,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-foreground",
                 )}
-                onClick={() => setPrScope("lifetime")}
+                onClick={() => handleScopeChange("lifetime")}
               >
                 Lifetime
               </button>
@@ -474,7 +497,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-foreground",
                 )}
-                onClick={() => setPrScope("yearly")}
+                onClick={() => handleScopeChange("yearly")}
               >
                 12 months
               </button>
@@ -538,7 +561,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                 liftType={liftType}
                 liftColor={liftColor}
                 onCardClick={() => handleCardClick(repIndex)}
-                isExpanded={activeTab === `rep-${repIndex}`}
+                isExpanded={effectiveTab === `rep-${repIndex}`}
                 hasBioData={hasBioData}
                 standards={standards}
                 age={age}
@@ -565,7 +588,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
               </h3>
               <button
                 type="button"
-                onClick={() => setActiveTab("overview")}
+                onClick={() => handleTabChange("overview")}
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground self-start sm:self-auto"
               >
                 ← Back to overview

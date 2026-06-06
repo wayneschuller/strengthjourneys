@@ -35,7 +35,9 @@ export function LiftDetailPanel({ liftType }) {
       <VisualizerMini liftType={liftType} />
       <TonnageChart liftType={liftType} />
       <StrengthPotentialBarChart liftType={liftType} />
-      <LiftTypeRepPRsDisplay liftType={liftType} />
+      <div id="lift-prs">
+        <LiftTypeRepPRsDisplay liftType={liftType} />
+      </div>
     </div>
   );
 }

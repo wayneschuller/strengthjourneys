@@ -306,7 +306,6 @@ export function SetRow({
 
   const hasBadges = !set._pending && Boolean(strengthBadge);
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
-  const prBadgeHref = getLogPRBadgeHref(set.liftType);
   const prBadgeTooltip = getLogPRBadgeTooltip(set.liftType);
 
   return (
@@ -504,25 +503,30 @@ export function SetRow({
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Link href={prBadgeHref} className="inline-flex flex-col items-end gap-1">
+                        <span className="inline-flex flex-col items-end gap-1">
                           {rankingBadges.map((badge) => (
-                            <CelebrationReveal
+                            <Link
                               key={`${badge.scope}-${badge.message}`}
-                              animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
+                              href={getLogPRBadgeHref(set.liftType, badge)}
+                              className="inline-flex"
                             >
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  metaBadgeClassName,
-                                  rankingBadgeMaxClass,
-                                  getPrToneClass(badge.scope),
-                                )}
+                              <CelebrationReveal
+                                animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
                               >
-                                <span className="truncate">{badge.message}</span>
-                              </Badge>
-                            </CelebrationReveal>
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    metaBadgeClassName,
+                                    rankingBadgeMaxClass,
+                                    getPrToneClass(badge.scope),
+                                  )}
+                                >
+                                  <span className="truncate">{badge.message}</span>
+                                </Badge>
+                              </CelebrationReveal>
+                            </Link>
                           ))}
-                        </Link>
+                        </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
                         <p>{prBadgeTooltip}</p>
@@ -578,25 +582,30 @@ export function SetRow({
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Link href={prBadgeHref} className="inline-flex flex-col items-start gap-1">
+                      <span className="inline-flex flex-col items-start gap-1">
                         {rankingBadges.map((badge) => (
-                          <CelebrationReveal
+                          <Link
                             key={`${badge.scope}-${badge.message}`}
-                            animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
+                            href={getLogPRBadgeHref(set.liftType, badge)}
+                            className="inline-flex"
                           >
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                metaBadgeClassName,
-                                "max-w-[11rem]",
-                                getPrToneClass(badge.scope),
-                              )}
+                            <CelebrationReveal
+                              animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
                             >
-                              <span className="truncate">{badge.message}</span>
-                            </Badge>
-                          </CelebrationReveal>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  metaBadgeClassName,
+                                  "max-w-[11rem]",
+                                  getPrToneClass(badge.scope),
+                                )}
+                              >
+                                <span className="truncate">{badge.message}</span>
+                              </Badge>
+                            </CelebrationReveal>
+                          </Link>
                         ))}
-                      </Link>
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       <p>{prBadgeTooltip}</p>
@@ -641,8 +650,11 @@ function isHttpUrl(value) {
   }
 }
 
-function getLogPRBadgeHref(liftType) {
-  return getLiftDetailUrl(liftType, "#lift-prs");
+function getLogPRBadgeHref(liftType, badge) {
+  return getLiftDetailUrl(liftType, "#lift-prs", {
+    prScope: badge?.scope,
+    prReps: badge?.reps,
+  });
 }
 
 function getLogPRBadgeTooltip(liftType) {

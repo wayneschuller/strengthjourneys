@@ -217,6 +217,7 @@ export function getOptimisticRankingMeta({
       ? {
           scope: "lifetime",
           rank: lifetimeRank,
+          reps: effectiveSet.reps,
           emoji: getCelebrationEmoji(lifetimeRank),
           message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${effectiveSet.reps}RM`,
         }
@@ -227,6 +228,7 @@ export function getOptimisticRankingMeta({
       ? {
           scope: "yearly",
           rank: yearlyRank,
+          reps: effectiveSet.reps,
           emoji: getCelebrationEmoji(yearlyRank),
           message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${effectiveSet.reps}RM`,
         }
@@ -288,6 +290,7 @@ export function getRankingMeta({
       ? {
           scope: "lifetime",
           rank: lifetimeRank,
+          reps,
           emoji: getCelebrationEmoji(lifetimeRank),
           message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
         }
@@ -298,6 +301,7 @@ export function getRankingMeta({
       ? {
           scope: "yearly",
           rank: yearlyRank,
+          reps,
           emoji: getCelebrationEmoji(yearlyRank),
           message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
         }

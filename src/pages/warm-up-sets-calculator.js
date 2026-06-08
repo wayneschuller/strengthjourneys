@@ -1,3 +1,7 @@
+/**
+ * Warm-up sets calculator page. Uses the Pages Router ISR shell and keeps the
+ * calculator state shareable while preserving explicit local bar preferences.
+ */
 
 import { useMemo } from "react";
 import { useMediaQuery } from "usehooks-ts";
@@ -26,9 +30,13 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
-
+import {
+  getDefaultBarbellWeight,
+  getDefaultBarType,
+} from "@/lib/barbell-defaults";
 import { generateSessionSets, formatPlateBreakdown } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
@@ -106,6 +114,7 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
 function WarmUpSetsCalculatorMain({ relatedArticles }) {
+  const { sex } = useAthleteBio();
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight is last so changing it syncs the full state → shareable URL on any change.
   const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
@@ -113,19 +122,25 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     false,
     true,
   );
-  const [barType, setBarType] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE,
-    "standard",
-    true,
-    { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
-  );
+  const [barType, setBarType, barTypeIsDefault] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE,
+      "standard",
+      true,
+      { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
+    );
+  const explicitBarType = barTypeIsDefault ? null : barType;
+  const effectiveBarType = getDefaultBarType({
+    sex,
+    storedBarType: explicitBarType,
+  });
   const [platePreference, setPlatePreference] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE,
     "red",
     true,
     {
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: barType,
+      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: effectiveBarType,
     },
   );
   const [warmupSetCount, setWarmupSetCount] = useStateFromQueryOrLocalStorage(
@@ -134,7 +149,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     true,
     {
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: barType,
+      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: effectiveBarType,
       [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
     },
   );
@@ -144,7 +159,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     true,
     {
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: barType,
+      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: effectiveBarType,
       [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
       [LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT]: warmupSetCount,
     },
@@ -155,21 +170,18 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     true,
     {
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: barType,
+      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: effectiveBarType,
       [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
       [LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT]: warmupSetCount,
       [LOCAL_STORAGE_KEYS.WARMUP_REPS]: reps,
     },
   );
 
-  // Calculate bar weight based on unit and bar type
-  const barWeight = isMetric
-    ? barType === "womens"
-      ? 15
-      : 20
-    : barType === "womens"
-      ? 35
-      : 45;
+  const barWeight = getDefaultBarbellWeight({
+    isMetric,
+    sex,
+    storedBarType: explicitBarType,
+  });
 
   /**
    * Generate all sets (warmups + top set) with plate breakdowns
@@ -233,8 +245,8 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
   // Changes whenever sliders/options change – used to retrigger barbell animations
   const animationKey = useMemo(
     () =>
-      `${weight}-${reps}-${warmupSetCount}-${barType}-${platePreference}-${isMetric}`,
-    [weight, reps, warmupSetCount, barType, platePreference, isMetric],
+      `${weight}-${reps}-${warmupSetCount}-${effectiveBarType}-${platePreference}-${isMetric}`,
+    [weight, reps, warmupSetCount, effectiveBarType, platePreference, isMetric],
   );
 
   return (
@@ -331,7 +343,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
             {/* Bar Type Selection */}
             <div>
               <Label className="mb-2 block">Barbell Type</Label>
-              <RadioGroup value={barType} onValueChange={setBarType}>
+              <RadioGroup value={effectiveBarType} onValueChange={setBarType}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="standard" id="standard" />
                   <Label htmlFor="standard">

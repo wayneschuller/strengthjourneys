@@ -1,21 +1,11 @@
 /**
- * Shared log utilities for anchor IDs, video previews, and barbell defaults.
- * Keep bar-weight decisions here so suggestions, draft rows, and sheet writes
- * do not drift apart when athlete bio or warm-up preferences change.
+ * Shared log utilities for anchor IDs and video previews.
  */
 
 import {
   extractYouTubeVideoId,
   getYouTubeThumbnailUrl,
 } from "@/lib/video-thumbnails";
-
-export function getDefaultLogBarWeight({ isMetric, sex, storedBarType }) {
-  const usesWomensBar =
-    storedBarType === "womens" || (!storedBarType && sex === "female");
-
-  if (isMetric) return usesWomensBar ? 15 : 20;
-  return usesWomensBar ? 35 : 45;
-}
 
 export function getLiftAnchorId(liftType) {
   if (typeof liftType !== "string") return "lift";

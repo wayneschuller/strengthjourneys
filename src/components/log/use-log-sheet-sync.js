@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReadLocalStorage } from "usehooks-ts";
 
+import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   groupSessionLifts,
@@ -25,7 +26,6 @@ import {
   snapshotToEditableFields,
 } from "@/components/log/sheet-snapshot-utils";
 import { logSheetTimings } from "@/components/log/timing-log";
-import { getDefaultLogBarWeight } from "@/components/log/utils";
 
 function getPriorOpeningSet({ parsedData, liftType, sessionDate, isMetric }) {
   if (!Array.isArray(parsedData)) return null;
@@ -80,7 +80,7 @@ export function useLogSheetSync({
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
       initializeWithValue: false,
     }) ?? null;
-  const defaultBarWeight = getDefaultLogBarWeight({
+  const defaultBarWeight = getDefaultBarbellWeight({
     isMetric,
     sex,
     storedBarType,

@@ -6,7 +6,7 @@
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { generateSessionSets } from "@/lib/warmups";
 import { getRankingMeta } from "@/lib/pr-ranking";
-import { getDefaultLogBarWeight } from "@/components/log/utils";
+import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
 import {
   getFirstTimeEmptyButtons,
   getFirstTimeProgressionButtons,
@@ -47,7 +47,7 @@ export function getLiftBlockCoachingState({
   if (!parsedData) return null;
 
   const unitType = isMetric ? "kg" : "lb";
-  const barWeight = getDefaultLogBarWeight({ isMetric, sex, storedBarType });
+  const barWeight = getDefaultBarbellWeight({ isMetric, sex, storedBarType });
   const minIncrement = isMetric ? 2.5 : 5;
   const priorLiftDates = Array.from(
     new Set(

@@ -13,6 +13,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
 import { hexToRgba } from "@/lib/color-tools";
 import {
   getEffectiveSetForRanking,
@@ -43,7 +44,6 @@ import {
 } from "@/components/log/add-controls";
 import { CustomSetDraftRow } from "@/components/log/custom-set-draft-row";
 import { SetRow } from "@/components/log/set-row";
-import { getDefaultLogBarWeight } from "@/components/log/utils";
 import { getLiftBlockCoachingState } from "@/components/log/lift-block-coaching-state";
 import { getAutoTimestampNotes } from "@/components/log/sheet-snapshot-utils";
 
@@ -237,7 +237,7 @@ export function LiftBlock({
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, {
       initializeWithValue: false,
     }) ?? "blue";
-  const defaultBarWeight = getDefaultLogBarWeight({
+  const defaultBarWeight = getDefaultBarbellWeight({
     isMetric,
     sex,
     storedBarType,

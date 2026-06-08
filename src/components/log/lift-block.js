@@ -43,6 +43,7 @@ import {
 } from "@/components/log/add-controls";
 import { CustomSetDraftRow } from "@/components/log/custom-set-draft-row";
 import { SetRow } from "@/components/log/set-row";
+import { getDefaultLogBarWeight } from "@/components/log/utils";
 import { getLiftBlockCoachingState } from "@/components/log/lift-block-coaching-state";
 import { getAutoTimestampNotes } from "@/components/log/sheet-snapshot-utils";
 
@@ -231,11 +232,16 @@ export function LiftBlock({
   const storedBarType =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
       initializeWithValue: false,
-    }) ?? "standard";
+    }) ?? null;
   const storedPlatePreference =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, {
       initializeWithValue: false,
     }) ?? "blue";
+  const defaultBarWeight = getDefaultLogBarWeight({
+    isMetric,
+    sex,
+    storedBarType,
+  });
 
   const inSessionCoachState = useMemo(
     () =>
@@ -247,6 +253,7 @@ export function LiftBlock({
         parsedData,
         realSets,
         sessionDate,
+        sex,
         standards,
         storedBarType,
         storedPlatePreference,
@@ -261,6 +268,7 @@ export function LiftBlock({
       parsedData,
       realSets,
       sessionDate,
+      sex,
       standards,
       storedBarType,
       storedPlatePreference,
@@ -626,6 +634,7 @@ export function LiftBlock({
             key={`custom-${liftType}-${customDraftSeed}`}
             liftType={liftType}
             unitType={customDraftConfig.unitType}
+            defaultWeight={defaultBarWeight}
             defaultNotes={customDraftConfig.notes}
             onCommit={handleCustomDraftCommit}
             onCancel={closeCustomSetDraft}

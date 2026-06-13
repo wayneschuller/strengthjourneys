@@ -13,6 +13,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
 import { hexToRgba } from "@/lib/color-tools";
 import {
   getEffectiveSetForRanking,
@@ -231,11 +232,16 @@ export function LiftBlock({
   const storedBarType =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
       initializeWithValue: false,
-    }) ?? "standard";
+    }) ?? null;
   const storedPlatePreference =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, {
       initializeWithValue: false,
     }) ?? "blue";
+  const defaultBarWeight = getDefaultBarbellWeight({
+    isMetric,
+    sex,
+    storedBarType,
+  });
 
   const inSessionCoachState = useMemo(
     () =>
@@ -247,6 +253,7 @@ export function LiftBlock({
         parsedData,
         realSets,
         sessionDate,
+        sex,
         standards,
         storedBarType,
         storedPlatePreference,
@@ -261,6 +268,7 @@ export function LiftBlock({
       parsedData,
       realSets,
       sessionDate,
+      sex,
       standards,
       storedBarType,
       storedPlatePreference,
@@ -313,6 +321,7 @@ export function LiftBlock({
           status: null,
           message: null,
           scope: null,
+          badges: [],
           celebration: {
             tier: "none",
             score: CELEBRATION_TIERS.none,
@@ -323,6 +332,11 @@ export function LiftBlock({
       }
 
       const active = rankingMeta?.best ?? null;
+      const rankingBadges = getLogRankingBadges({
+        rankingMeta,
+        trainingAgeYears,
+      });
+      const primaryBadge = rankingBadges[0] ?? active;
       const celebration = getCelebrationTier({
         rankingMeta,
         reps: effectiveSet.reps,
@@ -335,26 +349,28 @@ export function LiftBlock({
                 s._tempId ??
                 `${liftType}-${effectiveSet.reps}-${effectiveSet.weight}`,
               celebration.tier,
-              active?.scope ?? "lifetime",
-              active?.rank ?? "na",
+              primaryBadge?.scope ?? "lifetime",
+              primaryBadge?.rank ?? "na",
             ].join(":")
           : null;
 
       if (s.isHistoricalPR) {
         return {
-          status: "lifetime",
-          message: active?.message ?? null,
-          scope: active?.scope ?? "lifetime",
+          status: primaryBadge?.scope ?? "lifetime",
+          message: primaryBadge?.message ?? null,
+          scope: primaryBadge?.scope ?? "lifetime",
+          badges: rankingBadges,
           celebration,
           celebrationKey,
         };
       }
 
-      if (active) {
+      if (primaryBadge) {
         return {
-          status: active.scope,
-          message: active.message,
-          scope: active.scope,
+          status: primaryBadge.scope,
+          message: primaryBadge.message,
+          scope: primaryBadge.scope,
+          badges: rankingBadges,
           celebration,
           celebrationKey,
         };
@@ -363,6 +379,7 @@ export function LiftBlock({
         status: null,
         message: null,
         scope: null,
+        badges: [],
         celebration,
         celebrationKey,
       };
@@ -617,6 +634,7 @@ export function LiftBlock({
             key={`custom-${liftType}-${customDraftSeed}`}
             liftType={liftType}
             unitType={customDraftConfig.unitType}
+            defaultWeight={defaultBarWeight}
             defaultNotes={customDraftConfig.notes}
             onCommit={handleCustomDraftCommit}
             onCancel={closeCustomSetDraft}
@@ -676,4 +694,20 @@ export function LiftBlock({
       )}
     </div>
   );
+}
+
+function getLogRankingBadges({ rankingMeta, trainingAgeYears }) {
+  if (!rankingMeta) return [];
+
+  const { lifetime, yearly, best } = rankingMeta;
+  const hasMatureHistory = trainingAgeYears > 2;
+
+  if (hasMatureHistory) {
+    return [
+      lifetime,
+      yearly && (yearly.rank < 3 || !lifetime) ? yearly : null,
+    ].filter(Boolean);
+  }
+
+  return best ? [best] : [];
 }

@@ -16,6 +16,7 @@ import { UnitLabel } from "@/components/log/unit-label";
 export function CustomSetDraftRow({
   liftType,
   unitType,
+  defaultWeight,
   defaultNotes,
   onCommit,
   onCancel,
@@ -41,9 +42,7 @@ export function CustomSetDraftRow({
   const hasValidWeight = isValidLiftWeight(liftType, parsedWeight);
   const weightPlaceholder = isBodyweightLoadLiftName(liftType)
     ? "0"
-    : unitType === "kg"
-      ? "20"
-      : "45";
+    : String(defaultWeight ?? (unitType === "kg" ? 20 : 45));
   const canSubmit = !disabled && hasValidReps && hasValidWeight;
 
   const moveToWeight = useCallback(() => {

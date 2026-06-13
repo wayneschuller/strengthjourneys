@@ -12,14 +12,26 @@ export const bigFourURLs = BIG_FOUR_PROGRESS_GUIDE_PATHS;
  *
  * @param {string} liftType - e.g. "Back Squat", "Front Squat"
  * @param {string} [hash] - Optional hash fragment (e.g. "#lift-prs", "#tonnage-chart")
+ * @param {Object} [query] - Optional query params to add before the hash.
  * @returns {string|null} URL string, or null if liftType is falsy.
  */
-export function getLiftDetailUrl(liftType, hash = "") {
+export function getLiftDetailUrl(liftType, hash = "", query = {}) {
   if (!liftType) return null;
   const base =
     bigFourURLs[liftType] ||
     `/lift-explorer?liftType=${encodeURIComponent(liftType)}`;
-  return hash ? `${base}${hash}` : base;
+  const params = new URLSearchParams(
+    base.includes("?") ? base.slice(base.indexOf("?") + 1) : "",
+  );
+  Object.entries(query).forEach(([key, value]) => {
+    if (value == null || value === "") return;
+    params.set(key, String(value));
+  });
+  const basePath = base.split("?")[0];
+  const queryString = params.toString();
+  const href = queryString ? `${basePath}?${queryString}` : basePath;
+
+  return hash ? `${href}${hash}` : href;
 }
 
 /**

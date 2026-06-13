@@ -142,7 +142,7 @@ export default function LogSessionPage({
     isImportedData,
     hasUserData,
   } = useUserLiftingData();
-  const { isMetric, toggleIsMetric } = useAthleteBio();
+  const { isMetric, sex, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
   const persistedSheetInfo = useMemo(() => {
     if (!isClient) return null;
@@ -199,6 +199,7 @@ export default function LogSessionPage({
     sessionDates,
     todayIso,
     isMetric,
+    sex,
     mutate,
     toast,
   });

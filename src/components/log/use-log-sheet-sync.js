@@ -5,7 +5,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useReadLocalStorage } from "usehooks-ts";
 
+import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   groupSessionLifts,
   mergeSessionLiftsWithPending,
@@ -69,9 +72,19 @@ export function useLogSheetSync({
   sessionDates,
   todayIso,
   isMetric,
+  sex,
   mutate,
   toast,
 }) {
+  const storedBarType =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
+      initializeWithValue: false,
+    }) ?? null;
+  const defaultBarWeight = getDefaultBarbellWeight({
+    isMetric,
+    sex,
+    storedBarType,
+  });
   const [syncState, setSyncState] = useState("idle"); // idle | saving | saved | error
   const [isStructuralSaving, setIsStructuralSaving] = useState(false);
   // Row deletes reindex the visible list. A very fast double-click can hit the
@@ -750,7 +763,7 @@ export function useLogSheetSync({
 
       const unitType = prevSet?.unitType ?? (isMetric ? "kg" : "lb");
       const reps = prevSet?.reps ?? 5;
-      const weight = prevSet?.weight ?? (isMetric ? 20 : 45);
+      const weight = prevSet?.weight ?? defaultBarWeight;
 
       // Compute insertion position BEFORE adding to pending, so we can include
       // confirmed-pending rows (promoted on previous successful adds) in the calculation.
@@ -873,6 +886,7 @@ export function useLogSheetSync({
       parsedData,
       sessionDate,
       isMetric,
+      defaultBarWeight,
       setPendingSetsSync,
       promoteFirstPending,
       queueStructuralAction,
@@ -903,7 +917,7 @@ export function useLogSheetSync({
         getPriorOpeningSet({ parsedData, liftType, sessionDate, isMetric }) ??
         null;
       const unitType = openingSet?.unitType ?? (isMetric ? "kg" : "lb");
-      const weight = openingSet?.weight ?? (isMetric ? 20 : 45);
+      const weight = openingSet?.weight ?? defaultBarWeight;
       const reps = openingSet?.reps ?? 5;
 
       // Read pending state BEFORE updating it, so hasPendingForDate accurately
@@ -1060,6 +1074,7 @@ export function useLogSheetSync({
       parsedData,
       sessionDate,
       isMetric,
+      defaultBarWeight,
       setPendingSetsSync,
       promoteFirstPending,
       sessionLiftsWithPending,

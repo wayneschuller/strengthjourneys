@@ -9,6 +9,8 @@ import {
 } from "@/lib/processing-utils";
 import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
 
+const TOP_THREE_RANK_CUTOFF = 3;
+
 /**
  * Find the 0-indexed rank a given weight would occupy in a precomputed top-lifts
  * array (already sorted heaviest-first). Returns null if the weight doesn't
@@ -128,7 +130,8 @@ export function compareRankingEntries(a, b, isMetric) {
  * @param {Record<string, Array<Array<object>>>} args.topLiftsByTypeAndRepsLast12Months -
  *   Same shape, rolling 12-month window.
  * @returns {{ best: object|null, lifetime: object|null, yearly: object|null } | null}
- *   `best = lifetime ?? yearly`. Null if the set can't be ranked (bad input or reps out of 1..10).
+ *   `best` is the display badge: top-3 yearly beats lifetime, otherwise lifetime wins.
+ *   Null if the set can't be ranked (bad input or reps out of 1..10).
  */
 export function getOptimisticRankingMeta({
   set,
@@ -214,6 +217,7 @@ export function getOptimisticRankingMeta({
       ? {
           scope: "lifetime",
           rank: lifetimeRank,
+          reps: effectiveSet.reps,
           emoji: getCelebrationEmoji(lifetimeRank),
           message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${effectiveSet.reps}RM`,
         }
@@ -224,13 +228,14 @@ export function getOptimisticRankingMeta({
       ? {
           scope: "yearly",
           rank: yearlyRank,
+          reps: effectiveSet.reps,
           emoji: getCelebrationEmoji(yearlyRank),
           message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${effectiveSet.reps}RM`,
         }
       : null;
 
   return {
-    best: lifetime ?? yearly,
+    best: getDisplayRankingMeta({ lifetime, yearly }),
     lifetime,
     yearly,
   };
@@ -285,6 +290,7 @@ export function getRankingMeta({
       ? {
           scope: "lifetime",
           rank: lifetimeRank,
+          reps,
           emoji: getCelebrationEmoji(lifetimeRank),
           message: `${getCelebrationEmoji(lifetimeRank)} Lifetime #${lifetimeRank + 1} ${reps}RM`,
         }
@@ -295,12 +301,17 @@ export function getRankingMeta({
       ? {
           scope: "yearly",
           rank: yearlyRank,
+          reps,
           emoji: getCelebrationEmoji(yearlyRank),
           message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
         }
       : null;
 
-  const best = lifetime ?? yearly;
+  return { best: getDisplayRankingMeta({ lifetime, yearly }), lifetime, yearly };
+}
 
-  return { best, lifetime, yearly };
+function getDisplayRankingMeta({ lifetime, yearly }) {
+  if (yearly && yearly.rank < TOP_THREE_RANK_CUTOFF) return yearly;
+
+  return lifetime ?? yearly;
 }

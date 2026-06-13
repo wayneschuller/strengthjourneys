@@ -1,3 +1,7 @@
+/**
+ * Shared log utilities for anchor IDs and video previews.
+ */
+
 import {
   extractYouTubeVideoId,
   getYouTubeThumbnailUrl,

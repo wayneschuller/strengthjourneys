@@ -16,7 +16,8 @@ export const AI_CHAT_ANON_WARN_AT_REMAINING = 10;
 export const AI_CHAT_AUTH_DAILY_LIMIT = 100;
 export const AI_CHAT_AUTH_WARN_AT_REMAINING = 15;
 
-const ANON_TTL_SECONDS = 60 * 60 * 24 * 365;
+const ANON_COOKIE_TTL_SECONDS = 60 * 60 * 24 * 365;
+const ANON_USAGE_TTL_SECONDS = 60 * 60 * 48;
 const AUTH_TTL_SECONDS = 60 * 60 * 48;
 
 export function getUtcDateKey(date = new Date()) {
@@ -70,7 +71,7 @@ function appendAnonCookie(res, anonId) {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   res.setHeader(
     "Set-Cookie",
-    `${AI_CHAT_ANON_COOKIE}=${anonId}; Path=/; Max-Age=${ANON_TTL_SECONDS}; HttpOnly; SameSite=Lax${secure}`,
+    `${AI_CHAT_ANON_COOKIE}=${anonId}; Path=/; Max-Age=${ANON_COOKIE_TTL_SECONDS}; HttpOnly; SameSite=Lax${secure}`,
   );
 }
 
@@ -137,7 +138,7 @@ export async function resolveAiChatQuota({
       appendAnonCookie(res, anonId);
     }
 
-    const kvKey = `sj:ai:anon:${anonId}`;
+    const kvKey = `sj:ai:anon:${anonId}:${getUtcDateKey()}`;
     const current = await readUsage(kvKey);
 
     if (increment) {
@@ -149,7 +150,7 @@ export async function resolveAiChatQuota({
         });
       }
 
-      const used = await incrementUsage(kvKey, ANON_TTL_SECONDS);
+      const used = await incrementUsage(kvKey, ANON_USAGE_TTL_SECONDS);
       return buildAiChatQuota({
         tier: "anonymous",
         limit: AI_CHAT_ANON_LIMIT,

@@ -52,14 +52,14 @@ function getQuotaPercentUsed(quota) {
 
 function getQuotaCopy(quota) {
   const isAnonymous = quota?.tier === "anonymous";
-  const resetText = isAnonymous ? null : getDailyResetText();
+  const resetText = getDailyResetText();
 
   if (quota?.blocked && isAnonymous) {
     return {
       title: "AI quota exhausted",
-      detail:
-        "Sign in to keep chatting with a higher daily quota and optionally connect your lifting data.",
-      footer: "Your data stays yours. You choose what the assistant can see.",
+      detail: resetText,
+      footer:
+        "Sign in for a higher daily quota and optional lifting data sharing.",
     };
   }
 
@@ -75,7 +75,7 @@ function getQuotaCopy(quota) {
     return {
       title: `${quota.remaining} ${quota.remaining === 1 ? "message" : "messages"} left`,
       detail: "Signed-in users get a higher daily quota.",
-      footer: "Sign in when you want more room to chat or share lifting data.",
+      footer: resetText,
     };
   }
 

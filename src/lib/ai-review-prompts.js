@@ -32,7 +32,7 @@ export function buildWeeklyReviewPrompt({
       ? `\n\nVisible week card data:\n${summaryLines.join("\n")}`
       : "";
 
-  return `Review my training week ${windowText}. Use the visible week card data below as the source of truth for this dashboard review.${visibleSummaryText}\n\nLook at sessions, lift selection, tonnage, PRs, consistency, and what I should focus on next. Be specific and practical.`;
+  return `Review my training week ${windowText}. Use the visible week card data below as the source of truth for this dashboard review.${visibleSummaryText}`;
 }
 
 export function buildMonthlyReviewPrompt({
@@ -52,7 +52,7 @@ export function buildMonthlyReviewPrompt({
       ? `\n\nVisible month card data:\n${summaryLines.join("\n")}`
       : "";
 
-  return `Review my training month ${windowText}. Use the visible month card data below as the source of truth for this dashboard review.${visibleSummaryText}\n\nLook at sessions, Big Four work, strength progress, consistency, weak spots, and what I should focus on next. Be specific and practical.`;
+  return `Review my training month ${windowText}. Use the visible month card data below as the source of truth for this dashboard review.${visibleSummaryText}`;
 }
 
 export function buildLiftRecentSessionsReviewPrompt({

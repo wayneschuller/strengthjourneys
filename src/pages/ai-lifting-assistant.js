@@ -833,20 +833,22 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 description="Enter your questions into the chat box below (or click a sample question)"
                 className="items-start px-0"
               >
-                <div className="-mx-4 mt-6 w-full px-4">
-                  <Suggestions className="w-full">
-                    {defaultMessages.map((message) => (
-                      <Suggestion
-                        key={message}
-                        suggestion={message}
-                        disabled={isChatUnavailable}
-                        onClick={(suggestion) => {
-                          sendMessageWithMetadata(suggestion);
-                        }}
-                      />
-                    ))}
-                  </Suggestions>
-                </div>
+                {isChatHydrated && (
+                  <div className="-mx-4 mt-6 w-full px-4">
+                    <Suggestions className="w-full">
+                      {defaultMessages.map((message) => (
+                        <Suggestion
+                          key={message}
+                          suggestion={message}
+                          disabled={isChatUnavailable}
+                          onClick={(suggestion) => {
+                            sendMessageWithMetadata(suggestion);
+                          }}
+                        />
+                      ))}
+                    </Suggestions>
+                  </div>
+                )}
               </ConversationEmptyState>
             ) : (
               <>

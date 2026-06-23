@@ -317,9 +317,26 @@ export function TheMonthInIronCard({
           startDate: boundaries.currentMonthStart,
           endDate: boundaries.todayStr,
           isCurrentMonth: boundaries.isCurrentMonthView,
+          summaryLines: buildMonthCardPromptSummary({
+            stats,
+            strengthLevelStats,
+            strengthSetupRequired,
+            boundaries,
+            unit,
+            checksSummary,
+            verdictHeadline,
+          }),
         }),
       ),
-    [boundaries],
+    [
+      boundaries,
+      checksSummary,
+      stats,
+      strengthLevelStats,
+      strengthSetupRequired,
+      unit,
+      verdictHeadline,
+    ],
   );
 
   if (dataMaturityStage !== "mature") {
@@ -1451,6 +1468,95 @@ function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
   }
 
   return { checksMet, checksTotal };
+}
+
+function buildMonthCardPromptSummary({
+  stats,
+  strengthLevelStats,
+  strengthSetupRequired,
+  boundaries,
+  unit,
+  checksSummary,
+  verdictHeadline,
+}) {
+  const lines = [
+    `range=${boundaries.currentMonthStart}..${boundaries.todayStr}${boundaries.isCurrentMonthView ? " current_month" : " historical_month"}`,
+    `comparison_month=${boundaries.prevMonthName} (${boundaries.prevMonthStart}..${boundaries.prevMonthEnd})`,
+  ];
+
+  if (!stats) return lines;
+
+  if (checksSummary) {
+    lines.push(
+      `score=${checksSummary.checksMet}/${checksSummary.checksTotal} green`,
+    );
+  }
+  if (verdictHeadline?.text) {
+    lines.push(`headline=${verdictHeadline.text}`);
+  }
+
+  lines.push(
+    `sessions=current ${stats.sessions.current}, previous ${stats.sessions.last}, previous_same_day ${stats.sessions.lastSameDay}`,
+  );
+  lines.push(
+    `total_tonnage=current ${formatTonnage(stats.tonnage.current, unit)}, previous ${formatTonnage(stats.tonnage.last, unit)}, previous_same_day ${formatTonnage(stats.tonnage.lastSameDay, unit)}`,
+  );
+  lines.push(
+    `big_four_tonnage=current ${formatTonnage(stats.bigFourTonnage.current, unit)}, previous ${formatTonnage(stats.bigFourTonnage.last, unit)}, previous_same_day ${formatTonnage(stats.bigFourTonnage.lastSameDay, unit)}`,
+  );
+
+  const liftRows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
+    const tonnage = stats.bigFourByLift?.[liftType] ?? {
+      current: 0,
+      last: 0,
+      lastSameDay: 0,
+    };
+    const currentTonnage = tonnage.current ?? 0;
+    const lastTonnage = tonnage.last ?? 0;
+    const liftPaceStatus =
+      boundaries.isCurrentMonthView && boundaries.dayOfMonth > 0
+        ? getLiftPaceStatus(
+            currentTonnage,
+            lastTonnage,
+            boundaries.dayOfMonth,
+            boundaries.daysInCurrentMonth,
+          )
+        : "no-data";
+    const tonnageBaseline = lastTonnage === 0;
+    const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
+    const tonnagePassed = tonnageBaseline
+      ? tonnageNewWin
+      : boundaries.isCurrentMonthView
+        ? liftPaceStatus === "ahead" || liftPaceStatus === "on-pace"
+        : passesTonnageThreshold(currentTonnage, lastTonnage);
+    const strength = strengthLevelStats?.[liftType] ?? {
+      current: null,
+      last: null,
+    };
+    const currentStrength = formatPromptStrengthLevel(strength.current);
+    const lastStrength = formatPromptStrengthLevel(strength.last);
+    const strengthStatus = strengthSetupRequired
+      ? "setup_required"
+      : strength.last === null
+        ? strength.current === null
+          ? "no_baseline"
+          : "new_baseline"
+        : isStrengthLevelRegressed(strength.current, strength.last)
+          ? "regressed"
+          : "matched_or_better";
+
+    return `${liftType}: tonnage current ${formatTonnage(currentTonnage, unit)}, previous ${formatTonnage(lastTonnage, unit)}, status ${tonnagePassed ? "green" : "behind"}${liftPaceStatus !== "no-data" ? `/${liftPaceStatus}` : ""}; strength current ${currentStrength}, previous ${lastStrength}, status ${strengthStatus}`;
+  });
+
+  lines.push("big_four_rows:");
+  lines.push(...liftRows);
+
+  return lines;
+}
+
+function formatPromptStrengthLevel(score) {
+  const formatted = formatStrengthLevel(score);
+  return formatted?.label || "none";
 }
 
 function getMonthlyRevealRowCount(stats, strengthLevelStats) {

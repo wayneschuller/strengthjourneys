@@ -14,26 +14,44 @@ export const AI_REVIEW_PROMPTS = {
     "Review my training this month. Look at sessions, Big Four work, strength progress, consistency, and what I should focus on next month.",
 };
 
-export function buildWeeklyReviewPrompt({ startDate, endDate, isCurrentWeek }) {
+export function buildWeeklyReviewPrompt({
+  startDate,
+  endDate,
+  isCurrentWeek,
+  summaryLines,
+}) {
   const windowText =
     startDate && endDate
       ? `from ${startDate} to ${endDate}`
       : isCurrentWeek
         ? "this week"
         : "that week";
+  const visibleSummaryText =
+    Array.isArray(summaryLines) && summaryLines.length > 0
+      ? `\n\nVisible week card data:\n${summaryLines.join("\n")}`
+      : "";
 
-  return `Review my training week ${windowText}. Look at sessions, lift selection, tonnage, PRs, consistency, and what I should focus on next. Be specific and use the lifting data I have shared with you.`;
+  return `Review my training week ${windowText}. Use the visible week card data below as the source of truth for this dashboard review.${visibleSummaryText}\n\nLook at sessions, lift selection, tonnage, PRs, consistency, and what I should focus on next. Be specific and practical.`;
 }
 
-export function buildMonthlyReviewPrompt({ startDate, endDate, isCurrentMonth }) {
+export function buildMonthlyReviewPrompt({
+  startDate,
+  endDate,
+  isCurrentMonth,
+  summaryLines,
+}) {
   const windowText =
     startDate && endDate
       ? `from ${startDate} to ${endDate}`
       : isCurrentMonth
         ? "this month"
         : "that month";
+  const visibleSummaryText =
+    Array.isArray(summaryLines) && summaryLines.length > 0
+      ? `\n\nVisible month card data:\n${summaryLines.join("\n")}`
+      : "";
 
-  return `Review my training month ${windowText}. Look at sessions, Big Four work, strength progress, consistency, weak spots, and what I should focus on next. Be specific and use the lifting data I have shared with you.`;
+  return `Review my training month ${windowText}. Use the visible month card data below as the source of truth for this dashboard review.${visibleSummaryText}\n\nLook at sessions, Big Four work, strength progress, consistency, weak spots, and what I should focus on next. Be specific and practical.`;
 }
 
 export function buildLiftRecentSessionsReviewPrompt({

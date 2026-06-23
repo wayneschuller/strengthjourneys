@@ -215,6 +215,32 @@ function AILiftingAssistantMain({ relatedArticles }) {
   );
   const hasSharedTrainingData = hasAnySharedTrainingData(userLiftingMetadata);
   const hasSharedFullTrainingData = hasAllSharedTrainingData(userLiftingMetadata);
+  const suggestionContext = useMemo(() => {
+    const prioritizedLifts = hasSharedTrainingData
+      ? getPrioritizedLiftTypes({
+          liftTypes,
+          parsedData,
+          topLiftsByTypeAndReps,
+          limit: 2,
+        })
+      : [];
+
+    return {
+      age: shareBioDetails ? age : null,
+      primaryLift: prioritizedLifts[0] ?? null,
+      secondaryLift: prioritizedLifts[1] ?? null,
+      recentSessionDate: hasSharedTrainingData
+        ? getMostRecentSessionDate(parsedData)
+        : null,
+    };
+  }, [
+    age,
+    hasSharedTrainingData,
+    liftTypes,
+    parsedData,
+    shareBioDetails,
+    topLiftsByTypeAndReps,
+  ]);
 
   const userProvidedProfileData = useMemo(() => {
     if (isDemoMode) return "";
@@ -383,6 +409,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
             hasSharedBioData={!isDemoMode && shareBioDetails}
             hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
             hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
+            suggestionContext={suggestionContext}
             userProvidedProfileData={userProvidedProfileData}
           />
         </div>
@@ -412,23 +439,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   );
 }
 
-const TRAINING_DATA_PROMPTS = [
-  AI_REVIEW_PROMPTS.week,
-  AI_REVIEW_PROMPTS.month,
-  "How strong am I?",
-  "What lift should I focus on next?",
-  "Where is my training inconsistent?",
-];
-
-const PARTIAL_TRAINING_DATA_PROMPTS = [
-  AI_REVIEW_PROMPTS.week,
-  AI_REVIEW_PROMPTS.month,
-  "How strong am I?",
-  "What should I focus on next?",
-];
-
-const BIO_DATA_PROMPTS = [
-  "Am I strong for my age?",
+const BIO_DATA_FALLBACK_PROMPTS = [
   "How much protein should I eat?",
   "Should I lift every day?",
   "Can I lift weights and still lose weight?",
@@ -455,10 +466,21 @@ function getAssistantSuggestions({
   hasSharedBioData,
   hasSharedFullTrainingData,
   hasSharedTrainingData,
+  suggestionContext,
 }) {
+  const trainingPrompts = buildTrainingDataPrompts({
+    hasSharedBioData,
+    suggestionContext,
+  });
+  const partialTrainingPrompts = buildPartialTrainingDataPrompts({
+    hasSharedBioData,
+    suggestionContext,
+  });
+  const bioPrompts = buildBioDataPrompts(suggestionContext);
+
   if (hasSharedFullTrainingData) {
     return uniqueMessages([
-      ...TRAINING_DATA_PROMPTS,
+      ...trainingPrompts,
       ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 2),
       ...getRotatedPrompts(PLAYFUL_PROMPTS, dateKey, 1),
     ]);
@@ -466,15 +488,15 @@ function getAssistantSuggestions({
 
   if (hasSharedTrainingData) {
     return uniqueMessages([
-      ...PARTIAL_TRAINING_DATA_PROMPTS,
-      ...(hasSharedBioData ? BIO_DATA_PROMPTS.slice(0, 2) : []),
+      ...partialTrainingPrompts,
+      ...(hasSharedBioData ? bioPrompts.slice(0, 2) : []),
       ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 3),
     ]);
   }
 
   if (hasSharedBioData) {
     return uniqueMessages([
-      ...BIO_DATA_PROMPTS,
+      ...bioPrompts,
       ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 4),
       ...getRotatedPrompts(PLAYFUL_PROMPTS, dateKey, 1),
     ]);
@@ -482,9 +504,60 @@ function getAssistantSuggestions({
 
   return uniqueMessages([
     ...GENERAL_LIFTING_PROMPTS,
-    ...BIO_DATA_PROMPTS.slice(1),
+    ...BIO_DATA_FALLBACK_PROMPTS,
     ...PLAYFUL_PROMPTS,
   ]);
+}
+
+function buildTrainingDataPrompts({ hasSharedBioData, suggestionContext }) {
+  const { primaryLift, recentSessionDate } = suggestionContext ?? {};
+
+  return [
+    AI_REVIEW_PROMPTS.week,
+    AI_REVIEW_PROMPTS.month,
+    recentSessionDate
+      ? `Review my latest session from ${recentSessionDate}`
+      : "Review my latest session",
+    primaryLift
+      ? `What should I focus on next for ${primaryLift}?`
+      : "What lift should I focus on next?",
+    "Where is my training inconsistent?",
+    hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
+  ];
+}
+
+function buildPartialTrainingDataPrompts({
+  hasSharedBioData,
+  suggestionContext,
+}) {
+  const { primaryLift, secondaryLift } = suggestionContext ?? {};
+  const liftFocus = primaryLift
+    ? `What does my ${primaryLift} data suggest?`
+    : "What does my shared training data suggest?";
+  const comparisonPrompt =
+    primaryLift && secondaryLift
+      ? `Compare my ${primaryLift} and ${secondaryLift} progress`
+      : "What should I focus on next from my shared data?";
+
+  return [
+    "Review the training data I've shared",
+    liftFocus,
+    comparisonPrompt,
+    hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
+  ];
+}
+
+function buildBioDataPrompts(suggestionContext) {
+  const age = Number(suggestionContext?.age);
+  const ageSuffix = Number.isFinite(age) && age > 0 ? ` at ${age}` : "";
+
+  return [
+    `Why does strength training matter${ageSuffix}?`,
+    `How should recovery change${ageSuffix}?`,
+    "How much protein should I eat?",
+    "Should I lift every day?",
+    "Can I lift weights and still lose weight?",
+  ];
 }
 
 function hasAnySharedTrainingData(userLiftingMetadata) {
@@ -596,6 +669,7 @@ function CopyButton({ text, ...props }) {
  * @param {boolean} props.hasSharedBioData - Whether the user has opted to share bio details.
  * @param {boolean} props.hasSharedFullTrainingData - Whether the user has opted to share every lifting metadata section.
  * @param {boolean} props.hasSharedTrainingData - Whether the user has opted to share any lifting metadata.
+ * @param {Object} props.suggestionContext - Small prompt-personalisation context derived from opted-in local data.
  * @param {string} props.userProvidedProfileData - Serialised string of user bio and lifting
  *   metadata to inject into the AI system prompt via the request body on each message send.
  */
@@ -603,6 +677,7 @@ function AILiftingAssistantCard({
   hasSharedBioData,
   hasSharedFullTrainingData,
   hasSharedTrainingData,
+  suggestionContext,
   userProvidedProfileData,
 }) {
   const router = useRouter();
@@ -621,12 +696,14 @@ function AILiftingAssistantCard({
         hasSharedBioData,
         hasSharedFullTrainingData,
         hasSharedTrainingData,
+        suggestionContext,
       }),
     [
       hasSharedBioData,
       hasSharedFullTrainingData,
       hasSharedTrainingData,
       suggestionDateKey,
+      suggestionContext,
     ],
   );
 

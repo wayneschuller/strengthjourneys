@@ -481,7 +481,8 @@ function getAssistantSuggestions({
   if (hasSharedFullTrainingData) {
     return uniqueMessages([
       ...trainingPrompts,
-      ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 2),
+      ...(hasSharedBioData ? bioPrompts.slice(0, 2) : []),
+      ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 1),
       ...getRotatedPrompts(PLAYFUL_PROMPTS, dateKey, 1),
     ]);
   }

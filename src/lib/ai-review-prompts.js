@@ -36,6 +36,23 @@ export function buildMonthlyReviewPrompt({ startDate, endDate, isCurrentMonth })
   return `Review my training month ${windowText}. Look at sessions, Big Four work, strength progress, consistency, weak spots, and what I should focus on next. Be specific and use the lifting data I have shared with you.`;
 }
 
+export function buildLiftRecentSessionsReviewPrompt({
+  liftType,
+  startDate,
+  endDate,
+  sessionCount,
+}) {
+  const liftName = liftType || "this lift";
+  const sessionText =
+    typeof sessionCount === "number" && sessionCount > 0
+      ? `my last ${sessionCount} ${liftName} ${sessionCount === 1 ? "session" : "sessions"}`
+      : `my recent ${liftName} sessions`;
+  const windowText =
+    startDate && endDate ? ` from ${startDate} to ${endDate}` : "";
+
+  return `Review ${sessionText}${windowText}. Look at load selection, rep ranges, estimated strength, PRs, fatigue signals, and what I should do next for ${liftName}. Be specific and use the lifting data I have shared with you.`;
+}
+
 export function buildAiAssistantPromptHref(prompt) {
   const query = new URLSearchParams({ aiPrompt: prompt });
   return `${AI_ASSISTANT_PATH}?${query.toString()}`;

@@ -92,7 +92,7 @@ export function buildLogSessionReviewPrompt({
       ? `\n\nVisible tonnage context:\n${tonnageSummaries.join("\n")}`
       : "";
 
-  return `Review my lifting session${dateText}. Use the visible log data below as the source of truth for this session review; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}${visibleTonnageText}\n\nLook at lift selection, load jumps, top sets, volume, PRs, notes, fatigue signals, and what I should adjust next time. Be specific, practical, and concise.`;
+  return `Review my lifting session${dateText}. Use the visible log data below as the source of truth for this session review; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}${visibleTonnageText}`;
 }
 
 export function buildAiAssistantPromptLink(prompt, options = {}) {

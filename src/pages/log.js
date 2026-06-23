@@ -657,12 +657,12 @@ export default function LogSessionPage({
                   )}
 
                   {aiSessionReviewHref && (
-                    <div className="flex justify-end">
+                    <div>
                       <Button
                         asChild
                         variant="outline"
                         size="sm"
-                        className="h-9 gap-1.5 px-3"
+                        className="w-full gap-2"
                       >
                         <Link href={aiSessionReviewHref}>
                           <Bot className="h-4 w-4" />

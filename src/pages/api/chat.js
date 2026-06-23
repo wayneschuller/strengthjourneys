@@ -120,6 +120,11 @@ export default async function handler(req, res) {
     );
   }
 
+  systemMessages.push({
+    role: "system",
+    content: buildTemporalContextPrompt(),
+  });
+
   if (userProvidedMetadata?.length > 10) {
     systemMessages.push({ role: "system", content: userProvidedMetadata });
   }
@@ -172,4 +177,15 @@ export default async function handler(req, res) {
   } else {
     res.end();
   }
+}
+
+function buildTemporalContextPrompt() {
+  const now = new Date();
+  const utcDate = now.toISOString().slice(0, 10);
+
+  return [
+    `Today's date is ${utcDate} UTC.`,
+    "Use this date when reasoning about training recency, missed sessions, deloads, layoffs, and gaps between logged session dates.",
+    "If the user's lifting data includes dated sessions, compare those dates against today before commenting on momentum or recent fatigue.",
+  ].join(" ");
 }

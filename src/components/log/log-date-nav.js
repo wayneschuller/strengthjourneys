@@ -3,9 +3,7 @@
  * Keeps calendar-picker rendering separate from session orchestration.
  */
 
-import Link from "next/link";
-
-import { Bot, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { getReadableDateString } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
@@ -18,7 +16,6 @@ import {
 import { SyncIndicator } from "@/components/log/session-summary";
 
 export function LogDateNav({
-  aiSessionReviewHref,
   datePickerOpen,
   isToday,
   nextSessionDate,
@@ -96,21 +93,6 @@ export function LogDateNav({
           </PopoverContent>
         </Popover>
       </div>
-
-      {aiSessionReviewHref && (
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="h-8 shrink-0 gap-1.5 px-2.5"
-        >
-          <Link href={aiSessionReviewHref}>
-            <Bot className="h-4 w-4" />
-            <span className="hidden sm:inline">AI session feedback</span>
-            <span className="sm:hidden">AI feedback</span>
-          </Link>
-        </Button>
-      )}
 
       {!previewMode && <SyncIndicator state={syncState} />}
 

@@ -13,7 +13,7 @@ import {
 } from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Bot, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,10 @@ import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-setting
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { gaTrackCoffeeNudgeClick } from "@/lib/analytics";
+import {
+  buildAiAssistantPromptHref,
+  buildMonthlyReviewPrompt,
+} from "@/lib/ai-review-prompts";
 
 // ─── Main component ────────────────────────────────────────────────────────
 
@@ -306,6 +310,17 @@ export function TheMonthInIronCard({
   const viewNextMonth = () => {
     setMonthOffset((prev) => Math.max(0, prev - 1));
   };
+  const aiReviewHref = useMemo(
+    () =>
+      buildAiAssistantPromptHref(
+        buildMonthlyReviewPrompt({
+          startDate: boundaries.currentMonthStart,
+          endDate: boundaries.todayStr,
+          isCurrentMonth: boundaries.isCurrentMonthView,
+        }),
+      ),
+    [boundaries],
+  );
 
   if (dataMaturityStage !== "mature") {
     return (
@@ -331,43 +346,56 @@ export function TheMonthInIronCard({
             </CardTitle>
             <CardDescription>{motivationalPhrase}</CardDescription>
           </div>
-          <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={viewPreviousMonth}
-                    disabled={safeMonthOffset >= maxMonthOffset}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Previous month</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={viewNextMonth}
-                    disabled={safeMonthOffset === 0}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Next month</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5"
+            >
+              <Link href={aiReviewHref}>
+                <Bot className="h-4 w-4" />
+                <span className="hidden sm:inline">AI review</span>
+              </Link>
+            </Button>
+            <div className="flex items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={viewPreviousMonth}
+                      disabled={safeMonthOffset >= maxMonthOffset}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Previous month</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={viewNextMonth}
+                      disabled={safeMonthOffset === 0}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Next month</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
       </CardHeader>

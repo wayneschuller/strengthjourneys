@@ -14,6 +14,7 @@ import {
   FileUp,
   TrendingUp,
   TrendingDown,
+  Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -50,6 +51,10 @@ import {
   subtractDaysFromStr,
   getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
+import {
+  buildAiAssistantPromptHref,
+  buildWeeklyReviewPrompt,
+} from "@/lib/ai-review-prompts";
 
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
 
@@ -481,6 +486,17 @@ export function TheWeekInIronCard({
   const viewNextWeek = () => {
     setWeekOffset((prev) => Math.max(0, prev - 1));
   };
+  const aiReviewHref = useMemo(
+    () =>
+      buildAiAssistantPromptHref(
+        buildWeeklyReviewPrompt({
+          startDate: boundaries.mondayStr,
+          endDate: boundaries.effectiveEnd,
+          isCurrentWeek: boundaries.isCurrentWeek,
+        }),
+      ),
+    [boundaries],
+  );
 
   const hasLoggedSessions = useMemo(
     () => Array.isArray(parsedData) && parsedData.some((e) => !e?.isGoal),
@@ -519,39 +535,52 @@ export function TheWeekInIronCard({
               </CardTitle>
               <CardDescription>{subtitle}</CardDescription>
             </div>
-            <div className="bg-muted/30 flex shrink-0 items-center gap-0.5 rounded-lg border p-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={viewPreviousWeek}
-                    disabled={safeWeekOffset >= maxWeekOffset}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Previous week</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={viewNextWeek}
-                    disabled={safeWeekOffset === 0}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Next week</p>
-                </TooltipContent>
-              </Tooltip>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 px-2.5"
+              >
+                <Link href={aiReviewHref}>
+                  <Bot className="h-4 w-4" />
+                  <span className="hidden sm:inline">AI review</span>
+                </Link>
+              </Button>
+              <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={viewPreviousWeek}
+                      disabled={safeWeekOffset >= maxWeekOffset}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Previous week</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={viewNextWeek}
+                      disabled={safeWeekOffset === 0}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Next week</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
           </div>
         </CardHeader>

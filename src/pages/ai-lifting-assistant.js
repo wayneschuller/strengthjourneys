@@ -2,10 +2,12 @@
 import { format } from "date-fns";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { AI_REVIEW_PROMPTS } from "@/lib/ai-review-prompts";
 import {
   AI_CHAT_ANON_WARN_AT_REMAINING,
   AI_CHAT_AUTH_WARN_AT_REMAINING,
@@ -403,6 +405,8 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
 // Single flat array of suggestions
 const defaultMessages = [
+  AI_REVIEW_PROMPTS.week,
+  AI_REVIEW_PROMPTS.month,
   "Why lift weights?",
   "What should I do in my first gym session?",
   "How often should I deadlift?",
@@ -480,9 +484,13 @@ function CopyButton({ text, ...props }) {
  *   to inject into the AI system prompt via the request body on each message send.
  */
 function AILiftingAssistantCard({ userProvidedProfileData }) {
+  const router = useRouter();
   const { status: authStatus } = useSession();
   const [chatQuota, setChatQuota] = useState(null);
   const [isChatQuotaReady, setIsChatQuotaReady] = useState(false);
+  const [isChatHydrated, setIsChatHydrated] = useState(false);
+  const pendingAiPromptRef = useRef(null);
+  const consumedAiPromptRef = useRef(null);
 
   const applyQuotaSnapshot = useCallback((nextQuota, options = {}) => {
     if (!nextQuota) return;
@@ -594,6 +602,9 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   const isChatUnavailable = !isChatQuotaReady || isChatBlocked;
   const isAnonymousQuotaBlocked =
     isChatBlocked && chatQuota?.tier === "anonymous";
+  const aiPromptQuery = router.query?.aiPrompt;
+  const queryPrompt =
+    typeof aiPromptQuery === "string" ? aiPromptQuery.trim() : "";
 
   const { messages, setMessages, sendMessage, status, stop, regenerate } =
     useChat({
@@ -606,7 +617,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     });
 
   // Helper to send messages with fresh metadata (per AI SDK v6 docs for ChatRequestOptions.body)
-  const sendMessageWithMetadata = (message) => {
+  const sendMessageWithMetadata = useCallback((message) => {
     if (isChatUnavailable) return;
 
     reserveQuotaLocally();
@@ -615,7 +626,12 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         userProvidedMetadata: userProvidedProfileData,
       },
     });
-  };
+  }, [
+    isChatUnavailable,
+    reserveQuotaLocally,
+    sendMessage,
+    userProvidedProfileData,
+  ]);
 
   // Handle submit from PromptInput (receives message object with text)
   const handleSubmit = (message) => {
@@ -628,12 +644,21 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     sendMessageWithMetadata(message.text);
   };
 
+  useEffect(() => {
+    if (!router.isReady || !queryPrompt) return;
+    if (consumedAiPromptRef.current === queryPrompt) return;
+    pendingAiPromptRef.current = queryPrompt;
+  }, [queryPrompt, router.isReady]);
+
   // Hydrate once on mount (client only)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("chat:/ai");
       if (raw) setMessages(JSON.parse(raw));
-    } catch {}
+    } catch {
+    } finally {
+      setIsChatHydrated(true);
+    }
   }, [setMessages]);
 
   // save whenever messages change
@@ -645,6 +670,22 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       sessionStorage.setItem("chat:/ai", JSON.stringify(capped));
     } catch {}
   }, [messages]);
+
+  useEffect(() => {
+    const pendingPrompt = pendingAiPromptRef.current;
+    if (
+      !pendingPrompt ||
+      !isChatHydrated ||
+      isChatUnavailable ||
+      status !== "ready"
+    ) {
+      return;
+    }
+
+    consumedAiPromptRef.current = pendingPrompt;
+    pendingAiPromptRef.current = null;
+    sendMessageWithMetadata(pendingPrompt);
+  }, [isChatHydrated, isChatUnavailable, sendMessageWithMetadata, status]);
 
   // devLog(messages);
 

@@ -21,6 +21,17 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
+  AppBanner,
+  AppBannerActionGroup,
+  AppBannerActions,
+  AppBannerContent,
+  AppBannerCopy,
+  AppBannerHint,
+  AppBannerMessage,
+  bannerAccentButtonClassName,
+  bannerGhostButtonClassName,
+} from "@/components/ui/app-banner";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -28,6 +39,7 @@ import {
 } from "@/components/ui/tooltip";
 import { AlertTriangle, FileUp, Loader2, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
+import { cn } from "@/lib/utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { analyzeImportedEntries } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
@@ -423,88 +435,86 @@ function DataAccessBanner({ pathname, currentPath }) {
   if (!showSignInCta && !showSetupSheetCta) return null;
 
   return (
-    <>
-      <section className="mb-3 border-y bg-amber-100/60">
-        <div className="mx-0 flex flex-col items-center justify-center gap-3 px-4 py-3 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
-          <p className="text-sm leading-tight text-amber-950">
-            {showSignInCta
-              ? "You are viewing demo data. Want to see your own lifts, trends, and PRs here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode."
-              : isDemoMode
-                ? "Demo mode is on. Connect your data to replace the sample view with your own lifting history here."
-                : "Connect your data to replace the sample view with your own lifting history here."}
-          </p>
-          {showSignInCta ? (
-            <div className="flex flex-col items-center gap-2 sm:flex-row">
-              <div className="flex flex-col items-center">
-                <GoogleSignInButton size="sm" cta="demo_banner">
-                  Sign in with Google
-                </GoogleSignInButton>
-                <p className="mt-1.5 text-center text-xs text-amber-900/70">
-                  Free forever. Your data stays yours.
-                </p>
-              </div>
-              <div className="flex flex-col items-center">
-                <Button size="sm" variant="outline" asChild>
-                  <Link
-                    href={{
-                      pathname: "/import",
-                      query: { returnTo: currentPath },
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <FileUp className="h-4 w-4" />
-                    Import From Another Fitness App
-                  </Link>
-                </Button>
-                <p className="mt-1.5 text-center text-xs text-amber-900/70">
-                  Instant preview. No sign-in required.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-2 sm:flex-row">
-              <div className="flex flex-col items-center">
-                <Button
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    openSheetSetupDialog("bootstrap");
+    <AppBanner tint="amber">
+      <AppBannerContent density="comfortable">
+        <AppBannerMessage>
+          {showSignInCta
+            ? "You are viewing demo data. Want to see your own lifts, trends, and PRs here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode."
+            : isDemoMode
+              ? "Demo mode is on. Connect your data to replace the sample view with your own lifting history here."
+              : "Connect your data to replace the sample view with your own lifting history here."}
+        </AppBannerMessage>
+        {showSignInCta ? (
+          <AppBannerActions>
+            <AppBannerActionGroup>
+              <GoogleSignInButton size="sm" cta="demo_banner">
+                Sign in with Google
+              </GoogleSignInButton>
+              <AppBannerHint className="mt-1.5">
+                Free forever. Your data stays yours.
+              </AppBannerHint>
+            </AppBannerActionGroup>
+            <AppBannerActionGroup>
+              <Button size="sm" variant="outline" asChild>
+                <Link
+                  href={{
+                    pathname: "/import",
+                    query: { returnTo: currentPath },
                   }}
+                  className="flex items-center gap-2"
                 >
-                  <img
-                    src={GOOGLE_SHEETS_ICON_URL}
-                    alt=""
-                    className="h-4 w-4 shrink-0"
-                    aria-hidden
-                  />
-                  Set Up Google Sheet
-                </Button>
-                <p className="mt-1.5 text-center text-xs text-amber-900/70">
-                  Free forever. Your data stays yours.
-                </p>
-              </div>
-              <div className="flex flex-col items-center">
-                <Button size="sm" variant="outline" asChild>
-                  <Link
-                    href={{
-                      pathname: "/import",
-                      query: { returnTo: currentPath },
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <FileUp className="h-4 w-4" />
-                    Import From Another Fitness App
-                  </Link>
-                </Button>
-                <p className="mt-1.5 text-center text-xs text-amber-900/70">
-                  Instant preview first. Save or merge when you&apos;re ready.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-    </>
+                  <FileUp className="h-4 w-4" />
+                  Import From Another Fitness App
+                </Link>
+              </Button>
+              <AppBannerHint className="mt-1.5">
+                Instant preview. No sign-in required.
+              </AppBannerHint>
+            </AppBannerActionGroup>
+          </AppBannerActions>
+        ) : (
+          <AppBannerActions>
+            <AppBannerActionGroup>
+              <Button
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  openSheetSetupDialog("bootstrap");
+                }}
+              >
+                <img
+                  src={GOOGLE_SHEETS_ICON_URL}
+                  alt=""
+                  className="h-4 w-4 shrink-0"
+                  aria-hidden
+                />
+                Set Up Google Sheet
+              </Button>
+              <AppBannerHint className="mt-1.5">
+                Free forever. Your data stays yours.
+              </AppBannerHint>
+            </AppBannerActionGroup>
+            <AppBannerActionGroup>
+              <Button size="sm" variant="outline" asChild>
+                <Link
+                  href={{
+                    pathname: "/import",
+                    query: { returnTo: currentPath },
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <FileUp className="h-4 w-4" />
+                  Import From Another Fitness App
+                </Link>
+              </Button>
+              <AppBannerHint className="mt-1.5">
+                Instant preview first. Save or merge when you&apos;re ready.
+              </AppBannerHint>
+            </AppBannerActionGroup>
+          </AppBannerActions>
+        )}
+      </AppBannerContent>
+    </AppBanner>
   );
 }
 
@@ -583,16 +593,19 @@ function DataQualityBanner({ warnings, onFix }) {
       : `Fix ${warning.affectedSetCount.toLocaleString()} sets`);
 
   return (
-    <section className="mb-3 border-y border-amber-300 bg-amber-50/90 dark:border-amber-800/70 dark:bg-amber-950/70">
-      <div className="mx-0 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-2.5 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
-        <p className="max-w-4xl text-sm leading-tight text-amber-950 dark:text-amber-100">
+    <AppBanner tint="amberAlert">
+      <AppBannerContent density="compact">
+        <AppBannerMessage className="max-w-4xl">
           <AlertTriangle className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
           {warning.message}
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        </AppBannerMessage>
+        <AppBannerActions className="flex-row flex-wrap">
           <Button
             size="sm"
-            className="h-7 bg-amber-700 text-xs text-white hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500"
+            className={cn(
+              "h-7 text-xs",
+              bannerAccentButtonClassName({ tint: "amberAlert" }),
+            )}
             disabled={isWorking}
             onClick={handleFix}
           >
@@ -602,16 +615,16 @@ function DataQualityBanner({ warnings, onFix }) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs text-amber-900/70 hover:bg-amber-100 hover:text-amber-950 dark:text-amber-200/70 dark:hover:bg-amber-900/50"
+            className={bannerGhostButtonClassName({ tint: "amberAlert" })}
             disabled={isWorking}
             onClick={dismissWarning}
           >
             <X className="mr-1 h-3.5 w-3.5" />
             Dismiss
           </Button>
-        </div>
-      </div>
-    </section>
+        </AppBannerActions>
+      </AppBannerContent>
+    </AppBanner>
   );
 }
 
@@ -731,10 +744,10 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
   }, [parsedData]);
 
   return (
-    <section className="mb-3 border-y border-blue-200 bg-blue-50/80 dark:border-blue-800/60 dark:bg-blue-950/50">
-      <div className="mx-0 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4 py-2.5 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
-        <div className="space-y-0.5">
-          <p className="text-sm leading-tight text-blue-900 dark:text-blue-200">
+    <AppBanner tint="blue">
+      <AppBannerContent density="compact">
+        <AppBannerCopy>
+          <AppBannerMessage>
             <FileUp className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
             {hasSsid && isFullyDuplicate
               ? `This preview file already matches your linked sheet.`
@@ -750,14 +763,14 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
                 warm-ups and progression targets.
               </span>
             )}
-          </p>
-          <p className="text-[11px] text-blue-700/70 dark:text-blue-300/60">
+          </AppBannerMessage>
+          <AppBannerHint size="2xs">
             {hasSsid && isFullyDuplicate
               ? "No merge is needed unless you import a different file."
               : "Preview data will be lost when you leave."}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
+          </AppBannerHint>
+        </AppBannerCopy>
+        <AppBannerActions className="flex-row flex-wrap">
           {/* Not signed in: primary save CTA */}
           {!isAuthenticated && authStatus !== "loading" && (
             <TooltipProvider>
@@ -782,22 +795,28 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
           {isAuthenticated && hasSsid && !isFullyDuplicate && (
             <Button
               size="sm"
-              className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              className={cn(
+                "h-7 text-xs",
+                bannerAccentButtonClassName({ tint: "blue" }),
+              )}
               disabled={working || isSheetComparisonPending}
               onClick={handleMergeFromBanner}
             >
               {isSheetComparisonPending
                 ? "Checking sheet..."
                 : working
-                ? "Saving..."
-                : `Merge ${mergeEntryCount.toLocaleString()} ${mergeEntryCount === 1 ? "entry" : "entries"}`}
+                  ? "Saving..."
+                  : `Merge ${mergeEntryCount.toLocaleString()} ${mergeEntryCount === 1 ? "entry" : "entries"}`}
             </Button>
           )}
           {/* Signed in + no sheet: create */}
           {isAuthenticated && !hasSsid && (
             <Button
               size="sm"
-              className="h-7 border-blue-300 bg-blue-600 text-xs text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              className={cn(
+                "h-7 text-xs",
+                bannerAccentButtonClassName({ tint: "blue" }),
+              )}
               onClick={handleCreateFromBanner}
             >
               Save my data
@@ -806,15 +825,15 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs text-blue-800/60 hover:bg-blue-100 hover:text-blue-950 dark:text-blue-400/60 dark:hover:bg-blue-900/50"
+            className={bannerGhostButtonClassName({ tint: "blue" })}
             onClick={onClear}
           >
             <X className="mr-1 h-3.5 w-3.5" />
             Clear preview
           </Button>
-        </div>
-      </div>
-    </section>
+        </AppBannerActions>
+      </AppBannerContent>
+    </AppBanner>
   );
 }
 

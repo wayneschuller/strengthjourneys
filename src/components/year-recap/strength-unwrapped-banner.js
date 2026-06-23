@@ -3,6 +3,14 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  AppBanner,
+  AppBannerContent,
+  AppBannerDescription,
+  AppBannerIconBadge,
+  AppBannerLeading,
+  AppBannerTitle,
+} from "@/components/ui/app-banner";
 import { Sparkles, ChevronRight } from "lucide-react";
 
 /**
@@ -25,26 +33,26 @@ export function StrengthUnwrappedDecemberBanner({ className, hidden }) {
 
   return (
     <div className={cn("w-full", className)}>
-      <Link href={href}>
-        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10 md:p-6">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/20 p-2">
+      <Link href={href} className="block">
+        <AppBanner as="div" layout="card" tint="primary">
+          <AppBannerContent density="card">
+            <AppBannerLeading>
+              <AppBannerIconBadge>
                 <Sparkles className="h-6 w-6 text-primary" />
-              </div>
+              </AppBannerIconBadge>
               <div>
-                <h3 className="text-lg font-semibold">Strength Unwrapped</h3>
-                <p className="text-sm text-muted-foreground">
+                <AppBannerTitle>Strength Unwrapped</AppBannerTitle>
+                <AppBannerDescription>
                   Your {currentYear} in strength. See your recap.
-                </p>
+                </AppBannerDescription>
               </div>
-            </div>
+            </AppBannerLeading>
             <Button variant="default" size="sm" className="shrink-0">
               View my recap
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
-          </div>
-        </div>
+          </AppBannerContent>
+        </AppBanner>
       </Link>
     </div>
   );

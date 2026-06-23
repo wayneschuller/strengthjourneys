@@ -94,7 +94,10 @@ export function buildLogSessionReviewPrompt({
   return `Review my lifting session${dateText}. Use the visible log data below as the source of truth for this session review; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}${visibleTonnageText}\n\nLook at lift selection, load jumps, top sets, volume, PRs, notes, fatigue signals, and what I should adjust next time. Be specific, practical, and concise.`;
 }
 
-export function buildAiAssistantPromptHref(prompt) {
+export function buildAiAssistantPromptHref(prompt, options = {}) {
   const query = new URLSearchParams({ aiPrompt: prompt });
+  if (options.resetChat) {
+    query.set("resetChat", "1");
+  }
   return `${AI_ASSISTANT_PATH}?${query.toString()}`;
 }

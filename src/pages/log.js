@@ -318,6 +318,7 @@ export default function LogSessionPage({
           perLiftTonnageStats,
         ),
       }),
+      { resetChat: true },
     );
   }, [isMetric, perLiftTonnageStats, sessionDate, sessionLiftsWithPending]);
   const isToday = sessionDate === todayIso;

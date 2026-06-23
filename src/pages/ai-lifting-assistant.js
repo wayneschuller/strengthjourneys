@@ -603,6 +603,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   const isAnonymousQuotaBlocked =
     isChatBlocked && chatQuota?.tier === "anonymous";
   const aiPromptQuery = router.query?.aiPrompt;
+  const shouldResetChatForPrompt = router.query?.resetChat === "1";
   const queryPrompt =
     typeof aiPromptQuery === "string" ? aiPromptQuery.trim() : "";
 
@@ -647,8 +648,14 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   useEffect(() => {
     if (!router.isReady || !queryPrompt) return;
     if (consumedAiPromptRef.current === queryPrompt) return;
+    if (shouldResetChatForPrompt) {
+      try {
+        sessionStorage.removeItem("chat:/ai");
+      } catch {}
+      setMessages([]);
+    }
     pendingAiPromptRef.current = queryPrompt;
-  }, [queryPrompt, router.isReady]);
+  }, [queryPrompt, router.isReady, setMessages, shouldResetChatForPrompt]);
 
   // Hydrate once on mount (client only)
   useEffect(() => {

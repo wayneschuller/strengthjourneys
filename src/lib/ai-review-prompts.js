@@ -9,10 +9,8 @@ export const AI_ASSISTANT_PATH = "/ai-lifting-assistant";
 export const AI_ASSISTANT_PROMPT_STORAGE_PREFIX = "SJ_AI_ASSISTANT_PROMPT_";
 
 export const AI_REVIEW_PROMPTS = {
-  week:
-    "Review my training this week. Look at sessions, lift selection, tonnage, PRs, consistency, and what I should focus on next.",
-  month:
-    "Review my training this month. Look at sessions, Big Four work, strength progress, consistency, and what I should focus on next month.",
+  week: "Review my training this week",
+  month: "Review my training this month",
 };
 
 export function buildWeeklyReviewPrompt({

@@ -6,6 +6,7 @@
  */
 
 export const AI_ASSISTANT_PATH = "/ai-lifting-assistant";
+export const AI_ASSISTANT_PROMPT_STORAGE_PREFIX = "SJ_AI_ASSISTANT_PROMPT_";
 
 export const AI_REVIEW_PROMPTS = {
   week:
@@ -94,10 +95,67 @@ export function buildLogSessionReviewPrompt({
   return `Review my lifting session${dateText}. Use the visible log data below as the source of truth for this session review; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}${visibleTonnageText}\n\nLook at lift selection, load jumps, top sets, volume, PRs, notes, fatigue signals, and what I should adjust next time. Be specific, practical, and concise.`;
 }
 
-export function buildAiAssistantPromptHref(prompt, options = {}) {
-  const query = new URLSearchParams({ aiPrompt: prompt });
+export function buildAiAssistantPromptLink(prompt, options = {}) {
+  const promptKey = buildPromptKey(prompt, options);
+  const query = new URLSearchParams({ aiPromptKey: promptKey });
   if (options.resetChat) {
     query.set("resetChat", "1");
   }
-  return `${AI_ASSISTANT_PATH}?${query.toString()}`;
+
+  return {
+    href: `${AI_ASSISTANT_PATH}?${query.toString()}`,
+    prompt,
+    promptKey,
+  };
+}
+
+export function stashAiAssistantPrompt(promptLink) {
+  if (
+    typeof window === "undefined" ||
+    !promptLink?.promptKey ||
+    !promptLink?.prompt
+  ) {
+    return false;
+  }
+
+  try {
+    window.sessionStorage.setItem(
+      `${AI_ASSISTANT_PROMPT_STORAGE_PREFIX}${promptLink.promptKey}`,
+      promptLink.prompt,
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function readAiAssistantPrompt(promptKey) {
+  if (typeof window === "undefined" || !promptKey) return "";
+
+  const storageKey = `${AI_ASSISTANT_PROMPT_STORAGE_PREFIX}${promptKey}`;
+  try {
+    return window.sessionStorage.getItem(storageKey) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function clearAiAssistantPrompt(promptKey) {
+  if (typeof window === "undefined" || !promptKey) return;
+
+  const storageKey = `${AI_ASSISTANT_PROMPT_STORAGE_PREFIX}${promptKey}`;
+  try {
+    window.sessionStorage.removeItem(storageKey);
+  } catch {
+    // Ignore storage failures; the prompt key contains no prompt data.
+  }
+}
+
+function buildPromptKey(prompt, options = {}) {
+  const seed = `${options.resetChat ? "reset:" : ""}${prompt || ""}`;
+  let hash = 5381;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = ((hash << 5) + hash + seed.charCodeAt(index)) >>> 0;
+  }
+  return hash.toString(36);
 }

@@ -21,6 +21,12 @@ const SYSTEM_PROMPT =
   "You are a strength coach answering questions only about barbell exercises with an emphasis on getting strong." +
   "Emphasise safety and take precautions if user indicates any health concerns.";
 
+const MAX_MESSAGES = 20;
+const MAX_MESSAGE_CHARS = 3000;
+const MAX_TOTAL_MESSAGE_CHARS = 12000;
+const MAX_METADATA_CHARS = 4500;
+const ALLOWED_CLIENT_ROLES = new Set(["user", "assistant"]);
+
 const ALLOWED_EXACT_HOSTS = [
   "localhost:3000",
   "127.0.0.1:3000",
@@ -60,13 +66,15 @@ export default async function handler(req, res) {
     Promise.resolve(req.body),
   ]);
 
-  const { messages, userProvidedMetadata } = body || {};
-  const userMessages = Array.isArray(messages) ? messages : [];
-
-  if (userMessages.length === 0) {
-    devLog("WARNING: No messages received from client");
-    return res.status(400).json({ error: "No messages provided" });
+  const validation = validateChatRequest(body);
+  if (validation.error) {
+    return res.status(validation.status).json({ error: validation.error });
   }
+
+  const {
+    messages: userMessages,
+    userProvidedMetadata,
+  } = validation;
 
   const useXai = !!process.env.XAI_API_KEY;
 
@@ -177,6 +185,95 @@ export default async function handler(req, res) {
   } else {
     res.end();
   }
+}
+
+function validateChatRequest(body) {
+  const { messages, userProvidedMetadata } = body || {};
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    devLog("WARNING: No messages received from client");
+    return { status: 400, error: "No messages provided" };
+  }
+
+  if (messages.length > MAX_MESSAGES) {
+    return { status: 413, error: "Too many chat messages" };
+  }
+
+  if (
+    userProvidedMetadata != null &&
+    typeof userProvidedMetadata !== "string"
+  ) {
+    return { status: 400, error: "Invalid chat metadata" };
+  }
+
+  if ((userProvidedMetadata?.length ?? 0) > MAX_METADATA_CHARS) {
+    return { status: 413, error: "Chat metadata is too large" };
+  }
+
+  let totalChars = 0;
+  const sanitizedMessages = [];
+
+  for (const message of messages) {
+    if (!message || typeof message !== "object") {
+      return { status: 400, error: "Invalid chat message" };
+    }
+
+    if (!ALLOWED_CLIENT_ROLES.has(message.role)) {
+      return { status: 400, error: "Invalid chat message role" };
+    }
+
+    const text = getMessageText(message);
+    const textLength = text.length;
+    if (textLength > MAX_MESSAGE_CHARS) {
+      return { status: 413, error: "Chat message is too large" };
+    }
+
+    totalChars += textLength;
+    if (totalChars > MAX_TOTAL_MESSAGE_CHARS) {
+      return { status: 413, error: "Chat request is too large" };
+    }
+
+    if (textLength > 0) {
+      sanitizedMessages.push({
+        id:
+          typeof message.id === "string"
+            ? message.id.slice(0, 120)
+            : `message-${sanitizedMessages.length}`,
+        role: message.role,
+        parts: [{ type: "text", text }],
+      });
+    }
+  }
+
+  if (sanitizedMessages.length === 0) {
+    return { status: 400, error: "No message text provided" };
+  }
+
+  return {
+    messages: sanitizedMessages,
+    userProvidedMetadata: userProvidedMetadata || "",
+  };
+}
+
+function getMessageText(message) {
+  if (typeof message.content === "string") {
+    return message.content;
+  }
+
+  if (typeof message.text === "string") {
+    return message.text;
+  }
+
+  if (Array.isArray(message.parts)) {
+    return message.parts.reduce((text, part) => {
+      if (part?.type === "text" && typeof part.text === "string") {
+        return `${text}${part.text}`;
+      }
+      return text;
+    }, "");
+  }
+
+  return "";
 }
 
 function buildTemporalContextPrompt() {

@@ -7,7 +7,11 @@ import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { AI_REVIEW_PROMPTS } from "@/lib/ai-review-prompts";
+import {
+  AI_REVIEW_PROMPTS,
+  clearAiAssistantPrompt,
+  readAiAssistantPrompt,
+} from "@/lib/ai-review-prompts";
 import {
   AI_CHAT_ANON_WARN_AT_REMAINING,
   AI_CHAT_AUTH_WARN_AT_REMAINING,
@@ -490,6 +494,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   const [isChatQuotaReady, setIsChatQuotaReady] = useState(false);
   const [isChatHydrated, setIsChatHydrated] = useState(false);
   const pendingAiPromptRef = useRef(null);
+  const pendingAiPromptKeyRef = useRef(null);
   const consumedAiPromptRef = useRef(null);
 
   const applyQuotaSnapshot = useCallback((nextQuota, options = {}) => {
@@ -603,9 +608,12 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   const isAnonymousQuotaBlocked =
     isChatBlocked && chatQuota?.tier === "anonymous";
   const aiPromptQuery = router.query?.aiPrompt;
+  const aiPromptKeyQuery = router.query?.aiPromptKey;
   const shouldResetChatForPrompt = router.query?.resetChat === "1";
-  const queryPrompt =
+  const legacyQueryPrompt =
     typeof aiPromptQuery === "string" ? aiPromptQuery.trim() : "";
+  const queryPromptKey =
+    typeof aiPromptKeyQuery === "string" ? aiPromptKeyQuery.trim() : "";
 
   const { messages, setMessages, sendMessage, status, stop, regenerate } =
     useChat({
@@ -646,16 +654,36 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   };
 
   useEffect(() => {
-    if (!router.isReady || !queryPrompt) return;
-    if (consumedAiPromptRef.current === queryPrompt) return;
+    if (!router.isReady) return;
+
+    let nextPrompt = legacyQueryPrompt;
+    let nextPromptKey = null;
+
+    if (!nextPrompt && queryPromptKey) {
+      nextPrompt = readAiAssistantPrompt(queryPromptKey).trim();
+      nextPromptKey = queryPromptKey;
+    }
+
+    if (!nextPrompt) return;
+
+    const consumedMarker = nextPromptKey || nextPrompt;
+    if (consumedAiPromptRef.current === consumedMarker) return;
+
     if (shouldResetChatForPrompt) {
       try {
         sessionStorage.removeItem("chat:/ai");
       } catch {}
       setMessages([]);
     }
-    pendingAiPromptRef.current = queryPrompt;
-  }, [queryPrompt, router.isReady, setMessages, shouldResetChatForPrompt]);
+    pendingAiPromptRef.current = nextPrompt;
+    pendingAiPromptKeyRef.current = nextPromptKey;
+  }, [
+    legacyQueryPrompt,
+    queryPromptKey,
+    router.isReady,
+    setMessages,
+    shouldResetChatForPrompt,
+  ]);
 
   // Hydrate once on mount (client only)
   useEffect(() => {
@@ -689,9 +717,14 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       return;
     }
 
-    consumedAiPromptRef.current = pendingPrompt;
+    const pendingPromptKey = pendingAiPromptKeyRef.current;
+    consumedAiPromptRef.current = pendingPromptKey || pendingPrompt;
     pendingAiPromptRef.current = null;
+    pendingAiPromptKeyRef.current = null;
     sendMessageWithMetadata(pendingPrompt);
+    if (pendingPromptKey) {
+      clearAiAssistantPrompt(pendingPromptKey);
+    }
   }, [isChatHydrated, isChatUnavailable, sendMessageWithMetadata, status]);
 
   // devLog(messages);

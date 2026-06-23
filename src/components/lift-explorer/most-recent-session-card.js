@@ -30,8 +30,9 @@ import {
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import {
-  buildAiAssistantPromptHref,
+  buildAiAssistantPromptLink,
   buildLiftRecentSessionsReviewPrompt,
+  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 
 const RECENT_SESSIONS_COUNT = 3;
@@ -176,7 +177,7 @@ export function MostRecentSessionCard({
     () => recentSessions.slice(0, visibleCount),
     [recentSessions, visibleCount],
   );
-  const aiReviewHref = useMemo(() => {
+  const aiReviewLink = useMemo(() => {
     if (!liftType || visibleRecentSessions.length === 0) return null;
     const newestSession = visibleRecentSessions[0];
     const oldestSession =
@@ -186,7 +187,7 @@ export function MostRecentSessionCard({
       isMetric,
     );
 
-    return buildAiAssistantPromptHref(
+    return buildAiAssistantPromptLink(
       buildLiftRecentSessionsReviewPrompt({
         liftType,
         startDate: oldestSession?.sessionDate,
@@ -243,14 +244,17 @@ export function MostRecentSessionCard({
                 {isDemoMode && <DemoModeBadge size="sm" />}
                 {titlePrefix}
               </CardTitle>
-              {aiReviewHref && (
+              {aiReviewLink && (
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
                   className="h-8 shrink-0 gap-1.5 px-2.5"
                 >
-                  <Link href={aiReviewHref}>
+                  <Link
+                    href={aiReviewLink.href}
+                    onClick={() => stashAiAssistantPrompt(aiReviewLink)}
+                  >
                     <Bot className="h-4 w-4" />
                     <span className="hidden sm:inline">AI review</span>
                   </Link>

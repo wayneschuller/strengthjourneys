@@ -52,8 +52,9 @@ import {
   getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
 import {
-  buildAiAssistantPromptHref,
+  buildAiAssistantPromptLink,
   buildWeeklyReviewPrompt,
+  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
@@ -556,9 +557,9 @@ export function TheWeekInIronCard({
   const viewNextWeek = () => {
     setWeekOffset((prev) => Math.max(0, prev - 1));
   };
-  const aiReviewHref = useMemo(
+  const aiReviewLink = useMemo(
     () =>
-      buildAiAssistantPromptHref(
+      buildAiAssistantPromptLink(
         buildWeeklyReviewPrompt({
           startDate: boundaries.mondayStr,
           endDate: boundaries.effectiveEnd,
@@ -620,7 +621,10 @@ export function TheWeekInIronCard({
                 size="sm"
                 className="h-8 gap-1.5 px-2.5"
               >
-                <Link href={aiReviewHref}>
+                <Link
+                  href={aiReviewLink.href}
+                  onClick={() => stashAiAssistantPrompt(aiReviewLink)}
+                >
                   <Bot className="h-4 w-4" />
                   <span className="hidden sm:inline">AI review</span>
                 </Link>

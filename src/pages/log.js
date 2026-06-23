@@ -19,8 +19,9 @@ import { CELEBRATION_KEYFRAMES } from "@/lib/celebration";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import {
-  buildAiAssistantPromptHref,
+  buildAiAssistantPromptLink,
   buildLogSessionReviewPrompt,
+  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -303,14 +304,14 @@ export default function LogSessionPage({
       }),
     [sessionDate, sessionLiftsWithPending, sessionTonnageLookup],
   );
-  const aiSessionReviewHref = useMemo(() => {
+  const aiSessionReviewLink = useMemo(() => {
     const sessionSummaries = buildLogSessionPromptSummaries({
       sessionLiftsWithPending,
       isMetric,
     });
     if (sessionSummaries.length === 0) return null;
 
-    return buildAiAssistantPromptHref(
+    return buildAiAssistantPromptLink(
       buildLogSessionReviewPrompt({
         sessionDate,
         sessionSummaries,
@@ -657,7 +658,7 @@ export default function LogSessionPage({
                     />
                   )}
 
-                  {aiSessionReviewHref && (
+                  {aiSessionReviewLink && (
                     <div>
                       <Button
                         asChild
@@ -665,7 +666,12 @@ export default function LogSessionPage({
                         size="sm"
                         className="w-full gap-2"
                       >
-                        <Link href={aiSessionReviewHref}>
+                        <Link
+                          href={aiSessionReviewLink.href}
+                          onClick={() =>
+                            stashAiAssistantPrompt(aiSessionReviewLink)
+                          }
+                        >
                           <Bot className="h-4 w-4" />
                           <span>AI session feedback</span>
                         </Link>

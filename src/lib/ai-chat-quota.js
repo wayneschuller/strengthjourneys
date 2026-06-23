@@ -6,12 +6,13 @@
  * limits cannot be bypassed by trimming the client message array.
  */
 
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { kv } from "@vercel/kv";
 import { devLog } from "@/lib/processing-utils";
 
 export const AI_CHAT_ANON_COOKIE = "sj_ai_anon";
 export const AI_CHAT_ANON_LIMIT = 50;
+export const AI_CHAT_ANON_IP_LIMIT = 150;
 export const AI_CHAT_ANON_WARN_AT_REMAINING = 10;
 export const AI_CHAT_AUTH_DAILY_LIMIT = 100;
 export const AI_CHAT_AUTH_WARN_AT_REMAINING = 15;
@@ -92,6 +93,40 @@ async function incrementUsage(kvKey, ttlSeconds) {
   return used;
 }
 
+function getForwardedIp(req) {
+  const forwardedFor =
+    req.headers["x-vercel-forwarded-for"] || req.headers["x-forwarded-for"];
+  const firstForwardedIp = Array.isArray(forwardedFor)
+    ? forwardedFor[0]
+    : forwardedFor?.split(",")[0];
+
+  return firstForwardedIp?.trim() || req.socket?.remoteAddress || "unknown";
+}
+
+function hashRateLimitIdentity(value) {
+  const salt =
+    process.env.AI_RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET || "";
+  return createHash("sha256")
+    .update(`${salt}:${value}`)
+    .digest("hex")
+    .slice(0, 32);
+}
+
+function mergeAnonymousQuota(cookieQuota, ipUsed) {
+  const ipRemaining = Math.max(0, AI_CHAT_ANON_IP_LIMIT - (Number(ipUsed) || 0));
+  const remaining = Math.min(cookieQuota.remaining, ipRemaining);
+  const used = Math.max(cookieQuota.used, AI_CHAT_ANON_LIMIT - remaining);
+
+  return {
+    ...cookieQuota,
+    used,
+    remaining,
+    warn: remaining > 0 && remaining <= AI_CHAT_ANON_WARN_AT_REMAINING,
+    blocked: remaining <= 0,
+    code: remaining <= 0 ? "SIGN_IN_REQUIRED" : null,
+  };
+}
+
 /**
  * Reads or reserves one chat turn against the caller's quota bucket.
  * @param {{ req: import("http").IncomingMessage, res: import("http").ServerResponse, session: object|null, increment?: boolean }} params
@@ -138,31 +173,39 @@ export async function resolveAiChatQuota({
       appendAnonCookie(res, anonId);
     }
 
-    const kvKey = `sj:ai:anon:${anonId}:${getUtcDateKey()}`;
+    const dateKey = getUtcDateKey();
+    const kvKey = `sj:ai:anon:${anonId}:${dateKey}`;
+    const ipHash = hashRateLimitIdentity(getForwardedIp(req));
+    const ipKvKey = `sj:ai:anon-ip:${ipHash}:${dateKey}`;
     const current = await readUsage(kvKey);
-
-    if (increment) {
-      if (current >= AI_CHAT_ANON_LIMIT) {
-        return buildAiChatQuota({
-          tier: "anonymous",
-          limit: AI_CHAT_ANON_LIMIT,
-          used: current,
-        });
-      }
-
-      const used = await incrementUsage(kvKey, ANON_USAGE_TTL_SECONDS);
-      return buildAiChatQuota({
-        tier: "anonymous",
-        limit: AI_CHAT_ANON_LIMIT,
-        used,
-      });
-    }
-
-    return buildAiChatQuota({
+    const currentIp = await readUsage(ipKvKey);
+    const cookieQuota = buildAiChatQuota({
       tier: "anonymous",
       limit: AI_CHAT_ANON_LIMIT,
       used: current,
     });
+
+    if (increment) {
+      if (current >= AI_CHAT_ANON_LIMIT || currentIp >= AI_CHAT_ANON_IP_LIMIT) {
+        return mergeAnonymousQuota(cookieQuota, currentIp);
+      }
+
+      const [used, usedIp] = await Promise.all([
+        incrementUsage(kvKey, ANON_USAGE_TTL_SECONDS),
+        incrementUsage(ipKvKey, ANON_USAGE_TTL_SECONDS),
+      ]);
+
+      return mergeAnonymousQuota(
+        buildAiChatQuota({
+          tier: "anonymous",
+          limit: AI_CHAT_ANON_LIMIT,
+          used,
+        }),
+        usedIp,
+      );
+    }
+
+    return mergeAnonymousQuota(cookieQuota, currentIp);
   } catch (error) {
     devLog("AI chat quota KV error:", error);
 

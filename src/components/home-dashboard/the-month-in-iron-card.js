@@ -49,8 +49,9 @@ import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { gaTrackCoffeeNudgeClick } from "@/lib/analytics";
 import {
-  buildAiAssistantPromptHref,
+  buildAiAssistantPromptLink,
   buildMonthlyReviewPrompt,
+  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 
 // ─── Main component ────────────────────────────────────────────────────────
@@ -310,9 +311,9 @@ export function TheMonthInIronCard({
   const viewNextMonth = () => {
     setMonthOffset((prev) => Math.max(0, prev - 1));
   };
-  const aiReviewHref = useMemo(
+  const aiReviewLink = useMemo(
     () =>
-      buildAiAssistantPromptHref(
+      buildAiAssistantPromptLink(
         buildMonthlyReviewPrompt({
           startDate: boundaries.currentMonthStart,
           endDate: boundaries.todayStr,
@@ -370,7 +371,10 @@ export function TheMonthInIronCard({
               size="sm"
               className="h-8 gap-1.5 px-2.5"
             >
-              <Link href={aiReviewHref}>
+              <Link
+                href={aiReviewLink.href}
+                onClick={() => stashAiAssistantPrompt(aiReviewLink)}
+              >
                 <Bot className="h-4 w-4" />
                 <span className="hidden sm:inline">AI review</span>
               </Link>

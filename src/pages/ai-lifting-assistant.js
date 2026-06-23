@@ -686,13 +686,19 @@ function AILiftingAssistantCard({
   const [isChatQuotaReady, setIsChatQuotaReady] = useState(false);
   const [isChatHydrated, setIsChatHydrated] = useState(false);
   const [suggestionDateKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const suggestionRotationKey = [
+    suggestionDateKey,
+    hasSharedBioData ? "bio" : "no-bio",
+    hasSharedTrainingData ? "training" : "no-training",
+    hasSharedFullTrainingData ? "full-training" : "partial-training",
+  ].join("|");
   const pendingAiPromptRef = useRef(null);
   const pendingAiPromptKeyRef = useRef(null);
   const consumedAiPromptRef = useRef(null);
   const suggestedMessages = useMemo(
     () =>
       getAssistantSuggestions({
-        dateKey: suggestionDateKey,
+        dateKey: suggestionRotationKey,
         hasSharedBioData,
         hasSharedFullTrainingData,
         hasSharedTrainingData,
@@ -702,7 +708,7 @@ function AILiftingAssistantCard({
       hasSharedBioData,
       hasSharedFullTrainingData,
       hasSharedTrainingData,
-      suggestionDateKey,
+      suggestionRotationKey,
       suggestionContext,
     ],
   );

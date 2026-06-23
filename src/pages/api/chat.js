@@ -1,7 +1,19 @@
+/**
+ * AI lifting assistant chat API. Streams model output for the public AI page.
+ *
+ * Anonymous users get a limited allowance tracked via cookie + KV; signed-in
+ * users get a higher daily cap. Quota is enforced server-side before any model
+ * call so it cannot be bypassed from the client.
+ */
+
 import { openai } from "@ai-sdk/openai";
 import { xai } from "@ai-sdk/xai";
 import { streamText, convertToModelMessages } from "ai";
 import { devLog } from "@/lib/processing-utils";
+import {
+  appendAiChatQuotaHeaders,
+  resolveAiChatQuota,
+} from "@/lib/ai-chat-quota";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
@@ -9,20 +21,52 @@ const SYSTEM_PROMPT =
   "You are a strength coach answering questions only about barbell exercises with an emphasis on getting strong." +
   "Emphasise safety and take precautions if user indicates any health concerns.";
 
+const ALLOWED_EXACT_HOSTS = [
+  "localhost:3000",
+  "127.0.0.1:3000",
+];
+
+const ALLOWED_HOST_SUFFIXES = ["strengthjourneys.xyz"];
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+
+  try {
+    const { host, hostname } = new URL(origin);
+
+    return (
+      ALLOWED_EXACT_HOSTS.includes(host) ||
+      ALLOWED_HOST_SUFFIXES.some(
+        (suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`),
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
-  // Only handle POST requests
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  // Parallelize independent operations: session fetch and request body parsing
+  if (process.env.NODE_ENV === "production" && !isAllowedOrigin(req.headers.origin)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
   const [session, body] = await Promise.all([
     getServerSession(req, res, authOptions),
-    Promise.resolve(req.body), // Pages router already parses JSON body
+    Promise.resolve(req.body),
   ]);
 
-  let isAdvancedModel = false;
+  const { messages, userProvidedMetadata } = body || {};
+  const userMessages = Array.isArray(messages) ? messages : [];
+
+  if (userMessages.length === 0) {
+    devLog("WARNING: No messages received from client");
+    return res.status(400).json({ error: "No messages provided" });
+  }
 
   const useXai = !!process.env.XAI_API_KEY;
 
@@ -30,17 +74,32 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "No AI API key is set" });
   }
 
-  const paidUsers = process.env.SJ_PAID_USERS;
-  if (paidUsers) {
-    isAdvancedModel = paidUsers.includes(session?.user?.email);
+  let quota;
+  try {
+    quota = await resolveAiChatQuota({
+      req,
+      res,
+      session,
+      increment: true,
+    });
+  } catch {
+    return res.status(503).json({ error: "Quota service unavailable" });
   }
 
-  const { messages, userProvidedMetadata } = body;
+  appendAiChatQuotaHeaders(res, quota);
 
-  // Initialize the system messages array (already in ModelMessage format)
+  if (quota.blocked) {
+    return res.status(403).json({
+      error:
+        quota.code === "SIGN_IN_REQUIRED"
+          ? "Sign in to continue chatting."
+          : "AI quota exhausted. Try again tomorrow.",
+      ...quota,
+    });
+  }
+
   let systemMessages = [{ role: "system", content: SYSTEM_PROMPT }];
 
-  // Check for the EXTENDED_AI_PROMPT environment variable
   const envAIPrompt = process.env.EXTENDED_AI_PROMPT;
   if (envAIPrompt) {
     let decodedPrompt = envAIPrompt;
@@ -65,7 +124,6 @@ export default async function handler(req, res) {
     systemMessages.push({ role: "system", content: userProvidedMetadata });
   }
 
-  // FIXME: we could put this client side (and make optional?)
   if (session?.user?.name) {
     let firstName = null;
     firstName = session.user.name.split(" ")[0] || session.user.name;
@@ -79,20 +137,9 @@ export default async function handler(req, res) {
   if (useXai) {
     AI_model = xai("grok-3-mini");
   } else {
-    // 2026-03-15: GPT-4.1 is the default here for stronger formatting and lower-latency chat quality.
     AI_model = openai("gpt-4.1");
   }
 
-  // Convert UI messages (from client) to model messages, then combine with system messages
-  // In AI SDK v6, convertToModelMessages is async and must be awaited
-  const userMessages = Array.isArray(messages) ? messages : [];
-
-  if (userMessages.length === 0) {
-    devLog("WARNING: No messages received from client");
-    return res.status(400).json({ error: "No messages provided" });
-  }
-
-  // convertToModelMessages handles both legacy (content) and new (parts) formats
   const convertedUserMessages = await convertToModelMessages(userMessages);
 
   const modelMessages = [...systemMessages, ...convertedUserMessages];
@@ -100,32 +147,25 @@ export default async function handler(req, res) {
   devLog(`AI model: ${AI_model.modelId}`);
 
   const result = await streamText({
-    // model: openai("gpt-4o-mini"),
-    // model: openai("gpt-4o"),
-    // model: openai("gpt-5"),
-    // max_completion_tokens: 5000, // GPT 5
     model: AI_model,
     messages: modelMessages,
   });
 
-  // Convert the Response from toUIMessageStreamResponse() to work with pages router
   const response = result.toUIMessageStreamResponse({
-    originalMessages: userMessages, // Required to prevent duplicate messages (use sanitized array)
+    originalMessages: userMessages,
     sendSources: true,
     sendReasoning: true,
   });
 
-  // Copy headers from the Response to the pages router res
   response.headers.forEach((value, key) => {
     res.setHeader(key, value);
   });
 
-  // Set status code
+  appendAiChatQuotaHeaders(res, quota);
+
   res.status(response.status);
 
-  // Pipe the response body to the pages router res
   if (response.body) {
-    // Convert Web ReadableStream to Node.js stream and pipe to res
     const { Readable } = require("stream");
     const nodeStream = Readable.fromWeb(response.body);
     nodeStream.pipe(res);

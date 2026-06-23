@@ -1,10 +1,16 @@
 
 import { format } from "date-fns";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
+import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import {
+  AI_CHAT_ANON_WARN_AT_REMAINING,
+  AI_CHAT_AUTH_WARN_AT_REMAINING,
+  parseAiChatQuotaFromHeaders,
+} from "@/lib/ai-chat-quota";
 import {
   devLog,
   getAnalyzedSessionLifts,
@@ -43,6 +49,7 @@ import {
   PromptInputTextarea,
   PromptInputFooter,
   PromptInputSubmit,
+  PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 
 import {
@@ -69,6 +76,10 @@ import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
+import {
+  ChatQuotaLimitNotice,
+  ChatQuotaMeter,
+} from "@/components/ai-assistant/chat-quota-meter";
 import { processConsistency } from "@/lib/consistency";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 
@@ -469,16 +480,136 @@ function CopyButton({ text, ...props }) {
  *   to inject into the AI system prompt via the request body on each message send.
  */
 function AILiftingAssistantCard({ userProvidedProfileData }) {
+  const { status: authStatus } = useSession();
+  const [chatQuota, setChatQuota] = useState(null);
+  const [isChatQuotaReady, setIsChatQuotaReady] = useState(false);
+
+  const applyQuotaSnapshot = useCallback((nextQuota, options = {}) => {
+    if (!nextQuota) return;
+
+    setChatQuota((previousQuota) => {
+      if (
+        !options.allowRollback &&
+        previousQuota?.tier === nextQuota.tier &&
+        Number(nextQuota.used) < Number(previousQuota.used)
+      ) {
+        return previousQuota;
+      }
+
+      return nextQuota;
+    });
+    setIsChatQuotaReady(true);
+  }, []);
+
+  const reserveQuotaLocally = useCallback(() => {
+    setChatQuota((previousQuota) => {
+      if (!previousQuota || previousQuota.blocked) return previousQuota;
+
+      const used = Math.min(previousQuota.limit, previousQuota.used + 1);
+      const remaining = Math.max(0, previousQuota.limit - used);
+      const warnAtRemaining =
+        previousQuota.tier === "anonymous"
+          ? AI_CHAT_ANON_WARN_AT_REMAINING
+          : AI_CHAT_AUTH_WARN_AT_REMAINING;
+
+      return {
+        ...previousQuota,
+        used,
+        remaining,
+        warn: previousQuota.warn || remaining <= warnAtRemaining,
+        blocked: remaining <= 0,
+        code:
+          remaining <= 0
+            ? previousQuota.tier === "anonymous"
+              ? "SIGN_IN_REQUIRED"
+              : "DAILY_LIMIT_REACHED"
+            : previousQuota.code,
+      };
+    });
+  }, []);
+
+  const loadChatQuota = useCallback(async (options = {}) => {
+    try {
+      const response = await fetch("/api/chat/quota");
+      if (!response.ok) return;
+      const data = await response.json();
+      applyQuotaSnapshot(data, options);
+    } catch (error) {
+      devLog("Failed to load AI chat quota", error);
+    }
+  }, [applyQuotaSnapshot]);
+
+  const chatFetch = useCallback(
+    async (input, init) => {
+      const response = await fetch(input, init);
+      const headerQuota = parseAiChatQuotaFromHeaders(response.headers);
+
+      if (headerQuota) {
+        applyQuotaSnapshot(headerQuota);
+      } else if (!response.ok && response.status === 403) {
+        try {
+          const data = await response.clone().json();
+          if (data?.tier) {
+            applyQuotaSnapshot(data);
+          }
+        } catch {
+          // Ignore malformed quota error payloads.
+        }
+      }
+
+      return response;
+    },
+    [applyQuotaSnapshot],
+  );
+
+  useEffect(() => {
+    if (authStatus === "loading") return undefined;
+
+    let cancelled = false;
+    setIsChatQuotaReady(false);
+
+    (async () => {
+      try {
+        const response = await fetch("/api/chat/quota");
+        if (!response.ok || cancelled) return;
+        const data = await response.json();
+        if (!cancelled) {
+          applyQuotaSnapshot(data);
+        }
+      } catch (error) {
+        devLog("Failed to load AI chat quota", error);
+      } finally {
+        if (!cancelled) {
+          setIsChatQuotaReady(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authStatus, applyQuotaSnapshot]);
+
+  const isChatBlocked = Boolean(chatQuota?.blocked);
+  const isChatUnavailable = !isChatQuotaReady || isChatBlocked;
+  const isAnonymousQuotaBlocked =
+    isChatBlocked && chatQuota?.tier === "anonymous";
+
   const { messages, setMessages, sendMessage, status, stop, regenerate } =
     useChat({
-      api: "/api/chat", // Explicitly set the pages router endpoint
+      api: "/api/chat",
+      fetch: chatFetch,
       onError: (error) => {
         console.error("(useChat() error: ", error);
+        loadChatQuota({ allowRollback: true });
       },
     });
 
   // Helper to send messages with fresh metadata (per AI SDK v6 docs for ChatRequestOptions.body)
   const sendMessageWithMetadata = (message) => {
+    if (isChatUnavailable) return;
+
+    reserveQuotaLocally();
     sendMessage(typeof message === "string" ? { text: message } : message, {
       body: {
         userProvidedMetadata: userProvidedProfileData,
@@ -490,7 +621,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   const handleSubmit = (message) => {
     const hasText = Boolean(message.text && message.text.trim());
 
-    if (!hasText) {
+    if (!hasText || isChatUnavailable) {
       return;
     }
 
@@ -627,6 +758,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                       <Suggestion
                         key={message}
                         suggestion={message}
+                        disabled={isChatUnavailable}
                         onClick={(suggestion) => {
                           sendMessageWithMetadata(suggestion);
                         }}
@@ -705,8 +837,14 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                             textContent && (
                               <MessageActions>
                                 <MessageAction
-                                  onClick={() => regenerate()}
+                                  onClick={() => {
+                                    if (!isChatUnavailable) {
+                                      reserveQuotaLocally();
+                                      regenerate();
+                                    }
+                                  }}
                                   label="Retry"
+                                  disabled={isChatUnavailable}
                                 >
                                   <RefreshCcwIcon className="size-3" />
                                 </MessageAction>
@@ -728,12 +866,35 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       </CardContent>
       <CardFooter>
         <div className="flex w-full flex-col gap-3">
-          <PromptInput onSubmit={handleSubmit}>
+          <ChatQuotaLimitNotice quota={chatQuota} />
+          <PromptInput
+            className="[&_[data-slot=input-group]]:border-border/60 [&_[data-slot=input-group]]:shadow-none"
+            onSubmit={handleSubmit}
+          >
             <PromptInputBody>
-              <PromptInputTextarea placeholder="Type a message..." />
+              <PromptInputTextarea
+                className="disabled:opacity-70"
+                placeholder={
+                  isChatBlocked
+                    ? isAnonymousQuotaBlocked
+                      ? "Sign in to continue chatting..."
+                      : "AI quota exhausted."
+                    : !isChatQuotaReady
+                      ? "Checking message quota..."
+                    : "Type a message..."
+                }
+                disabled={isChatUnavailable}
+              />
             </PromptInputBody>
             <PromptInputFooter>
-              <PromptInputSubmit status={status} onStop={stop} />
+              <PromptInputTools>
+                <ChatQuotaMeter quota={chatQuota} />
+              </PromptInputTools>
+              <PromptInputSubmit
+                status={status}
+                onStop={stop}
+                disabled={isChatUnavailable}
+              />
             </PromptInputFooter>
           </PromptInput>
           <MiniFeedbackWidget

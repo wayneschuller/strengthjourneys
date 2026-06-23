@@ -76,6 +76,24 @@ export function buildLiftRecentSessionsReviewPrompt({
   return `Review ${sessionText}${windowText}. Use the visible session data below as the source of truth for these sessions; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}\n\nLook at load selection, rep ranges, estimated strength, PRs, fatigue signals, and what I should do next for ${liftName}. Be specific and practical.`;
 }
 
+export function buildLogSessionReviewPrompt({
+  sessionDate,
+  sessionSummaries,
+  tonnageSummaries,
+}) {
+  const dateText = sessionDate ? ` on ${sessionDate}` : "";
+  const visibleSessionText =
+    Array.isArray(sessionSummaries) && sessionSummaries.length > 0
+      ? `\n\nVisible session data:\n${sessionSummaries.join("\n")}`
+      : "";
+  const visibleTonnageText =
+    Array.isArray(tonnageSummaries) && tonnageSummaries.length > 0
+      ? `\n\nVisible tonnage context:\n${tonnageSummaries.join("\n")}`
+      : "";
+
+  return `Review my lifting session${dateText}. Use the visible log data below as the source of truth for this session review; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}${visibleTonnageText}\n\nLook at lift selection, load jumps, top sets, volume, PRs, notes, fatigue signals, and what I should adjust next time. Be specific, practical, and concise.`;
+}
+
 export function buildAiAssistantPromptHref(prompt) {
   const query = new URLSearchParams({ aiPrompt: prompt });
   return `${AI_ASSISTANT_PATH}?${query.toString()}`;

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
+import { Bot } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIsClient } from "usehooks-ts";
 
@@ -17,8 +18,14 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { CELEBRATION_KEYFRAMES } from "@/lib/celebration";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
+import {
+  buildAiAssistantPromptHref,
+  buildLogSessionReviewPrompt,
+} from "@/lib/ai-review-prompts";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
 import { InspirationCard } from "@/components/log/inspiration-card";
 import { AddLiftButton } from "@/components/log/add-controls";
 import { LogSessionSkeleton } from "@/components/log/session-summary";
@@ -296,6 +303,23 @@ export default function LogSessionPage({
       }),
     [sessionDate, sessionLiftsWithPending, sessionTonnageLookup],
   );
+  const aiSessionReviewHref = useMemo(() => {
+    const sessionSummaries = buildLogSessionPromptSummaries({
+      sessionLiftsWithPending,
+      isMetric,
+    });
+    if (sessionSummaries.length === 0) return null;
+
+    return buildAiAssistantPromptHref(
+      buildLogSessionReviewPrompt({
+        sessionDate,
+        sessionSummaries,
+        tonnageSummaries: buildLogSessionTonnagePromptSummaries(
+          perLiftTonnageStats,
+        ),
+      }),
+    );
+  }, [isMetric, perLiftTonnageStats, sessionDate, sessionLiftsWithPending]);
   const isToday = sessionDate === todayIso;
   const effectiveSsid = sheetInfo?.ssid ?? persistedSheetInfo?.ssid ?? null;
   const { dashboardStage, sessionCount } = useMemo(
@@ -557,6 +581,22 @@ export default function LogSessionPage({
                 todayIso={todayIso}
               />
 
+              {!showSessionBootstrap && hasSession && aiSessionReviewHref && (
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2.5"
+                  >
+                    <Link href={aiSessionReviewHref}>
+                      <Bot className="h-4 w-4" />
+                      <span>AI review</span>
+                    </Link>
+                  </Button>
+                </div>
+              )}
+
               {showSessionBootstrap && <LogSessionSkeleton />}
 
               {!showSessionBootstrap && !isLoading && !hasSession && (
@@ -671,6 +711,75 @@ export async function getStaticProps() {
       staticContent: LOG_PAGE_STATIC_CONTENT,
     },
   };
+}
+
+function buildLogSessionPromptSummaries({ sessionLiftsWithPending, isMetric }) {
+  return Object.entries(sessionLiftsWithPending)
+    .map(([liftType, sets]) => {
+      const visibleSets = Array.isArray(sets)
+        ? sets.filter(
+            (set) =>
+              (set.reps ?? 0) > 0 &&
+              (set.weight ?? 0) > 0 &&
+              !set._pending,
+          )
+        : [];
+      if (visibleSets.length === 0) return null;
+
+      const setLines = visibleSets.map((set) => {
+        const { value, unit } = getDisplayWeight(set, isMetric);
+        const prLabel = set.isHistoricalPR ? " PR" : "";
+        return `${set.reps}@${formatPromptNumber(value)}${unit}${prLabel}`;
+      });
+      const noteLines = visibleSets
+        .map((set) => normalizePromptNote(set.notes))
+        .filter(Boolean)
+        .slice(0, 4);
+      const notesText =
+        noteLines.length > 0 ? `; notes: ${noteLines.join(" | ")}` : "";
+
+      return `- ${liftType}: ${setLines.join(", ")}${notesText}`;
+    })
+    .filter(Boolean);
+}
+
+function buildLogSessionTonnagePromptSummaries(perLiftTonnageStats) {
+  if (!perLiftTonnageStats) return [];
+
+  return Object.entries(perLiftTonnageStats)
+    .map(([liftType, stats]) => {
+      if (!stats?.currentLiftTonnage || stats.currentLiftTonnage <= 0) {
+        return null;
+      }
+
+      const unit = stats.unitType ?? "";
+      const current = formatPromptNumber(stats.currentLiftTonnage);
+      if (!stats.shouldShowComparison || !Number.isFinite(stats.pctDiff)) {
+        return `- ${liftType}: tonnage=${current}${unit}`;
+      }
+
+      const pct = Math.round(stats.pctDiff);
+      const sign = pct > 0 ? "+" : "";
+      const sessionCountText =
+        stats.sessionCount > 0 ? ` across ${stats.sessionCount} prior sessions` : "";
+
+      return `- ${liftType}: tonnage=${current}${unit} (${sign}${pct}% vs average${sessionCountText})`;
+    })
+    .filter(Boolean);
+}
+
+function normalizePromptNote(note) {
+  if (typeof note !== "string") return "";
+  const compact = note.replace(/\s+/g, " ").trim();
+  if (!compact) return "";
+  return compact.length > 120 ? `${compact.slice(0, 117).trim()}...` : compact;
+}
+
+function formatPromptNumber(value) {
+  if (!Number.isFinite(value)) return "0";
+  return Math.abs(value - Math.round(value)) < 0.05
+    ? String(Math.round(value))
+    : value.toFixed(1);
 }
 
 function LogStaticContent({ content }) {

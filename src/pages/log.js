@@ -9,7 +9,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
-import { Bot } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIsClient } from "usehooks-ts";
 
@@ -25,7 +24,6 @@ import {
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
 import { InspirationCard } from "@/components/log/inspiration-card";
 import { AddLiftButton } from "@/components/log/add-controls";
 import { LogSessionSkeleton } from "@/components/log/session-summary";
@@ -566,6 +564,7 @@ export default function LogSessionPage({
           <main className="min-w-0">
             <div className="w-full max-w-[56rem]">
               <LogDateNav
+                aiSessionReviewHref={hasSession ? aiSessionReviewHref : null}
                 datePickerOpen={datePickerOpen}
                 isToday={isToday}
                 nextSessionDate={nextSessionDate}
@@ -580,22 +579,6 @@ export default function LogSessionPage({
                 syncState={syncState}
                 todayIso={todayIso}
               />
-
-              {!showSessionBootstrap && hasSession && aiSessionReviewHref && (
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="h-8 gap-1.5 px-2.5"
-                  >
-                    <Link href={aiSessionReviewHref}>
-                      <Bot className="h-4 w-4" />
-                      <span>AI review</span>
-                    </Link>
-                  </Button>
-                </div>
-              )}
 
               {showSessionBootstrap && <LogSessionSkeleton />}
 

@@ -14,6 +14,7 @@ import {
   FileUp,
   TrendingUp,
   TrendingDown,
+  Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -50,6 +51,11 @@ import {
   subtractDaysFromStr,
   getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
+import {
+  buildAiAssistantPromptLink,
+  buildWeeklyReviewPrompt,
+  stashAiAssistantPrompt,
+} from "@/lib/ai-review-prompts";
 
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
 
@@ -398,6 +404,76 @@ function getSessionLiftDetails(entries, isMetric) {
   return liftSummaries;
 }
 
+function buildWeekCardPromptSummary({
+  stats,
+  boundaries,
+  unit,
+  weeklySessionRows,
+  avgTonnage,
+  streakStats,
+}) {
+  const lines = [
+    `range=${boundaries.mondayStr}..${boundaries.effectiveEnd}${boundaries.isCurrentWeek ? " current_week" : " historical_week"}`,
+  ];
+
+  if (!stats) return lines;
+
+  lines.push(
+    `totals=sessions ${stats.sessions.current}, sets ${stats.sets.current}, tonnage ${formatTonnage(stats.tonnage.current, unit)}, PRs ${stats.prs}`,
+  );
+
+  if (stats.sessions.prev > 0 || stats.tonnage.prev > 0) {
+    lines.push(
+      `previous_week=sessions ${stats.sessions.prev}, sets ${stats.sets.prev}, tonnage ${formatTonnage(stats.tonnage.prev, unit)}`,
+    );
+  }
+
+  if (avgTonnage?.avg > 0) {
+    lines.push(
+      `52_week_average_tonnage=${formatTonnage(avgTonnage.avg, avgTonnage.unit)}`,
+    );
+  }
+
+  const activeDays = stats.dayActivity
+    .map((active, index) =>
+      active ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index] : null,
+    )
+    .filter(Boolean);
+  lines.push(
+    `activity_days=${activeDays.length ? activeDays.join(",") : "none"}`,
+  );
+
+  if (stats.liftTypes.length > 0) {
+    const liftMix = stats.liftTypes
+      .map((liftType) => `${liftType}:${stats.liftTypeSets[liftType] ?? 0} sets`)
+      .join("; ");
+    lines.push(`lift_mix=${liftMix}`);
+  }
+
+  if (streakStats) {
+    lines.push(
+      `streak=current ${streakStats.currentStreak ?? 0}, best ${streakStats.bestStreak ?? 0}`,
+    );
+  }
+
+  const sessionLines = weeklySessionRows.map((row) => {
+    const liftDetails = row.liftDetails
+      .map((lift) => {
+        const prText = lift.hasHistoricalPR ? " PR" : "";
+        return `${lift.liftType} ${lift.topSets.join("/")}${prText}`;
+      })
+      .join("; ");
+    return `${row.date}: ${liftDetails || formatLiftSummary([...row.lifts])}`;
+  });
+
+  if (sessionLines.length > 0) {
+    lines.push("visible_sessions:");
+    lines.push(...sessionLines);
+  }
+
+  return lines;
+}
+
 // ─── Main component ────────────────────────────────────────────────────────
 
 export function TheWeekInIronCard({
@@ -481,6 +557,25 @@ export function TheWeekInIronCard({
   const viewNextWeek = () => {
     setWeekOffset((prev) => Math.max(0, prev - 1));
   };
+  const aiReviewLink = useMemo(
+    () =>
+      buildAiAssistantPromptLink(
+        buildWeeklyReviewPrompt({
+          startDate: boundaries.mondayStr,
+          endDate: boundaries.effectiveEnd,
+          isCurrentWeek: boundaries.isCurrentWeek,
+          summaryLines: buildWeekCardPromptSummary({
+            stats,
+            boundaries,
+            unit,
+            weeklySessionRows,
+            avgTonnage,
+            streakStats,
+          }),
+        }),
+      ),
+    [avgTonnage, boundaries, stats, streakStats, unit, weeklySessionRows],
+  );
 
   const hasLoggedSessions = useMemo(
     () => Array.isArray(parsedData) && parsedData.some((e) => !e?.isGoal),
@@ -519,39 +614,55 @@ export function TheWeekInIronCard({
               </CardTitle>
               <CardDescription>{subtitle}</CardDescription>
             </div>
-            <div className="bg-muted/30 flex shrink-0 items-center gap-0.5 rounded-lg border p-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={viewPreviousWeek}
-                    disabled={safeWeekOffset >= maxWeekOffset}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Previous week</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={viewNextWeek}
-                    disabled={safeWeekOffset === 0}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Next week</p>
-                </TooltipContent>
-              </Tooltip>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 px-2.5"
+              >
+                <Link
+                  href={aiReviewLink.href}
+                  onClick={() => stashAiAssistantPrompt(aiReviewLink)}
+                >
+                  <Bot className="h-4 w-4" />
+                  <span className="hidden sm:inline">AI review</span>
+                </Link>
+              </Button>
+              <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={viewPreviousWeek}
+                      disabled={safeWeekOffset >= maxWeekOffset}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Previous week</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={viewNextWeek}
+                      disabled={safeWeekOffset === 0}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Next week</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
           </div>
         </CardHeader>

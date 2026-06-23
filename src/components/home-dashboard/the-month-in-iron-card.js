@@ -13,7 +13,7 @@ import {
 } from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Bot, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,11 @@ import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-setting
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { gaTrackCoffeeNudgeClick } from "@/lib/analytics";
+import {
+  buildAiAssistantPromptLink,
+  buildMonthlyReviewPrompt,
+  stashAiAssistantPrompt,
+} from "@/lib/ai-review-prompts";
 
 // ─── Main component ────────────────────────────────────────────────────────
 
@@ -306,6 +311,34 @@ export function TheMonthInIronCard({
   const viewNextMonth = () => {
     setMonthOffset((prev) => Math.max(0, prev - 1));
   };
+  const aiReviewLink = useMemo(
+    () =>
+      buildAiAssistantPromptLink(
+        buildMonthlyReviewPrompt({
+          startDate: boundaries.currentMonthStart,
+          endDate: boundaries.todayStr,
+          isCurrentMonth: boundaries.isCurrentMonthView,
+          summaryLines: buildMonthCardPromptSummary({
+            stats,
+            strengthLevelStats,
+            strengthSetupRequired,
+            boundaries,
+            unit,
+            checksSummary,
+            verdictHeadline,
+          }),
+        }),
+      ),
+    [
+      boundaries,
+      checksSummary,
+      stats,
+      strengthLevelStats,
+      strengthSetupRequired,
+      unit,
+      verdictHeadline,
+    ],
+  );
 
   if (dataMaturityStage !== "mature") {
     return (
@@ -331,43 +364,59 @@ export function TheMonthInIronCard({
             </CardTitle>
             <CardDescription>{motivationalPhrase}</CardDescription>
           </div>
-          <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={viewPreviousMonth}
-                    disabled={safeMonthOffset >= maxMonthOffset}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Previous month</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={viewNextMonth}
-                    disabled={safeMonthOffset === 0}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Next month</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5"
+            >
+              <Link
+                href={aiReviewLink.href}
+                onClick={() => stashAiAssistantPrompt(aiReviewLink)}
+              >
+                <Bot className="h-4 w-4" />
+                <span className="hidden sm:inline">AI review</span>
+              </Link>
+            </Button>
+            <div className="flex items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={viewPreviousMonth}
+                      disabled={safeMonthOffset >= maxMonthOffset}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Previous month</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={viewNextMonth}
+                      disabled={safeMonthOffset === 0}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Next month</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -1423,6 +1472,95 @@ function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
   }
 
   return { checksMet, checksTotal };
+}
+
+function buildMonthCardPromptSummary({
+  stats,
+  strengthLevelStats,
+  strengthSetupRequired,
+  boundaries,
+  unit,
+  checksSummary,
+  verdictHeadline,
+}) {
+  const lines = [
+    `range=${boundaries.currentMonthStart}..${boundaries.todayStr}${boundaries.isCurrentMonthView ? " current_month" : " historical_month"}`,
+    `comparison_month=${boundaries.prevMonthName} (${boundaries.prevMonthStart}..${boundaries.prevMonthEnd})`,
+  ];
+
+  if (!stats) return lines;
+
+  if (checksSummary) {
+    lines.push(
+      `score=${checksSummary.checksMet}/${checksSummary.checksTotal} green`,
+    );
+  }
+  if (verdictHeadline?.text) {
+    lines.push(`headline=${verdictHeadline.text}`);
+  }
+
+  lines.push(
+    `sessions=current ${stats.sessions.current}, previous ${stats.sessions.last}, previous_same_day ${stats.sessions.lastSameDay}`,
+  );
+  lines.push(
+    `total_tonnage=current ${formatTonnage(stats.tonnage.current, unit)}, previous ${formatTonnage(stats.tonnage.last, unit)}, previous_same_day ${formatTonnage(stats.tonnage.lastSameDay, unit)}`,
+  );
+  lines.push(
+    `big_four_tonnage=current ${formatTonnage(stats.bigFourTonnage.current, unit)}, previous ${formatTonnage(stats.bigFourTonnage.last, unit)}, previous_same_day ${formatTonnage(stats.bigFourTonnage.lastSameDay, unit)}`,
+  );
+
+  const liftRows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
+    const tonnage = stats.bigFourByLift?.[liftType] ?? {
+      current: 0,
+      last: 0,
+      lastSameDay: 0,
+    };
+    const currentTonnage = tonnage.current ?? 0;
+    const lastTonnage = tonnage.last ?? 0;
+    const liftPaceStatus =
+      boundaries.isCurrentMonthView && boundaries.dayOfMonth > 0
+        ? getLiftPaceStatus(
+            currentTonnage,
+            lastTonnage,
+            boundaries.dayOfMonth,
+            boundaries.daysInCurrentMonth,
+          )
+        : "no-data";
+    const tonnageBaseline = lastTonnage === 0;
+    const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
+    const tonnagePassed = tonnageBaseline
+      ? tonnageNewWin
+      : boundaries.isCurrentMonthView
+        ? liftPaceStatus === "ahead" || liftPaceStatus === "on-pace"
+        : passesTonnageThreshold(currentTonnage, lastTonnage);
+    const strength = strengthLevelStats?.[liftType] ?? {
+      current: null,
+      last: null,
+    };
+    const currentStrength = formatPromptStrengthLevel(strength.current);
+    const lastStrength = formatPromptStrengthLevel(strength.last);
+    const strengthStatus = strengthSetupRequired
+      ? "setup_required"
+      : strength.last === null
+        ? strength.current === null
+          ? "no_baseline"
+          : "new_baseline"
+        : isStrengthLevelRegressed(strength.current, strength.last)
+          ? "regressed"
+          : "matched_or_better";
+
+    return `${liftType}: tonnage current ${formatTonnage(currentTonnage, unit)}, previous ${formatTonnage(lastTonnage, unit)}, status ${tonnagePassed ? "green" : "behind"}${liftPaceStatus !== "no-data" ? `/${liftPaceStatus}` : ""}; strength current ${currentStrength}, previous ${lastStrength}, status ${strengthStatus}`;
+  });
+
+  lines.push("big_four_rows:");
+  lines.push(...liftRows);
+
+  return lines;
+}
+
+function formatPromptStrengthLevel(score) {
+  const formatted = formatStrengthLevel(score);
+  return formatted?.label || "none";
 }
 
 function getMonthlyRevealRowCount(stats, strengthLevelStats) {

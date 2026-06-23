@@ -1,5 +1,6 @@
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useReadLocalStorage } from "usehooks-ts";
 import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,19 +12,28 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Bot, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { differenceInDays } from "date-fns";
 import {
   getAnalyzedSessionLifts,
+  getDisplayWeight,
   getSessionDatesContainingLiftType,
 } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
-import { SessionExerciseBlock } from "@/components/home-dashboard/session-exercise-block";
+import {
+  getConsecutiveWorkoutGroups,
+  SessionExerciseBlock,
+} from "@/components/home-dashboard/session-exercise-block";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import {
+  buildAiAssistantPromptLink,
+  buildLiftRecentSessionsReviewPrompt,
+  stashAiAssistantPrompt,
+} from "@/lib/ai-review-prompts";
 
 const RECENT_SESSIONS_COUNT = 3;
 
@@ -163,6 +173,30 @@ export function MostRecentSessionCard({
       highlightDate,
       liftType,
     ]);
+  const visibleRecentSessions = useMemo(
+    () => recentSessions.slice(0, visibleCount),
+    [recentSessions, visibleCount],
+  );
+  const aiReviewLink = useMemo(() => {
+    if (!liftType || visibleRecentSessions.length === 0) return null;
+    const newestSession = visibleRecentSessions[0];
+    const oldestSession =
+      visibleRecentSessions[visibleRecentSessions.length - 1];
+    const sessionSummaries = buildRecentSessionPromptSummaries(
+      visibleRecentSessions,
+      isMetric,
+    );
+
+    return buildAiAssistantPromptLink(
+      buildLiftRecentSessionsReviewPrompt({
+        liftType,
+        startDate: oldestSession?.sessionDate,
+        endDate: newestSession?.sessionDate,
+        sessionCount: visibleRecentSessions.length,
+        sessionSummaries,
+      }),
+    );
+  }, [isMetric, liftType, visibleRecentSessions]);
 
   if (!isProgressDone) {
     return <MostRecentSessionCardSkeleton />;
@@ -210,6 +244,22 @@ export function MostRecentSessionCard({
                 {isDemoMode && <DemoModeBadge size="sm" />}
                 {titlePrefix}
               </CardTitle>
+              {aiReviewLink && (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="h-8 shrink-0 gap-1.5 px-2.5"
+                >
+                  <Link
+                    href={aiReviewLink.href}
+                    onClick={() => stashAiAssistantPrompt(aiReviewLink)}
+                  >
+                    <Bot className="h-4 w-4" />
+                    <span className="hidden sm:inline">AI review</span>
+                  </Link>
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -224,7 +274,7 @@ export function MostRecentSessionCard({
                 </div>
               )}
               <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-                {recentSessions.slice(0, visibleCount).map(({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
+                {visibleRecentSessions.map(({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
                   const liftEntries = Object.entries(analyzedSessionLifts);
                   if (liftEntries.length === 0) return null;
                   return (
@@ -437,4 +487,47 @@ function MostRecentSessionCardSkeleton() {
       </CardContent>
     </Card>
   );
+}
+
+function buildRecentSessionPromptSummaries(sessions, isMetric) {
+  return sessions
+    .map(({ sessionDate, analyzedSessionLifts }) => {
+      const setText = Object.values(analyzedSessionLifts || {})
+        .flatMap((workouts) => formatWorkoutsForPrompt(workouts, isMetric))
+        .join(", ");
+
+      return setText ? `${sessionDate}: ${setText}` : null;
+    })
+    .filter(Boolean);
+}
+
+function formatWorkoutsForPrompt(workouts = [], isMetric) {
+  return getConsecutiveWorkoutGroups(workouts).map((group) => {
+    const firstWorkout = workouts[group[0]];
+    const count = group.length;
+    const { value: weightValue, unit: weightUnit } = getDisplayWeight(
+      firstWorkout,
+      isMetric ?? false,
+    );
+    const setText =
+      count > 1
+        ? `${count}x${firstWorkout.reps}@${weightValue}${weightUnit}`
+        : `${firstWorkout.reps}@${weightValue}${weightUnit}`;
+    const markers = [];
+
+    if (group.some((index) => workouts[index]?.lifetimeRanking !== -1)) {
+      markers.push("lifetime PR");
+    }
+    if (
+      group.some(
+        (index) =>
+          workouts[index]?.yearlyRanking != null &&
+          workouts[index]?.yearlyRanking !== -1,
+      )
+    ) {
+      markers.push("12-month PR");
+    }
+
+    return markers.length ? `${setText} (${markers.join(", ")})` : setText;
+  });
 }

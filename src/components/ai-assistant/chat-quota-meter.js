@@ -23,6 +23,22 @@ const ICON_VIEWBOX = 24;
 const ICON_CENTER = 12;
 const ICON_STROKE_WIDTH = 2;
 
+function getDailyResetText(date = new Date()) {
+  const nextUtcMidnight = new Date(date);
+  nextUtcMidnight.setUTCHours(24, 0, 0, 0);
+
+  const resetAt = nextUtcMidnight.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const hoursUntilReset = Math.max(
+    1,
+    Math.ceil((nextUtcMidnight.getTime() - date.getTime()) / (60 * 60 * 1000)),
+  );
+
+  return `Resets in about ${hoursUntilReset} ${hoursUntilReset === 1 ? "hour" : "hours"} (${resetAt} your time).`;
+}
+
 function getQuotaTone(quota) {
   if (quota?.blocked) return "blocked";
   if (quota?.warn) return "warn";
@@ -36,6 +52,7 @@ function getQuotaPercentUsed(quota) {
 
 function getQuotaCopy(quota) {
   const isAnonymous = quota?.tier === "anonymous";
+  const resetText = isAnonymous ? null : getDailyResetText();
 
   if (quota?.blocked && isAnonymous) {
     return {
@@ -49,7 +66,7 @@ function getQuotaCopy(quota) {
   if (quota?.blocked) {
     return {
       title: "AI quota exhausted",
-      detail: "Your assistant messages reset at midnight UTC.",
+      detail: resetText,
       footer: "Daily quotas keep the assistant available for everyone.",
     };
   }
@@ -65,7 +82,7 @@ function getQuotaCopy(quota) {
   return {
     title: `${quota.remaining} ${quota.remaining === 1 ? "message" : "messages"} left today`,
     detail: `${quota.used} of ${quota.limit} assistant messages used.`,
-    footer: "Your allowance resets at midnight UTC.",
+    footer: resetText,
   };
 }
 

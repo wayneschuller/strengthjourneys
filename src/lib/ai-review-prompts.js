@@ -41,6 +41,7 @@ export function buildLiftRecentSessionsReviewPrompt({
   startDate,
   endDate,
   sessionCount,
+  sessionSummaries,
 }) {
   const liftName = liftType || "this lift";
   const sessionText =
@@ -49,8 +50,12 @@ export function buildLiftRecentSessionsReviewPrompt({
       : `my recent ${liftName} sessions`;
   const windowText =
     startDate && endDate ? ` from ${startDate} to ${endDate}` : "";
+  const visibleSessionText =
+    Array.isArray(sessionSummaries) && sessionSummaries.length > 0
+      ? `\n\nVisible session data:\n${sessionSummaries.join("\n")}`
+      : "";
 
-  return `Review ${sessionText}${windowText}. Look at load selection, rep ranges, estimated strength, PRs, fatigue signals, and what I should do next for ${liftName}. Be specific and use the lifting data I have shared with you.`;
+  return `Review ${sessionText}${windowText}. Use the visible session data below as the source of truth for these sessions; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}\n\nLook at load selection, rep ranges, estimated strength, PRs, fatigue signals, and what I should do next for ${liftName}. Be specific and practical.`;
 }
 
 export function buildAiAssistantPromptHref(prompt) {

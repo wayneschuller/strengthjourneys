@@ -19,10 +19,14 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { differenceInDays } from "date-fns";
 import {
   getAnalyzedSessionLifts,
+  getDisplayWeight,
   getSessionDatesContainingLiftType,
 } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
-import { SessionExerciseBlock } from "@/components/home-dashboard/session-exercise-block";
+import {
+  getConsecutiveWorkoutGroups,
+  SessionExerciseBlock,
+} from "@/components/home-dashboard/session-exercise-block";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import {
@@ -177,6 +181,10 @@ export function MostRecentSessionCard({
     const newestSession = visibleRecentSessions[0];
     const oldestSession =
       visibleRecentSessions[visibleRecentSessions.length - 1];
+    const sessionSummaries = buildRecentSessionPromptSummaries(
+      visibleRecentSessions,
+      isMetric,
+    );
 
     return buildAiAssistantPromptHref(
       buildLiftRecentSessionsReviewPrompt({
@@ -184,9 +192,10 @@ export function MostRecentSessionCard({
         startDate: oldestSession?.sessionDate,
         endDate: newestSession?.sessionDate,
         sessionCount: visibleRecentSessions.length,
+        sessionSummaries,
       }),
     );
-  }, [liftType, visibleRecentSessions]);
+  }, [isMetric, liftType, visibleRecentSessions]);
 
   if (!isProgressDone) {
     return <MostRecentSessionCardSkeleton />;
@@ -474,4 +483,47 @@ function MostRecentSessionCardSkeleton() {
       </CardContent>
     </Card>
   );
+}
+
+function buildRecentSessionPromptSummaries(sessions, isMetric) {
+  return sessions
+    .map(({ sessionDate, analyzedSessionLifts }) => {
+      const setText = Object.values(analyzedSessionLifts || {})
+        .flatMap((workouts) => formatWorkoutsForPrompt(workouts, isMetric))
+        .join(", ");
+
+      return setText ? `${sessionDate}: ${setText}` : null;
+    })
+    .filter(Boolean);
+}
+
+function formatWorkoutsForPrompt(workouts = [], isMetric) {
+  return getConsecutiveWorkoutGroups(workouts).map((group) => {
+    const firstWorkout = workouts[group[0]];
+    const count = group.length;
+    const { value: weightValue, unit: weightUnit } = getDisplayWeight(
+      firstWorkout,
+      isMetric ?? false,
+    );
+    const setText =
+      count > 1
+        ? `${count}x${firstWorkout.reps}@${weightValue}${weightUnit}`
+        : `${firstWorkout.reps}@${weightValue}${weightUnit}`;
+    const markers = [];
+
+    if (group.some((index) => workouts[index]?.lifetimeRanking !== -1)) {
+      markers.push("lifetime PR");
+    }
+    if (
+      group.some(
+        (index) =>
+          workouts[index]?.yearlyRanking != null &&
+          workouts[index]?.yearlyRanking !== -1,
+      )
+    ) {
+      markers.push("12-month PR");
+    }
+
+    return markers.length ? `${setText} (${markers.join(", ")})` : setText;
+  });
 }

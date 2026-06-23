@@ -74,7 +74,7 @@ export function buildLiftRecentSessionsReviewPrompt({
       ? `\n\nVisible session data:\n${sessionSummaries.join("\n")}`
       : "";
 
-  return `Review ${sessionText}${windowText}. Use the visible session data below as the source of truth for these sessions; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}\n\nLook at load selection, rep ranges, estimated strength, PRs, fatigue signals, and what I should do next for ${liftName}. Be specific and practical.`;
+  return `Review ${sessionText}${windowText}. Use the visible session data below as the source of truth for these sessions; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}`;
 }
 
 export function buildLogSessionReviewPrompt({

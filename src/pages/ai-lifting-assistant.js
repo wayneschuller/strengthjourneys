@@ -213,6 +213,34 @@ function AILiftingAssistantMain({ relatedArticles }) {
     false,
     { initializeWithValue: false },
   );
+  const hasSharedTrainingData = hasAnySharedTrainingData(userLiftingMetadata);
+  const hasSharedFullTrainingData = hasAllSharedTrainingData(userLiftingMetadata);
+  const suggestionContext = useMemo(() => {
+    const prioritizedLifts = hasSharedTrainingData
+      ? getPrioritizedLiftTypes({
+          liftTypes,
+          parsedData,
+          topLiftsByTypeAndReps,
+          limit: 2,
+        })
+      : [];
+
+    return {
+      age: shareBioDetails ? age : null,
+      primaryLift: prioritizedLifts[0] ?? null,
+      secondaryLift: prioritizedLifts[1] ?? null,
+      recentSessionDate: hasSharedTrainingData
+        ? getMostRecentSessionDate(parsedData)
+        : null,
+    };
+  }, [
+    age,
+    hasSharedTrainingData,
+    liftTypes,
+    parsedData,
+    shareBioDetails,
+    topLiftsByTypeAndReps,
+  ]);
 
   const userProvidedProfileData = useMemo(() => {
     if (isDemoMode) return "";
@@ -378,6 +406,10 @@ function AILiftingAssistantMain({ relatedArticles }) {
       <div className="flex flex-col gap-2 md:gap-5 lg:flex-row">
         <div className="h-dvh flex-1 lg:flex lg:flex-col 2xl:max-w-screen-xl">
           <AILiftingAssistantCard
+            hasSharedBioData={!isDemoMode && shareBioDetails}
+            hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
+            hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
+            suggestionContext={suggestionContext}
             userProvidedProfileData={userProvidedProfileData}
           />
         </div>
@@ -407,26 +439,177 @@ function AILiftingAssistantMain({ relatedArticles }) {
   );
 }
 
-// Single flat array of suggestions
-const defaultMessages = [
-  AI_REVIEW_PROMPTS.week,
-  AI_REVIEW_PROMPTS.month,
+const BIO_DATA_FALLBACK_PROMPTS = [
+  "How much protein should I eat?",
+  "Should I lift every day?",
+  "Can I lift weights and still lose weight?",
+];
+
+const GENERAL_LIFTING_PROMPTS = [
   "Why lift weights?",
   "What should I do in my first gym session?",
   "How often should I deadlift?",
-  "Am I strong for my age?",
   "I'm female, will I get bulky lifting weights?",
   "How do I choose a gym?",
-  "Write me a motivational rap.",
   "Isn't deadlifting dangerous?",
-  "How strong am I?",
-  "Can I lift weights and still lose weight?",
-  "How much protein should I eat?",
-  "Should I lift every day?",
   "What are the health benefits for women who lift?",
+];
+
+const PLAYFUL_PROMPTS = [
+  "Write me a motivational rap.",
   "ME STRONG",
   "Give me a riddle about lifting weights.",
 ];
+
+function getAssistantSuggestions({
+  dateKey,
+  hasSharedBioData,
+  hasSharedFullTrainingData,
+  hasSharedTrainingData,
+  suggestionContext,
+}) {
+  const trainingPrompts = buildTrainingDataPrompts({
+    hasSharedBioData,
+    suggestionContext,
+  });
+  const partialTrainingPrompts = buildPartialTrainingDataPrompts({
+    hasSharedBioData,
+    suggestionContext,
+  });
+  const bioPrompts = buildBioDataPrompts(suggestionContext);
+
+  if (hasSharedFullTrainingData) {
+    return uniqueMessages([
+      ...trainingPrompts,
+      ...(hasSharedBioData ? bioPrompts.slice(0, 2) : []),
+      ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 1),
+      ...getRotatedPrompts(PLAYFUL_PROMPTS, dateKey, 1),
+    ]);
+  }
+
+  if (hasSharedTrainingData) {
+    return uniqueMessages([
+      ...partialTrainingPrompts,
+      ...(hasSharedBioData ? bioPrompts.slice(0, 2) : []),
+      ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 3),
+    ]);
+  }
+
+  if (hasSharedBioData) {
+    return uniqueMessages([
+      ...bioPrompts,
+      ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 4),
+      ...getRotatedPrompts(PLAYFUL_PROMPTS, dateKey, 1),
+    ]);
+  }
+
+  return uniqueMessages([
+    ...GENERAL_LIFTING_PROMPTS,
+    ...BIO_DATA_FALLBACK_PROMPTS,
+    ...PLAYFUL_PROMPTS,
+  ]);
+}
+
+function buildTrainingDataPrompts({ hasSharedBioData, suggestionContext }) {
+  const { primaryLift, recentSessionDate } = suggestionContext ?? {};
+
+  return [
+    AI_REVIEW_PROMPTS.week,
+    AI_REVIEW_PROMPTS.month,
+    recentSessionDate
+      ? `Review my latest session from ${recentSessionDate}`
+      : "Review my latest session",
+    primaryLift
+      ? `What should I focus on next for ${primaryLift}?`
+      : "What lift should I focus on next?",
+    "Where is my training inconsistent?",
+    hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
+  ];
+}
+
+function buildPartialTrainingDataPrompts({
+  hasSharedBioData,
+  suggestionContext,
+}) {
+  const { primaryLift, secondaryLift } = suggestionContext ?? {};
+  const liftFocus = primaryLift
+    ? `What does my ${primaryLift} data suggest?`
+    : "What does my shared training data suggest?";
+  const comparisonPrompt =
+    primaryLift && secondaryLift
+      ? `Compare my ${primaryLift} and ${secondaryLift} progress`
+      : "What should I focus on next from my shared data?";
+
+  return [
+    "Review the training data I've shared",
+    liftFocus,
+    comparisonPrompt,
+    hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
+  ];
+}
+
+function buildBioDataPrompts(suggestionContext) {
+  const age = Number(suggestionContext?.age);
+  const ageSuffix = Number.isFinite(age) && age > 0 ? ` at ${age}` : "";
+
+  return [
+    `Why does strength training matter${ageSuffix}?`,
+    `How should recovery change${ageSuffix}?`,
+    "How much protein should I eat?",
+    "Should I lift every day?",
+    "Can I lift weights and still lose weight?",
+  ];
+}
+
+function hasAnySharedTrainingData(userLiftingMetadata) {
+  return Boolean(
+    userLiftingMetadata?.all ||
+      userLiftingMetadata?.records ||
+      userLiftingMetadata?.trainingLoad ||
+      userLiftingMetadata?.frequency ||
+      userLiftingMetadata?.consistency ||
+      userLiftingMetadata?.sessionData,
+  );
+}
+
+function hasAllSharedTrainingData(userLiftingMetadata) {
+  if (userLiftingMetadata?.all) return true;
+
+  return Boolean(
+    userLiftingMetadata?.records &&
+      userLiftingMetadata?.trainingLoad &&
+      userLiftingMetadata?.frequency &&
+      userLiftingMetadata?.consistency &&
+      userLiftingMetadata?.sessionData,
+  );
+}
+
+function getRotatedPrompts(prompts, dateKey, count) {
+  if (!Array.isArray(prompts) || prompts.length === 0 || count <= 0) {
+    return [];
+  }
+
+  const offset = getStablePromptOffset(dateKey, prompts.length);
+  return Array.from({ length: Math.min(count, prompts.length) }, (_, index) => {
+    const promptIndex = (offset + index) % prompts.length;
+    return prompts[promptIndex];
+  });
+}
+
+function getStablePromptOffset(value, modulo) {
+  if (!value || modulo <= 0) return 0;
+
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) % modulo;
+  }
+
+  return hash;
+}
+
+function uniqueMessages(messages) {
+  return [...new Set(messages.filter(Boolean))];
+}
 
 function XAILogo({ className }) {
   return (
@@ -484,18 +667,52 @@ function CopyButton({ text, ...props }) {
  * Chat card that drives the AI lifting assistant conversation. Handles message streaming via the
  * Vercel AI SDK, persists the session to sessionStorage, and supports download and reset actions.
  * @param {Object} props
- * @param {string} props.userProvidedProfileData - Serialised string of user bio and lifting metadata
- *   to inject into the AI system prompt via the request body on each message send.
+ * @param {boolean} props.hasSharedBioData - Whether the user has opted to share bio details.
+ * @param {boolean} props.hasSharedFullTrainingData - Whether the user has opted to share every lifting metadata section.
+ * @param {boolean} props.hasSharedTrainingData - Whether the user has opted to share any lifting metadata.
+ * @param {Object} props.suggestionContext - Small prompt-personalisation context derived from opted-in local data.
+ * @param {string} props.userProvidedProfileData - Serialised string of user bio and lifting
+ *   metadata to inject into the AI system prompt via the request body on each message send.
  */
-function AILiftingAssistantCard({ userProvidedProfileData }) {
+function AILiftingAssistantCard({
+  hasSharedBioData,
+  hasSharedFullTrainingData,
+  hasSharedTrainingData,
+  suggestionContext,
+  userProvidedProfileData,
+}) {
   const router = useRouter();
   const { status: authStatus } = useSession();
   const [chatQuota, setChatQuota] = useState(null);
   const [isChatQuotaReady, setIsChatQuotaReady] = useState(false);
   const [isChatHydrated, setIsChatHydrated] = useState(false);
+  const [suggestionDateKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const suggestionRotationKey = [
+    suggestionDateKey,
+    hasSharedBioData ? "bio" : "no-bio",
+    hasSharedTrainingData ? "training" : "no-training",
+    hasSharedFullTrainingData ? "full-training" : "partial-training",
+  ].join("|");
   const pendingAiPromptRef = useRef(null);
   const pendingAiPromptKeyRef = useRef(null);
   const consumedAiPromptRef = useRef(null);
+  const suggestedMessages = useMemo(
+    () =>
+      getAssistantSuggestions({
+        dateKey: suggestionRotationKey,
+        hasSharedBioData,
+        hasSharedFullTrainingData,
+        hasSharedTrainingData,
+        suggestionContext,
+      }),
+    [
+      hasSharedBioData,
+      hasSharedFullTrainingData,
+      hasSharedTrainingData,
+      suggestionRotationKey,
+      suggestionContext,
+    ],
+  );
 
   const applyQuotaSnapshot = useCallback((nextQuota, options = {}) => {
     if (!nextQuota) return;
@@ -836,7 +1053,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 {isChatHydrated && (
                   <div className="-mx-4 mt-6 w-full px-4">
                     <Suggestions className="w-full">
-                      {defaultMessages.map((message) => (
+                      {suggestedMessages.map((message) => (
                         <Suggestion
                           key={message}
                           suggestion={message}

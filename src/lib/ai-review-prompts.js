@@ -9,10 +9,8 @@ export const AI_ASSISTANT_PATH = "/ai-lifting-assistant";
 export const AI_ASSISTANT_PROMPT_STORAGE_PREFIX = "SJ_AI_ASSISTANT_PROMPT_";
 
 export const AI_REVIEW_PROMPTS = {
-  week:
-    "Review my training this week. Look at sessions, lift selection, tonnage, PRs, consistency, and what I should focus on next.",
-  month:
-    "Review my training this month. Look at sessions, Big Four work, strength progress, consistency, and what I should focus on next month.",
+  week: "Review my training this week",
+  month: "Review my training this month",
 };
 
 export function buildWeeklyReviewPrompt({
@@ -74,7 +72,7 @@ export function buildLiftRecentSessionsReviewPrompt({
       ? `\n\nVisible session data:\n${sessionSummaries.join("\n")}`
       : "";
 
-  return `Review ${sessionText}${windowText}. Use the visible session data below as the source of truth for these sessions; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}\n\nLook at load selection, rep ranges, estimated strength, PRs, fatigue signals, and what I should do next for ${liftName}. Be specific and practical.`;
+  return `Review ${sessionText}${windowText}. Use the visible session data below as the source of truth for these sessions; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}`;
 }
 
 export function buildLogSessionReviewPrompt({

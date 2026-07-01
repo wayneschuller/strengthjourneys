@@ -265,17 +265,22 @@ function SmartAddButtonGrid({
   showHint,
   disabled = false,
 }) {
-  const visibleButtons = buttons.slice(0, 3);
-  const buttonBorderClass = (index, count) =>
-    [
+  const visibleButtons = buttons.slice(0, 4);
+  const desktopGridClass =
+    visibleButtons.length >= 4 ? "sm:grid-cols-5" : "sm:grid-cols-4";
+  const buttonBorderClass = (index, count) => {
+    const mobileLastRowStart = count % 2 === 0 ? count - 2 : count - 1;
+
+    return [
       "border-border/40",
       index % 2 === 0 && index < count - 1 ? "border-r" : "",
-      index < count - 2 ? "border-b" : "",
+      index < mobileLastRowStart ? "border-b" : "",
       "sm:border-b-0",
       index < count - 1 ? "sm:border-r" : "sm:border-r-0",
     ]
       .filter(Boolean)
       .join(" ");
+  };
   const buttonRadiusClass = (index, count) => {
     const mobileRow = Math.floor(index / 2);
     const mobileLastRow = Math.ceil(count / 2) - 1;
@@ -292,7 +297,9 @@ function SmartAddButtonGrid({
 
   return (
     <>
-      <div className="grid grid-cols-2 overflow-hidden rounded-b-xl sm:grid-cols-4">
+      <div
+        className={`grid grid-cols-2 overflow-hidden rounded-b-xl ${desktopGridClass}`}
+      >
         {visibleButtons.map((s, i) => {
           const { Icon, className: iconClassName } = getSuggestionIcon(s, lastRealSet);
           const totalButtonCount = visibleButtons.length + 1;

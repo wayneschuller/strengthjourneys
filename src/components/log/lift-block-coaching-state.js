@@ -429,7 +429,11 @@ export function getLiftBlockCoachingState({
         }
       : null;
 
-    addWarmupButton(nextActualWarmupSet, "last warmup", "primary");
+    addWarmupButton(
+      nextActualWarmupSet,
+      realSets.length === 0 ? "opening set" : "next warmup",
+      "primary",
+    );
 
     if (lastLoggedWeight > 0) {
       pushSuggestionButton({

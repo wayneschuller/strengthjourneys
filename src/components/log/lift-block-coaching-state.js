@@ -28,6 +28,7 @@ const HEAVIER_SET_SUBLABELS = [
   "bold move",
   "if feeling good",
 ];
+const RECENT_TOP_SET_SESSION_LIMIT = 6;
 
 export function getLiftBlockCoachingState({
   dashboardStage,
@@ -207,7 +208,18 @@ export function getLiftBlockCoachingState({
     };
   }
 
-  const lastDate = prior[prior.length - 1].date;
+  const recentTopSetHistory = getRecentTopSetHistory({
+    prior,
+    isMetric,
+    limit: RECENT_TOP_SET_SESSION_LIMIT,
+  });
+  const lastTopSetSummary =
+    recentTopSetHistory[recentTopSetHistory.length - 1] ?? null;
+  const targetTopSetSummary = getTargetTopSetSummary({
+    topSetHistory: recentTopSetHistory,
+    minIncrement,
+  });
+  const lastDate = lastTopSetSummary?.date ?? prior[prior.length - 1].date;
   const lastSets = prior.filter((e) => e.date === lastDate);
   const orderedLastSets = [...lastSets].sort((a, b) => {
     if (Number.isFinite(a.rowIndex) && Number.isFinite(b.rowIndex)) {
@@ -221,14 +233,9 @@ export function getLiftBlockCoachingState({
     return value > 0 && (set.reps ?? 0) > 0;
   });
 
-  // Find the top set from last session (heaviest weight)
-  let topSet = lastSets[0];
-  for (const s of orderedLastSets) {
-    // Convert to user's current unit for comparison
-    const { value } = getDisplayWeight(s, isMetric);
-    const { value: topValue } = getDisplayWeight(topSet, isMetric);
-    if (value > topValue) topSet = s;
-  }
+  // Anchor top-set planning to the recent trend. A single deload session should
+  // not erase several prior sessions of steady top-set progression.
+  const topSet = targetTopSetSummary?.set ?? lastSets[0];
 
   const { value: lastTopWeight } = getDisplayWeight(topSet, isMetric);
   const topReps = topSet.reps;
@@ -236,6 +243,12 @@ export function getLiftBlockCoachingState({
 
   // Assume progressive overload: target is last session's top + one increment
   const topWeight = lastTopWeight + minIncrement;
+  const lastSessionTopWeight = lastTopSetSummary?.weight ?? lastTopWeight;
+  const lastSessionTopReps = lastTopSetSummary?.reps ?? topReps;
+  const isRecoveringFromDeload =
+    targetTopSetSummary?.date &&
+    lastTopSetSummary?.date &&
+    targetTopSetSummary.date !== lastTopSetSummary.date;
 
   // Generate the full warmup progression using shared algorithm
   const progression = generateSessionSets(
@@ -362,7 +375,7 @@ export function getLiftBlockCoachingState({
     sublabel,
     variant,
   }) => {
-    if (!reps || !weight || buttons.length >= 3) return;
+    if (!reps || !weight || buttons.length >= 4) return;
     const key = `${reps}-${weight}`;
     if (seenButtonKeys.has(key)) return;
     seenButtonKeys.add(key);
@@ -393,6 +406,15 @@ export function getLiftBlockCoachingState({
     };
 
     const topProgSet = progression[progression.length - 1];
+    const lastSessionTopOption =
+      isRecoveringFromDeload &&
+      lastSessionTopWeight > maxLogged &&
+      lastSessionTopWeight < topProgSet.weight
+        ? {
+            reps: lastSessionTopReps,
+            weight: lastSessionTopWeight,
+          }
+        : null;
     const previousTopOption =
       lastTopWeight > maxLogged && lastTopWeight < topProgSet.weight
         ? {
@@ -400,8 +422,27 @@ export function getLiftBlockCoachingState({
             weight: lastTopWeight,
           }
         : null;
+    const stretchTopOption = isRecoveringFromDeload
+      ? {
+          reps: topReps,
+          weight: topWeight + minIncrement,
+        }
+      : null;
+    const bridgeWarmupSet =
+      nextSet?.isTopSet && lastLoggedWeight > 0
+        ? getBridgeWarmupSet({
+            fromWeight: lastLoggedWeight,
+            targetWeight: nextSet.weight,
+            topReps,
+            minIncrement,
+          })
+        : null;
 
-    addWarmupButton(nextActualWarmupSet, "last warmup", "primary");
+    addWarmupButton(
+      nextActualWarmupSet,
+      realSets.length === 0 ? "opening set" : "next warmup",
+      "primary",
+    );
 
     if (lastLoggedWeight > 0) {
       pushSuggestionButton({
@@ -412,20 +453,30 @@ export function getLiftBlockCoachingState({
       });
     }
 
+    if (bridgeWarmupSet) {
+      addWarmupButton(bridgeWarmupSet, "bridge warmup", "primary");
+    } else {
+      addWarmupButton(
+        nextSet,
+        getHeavierSetSublabel({
+          liftType,
+          sessionDate,
+          reps: nextSet?.reps,
+          weight: nextSet?.weight,
+          lastLoggedWeight,
+          loggedSetCount: lastLoggedSets.length,
+        }),
+        "outline",
+      );
+    }
+    addWarmupButton(previousTopOption, "repeat top", "outline");
+    addWarmupButton(lastSessionTopOption, "deload top", "outline");
     addWarmupButton(
-      nextSet,
-      getHeavierSetSublabel({
-        liftType,
-        sessionDate,
-        reps: nextSet?.reps,
-        weight: nextSet?.weight,
-        lastLoggedWeight,
-        loggedSetCount: lastLoggedSets.length,
-      }),
+      topProgSet,
+      isRecoveringFromDeload ? "trend target" : "top set",
       "outline",
     );
-    addWarmupButton(previousTopOption, "repeat top", "outline");
-    addWarmupButton(topProgSet, "top set", "outline");
+    addWarmupButton(stretchTopOption, "if feeling good", "outline");
   } else if (inDropSetMode) {
     // Drop set mode: weight is descending — only offer repeat at current drop weight
     pushSuggestionButton({
@@ -449,7 +500,7 @@ export function getLiftBlockCoachingState({
     pushSuggestionButton({
       reps: topReps,
       weight: topWeight,
-      sublabel: "top set",
+      sublabel: isRecoveringFromDeload ? "trend target" : "top set",
       variant: "outline",
     });
   } else {
@@ -506,7 +557,7 @@ export function getLiftBlockCoachingState({
     pushSuggestionButton({
       reps: topReps,
       weight: topWeight,
-      sublabel: "top set",
+      sublabel: isRecoveringFromDeload ? "trend target" : "top set",
       variant: "outline",
     });
   }
@@ -516,6 +567,88 @@ export function getLiftBlockCoachingState({
     buttons,
     inSessionCoaching: inSessionFallbackCoaching,
     journeyTechniqueAssist,
+  };
+}
+
+function getRecentTopSetHistory({ prior, isMetric, limit }) {
+  const dateOrder = [];
+  const setsByDate = new Map();
+
+  for (const set of prior) {
+    if (!set?.date) continue;
+    if (!setsByDate.has(set.date)) {
+      setsByDate.set(set.date, []);
+      dateOrder.push(set.date);
+    }
+    setsByDate.get(set.date).push(set);
+  }
+
+  return dateOrder
+    .sort()
+    .slice(-limit)
+    .map((date) => {
+      const sets = setsByDate.get(date) ?? [];
+      const topSet = sets.reduce((best, set) => {
+        if (!best) return set;
+        const { value } = getDisplayWeight(set, isMetric);
+        const { value: bestValue } = getDisplayWeight(best, isMetric);
+        return value > bestValue ? set : best;
+      }, null);
+
+      if (!topSet) return null;
+
+      return {
+        date,
+        set: topSet,
+        reps: topSet.reps,
+        weight: getDisplayWeight(topSet, isMetric).value,
+      };
+    })
+    .filter((entry) => entry?.weight > 0 && entry?.reps > 0);
+}
+
+function getTargetTopSetSummary({ topSetHistory, minIncrement }) {
+  if (!topSetHistory.length) return null;
+
+  const latest = topSetHistory[topSetHistory.length - 1];
+  const earlier = topSetHistory.slice(0, -1);
+  if (earlier.length < 2) return latest;
+
+  const strongestEarlier = earlier.reduce((best, entry) =>
+    entry.weight > best.weight ? entry : best,
+  );
+  const meaningfulDrop = Math.max(
+    minIncrement * 2,
+    strongestEarlier.weight * 0.05,
+  );
+
+  if (latest.weight <= strongestEarlier.weight - meaningfulDrop) {
+    return strongestEarlier;
+  }
+
+  return latest;
+}
+
+function getBridgeWarmupSet({ fromWeight, targetWeight, topReps, minIncrement }) {
+  const gap = targetWeight - fromWeight;
+  const bridgeThreshold = minIncrement * 4;
+  if (gap < bridgeThreshold) return null;
+
+  const rawBridgeWeight = fromWeight + gap * 0.55;
+  const bridgeWeight =
+    Math.round(rawBridgeWeight / minIncrement) * minIncrement;
+
+  if (
+    bridgeWeight <= fromWeight + minIncrement ||
+    bridgeWeight >= targetWeight - minIncrement
+  ) {
+    return null;
+  }
+
+  return {
+    reps: topReps <= 3 ? 1 : 3,
+    weight: bridgeWeight,
+    isTopSet: false,
   };
 }
 

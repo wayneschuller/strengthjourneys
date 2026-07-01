@@ -313,22 +313,30 @@ function SmartAddButtonGrid({
                 disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
               } ${
                 s.variant === "primary"
-                  ? "bg-accent/20 font-semibold text-foreground"
+                  ? "bg-accent/20 text-foreground"
                   : s.variant === "secondary"
-                    ? "font-medium text-foreground"
+                    ? "text-foreground"
                     : "text-muted-foreground"
               }`}
               onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
             >
-              <span className="flex min-w-0 items-center justify-center gap-1.5 self-end">
+              <span
+                className={`flex min-w-0 items-center justify-center gap-1.5 self-end ${
+                  s.variant === "primary"
+                    ? "font-semibold"
+                    : s.variant === "secondary"
+                      ? "font-medium"
+                      : ""
+                }`}
+              >
                 <Icon className={`h-3.5 w-3.5 ${iconClassName}`} />
                 <span className="min-w-0 break-words">{s.label}</span>
               </span>
-              <span className="self-start text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              <span className="self-start text-[10px] font-normal uppercase tracking-wider text-muted-foreground/70">
                 {s.sublabel}
               </span>
               <span
-                className={`self-start text-[10px] uppercase tracking-wide ${
+                className={`self-start text-[10px] font-normal uppercase tracking-wide ${
                   s.rankingMessage
                     ? s.rankingScope === "lifetime"
                       ? "text-amber-500"

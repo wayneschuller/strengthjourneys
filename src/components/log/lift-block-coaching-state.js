@@ -428,6 +428,15 @@ export function getLiftBlockCoachingState({
           weight: topWeight + minIncrement,
         }
       : null;
+    const bridgeWarmupSet =
+      nextSet?.isTopSet && lastLoggedWeight > 0
+        ? getBridgeWarmupSet({
+            fromWeight: lastLoggedWeight,
+            targetWeight: nextSet.weight,
+            topReps,
+            minIncrement,
+          })
+        : null;
 
     addWarmupButton(
       nextActualWarmupSet,
@@ -444,18 +453,22 @@ export function getLiftBlockCoachingState({
       });
     }
 
-    addWarmupButton(
-      nextSet,
-      getHeavierSetSublabel({
-        liftType,
-        sessionDate,
-        reps: nextSet?.reps,
-        weight: nextSet?.weight,
-        lastLoggedWeight,
-        loggedSetCount: lastLoggedSets.length,
-      }),
-      "outline",
-    );
+    if (bridgeWarmupSet) {
+      addWarmupButton(bridgeWarmupSet, "bridge warmup", "primary");
+    } else {
+      addWarmupButton(
+        nextSet,
+        getHeavierSetSublabel({
+          liftType,
+          sessionDate,
+          reps: nextSet?.reps,
+          weight: nextSet?.weight,
+          lastLoggedWeight,
+          loggedSetCount: lastLoggedSets.length,
+        }),
+        "outline",
+      );
+    }
     addWarmupButton(previousTopOption, "repeat top", "outline");
     addWarmupButton(lastSessionTopOption, "deload top", "outline");
     addWarmupButton(
@@ -614,6 +627,29 @@ function getTargetTopSetSummary({ topSetHistory, minIncrement }) {
   }
 
   return latest;
+}
+
+function getBridgeWarmupSet({ fromWeight, targetWeight, topReps, minIncrement }) {
+  const gap = targetWeight - fromWeight;
+  const bridgeThreshold = minIncrement * 4;
+  if (gap < bridgeThreshold) return null;
+
+  const rawBridgeWeight = fromWeight + gap * 0.55;
+  const bridgeWeight =
+    Math.round(rawBridgeWeight / minIncrement) * minIncrement;
+
+  if (
+    bridgeWeight <= fromWeight + minIncrement ||
+    bridgeWeight >= targetWeight - minIncrement
+  ) {
+    return null;
+  }
+
+  return {
+    reps: topReps <= 3 ? 1 : 3,
+    weight: bridgeWeight,
+    isTopSet: false,
+  };
 }
 
 function getHeavierSetSublabel({

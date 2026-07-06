@@ -5,6 +5,40 @@
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { COACHED_LIFTS } from "@/components/log/coached-lifts";
 
+const FIRST_TIME_WARMUP_SUBLABELS = [
+  "next warmup",
+  "heat rising",
+  "heart rising",
+];
+const FIRST_TIME_TARGET_SUBLABELS = [
+  "today's target",
+  "main event",
+  "prove it",
+  "no hiding",
+  "lock in",
+  "reckless optimism",
+  "danger button",
+  "ignition set",
+  "PR bait",
+  "make it count",
+  "send it",
+  "violence",
+  "bad idea",
+  "own this",
+  "big swing",
+  "for the gram",
+];
+const FIRST_TIME_REPEAT_SUBLABELS = ["repeat", "run it back"];
+const FIRST_TIME_SMALL_JUMP_SUBLABELS = [
+  "small jump",
+  "polite increase",
+  "nudge upward",
+];
+const FIRST_TIME_STRETCH_SUBLABELS = [
+  "if it felt easy",
+  "reckless optimism",
+];
+
 export function isEarlyStrengthJourneyStage(dashboardStage) {
   return (
     dashboardStage === "starter_sample" ||
@@ -196,7 +230,9 @@ export function getFirstTimeProgressionButtons({
     pushButton({
       reps: nextSet.reps,
       weight: nextSet.weight,
-      sublabel: nextSet.isTopSet ? "today's target" : "next warmup",
+      sublabel: nextSet.isTopSet
+        ? getIndexedSublabel(FIRST_TIME_TARGET_SUBLABELS, nextWarmupIdx)
+        : getIndexedSublabel(FIRST_TIME_WARMUP_SUBLABELS, nextWarmupIdx),
       variant: "primary",
     });
 
@@ -213,7 +249,10 @@ export function getFirstTimeProgressionButtons({
       pushButton({
         reps: topSet.reps,
         weight: topSet.weight,
-        sublabel: "today's target",
+        sublabel: getIndexedSublabel(
+          FIRST_TIME_TARGET_SUBLABELS,
+          nextWarmupIdx + 1,
+        ),
         variant: "outline",
       });
     }
@@ -230,23 +269,38 @@ export function getFirstTimeProgressionButtons({
   pushButton({
     reps: lastLoggedReps,
     weight: lastLoggedWeight,
-    sublabel: "repeat",
+    sublabel: getIndexedSublabel(
+      FIRST_TIME_REPEAT_SUBLABELS,
+      Math.round(lastLoggedWeight),
+    ),
     variant: "secondary",
   });
   pushButton({
     reps: lastLoggedReps,
     weight: lastLoggedWeight + minIncrement,
-    sublabel: "small jump",
+    sublabel: getIndexedSublabel(
+      FIRST_TIME_SMALL_JUMP_SUBLABELS,
+      Math.round(lastLoggedWeight + minIncrement),
+    ),
     variant: "primary",
   });
   pushButton({
     reps: lastLoggedReps,
     weight: lastLoggedWeight + minIncrement * 2,
-    sublabel: "if it felt easy",
+    sublabel: getIndexedSublabel(
+      FIRST_TIME_STRETCH_SUBLABELS,
+      Math.round(lastLoggedWeight + minIncrement * 2),
+    ),
     variant: "outline",
   });
 
   return buttons;
+}
+
+function getIndexedSublabel(labels, index) {
+  if (!labels?.length) return "";
+
+  return labels[Math.abs(index) % labels.length];
 }
 
 export function getInSessionCoachingCopy({

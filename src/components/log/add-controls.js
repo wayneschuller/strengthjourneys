@@ -266,6 +266,8 @@ function SmartAddButtonGrid({
   disabled = false,
 }) {
   const visibleButtons = buttons.slice(0, 4);
+  const suggestionButtonClass =
+    "grid min-h-[6.25rem] min-w-0 grid-rows-[1.75rem_1.1rem_1.4rem] place-items-center gap-1 px-2 py-3 text-center text-sm transition-colors";
   const desktopGridClass =
     visibleButtons.length >= 4 ? "sm:grid-cols-5" : "sm:grid-cols-4";
   const buttonBorderClass = (index, count) => {
@@ -309,7 +311,7 @@ function SmartAddButtonGrid({
               key={i}
               type="button"
               disabled={disabled}
-              className={`grid min-h-[8.25rem] min-w-0 grid-rows-[1.75rem_1.1rem_1.4rem] place-items-center gap-1 px-2 py-3 text-center text-sm transition-colors ${buttonBorderClass(i, totalButtonCount)} ${buttonRadiusClass(i, totalButtonCount)} ${
+              className={`${suggestionButtonClass} ${buttonBorderClass(i, totalButtonCount)} ${buttonRadiusClass(i, totalButtonCount)} ${
                 disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
               } ${
                 s.variant === "primary"
@@ -352,7 +354,7 @@ function SmartAddButtonGrid({
         <button
           type="button"
           disabled={disabled}
-          className={`grid min-h-[8.25rem] min-w-0 grid-rows-[1.75rem_1.1rem_1.4rem] place-items-center gap-1 px-2 py-3 text-center text-sm transition-colors ${buttonBorderClass(visibleButtons.length, visibleButtons.length + 1)} ${buttonRadiusClass(visibleButtons.length, visibleButtons.length + 1)} ${
+          className={`${suggestionButtonClass} ${buttonBorderClass(visibleButtons.length, visibleButtons.length + 1)} ${buttonRadiusClass(visibleButtons.length, visibleButtons.length + 1)} ${
             disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
           } text-muted-foreground`}
           onClick={onStartCustomSet}

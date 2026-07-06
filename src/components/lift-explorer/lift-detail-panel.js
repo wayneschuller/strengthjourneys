@@ -6,6 +6,7 @@
  */
 
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
+import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
 import { LiftTypeRepPRsDisplay } from "@/components/lift-explorer/lift-type-prs-display";
 import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
 import { MostRecentSessionCard } from "@/components/lift-explorer/most-recent-session-card";
@@ -27,6 +28,7 @@ export function LiftDetailPanel({ liftType }) {
         asCard={false}
         chartDensity="dense"
       />
+      <LiftLogCta liftType={liftType} />
       <MostRecentSessionCard
         key={liftType}
         liftType={liftType}

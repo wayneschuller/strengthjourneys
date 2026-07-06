@@ -17,16 +17,46 @@ import {
 } from "@/components/log/coaching-utils";
 
 const HEAVIER_SET_SUBLABELS = [
+  "next warmup",
+  "heat rising",
+  "heart rising",
   "ambitious",
   "send it",
   "for Instagram",
+  "for the gram",
   "spicy one",
   "hero set",
   "big swing",
+  "violence",
+  "bad idea",
+  "own this",
+  "reckless optimism",
   "stretch goal",
   "on a heater",
   "bold move",
   "if feeling good",
+];
+const BRIDGE_WARMUP_SUBLABELS = ["bridge warmup", "launch ramp"];
+const REPEAT_SUBLABELS = ["repeat", "run it back"];
+const SMALL_JUMP_SUBLABELS = ["small jump", "polite increase", "nudge upward"];
+const STRETCH_SET_SUBLABELS = ["if feeling good", "reckless optimism"];
+const TOP_SET_SUBLABELS = [
+  "top set",
+  "main event",
+  "prove it",
+  "no hiding",
+  "lock in",
+  "reckless optimism",
+  "danger button",
+  "ignition set",
+  "PR bait",
+  "make it count",
+  "send it",
+  "violence",
+  "bad idea",
+  "own this",
+  "big swing",
+  "for the gram",
 ];
 const RECENT_TOP_SET_SESSION_LIMIT = 6;
 
@@ -178,7 +208,10 @@ export function getLiftBlockCoachingState({
             },
             {
               label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
-              sublabel: "repeat",
+              sublabel: getStableSublabel({
+                labels: REPEAT_SUBLABELS,
+                seed: `${liftType}|${sessionDate}|first-time-repeat|${lastLoggedWeight}`,
+              }),
               reps: lastLoggedReps,
               weight: lastLoggedWeight,
               unitType,
@@ -391,6 +424,21 @@ export function getLiftBlockCoachingState({
       variant,
     });
   };
+  const getSuggestionSublabel = (labels, scope, set = {}) =>
+    getStableSublabel({
+      labels,
+      seed: [
+        liftType,
+        sessionDate,
+        scope,
+        set.reps,
+        set.weight,
+        lastLoggedWeight,
+        lastLoggedSets.length,
+      ].join("|"),
+    });
+  const getTopSetSublabel = (set, fallback = TOP_SET_SUBLABELS) =>
+    getSuggestionSublabel(fallback, "top-set", set);
 
   if (!effectiveAtOrPastTop) {
     // Warmup phase: replay the user's actual previous warmup first, then fill
@@ -440,7 +488,13 @@ export function getLiftBlockCoachingState({
 
     addWarmupButton(
       nextActualWarmupSet,
-      realSets.length === 0 ? "opening set" : "next warmup",
+      realSets.length === 0
+        ? "opening set"
+        : getSuggestionSublabel(
+            ["next warmup", "heat rising", "heart rising"],
+            "next-warmup",
+            nextActualWarmupSet,
+          ),
       "primary",
     );
 
@@ -448,35 +502,65 @@ export function getLiftBlockCoachingState({
       pushSuggestionButton({
         reps: lastLoggedReps,
         weight: lastLoggedWeight,
-        sublabel: "repeat",
+        sublabel: getSuggestionSublabel(
+          REPEAT_SUBLABELS,
+          "warmup-repeat",
+          lastRealSet,
+        ),
         variant: "secondary",
       });
     }
 
     if (bridgeWarmupSet) {
-      addWarmupButton(bridgeWarmupSet, "bridge warmup", "primary");
+      addWarmupButton(
+        bridgeWarmupSet,
+        getSuggestionSublabel(
+          BRIDGE_WARMUP_SUBLABELS,
+          "bridge-warmup",
+          bridgeWarmupSet,
+        ),
+        "primary",
+      );
     } else {
       addWarmupButton(
         nextSet,
-        getHeavierSetSublabel({
-          liftType,
-          sessionDate,
-          reps: nextSet?.reps,
-          weight: nextSet?.weight,
-          lastLoggedWeight,
-          loggedSetCount: lastLoggedSets.length,
-        }),
+        nextSet?.isTopSet
+          ? getTopSetSublabel(nextSet)
+          : getHeavierSetSublabel({
+              liftType,
+              sessionDate,
+              reps: nextSet?.reps,
+              weight: nextSet?.weight,
+              lastLoggedWeight,
+              loggedSetCount: lastLoggedSets.length,
+            }),
         "outline",
       );
     }
-    addWarmupButton(previousTopOption, "repeat top", "outline");
+    addWarmupButton(
+      previousTopOption,
+      getSuggestionSublabel(
+        ["repeat top", "run it back"],
+        "previous-top",
+        previousTopOption,
+      ),
+      "outline",
+    );
     addWarmupButton(lastSessionTopOption, "deload top", "outline");
     addWarmupButton(
       topProgSet,
-      isRecoveringFromDeload ? "trend target" : "top set",
+      isRecoveringFromDeload ? "trend target" : getTopSetSublabel(topProgSet),
       "outline",
     );
-    addWarmupButton(stretchTopOption, "if feeling good", "outline");
+    addWarmupButton(
+      stretchTopOption,
+      getSuggestionSublabel(
+        STRETCH_SET_SUBLABELS,
+        "stretch-top",
+        stretchTopOption,
+      ),
+      "outline",
+    );
   } else if (inDropSetMode) {
     // Drop set mode: weight is descending — only offer repeat at current drop weight
     pushSuggestionButton({
@@ -494,13 +578,19 @@ export function getLiftBlockCoachingState({
     pushSuggestionButton({
       reps: topReps,
       weight: lastTopWeight,
-      sublabel: "repeat top",
+      sublabel: getSuggestionSublabel(
+        ["repeat top", "run it back"],
+        "drop-repeat-top",
+        { reps: topReps, weight: lastTopWeight },
+      ),
       variant: "outline",
     });
     pushSuggestionButton({
       reps: topReps,
       weight: topWeight,
-      sublabel: isRecoveringFromDeload ? "trend target" : "top set",
+      sublabel: isRecoveringFromDeload
+        ? "trend target"
+        : getTopSetSublabel({ reps: topReps, weight: topWeight }),
       variant: "outline",
     });
   } else {
@@ -509,7 +599,11 @@ export function getLiftBlockCoachingState({
     pushSuggestionButton({
       reps: lastLoggedReps,
       weight: lastLoggedWeight,
-      sublabel: "repeat",
+      sublabel: getSuggestionSublabel(
+        REPEAT_SUBLABELS,
+        "working-repeat",
+        lastRealSet,
+      ),
       variant: "secondary",
     });
 
@@ -517,7 +611,11 @@ export function getLiftBlockCoachingState({
       pushSuggestionButton({
         reps: topReps,
         weight: lastTopWeight,
-        sublabel: "repeat top",
+        sublabel: getSuggestionSublabel(
+          ["repeat top", "run it back"],
+          "working-repeat-top",
+          { reps: topReps, weight: lastTopWeight },
+        ),
         variant: "outline",
       });
     }
@@ -529,7 +627,7 @@ export function getLiftBlockCoachingState({
       pushSuggestionButton({
         reps: targetTopSet.reps,
         weight: targetTopSet.weight,
-        sublabel: "top set",
+        sublabel: getTopSetSublabel(targetTopSet),
         variant: "outline",
       });
     } else {
@@ -537,7 +635,11 @@ export function getLiftBlockCoachingState({
       pushSuggestionButton({
         reps: lastLoggedReps,
         weight: incrWeight,
-        sublabel: `+${minIncrement}`,
+        sublabel: getSuggestionSublabel(
+          [`+${minIncrement}`, ...SMALL_JUMP_SUBLABELS],
+          "working-small-jump",
+          { reps: lastLoggedReps, weight: incrWeight },
+        ),
         variant: "outline",
       });
     }
@@ -557,7 +659,9 @@ export function getLiftBlockCoachingState({
     pushSuggestionButton({
       reps: topReps,
       weight: topWeight,
-      sublabel: isRecoveringFromDeload ? "trend target" : "top set",
+      sublabel: isRecoveringFromDeload
+        ? "trend target"
+        : getTopSetSublabel({ reps: topReps, weight: topWeight }),
       variant: "outline",
     });
   }
@@ -687,4 +791,10 @@ function getStableIndex(seed, length) {
   }
 
   return hash;
+}
+
+function getStableSublabel({ labels, seed }) {
+  if (!labels?.length) return "";
+
+  return labels[getStableIndex(seed, labels.length)];
 }

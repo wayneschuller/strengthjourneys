@@ -33,7 +33,7 @@ const MAX_TOTAL_MESSAGE_CHARS = 12000;
 const MAX_METADATA_CHARS = 4500;
 const MAX_SUGGESTION_INPUT_CHARS = 5000;
 const MAX_SUGGESTION_TEXT_CHARS = 90;
-const MAX_SUGGESTIONS = 4;
+const MAX_SUGGESTIONS = 3;
 const ALLOWED_CLIENT_ROLES = new Set(["user", "assistant"]);
 
 const ALLOWED_EXACT_HOSTS = [
@@ -373,11 +373,14 @@ async function generateSuggestedQuestions({
     const result = await generateText({
       model,
       system: [
-        "Create suggested follow-up questions for a strength coaching chat.",
+        "Create clickable suggested next questions for a strength coaching chat.",
         "Return only JSON in this shape: {\"questions\":[\"...\"]}.",
-        `Return 2-${MAX_SUGGESTIONS} questions.`,
+        `Return exactly ${MAX_SUGGESTIONS} questions.`,
         `Each question must be under ${MAX_SUGGESTION_TEXT_CHARS} characters.`,
-        "Phrase each question as something the user would click or type next.",
+        "Each question must be from the user's point of view, addressed to the AI coach.",
+        "Do not ask the user for information. Do not write questions the coach would ask the user.",
+        "Good: \"Estimate my e1RM from 112.5x3\".",
+        "Bad: \"How did 112.5x3 feel?\".",
         "Prefer concrete next-step questions tied to the latest answer.",
         "Do not include medical diagnosis prompts.",
       ].join(" "),
@@ -433,6 +436,7 @@ function parseSuggestedQuestions(text) {
         .filter((question) => typeof question === "string")
         .map((question) => question.trim())
         .filter((question) => question.length > 0)
+        .filter((question) => !isCoachQuestionForUser(question))
         .map((question) =>
           question.length > MAX_SUGGESTION_TEXT_CHARS
             ? `${question.slice(0, MAX_SUGGESTION_TEXT_CHARS - 1).trim()}?`
@@ -442,6 +446,20 @@ function parseSuggestedQuestions(text) {
   } catch {
     return [];
   }
+}
+
+function isCoachQuestionForUser(question) {
+  const normalizedQuestion = question.toLowerCase();
+
+  return [
+    "how did ",
+    "how do you feel",
+    "how does it feel",
+    "what did ",
+    "what do you feel",
+    "can you share",
+    "tell me ",
+  ].some((blockedStart) => normalizedQuestion.startsWith(blockedStart));
 }
 
 function getLatestUserMessageText(messages) {

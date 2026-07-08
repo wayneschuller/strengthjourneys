@@ -822,7 +822,7 @@
   }
 
   .animate-streak-leader-shake {
-    animation: streak-leader-shake 3.6s ease-in-out infinite;
+    animation: streak-leader-shake 3.6s ease-in-out 2;
     will-change: transform;
   }
 

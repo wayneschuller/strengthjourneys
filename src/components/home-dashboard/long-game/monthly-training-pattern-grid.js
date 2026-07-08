@@ -5,6 +5,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 
+import { useReducedMotion } from "motion/react";
+
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
@@ -217,6 +219,7 @@ export function MonthlyTrainingPatternGrid({
   isSharing,
 }) {
   const { isDemoMode } = useUserLiftingData();
+  const prefersReducedMotion = useReducedMotion();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -303,7 +306,7 @@ export function MonthlyTrainingPatternGrid({
 
       {/* Year rows */}
       <div className="flex w-full flex-col gap-1">
-        {years.map((year) => (
+        {years.map((year, yearIndex) => (
           <div
             key={year}
             className={`flex w-full items-center ${year === currentYear ? "bg-muted/25 rounded-md py-0.5" : ""}`}
@@ -351,6 +354,16 @@ export function MonthlyTrainingPatternGrid({
                     style={{
                       height: 28,
                       ...cellStyle,
+                      ...(!isSharing && !prefersReducedMotion
+                        ? {
+                            animation: "long-game-cell-pop 560ms both",
+                            animationDelay: `${Math.min(
+                              yearIndex * 34 + (month - 1) * 26,
+                              820,
+                            )}ms`,
+                            transformOrigin: "center",
+                          }
+                        : null),
                     }}
                     onMouseOver={
                       !isFuture

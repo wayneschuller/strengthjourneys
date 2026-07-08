@@ -7,6 +7,8 @@ import { format } from "date-fns";
 
 import { useCallback, useMemo, useState } from "react";
 
+import { useReducedMotion } from "motion/react";
+
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
@@ -88,6 +90,7 @@ export function WeeklyTrainingPatternGrid({
   isSharing,
 }) {
   const { isDemoMode } = useUserLiftingData();
+  const prefersReducedMotion = useReducedMotion();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -170,7 +173,7 @@ export function WeeklyTrainingPatternGrid({
 
       {/* Year rows */}
       <div className="flex w-full flex-col gap-[2px]">
-        {years.map((year) => (
+        {years.map((year, yearIndex) => (
           <div
             key={year}
             className={`flex w-full items-center ${year === currentYear ? "bg-muted/25 -mx-1 rounded-md px-1 py-0.5" : ""}`}
@@ -221,7 +224,19 @@ export function WeeklyTrainingPatternGrid({
                   <div
                     key={weekNum}
                     className="rounded-sm"
-                    style={cellStyle}
+                    style={{
+                      ...cellStyle,
+                      ...(!isSharing && !prefersReducedMotion
+                        ? {
+                            animation: "long-game-cell-pop 520ms both",
+                            animationDelay: `${Math.min(
+                              (weekNum - 1) * 8 + yearIndex * 24,
+                              760,
+                            )}ms`,
+                            transformOrigin: "center",
+                          }
+                        : null),
+                    }}
                     onMouseOver={
                       data && !isFuture
                         ? (e) => handleMouseOver(e, year, weekNum, data)

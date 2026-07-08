@@ -35,6 +35,101 @@ const MONTH_NAMES = [
   { narrow: "D", short: "Dec" },
 ];
 
+const MONTHLY_INSIGHT_OPTIONS = {
+  monthInProgress: [
+    "Still mid-month. Keep loading it.",
+    "Month's not done yet.",
+    "Still time to stack work.",
+    "Live month. Keep showing up.",
+    "Snapshot only. More work left.",
+    "Not final. Add more sessions.",
+    "This month's still moving.",
+    "Plenty of runway left.",
+    "Partial month. Build it.",
+    "Still unfolding. Keep training.",
+  ],
+  noTrainingLogged: [
+    "No training logged.",
+    "Nothing on the bar here.",
+    "Blank month.",
+    "No sessions recorded.",
+    "Quiet month.",
+    "No lifts logged.",
+    "Empty slot in the log.",
+    "Nothing moved here.",
+    "No work shows up.",
+    "Off month on paper.",
+  ],
+  perfectConsistency: [
+    "Great consistency.",
+    "Every week got work.",
+    "That's the rhythm.",
+    "Strong month. No gaps.",
+    "Every week showed up.",
+    "Clean weekly spread.",
+    "No empty weeks.",
+    "Steady all month.",
+    "Consistency carried.",
+    "Solid month, start to finish.",
+  ],
+  strongSpread: [
+    "Strong spread.",
+    "Nearly every week hit.",
+    "Well-distributed month.",
+    "Most weeks got work.",
+    "Good monthly coverage.",
+    "Nicely spread sessions.",
+    "Solid calendar rhythm.",
+    "Training stayed present.",
+    "Good work, small gap.",
+    "Strong month-wide coverage.",
+  ],
+  oneWeekCluster: [
+    "One week carried it.",
+    "Work landed in one week.",
+    "Short burst, quiet month.",
+    "Tight cluster of work.",
+    "One active week.",
+    "One good push.",
+    "Mostly one training pocket.",
+    "Concentrated, not spread.",
+    "Light month, one burst.",
+    "One week did the job.",
+  ],
+  middleCluster: [
+    "Middle weeks carried it.",
+    "Mid-month did the work.",
+    "Mostly middle-week training.",
+    "Quiet edges, active middle.",
+    "Work clustered mid-month.",
+    "Activity peaked mid-month.",
+    "Clear middle block.",
+    "Start and finish got quiet.",
+    "Sessions sat in the middle.",
+    "Mid-month pocket stands out.",
+  ],
+  steadyPockets: [
+    "A few solid pockets.",
+    "Several useful training pockets.",
+    "Decent month, distinct weeks.",
+    "Small clusters kept it moving.",
+    "Pockets of work showed up.",
+    "Not perfect, still useful.",
+    "Mixed month, real work.",
+    "A few good patches.",
+    "Pockets, not full spread.",
+    "Decent month with spots.",
+  ],
+};
+
+function getHashedMonthlyInsight(options, hashKey) {
+  let hash = 0;
+  for (let index = 0; index < hashKey.length; index++) {
+    hash = (hash * 31 + hashKey.charCodeAt(index)) >>> 0;
+  }
+  return options[hash % options.length];
+}
+
 function getMonthlyShade(level) {
   const clampedLevel = Math.max(1, Math.min(level, 6));
   if (clampedLevel >= 6) return "var(--heatmap-4)";
@@ -389,26 +484,45 @@ function getBestWeekKey(weekBreakdown) {
 }
 
 function getMonthlyInsight({
+  year,
+  month,
   activeWeeks,
   possibleWeeks,
   totalSessions,
   isMonthInProgress,
   weekBreakdown,
 }) {
+  const hashKey = `${year}-${month}-${activeWeeks}-${possibleWeeks}-${totalSessions}`;
+
   if (isMonthInProgress) {
-    return "Month in progress; the remaining weeks can still change the story.";
+    return getHashedMonthlyInsight(
+      MONTHLY_INSIGHT_OPTIONS.monthInProgress,
+      hashKey,
+    );
   }
   if (totalSessions <= 0) {
-    return "No logged training this month 💩.";
+    return getHashedMonthlyInsight(
+      MONTHLY_INSIGHT_OPTIONS.noTrainingLogged,
+      hashKey,
+    );
   }
   if (activeWeeks === possibleWeeks && possibleWeeks > 0) {
-    return "Great consistency this month.";
+    return getHashedMonthlyInsight(
+      MONTHLY_INSIGHT_OPTIONS.perfectConsistency,
+      hashKey,
+    );
   }
   if (activeWeeks >= Math.max(possibleWeeks - 1, 1)) {
-    return "Strong spread across the month.";
+    return getHashedMonthlyInsight(
+      MONTHLY_INSIGHT_OPTIONS.strongSpread,
+      hashKey,
+    );
   }
   if (activeWeeks <= 1) {
-    return "A lighter month, with training concentrated in one week.";
+    return getHashedMonthlyInsight(
+      MONTHLY_INSIGHT_OPTIONS.oneWeekCluster,
+      hashKey,
+    );
   }
 
   const activeIndexes = weekBreakdown
@@ -417,10 +531,16 @@ function getMonthlyInsight({
   const firstActive = activeIndexes[0] ?? 0;
   const lastActive = activeIndexes[activeIndexes.length - 1] ?? 0;
   if (firstActive > 0 && lastActive < possibleWeeks - 1) {
-    return "A lighter month, with training clustered in the middle.";
+    return getHashedMonthlyInsight(
+      MONTHLY_INSIGHT_OPTIONS.middleCluster,
+      hashKey,
+    );
   }
 
-  return "A steady month with a few clear training pockets.";
+  return getHashedMonthlyInsight(
+    MONTHLY_INSIGHT_OPTIONS.steadyPockets,
+    hashKey,
+  );
 }
 
 function MonthlyWeekSparkline({ weekBreakdown, bestWeekKey }) {
@@ -474,6 +594,8 @@ function MonthlyTrainingPatternTooltip({ value }) {
     isMonthInProgress ? " so far" : ""
   }`;
   const insight = getMonthlyInsight({
+    year,
+    month,
     activeWeeks,
     possibleWeeks: possibleWeekKeys.length,
     totalSessions,

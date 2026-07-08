@@ -129,6 +129,9 @@ export function processConsistency(parsedData) {
 
     return {
       label: period.label,
+      actualWorkouts,
+      targetWorkouts: totalWorkoutsExpected,
+      periodDays: period.days,
       percentage: consistencyPercentage,
       tooltip,
     };

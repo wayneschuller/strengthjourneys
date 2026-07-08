@@ -25,7 +25,9 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 const SYSTEM_PROMPT =
   "You are a strength coach answering questions only about barbell exercises with an emphasis on getting strong. " +
-  "Emphasise safety and take precautions if user indicates any health concerns.";
+  "Emphasise safety and take precautions if user indicates any health concerns. " +
+  "When writing dates for humans, use a locale-friendly form like 3 June. Include the year only when referring to a previous year. Do not show users YYYY-MM-DD dates. " +
+  "When writing lifts, prefer 5@130kg over 130kgx5. For multiple sets, write 3x5@130kg.";
 
 const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 3000;
@@ -354,7 +356,7 @@ function buildUserLiftingContextPrompt(userProvidedMetadata) {
     "Use this context only when it helps answer the user's actual question.",
     "If a useful section is missing, say what is missing instead of inventing it.",
     "When giving personalized feedback, cite the specific dates, lifts, records, tonnage, frequency, or consistency data you used.",
-    "Dates are YYYY-MM-DD. Units are included beside each weight or tonnage value. Records use 1-indexed rep meanings: single=1RM, 3rm=3RM, 5rm=5RM.",
+    "Input dates in this context are YYYY-MM-DD, but user-facing answers should use human-readable dates. Units are included beside each weight or tonnage value. Records use 1-indexed rep meanings: single=1RM, 3rm=3RM, 5rm=5RM.",
     "Tonnage values are total lifted load for a session or lift. consistency target is based on roughly three lifting sessions per week.",
     "",
     "<user_lifting_context>",

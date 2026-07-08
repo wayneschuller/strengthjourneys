@@ -168,12 +168,14 @@ export default async function handler(req, res) {
   const convertedUserMessages = await convertToModelMessages(userMessages);
 
   const modelMessages = [...systemMessages, ...convertedUserMessages];
+  const providerOptions = buildProviderOptions({ useXai });
 
   devLog(`AI model: ${AI_model.modelId}`);
 
   const result = await streamText({
     model: AI_model,
     messages: modelMessages,
+    providerOptions,
   });
 
   const stream = createUIMessageStream({
@@ -208,6 +210,7 @@ export default async function handler(req, res) {
         userMessages,
         assistantText,
         userProvidedMetadata,
+        providerOptions,
       });
 
       if (suggestedQuestions.length > 0) {
@@ -365,6 +368,7 @@ async function generateSuggestedQuestions({
   userMessages,
   assistantText,
   userProvidedMetadata,
+  providerOptions,
 }) {
   const latestUserMessage = getLatestUserMessageText(userMessages);
   if (!latestUserMessage || !assistantText.trim()) return [];
@@ -389,6 +393,7 @@ async function generateSuggestedQuestions({
         assistantText,
         userProvidedMetadata,
       }),
+      providerOptions,
     });
 
     return parseSuggestedQuestions(result.text);
@@ -396,6 +401,16 @@ async function generateSuggestedQuestions({
     devLog("Failed to generate AI follow-up suggestions", error);
     return [];
   }
+}
+
+function buildProviderOptions({ useXai }) {
+  if (!useXai) return undefined;
+
+  return {
+    xai: {
+      reasoningEffort: "low",
+    },
+  };
 }
 
 function buildSuggestionPrompt({

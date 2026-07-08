@@ -3,13 +3,16 @@
  * each active month against the rest of the lifter's own training history.
  */
 
-import { format } from "date-fns";
-
 import { useCallback, useMemo, useState } from "react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
-import { parseYmdUtc } from "@/lib/date-utils";
+import {
+  addDaysFromStr,
+  daysInMonth,
+  getWeekKeyFromDateStr,
+  parseYmdUtc,
+} from "@/lib/date-utils";
 
 import { buildMonthlyTrainingActivityByYear } from "@/components/home-dashboard/long-game/long-game-training-activity";
 
@@ -151,18 +154,21 @@ export function MonthlyTrainingPatternGrid({
   const currentYear = todayDate.getFullYear();
   const currentMonth = todayDate.getMonth() + 1;
 
-  const handleMouseOver = useCallback((e, year, month, data) => {
-    const cellRect = e.target.getBoundingClientRect();
-    const x = cellRect.left + cellRect.width / 2;
-    const y = cellRect.top;
-    const showBelow = y < 200;
-    setTooltipPos({
-      x: Math.max(100, Math.min(x, window.innerWidth - 100)),
-      y: showBelow ? cellRect.bottom + 8 : y - 8,
-      showBelow,
-    });
-    setHoveredValue({ year, month, ...(data ?? {}) });
-  }, []);
+  const handleMouseOver = useCallback(
+    (e, year, month, data, relativeLevel) => {
+      const cellRect = e.target.getBoundingClientRect();
+      const x = cellRect.left + cellRect.width / 2;
+      const y = cellRect.top;
+      const showBelow = y < 200;
+      setTooltipPos({
+        x: Math.max(100, Math.min(x, window.innerWidth - 100)),
+        y: showBelow ? cellRect.bottom + 8 : y - 8,
+        showBelow,
+      });
+      setHoveredValue({ year, month, relativeLevel, ...(data ?? {}) });
+    },
+    [],
+  );
 
   const handleMouseLeave = useCallback(() => setHoveredValue(null), []);
 
@@ -253,7 +259,14 @@ export function MonthlyTrainingPatternGrid({
                     }}
                     onMouseOver={
                       !isFuture
-                        ? (e) => handleMouseOver(e, year, month, data)
+                        ? (e) =>
+                            handleMouseOver(
+                              e,
+                              year,
+                              month,
+                              data,
+                              relativeLevel,
+                            )
                         : undefined
                     }
                     onMouseLeave={!isFuture ? handleMouseLeave : undefined}
@@ -311,14 +324,6 @@ export function MonthlyTrainingPatternGrid({
   );
 }
 
-// Maps a weekly session count to an emoji for monthly tooltip week rows.
-function weekEmoji(sessions) {
-  if (sessions >= 3) return "🏆";
-  if (sessions === 2) return "💪";
-  if (sessions === 1) return "✅";
-  return "💩";
-}
-
 function getSparklineHeight(sessions) {
   if (sessions >= 4) return 26;
   if (sessions === 3) return 21;
@@ -327,7 +332,95 @@ function getSparklineHeight(sessions) {
   return 4;
 }
 
-function MonthlyWeekSparkline({ weekBreakdown }) {
+function getActivitySummary(relativeLevel, totalSessions) {
+  if (totalSessions <= 0) {
+    return { label: "No activity yet", badge: "" };
+  }
+  if (relativeLevel >= 5) {
+    return { label: "High activity", badge: "🏆" };
+  }
+  if (relativeLevel >= 3) {
+    return { label: "Mid activity", badge: "💪" };
+  }
+  return { label: "Low activity", badge: "" };
+}
+
+function getMonthWeekKeys(year, month, isMonthInProgress) {
+  const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+  const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(
+    daysInMonth(year, month),
+  ).padStart(2, "0")}`;
+  const today = new Date();
+  const todayYmd = `${today.getFullYear()}-${String(
+    today.getMonth() + 1,
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const rangeEnd = isMonthInProgress && todayYmd < monthEnd ? todayYmd : monthEnd;
+  const endWeekKey = getWeekKeyFromDateStr(rangeEnd);
+  const weekKeys = [];
+  let weekKey = getWeekKeyFromDateStr(monthStart);
+
+  while (weekKey <= endWeekKey) {
+    weekKeys.push(weekKey);
+    weekKey = addDaysFromStr(weekKey, 7);
+  }
+
+  return weekKeys;
+}
+
+function formatMonthDay(dateStr) {
+  const date = parseYmdUtc(dateStr);
+  return `${MONTH_NAMES[date.getUTCMonth()].short} ${date.getUTCDate()}`;
+}
+
+function formatWeekRange(weekKey) {
+  return `${formatMonthDay(weekKey)}-${formatMonthDay(addDaysFromStr(weekKey, 6))}`;
+}
+
+function getBestWeekKey(weekBreakdown) {
+  if (!weekBreakdown?.length) return null;
+  const bestWeek = weekBreakdown.reduce((best, week) => {
+    if (!best || week.sessions > best.sessions) return week;
+    return best;
+  }, null);
+  return bestWeek?.sessions > 0 ? bestWeek.weekKey : null;
+}
+
+function getMonthlyInsight({
+  activeWeeks,
+  possibleWeeks,
+  totalSessions,
+  isMonthInProgress,
+  weekBreakdown,
+}) {
+  if (isMonthInProgress) {
+    return "Month in progress; the remaining weeks can still change the story.";
+  }
+  if (totalSessions <= 0) {
+    return "No logged training this month.";
+  }
+  if (activeWeeks === possibleWeeks && possibleWeeks > 0) {
+    return "Great consistency this month.";
+  }
+  if (activeWeeks >= Math.max(possibleWeeks - 1, 1)) {
+    return "Strong spread across the month.";
+  }
+  if (activeWeeks <= 1) {
+    return "A lighter month, with training concentrated in one week.";
+  }
+
+  const activeIndexes = weekBreakdown
+    .map((week, index) => (week.sessions > 0 ? index : null))
+    .filter((index) => index !== null);
+  const firstActive = activeIndexes[0] ?? 0;
+  const lastActive = activeIndexes[activeIndexes.length - 1] ?? 0;
+  if (firstActive > 0 && lastActive < possibleWeeks - 1) {
+    return "A lighter month, with training clustered in the middle.";
+  }
+
+  return "A steady month with a few clear training pockets.";
+}
+
+function MonthlyWeekSparkline({ weekBreakdown, bestWeekKey }) {
   if (!weekBreakdown?.length) return null;
 
   return (
@@ -338,7 +431,9 @@ function MonthlyWeekSparkline({ weekBreakdown }) {
       {weekBreakdown.map(({ sessions, weekKey }, index) => (
         <span
           key={weekKey ?? index}
-          className="bg-primary/75 min-w-[10px] flex-1 rounded-t-sm"
+          className={`min-w-[10px] flex-1 rounded-t-sm ${
+            weekKey === bestWeekKey ? "bg-primary/85" : "bg-primary/35"
+          }`}
           style={{ height: getSparklineHeight(sessions) }}
         />
       ))}
@@ -348,34 +443,75 @@ function MonthlyWeekSparkline({ weekBreakdown }) {
 
 // Tooltip body for a monthly cell: shows month/year heading and a per-week session breakdown.
 function MonthlyTrainingPatternTooltip({ value }) {
-  const { year, month, weekBreakdown } = value;
+  const { year, month, relativeLevel = 0, totalSessions = 0 } = value;
+  const rawWeekBreakdown = value.weekBreakdown ?? [];
+  const today = new Date();
+  const isMonthInProgress =
+    year === today.getFullYear() && month === today.getMonth() + 1;
+  const possibleWeekKeys = getMonthWeekKeys(year, month, isMonthInProgress);
+  const keyedWeeks = rawWeekBreakdown.filter((week) => week.weekKey);
+  const weeklySessionsByKey = new Map(
+    keyedWeeks.map((week) => [week.weekKey, week.sessions]),
+  );
+  const weekBreakdown = possibleWeekKeys.map((weekKey) => ({
+    weekKey,
+    sessions:
+      weeklySessionsByKey.get(weekKey) ??
+      rawWeekBreakdown[possibleWeekKeys.indexOf(weekKey)]?.sessions ??
+      0,
+  }));
+  const activeWeeks = weekBreakdown.filter((week) => week.sessions > 0).length;
+  const bestWeekKey = getBestWeekKey(weekBreakdown);
+  const activitySummary = getActivitySummary(relativeLevel, totalSessions);
+  const title = `${MONTH_NAMES[month - 1].short} ${year}${
+    isMonthInProgress ? " so far" : ""
+  }`;
+  const insight = getMonthlyInsight({
+    activeWeeks,
+    possibleWeeks: possibleWeekKeys.length,
+    totalSessions,
+    isMonthInProgress,
+    weekBreakdown,
+  });
+
   return (
-    <div className="border-border/50 bg-background grid max-w-[18rem] min-w-[10rem] items-start gap-1 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
-      <p className="font-bold">
-        {MONTH_NAMES[month - 1].short} {year}
+    <div className="border-border/50 bg-background grid max-w-[18rem] min-w-[12rem] items-start gap-1.5 rounded-lg border px-2.5 py-2 text-xs shadow-xl">
+      <div className="grid gap-0.5">
+        <p className="text-foreground font-bold">{title}</p>
+        <p className="text-muted-foreground">
+          <span className="text-foreground font-semibold">
+            {totalSessions} {totalSessions === 1 ? "session" : "sessions"}
+          </span>{" "}
+          · {activitySummary.label}
+          {activitySummary.badge ? ` ${activitySummary.badge}` : ""}
+        </p>
+        <p className="text-muted-foreground">
+          {activeWeeks}/{possibleWeekKeys.length} active weeks
+        </p>
+        {isMonthInProgress && (
+          <p className="text-muted-foreground">Month in progress</p>
+        )}
+      </div>
+      <MonthlyWeekSparkline
+        weekBreakdown={weekBreakdown}
+        bestWeekKey={bestWeekKey}
+      />
+      <div className="flex flex-col gap-0.5">
+        {weekBreakdown.map(({ sessions, weekKey }) => (
+          <p key={weekKey} className="text-muted-foreground">
+            <span className="text-foreground font-semibold">
+              {formatWeekRange(weekKey)}:
+            </span>{" "}
+            {sessions} {sessions === 1 ? "session" : "sessions"}
+            {weekKey === bestWeekKey && sessions > 0 ? (
+              <span className="text-foreground font-semibold"> · Best</span>
+            ) : null}
+          </p>
+        ))}
+      </div>
+      <p className="text-foreground/85 border-border/40 border-t pt-1">
+        {insight}
       </p>
-      {weekBreakdown?.length > 0 ? (
-        <>
-          <MonthlyWeekSparkline weekBreakdown={weekBreakdown} />
-          <div className="flex flex-col gap-0.5">
-            {weekBreakdown.map(({ sessions, weekKey }, i) => (
-              <p key={weekKey ?? i} className="text-muted-foreground">
-                <span className="text-foreground font-semibold">
-                  Week of{" "}
-                  {weekKey
-                    ? format(parseYmdUtc(weekKey), "MMM d")
-                    : `Week ${i + 1}`}
-                  :
-                </span>{" "}
-                {sessions} {sessions === 1 ? "session" : "sessions"}{" "}
-                {weekEmoji(sessions)}
-              </p>
-            ))}
-          </div>
-        </>
-      ) : (
-        <p className="text-muted-foreground">No training sessions 💩</p>
-      )}
     </div>
   );
 }

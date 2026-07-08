@@ -826,6 +826,10 @@
     will-change: transform;
   }
 
+  .long-game-cell-pop {
+    animation: long-game-cell-pop 560ms both;
+  }
+
   .shadow-2xs {
     box-shadow: var(--shadow-2xs);
   }
@@ -849,6 +853,31 @@
   }
   .shadow-2xl {
     box-shadow: var(--shadow-2xl);
+  }
+}
+
+@keyframes long-game-cell-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) translateY(4px);
+    filter: saturate(0.78) brightness(0.88);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(1.08) translateY(-1px);
+    filter: saturate(1.08) brightness(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: saturate(1) brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-calendar-heatmap rect,
+  [style*="long-game-cell-pop"] {
+    animation: none !important;
   }
 }
 

@@ -7,6 +7,8 @@ import { cloneElement, memo, useCallback, useMemo, useState } from "react";
 
 import { useRouter } from "next/router";
 
+import { useReducedMotion } from "motion/react";
+
 import CalendarHeatmap from "react-calendar-heatmap";
 
 import { getDisplayWeight } from "@/lib/processing-utils";
@@ -39,6 +41,13 @@ export function DailyTrainingHeatmap({
 }) {
   const { isDemoMode } = useUserLiftingData();
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
+  const heatmapYear = startDate
+    ? parseTrainingDateAsLocalDate(startDate).getFullYear()
+    : null;
+  const currentYear = new Date().getFullYear();
+  const shouldAnimateCurrentYear =
+    heatmapYear === currentYear && !isSharing && !prefersReducedMotion;
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -101,13 +110,25 @@ export function DailyTrainingHeatmap({
         onClick={handleClick}
         onMouseOver={handleMouseOver}
         onMouseLeave={handleMouseLeave}
-        transformDayElement={(element, value, index) =>
-          cloneElement(element, {
+        transformDayElement={(element, value, index) => {
+          const dayStyle = value?.dateKey ? { cursor: "pointer" } : {};
+          return cloneElement(element, {
             rx: 3,
             ry: 3,
-            style: value?.dateKey ? { cursor: "pointer" } : undefined,
-          })
-        }
+            style: {
+              ...element.props.style,
+              ...dayStyle,
+              ...(shouldAnimateCurrentYear
+                ? {
+                    animation: "long-game-cell-pop 560ms both",
+                    animationDelay: `${Math.min(index * 6, 640)}ms`,
+                    transformBox: "fill-box",
+                    transformOrigin: "center",
+                  }
+                : null),
+            },
+          });
+        }}
       />
       {hoveredValue && !isSharing && (
         <div

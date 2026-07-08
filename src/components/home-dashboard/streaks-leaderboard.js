@@ -4,6 +4,7 @@
  */
 import { useMemo } from "react";
 import { format, parseISO } from "date-fns";
+import { motion, useReducedMotion } from "motion/react";
 import {
   Tooltip,
   TooltipContent,
@@ -40,6 +41,7 @@ function formatStreakRange(startWeek, endWeek) {
 
 export function StreaksLeaderboard({ streaks, isSharing = false }) {
   const { isMetric } = useAthleteBio();
+  const prefersReducedMotion = useReducedMotion();
 
   const ranked = useMemo(() => {
     if (!streaks?.length) return [];
@@ -106,6 +108,8 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
               isMetric={isMetric}
               isSharing={isSharing}
               isLeader={index === 0}
+              animationIndex={index}
+              shouldAnimate={!isSharing && !prefersReducedMotion}
             />
           );
         })}
@@ -126,6 +130,8 @@ function StreakBar({
   isMetric,
   isSharing,
   isLeader,
+  animationIndex,
+  shouldAnimate,
 }) {
   const dateLabel = formatStreakRange(streak.startWeek, streak.endWeek);
 
@@ -153,7 +159,7 @@ function StreakBar({
     : "text-foreground/85";
 
   const row = (
-    <div
+    <motion.div
       className={cn(
         "flex cursor-default items-center gap-2",
         isLeader &&
@@ -161,6 +167,21 @@ function StreakBar({
           !isSharing &&
           "animate-streak-leader-shake",
       )}
+      initial={
+        shouldAnimate
+          ? { opacity: 0, y: 8, scaleX: 0.96, transformOrigin: "left" }
+          : false
+      }
+      animate={shouldAnimate ? { opacity: 1, y: 0, scaleX: 1 } : undefined}
+      transition={
+        shouldAnimate
+          ? {
+              duration: 0.34,
+              delay: animationIndex * 0.055,
+              ease: [0.22, 1, 0.36, 1],
+            }
+          : undefined
+      }
     >
       <div className="relative min-w-0 flex-1">
         <div
@@ -183,7 +204,7 @@ function StreakBar({
       >
         {streak.weeks}wk
       </span>
-    </div>
+    </motion.div>
   );
 
   if (isSharing) {

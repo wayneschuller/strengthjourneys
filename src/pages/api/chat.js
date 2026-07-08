@@ -8,7 +8,13 @@
 
 import { openai } from "@ai-sdk/openai";
 import { xai } from "@ai-sdk/xai";
-import { streamText, convertToModelMessages } from "ai";
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  streamText,
+  convertToModelMessages,
+  generateText,
+} from "ai";
 import { devLog } from "@/lib/processing-utils";
 import {
   appendAiChatQuotaHeaders,
@@ -25,6 +31,9 @@ const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 3000;
 const MAX_TOTAL_MESSAGE_CHARS = 12000;
 const MAX_METADATA_CHARS = 4500;
+const MAX_SUGGESTION_INPUT_CHARS = 5000;
+const MAX_SUGGESTION_TEXT_CHARS = 90;
+const MAX_SUGGESTIONS = 4;
 const ALLOWED_CLIENT_ROLES = new Set(["user", "assistant"]);
 
 const ALLOWED_EXACT_HOSTS = [
@@ -167,10 +176,55 @@ export default async function handler(req, res) {
     messages: modelMessages,
   });
 
-  const response = result.toUIMessageStreamResponse({
-    originalMessages: userMessages,
-    sendSources: true,
-    sendReasoning: true,
+  const stream = createUIMessageStream({
+    execute: async ({ writer }) => {
+      const uiStream = result.toUIMessageStream({
+        originalMessages: userMessages,
+        sendSources: true,
+        sendReasoning: true,
+      });
+      const reader = uiStream.getReader();
+      let assistantText = "";
+      let finishChunk = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        if (value?.type === "text-delta") {
+          assistantText += value.delta;
+        }
+
+        if (value?.type === "finish") {
+          finishChunk = value;
+          continue;
+        }
+
+        writer.write(value);
+      }
+
+      const suggestedQuestions = await generateSuggestedQuestions({
+        model: AI_model,
+        userMessages,
+        assistantText,
+        userProvidedMetadata,
+      });
+
+      if (suggestedQuestions.length > 0) {
+        writer.write({
+          type: "data-suggested-questions",
+          data: { questions: suggestedQuestions },
+        });
+      }
+
+      if (finishChunk) {
+        writer.write(finishChunk);
+      }
+    },
+  });
+
+  const response = createUIMessageStreamResponse({
+    stream,
   });
 
   response.headers.forEach((value, key) => {
@@ -304,4 +358,117 @@ function buildUserLiftingContextPrompt(userProvidedMetadata) {
     userProvidedMetadata,
     "</user_lifting_context>",
   ].join("\n");
+}
+
+async function generateSuggestedQuestions({
+  model,
+  userMessages,
+  assistantText,
+  userProvidedMetadata,
+}) {
+  const latestUserMessage = getLatestUserMessageText(userMessages);
+  if (!latestUserMessage || !assistantText.trim()) return [];
+
+  try {
+    const result = await generateText({
+      model,
+      system: [
+        "Create suggested follow-up questions for a strength coaching chat.",
+        "Return only JSON in this shape: {\"questions\":[\"...\"]}.",
+        `Return 2-${MAX_SUGGESTIONS} questions.`,
+        `Each question must be under ${MAX_SUGGESTION_TEXT_CHARS} characters.`,
+        "Phrase each question as something the user would click or type next.",
+        "Prefer concrete next-step questions tied to the latest answer.",
+        "Do not include medical diagnosis prompts.",
+      ].join(" "),
+      prompt: buildSuggestionPrompt({
+        latestUserMessage,
+        assistantText,
+        userProvidedMetadata,
+      }),
+    });
+
+    return parseSuggestedQuestions(result.text);
+  } catch (error) {
+    devLog("Failed to generate AI follow-up suggestions", error);
+    return [];
+  }
+}
+
+function buildSuggestionPrompt({
+  latestUserMessage,
+  assistantText,
+  userProvidedMetadata,
+}) {
+  return truncateText(
+    [
+      "Latest user message:",
+      latestUserMessage,
+      "",
+      "Latest assistant answer:",
+      assistantText,
+      "",
+      "Optional lifting context summary:",
+      extractMetadataSection(userProvidedMetadata, "data_context") ||
+        "No lifting context summary shared.",
+    ].join("\n"),
+    MAX_SUGGESTION_INPUT_CHARS,
+  );
+}
+
+function parseSuggestedQuestions(text) {
+  const trimmedText = text?.trim();
+  if (!trimmedText) return [];
+
+  try {
+    const jsonText =
+      trimmedText.match(/\{[\s\S]*\}/)?.[0] || trimmedText;
+    const parsed = JSON.parse(jsonText);
+    const questions = Array.isArray(parsed?.questions)
+      ? parsed.questions
+      : [];
+
+    return [...new Set(
+      questions
+        .filter((question) => typeof question === "string")
+        .map((question) => question.trim())
+        .filter((question) => question.length > 0)
+        .map((question) =>
+          question.length > MAX_SUGGESTION_TEXT_CHARS
+            ? `${question.slice(0, MAX_SUGGESTION_TEXT_CHARS - 1).trim()}?`
+            : question,
+        ),
+    )].slice(0, MAX_SUGGESTIONS);
+  } catch {
+    return [];
+  }
+}
+
+function getLatestUserMessageText(messages) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role === "user") {
+      return getMessageText(messages[index]);
+    }
+  }
+
+  return "";
+}
+
+function extractMetadataSection(metadata, sectionName) {
+  const sectionStart = `[${sectionName}]`;
+  const startIndex = metadata.indexOf(sectionStart);
+  if (startIndex === -1) return "";
+
+  const nextSectionIndex = metadata.indexOf("\n[", startIndex + sectionStart.length);
+  return metadata
+    .slice(
+      startIndex,
+      nextSectionIndex === -1 ? undefined : nextSectionIndex,
+    )
+    .trim();
+}
+
+function truncateText(text, maxChars) {
+  if (text.length <= maxChars) return text;
+  return `${text.slice(0, maxChars).trim()}\n[truncated]`;
 }

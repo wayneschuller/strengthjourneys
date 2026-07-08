@@ -1119,6 +1119,8 @@ function AILiftingAssistantCard({
                     const hasSources = parts.some(
                       (part) => part.type === "source-url",
                     );
+                    const suggestedQuestions =
+                      getSuggestedQuestionsFromParts(parts);
 
                     // Get text content for actions (last text part or fallback to content)
                     const lastTextPart = parts
@@ -1190,6 +1192,22 @@ function AILiftingAssistantCard({
                               </MessageActions>
                             )}
                         </Message>
+                        {message.role === "assistant" &&
+                          isLastMessage &&
+                          suggestedQuestions.length > 0 && (
+                            <Suggestions className="mt-3 max-w-3xl">
+                              {suggestedQuestions.map((question) => (
+                                <Suggestion
+                                  key={question}
+                                  suggestion={question}
+                                  disabled={isChatUnavailable}
+                                  onClick={(suggestion) => {
+                                    sendMessageWithMetadata(suggestion);
+                                  }}
+                                />
+                              ))}
+                            </Suggestions>
+                          )}
                       </div>
                     );
                   })}
@@ -1615,6 +1633,20 @@ function buildLatestSessionDetailLines(sessionDate, analyzedLifts) {
     });
 
   return lines;
+}
+
+function getSuggestedQuestionsFromParts(parts) {
+  const suggestionPart = parts.find(
+    (part) => part.type === "data-suggested-questions",
+  );
+  const questions = suggestionPart?.data?.questions;
+
+  if (!Array.isArray(questions)) return [];
+
+  return questions
+    .filter((question) => typeof question === "string")
+    .map((question) => question.trim())
+    .filter(Boolean);
 }
 
 function getDaysBetweenDates(olderDate, newerDate) {

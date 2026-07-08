@@ -1199,6 +1199,7 @@ function AILiftingAssistantCard({
                               {suggestedQuestions.map((question) => (
                                 <Suggestion
                                   key={question}
+                                  className="border-foreground/80 bg-foreground text-background hover:bg-foreground/90 hover:text-background disabled:bg-muted disabled:text-muted-foreground"
                                   suggestion={question}
                                   disabled={isChatUnavailable}
                                   onClick={(suggestion) => {

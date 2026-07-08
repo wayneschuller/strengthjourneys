@@ -881,6 +881,30 @@ function AILiftingAssistantCard({
     }),
     [userProvidedProfileData],
   );
+  const clearPromptQueryParams = useCallback(() => {
+    if (!router.isReady) return;
+    if (
+      !("aiPrompt" in router.query) &&
+      !("aiPromptKey" in router.query) &&
+      !("resetChat" in router.query)
+    ) {
+      return;
+    }
+
+    const nextQuery = { ...router.query };
+    delete nextQuery.aiPrompt;
+    delete nextQuery.aiPromptKey;
+    delete nextQuery.resetChat;
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: nextQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  }, [router]);
 
   // Helper to send messages with fresh metadata (per AI SDK v6 docs for ChatRequestOptions.body)
   const sendMessageWithMetadata = useCallback((message) => {
@@ -932,7 +956,9 @@ function AILiftingAssistantCard({
     }
     pendingAiPromptRef.current = nextPrompt;
     pendingAiPromptKeyRef.current = nextPromptKey;
+    clearPromptQueryParams();
   }, [
+    clearPromptQueryParams,
     legacyQueryPrompt,
     queryPromptKey,
     router.isReady,
@@ -989,6 +1015,7 @@ function AILiftingAssistantCard({
       sessionStorage.removeItem("chat:/ai");
     }
     setMessages([]);
+    clearPromptQueryParams();
   };
 
   const handleDownloadChat = () => {

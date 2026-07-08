@@ -332,9 +332,12 @@ function getSparklineHeight(sessions) {
   return 4;
 }
 
-function getActivitySummary(relativeLevel, totalSessions) {
+function getActivitySummary(relativeLevel, totalSessions, isMonthInProgress) {
   if (totalSessions <= 0) {
-    return { label: "No activity yet", badge: "" };
+    return {
+      label: isMonthInProgress ? "No activity yet" : "No training logged",
+      badge: isMonthInProgress ? "" : "💩",
+    };
   }
   if (relativeLevel >= 5) {
     return { label: "High activity", badge: "🏆" };
@@ -396,7 +399,7 @@ function getMonthlyInsight({
     return "Month in progress; the remaining weeks can still change the story.";
   }
   if (totalSessions <= 0) {
-    return "No logged training this month.";
+    return "No logged training this month 💩.";
   }
   if (activeWeeks === possibleWeeks && possibleWeeks > 0) {
     return "Great consistency this month.";
@@ -462,7 +465,11 @@ function MonthlyTrainingPatternTooltip({ value }) {
   }));
   const activeWeeks = weekBreakdown.filter((week) => week.sessions > 0).length;
   const bestWeekKey = getBestWeekKey(weekBreakdown);
-  const activitySummary = getActivitySummary(relativeLevel, totalSessions);
+  const activitySummary = getActivitySummary(
+    relativeLevel,
+    totalSessions,
+    isMonthInProgress,
+  );
   const title = `${MONTH_NAMES[month - 1].short} ${year}${
     isMonthInProgress ? " so far" : ""
   }`;

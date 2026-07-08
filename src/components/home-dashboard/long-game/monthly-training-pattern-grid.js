@@ -205,7 +205,7 @@ export function MonthlyTrainingPatternGrid({
         {years.map((year) => (
           <div
             key={year}
-            className={`flex w-full items-center ${year === currentYear ? "bg-muted/25 -mx-1 rounded-md px-1 py-0.5" : ""}`}
+            className={`flex w-full items-center ${year === currentYear ? "bg-muted/25 rounded-md py-0.5" : ""}`}
           >
             <div
               className="shrink-0 pr-2 text-right text-xs lg:text-sm"
@@ -264,14 +264,14 @@ export function MonthlyTrainingPatternGrid({
                   >
                     {activeWeekCount > 0 && (
                       <div
-                        className="absolute right-1 bottom-1 left-1 flex gap-[2px]"
+                        className="absolute bottom-1 left-1/2 flex -translate-x-1/2 items-end gap-[3px]"
                         aria-hidden="true"
                       >
                         {Array.from({ length: activeWeekCount }).map(
                           (_, weekIndex) => (
                             <span
                               key={weekIndex}
-                              className="h-[3px] min-w-0 flex-1 rounded-full bg-white/55"
+                              className="h-[7px] w-[2px] rounded-full bg-white/55"
                             />
                           ),
                         )}

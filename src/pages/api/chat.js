@@ -148,7 +148,7 @@ export default async function handler(req, res) {
 
   let AI_model;
   if (useXai) {
-    AI_model = xai("grok-3-mini");
+    AI_model = xai.responses("grok-4.5");
   } else {
     AI_model = openai("gpt-4.1");
   }

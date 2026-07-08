@@ -48,7 +48,7 @@ import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
-import { DailyHeatmap } from "@/components/home-dashboard/the-long-game-card";
+import { DailyTrainingHeatmap } from "@/components/home-dashboard/long-game/daily-training-heatmap";
 import { ThousandDonut } from "@/components/thousand-club-donut";
 import { useScrollToLatestYear } from "@/hooks/use-scroll-to-latest-year";
 import { Badge } from "@/components/ui/badge";
@@ -559,7 +559,7 @@ function ImportedDataOverview({ parsedData, label }) {
                     <div
                       className={`min-w-0 flex-1 ${isCurrentYear ? "" : "opacity-80"}`}
                     >
-                      <DailyHeatmap
+                      <DailyTrainingHeatmap
                         parsedData={parsedData}
                         startDate={interval.startDate}
                         endDate={interval.endDate}

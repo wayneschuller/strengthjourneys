@@ -436,7 +436,6 @@ function parseSuggestedQuestions(text) {
         .filter((question) => typeof question === "string")
         .map((question) => question.trim())
         .filter((question) => question.length > 0)
-        .filter((question) => !isCoachQuestionForUser(question))
         .map((question) =>
           question.length > MAX_SUGGESTION_TEXT_CHARS
             ? `${question.slice(0, MAX_SUGGESTION_TEXT_CHARS - 1).trim()}?`
@@ -446,20 +445,6 @@ function parseSuggestedQuestions(text) {
   } catch {
     return [];
   }
-}
-
-function isCoachQuestionForUser(question) {
-  const normalizedQuestion = question.toLowerCase();
-
-  return [
-    "how did ",
-    "how do you feel",
-    "how does it feel",
-    "what did ",
-    "what do you feel",
-    "can you share",
-    "tell me ",
-  ].some((blockedStart) => normalizedQuestion.startsWith(blockedStart));
 }
 
 function getLatestUserMessageText(messages) {

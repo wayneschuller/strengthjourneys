@@ -156,7 +156,10 @@ function StreakBar({
     <div
       className={cn(
         "flex cursor-default items-center gap-2",
-        isLeader && !isSharing && "animate-streak-leader-shake",
+        isLeader &&
+          streak.isActive &&
+          !isSharing &&
+          "animate-streak-leader-shake",
       )}
     >
       <div className="relative min-w-0 flex-1">

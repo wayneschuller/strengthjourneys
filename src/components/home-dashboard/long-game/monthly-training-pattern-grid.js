@@ -238,10 +238,6 @@ export function MonthlyTrainingPatternGrid({
                   data?.totalSessions > 0
                     ? (relativeLevels[year]?.[month] ?? 1)
                     : 0;
-                const activeWeekCount = Math.min(
-                  data?.weekBreakdown?.length ?? 0,
-                  5,
-                );
                 const cellStyle = getMonthlyCellStyles(
                   relativeLevel,
                   isFuture,
@@ -261,23 +257,7 @@ export function MonthlyTrainingPatternGrid({
                         : undefined
                     }
                     onMouseLeave={!isFuture ? handleMouseLeave : undefined}
-                  >
-                    {activeWeekCount > 0 && (
-                      <div
-                        className="absolute bottom-1 left-1/2 flex -translate-x-1/2 items-end gap-[3px]"
-                        aria-hidden="true"
-                      >
-                        {Array.from({ length: activeWeekCount }).map(
-                          (_, weekIndex) => (
-                            <span
-                              key={weekIndex}
-                              className="h-[7px] w-[2px] rounded-full bg-white/55"
-                            />
-                          ),
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  />
                 );
               })}
             </div>
@@ -339,6 +319,33 @@ function weekEmoji(sessions) {
   return "💩";
 }
 
+function getSparklineHeight(sessions) {
+  if (sessions >= 4) return 26;
+  if (sessions === 3) return 21;
+  if (sessions === 2) return 16;
+  if (sessions === 1) return 10;
+  return 4;
+}
+
+function MonthlyWeekSparkline({ weekBreakdown }) {
+  if (!weekBreakdown?.length) return null;
+
+  return (
+    <div
+      className="bg-muted/40 border-border/40 mt-0.5 flex h-9 items-end gap-1 rounded-md border px-1.5 py-1"
+      aria-hidden="true"
+    >
+      {weekBreakdown.map(({ sessions, weekKey }, index) => (
+        <span
+          key={weekKey ?? index}
+          className="bg-primary/75 min-w-[10px] flex-1 rounded-t-sm"
+          style={{ height: getSparklineHeight(sessions) }}
+        />
+      ))}
+    </div>
+  );
+}
+
 // Tooltip body for a monthly cell: shows month/year heading and a per-week session breakdown.
 function MonthlyTrainingPatternTooltip({ value }) {
   const { year, month, weekBreakdown } = value;
@@ -348,21 +355,24 @@ function MonthlyTrainingPatternTooltip({ value }) {
         {MONTH_NAMES[month - 1].short} {year}
       </p>
       {weekBreakdown?.length > 0 ? (
-        <div className="flex flex-col gap-0.5">
-          {weekBreakdown.map(({ sessions, weekKey }, i) => (
-            <p key={weekKey ?? i} className="text-muted-foreground">
-              <span className="text-foreground font-semibold">
-                Week of{" "}
-                {weekKey
-                  ? format(parseYmdUtc(weekKey), "MMM d")
-                  : `Week ${i + 1}`}
-                :
-              </span>{" "}
-              {sessions} {sessions === 1 ? "session" : "sessions"}{" "}
-              {weekEmoji(sessions)}
-            </p>
-          ))}
-        </div>
+        <>
+          <MonthlyWeekSparkline weekBreakdown={weekBreakdown} />
+          <div className="flex flex-col gap-0.5">
+            {weekBreakdown.map(({ sessions, weekKey }, i) => (
+              <p key={weekKey ?? i} className="text-muted-foreground">
+                <span className="text-foreground font-semibold">
+                  Week of{" "}
+                  {weekKey
+                    ? format(parseYmdUtc(weekKey), "MMM d")
+                    : `Week ${i + 1}`}
+                  :
+                </span>{" "}
+                {sessions} {sessions === 1 ? "session" : "sessions"}{" "}
+                {weekEmoji(sessions)}
+              </p>
+            ))}
+          </div>
+        </>
       ) : (
         <p className="text-muted-foreground">No training sessions 💩</p>
       )}

@@ -18,35 +18,41 @@ const MONTHLY_GAP = 5;
 const LONG_GAME_YEAR_LABEL_WIDTH = 48;
 
 const MONTH_NAMES = [
-  "J",
-  "F",
-  "M",
-  "A",
-  "M",
-  "J",
-  "J",
-  "A",
-  "S",
-  "O",
-  "N",
-  "D",
+  { narrow: "J", short: "Jan" },
+  { narrow: "F", short: "Feb" },
+  { narrow: "M", short: "Mar" },
+  { narrow: "A", short: "Apr" },
+  { narrow: "M", short: "May" },
+  { narrow: "J", short: "Jun" },
+  { narrow: "J", short: "Jul" },
+  { narrow: "A", short: "Aug" },
+  { narrow: "S", short: "Sep" },
+  { narrow: "O", short: "Oct" },
+  { narrow: "N", short: "Nov" },
+  { narrow: "D", short: "Dec" },
 ];
 
 function getMonthlyShade(level) {
   const clampedLevel = Math.max(1, Math.min(level, 6));
-  const mixPercent = 18 + clampedLevel * 14;
-  return `color-mix(in srgb, var(--heatmap-4) ${mixPercent}%, var(--heatmap-1))`;
+  if (clampedLevel >= 6) return "var(--heatmap-4)";
+  if (clampedLevel >= 4) return "var(--heatmap-3)";
+  if (clampedLevel >= 2) return "var(--heatmap-2)";
+  return "var(--heatmap-1)";
 }
 
 function getMonthlyCellStyles(level, isFuture, isSharing = false) {
   if (isFuture) {
-    return {};
+    return {
+      backgroundColor: "transparent",
+      border: "1px solid transparent",
+    };
   }
 
   if (level === 0) {
     return {
       backgroundColor: "var(--heatmap-0)",
-      opacity: 0.38,
+      opacity: 0.44,
+      border: "1px solid rgba(15,23,42,0.05)",
       // Drop inset highlight during capture — html2canvas-pro renders inset
       // shadows as offset shapes that visually "double up" the tile.
       boxShadow: isSharing ? "none" : "inset 0 1px 0 rgba(255,255,255,0.35)",
@@ -59,13 +65,15 @@ function getMonthlyCellStyles(level, isFuture, isSharing = false) {
     // producing the double-tile look we saw in the exported PNG).
     return {
       backgroundColor: getMonthlyShade(level),
+      border: "1px solid transparent",
     };
   }
 
   return {
     backgroundColor: getMonthlyShade(level),
+    border: "1px solid rgba(15,23,42,0.08)",
     boxShadow:
-      "inset 0 1px 0 rgba(255,255,255,0.22), 0 0 0 1px rgba(15,23,42,0.04)",
+      "inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 14px rgba(15,23,42,0.05)",
     filter: level >= 5 ? "saturate(0.96) brightness(1.02)" : "none",
   };
 }
@@ -170,7 +178,7 @@ export function MonthlyTrainingPatternGrid({
       className={
         isSharing
           ? "relative w-full rounded-xl bg-white px-2 py-2"
-          : "from-background to-muted/20 relative w-full rounded-xl bg-gradient-to-b px-2 py-2"
+          : "from-background via-background to-muted/25 relative w-full rounded-xl bg-gradient-to-b px-2 py-2"
       }
     >
       {/* Month name header */}
@@ -180,12 +188,13 @@ export function MonthlyTrainingPatternGrid({
           style={{ width: LONG_GAME_YEAR_LABEL_WIDTH }}
         />
         <div style={cellGridStyle}>
-          {MONTH_NAMES.map((name, index) => (
+          {MONTH_NAMES.map(({ narrow, short }, index) => (
             <span
-              key={`${name}-${index}`}
-              className="text-muted-foreground/80 text-center text-[9px] tracking-[0.04em] lg:text-[11px] 2xl:text-xs"
+              key={`${short}-${index}`}
+              className="text-muted-foreground/80 text-center text-[9px] tracking-[0.04em] lg:text-[10px] 2xl:text-xs"
             >
-              {name}
+              <span className="sm:hidden">{narrow}</span>
+              <span className="hidden sm:inline">{short}</span>
             </span>
           ))}
         </div>
@@ -229,6 +238,10 @@ export function MonthlyTrainingPatternGrid({
                   data?.totalSessions > 0
                     ? (relativeLevels[year]?.[month] ?? 1)
                     : 0;
+                const activeWeekCount = Math.min(
+                  data?.weekBreakdown?.length ?? 0,
+                  5,
+                );
                 const cellStyle = getMonthlyCellStyles(
                   relativeLevel,
                   isFuture,
@@ -237,9 +250,9 @@ export function MonthlyTrainingPatternGrid({
                 return (
                   <div
                     key={month}
-                    className={`rounded-[8px] ${isSharing ? "" : "transition-transform duration-150"} ${!isFuture && relativeLevel > 0 && !isSharing ? "hover:scale-[1.03]" : ""}`}
+                    className={`relative overflow-hidden rounded-[8px] ${isSharing ? "" : "transition-transform duration-150"} ${!isFuture && relativeLevel > 0 && !isSharing ? "hover:scale-[1.03]" : ""}`}
                     style={{
-                      height: 26,
+                      height: 28,
                       ...cellStyle,
                     }}
                     onMouseOver={
@@ -248,7 +261,23 @@ export function MonthlyTrainingPatternGrid({
                         : undefined
                     }
                     onMouseLeave={!isFuture ? handleMouseLeave : undefined}
-                  />
+                  >
+                    {activeWeekCount > 0 && (
+                      <div
+                        className="absolute right-1 bottom-1 left-1 flex gap-[2px]"
+                        aria-hidden="true"
+                      >
+                        {Array.from({ length: activeWeekCount }).map(
+                          (_, weekIndex) => (
+                            <span
+                              key={weekIndex}
+                              className="h-[3px] min-w-0 flex-1 rounded-full bg-white/55"
+                            />
+                          ),
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -316,7 +345,7 @@ function MonthlyTrainingPatternTooltip({ value }) {
   return (
     <div className="border-border/50 bg-background grid max-w-[18rem] min-w-[10rem] items-start gap-1 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">
-        {MONTH_NAMES[month - 1]} {year}
+        {MONTH_NAMES[month - 1].short} {year}
       </p>
       {weekBreakdown?.length > 0 ? (
         <div className="flex flex-col gap-0.5">

@@ -412,15 +412,21 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
   return (
     <PageContainer>
-      <PageHeader>
+      <PageHeader className="pb-4 md:pb-6">
         <PageHeaderHeading icon={Bot}>AI Lifting Assistant</PageHeaderHeading>
         <PageHeaderDescription>
           Free AI Lifting Assistant. Talk to your lifting data. The gym buddy
           you never had.
         </PageHeaderDescription>
       </PageHeader>
-      <div className="flex flex-col gap-2 md:gap-5 lg:flex-row">
-        <div className="h-dvh flex-1 lg:flex lg:flex-col 2xl:max-w-screen-xl">
+
+      {/*
+        Chat workspace: primary column fills remaining viewport height;
+        settings rail is fixed-width and sticky on desktop, stacked below on mobile.
+        Keeps the shared PageContainer + PageHeader shell used by other top-level pages.
+      */}
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-6">
+        <div className="min-w-0 flex-1">
           <AILiftingAssistantCard
             hasSharedBioData={!isDemoMode && shareBioDetails}
             hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
@@ -429,7 +435,8 @@ function AILiftingAssistantMain({ relatedArticles }) {
             userProvidedProfileData={userProvidedProfileData}
           />
         </div>
-        <div className="flex flex-col gap-5 md:max-w-3/5">
+
+        <aside className="flex w-full shrink-0 flex-col gap-4 lg:sticky lg:top-20 lg:w-80 lg:self-start xl:w-[22rem]">
           <BioDetailsCard
             age={age}
             setAge={setAge}
@@ -448,8 +455,9 @@ function AILiftingAssistantMain({ relatedArticles }) {
             selectedOptions={userLiftingMetadata}
             setSelectedOptions={setUserLiftingMetaData}
           />
-        </div>
+        </aside>
       </div>
+
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );
@@ -1070,44 +1078,82 @@ function AILiftingAssistantCard({
     URL.revokeObjectURL(url);
   };
 
+  const hasMessages = messages.length > 0;
+
   return (
-    <Card className="bg-background text-foreground max-h-full">
-      <CardHeader className="flex flex-1 flex-col md:flex-row">
-        <div className="flex flex-1 flex-col">
-          <div className="flex items-center gap-3">
-            <CardTitle className="text-2xl font-bold text-balance">
-              Your Personal Lifting AI Assistant
+    <Card
+      className={cn(
+        "bg-background text-foreground flex flex-col overflow-hidden",
+        // Fill viewport under nav + shared page header; min height keeps empty state usable.
+        "h-[calc(100dvh-9.5rem)] min-h-[28rem] sm:h-[calc(100dvh-10.5rem)] lg:h-[calc(100dvh-11rem)]",
+      )}
+    >
+      {hasMessages ? (
+        // Active session: thin toolbar — page H1 already carries brand context.
+        <CardHeader className="flex shrink-0 flex-row items-center gap-2 space-y-0 border-b px-4 py-3 md:px-6">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base font-semibold tracking-tight md:text-lg">
+              Your lifting coach
             </CardTitle>
-            <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-1.5 pr-4 md:flex">
-              <XAILogo className="size-5" />
-              <span className="text-sm font-medium">Powered by xAI Grok</span>
+            <CardDescription className="text-xs">
+              Streamed to your device · not stored on our servers
+            </CardDescription>
+          </div>
+          <div className="text-muted-foreground hidden shrink-0 items-center gap-1.5 sm:flex">
+            <XAILogo className="size-4" />
+            <span className="text-xs font-medium">xAI Grok</span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="px-2.5 sm:px-3"
+              onClick={handleDownloadChat}
+            >
+              <span className="hidden sm:inline">Download</span>
+              <span className="sm:hidden">Save</span>
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="px-2.5 sm:px-3"
+              onClick={handleResetChat}
+            >
+              Reset
+            </Button>
+          </div>
+        </CardHeader>
+      ) : (
+        // Empty state: fuller intro + decorative grid (desktop only).
+        <CardHeader className="relative flex shrink-0 flex-col gap-1 space-y-0 pb-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <CardTitle className="text-xl font-bold text-balance md:text-2xl">
+                Your Personal Lifting AI Assistant
+              </CardTitle>
+              <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-1.5 md:flex">
+                <XAILogo className="size-5" />
+                <span className="text-sm font-medium">Powered by xAI Grok</span>
+              </div>
+            </div>
+            <CardDescription className="text-muted-foreground text-balance">
+              Discussions are streamed to your device and not stored on our
+              servers.
+            </CardDescription>
+            <div className="text-muted-foreground mt-1 flex items-center gap-1.5 md:hidden">
+              <XAILogo className="size-4" />
+              <span className="text-xs font-medium">Powered by xAI Grok</span>
             </div>
           </div>
-          <CardDescription className="text-muted-foreground text-balance">
-            Discussions are streamed to your device and not stored on our
-            servers.
-          </CardDescription>
-          <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 md:hidden">
-            <XAILogo className="size-4" />
-            <span className="text-xs font-medium">Powered by xAI Grok</span>
+          <div className="pointer-events-none absolute top-4 right-4 hidden md:block">
+            <FlickeringGridDemo />
           </div>
-        </div>
-        {messages.length > 0 && (
-          <div className="mr-4 flex items-start gap-2">
-            <Button variant="outline" size="sm" onClick={handleDownloadChat}>
-              Download chat
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleResetChat}>
-              Reset chat
-            </Button>
-          </div>
-        )}
-        <div className="hidden md:block">
-          <FlickeringGridDemo />
-        </div>
-      </CardHeader>
-      <CardContent className="flex h-[55vh] flex-col overflow-y-auto pb-5 align-middle">
-        <Conversation className="overflow-x-visible overflow-y-hidden">
+        </CardHeader>
+      )}
+
+      {/* Transcript: flex-1 + min-h-0 so StickToBottom can scroll inside the card */}
+      <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+        <Conversation className="min-h-0 flex-1 overflow-x-visible overflow-y-hidden">
           <ConversationContent>
             {messages.length === 0 ? (
               <ConversationEmptyState
@@ -1248,7 +1294,9 @@ function AILiftingAssistantCard({
           <ConversationScrollButton />
         </Conversation>
       </CardContent>
-      <CardFooter>
+
+      {/* Composer stays pinned to the bottom of the chat card */}
+      <CardFooter className="bg-background shrink-0 border-t px-4 py-3 md:px-6">
         <div className="flex w-full flex-col gap-3">
           <ChatQuotaLimitNotice quota={chatQuota} />
           <PromptInput
@@ -1265,7 +1313,7 @@ function AILiftingAssistantCard({
                       : "AI quota exhausted."
                     : !isChatQuotaReady
                       ? "Checking message quota..."
-                    : "Type a message..."
+                      : "Type a message..."
                 }
                 disabled={isChatUnavailable}
               />

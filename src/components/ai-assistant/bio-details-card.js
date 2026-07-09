@@ -1,13 +1,20 @@
+/**
+ * Athlete bio controls for the AI Lifting Assistant.
+ * On mobile the form collapses under a summary header so the chat stays primary;
+ * on desktop it stays fully expanded in the sticky settings rail.
+ */
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useMediaQuery } from "usehooks-ts";
+
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -16,10 +23,13 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useLocalStorage } from "usehooks-ts";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 /**
@@ -53,105 +63,152 @@ export function BioDetailsCard({
   shareBioDetails,
   setShareBioDetails,
 }) {
-  return (
-    <Card className="">
-      <CardHeader>
-        <CardTitle>Tell us about yourself</CardTitle>
-        <CardDescription>
-          Enhance the AI by providing your basic details
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="">
-        <div className="group mb-5 flex flex-row space-x-2 align-middle">
-          <Checkbox
-            id="shareBioDetails"
-            checked={shareBioDetails}
-            onCheckedChange={setShareBioDetails}
-            className="group-hover:border-blue-500"
-          />
-          <Label
-            htmlFor="shareBioDetails"
-            className="cursor-pointer text-sm font-medium leading-none group-hover:underline peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Share this with the AI
-          </Label>
-        </div>
+  const isDesktop = useMediaQuery("(min-width: 1024px)", {
+    initializeWithValue: false,
+  });
+  // Mobile starts collapsed so chat stays primary; desktop is always expanded.
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const open = Boolean(isDesktop) || mobileOpen;
 
-        <div
-          className={cn(
-            "flex flex-col items-start gap-4 md:flex-col md:gap-8",
-            !shareBioDetails && "text-muted-foreground/40",
-          )}
-        >
-          <div className="flex w-full flex-col">
-            <div className="py-2">
-              <Label htmlFor="age" className="text-xl">
-                Age: {age}
-              </Label>
-            </div>
-            <Slider
-              min={13}
-              max={100}
-              step={1}
-              value={[age]}
-              onValueChange={(values) => setAge(values[0])}
-              className="mt-2 min-w-40 flex-1"
-              aria-label="Age"
-              aria-labelledby="age"
-            />
-          </div>
-          <div className="flex h-[4rem] w-full flex-col justify-between">
-            <div className="flex flex-row items-center">
-              <Label htmlFor="weight" className="mr-2 text-xl">
-                Bodyweight:
-              </Label>
-              <Label
-                htmlFor="weight"
-                className="mr-2 w-[3rem] text-right text-xl"
-              >
-                {bodyWeight}
-              </Label>
-              <UnitChooser
-                isMetric={isMetric}
-                onSwitchChange={toggleIsMetric}
-              />
-            </div>
-            <Slider
-              min={isMetric ? 40 : 100}
-              max={isMetric ? 230 : 500}
-              step={1}
-              value={[bodyWeight]}
-              onValueChange={(values) => setBodyWeight(values[0])}
-              className="mt-2 min-w-40 flex-1"
-              aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
-            />
-          </div>
-          <div className="flex w-full flex-col justify-between">
-            <HeightWidget height={height} setHeight={setHeight} />
-          </div>
-          <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
-            <Label htmlFor="sex" className="text-xl">
-              Sex:
-            </Label>
-            <Select
-              id="gender"
-              value={sex}
-              onValueChange={(value) => setSex(value)}
-              className="min-w-52 text-xl"
+  const summary = shareBioDetails
+    ? `${age} · ${bodyWeight}${isMetric ? "kg" : "lb"} · ${height}cm · ${sex === "female" ? "Female" : "Male"}`
+    : "Not shared with AI";
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={(next) => {
+        if (!isDesktop) setMobileOpen(next);
+      }}
+    >
+      <Card>
+        <CardHeader className="space-y-0 p-0">
+          <CollapsibleTrigger
+            asChild
+            disabled={isDesktop}
+            className="lg:pointer-events-none"
+          >
+            <button
+              type="button"
+              className="hover:bg-muted/40 flex w-full items-start justify-between gap-3 rounded-t-lg p-6 pb-3 text-left transition-colors lg:hover:bg-transparent"
+              aria-label={
+                mobileOpen ? "Collapse bio settings" : "Expand bio settings"
+              }
             >
-              <SelectTrigger aria-label="Select sex">
-                <SelectValue placeholder="Select sex" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardContent>
-      {/* <CardFooter className="text-sm"></CardFooter> */}
-    </Card>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-xl lg:text-2xl">
+                  Tell us about yourself
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Enhance the AI by providing your basic details
+                </CardDescription>
+                <p className="text-muted-foreground mt-2 text-xs lg:hidden">
+                  {summary}
+                </p>
+              </div>
+              <ChevronDown
+                className={cn(
+                  "text-muted-foreground mt-1 h-4 w-4 shrink-0 transition-transform duration-200 lg:hidden",
+                  open && "rotate-180",
+                )}
+              />
+            </button>
+          </CollapsibleTrigger>
+        </CardHeader>
+
+        <CollapsibleContent>
+          <CardContent className="pt-0">
+            <div className="group mb-5 flex flex-row space-x-2 align-middle">
+              <Checkbox
+                id="shareBioDetails"
+                checked={shareBioDetails}
+                onCheckedChange={setShareBioDetails}
+                className="group-hover:border-blue-500"
+              />
+              <Label
+                htmlFor="shareBioDetails"
+                className="cursor-pointer text-sm font-medium leading-none group-hover:underline peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Share this with the AI
+              </Label>
+            </div>
+
+            <div
+              className={cn(
+                "flex flex-col items-start gap-4 md:flex-col md:gap-8",
+                !shareBioDetails && "text-muted-foreground/40",
+              )}
+            >
+              <div className="flex w-full flex-col">
+                <div className="py-2">
+                  <Label htmlFor="age" className="text-xl">
+                    Age: {age}
+                  </Label>
+                </div>
+                <Slider
+                  min={13}
+                  max={100}
+                  step={1}
+                  value={[age]}
+                  onValueChange={(values) => setAge(values[0])}
+                  className="mt-2 min-w-40 flex-1"
+                  aria-label="Age"
+                  aria-labelledby="age"
+                />
+              </div>
+              <div className="flex h-[4rem] w-full flex-col justify-between">
+                <div className="flex flex-row items-center">
+                  <Label htmlFor="weight" className="mr-2 text-xl">
+                    Bodyweight:
+                  </Label>
+                  <Label
+                    htmlFor="weight"
+                    className="mr-2 w-[3rem] text-right text-xl"
+                  >
+                    {bodyWeight}
+                  </Label>
+                  <UnitChooser
+                    isMetric={isMetric}
+                    onSwitchChange={toggleIsMetric}
+                  />
+                </div>
+                <Slider
+                  min={isMetric ? 40 : 100}
+                  max={isMetric ? 230 : 500}
+                  step={1}
+                  value={[bodyWeight]}
+                  onValueChange={(values) => setBodyWeight(values[0])}
+                  className="mt-2 min-w-40 flex-1"
+                  aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
+                />
+              </div>
+              <div className="flex w-full flex-col justify-between">
+                <HeightWidget height={height} setHeight={setHeight} />
+              </div>
+              <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
+                <Label htmlFor="sex" className="text-xl">
+                  Sex:
+                </Label>
+                <Select
+                  id="gender"
+                  value={sex}
+                  onValueChange={(value) => setSex(value)}
+                  className="min-w-52 text-xl"
+                >
+                  <SelectTrigger aria-label="Select sex">
+                    <SelectValue placeholder="Select sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
 

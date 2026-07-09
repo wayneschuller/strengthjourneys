@@ -33,7 +33,6 @@ import { MiniFeedbackWidget } from "@/components/feedback";
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import {
@@ -80,15 +79,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { Bot, CopyIcon, RefreshCcwIcon, CheckIcon } from "lucide-react";
+import {
+  Bot,
+  CopyIcon,
+  RefreshCcwIcon,
+  CheckIcon,
+  DownloadIcon,
+  RotateCcwIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
 import {
   ChatQuotaLimitNotice,
   ChatQuotaMeter,
 } from "@/components/ai-assistant/chat-quota-meter";
+import {
+  CoachContextStrip,
+  CoachEmptyState,
+  LoadedBarStripe,
+  NextWorkLabel,
+  getCoachPlaceholder,
+} from "@/components/ai-assistant/coach-chat-ui";
 import { processConsistency } from "@/lib/consistency";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 
@@ -412,11 +424,11 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
   return (
     <PageContainer>
-      <PageHeader className="pb-4 md:pb-6">
+      <PageHeader className="pb-3 md:pb-5">
         <PageHeaderHeading icon={Bot}>AI Lifting Assistant</PageHeaderHeading>
         <PageHeaderDescription>
-          Free AI Lifting Assistant. Talk to your lifting data. The gym buddy
-          you never had.
+          The gym buddy who actually read your log. Private by default — you
+          choose what the coach can see.
         </PageHeaderDescription>
       </PageHeader>
 
@@ -436,7 +448,16 @@ function AILiftingAssistantMain({ relatedArticles }) {
           />
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col gap-4 lg:sticky lg:top-20 lg:w-80 lg:self-start xl:w-[22rem]">
+        <aside className="flex w-full shrink-0 flex-col gap-3 lg:sticky lg:top-20 lg:w-80 lg:self-start xl:w-[22rem]">
+          <div className="px-0.5">
+            <p className="text-muted-foreground text-[11px] font-medium tracking-[0.14em] uppercase">
+              Feed the coach
+            </p>
+            <p className="text-muted-foreground/80 mt-0.5 text-xs text-pretty">
+              Opt in to bio and log sections. Nothing leaves your browser except
+              the summaries you enable.
+            </p>
+          </div>
           <BioDetailsCard
             age={age}
             setAge={setAge}
@@ -1079,123 +1100,123 @@ function AILiftingAssistantCard({
   };
 
   const hasMessages = messages.length > 0;
+  const coachPlaceholder = getCoachPlaceholder({
+    isChatBlocked,
+    isAnonymousQuotaBlocked,
+    isChatQuotaReady,
+    hasSharedTrainingData,
+    primaryLift: suggestionContext?.primaryLift,
+  });
 
   return (
     <Card
       className={cn(
-        "bg-background text-foreground flex flex-col overflow-hidden",
+        "bg-background text-foreground relative flex flex-col overflow-hidden",
+        "shadow-lg shadow-black/5 ring-1 ring-black/5 dark:shadow-black/30 dark:ring-white/10",
         // Fill viewport under nav + shared page header; min height keeps empty state usable.
-        "h-[calc(100dvh-9.5rem)] min-h-[28rem] sm:h-[calc(100dvh-10.5rem)] lg:h-[calc(100dvh-11rem)]",
+        "h-[calc(100dvh-8.5rem)] min-h-[30rem] sm:h-[calc(100dvh-9.5rem)] lg:h-[calc(100dvh-10rem)]",
       )}
     >
-      {hasMessages ? (
-        // Active session: thin toolbar — page H1 already carries brand context.
-        <CardHeader className="flex shrink-0 flex-row items-center gap-2 space-y-0 border-b px-4 py-3 md:px-6">
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-base font-semibold tracking-tight md:text-lg">
-              Your lifting coach
+      {/* Big-four loaded bar — the visual signature of this coach */}
+      <LoadedBarStripe className="shrink-0" />
+
+      {/* Compact coach toolbar (same height empty vs active — more room for chat) */}
+      <CardHeader className="flex shrink-0 flex-row items-center gap-2 space-y-0 border-b px-3 py-2.5 sm:px-4 md:px-5">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "size-2 shrink-0 rounded-full",
+                hasSharedTrainingData || hasSharedBioData
+                  ? "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.2)]"
+                  : "bg-muted-foreground/40",
+              )}
+              aria-hidden
+            />
+            <CardTitle className="text-sm font-semibold tracking-tight sm:text-base">
+              {hasMessages ? "Session with your coach" : "Your lifting coach"}
             </CardTitle>
-            <CardDescription className="text-xs">
-              Streamed to your device · not stored on our servers
-            </CardDescription>
           </div>
-          <div className="text-muted-foreground hidden shrink-0 items-center gap-1.5 sm:flex">
-            <XAILogo className="size-4" />
-            <span className="text-xs font-medium">xAI Grok</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <CardDescription className="mt-0.5 text-[11px] sm:text-xs">
+            Streamed to your device · never stored on our servers
+          </CardDescription>
+        </div>
+        <div className="text-muted-foreground hidden shrink-0 items-center gap-1.5 sm:flex">
+          <XAILogo className="size-3.5" />
+          <span className="text-[11px] font-medium">xAI Grok</span>
+        </div>
+        {hasMessages && (
+          <div className="flex shrink-0 items-center gap-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="px-2.5 sm:px-3"
+              className="text-muted-foreground h-8 gap-1.5 px-2"
               onClick={handleDownloadChat}
             >
-              <span className="hidden sm:inline">Download</span>
-              <span className="sm:hidden">Save</span>
+              <DownloadIcon className="size-3.5" />
+              <span className="hidden sm:inline">Save</span>
             </Button>
             <Button
-              variant="destructive"
+              variant="ghost"
               size="sm"
-              className="px-2.5 sm:px-3"
+              className="text-muted-foreground hover:text-destructive h-8 gap-1.5 px-2"
               onClick={handleResetChat}
             >
-              Reset
+              <RotateCcwIcon className="size-3.5" />
+              <span className="hidden sm:inline">New</span>
             </Button>
           </div>
-        </CardHeader>
-      ) : (
-        // Empty state: fuller intro + decorative grid (desktop only).
-        <CardHeader className="relative flex shrink-0 flex-col gap-1 space-y-0 pb-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex items-center gap-3">
-              <CardTitle className="text-xl font-bold text-balance md:text-2xl">
-                Your Personal Lifting AI Assistant
-              </CardTitle>
-              <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-1.5 md:flex">
-                <XAILogo className="size-5" />
-                <span className="text-sm font-medium">Powered by xAI Grok</span>
-              </div>
-            </div>
-            <CardDescription className="text-muted-foreground text-balance">
-              Discussions are streamed to your device and not stored on our
-              servers.
-            </CardDescription>
-            <div className="text-muted-foreground mt-1 flex items-center gap-1.5 md:hidden">
-              <XAILogo className="size-4" />
-              <span className="text-xs font-medium">Powered by xAI Grok</span>
-            </div>
-          </div>
-          <div className="pointer-events-none absolute top-4 right-4 hidden md:block">
-            <FlickeringGridDemo />
-          </div>
-        </CardHeader>
-      )}
+        )}
+      </CardHeader>
 
       {/* Transcript: flex-1 + min-h-0 so StickToBottom can scroll inside the card */}
-      <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+      <CardContent
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-hidden p-0",
+          // Soft platform floor under the conversation
+          "bg-[radial-gradient(ellipse_at_top,var(--muted)_0%,transparent_55%)]",
+        )}
+      >
         <Conversation className="min-h-0 flex-1 overflow-x-visible overflow-y-hidden">
-          <ConversationContent>
+          <ConversationContent
+            className={cn(
+              hasMessages
+                ? "gap-6 px-3 py-4 sm:px-5 sm:py-5 md:px-6"
+                : "gap-0 p-0",
+            )}
+          >
             {messages.length === 0 ? (
-              <ConversationEmptyState
-                title="No messages yet"
-                description="Enter your questions into the chat box below (or click a sample question)"
-                className="items-start px-0"
-              >
-                {isChatHydrated && (
-                  <div className="-mx-4 mt-6 w-full px-4">
-                    <Suggestions className="w-full">
-                      {suggestedMessages.map((message) => (
-                        <Suggestion
-                          key={message}
-                          suggestion={message}
-                          disabled={isChatUnavailable}
-                          onClick={(suggestion) => {
-                            sendMessageWithMetadata(suggestion);
-                          }}
-                        />
-                      ))}
-                    </Suggestions>
-                  </div>
-                )}
-              </ConversationEmptyState>
+              isChatHydrated ? (
+                <CoachEmptyState
+                  hasSharedBioData={hasSharedBioData}
+                  hasSharedTrainingData={hasSharedTrainingData}
+                  suggestionContext={suggestionContext}
+                  suggestions={suggestedMessages}
+                  isChatUnavailable={isChatUnavailable}
+                  onSuggestion={(suggestion) => {
+                    sendMessageWithMetadata(suggestion);
+                  }}
+                />
+              ) : (
+                <div className="text-muted-foreground flex size-full items-center justify-center text-sm">
+                  Loading coach…
+                </div>
+              )
             ) : (
               <>
                 {messages
-                  .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
+                  .filter((msg) => msg.role !== "suggestions")
                   .map((message) => {
-                    // Handle AI SDK v6 parts format
                     const parts = message.parts || [];
                     const isLastMessage =
                       message.id === messages[messages.length - 1]?.id;
 
-                    // Show sources if there are any source-url parts
                     const hasSources = parts.some(
                       (part) => part.type === "source-url",
                     );
                     const suggestedQuestions =
                       getSuggestedQuestionsFromParts(parts);
 
-                    // Get text content for actions (last text part or fallback to content)
                     const lastTextPart = parts
                       .filter((p) => p.type === "text")
                       .pop();
@@ -1205,9 +1226,19 @@ function AILiftingAssistantCard({
                         ? message.content
                         : null);
 
+                    const isUser = message.role === "user";
+                    const isAssistant = message.role === "assistant";
+
                     return (
-                      <div key={message.id}>
-                        {message.role === "assistant" && hasSources && (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          "flex w-full flex-col",
+                          isUser && "items-end",
+                          isAssistant && "items-stretch",
+                        )}
+                      >
+                        {isAssistant && hasSources && (
                           <Sources>
                             <SourcesTrigger
                               count={
@@ -1227,67 +1258,117 @@ function AILiftingAssistantCard({
                               ))}
                           </Sources>
                         )}
-                        <Message from={message.role}>
-                          <MessageContent>
+
+                        {isUser && (
+                          <span className="text-muted-foreground mb-1 mr-1 text-[10px] font-medium tracking-wide uppercase">
+                            You
+                          </span>
+                        )}
+                        {isAssistant && (
+                          <span className="text-muted-foreground mb-1.5 flex items-center gap-1.5 text-[10px] font-medium tracking-wide uppercase">
+                            <span className="bg-foreground/80 size-1.5 rounded-full" />
+                            Coach
+                          </span>
+                        )}
+
+                        <Message
+                          from={message.role}
+                          className={cn(
+                            isUser && "max-w-[min(100%,28rem)]",
+                            isAssistant && "max-w-3xl",
+                          )}
+                        >
+                          <MessageContent
+                            className={cn(
+                              // Override default bubble styles for a coach/lifter conversation feel
+                              isUser &&
+                                "!bg-foreground !text-background rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-snug shadow-sm",
+                              isAssistant &&
+                                "border-border/60 bg-card/90 max-w-none rounded-2xl rounded-tl-md border px-4 py-3 text-[15px] leading-relaxed shadow-sm sm:px-5 sm:py-4",
+                            )}
+                          >
                             {parts.length > 0 ? (
                               parts
                                 .filter((part) => part.type === "text")
                                 .map((part, i) => (
-                                  <MessageResponse key={`${message.id}-${i}`}>
+                                  <MessageResponse
+                                    key={`${message.id}-${i}`}
+                                    className={cn(
+                                      isAssistant &&
+                                        "prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:tracking-tight prose-p:leading-relaxed prose-li:my-0.5 prose-strong:font-semibold",
+                                    )}
+                                  >
                                     {part.text}
                                   </MessageResponse>
                                 ))
                             ) : message.content ? (
-                              <MessageResponse>
+                              <MessageResponse
+                                className={cn(
+                                  isAssistant &&
+                                    "prose prose-sm dark:prose-invert max-w-none",
+                                )}
+                              >
                                 {typeof message.content === "string"
                                   ? message.content
                                   : JSON.stringify(message.content)}
                               </MessageResponse>
                             ) : null}
                           </MessageContent>
-                          {message.role === "assistant" &&
-                            isLastMessage &&
-                            textContent && (
-                              <MessageActions>
-                                <MessageAction
-                                  onClick={() => {
-                                    if (!isChatUnavailable) {
-                                      reserveQuotaLocally();
-                                      regenerate({ body: chatRequestBody });
-                                    }
-                                  }}
-                                  label="Retry"
-                                  disabled={isChatUnavailable}
-                                >
-                                  <RefreshCcwIcon className="size-3" />
-                                </MessageAction>
-                                <CopyButton text={textContent} />
-                              </MessageActions>
-                            )}
+                          {isAssistant && isLastMessage && textContent && (
+                            <MessageActions className="mt-1.5 opacity-70 transition-opacity group-hover:opacity-100">
+                              <MessageAction
+                                onClick={() => {
+                                  if (!isChatUnavailable) {
+                                    reserveQuotaLocally();
+                                    regenerate({ body: chatRequestBody });
+                                  }
+                                }}
+                                label="Retry"
+                                disabled={isChatUnavailable}
+                              >
+                                <RefreshCcwIcon className="size-3" />
+                              </MessageAction>
+                              <CopyButton text={textContent} />
+                            </MessageActions>
+                          )}
                         </Message>
-                        {message.role === "assistant" &&
+
+                        {isAssistant &&
                           isLastMessage &&
                           suggestedQuestions.length > 0 && (
-                            <Suggestions className="mt-3 max-w-3xl">
-                              {suggestedQuestions.map((question) => (
-                                <Suggestion
-                                  key={question}
-                                  className="border-foreground/80 bg-foreground text-background hover:bg-foreground/90 hover:text-background disabled:bg-muted disabled:text-muted-foreground"
-                                  suggestion={question}
-                                  disabled={isChatUnavailable}
-                                  onClick={(suggestion) => {
-                                    sendMessageWithMetadata(suggestion);
-                                  }}
-                                />
-                              ))}
-                            </Suggestions>
+                            <div className="mt-4 max-w-3xl">
+                              <NextWorkLabel />
+                              <Suggestions className="gap-2">
+                                {suggestedQuestions.map((question) => (
+                                  <Suggestion
+                                    key={question}
+                                    className={cn(
+                                      "border-border bg-background hover:border-foreground/50 hover:bg-muted/50",
+                                      "text-foreground max-w-full rounded-full text-left text-sm shadow-sm",
+                                      "disabled:bg-muted disabled:text-muted-foreground",
+                                    )}
+                                    suggestion={question}
+                                    disabled={isChatUnavailable}
+                                    onClick={(suggestion) => {
+                                      sendMessageWithMetadata(suggestion);
+                                    }}
+                                  />
+                                ))}
+                              </Suggestions>
+                            </div>
                           )}
                       </div>
                     );
                   })}
 
-                {/* Show loader only while waiting */}
-                {status === "submitted" && <Loader />}
+                {status === "submitted" && (
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
+                      Coach
+                    </span>
+                    <Loader />
+                  </div>
+                )}
               </>
             )}
           </ConversationContent>
@@ -1295,26 +1376,34 @@ function AILiftingAssistantCard({
         </Conversation>
       </CardContent>
 
-      {/* Composer stays pinned to the bottom of the chat card */}
-      <CardFooter className="bg-background shrink-0 border-t px-4 py-3 md:px-6">
-        <div className="flex w-full flex-col gap-3">
+      {/* Composer dock — context strip + input, pinned to platform floor */}
+      <CardFooter className="bg-background/95 supports-[backdrop-filter]:bg-background/80 shrink-0 flex-col items-stretch gap-0 border-t p-0 backdrop-blur-md">
+        <div className="border-border/50 border-b px-3 py-2 sm:px-4 md:px-5">
+          <CoachContextStrip
+            hasSharedBioData={hasSharedBioData}
+            hasSharedTrainingData={hasSharedTrainingData}
+            hasSharedFullTrainingData={hasSharedFullTrainingData}
+            suggestionContext={suggestionContext}
+          />
+        </div>
+        <div className="flex w-full flex-col gap-2.5 px-3 py-3 sm:px-4 md:px-5">
           <ChatQuotaLimitNotice quota={chatQuota} />
           <PromptInput
-            className="[&_[data-slot=input-group]]:border-border/60 [&_[data-slot=input-group]]:shadow-none"
+            className={cn(
+              "[&_[data-slot=input-group]]:border-border/70",
+              "[&_[data-slot=input-group]]:bg-background",
+              "[&_[data-slot=input-group]]:shadow-md",
+              "[&_[data-slot=input-group]]:rounded-2xl",
+              "[&_[data-slot=input-group]]:ring-offset-background",
+              "[&_[data-slot=input-group]:focus-within]:ring-ring/40",
+              "[&_[data-slot=input-group]:focus-within]:ring-2",
+            )}
             onSubmit={handleSubmit}
           >
             <PromptInputBody>
               <PromptInputTextarea
-                className="disabled:opacity-70"
-                placeholder={
-                  isChatBlocked
-                    ? isAnonymousQuotaBlocked
-                      ? "Sign in to continue chatting..."
-                      : "AI quota exhausted."
-                    : !isChatQuotaReady
-                      ? "Checking message quota..."
-                      : "Type a message..."
-                }
+                className="min-h-[2.75rem] text-[15px] disabled:opacity-70"
+                placeholder={coachPlaceholder}
                 disabled={isChatUnavailable}
               />
             </PromptInputBody>
@@ -1329,30 +1418,17 @@ function AILiftingAssistantCard({
               />
             </PromptInputFooter>
           </PromptInput>
-          <MiniFeedbackWidget
-            prompt="Useful assistant?"
-            contextId="ai_lifting_assistant_card"
-            page="/ai-lifting-assistant"
-            analyticsExtra={{ context: "ai_lifting_assistant_card" }}
-          />
+          {hasMessages && (
+            <MiniFeedbackWidget
+              prompt="Useful coach?"
+              contextId="ai_lifting_assistant_card"
+              page="/ai-lifting-assistant"
+              analyticsExtra={{ context: "ai_lifting_assistant_card" }}
+            />
+          )}
         </div>
       </CardFooter>
     </Card>
-  );
-}
-
-// Decorative flickering grid animation shown in the chat card header on desktop.
-function FlickeringGridDemo() {
-  return (
-    <FlickeringGrid
-      squareSize={4}
-      gridGap={6}
-      color="#6B7280"
-      maxOpacity={0.5}
-      flickerChance={0.2}
-      height={70}
-      width={70}
-    />
   );
 }
 

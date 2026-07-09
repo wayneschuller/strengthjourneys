@@ -81,7 +81,7 @@ export function BioDetailsCard({
         if (!isDesktop) setMobileOpen(next);
       }}
     >
-      <Card>
+      <Card className="border-border/80 shadow-sm">
         <CardHeader className="space-y-0 p-0">
           <CollapsibleTrigger
             asChild
@@ -96,11 +96,11 @@ export function BioDetailsCard({
               }
             >
               <div className="min-w-0 flex-1">
-                <CardTitle className="text-xl lg:text-2xl">
-                  Tell us about yourself
+                <CardTitle className="text-lg lg:text-xl">
+                  Athlete profile
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Enhance the AI by providing your basic details
+                  Age, bodyweight, height — so programming fits the lifter
                 </CardDescription>
                 <p className="text-muted-foreground mt-2 text-xs lg:hidden">
                   {summary}

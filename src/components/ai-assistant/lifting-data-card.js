@@ -108,7 +108,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
         if (!isDesktop) setMobileOpen(next);
       }}
     >
-      <Card>
+      <Card className="border-border/80 shadow-sm">
         <CardHeader className="space-y-0 p-0">
           <CollapsibleTrigger
             asChild
@@ -125,8 +125,8 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
               }
             >
               <div className="min-w-0 flex-1">
-                <CardTitle className="text-xl lg:text-2xl">
-                  Talk To Your Lifting Data
+                <CardTitle className="text-lg lg:text-xl">
+                  Training log
                 </CardTitle>
                 <CardDescription className="mt-1">
                   {statusDescription}

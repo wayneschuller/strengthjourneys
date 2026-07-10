@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Extract EXTENDED_AI_PROMPT from .env without executing the file as shell code
+# Extract EXTENDED_AI_PROMPT from .env without executing the file as shell code.
+# Accept both dotenv multiline quote styles; double quotes allow apostrophes in
+# natural-language prompts without truncating the value.
 if [[ ! -f ".env" ]]; then
   echo ".env file not found" >&2
   exit 1
@@ -12,14 +14,25 @@ TMPFILE=$(mktemp)
 trap 'rm -f "$TMPFILE"' EXIT
 
 awk '
-  BEGIN { in_prompt = 0 }
-  in_prompt == 0 && /^EXTENDED_AI_PROMPT='\''/ {
+  BEGIN {
+    in_prompt = 0
+    closing_quote = ""
+  }
+  in_prompt == 0 && /^EXTENDED_AI_PROMPT=/ {
+    value = $0
+    sub(/^EXTENDED_AI_PROMPT=/, "", value)
+    opening_quote = substr(value, 1, 1)
+
+    if (opening_quote != "\"" && opening_quote != "'\''") {
+      next
+    }
+
     in_prompt = 1
-    sub(/^EXTENDED_AI_PROMPT='\''/, "")
-    print
+    closing_quote = opening_quote
+    print substr(value, 2)
     next
   }
-  in_prompt == 1 && /^'\''$/ { exit }
+  in_prompt == 1 && $0 == closing_quote { exit }
   in_prompt == 1 { print }
 ' .env > "$TMPFILE"
 

@@ -169,14 +169,14 @@ export default async function handler(req, res) {
 
   const convertedUserMessages = await convertToModelMessages(userMessages);
 
-  const modelMessages = [...systemMessages, ...convertedUserMessages];
   const providerOptions = buildProviderOptions({ useXai });
 
   devLog(`AI model: ${AI_model.modelId}`);
 
   const result = await streamText({
     model: AI_model,
-    messages: modelMessages,
+    system: systemMessages,
+    messages: convertedUserMessages,
     providerOptions,
   });
 

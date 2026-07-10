@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,7 +35,7 @@ import { cn } from "@/lib/utils";
  * @param {Function} props.setHeight - Setter for height.
  * @param {boolean} props.shareBioDetails - Whether bio details are currently shared with the AI.
  * @param {Function} props.setShareBioDetails - Setter for shareBioDetails.
- * @param {boolean} props.embedded - Whether to render as a section inside the merged personalization panel.
+ * @param {boolean} props.embedded - Whether to render as a section inside the personalization dialog.
  */
 export function BioDetailsCard({
   age,
@@ -54,34 +55,47 @@ export function BioDetailsCard({
   const content = (
     <>
       {embedded && (
-        <div className="mb-5">
-          <h3 className="text-lg font-semibold">Athlete profile</h3>
-          <p className="text-muted-foreground text-sm">
-            Add basic details for more relevant recommendations.
-          </p>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <Label htmlFor="shareBioDetails" className="text-base font-semibold">
+              Use my athlete profile
+            </Label>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Age, bodyweight, height and sex
+            </p>
+          </div>
+          <Switch
+            id="shareBioDetails"
+            checked={shareBioDetails}
+            onCheckedChange={setShareBioDetails}
+            aria-label="Use my athlete profile"
+          />
         </div>
       )}
-      <div className="group mb-5 flex flex-row space-x-2 align-middle">
-        <Checkbox
-          id="shareBioDetails"
-          checked={shareBioDetails}
-          onCheckedChange={setShareBioDetails}
-          className="group-hover:border-blue-500"
-        />
-        <Label
-          htmlFor="shareBioDetails"
-          className="cursor-pointer text-sm font-medium leading-none group-hover:underline peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          Share this with the AI
-        </Label>
-      </div>
+      {!embedded && (
+        <div className="group mb-5 flex flex-row space-x-2 align-middle">
+          <Checkbox
+            id="shareBioDetails"
+            checked={shareBioDetails}
+            onCheckedChange={setShareBioDetails}
+            className="group-hover:border-blue-500"
+          />
+          <Label
+            htmlFor="shareBioDetails"
+            className="cursor-pointer text-sm font-medium leading-none group-hover:underline peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Share this with the AI
+          </Label>
+        </div>
+      )}
 
-      <div
-        className={cn(
-          "flex flex-col items-start gap-4 md:flex-col md:gap-8",
-          !shareBioDetails && "text-muted-foreground/40",
-        )}
-      >
+      {(!embedded || shareBioDetails) && (
+        <div
+          className={cn(
+            "flex flex-col items-start gap-4 md:flex-col md:gap-8",
+            !shareBioDetails && "text-muted-foreground/40",
+          )}
+        >
         <div className="flex w-full flex-col">
           <div className="py-2">
             <Label id="age-label" className="text-xl">
@@ -134,7 +148,8 @@ export function BioDetailsCard({
             </SelectContent>
           </Select>
         </div>
-      </div>
+        </div>
+      )}
     </>
   );
 

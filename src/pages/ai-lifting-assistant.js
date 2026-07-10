@@ -85,6 +85,7 @@ import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
+import { PersonalizationDialog } from "@/components/ai-assistant/personalization-dialog";
 import {
   ChatQuotaLimitNotice,
   ChatQuotaMeter,
@@ -419,37 +420,39 @@ function AILiftingAssistantMain({ relatedArticles }) {
           you never had.
         </PageHeaderDescription>
       </PageHeader>
-      <div className="flex flex-col gap-2 md:gap-5 lg:flex-row">
-        <div className="h-dvh flex-1 lg:flex lg:flex-col 2xl:max-w-screen-xl">
-          <AILiftingAssistantCard
-            hasSharedBioData={!isDemoMode && shareBioDetails}
-            hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
-            hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
-            suggestionContext={suggestionContext}
-            userProvidedProfileData={userProvidedProfileData}
-          />
-        </div>
-        <div className="flex flex-col gap-5 md:max-w-3/5">
-          <BioDetailsCard
-            age={age}
-            setAge={setAge}
-            bodyWeight={bodyWeight}
-            setBodyWeight={setBodyWeight}
-            isMetric={isMetric}
-            toggleIsMetric={toggleIsMetric}
-            sex={sex}
-            setSex={setSex}
-            height={height}
-            setHeight={setHeight}
-            shareBioDetails={shareBioDetails}
-            setShareBioDetails={setShareBioDetails}
-          />
-          <LiftingDataCard
-            selectedOptions={userLiftingMetadata}
-            setSelectedOptions={setUserLiftingMetaData}
-          />
-        </div>
-      </div>
+      <AILiftingAssistantCard
+        hasSharedBioData={!isDemoMode && shareBioDetails}
+        hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
+        hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
+        personalizationControls={
+          <PersonalizationDialog
+            enabled={!isDemoMode && (shareBioDetails || hasSharedTrainingData)}
+          >
+            <BioDetailsCard
+              age={age}
+              setAge={setAge}
+              bodyWeight={bodyWeight}
+              setBodyWeight={setBodyWeight}
+              isMetric={isMetric}
+              toggleIsMetric={toggleIsMetric}
+              sex={sex}
+              setSex={setSex}
+              height={height}
+              setHeight={setHeight}
+              shareBioDetails={shareBioDetails}
+              setShareBioDetails={setShareBioDetails}
+              embedded
+            />
+            <LiftingDataCard
+              selectedOptions={userLiftingMetadata}
+              setSelectedOptions={setUserLiftingMetaData}
+              embedded
+            />
+          </PersonalizationDialog>
+        }
+        suggestionContext={suggestionContext}
+        userProvidedProfileData={userProvidedProfileData}
+      />
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );
@@ -704,6 +707,7 @@ function CopyButton({ text, ...props }) {
  * @param {boolean} props.hasSharedBioData - Whether the user has opted to share bio details.
  * @param {boolean} props.hasSharedFullTrainingData - Whether the user has opted to share every lifting metadata section.
  * @param {boolean} props.hasSharedTrainingData - Whether the user has opted to share any lifting metadata.
+ * @param {React.ReactNode} props.personalizationControls - Compact dialog trigger rendered in the chat header.
  * @param {Object} props.suggestionContext - Small prompt-personalisation context derived from opted-in local data.
  * @param {string} props.userProvidedProfileData - Serialised string of user bio and lifting
  *   metadata to inject into the AI system prompt via the request body on each message send.
@@ -712,6 +716,7 @@ function AILiftingAssistantCard({
   hasSharedBioData,
   hasSharedFullTrainingData,
   hasSharedTrainingData,
+  personalizationControls,
   suggestionContext,
   userProvidedProfileData,
 }) {
@@ -1074,10 +1079,11 @@ function AILiftingAssistantCard({
     <Card className="bg-background text-foreground max-h-full">
       <CardHeader className="flex flex-1 flex-col md:flex-row">
         <div className="flex flex-1 flex-col">
-          <div className="flex items-center gap-3">
-            <CardTitle className="text-2xl font-bold text-balance">
+          <div className="flex flex-wrap items-center gap-3">
+            <CardTitle className="min-w-60 flex-1 text-2xl font-bold text-balance">
               Your Personal Lifting AI Assistant
             </CardTitle>
+            {personalizationControls}
             <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-1.5 pr-4 md:flex">
               <XAILogo className="size-5" />
               <span className="text-sm font-medium">Powered by xAI Grok</span>

@@ -29,6 +29,13 @@ const SYSTEM_PROMPT =
   "When writing dates for humans, use a locale-friendly form like 3 June. Include the year only when referring to a previous year. Do not show users YYYY-MM-DD dates. " +
   "When writing lifts, prefer 5@130kg over 130kgx5. For multiple sets, write 3x5@130kg.";
 
+const BIG_FOUR_LINK_PROMPT =
+  "In each answer, hyperlink the first meaningful reference to each Big Four lift using Markdown and these internal insight-page paths: " +
+  "[Back Squat](/progress-guide/squat), [Bench Press](/progress-guide/bench-press), " +
+  "[Deadlift](/progress-guide/deadlift), and [Strict Press](/progress-guide/strict-press). " +
+  "Treat squat as Back Squat, bench as Bench Press, and overhead press or OHP as Strict Press when choosing the matching link. " +
+  "Keep the wording natural and do not repeatedly link the same lift within one answer.";
+
 const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 3000;
 const MAX_TOTAL_MESSAGE_CHARS = 12000;
@@ -138,6 +145,12 @@ export default async function handler(req, res) {
       `Extended prompt detected: Characters: ${charCount}, Words: ${wordCount}`,
     );
   }
+
+  // Keep product navigation guidance independent of the optional prompt override.
+  systemMessages.push({
+    role: "system",
+    content: BIG_FOUR_LINK_PROMPT,
+  });
 
   systemMessages.push({
     role: "system",

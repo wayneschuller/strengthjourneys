@@ -85,6 +85,7 @@ import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
+import { PersonalizationPanel } from "@/components/ai-assistant/personalization-panel";
 import {
   ChatQuotaLimitNotice,
   ChatQuotaMeter,
@@ -419,17 +420,11 @@ function AILiftingAssistantMain({ relatedArticles }) {
           you never had.
         </PageHeaderDescription>
       </PageHeader>
-      <div className="flex flex-col gap-2 md:gap-5 lg:flex-row">
-        <div className="h-dvh flex-1 lg:flex lg:flex-col 2xl:max-w-screen-xl">
-          <AILiftingAssistantCard
-            hasSharedBioData={!isDemoMode && shareBioDetails}
-            hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
-            hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
-            suggestionContext={suggestionContext}
-            userProvidedProfileData={userProvidedProfileData}
-          />
-        </div>
-        <div className="flex flex-col gap-5 md:max-w-3/5">
+      <div className="flex flex-col gap-5">
+        <PersonalizationPanel
+          bioEnabled={!isDemoMode && shareBioDetails}
+          trainingOptions={isDemoMode ? {} : userLiftingMetadata}
+        >
           <BioDetailsCard
             age={age}
             setAge={setAge}
@@ -443,10 +438,21 @@ function AILiftingAssistantMain({ relatedArticles }) {
             setHeight={setHeight}
             shareBioDetails={shareBioDetails}
             setShareBioDetails={setShareBioDetails}
+            embedded
           />
           <LiftingDataCard
             selectedOptions={userLiftingMetadata}
             setSelectedOptions={setUserLiftingMetaData}
+            embedded
+          />
+        </PersonalizationPanel>
+        <div>
+          <AILiftingAssistantCard
+            hasSharedBioData={!isDemoMode && shareBioDetails}
+            hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
+            hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
+            suggestionContext={suggestionContext}
+            userProvidedProfileData={userProvidedProfileData}
           />
         </div>
       </div>

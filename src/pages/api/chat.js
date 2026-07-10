@@ -188,7 +188,7 @@ export default async function handler(req, res) {
 
   const result = await streamText({
     model: AI_model,
-    system: systemMessages,
+    instructions: systemMessages,
     messages: convertedUserMessages,
     providerOptions,
   });
@@ -391,7 +391,7 @@ async function generateSuggestedQuestions({
   try {
     const result = await generateText({
       model,
-      system: [
+      instructions: [
         "Create clickable suggested next questions for a strength coaching chat.",
         "Return only JSON in this shape: {\"questions\":[\"...\"]}.",
         `Return exactly ${MAX_SUGGESTIONS} questions.`,

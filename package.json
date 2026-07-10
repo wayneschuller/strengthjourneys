@@ -15,9 +15,9 @@
     "postbuild": "next-sitemap"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.68",
-    "@ai-sdk/react": "^3.0.199",
-    "@ai-sdk/xai": "^3.0.93",
+    "@ai-sdk/openai": "^4.0.11",
+    "@ai-sdk/react": "^4.0.20",
+    "@ai-sdk/xai": "^4.0.10",
     "@braintree/sanitize-url": "^7.1.1",
     "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/geist-sans": "^5.2.5",
@@ -62,7 +62,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/kv": "^2.0.0",
     "@xyflow/react": "^12.11.0",
-    "ai": "^6.0.197",
+    "ai": "^7.0.19",
     "ansi-to-react": "^6.2.6",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",

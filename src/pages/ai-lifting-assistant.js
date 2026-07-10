@@ -1228,19 +1228,24 @@ function AILiftingAssistantCard({
                         {message.role === "assistant" &&
                           isLastMessage &&
                           suggestedQuestions.length > 0 && (
-                            <Suggestions className="mt-3 max-w-3xl">
-                              {suggestedQuestions.map((question) => (
-                                <Suggestion
-                                  key={question}
-                                  className="border-foreground/80 bg-foreground text-background hover:bg-foreground/90 hover:text-background disabled:bg-muted disabled:text-muted-foreground"
-                                  suggestion={question}
-                                  disabled={isChatUnavailable}
-                                  onClick={(suggestion) => {
-                                    sendMessageWithMetadata(suggestion);
-                                  }}
-                                />
-                              ))}
-                            </Suggestions>
+                            <div className="mt-3 max-w-3xl">
+                              <p className="mb-2 text-xs italic text-muted-foreground">
+                                Suggested follow-ups
+                              </p>
+                              <Suggestions>
+                                {suggestedQuestions.map((question) => (
+                                  <Suggestion
+                                    key={question}
+                                    className="border-border bg-muted/50 px-3 text-foreground hover:bg-muted hover:text-foreground disabled:bg-muted disabled:text-muted-foreground"
+                                    suggestion={question}
+                                    disabled={isChatUnavailable}
+                                    onClick={(suggestion) => {
+                                      sendMessageWithMetadata(suggestion);
+                                    }}
+                                  />
+                                ))}
+                              </Suggestions>
+                            </div>
                           )}
                       </div>
                     );

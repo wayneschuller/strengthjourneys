@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { parseStoredPlaylist } from "@/components/playlist-leaderboard/playlist-utils";
@@ -61,4 +61,3 @@ export default async function handler(req, res) {
       .json({ message: "Internal Server Error", error: error.message });
   }
 }
-

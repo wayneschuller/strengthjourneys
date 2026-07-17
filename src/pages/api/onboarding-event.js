@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { getServerSession } from "next-auth/next";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import {

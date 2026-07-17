@@ -7,7 +7,7 @@
  */
 
 import { createHash, randomUUID } from "crypto";
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { devLog } from "@/lib/processing-utils";
 
 export const AI_CHAT_ANON_COOKIE = "sj_ai_anon";

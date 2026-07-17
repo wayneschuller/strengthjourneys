@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { randomUUID } from "crypto";
 
 export const ONBOARDING_FLOW_TOKEN_TTL_SECONDS = 30 * 60;

@@ -1,7 +1,9 @@
-"use client";;
+/*
+ * Composable terminal output used by AI interface elements.
+ * Output stays plain text so React provides escaping without an ANSI parser.
+ */
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Ansi from "ansi-to-react";
 import { CheckIcon, CopyIcon, TerminalIcon, Trash2Icon } from "lucide-react";
 import {
   createContext,
@@ -205,7 +207,7 @@ export const TerminalContent = ({
       {...props}>
       {children ?? (
         <pre className="whitespace-pre-wrap break-words">
-          <Ansi>{output}</Ansi>
+          {output}
           {isStreaming && (
             <span className="ml-0.5 inline-block h-4 w-2 animate-pulse bg-zinc-100" />
           )}

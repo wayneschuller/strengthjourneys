@@ -24,7 +24,7 @@
 
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { devLog } from "@/lib/processing-utils";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;

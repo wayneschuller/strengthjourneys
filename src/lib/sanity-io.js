@@ -1,5 +1,9 @@
+/*
+ * Read-only Sanity client and image URL helpers for article content.
+ * The writable studio remains in the sibling Sanity repository.
+ */
 import { createClient } from "@sanity/client";
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder } from "@sanity/image-url";
 
 // NOTE: The article content is a separate repo on sanity.io and is not part of the GPL licensed repo
 export const sanityIOClient = createClient({
@@ -9,7 +13,7 @@ export const sanityIOClient = createClient({
   apiVersion: "2023-05-03",
 });
 
-export const builder = imageUrlBuilder(sanityIOClient);
+export const builder = createImageUrlBuilder(sanityIOClient);
 
 export function urlFor(source) {
   return builder.image(source);

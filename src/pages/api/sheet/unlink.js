@@ -18,7 +18,7 @@
 //
 // Returns: { ok: true, message: string }
 
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { devLog } from "@/lib/processing-utils";
 import { requireSheetFlowContext } from "@/lib/sheet-flow";
 

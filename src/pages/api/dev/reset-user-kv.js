@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth/next";
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 function isDevelopmentEnv() {

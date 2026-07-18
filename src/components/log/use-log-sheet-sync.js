@@ -507,6 +507,9 @@ export function useLogSheetSync({
   // effect below AND
   // from markStructuralSaved/Error so edits that were blocked during a
   // structural op are never permanently lost.
+  // The callback participates in the structural-save callback cycle, so its
+  // explicit dependencies are safer than compiler-inferred memoization here.
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const flushQueuedSync = useCallback(() => {
     if (structuralSavingRef.current) return;
     const queuedSet = Object.values(pendingSetsRef.current)

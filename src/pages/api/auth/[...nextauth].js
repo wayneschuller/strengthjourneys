@@ -5,7 +5,7 @@
 
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { Resend } from "resend";
 import { shouldSendFounderNotification } from "@/lib/founder-notifications";
 import { isLeaderboardAdminEmail } from "@/lib/playlist-security";

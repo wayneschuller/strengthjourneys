@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { devLog } from "@/lib/processing-utils";
 import validator from "validator";
 import { sanitizeUrl } from "@braintree/sanitize-url";

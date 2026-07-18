@@ -1,7 +1,7 @@
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
-import shortUUID from "short-uuid";
+import { generate as generateShortUuid } from "short-uuid";
 import {
   parseStoredPlaylist,
   validateAndProcessPlaylist,
@@ -17,7 +17,6 @@ import { RegExpMatcher, englishDataset } from "obscenity";
 
 // Initialize obscenity matcher
 const matcher = new RegExpMatcher({ ...englishDataset.build() });
-const translator = shortUUID();
 
 // Helper function to check for profanity
 function containsProfanity(text) {
@@ -59,7 +58,7 @@ export default async function handler(req, res) {
         const oembedData = await fetchPlaylistOembedData(validatedPlaylist.url);
         const playlistRecord = {
           ...validatedPlaylist,
-          id: translator.generate(),
+          id: generateShortUuid(),
           timestamp: Date.now(),
           ...(oembedData?.title && { title: oembedData.title }),
           ...(oembedData?.thumbnailUrl && { thumbnailUrl: oembedData.thumbnailUrl }),
@@ -261,4 +260,3 @@ async function isThrottled(subject) {
   });
   return result === null;
 }
-

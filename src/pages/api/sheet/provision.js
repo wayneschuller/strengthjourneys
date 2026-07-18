@@ -29,7 +29,7 @@
 // activation notification when a new user successfully links their first sheet.
 
 import { getServerSession } from "next-auth/next";
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { devLog } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";

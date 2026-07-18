@@ -1,4 +1,7 @@
-
+/**
+ * AI Lifting Assistant page. Builds an opt-in, compact lifting-context prompt
+ * from local user data and streams model responses through the chat API.
+ */
 import { format } from "date-fns";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
@@ -82,6 +85,7 @@ import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
+import { PersonalizationDialog } from "@/components/ai-assistant/personalization-dialog";
 import {
   ChatQuotaLimitNotice,
   ChatQuotaMeter,
@@ -252,6 +256,21 @@ function AILiftingAssistantMain({ relatedArticles }) {
       topLiftsByTypeAndReps,
       limit: 6,
     });
+    const sharedSections = getSharedMetadataSections({
+      shareBioDetails,
+      userLiftingMetadata,
+    });
+
+    if (sharedSections.length > 0) {
+      metadataSections.push(
+        createMetadataSection("data_context", [
+          `shared_sections=${sharedSections.join(",")}`,
+          recentSessionDate ? `latest_session=${recentSessionDate}` : null,
+          `selected_lifts=${prioritizedLifts.join(",") || "none"}`,
+          "missing_sections=not_shared_or_unavailable",
+        ]),
+      );
+    }
 
     if (shareBioDetails) {
       const profileLines = [
@@ -328,9 +347,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
     if (userLiftingMetadata.consistency && parsedData) {
       const consistency = processConsistency(parsedData) ?? [];
-      const consistencyLines = consistency.map(
-        ({ label, percentage }) => `${label}=${percentage}%`,
-      );
+      const consistencyLines = consistency.map(formatConsistencyLine);
 
       if (consistencyLines.length > 0) {
         metadataSections.push(
@@ -403,37 +420,39 @@ function AILiftingAssistantMain({ relatedArticles }) {
           you never had.
         </PageHeaderDescription>
       </PageHeader>
-      <div className="flex flex-col gap-2 md:gap-5 lg:flex-row">
-        <div className="h-dvh flex-1 lg:flex lg:flex-col 2xl:max-w-screen-xl">
-          <AILiftingAssistantCard
-            hasSharedBioData={!isDemoMode && shareBioDetails}
-            hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
-            hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
-            suggestionContext={suggestionContext}
-            userProvidedProfileData={userProvidedProfileData}
-          />
-        </div>
-        <div className="flex flex-col gap-5 md:max-w-3/5">
-          <BioDetailsCard
-            age={age}
-            setAge={setAge}
-            bodyWeight={bodyWeight}
-            setBodyWeight={setBodyWeight}
-            isMetric={isMetric}
-            toggleIsMetric={toggleIsMetric}
-            sex={sex}
-            setSex={setSex}
-            height={height}
-            setHeight={setHeight}
-            shareBioDetails={shareBioDetails}
-            setShareBioDetails={setShareBioDetails}
-          />
-          <LiftingDataCard
-            selectedOptions={userLiftingMetadata}
-            setSelectedOptions={setUserLiftingMetaData}
-          />
-        </div>
-      </div>
+      <AILiftingAssistantCard
+        hasSharedBioData={!isDemoMode && shareBioDetails}
+        hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
+        hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
+        personalizationControls={
+          <PersonalizationDialog
+            enabled={!isDemoMode && (shareBioDetails || hasSharedTrainingData)}
+          >
+            <BioDetailsCard
+              age={age}
+              setAge={setAge}
+              bodyWeight={bodyWeight}
+              setBodyWeight={setBodyWeight}
+              isMetric={isMetric}
+              toggleIsMetric={toggleIsMetric}
+              sex={sex}
+              setSex={setSex}
+              height={height}
+              setHeight={setHeight}
+              shareBioDetails={shareBioDetails}
+              setShareBioDetails={setShareBioDetails}
+              embedded
+            />
+            <LiftingDataCard
+              selectedOptions={userLiftingMetadata}
+              setSelectedOptions={setUserLiftingMetaData}
+              embedded
+            />
+          </PersonalizationDialog>
+        }
+        suggestionContext={suggestionContext}
+        userProvidedProfileData={userProvidedProfileData}
+      />
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );
@@ -584,6 +603,24 @@ function hasAllSharedTrainingData(userLiftingMetadata) {
   );
 }
 
+function getSharedMetadataSections({ shareBioDetails, userLiftingMetadata }) {
+  const sections = [];
+
+  if (shareBioDetails) {
+    sections.push("profile", "standards");
+  }
+
+  if (userLiftingMetadata?.records) sections.push("records");
+  if (userLiftingMetadata?.trainingLoad) sections.push("training_load");
+  if (userLiftingMetadata?.frequency) sections.push("frequency");
+  if (userLiftingMetadata?.consistency) sections.push("consistency");
+  if (userLiftingMetadata?.sessionData) {
+    sections.push("recent_sessions", "latest_session_detail");
+  }
+
+  return sections;
+}
+
 function getRotatedPrompts(prompts, dateKey, count) {
   if (!Array.isArray(prompts) || prompts.length === 0 || count <= 0) {
     return [];
@@ -670,6 +707,7 @@ function CopyButton({ text, ...props }) {
  * @param {boolean} props.hasSharedBioData - Whether the user has opted to share bio details.
  * @param {boolean} props.hasSharedFullTrainingData - Whether the user has opted to share every lifting metadata section.
  * @param {boolean} props.hasSharedTrainingData - Whether the user has opted to share any lifting metadata.
+ * @param {React.ReactNode} props.personalizationControls - Compact dialog trigger rendered in the chat header.
  * @param {Object} props.suggestionContext - Small prompt-personalisation context derived from opted-in local data.
  * @param {string} props.userProvidedProfileData - Serialised string of user bio and lifting
  *   metadata to inject into the AI system prompt via the request body on each message send.
@@ -678,6 +716,7 @@ function AILiftingAssistantCard({
   hasSharedBioData,
   hasSharedFullTrainingData,
   hasSharedTrainingData,
+  personalizationControls,
   suggestionContext,
   userProvidedProfileData,
 }) {
@@ -841,6 +880,36 @@ function AILiftingAssistantCard({
         loadChatQuota({ allowRollback: true });
       },
     });
+  const chatRequestBody = useMemo(
+    () => ({
+      userProvidedMetadata: userProvidedProfileData,
+    }),
+    [userProvidedProfileData],
+  );
+  const clearPromptQueryParams = useCallback(() => {
+    if (!router.isReady) return;
+    if (
+      !("aiPrompt" in router.query) &&
+      !("aiPromptKey" in router.query) &&
+      !("resetChat" in router.query)
+    ) {
+      return;
+    }
+
+    const nextQuery = { ...router.query };
+    delete nextQuery.aiPrompt;
+    delete nextQuery.aiPromptKey;
+    delete nextQuery.resetChat;
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: nextQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  }, [router]);
 
   // Helper to send messages with fresh metadata (per AI SDK v6 docs for ChatRequestOptions.body)
   const sendMessageWithMetadata = useCallback((message) => {
@@ -848,15 +917,13 @@ function AILiftingAssistantCard({
 
     reserveQuotaLocally();
     sendMessage(typeof message === "string" ? { text: message } : message, {
-      body: {
-        userProvidedMetadata: userProvidedProfileData,
-      },
+      body: chatRequestBody,
     });
   }, [
+    chatRequestBody,
     isChatUnavailable,
     reserveQuotaLocally,
     sendMessage,
-    userProvidedProfileData,
   ]);
 
   // Handle submit from PromptInput (receives message object with text)
@@ -894,7 +961,9 @@ function AILiftingAssistantCard({
     }
     pendingAiPromptRef.current = nextPrompt;
     pendingAiPromptKeyRef.current = nextPromptKey;
+    clearPromptQueryParams();
   }, [
+    clearPromptQueryParams,
     legacyQueryPrompt,
     queryPromptKey,
     router.isReady,
@@ -951,6 +1020,7 @@ function AILiftingAssistantCard({
       sessionStorage.removeItem("chat:/ai");
     }
     setMessages([]);
+    clearPromptQueryParams();
   };
 
   const handleDownloadChat = () => {
@@ -1009,10 +1079,11 @@ function AILiftingAssistantCard({
     <Card className="bg-background text-foreground max-h-full">
       <CardHeader className="flex flex-1 flex-col md:flex-row">
         <div className="flex flex-1 flex-col">
-          <div className="flex items-center gap-3">
-            <CardTitle className="text-2xl font-bold text-balance">
+          <div className="flex flex-wrap items-center gap-3">
+            <CardTitle className="min-w-60 flex-1 text-2xl font-bold text-balance">
               Your Personal Lifting AI Assistant
             </CardTitle>
+            {personalizationControls}
             <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-1.5 pr-4 md:flex">
               <XAILogo className="size-5" />
               <span className="text-sm font-medium">Powered by xAI Grok</span>
@@ -1081,6 +1152,8 @@ function AILiftingAssistantCard({
                     const hasSources = parts.some(
                       (part) => part.type === "source-url",
                     );
+                    const suggestedQuestions =
+                      getSuggestedQuestionsFromParts(parts);
 
                     // Get text content for actions (last text part or fallback to content)
                     const lastTextPart = parts
@@ -1140,7 +1213,7 @@ function AILiftingAssistantCard({
                                   onClick={() => {
                                     if (!isChatUnavailable) {
                                       reserveQuotaLocally();
-                                      regenerate();
+                                      regenerate({ body: chatRequestBody });
                                     }
                                   }}
                                   label="Retry"
@@ -1152,6 +1225,28 @@ function AILiftingAssistantCard({
                               </MessageActions>
                             )}
                         </Message>
+                        {message.role === "assistant" &&
+                          isLastMessage &&
+                          suggestedQuestions.length > 0 && (
+                            <div className="mt-3 max-w-3xl">
+                              <p className="mb-2 text-xs italic text-muted-foreground">
+                                Suggested follow-ups
+                              </p>
+                              <Suggestions>
+                                {suggestedQuestions.map((question) => (
+                                  <Suggestion
+                                    key={question}
+                                    className="border-border bg-muted/50 px-3 text-foreground hover:bg-muted hover:text-foreground disabled:bg-muted disabled:text-muted-foreground"
+                                    suggestion={question}
+                                    disabled={isChatUnavailable}
+                                    onClick={(suggestion) => {
+                                      sendMessageWithMetadata(suggestion);
+                                    }}
+                                  />
+                                ))}
+                              </Suggestions>
+                            </div>
+                          )}
                       </div>
                     );
                   })}
@@ -1228,6 +1323,23 @@ function createMetadataSection(title, lines) {
   const filteredLines = (lines ?? []).filter(Boolean).slice(0, 8);
   if (filteredLines.length === 0) return "";
   return [`[${title}]`, ...filteredLines].join("\n");
+}
+
+function formatConsistencyLine({
+  label,
+  actualWorkouts,
+  targetWorkouts,
+  periodDays,
+  percentage,
+}) {
+  const parts = [
+    `sessions=${actualWorkouts}`,
+    `target=${targetWorkouts}`,
+    `period_days=${periodDays}`,
+    `score=${percentage}%`,
+  ];
+
+  return `${label}: ${parts.join(" | ")}`;
 }
 
 function combineMetadataSections(sections, maxChars = 4500) {
@@ -1501,6 +1613,21 @@ function summarizeSessionForPrompt(parsedData, sessionDate) {
   const liftSummaries = Object.entries(byLift)
     .slice(0, 4)
     .map(([liftType, lifts]) => {
+      const totalReps = lifts.reduce(
+        (sum, lift) => sum + (Number(lift.reps) || 0),
+        0,
+      );
+      const tonnageByUnit = lifts.reduce((totals, lift) => {
+        const unitType = lift.unitType || "unit";
+        const reps = Number(lift.reps) || 0;
+        const weight = Number(lift.weight) || 0;
+        totals[unitType] = (totals[unitType] || 0) + reps * weight;
+        return totals;
+      }, {});
+      const tonnageSummary = Object.entries(tonnageByUnit)
+        .map(([unitType, tonnage]) => formatRoundedStat(tonnage, unitType))
+        .filter(Boolean)
+        .join("+");
       const topSet = lifts.reduce((best, current) => {
         if (!best) return current;
         if ((current.weight ?? 0) > (best.weight ?? 0)) return current;
@@ -1512,7 +1639,7 @@ function summarizeSessionForPrompt(parsedData, sessionDate) {
 
       if (!topSet) return null;
 
-      return `${liftType} ${lifts.length} sets top ${topSet.weight}${topSet.unitType}x${topSet.reps}`;
+      return `${liftType} sets=${lifts.length} reps=${totalReps} tonnage=${tonnageSummary || "n/a"} top=${topSet.weight}${topSet.unitType}x${topSet.reps}`;
     })
     .filter(Boolean)
     .join("; ");
@@ -1545,6 +1672,20 @@ function buildLatestSessionDetailLines(sessionDate, analyzedLifts) {
     });
 
   return lines;
+}
+
+function getSuggestedQuestionsFromParts(parts) {
+  const suggestionPart = parts.find(
+    (part) => part.type === "data-suggested-questions",
+  );
+  const questions = suggestionPart?.data?.questions;
+
+  if (!Array.isArray(questions)) return [];
+
+  return questions
+    .filter((question) => typeof question === "string")
+    .map((question) => question.trim())
+    .filter(Boolean);
 }
 
 function getDaysBetweenDates(olderDate, newerDate) {

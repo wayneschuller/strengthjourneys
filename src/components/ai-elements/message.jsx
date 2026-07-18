@@ -27,7 +27,10 @@ import {
 } from "react";
 import { Streamdown } from "streamdown";
 
-const APP_ORIGIN = "https://www.strengthjourneys.xyz";
+const APP_HOSTNAMES = new Set([
+  "strengthjourneys.xyz",
+  "www.strengthjourneys.xyz",
+]);
 
 function resolveInternalHref(href) {
   if (!href || typeof href !== "string") return null;
@@ -35,7 +38,7 @@ function resolveInternalHref(href) {
 
   try {
     const url = new URL(href);
-    if (url.origin !== APP_ORIGIN) return null;
+    if (!APP_HOSTNAMES.has(url.hostname)) return null;
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return null;

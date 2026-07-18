@@ -3,11 +3,9 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -16,10 +14,9 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useLocalStorage } from "usehooks-ts";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 /**
@@ -38,6 +35,7 @@ import { cn } from "@/lib/utils";
  * @param {Function} props.setHeight - Setter for height.
  * @param {boolean} props.shareBioDetails - Whether bio details are currently shared with the AI.
  * @param {Function} props.setShareBioDetails - Setter for shareBioDetails.
+ * @param {boolean} props.embedded - Whether to render as a section inside the personalization dialog.
  */
 export function BioDetailsCard({
   age,
@@ -52,16 +50,29 @@ export function BioDetailsCard({
   setHeight,
   shareBioDetails,
   setShareBioDetails,
+  embedded = false,
 }) {
-  return (
-    <Card className="">
-      <CardHeader>
-        <CardTitle>Tell us about yourself</CardTitle>
-        <CardDescription>
-          Enhance the AI by providing your basic details
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="">
+  const content = (
+    <>
+      {embedded && (
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <Label htmlFor="shareBioDetails" className="text-base font-semibold">
+              Use my athlete profile
+            </Label>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Age, bodyweight, height and sex
+            </p>
+          </div>
+          <Switch
+            id="shareBioDetails"
+            checked={shareBioDetails}
+            onCheckedChange={setShareBioDetails}
+            aria-label="Use my athlete profile"
+          />
+        </div>
+      )}
+      {!embedded && (
         <div className="group mb-5 flex flex-row space-x-2 align-middle">
           <Checkbox
             id="shareBioDetails"
@@ -76,81 +87,85 @@ export function BioDetailsCard({
             Share this with the AI
           </Label>
         </div>
+      )}
 
+      {(!embedded || shareBioDetails) && (
         <div
           className={cn(
             "flex flex-col items-start gap-4 md:flex-col md:gap-8",
             !shareBioDetails && "text-muted-foreground/40",
           )}
         >
-          <div className="flex w-full flex-col">
-            <div className="py-2">
-              <Label htmlFor="age" className="text-xl">
-                Age: {age}
-              </Label>
-            </div>
-            <Slider
-              min={13}
-              max={100}
-              step={1}
-              value={[age]}
-              onValueChange={(values) => setAge(values[0])}
-              className="mt-2 min-w-40 flex-1"
-              aria-label="Age"
-              aria-labelledby="age"
-            />
-          </div>
-          <div className="flex h-[4rem] w-full flex-col justify-between">
-            <div className="flex flex-row items-center">
-              <Label htmlFor="weight" className="mr-2 text-xl">
-                Bodyweight:
-              </Label>
-              <Label
-                htmlFor="weight"
-                className="mr-2 w-[3rem] text-right text-xl"
-              >
-                {bodyWeight}
-              </Label>
-              <UnitChooser
-                isMetric={isMetric}
-                onSwitchChange={toggleIsMetric}
-              />
-            </div>
-            <Slider
-              min={isMetric ? 40 : 100}
-              max={isMetric ? 230 : 500}
-              step={1}
-              value={[bodyWeight]}
-              onValueChange={(values) => setBodyWeight(values[0])}
-              className="mt-2 min-w-40 flex-1"
-              aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
-            />
-          </div>
-          <div className="flex w-full flex-col justify-between">
-            <HeightWidget height={height} setHeight={setHeight} />
-          </div>
-          <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
-            <Label htmlFor="sex" className="text-xl">
-              Sex:
+        <div className="flex w-full flex-col">
+          <div className="py-2">
+            <Label id="age-label" className="text-xl">
+              Age: {age}
             </Label>
-            <Select
-              id="gender"
-              value={sex}
-              onValueChange={(value) => setSex(value)}
-              className="min-w-52 text-xl"
-            >
-              <SelectTrigger aria-label="Select sex">
-                <SelectValue placeholder="Select sex" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
+          <Slider
+            min={13}
+            max={100}
+            step={1}
+            value={[age]}
+            onValueChange={(values) => setAge(values[0])}
+            className="mt-2 min-w-40 flex-1"
+            aria-labelledby="age-label"
+          />
         </div>
-      </CardContent>
-      {/* <CardFooter className="text-sm"></CardFooter> */}
+        <div className="flex min-h-16 w-full flex-col justify-between">
+          <div className="flex flex-wrap items-center gap-y-2">
+            <Label className="mr-2 text-xl">Bodyweight:</Label>
+            <span className="mr-2 min-w-12 text-right text-xl">
+              {bodyWeight}
+            </span>
+            <UnitChooser
+              isMetric={isMetric}
+              onSwitchChange={toggleIsMetric}
+            />
+          </div>
+          <Slider
+            min={isMetric ? 40 : 100}
+            max={isMetric ? 230 : 500}
+            step={1}
+            value={[bodyWeight]}
+            onValueChange={(values) => setBodyWeight(values[0])}
+            className="mt-2 min-w-40 flex-1"
+            aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"}`}
+          />
+        </div>
+        <div className="flex w-full flex-col justify-between">
+          <HeightWidget height={height} setHeight={setHeight} />
+        </div>
+        <div className="flex min-h-16 w-full items-center gap-2">
+          <Label className="text-xl">Sex:</Label>
+          <Select value={sex} onValueChange={(value) => setSex(value)}>
+            <SelectTrigger className="w-full max-w-52" aria-label="Select sex">
+              <SelectValue placeholder="Select sex" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        </div>
+      )}
+    </>
+  );
+
+  if (embedded) {
+    return <section>{content}</section>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Tell us about yourself</CardTitle>
+        <CardDescription>
+          Enhance the AI by providing your basic details
+        </CardDescription>
+      </CardHeader>
+      <CardContent>{content}</CardContent>
     </Card>
   );
 }
@@ -181,10 +196,11 @@ const HeightWidget = ({ height, setHeight }) => {
         min={100}
         max={250}
         step={1}
-        value={[height]}
-        onValueChange={handleHeightChange}
-        className="mt-2"
-      />
+      value={[height]}
+      onValueChange={handleHeightChange}
+      className="mt-2"
+      aria-label="Height in centimetres"
+    />
     </div>
   );
 };

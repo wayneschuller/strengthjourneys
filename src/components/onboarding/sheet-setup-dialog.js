@@ -931,7 +931,7 @@ export function SheetSetupDialog() {
     mutate,
     parsedData,
     resetUiState,
-    sheetInfo?.ssid,
+    sheetInfo,
     sheetParsedData,
     toast,
   ]);

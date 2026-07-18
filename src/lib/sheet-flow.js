@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { getServerSession } from "next-auth/next";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { normalizeDateInput } from "@/lib/date-utils";

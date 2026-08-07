@@ -463,6 +463,7 @@ export function SmartAddButtons({
   showHint,
   hasBigFourIcon = false,
   isPastSession = false,
+  collapseSuggestions = false,
   disabled = false,
 }) {
   if (!inSessionCoachState?.buttons?.length) {
@@ -483,7 +484,10 @@ export function SmartAddButtons({
     );
   }
 
-  if (isPastSession && inSessionCoachState.mode === "history") {
+  if (
+    collapseSuggestions ||
+    (isPastSession && inSessionCoachState.mode === "history")
+  ) {
     return (
       <PastSessionSmartAddButtons
         liftType={liftType}

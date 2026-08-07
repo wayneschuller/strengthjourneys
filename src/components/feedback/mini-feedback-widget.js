@@ -1,3 +1,6 @@
+/**
+ * Compact, progressively revealed sentiment feedback for cards and inline results.
+ */
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "motion/react";
@@ -8,6 +11,8 @@ import {
 } from "@/components/feedback/feedback-tracking";
 
 const CELEBRATE_DURATION_MS = 1200;
+const DEFAULT_REVEAL_DELAY_MS = 8000;
+const DEFAULT_REVEAL_JITTER_MS = 4000;
 
 const DEFAULT_SHORT_PROMPTS = [
   "Helpful?",
@@ -53,6 +58,8 @@ function isValidReasonCode(sentiment, reasonCode) {
  * @param {string} props.page
  * @param {object} [props.analyticsExtra]
  * @param {string} [props.className]
+ * @param {number} [props.revealDelayMs]
+ * @param {number} [props.revealJitterMs]
  */
 export function MiniFeedbackWidget({
   prompt,
@@ -61,15 +68,24 @@ export function MiniFeedbackWidget({
   page,
   analyticsExtra = {},
   className = "",
+  revealDelayMs = DEFAULT_REVEAL_DELAY_MS,
+  revealJitterMs = DEFAULT_REVEAL_JITTER_MS,
 }) {
   const { status } = useSession();
   const [vote, setVote] = useState(null);
   const [reasonCode, setReasonCode] = useState(null);
   const [isCelebrating, setIsCelebrating] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(() => revealDelayMs <= 0);
   const mountTime = useRef(null);
+  const revealTimerRef = useRef(null);
   const hideTimerRef = useRef(null);
   const celebrateTimerRef = useRef(null);
+  const [effectiveRevealDelayMs] = useState(() => {
+    const jitterRange = Math.max(0, revealJitterMs);
+    const jitterOffset = Math.random() * jitterRange - jitterRange / 2;
+    return Math.max(0, Math.round(revealDelayMs + jitterOffset));
+  });
   const safePromptOptions = Array.isArray(promptOptions) && promptOptions.length > 0
     ? promptOptions
     : DEFAULT_SHORT_PROMPTS;
@@ -78,15 +94,26 @@ export function MiniFeedbackWidget({
   );
 
   useEffect(() => {
-    if (mountTime.current === null) {
+    if (isRevealed && mountTime.current === null) {
       mountTime.current = Date.now();
     }
-  }, []);
+  }, [isRevealed]);
+
+  useEffect(() => {
+    if (isRevealed) return undefined;
+
+    revealTimerRef.current = setTimeout(() => {
+      setIsRevealed(true);
+    }, effectiveRevealDelayMs);
+
+    return () => clearTimeout(revealTimerRef.current);
+  }, [effectiveRevealDelayMs, isRevealed]);
 
   useEffect(() => {
     return () => {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
       if (celebrateTimerRef.current) clearTimeout(celebrateTimerRef.current);
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
     };
   }, []);
 
@@ -152,9 +179,13 @@ export function MiniFeedbackWidget({
   return (
     <div
       className={`flex max-h-32 flex-col items-start gap-1.5 overflow-hidden transition-all duration-500 ${
-        isHidden ? "pointer-events-none max-h-0 opacity-0" : "opacity-100"
+        isHidden
+          ? "invisible pointer-events-none max-h-0 opacity-0"
+          : isRevealed
+            ? "visible opacity-100"
+            : "invisible pointer-events-none opacity-0"
       } ${className}`.trim()}
-      aria-hidden={isHidden}
+      aria-hidden={isHidden || !isRevealed}
     >
       <div className="flex items-center gap-2">
         <span

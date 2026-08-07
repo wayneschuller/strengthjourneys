@@ -65,7 +65,9 @@ export function LiftBlock({
   sessionCount = 0,
   isPastSession,
   isStructuralSaving = false,
+  isAddSaving = false,
   isDeleteCooldownActive = false,
+  collapseSuggestions = false,
   onUpdateSet,
   onDeleteSet,
   onAddSet,
@@ -115,7 +117,8 @@ export function LiftBlock({
         ]),
       ),
   );
-  const canEditSets = !previewMode && typeof onUpdateSet === "function";
+  const canEditSets =
+    !previewMode && !isStructuralSaving && typeof onUpdateSet === "function";
   const canDeleteSets = !previewMode && typeof onDeleteSet === "function";
   const canAddSets = !previewMode && typeof onAddSet === "function";
   const trainingAgeYears = useMemo(
@@ -638,7 +641,7 @@ export function LiftBlock({
             defaultNotes={customDraftConfig.notes}
             onCommit={handleCustomDraftCommit}
             onCancel={closeCustomSetDraft}
-            disabled={isStructuralSaving}
+            disabled={isAddSaving}
           />
         )}
       </div>
@@ -689,7 +692,8 @@ export function LiftBlock({
           showHint={showSuggestionHint}
           hasBigFourIcon
           isPastSession={isPastSession}
-          disabled={isStructuralSaving}
+          collapseSuggestions={collapseSuggestions}
+          disabled={isAddSaving}
         />
       )}
     </div>

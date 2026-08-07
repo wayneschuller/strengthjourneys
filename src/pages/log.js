@@ -175,6 +175,7 @@ export default function LogSessionPage({
   const [acceptedSessionUrls, setAcceptedSessionUrls] = useState(
     () => new Set(),
   );
+  const [activeNewLiftType, setActiveNewLiftType] = useState(null);
   const autoStartedLiftRef = useRef("");
 
   // Sync date from URL param after hydration.
@@ -192,6 +193,7 @@ export default function LogSessionPage({
   const {
     syncState,
     isStructuralSaving,
+    hasDeferredAdd,
     isDeleteCooldownActive,
     sessionLiftsWithPending,
     resetOptimisticSessionState,
@@ -210,12 +212,14 @@ export default function LogSessionPage({
     sex,
     mutate,
     toast,
+    isValidating,
   });
 
   const navigateToDate = useCallback(
     (date) => {
       setSessionDate(date);
       setShowDeleteConfirm(false);
+      setActiveNewLiftType(null);
       resetOptimisticSessionState();
       router.replace(
         { pathname: "/log", query: date !== todayIso ? { date } : {} },
@@ -339,14 +343,25 @@ export default function LogSessionPage({
     (authStatus === "authenticated" &&
       !!effectiveSsid &&
       (isLoading || parsedData === null));
-  // Keep row-writing controls quiet while SWR is refreshing Google Sheet rows:
-  // the small disabled window is preferable to racing against stale rowIndex
-  // data, but keep this narrowly scoped so normal logging does not feel sticky.
-  const isSheetWriteBlocked =
+  // Existing rows are deliberately locked during SWR refresh because editing or
+  // deleting by a stale rowIndex is unsafe. Add-set controls use the narrower
+  // gate below: the sync hook can accept one optimistic add and defer its insert
+  // until revalidation supplies a fresh structural snapshot.
+  const isExistingRowWriteBlocked =
     showSessionBootstrap ||
     isStructuralSaving ||
     isLoading ||
     isValidating ||
+    isError ||
+    fetchFailed ||
+    !Array.isArray(parsedData);
+  // An add can be accepted optimistically during a background SWR read. The
+  // sync hook defers its structural insert until that read has settled.
+  const isAddBlocked =
+    showSessionBootstrap ||
+    isStructuralSaving ||
+    hasDeferredAdd ||
+    isLoading ||
     isError ||
     fetchFailed ||
     !Array.isArray(parsedData);
@@ -381,6 +396,16 @@ export default function LogSessionPage({
       },
     );
   }, [parsedData]);
+
+  const handleAddLift = useCallback(
+    (liftType) => {
+      if (!sessionLiftsWithPending[liftType]?.length) {
+        setActiveNewLiftType(liftType);
+      }
+      return addLift(liftType);
+    },
+    [addLift, sessionLiftsWithPending],
+  );
 
   // --- Unit mismatch nudge ---
   // If 100% of the user's sheet data is in one unit but their SJ preference is
@@ -588,9 +613,9 @@ export default function LogSessionPage({
               {!showSessionBootstrap && !isLoading && !hasSession && (
                 <EmptySessionState
                   addLiftChips={addLiftChips}
-                  isStructuralSaving={isSheetWriteBlocked}
+                  isStructuralSaving={isAddBlocked}
                   isToday={isToday}
-                  onAddLift={addLift}
+                  onAddLift={handleAddLift}
                   parsedData={parsedData}
                   previewMode={previewMode}
                   starterLifts={BIG_FOUR}
@@ -628,8 +653,17 @@ export default function LogSessionPage({
                             dashboardStage={dashboardStage}
                             sessionCount={sessionCount}
                             isPastSession={!isToday}
-                            isStructuralSaving={isSheetWriteBlocked}
+                            isStructuralSaving={isExistingRowWriteBlocked}
+                            isAddSaving={isAddBlocked}
                             isDeleteCooldownActive={isDeleteCooldownActive}
+                            collapseSuggestions={
+                              activeNewLiftType !== null &&
+                              Boolean(
+                                sessionLiftsWithPending[activeNewLiftType]
+                                  ?.length,
+                              ) &&
+                              activeNewLiftType !== liftType
+                            }
                             previewMode={previewMode}
                             onUpdateSet={previewMode ? undefined : updateSet}
                             onDeleteSet={previewMode ? undefined : deleteSet}
@@ -652,9 +686,9 @@ export default function LogSessionPage({
                   {!previewMode && (
                     <AddLiftButton
                       parsedData={parsedData}
-                      onAddLift={addLift}
+                      onAddLift={handleAddLift}
                       chips={addLiftChips}
-                      disabled={isSheetWriteBlocked}
+                      disabled={isAddBlocked}
                     />
                   )}
 
@@ -682,7 +716,7 @@ export default function LogSessionPage({
                   {!previewMode && (
                     <>
                       <DeleteSessionControls
-                        isStructuralSaving={isSheetWriteBlocked}
+                        isStructuralSaving={isExistingRowWriteBlocked}
                         onCancel={() => setShowDeleteConfirm(false)}
                         onConfirm={handleDeleteSession}
                         onRequestConfirm={() => setShowDeleteConfirm(true)}

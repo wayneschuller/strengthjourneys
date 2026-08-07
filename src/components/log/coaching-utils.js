@@ -6,7 +6,8 @@ import { getDisplayWeight } from "@/lib/processing-utils";
 import { COACHED_LIFTS } from "@/components/log/coached-lifts";
 
 const FIRST_TIME_WARMUP_SUBLABELS = [
-  "next warmup",
+  "start your engine",
+  "ignition set",
   "heat rising",
   "heart rising",
   "keep moving",
@@ -22,7 +23,6 @@ const FIRST_TIME_TARGET_SUBLABELS = [
   "lock in",
   "reckless optimism",
   "danger button",
-  "ignition set",
   "PR bait",
   "make it count",
   "send it",

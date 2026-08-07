@@ -20,6 +20,10 @@ const HEAVIER_SET_SUBLABELS = [
   "next warmup",
   "heat rising",
   "heart rising",
+  "keep moving",
+  "stepping stone",
+  "build the fire",
+  "one plate closer",
   "ambitious",
   "send it",
   "for Instagram",
@@ -386,9 +390,10 @@ export function getLiftBlockCoachingState({
   // Detect drop set mode: last logged weight is below the session's peak
   const inDropSetMode = effectiveAtOrPastTop && lastLoggedWeight < maxLogged;
 
-  // Helper: check if a suggested set would be a PR (use best/default pick)
-  const getSuggestionRankingMeta = (reps, weight) => {
-    const meta = getRankingMeta({
+  // Keep both ranking lanes so button badges can use the preferred result while
+  // milestone quips can still react specifically to an all-time best.
+  const getSuggestionRankingMeta = (reps, weight) =>
+    getRankingMeta({
       liftType,
       reps,
       weight,
@@ -396,8 +401,6 @@ export function getLiftBlockCoachingState({
       topLiftsByTypeAndReps,
       topLiftsByTypeAndRepsLast12Months,
     });
-    return meta?.best ?? null;
-  };
 
   const buttons = [];
   const seenButtonKeys = new Set();
@@ -412,7 +415,7 @@ export function getLiftBlockCoachingState({
     const key = `${reps}-${weight}`;
     if (seenButtonKeys.has(key)) return;
     seenButtonKeys.add(key);
-    const rankingMeta = getSuggestionRankingMeta(reps, weight);
+    const rankingMeta = getSuggestionRankingMeta(reps, weight)?.best;
     buttons.push({
       label: `${reps}@${weight}${unitType}`,
       sublabel,
@@ -437,8 +440,13 @@ export function getLiftBlockCoachingState({
         lastLoggedSets.length,
       ].join("|"),
     });
-  const getTopSetSublabel = (set, fallback = TOP_SET_SUBLABELS) =>
-    getSuggestionSublabel(fallback, "top-set", set);
+  const getTopSetSublabel = (set, fallback = TOP_SET_SUBLABELS) => {
+    const rankingMeta = getSuggestionRankingMeta(set?.reps, set?.weight);
+
+    if (rankingMeta?.lifetime?.rank === 0) return "meet Jesus";
+
+    return getSuggestionSublabel(fallback, "top-set", set);
+  };
 
   if (!effectiveAtOrPastTop) {
     // Warmup phase: replay the user's actual previous warmup first, then fill
@@ -491,7 +499,15 @@ export function getLiftBlockCoachingState({
       realSets.length === 0
         ? "opening set"
         : getSuggestionSublabel(
-            ["next warmup", "heat rising", "heart rising"],
+            [
+              "next warmup",
+              "heat rising",
+              "heart rising",
+              "keep moving",
+              "stepping stone",
+              "build the fire",
+              "one plate closer",
+            ],
             "next-warmup",
             nextActualWarmupSet,
           ),

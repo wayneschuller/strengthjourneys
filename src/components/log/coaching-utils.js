@@ -9,6 +9,10 @@ const FIRST_TIME_WARMUP_SUBLABELS = [
   "next warmup",
   "heat rising",
   "heart rising",
+  "keep moving",
+  "stepping stone",
+  "build the fire",
+  "one plate closer",
 ];
 const FIRST_TIME_TARGET_SUBLABELS = [
   "today's target",

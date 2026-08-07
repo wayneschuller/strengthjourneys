@@ -175,6 +175,7 @@ export default function LogSessionPage({
   const [acceptedSessionUrls, setAcceptedSessionUrls] = useState(
     () => new Set(),
   );
+  const [activeNewLiftType, setActiveNewLiftType] = useState(null);
   const autoStartedLiftRef = useRef("");
 
   // Sync date from URL param after hydration.
@@ -218,6 +219,7 @@ export default function LogSessionPage({
     (date) => {
       setSessionDate(date);
       setShowDeleteConfirm(false);
+      setActiveNewLiftType(null);
       resetOptimisticSessionState();
       router.replace(
         { pathname: "/log", query: date !== todayIso ? { date } : {} },
@@ -394,6 +396,16 @@ export default function LogSessionPage({
       },
     );
   }, [parsedData]);
+
+  const handleAddLift = useCallback(
+    (liftType) => {
+      if (!sessionLiftsWithPending[liftType]?.length) {
+        setActiveNewLiftType(liftType);
+      }
+      return addLift(liftType);
+    },
+    [addLift, sessionLiftsWithPending],
+  );
 
   // --- Unit mismatch nudge ---
   // If 100% of the user's sheet data is in one unit but their SJ preference is
@@ -603,7 +615,7 @@ export default function LogSessionPage({
                   addLiftChips={addLiftChips}
                   isStructuralSaving={isAddBlocked}
                   isToday={isToday}
-                  onAddLift={addLift}
+                  onAddLift={handleAddLift}
                   parsedData={parsedData}
                   previewMode={previewMode}
                   starterLifts={BIG_FOUR}
@@ -644,6 +656,14 @@ export default function LogSessionPage({
                             isStructuralSaving={isExistingRowWriteBlocked}
                             isAddSaving={isAddBlocked}
                             isDeleteCooldownActive={isDeleteCooldownActive}
+                            collapseSuggestions={
+                              activeNewLiftType !== null &&
+                              Boolean(
+                                sessionLiftsWithPending[activeNewLiftType]
+                                  ?.length,
+                              ) &&
+                              activeNewLiftType !== liftType
+                            }
                             previewMode={previewMode}
                             onUpdateSet={previewMode ? undefined : updateSet}
                             onDeleteSet={previewMode ? undefined : deleteSet}
@@ -666,7 +686,7 @@ export default function LogSessionPage({
                   {!previewMode && (
                     <AddLiftButton
                       parsedData={parsedData}
-                      onAddLift={addLift}
+                      onAddLift={handleAddLift}
                       chips={addLiftChips}
                       disabled={isAddBlocked}
                     />

@@ -67,6 +67,7 @@ export function LiftBlock({
   isStructuralSaving = false,
   isAddSaving = false,
   isDeleteCooldownActive = false,
+  collapseSuggestions = false,
   onUpdateSet,
   onDeleteSet,
   onAddSet,
@@ -691,6 +692,7 @@ export function LiftBlock({
           showHint={showSuggestionHint}
           hasBigFourIcon
           isPastSession={isPastSession}
+          collapseSuggestions={collapseSuggestions}
           disabled={isAddSaving}
         />
       )}

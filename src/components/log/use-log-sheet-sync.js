@@ -75,6 +75,7 @@ export function useLogSheetSync({
   sex,
   mutate,
   toast,
+  isValidating,
 }) {
   const storedBarType =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
@@ -92,6 +93,33 @@ export function useLogSheetSync({
   // the per-set trash buttons disabled for a short beat after delete completion
   // so pointer follow-through cannot immediately delete the shifted row.
   const [isDeleteCooldownActive, setIsDeleteCooldownActive] = useState(false);
+  const [hasDeferredAdd, setHasDeferredAdd] = useState(false);
+
+  // Log sync design strategy:
+  //
+  // 1. Keep SWR's focus/reconnect revalidation defaults. Google Sheets remains
+  //    canonical, and frequent inexpensive reads are useful protection against
+  //    edits made outside this UI.
+  // 2. Existing-row edits and deletes stay conservative. They pause during
+  //    revalidation because a stale rowIndex could target someone else's set;
+  //    the server-side full-row snapshot checks are intentional and must remain.
+  // 3. Additive controls should remain available. One add intent may be accepted
+  //    while SWR is revalidating and deferred until fresh parsedData can determine
+  //    its insertion position. Existing-lift sets render optimistically at once;
+  //    new lift/session intents appear when the fresh sparse anchor is known. A
+  //    single slot matches real workout usage and avoids a general-purpose queue
+  //    whose ordering is hard to prove.
+  // 4. The optimistic row is durable across the post-insert mutate(). Successful
+  //    insertion promotes that exact tempId to a confirmed rowIndex; strict
+  //    rowIndex + content reconciliation removes it only when canonical parsed
+  //    data contains the same row. Never clear it merely because a request or
+  //    revalidation finished, otherwise the row can flicker or disappear.
+  // 5. Row content (including timestamped notes) is reconciliation evidence, not
+  //    a React key. The tempId remains stable throughout the optimistic phase;
+  //    canonical rows continue to use their sheet rowIndex after handoff.
+  //
+  // If this model is expanded, preserve the priority order: never write/delete
+  // the wrong row, never lose an accepted add, then minimize interaction delay.
   // Optimistic pending sets: { [liftType]: [pendingSetObj, ...] }
   // _pending: true  -> in-flight (show spinner)
   // _pending: false -> confirmed (rowIndex known, waiting for parsedData to catch up)
@@ -99,6 +127,7 @@ export function useLogSheetSync({
   const pendingSetsRef = useRef({});
   const queuedEditOpsRef = useRef([]);
   const queuedStructuralActionRef = useRef(null);
+  const deferredAddRef = useRef(null);
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
 
   // Structural mutation guard: prevents concurrent row-shifting API calls
@@ -134,6 +163,8 @@ export function useLogSheetSync({
   }, []);
 
   const resetOptimisticSessionState = useCallback(() => {
+    deferredAddRef.current = null;
+    setHasDeferredAdd(false);
     setPendingSetsSync({});
     setDeletedRowIndices(new Set());
   }, [setPendingSetsSync]);
@@ -344,15 +375,14 @@ export function useLogSheetSync({
     [setPendingSetsSync],
   );
 
-  // Promote the first still-pending row for a liftType to confirmed with a real rowIndex.
-  const promoteFirstPending = useCallback(
-    (liftType, rowIndex) => {
+  // Promote only the row confirmed by this insert response. Matching by tempId
+  // keeps cleanup and reconciliation safe if the sync model grows later.
+  const promotePendingByTempId = useCallback(
+    (liftType, tempId, rowIndex) => {
       setPendingSetsSync((prev) => {
         if (!prev[liftType]) return prev;
-        let promoted = false;
         const next = prev[liftType].map((s) => {
-          if (!promoted && s._pending) {
-            promoted = true;
+          if (s._tempId === tempId) {
             return { ...s, _pending: false, rowIndex };
           }
           return s;
@@ -750,24 +780,13 @@ export function useLogSheetSync({
     [sheetInfo?.ssid, toast, setPendingSetsSync, mutate],
   );
 
-  // Add a new set to an existing lift block.
-  // Optimistic: row appears immediately with spinner, promoted to confirmed on success.
-  const addSet = useCallback(
-    async (liftType, prevSet) => {
-      if (!sheetInfo?.ssid || !parsedData) return;
-      if (structuralSavingRef.current) {
-        queueStructuralAction({
-          kind: "addSet",
-          liftType,
-          prevSet: prevSet ?? null,
-        });
-        return;
-      }
-
-      const unitType = prevSet?.unitType ?? (isMetric ? "kg" : "lb");
-      const reps = prevSet?.reps ?? 5;
-      const weight = prevSet?.weight ?? defaultBarWeight;
-
+  const insertPendingSet = useCallback(
+    async (liftType, tempId) => {
+      if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
+      const pendingSet = (pendingSetsRef.current[liftType] ?? []).find(
+        (set) => set._tempId === tempId,
+      );
+      if (!pendingSet) return;
       // Compute insertion position BEFORE adding to pending, so we can include
       // confirmed-pending rows (promoted on previous successful adds) in the calculation.
       const confirmedPendingRows = (
@@ -787,41 +806,7 @@ export function useLogSheetSync({
       );
       const insertAfterRowIndex = predecessorRow?.rowIndex ?? null;
       const beforeSnapshot = buildSheetSnapshotFromSetLike(predecessorRow);
-
-      // Stable temp key so the SetRow component keeps the same React key through
-      // the in-flight → confirmed transition (avoiding a remount/flash).
-      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-      // Auto-timestamp: 24h clock in the notes column (e.g. "14:35 ")
-      const notes =
-        prevSet && Object.prototype.hasOwnProperty.call(prevSet, "notes")
-          ? (prevSet.notes ?? "")
-          : getAutoTimestampNotes();
-
-      // Show optimistic row immediately (in-flight)
-      setPendingSetsSync((prev) => ({
-        ...prev,
-        [liftType]: [
-          ...(prev[liftType] ?? []),
-          {
-            date: sessionDate,
-            liftType,
-            reps,
-            weight,
-            unitType,
-            notes,
-            rowIndex: null,
-            isGoal: false,
-            isHistoricalPR: false,
-            _pending: true,
-            _tempId: tempId,
-            _serverSnapshot: buildSheetSnapshotFromFields(
-              { reps, weight, unitType, notes, url: "" },
-              { date: sessionDate, liftType },
-            ),
-          },
-        ],
-      }));
+      const { reps, weight, unitType, notes, URL = "" } = pendingSet;
       const timings = [];
       const t0 = performance.now();
       markStructuralSaving();
@@ -833,7 +818,7 @@ export function useLogSheetSync({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ssid: sheetInfo.ssid,
-            rows: [["", "", String(reps), `${weight}${unitType}`, notes, ""]],
+            rows: [["", "", String(reps), `${weight}${unitType}`, notes, URL]],
             insertAfterRowIndex,
             before: beforeSnapshot,
           }),
@@ -860,7 +845,7 @@ export function useLogSheetSync({
         const { firstRowIndex } = data;
         // Promote pending → confirmed with the real rowIndex so the optimistic
         // row dedupes cleanly when parsedData catches up.
-        promoteFirstPending(liftType, firstRowIndex);
+        promotePendingByTempId(liftType, tempId, firstRowIndex);
         // Release the structural guard immediately — the promoted row already has
         // the correct rowIndex, so queued follow-ups can compute positions safely.
         // Fire revalidation in the background (no await) to avoid a race where a
@@ -874,8 +859,11 @@ export function useLogSheetSync({
         // Remove the failed pending row
         setPendingSetsSync((prev) => {
           const next = { ...prev };
-          if (next[liftType])
-            next[liftType] = next[liftType].filter((s) => !s._pending);
+          if (next[liftType]) {
+            next[liftType] = next[liftType].filter(
+              (set) => set._tempId !== tempId,
+            );
+          }
           if (!next[liftType]?.length) delete next[liftType];
           return next;
         });
@@ -888,12 +876,70 @@ export function useLogSheetSync({
       sheetInfo?.ssid,
       parsedData,
       sessionDate,
+      setPendingSetsSync,
+      promotePendingByTempId,
+      mutate,
+    ],
+  );
+
+  // Accept one add immediately during SWR revalidation, but wait to calculate
+  // its row position until the fresh canonical snapshot has landed.
+  const addSet = useCallback(
+    async (liftType, prevSet) => {
+      if (!sheetInfo?.ssid || !parsedData) return;
+      if (structuralSavingRef.current || deferredAddRef.current) return;
+
+      const unitType = prevSet?.unitType ?? (isMetric ? "kg" : "lb");
+      const reps = prevSet?.reps ?? 5;
+      const weight = prevSet?.weight ?? defaultBarWeight;
+      const notes =
+        prevSet && Object.prototype.hasOwnProperty.call(prevSet, "notes")
+          ? (prevSet.notes ?? "")
+          : getAutoTimestampNotes();
+      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      setPendingSetsSync((prev) => ({
+        ...prev,
+        [liftType]: [
+          ...(prev[liftType] ?? []),
+          {
+            date: sessionDate,
+            liftType,
+            reps,
+            weight,
+            unitType,
+            notes,
+            URL: "",
+            rowIndex: null,
+            isGoal: false,
+            isHistoricalPR: false,
+            _pending: true,
+            _tempId: tempId,
+            _serverSnapshot: buildSheetSnapshotFromFields(
+              { reps, weight, unitType, notes, url: "" },
+              { date: sessionDate, liftType },
+            ),
+          },
+        ],
+      }));
+
+      if (isValidating) {
+        deferredAddRef.current = { kind: "addSet", liftType, tempId };
+        setHasDeferredAdd(true);
+        return;
+      }
+
+      await insertPendingSet(liftType, tempId);
+    },
+    [
+      sheetInfo?.ssid,
+      parsedData,
       isMetric,
       defaultBarWeight,
+      sessionDate,
+      isValidating,
       setPendingSetsSync,
-      promoteFirstPending,
-      queueStructuralAction,
-      mutate,
+      insertPendingSet,
     ],
   );
 
@@ -902,6 +948,15 @@ export function useLogSheetSync({
   const addLift = useCallback(
     async (liftType) => {
       if (!sheetInfo?.ssid || !parsedData) return;
+      if (deferredAddRef.current) return;
+      if (isValidating) {
+        // New lifts and sessions are additive too. Accept one intent during a
+        // background read, then calculate its sparse anchor position from the
+        // fresh snapshot instead of presenting a disabled first-session UI.
+        deferredAddRef.current = { kind: "addLift", liftType };
+        setHasDeferredAdd(true);
+        return;
+      }
       if (structuralSavingRef.current) {
         queueStructuralAction({ kind: "addLift", liftType });
         return;
@@ -1055,15 +1110,18 @@ export function useLogSheetSync({
           throw new Error(data.error || "Failed");
         }
         const { firstRowIndex } = data;
-        promoteFirstPending(liftType, firstRowIndex);
+        promotePendingByTempId(liftType, tempId, firstRowIndex);
         markStructuralSaved();
         void mutate();
       } catch (err) {
         console.error("[sheet/insert-row] addLift failed:", err);
         setPendingSetsSync((prev) => {
           const next = { ...prev };
-          if (next[liftType])
-            next[liftType] = next[liftType].filter((s) => !s._pending);
+          if (next[liftType]) {
+            next[liftType] = next[liftType].filter(
+              (set) => set._tempId !== tempId,
+            );
+          }
           if (!next[liftType]?.length) delete next[liftType];
           return next;
         });
@@ -1079,19 +1137,34 @@ export function useLogSheetSync({
       isMetric,
       defaultBarWeight,
       setPendingSetsSync,
-      promoteFirstPending,
+      promotePendingByTempId,
       sessionLiftsWithPending,
       addSet,
       queueStructuralAction,
       mutate,
+      isValidating,
     ],
   );
 
   useEffect(() => {
-    // Structural actions (insert/delete row ranges) cannot safely run in
-    // parallel because row indices shift. Rather than dropping a fast follow-up
-    // click, keep the latest requested add action here and replay it once the
-    // current structural op settles.
+    if (isValidating || structuralSavingRef.current) return;
+    const deferredAdd = deferredAddRef.current;
+    if (!deferredAdd) return;
+    deferredAddRef.current = null;
+    setHasDeferredAdd(false);
+
+    if (deferredAdd.kind === "addSet") {
+      void insertPendingSet(deferredAdd.liftType, deferredAdd.tempId);
+      return;
+    }
+
+    void addLift(deferredAdd.liftType);
+  }, [isValidating, parsedData, insertPendingSet, addLift]);
+
+  useEffect(() => {
+    // Brand-new lift blocks cannot safely insert while another structural
+    // operation is shifting row indices. Replay the one guarded call after the
+    // active operation settles.
     if (structuralSavingRef.current) return;
     if (syncState !== "saved" && syncState !== "error") return;
 
@@ -1100,13 +1173,8 @@ export function useLogSheetSync({
 
     queuedStructuralActionRef.current = null;
 
-    if (queuedAction.kind === "addSet") {
-      void addSet(queuedAction.liftType, queuedAction.prevSet ?? null);
-      return;
-    }
-
     void addLift(queuedAction.liftType);
-  }, [syncState, addSet, addLift]);
+  }, [syncState, addLift]);
 
   const deleteSession = useCallback(async () => {
     if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) {
@@ -1187,6 +1255,7 @@ export function useLogSheetSync({
   return {
     syncState,
     isStructuralSaving,
+    hasDeferredAdd,
     isDeleteCooldownActive,
     sessionLifts,
     sessionLiftsWithPending,

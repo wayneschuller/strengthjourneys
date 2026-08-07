@@ -192,6 +192,7 @@ export default function LogSessionPage({
   const {
     syncState,
     isStructuralSaving,
+    hasDeferredAdd,
     isDeleteCooldownActive,
     sessionLiftsWithPending,
     resetOptimisticSessionState,
@@ -210,6 +211,7 @@ export default function LogSessionPage({
     sex,
     mutate,
     toast,
+    isValidating,
   });
 
   const navigateToDate = useCallback(
@@ -339,14 +341,25 @@ export default function LogSessionPage({
     (authStatus === "authenticated" &&
       !!effectiveSsid &&
       (isLoading || parsedData === null));
-  // Keep row-writing controls quiet while SWR is refreshing Google Sheet rows:
-  // the small disabled window is preferable to racing against stale rowIndex
-  // data, but keep this narrowly scoped so normal logging does not feel sticky.
-  const isSheetWriteBlocked =
+  // Existing rows are deliberately locked during SWR refresh because editing or
+  // deleting by a stale rowIndex is unsafe. Add-set controls use the narrower
+  // gate below: the sync hook can accept one optimistic add and defer its insert
+  // until revalidation supplies a fresh structural snapshot.
+  const isExistingRowWriteBlocked =
     showSessionBootstrap ||
     isStructuralSaving ||
     isLoading ||
     isValidating ||
+    isError ||
+    fetchFailed ||
+    !Array.isArray(parsedData);
+  // An add can be accepted optimistically during a background SWR read. The
+  // sync hook defers its structural insert until that read has settled.
+  const isAddBlocked =
+    showSessionBootstrap ||
+    isStructuralSaving ||
+    hasDeferredAdd ||
+    isLoading ||
     isError ||
     fetchFailed ||
     !Array.isArray(parsedData);
@@ -588,7 +601,7 @@ export default function LogSessionPage({
               {!showSessionBootstrap && !isLoading && !hasSession && (
                 <EmptySessionState
                   addLiftChips={addLiftChips}
-                  isStructuralSaving={isSheetWriteBlocked}
+                  isStructuralSaving={isAddBlocked}
                   isToday={isToday}
                   onAddLift={addLift}
                   parsedData={parsedData}
@@ -628,7 +641,8 @@ export default function LogSessionPage({
                             dashboardStage={dashboardStage}
                             sessionCount={sessionCount}
                             isPastSession={!isToday}
-                            isStructuralSaving={isSheetWriteBlocked}
+                            isStructuralSaving={isExistingRowWriteBlocked}
+                            isAddSaving={isAddBlocked}
                             isDeleteCooldownActive={isDeleteCooldownActive}
                             previewMode={previewMode}
                             onUpdateSet={previewMode ? undefined : updateSet}
@@ -654,7 +668,7 @@ export default function LogSessionPage({
                       parsedData={parsedData}
                       onAddLift={addLift}
                       chips={addLiftChips}
-                      disabled={isSheetWriteBlocked}
+                      disabled={isAddBlocked}
                     />
                   )}
 
@@ -682,7 +696,7 @@ export default function LogSessionPage({
                   {!previewMode && (
                     <>
                       <DeleteSessionControls
-                        isStructuralSaving={isSheetWriteBlocked}
+                        isStructuralSaving={isExistingRowWriteBlocked}
                         onCancel={() => setShowDeleteConfirm(false)}
                         onConfirm={handleDeleteSession}
                         onRequestConfirm={() => setShowDeleteConfirm(true)}

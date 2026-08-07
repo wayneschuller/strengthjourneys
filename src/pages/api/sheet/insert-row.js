@@ -144,7 +144,10 @@ export default async function handler(req, res) {
       });
     }
 
-    // Step 1: insert N empty rows at the target position.
+    // Insert, format, and populate the rows in one atomic Sheets batch. Keeping
+    // values in this request both removes a network round trip and prevents a
+    // successful insert followed by a failed values.update from leaving blank
+    // rows behind and shifting every subsequent client rowIndex.
     //
     // Google Sheets formatting quirk:
     // - inheritFromBefore:true copies header styling when inserting after row 1
@@ -215,6 +218,22 @@ export default async function handler(req, res) {
       });
     }
 
+    batchRequests.push({
+      updateCells: {
+        start: {
+          sheetId: 0,
+          rowIndex: startIndex0,
+          columnIndex: 0,
+        },
+        rows: rows.map((row) => ({
+          values: row.map((value, columnIndex) =>
+            buildInsertedCell(value, columnIndex),
+          ),
+        })),
+        fields: "userEnteredValue",
+      },
+    });
+
     const insertRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
       {
@@ -227,35 +246,11 @@ export default async function handler(req, res) {
     if (!insertRes.ok) {
       const body = await insertRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to insert rows";
-      console.error("[sheet/insert-row] insertDimension failed:", msg);
+      console.error("[sheet/insert-row] atomic batchUpdate failed:", msg);
       return res.status(insertRes.status).json({ error: msg });
     }
 
-    // Step 2: write data into the newly inserted rows.
     const firstNewRow = insertAfter + 1;
-    const lastNewRow = insertAfter + rows.length;
-    const range = `A${firstNewRow}:F${lastNewRow}`;
-
-    const writeRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?valueInputOption=USER_ENTERED`,
-      {
-        method: "PUT",
-        headers,
-        body: JSON.stringify({
-          range,
-          majorDimension: "ROWS",
-          values: rows,
-        }),
-      },
-    );
-
-    if (!writeRes.ok) {
-      const body = await writeRes.json().catch(() => ({}));
-      const msg = body?.error?.message || "Failed to write row values";
-      console.error("[sheet/insert-row] values.update failed:", msg);
-      return res.status(writeRes.status).json({ error: msg });
-    }
-
     return res.status(200).json({
       insertedRows: rows.length,
       firstRowIndex: firstNewRow,
@@ -264,4 +259,21 @@ export default async function handler(req, res) {
     console.error("[sheet/insert-row] unexpected error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   }
+}
+
+// updateCells requires explicit value types (unlike values.update with
+// USER_ENTERED). Reps remain numeric for the sheet, while dates, weights with
+// units, notes, and URLs remain literal strings. Literal strings also ensure a
+// note beginning with "=" cannot be interpreted as a formula.
+function buildInsertedCell(value, columnIndex) {
+  if (columnIndex === 2) {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue)) {
+      return { userEnteredValue: { numberValue: numericValue } };
+    }
+  }
+
+  return {
+    userEnteredValue: { stringValue: String(value ?? "") },
+  };
 }

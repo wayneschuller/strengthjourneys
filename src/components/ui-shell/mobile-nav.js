@@ -2,19 +2,21 @@
  * Mobile navigation trigger and slide-out destination menu.
  */
 
-import Link from "next/link";
-import React, { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ViewVerticalIcon } from "@radix-ui/react-icons";
-import { Menu } from "lucide-react";
-import { featurePages } from "@/pages";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { Crown, Luggage, Menu, Shield, Skull } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { ThemeChooser } from "@/components/ui-shell/theme-chooser";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getLogoForTheme } from "@/lib/theme-logos";
+import { cn } from "@/lib/utils";
+import { featurePages } from "@/pages";
 
 import {
   Sheet,
@@ -25,9 +27,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
-import { Crown, Shield, Skull, Luggage } from "lucide-react";
-import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
 /**
  * Slide-out mobile navigation drawer triggered by a hamburger button.
@@ -116,7 +115,7 @@ export function MobileNav() {
           </SheetTitle>
           <SheetDescription></SheetDescription>
         </SheetHeader>
-        <div className="flex flex-1 flex-col overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-6">
           <div className="flex flex-col gap-4 text-lg font-medium tracking-tight">
             {featurePages
               .filter((item) => !item.authRequired || hasUserData)
@@ -132,6 +131,15 @@ export function MobileNav() {
               />
             ))}
           </div>
+        </div>
+        <div className="border-border flex shrink-0 items-center justify-between border-t pt-4 pr-6">
+          <div>
+            <p className="text-sm font-medium">Appearance</p>
+            <p className="text-muted-foreground text-xs">
+              Theme and background
+            </p>
+          </div>
+          <ThemeChooser />
         </div>
       </SheetContent>
     </Sheet>

@@ -183,7 +183,7 @@ export function NavBar() {
                 <Button
                   asChild
                   size="sm"
-                  className="mr-2 hidden h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:inline-flex dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+                  className="mr-0 inline-flex h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:mr-2 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
                 >
                   <Link href="/log">
                     {canOpenLog && !isImportedData ? (
@@ -254,7 +254,9 @@ export function NavBar() {
               pages where bio data (age, sex, bodyweight) actively changes the output — we don't
               want the pulsing badge distracting first-time visitors on the landing page. */}
           <AthleteBioQuickSettings />
-          <ThemeChooser />
+          <div className="hidden md:block">
+            <ThemeChooser />
+          </div>
           {/* <DarkModeToggle /> */}
           <AvatarDropdown />
         </div>

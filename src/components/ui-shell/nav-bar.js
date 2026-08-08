@@ -1,4 +1,6 @@
-/** @format */
+/**
+ * Global application navigation and its desktop menus and utility actions.
+ */
 
 import Image from "next/image";
 import Link from "next/link";
@@ -296,7 +298,7 @@ export function DesktopNav() {
           width={100}
           height="auto"
           alt="Strength Journeys logo"
-          className="inline-block rounded-lg"
+          className="inline-block origin-left scale-[1.2] rounded-lg"
           priority={true}
         />
       </Link>

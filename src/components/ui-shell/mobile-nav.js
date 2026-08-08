@@ -1,3 +1,6 @@
+/**
+ * Mobile navigation trigger and slide-out destination menu.
+ */
 
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
@@ -106,7 +109,7 @@ export function MobileNav() {
                   width={logoWidth}
                   height="auto"
                   alt="Strength Journeys logo"
-                  className="inline-block rounded-lg"
+                  className="inline-block origin-left scale-[1.2] rounded-lg"
                 />
               </Link>
             </SheetClose>

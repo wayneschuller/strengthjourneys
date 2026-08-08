@@ -147,16 +147,10 @@ export function MobileNav() {
       <Button
         asChild
         variant="ghost"
-        className={cn(
-          "h-9 px-2 md:hidden",
-          pathname === "/"
-            ? "bg-accent text-foreground"
-            : "text-muted-foreground",
-        )}
+        className="text-muted-foreground h-9 px-2 hover:bg-transparent hover:text-foreground md:hidden"
       >
         <Link href="/" aria-label="Home dashboard">
-          <House className="h-5 w-5 sm:mr-2" />
-          <span className="hidden sm:inline">Home</span>
+          <House className="h-5 w-5" />
         </Link>
       </Button>
     </>

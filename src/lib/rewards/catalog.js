@@ -22,6 +22,11 @@ export const THEME_REWARDS = [
 
 export const REWARD_CATALOG = [...THEME_REWARDS];
 
+export function getRewardsByCategory(category) {
+  if (!category) return REWARD_CATALOG;
+  return REWARD_CATALOG.filter((reward) => reward.category === category);
+}
+
 function createThemeReward(theme, label, sets, reps, historyDays) {
   return {
     id: `theme:${theme}`,

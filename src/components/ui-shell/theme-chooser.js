@@ -5,7 +5,6 @@
 
 import { useEffect, useMemo } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import { useSession } from "next-auth/react";
 import { Lock, Moon, Palette, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -27,14 +26,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useRewardProgress } from "@/hooks/use-reward-progress";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { THEME_REWARDS } from "@/lib/rewards/catalog";
-import {
-  getRewardRequirement,
-  getRewardProgress,
-} from "@/lib/rewards/progression";
+import { getRewardRequirement } from "@/lib/rewards/progression";
 import { cn } from "@/lib/utils";
 
 const BASIC_THEMES = ["light", "dark"];
@@ -45,10 +40,14 @@ const BASIC_THEMES = ["light", "dark"];
  */
 export function ThemeChooser() {
   const { theme, setTheme, themes } = useTheme();
-  const { status: authStatus } = useSession();
-  const { parsedData, isDemoMode, isLoading, isReturningUserLoading } =
-    useUserLiftingData();
-  const isAuthenticated = authStatus === "authenticated";
+  const {
+    rewards,
+    metrics,
+    unlockedRewardIds,
+    nextReward,
+    isAuthenticated,
+    isProgressLoading,
+  } = useRewardProgress("theme");
   const [animatedBackground, setAnimatedBackground] = useLocalStorage(
     LOCAL_STORAGE_KEYS.ANIMATED_BACKGROUND,
     false,
@@ -59,34 +58,21 @@ export function ThemeChooser() {
     true,
     { initializeWithValue: false },
   );
-  const { metrics, unlockedRewardIds, nextReward } = useMemo(
-    () =>
-      getRewardProgress({
-        isAuthenticated,
-        isDemoMode,
-        parsedData,
-        rewards: THEME_REWARDS,
-      }),
-    [isAuthenticated, isDemoMode, parsedData],
-  );
   const unlockedThemes = useMemo(() => {
     const unlocked = new Set(BASIC_THEMES);
-    THEME_REWARDS.forEach((reward) => {
+    rewards.forEach((reward) => {
       if (unlockedRewardIds.has(reward.id)) unlocked.add(reward.value);
     });
     return unlocked;
-  }, [unlockedRewardIds]);
+  }, [rewards, unlockedRewardIds]);
 
   useEffect(() => {
-    const isUserDataLoading = isLoading || isReturningUserLoading;
-    if (authStatus === "loading" || isUserDataLoading || !theme) return;
+    if (isProgressLoading || !theme) return;
     if (unlockedThemes.has(theme)) return;
 
     setTheme("light");
   }, [
-    authStatus,
-    isLoading,
-    isReturningUserLoading,
+    isProgressLoading,
     setTheme,
     theme,
     unlockedThemes,
@@ -119,7 +105,7 @@ export function ThemeChooser() {
         >
           {themes.map((t) => {
             const isLocked = !unlockedThemes.has(t);
-            const reward = THEME_REWARDS.find(({ value }) => value === t);
+            const reward = rewards.find(({ value }) => value === t);
             return (
               <DropdownMenuRadioItem
                 key={t}

@@ -30,12 +30,14 @@ import {
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { THEME_REWARDS } from "@/lib/rewards/catalog";
 import {
   getRewardRequirement,
-  getThemeUnlocks,
-  THEME_REWARDS,
-} from "@/lib/theme-unlocks";
+  getRewardProgress,
+} from "@/lib/rewards/progression";
 import { cn } from "@/lib/utils";
+
+const BASIC_THEMES = ["light", "dark"];
 
 /**
  * Dropdown button that lets the user select from all available app themes.
@@ -57,15 +59,23 @@ export function ThemeChooser() {
     true,
     { initializeWithValue: false },
   );
-  const { metrics, unlockedThemes, nextReward } = useMemo(
+  const { metrics, unlockedRewardIds, nextReward } = useMemo(
     () =>
-      getThemeUnlocks({
+      getRewardProgress({
         isAuthenticated,
         isDemoMode,
         parsedData,
+        rewards: THEME_REWARDS,
       }),
     [isAuthenticated, isDemoMode, parsedData],
   );
+  const unlockedThemes = useMemo(() => {
+    const unlocked = new Set(BASIC_THEMES);
+    THEME_REWARDS.forEach((reward) => {
+      if (unlockedRewardIds.has(reward.id)) unlocked.add(reward.value);
+    });
+    return unlocked;
+  }, [unlockedRewardIds]);
 
   useEffect(() => {
     const isUserDataLoading = isLoading || isReturningUserLoading;
@@ -109,9 +119,7 @@ export function ThemeChooser() {
         >
           {themes.map((t) => {
             const isLocked = !unlockedThemes.has(t);
-            const reward = THEME_REWARDS.find(({ themes: rewardThemes }) =>
-              rewardThemes.includes(t),
-            );
+            const reward = THEME_REWARDS.find(({ value }) => value === t);
             return (
               <DropdownMenuRadioItem
                 key={t}
@@ -177,15 +185,15 @@ export function ThemeChooser() {
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="max-w-64 whitespace-normal text-xs font-normal">
               <span className="font-medium">Next: {nextReward.label}</span>
-              {nextReward.sets === 1 ? (
+              {nextReward.criteria[0].threshold === 1 ? (
                 <span className="text-muted-foreground block">
-                  Log your first real set to unlock both variants.
+                  Log your first real set to unlock it.
                 </span>
               ) : (
                 <span className="text-muted-foreground block">
-                  {metrics.setCount}/{nextReward.sets} sets · {metrics.repCount}/
-                  {nextReward.reps} reps · {metrics.historyDays}/
-                  {nextReward.historyDays} days
+                  {metrics.setCount}/{nextReward.criteria[0].threshold} sets ·{" "}
+                  {metrics.repCount}/{nextReward.criteria[1].threshold} reps ·{" "}
+                  {metrics.historyDays}/{nextReward.criteria[2].threshold} days
                 </span>
               )}
               <span className="text-muted-foreground block">
@@ -201,6 +209,7 @@ export function ThemeChooser() {
 
 const DARK_THEMES = [
   "dark",
+  "blueprint-dark",
   "neo-brutalism-dark",
   "retro-arcade-dark",
   "starry-night-dark",

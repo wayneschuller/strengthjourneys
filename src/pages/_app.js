@@ -1,4 +1,7 @@
-/** @format */
+/**
+ * Composes the global providers and app shell shared by every Pages Router page.
+ * Provider order is intentional because downstream app state depends on auth and data.
+ */
 
 import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/next";
@@ -50,14 +53,14 @@ export default function App({ Component, pageProps, session }) {
         themes={[
           "light",
           "dark",
-          "neo-brutalism",
-          "neo-brutalism-dark",
           "blueprint",
           "blueprint-dark",
-          "retro-arcade",
-          "retro-arcade-dark",
           "starry-night",
           "starry-night-dark",
+          "retro-arcade",
+          "retro-arcade-dark",
+          "neo-brutalism",
+          "neo-brutalism-dark",
         ]}
         // I'm not sure about the next two options. Commenting out for now.
         // enableSystem

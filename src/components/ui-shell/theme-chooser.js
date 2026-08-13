@@ -29,7 +29,6 @@ import {
 import { useRewardProgress } from "@/hooks/use-reward-progress";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { getRewardRequirement } from "@/lib/rewards/progression";
 import { cn } from "@/lib/utils";
 
 const BASIC_THEMES = ["light", "dark"];
@@ -105,7 +104,6 @@ export function ThemeChooser() {
         >
           {themes.map((t) => {
             const isLocked = !unlockedThemes.has(t);
-            const reward = rewards.find(({ value }) => value === t);
             return (
               <DropdownMenuRadioItem
                 key={t}
@@ -120,11 +118,6 @@ export function ThemeChooser() {
                   {t
                     .replace(/-/g, " ")
                     .replace(/\b\w/g, (c) => c.toUpperCase())}
-                  {isLocked && isAuthenticated && reward && (
-                    <span className="text-muted-foreground block text-[10px] leading-tight">
-                      {getRewardRequirement(reward)}
-                    </span>
-                  )}
                 </span>
                 {isLocked && <Lock className="h-3 w-3" />}
               </DropdownMenuRadioItem>

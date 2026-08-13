@@ -49,6 +49,7 @@ export default function App({ Component, pageProps, session }) {
       <ThemeProvider
         attribute="class"
         defaultTheme="light"
+        enableSystem={false}
         // New themes added to globals.css get added here
         themes={[
           "light",
@@ -62,8 +63,7 @@ export default function App({ Component, pageProps, session }) {
           "neo-brutalism",
           "neo-brutalism-dark",
         ]}
-        // I'm not sure about the next two options. Commenting out for now.
-        // enableSystem
+        // Keep theme changes instant; transitions remain enabled for now.
         // disableTransitionOnChange
       >
         <SessionProvider session={session}>

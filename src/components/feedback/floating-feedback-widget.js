@@ -1,4 +1,6 @@
-
+/**
+ * Global progressive feedback dialog, with route-aware prompts for relevant workflows.
+ */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
@@ -423,6 +425,8 @@ export function FeedbackWidget({ labels = {} }) {
 
   // Delays first render of the floating trigger on anonymous home visits to reduce interruption.
   const isHomePage = router.pathname === "/";
+  const isImporterPage =
+    router.pathname === "/import" || router.pathname === "/import/[slug]";
   const delayButton = isHomePage && !session;
   const [visible, setVisible] = useState(!delayButton);
 
@@ -538,6 +542,20 @@ export function FeedbackWidget({ labels = {} }) {
           {/* Layer 2: Comment */}
           {layer >= 2 && layer <= 3 && (
             <div className="space-y-4">
+              {isImporterPage && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+                  If you&apos;re sharing importer feedback, please consider emailing
+                  your original export to{" "}
+                  <a
+                    href="mailto:info@strengthjourneys.xyz?subject=Importer%20export%20for%20development"
+                    className="font-medium underline underline-offset-2"
+                  >
+                    info@strengthjourneys.xyz
+                  </a>
+                  . We&apos;ll use it only for development—and promise not to judge
+                  your lifting history.
+                </div>
+              )}
               <Textarea
                 placeholder={labels.commentPlaceholder || "Bug report, feature idea, or just say hi..."}
                 value={message}

@@ -10,7 +10,10 @@ import { parseStrengthJourneysData } from "@/lib/data-sources/strength-journeys-
 import { parseBtwbData } from "@/lib/data-sources/btwb-parser";
 import { parseHevyData } from "@/lib/data-sources/hevy-parser";
 import { parseStrongData } from "@/lib/data-sources/strong-parser";
-import { parseStrongliftsData } from "@/lib/data-sources/stronglifts-parser";
+import {
+  isStrongliftsExport,
+  parseStrongliftsData,
+} from "@/lib/data-sources/stronglifts-parser";
 import { parseTurnKeyData } from "@/lib/data-sources/turnkey-parser";
 import { parseWodifyData } from "@/lib/data-sources/wodify-parser";
 import { decodeCSV } from "@/lib/data-sources/decode-csv";
@@ -70,20 +73,10 @@ const FORMAT_SIGNATURES = [
     parse: parseHevyData,
   },
   {
-    // StrongLifts 5x5 app (NOT the Strong app — different format).
-    // Wide CSV: one row per workout, with Exercise N / Set N column groups.
+    // StrongLifts 5x5 app (NOT the Strong app — different format). Supports
+    // legacy workout-wide rows and current exercise rows with per-set weights.
     name: "StrongLifts",
-    detect: (headers) => {
-      const trimmed = headers.map((h) => String(h || "").trim());
-      const lower = trimmed.map((h) => h.toLowerCase());
-      const hasDate = lower.includes("date");
-      const hasBodyWeight = lower.some(
-        (h) => h === "body weight (kg)" || h === "body weight (lb)",
-      );
-      const hasExerciseSlot = trimmed.some((h) => /^Exercise\s+\d+$/i.test(h));
-      const hasSetSlot = trimmed.some((h) => /^Set\s+\d+$/i.test(h));
-      return hasDate && hasBodyWeight && hasExerciseSlot && hasSetSlot;
-    },
+    detect: isStrongliftsExport,
     parse: parseStrongliftsData,
   },
   {

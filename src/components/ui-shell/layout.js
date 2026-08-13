@@ -12,6 +12,8 @@ import { NavBar } from "@/components/ui-shell/nav-bar";
 import { Footer } from "@/components/ui-shell/footer";
 import { AppBackground } from "@/components/ui-shell/app-background";
 import { FeedbackWidget } from "@/components/feedback";
+import { HomeImportMergeNudge } from "@/components/home-dashboard/home-import-merge-nudge";
+import { ThemeRewardUnlockBanner } from "@/components/rewards/theme-reward-unlock-banner";
 import {
   GoogleSignInButton,
   GoogleSignInToastAction,
@@ -262,6 +264,8 @@ export function Layout({ children }) {
           warnings={dataQualityWarnings}
           onFix={fixDataQualityWarning}
         />
+        {router.pathname === "/" && <HomeImportMergeNudge />}
+        <ThemeRewardUnlockBanner suppress={isImportedData} />
         <SheetSetupDialog />
         <main className="mx-0 md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           {children}

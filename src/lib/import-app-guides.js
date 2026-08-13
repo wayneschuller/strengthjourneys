@@ -131,13 +131,13 @@ export const IMPORT_APP_PAGES = [
     whyItMatters:
       "StrongLifts 5x5 is how many lifters fall in love with the barbell, but the app's built-in chart barely scratches the surface of what your data is telling you. Once you graduate from 5x5 to your own programming, that early history shouldn't get left behind. Import it here to see your linear progression, the stalls, the deload comebacks, and the long-term strength curve. Your Google Sheet then becomes the permanent home for everything that comes next.",
     exportSteps: [
-      "Open the StrongLifts 5x5 app and go to Settings, then look for Export Workouts. The app emails you a CSV file.",
-      "Save the CSV file to your device from the email.",
+      "Open the StrongLifts app and go to Settings, then choose Export Data.",
+      "Use the share button to save the CSV file to your device or email yourself a copy.",
       "Drop the file on the Strength Journeys import page.",
       "See your full strength dashboard instantly, or sign in to save it to your own Google Sheet.",
     ],
     whatYouGet: [
-      "Every workout pivoted into a proper timeline instead of StrongLifts' wide CSV rows.",
+      "Every exercise and set turned into a proper long-term strength timeline.",
       "Automatic PR detection across squat, bench, row, press, and deadlift at every rep range.",
       "See the stalls and deloads inside your linear progression that the StrongLifts chart hides.",
       "Merge with Hevy, Strong, or any other app to track your full lifting career past 5x5.",
@@ -149,7 +149,7 @@ export const IMPORT_APP_PAGES = [
       {
         question: "How do I export my data from the StrongLifts 5x5 app?",
         answer:
-          "Open the StrongLifts 5x5 app, tap Settings, and look for the Export Workouts option. The app emails you a CSV file, which you can then upload here.",
+          "Open the StrongLifts app, tap Settings, choose Export Data, then use the share button to save or email yourself the CSV file.",
       },
       {
         question: "Do I need an account to see my data?",
@@ -159,7 +159,7 @@ export const IMPORT_APP_PAGES = [
       {
         question: "Will old StrongLifts exports still work?",
         answer:
-          "Yes. The StrongLifts wide CSV format has been stable for years. Exports going back to 2018 parse correctly. If you have a newer export with extra columns, drop it anyway and we'll do our best to handle it.",
+          "Yes. We support both older workout-wide exports and the newer format with one exercise per row and separate reps and weights for each set.",
       },
       {
         question: "Can I merge StrongLifts data with another app?",

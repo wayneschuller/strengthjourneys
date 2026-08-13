@@ -1,4 +1,7 @@
-/** @format */
+/**
+ * Composes the global providers and app shell shared by every Pages Router page.
+ * Provider order is intentional because downstream app state depends on auth and data.
+ */
 
 import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/next";
@@ -46,21 +49,21 @@ export default function App({ Component, pageProps, session }) {
       <ThemeProvider
         attribute="class"
         defaultTheme="light"
+        enableSystem={false}
         // New themes added to globals.css get added here
         themes={[
           "light",
           "dark",
-          "neo-brutalism",
-          "neo-brutalism-dark",
           "blueprint",
           "blueprint-dark",
-          "retro-arcade",
-          "retro-arcade-dark",
           "starry-night",
           "starry-night-dark",
+          "retro-arcade",
+          "retro-arcade-dark",
+          "neo-brutalism",
+          "neo-brutalism-dark",
         ]}
-        // I'm not sure about the next two options. Commenting out for now.
-        // enableSystem
+        // Keep theme changes instant; transitions remain enabled for now.
         // disableTransitionOnChange
       >
         <SessionProvider session={session}>

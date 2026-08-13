@@ -1,34 +1,33 @@
-/** @format */
+/**
+ * Theme controls for the app shell, including training-history reward unlocks.
+ * Only real user data counts; demo data never grants reward progress.
+ */
 
-
-import { devLog } from "@/lib/processing-utils";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
-import { GoogleSignInMenuItem } from "@/components/onboarding/google-sign-in";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import { useSession } from "next-auth/react";
-import { Moon, Sun } from "lucide-react";
+import { Lock, Moon, Palette, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+
+import { GoogleSignInMenuItem } from "@/components/onboarding/google-sign-in";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { Palette } from "lucide-react";
-
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useRewardProgress } from "@/hooks/use-reward-progress";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 
@@ -36,13 +35,18 @@ const BASIC_THEMES = ["light", "dark"];
 
 /**
  * Dropdown button that lets the user select from all available app themes.
- * Authenticated users can access all themes and toggle the animated background; unauthenticated users are limited to light/dark.
+ * Real training data progressively unlocks signed-in theme rewards.
  */
 export function ThemeChooser() {
   const { theme, setTheme, themes } = useTheme();
-  const { status: authStatus } = useSession();
-  const isAuthenticated = authStatus === "authenticated";
-  const [position, setPosition] = useState("light");
+  const {
+    rewards,
+    metrics,
+    unlockedRewardIds,
+    nextReward,
+    isAuthenticated,
+    isProgressLoading,
+  } = useRewardProgress("theme");
   const [animatedBackground, setAnimatedBackground] = useLocalStorage(
     LOCAL_STORAGE_KEYS.ANIMATED_BACKGROUND,
     false,
@@ -53,12 +57,25 @@ export function ThemeChooser() {
     true,
     { initializeWithValue: false },
   );
+  const unlockedThemes = useMemo(() => {
+    const unlocked = new Set(BASIC_THEMES);
+    rewards.forEach((reward) => {
+      if (unlockedRewardIds.has(reward.id)) unlocked.add(reward.value);
+    });
+    return unlocked;
+  }, [rewards, unlockedRewardIds]);
 
   useEffect(() => {
-    if (theme) {
-      setPosition(theme);
-    }
-  }, [theme]);
+    if (isProgressLoading || !theme) return;
+    if (unlockedThemes.has(theme)) return;
+
+    setTheme("light");
+  }, [
+    isProgressLoading,
+    setTheme,
+    theme,
+    unlockedThemes,
+  ]);
 
   return (
     <DropdownMenu>
@@ -78,29 +95,31 @@ export function ThemeChooser() {
         <DropdownMenuLabel>Choose theme:</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup
-          value={position}
+          value={unlockedThemes.has(theme) ? theme : "light"}
           onValueChange={(value) => {
-            if (isAuthenticated || BASIC_THEMES.includes(value)) {
-              setPosition(value);
+            if (unlockedThemes.has(value)) {
               setTheme(value);
             }
           }}
         >
           {themes.map((t) => {
-            const isBasicTheme = BASIC_THEMES.includes(t);
-            const isLocked = !isAuthenticated && !isBasicTheme;
+            const isLocked = !unlockedThemes.has(t);
             return (
               <DropdownMenuRadioItem
                 key={t}
                 value={t}
+                disabled={isLocked}
                 className={cn(
-                  isLocked && "opacity-50 pointer-events-none cursor-default"
+                  "gap-2",
+                  isLocked && "opacity-50 cursor-default",
                 )}
               >
-                {/* Optionally prettify label */}
-                {t
-                  .replace(/-/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase())}
+                <span className="flex-1">
+                  {t
+                    .replace(/-/g, " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase())}
+                </span>
+                {isLocked && <Lock className="h-3 w-3" />}
               </DropdownMenuRadioItem>
             );
           })}
@@ -120,7 +139,8 @@ export function ThemeChooser() {
             }
             className={cn(
               "pl-8 text-muted-foreground",
-              !isAuthenticated && "opacity-50 pointer-events-none cursor-default"
+              !isAuthenticated &&
+                "opacity-50 pointer-events-none cursor-default",
             )}
           >
             Animated background
@@ -133,10 +153,32 @@ export function ThemeChooser() {
               <span>
                 <span className="font-medium">Sign in with Google</span>
                 <span className="text-muted-foreground text-xs block">
-                  Unlock all themes and animated background
+                  Earn themes from your training history
                 </span>
               </span>
             </GoogleSignInMenuItem>
+          </>
+        )}
+        {isAuthenticated && nextReward && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="max-w-64 whitespace-normal text-xs font-normal">
+              <span className="font-medium">Next: {nextReward.label}</span>
+              {nextReward.criteria[0].threshold === 1 ? (
+                <span className="text-muted-foreground block">
+                  Log your first real set to unlock it.
+                </span>
+              ) : (
+                <span className="text-muted-foreground block">
+                  {metrics.setCount}/{nextReward.criteria[0].threshold} sets ·{" "}
+                  {metrics.repCount}/{nextReward.criteria[1].threshold} reps ·{" "}
+                  {metrics.historyDays}/{nextReward.criteria[2].threshold} days
+                </span>
+              )}
+              <span className="text-muted-foreground block">
+                Reach any one to unlock it.
+              </span>
+            </DropdownMenuLabel>
           </>
         )}
       </DropdownMenuContent>
@@ -146,6 +188,7 @@ export function ThemeChooser() {
 
 const DARK_THEMES = [
   "dark",
+  "blueprint-dark",
   "neo-brutalism-dark",
   "retro-arcade-dark",
   "starry-night-dark",

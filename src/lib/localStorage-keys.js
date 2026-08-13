@@ -33,6 +33,9 @@ export const LOCAL_STORAGE_KEYS = {
   SHOW_BACKGROUND: "sj-show-background",
   ANIMATED_BACKGROUND: "sj-animated-background",
 
+  // Rewards
+  SEEN_REWARD_ANNOUNCEMENTS: "SJ_seenRewardAnnouncements",
+
   // Lift colors
   LIFT_COLOR_OVERRIDES: "liftColorOverrides",
 

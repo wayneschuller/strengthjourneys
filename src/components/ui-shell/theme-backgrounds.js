@@ -1,4 +1,10 @@
-/** @format */
+/**
+ * Theme-specific decorative backgrounds used by the global application shell.
+ * Keep these layers deterministic and non-interactive so they remain safe
+ * behind every page and do not compete with application content.
+ *
+ * @format
+ */
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
@@ -227,10 +233,10 @@ export const WarpBackground = ({
 };
 
 // -----------------------------------------------------------------------------
-// Neo Brutalism – Sticker bomb background (deterministic SVG)
+// Neo Brutalism – Training-log editorial background (deterministic SVG)
 // -----------------------------------------------------------------------------
 
-const STICKER_TEXT_STYLE = {
+const BRUTALIST_TEXT_STYLE = {
   fontFamily: "var(--font-mono)",
   fontWeight: 700,
   letterSpacing: "0.02em",
@@ -250,83 +256,9 @@ function FloatingGroup({ enabled, children, animate, transition }) {
   );
 }
 
-function Sticker({
-  x,
-  y,
-  w,
-  h,
-  r = 0,
-  fill,
-  stroke,
-  shadowFill,
-  shadowDx = 10,
-  shadowDy = 10,
-  radius = 18,
-  children,
-}) {
-  const transform = r ? `rotate(${r} ${x + w / 2} ${y + h / 2})` : undefined;
-
-  return (
-    <g transform={transform}>
-      <rect
-        x={x + shadowDx}
-        y={y + shadowDy}
-        width={w}
-        height={h}
-        rx={radius}
-        ry={radius}
-        fill={shadowFill}
-        opacity="0.85"
-      />
-      <rect
-        x={x}
-        y={y}
-        width={w}
-        height={h}
-        rx={radius}
-        ry={radius}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth="6"
-      />
-      {children}
-    </g>
-  );
-}
-
-function Barcode({ x, y, w, h, color }) {
-  // Deterministic (no randomness) barcode-ish stripes.
-  const stripes = [6, 3, 2, 6, 2, 4, 3, 2, 7, 3, 2, 5, 2, 3, 6, 2, 4, 3, 2, 6];
-
-  const total = stripes.reduce((sum, n) => sum + n, 0);
-  const scale = w / total;
-  let cursor = 0;
-
-  return (
-    <g>
-      {stripes.map((n, i) => {
-        const stripeW = n * scale;
-        const rect = (
-          <rect
-            key={i}
-            x={x + cursor}
-            y={y}
-            width={Math.max(1, stripeW * (i % 2 === 0 ? 0.65 : 0.35))}
-            height={h}
-            fill={color}
-            opacity={i % 3 === 0 ? 0.95 : 0.75}
-          />
-        );
-        cursor += stripeW;
-        return rect;
-      })}
-    </g>
-  );
-}
-
 /**
- * Full-bleed neo-brutalist sticker bomb layer.
- * Deterministic SVG so it renders consistently.
+ * Full-bleed neo-brutalist training-log layer. The composition keeps its
+ * strongest marks around the viewport edges so dense pages remain readable.
  *
  * @param {Object} props
  * @param {string} [props.className]
@@ -345,8 +277,8 @@ export function NeoBrutalistStickerBombLayer({
   const stroke = isDark ? "hsl(0 0% 100%)" : "hsl(0 0% 0%)";
   const shadowFill = isDark ? "hsl(0 0% 100% / 0.22)" : "hsl(0 0% 0%)";
 
-  // A touch quieter on dark so content stays crisp.
-  const baseOpacity = isDark ? 0.16 : 0.22;
+  // The background should add texture without showing through cards as copy.
+  const baseOpacity = isDark ? 0.14 : 0.18;
 
   const Svg = enableAnimation ? motion.svg : "svg";
   const motionProps = enableAnimation
@@ -360,8 +292,8 @@ export function NeoBrutalistStickerBombLayer({
   const Wrapper = enableAnimation ? motion.div : "div";
   const wrapperProps = enableAnimation
     ? {
-        animate: { x: [0, 6, 0], y: [0, -4, 0], rotate: [0, 0.35, 0] },
-        transition: { duration: 28, repeat: Infinity, ease: "easeInOut" },
+        animate: { x: [0, 4, 0], y: [0, -3, 0] },
+        transition: { duration: 32, repeat: Infinity, ease: "easeInOut" },
       }
     : {};
 
@@ -380,7 +312,6 @@ export function NeoBrutalistStickerBombLayer({
           viewBox="0 0 1600 900"
           preserveAspectRatio="xMidYMid slice"
         >
-          {/* Atmospheric paper wash */}
           <defs>
             <radialGradient id="nb-wash" cx="30%" cy="22%" r="80%">
               <stop
@@ -399,193 +330,249 @@ export function NeoBrutalistStickerBombLayer({
                 }
               />
             </radialGradient>
+            <pattern
+              id="nb-grid"
+              width="48"
+              height="48"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 48 0 L 0 0 0 48"
+                fill="none"
+                stroke={stroke}
+                strokeWidth="1"
+              />
+            </pattern>
+            <pattern
+              id="nb-hatch"
+              width="16"
+              height="16"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="16"
+                stroke={stroke}
+                strokeWidth="5"
+              />
+            </pattern>
           </defs>
           <rect x="0" y="0" width="1600" height="900" fill="url(#nb-wash)" />
+          <rect
+            x="0"
+            y="0"
+            width="1600"
+            height="900"
+            fill="url(#nb-grid)"
+            opacity={isDark ? 0.14 : 0.1}
+          />
 
-          {/* Desktop-first composition: hero stickers on the sides; center stays mostly clean. */}
-
-          {/* Left hero sticker */}
+          {/* Cropped calibrated plate: bold at the edge, quiet through the center. */}
           <FloatingGroup
             enabled={enableAnimation}
-            animate={{ x: [0, 12, 0], y: [0, -18, 0], rotate: [0, -1.2, 0] }}
-            transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Sticker
-              x={40}
-              y={120}
-              w={200}
-              h={640}
-              r={-2}
-              fill={isDark ? "hsl(0 0% 8%)" : "hsl(0 0% 100%)"}
-              stroke={stroke}
-              shadowFill={shadowFill}
-              shadowDx={14}
-              shadowDy={14}
-              radius={22}
-            >
-              <text
-                x={145}
-                y={440}
-                fill={stroke}
-                fontSize="48"
-                style={STICKER_TEXT_STYLE}
-                transform="rotate(-90 145 440)"
-              >
-                ONE REP
-              </text>
-              <text
-                x={185}
-                y={440}
-                fill={stroke}
-                fontSize="48"
-                style={STICKER_TEXT_STYLE}
-                transform="rotate(-90 185 440)"
-              >
-                MAX
-              </text>
-              <text
-                x={62}
-                y={165}
-                fill={stroke}
-                fontSize="16"
-                opacity="0.78"
-                style={{ ...STICKER_TEXT_STYLE, fontWeight: 600 }}
-              >
-                E1RM / RPE / PR
-              </text>
-              <Barcode x={60} y={720} w={160} h={32} color={stroke} />
-            </Sticker>
-          </FloatingGroup>
-
-          {/* Right hero sticker */}
-          <FloatingGroup
-            enabled={enableAnimation}
-            animate={{ x: [0, -12, 0], y: [0, 14, 0], rotate: [0, 1.3, 0] }}
+            animate={{ rotate: [0, -1.5, 0], x: [0, 8, 0] }}
             transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
           >
-            <Sticker
-              x={1360}
-              y={120}
-              w={200}
-              h={640}
-              r={3}
-              fill={"var(--secondary)"}
+            <circle cx="-20" cy="655" r="242" fill={shadowFill} />
+            <circle
+              cx="-34"
+              cy="641"
+              r="242"
+              fill="var(--primary)"
               stroke={stroke}
-              shadowFill={shadowFill}
-              shadowDx={14}
-              shadowDy={14}
-              radius={22}
+              strokeWidth="8"
+            />
+            <circle
+              cx="-34"
+              cy="641"
+              r="126"
+              fill="none"
+              stroke={stroke}
+              strokeWidth="7"
+            />
+            <circle
+              cx="-34"
+              cy="641"
+              r="46"
+              fill={isDark ? "hsl(0 0% 8%)" : "hsl(0 0% 100%)"}
+              stroke={stroke}
+              strokeWidth="7"
+            />
+            <text
+              x="72"
+              y="538"
+              fill="var(--primary-foreground)"
+              fontSize="58"
+              style={BRUTALIST_TEXT_STYLE}
+              transform="rotate(18 72 538)"
             >
-              <text
-                x={1460}
-                y={440}
-                fill={isDark ? "hsl(0 0% 0%)" : "hsl(0 0% 0%)"}
-                fontSize="44"
-                style={STICKER_TEXT_STYLE}
-                transform="rotate(90 1460 440)"
-              >
-                NO EXCUSES
-              </text>
-              <text
-                x={1378}
-                y={165}
-                fill={isDark ? "hsl(0 0% 0%)" : "hsl(0 0% 0%)"}
-                fontSize="16"
-                opacity="0.85"
-                style={{ ...STICKER_TEXT_STYLE, fontWeight: 700 }}
-              >
-                TRACK THE WORK
-              </text>
-              <Barcode
-                x={1380}
-                y={720}
-                w={170}
-                h={32}
-                color={isDark ? "hsl(0 0% 0%)" : "hsl(0 0% 0%)"}
+              20
+            </text>
+            <text
+              x="100"
+              y="588"
+              fill="var(--primary-foreground)"
+              fontSize="20"
+              style={BRUTALIST_TEXT_STYLE}
+              transform="rotate(18 100 588)"
+            >
+              KG
+            </text>
+          </FloatingGroup>
+
+          {/* A compact log card replaces the old motivational-poster copy. */}
+          <FloatingGroup
+            enabled={enableAnimation}
+            animate={{ x: [0, 10, 0], y: [0, -7, 0], rotate: [0, -0.8, 0] }}
+            transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <g transform="rotate(-5 190 160)">
+              <rect x="38" y="70" width="382" height="182" fill={shadowFill} />
+              <rect
+                x="26"
+                y="58"
+                width="382"
+                height="182"
+                fill={isDark ? "hsl(0 0% 8%)" : "hsl(0 0% 100%)"}
+                stroke={stroke}
+                strokeWidth="6"
               />
-            </Sticker>
+              <rect
+                x="26"
+                y="58"
+                width="382"
+                height="38"
+                fill={stroke}
+              />
+              <text
+                x="44"
+                y="84"
+                fill={isDark ? "hsl(0 0% 0%)" : "hsl(0 0% 100%)"}
+                fontSize="16"
+                style={BRUTALIST_TEXT_STYLE}
+              >
+                SESSION / 042
+              </text>
+              <text
+                x="44"
+                y="151"
+                fill={stroke}
+                fontSize="44"
+                style={BRUTALIST_TEXT_STYLE}
+              >
+                167.5 KG
+              </text>
+              <line x1="44" y1="172" x2="388" y2="172" stroke={stroke} strokeWidth="3" />
+              <text x="44" y="211" fill={stroke} fontSize="18" style={BRUTALIST_TEXT_STYLE}>
+                SET 05
+              </text>
+              <text x="238" y="211" fill={stroke} fontSize="18" style={BRUTALIST_TEXT_STYLE}>
+                RPE 8.5
+              </text>
+            </g>
           </FloatingGroup>
 
-          {/* Center: only a couple stickers */}
+          {/* Right-side blocks use the theme palette without becoming slogans. */}
           <FloatingGroup
             enabled={enableAnimation}
-            animate={{ x: [0, 10, 0], y: [0, 8, 0], rotate: [0, 0.9, 0] }}
-            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+            animate={{ x: [0, -8, 0], y: [0, 10, 0] }}
+            transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
           >
-            <Sticker
-              x={610}
-              y={140}
-              w={380}
-              h={140}
-              r={-6}
-              fill={isDark ? "hsl(0 0% 10%)" : "hsl(0 0% 100%)"}
+            <rect x="1390" y="86" width="260" height="468" fill={shadowFill} />
+            <rect
+              x="1374"
+              y="70"
+              width="260"
+              height="468"
+              fill="var(--secondary)"
               stroke={stroke}
-              shadowFill={shadowFill}
-              shadowDx={12}
-              shadowDy={12}
+              strokeWidth="7"
+            />
+            <rect x="1374" y="70" width="260" height="116" fill="url(#nb-hatch)" />
+            <text
+              x="1503"
+              y="280"
+              fill="hsl(0 0% 0%)"
+              fontSize="92"
+              textAnchor="middle"
+              style={BRUTALIST_TEXT_STYLE}
             >
-              <text
-                x={640}
-                y={225}
-                fill={stroke}
-                fontSize="46"
-                style={STICKER_TEXT_STYLE}
-              >
-                HEAVY
-              </text>
-              <text
-                x={640}
-                y={260}
-                fill={stroke}
-                fontSize="18"
-                opacity="0.78"
-                style={{ ...STICKER_TEXT_STYLE, fontWeight: 600 }}
-              >
-                LOG IT
-              </text>
-            </Sticker>
+              05
+            </text>
+            <text
+              x="1503"
+              y="326"
+              fill="hsl(0 0% 0%)"
+              fontSize="18"
+              textAnchor="middle"
+              style={BRUTALIST_TEXT_STYLE}
+            >
+              WORK SETS
+            </text>
+            <line x1="1402" y1="362" x2="1606" y2="362" stroke="hsl(0 0% 0%)" strokeWidth="5" />
+            <text
+              x="1503"
+              y="422"
+              fill="hsl(0 0% 0%)"
+              fontSize="26"
+              textAnchor="middle"
+              style={BRUTALIST_TEXT_STYLE}
+            >
+              03 / 08
+            </text>
           </FloatingGroup>
 
+          {/* Bottom-right registration slab anchors long pages. */}
           <FloatingGroup
             enabled={enableAnimation}
-            animate={{ x: [0, -8, 0], y: [0, -10, 0], rotate: [0, -2.2, 0] }}
-            transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+            animate={{ x: [0, -6, 0], rotate: [0, 0.8, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
           >
-            <Sticker
-              x={700}
-              y={625}
-              w={200}
-              h={100}
-              r={8}
-              fill={"var(--primary)"}
-              stroke={stroke}
-              shadowFill={shadowFill}
-              shadowDx={12}
-              shadowDy={12}
-              radius={999}
-            >
+            <g transform="rotate(4 1370 770)">
+              <rect x="1226" y="690" width="430" height="148" fill={shadowFill} />
+              <rect
+                x="1212"
+                y="676"
+                width="430"
+                height="148"
+                fill="var(--accent)"
+                stroke={stroke}
+                strokeWidth="7"
+              />
               <text
-                x={760}
-                y={690}
-                fill={"var(--primary-foreground)"}
-                fontSize="38"
-                style={STICKER_TEXT_STYLE}
+                x="1240"
+                y="770"
+                fill="var(--accent-foreground)"
+                fontSize="68"
+                style={BRUTALIST_TEXT_STYLE}
               >
-                PR
+                +2.5
               </text>
-            </Sticker>
+              <text
+                x="1470"
+                y="770"
+                fill="var(--accent-foreground)"
+                fontSize="20"
+                style={BRUTALIST_TEXT_STYLE}
+              >
+                Δ KG
+              </text>
+            </g>
           </FloatingGroup>
 
-          {/* Micro speckle dots (cheap grit) */}
-          <g opacity={isDark ? 0.24 : 0.22}>
-            <circle cx="820" cy="330" r="2" fill={stroke} />
-            <circle cx="870" cy="350" r="1.5" fill={stroke} />
-            <circle cx="790" cy="370" r="1" fill={stroke} />
-            <circle cx="840" cy="395" r="1.6" fill={stroke} />
-            <circle cx="880" cy="410" r="1.2" fill={stroke} />
-            <circle cx="815" cy="420" r="1" fill={stroke} />
-            <circle cx="855" cy="435" r="1.8" fill={stroke} />
-            <circle cx="895" cy="450" r="1.3" fill={stroke} />
+          {/* Registration marks lend a print/editorial feel without adding copy. */}
+          <g stroke={stroke} strokeWidth="4" opacity="0.72">
+            <path d="M 480 92 h 48 M 504 68 v 48" />
+            <circle cx="504" cy="92" r="12" fill="none" />
+            <path d="M 1082 754 h 48 M 1106 730 v 48" />
+            <circle cx="1106" cy="754" r="12" fill="none" />
+            <path d="M 1030 126 h 150" />
+            <path d="M 1030 136 h 92" />
+            <path d="M 470 790 h 230" />
+            <path d="M 470 800 h 138" />
           </g>
         </Svg>
       </Wrapper>

@@ -37,6 +37,7 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
 import { addDaysFromStr, getWeekKeyFromDateStr } from "@/lib/date-utils";
@@ -739,6 +740,7 @@ export function ImportWorkflowSection({
     clearImportedData,
     isImportedData,
     importedFormatName,
+    importedFormatId,
     importedFileName,
     importedDiagnostics,
     sheetParsedData,
@@ -807,7 +809,7 @@ export function ImportWorkflowSection({
   const onDragLeave = useCallback(() => setDragOver(false), []);
 
   const writeEntriesToSheet = useCallback(
-    async (targetSsid, entries) => {
+    async (targetSsid, entries, importSummary = null) => {
       const apiEntries = entries.map((entry) => ({
         date: entry.date,
         liftType: entry.liftType,
@@ -819,7 +821,12 @@ export function ImportWorkflowSection({
 
       const res = await postImportHistory(
         { ssid: targetSsid, entries: apiEntries },
-        { source: "import_workflow", formatName: importedFormatName },
+        {
+          source: "import_workflow",
+          formatId: importedFormatId,
+          formatName: importedFormatName,
+          importSummary,
+        },
       );
       const data = await res.json();
 
@@ -828,7 +835,7 @@ export function ImportWorkflowSection({
       }
       return data;
     },
-    [importedFormatName],
+    [importedFormatId, importedFormatName],
   );
 
   const handleMerge = useCallback(async () => {
@@ -844,25 +851,58 @@ export function ImportWorkflowSection({
 
     const { newEntries, skippedCount, conflictCount } =
       deduplicateImportedEntries(parsedData, sheetParsedData);
+    const importSummary = {
+      outcome:
+        newEntries.length > 0
+          ? "merged"
+          : conflictCount > 0
+            ? "conflicts_only"
+            : "already_current",
+      candidateEntryCount: parsedData.filter((entry) => !entry.isGoal).length,
+      skippedCount,
+      conflictCount,
+      latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),
+    };
 
     if (newEntries.length === 0) {
-      toast({
-        title:
-          conflictCount > 0
-            ? "Changed sets need review"
-            : "Nothing new to merge",
-        description:
-          conflictCount > 0
-            ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} the same Hevy source details but different lifting data. Nothing was overwritten.`
-            : `All ${skippedCount} entries already exist in your linked sheet.`,
-        ...(conflictCount > 0 ? { variant: "destructive" } : {}),
-      });
+      setMerging(true);
+      try {
+        await writeEntriesToSheet(sheetInfo.ssid, [], importSummary);
+        toast({
+          title:
+            conflictCount > 0
+              ? "Changed sets need review"
+              : "Your training data is already up to date",
+          description:
+            conflictCount > 0
+              ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} matching source details but different lifting data. Nothing was overwritten.`
+              : `All ${skippedCount} entries already exist in your linked sheet. You can still import another supported format at any time.`,
+          ...(conflictCount > 0 ? { variant: "destructive" } : {}),
+        });
+      } catch {
+        toast({
+          title:
+            conflictCount > 0
+              ? "Changed sets need review"
+              : "Nothing new to merge",
+          description:
+            conflictCount > 0
+              ? `${conflictCount} changed ${conflictCount === 1 ? "set was" : "sets were"} left untouched.`
+              : `All ${skippedCount} entries already exist in your linked sheet.`,
+        });
+      } finally {
+        setMerging(false);
+      }
       return;
     }
 
     setMerging(true);
     try {
-      const data = await writeEntriesToSheet(sheetInfo.ssid, newEntries);
+      const data = await writeEntriesToSheet(
+        sheetInfo.ssid,
+        newEntries,
+        importSummary,
+      );
       const skippedNote =
         skippedCount > 0
           ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
@@ -995,9 +1035,8 @@ export function ImportWorkflowSection({
                         <p>
                           {conflictCount} changed{" "}
                           {conflictCount === 1 ? "set" : "sets"} share the same
-                          Hevy workout, exercise, time, and set number as data
-                          already in your Sheet. They will not be overwritten
-                          automatically.
+                          source details as data already in your Sheet. They
+                          will not be overwritten automatically.
                         </p>
                       </div>
                     )}
@@ -1173,9 +1212,16 @@ export function ImportWorkflowSection({
             <>
               <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
               <h3 className="mb-2 font-semibold">
-                {sourceAppName
-                  ? `Drop your ${sourceAppName} workout export here`
-                  : "Drop your lifting history here"}
+                <span className="md:hidden">
+                  {sourceAppName
+                    ? `Choose your ${sourceAppName} workout export`
+                    : "Choose your lifting history file"}
+                </span>
+                <span className="hidden md:inline">
+                  {sourceAppName
+                    ? `Drop your ${sourceAppName} workout export here`
+                    : "Drop your lifting history here"}
+                </span>
               </h3>
               <p className="text-muted-foreground mb-1 max-w-md text-sm">
                 {mergeMode ? (

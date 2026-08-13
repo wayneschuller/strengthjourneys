@@ -22,13 +22,23 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { gaTrackHomeImportNudge } from "@/lib/analytics";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import {
+  formatWorkoutFreshnessDate,
+  getRepeatImportHref,
+} from "@/lib/import/import-sources";
+import {
   getSheetScopedStorageKey,
   LOCAL_STORAGE_KEYS,
 } from "@/lib/localStorage-keys";
 
 export function HomeImportMergeNudge() {
-  const { hasUserData, isImportedData, parsedData, rawRows, sheetInfo } =
-    useUserLiftingData();
+  const {
+    hasUserData,
+    importProfile,
+    isImportedData,
+    parsedData,
+    rawRows,
+    sheetInfo,
+  } = useUserLiftingData();
   const trackedImpressionKeyRef = useRef(null);
   const { dashboardStage, sessionCount } = useMemo(
     () => getDashboardStage({ parsedData, rawRows, sheetInfo }),
@@ -45,9 +55,15 @@ export function HomeImportMergeNudge() {
   const [isDismissed, setIsDismissed] = useLocalStorage(storageKey, false, {
     initializeWithValue: false,
   });
+  const shouldShowFreshness =
+    hasUserData &&
+    !isImportedData &&
+    Boolean(importProfile?.lastSourceId) &&
+    (!importProfile?.lastSheetId || importProfile.lastSheetId === sheetInfo?.ssid);
   const shouldShow =
     hasUserData &&
     !isImportedData &&
+    !shouldShowFreshness &&
     Array.isArray(parsedData) &&
     rawRows != null &&
     !isDismissed &&
@@ -69,6 +85,73 @@ export function HomeImportMergeNudge() {
     });
     trackedImpressionKeyRef.current = trackingKey;
   }, [dashboardStage, sessionCount, shouldShow, storageKey]);
+
+  useEffect(() => {
+    if (!shouldShowFreshness) return;
+    const trackingKey = `${storageKey}:freshness:${importProfile.lastImportCheckedAt || "unknown"}`;
+    if (trackedImpressionKeyRef.current === trackingKey) return;
+
+    gaTrackHomeImportNudge({
+      action: "impression",
+      surface: "dashboard_freshness",
+      dashboardStage,
+      sessionCount,
+    });
+    trackedImpressionKeyRef.current = trackingKey;
+  }, [
+    dashboardStage,
+    importProfile?.lastImportCheckedAt,
+    sessionCount,
+    shouldShowFreshness,
+    storageKey,
+  ]);
+
+  if (shouldShowFreshness) {
+    const freshnessDate = formatWorkoutFreshnessDate(
+      importProfile.latestImportedWorkoutDate,
+    );
+    const sourceName = importProfile.lastSourceName || "your last source";
+
+    return (
+      <AppBanner tint="blue">
+        <AppBannerContent density="compact">
+          <AppBannerMessage>
+            <FileUp className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
+            <span className="font-semibold">
+              {freshnessDate
+                ? `Training data through ${freshnessDate}.`
+                : "Keep your training timeline current."}
+            </span>{" "}
+            <span>
+              Last used {sourceName}; upload that again or switch to any
+              supported app or spreadsheet whenever you like.
+            </span>
+          </AppBannerMessage>
+          <AppBannerActions className="flex-row flex-wrap">
+            <Button
+              asChild
+              size="sm"
+              className={bannerAccentButtonClassName({ tint: "blue" })}
+            >
+              <Link
+                href={getRepeatImportHref(importProfile, "dashboard-freshness")}
+                onClick={() => {
+                  gaTrackHomeImportNudge({
+                    action: "click",
+                    surface: "dashboard_freshness",
+                    dashboardStage,
+                    sessionCount,
+                  });
+                }}
+              >
+                Update Data
+              </Link>
+            </Button>
+          </AppBannerActions>
+        </AppBannerContent>
+      </AppBanner>
+    );
+  }
 
   if (!shouldShow) return null;
 
@@ -131,7 +214,6 @@ function getHomeImportNudgeCopy(dashboardStage) {
       dashboardStage === "early_base"
         ? "Your long-term dashboard gets better with more history."
         : "Already trained in another app?",
-    body:
-      "Import Hevy, Strong, StrongLifts, Wodify, BTWB, or another spreadsheet. Add files one at a time and merge them into one timeline.",
+    body: "Import Hevy, Strong, StrongLifts, Wodify, BTWB, or another spreadsheet. Add files one at a time and merge them into one timeline.",
   };
 }

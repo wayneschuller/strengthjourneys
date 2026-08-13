@@ -23,7 +23,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
+import { getRepeatImportHref } from "@/lib/import/import-sources";
 
 import {
   Tooltip,
@@ -150,24 +150,10 @@ function ensureCannyChangelog() {
  */
 export function NavBar() {
   const { status: authStatus } = useSession();
-  const pathname = usePathname();
-  const { hasUserData, isReadOnly, isImportedData, isLoading, isValidating, parsedData, rawRows, sheetInfo } = useUserLiftingData();
+  const { importProfile, isReadOnly, isImportedData } = useUserLiftingData();
   const canOpenLog = !isReadOnly || isImportedData;
-
-  // Show a standalone "Import / Merge Data" button for signed-in users who
-  // haven't yet built up a mature training history. Once they're "established"
-  // (60+ sessions) the nudge disappears -- they're committed to SJ.
-  // Default to hidden and wait until data has fully loaded to avoid flashing
-  // during the auth/fetch sequence.
-  const [showImportNudge, setShowImportNudge] = useState(false);
-  useEffect(() => {
-    if (authStatus !== "authenticated" || !hasUserData || isLoading || isValidating) {
-      setShowImportNudge(false);
-      return;
-    }
-    const { dashboardStage } = getDashboardStage({ parsedData, rawRows, sheetInfo });
-    setShowImportNudge(dashboardStage !== "established");
-  }, [authStatus, hasUserData, isLoading, isValidating, parsedData, rawRows, sheetInfo]);
+  const hasImportRitual = Boolean(importProfile?.lastSourceId);
+  const importHref = getRepeatImportHref(importProfile, "repeat-import-nav");
 
   return (
     <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
@@ -209,19 +195,54 @@ export function NavBar() {
               )}
             </Tooltip>
           </TooltipProvider>
-          {showImportNudge && (
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="mr-2 hidden h-9 shrink-0 rounded-full px-3 md:inline-flex"
-            >
-              <Link href="/import">
-                <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
-                <span className="xl:hidden">Import</span>
-                <span className="hidden xl:inline">Import / Merge Data</span>
-              </Link>
-            </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="mr-2 hidden h-9 shrink-0 rounded-full px-3 xl:inline-flex"
+                >
+                  <Link href={hasImportRitual ? importHref : "/import"}>
+                    <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    Import / Export
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {hasImportRitual
+                  ? `Last used ${importProfile.lastSourceName}. Update from there, switch to any supported format, or export your SJ data.`
+                  : "Import from any supported app or spreadsheet, or export your Strength Journeys data."}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {hasImportRitual && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="mr-0 h-9 shrink-0 rounded-full px-2.5 md:mr-2 md:px-3 xl:hidden"
+                  >
+                    <Link href={importHref}>
+                      <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      <span className="hidden sm:inline md:hidden">
+                        Update Data
+                      </span>
+                      <span className="hidden md:inline">Update</span>
+                      <span className="sr-only sm:hidden">Update data</span>
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Last used {importProfile.lastSourceName}. Upload that or any
+                  other supported export.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {authStatus === "authenticated" && !canOpenLog && (
             <Button

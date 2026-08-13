@@ -363,12 +363,8 @@ const PROMPT_MESSAGES = {
     subject: `[SJ] Activated — ${name}`,
     text: [
       `${name} (${email}) activated at ${timeStr}.`,
-      meta.connectionMethod
-        ? `Connection method: ${meta.connectionMethod}`
-        : null,
-      meta.provisioningMethod
-        ? `Provisioning method: ${meta.provisioningMethod}`
-        : null,
+      meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
+      meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
       meta.sheetName ? `Sheet: ${meta.sheetName}` : null,
       meta.rowCount != null ? `Rows: ${meta.rowCount}` : null,
       `\nThey're set up and in the app. Worth a welcome message.`,
@@ -442,8 +438,12 @@ const PROMPT_MESSAGES = {
       meta.intent ? `Intent: ${meta.intent}` : null,
       meta.resultAction ? `Result action: ${meta.resultAction}` : null,
       meta.reason ? `Reason: ${meta.reason}` : null,
-      meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
-      meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
       meta.ssid != null ? `Sheet ID exists: ${meta.ssid ? "yes" : "no"}` : null,
       meta.sheetName ? `Sheet: ${meta.sheetName}` : null,
       meta.hadLocalSheetBefore != null
@@ -501,13 +501,46 @@ const PROMPT_MESSAGES = {
       .join("\n"),
   }),
   "import-merged": (name, email, timeStr, meta) => ({
-    subject: `[SJ] Import merged — ${name}`,
+    subject: `[SJ] ${meta.importRelationship || "Import merged"} — ${name}`,
     text: [
-      `${name} (${email}) merged imported history at ${timeStr}.`,
+      `${name} (${email}) completed an import check at ${timeStr}.`,
+      meta.importRelationship
+        ? `Import relationship: ${meta.importRelationship}`
+        : null,
       meta.formatName ? `Format: ${meta.formatName}` : null,
-      meta.entryCount != null ? `Imported entries: ${meta.entryCount}` : null,
-      meta.insertedRows != null ? `Inserted rows: ${meta.insertedRows}` : null,
+      meta.importOutcome ? `Outcome: ${meta.importOutcome}` : null,
+      meta.entryCount != null
+        ? `File entries compared: ${meta.entryCount}`
+        : null,
+      meta.insertedRows != null
+        ? `New rows merged: ${meta.insertedRows}`
+        : null,
+      meta.skippedCount != null
+        ? `Existing sets skipped: ${meta.skippedCount}`
+        : null,
+      meta.conflictCount != null
+        ? `Changed sets left for review: ${meta.conflictCount}`
+        : null,
       meta.dateCount != null ? `Imported dates: ${meta.dateCount}` : null,
+      meta.previousImportAt
+        ? `Previous check from this source: ${meta.previousImportAt}`
+        : null,
+      meta.previousWorkoutDate
+        ? `Previous source freshness: ${meta.previousWorkoutDate}`
+        : null,
+      meta.latestWorkoutDate
+        ? `Latest source workout: ${meta.latestWorkoutDate}`
+        : null,
+      meta.sourceImportCount != null
+        ? `Successful imports from this source: ${meta.sourceImportCount}`
+        : null,
+      meta.totalImportCount != null
+        ? `Successful imports across all sources: ${meta.totalImportCount}`
+        : null,
+      meta.sourceCount != null
+        ? `Different sources observed: ${meta.sourceCount}`
+        : null,
+      meta.cadence ? `Observed rhythm: ${meta.cadence}` : null,
       meta.liftTypeCount != null ? `Lift types: ${meta.liftTypeCount}` : null,
       meta.bigFourEntryCount != null
         ? `Big Four entries: ${meta.bigFourEntryCount}`

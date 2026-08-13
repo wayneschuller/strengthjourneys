@@ -132,6 +132,9 @@ export const LOCAL_STORAGE_KEYS = {
   HOME_DASHBOARD_FIRST_VIEW_TRACKED: "SJ_homeDashboardFirstViewTracked",
   HOME_DASHBOARD_LAST_TRACKED_STAGE: "SJ_homeDashboardLastTrackedStage",
   HOME_DASHBOARD_IMPORT_NUDGE_DISMISSED: "SJ_homeDashboardImportNudgeDismissed",
+  // Cached copy of the authenticated user's KV-backed recurring-import profile.
+  // Contains workflow freshness only, never filenames or lifting data.
+  IMPORT_PROFILE: "SJ_importProfile",
 };
 
 export const SESSION_STORAGE_KEYS = {

@@ -21,6 +21,8 @@ import {
   buildVisibleImportProvenance,
   hasVisibleImportProvenance,
 } from "@/lib/import/provenance";
+import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
+import { recordImportActivity } from "@/lib/import/import-profile-store";
 import { getServerSession } from "next-auth/next";
 import { gunzipSync } from "node:zlib";
 
@@ -45,6 +47,73 @@ function logImportEvent(phase, meta = {}) {
     phase,
     ...meta,
   });
+}
+
+function sanitizeImportSummary(summary, entries) {
+  const safeCount = (value, fallback = 0) =>
+    Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback;
+  const latestWorkoutDate = /^\d{4}-\d{2}-\d{2}$/.test(
+    String(summary?.latestWorkoutDate || ""),
+  )
+    ? summary.latestWorkoutDate
+    : getLatestImportedWorkoutDate(entries);
+
+  return {
+    outcome: ["merged", "already_current", "conflicts_only"].includes(
+      summary?.outcome,
+    )
+      ? summary.outcome
+      : entries.length > 0
+        ? "merged"
+        : "already_current",
+    candidateEntryCount: safeCount(
+      summary?.candidateEntryCount,
+      entries.length,
+    ),
+    skippedCount: safeCount(summary?.skippedCount),
+    conflictCount: safeCount(summary?.conflictCount),
+    latestWorkoutDate,
+  };
+}
+
+async function recordImportActivityBestEffort({
+  session,
+  formatId,
+  formatName,
+  sheetId,
+  summary,
+  insertedRows,
+}) {
+  try {
+    return await recordImportActivity(session.user.email, {
+      formatId,
+      formatName,
+      sheetId,
+      checkedAt: new Date().toISOString(),
+      latestWorkoutDate: summary.latestWorkoutDate,
+      insertedRows,
+      outcome: insertedRows > 0 ? "merged" : summary.outcome,
+    });
+  } catch (error) {
+    console.error("[import-profile] activity write failed:", error);
+    return null;
+  }
+}
+
+function getImportRelationshipMeta(transition) {
+  if (!transition) return {};
+  const sourceProfile =
+    transition.profile.sources?.[transition.profile.lastSourceId];
+  return {
+    importRelationship: transition.relationshipLabel,
+    previousImportAt: transition.previousCheckedAt,
+    previousWorkoutDate: transition.previousWorkoutDate,
+    latestWorkoutDate: sourceProfile?.latestWorkoutDate || null,
+    sourceImportCount: sourceProfile?.importCount || 0,
+    totalImportCount: transition.profile.successfulImportCount,
+    sourceCount: Object.keys(transition.profile.sources || {}).length,
+    cadence: transition.cadenceLabel,
+  };
 }
 
 function buildGoogleApiFailure(body, fallbackMessage, httpStatus) {
@@ -176,9 +245,9 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, entries, formatName } = requestBody;
+  const { ssid, entries, formatId, formatName } = requestBody;
 
-  if (!ssid || !Array.isArray(entries) || entries.length === 0) {
+  if (!ssid || !Array.isArray(entries)) {
     logImportEvent("request_rejected", {
       durationMs: Date.now() - startedAt,
       hasSsid: Boolean(ssid),
@@ -188,6 +257,53 @@ export default async function handler(req, res) {
     return res
       .status(400)
       .json({ error: "Missing required fields: ssid, entries" });
+  }
+
+  const importSummary = sanitizeImportSummary(
+    requestBody.importSummary,
+    entries,
+  );
+  const isActivityOnly =
+    entries.length === 0 &&
+    ["already_current", "conflicts_only"].includes(importSummary.outcome);
+
+  if (entries.length === 0 && !isActivityOnly) {
+    return res.status(400).json({
+      error: "An empty import must describe an already-current comparison",
+    });
+  }
+
+  if (isActivityOnly) {
+    const transition = await recordImportActivityBestEffort({
+      session,
+      formatId,
+      formatName,
+      sheetId: ssid,
+      summary: importSummary,
+      insertedRows: 0,
+    });
+    const relationshipMeta = getImportRelationshipMeta(transition);
+
+    res.status(200).json({
+      ok: true,
+      insertedRows: 0,
+      dateCount: 0,
+      importProfile: transition?.profile || null,
+    });
+
+    if (!transition?.duplicateActivity) {
+      void promptDeveloper("import-merged", session.user, {
+        formatName: formatName || "unknown",
+        entryCount: importSummary.candidateEntryCount,
+        insertedRows: 0,
+        dateCount: 0,
+        skippedCount: importSummary.skippedCount,
+        conflictCount: importSummary.conflictCount,
+        importOutcome: importSummary.outcome,
+        ...relationshipMeta,
+      });
+    }
+    return;
   }
 
   logImportEvent("request_validated", {
@@ -475,10 +591,24 @@ export default async function handler(req, res) {
     // It exists only to help with user support and import health visibility.
     const founderMeta = summarizeImportedEntries(entries);
 
+    const transition =
+      requestBody.trackImportRitual === false
+        ? null
+        : await recordImportActivityBestEffort({
+            session,
+            formatId,
+            formatName,
+            sheetId: ssid,
+            summary: importSummary,
+            insertedRows: totalInserted,
+          });
+    const relationshipMeta = getImportRelationshipMeta(transition);
+
     res.status(200).json({
       ok: true,
       insertedRows: totalInserted,
       dateCount: sortedDates.length,
+      importProfile: transition?.profile || null,
     });
 
     void promptDeveloper("import-merged", session.user, {
@@ -486,8 +616,12 @@ export default async function handler(req, res) {
       entryCount: entries.length,
       insertedRows: totalInserted,
       dateCount: sortedDates.length,
+      skippedCount: importSummary.skippedCount,
+      conflictCount: importSummary.conflictCount,
+      importOutcome: "merged",
       durationMs,
       ...founderMeta,
+      ...relationshipMeta,
     });
     return;
   } catch (err) {

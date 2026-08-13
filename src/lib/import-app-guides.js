@@ -75,7 +75,7 @@ export const IMPORT_APP_PAGES = [
     heroTitle: "See Your Strong Data in a New Light",
     hookLine: "Years of gains you've never actually seen",
     heroDescription:
-      "Drop your Strong CSV and watch years of progress come alive instantly.",
+      "Choose your Strong CSV and watch years of progress come alive instantly.",
     cardDescription:
       "Got years of Strong data? Finally see your full progression arc.",
     whyItMatters:
@@ -127,7 +127,7 @@ export const IMPORT_APP_PAGES = [
     hookLine:
       "Linear progression is more interesting than the StrongLifts chart shows",
     heroDescription:
-      "Drop your StrongLifts 5x5 export and finally see every PR, every stall, and every comeback in one timeline.",
+      "Choose your StrongLifts 5x5 export and finally see every PR, every stall, and every comeback in one timeline.",
     cardDescription:
       "Started with 5x5? See the full arc of your linear progression.",
     whyItMatters:
@@ -183,7 +183,7 @@ export const IMPORT_APP_PAGES = [
     heroTitle: "Rescue Your Wodify Lifting History",
     hookLine: "That old Wodify export isn't dead weight",
     heroDescription:
-      "Drop your Wodify export, even years-old files work. Your data isn't lost.",
+      "Choose your Wodify export—even years-old files work. Your data isn't lost.",
     cardDescription:
       "Gym switched platforms? Your old Wodify data still has stories to tell.",
     whyItMatters:
@@ -239,7 +239,7 @@ export const IMPORT_APP_PAGES = [
     heroTitle: "Your CrossFit Strength Data Deserves Better Analytics",
     hookLine: "Years of CrossFit strength work you've never truly seen",
     heroDescription:
-      "Drop your Beyond the Whiteboard (BTWB) export and finally see your complete barbell progression. Many of our most dedicated users come from CrossFit backgrounds, and they tell us this is the view of their training they always wanted.",
+      "Choose your Beyond the Whiteboard (BTWB) export and finally see your complete barbell progression. Many of our most dedicated users come from CrossFit backgrounds, and they tell us this is the view of their training they always wanted.",
     cardDescription:
       "CrossFit athlete? Unify years of BTWB history with everything else.",
     whyItMatters:

@@ -43,6 +43,8 @@ const { detectFormat } =
   await import("../src/lib/data-sources/import-dispatcher.js");
 const { deduplicateImportedEntries } =
   await import("../src/lib/import/dedupe.js");
+const { buildNextImportProfile } =
+  await import("../src/lib/import/import-profile.js");
 
 async function readFixture(name) {
   const fixturePath = path.join(
@@ -60,6 +62,7 @@ const kg = parseHevyData(await readFixture("hevy-kg.csv"), { importedAt });
 const lb = parseHevyData(await readFixture("hevy-lb.csv"), { importedAt });
 
 assert.equal(detectFormat((await readFixture("hevy-kg.csv"))[0])?.name, "Hevy");
+assert.equal(detectFormat((await readFixture("hevy-kg.csv"))[0])?.id, "hevy");
 assert.equal(detectFormat((await readFixture("hevy-lb.csv"))[0])?.name, "Hevy");
 assert.equal(
   detectFormat([
@@ -119,4 +122,64 @@ const changedMerge = deduplicateImportedEntries([changedSet], [lb[0]]);
 assert.equal(changedMerge.conflictCount, 1);
 assert.equal(changedMerge.newEntries.length, 0);
 
-console.log("Hevy importer validation passed.");
+const firstImport = buildNextImportProfile(null, {
+  formatId: "hevy",
+  formatName: "Hevy",
+  sheetId: "sheet-a",
+  checkedAt: "2026-07-31T10:00:00.000Z",
+  latestWorkoutDate: "2026-07-30",
+  insertedRows: 120,
+});
+assert.equal(firstImport.relationship, "first_import");
+assert.equal(firstImport.profile.sources.hevy.importCount, 1);
+assert.equal(firstImport.profile.lastSheetId, "sheet-a");
+
+const repeatImport = buildNextImportProfile(firstImport.profile, {
+  formatId: "hevy",
+  formatName: "Hevy",
+  checkedAt: "2026-08-07T10:00:00.000Z",
+  latestWorkoutDate: "2026-08-06",
+  insertedRows: 18,
+});
+assert.equal(repeatImport.relationship, "repeat_same_source");
+assert.equal(repeatImport.relationshipLabel, "2nd successful Hevy import");
+
+const mixedSourceImport = buildNextImportProfile(repeatImport.profile, {
+  formatId: "strong",
+  formatName: "Strong",
+  checkedAt: "2026-08-14T10:00:00.000Z",
+  latestWorkoutDate: "2024-03-04",
+  insertedRows: 40,
+});
+assert.equal(mixedSourceImport.relationship, "new_source");
+assert.equal(Object.keys(mixedSourceImport.profile.sources).length, 2);
+assert.equal(mixedSourceImport.profile.lastSourceName, "Strong");
+assert.equal(mixedSourceImport.profile.latestImportedWorkoutDate, "2026-08-06");
+assert.equal(mixedSourceImport.cadenceLabel, "approximately weekly");
+
+const currentCheck = buildNextImportProfile(mixedSourceImport.profile, {
+  formatId: "hevy",
+  formatName: "Hevy",
+  checkedAt: "2026-08-14T12:00:00.000Z",
+  latestWorkoutDate: "2026-08-06",
+  insertedRows: 0,
+  outcome: "already_current",
+});
+assert.equal(currentCheck.relationship, "freshness_check");
+assert.equal(currentCheck.profile.successfulImportCount, 3);
+assert.equal(currentCheck.profile.lastSourceName, "Hevy");
+
+const switchedSheetImport = buildNextImportProfile(currentCheck.profile, {
+  formatId: "wodify",
+  formatName: "Wodify",
+  sheetId: "sheet-b",
+  checkedAt: "2026-08-15T12:00:00.000Z",
+  latestWorkoutDate: "2025-01-10",
+  insertedRows: 12,
+});
+assert.equal(switchedSheetImport.relationship, "first_import");
+assert.equal(switchedSheetImport.profile.lastSheetId, "sheet-b");
+assert.equal(switchedSheetImport.profile.latestImportedWorkoutDate, "2025-01-10");
+assert.deepEqual(Object.keys(switchedSheetImport.profile.sources), ["wodify"]);
+
+console.log("Importer and recurring-profile validation passed.");

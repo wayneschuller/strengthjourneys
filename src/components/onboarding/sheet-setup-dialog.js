@@ -13,6 +13,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { deduplicateImportedEntries } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/open-sheet-setup";
 import {
@@ -168,7 +169,11 @@ function shouldShowSyncToastOnAutoLink(payload) {
   return ["drive_single", "legacy_drive_relink"].includes(payload?.reason);
 }
 
-async function writeEntriesToSheet(targetSsid, entries, formatName) {
+async function writeEntriesToSheet(
+  targetSsid,
+  entries,
+  { formatId, formatName, importSummary } = {},
+) {
   const apiEntries = entries.map((entry) => ({
     date: entry.date,
     liftType: entry.liftType,
@@ -185,7 +190,9 @@ async function writeEntriesToSheet(targetSsid, entries, formatName) {
     },
     {
       source: "sheet_setup_write",
+      formatId,
       formatName,
+      importSummary,
     },
   );
   const payload = await response.json().catch(() => ({}));
@@ -299,6 +306,7 @@ export function SheetSetupDialog() {
     clearImportedData,
     isImportedData,
     importedFileName,
+    importedFormatId,
     importedFormatName,
     mutate,
   } = useUserLiftingData();
@@ -888,27 +896,44 @@ export function SheetSetupDialog() {
       const importedEntries = parsedData.filter((entry) => !entry.isGoal);
       const { newEntries, skippedCount, conflictCount } =
         deduplicateImportedEntries(importedEntries, sheetParsedData);
+      const importSummary = {
+        outcome:
+          newEntries.length > 0
+            ? "merged"
+            : conflictCount > 0
+              ? "conflicts_only"
+              : "already_current",
+        candidateEntryCount: importedEntries.length,
+        skippedCount,
+        conflictCount,
+        latestWorkoutDate: getLatestImportedWorkoutDate(importedEntries),
+      };
 
       if (newEntries.length === 0) {
+        await writeEntriesToSheet(sheetInfo.ssid, [], {
+          formatId: importedFormatId,
+          formatName: importedFormatName,
+          importSummary,
+        });
         toast({
           title:
             conflictCount > 0
               ? "Changed sets need review"
-              : "Nothing new to merge",
+              : "Your training data is already up to date",
           description:
             conflictCount > 0
-              ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} the same Hevy source details but different lifting data. Nothing was overwritten.`
-              : `All ${skippedCount} entries already exist in your sheet.`,
+              ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} matching source details but different lifting data. Nothing was overwritten.`
+              : `All ${skippedCount} entries already exist in your sheet. You can still import another supported format at any time.`,
           ...(conflictCount > 0 ? { variant: "destructive" } : {}),
         });
         return;
       }
 
-      const payload = await writeEntriesToSheet(
-        sheetInfo.ssid,
-        newEntries,
-        importedFormatName,
-      );
+      const payload = await writeEntriesToSheet(sheetInfo.ssid, newEntries, {
+        formatId: importedFormatId,
+        formatName: importedFormatName,
+        importSummary,
+      });
       mutate();
       if (conflictCount === 0) {
         clearImportedData();
@@ -942,6 +967,7 @@ export function SheetSetupDialog() {
   }, [
     clearImportedData,
     importedFormatName,
+    importedFormatId,
     isLoading,
     mutate,
     parsedData,
@@ -992,7 +1018,17 @@ export function SheetSetupDialog() {
         const payload = await writeEntriesToSheet(
           linkPayload.ssid,
           importedEntries,
-          importedFormatName,
+          {
+            formatId: importedFormatId,
+            formatName: importedFormatName,
+            importSummary: {
+              outcome: "merged",
+              candidateEntryCount: importedEntries.length,
+              skippedCount: 0,
+              conflictCount: 0,
+              latestWorkoutDate: getLatestImportedWorkoutDate(importedEntries),
+            },
+          },
         );
         const nextSheetInfo = {
           ssid: linkPayload.ssid,
@@ -1052,6 +1088,7 @@ export function SheetSetupDialog() {
       handleActionFailure,
       hadLocalSheetBefore,
       importedFileName,
+      importedFormatId,
       importedFormatName,
       mutate,
       parsedData,
@@ -1071,7 +1108,12 @@ export function SheetSetupDialog() {
       setOnboardingState("linking_or_creating");
       try {
         // Step 1: Parse the file
-        const { count, formatName, entries = [] } = await importFile(file);
+        const {
+          count,
+          formatId,
+          formatName,
+          entries = [],
+        } = await importFile(file);
         if (count === 0) {
           throw new Error("No valid entries found in the file.");
         }
@@ -1115,7 +1157,16 @@ export function SheetSetupDialog() {
             },
             {
               source: "sheet_setup_create",
+              formatId,
               formatName,
+              importSummary: {
+                outcome: "merged",
+                candidateEntryCount: importedEntries.length,
+                skippedCount: 0,
+                conflictCount: 0,
+                latestWorkoutDate:
+                  getLatestImportedWorkoutDate(importedEntries),
+              },
             },
           );
           const writeData = await writeRes.json();

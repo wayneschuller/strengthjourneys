@@ -449,6 +449,7 @@ export default function ImportPage() {
     isReturningUserLoading,
     isImportedData,
     hasUserData,
+    importProfile,
     isReadOnly,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
@@ -505,13 +506,17 @@ export default function ImportPage() {
 
     setSaving(true);
     try {
-      const res = await postImportHistory({
-        ssid: sheetInfo.ssid,
-        entries: validEntries,
-      }, {
-        source: "import_page_manual",
-        formatName: "Strength Journeys",
-      });
+      const res = await postImportHistory(
+        {
+          ssid: sheetInfo.ssid,
+          entries: validEntries,
+        },
+        {
+          source: "import_page_manual",
+          formatName: "Strength Journeys",
+          trackImportRitual: false,
+        },
+      );
       const data = await res.json();
 
       if (!res.ok) {
@@ -597,16 +602,28 @@ export default function ImportPage() {
       <PageContainer>
         <PageHeader>
           <PageHeaderHeading icon={Upload}>
-            Your Lifting Data is Trapped. Let&apos;s Fix That.
+            {importProfile?.lastSourceId
+              ? "Bring Your Training Timeline Up to Date"
+              : "Your Lifting Data is Trapped. Let's Fix That."}
           </PageHeaderHeading>
           <PageHeaderDescription>
-            Drop a file from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB,
-            TurnKey, or any spreadsheet and see your full strength dashboard
-            instantly. Use Strength Journeys as the migration layer for your
-            lifting life: preview first, then merge every export into one
-            Google Sheet you own.
-            {authStatus !== "authenticated" &&
-              " No account required."}
+            {importProfile?.lastSourceId ? (
+              <>
+                Last time you used {importProfile.lastSourceName}. Choose a
+                newer export from there, or upload Hevy, Strong, StrongLifts
+                5x5, Wodify, BTWB, TurnKey, or another supported spreadsheet at
+                any time.
+              </>
+            ) : (
+              <>
+                Choose a file from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB,
+                TurnKey, or any spreadsheet and see your full strength dashboard
+                instantly. Use Strength Journeys as the migration layer for your
+                lifting life: preview first, then merge every export into one
+                Google Sheet you own.
+              </>
+            )}
+            {authStatus !== "authenticated" && " No account required."}
           </PageHeaderDescription>
         </PageHeader>
 

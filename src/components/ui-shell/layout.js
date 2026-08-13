@@ -44,6 +44,7 @@ import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { analyzeImportedEntries } from "@/lib/import/dedupe";
+import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { postImportHistory } from "@/lib/import-history-client";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
@@ -73,6 +74,7 @@ export function Layout({ children }) {
     isDemoMode,
     isImportedData,
     importedFormatName,
+    importedFormatId,
     clearImportedData,
     parseError,
     parsedData,
@@ -250,6 +252,7 @@ export function Layout({ children }) {
         <NavBar />
         {isImportedData ? (
           <ImportedDataBanner
+            formatId={importedFormatId}
             formatName={importedFormatName}
             entryCount={parsedData?.length || 0}
             onClear={clearImportedData}
@@ -637,7 +640,7 @@ function DataQualityBanner({ warnings, onFix }) {
 // - Not signed in: sign-in CTA (data will be saved to a new GSheet)
 // - Signed in + no sheet: "Save to Google Sheet" button
 // - Signed in + has sheet: "Merge into your sheet" button
-function ImportedDataBanner({ formatName, entryCount, onClear }) {
+function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
   const router = useRouter();
   const { status: authStatus } = useSession();
   const {
@@ -663,21 +666,77 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
   const isPartialOverlap = importAnalysis?.status === "partial_overlap";
   const isSheetComparisonPending =
     hasSsid && isAuthenticated && isLoading && !Array.isArray(sheetParsedData);
+  const recordedComparisonRef = useRef(null);
+
+  useEffect(() => {
+    if (
+      !isAuthenticated ||
+      !hasSsid ||
+      isSheetComparisonPending ||
+      !importAnalysis ||
+      importAnalysis.newEntriesCount > 0
+    ) {
+      return;
+    }
+
+    const comparisonKey = [
+      formatId || formatName || "unknown",
+      entryCount,
+      getLatestImportedWorkoutDate(parsedData),
+      importAnalysis.duplicateCount,
+      importAnalysis.conflictCount,
+    ].join(":");
+    if (recordedComparisonRef.current === comparisonKey) return;
+    recordedComparisonRef.current = comparisonKey;
+
+    void postImportHistory(
+      { ssid: sheetInfo.ssid, entries: [] },
+      {
+        source: "preview_banner_comparison",
+        formatId,
+        formatName,
+        importSummary: {
+          outcome:
+            importAnalysis.conflictCount > 0
+              ? "conflicts_only"
+              : "already_current",
+          candidateEntryCount: entryCount,
+          skippedCount: importAnalysis.duplicateCount,
+          conflictCount: importAnalysis.conflictCount,
+          latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),
+        },
+      },
+    ).catch(() => {
+      // The preview remains correct even if convenience metadata cannot sync.
+    });
+  }, [
+    entryCount,
+    formatId,
+    formatName,
+    hasSsid,
+    importAnalysis,
+    isAuthenticated,
+    isSheetComparisonPending,
+    parsedData,
+    sheetInfo?.ssid,
+  ]);
 
   const handleMergeFromBanner = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
     if (isSheetComparisonPending) {
       toast({
         title: "Still checking your sheet",
-        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+        description:
+          "Wait a moment so Strength Journeys can compare this preview against your linked data.",
       });
       return;
     }
 
-    const { newEntries, duplicateCount: skippedCount } = analyzeImportedEntries(
-      parsedData,
-      sheetParsedData,
-    );
+    const {
+      newEntries,
+      duplicateCount: skippedCount,
+      conflictCount,
+    } = analyzeImportedEntries(parsedData, sheetParsedData);
 
     if (newEntries.length === 0) {
       toast({
@@ -697,13 +756,25 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
         unitType: e.unitType || "kg",
         ...(e.notes ? { notes: e.notes } : {}),
       }));
-      const res = await postImportHistory({
-        ssid: sheetInfo.ssid,
-        entries: apiEntries,
-      }, {
-        source: "preview_banner_merge",
-        formatName,
-      });
+      const res = await postImportHistory(
+        {
+          ssid: sheetInfo.ssid,
+          entries: apiEntries,
+        },
+        {
+          source: "preview_banner_merge",
+          formatId,
+          formatName,
+          importSummary: {
+            outcome: "merged",
+            candidateEntryCount: parsedData.filter((entry) => !entry.isGoal)
+              .length,
+            skippedCount,
+            conflictCount,
+            latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),
+          },
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Merge failed");
 
@@ -732,6 +803,7 @@ function ImportedDataBanner({ formatName, entryCount, onClear }) {
     sheetInfo,
     isSheetComparisonPending,
     clearImportedData,
+    formatId,
     formatName,
     mutate,
     toast,

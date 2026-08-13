@@ -7,13 +7,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import {
-  BookOpen,
-  CheckCircle2,
-  GitMerge,
-  Shield,
-  Upload,
-} from "lucide-react";
+import { BookOpen, CheckCircle2, GitMerge, Shield, Upload } from "lucide-react";
 
 import { ImportWorkflowSection } from "@/components/onboarding/import-workflow-section";
 import { ImporterFeedbackCard } from "@/components/feedback";
@@ -29,11 +23,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   getImportAppPageBySlug,
@@ -143,9 +133,7 @@ function ImportAppPage({ page }) {
 
       <PageContainer className="pb-16">
         <PageHeader>
-          <PageHeaderHeading icon={Upload}>
-            {page.heroTitle}
-          </PageHeaderHeading>
+          <PageHeaderHeading icon={Upload}>{page.heroTitle}</PageHeaderHeading>
           <PageHeaderDescription>
             <p>
               {page.hookLine}. {page.heroDescription} Merge it with your other
@@ -159,15 +147,16 @@ function ImportAppPage({ page }) {
           <ImportWorkflowSection
             title={`Import from ${page.appName}`}
             description={`Preview the export first. Then save or merge ${page.appName} into the same Google Sheet you use for the rest of your lifting history.`}
+            sourceAppName={page.appName}
           />
         </div>
 
         {/* Privacy badge */}
         <p className="text-muted-foreground mx-auto -mt-8 mb-10 max-w-5xl text-center text-xs">
           <Shield className="mr-1 inline h-3.5 w-3.5 align-text-bottom" />
-          Your preview stays in your browser. If you choose to save it,
-          Strength Journeys writes it into a Google Sheet in your own Drive and
-          does not keep a server-side copy.
+          Your preview stays in your browser. If you choose to save it, Strength
+          Journeys writes it into a Google Sheet in your own Drive and does not
+          keep a server-side copy.
         </p>
 
         <div className="mx-auto max-w-5xl space-y-8">
@@ -175,7 +164,9 @@ function ImportAppPage({ page }) {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <h2 className="text-2xl font-semibold leading-none tracking-tight">Why move your {page.appName} data?</h2>
+                <h2 className="text-2xl leading-none font-semibold tracking-tight">
+                  Why move your {page.appName} data?
+                </h2>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm leading-7">
@@ -185,7 +176,9 @@ function ImportAppPage({ page }) {
             </Card>
             <Card>
               <CardHeader>
-                <h2 className="text-2xl font-semibold leading-none tracking-tight">What you get</h2>
+                <h2 className="text-2xl leading-none font-semibold tracking-tight">
+                  What you get
+                </h2>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 text-sm leading-6">
@@ -204,7 +197,7 @@ function ImportAppPage({ page }) {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <h2 className="text-2xl font-semibold leading-none tracking-tight">
+                <h2 className="text-2xl leading-none font-semibold tracking-tight">
                   How to export from {page.appName}
                 </h2>
               </CardHeader>
@@ -227,7 +220,9 @@ function ImportAppPage({ page }) {
 
             <Card>
               <CardHeader>
-                <h2 className="text-2xl font-semibold leading-none tracking-tight">{page.mergeTitle}</h2>
+                <h2 className="text-2xl leading-none font-semibold tracking-tight">
+                  {page.mergeTitle}
+                </h2>
               </CardHeader>
               <CardContent>
                 <div className="flex items-start gap-3 rounded-lg border p-4">
@@ -248,7 +243,7 @@ function ImportAppPage({ page }) {
                 <div>
                   <Link
                     href={page.articleLink.href}
-                    className="text-primary hover:underline font-semibold"
+                    className="text-primary font-semibold hover:underline"
                   >
                     {page.articleLink.title}
                   </Link>
@@ -263,7 +258,9 @@ function ImportAppPage({ page }) {
           {/* FAQ */}
           <Card>
             <CardHeader>
-              <h2 className="text-2xl font-semibold leading-none tracking-tight">Common questions</h2>
+              <h2 className="text-2xl leading-none font-semibold tracking-tight">
+                Common questions
+              </h2>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
@@ -279,7 +276,7 @@ function ImportAppPage({ page }) {
             </CardContent>
           </Card>
 
-          {/* Explicit feedback CTA — we can't test every export format ourselves */}
+          {/* Explicit feedback CTA for source-specific import surprises */}
           <ImporterFeedbackCard appName={page.appName} />
 
           {/* Bottom CTA — scroll to import */}
@@ -304,7 +301,9 @@ function ImportAppPage({ page }) {
           {/* Related apps */}
           <Card>
             <CardHeader>
-              <h2 className="text-2xl font-semibold leading-none tracking-tight">Importing from another app too?</h2>
+              <h2 className="text-2xl leading-none font-semibold tracking-tight">
+                Importing from another app too?
+              </h2>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {relatedPages.map((relatedPage) => (

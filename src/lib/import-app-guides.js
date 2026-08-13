@@ -14,35 +14,36 @@ export const IMPORT_APP_PAGES = [
     appName: "Hevy",
     title: "Import Hevy Data to Google Sheets | Strength Journeys",
     metaDescription:
-      "Export your Hevy workout history and see your strength progression instantly. PRs, trends, and progression charts, all from one CSV upload.",
-    heroTitle: "Bring Your Hevy History to Life",
-    hookLine: "The PRs hiding in your Hevy data",
+      "Upload a Hevy workout CSV in kg or lb to preview weighted sets, PRs, volume trends, and long-term strength progression. No account required.",
+    heroTitle: "Turn Your Hevy Export Into a Strength Timeline",
+    hookLine: "Your Hevy history, made useful beyond the app",
     heroDescription:
-      "Drop your Hevy export and see every PR and trend instantly.",
+      "Upload your workout CSV to preview weighted sets, PRs, and volume trends.",
     cardDescription:
-      "Switching apps? See the analytics Hevy never showed you.",
+      "Switching apps? Keep your Hevy lifting history useful and portable.",
     whyItMatters:
-      "Hevy is great for logging, but your training history deserves more than a locked database. Once your data is here, you can visualize years of progress, spot trends Hevy doesn't show you, and keep a permanent copy in your own Google Sheet that no app can take away.",
+      "Hevy gives you a useful workout export. Strength Journeys turns its weighted, rep-based sets into progression charts, PR history, and volume trends, while keeping a readable copy in a Google Sheet you control.",
     exportSteps: [
       "In Hevy, open Profile → Settings → Export & Import Data.",
-      "Tap Export Data and save the CSV file.",
-      "Drop the file on the Strength Journeys import page.",
-      "Instantly see your strength dashboard, or sign in to save it to your own Google Sheet.",
+      "Tap Export Data → Export Workouts, then save the CSV file.",
+      "Upload the file here and review the imported sets and any rows that could not be converted.",
+      "Explore the preview, or sign in to save it to your own Google Sheet.",
     ],
     whatYouGet: [
-      "Progression charts, volume trends, and analytics that go deeper than Hevy's built-in stats.",
-      "Automatic PR detection across every lift and rep range, including ones you forgot about.",
+      "Progression charts and volume trends built from Hevy's weighted, rep-based sets.",
+      "Automatic PR detection across imported lifts and rep ranges.",
+      "Support for both metric and imperial Hevy workout exports.",
       "Merge with Strong, Wodify, BTWB, or any other app into one unified timeline.",
       "A Google Sheet you control: edit, share with a coach, or back up whenever you want.",
     ],
     mergeTitle: "Already used other apps too?",
     mergeBody:
-      "Most lifters have history scattered across two or three apps. Just import each file. We normalize the data, skip duplicates, and merge everything into one timeline. Your years of training finally live in one place.",
+      "Most lifters have history scattered across two or three apps. Import each file and review the preview. We normalize compatible lift names, preserve readable source details, and skip matching sets before anything is merged.",
     faqItems: [
       {
         question: "How do I export my data from Hevy?",
         answer:
-          "Open Hevy → Profile → Settings → Export & Import Data → Export Data. Save the CSV file, then upload it here.",
+          "Open Hevy → Profile → Settings → Export & Import Data → Export Data → Export Workouts. Save the CSV file, then upload it here.",
       },
       {
         question: "Do I need an account to see my data?",
@@ -57,7 +58,7 @@ export const IMPORT_APP_PAGES = [
       {
         question: "How can I merge my Hevy and Strong app history?",
         answer:
-          "Export your Hevy data and your Strong CSV, then upload one file at a time. Strength Journeys previews each import, normalizes the lift names, skips duplicate sessions, and can save the merged Hevy and Strong history into one Google Sheet you own.",
+          "Export your Hevy workout data and your Strong CSV, then upload one file at a time. Strength Journeys previews each import, preserves readable source details, and skips matching sets before saving the combined history into one Google Sheet you own.",
       },
       {
         question: "What happens to my data?",
@@ -123,7 +124,8 @@ export const IMPORT_APP_PAGES = [
     metaDescription:
       "Export your StrongLifts 5x5 workout history and see your full linear progression instantly. PRs, plateaus, and comeback arcs in seconds. No account required.",
     heroTitle: "Your StrongLifts 5x5 Data Deserves a Real Strength Chart",
-    hookLine: "Linear progression is more interesting than the StrongLifts chart shows",
+    hookLine:
+      "Linear progression is more interesting than the StrongLifts chart shows",
     heroDescription:
       "Drop your StrongLifts 5x5 export and finally see every PR, every stall, and every comeback in one timeline.",
     cardDescription:

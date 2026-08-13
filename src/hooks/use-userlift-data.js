@@ -167,6 +167,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [importedParsedData, setImportedParsedData] = useState(null);
   const [importedFormatName, setImportedFormatName] = useState(null);
   const [importedFileName, setImportedFileName] = useState(null);
+  const [importedDiagnostics, setImportedDiagnostics] = useState(null);
 
   useIsomorphicLayoutEffect(() => {
     try {
@@ -179,6 +180,12 @@ export const UserLiftingDataProvider = ({ children }) => {
         setImportedFileName(
           sessionStorage.getItem("sj_importedFileName") || null,
         );
+        const storedDiagnostics = sessionStorage.getItem(
+          "sj_importedDiagnostics",
+        );
+        setImportedDiagnostics(
+          storedDiagnostics ? JSON.parse(storedDiagnostics) : null,
+        );
       }
     } catch {
       // sessionStorage unavailable or corrupt — stay with null
@@ -186,15 +193,28 @@ export const UserLiftingDataProvider = ({ children }) => {
   }, []);
 
   const importFile = useCallback(async (file) => {
-    const { data: parsed, formatName } = await parseImportedFile(file);
+    const {
+      data: parsed,
+      formatName,
+      diagnostics,
+    } = await parseImportedFile(file);
     const processed = markHigherWeightAsHistoricalPRs(parsed);
     setImportedParsedData(processed);
     setImportedFormatName(formatName);
     setImportedFileName(file?.name || null);
+    setImportedDiagnostics(diagnostics);
     try {
       sessionStorage.setItem("sj_importedData", JSON.stringify(processed));
       sessionStorage.setItem("sj_importedFormat", formatName);
       sessionStorage.setItem("sj_importedFileName", file?.name || "");
+      if (diagnostics) {
+        sessionStorage.setItem(
+          "sj_importedDiagnostics",
+          JSON.stringify(diagnostics),
+        );
+      } else {
+        sessionStorage.removeItem("sj_importedDiagnostics");
+      }
     } catch {
       // sessionStorage full or unavailable — data still works for this session
     }
@@ -203,6 +223,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       formatName,
       fileName: file?.name || null,
       entries: processed,
+      diagnostics,
     };
   }, []);
 
@@ -210,10 +231,12 @@ export const UserLiftingDataProvider = ({ children }) => {
     setImportedParsedData(null);
     setImportedFormatName(null);
     setImportedFileName(null);
+    setImportedDiagnostics(null);
     try {
       sessionStorage.removeItem("sj_importedData");
       sessionStorage.removeItem("sj_importedFormat");
       sessionStorage.removeItem("sj_importedFileName");
+      sessionStorage.removeItem("sj_importedDiagnostics");
     } catch {
       // ignore
     }
@@ -595,6 +618,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         isImportedData,
         importedFormatName,
         importedFileName,
+        importedDiagnostics,
         isReturningUserLoading,
         parseError,
         liftTypes,

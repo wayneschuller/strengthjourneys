@@ -1,0 +1,4 @@
+title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe
+Upper A,"28 Mar 2025, 17:29","28 Mar 2025, 18:45",,Bench Press (Barbell),,Go heavy,0,warmup,45,10,,,6
+Upper A,"28 Mar 2025, 17:29","28 Mar 2025, 18:45",,Bench Press (Barbell),,,1,normal,185,8,,,8
+Upper A,"28 Mar 2025, 17:29","28 Mar 2025, 18:45",,Bench Press (Dumbbell),,,0,normal,65,10,,,8

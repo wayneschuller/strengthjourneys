@@ -1,8 +1,13 @@
 import { recordTiming } from "@/lib/processing-utils";
 import {
+  isBodyweightLoadLiftName,
   isValidLiftWeight,
   normalizeLiftTypeNames,
 } from "@/lib/data-sources/parser-utilities";
+import {
+  buildHevySetProvenance,
+  buildVisibleImportProvenance,
+} from "@/lib/import/provenance";
 
 const HEVY_MONTHS = {
   jan: 1,
@@ -19,18 +24,40 @@ const HEVY_MONTHS = {
   dec: 12,
 };
 
-function getColumnIndex(headers, name) {
-  return headers.indexOf(name);
+function normalizeHeader(header) {
+  return String(header || "")
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .toLowerCase();
+}
+
+function getColumnIndex(headers, ...names) {
+  const normalizedHeaders = headers.map(normalizeHeader);
+  return normalizedHeaders.findIndex((header) => names.includes(header));
 }
 
 function parseNumber(value) {
-  const parsed = Number.parseFloat(String(value ?? "").trim());
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
 function parseInteger(value) {
-  const parsed = Number.parseInt(String(value || "").trim(), 10);
-  return Number.isFinite(parsed) ? parsed : null;
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return null;
+  const parsed = Number(raw);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+function isValidCalendarDate(year, month, day) {
+  if (!year || !month || !day) return false;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
 }
 
 function normalizeHevyDate(dateTimeString) {
@@ -49,28 +76,56 @@ function normalizeHevyDate(dateTimeString) {
       year += year < 71 ? 2000 : 1900;
     }
 
-    if (day && month && year) {
+    if (isValidCalendarDate(year, month, day)) {
       return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     }
+    return null;
   }
 
   const isoLikeMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (isoLikeMatch) {
-    return `${isoLikeMatch[1]}-${isoLikeMatch[2]}-${isoLikeMatch[3]}`;
+    const year = Number(isoLikeMatch[1]);
+    const month = Number(isoLikeMatch[2]);
+    const day = Number(isoLikeMatch[3]);
+    return isValidCalendarDate(year, month, day)
+      ? `${isoLikeMatch[1]}-${isoLikeMatch[2]}-${isoLikeMatch[3]}`
+      : null;
   }
 
-  const native = new Date(raw);
-  if (Number.isNaN(native.getTime())) return null;
+  // Unknown formats are reported to the user instead of relying on the
+  // browser's locale- and timezone-dependent Date parser.
+  return null;
+}
 
-  return `${native.getFullYear()}-${String(native.getMonth() + 1).padStart(2, "0")}-${String(native.getDate()).padStart(2, "0")}`;
+function getHevyTime(dateTimeString) {
+  const raw = String(dateTimeString || "").trim();
+  const monthNameTime = raw.match(/,\s*(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  const isoTime = raw.match(/[T\s](\d{2}):(\d{2})(?::\d{2})?/);
+  const match = monthNameTime || isoTime;
+  if (!match) return null;
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 function normalizeHevyLiftType(rawLiftType) {
   const cleaned = String(rawLiftType || "")
-    .replace(/\s*\([^)]*\)\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   if (!cleaned) return null;
+
+  const explicitBarbellAliases = {
+    "bench press (barbell)": "Bench Press",
+    "deadlift (barbell)": "Deadlift",
+    "overhead press (barbell)": "Strict Press",
+    "military press (barbell)": "Strict Press",
+    "squat (barbell)": "Back Squat",
+  };
+  const explicitAlias = explicitBarbellAliases[cleaned.toLowerCase()];
+  if (explicitAlias) return explicitAlias;
+
   return normalizeLiftTypeNames(cleaned);
 }
 
@@ -84,35 +139,126 @@ function buildNotes(...parts) {
   return unique.length > 0 ? unique.join(" | ") : undefined;
 }
 
+function buildHevyNotes({
+  time,
+  exerciseNotes,
+  workoutDescription,
+  setType,
+  rpe,
+  workoutTitle,
+  setIndex,
+  importProvenance,
+}) {
+  const details = buildNotes(
+    exerciseNotes,
+    workoutDescription,
+    setType && setType.toLowerCase() !== "normal"
+      ? `Set type: ${setType}`
+      : null,
+    rpe !== "" && rpe != null ? `RPE ${rpe}` : null,
+    buildHevySetProvenance(workoutTitle, setIndex),
+    importProvenance,
+  );
+
+  if (!time) return details;
+  return details ? `${time} ${details}` : time;
+}
+
+function incrementReason(reasons, reason) {
+  reasons[reason] = (reasons[reason] || 0) + 1;
+}
+
 // Parse Hevy workout CSV exports.
 //
 // Publicly documented/community-observed Hevy exports are one row per set and
-// use `weight_kg`, `reps`, and `exercise_title` columns.
-export function parseHevyData(data) {
+// expose either metric (`weight_kg`) or imperial (`weight_lbs`) load columns.
+export function parseHevyData(data, { importedAt = new Date() } = {}) {
   const startTime = performance.now();
   const headers = data[0] || [];
   const startTimeColumnIndex = getColumnIndex(headers, "start_time");
   const exerciseTitleColumnIndex = getColumnIndex(headers, "exercise_title");
-  const weightColumnIndex = getColumnIndex(headers, "weight_kg");
+  const weightKgColumnIndex = getColumnIndex(headers, "weight_kg");
+  const weightLbColumnIndex = getColumnIndex(
+    headers,
+    "weight_lbs",
+    "weight_lb",
+  );
+  const weightColumnIndex =
+    weightKgColumnIndex >= 0 ? weightKgColumnIndex : weightLbColumnIndex;
+  const unitType = weightKgColumnIndex >= 0 ? "kg" : "lb";
   const repsColumnIndex = getColumnIndex(headers, "reps");
+  const workoutTitleColumnIndex = getColumnIndex(headers, "title");
   const workoutDescriptionColumnIndex = getColumnIndex(headers, "description");
   const exerciseNotesColumnIndex = getColumnIndex(headers, "exercise_notes");
+  const setIndexColumnIndex = getColumnIndex(headers, "set_index");
   const setTypeColumnIndex = getColumnIndex(headers, "set_type");
   const rpeColumnIndex = getColumnIndex(headers, "rpe");
+  const distanceColumnIndex = getColumnIndex(
+    headers,
+    "distance_km",
+    "distance_miles",
+    "distance_meters",
+  );
+  const durationColumnIndex = getColumnIndex(headers, "duration_seconds");
 
   const parsedData = [];
+  const skippedByReason = {};
+  const acceptedWorkouts = new Set();
+  const anchoredWorkouts = new Set();
+  let sourceRows = 0;
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (!row || row.length === 0) continue;
+    if (!row || row.length === 0 || row.every((cell) => cell === "")) continue;
+    sourceRows++;
 
-    const date = normalizeHevyDate(row[startTimeColumnIndex]);
+    const rawStartTime = row[startTimeColumnIndex];
+    const date = normalizeHevyDate(rawStartTime);
+    const time = getHevyTime(rawStartTime);
     const liftType = normalizeHevyLiftType(row[exerciseTitleColumnIndex]);
     const reps = parseInteger(row[repsColumnIndex]);
-    const weight = parseNumber(row[weightColumnIndex]);
+    const parsedWeight = parseNumber(row[weightColumnIndex]);
+    const weight =
+      parsedWeight == null && isBodyweightLoadLiftName(liftType)
+        ? 0
+        : parsedWeight;
 
-    if (!date || !liftType) continue;
-    if (!reps || reps <= 0 || !isValidLiftWeight(liftType, weight)) continue;
+    if (!date) {
+      incrementReason(skippedByReason, "invalidDate");
+      continue;
+    }
+    if (!liftType) {
+      incrementReason(skippedByReason, "missingExercise");
+      continue;
+    }
+    if (!reps || reps <= 0) {
+      const hasDurationOrDistance =
+        parseNumber(row[durationColumnIndex]) != null ||
+        parseNumber(row[distanceColumnIndex]) != null;
+      incrementReason(
+        skippedByReason,
+        hasDurationOrDistance ? "unsupportedDurationOrDistance" : "missingReps",
+      );
+      continue;
+    }
+    if (!isValidLiftWeight(liftType, weight)) {
+      incrementReason(
+        skippedByReason,
+        parsedWeight == null ? "missingWeight" : "invalidWeight",
+      );
+      continue;
+    }
+
+    const workoutTitle = String(
+      row[workoutTitleColumnIndex] || "Workout",
+    ).trim();
+    const workoutKey = `${String(rawStartTime || "").trim()}|${workoutTitle}`;
+    const isWorkoutAnchor = !anchoredWorkouts.has(workoutKey);
+    const importProvenance = isWorkoutAnchor
+      ? buildVisibleImportProvenance("Hevy", importedAt)
+      : null;
+    anchoredWorkouts.add(workoutKey);
+    acceptedWorkouts.add(workoutKey);
 
     parsedData.push({
       date,
@@ -121,15 +267,17 @@ export function parseHevyData(data) {
         String(row[exerciseTitleColumnIndex] || "").trim() || undefined,
       reps,
       weight,
-      unitType: "kg",
-      notes: buildNotes(
-        row[exerciseNotesColumnIndex],
-        row[workoutDescriptionColumnIndex],
-        row[setTypeColumnIndex] && row[setTypeColumnIndex] !== "normal"
-          ? `Set type: ${row[setTypeColumnIndex]}`
-          : null,
-        row[rpeColumnIndex] ? `RPE ${row[rpeColumnIndex]}` : null,
-      ),
+      unitType,
+      notes: buildHevyNotes({
+        time,
+        exerciseNotes: row[exerciseNotesColumnIndex],
+        workoutDescription: row[workoutDescriptionColumnIndex],
+        setType: String(row[setTypeColumnIndex] || "").trim(),
+        rpe: row[rpeColumnIndex],
+        workoutTitle,
+        setIndex: parseInteger(row[setIndexColumnIndex]),
+        importProvenance,
+      }),
     });
   }
 
@@ -140,6 +288,18 @@ export function parseHevyData(data) {
     performance.now() - startTime,
     `${parsedData.length} lifts`,
   );
+
+  Object.defineProperty(parsedData, "importDiagnostics", {
+    value: {
+      sourceRows,
+      parsedRows: parsedData.length,
+      skippedRows: sourceRows - parsedData.length,
+      skippedByReason,
+      workoutCount: acceptedWorkouts.size,
+      unitType,
+    },
+    enumerable: false,
+  });
 
   return parsedData;
 }

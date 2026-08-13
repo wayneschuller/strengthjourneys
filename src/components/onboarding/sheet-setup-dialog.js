@@ -886,33 +886,48 @@ export function SheetSetupDialog() {
     setIsProvisionActionLoading(true);
     try {
       const importedEntries = parsedData.filter((entry) => !entry.isGoal);
-      const { newEntries, skippedCount } = deduplicateImportedEntries(
-        importedEntries,
-        sheetParsedData,
-      );
+      const { newEntries, skippedCount, conflictCount } =
+        deduplicateImportedEntries(importedEntries, sheetParsedData);
 
       if (newEntries.length === 0) {
         toast({
-          title: "Nothing new to merge",
-          description: `All ${skippedCount} entries already exist in your sheet.`,
+          title:
+            conflictCount > 0
+              ? "Changed sets need review"
+              : "Nothing new to merge",
+          description:
+            conflictCount > 0
+              ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} the same Hevy source details but different lifting data. Nothing was overwritten.`
+              : `All ${skippedCount} entries already exist in your sheet.`,
+          ...(conflictCount > 0 ? { variant: "destructive" } : {}),
         });
         return;
       }
 
-      const payload = await writeEntriesToSheet(sheetInfo.ssid, newEntries, importedFormatName);
-      clearImportedData();
+      const payload = await writeEntriesToSheet(
+        sheetInfo.ssid,
+        newEntries,
+        importedFormatName,
+      );
       mutate();
-      setOpen(false);
-      resetUiState();
+      if (conflictCount === 0) {
+        clearImportedData();
+        setOpen(false);
+        resetUiState();
+      }
 
       const skippedNote =
         skippedCount > 0
           ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
           : "";
+      const conflictNote =
+        conflictCount > 0
+          ? ` Left ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} untouched for review.`
+          : "";
 
       toast({
         title: "Preview merged into your sheet",
-        description: `Added ${payload.insertedRows} rows across ${payload.dateCount} date${payload.dateCount === 1 ? "" : "s"}.${skippedNote}`,
+        description: `Added ${payload.insertedRows} rows across ${payload.dateCount} date${payload.dateCount === 1 ? "" : "s"}.${skippedNote}${conflictNote}`,
       });
     } catch (error) {
       toast({
@@ -977,6 +992,7 @@ export function SheetSetupDialog() {
         const payload = await writeEntriesToSheet(
           linkPayload.ssid,
           importedEntries,
+          importedFormatName,
         );
         const nextSheetInfo = {
           ssid: linkPayload.ssid,
@@ -1036,6 +1052,7 @@ export function SheetSetupDialog() {
       handleActionFailure,
       hadLocalSheetBefore,
       importedFileName,
+      importedFormatName,
       mutate,
       parsedData,
       reportOnboardingEvent,
@@ -1822,11 +1839,7 @@ function CreatedSheetPanel({
         </div>
       ) : null}
       <div className="flex justify-center">
-        <Button
-          size="lg"
-          className="gap-2 shadow-sm"
-          onClick={onGoToDashboard}
-        >
+        <Button size="lg" className="gap-2 shadow-sm" onClick={onGoToDashboard}>
           Go to Home Dashboard
           <ArrowRight className="h-4 w-4" />
         </Button>

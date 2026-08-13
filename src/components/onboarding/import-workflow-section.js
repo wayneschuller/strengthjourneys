@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import {
   ArrowRight,
+  AlertTriangle,
   CheckCircle2,
   FileUp,
   Layers,
@@ -86,6 +87,44 @@ function clampFileName(rawName) {
   return `${base}${extension}`;
 }
 
+const IMPORT_SKIP_REASON_LABELS = {
+  invalidDate: "invalid dates",
+  missingExercise: "missing exercise names",
+  missingReps: "missing or invalid reps",
+  missingWeight: "missing loads",
+  invalidWeight: "invalid loads",
+  unsupportedDurationOrDistance: "duration or distance-only sets",
+};
+
+function ImportDiagnosticsNotice({ diagnostics }) {
+  if (!diagnostics?.skippedRows) return null;
+
+  const reasonSummary = Object.entries(diagnostics.skippedByReason || {})
+    .filter(([, count]) => count > 0)
+    .map(
+      ([reason, count]) =>
+        `${count.toLocaleString()} ${IMPORT_SKIP_REASON_LABELS[reason] || "unsupported rows"}`,
+    )
+    .join(", ");
+
+  return (
+    <div className="mt-4 flex w-full items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50/50 p-3 text-left dark:border-amber-500/30 dark:bg-amber-500/5">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
+      <div className="text-sm">
+        <p className="font-medium">
+          Imported {diagnostics.parsedRows.toLocaleString()} of{" "}
+          {diagnostics.sourceRows.toLocaleString()} set rows
+        </p>
+        <p className="text-muted-foreground mt-1 leading-5">
+          {diagnostics.skippedRows.toLocaleString()} could not become weighted,
+          rep-based Strength Journeys entries
+          {reasonSummary ? `: ${reasonSummary}.` : "."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function getMotivationalPhrase(percentile) {
   if (percentile >= 95) return "You're in rare company. Elite strength.";
   if (percentile >= 85) return "Seriously strong. Most people never get here.";
@@ -134,11 +173,11 @@ function SinglePercentileRing({ percentile }) {
         <span className="text-muted-foreground text-[10px] leading-snug">
           Stronger than
         </span>
-        <span className="text-3xl font-bold leading-none tabular-nums">
+        <span className="text-3xl leading-none font-bold tabular-nums">
           {percentile}%
         </span>
         <span
-          className="mt-0.5 text-[10px] font-semibold leading-snug"
+          className="mt-0.5 text-[10px] leading-snug font-semibold"
           style={{ color: "var(--chart-1)" }}
         >
           of Gen. Pop.
@@ -148,7 +187,7 @@ function SinglePercentileRing({ percentile }) {
   );
 }
 
-function ImportHero({ parsedData, fileName, formatName }) {
+function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
   const { topLiftsByTypeAndReps } = useUserLiftingData();
 
@@ -159,13 +198,14 @@ function ImportHero({ parsedData, fileName, formatName }) {
     const dates = [...new Set(entries.map((e) => e.date))].sort();
     const liftTypes = new Set(entries.map((e) => e.liftType));
     return {
-      sessionCount: dates.length,
+      activityCount: diagnostics?.workoutCount || dates.length,
+      activityLabel: diagnostics?.workoutCount ? "workouts" : "training days",
       totalSets: entries.length,
       exerciseCount: liftTypes.size,
       first: dates[0],
       last: dates[dates.length - 1],
     };
-  }, [parsedData]);
+  }, [diagnostics?.workoutCount, parsedData]);
 
   const strength = useMemo(() => {
     if (!topLiftsByTypeAndReps) return null;
@@ -181,7 +221,9 @@ function ImportHero({ parsedData, fileName, formatName }) {
     })) {
       const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
       liftKgs[key] =
-        best.bestE1RMWeight > 0 ? toKg(best.bestE1RMWeight, best.unitType) : null;
+        best.bestE1RMWeight > 0
+          ? toKg(best.bestE1RMWeight, best.unitType)
+          : null;
     }
 
     if (!liftKgs.squat && !liftKgs.bench && !liftKgs.deadlift) return null;
@@ -267,8 +309,10 @@ function ImportHero({ parsedData, fileName, formatName }) {
             We parsed{" "}
             <span className="text-foreground font-medium">{displayName}</span>{" "}
             and found{" "}
-            <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
-            sessions across{" "}
+            <strong className="text-foreground">
+              {stats.activityCount.toLocaleString()}
+            </strong>{" "}
+            {stats.activityLabel} across{" "}
             <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
             exercises.
           </p>
@@ -276,8 +320,10 @@ function ImportHero({ parsedData, fileName, formatName }) {
         {!displayName && (
           <p>
             We found{" "}
-            <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
-            sessions across{" "}
+            <strong className="text-foreground">
+              {stats.activityCount.toLocaleString()}
+            </strong>{" "}
+            {stats.activityLabel} across{" "}
             <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
             exercises.
           </p>
@@ -288,9 +334,12 @@ function ImportHero({ parsedData, fileName, formatName }) {
         </p>
         <p>
           That&apos;s{" "}
-          <strong className="text-foreground">{stats.totalSets.toLocaleString()}</strong>{" "}
+          <strong className="text-foreground">
+            {stats.totalSets.toLocaleString()}
+          </strong>{" "}
           sets of work.
         </p>
+        <ImportDiagnosticsNotice diagnostics={diagnostics} />
       </div>
 
       {/* Strength rating row */}
@@ -323,13 +372,13 @@ function ImportHero({ parsedData, fileName, formatName }) {
             </p>
             {thousandClub.biggestOpportunity && !thousandClub.inClub && (
               <p className="text-muted-foreground mt-0.5 text-sm">
-                <span className="font-semibold text-foreground">
+                <span className="text-foreground font-semibold">
                   Biggest opportunity:
                 </span>{" "}
                 Add ~{thousandClub.biggestOpportunity.gapLbs} lb (
                 {Math.round(thousandClub.biggestOpportunity.gapLbs * 0.453592)}{" "}
-                kg) to your{" "}
-                {thousandClub.biggestOpportunity.lift.toLowerCase()}.
+                kg) to your {thousandClub.biggestOpportunity.lift.toLowerCase()}
+                .
               </p>
             )}
           </div>
@@ -430,9 +479,7 @@ function ImportedDataOverview({ parsedData, label }) {
           : bestSet.weight;
         const displayE1RM = needsConversion
           ? Math.round(
-              preferredUnit === "kg"
-                ? bestE1RM / 2.2046
-                : bestE1RM * 2.2046,
+              preferredUnit === "kg" ? bestE1RM / 2.2046 : bestE1RM * 2.2046,
             )
           : bestE1RM;
         return {
@@ -489,32 +536,34 @@ function ImportedDataOverview({ parsedData, label }) {
     <div className="mt-4 w-full text-left">
       {/* Summary line — only shown when label is set (merge preview) since
           the ImportHero already covers these stats for the main view */}
-      {label && <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
-        <span>
-          <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
-          sessions
-        </span>
-        <span aria-hidden="true" className="text-border">
-          &bull;
-        </span>
-        <span>
-          <strong className="text-foreground">{stats.totalSets}</strong> sets
-        </span>
-        <span aria-hidden="true" className="text-border">
-          &bull;
-        </span>
-        <span>
-          <strong className="text-foreground">{stats.liftTypeCount}</strong>{" "}
-          exercises
-        </span>
-        <span aria-hidden="true" className="text-border">
-          &bull;
-        </span>
-        <span>
-          {getReadableDateShort(stats.dateRange.first)} to{" "}
-          {getReadableDateShort(stats.dateRange.last)}
-        </span>
-      </div>}
+      {label && (
+        <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
+          <span>
+            <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
+            sessions
+          </span>
+          <span aria-hidden="true" className="text-border">
+            &bull;
+          </span>
+          <span>
+            <strong className="text-foreground">{stats.totalSets}</strong> sets
+          </span>
+          <span aria-hidden="true" className="text-border">
+            &bull;
+          </span>
+          <span>
+            <strong className="text-foreground">{stats.liftTypeCount}</strong>{" "}
+            exercises
+          </span>
+          <span aria-hidden="true" className="text-border">
+            &bull;
+          </span>
+          <span>
+            {getReadableDateShort(stats.dateRange.first)} to{" "}
+            {getReadableDateShort(stats.dateRange.last)}
+          </span>
+        </div>
+      )}
 
       {/* Two-column layout: heatmaps + top lifts */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -538,38 +587,35 @@ function ImportedDataOverview({ parsedData, label }) {
               className="max-h-[39vh] overflow-y-auto pr-1"
             >
               <div className="flex flex-col gap-2">
-              {yearIntervals.map((interval) => {
-                const isCurrentYear =
-                  interval.year === new Date().getFullYear();
-                return (
-                  <div
-                    key={interval.year}
-                    className="flex items-start gap-3"
-                  >
-                    <span
-                      className={`shrink-0 pt-1 text-right text-xs tabular-nums ${
-                        isCurrentYear
-                          ? "text-foreground font-semibold"
-                          : "text-muted-foreground/70"
-                      }`}
-                      style={{ width: 36 }}
-                    >
-                      {interval.year}
-                    </span>
-                    <div
-                      className={`min-w-0 flex-1 ${isCurrentYear ? "" : "opacity-80"}`}
-                    >
-                      <DailyTrainingHeatmap
-                        parsedData={parsedData}
-                        startDate={interval.startDate}
-                        endDate={interval.endDate}
-                        isSharing={false}
-                        showMonthLabels={true}
-                      />
+                {yearIntervals.map((interval) => {
+                  const isCurrentYear =
+                    interval.year === new Date().getFullYear();
+                  return (
+                    <div key={interval.year} className="flex items-start gap-3">
+                      <span
+                        className={`shrink-0 pt-1 text-right text-xs tabular-nums ${
+                          isCurrentYear
+                            ? "text-foreground font-semibold"
+                            : "text-muted-foreground/70"
+                        }`}
+                        style={{ width: 36 }}
+                      >
+                        {interval.year}
+                      </span>
+                      <div
+                        className={`min-w-0 flex-1 ${isCurrentYear ? "" : "opacity-80"}`}
+                      >
+                        <DailyTrainingHeatmap
+                          parsedData={parsedData}
+                          startDate={interval.startDate}
+                          endDate={interval.endDate}
+                          isSharing={false}
+                          showMonthLabels={true}
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -582,22 +628,21 @@ function ImportedDataOverview({ parsedData, label }) {
           </p>
           <div className="space-y-2">
             {stats.topLifts.map((lift) => {
-              const strengthRating =
-                hasBio
-                  ? (() => {
-                      const standard = getStandardForLiftDate(
-                        age,
-                        lift.date,
-                        bodyWeight,
-                        sex,
-                        lift.name,
-                        isMetric,
-                      );
-                      return standard
-                        ? getStrengthRatingForE1RM(lift.bestE1RM, standard)
-                        : null;
-                    })()
-                  : null;
+              const strengthRating = hasBio
+                ? (() => {
+                    const standard = getStandardForLiftDate(
+                      age,
+                      lift.date,
+                      bodyWeight,
+                      sex,
+                      lift.name,
+                      isMetric,
+                    );
+                    return standard
+                      ? getStrengthRatingForE1RM(lift.bestE1RM, standard)
+                      : null;
+                  })()
+                : null;
 
               const svgPath = getLiftSvgPath(lift.name);
               const liftUrl = getLiftDetailUrl(lift.name);
@@ -652,7 +697,8 @@ function ImportedDataOverview({ parsedData, label }) {
                             variant={getRatingBadgeVariant(strengthRating)}
                             className="inline-flex items-center gap-1"
                           >
-                            {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
+                            {STRENGTH_LEVEL_EMOJI[strengthRating]}{" "}
+                            {strengthRating}
                           </Badge>
                         </Link>
                       </div>
@@ -679,6 +725,7 @@ const DEFAULT_IMPORT_DESCRIPTION =
 export function ImportWorkflowSection({
   title = "Import from Another App",
   description = DEFAULT_IMPORT_DESCRIPTION,
+  sourceAppName = null,
 }) {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -693,6 +740,7 @@ export function ImportWorkflowSection({
     isImportedData,
     importedFormatName,
     importedFileName,
+    importedDiagnostics,
     sheetParsedData,
   } = useUserLiftingData();
 
@@ -724,11 +772,14 @@ export function ImportWorkflowSection({
       setImporting(true);
       setImportError(null);
       try {
-        const { count, formatName } = await importFile(file);
+        const { count, formatName, diagnostics } = await importFile(file);
+        const skippedNote = diagnostics?.skippedRows
+          ? ` ${diagnostics.skippedRows} unsupported row${diagnostics.skippedRows === 1 ? " was" : "s were"} left out.`
+          : "";
 
         toast({
           title: "Data loaded!",
-          description: `Parsed ${count} entries from ${formatName} format.`,
+          description: `Parsed ${count} entries from ${formatName} format.${skippedNote}`,
         });
       } catch (err) {
         setImportError(err.message);
@@ -755,47 +806,56 @@ export function ImportWorkflowSection({
 
   const onDragLeave = useCallback(() => setDragOver(false), []);
 
-  const writeEntriesToSheet = useCallback(async (targetSsid, entries) => {
-    const apiEntries = entries.map((entry) => ({
-      date: entry.date,
-      liftType: entry.liftType,
-      reps: entry.reps,
-      weight: entry.weight,
-      unitType: entry.unitType || "kg",
-      ...(entry.notes ? { notes: entry.notes } : {}),
-    }));
+  const writeEntriesToSheet = useCallback(
+    async (targetSsid, entries) => {
+      const apiEntries = entries.map((entry) => ({
+        date: entry.date,
+        liftType: entry.liftType,
+        reps: entry.reps,
+        weight: entry.weight,
+        unitType: entry.unitType || "kg",
+        ...(entry.notes ? { notes: entry.notes } : {}),
+      }));
 
-    const res = await postImportHistory(
-      { ssid: targetSsid, entries: apiEntries },
-      { source: "import_workflow", formatName: importedFormatName },
-    );
-    const data = await res.json();
+      const res = await postImportHistory(
+        { ssid: targetSsid, entries: apiEntries },
+        { source: "import_workflow", formatName: importedFormatName },
+      );
+      const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.error || "Failed to write data to sheet");
-    }
-    return data;
-  }, [importedFormatName]);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to write data to sheet");
+      }
+      return data;
+    },
+    [importedFormatName],
+  );
 
   const handleMerge = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
     if (isSheetComparisonPending) {
       toast({
         title: "Still checking your sheet",
-        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+        description:
+          "Wait a moment so Strength Journeys can compare this preview against your linked data.",
       });
       return;
     }
 
-    const { newEntries, skippedCount } = deduplicateImportedEntries(
-      parsedData,
-      sheetParsedData,
-    );
+    const { newEntries, skippedCount, conflictCount } =
+      deduplicateImportedEntries(parsedData, sheetParsedData);
 
     if (newEntries.length === 0) {
       toast({
-        title: "Nothing new to merge",
-        description: `All ${skippedCount} entries already exist in your linked sheet.`,
+        title:
+          conflictCount > 0
+            ? "Changed sets need review"
+            : "Nothing new to merge",
+        description:
+          conflictCount > 0
+            ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} the same Hevy source details but different lifting data. Nothing was overwritten.`
+            : `All ${skippedCount} entries already exist in your linked sheet.`,
+        ...(conflictCount > 0 ? { variant: "destructive" } : {}),
       });
       return;
     }
@@ -807,15 +867,21 @@ export function ImportWorkflowSection({
         skippedCount > 0
           ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
           : "";
+      const conflictNote =
+        conflictCount > 0
+          ? ` Left ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} untouched for review.`
+          : "";
 
       toast({
         title: "Data merged into your linked sheet!",
-        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}`,
+        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}${conflictNote}`,
       });
 
-      clearImportedData();
       mutate();
-      router.push("/");
+      if (conflictCount === 0) {
+        clearImportedData();
+        router.push("/");
+      }
     } catch (err) {
       toast({
         title: "Merge failed",
@@ -860,6 +926,7 @@ export function ImportWorkflowSection({
       parsedData?.filter((entry) => !entry.isGoal) ||
       [];
     const skippedCount = importAnalysis?.duplicateCount || 0;
+    const conflictCount = importAnalysis?.conflictCount || 0;
     const isFullyDuplicate =
       importAnalysis?.status === "already_in_linked_sheet";
     const isPartialOverlap = importAnalysis?.status === "partial_overlap";
@@ -889,12 +956,14 @@ export function ImportWorkflowSection({
                   parsedData={parsedData}
                   fileName={importedFileName}
                   formatName={importedFormatName}
+                  diagnostics={importedDiagnostics}
                 />
 
                 {showMerge && isFullyDuplicate && (
                   <p className="text-muted-foreground mb-4 text-sm">
-                    All {skippedCount} {skippedCount === 1 ? "entry" : "entries"}{" "}
-                    from this file already exist in your linked sheet.
+                    All {skippedCount}{" "}
+                    {skippedCount === 1 ? "entry" : "entries"} from this file
+                    already exist in your linked sheet.
                   </p>
                 )}
 
@@ -904,8 +973,8 @@ export function ImportWorkflowSection({
                       We&apos;ll create a new Google Sheet in your Drive and
                       populate it with your {entryCount}{" "}
                       {entryCount === 1 ? "entry" : "entries"}. This becomes
-                      your permanent lifting archive, ready for every future
-                      app import too.
+                      your permanent lifting archive, ready for every future app
+                      import too.
                     </p>
                     <Button
                       onClick={handleCreateSheetFromImport}
@@ -920,19 +989,34 @@ export function ImportWorkflowSection({
 
                 {showMerge && (
                   <div className="w-full space-y-3">
+                    {conflictCount > 0 && (
+                      <div className="mx-auto flex max-w-md items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50/50 p-3 text-left text-sm dark:border-amber-500/30 dark:bg-amber-500/5">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                        <p>
+                          {conflictCount} changed{" "}
+                          {conflictCount === 1 ? "set" : "sets"} share the same
+                          Hevy workout, exercise, time, and set number as data
+                          already in your Sheet. They will not be overwritten
+                          automatically.
+                        </p>
+                      </div>
+                    )}
                     <p className="text-muted-foreground mx-auto max-w-md text-sm">
                       {isSheetComparisonPending
                         ? "Checking your linked Strength Journeys sheet for duplicates before merge."
                         : isFullyDuplicate
-                        ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.`
-                        : isPartialOverlap
-                          ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Google Sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.`
-                          : `Merge this data into the Google Sheet you own.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}`}
+                          ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.`
+                          : isPartialOverlap
+                            ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Google Sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.${conflictCount > 0 ? ` ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} will be left untouched.` : ""}`
+                            : `Merge this data into the Google Sheet you own.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}${conflictCount > 0 ? ` ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} will be left untouched.` : ""}`}
                     </p>
                     {newEntries.length > 0 ? (
                       <>
                         {!isSheetComparisonPending && (
-                          <ImportedDataOverview parsedData={newEntries} label="new entries only" />
+                          <ImportedDataOverview
+                            parsedData={newEntries}
+                            label="new entries only"
+                          />
                         )}
                         <Button
                           onClick={handleMerge}
@@ -965,10 +1049,14 @@ export function ImportWorkflowSection({
                         const liftCounts = {};
                         for (const e of parsedData || []) {
                           if (e.isGoal) continue;
-                          liftCounts[e.liftType] = (liftCounts[e.liftType] || 0) + 1;
+                          liftCounts[e.liftType] =
+                            (liftCounts[e.liftType] || 0) + 1;
                         }
                         const bigFourMatch = bigFourLiftInsightData
-                          .map((b) => ({ ...b, count: liftCounts[b.liftType] || 0 }))
+                          .map((b) => ({
+                            ...b,
+                            count: liftCounts[b.liftType] || 0,
+                          }))
                           .filter((b) => b.count > 0)
                           .sort((a, b) => b.count - a.count)[0];
 
@@ -977,7 +1065,11 @@ export function ImportWorkflowSection({
                             <Button
                               variant="default"
                               size="sm"
-                              onClick={() => router.push(`/progress-guide/${bigFourMatch.slug}`)}
+                              onClick={() =>
+                                router.push(
+                                  `/progress-guide/${bigFourMatch.slug}`,
+                                )
+                              }
                             >
                               <TrendingUp className="mr-2 h-4 w-4" />
                               Your {bigFourMatch.liftType} Progress
@@ -1023,10 +1115,7 @@ export function ImportWorkflowSection({
                       <p className="text-muted-foreground mb-2 text-sm">
                         This preview will disappear when you close the tab.
                       </p>
-                      <GoogleSignInButton
-                        size="sm"
-                        cta="import_overview"
-                      >
+                      <GoogleSignInButton size="sm" cta="import_overview">
                         Save &amp; keep my progress
                       </GoogleSignInButton>
                       <p className="text-muted-foreground mt-1.5 text-xs">
@@ -1084,23 +1173,25 @@ export function ImportWorkflowSection({
             <>
               <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
               <h3 className="mb-2 font-semibold">
-                Drop your lifting history here
+                {sourceAppName
+                  ? `Drop your ${sourceAppName} workout export here`
+                  : "Drop your lifting history here"}
               </h3>
               <p className="text-muted-foreground mb-1 max-w-md text-sm">
                 {mergeMode ? (
-                  <>
-                    Preview your data before merging into your sheet.
-                  </>
+                  <>Preview your data before merging into your sheet.</>
                 ) : createMode ? (
                   "We'll create a Google Sheet in your Drive and populate it with your data, ready for every future import."
+                ) : sourceAppName ? (
+                  `Upload the workout export from ${sourceAppName}. We'll preview the weighted, rep-based sets before anything is saved.`
                 ) : (
                   "CSV or Excel from Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey, or any spreadsheet export. Bring every export home."
                 )}
               </p>
               {mergeMode && (
                 <p className="text-muted-foreground mb-3 max-w-md text-xs">
-                  We&apos;ll show you a full preview first - then you can
-                  choose to merge it into{" "}
+                  We&apos;ll show you a full preview first - then you can choose
+                  to merge it into{" "}
                   <strong className="text-foreground">
                     &ldquo;{sheetName}&rdquo;
                   </strong>
@@ -1116,10 +1207,9 @@ export function ImportWorkflowSection({
                   <span>Instant preview</span>
                 </p>
               )}
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <FileUp className="mr-2 h-4 w-4" /> Choose File
+              <Button onClick={() => fileInputRef.current?.click()}>
+                <FileUp className="mr-2 h-4 w-4" />{" "}
+                {sourceAppName ? `Choose ${sourceAppName} File` : "Choose File"}
               </Button>
               <input
                 ref={fileInputRef}

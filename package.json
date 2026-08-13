@@ -12,6 +12,7 @@
     "build:analyze": "next experimental-analyze",
     "start": "next start",
     "lint": "eslint src/",
+    "validate:hevy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-hevy-importer.mjs",
     "postbuild": "next-sitemap"
   },
   "dependencies": {

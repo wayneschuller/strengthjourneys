@@ -17,6 +17,10 @@ import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
 import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
+import {
+  buildVisibleImportProvenance,
+  hasVisibleImportProvenance,
+} from "@/lib/import/provenance";
 import { getServerSession } from "next-auth/next";
 import { gunzipSync } from "node:zlib";
 
@@ -67,10 +71,14 @@ function summarizeImportedEntries(entries = []) {
   let bigFourLiftCount = 0;
 
   for (const entry of entries) {
-    const liftType = typeof entry?.liftType === "string" ? entry.liftType.trim() : "";
+    const liftType =
+      typeof entry?.liftType === "string" ? entry.liftType.trim() : "";
     if (liftType) {
       const nextCount = (liftTypeCounts.get(liftType) || 0) + 1;
-      if (!liftTypeCounts.has(liftType) && BIG_FOUR_LIFT_TYPES.includes(liftType)) {
+      if (
+        !liftTypeCounts.has(liftType) &&
+        BIG_FOUR_LIFT_TYPES.includes(liftType)
+      ) {
         bigFourLiftCount += 1;
       }
       liftTypeCounts.set(liftType, nextCount);
@@ -79,7 +87,8 @@ function summarizeImportedEntries(entries = []) {
       }
     }
 
-    const unitType = typeof entry?.unitType === "string" ? entry.unitType.trim() : "";
+    const unitType =
+      typeof entry?.unitType === "string" ? entry.unitType.trim() : "";
     if (unitType) unitTypes.add(unitType);
 
     const date = typeof entry?.date === "string" ? entry.date.trim() : "";
@@ -112,8 +121,13 @@ function summarizeImportedEntries(entries = []) {
     unitSystem,
     dateCount: dateSet.size,
     dateRange:
-      minDate && maxDate ? (minDate === maxDate ? minDate : `${minDate} to ${maxDate}`) : null,
-    topLiftTypes: sortedLiftTypes.length > 0 ? sortedLiftTypes.join(", ") : null,
+      minDate && maxDate
+        ? minDate === maxDate
+          ? minDate
+          : `${minDate} to ${maxDate}`
+        : null,
+    topLiftTypes:
+      sortedLiftTypes.length > 0 ? sortedLiftTypes.join(", ") : null,
   };
 }
 
@@ -138,7 +152,9 @@ export default async function handler(req, res) {
     const payloadBytes = decodedBody.byteLength;
     logImportEvent("request_decoded", {
       compressedBytes: rawBody.byteLength,
-      compressedMegabytes: Number((rawBody.byteLength / (1024 * 1024)).toFixed(3)),
+      compressedMegabytes: Number(
+        (rawBody.byteLength / (1024 * 1024)).toFixed(3),
+      ),
       bytes: payloadBytes,
       megabytes: Number((payloadBytes / (1024 * 1024)).toFixed(3)),
       gzipped: isGzipped,
@@ -266,9 +282,12 @@ export default async function handler(req, res) {
       }
 
       // Build sheet rows (sparse encoding)
-      const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      const sourceName = formatName && formatName !== "unknown" ? formatName : "External";
-      const importTag = `(${sourceName} import to Strength Journeys ${today})`;
+      const sourceName =
+        formatName && formatName !== "unknown" ? formatName : "External";
+      const importTag = buildVisibleImportProvenance(sourceName, new Date());
+      const sourceAlreadyTagged = dateEntries.some((entry) =>
+        hasVisibleImportProvenance(entry.notes, sourceName),
+      );
       const rows = [];
       for (let li = 0; li < liftOrder.length; li++) {
         const liftType = liftOrder[li];
@@ -277,9 +296,10 @@ export default async function handler(req, res) {
           const s = sets[si];
           const isSessionAnchor = li === 0 && si === 0;
           const isLiftAnchor = si === 0 && li > 0;
-          const notes = isSessionAnchor
-            ? [s.notes, importTag].filter(Boolean).join(" ")
-            : s.notes || "";
+          const notes =
+            isSessionAnchor && !sourceAlreadyTagged
+              ? [s.notes, importTag].filter(Boolean).join(" ")
+              : s.notes || "";
           rows.push([
             isSessionAnchor ? date : "",
             isSessionAnchor || isLiftAnchor ? liftType : "",

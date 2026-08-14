@@ -360,7 +360,7 @@ function BenefitsRow() {
 function ImportSeoLinksSection() {
   return (
     <section className="mx-auto mb-12 max-w-5xl">
-      <Collapsible className="rounded-xl border">
+      <Collapsible defaultOpen className="rounded-xl border">
         <CollapsibleTrigger asChild>
           <button
             type="button"
@@ -370,9 +370,12 @@ function ImportSeoLinksSection() {
               <Download className="text-muted-foreground h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="font-semibold">Need your export file first?</h2>
+              <h2 className="font-semibold">
+                Export from Hevy, Strong, Wodify &amp; More
+              </h2>
               <p className="text-muted-foreground mt-0.5 text-sm">
-                Get the two-minute export steps for your training app.
+                Two-minute guides for Hevy, Strong, StrongLifts 5x5, Wodify, and
+                BTWB.
               </p>
             </div>
             <ChevronDown className="text-muted-foreground h-5 w-5 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
@@ -683,6 +686,9 @@ export default function ImportPage() {
           keep a server-side copy.
         </p>
 
+        {/* Keep supported-app guidance visible beside the primary import path. */}
+        {!isImportedData && <ImportSeoLinksSection />}
+
         {/* Ask about importer quality only after the user has tried a file. */}
         {isImportedData && (
           <section className="mx-auto mb-12 max-w-5xl">
@@ -752,8 +758,6 @@ export default function ImportPage() {
             </div>
           </section>
         )}
-
-        {!isImportedData && <ImportSeoLinksSection />}
 
         {/* Export Section */}
         {hasUserData && !isImportedData && (

@@ -334,6 +334,7 @@ export function gaTrackHomeImportNudge({
 export function gaTrackImportProcess({
   phase,
   source,
+  formatId,
   entryCount,
   payloadBytes,
   compressedBytes,
@@ -348,6 +349,9 @@ export function gaTrackImportProcess({
     phase,
     source,
   };
+  if (typeof formatId === "string" && formatId.length > 0) {
+    params.format_id = formatId;
+  }
   if (typeof entryCount === "number") params.entry_count = entryCount;
   if (typeof payloadBytes === "number") params.payload_bytes = payloadBytes;
   if (typeof compressedBytes === "number") {

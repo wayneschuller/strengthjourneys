@@ -166,7 +166,9 @@ export const UserLiftingDataProvider = ({ children }) => {
   // to avoid hydration mismatch — sessionStorage is client-only.
   const [importedParsedData, setImportedParsedData] = useState(null);
   const [importedFormatName, setImportedFormatName] = useState(null);
+  const [importedFormatId, setImportedFormatId] = useState(null);
   const [importedFileName, setImportedFileName] = useState(null);
+  const [importedDiagnostics, setImportedDiagnostics] = useState(null);
 
   useIsomorphicLayoutEffect(() => {
     try {
@@ -176,8 +178,17 @@ export const UserLiftingDataProvider = ({ children }) => {
         setImportedFormatName(
           sessionStorage.getItem("sj_importedFormat") || null,
         );
+        setImportedFormatId(
+          sessionStorage.getItem("sj_importedFormatId") || null,
+        );
         setImportedFileName(
           sessionStorage.getItem("sj_importedFileName") || null,
+        );
+        const storedDiagnostics = sessionStorage.getItem(
+          "sj_importedDiagnostics",
+        );
+        setImportedDiagnostics(
+          storedDiagnostics ? JSON.parse(storedDiagnostics) : null,
         );
       }
     } catch {
@@ -186,34 +197,56 @@ export const UserLiftingDataProvider = ({ children }) => {
   }, []);
 
   const importFile = useCallback(async (file) => {
-    const { data: parsed, formatName } = await parseImportedFile(file);
+    const {
+      data: parsed,
+      formatId,
+      formatName,
+      diagnostics,
+    } = await parseImportedFile(file);
     const processed = markHigherWeightAsHistoricalPRs(parsed);
     setImportedParsedData(processed);
     setImportedFormatName(formatName);
+    setImportedFormatId(formatId);
     setImportedFileName(file?.name || null);
+    setImportedDiagnostics(diagnostics);
     try {
       sessionStorage.setItem("sj_importedData", JSON.stringify(processed));
       sessionStorage.setItem("sj_importedFormat", formatName);
+      sessionStorage.setItem("sj_importedFormatId", formatId);
       sessionStorage.setItem("sj_importedFileName", file?.name || "");
+      if (diagnostics) {
+        sessionStorage.setItem(
+          "sj_importedDiagnostics",
+          JSON.stringify(diagnostics),
+        );
+      } else {
+        sessionStorage.removeItem("sj_importedDiagnostics");
+      }
     } catch {
       // sessionStorage full or unavailable — data still works for this session
     }
     return {
       count: processed.length,
       formatName,
+      formatId,
       fileName: file?.name || null,
       entries: processed,
+      diagnostics,
     };
   }, []);
 
   const clearImportedData = useCallback(() => {
     setImportedParsedData(null);
     setImportedFormatName(null);
+    setImportedFormatId(null);
     setImportedFileName(null);
+    setImportedDiagnostics(null);
     try {
       sessionStorage.removeItem("sj_importedData");
       sessionStorage.removeItem("sj_importedFormat");
+      sessionStorage.removeItem("sj_importedFormatId");
       sessionStorage.removeItem("sj_importedFileName");
+      sessionStorage.removeItem("sj_importedDiagnostics");
     } catch {
       // ignore
     }
@@ -222,6 +255,56 @@ export const UserLiftingDataProvider = ({ children }) => {
   const isImportedData = !!importedParsedData;
 
   const { data: session, status: authStatus } = useSession();
+
+  const [importProfile, setImportProfile] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.IMPORT_PROFILE,
+    null,
+    { initializeWithValue: false },
+  );
+
+  const rememberImportProfile = useCallback(
+    (nextProfile) => {
+      if (nextProfile && typeof nextProfile === "object") {
+        setImportProfile(nextProfile);
+      }
+    },
+    [setImportProfile],
+  );
+
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+
+    let cancelled = false;
+    fetch("/api/import/profile")
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then((payload) => {
+        if (
+          !cancelled &&
+          payload &&
+          Object.prototype.hasOwnProperty.call(payload, "importProfile")
+        ) {
+          setImportProfile(payload.importProfile);
+        }
+      })
+      .catch(() => {
+        // localStorage remains a useful fast fallback if cross-device sync fails.
+      });
+
+    const handleProfileUpdate = (event) => {
+      if (!cancelled && event?.detail) setImportProfile(event.detail);
+    };
+    window.addEventListener("sj-import-profile-updated", handleProfileUpdate);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(
+        "sj-import-profile-updated",
+        handleProfileUpdate,
+      );
+    };
+  }, [authStatus, setImportProfile]);
 
   // Single consolidated sheet state
   const [sheetInfo, setSheetInfo] = useLocalStorage(
@@ -594,7 +677,11 @@ export const UserLiftingDataProvider = ({ children }) => {
         isReadOnly,
         isImportedData,
         importedFormatName,
+        importedFormatId,
         importedFileName,
+        importedDiagnostics,
+        importProfile,
+        rememberImportProfile,
         isReturningUserLoading,
         parseError,
         liftTypes,

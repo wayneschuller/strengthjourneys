@@ -1,0 +1,8 @@
+title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_kg,reps,distance_km,duration_seconds,rpe
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",Heavy five,Bench Press (Barbell),,Smooth,0,normal,100,5,,,8
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",Heavy five,Bench Press (Barbell),,Smooth,1,normal,100,5,,,8
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Bench Press (Dumbbell),,,0,normal,30,8,,,7.5
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Pull Up (Bodyweight),,,0,normal,,8,,,,
+Conditioning,"25 Aug 2025, 18:00","25 Aug 2025, 18:30",,Plank,,,0,normal,,,0,60,
+Lower PM,"25 Aug 2025, 19:05","25 Aug 2025, 20:00",,Deadlift (Trap Bar),,,0,normal,140,3,,,9
+Bad row,"31 Feb 2025, 12:00","31 Feb 2025, 12:30",,Squat (Barbell),,,0,normal,100,5,,,,

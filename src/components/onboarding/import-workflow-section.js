@@ -4,12 +4,19 @@
  * /import after parsing, while hero-driven imports should bounce home in preview mode.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import {
   ArrowRight,
+  AlertTriangle,
   CheckCircle2,
   FileUp,
   Layers,
@@ -36,6 +43,7 @@ import {
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import-history-client";
+import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
 import { addDaysFromStr, getWeekKeyFromDateStr } from "@/lib/date-utils";
@@ -86,6 +94,44 @@ function clampFileName(rawName) {
   return `${base}${extension}`;
 }
 
+const IMPORT_SKIP_REASON_LABELS = {
+  invalidDate: "invalid dates",
+  missingExercise: "missing exercise names",
+  missingReps: "missing or invalid reps",
+  missingWeight: "missing loads",
+  invalidWeight: "invalid loads",
+  unsupportedDurationOrDistance: "duration or distance-only sets",
+};
+
+function ImportDiagnosticsNotice({ diagnostics }) {
+  if (!diagnostics?.skippedRows) return null;
+
+  const reasonSummary = Object.entries(diagnostics.skippedByReason || {})
+    .filter(([, count]) => count > 0)
+    .map(
+      ([reason, count]) =>
+        `${count.toLocaleString()} ${IMPORT_SKIP_REASON_LABELS[reason] || "unsupported rows"}`,
+    )
+    .join(", ");
+
+  return (
+    <div className="mt-4 flex w-full items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50/50 p-3 text-left dark:border-amber-500/30 dark:bg-amber-500/5">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
+      <div className="text-sm">
+        <p className="font-medium">
+          Imported {diagnostics.parsedRows.toLocaleString()} of{" "}
+          {diagnostics.sourceRows.toLocaleString()} set rows
+        </p>
+        <p className="text-muted-foreground mt-1 leading-5">
+          {diagnostics.skippedRows.toLocaleString()} could not become weighted,
+          rep-based Strength Journeys entries
+          {reasonSummary ? `: ${reasonSummary}.` : "."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function getMotivationalPhrase(percentile) {
   if (percentile >= 95) return "You're in rare company. Elite strength.";
   if (percentile >= 85) return "Seriously strong. Most people never get here.";
@@ -134,11 +180,11 @@ function SinglePercentileRing({ percentile }) {
         <span className="text-muted-foreground text-[10px] leading-snug">
           Stronger than
         </span>
-        <span className="text-3xl font-bold leading-none tabular-nums">
+        <span className="text-3xl leading-none font-bold tabular-nums">
           {percentile}%
         </span>
         <span
-          className="mt-0.5 text-[10px] font-semibold leading-snug"
+          className="mt-0.5 text-[10px] leading-snug font-semibold"
           style={{ color: "var(--chart-1)" }}
         >
           of Gen. Pop.
@@ -148,7 +194,7 @@ function SinglePercentileRing({ percentile }) {
   );
 }
 
-function ImportHero({ parsedData, fileName, formatName }) {
+function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
   const { topLiftsByTypeAndReps } = useUserLiftingData();
 
@@ -159,13 +205,14 @@ function ImportHero({ parsedData, fileName, formatName }) {
     const dates = [...new Set(entries.map((e) => e.date))].sort();
     const liftTypes = new Set(entries.map((e) => e.liftType));
     return {
-      sessionCount: dates.length,
+      activityCount: diagnostics?.workoutCount || dates.length,
+      activityLabel: diagnostics?.workoutCount ? "workouts" : "training days",
       totalSets: entries.length,
       exerciseCount: liftTypes.size,
       first: dates[0],
       last: dates[dates.length - 1],
     };
-  }, [parsedData]);
+  }, [diagnostics?.workoutCount, parsedData]);
 
   const strength = useMemo(() => {
     if (!topLiftsByTypeAndReps) return null;
@@ -181,7 +228,9 @@ function ImportHero({ parsedData, fileName, formatName }) {
     })) {
       const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
       liftKgs[key] =
-        best.bestE1RMWeight > 0 ? toKg(best.bestE1RMWeight, best.unitType) : null;
+        best.bestE1RMWeight > 0
+          ? toKg(best.bestE1RMWeight, best.unitType)
+          : null;
     }
 
     if (!liftKgs.squat && !liftKgs.bench && !liftKgs.deadlift) return null;
@@ -267,8 +316,10 @@ function ImportHero({ parsedData, fileName, formatName }) {
             We parsed{" "}
             <span className="text-foreground font-medium">{displayName}</span>{" "}
             and found{" "}
-            <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
-            sessions across{" "}
+            <strong className="text-foreground">
+              {stats.activityCount.toLocaleString()}
+            </strong>{" "}
+            {stats.activityLabel} across{" "}
             <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
             exercises.
           </p>
@@ -276,8 +327,10 @@ function ImportHero({ parsedData, fileName, formatName }) {
         {!displayName && (
           <p>
             We found{" "}
-            <strong className="text-foreground">{stats.sessionCount.toLocaleString()}</strong>{" "}
-            sessions across{" "}
+            <strong className="text-foreground">
+              {stats.activityCount.toLocaleString()}
+            </strong>{" "}
+            {stats.activityLabel} across{" "}
             <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
             exercises.
           </p>
@@ -288,9 +341,12 @@ function ImportHero({ parsedData, fileName, formatName }) {
         </p>
         <p>
           That&apos;s{" "}
-          <strong className="text-foreground">{stats.totalSets.toLocaleString()}</strong>{" "}
+          <strong className="text-foreground">
+            {stats.totalSets.toLocaleString()}
+          </strong>{" "}
           sets of work.
         </p>
+        <ImportDiagnosticsNotice diagnostics={diagnostics} />
       </div>
 
       {/* Strength rating row */}
@@ -323,13 +379,13 @@ function ImportHero({ parsedData, fileName, formatName }) {
             </p>
             {thousandClub.biggestOpportunity && !thousandClub.inClub && (
               <p className="text-muted-foreground mt-0.5 text-sm">
-                <span className="font-semibold text-foreground">
+                <span className="text-foreground font-semibold">
                   Biggest opportunity:
                 </span>{" "}
                 Add ~{thousandClub.biggestOpportunity.gapLbs} lb (
                 {Math.round(thousandClub.biggestOpportunity.gapLbs * 0.453592)}{" "}
-                kg) to your{" "}
-                {thousandClub.biggestOpportunity.lift.toLowerCase()}.
+                kg) to your {thousandClub.biggestOpportunity.lift.toLowerCase()}
+                .
               </p>
             )}
           </div>
@@ -430,9 +486,7 @@ function ImportedDataOverview({ parsedData, label }) {
           : bestSet.weight;
         const displayE1RM = needsConversion
           ? Math.round(
-              preferredUnit === "kg"
-                ? bestE1RM / 2.2046
-                : bestE1RM * 2.2046,
+              preferredUnit === "kg" ? bestE1RM / 2.2046 : bestE1RM * 2.2046,
             )
           : bestE1RM;
         return {
@@ -489,32 +543,34 @@ function ImportedDataOverview({ parsedData, label }) {
     <div className="mt-4 w-full text-left">
       {/* Summary line — only shown when label is set (merge preview) since
           the ImportHero already covers these stats for the main view */}
-      {label && <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
-        <span>
-          <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
-          sessions
-        </span>
-        <span aria-hidden="true" className="text-border">
-          &bull;
-        </span>
-        <span>
-          <strong className="text-foreground">{stats.totalSets}</strong> sets
-        </span>
-        <span aria-hidden="true" className="text-border">
-          &bull;
-        </span>
-        <span>
-          <strong className="text-foreground">{stats.liftTypeCount}</strong>{" "}
-          exercises
-        </span>
-        <span aria-hidden="true" className="text-border">
-          &bull;
-        </span>
-        <span>
-          {getReadableDateShort(stats.dateRange.first)} to{" "}
-          {getReadableDateShort(stats.dateRange.last)}
-        </span>
-      </div>}
+      {label && (
+        <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm">
+          <span>
+            <strong className="text-foreground">{stats.sessionCount}</strong>{" "}
+            sessions
+          </span>
+          <span aria-hidden="true" className="text-border">
+            &bull;
+          </span>
+          <span>
+            <strong className="text-foreground">{stats.totalSets}</strong> sets
+          </span>
+          <span aria-hidden="true" className="text-border">
+            &bull;
+          </span>
+          <span>
+            <strong className="text-foreground">{stats.liftTypeCount}</strong>{" "}
+            exercises
+          </span>
+          <span aria-hidden="true" className="text-border">
+            &bull;
+          </span>
+          <span>
+            {getReadableDateShort(stats.dateRange.first)} to{" "}
+            {getReadableDateShort(stats.dateRange.last)}
+          </span>
+        </div>
+      )}
 
       {/* Two-column layout: heatmaps + top lifts */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -538,38 +594,35 @@ function ImportedDataOverview({ parsedData, label }) {
               className="max-h-[39vh] overflow-y-auto pr-1"
             >
               <div className="flex flex-col gap-2">
-              {yearIntervals.map((interval) => {
-                const isCurrentYear =
-                  interval.year === new Date().getFullYear();
-                return (
-                  <div
-                    key={interval.year}
-                    className="flex items-start gap-3"
-                  >
-                    <span
-                      className={`shrink-0 pt-1 text-right text-xs tabular-nums ${
-                        isCurrentYear
-                          ? "text-foreground font-semibold"
-                          : "text-muted-foreground/70"
-                      }`}
-                      style={{ width: 36 }}
-                    >
-                      {interval.year}
-                    </span>
-                    <div
-                      className={`min-w-0 flex-1 ${isCurrentYear ? "" : "opacity-80"}`}
-                    >
-                      <DailyTrainingHeatmap
-                        parsedData={parsedData}
-                        startDate={interval.startDate}
-                        endDate={interval.endDate}
-                        isSharing={false}
-                        showMonthLabels={true}
-                      />
+                {yearIntervals.map((interval) => {
+                  const isCurrentYear =
+                    interval.year === new Date().getFullYear();
+                  return (
+                    <div key={interval.year} className="flex items-start gap-3">
+                      <span
+                        className={`shrink-0 pt-1 text-right text-xs tabular-nums ${
+                          isCurrentYear
+                            ? "text-foreground font-semibold"
+                            : "text-muted-foreground/70"
+                        }`}
+                        style={{ width: 36 }}
+                      >
+                        {interval.year}
+                      </span>
+                      <div
+                        className={`min-w-0 flex-1 ${isCurrentYear ? "" : "opacity-80"}`}
+                      >
+                        <DailyTrainingHeatmap
+                          parsedData={parsedData}
+                          startDate={interval.startDate}
+                          endDate={interval.endDate}
+                          isSharing={false}
+                          showMonthLabels={true}
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -582,22 +635,21 @@ function ImportedDataOverview({ parsedData, label }) {
           </p>
           <div className="space-y-2">
             {stats.topLifts.map((lift) => {
-              const strengthRating =
-                hasBio
-                  ? (() => {
-                      const standard = getStandardForLiftDate(
-                        age,
-                        lift.date,
-                        bodyWeight,
-                        sex,
-                        lift.name,
-                        isMetric,
-                      );
-                      return standard
-                        ? getStrengthRatingForE1RM(lift.bestE1RM, standard)
-                        : null;
-                    })()
-                  : null;
+              const strengthRating = hasBio
+                ? (() => {
+                    const standard = getStandardForLiftDate(
+                      age,
+                      lift.date,
+                      bodyWeight,
+                      sex,
+                      lift.name,
+                      isMetric,
+                    );
+                    return standard
+                      ? getStrengthRatingForE1RM(lift.bestE1RM, standard)
+                      : null;
+                  })()
+                : null;
 
               const svgPath = getLiftSvgPath(lift.name);
               const liftUrl = getLiftDetailUrl(lift.name);
@@ -652,7 +704,8 @@ function ImportedDataOverview({ parsedData, label }) {
                             variant={getRatingBadgeVariant(strengthRating)}
                             className="inline-flex items-center gap-1"
                           >
-                            {STRENGTH_LEVEL_EMOJI[strengthRating]} {strengthRating}
+                            {STRENGTH_LEVEL_EMOJI[strengthRating]}{" "}
+                            {strengthRating}
                           </Badge>
                         </Link>
                       </div>
@@ -673,12 +726,228 @@ function ImportedDataOverview({ parsedData, label }) {
   );
 }
 
-const DEFAULT_IMPORT_DESCRIPTION =
-  "Use Strength Journeys as your lifting data merge lane: preview app exports, then save the clean timeline to one Google Sheet you own.";
+const IMPORT_WORKFLOW_COPY = {
+  merge: [
+    {
+      title: "Merge Data From {sourceTitle}",
+      description:
+        "Choose your {export} to compare with the history already in “{sheet}”. We’ll separate new entries from duplicates before anything changes.",
+      desktopTitle: "Drop the export you want to merge here",
+      mobileTitle: "Choose the export you want to merge",
+      dropDescription: "Preview everything before adding it to “{sheet}”.",
+      button: "Preview Data to Merge",
+      reassurance: "Nothing is merged until you confirm.",
+    },
+    {
+      title: "Bring {sourceTitle} Into Your Timeline",
+      description:
+        "Your Google Sheet already holds the story so far. Add {sourceData} without starting over or doubling up old sessions.",
+      desktopTitle: "Drop the next chapter of your training here",
+      mobileTitle: "Choose the next chapter of your training",
+      dropDescription:
+        "See what’s new and what is already safely stored in “{sheet}”.",
+      button: "Preview New Entries",
+      reassurance: "Your Google Sheet stays unchanged until you approve it.",
+    },
+    {
+      title: "Add More History to Your Google Sheet",
+      description:
+        "Compare your {export} with “{sheet}” and keep only the training that belongs next in your timeline.",
+      desktopTitle: "Drop your latest workout export here",
+      mobileTitle: "Choose your latest workout export",
+      dropDescription:
+        "We’ll check the file against your existing lifting history first.",
+      button: "Compare With My Sheet",
+      reassurance: "Duplicates are identified before you choose what to merge.",
+    },
+    {
+      title: "Unite Your Training History",
+      description:
+        "Bring {sourceData} alongside the workouts already living in your Google Sheet. One timeline, no blind overwrites.",
+      desktopTitle: "Drop another piece of your lifting history here",
+      mobileTitle: "Choose another piece of your lifting history",
+      dropDescription:
+        "Preview how it fits with “{sheet}” before making any changes.",
+      button: "Preview Before Merging",
+      reassurance: "You’ll review the comparison before anything is added.",
+    },
+    {
+      title: "Keep Your Timeline Up to Date",
+      description:
+        "Got a newer {export}? Check it against “{sheet}” and add the sessions your timeline has not seen yet.",
+      desktopTitle: "Drop the export you want us to check",
+      mobileTitle: "Choose the export you want us to check",
+      dropDescription:
+        "We’ll find new entries, duplicates, and anything that needs attention.",
+      button: "Check This Export",
+      reassurance: "Checking is read-only. You decide whether to merge.",
+    },
+  ],
+  create: [
+    {
+      title: "Bring Your Lifting History Together",
+      description:
+        "Choose your {export} and preview the full timeline. When you’re ready, we’ll create a Google Sheet for it in your Drive.",
+      desktopTitle: "Drop your lifting history here",
+      mobileTitle: "Choose your lifting history",
+      dropDescription: "See the clean timeline before creating your Sheet.",
+      button: "Preview My History",
+      reassurance: "No Google Sheet is created until you confirm.",
+    },
+    {
+      title: "Turn Old Workouts Into One Timeline",
+      description:
+        "Start with {sourceHistory}. We’ll organize the weighted, rep-based sets and show you the result before saving anything.",
+      desktopTitle: "Drop the workouts that got you here",
+      mobileTitle: "Choose the workouts that got you here",
+      dropDescription:
+        "Your preview becomes the foundation of a Google Sheet you own.",
+      button: "See My Timeline",
+      reassurance: "Preview first. Create your Sheet only when it looks right.",
+    },
+    {
+      title: "Give Your Training History a Home",
+      description:
+        "Preview your {export}, then keep the clean history in a readable Google Sheet inside your own Drive.",
+      desktopTitle: "Drop your workout archive here",
+      mobileTitle: "Choose your workout archive",
+      dropDescription:
+        "We’ll show you what belongs in your permanent lifting archive.",
+      button: "Preview My Archive",
+      reassurance: "Nothing is saved to Drive until you choose to continue.",
+    },
+    {
+      title: "Start With the Lifts You Already Logged",
+      description:
+        "You already did the work. Choose your {export} to turn those sessions into a Strength Journeys timeline and a Sheet you control.",
+      desktopTitle: "Drop your past training here",
+      mobileTitle: "Choose your past training",
+      dropDescription:
+        "Preview the sessions, exercises, and date range before saving them.",
+      button: "Preview My Workout Data",
+      reassurance: "Your Google Sheet comes after the preview, not before it.",
+    },
+    {
+      title: "Bring Every Rep With You",
+      description:
+        "Move {sourceHistory} into one clean timeline without handing ownership of it to another closed platform.",
+      desktopTitle: "Drop your training export here",
+      mobileTitle: "Choose your training export",
+      dropDescription:
+        "See the history first, then create its permanent home in your Drive.",
+      button: "See My Imported History",
+      reassurance: "You stay in control of when the Google Sheet is created.",
+    },
+  ],
+  preview: [
+    {
+      title: "See Your Lifting History Come Together",
+      description:
+        "Choose your {export} and instantly preview the weighted, rep-based sets that tell your training story. No account required.",
+      desktopTitle: "Drop your lifting history here",
+      mobileTitle: "Choose your lifting history",
+      dropDescription:
+        "See your sessions, exercises, and progress before deciding what to save.",
+      button: "Preview My History",
+      reassurance: "Your preview stays in this browser and nothing is saved.",
+    },
+    {
+      title: "Your Old Workouts Have a Story",
+      description:
+        "Open up {sourceHistory} and see the years, exercises, and strongest sets hiding inside the export.",
+      desktopTitle: "Drop the workouts you remember here",
+      mobileTitle: "Choose the workouts you remember",
+      dropDescription:
+        "We’ll turn the file into a private, explorable preview.",
+      button: "Show Me My Timeline",
+      reassurance: "No account required. The preview stays on this device.",
+    },
+    {
+      title: "Bring Your Training Years Back Into View",
+      description:
+        "Choose your {export} to rediscover old sessions, favourite lifts, and the progress that is easy to forget in a spreadsheet.",
+      desktopTitle: "Drop years of training here",
+      mobileTitle: "Choose your years of training",
+      dropDescription:
+        "Preview the story first—nothing is uploaded or saved to an account.",
+      button: "Explore My Past Training",
+      reassurance: "Private browser preview. No account and no commitment.",
+    },
+    {
+      title: "Find the Progress Hidden in Your Export",
+      description:
+        "A workout file is hard to read. Choose your {export} and we’ll reveal the timeline, volume, and standout lifts inside it.",
+      desktopTitle: "Drop your workout data here",
+      mobileTitle: "Choose your workout data",
+      dropDescription:
+        "See what your training adds up to before deciding whether to keep it.",
+      button: "Find My Progress",
+      reassurance: "The file is processed in your browser and stays private.",
+    },
+    {
+      title: "Give Your Workout History a Proper Look",
+      description:
+        "Choose {sourceHistory} and see it as a lifting journey instead of rows in an export file.",
+      desktopTitle: "Drop your training story here",
+      mobileTitle: "Choose your training story",
+      dropDescription:
+        "Get an instant private preview of the work you have already done.",
+      button: "Preview My Workout Story",
+      reassurance:
+        "Nothing leaves this browser unless you later choose to save.",
+    },
+  ],
+};
+
+// App-specific import pages are statically generated, so hydrate with variant zero
+// before adopting the browser's local-date hash without a server/client mismatch.
+const subscribeToDailyCopy = () => () => {};
+const getServerDailyCopyIndex = () => 0;
+
+function getDailyCopyIndex() {
+  const today = new Date();
+  const dateKey = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+  let hash = 0;
+
+  for (let index = 0; index < dateKey.length; index += 1) {
+    hash = (hash * 31 + dateKey.charCodeAt(index)) >>> 0;
+  }
+
+  return hash % IMPORT_WORKFLOW_COPY.preview.length;
+}
+
+function resolveWorkflowCopy(copy, { sourceAppName, sheetName }) {
+  const replacements = {
+    "{sourceTitle}": sourceAppName || "Another App",
+    "{sourceData}": sourceAppName
+      ? `your ${sourceAppName} data`
+      : "data from another app",
+    "{sourceHistory}": sourceAppName
+      ? `your ${sourceAppName} history`
+      : "your existing workout history",
+    "{export}": sourceAppName ? `${sourceAppName} export` : "workout export",
+    "{sheet}": sheetName,
+  };
+
+  return Object.fromEntries(
+    Object.entries(copy).map(([key, value]) => [
+      key,
+      Object.entries(replacements).reduce(
+        (result, [token, replacement]) => result.replaceAll(token, replacement),
+        value,
+      ),
+    ]),
+  );
+}
 
 export function ImportWorkflowSection({
-  title = "Import from Another App",
-  description = DEFAULT_IMPORT_DESCRIPTION,
+  title = null,
+  description = null,
+  sourceAppName = null,
 }) {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -692,7 +961,9 @@ export function ImportWorkflowSection({
     clearImportedData,
     isImportedData,
     importedFormatName,
+    importedFormatId,
     importedFileName,
+    importedDiagnostics,
     sheetParsedData,
   } = useUserLiftingData();
 
@@ -709,6 +980,22 @@ export function ImportWorkflowSection({
   const isSheetComparisonPending =
     mergeMode && isLoading && !Array.isArray(sheetParsedData);
   const sheetName = sheetInfo?.filename || "your Google Sheet";
+  const dailyCopyIndex = useSyncExternalStore(
+    subscribeToDailyCopy,
+    getDailyCopyIndex,
+    getServerDailyCopyIndex,
+  );
+  const copyMode = mergeMode ? "merge" : createMode ? "create" : "preview";
+  const workflowCopy = useMemo(
+    () =>
+      resolveWorkflowCopy(IMPORT_WORKFLOW_COPY[copyMode][dailyCopyIndex], {
+        sourceAppName,
+        sheetName,
+      }),
+    [copyMode, dailyCopyIndex, sheetName, sourceAppName],
+  );
+  const displayTitle = title || workflowCopy.title;
+  const displayDescription = description || workflowCopy.description;
 
   const handleFile = useCallback(
     async (file) => {
@@ -724,11 +1011,14 @@ export function ImportWorkflowSection({
       setImporting(true);
       setImportError(null);
       try {
-        const { count, formatName } = await importFile(file);
+        const { count, formatName, diagnostics } = await importFile(file);
+        const skippedNote = diagnostics?.skippedRows
+          ? ` ${diagnostics.skippedRows} unsupported row${diagnostics.skippedRows === 1 ? " was" : "s were"} left out.`
+          : "";
 
         toast({
           title: "Data loaded!",
-          description: `Parsed ${count} entries from ${formatName} format.`,
+          description: `Parsed ${count} entries from ${formatName} format.${skippedNote}`,
         });
       } catch (err) {
         setImportError(err.message);
@@ -755,67 +1045,120 @@ export function ImportWorkflowSection({
 
   const onDragLeave = useCallback(() => setDragOver(false), []);
 
-  const writeEntriesToSheet = useCallback(async (targetSsid, entries) => {
-    const apiEntries = entries.map((entry) => ({
-      date: entry.date,
-      liftType: entry.liftType,
-      reps: entry.reps,
-      weight: entry.weight,
-      unitType: entry.unitType || "kg",
-      ...(entry.notes ? { notes: entry.notes } : {}),
-    }));
+  const writeEntriesToSheet = useCallback(
+    async (targetSsid, entries, importSummary = null) => {
+      const apiEntries = entries.map((entry) => ({
+        date: entry.date,
+        liftType: entry.liftType,
+        reps: entry.reps,
+        weight: entry.weight,
+        unitType: entry.unitType || "kg",
+        ...(entry.notes ? { notes: entry.notes } : {}),
+      }));
 
-    const res = await postImportHistory(
-      { ssid: targetSsid, entries: apiEntries },
-      { source: "import_workflow", formatName: importedFormatName },
-    );
-    const data = await res.json();
+      const res = await postImportHistory(
+        { ssid: targetSsid, entries: apiEntries },
+        {
+          source: "import_workflow",
+          formatId: importedFormatId,
+          formatName: importedFormatName,
+          importSummary,
+        },
+      );
+      const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.error || "Failed to write data to sheet");
-    }
-    return data;
-  }, [importedFormatName]);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to write data to sheet");
+      }
+      return data;
+    },
+    [importedFormatId, importedFormatName],
+  );
 
   const handleMerge = useCallback(async () => {
     if (!parsedData || !sheetInfo?.ssid) return;
     if (isSheetComparisonPending) {
       toast({
         title: "Still checking your sheet",
-        description: "Wait a moment so Strength Journeys can compare this preview against your linked data.",
+        description:
+          "Wait a moment so Strength Journeys can compare this preview against your linked data.",
       });
       return;
     }
 
-    const { newEntries, skippedCount } = deduplicateImportedEntries(
-      parsedData,
-      sheetParsedData,
-    );
+    const { newEntries, skippedCount, conflictCount } =
+      deduplicateImportedEntries(parsedData, sheetParsedData);
+    const importSummary = {
+      outcome:
+        newEntries.length > 0
+          ? "merged"
+          : conflictCount > 0
+            ? "conflicts_only"
+            : "already_current",
+      candidateEntryCount: parsedData.filter((entry) => !entry.isGoal).length,
+      skippedCount,
+      conflictCount,
+      latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),
+    };
 
     if (newEntries.length === 0) {
-      toast({
-        title: "Nothing new to merge",
-        description: `All ${skippedCount} entries already exist in your linked sheet.`,
-      });
+      setMerging(true);
+      try {
+        await writeEntriesToSheet(sheetInfo.ssid, [], importSummary);
+        toast({
+          title:
+            conflictCount > 0
+              ? "Changed sets need review"
+              : "Your training data is already up to date",
+          description:
+            conflictCount > 0
+              ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} matching source details but different lifting data. Nothing was overwritten.`
+              : `All ${skippedCount} entries already exist in your linked sheet. You can still import another supported format at any time.`,
+          ...(conflictCount > 0 ? { variant: "destructive" } : {}),
+        });
+      } catch {
+        toast({
+          title:
+            conflictCount > 0
+              ? "Changed sets need review"
+              : "Nothing new to merge",
+          description:
+            conflictCount > 0
+              ? `${conflictCount} changed ${conflictCount === 1 ? "set was" : "sets were"} left untouched.`
+              : `All ${skippedCount} entries already exist in your linked sheet.`,
+        });
+      } finally {
+        setMerging(false);
+      }
       return;
     }
 
     setMerging(true);
     try {
-      const data = await writeEntriesToSheet(sheetInfo.ssid, newEntries);
+      const data = await writeEntriesToSheet(
+        sheetInfo.ssid,
+        newEntries,
+        importSummary,
+      );
       const skippedNote =
         skippedCount > 0
           ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
           : "";
+      const conflictNote =
+        conflictCount > 0
+          ? ` Left ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} untouched for review.`
+          : "";
 
       toast({
         title: "Data merged into your linked sheet!",
-        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}`,
+        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}${conflictNote}`,
       });
 
-      clearImportedData();
       mutate();
-      router.push("/");
+      if (conflictCount === 0) {
+        clearImportedData();
+        router.push("/");
+      }
     } catch (err) {
       toast({
         title: "Merge failed",
@@ -860,13 +1203,14 @@ export function ImportWorkflowSection({
       parsedData?.filter((entry) => !entry.isGoal) ||
       [];
     const skippedCount = importAnalysis?.duplicateCount || 0;
+    const conflictCount = importAnalysis?.conflictCount || 0;
     const isFullyDuplicate =
       importAnalysis?.status === "already_in_linked_sheet";
     const isPartialOverlap = importAnalysis?.status === "partial_overlap";
 
     return (
       <section className="mx-auto mb-12 max-w-5xl">
-        <h2 className="mb-4 text-lg font-semibold">{title}</h2>
+        <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8 text-center">
             {merging ? (
@@ -889,12 +1233,14 @@ export function ImportWorkflowSection({
                   parsedData={parsedData}
                   fileName={importedFileName}
                   formatName={importedFormatName}
+                  diagnostics={importedDiagnostics}
                 />
 
                 {showMerge && isFullyDuplicate && (
                   <p className="text-muted-foreground mb-4 text-sm">
-                    All {skippedCount} {skippedCount === 1 ? "entry" : "entries"}{" "}
-                    from this file already exist in your linked sheet.
+                    All {skippedCount}{" "}
+                    {skippedCount === 1 ? "entry" : "entries"} from this file
+                    already exist in your linked sheet.
                   </p>
                 )}
 
@@ -904,8 +1250,8 @@ export function ImportWorkflowSection({
                       We&apos;ll create a new Google Sheet in your Drive and
                       populate it with your {entryCount}{" "}
                       {entryCount === 1 ? "entry" : "entries"}. This becomes
-                      your permanent lifting archive, ready for every future
-                      app import too.
+                      your permanent lifting archive, ready for every future app
+                      import too.
                     </p>
                     <Button
                       onClick={handleCreateSheetFromImport}
@@ -920,19 +1266,33 @@ export function ImportWorkflowSection({
 
                 {showMerge && (
                   <div className="w-full space-y-3">
+                    {conflictCount > 0 && (
+                      <div className="mx-auto flex max-w-md items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50/50 p-3 text-left text-sm dark:border-amber-500/30 dark:bg-amber-500/5">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                        <p>
+                          {conflictCount} changed{" "}
+                          {conflictCount === 1 ? "set" : "sets"} share the same
+                          source details as data already in your Sheet. They
+                          will not be overwritten automatically.
+                        </p>
+                      </div>
+                    )}
                     <p className="text-muted-foreground mx-auto max-w-md text-sm">
                       {isSheetComparisonPending
                         ? "Checking your linked Strength Journeys sheet for duplicates before merge."
                         : isFullyDuplicate
-                        ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.`
-                        : isPartialOverlap
-                          ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Google Sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.`
-                          : `Merge this data into the Google Sheet you own.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}`}
+                          ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.`
+                          : isPartialOverlap
+                            ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Google Sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.${conflictCount > 0 ? ` ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} will be left untouched.` : ""}`
+                            : `Merge this data into the Google Sheet you own.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}${conflictCount > 0 ? ` ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} will be left untouched.` : ""}`}
                     </p>
                     {newEntries.length > 0 ? (
                       <>
                         {!isSheetComparisonPending && (
-                          <ImportedDataOverview parsedData={newEntries} label="new entries only" />
+                          <ImportedDataOverview
+                            parsedData={newEntries}
+                            label="new entries only"
+                          />
                         )}
                         <Button
                           onClick={handleMerge}
@@ -965,10 +1325,14 @@ export function ImportWorkflowSection({
                         const liftCounts = {};
                         for (const e of parsedData || []) {
                           if (e.isGoal) continue;
-                          liftCounts[e.liftType] = (liftCounts[e.liftType] || 0) + 1;
+                          liftCounts[e.liftType] =
+                            (liftCounts[e.liftType] || 0) + 1;
                         }
                         const bigFourMatch = bigFourLiftInsightData
-                          .map((b) => ({ ...b, count: liftCounts[b.liftType] || 0 }))
+                          .map((b) => ({
+                            ...b,
+                            count: liftCounts[b.liftType] || 0,
+                          }))
                           .filter((b) => b.count > 0)
                           .sort((a, b) => b.count - a.count)[0];
 
@@ -977,7 +1341,11 @@ export function ImportWorkflowSection({
                             <Button
                               variant="default"
                               size="sm"
-                              onClick={() => router.push(`/progress-guide/${bigFourMatch.slug}`)}
+                              onClick={() =>
+                                router.push(
+                                  `/progress-guide/${bigFourMatch.slug}`,
+                                )
+                              }
                             >
                               <TrendingUp className="mr-2 h-4 w-4" />
                               Your {bigFourMatch.liftType} Progress
@@ -1023,10 +1391,7 @@ export function ImportWorkflowSection({
                       <p className="text-muted-foreground mb-2 text-sm">
                         This preview will disappear when you close the tab.
                       </p>
-                      <GoogleSignInButton
-                        size="sm"
-                        cta="import_overview"
-                      >
+                      <GoogleSignInButton size="sm" cta="import_overview">
                         Save &amp; keep my progress
                       </GoogleSignInButton>
                       <p className="text-muted-foreground mt-1.5 text-xs">
@@ -1062,10 +1427,10 @@ export function ImportWorkflowSection({
 
   return (
     <section className="mx-auto mb-12 max-w-5xl">
-      <h2 className="mb-4 text-lg font-semibold">{title}</h2>
-      {description && (
+      <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
+      {displayDescription && (
         <p className="text-muted-foreground mb-4 max-w-3xl text-sm leading-6">
-          {description}
+          {displayDescription}
         </p>
       )}
       <Card
@@ -1084,29 +1449,14 @@ export function ImportWorkflowSection({
             <>
               <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
               <h3 className="mb-2 font-semibold">
-                Drop your lifting history here
+                <span className="md:hidden">{workflowCopy.mobileTitle}</span>
+                <span className="hidden md:inline">
+                  {workflowCopy.desktopTitle}
+                </span>
               </h3>
               <p className="text-muted-foreground mb-1 max-w-md text-sm">
-                {mergeMode ? (
-                  <>
-                    Preview your data before merging into your sheet.
-                  </>
-                ) : createMode ? (
-                  "We'll create a Google Sheet in your Drive and populate it with your data, ready for every future import."
-                ) : (
-                  "CSV or Excel from Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey, or any spreadsheet export. Bring every export home."
-                )}
+                {workflowCopy.dropDescription}
               </p>
-              {mergeMode && (
-                <p className="text-muted-foreground mb-3 max-w-md text-xs">
-                  We&apos;ll show you a full preview first - then you can
-                  choose to merge it into{" "}
-                  <strong className="text-foreground">
-                    &ldquo;{sheetName}&rdquo;
-                  </strong>
-                  .
-                </p>
-              )}
               {!isAuthenticated && (
                 <p className="text-muted-foreground mb-3 flex items-center justify-center gap-3 text-xs">
                   <span>No account required</span>
@@ -1116,10 +1466,8 @@ export function ImportWorkflowSection({
                   <span>Instant preview</span>
                 </p>
               )}
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <FileUp className="mr-2 h-4 w-4" /> Choose File
+              <Button onClick={() => fileInputRef.current?.click()}>
+                <FileUp className="mr-2 h-4 w-4" /> {workflowCopy.button}
               </Button>
               <input
                 ref={fileInputRef}
@@ -1128,11 +1476,9 @@ export function ImportWorkflowSection({
                 className="hidden"
                 onChange={(e) => handleFile(e.target.files?.[0])}
               />
-              {mergeMode && (
-                <p className="text-muted-foreground mt-4 max-w-sm text-xs">
-                  No changes are made until you confirm the merge.
-                </p>
-              )}
+              <p className="text-muted-foreground mt-4 max-w-sm text-xs">
+                {workflowCopy.reassurance}
+              </p>
             </>
           )}
           {importError && (

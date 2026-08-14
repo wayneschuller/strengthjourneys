@@ -15,6 +15,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getLogoForTheme } from "@/lib/theme-logos";
+import { getRepeatImportHref } from "@/lib/import/import-sources";
 import { cn } from "@/lib/utils";
 import { featurePages } from "@/pages";
 
@@ -35,7 +36,12 @@ import {
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { hasUserData } = useUserLiftingData();
+  const { hasUserData, importProfile } = useUserLiftingData();
+  const hasImportRitual = Boolean(importProfile?.lastSourceId);
+  const repeatImportHref = getRepeatImportHref(
+    importProfile,
+    "repeat-import-mobile-menu",
+  );
   const logoWidth = 150;
   const { resolvedTheme, theme } = useTheme();
   const [logoSrc, setLogoSrc] = useState(() => {
@@ -46,7 +52,7 @@ export function MobileNav() {
   // Set logo on mount and when theme changes
   useEffect(() => {
     let currentTheme = theme ?? resolvedTheme;
-    
+
     // If theme not yet resolved, try to get from localStorage
     if (!currentTheme && typeof window !== "undefined") {
       const storedTheme = localStorage.getItem(LOCAL_STORAGE_KEYS.THEME);
@@ -54,7 +60,7 @@ export function MobileNav() {
         currentTheme = storedTheme;
       }
     }
-    
+
     setLogoSrc(getLogoForTheme(currentTheme || "light"));
   }, [theme, resolvedTheme]);
 
@@ -120,9 +126,25 @@ export function MobileNav() {
             <div className="flex flex-col gap-4 text-lg font-medium tracking-tight">
               {featurePages
                 .filter((item) => !item.authRequired || hasUserData)
-                .map((item) => (
-                  <NavLink key={item.href} {...item} />
-                ))}
+                .map((item) => {
+                  const isImportLink = item.href === "/import";
+                  return (
+                    <NavLink
+                      key={item.href}
+                      {...item}
+                      href={
+                        isImportLink && hasImportRitual
+                          ? repeatImportHref
+                          : item.href
+                      }
+                      title={
+                        isImportLink && hasImportRitual
+                          ? `Update / Export · ${importProfile.lastSourceName} or any format`
+                          : item.title
+                      }
+                    />
+                  );
+                })}
               {lifts.map((lift) => (
                 <NavLink
                   key={lift.slug}

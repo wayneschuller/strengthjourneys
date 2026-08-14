@@ -64,15 +64,28 @@ export function parseData(data) {
  */
 const FORMAT_SIGNATURES = [
   {
+    id: "hevy",
     name: "Hevy",
-    detect: (headers) =>
-      headers.includes("start_time") &&
-      headers.includes("exercise_title") &&
-      headers.includes("weight_kg") &&
-      headers.includes("reps"),
+    detect: (headers) => {
+      const normalized = headers.map((header) =>
+        String(header || "")
+          .replace(/^\uFEFF/, "")
+          .trim()
+          .toLowerCase(),
+      );
+      return (
+        normalized.includes("start_time") &&
+        normalized.includes("exercise_title") &&
+        (normalized.includes("weight_kg") ||
+          normalized.includes("weight_lbs") ||
+          normalized.includes("weight_lb")) &&
+        normalized.includes("reps")
+      );
+    },
     parse: parseHevyData,
   },
   {
+    id: "stronglifts",
     // StrongLifts 5x5 app (NOT the Strong app — different format). Supports
     // legacy workout-wide rows and current exercise rows with per-set weights.
     name: "StrongLifts",
@@ -80,6 +93,7 @@ const FORMAT_SIGNATURES = [
     parse: parseStrongliftsData,
   },
   {
+    id: "strong",
     name: "Strong",
     detect: (headers) => {
       const lower = headers.map((header) =>
@@ -98,6 +112,7 @@ const FORMAT_SIGNATURES = [
     parse: parseStrongData,
   },
   {
+    id: "wodify",
     name: "Wodify",
     detect: (headers) => {
       const hasDate = headers.includes("Date");
@@ -124,6 +139,7 @@ const FORMAT_SIGNATURES = [
     parse: parseWodifyData,
   },
   {
+    id: "btwb",
     name: "BTWB",
     detect: (headers) =>
       headers.includes("Date") &&
@@ -133,12 +149,14 @@ const FORMAT_SIGNATURES = [
     parse: parseBtwbData,
   },
   {
+    id: "turnkey",
     name: "TurnKey",
     detect: (headers) =>
       headers.includes("user_name") && headers.includes("workout_id"),
     parse: parseTurnKeyData,
   },
   {
+    id: "strength-journeys",
     // Strength Journeys CSV export or compatible sheet
     // Detected by having the 4 required columns (after normalization happens inside the parser)
     name: "Strength Journeys",
@@ -163,7 +181,7 @@ const FORMAT_SIGNATURES = [
  * Detect the format of a header row.
  *
  * @param {string[]} headers First row of the imported data
- * @returns {{ name: string, parse: Function } | null}
+ * @returns {{ id: string, name: string, parse: Function } | null}
  */
 export function detectFormat(headers) {
   for (const sig of FORMAT_SIGNATURES) {
@@ -177,7 +195,7 @@ export function detectFormat(headers) {
  * Handles container decoding (CSV → rows) and format detection.
  *
  * @param {File} file The dropped/selected file
- * @returns {Promise<{ data: ParsedData, formatName: string }>}
+ * @returns {Promise<{ data: ParsedData, formatId: string, formatName: string, diagnostics?: object }>}
  * @throws {Error} If the file can't be parsed or format is unrecognized
  */
 export async function parseImportedFile(file) {
@@ -206,6 +224,7 @@ export async function parseImportedFile(file) {
   }
 
   const data = format.parse(rows);
+  const diagnostics = data?.importDiagnostics || null;
 
   if (!data || data.length === 0) {
     throw new Error(
@@ -214,7 +233,12 @@ export async function parseImportedFile(file) {
     );
   }
 
-  return { data, formatName: format.name };
+  return {
+    data,
+    formatId: format.id,
+    formatName: format.name,
+    diagnostics,
+  };
 }
 
 // Re-export normalization utilities for use by other modules

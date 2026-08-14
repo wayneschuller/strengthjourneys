@@ -176,9 +176,9 @@ export const featurePages = [
   },
   {
     href: "/import",
-    title: "Import Data",
+    title: "Import / Export Data",
     description:
-      "Import from Hevy, Strong, Wodify, BTWB, or spreadsheets. Merge everything into your own Sheet.",
+      "Import from any supported app or spreadsheet, merge everything into your own Sheet, or export it whenever you like.",
     IconComponent: Upload,
   },
   {

@@ -36,10 +36,9 @@ export function ImporterFeedbackCard({ appName }) {
         <div className="flex-1">
           <h3 className="font-semibold">Help us improve {label}</h3>
           <p className="text-muted-foreground mt-1 text-sm leading-6">
-            Strength Journeys is built by one person who doesn&apos;t own every
-            fitness app. If your import worked, the parser just passed a real
-            test. If anything looked wrong or missing, please tell us so we can
-            fix it.
+            Something missing, mislabeled, or surprising in the preview? Tell us
+            what you expected so we can improve the importer. You never need to
+            include private workout details in your report.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 md:flex-nowrap">

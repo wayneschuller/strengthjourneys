@@ -721,7 +721,7 @@ function ImportedDataOverview({ parsedData, label }) {
 }
 
 const DEFAULT_IMPORT_DESCRIPTION =
-  "Use Strength Journeys as your lifting data merge lane: preview app exports, then save the clean timeline to one Google Sheet you own.";
+  "Choose a workout export and preview it first. When it looks right, add the clean history to your Strength Journeys timeline.";
 
 export function ImportWorkflowSection({
   title = "Import from Another App",
@@ -1255,7 +1255,9 @@ export function ImportWorkflowSection({
               )}
               <Button onClick={() => fileInputRef.current?.click()}>
                 <FileUp className="mr-2 h-4 w-4" />{" "}
-                {sourceAppName ? `Choose ${sourceAppName} File` : "Choose File"}
+                {sourceAppName
+                  ? `Choose ${sourceAppName} File`
+                  : "Choose Workout Export"}
               </Button>
               <input
                 ref={fileInputRef}

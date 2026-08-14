@@ -152,7 +152,7 @@ export function HomeInspirationCards({
   ]);
 
   return (
-    <div className="col-span-full flex flex-wrap gap-5 [&>*]:min-w-[220px] [&>*]:flex-1">
+    <div className="col-span-full grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:flex-wrap sm:gap-5 sm:[&>*]:min-w-[220px] sm:[&>*]:flex-1 [&>*:last-child:nth-child(odd)]:col-span-2">
       {!isProgressDone && <HomeInspirationCardsSkeleton />}
       {isProgressDone && cards}
     </div>

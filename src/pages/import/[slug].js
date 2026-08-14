@@ -144,11 +144,7 @@ function ImportAppPage({ page }) {
 
         {/* Upload area — front and center */}
         <div id="import-section">
-          <ImportWorkflowSection
-            title={`Import from ${page.appName}`}
-            description={`Preview the export first. Then save or merge ${page.appName} into the same Google Sheet you use for the rest of your lifting history.`}
-            sourceAppName={page.appName}
-          />
+          <ImportWorkflowSection sourceAppName={page.appName} />
         </div>
 
         {/* Privacy badge */}

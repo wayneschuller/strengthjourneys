@@ -4,7 +4,13 @@
  * /import after parsing, while hero-driven imports should bounce home in preview mode.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -720,12 +726,227 @@ function ImportedDataOverview({ parsedData, label }) {
   );
 }
 
-const DEFAULT_IMPORT_DESCRIPTION =
-  "Choose a workout export and preview it first. When it looks right, add the clean history to your Strength Journeys timeline.";
+const IMPORT_WORKFLOW_COPY = {
+  merge: [
+    {
+      title: "Merge Data From {sourceTitle}",
+      description:
+        "Choose your {export} to compare with the history already in “{sheet}”. We’ll separate new entries from duplicates before anything changes.",
+      desktopTitle: "Drop the export you want to merge here",
+      mobileTitle: "Choose the export you want to merge",
+      dropDescription: "Preview everything before adding it to “{sheet}”.",
+      button: "Preview Data to Merge",
+      reassurance: "Nothing is merged until you confirm.",
+    },
+    {
+      title: "Bring {sourceTitle} Into Your Timeline",
+      description:
+        "Your Google Sheet already holds the story so far. Add {sourceData} without starting over or doubling up old sessions.",
+      desktopTitle: "Drop the next chapter of your training here",
+      mobileTitle: "Choose the next chapter of your training",
+      dropDescription:
+        "See what’s new and what is already safely stored in “{sheet}”.",
+      button: "Preview New Entries",
+      reassurance: "Your Google Sheet stays unchanged until you approve it.",
+    },
+    {
+      title: "Add More History to Your Google Sheet",
+      description:
+        "Compare your {export} with “{sheet}” and keep only the training that belongs next in your timeline.",
+      desktopTitle: "Drop your latest workout export here",
+      mobileTitle: "Choose your latest workout export",
+      dropDescription:
+        "We’ll check the file against your existing lifting history first.",
+      button: "Compare With My Sheet",
+      reassurance: "Duplicates are identified before you choose what to merge.",
+    },
+    {
+      title: "Unite Your Training History",
+      description:
+        "Bring {sourceData} alongside the workouts already living in your Google Sheet. One timeline, no blind overwrites.",
+      desktopTitle: "Drop another piece of your lifting history here",
+      mobileTitle: "Choose another piece of your lifting history",
+      dropDescription:
+        "Preview how it fits with “{sheet}” before making any changes.",
+      button: "Preview Before Merging",
+      reassurance: "You’ll review the comparison before anything is added.",
+    },
+    {
+      title: "Keep Your Timeline Up to Date",
+      description:
+        "Got a newer {export}? Check it against “{sheet}” and add the sessions your timeline has not seen yet.",
+      desktopTitle: "Drop the export you want us to check",
+      mobileTitle: "Choose the export you want us to check",
+      dropDescription:
+        "We’ll find new entries, duplicates, and anything that needs attention.",
+      button: "Check This Export",
+      reassurance: "Checking is read-only. You decide whether to merge.",
+    },
+  ],
+  create: [
+    {
+      title: "Bring Your Lifting History Together",
+      description:
+        "Choose your {export} and preview the full timeline. When you’re ready, we’ll create a Google Sheet for it in your Drive.",
+      desktopTitle: "Drop your lifting history here",
+      mobileTitle: "Choose your lifting history",
+      dropDescription: "See the clean timeline before creating your Sheet.",
+      button: "Preview My History",
+      reassurance: "No Google Sheet is created until you confirm.",
+    },
+    {
+      title: "Turn Old Workouts Into One Timeline",
+      description:
+        "Start with {sourceHistory}. We’ll organize the weighted, rep-based sets and show you the result before saving anything.",
+      desktopTitle: "Drop the workouts that got you here",
+      mobileTitle: "Choose the workouts that got you here",
+      dropDescription:
+        "Your preview becomes the foundation of a Google Sheet you own.",
+      button: "See My Timeline",
+      reassurance: "Preview first. Create your Sheet only when it looks right.",
+    },
+    {
+      title: "Give Your Training History a Home",
+      description:
+        "Preview your {export}, then keep the clean history in a readable Google Sheet inside your own Drive.",
+      desktopTitle: "Drop your workout archive here",
+      mobileTitle: "Choose your workout archive",
+      dropDescription:
+        "We’ll show you what belongs in your permanent lifting archive.",
+      button: "Preview My Archive",
+      reassurance: "Nothing is saved to Drive until you choose to continue.",
+    },
+    {
+      title: "Start With the Lifts You Already Logged",
+      description:
+        "You already did the work. Choose your {export} to turn those sessions into a Strength Journeys timeline and a Sheet you control.",
+      desktopTitle: "Drop your past training here",
+      mobileTitle: "Choose your past training",
+      dropDescription:
+        "Preview the sessions, exercises, and date range before saving them.",
+      button: "Preview My Workout Data",
+      reassurance: "Your Google Sheet comes after the preview, not before it.",
+    },
+    {
+      title: "Bring Every Rep With You",
+      description:
+        "Move {sourceHistory} into one clean timeline without handing ownership of it to another closed platform.",
+      desktopTitle: "Drop your training export here",
+      mobileTitle: "Choose your training export",
+      dropDescription:
+        "See the history first, then create its permanent home in your Drive.",
+      button: "See My Imported History",
+      reassurance: "You stay in control of when the Google Sheet is created.",
+    },
+  ],
+  preview: [
+    {
+      title: "See Your Lifting History Come Together",
+      description:
+        "Choose your {export} and instantly preview the weighted, rep-based sets that tell your training story. No account required.",
+      desktopTitle: "Drop your lifting history here",
+      mobileTitle: "Choose your lifting history",
+      dropDescription:
+        "See your sessions, exercises, and progress before deciding what to save.",
+      button: "Preview My History",
+      reassurance: "Your preview stays in this browser and nothing is saved.",
+    },
+    {
+      title: "Your Old Workouts Have a Story",
+      description:
+        "Open up {sourceHistory} and see the years, exercises, and strongest sets hiding inside the export.",
+      desktopTitle: "Drop the workouts you remember here",
+      mobileTitle: "Choose the workouts you remember",
+      dropDescription:
+        "We’ll turn the file into a private, explorable preview.",
+      button: "Show Me My Timeline",
+      reassurance: "No account required. The preview stays on this device.",
+    },
+    {
+      title: "Bring Your Training Years Back Into View",
+      description:
+        "Choose your {export} to rediscover old sessions, favourite lifts, and the progress that is easy to forget in a spreadsheet.",
+      desktopTitle: "Drop years of training here",
+      mobileTitle: "Choose your years of training",
+      dropDescription:
+        "Preview the story first—nothing is uploaded or saved to an account.",
+      button: "Explore My Past Training",
+      reassurance: "Private browser preview. No account and no commitment.",
+    },
+    {
+      title: "Find the Progress Hidden in Your Export",
+      description:
+        "A workout file is hard to read. Choose your {export} and we’ll reveal the timeline, volume, and standout lifts inside it.",
+      desktopTitle: "Drop your workout data here",
+      mobileTitle: "Choose your workout data",
+      dropDescription:
+        "See what your training adds up to before deciding whether to keep it.",
+      button: "Find My Progress",
+      reassurance: "The file is processed in your browser and stays private.",
+    },
+    {
+      title: "Give Your Workout History a Proper Look",
+      description:
+        "Choose {sourceHistory} and see it as a lifting journey instead of rows in an export file.",
+      desktopTitle: "Drop your training story here",
+      mobileTitle: "Choose your training story",
+      dropDescription:
+        "Get an instant private preview of the work you have already done.",
+      button: "Preview My Workout Story",
+      reassurance:
+        "Nothing leaves this browser unless you later choose to save.",
+    },
+  ],
+};
+
+// App-specific import pages are statically generated, so hydrate with variant zero
+// before adopting the browser's local-date hash without a server/client mismatch.
+const subscribeToDailyCopy = () => () => {};
+const getServerDailyCopyIndex = () => 0;
+
+function getDailyCopyIndex() {
+  const today = new Date();
+  const dateKey = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+  let hash = 0;
+
+  for (let index = 0; index < dateKey.length; index += 1) {
+    hash = (hash * 31 + dateKey.charCodeAt(index)) >>> 0;
+  }
+
+  return hash % IMPORT_WORKFLOW_COPY.preview.length;
+}
+
+function resolveWorkflowCopy(copy, { sourceAppName, sheetName }) {
+  const replacements = {
+    "{sourceTitle}": sourceAppName || "Another App",
+    "{sourceData}": sourceAppName
+      ? `your ${sourceAppName} data`
+      : "data from another app",
+    "{sourceHistory}": sourceAppName
+      ? `your ${sourceAppName} history`
+      : "your existing workout history",
+    "{export}": sourceAppName ? `${sourceAppName} export` : "workout export",
+    "{sheet}": sheetName,
+  };
+
+  return Object.fromEntries(
+    Object.entries(copy).map(([key, value]) => [
+      key,
+      Object.entries(replacements).reduce(
+        (result, [token, replacement]) => result.replaceAll(token, replacement),
+        value,
+      ),
+    ]),
+  );
+}
 
 export function ImportWorkflowSection({
-  title = "Import from Another App",
-  description = DEFAULT_IMPORT_DESCRIPTION,
+  title = null,
+  description = null,
   sourceAppName = null,
 }) {
   const router = useRouter();
@@ -759,6 +980,22 @@ export function ImportWorkflowSection({
   const isSheetComparisonPending =
     mergeMode && isLoading && !Array.isArray(sheetParsedData);
   const sheetName = sheetInfo?.filename || "your Google Sheet";
+  const dailyCopyIndex = useSyncExternalStore(
+    subscribeToDailyCopy,
+    getDailyCopyIndex,
+    getServerDailyCopyIndex,
+  );
+  const copyMode = mergeMode ? "merge" : createMode ? "create" : "preview";
+  const workflowCopy = useMemo(
+    () =>
+      resolveWorkflowCopy(IMPORT_WORKFLOW_COPY[copyMode][dailyCopyIndex], {
+        sourceAppName,
+        sheetName,
+      }),
+    [copyMode, dailyCopyIndex, sheetName, sourceAppName],
+  );
+  const displayTitle = title || workflowCopy.title;
+  const displayDescription = description || workflowCopy.description;
 
   const handleFile = useCallback(
     async (file) => {
@@ -973,7 +1210,7 @@ export function ImportWorkflowSection({
 
     return (
       <section className="mx-auto mb-12 max-w-5xl">
-        <h2 className="mb-4 text-lg font-semibold">{title}</h2>
+        <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8 text-center">
             {merging ? (
@@ -1190,10 +1427,10 @@ export function ImportWorkflowSection({
 
   return (
     <section className="mx-auto mb-12 max-w-5xl">
-      <h2 className="mb-4 text-lg font-semibold">{title}</h2>
-      {description && (
+      <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
+      {displayDescription && (
         <p className="text-muted-foreground mb-4 max-w-3xl text-sm leading-6">
-          {description}
+          {displayDescription}
         </p>
       )}
       <Card
@@ -1212,38 +1449,14 @@ export function ImportWorkflowSection({
             <>
               <FileUp className="text-muted-foreground mb-4 h-12 w-12" />
               <h3 className="mb-2 font-semibold">
-                <span className="md:hidden">
-                  {sourceAppName
-                    ? `Choose your ${sourceAppName} workout export`
-                    : "Choose your lifting history file"}
-                </span>
+                <span className="md:hidden">{workflowCopy.mobileTitle}</span>
                 <span className="hidden md:inline">
-                  {sourceAppName
-                    ? `Drop your ${sourceAppName} workout export here`
-                    : "Drop your lifting history here"}
+                  {workflowCopy.desktopTitle}
                 </span>
               </h3>
               <p className="text-muted-foreground mb-1 max-w-md text-sm">
-                {mergeMode ? (
-                  <>Preview your data before merging into your sheet.</>
-                ) : createMode ? (
-                  "We'll create a Google Sheet in your Drive and populate it with your data, ready for every future import."
-                ) : sourceAppName ? (
-                  `Upload the workout export from ${sourceAppName}. We'll preview the weighted, rep-based sets before anything is saved.`
-                ) : (
-                  "CSV or Excel from Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey, or any spreadsheet export. Bring every export home."
-                )}
+                {workflowCopy.dropDescription}
               </p>
-              {mergeMode && (
-                <p className="text-muted-foreground mb-3 max-w-md text-xs">
-                  We&apos;ll show you a full preview first - then you can choose
-                  to merge it into{" "}
-                  <strong className="text-foreground">
-                    &ldquo;{sheetName}&rdquo;
-                  </strong>
-                  .
-                </p>
-              )}
               {!isAuthenticated && (
                 <p className="text-muted-foreground mb-3 flex items-center justify-center gap-3 text-xs">
                   <span>No account required</span>
@@ -1254,10 +1467,7 @@ export function ImportWorkflowSection({
                 </p>
               )}
               <Button onClick={() => fileInputRef.current?.click()}>
-                <FileUp className="mr-2 h-4 w-4" />{" "}
-                {sourceAppName
-                  ? `Choose ${sourceAppName} File`
-                  : "Choose Workout Export"}
+                <FileUp className="mr-2 h-4 w-4" /> {workflowCopy.button}
               </Button>
               <input
                 ref={fileInputRef}
@@ -1266,11 +1476,9 @@ export function ImportWorkflowSection({
                 className="hidden"
                 onChange={(e) => handleFile(e.target.files?.[0])}
               />
-              {mergeMode && (
-                <p className="text-muted-foreground mt-4 max-w-sm text-xs">
-                  No changes are made until you confirm the merge.
-                </p>
-              )}
+              <p className="text-muted-foreground mt-4 max-w-sm text-xs">
+                {workflowCopy.reassurance}
+              </p>
             </>
           )}
           {importError && (

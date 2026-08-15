@@ -76,8 +76,6 @@ function buildUserEmail(user, outcome) {
     "Thanks again for checking it out,",
     "Wayne",
     "https://www.instagram.com/wayneschuller/",
-    "",
-    "This is a one-time note. If you'd rather not hear from me again, just reply unsubscribe.",
   ];
 
   if (outcome === "stalled") {

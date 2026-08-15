@@ -5,8 +5,13 @@
 
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { kv } from "@/lib/kv";
 import { Resend } from "resend";
+
+import {
+  handleSupportActivation,
+  handleSupportSignIn,
+} from "@/lib/founder-support-outreach";
+import { kv } from "@/lib/kv";
 import { shouldSendFounderNotification } from "@/lib/founder-notifications";
 import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 import { devLog } from "@/lib/processing-utils";
@@ -611,10 +616,15 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
   const { exactKey, normalizedKey } = getUserKvKeys(email);
   if (!exactKey) return;
 
-  const existingRecord =
-    (await kv.get(exactKey)) ||
-    (normalizedKey !== exactKey ? await kv.get(normalizedKey) : null) ||
-    {};
+  const exactRecord = (await kv.get(exactKey)) || {};
+  const normalizedRecord =
+    normalizedKey !== exactKey ? (await kv.get(normalizedKey)) || {} : {};
+  // Merge legacy casing variants before deciding whether this user is new.
+  // Activity under either key must suppress automated founder outreach.
+  const existingRecord = {
+    ...normalizedRecord,
+    ...exactRecord,
+  };
   const nowIso = new Date().toISOString();
   const currentCount =
     typeof existingRecord?.signInCount === "number" &&
@@ -628,6 +638,14 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
     lastSignInAt: nowIso,
     signInCount: currentCount + 1,
   };
+
+  // Any pre-existing per-user KV metadata means this person was already known
+  // before the automated outreach flow saw them. Only a genuinely empty record
+  // is eligible, so older users cannot receive a retroactive founder email even
+  // when their legacy record lacks newer sign-in or activation fields.
+  if (Object.keys(existingRecord).length === 0) {
+    nextRecord.supportOutreachEligibleAt = nowIso;
+  }
 
   // Privacy boundary: per-user KV keeps only first/last OAuth entry metadata so
   // support emails have context. It must not become a clickstream, browsing
@@ -650,12 +668,42 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
     nextRecord.lastRequiredDriveScopeGranted =
       grantedScopeMeta.hasRequiredDriveScope;
   }
+  if (grantedScopeMeta.hasRequiredDriveScope === false) {
+    nextRecord.firstMissingDriveScopeAt =
+      existingRecord.firstMissingDriveScopeAt || nowIso;
+    nextRecord.lastMissingDriveScopeAt = nowIso;
+  }
+  if (
+    grantedScopeMeta.hasRequiredDriveScope === true &&
+    existingRecord.firstMissingDriveScopeAt &&
+    !existingRecord.driveScopeRecoveredAt
+  ) {
+    nextRecord.driveScopeRecoveredAt = nowIso;
+  }
 
   await kv.set(exactKey, nextRecord);
 }
 
 export async function promptDeveloper(event, user, meta = {}) {
   try {
+    if (event === "sign-in") {
+      await handleSupportSignIn(user, meta);
+      if (meta.hasRequiredDriveScope === true) {
+        await handleSupportActivation(user, {
+          requirePriorMissingScope: true,
+        });
+      }
+      return;
+    }
+    if (
+      ["activated", "first-time-provisioned", "onboarding-success"].includes(
+        event,
+      )
+    ) {
+      await handleSupportActivation(user);
+      return;
+    }
+
     const apiKey = process.env.RESEND_API_KEY;
     const to = process.env.FEEDBACK_EMAIL_TO;
     if (!apiKey || !to || !user?.email) return;

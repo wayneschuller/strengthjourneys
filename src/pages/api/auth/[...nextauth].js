@@ -5,8 +5,13 @@
 
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { kv } from "@/lib/kv";
 import { Resend } from "resend";
+
+import {
+  handleSupportActivation,
+  handleSupportSignIn,
+} from "@/lib/founder-support-outreach";
+import { kv } from "@/lib/kv";
 import { shouldSendFounderNotification } from "@/lib/founder-notifications";
 import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 import { devLog } from "@/lib/processing-utils";
@@ -629,6 +634,17 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
     signInCount: currentCount + 1,
   };
 
+  // Only users first observed after this automation shipped enter the delayed
+  // founder-support flow. Existing and returning users must not unexpectedly
+  // receive a retroactive welcome email.
+  if (
+    !existingRecord.firstSignInAt &&
+    !existingRecord.connectedAt &&
+    !existingRecord.provisionedSheetId
+  ) {
+    nextRecord.supportOutreachEligibleAt = nowIso;
+  }
+
   // Privacy boundary: per-user KV keeps only first/last OAuth entry metadata so
   // support emails have context. It must not become a clickstream, browsing
   // profile, or storage for training data / Google Sheet contents.
@@ -650,12 +666,42 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
     nextRecord.lastRequiredDriveScopeGranted =
       grantedScopeMeta.hasRequiredDriveScope;
   }
+  if (grantedScopeMeta.hasRequiredDriveScope === false) {
+    nextRecord.firstMissingDriveScopeAt =
+      existingRecord.firstMissingDriveScopeAt || nowIso;
+    nextRecord.lastMissingDriveScopeAt = nowIso;
+  }
+  if (
+    grantedScopeMeta.hasRequiredDriveScope === true &&
+    existingRecord.firstMissingDriveScopeAt &&
+    !existingRecord.driveScopeRecoveredAt
+  ) {
+    nextRecord.driveScopeRecoveredAt = nowIso;
+  }
 
   await kv.set(exactKey, nextRecord);
 }
 
 export async function promptDeveloper(event, user, meta = {}) {
   try {
+    if (event === "sign-in") {
+      await handleSupportSignIn(user, meta);
+      if (meta.hasRequiredDriveScope === true) {
+        await handleSupportActivation(user, {
+          requirePriorMissingScope: true,
+        });
+      }
+      return;
+    }
+    if (
+      ["activated", "first-time-provisioned", "onboarding-success"].includes(
+        event,
+      )
+    ) {
+      await handleSupportActivation(user);
+      return;
+    }
+
     const apiKey = process.env.RESEND_API_KEY;
     const to = process.env.FEEDBACK_EMAIL_TO;
     if (!apiKey || !to || !user?.email) return;

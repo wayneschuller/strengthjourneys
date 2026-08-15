@@ -1042,8 +1042,13 @@ export async function maybePromptActivation({ existingRecord, session, meta }) {
 }
 
 export async function markActivationPrompted({ kvKey, existingRecord, nowIso }) {
+  // Activation support may add delayed-email metadata while the caller still
+  // holds an older record snapshot. Merge the latest KV value so that metadata
+  // is not lost when activationPromptedAt is written.
+  const latestRecord = (await kv.get(kvKey)) || {};
   await kv.set(kvKey, {
     ...existingRecord,
+    ...latestRecord,
     activationPromptedAt: nowIso,
   });
 }

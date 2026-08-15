@@ -616,10 +616,15 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
   const { exactKey, normalizedKey } = getUserKvKeys(email);
   if (!exactKey) return;
 
-  const existingRecord =
-    (await kv.get(exactKey)) ||
-    (normalizedKey !== exactKey ? await kv.get(normalizedKey) : null) ||
-    {};
+  const exactRecord = (await kv.get(exactKey)) || {};
+  const normalizedRecord =
+    normalizedKey !== exactKey ? (await kv.get(normalizedKey)) || {} : {};
+  // Merge legacy casing variants before deciding whether this user is new.
+  // Activity under either key must suppress automated founder outreach.
+  const existingRecord = {
+    ...normalizedRecord,
+    ...exactRecord,
+  };
   const nowIso = new Date().toISOString();
   const currentCount =
     typeof existingRecord?.signInCount === "number" &&
@@ -634,14 +639,11 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
     signInCount: currentCount + 1,
   };
 
-  // Only users first observed after this automation shipped enter the delayed
-  // founder-support flow. Existing and returning users must not unexpectedly
-  // receive a retroactive welcome email.
-  if (
-    !existingRecord.firstSignInAt &&
-    !existingRecord.connectedAt &&
-    !existingRecord.provisionedSheetId
-  ) {
+  // Any pre-existing per-user KV metadata means this person was already known
+  // before the automated outreach flow saw them. Only a genuinely empty record
+  // is eligible, so older users cannot receive a retroactive founder email even
+  // when their legacy record lacks newer sign-in or activation fields.
+  if (Object.keys(existingRecord).length === 0) {
     nextRecord.supportOutreachEligibleAt = nowIso;
   }
 

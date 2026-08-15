@@ -13,6 +13,7 @@ const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";
 const MIN_DELAY_HOURS = 24;
 const DELAY_WINDOW_HOURS = 49;
 const SUPPORT_LOCK_SECONDS = 30;
+const FOUNDER_EMAIL_HISTORY_LIMIT = 25;
 
 function normalizeEmail(email) {
   return typeof email === "string" ? email.trim().toLowerCase() : "";
@@ -24,6 +25,29 @@ function getUserKey(email) {
 
 function getLockKey(email) {
   return `sj:support-outreach-lock:${normalizeEmail(email)}`;
+}
+
+function hasFounderSupportOptOut(record) {
+  return Boolean(record.emailPreferences?.founderSupportUnsubscribedAt);
+}
+
+function appendFounderEmailHistory(record, entry) {
+  const history = Array.isArray(record.founderEmailHistory)
+    ? record.founderEmailHistory
+    : [];
+  return [...history, entry].slice(-FOUNDER_EMAIL_HISTORY_LIMIT);
+}
+
+function markFounderEmailCancelled(record, resendEmailId, cancelledAt) {
+  const history = Array.isArray(record.founderEmailHistory)
+    ? record.founderEmailHistory
+    : [];
+
+  return history.map((entry) =>
+    entry.resendEmailId === resendEmailId
+      ? { ...entry, status: "cancelled", cancelledAt }
+      : entry,
+  );
 }
 
 function getDelayMs(email) {
@@ -285,6 +309,7 @@ export async function handleSupportSignIn(user, meta = {}) {
     const record = (await kv.get(kvKey)) || {};
     if (
       !record.supportOutreachEligibleAt ||
+      hasFounderSupportOptOut(record) ||
       record.supportOutcomeAt ||
       record.supportStalledUserEmailId ||
       record.supportUserOutreachSentOrScheduledAt
@@ -327,6 +352,14 @@ export async function handleSupportSignIn(user, meta = {}) {
       });
       await kv.set(kvKey, {
         ...nextRecord,
+        founderEmailHistory: appendFounderEmailHistory(nextRecord, {
+          category: "founder_support",
+          outcome: "stalled",
+          recordedAt: new Date().toISOString(),
+          resendEmailId: userEmailId,
+          scheduledAt,
+          status: "scheduled",
+        }),
         supportStalledUserEmailId: userEmailId,
       });
     }
@@ -347,6 +380,7 @@ export async function handleSupportActivation(
     const record = (await kv.get(kvKey)) || {};
     if (
       !record.supportOutreachEligibleAt ||
+      hasFounderSupportOptOut(record) ||
       record.supportOutcomeAt ||
       (requirePriorMissingScope && !record.firstMissingDriveScopeAt)
     ) {
@@ -376,6 +410,21 @@ export async function handleSupportActivation(
       ? record.supportUserOutreachScheduledFor
       : getScheduledAt(context.userEmail, now);
     let userEmailId = record.supportStalledUserEmailId || null;
+    let founderEmailHistory = Array.isArray(record.founderEmailHistory)
+      ? record.founderEmailHistory
+      : [];
+
+    if (
+      !pendingEmailHasLikelySent &&
+      stalledUserEmailCancelled &&
+      record.supportStalledUserEmailId
+    ) {
+      founderEmailHistory = markFounderEmailCancelled(
+        record,
+        record.supportStalledUserEmailId,
+        nowIso,
+      );
+    }
 
     if (!pendingEmailHasLikelySent && stalledUserEmailCancelled) {
       userEmailId = await scheduleUserNote({
@@ -384,6 +433,17 @@ export async function handleSupportActivation(
         outcome,
         scheduledAt,
       });
+      founderEmailHistory = appendFounderEmailHistory(
+        { founderEmailHistory },
+        {
+          category: "founder_support",
+          outcome,
+          recordedAt: nowIso,
+          resendEmailId: userEmailId,
+          scheduledAt,
+          status: "scheduled",
+        },
+      );
     }
 
     const nextRecord = {
@@ -391,6 +451,7 @@ export async function handleSupportActivation(
       ...(hadMissingScope && !record.driveScopeRecoveredAt
         ? { driveScopeRecoveredAt: nowIso }
         : {}),
+      founderEmailHistory,
       supportOutcome: outcome,
       supportOutcomeAt: nowIso,
       supportPendingOutcome: null,

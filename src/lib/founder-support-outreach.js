@@ -204,6 +204,7 @@ async function scheduleUserNote({ context, user, outcome, scheduledAt }) {
   return scheduleEmail(
     context.resend,
     {
+      bcc: context.founderEmail,
       from: FROM_EMAIL,
       to: context.userEmail,
       replyTo: context.founderEmail,

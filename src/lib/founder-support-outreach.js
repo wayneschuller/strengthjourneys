@@ -60,6 +60,36 @@ function getFounderName(user) {
   return user?.name || user?.email || "Unknown user";
 }
 
+function escapeEmailHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatEmailLine(line) {
+  return escapeEmailHtml(line)
+    .replace(
+      /https:\/\/[^\s]+/g,
+      (url) => `<a href="${url}" style="color:#1155cc">${url}</a>`,
+    )
+    .replaceAll(
+      "Strength Journeys",
+      '<a href="https://www.strengthjourneys.xyz/" style="color:#1155cc">Strength Journeys</a>',
+    );
+}
+
+function buildUserEmailHtml(text) {
+  const paragraphs = text.split(/\n{2,}/).map((paragraph) => {
+    const lines = paragraph.split("\n").map(formatEmailLine).join("<br>");
+    return `<p style="margin:0 0 16px">${lines}</p>`;
+  });
+
+  return `<div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#111">${paragraphs.join("")}</div>`;
+}
+
 function buildUserEmail(user, outcome) {
   const sharedOpening = [
     getGreeting(user),
@@ -207,6 +237,7 @@ async function scheduleUserNote({ context, user, outcome, scheduledAt }) {
       to: context.userEmail,
       replyTo: context.founderEmail,
       subject: message.subject,
+      html: buildUserEmailHtml(message.text),
       text: message.text,
       scheduledAt,
     },

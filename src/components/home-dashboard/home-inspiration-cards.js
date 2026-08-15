@@ -1,3 +1,6 @@
+/**
+ * Builds the stage-aware summary strip shown above the main dashboard cards.
+ */
 import { useMemo } from "react";
 
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -152,7 +155,7 @@ export function HomeInspirationCards({
   ]);
 
   return (
-    <div className="col-span-full grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:flex-wrap sm:gap-5 sm:[&>*]:min-w-[220px] sm:[&>*]:flex-1 [&>*:last-child:nth-child(odd)]:col-span-2">
+    <div className="col-span-full grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:flex-wrap sm:gap-5 sm:[&>*]:min-w-[220px] sm:[&>*]:flex-1 sm:[&>*:first-child]:max-w-[320px] [&>*:last-child:nth-child(odd)]:col-span-2">
       {!isProgressDone && <HomeInspirationCardsSkeleton />}
       {isProgressDone && cards}
     </div>

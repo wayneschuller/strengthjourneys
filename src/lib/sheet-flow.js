@@ -8,6 +8,7 @@ import {
   STANDARD_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/data-sources/parser-utilities";
 import { devLog } from "@/lib/processing-utils";
+import { mergeUserRecord } from "@/lib/user-kv-keys";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
 export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
@@ -1020,19 +1021,20 @@ export async function persistLinkedSheet({
   connectionMethod,
   provisioningMethod,
 }) {
-  const nextRecord = {
-    ...existingRecord,
-    connectedAt: existingRecord.connectedAt || nowIso,
-    activationPromptedAt: existingRecord.activationPromptedAt || null,
+  // Re-read before writing: the sign-in callback and the founder outreach flow
+  // both write to this record, so a plain set from the caller's snapshot can
+  // drop scheduled-email IDs and scope timestamps written since it was taken.
+  return mergeUserRecord(kvKey, (latest) => ({
+    connectedAt: latest.connectedAt || existingRecord.connectedAt || nowIso,
+    activationPromptedAt:
+      latest.activationPromptedAt || existingRecord.activationPromptedAt || null,
     connectionMethod,
     provisionedSheetId: metadata.id,
-    provisionedAt: existingRecord.provisionedAt || nowIso,
+    provisionedAt: latest.provisionedAt || existingRecord.provisionedAt || nowIso,
     provisionVersion: PROVISION_VERSION,
     provisioningMethod,
     lastSeenAt: nowIso,
-  };
-  await kv.set(kvKey, nextRecord);
-  return nextRecord;
+  }));
 }
 
 export async function maybePromptActivation({ existingRecord, session, meta }) {
@@ -1043,14 +1045,13 @@ export async function maybePromptActivation({ existingRecord, session, meta }) {
 
 export async function markActivationPrompted({ kvKey, existingRecord, nowIso }) {
   // Activation support may add delayed-email metadata while the caller still
-  // holds an older record snapshot. Merge the latest KV value so that metadata
-  // is not lost when activationPromptedAt is written.
-  const latestRecord = (await kv.get(kvKey)) || {};
-  await kv.set(kvKey, {
+  // holds an older record snapshot. mergeUserRecord re-reads the latest KV
+  // value so that metadata is not lost when activationPromptedAt is written.
+  await mergeUserRecord(kvKey, (latest) => ({
     ...existingRecord,
-    ...latestRecord,
+    ...latest,
     activationPromptedAt: nowIso,
-  });
+  }));
 }
 
 export function respondLinkExisting(

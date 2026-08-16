@@ -44,6 +44,18 @@ Notes:
 - Automatically runs `next-sitemap` as a postbuild step
 - Must succeed before pushing to production
 
+### Sitemaps
+
+Two sitemaps, both generated - never commit sitemap files to git:
+
+- `/sitemap.xml` + `/sitemap-0.xml` - static routes, written into `public/` by
+  `next-sitemap` at postbuild time from `next-sitemap.config.js`
+- `/server-sitemap.xml` - Sanity article slugs, served on request by
+  `src/pages/server-sitemap.xml.js` so new articles appear without a deploy
+
+Both are listed in the generated `robots.txt` and should both be submitted in
+Google Search Console.
+
 ### Lint Entire Project
 
 ```

@@ -1,4 +1,5 @@
 import { kv } from "@/lib/kv";
+import { getUserKvKey } from "@/lib/user-kv-keys";
 
 const LEADERBOARD_ADMIN_ENV = "STRENGTH_JOURNEYS_LEADERBOARD_ADMINS";
 
@@ -40,7 +41,7 @@ export async function getVoteWeight(email) {
   if (!email) return 1;
 
   try {
-    const record = await kv.get(`sj:user:${email.trim().toLowerCase()}`);
+    const record = await kv.get(getUserKvKey(email));
     if (!record?.connectedAt) return 3;
 
     const daysSinceConnected =

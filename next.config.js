@@ -52,6 +52,14 @@ const nextConfig = {
         destination: "/lift-explorer",
         permanent: true,
       },
+      // 2026-08-17: Article renamed in Sanity when the PR analyzer became the home dashboard.
+      {
+        source:
+          "/articles/getting-the-most-out-of-the-strength-journeys-pr-analyzer",
+        destination:
+          "/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard",
+        permanent: true,
+      },
       // 2024-09-01: Preserve traffic from the old manually-authored article slug after Sanity migration.
       {
         source: "/articles/own-your-lifting-data",

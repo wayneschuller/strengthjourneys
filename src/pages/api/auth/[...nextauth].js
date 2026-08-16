@@ -14,6 +14,7 @@ import {
 import { kv } from "@/lib/kv";
 import { shouldSendFounderNotification } from "@/lib/founder-notifications";
 import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
+import { mergeUserRecord, readUserRecord } from "@/lib/user-kv-keys";
 import { devLog } from "@/lib/processing-utils";
 
 const scopes = [
@@ -24,17 +25,6 @@ const scopes = [
 const REQUIRED_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const SIGN_IN_ATTRIBUTION_COOKIE = "sj_signin_source";
 const SIGN_IN_METRICS_PREFIX = "sj:metrics:signin:daily";
-
-function getUserKvKeys(email) {
-  if (!email) return { exactKey: null, normalizedKey: null };
-
-  const exactEmail = String(email);
-  const normalizedEmail = exactEmail.trim().toLowerCase();
-  return {
-    exactKey: `sj:user:${exactEmail}`,
-    normalizedKey: `sj:user:${normalizedEmail}`,
-  };
-}
 
 function getGrantedScopeSupportMeta(account) {
   const grantedScopeString =
@@ -579,14 +569,10 @@ async function getSignInSupportMeta(email) {
   if (!email) return {};
 
   try {
-    const { exactKey, normalizedKey } = getUserKvKeys(email);
-    const record =
-      (await kv.get(exactKey)) ||
-      (normalizedKey !== exactKey ? await kv.get(normalizedKey) : null) ||
-      null;
+    const { record } = await readUserRecord(email);
 
     return {
-      hasKvRecord: Boolean(record && Object.keys(record).length > 0),
+      hasKvRecord: Object.keys(record).length > 0,
       connectedAt: record?.connectedAt || null,
       lastSeenAt: record?.lastSeenAt || null,
       connectionMethod: record?.connectionMethod || null,
@@ -613,75 +599,69 @@ async function getSignInSupportMeta(email) {
 async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
   if (!email) return;
 
-  const { exactKey, normalizedKey } = getUserKvKeys(email);
-  if (!exactKey) return;
+  const { record: existingRecord, writeKey } = await readUserRecord(email);
+  if (!writeKey) return;
 
-  const exactRecord = (await kv.get(exactKey)) || {};
-  const normalizedRecord =
-    normalizedKey !== exactKey ? (await kv.get(normalizedKey)) || {} : {};
-  // Merge legacy casing variants before deciding whether this user is new.
-  // Activity under either key must suppress automated founder outreach.
-  const existingRecord = {
-    ...normalizedRecord,
-    ...exactRecord,
-  };
   const nowIso = new Date().toISOString();
-  const currentCount =
-    typeof existingRecord?.signInCount === "number" &&
-    Number.isFinite(existingRecord.signInCount)
-      ? existingRecord.signInCount
-      : 0;
-
-  const nextRecord = {
-    ...existingRecord,
-    firstSignInAt: existingRecord.firstSignInAt || nowIso,
-    lastSignInAt: nowIso,
-    signInCount: currentCount + 1,
-  };
-
   // Any pre-existing per-user KV metadata means this person was already known
   // before the automated outreach flow saw them. Only a genuinely empty record
   // is eligible, so older users cannot receive a retroactive founder email even
-  // when their legacy record lacks newer sign-in or activation fields.
-  if (Object.keys(existingRecord).length === 0) {
-    nextRecord.supportOutreachEligibleAt = nowIso;
-  }
+  // when their record lacks newer sign-in or activation fields.
+  const looksNew = Object.keys(existingRecord).length === 0;
 
-  // Privacy boundary: per-user KV keeps only first/last OAuth entry metadata so
-  // support emails have context. It must not become a clickstream, browsing
-  // profile, or storage for training data / Google Sheet contents.
-  if (signInSource?.page) {
-    nextRecord.firstSignInPage =
-      existingRecord.firstSignInPage || signInSource.page;
-    nextRecord.lastSignInPage = signInSource.page;
-  }
-  if (signInSource?.cta) {
-    nextRecord.firstSignInCta =
-      existingRecord.firstSignInCta || signInSource.cta;
-    nextRecord.lastSignInCta = signInSource.cta;
-  }
+  await mergeUserRecord(writeKey, (base) => {
+    // `base` is whatever is in KV right now, which may include delayed-email
+    // fields a concurrent activation just wrote. Fields authored below win.
+    const currentCount =
+      typeof base.signInCount === "number" && Number.isFinite(base.signInCount)
+        ? base.signInCount
+        : 0;
 
-  if (grantedScopeMeta.grantedScopesKnown) {
-    nextRecord.lastGrantedScopes = grantedScopeMeta.grantedScopes || [];
-  }
-  if (grantedScopeMeta.hasRequiredDriveScope != null) {
-    nextRecord.lastRequiredDriveScopeGranted =
-      grantedScopeMeta.hasRequiredDriveScope;
-  }
-  if (grantedScopeMeta.hasRequiredDriveScope === false) {
-    nextRecord.firstMissingDriveScopeAt =
-      existingRecord.firstMissingDriveScopeAt || nowIso;
-    nextRecord.lastMissingDriveScopeAt = nowIso;
-  }
-  if (
-    grantedScopeMeta.hasRequiredDriveScope === true &&
-    existingRecord.firstMissingDriveScopeAt &&
-    !existingRecord.driveScopeRecoveredAt
-  ) {
-    nextRecord.driveScopeRecoveredAt = nowIso;
-  }
+    const authored = {
+      firstSignInAt: base.firstSignInAt || nowIso,
+      lastSignInAt: nowIso,
+      signInCount: currentCount + 1,
+    };
 
-  await kv.set(exactKey, nextRecord);
+    // Re-check emptiness against the fresh read too, so a record created
+    // between the two reads still blocks eligibility. Fails closed.
+    if (looksNew && Object.keys(base).length === 0) {
+      authored.supportOutreachEligibleAt = nowIso;
+    }
+
+    // Privacy boundary: per-user KV keeps only first/last OAuth entry metadata
+    // so support emails have context. It must not become a clickstream,
+    // browsing profile, or storage for training data / Google Sheet contents.
+    if (signInSource?.page) {
+      authored.firstSignInPage = base.firstSignInPage || signInSource.page;
+      authored.lastSignInPage = signInSource.page;
+    }
+    if (signInSource?.cta) {
+      authored.firstSignInCta = base.firstSignInCta || signInSource.cta;
+      authored.lastSignInCta = signInSource.cta;
+    }
+
+    if (grantedScopeMeta.grantedScopesKnown) {
+      authored.lastGrantedScopes = grantedScopeMeta.grantedScopes || [];
+    }
+    if (grantedScopeMeta.hasRequiredDriveScope != null) {
+      authored.lastRequiredDriveScopeGranted =
+        grantedScopeMeta.hasRequiredDriveScope;
+    }
+    if (grantedScopeMeta.hasRequiredDriveScope === false) {
+      authored.firstMissingDriveScopeAt = base.firstMissingDriveScopeAt || nowIso;
+      authored.lastMissingDriveScopeAt = nowIso;
+    }
+    if (
+      grantedScopeMeta.hasRequiredDriveScope === true &&
+      base.firstMissingDriveScopeAt &&
+      !base.driveScopeRecoveredAt
+    ) {
+      authored.driveScopeRecoveredAt = nowIso;
+    }
+
+    return { ...base, ...authored };
+  });
 }
 
 export async function promptDeveloper(event, user, meta = {}) {

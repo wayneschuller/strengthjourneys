@@ -7,21 +7,17 @@
 import { kv } from "@/lib/kv";
 import { buildNextImportProfile } from "@/lib/import/import-profile";
 import { getImportSource } from "@/lib/import/import-sources";
-
-function getUserKey(email) {
-  return `sj:user:${String(email || "")
-    .trim()
-    .toLowerCase()}`;
-}
+import { getUserKvKey } from "@/lib/user-kv-keys";
 
 export async function getImportProfile(email) {
   if (!email) return null;
-  const record = (await kv.get(getUserKey(email))) || {};
+  const record = (await kv.get(getUserKvKey(email))) || {};
   return record.importProfile || null;
 }
 
 export async function recordImportActivity(email, activity) {
-  const key = getUserKey(email);
+  if (!email) return null;
+  const key = getUserKvKey(email);
   const record = (await kv.get(key)) || {};
   const source = getImportSource(activity);
   const currentProfile = record.importProfile || null;

@@ -2,12 +2,24 @@
  * Turns noisy onboarding events into one founder outcome notification and one
  * delayed, reply-first support note to the user. Resend owns the delay so this
  * flow does not need a cron job or a queue worker.
+ *
+ * BY DESIGN, the founder receives two messages per user outcome:
+ *   1. A structured `[SJ]` notification, sent immediately, carrying the KV
+ *      context (entry page, CTA, scope timeline, when the user note will land).
+ *   2. A bcc of the user-facing note itself, arriving whenever that note is
+ *      actually delivered, so the exact wording the user saw can be observed
+ *      and tracked as a real conversation.
+ * Two purposeful messages replace the previous behaviour, where a single
+ * successful onboarding could fan out into five separate founder emails about
+ * intermediate steps. See `DEFAULT_DISABLED_EVENTS` in "@/lib/founder-
+ * notifications" for the legacy event emails this superseded.
  */
 
 import { Resend } from "resend";
 
 import { kv } from "@/lib/kv";
 import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
+import { mergeUserRecord, readUserRecord } from "@/lib/user-kv-keys";
 
 const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";
 const MIN_DELAY_HOURS = 24;
@@ -19,14 +31,33 @@ function normalizeEmail(email) {
   return typeof email === "string" ? email.trim().toLowerCase() : "";
 }
 
-function getUserKey(email) {
-  return `sj:user:${normalizeEmail(email)}`;
-}
-
+// The per-user KV record is keyed on the raw provider email, so this module must
+// go through the shared helpers in "@/lib/user-kv-keys" rather than building a
+// key from the normalized address. Reading a normalized key here would silently
+// miss `supportOutreachEligibleAt` for any mixed-case address and disable the
+// whole flow for those users, with nothing logged.
+//
+// Everything below that is *not* a KV record key stays normalized on purpose:
+// one lock and one idempotency key per human, whatever casing they signed in
+// with, so two casings cannot race or double-send.
 function getLockKey(email) {
   return `sj:support-outreach-lock:${normalizeEmail(email)}`;
 }
 
+/**
+ * Opt-out hook, intentionally left without a writer for now.
+ *
+ * The current practice is a single personal email to each new user, which then
+ * becomes a hand-managed reply thread — closer to correspondence than to a
+ * mailing list, so there is no list to leave. Nothing sets
+ * `emailPreferences.founderSupportUnsubscribedAt` yet; the check exists so the
+ * suppression point is already in the right place.
+ *
+ * If this ever grows into recurring or bulk sending, it stops being
+ * correspondence and needs real list infrastructure: a writer for this field,
+ * an unsubscribe link in `buildUserEmail`, and a `List-Unsubscribe` header on
+ * the Resend payload.
+ */
 function hasFounderSupportOptOut(record) {
   return Boolean(record.emailPreferences?.founderSupportUnsubscribedAt);
 }
@@ -65,14 +96,69 @@ function getScheduledAt(email, now = new Date()) {
   return new Date(now.getTime() + getDelayMs(email)).toISOString();
 }
 
+function isWhitespace(character) {
+  return character === " " || character === "\t" || character === "\n"
+    || character === "\r";
+}
+
+function getFirstWord(value) {
+  const trimmed = value.trim();
+  for (let index = 0; index < trimmed.length; index += 1) {
+    if (isWhitespace(trimmed[index])) return trimmed.slice(0, index);
+  }
+  return trimmed;
+}
+
+// Punctuation that legitimately appears inside a given name.
+const NAME_PUNCTUATION = "'’-";
+// ASCII characters that never do.
+const NON_NAME_ASCII = "0123456789!\"#$%&()*+,./:;<=>?@[\\]^_`{|}~";
+// Non-ASCII blocks that hold symbols and punctuation rather than letters, so a
+// display name like "🔥Wayne" or "「Bob」" still falls back to "Hi there,".
+// Everything outside these ranges is allowed through, which keeps Cyrillic
+// (U+0400+), Arabic (U+0600+), CJK ideographs (U+4E00+) and Hangul (U+AC00+)
+// working for a personalised greeting.
+const NON_NAME_CODE_POINT_RANGES = [
+  [0x2000, 0x2bff], // punctuation, currency, arrows, math, misc symbols, dingbats
+  [0x3000, 0x303f], // CJK symbols and punctuation
+  [0xfe00, 0xfe0f], // variation selectors
+  [0x1f000, 0x1faff], // emoji and pictographs
+];
+
+function isNonNameCodePoint(codePoint) {
+  return NON_NAME_CODE_POINT_RANGES.some(
+    ([start, end]) => codePoint >= start && codePoint <= end,
+  );
+}
+
+/**
+ * Guards what can be interpolated into "Hi <name>,". This is a plausibility
+ * check, not sanitisation — the value is HTML-escaped before it reaches the
+ * email either way. The aim is simply to fall back to "Hi there," when a
+ * provider display name is clearly not a first name.
+ */
+function isPlausibleFirstName(candidate) {
+  if (candidate.length === 0 || candidate.length > 40) return false;
+
+  for (const character of candidate) {
+    if (NAME_PUNCTUATION.includes(character)) continue;
+    const codePoint = character.codePointAt(0);
+    // Control characters and the space range.
+    if (codePoint <= 0x20 || codePoint === 0x7f) return false;
+    if (NON_NAME_ASCII.includes(character)) return false;
+    if (isNonNameCodePoint(codePoint)) return false;
+  }
+  return true;
+}
+
 function getFirstName(user) {
   const explicitFirstName =
     typeof user?.firstName === "string" ? user.firstName.trim() : "";
   const nameFirstWord =
-    typeof user?.name === "string" ? user.name.trim().split(/\s+/)[0] : "";
+    typeof user?.name === "string" ? getFirstWord(user.name) : "";
   const candidate = explicitFirstName || nameFirstWord;
 
-  return /^[\p{L}\p{M}'’-]{1,40}$/u.test(candidate) ? candidate : null;
+  return isPlausibleFirstName(candidate) ? candidate : null;
 }
 
 function getGreeting(user) {
@@ -93,22 +179,103 @@ function escapeEmailHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+const LINK_STYLE = "color:#1155cc";
+const URL_SCHEME = "https://";
+// Trailing characters that belong to the sentence rather than to the link, so
+// "see https://example.com/x." does not pull the full stop into the href.
+const URL_TRAILING_PUNCTUATION = ".,;:!?)]}\"'";
+
+/**
+ * Splits a line into plain-text and URL runs by scanning for the scheme and
+ * walking to the next whitespace. Deliberately no regex: the boundary rules
+ * here are "stop at whitespace, then give back trailing punctuation", which is
+ * clearer and easier to verify written out than encoded in a pattern.
+ */
+function splitLineOnUrls(line) {
+  const segments = [];
+  let emittedTo = 0; // end of the text already pushed into `segments`
+  let searchFrom = 0;
+
+  while (searchFrom < line.length) {
+    const start = line.indexOf(URL_SCHEME, searchFrom);
+    if (start === -1) break;
+
+    let end = start;
+    while (end < line.length && !isWhitespace(line[end])) end += 1;
+    while (end > start && URL_TRAILING_PUNCTUATION.includes(line[end - 1])) {
+      end -= 1;
+    }
+
+    if (end <= start + URL_SCHEME.length) {
+      // A bare scheme with no host after it. Keep it as ordinary text and
+      // carry on scanning the rest of the line.
+      searchFrom = start + URL_SCHEME.length;
+      continue;
+    }
+
+    if (start > emittedTo) {
+      segments.push({ type: "text", value: line.slice(emittedTo, start) });
+    }
+    segments.push({ type: "url", value: line.slice(start, end) });
+    emittedTo = end;
+    searchFrom = end;
+  }
+
+  if (emittedTo < line.length) {
+    segments.push({ type: "text", value: line.slice(emittedTo) });
+  }
+  return segments;
+}
+
+function linkBrandMentions(escapedText) {
+  return escapedText.replaceAll(
+    "Strength Journeys",
+    `<a href="https://www.strengthjourneys.xyz/" style="${LINK_STYLE}">Strength Journeys</a>`,
+  );
+}
+
 function formatEmailLine(line) {
-  return escapeEmailHtml(line)
-    .replace(
-      /https:\/\/[^\s]+/g,
-      (url) => `<a href="${url}" style="color:#1155cc">${url}</a>`,
-    )
-    .replaceAll(
-      "Strength Journeys",
-      '<a href="https://www.strengthjourneys.xyz/" style="color:#1155cc">Strength Journeys</a>',
-    );
+  // URLs are located in the raw line and each segment is escaped on its own.
+  // Escaping first would fold characters like & into entities (&amp;) and blur
+  // the boundary between a link and the punctuation that follows it. It also
+  // keeps the brand-linking pass off the inside of an href.
+  return splitLineOnUrls(line)
+    .map((segment) => {
+      const escaped = escapeEmailHtml(segment.value);
+      return segment.type === "url"
+        ? `<a href="${escaped}" style="${LINK_STYLE}">${escaped}</a>`
+        : linkBrandMentions(escaped);
+    })
+    .join("");
+}
+
+/**
+ * Groups lines into paragraphs, treating any run of blank lines as the break.
+ * The message bodies are arrays joined on "\n" with "" entries as spacers, so
+ * grouping non-blank runs is exactly the intent — and unlike a split on two or
+ * more newlines it cannot emit an empty paragraph.
+ */
+function splitParagraphs(text) {
+  const paragraphs = [];
+  let current = [];
+
+  for (const line of text.split("\n")) {
+    if (line.trim().length === 0) {
+      if (current.length > 0) paragraphs.push(current);
+      current = [];
+      continue;
+    }
+    current.push(line);
+  }
+  if (current.length > 0) paragraphs.push(current);
+
+  return paragraphs;
 }
 
 function buildUserEmailHtml(text) {
-  const paragraphs = text.split(/\n{2,}/).map((paragraph) => {
-    const lines = paragraph.split("\n").map(formatEmailLine).join("<br>");
-    return `<p style="margin:0 0 16px">${lines}</p>`;
+  const paragraphs = splitParagraphs(text).map((lines) => {
+    const body = lines.map(formatEmailLine).join("<br>");
+    return `<p style="margin:0 0 16px">${body}</p>`;
   });
 
   return `<div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#111">${paragraphs.join("")}</div>`;
@@ -211,7 +378,11 @@ function getResendContext(user) {
 
   return {
     founderEmail,
+    // Raw provider address, used only to resolve the KV record key.
+    recordEmail: user.email,
     resend: new Resend(apiKey),
+    // Normalized address, used for the lock, the `to:` header and Resend
+    // idempotency keys.
     userEmail,
   };
 }
@@ -305,9 +476,9 @@ export async function handleSupportSignIn(user, meta = {}) {
   if (!context || !(await acquireLock(context.userEmail))) return;
 
   try {
-    const kvKey = getUserKey(context.userEmail);
-    const record = (await kv.get(kvKey)) || {};
+    const { record, writeKey } = await readUserRecord(context.recordEmail);
     if (
+      !writeKey ||
       !record.supportOutreachEligibleAt ||
       hasFounderSupportOptOut(record) ||
       record.supportOutcomeAt ||
@@ -323,8 +494,8 @@ export async function handleSupportSignIn(user, meta = {}) {
       firstMissingDriveScopeAt:
         record.firstMissingDriveScopeAt || new Date().toISOString(),
     };
-    let nextRecord = {
-      ...stalledRecord,
+    const pendingFields = {
+      firstMissingDriveScopeAt: stalledRecord.firstMissingDriveScopeAt,
       supportPendingOutcome: "stalled",
       supportUserOutreachScheduledFor: scheduledAt,
     };
@@ -336,11 +507,10 @@ export async function handleSupportSignIn(user, meta = {}) {
         record: stalledRecord,
         scheduledAt,
       });
-      nextRecord = {
-        ...nextRecord,
+      await mergeUserRecord(writeKey, {
+        ...pendingFields,
         supportStalledFounderEmailId: founderEmailId,
-      };
-      await kv.set(kvKey, nextRecord);
+      });
     }
 
     if (!record.supportStalledUserEmailId) {
@@ -350,9 +520,11 @@ export async function handleSupportSignIn(user, meta = {}) {
         outcome: "stalled",
         scheduledAt,
       });
-      await kv.set(kvKey, {
-        ...nextRecord,
-        founderEmailHistory: appendFounderEmailHistory(nextRecord, {
+      // Append onto the freshest history so the founder email ID written a
+      // moment ago (and anything a concurrent request added) survives.
+      await mergeUserRecord(writeKey, (latest) => ({
+        ...pendingFields,
+        founderEmailHistory: appendFounderEmailHistory(latest, {
           category: "founder_support",
           outcome: "stalled",
           recordedAt: new Date().toISOString(),
@@ -361,7 +533,7 @@ export async function handleSupportSignIn(user, meta = {}) {
           status: "scheduled",
         }),
         supportStalledUserEmailId: userEmailId,
-      });
+      }));
     }
   } finally {
     await releaseLock(context.userEmail);
@@ -376,9 +548,9 @@ export async function handleSupportActivation(
   if (!context || !(await acquireLock(context.userEmail))) return;
 
   try {
-    const kvKey = getUserKey(context.userEmail);
-    const record = (await kv.get(kvKey)) || {};
+    const { record, writeKey } = await readUserRecord(context.recordEmail);
     if (
+      !writeKey ||
       !record.supportOutreachEligibleAt ||
       hasFounderSupportOptOut(record) ||
       record.supportOutcomeAt ||
@@ -446,8 +618,9 @@ export async function handleSupportActivation(
       );
     }
 
-    const nextRecord = {
-      ...record,
+    // `founderEmailHistory` is derived from the snapshot above, which is safe
+    // because the outreach lock excludes the only other writer of that field.
+    const authoredFields = {
       ...(hadMissingScope && !record.driveScopeRecoveredAt
         ? { driveScopeRecoveredAt: nowIso }
         : {}),
@@ -467,10 +640,12 @@ export async function handleSupportActivation(
       context,
       user,
       outcome,
-      record: nextRecord,
+      record: { ...record, ...authoredFields },
       scheduledAt,
     });
-    await kv.set(kvKey, nextRecord);
+    // Write only the fields authored here: the sign-in callback may have
+    // bumped counters or scope timestamps while these emails were in flight.
+    await mergeUserRecord(writeKey, authoredFields);
   } finally {
     await releaseLock(context.userEmail);
   }

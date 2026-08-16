@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { kv } from "@/lib/kv";
+import { getUserKvKey } from "@/lib/user-kv-keys";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 function isDevelopmentEnv() {
@@ -25,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   const mode = req.body?.mode === "delete" ? "delete" : "onboarding";
-  const kvKey = `sj:user:${session.user.email}`;
+  const kvKey = getUserKvKey(session.user.email);
 
   try {
     if (mode === "delete") {

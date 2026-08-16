@@ -1,56 +1,39 @@
 /**
  * Single source of truth for the per-user KV record key.
  *
- * CONVENTION: the canonical key is `sj:user:<email exactly as the OAuth
- * provider supplied it>`. Every write goes to that exact key. Reads must also
- * check a trimmed/lowercased variant of the same address, because some older
- * records were written under that casing before the convention settled.
+ * CONVENTION: `sj:user:<email, trimmed and lowercased>`. The address is
+ * normalized once, here, so the invariant "one human, one record" is true by
+ * construction rather than by assumption.
  *
- * WHY THIS MATTERS: a module that picks its own casing reads a *different*
- * record than the one the rest of the app writes, and an absent record is
- * indistinguishable from a brand new user. Bugs of that shape are silent —
- * eligibility checks simply never fire and no error is ever logged. Anything
- * touching `sj:user:*` should import from here rather than interpolating the
- * key inline.
+ * Sign-in is Google OAuth only and Google's `email` claim is already
+ * normalized, so this is a no-op for every address the app sees today (a census
+ * of the live keyspace found zero with uppercase or stray whitespace). It is
+ * written this way because the alternative — keying on the raw claim — would
+ * silently create a *second* record for the same person if that ever stopped
+ * holding. Normalizing costs nothing and removes the need for the read-time
+ * fallback this module used to carry.
+ *
+ * Anything touching `sj:user:*` should import from here rather than
+ * interpolating the key inline; call sites that spell the key themselves are
+ * how the two halves of the codebase drifted apart in the first place.
  */
 
 import { kv } from "@/lib/kv";
 
-export function getUserKvKeys(email) {
-  if (!email) return { exactKey: null, normalizedKey: null };
-
-  const exactEmail = String(email);
-  const normalizedEmail = exactEmail.trim().toLowerCase();
-  return {
-    exactKey: `sj:user:${exactEmail}`,
-    normalizedKey: `sj:user:${normalizedEmail}`,
-  };
+export function getUserKvKey(email) {
+  if (!email) return null;
+  return `sj:user:${String(email).trim().toLowerCase()}`;
 }
 
 /**
- * Reads the merged per-user record and returns the key that writes must target.
- *
- * Fields from the exact key win over the legacy normalized key so the newer
- * record stays authoritative. `record` is `{}` when nothing exists under either
- * key, which callers may treat as "this person is genuinely new".
- *
- * `legacyRecord` is the normalized-key half on its own. Nothing writes to that
- * key any more, so it is frozen history; callers migrating it forward must
- * layer it *underneath* the exact-key record rather than over the top.
+ * Reads the per-user record and returns the key writes must target. `record` is
+ * `{}` when nothing exists, which callers may treat as "this person is new".
  */
 export async function readUserRecord(email) {
-  const { exactKey, normalizedKey } = getUserKvKeys(email);
-  if (!exactKey) return { record: {}, legacyRecord: {}, writeKey: null };
+  const writeKey = getUserKvKey(email);
+  if (!writeKey) return { record: {}, writeKey: null };
 
-  const exactRecord = (await kv.get(exactKey)) || {};
-  const normalizedRecord =
-    normalizedKey !== exactKey ? (await kv.get(normalizedKey)) || {} : {};
-
-  return {
-    record: { ...normalizedRecord, ...exactRecord },
-    legacyRecord: normalizedRecord,
-    writeKey: exactKey,
-  };
+  return { record: (await kv.get(writeKey)) || {}, writeKey };
 }
 
 /**

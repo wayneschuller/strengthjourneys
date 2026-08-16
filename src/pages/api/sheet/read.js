@@ -25,6 +25,7 @@
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 import { kv } from "@/lib/kv";
+import { getUserKvKey } from "@/lib/user-kv-keys";
 import { devLog } from "@/lib/processing-utils";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -130,7 +131,7 @@ export default async function handler(req, res) {
     // Prompts the developer to offer personal support at key moments.
     // Runs after the response is sent so the user never waits for this.
     try {
-      const kvKey = `sj:user:${session.user.email}`;
+      const kvKey = getUserKvKey(session.user.email);
       const record = (await kv.get(kvKey)) || {};
       const now = new Date();
       const nowIso = now.toISOString();

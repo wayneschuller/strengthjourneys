@@ -599,24 +599,19 @@ async function getSignInSupportMeta(email) {
 async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
   if (!email) return;
 
-  // Merge legacy casing variants before deciding whether this user is new.
-  // Activity under either key must suppress automated founder outreach.
-  const { record: existingRecord, legacyRecord, writeKey } =
-    await readUserRecord(email);
+  const { record: existingRecord, writeKey } = await readUserRecord(email);
   if (!writeKey) return;
 
   const nowIso = new Date().toISOString();
   // Any pre-existing per-user KV metadata means this person was already known
   // before the automated outreach flow saw them. Only a genuinely empty record
   // is eligible, so older users cannot receive a retroactive founder email even
-  // when their legacy record lacks newer sign-in or activation fields.
+  // when their record lacks newer sign-in or activation fields.
   const looksNew = Object.keys(existingRecord).length === 0;
 
-  await mergeUserRecord(writeKey, (latest) => {
-    // Precedence, lowest to highest: frozen legacy record, then whatever is in
-    // KV right now (which may include delayed-email fields a concurrent
-    // activation just wrote), then the fields this sign-in actually authors.
-    const base = { ...legacyRecord, ...latest };
+  await mergeUserRecord(writeKey, (base) => {
+    // `base` is whatever is in KV right now, which may include delayed-email
+    // fields a concurrent activation just wrote. Fields authored below win.
     const currentCount =
       typeof base.signInCount === "number" && Number.isFinite(base.signInCount)
         ? base.signInCount

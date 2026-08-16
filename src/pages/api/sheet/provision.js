@@ -30,6 +30,7 @@
 
 import { getServerSession } from "next-auth/next";
 import { kv } from "@/lib/kv";
+import { getUserKvKey } from "@/lib/user-kv-keys";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { devLog } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
@@ -810,7 +811,7 @@ export default async function handler(req, res) {
     ? req.body.candidates
     : [];
   const headers = { Authorization: `Bearer ${session.accessToken}` };
-  const kvKey = `sj:user:${session.user.email}`;
+  const kvKey = getUserKvKey(session.user.email);
   const nowIso = new Date().toISOString();
   const sheetName = buildSheetName(session.user.name);
 

@@ -8,7 +8,7 @@ import {
   STANDARD_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/data-sources/parser-utilities";
 import { devLog } from "@/lib/processing-utils";
-import { mergeUserRecord } from "@/lib/user-kv-keys";
+import { getUserKvKey, mergeUserRecord } from "@/lib/user-kv-keys";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
 export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
@@ -263,7 +263,7 @@ export async function requireSheetFlowContext(req, res) {
   return {
     session,
     headers: { Authorization: `Bearer ${session.accessToken}` },
-    kvKey: `sj:user:${session.user.email}`,
+    kvKey: getUserKvKey(session.user.email),
     locale: getRequestLocale(req),
   };
 }

@@ -423,7 +423,7 @@ export function SetRow({
                 autoFocus
               />
               <div className="flex items-center gap-1">
-                <Link2 className="text-muted-foreground/40 h-3 w-3 shrink-0" />
+                <Link2 className="text-muted-foreground/60 h-3 w-3 shrink-0" />
                 <input
                   ref={urlInputRef}
                   type="url"
@@ -444,12 +444,12 @@ export function SetRow({
           ) : (
             <div className="space-y-0.5">
               {isLocked || isReadOnly ? (
-                <div className="text-muted-foreground/50 w-full text-left text-xs italic">
+                <div className="text-muted-foreground w-full text-left text-[13px]">
                   {displayNotes || (isReadOnly ? "" : "notes...")}
                 </div>
               ) : (
                 <button
-                  className="text-muted-foreground/50 hover:text-muted-foreground w-full text-left text-xs italic"
+                  className="text-muted-foreground hover:text-foreground w-full text-left text-[13px]"
                   onClick={openNotesEdit}
                 >
                   {displayNotes || "notes..."}
@@ -468,7 +468,7 @@ export function SetRow({
                   href={displayUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground/50 hover:text-foreground shrink-0 rounded p-1 transition-colors"
+                  className="text-muted-foreground/60 hover:text-foreground shrink-0 rounded p-1 transition-colors"
                   aria-label="Watch video"
                 >
                   <PlayCircle className="h-4 w-4" />
@@ -483,7 +483,7 @@ export function SetRow({
 
         <div className="hidden w-[17rem] shrink-0 items-center justify-end gap-2 md:flex">
           {set._pending ? (
-            <Loader2 className="text-muted-foreground/50 h-3 w-3 animate-spin" />
+            <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
           ) : (
             <>
               <div className="ml-auto flex items-center gap-2">
@@ -540,7 +540,7 @@ export function SetRow({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        className="text-muted-foreground/30 hover:text-destructive disabled:text-muted-foreground/20 disabled:hover:text-muted-foreground/20 rounded p-1 transition-colors disabled:cursor-not-allowed md:opacity-0 md:group-hover:opacity-100 disabled:md:opacity-35"
+                        className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded p-1 transition-colors disabled:cursor-not-allowed md:opacity-0 md:group-hover:opacity-100 disabled:md:opacity-35"
                         onClick={onDelete}
                         disabled={isDeleteDisabled}
                         aria-label="Delete set"
@@ -563,7 +563,7 @@ export function SetRow({
       {(hasBadges || hasRankingBadges || onDelete || set._pending) && (
         <div className="mt-1 flex items-center gap-2 pl-7 md:hidden">
           {set._pending ? (
-            <Loader2 className="text-muted-foreground/50 h-3 w-3 animate-spin" />
+            <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
           ) : (
             <>
               {strengthBadge && (
@@ -619,7 +619,7 @@ export function SetRow({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        className="text-muted-foreground/30 hover:text-destructive disabled:text-muted-foreground/20 disabled:hover:text-muted-foreground/20 rounded p-1 transition-colors disabled:cursor-not-allowed"
+                        className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded p-1 transition-colors disabled:cursor-not-allowed"
                         onClick={onDelete}
                         disabled={isDeleteDisabled}
                         aria-label="Delete set"
@@ -665,5 +665,5 @@ function getLogPRBadgeTooltip(liftType) {
 function getPrToneClass(scope) {
   if (scope === "lifetime") return "text-amber-600";
   if (scope === "yearly") return "text-blue-500";
-  return "text-muted-foreground/45";
+  return "text-muted-foreground";
 }

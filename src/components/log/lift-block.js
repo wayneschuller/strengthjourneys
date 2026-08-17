@@ -14,7 +14,6 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
-import { hexToRgba } from "@/lib/color-tools";
 import {
   getEffectiveSetForRanking,
   getOptimisticRankingMeta,
@@ -495,16 +494,18 @@ export function LiftBlock({
   return (
     <div
       ref={liftBlockRef}
-      className="bg-card relative overflow-hidden rounded-xl border"
+      // `lift-card` owns the colour wash and border tint so the alphas can differ
+      // per theme — see the .lift-card block in globals.css.
+      className="lift-card bg-card relative overflow-hidden rounded-xl border"
       style={{
-        backgroundImage: `linear-gradient(135deg, ${hexToRgba(liftColor, 0.12)} 0%, ${hexToRgba(liftColor, 0.06)} 18%, rgba(255, 255, 255, 0) 42%)`,
+        "--lift-color": liftColor,
         animation: isCelebrationShaking
           ? "log-pr-shake 0.6s ease-in-out"
           : undefined,
       }}
     >
       <div
-        className="absolute inset-x-0 top-0 h-1 rounded-t-xl"
+        className="absolute inset-x-0 top-0 h-1 rounded-t-xl dark:h-1.5"
         style={{ backgroundColor: liftColor }}
       />
       {/* Desktop: large icon in left gutter */}

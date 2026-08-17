@@ -71,7 +71,7 @@ export function LiftSuggestions({
   const dateLabel = getReadableDateString(lastDate);
 
   return (
-    <p className="pb-1 text-xs italic text-muted-foreground/70">
+    <p className="pb-1 text-xs italic text-muted-foreground">
       Last{" "}
       {onNavigateToDate ? (
         <button

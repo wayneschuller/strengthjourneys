@@ -2,6 +2,10 @@
  * Motivational log CTA for Lift Explorer.
  * Uses the selected lift's latest logged date so the button feels tied to the
  * lifter's actual training history instead of generic page copy.
+ *
+ * Hidden in demo mode: the copy speaks in second person about training that
+ * never happened ("you trained it 2 days ago"), and the button would send a
+ * visitor to log a set against a history that is not theirs.
  */
 
 import Link from "next/link";
@@ -104,9 +108,9 @@ const LIFT_LOG_CTA_PHRASES = {
  * @param {string} props.liftType - Selected lift type.
  */
 export function LiftLogCta({ liftType }) {
-  const { parsedData, isLoading } = useUserLiftingData();
+  const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
 
-  if (!liftType) return null;
+  if (!liftType || isDemoMode) return null;
 
   const today = formatDateToYmdLocal(new Date());
   const latestLiftDate = getLatestLiftDate(parsedData, liftType);

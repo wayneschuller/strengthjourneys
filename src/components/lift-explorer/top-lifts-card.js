@@ -175,21 +175,25 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
           ))}
         </div>
         <div className="hidden md:block">
-          <LiftPickerList
-            stats={visibleStats}
-            selectedLiftType={selectedLiftType}
-            onSelectLift={onSelectLift}
-            showRank={sortMode === "sets"}
-          />
-          {outOfViewSelected && (
-            <div className="mt-1 border-t pt-1">
-              <LiftPickerList
-                stats={[outOfViewSelected]}
-                selectedLiftType={selectedLiftType}
-                onSelectLift={onSelectLift}
-              />
-            </div>
-          )}
+          {/* Expanded, a long lifting history runs to hundreds of movements, so
+              it scrolls inside the card rather than down the whole page. */}
+          <div className={cn(isListExpanded && "max-h-[70vh] overflow-y-auto")}>
+            <LiftPickerList
+              stats={visibleStats}
+              selectedLiftType={selectedLiftType}
+              onSelectLift={onSelectLift}
+              showRank={sortMode === "sets"}
+            />
+            {outOfViewSelected && (
+              <div className="mt-1 border-t pt-1">
+                <LiftPickerList
+                  stats={[outOfViewSelected]}
+                  selectedLiftType={selectedLiftType}
+                  onSelectLift={onSelectLift}
+                />
+              </div>
+            )}
+          </div>
           {(hiddenCount > 0 || isListExpanded) && (
             <button
               type="button"

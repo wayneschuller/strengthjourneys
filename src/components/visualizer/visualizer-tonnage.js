@@ -1,4 +1,8 @@
-
+/**
+ * Session tonnage chart (per-lift and all-lifts variants) with a 30-day rolling
+ * average trend line. Shares its visual language with the E1RM charts via
+ * chart-visuals so the two charts on a lift page read as a matched pair.
+ */
 import { useMemo, useEffect, useState } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -12,7 +16,6 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ReferenceLine } from "recharts";
 import {
   TimeRangeSelect,
   calculateThresholdDate,
@@ -44,6 +47,20 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+
+import {
+  CHART_AXIS_PROPS,
+  CHART_GRID_PROPS,
+  ChartAreaGradient,
+  ChartGlowFilter,
+  ChartInlineLabel,
+  chartActiveDotProps,
+  chartCursorProps,
+  formatWeightTick,
+  getDateTickProps,
+  renderYearDividers,
+  selectValueLabelIndices,
+} from "@/components/visualizer/chart-visuals";
 
 import { getYearLabels } from "@/components/visualizer/visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
@@ -132,10 +149,20 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   const displayUnit = isMetric ? "kg" : "lb";
 
-  const formatXAxisDate = (tickItem) => {
-    const date = new Date(tickItem);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
+  const dateTickProps = getDateTickProps(chartData);
+
+  // Which sessions get a value label when "Show Values" is on. Over years of
+  // sessions, labelling every point buries the line, so past a threshold only
+  // record-setting sessions and the latest one are annotated.
+  const valueLabelIndices = useMemo(
+    () =>
+      selectValueLabelIndices(
+        chartData,
+        (point) => point.tonnage,
+        width >= 1280 ? 24 : 12,
+      ),
+    [chartData, width],
+  );
 
   const tonnageColor = liftColor || "var(--chart-1)";
   const [hiddenSeries, setHiddenSeries] = useState({});
@@ -144,9 +171,20 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     setHiddenSeries((prev) => ({ ...prev, [dataKey]: !prev[dataKey] }));
   };
 
+  // Matches the rolling average line's dotted round-capped stroke on the chart.
   const DashedLineIcon = ({ opacity = 1 }) => (
     <svg width="12" height="12" viewBox="0 0 12 12" style={{ opacity }}>
-      <line x1="0" y1="6" x2="12" y2="6" stroke={tonnageColor} strokeWidth="2" strokeDasharray="3 2" strokeOpacity="0.6" />
+      <line
+        x1="1"
+        y1="6"
+        x2="11"
+        y2="6"
+        stroke={tonnageColor}
+        strokeWidth="2"
+        strokeDasharray="1 4"
+        strokeLinecap="round"
+        strokeOpacity="0.85"
+      />
     </svg>
   );
 
@@ -219,8 +257,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 data={chartData}
                 margin={{ left: 5, right: 20 }}
               >
-                <CartesianGrid vertical={false} />
+                <CartesianGrid {...CHART_GRID_PROPS} />
                 <XAxis
+                  {...CHART_AXIS_PROPS}
                   dataKey="rechartsDate"
                   type="number"
                   scale="time"
@@ -228,10 +267,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     (dataMin) => dataMin - 2 * 24 * 60 * 60 * 1000,
                     (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
                   ]}
-                  tickFormatter={formatXAxisDate}
+                  {...dateTickProps.axisProps}
                 />
                 <YAxis
-                  tickFormatter={(value) => `${value}${displayUnit}`}
+                  {...CHART_AXIS_PROPS}
+                  tickFormatter={(value) => formatWeightTick(value, displayUnit)}
                   domain={[0, yAxisConfig.roundedMax]}
                   ticks={yAxisConfig.ticks}
                   hide={width < 1280}
@@ -239,6 +279,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
                 <Tooltip
                   position={{ y: 180 }}
+                  cursor={chartCursorProps(liftColor)}
                   content={(props) => (
                     <TonnageTooltipContent
                       {...props}
@@ -253,21 +294,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 />
 
                 <defs>
-                  <linearGradient
-                    id={`fill`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                    key={liftType}
-                  >
-                    <stop offset="5%" stopColor={liftColor} stopOpacity={0.8} />
-                    <stop
-                      offset="50%"
-                      stopColor={liftColor}
-                      stopOpacity={0.05}
-                    />
-                  </linearGradient>
+                  <ChartAreaGradient id="fill" color={liftColor} />
+                  <ChartGlowFilter id="tonnageGlow" />
                 </defs>
                 <ChartLegend content={renderLegend} />
                 {!hiddenSeries.tonnage && (
@@ -278,30 +306,34 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     stroke={liftColor}
                     strokeWidth={2}
                     fill={`url(#fill)`}
-                    fillOpacity={0.4}
+                    fillOpacity={1}
+                    filter="url(#tonnageGlow)" // soft halo around the line
                     dot={
                       ["3M", "6M"].includes(timeRange)
                         ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
                         : false
                     }
+                    activeDot={chartActiveDotProps(liftColor)}
+                    animationDuration={900}
+                    animationEasing="ease-out"
                     connectNulls
                   >
                     {showLabelValues && (
                       <LabelList
                         position="top"
                         offset={12}
-                        content={({ x, y, value }) => (
-                          <text
-                            x={x}
-                            y={y}
-                            dy={-10}
-                            fontSize={12}
-                            textAnchor="middle"
-                            className="fill-foreground"
-                          >
-                            {`${Math.round(value)}${displayUnit}`}
-                          </text>
-                        )}
+                        content={({ x, y, value, index }) =>
+                          valueLabelIndices.has(index) ? (
+                            <ChartInlineLabel
+                              x={x}
+                              y={y - 10}
+                              color="var(--foreground)"
+                              textAnchor="middle"
+                            >
+                              {`${Math.round(value)}${displayUnit}`}
+                            </ChartInlineLabel>
+                          ) : null
+                        }
                       />
                     )}
                   </Area>
@@ -312,27 +344,21 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     dataKey="rollingAverageTonnage"
                     stroke={liftColor}
                     strokeWidth={2}
-                    strokeOpacity={0.6}
-                    strokeDasharray="6 3"
+                    strokeOpacity={0.85}
+                    strokeDasharray="1 5"
+                    strokeLinecap="round"
                     dot={false}
                     connectNulls
                     tooltipType="none"
+                    // Recharts animates a line by rewriting strokeDasharray, which
+                    // mangles a fine dotted pattern like this one — it only ever
+                    // drew the first few weeks. The area's grow-in carries the
+                    // entrance; this line just appears with it.
+                    isAnimationActive={false}
                   />
                 )}
 
-                {yearLabels.map(({ date, label }) => (
-                  <ReferenceLine
-                    key={`label-${date}`}
-                    x={date}
-                    stroke="none"
-                    label={{
-                      value: label,
-                      position: "insideBottom",
-                      fontSize: 14,
-                      fill: "#666",
-                    }}
-                  />
-                ))}
+                {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
               </AreaChart>
             </ChartContainer>
         ) : (
@@ -341,8 +367,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               data={chartData}
               margin={{ left: 5, right: 20 }}
             >
-              <CartesianGrid vertical={false} />
+              <CartesianGrid {...CHART_GRID_PROPS} />
               <XAxis
+                {...CHART_AXIS_PROPS}
                 dataKey="rechartsDate"
                 type="number"
                 scale="time"
@@ -350,10 +377,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   (dataMin) => dataMin - 2 * 24 * 60 * 60 * 1000,
                   (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
                 ]}
-                tickFormatter={formatXAxisDate}
+                {...dateTickProps.axisProps}
               />
               <YAxis
-                tickFormatter={(value) => `${value}${displayUnit}`}
+                {...CHART_AXIS_PROPS}
+                tickFormatter={(value) => formatWeightTick(value, displayUnit)}
                 domain={[0, yAxisConfig.roundedMax]}
                 ticks={yAxisConfig.ticks}
                 hide={width < 1280}
@@ -361,6 +389,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
               <Tooltip
                 position={{ y: 180 }}
+                cursor={chartCursorProps(tonnageColor)}
                 content={(props) => (
                   <TonnageTooltipMinimal
                     {...props}
@@ -372,18 +401,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               />
 
               <defs>
-                <linearGradient id="fillTonnage" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor={tonnageColor}
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="50%"
-                    stopColor={tonnageColor}
-                    stopOpacity={0.05}
-                  />
-                </linearGradient>
+                <ChartAreaGradient id="fillTonnage" color={tonnageColor} />
+                <ChartGlowFilter id="tonnageGlowAll" />
               </defs>
 
               <ChartLegend content={renderLegend} />
@@ -392,31 +411,36 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   type="monotone"
                   dataKey="tonnage"
                   stroke={tonnageColor}
+                  strokeWidth={2}
                   fill="url(#fillTonnage)"
-                  fillOpacity={0.4}
+                  fillOpacity={1}
+                  filter="url(#tonnageGlowAll)" // soft halo around the line
                   dot={
                     ["3M", "6M"].includes(timeRange)
                       ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
                       : false
                   }
+                  activeDot={chartActiveDotProps(tonnageColor)}
+                  animationDuration={900}
+                  animationEasing="ease-out"
                   connectNulls
                 >
                   {showLabelValues && (
                     <LabelList
                       position="top"
                       offset={12}
-                      content={({ x, y, value }) => (
-                        <text
-                          x={x}
-                          y={y}
-                          dy={-10}
-                          fontSize={12}
-                          textAnchor="middle"
-                          className="fill-foreground"
-                        >
-                          {`${Math.round(value)}${displayUnit}`}
-                        </text>
-                      )}
+                      content={({ x, y, value, index }) =>
+                        valueLabelIndices.has(index) ? (
+                          <ChartInlineLabel
+                            x={x}
+                            y={y - 10}
+                            color="var(--foreground)"
+                            textAnchor="middle"
+                          >
+                            {`${Math.round(value)}${displayUnit}`}
+                          </ChartInlineLabel>
+                        ) : null
+                      }
                     />
                   )}
                 </Area>
@@ -428,27 +452,19 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   dataKey="rollingAverageTonnage"
                   stroke={tonnageColor}
                   strokeWidth={2}
-                  strokeOpacity={0.6}
-                  strokeDasharray="6 3"
+                  strokeOpacity={0.85}
+                  strokeDasharray="1 5"
+                  strokeLinecap="round"
                   dot={false}
                   connectNulls
                   tooltipType="none"
+                  // See the per-lift chart above: animating this line mangles its
+                  // dotted pattern, so it renders statically.
+                  isAnimationActive={false}
                 />
               )}
 
-              {yearLabels.map(({ date, label }) => (
-                <ReferenceLine
-                  key={`label-${date}`}
-                  x={date}
-                  stroke="none"
-                  label={{
-                    value: label,
-                    position: "insideBottom",
-                    fontSize: 14,
-                    fill: "#666",
-                  }}
-                />
-              ))}
+              {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
             </AreaChart>
           </ChartContainer>
         )}
@@ -483,54 +499,30 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 }
 
 /**
- * Calculates nice round numbers for Y-axis ticks
- * Returns an object with roundedMax and tickInterval
- * Uses a scale based on powers of 10 with multipliers (1, 2, 5, 10, 20, 50, etc.)
+ * Calculates nice round numbers for Y-axis ticks.
+ * Returns an object with roundedMax and tickInterval.
+ *
+ * The ceiling is derived from the tick interval rather than snapped up to the
+ * next power-of-ten multiple. The old approach pushed a 3,400kg peak to a
+ * 5,000kg axis, so the data only filled two thirds of the chart and every
+ * session looked flat. Now we take just enough headroom (~6%) to clear the peak
+ * and then round up to a whole tick.
  */
 function calculateNiceYAxis(maxValue) {
   if (maxValue <= 0) {
     return { roundedMax: 1000, tickInterval: 200 };
   }
 
-  // Calculate the order of magnitude
-  const magnitude = Math.floor(Math.log10(maxValue));
-  const normalized = maxValue / Math.pow(10, magnitude);
+  const target = maxValue * 1.06; // small headroom so the peak isn't clipped
+  const magnitude = Math.pow(10, Math.floor(Math.log10(target / 5)));
+  const candidates = [1, 2, 2.5, 5, 10, 20].map((m) => m * magnitude);
 
-  // Nice number multipliers: 1, 2, 5, 10, 20, 50, 100, etc.
-  const niceMultipliers = [1, 2, 5, 10, 20, 50];
-  let niceMultiplier = 1;
+  // Smallest interval that still keeps the axis to at most 6 gridlines.
+  const tickInterval =
+    candidates.find((step) => Math.ceil(target / step) <= 6) ??
+    candidates[candidates.length - 1];
 
-  // Find the smallest nice multiplier that's greater than normalized
-  for (const multiplier of niceMultipliers) {
-    if (multiplier >= normalized) {
-      niceMultiplier = multiplier;
-      break;
-    }
-  }
-
-  // If normalized is larger than all multipliers, use 100
-  if (normalized > niceMultipliers[niceMultipliers.length - 1]) {
-    niceMultiplier = 100;
-  }
-
-  const roundedMax = niceMultiplier * Math.pow(10, magnitude);
-
-  // Calculate tick interval - aim for about 5-8 ticks
-  const targetTicks = 6;
-  const rawInterval = roundedMax / targetTicks;
-  const intervalMagnitude = Math.floor(Math.log10(rawInterval));
-  const normalizedInterval = rawInterval / Math.pow(10, intervalMagnitude);
-
-  // Find nice interval multiplier
-  let intervalMultiplier = 1;
-  for (const multiplier of niceMultipliers) {
-    if (multiplier >= normalizedInterval) {
-      intervalMultiplier = multiplier;
-      break;
-    }
-  }
-
-  const tickInterval = intervalMultiplier * Math.pow(10, intervalMagnitude);
+  const roundedMax = Math.ceil(target / tickInterval) * tickInterval;
 
   return { roundedMax, tickInterval };
 }

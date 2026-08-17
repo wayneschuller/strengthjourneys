@@ -33,7 +33,12 @@ export default function App({ Component, pageProps, session }) {
 
   useEffect(() => {
     captureUtmFromUrl(); // Google Analytics: persist UTM from URL for session
-    const handleRouteChange = () => {
+    // Shallow route changes are query-string updates on the same page (calculator
+    // sliders sync their state into the URL via useStateFromQueryOrLocalStorage).
+    // They are not navigations, so sending page_view for them inflates GA4 views
+    // by 10-20x on the calculator pages.
+    const handleRouteChange = (url, { shallow } = {}) => {
+      if (shallow) return;
       pageView(typeof window !== "undefined" ? window.location.href : ""); // Google Analytics: send page_view with full URL
       devLog(
         "Google Analytics pageView:",

@@ -47,6 +47,7 @@ import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
+import { buildLiftResultSummary, formatLiftResultText } from "@/lib/lift-result-summary";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 import {
@@ -442,70 +443,58 @@ export function E1RMCalculatorMain({
     const unit = getUnitSuffix(isMetric);
     const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
 
-    let sentenceToCopy;
+    // A lift slug page names its lift; the generic calculator does not, so rating
+    // and percentile stay slug-only (both need to know which lift it is). What the
+    // generic page gains here is the bodyweight multiple, the full share URL, and
+    // the same Reddit-safe formatting.
+    const bigFourName = forceLift ? LIFT_SLUG_TO_BIG_FOUR[forceLift] : null;
+    const liftName = bigFourName ?? forceLift ?? null;
+    const liftData = bigFourName ? getLiftBarData(bigFourName, standards, e1rmWeight) : null;
+    const hasBio = !bioDataIsDefault && bodyWeight > 0;
 
-    if (forceLift) {
-      // Lift slug pages — rich copy with strength rating, bodyweight ratio, and next tier.
-      const bigFourName = LIFT_SLUG_TO_BIG_FOUR[forceLift];
-      const liftData = bigFourName ? getLiftBarData(bigFourName, standards, e1rmWeight) : null;
-
-      const params = new URLSearchParams({
-        [LOCAL_STORAGE_KEYS.REPS]: reps,
-        [LOCAL_STORAGE_KEYS.WEIGHT]: weight,
-        [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-        [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
-      });
-      params.set("unit", unit);
-      if (!bioDataIsDefault) {
-        params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
-        params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
-        params.set(LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT, bodyWeight);
-      }
-
-      const lines = [
-        `${bigFourName ?? forceLift} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, using the ${e1rmFormula} algorithm.`,
-      ];
-      if (!bioDataIsDefault && bodyWeight > 0) {
-        lines.push(`${(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight`);
-      }
-      if (liftData) {
-        lines.push(`${bigFourName ?? forceLift}: ${liftData.emoji} ${liftData.rating}`);
-        // Add percentile line if bio data is available and lift is supported
-        if (!bioDataIsDefault && bodyWeight > 0 && bigFourName) {
-          const pctKey = LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName];
-          if (pctKey) {
-            const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
-            const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
-            const pcts = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);
-            if (pcts?.["Gym-Goers"] != null) {
-              lines.push(`Stronger than ${pcts["Gym-Goers"]}% of gym-goers`);
-            }
-          }
-        }
-        if (liftData.nextTierInfo && liftData.diff) {
-          lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[liftData.nextTierInfo.name] ?? ""} ${liftData.nextTierInfo.name} — ${liftData.diff}${unit} away`);
-        }
-      }
-      const slugPath = router.asPath.split("?")[0];
-      lines.push(`Source: https://www.strengthjourneys.xyz${slugPath}?${params.toString()}`);
-      sentenceToCopy = lines.join("\n");
-    } else {
-      // Generic calculator page — simple one-liner.
-      const encodeQueryParam = (param) => encodeURIComponent(param);
-      const createQueryString = (p) =>
-        Object.entries(p).map(([k, v]) => `${encodeQueryParam(k)}=${encodeQueryParam(v)}`).join("&");
-      const queryString = createQueryString({
-        reps,
-        weight,
-        unit,
-        calcIsMetric: isMetric,
-        formula: e1rmFormula,
-      });
-      sentenceToCopy =
-        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
-        `using the ${e1rmFormula} algorithm.\n` +
-        `Source: https://www.strengthjourneys.xyz/calculator?${queryString}`;
+    const params = new URLSearchParams({
+      [LOCAL_STORAGE_KEYS.REPS]: reps,
+      [LOCAL_STORAGE_KEYS.WEIGHT]: weight,
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
+    });
+    params.set("unit", unit);
+    if (!bioDataIsDefault) {
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT, bodyWeight);
     }
+
+    let sharePercentiles = null;
+    const pctKey = bigFourName ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName] : null;
+    if (hasBio && pctKey) {
+      const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+      const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+      sharePercentiles = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);
+    }
+
+    const summary = buildLiftResultSummary({
+      liftName,
+      reps,
+      weight,
+      unit,
+      e1rm: e1rmWeight,
+      formula: e1rmFormula,
+      bodyWeight: hasBio ? bodyWeight : null,
+      liftData,
+      percentiles: sharePercentiles,
+      nextTier:
+        liftData?.nextTierInfo && liftData?.diff
+          ? {
+              name: liftData.nextTierInfo.name,
+              emoji: STRENGTH_LEVEL_EMOJI[liftData.nextTierInfo.name] ?? "",
+              diff: liftData.diff,
+            }
+          : null,
+      sourceUrl: `https://www.strengthjourneys.xyz${router.asPath.split("?")[0]}?${params.toString()}`,
+    });
+
+    const sentenceToCopy = formatLiftResultText(summary);
 
     const textarea = document.createElement("textarea");
     let didCopy = false;

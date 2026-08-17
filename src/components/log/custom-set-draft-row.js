@@ -152,7 +152,7 @@ export function CustomSetDraftRow({
           <button
             type="button"
             disabled={disabled}
-            className="text-muted-foreground/45 hover:text-foreground rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="text-muted-foreground/60 hover:text-foreground rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onCancel}
             aria-label="Cancel custom set"
           >
@@ -161,7 +161,7 @@ export function CustomSetDraftRow({
           <button
             type="button"
             disabled={!canSubmit}
-            className="text-primary hover:text-primary/80 disabled:text-muted-foreground/35 rounded p-1 transition-colors disabled:cursor-not-allowed"
+            className="text-primary hover:text-primary/80 disabled:text-muted-foreground/50 rounded p-1 transition-colors disabled:cursor-not-allowed"
             onClick={commitDraft}
             aria-label="Add custom set"
           >
@@ -174,7 +174,7 @@ export function CustomSetDraftRow({
         <button
           type="button"
           disabled={disabled}
-          className="text-muted-foreground/45 hover:text-foreground rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="text-muted-foreground/60 hover:text-foreground rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onCancel}
           aria-label="Cancel custom set"
         >
@@ -183,7 +183,7 @@ export function CustomSetDraftRow({
         <button
           type="button"
           disabled={!canSubmit}
-          className="text-primary hover:text-primary/80 disabled:text-muted-foreground/35 rounded p-1 transition-colors disabled:cursor-not-allowed"
+          className="text-primary hover:text-primary/80 disabled:text-muted-foreground/50 rounded p-1 transition-colors disabled:cursor-not-allowed"
           onClick={commitDraft}
           aria-label="Add custom set"
         >

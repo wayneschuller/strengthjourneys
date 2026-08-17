@@ -882,6 +882,48 @@
 }
 
 /*
+ * Lift-colour card wash for the session log.
+ *
+ * Learning:
+ * The same alpha does not read the same on both grounds. A 12% tint of the lift
+ * colour is a soft wash on the light card but is almost invisible against the
+ * dark card (hsl(20 14.3% 4.1%)), which lost the log's strongest identity signal
+ * in every dark theme. Alphas are therefore raised in dark rather than shared.
+ *
+ * The theme list mirrors the `dark` custom variant declared at the top of this
+ * file — keep the two in sync when a dark theme is added. `:where()` keeps the
+ * dark rule at the same specificity as the base rule, so source order decides.
+ *
+ * `--lift-color` is set inline per card by LiftBlock.
+ */
+.lift-card {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--lift-color) 12%, transparent) 0%,
+    color-mix(in srgb, var(--lift-color) 6%, transparent) 18%,
+    transparent 42%
+  );
+  border-color: color-mix(in srgb, var(--lift-color) 26%, transparent);
+}
+
+:where(
+  .dark,
+  .neo-brutalism-dark,
+  .retro-arcade-dark,
+  .starry-night-dark,
+  .blueprint-dark
+)
+  .lift-card {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--lift-color) 22%, transparent) 0%,
+    color-mix(in srgb, var(--lift-color) 10%, transparent) 18%,
+    transparent 42%
+  );
+  border-color: color-mix(in srgb, var(--lift-color) 40%, transparent);
+}
+
+/*
  * react-calendar-heatmap styles
  *
  * All of the styles in this file are optional and configurable!

@@ -160,33 +160,38 @@ export function getCelebrationTier({ rankingMeta, reps, trainingAgeYears }) {
 }
 
 /**
- * Tailwind class bundles for a celebrated row — border + glow tinted by scope
- * (lifetime = amber/gold, yearly = blue). Returned as separate classNames so
- * callers can apply the border to the row and the glow to a wrapper/sibling.
+ * Tailwind classes for a celebrated row, tinted by scope (lifetime = amber/gold,
+ * yearly = blue).
+ *
+ * Learning:
+ * This used to draw a full outlined box around the row. Set rows live in a
+ * `divide-y` stack with no horizontal padding of their own, so that box ran flush
+ * to the card edges and cut across the dividers above and below it — a rendering
+ * glitch on the log's happiest moment. A left accent bar plus a background tint
+ * composes with a divided list instead of competing with it, and the negative
+ * margin buys the content breathing room inside the tint without shifting the
+ * reps column out of alignment with neighbouring rows.
+ *
+ * The transient glow on a freshly-earned PR is animated inline by SetRow, so no
+ * glow class is returned here.
  *
  * @param {{ tier: string, scope?: "lifetime"|"yearly" } | null | undefined} celebration
- * @returns {{ rowClassName: string, glowClassName: string }}
+ * @returns {{ rowClassName: string }}
  */
 export function getCelebrationStyles(celebration) {
   if (!celebration || celebration.tier === "none") {
-    return {
-      rowClassName: "",
-      glowClassName: "",
-    };
+    return { rowClassName: "" };
   }
 
   const isLifetime = celebration.scope === "lifetime";
-  const baseBorder = isLifetime
-    ? "border-amber-300/80 bg-amber-50/30 dark:border-amber-500/40 dark:bg-amber-500/5"
-    : "border-blue-300/80 bg-blue-50/30 dark:border-blue-500/40 dark:bg-blue-500/5";
-
-  const glowClassName = isLifetime
-    ? "shadow-[0_0_0_1px_rgba(251,191,36,0.2),0_12px_28px_-20px_rgba(245,158,11,0.7)]"
-    : "shadow-[0_0_0_1px_rgba(96,165,250,0.18),0_12px_28px_-20px_rgba(59,130,246,0.65)]";
 
   return {
-    rowClassName: cn("rounded-lg border", baseBorder),
-    glowClassName,
+    rowClassName: cn(
+      "-mx-3 rounded-r-md border-l-2 px-3",
+      isLifetime
+        ? "border-l-amber-400 bg-amber-400/10 dark:bg-amber-400/15"
+        : "border-l-blue-400 bg-blue-400/10 dark:bg-blue-400/15",
+    ),
   };
 }
 

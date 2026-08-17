@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { RelatedArticles } from "@/components/article-cards";
 import { TopLiftsCard } from "@/components/lift-explorer/top-lifts-card";
 import { LiftDetailPanel } from "@/components/lift-explorer/lift-detail-panel";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   PageContainer,
   PageHeader,
@@ -89,8 +90,7 @@ export default function LiftExplorer({ relatedArticles }) {
  */
 function LiftExplorerMain({ relatedArticles }) {
   const router = useRouter();
-  const { liftTypes } = useUserLiftingData();
-  const [selectedLiftType, setSelectedLiftType] = useState(null);
+  const { liftTypes, parsedData, isLoading } = useUserLiftingData();
   const requestedLiftType =
     typeof router.query.liftType === "string" ? router.query.liftType : null;
   const requestedLiftSelection =
@@ -98,9 +98,26 @@ function LiftExplorerMain({ relatedArticles }) {
       ? liftTypes.find((lift) => lift.liftType === requestedLiftType)?.liftType ?? null
       : null;
 
-  // null means "auto" — default to the user's most frequent lift
+  // No ?liftType means "auto" — default to the user's most frequent lift
   const effectiveLiftType =
-    selectedLiftType ?? requestedLiftSelection ?? liftTypes?.[0]?.liftType ?? null;
+    requestedLiftSelection ?? liftTypes?.[0]?.liftType ?? null;
+
+  // The URL is the single source of truth for the selection, so a lift view is
+  // shareable and the back button walks the lifts you looked at. Shallow keeps
+  // the switch instant (no getStaticProps re-run) and scroll:false preserves
+  // the reading position in the long detail panel.
+  const handleSelectLift = useCallback(
+    (liftType) => {
+      if (!liftType || liftType === effectiveLiftType) return;
+
+      router.push(
+        { pathname: "/lift-explorer", query: { ...router.query, liftType } },
+        undefined,
+        { shallow: true, scroll: false },
+      );
+    },
+    [effectiveLiftType, router],
+  );
 
   return (
     <PageContainer>
@@ -125,20 +142,58 @@ function LiftExplorerMain({ relatedArticles }) {
           </div>
         </PageHeaderRight>
       </PageHeader>
-      <section className="mt-4 flex flex-col gap-6 xl:flex-row">
-        {/* Left: narrow lift list */}
-        <div className="shrink-0 xl:w-1/5">
-          <TopLiftsCard
-            selectedLiftType={effectiveLiftType}
-            onSelectLift={setSelectedLiftType}
-          />
-        </div>
-        {/* Right: detail panel expands to fill remaining space */}
-        <div className="min-w-0 flex-1">
-          <LiftDetailPanel liftType={effectiveLiftType} />
-        </div>
-      </section>
+      {effectiveLiftType ? (
+        <section className="mt-4 flex flex-col gap-6 xl:flex-row">
+          {/* Left: narrow lift list */}
+          <div className="shrink-0 xl:w-1/5">
+            <TopLiftsCard
+              selectedLiftType={effectiveLiftType}
+              onSelectLift={handleSelectLift}
+            />
+          </div>
+          {/* Right: detail panel expands to fill remaining space */}
+          <div className="min-w-0 flex-1">
+            <LiftDetailPanel liftType={effectiveLiftType} />
+          </div>
+        </section>
+      ) : (
+        // parsedData stays null until auth and the sheet fetch have both
+        // settled, so it — not isLoading alone — is what separates "still
+        // arriving" from "genuinely nothing logged".
+        <NothingToExploreYet isResolving={isLoading || !parsedData} />
+      )}
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
+  );
+}
+
+/**
+ * Fallback for the rare case where there is nothing to explore — a linked sheet
+ * with no parseable lifts. Without it the page renders a header over blank space
+ * because both the lift list and the detail panel bail out on empty data.
+ *
+ * @param {Object} props
+ * @param {boolean} props.isResolving - True while auth/sheet data is still settling.
+ */
+function NothingToExploreYet({ isResolving }) {
+  return (
+    <Card className="mt-4">
+      <CardContent className="text-muted-foreground py-10 text-center">
+        {isResolving ? (
+          <p>Reading your lifting history…</p>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <p>No lifts to explore yet.</p>
+            <p className="text-sm">
+              Log a set in the{" "}
+              <Link href="/log" className="underline underline-offset-4">
+                Session Explorer
+              </Link>{" "}
+              and this page fills itself in.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

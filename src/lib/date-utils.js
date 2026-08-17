@@ -137,6 +137,32 @@ export function getReadableDateString(ISOdate, includeDayOfWeek = false) {
   return dateString;
 }
 
+/**
+ * Compact "how long ago" label for a YYYY-MM-DD date: "today", "3d", "5w",
+ * "8mo", "2y". Meant for dense lists where a full date would not fit.
+ *
+ * Both arguments are plain YMD strings and the difference is taken inside the
+ * UTC round-trip, so the answer is timezone-invariant (see the timezone model
+ * at the top of this file). Pass today's date in rather than reading the clock
+ * here, so callers stay pure across a render.
+ */
+export function getCompactAgeFromYmd(dateStr, todayYmd) {
+  if (!dateStr || !todayYmd) return null;
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const days = Math.round(
+    (parseYmdUtc(todayYmd).getTime() - parseYmdUtc(dateStr).getTime()) / dayMs,
+  );
+
+  if (!Number.isFinite(days)) return null;
+  if (days <= 0) return "today"; // Future-dated goal rows read as current
+  if (days < 7) return `${days}d`;
+  if (days < 60) return `${Math.round(days / 7)}w`;
+  if (days < 365) return `${Math.round(days / 30)}mo`;
+
+  return `${Math.floor(days / 365)}y`;
+}
+
 export function getYearFromYmd(dateStr) {
   if (!dateStr || dateStr.length < 4) return null;
   const year = Number.parseInt(dateStr.slice(0, 4), 10);

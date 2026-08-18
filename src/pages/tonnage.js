@@ -94,7 +94,7 @@ function TonnageVisualizerMain({ relatedArticles }) {
   const [highlightDate, setHighlightDate] = useState(null);
 
   return (
-    <PageContainer>
+    <PageContainer wide>
       <PageHeader>
         <PageHeaderHeading icon={Bus}>Tonnage Metrics</PageHeaderHeading>
         <PageHeaderDescription>
@@ -102,10 +102,10 @@ function TonnageVisualizerMain({ relatedArticles }) {
         </PageHeaderDescription>
       </PageHeader>
       <section className="flex flex-col gap-5 md:flex-row">
-        <div className="w-full lg:w-1/2 xl:w-2/3">
+        <div className="w-full lg:w-2/3 xl:w-3/4">
           <TonnageChart setHighlightDate={setHighlightDate} />
         </div>
-        <div className="w-full lg:w-1/2 xl:w-1/3">
+        <div className="w-full lg:w-1/3 xl:w-1/4">
           <TheLatestSessionCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}

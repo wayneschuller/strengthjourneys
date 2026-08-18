@@ -2,7 +2,7 @@
  * Full multi-lift E1RM visualizer with lift selection, time range controls,
  * and shared processing for historical training charts.
  */
-import { useMemo, useEffect, useState } from "react";
+import { Fragment, useMemo, useEffect, useState } from "react";
 import {
   SidePanelSelectLiftsButton,
   VISUALIZER_STORAGE_PREFIX,
@@ -20,7 +20,6 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ReferenceLine } from "recharts";
 import {
   E1RMFormulaSelect,
   SpecialHtmlLabel,
@@ -64,6 +63,22 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+
+import {
+  CHART_AXIS_PROPS,
+  CHART_GRID_PROPS,
+  ChartAreaGradient,
+  ChartGlowFilter,
+  TopPointMarkers,
+  chartActiveDotProps,
+  chartCursorProps,
+  e1rmMarkerLines,
+  formatWeightTick,
+  getDateTickProps,
+  paddedDateDomain,
+  renderYearDividers,
+  selectTopPoints,
+} from "@/components/visualizer/chart-visuals";
 
 import { processVisualizerData, getYearLabels } from "@/components/visualizer/visualizer-processing";
 
@@ -192,11 +207,30 @@ export function VisualizerShadcn({ setHighlightDate }) {
     ],
   );
 
+  // Ranked high points per selected lift, shown only when "Show Values" is on.
+  // Unlike the single-lift charts elsewhere, this view can carry up to four
+  // series at once, so the labels stay opt-in rather than always-on, and the
+  // per-lift budget shrinks as more lifts are shown so four series worth of
+  // labels don't bury the chart the way the old one-label-per-point-per-lift
+  // toggle did. Computed unconditionally (must be, as a hook) but cheaply
+  // skipped when the toggle is off.
+  const topPointsByLift = useMemo(() => {
+    if (!showLabelValues) return {};
+    const count = Math.max(2, 6 - selectedLiftTypes.length);
+    return Object.fromEntries(
+      selectedLiftTypes.map((liftType) => [
+        liftType,
+        selectTopPoints(chartData, (point) => point[liftType], { count }),
+      ]),
+    );
+  }, [chartData, selectedLiftTypes, showLabelValues]);
+
   // devLog("Rendering <VisualizerShadcn />...");
   if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
   // devLog(chartData);
 
   const yearLabels = getYearLabels(chartData);
+  const dateTickProps = getDateTickProps(chartData);
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
@@ -225,12 +259,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
   else if (dataRange <= 150) tickJump = 20;
   else if (dataRange <= 300) tickJump = isMetric ? 50 : 50;
   else tickJump = isMetric ? 50 : 100;
-
-  // FIXME: We need more dynamic x-axis ticks
-  const formatXAxisDateString = (tickItem) => {
-    const date = new Date(tickItem);
-    return date.toLocaleString("en-US", { month: "short", day: "numeric" });
-  };
 
   return (
     <Card>
@@ -272,30 +300,25 @@ export function VisualizerShadcn({ setHighlightDate }) {
             data={chartData}
             margin={{ left: 5, right: 20 }}
           >
-            <CartesianGrid vertical={false} />
+            <CartesianGrid {...CHART_GRID_PROPS} />
             <XAxis
-              // dataKey="date"
+              {...CHART_AXIS_PROPS}
               dataKey="rechartsDate"
               type="number"
               scale="time"
-              domain={[
-                (dataMin) =>
-                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
-                (dataMax) =>
-                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
-              ]}
-              tickFormatter={formatXAxisDateString}
-              // interval="equidistantPreserveStart"
+              domain={paddedDateDomain()}
+              {...dateTickProps.axisProps}
             />
             <YAxis
+              {...CHART_AXIS_PROPS}
               domain={[
                 Math.floor(weightMin / tickJump) * tickJump,
                 roundedMaxWeightValue,
               ]}
               hide={width < 1280}
-              axisLine={false}
               tickFormatter={
-                (value) => `${value}${chartData[0]?.displayUnit || ""}` // Use displayUnit from processed chart data
+                (value) =>
+                  formatWeightTick(value, chartData[0]?.displayUnit || "") // Use displayUnit from processed chart data
               }
               ticks={Array.from(
                 { length: Math.ceil(roundedMaxWeightValue / tickJump) + 1 },
@@ -312,40 +335,30 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 />
               }
               position={{ y: 40 }}
-              cursor={{
-                stroke: "#8884d8",
-                strokeWidth: 2,
-                strokeDasharray: "5 5",
-              }}
+              cursor={chartCursorProps(
+                // A single crosshair colour only makes sense to tie to a lift
+                // when exactly one is selected; otherwise keep it neutral.
+                selectedLiftTypes.length === 1
+                  ? liftColors[selectedLiftTypes[0]]
+                  : "var(--muted-foreground)",
+              )}
             />
             <defs>
-              {selectedLiftTypes.map((liftType, index) => {
-                const gradientId = `fill${liftType.split(" ").join("_")}`; // SVG id requires no spaces in life type label
+              {selectedLiftTypes.map((liftType) => {
+                const liftSlug = liftType.split(" ").join("_"); // SVG id requires no spaces in lift type label
                 return (
-                  <linearGradient
-                    id={`fill${gradientId}`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                    key={`${liftType}-${index}`} // Add a unique key for React rendering
-                  >
-                    <stop
-                      offset="5%"
-                      stopColor={liftColors[liftType]}
-                      stopOpacity={0.8}
+                  <Fragment key={liftType}>
+                    <ChartAreaGradient
+                      id={`fill-${liftSlug}`}
+                      color={liftColors[liftType]}
                     />
-                    <stop
-                      offset="50%"
-                      stopColor={liftColors[liftType]}
-                      stopOpacity={0.05}
-                    />
-                  </linearGradient>
+                    <ChartGlowFilter id={`glow-${liftSlug}`} />
+                  </Fragment>
                 );
               })}
             </defs>
-            {selectedLiftTypes.map((liftType, index) => {
-              const gradientId = `fill${liftType.split(" ").join("_")}`; // SVG id requires no spaces in life type label
+            {selectedLiftTypes.map((liftType) => {
+              const liftSlug = liftType.split(" ").join("_");
               return (
                 <Area
                   key={liftType}
@@ -354,29 +367,15 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   stroke={liftColors[liftType]}
                   name={liftType}
                   strokeWidth={2}
-                  fill={`url(#fill${gradientId})`}
-                  fillOpacity={0.4}
+                  fill={`url(#fill-${liftSlug})`}
+                  fillOpacity={1}
+                  filter={`url(#glow-${liftSlug})`} // soft halo around the line
                   dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
+                  activeDot={chartActiveDotProps(liftColors[liftType])}
+                  animationDuration={900}
+                  animationEasing="ease-out"
                   connectNulls
                 >
-                  {showLabelValues && (
-                    <LabelList
-                      position="top"
-                      offset={12}
-                      content={({ x, y, value, index }) => (
-                        <text
-                          x={x}
-                          y={y}
-                          dy={-10}
-                          fontSize={12}
-                          textAnchor="middle"
-                          className="fill-foreground"
-                        >
-                          {`${value}${chartData[index].displayUnit || ""}`}
-                        </text>
-                      )}
-                    />
-                  )}
                   {/* Special user provided labels of special events/lifts */}
                   <LabelList
                     dataKey="label"
@@ -386,20 +385,34 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 </Area>
               );
             })}
-            {/* Year labels to show year start */}
-            {yearLabels.map(({ date, label }) => (
-              <ReferenceLine
-                key={`label-${date}`}
-                x={date} // Position label at January 1 of each year
-                stroke="none" // No visible line
-                label={{
-                  value: label,
-                  position: "insideBottom",
-                  fontSize: 14,
-                  fill: "#666",
-                }}
-              />
-            ))}
+            {/* Ranked high points per lift, opt-in via the Show Values switch.
+                Replaces the old always-dense per-point labels, which became an
+                unreadable smear across several years and four lift types. */}
+            {showLabelValues &&
+              selectedLiftTypes.map((liftType, index) => (
+                <TopPointMarkers
+                  key={`top-${liftType}`}
+                  topPoints={topPointsByLift[liftType] || []}
+                  color={liftColors[liftType]}
+                  getLines={e1rmMarkerLines(liftType)}
+                  // Stagger each lift's label stack higher than the last so two
+                  // lifts peaking around the same week don't print on top of
+                  // each other — see TopPointMarkers' labelOffset doc.
+                  labelOffset={index * 22}
+                  // With several lifts on screen, foreground/muted text can't
+                  // tell one label from another — tint each with its own lift
+                  // colour so a label reads back to its line the same way the
+                  // legend does. A single selected lift keeps the plain
+                  // foreground styling, since there's nothing to disambiguate.
+                  labelColor={
+                    selectedLiftTypes.length > 1
+                      ? liftColors[liftType]
+                      : undefined
+                  }
+                />
+              ))}
+            {/* Faint year boundary dividers with the year beneath them */}
+            {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
             <ChartLegend
               content={<ChartLegendContent />}
               className="tracking-tight md:text-lg"

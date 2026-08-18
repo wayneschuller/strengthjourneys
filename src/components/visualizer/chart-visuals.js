@@ -7,7 +7,7 @@
  * lift color because the app ships ten themes (light/dark plus blueprint,
  * starry-night, retro-arcade and neo-brutalism variants).
  */
-import { ReferenceLine } from "recharts";
+import { ReferenceDot, ReferenceLine } from "recharts";
 
 // Muted token rather than a hardcoded grey so axis furniture stays legible in every theme.
 const AXIS_TEXT_COLOR = "var(--muted-foreground)";
@@ -249,7 +249,199 @@ export function ChartInlineLabel({
 }
 
 /**
- * Chooses which points get a value label when "Show Values" is on.
+ * Picks the best few points in a series, spread out so they read as separate
+ * climbs rather than one crowded summit — this is what replaced the old dense
+ * "Show Values" toggle. Labelling every session was fine for a few months but
+ * buried the line over years of data; labelling only the largest few is
+ * useless too, since a plain "N largest values" pick lands on neighbouring
+ * points of the same peak week.
+ *
+ * Each candidate must clear a minimum separation from the points already
+ * chosen before it can be added. Separation is a slice of the visible time
+ * span — clamped to a week at the short end and six months at the long end —
+ * so the marks stay spread on a 3-month view without demanding years of gap on
+ * an all-time view.
+ *
+ * @param {Array} data - Chart rows in chronological order, each carrying a
+ *   `rechartsDate` epoch ms field.
+ * @param {function} getValue - (row) => number|null|undefined
+ * @param {Object} [options]
+ * @param {number} [options.count] - Maximum number of points to return. A
+ *   ceiling, not a guarantee — a short range with few sessions, or one
+ *   dominated by a single spike, simply returns fewer.
+ * @returns {Array<{point: Object, index: number, value: number, rank: number}>}
+ *   Ranked highest (rank 0) to lowest.
+ */
+export function selectTopPoints(data, getValue, { count = 5 } = {}) {
+  if (!data?.length) return [];
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const spanMs = data[data.length - 1].rechartsDate - data[0].rechartsDate;
+  const separationMs = Math.min(Math.max(spanMs / 12, 7 * DAY_MS), 180 * DAY_MS);
+
+  const ranked = data
+    .map((point, index) => ({ point, index, value: getValue(point) }))
+    .filter((candidate) => candidate.value != null)
+    // Ties break towards the earlier session — that's the day it was earned.
+    .sort((a, b) => b.value - a.value || a.index - b.index);
+
+  const chosen = [];
+  for (const candidate of ranked) {
+    if (chosen.length === count) break;
+    const clear = chosen.every(
+      (taken) =>
+        Math.abs(candidate.point.rechartsDate - taken.point.rechartsDate) >=
+        separationMs,
+    );
+    if (clear) chosen.push(candidate);
+  }
+
+  return chosen.map((candidate, rank) => ({ ...candidate, rank }));
+}
+
+/**
+ * Renders the ranked markers from selectTopPoints. The winner gets a filled pin
+ * with a breathing halo; the rest get smaller open rings, so the hierarchy is
+ * readable at a glance. ReferenceDot sits at a zIndex above the series, so
+ * these always draw over the area fill and any reference bands.
+ *
+ * @param {Object} props
+ * @param {Array} props.topPoints - Output of selectTopPoints.
+ * @param {string} props.color - Marker colour, and the winner's label colour;
+ *   runners-up render their ring in this colour but drop their label to muted
+ *   foreground so the winner stays visually dominant.
+ * @param {function} props.getLines - ({ point, value, rank, isWinner }) =>
+ *   string[]. One or more lines to stack above the marker — e.g. a rep@weight
+ *   line above the E1RM estimate it produced.
+ * @param {number} [props.labelOffset] - Extra px lifted above the marker, on
+ *   top of the usual clearance. Two markers from *different* series can land
+ *   close together in both time and value — selectTopPoints only keeps a
+ *   series' own points apart, it has no view of any other series being drawn
+ *   alongside it — so a multi-series chart should stagger each series by a
+ *   different offset (e.g. its index among the selected series) to keep their
+ *   label stacks from colliding. Single-series charts can ignore this.
+ * @param {string} [props.labelColor] - Overrides the default foreground/muted
+ *   label colour with `color` (or any colour the caller passes). A chart with
+ *   one series doesn't need this — foreground already reads as "the" line —
+ *   but once several series share a plot, same-coloured labels can't be
+ *   traced back to their line. Pass the series' own colour there so a label
+ *   matches its marker the same way the line and legend already do.
+ */
+export function TopPointMarkers({
+  topPoints,
+  color,
+  getLines,
+  labelOffset = 0,
+  labelColor,
+}) {
+  if (!topPoints?.length) return null;
+
+  return (
+    <>
+      <ReferenceDot
+        x={topPoints[0].point.rechartsDate}
+        y={topPoints[0].value}
+        r={9}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeOpacity={0.45}
+        className="animate-pulse"
+      />
+      {topPoints.map(({ point, value, rank }) => {
+        const isWinner = rank === 0;
+        const lines = getLines({ point, value, rank, isWinner });
+        return (
+          <ReferenceDot
+            key={`top-${rank}`}
+            x={point.rechartsDate}
+            y={value}
+            r={isWinner ? 4.5 : 3.5}
+            // The winner is filled and ringed in the foreground so it reads as a
+            // pin in every theme; the runners-up are open circles, present but
+            // clearly secondary.
+            fill={isWinner ? color : "var(--background)"}
+            stroke={isWinner ? "var(--foreground)" : color}
+            strokeWidth={isWinner ? 1.5 : 2}
+            label={{
+              content: ({ viewBox }) => (
+                <ChartInlineLabel
+                  x={viewBox.x + viewBox.width / 2}
+                  // Stacked labels grow downward from the first line, so lift the
+                  // whole block to keep the last line clear of the marker.
+                  y={
+                    viewBox.y -
+                    (isWinner ? 12 : 10) -
+                    (lines.length - 1) * LABEL_LINE_HEIGHT -
+                    labelOffset
+                  }
+                  textAnchor="middle"
+                  // Foreground rather than the series colour, which is too dark
+                  // to read against the dark themes. Runners-up drop to muted to
+                  // keep the winner dominant. labelColor overrides both when the
+                  // caller needs labels traceable back to their series.
+                  color={
+                    labelColor ??
+                    (isWinner ? "var(--foreground)" : "var(--muted-foreground)")
+                  }
+                  fontWeight={isWinner ? 700 : 600}
+                  lines={lines}
+                />
+              ),
+            }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+/**
+ * XAxis `domain` padding: a [minFn, maxFn] pair that extends the visible range
+ * a few days past the first/last session, so the edge points don't draw flush
+ * against the plot border. Every time-series chart here pads identically, but
+ * each had grown its own copy — one written as Date arithmetic, one as raw
+ * milliseconds — so this is the one to reach for instead of a third variant.
+ *
+ * @param {number} [days] - Padding on each side, in days.
+ * @returns {[function, function]} Recharts domain functions: (dataMin) => …,
+ *   (dataMax) => ….
+ */
+export function paddedDateDomain(days = 2) {
+  const paddingMs = days * 24 * 60 * 60 * 1000;
+  return [(dataMin) => dataMin - paddingMs, (dataMax) => dataMax + paddingMs];
+}
+
+/**
+ * Builds the `getLines` callback TopPointMarkers needs for an E1RM chart series
+ * — shared because the single-lift and multi-lift E1RM charts both mark their
+ * ranked sessions the same way and had copied this verbatim between them.
+ *
+ * A multi-rep session only ever charted an *estimate*, so the line above the
+ * marker names the actual set that produced it (e.g. "5@115kg"), with the
+ * estimate itself on the line below. A single is already its own estimate, so
+ * it gets one line.
+ *
+ * @param {string} liftType - Which lift's `${liftType}_reps` / `_weight`
+ *   fields to read off each chart point (set by processVisualizerData).
+ * @returns {function} ({ point, value }) => string[]
+ */
+export function e1rmMarkerLines(liftType) {
+  return ({ point, value }) => {
+    const unit = point.displayUnit || "";
+    const reps = point[`${liftType}_reps`];
+    const weight = point[`${liftType}_weight`];
+    return reps > 1 && weight != null
+      ? [`${reps}@${weight}${unit}`, `${value}${unit}`]
+      : [`${value}${unit}`];
+  };
+}
+
+/**
+ * Chooses which points get a value label when "Show Values" is on. Used by the
+ * standalone all-lifts tonnage page, which has no natural "ranked peaks" reading
+ * across different lift types the way a single-lift chart does — see
+ * selectTopPoints for that alternative, used on the per-lift charts instead.
  *
  * Labelling every point is fine for a few months of sessions but unreadable over
  * years — a thousand overlapping numbers bury the very line they annotate. Past a
@@ -267,9 +459,8 @@ export function ChartInlineLabel({
  * @param {function} getValue - (row) => number|null|undefined
  * @param {number} [maxDense] - Above this many points, switch to selective mode.
  * @param {Iterable<number>} [reservedIndices] - Points that already carry their
- *   own annotation (the E1RM chart's "Best" marker and its rep-record labels).
- *   They never get a value label, but they still occupy space, so neighbouring
- *   labels keep clear of them too.
+ *   own annotation and should never get a value label, though neighbouring
+ *   labels still keep clear of them.
  * @returns {Set<number>} Indices of rows that should be labelled.
  */
 export function selectValueLabelIndices(

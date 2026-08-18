@@ -139,7 +139,7 @@ export function AthleteBioQuickSettings() {
                 onCheckedChange={(checked) =>
                   setSex(checked ? "female" : "male")
                 }
-                className="h-5 w-9 data-[state=checked]:bg-pink-500"
+                className="h-5 w-9 data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500 [&>[data-state=checked]]:!translate-x-3"
               />
               <span className="pl-1 text-xs font-semibold text-muted-foreground">
                 F
@@ -261,7 +261,7 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
               aria-label="Sex"
               checked={sex === "female"}
               onCheckedChange={(checked) => setSex(checked ? "female" : "male")}
-              className="h-6 w-11 data-[state=checked]:bg-pink-500"
+              className="h-6 w-11 data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500"
             />
             <span className="text-sm font-semibold text-muted-foreground">F</span>
           </div>
@@ -490,7 +490,7 @@ export function AthleteBioInlineSettings({
                       id="inline-bio-sex"
                       checked={sex === "female"}
                       onCheckedChange={(c) => setSex(c ? "female" : "male")}
-                      className="h-5 w-9 data-[state=checked]:bg-pink-500"
+                      className="h-5 w-9 data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500 [&>[data-state=checked]]:!translate-x-3"
                     />
                     <span className="text-xs font-semibold text-muted-foreground">F</span>
                   </>
@@ -546,7 +546,7 @@ export function AthleteBioInlineSettings({
                     aria-label="Sex"
                     checked={sex === "female"}
                     onCheckedChange={(c) => setSex(c ? "female" : "male")}
-                    className="h-5 w-9 data-[state=checked]:bg-pink-500"
+                    className="h-5 w-9 data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500 [&>[data-state=checked]]:!translate-x-3"
                   />
                   <span className="text-xs font-semibold text-muted-foreground">F</span>
                 </div>

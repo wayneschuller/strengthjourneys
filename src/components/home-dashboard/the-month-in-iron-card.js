@@ -437,27 +437,44 @@ export function TheMonthInIronCard({
 
             <Separator />
             <motion.div
-              className="space-y-0.5"
+              className={`flex items-center gap-4 rounded-xl border px-3 py-2.5 transition-colors duration-500 ${
+                highlightsComplete && verdictHeadline?.tone === "win"
+                  ? "border-emerald-500/30 bg-emerald-500/10 shadow-[0_0_18px_-6px_rgba(16,185,129,0.45)]"
+                  : highlightsComplete && verdictHeadline?.tone === "progress"
+                    ? "border-amber-500/30 bg-amber-500/10"
+                    : "border-border/40 bg-muted/10"
+              }`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.35 }}
             >
-              <p className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
-                <span
-                  className={
-                    !highlightsComplete || verdictHeadline?.tone === "neutral"
-                      ? "text-muted-foreground"
-                      : "text-foreground"
-                  }
-                >
-                  {verdictHeadline?.text || "Keep forging ⚒️"}
-                </span>
-                {highlightsComplete && verdictHeadline?.scoreText && (
-                  <span className="ml-2 text-xs font-medium text-muted-foreground align-middle">
-                    {verdictHeadline.scoreText}
+              {checksSummary && (
+                <MonthScoreRing
+                  met={highlightsComplete ? checksSummary.checksMet : 0}
+                  total={checksSummary.checksTotal}
+                  tone={highlightsComplete ? verdictHeadline?.tone : null}
+                  size={44}
+                />
+              )}
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {verdictHeadline?.phaseLabel}
+                  {highlightsComplete && verdictHeadline?.scoreText
+                    ? ` · ${verdictHeadline.scoreText}`
+                    : ""}
+                </div>
+                <p className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
+                  <span
+                    className={
+                      !highlightsComplete || verdictHeadline?.tone === "neutral"
+                        ? "text-muted-foreground"
+                        : "text-foreground"
+                    }
+                  >
+                    {verdictHeadline?.text || "Keep forging ⚒️"}
                   </span>
-                )}
-              </p>
+                </p>
+              </div>
             </motion.div>
 
             {showCoffeeNudge && (
@@ -983,6 +1000,60 @@ function AnimatedInteger({ value, className = "" }) {
   return <motion.span className={className}>{displayVal}</motion.span>;
 }
 
+// Compact circular progress ring showing "checks met / checks total" for the month.
+// Pass tone={null} to render an unrevealed neutral ring (used while the row-by-row
+// stagger reveal is still playing out) — the fill and fraction pop in once tone is set.
+function MonthScoreRing({ met, total, tone, size = 36 }) {
+  if (!total) return null;
+  const revealed = tone !== null && tone !== undefined;
+  const pct = revealed ? Math.min(1, Math.max(0, met / total)) : 0;
+  const stroke = Math.max(3, Math.round(size / 9));
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const ringColorClass =
+    tone === "win"
+      ? "text-emerald-500"
+      : tone === "progress"
+        ? "text-amber-500"
+        : "text-muted-foreground/70";
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={stroke}
+          className="stroke-muted/40"
+        />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          className={ringColorClass}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: circumference * (1 - pct) }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: revealed ? 0.1 : 0 }}
+        />
+      </svg>
+      <span
+        className={`absolute inset-0 flex items-center justify-center font-bold tabular-nums text-foreground transition-opacity duration-300 ${
+          size >= 44 ? "text-[11px]" : "text-[9px]"
+        } ${revealed ? "opacity-100" : "opacity-0"}`}
+      >
+        {met}/{total}
+      </span>
+    </div>
+  );
+}
+
 // ─── Month boundary helpers ────────────────────────────────────────────────
 
 function getMonthBoundaries(monthOffset = 0) {
@@ -1263,6 +1334,7 @@ function getVerdictHeadline({
     : null;
   const isPastMonthView = !boundaries?.isCurrentMonthView;
   const monthPhase = getCurrentMonthPhase(boundaries);
+  const phaseLabel = getMonthPhaseLabel(monthPhase, boundaries);
   const hasFullChecks = checksSummary?.checksTotal === 9;
   const monthWon = hasFullChecks
     ? checksSummary.checksMet >= 7
@@ -1274,6 +1346,7 @@ function getVerdictHeadline({
         tone: "neutral",
         text: pastMonthNoBaselineHeadline || "No prior month to beat. Baseline set.",
         scoreText: checksText ? `${checksText} green` : null,
+        phaseLabel,
       };
     }
 
@@ -1283,6 +1356,7 @@ function getVerdictHeadline({
         ? (pastMonthWinHeadline || "Month Won ✅")
         : (pastMonthLossHeadline || "Month Lost ❌"),
       scoreText: checksText ? `${checksText} green` : null,
+      phaseLabel,
     };
   }
 
@@ -1291,6 +1365,7 @@ function getVerdictHeadline({
       tone: "win",
       text: topTierPhrase || "Month Won ✅",
       scoreText: checksText ? `${checksText} green` : null,
+      phaseLabel,
     };
   }
 
@@ -1301,6 +1376,7 @@ function getVerdictHeadline({
         ? (topTierPhrase || "Month Won ✅")
         : "Month Won ✅",
       scoreText: checksText ? `${checksText} green` : null,
+      phaseLabel,
     };
   }
 
@@ -1318,10 +1394,9 @@ function getVerdictHeadline({
 
     return {
       tone: "progress",
-      text: checksText
-        ? `⚒️ ${checksText} green. ${text}`
-        : `⚒️ ${text}`,
-      scoreText: null,
+      text,
+      scoreText: checksText ? `${checksText} green` : null,
+      phaseLabel,
     };
   }
 
@@ -1333,10 +1408,9 @@ function getVerdictHeadline({
 
   return {
     tone: "neutral",
-    text: checksText
-      ? `⚒️ ${checksText} green. ${text}`
-      : `⚒️ ${text}`,
-    scoreText: null,
+    text,
+    scoreText: checksText ? `${checksText} green` : null,
+    phaseLabel,
   };
 }
 
@@ -1345,6 +1419,20 @@ function getCurrentMonthPhase(boundaries) {
   if (boundaries.dayOfMonth <= 7) return "first-week";
   if (boundaries.daysRemainingInCurrentMonth <= 7) return "last-week";
   return "middle";
+}
+
+// Short badge text giving temporal context, so the same verdict area reads
+// differently depending on where the user is in the month.
+function getMonthPhaseLabel(monthPhase, boundaries) {
+  if (monthPhase === "past") {
+    return boundaries?.currentMonthShortYear || "Past month";
+  }
+  if (monthPhase === "first-week") return "Week one";
+  if (monthPhase === "last-week") {
+    const days = boundaries?.daysRemainingInCurrentMonth ?? 0;
+    return days <= 1 ? "Final day" : `${days} days left`;
+  }
+  return "Mid-month";
 }
 
 function getCurrentMonthEncouragement({ phase, onTrack, phraseSeed }) {
@@ -1837,10 +1925,25 @@ function BigFourCriteriaTable({
 
   return (
     <div className="space-y-1.5">
-      <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 border-b border-border/30 px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-primary">
-        <div className="text-right">{boundaries.prevMonthName}</div>
-        <div className="text-center" aria-hidden="true"></div>
-        <div className="text-left">{boundaries.currentMonthName}</div>
+      <div className="flex items-center justify-end">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex cursor-help items-center gap-1 rounded-full border border-border/40 bg-muted/30 px-2 py-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="left" sideOffset={4}>
+              <p className="max-w-52 text-center text-xs">
+                <span className="text-emerald-500">●</span> Ahead of pace{"  "}
+                <span className="text-amber-500">●</span> On track{"  "}
+                <span className="text-red-500">●</span> Behind pace
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {!!sessions && (() => {
@@ -1857,6 +1960,9 @@ function BigFourCriteriaTable({
           sessions.current ?? 0,
           boundaries,
         );
+        const currentMonthSuffix = isCurrentMonthView
+          ? currentSessionsReporting.replace(`${sessions.current ?? 0} `, "")
+          : null;
         const rowBg = baseline
           ? "bg-muted/20"
           : passed
@@ -1872,7 +1978,7 @@ function BigFourCriteriaTable({
 
         return (
           <motion.div
-            className={`grid grid-cols-[1fr_100px_1fr] items-center gap-2 rounded-md border border-border/25 px-2 py-1 transition-colors duration-500 ${revealRowBg}`}
+            className={`grid grid-cols-[1fr_100px_1fr] items-start gap-2 rounded-md border border-border/25 px-2 py-1 transition-colors duration-500 ${revealRowBg}`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
@@ -1885,8 +1991,8 @@ function BigFourCriteriaTable({
                       value={previousSessionsCompared}
                       className={`tabular-nums text-2xl font-semibold tracking-tight transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
                     />
-                    <div className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
-                      total
+                    <div className={`text-[10px] font-medium uppercase tracking-wide transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
+                      {boundaries.prevMonthName}
                     </div>
                   </div>
                 </TooltipTrigger>
@@ -1897,9 +2003,8 @@ function BigFourCriteriaTable({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <div className={`text-center text-xs font-medium leading-tight transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}>
-              <div>Gym</div>
-              <div>Sessions</div>
+            <div className={`self-center text-center text-xs font-medium transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}>
+              Sessions
             </div>
             <TooltipProvider>
               <Tooltip>
@@ -1914,14 +2019,33 @@ function BigFourCriteriaTable({
                         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {isCurrentMonthView
-                        ? currentSessionsReporting.replace(
-                            `${sessions.current ?? 0} `,
-                            "",
-                          )
-                        : ""}
+                    <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {boundaries.currentMonthName}
+                      {currentMonthSuffix ? ` · ${currentMonthSuffix}` : ""}
                     </div>
+                    {rowHighlighted && isCurrentMonthView && !baseline && (
+                      <div className={`text-[10px] font-medium ${
+                        sessionPace === "ahead" ? "text-emerald-600 dark:text-emerald-400"
+                        : sessionPace === "on-pace" ? "text-amber-600 dark:text-amber-400"
+                        : "text-red-600 dark:text-red-400"
+                      }`}>
+                        {sessionPace === "ahead" ? "▲ Ahead of pace"
+                          : sessionPace === "on-pace" ? "→ On track"
+                          : "▼ Behind pace"}
+                      </div>
+                    )}
+                    {rowHighlighted && !baseline && (
+                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted/40">
+                        <motion.div
+                          className={`h-full rounded-full ${passed ? "bg-emerald-500" : "bg-red-500"}`}
+                          initial={{ width: 0 }}
+                          animate={{
+                            width: `${Math.min(100, ((sessions.current ?? 0) / previousSessionsCompared) * 100)}%`,
+                          }}
+                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
@@ -2039,7 +2163,7 @@ function BigFourCriteriaTable({
                       {strengthLocked ? (
                         <span className={rowHighlighted ? "text-muted-foreground/70" : "text-foreground"}>Locked</span>
                       ) : lastStrengthFmt ? (
-                        <span className={rowHighlighted ? "text-muted-foreground" : "text-foreground"}>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-muted/60 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}>
                           {lastStrengthFmt.emoji} {lastStrengthFmt.label}
                         </span>
                       ) : (
@@ -2069,7 +2193,24 @@ function BigFourCriteriaTable({
                 }}
                 transition={{ type: "spring", stiffness: 260, damping: 18 }}
               >
-                <LiftSvg liftType={liftType} size="sm" animate={false} />
+                <div
+                  className={`rounded-full p-1.5 ring-1 transition-colors duration-500 ${
+                    !rowHighlighted
+                      ? "bg-muted/10 ring-border/40"
+                      : tonnagePassed || tonnageNewWin
+                        ? "bg-emerald-500/10 ring-emerald-500/40"
+                        : tonnageBaseline
+                          ? "bg-muted/10 ring-border/40"
+                          : "bg-red-500/10 ring-red-500/40"
+                  }`}
+                >
+                  <LiftSvg
+                    liftType={liftType}
+                    size="sm"
+                    animate={false}
+                    className="h-16 w-16"
+                  />
+                </div>
                 <span className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
                   {formatLiftTypeLabel(liftType)}
                 </span>
@@ -2080,15 +2221,23 @@ function BigFourCriteriaTable({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className={`flex items-center gap-1 text-xs font-medium transition-colors duration-500 ${revealStrengthColor}`}>
+                    <div className="flex items-center gap-1 text-xs font-medium">
                       {strengthLocked ? (
-                        <span>Setup required</span>
+                        <span className={revealStrengthColor}>Setup required</span>
                       ) : currentStrengthFmt ? (
-                        <span>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition-colors duration-500 ${
+                            rowHighlighted
+                              ? strengthPassed || strengthNewWin
+                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                                : "bg-red-500/15 text-red-700 dark:text-red-400"
+                              : "bg-muted/60 text-foreground"
+                          }`}
+                        >
                           {currentStrengthFmt.emoji} {currentStrengthFmt.label}
                         </span>
                       ) : (
-                        <span>{strength.last !== null ? "Not trained" : "—"}</span>
+                        <span className={revealStrengthColor}>{strength.last !== null ? "Not trained" : "—"}</span>
                       )}
                       {rowHighlighted && !strengthLocked && strengthPassed && (strengthNewWin || !strengthBaseline) && (
                         <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
@@ -2142,6 +2291,20 @@ function BigFourCriteriaTable({
                         {liftPaceStatus === "ahead" ? "▲ Ahead of pace"
                           : liftPaceStatus === "on-pace" ? "→ On track"
                           : "▼ Behind pace"}
+                      </div>
+                    )}
+                    {rowHighlighted && !tonnageBaseline && (
+                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted/40">
+                        <motion.div
+                          className={`h-full rounded-full ${
+                            tonnagePassed ? "bg-emerald-500" : "bg-red-500"
+                          }`}
+                          initial={{ width: 0 }}
+                          animate={{
+                            width: `${Math.min(100, (currentTonnage / lastTonnage) * 100)}%`,
+                          }}
+                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                        />
                       </div>
                     )}
                   </div>

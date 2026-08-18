@@ -752,32 +752,41 @@ async function createBlankSheet(sheetName, headers) {
   };
 }
 
+// Re-reads KV immediately before writing rather than spreading the
+// request-start `existingRecord` snapshot. The Drive scan/copy calls between
+// that snapshot and this write can take long enough for a concurrent sign-in
+// to write outreach-tracking fields (supportOutcomeAt, supportStalled*EmailId,
+// etc.) in between — a blind overwrite here would silently drop those and
+// make the founder-support flow treat an already-emailed user as fresh again,
+// queuing a second user-facing email. Mirrors the same fix already applied to
+// the newer sheet-flow.js path (see mergeUserRecord in user-kv-keys.js).
 async function persistLinkedSheet({
   kvKey,
-  existingRecord,
   nowIso,
   metadata,
   connectionMethod,
   provisioningMethod,
 }) {
+  const latest = (await kv.get(kvKey)) || {};
+  const alreadyActivationPrompted = Boolean(latest.activationPromptedAt);
   const nextRecord = {
-    ...existingRecord,
-    connectedAt: existingRecord.connectedAt || nowIso,
-    activationPromptedAt: existingRecord.activationPromptedAt || nowIso,
+    ...latest,
+    connectedAt: latest.connectedAt || nowIso,
+    activationPromptedAt: latest.activationPromptedAt || nowIso,
     connectionMethod,
     provisionedSheetId: metadata.id,
-    provisionedAt: existingRecord.provisionedAt || nowIso,
+    provisionedAt: latest.provisionedAt || nowIso,
     provisionVersion: PROVISION_VERSION,
     provisioningMethod,
     lastSeenAt: nowIso,
   };
 
   await kv.set(kvKey, nextRecord);
-  return nextRecord;
+  return { alreadyActivationPrompted, record: nextRecord };
 }
 
-async function maybePromptActivation({ existingRecord, session, meta }) {
-  if (existingRecord.activationPromptedAt) return;
+async function maybePromptActivation({ alreadyActivationPrompted, session, meta }) {
+  if (alreadyActivationPrompted) return;
   await promptDeveloper("activated", session.user, meta);
 }
 
@@ -890,9 +899,8 @@ export default async function handler(req, res) {
         return;
       }
 
-      await persistLinkedSheet({
+      const { alreadyActivationPrompted } = await persistLinkedSheet({
         kvKey,
-        existingRecord,
         nowIso,
         metadata,
         connectionMethod: "onboarding_selection",
@@ -900,7 +908,7 @@ export default async function handler(req, res) {
       });
 
       await maybePromptActivation({
-        existingRecord,
+        alreadyActivationPrompted,
         session,
         meta: {
           connectionMethod: "onboarding_selection",
@@ -939,9 +947,8 @@ export default async function handler(req, res) {
           ? await copyTemplate(sheetName, headers)
           : await createBlankSheet(sheetName, headers);
 
-      await persistLinkedSheet({
+      const { alreadyActivationPrompted } = await persistLinkedSheet({
         kvKey,
-        existingRecord,
         nowIso,
         metadata: created,
         connectionMethod: "auto_provision",
@@ -950,7 +957,7 @@ export default async function handler(req, res) {
       });
 
       await maybePromptActivation({
-        existingRecord,
+        alreadyActivationPrompted,
         session,
         meta: {
           connectionMethod: "auto_provision",
@@ -1021,9 +1028,8 @@ export default async function handler(req, res) {
     if (validCandidates.length === 1) {
       const selected = validCandidates[0];
       debug.path.push("discover:single_candidate");
-      await persistLinkedSheet({
+      const { alreadyActivationPrompted } = await persistLinkedSheet({
         kvKey,
-        existingRecord,
         nowIso,
         metadata: selected,
         connectionMethod: "auto_relink",
@@ -1031,7 +1037,7 @@ export default async function handler(req, res) {
       });
 
       await maybePromptActivation({
-        existingRecord,
+        alreadyActivationPrompted,
         session,
         meta: {
           connectionMethod: "auto_relink",
@@ -1071,9 +1077,8 @@ export default async function handler(req, res) {
         const metadata = await fetchDriveMetadata(existingSsid, headers);
         if (metadata?.id) {
           debug.path.push("discover:kv_hint_hit");
-          await persistLinkedSheet({
+          const { alreadyActivationPrompted } = await persistLinkedSheet({
             kvKey,
-            existingRecord,
             nowIso,
             metadata,
             connectionMethod: "kv_relink",
@@ -1081,7 +1086,7 @@ export default async function handler(req, res) {
           });
 
           await maybePromptActivation({
-            existingRecord,
+            alreadyActivationPrompted,
             session,
             meta: {
               connectionMethod: "kv_relink",
@@ -1119,9 +1124,8 @@ export default async function handler(req, res) {
     debug.path.push("discover:fallback_create_sample");
     const created = await copyTemplate(sheetName, headers);
 
-    await persistLinkedSheet({
+    const { alreadyActivationPrompted } = await persistLinkedSheet({
       kvKey,
-      existingRecord,
       nowIso,
       metadata: created,
       connectionMethod: "auto_provision",
@@ -1129,7 +1133,7 @@ export default async function handler(req, res) {
     });
 
     await maybePromptActivation({
-      existingRecord,
+      alreadyActivationPrompted,
       session,
       meta: {
         connectionMethod: "auto_provision",

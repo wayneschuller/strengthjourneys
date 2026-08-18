@@ -46,6 +46,15 @@ export function AthleteBioQuickSettings() {
     bioDataIsDefault,
   } = useAthleteBio();
 
+  // Give the user time to explore the site before drawing attention to this
+  // button — the ring/ping only appear after a 10s grace period, not on load.
+  const [attentionArmed, setAttentionArmed] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setAttentionArmed(true), 10000);
+    return () => clearTimeout(id);
+  }, []);
+  const showAttention = attentionArmed && bioDataIsDefault;
+
   return (
     <DropdownMenu>
       <TooltipProvider>
@@ -58,11 +67,11 @@ export function AthleteBioQuickSettings() {
                 aria-label="Set athlete bio data"
                 className={cn(
                   "relative",
-                  bioDataIsDefault && "ring-2 ring-amber-400/70",
+                  showAttention && "ring-2 ring-amber-400/70",
                 )}
               >
                 <Activity className="h-4 w-4" />
-                {bioDataIsDefault && (
+                {showAttention && (
                   <span className="absolute -top-1 -right-1 flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-ping" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
@@ -71,13 +80,17 @@ export function AthleteBioQuickSettings() {
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent>Set athlete age, weight, and sex</TooltipContent>
+          <TooltipContent>
+            {bioDataIsDefault
+              ? "Add your bio for personalized strength ratings"
+              : "Edit your bio data"}
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <DropdownMenuContent className="w-72">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Your bio data</span>
-          {bioDataIsDefault && (
+          {showAttention && (
             <Badge
               variant="secondary"
               className="text-[0.6rem] font-semibold uppercase tracking-wide animate-pulse"
@@ -88,6 +101,10 @@ export function AthleteBioQuickSettings() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="space-y-3 px-3 pt-2 pb-3 text-xs">
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            Tell us your age, sex, and bodyweight and we&apos;ll tailor your
+            strength levels and percentile ratings to you.
+          </p>
           {/* Row 1: Age input + sex switch */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
@@ -160,8 +177,8 @@ export function AthleteBioQuickSettings() {
             </div>
           </div>
           <p className="pt-1 text-[10px] leading-snug text-muted-foreground">
-            We only store this in your browser to power strength level
-            calculations. For more details, see our{" "}
+            Stays on this device — stored only in your browser, never sent to
+            our servers, and used solely to personalize your results. See our{" "}
             <Link href="/privacy" className="underline underline-offset-2">
               privacy policy
             </Link>

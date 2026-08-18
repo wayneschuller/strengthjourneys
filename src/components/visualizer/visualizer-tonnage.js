@@ -54,11 +54,14 @@ import {
   ChartAreaGradient,
   ChartGlowFilter,
   ChartInlineLabel,
+  TopPointMarkers,
   chartActiveDotProps,
   chartCursorProps,
   formatWeightTick,
   getDateTickProps,
+  paddedDateDomain,
   renderYearDividers,
+  selectTopPoints,
   selectValueLabelIndices,
 } from "@/components/visualizer/chart-visuals";
 
@@ -93,6 +96,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     () => snapTimeRangeToData(parsedData, liftType, storedTimeRange),
     [parsedData, liftType, storedTimeRange],
   );
+  // Only meaningful on the standalone all-lifts page (src/pages/tonnage.js) — the
+  // per-lift charts embedded in progress-guide pages always show their ranked
+  // peaks instead, see topPoints below.
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
     false,
@@ -151,9 +157,20 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   const dateTickProps = getDateTickProps(chartData);
 
-  // Which sessions get a value label when "Show Values" is on. Over years of
-  // sessions, labelling every point buries the line, so past a threshold only
-  // record-setting sessions and the latest one are annotated.
+  // Per-lift chart only (progress-guide pages): the best sessions in range,
+  // ranked, so the chart always highlights its own high points instead of
+  // leaving them buried in the noise. See selectTopPoints for how the picks
+  // stay spread rather than clustering on one peak week.
+  const topPoints = useMemo(
+    () =>
+      liftType ? selectTopPoints(chartData, (point) => point.tonnage) : [],
+    [chartData, liftType],
+  );
+
+  // Standalone all-lifts page only: which sessions get a value label when
+  // "Show Values" is on. Over years of sessions, labelling every point buries
+  // the line, so past a threshold only record-setting sessions and the latest
+  // one are annotated.
   const valueLabelIndices = useMemo(
     () =>
       selectValueLabelIndices(
@@ -263,10 +280,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   dataKey="rechartsDate"
                   type="number"
                   scale="time"
-                  domain={[
-                    (dataMin) => dataMin - 2 * 24 * 60 * 60 * 1000,
-                    (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
-                  ]}
+                  domain={paddedDateDomain()}
                   {...dateTickProps.axisProps}
                 />
                 <YAxis
@@ -317,26 +331,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     animationDuration={900}
                     animationEasing="ease-out"
                     connectNulls
-                  >
-                    {showLabelValues && (
-                      <LabelList
-                        position="top"
-                        offset={12}
-                        content={({ x, y, value, index }) =>
-                          valueLabelIndices.has(index) ? (
-                            <ChartInlineLabel
-                              x={x}
-                              y={y - 10}
-                              color="var(--foreground)"
-                              textAnchor="middle"
-                            >
-                              {`${Math.round(value)}${displayUnit}`}
-                            </ChartInlineLabel>
-                          ) : null
-                        }
-                      />
-                    )}
-                  </Area>
+                  />
                 )}
                 {!hiddenSeries.rollingAverageTonnage && (
                   <Line
@@ -359,6 +354,17 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 )}
 
                 {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
+
+                {/* The best sessions in range, ranked — see selectTopPoints. */}
+                {!hiddenSeries.tonnage && (
+                  <TopPointMarkers
+                    topPoints={topPoints}
+                    color={liftColor}
+                    getLines={({ value }) => [
+                      `${Math.round(value)}${displayUnit}`,
+                    ]}
+                  />
+                )}
               </AreaChart>
             </ChartContainer>
         ) : (
@@ -373,10 +379,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 dataKey="rechartsDate"
                 type="number"
                 scale="time"
-                domain={[
-                  (dataMin) => dataMin - 2 * 24 * 60 * 60 * 1000,
-                  (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
-                ]}
+                domain={paddedDateDomain()}
                 {...dateTickProps.axisProps}
               />
               <YAxis
@@ -481,17 +484,21 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               lift_type: liftType || "all_lifts",
             }}
           />
-          <div className="flex items-center space-x-2">
-            <Label className="font-light" htmlFor="show-values">
-              Show Values
-            </Label>
-            <Switch
-              id="show-values"
-              value={showLabelValues}
-              checked={showLabelValues}
-              onCheckedChange={(show) => setShowLabelValues(show)}
-            />
-          </div>
+          {/* Only the standalone all-lifts page needs this: the per-lift charts
+              always show their ranked peaks instead (see topPoints above). */}
+          {!liftType && (
+            <div className="flex items-center space-x-2">
+              <Label className="font-light" htmlFor="show-values">
+                Show Values
+              </Label>
+              <Switch
+                id="show-values"
+                value={showLabelValues}
+                checked={showLabelValues}
+                onCheckedChange={(show) => setShowLabelValues(show)}
+              />
+            </div>
+          )}
         </div>
       </CardFooter>
     </Card>

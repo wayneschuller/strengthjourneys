@@ -29,13 +29,15 @@ import {
   ChartBandGradient,
   ChartGlowFilter,
   ChartInlineLabel,
-  LABEL_LINE_HEIGHT,
+  TopPointMarkers,
   chartActiveDotProps,
   chartCursorProps,
+  e1rmMarkerLines,
   formatWeightTick,
   getDateTickProps,
+  paddedDateDomain,
   renderYearDividers,
-  selectValueLabelIndices,
+  selectTopPoints,
 } from "@/components/visualizer/chart-visuals";
 
 import {
@@ -56,15 +58,7 @@ import {
 
 import { ChartContainer } from "@/components/ui/chart";
 
-import {
-  CartesianGrid,
-  Area,
-  AreaChart,
-  LabelList,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { CartesianGrid, Area, AreaChart, XAxis, YAxis, Tooltip } from "recharts";
 
 import { getYearLabels, processVisualizerData } from "@/components/visualizer/visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
@@ -106,14 +100,6 @@ export function VisualizerMini({ liftType }) {
   const timeRange = useMemo(
     () => snapTimeRangeToData(parsedData, liftType, storedTimeRange),
     [parsedData, liftType, storedTimeRange],
-  );
-
-  const [showLabelValues, setShowLabelValues] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
-    false,
-    {
-      initializeWithValue: false,
-    },
   );
 
   const [showAllData, setShowAllData] = useLocalStorage(
@@ -187,58 +173,15 @@ export function VisualizerMini({ liftType }) {
   const dateTickProps = getDateTickProps(chartData);
 
   // The best sessions inside the selected time range, ranked, so the chart always
-  // highlights the high points of whatever window you are looking at.
-  //
-  // A plain "largest values" pick would land on neighbouring sessions of the same
-  // peak week, so each pick has to sit clear of the ones already taken — that is
-  // what makes these read as separate climbs rather than one crowded summit.
-  // Separation is a slice of the visible span (clamped to a week at the short end
-  // and six months at the long end), which keeps the marks spread on a 3-month
-  // view without demanding years of gap on an all-time view.
-  const topPoints = useMemo(() => {
-    if (!chartData?.length) return [];
-
-    const DAY_MS = 24 * 60 * 60 * 1000;
-    const spanMs =
-      chartData[chartData.length - 1].rechartsDate - chartData[0].rechartsDate;
-    const separationMs = Math.min(
-      Math.max(spanMs / 12, 7 * DAY_MS),
-      180 * DAY_MS,
-    );
-
-    const ranked = chartData
-      .map((point, index) => ({ point, index, value: point[liftType] }))
-      .filter((candidate) => candidate.value != null)
-      // Ties break towards the earlier session — that's the day it was earned.
-      .sort((a, b) => b.value - a.value || a.index - b.index);
-
-    const chosen = [];
-    for (const candidate of ranked) {
-      if (chosen.length === TOP_SESSION_COUNT) break;
-      const clear = chosen.every(
-        (taken) =>
-          Math.abs(candidate.point.rechartsDate - taken.point.rechartsDate) >=
-          separationMs,
-      );
-      if (clear) chosen.push(candidate);
-    }
-
-    return chosen.map((candidate, rank) => ({ ...candidate, rank }));
-  }, [chartData, liftType]);
-
-  // Which points get a value label when "Show Values" is on. Narrow screens get
-  // fewer, since the same plot has to fit them. The ranked sessions are reserved:
-  // they already print their own numbers, and a value label landing on or beside
-  // one of them would collide with it.
-  const valueLabelIndices = useMemo(
+  // highlights the high points of whatever window you are looking at. See
+  // selectTopPoints for how the picks stay spread instead of clustering on one
+  // peak week.
+  const topPoints = useMemo(
     () =>
-      selectValueLabelIndices(
-        chartData,
-        (point) => point[liftType],
-        width >= 1280 ? 24 : 12,
-        topPoints.map((top) => top.index),
-      ),
-    [chartData, liftType, width, topPoints],
+      selectTopPoints(chartData, (point) => point[liftType], {
+        count: TOP_SESSION_COUNT,
+      }),
+    [chartData, liftType],
   );
 
   const strengthRanges = standards?.[liftType] || null;
@@ -382,16 +325,7 @@ export function VisualizerMini({ liftType }) {
                   dataKey="rechartsDate"
                   type="number"
                   scale="time"
-                  domain={[
-                    (dataMin) =>
-                      new Date(dataMin).setDate(
-                        new Date(dataMin).getDate() - 2,
-                      ),
-                    (dataMax) =>
-                      new Date(dataMax).setDate(
-                        new Date(dataMax).getDate() + 2,
-                      ),
-                  ]}
+                  domain={paddedDateDomain()}
                   {...dateTickProps.axisProps}
                 />
                 <YAxis
@@ -451,103 +385,19 @@ export function VisualizerMini({ liftType }) {
                   animationDuration={900}
                   animationEasing="ease-out"
                   connectNulls
-                >
-                  {showLabelValues && (
-                    <LabelList
-                      position="top"
-                      offset={12}
-                      content={({ x, y, value, index }) =>
-                        valueLabelIndices.has(index) ? (
-                          <ChartInlineLabel
-                            x={x}
-                            y={y - 10}
-                            color="var(--foreground)"
-                            textAnchor="middle"
-                          >
-                            {`${value}${chartData[index].displayUnit || ""}`}
-                          </ChartInlineLabel>
-                        ) : null
-                      }
-                    />
-                  )}
-                </Area>
+                />
                 {/* Faint year boundary dividers with the year beneath them */}
                 {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
 
-                {/* The best sessions in range, ranked. The winner gets a filled
-                    pin and a breathing halo; the rest get smaller open rings, so
-                    the hierarchy is readable at a glance.
-                    ReferenceDot sits at a zIndex above the series, so these always
-                    draw over the area fill and the standard bands. */}
-                {topPoints[0] && (
-                  <ReferenceDot
-                    x={topPoints[0].point.rechartsDate}
-                    y={topPoints[0].value}
-                    r={9}
-                    fill="none"
-                    stroke={liftColor}
-                    strokeWidth={1.5}
-                    strokeOpacity={0.45}
-                    className="animate-pulse"
-                  />
-                )}
-                {topPoints.map(({ point, value, rank }) => {
-                  const isWinner = rank === 0;
-                  const unit = point.displayUnit || "";
-                  const reps = point[`${liftType}_reps`];
-                  const weight = point[`${liftType}_weight`];
-
-                  // A multi-rep session only ever charted an estimate, so name the
-                  // set that produced it above the estimate itself. A single is its
-                  // own estimate, so one line says everything.
-                  const lines =
-                    reps > 1 && weight != null
-                      ? [`${reps}@${weight}${unit}`, `${value}${unit}`]
-                      : [`${value}${unit}`];
-
-                  return (
-                    <ReferenceDot
-                      key={`top-${rank}`}
-                      x={point.rechartsDate}
-                      y={value}
-                      r={isWinner ? 4.5 : 3.5}
-                      // The winner is filled and ringed in the foreground so it
-                      // reads as a pin in every theme; the runners-up are open
-                      // circles, present but clearly secondary.
-                      fill={isWinner ? liftColor : "var(--background)"}
-                      stroke={isWinner ? "var(--foreground)" : liftColor}
-                      strokeWidth={isWinner ? 1.5 : 2}
-                      label={{
-                        content: ({ viewBox }) => (
-                          <ChartInlineLabel
-                            x={viewBox.x + viewBox.width / 2}
-                            // Stacked labels grow downward from the first line, so
-                            // lift the whole block to keep the last line clear of
-                            // the marker.
-                            y={
-                              viewBox.y -
-                              (isWinner ? 12 : 10) -
-                              (lines.length - 1) * LABEL_LINE_HEIGHT
-                            }
-                            textAnchor="middle"
-                            // Foreground rather than the lift color, which is too
-                            // dark to read against the dark themes. Runners-up drop
-                            // to muted to keep the winner dominant.
-                            color={
-                              isWinner
-                                ? "var(--foreground)"
-                                : "var(--muted-foreground)"
-                            }
-                            // Weight alone marks the peak: no "Best" prefix needed
-                            // once it is the boldest label on the chart.
-                            fontWeight={isWinner ? 700 : 600}
-                            lines={lines}
-                          />
-                        ),
-                      }}
-                    />
-                  );
-                })}
+                {/* The best sessions in range, ranked. A multi-rep session names
+                    the set that produced the estimate above the estimate itself
+                    (5@115kg / 123kg); a single is its own estimate, so one line
+                    says everything. */}
+                <TopPointMarkers
+                  topPoints={topPoints}
+                  color={liftColor}
+                  getLines={e1rmMarkerLines(liftType)}
+                />
 
                 {/* Strength standards: color-coded lines for all reached levels + one next target. */}
                 {strengthRanges && showStandards && width > 768 &&
@@ -620,7 +470,7 @@ export function VisualizerMini({ liftType }) {
         )}
       </CardContent>
       <CardFooter>
-        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-4 md:items-center">
+        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 md:items-center">
           <div className="justify-self-start">
             <MiniFeedbackWidget
               prompt="Useful chart?"
@@ -630,17 +480,6 @@ export function VisualizerMini({ liftType }) {
                 context: "visualizer_mini_card",
                 lift_type: liftType,
               }}
-            />
-          </div>
-          <div className="flex items-center space-x-2 md:justify-self-center">
-            <Label className="font-light" htmlFor="show-values">
-              Show Values
-            </Label>
-            <Switch
-              id="show-values"
-              value={showLabelValues}
-              checked={showLabelValues}
-              onCheckedChange={(show) => setShowLabelValues(show)}
             />
           </div>
           <div className="flex items-center space-x-1 md:justify-self-center">

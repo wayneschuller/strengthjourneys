@@ -325,7 +325,13 @@ function buildUserEmail(user, outcome) {
   };
 }
 
-function buildFounderEmail(user, outcome, record, scheduledAt = null) {
+function buildFounderEmail(
+  user,
+  outcome,
+  record,
+  scheduledAt = null,
+  cancelWarning = null,
+) {
   const name = getFounderName(user);
   const labels = {
     smooth: "Smooth onboarding",
@@ -341,7 +347,7 @@ function buildFounderEmail(user, outcome, record, scheduledAt = null) {
   };
 
   return {
-    subject: `[SJ] ${labels[outcome]} — ${name}`,
+    subject: `[SJ] ${labels[outcome]}${cancelWarning ? " (action needed)" : ""} — ${name}`,
     text: [
       `${name} (${user.email}) ${descriptions[outcome]}`,
       record.firstSignInPage
@@ -355,6 +361,7 @@ function buildFounderEmail(user, outcome, record, scheduledAt = null) {
         ? `Scope recovered: ${record.driveScopeRecoveredAt}`
         : null,
       scheduledAt ? `User support email scheduled for: ${scheduledAt}` : null,
+      cancelWarning ? `\nWARNING: ${cancelWarning}` : null,
     ]
       .filter(Boolean)
       .join("\n"),
@@ -455,8 +462,21 @@ async function scheduleStalledFounderNote({ context, user, record, scheduledAt }
   );
 }
 
-async function sendFounderOutcome({ context, user, outcome, record, scheduledAt }) {
-  const message = buildFounderEmail(user, outcome, record, scheduledAt);
+async function sendFounderOutcome({
+  context,
+  user,
+  outcome,
+  record,
+  scheduledAt,
+  cancelWarning = null,
+}) {
+  const message = buildFounderEmail(
+    user,
+    outcome,
+    record,
+    scheduledAt,
+    cancelWarning,
+  );
   await sendEmail(
     context.resend,
     {
@@ -568,14 +588,34 @@ export async function handleSupportActivation(
     const pendingEmailHasLikelySent =
       Number.isFinite(pendingSendMs) && pendingSendMs <= now.getTime();
 
+    // Both calls are attempted even if the first fails, so a cancellable
+    // founder email isn't left behind just because the user email cancel
+    // errored (and vice versa).
     let stalledUserEmailCancelled = true;
+    let stalledFounderEmailCancelled = true;
     if (!pendingEmailHasLikelySent) {
       stalledUserEmailCancelled = await cancelScheduledEmail(
         context.resend,
         record.supportStalledUserEmailId,
       );
-      await cancelScheduledEmail(context.resend, record.supportStalledFounderEmailId);
+      stalledFounderEmailCancelled = await cancelScheduledEmail(
+        context.resend,
+        record.supportStalledFounderEmailId,
+      );
     }
+
+    // A cancel that was actually attempted and came back with an error is
+    // different from one skipped because the stalled email had likely
+    // already gone out: here Resend still holds a live, wrongly-worded
+    // "stalled" send, and treating that as resolved would tell the founder
+    // everything is fine while the user is still about to get the wrong
+    // email. This guards against a real incident: a send-only-restricted
+    // Resend API key silently failed every cancel call, and the outcome was
+    // finalized (with the only pointers to the stale email discarded)
+    // regardless.
+    const cancelFailed =
+      !pendingEmailHasLikelySent &&
+      (!stalledUserEmailCancelled || !stalledFounderEmailCancelled);
 
     const outcome = hadMissingScope ? "recovered" : "smooth";
     const scheduledAt = pendingEmailHasLikelySent
@@ -625,16 +665,30 @@ export async function handleSupportActivation(
         ? { driveScopeRecoveredAt: nowIso }
         : {}),
       founderEmailHistory,
-      supportOutcome: outcome,
-      supportOutcomeAt: nowIso,
-      supportPendingOutcome: null,
-      supportStalledFounderEmailId: null,
-      supportStalledUserEmailId: null,
-      supportUserEmailId: userEmailId,
-      supportUserOutreachScheduledFor: scheduledAt,
       supportUserOutreachSentOrScheduledAt:
         record.supportUserOutreachSentOrScheduledAt || nowIso,
+      ...(cancelFailed
+        ? // Deliberately leave supportOutcome/supportOutcomeAt and the
+          // supportStalled*EmailId pointers untouched: the next sign-in or
+          // activation event should retry the cancel rather than treating
+          // this as resolved, and the stale IDs must survive so they stay
+          // discoverable (in the founder warning email and in KV) until a
+          // cancel actually succeeds.
+          { supportPendingOutcome: outcome }
+        : {
+            supportOutcome: outcome,
+            supportOutcomeAt: nowIso,
+            supportPendingOutcome: null,
+            supportStalledFounderEmailId: null,
+            supportStalledUserEmailId: null,
+            supportUserEmailId: userEmailId,
+            supportUserOutreachScheduledFor: scheduledAt,
+          }),
     };
+
+    const cancelWarning = cancelFailed
+      ? `Could not cancel the previously scheduled "stalled" email(s) — user email ${record.supportStalledUserEmailId || "(none)"}${stalledUserEmailCancelled ? "" : " [cancel failed]"}, founder email ${record.supportStalledFounderEmailId || "(none)"}${stalledFounderEmailCancelled ? "" : " [cancel failed]"}. These may still be delivered as originally scheduled (around ${record.supportUserOutreachScheduledFor || "unknown time"}) — check the Resend dashboard and cancel manually if needed.`
+      : null;
 
     await sendFounderOutcome({
       context,
@@ -642,6 +696,7 @@ export async function handleSupportActivation(
       outcome,
       record: { ...record, ...authoredFields },
       scheduledAt,
+      cancelWarning,
     });
     // Write only the fields authored here: the sign-in callback may have
     // bumped counters or scope timestamps while these emails were in flight.

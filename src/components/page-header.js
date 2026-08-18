@@ -8,11 +8,23 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
  *
  * @param {Object} props
  * @param {string} [props.className] - Additional CSS classes.
+ * @param {boolean} [props.wide] - Swaps Tailwind's `container` (hard-capped at
+ *   1536px from the 2xl breakpoint up) for a looser cap. For chart-heavy
+ *   pages, where the standard container leaves a wide monitor's extra space
+ *   unused no matter how far Layout's own margin is narrowed for them.
  * @param {React.ReactNode} props.children - Page content.
  */
-export function PageContainer({ className, children, ...props }) {
+export function PageContainer({ className, wide, children, ...props }) {
   return (
-    <div className={cn("container mx-auto px-4 sm:px-6 lg:px-8", className)} {...props}>
+    <div
+      className={cn(
+        wide
+          ? "mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8"
+          : "container mx-auto px-4 sm:px-6 lg:px-8",
+        className,
+      )}
+      {...props}
+    >
       {children}
     </div>
   );

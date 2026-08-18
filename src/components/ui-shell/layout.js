@@ -60,6 +60,10 @@ import {
 
 const FORCE_SHEET_SYNC_TOAST_KEY = "SJ_forceNextSheetSyncToast";
 
+// Pages whose main content is a wide chart, not prose — the standard gutter
+// (up to 5vw a side at xl) leaves them visibly cramped on wide monitors.
+const WIDE_CONTENT_ROUTES = ["/visualizer", "/tonnage"];
+
 /**
  * Root layout wrapper for the app. Renders nav, main content area, footer, and app background.
  * Also owns all toast notifications that were previously in useUserLiftingData.
@@ -270,7 +274,18 @@ export function Layout({ children }) {
         {router.pathname === "/" && <HomeImportMergeNudge />}
         <ThemeRewardUnlockBanner suppress={isImportedData} />
         <SheetSetupDialog />
-        <main className="mx-0 md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
+        <main
+          className={cn(
+            "mx-0",
+            // The chart-heavy pages are starved for width under the standard
+            // gutter on wide monitors — nothing else on them wants the extra
+            // whitespace the way an article or calculator does — so they get
+            // a narrower margin instead of opting out of the shared rhythm.
+            WIDE_CONTENT_ROUTES.includes(router.pathname)
+              ? "md:mx-[1.5vw] lg:mx-[2vw] xl:mx-[2.5vw]"
+              : "md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]",
+          )}
+        >
           {children}
         </main>
         <Footer />

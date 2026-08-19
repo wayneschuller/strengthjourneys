@@ -7,6 +7,9 @@
 /* dark: applies when html has .dark or any *-dark theme class */
 @custom-variant dark (&:where(.dark, .neo-brutalism-dark, .retro-arcade-dark, .starry-night-dark, .blueprint-dark, .dark *, .neo-brutalism-dark *, .retro-arcade-dark *, .starry-night-dark *, .blueprint-dark *));
 
+/* blueprint: applies when html has .blueprint or .blueprint-dark (either light or dark variant) */
+@custom-variant blueprint (&:where(.blueprint, .blueprint-dark, .blueprint *, .blueprint-dark *));
+
 /* Required for MessageResponse component (Streamdown) */
 @source "../../node_modules/streamdown/dist/*.js";
 
@@ -1012,6 +1015,126 @@
   color: #0a0a0a !important;
   border-color: hsl(20 5.9% 90%) !important;
   box-shadow: none !important;
+}
+
+/*
+ * Blueprint theme: drafting-style decorative details on the home dashboard.
+ *
+ * Learning: html2canvas capture mode (`data-capture`) must stay clean for
+ * shared images, so the corner marks are excluded via :not([data-capture]) —
+ * same contract as the [data-capture="light"] rule above.
+ */
+
+/*
+ * Corner registration marks on every card (via the shared `Card` primitive,
+ * see ui/card.jsx). Three variants cycle across siblings so a row of cards
+ * doesn't look stamped from the same template — full corners, then the two
+ * diagonal pairs, repeating every three cards.
+ */
+.blueprint .blueprint-card,
+.blueprint-dark .blueprint-card {
+  position: relative;
+}
+
+.blueprint .blueprint-card:not([data-capture])::before,
+.blueprint-dark .blueprint-card:not([data-capture])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/*
+ * Variant 1 (base case, matches 3n+1 in a 3-card cycle): all four corners.
+ * Written unconditionally — the more specific :nth-of-type rules for
+ * variants 2 and 3 below override it on their positions.
+ */
+.blueprint .blueprint-card:not([data-capture])::before,
+.blueprint-dark .blueprint-card:not([data-capture])::before {
+  color: color-mix(in srgb, var(--primary) 45%, transparent);
+  background:
+    linear-gradient(currentColor, currentColor) top 9px left 9px / 9px 1px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) top 9px left 9px / 1px 9px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) top 9px right 9px / 9px 1px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) top 9px right 9px / 1px 9px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) bottom 9px left 9px / 9px 1px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) bottom 9px left 9px / 1px 9px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) bottom 9px right 9px / 9px 1px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) bottom 9px right 9px / 1px 9px
+      no-repeat;
+}
+
+/* Variant 2 (every 3n+2 card): only the top-left / bottom-right diagonal, a touch bolder and longer */
+.blueprint .blueprint-card:not([data-capture]):nth-of-type(3n + 2)::before,
+.blueprint-dark
+  .blueprint-card:not([data-capture]):nth-of-type(3n + 2)::before {
+  color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background:
+    linear-gradient(currentColor, currentColor) top 8px left 8px / 12px 1px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) top 8px left 8px / 1px 12px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) bottom 8px right 8px / 12px
+      1px no-repeat,
+    linear-gradient(currentColor, currentColor) bottom 8px right 8px / 1px
+      12px no-repeat;
+}
+
+/* Variant 3 (every 3rd card, 3n): only the top-right / bottom-left diagonal, smaller and fainter */
+.blueprint .blueprint-card:not([data-capture]):nth-of-type(3n)::before,
+.blueprint-dark .blueprint-card:not([data-capture]):nth-of-type(3n)::before {
+  color: color-mix(in srgb, var(--primary) 34%, transparent);
+  background:
+    linear-gradient(currentColor, currentColor) top 10px right 10px / 7px 1px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) top 10px right 10px / 1px 7px
+      no-repeat,
+    linear-gradient(currentColor, currentColor) bottom 10px left 10px / 7px
+      1px no-repeat,
+    linear-gradient(currentColor, currentColor) bottom 10px left 10px / 1px
+      7px no-repeat;
+}
+
+/* Dimension-line tick dividers between the hero stat tiles */
+@media (min-width: 640px) {
+  .blueprint .home-inspiration-strip > * + *,
+  .blueprint-dark .home-inspiration-strip > * + * {
+    position: relative;
+  }
+
+  .blueprint .home-inspiration-strip > * + *::before,
+  .blueprint-dark .home-inspiration-strip > * + *::before {
+    content: "";
+    position: absolute;
+    left: -13px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    pointer-events: none;
+    background:
+      linear-gradient(
+          color-mix(in srgb, var(--primary) 45%, transparent),
+          color-mix(in srgb, var(--primary) 45%, transparent)
+        )
+        center / 1px 100% no-repeat,
+      linear-gradient(
+          color-mix(in srgb, var(--primary) 55%, transparent),
+          color-mix(in srgb, var(--primary) 55%, transparent)
+        )
+        top / 100% 1px no-repeat,
+      linear-gradient(
+          color-mix(in srgb, var(--primary) 55%, transparent),
+          color-mix(in srgb, var(--primary) 55%, transparent)
+        )
+        bottom / 100% 1px no-repeat;
+  }
 }
 
 /* Center Google Drive picker vertically — Google sets an inline `top` that

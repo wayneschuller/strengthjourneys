@@ -88,6 +88,7 @@ export function AppBackground() {
     themeForBackground === "blueprint" ||
     themeForBackground === "blueprint-dark";
   const isBlueprintDark = themeForBackground === "blueprint-dark";
+  const isRetroArcadeDark = themeForBackground === "retro-arcade-dark";
 
   const showAnimated = animatedBackground ?? false;
   const shouldShowBackground = showBackground ?? true;
@@ -347,11 +348,24 @@ export function AppBackground() {
         </>
       )}
 
+      {/* Retro-arcade theme: neon sun-glow wash behind the warp tunnel */}
+      {mounted && isRetroArcade && (
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-0",
+            isRetroArcadeDark
+              ? "bg-[radial-gradient(1100px_circle_at_50%_-10%,rgba(95,168,163,0.16),transparent_60%),radial-gradient(900px_circle_at_50%_115%,rgba(214,107,122,0.14),transparent_65%)]"
+              : "bg-[radial-gradient(1100px_circle_at_50%_-10%,rgba(217,53,113,0.14),transparent_60%),radial-gradient(900px_circle_at_50%_115%,rgba(95,168,163,0.14),transparent_65%)]",
+          )}
+        />
+      )}
+
       {/* Warp background for retro-arcade themes */}
       {mounted && isRetroArcade && (
         <WarpBackground
           className="pointer-events-none absolute inset-0 rounded-none border-0 p-0"
-          perspective={140}
+          perspective={1100}
           beamsPerSide={showAnimated ? 4 : 0}
           showBeams={showAnimated}
           beamSize={6}

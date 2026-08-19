@@ -44,6 +44,9 @@ export function MobileNav() {
   );
   const logoWidth = 150;
   const { resolvedTheme, theme } = useTheme();
+  const isStarryNight = (theme ?? resolvedTheme ?? "").startsWith(
+    "starry-night",
+  );
   const [logoSrc, setLogoSrc] = useState(() => {
     // Start with default theme for SSR/hydration consistency
     return getLogoForTheme("light");
@@ -115,7 +118,10 @@ export function MobileNav() {
                     width={logoWidth}
                     height="auto"
                     alt="Strength Journeys logo"
-                    className="inline-block origin-left scale-[1.2] rounded-lg"
+                    className={cn(
+                      "inline-block origin-left scale-[1.2] rounded-lg",
+                      isStarryNight && "ring-border shadow-sm ring-1",
+                    )}
                   />
                 </Link>
               </SheetClose>

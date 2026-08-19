@@ -25,7 +25,10 @@ import "@fontsource/geist-sans/index.css"; // Used in: light, dark
 import "@fontsource/dm-sans/index.css"; // Used in: neo-brutalism, neo-brutalism-dark
 import "@fontsource/outfit/index.css"; // Used in: retro-arcade, retro-arcade-dark
 import "@fontsource/ibm-plex-sans-condensed/index.css"; // Used in: blueprint, blueprint-dark
-import "@fontsource/libre-baskerville/index.css"; // Used in: starry-night, starry-night-dark
+import "@fontsource/libre-baskerville/index.css"; // Used in: starry-night, starry-night-dark (400 weight)
+import "@fontsource/libre-baskerville/500.css"; // font-medium
+import "@fontsource/libre-baskerville/600.css"; // font-semibold
+import "@fontsource/libre-baskerville/700.css"; // font-bold — without these, bold text fell back to browser-faked bold
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;

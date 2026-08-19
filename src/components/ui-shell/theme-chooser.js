@@ -95,7 +95,11 @@ export function ThemeChooser() {
         <DropdownMenuLabel>Choose theme:</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup
-          value={unlockedThemes.has(theme) ? theme : "light"}
+          value={
+            !isProgressLoading && !unlockedThemes.has(theme)
+              ? "light"
+              : (theme ?? "light")
+          }
           onValueChange={(value) => {
             if (unlockedThemes.has(value)) {
               setTheme(value);
@@ -103,7 +107,11 @@ export function ThemeChooser() {
           }}
         >
           {themes.map((t) => {
-            const isLocked = !unlockedThemes.has(t);
+            // While reward progress is still loading, don't flash the
+            // currently-active theme as locked — we just haven't confirmed
+            // its status yet. Other themes stay locked until proven unlocked.
+            const isLocked =
+              !unlockedThemes.has(t) && !(isProgressLoading && t === theme);
             return (
               <DropdownMenuRadioItem
                 key={t}

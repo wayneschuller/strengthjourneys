@@ -140,9 +140,9 @@ export function AppBackground() {
             aria-hidden
             className={cn(
               blueprintOverlayClassName,
-              "text-primary/25",
+              isBlueprintDark ? "text-primary/25" : "text-primary/40",
               "bg-[repeating-linear-gradient(135deg,transparent_0_18px,currentColor_18px_19px,transparent_19px_36px)]",
-              "opacity-85",
+              isBlueprintDark ? "opacity-85" : "opacity-100",
             )}
           />
 
@@ -156,10 +156,12 @@ export function AppBackground() {
                 strokeDasharray="0"
                 squares={BLUEPRINT_SQUARES}
                 className={cn(
-                  "fill-primary/12 stroke-primary/40",
+                  isBlueprintDark
+                    ? "fill-primary/12 stroke-primary/40"
+                    : "fill-primary/18 stroke-primary/60",
                   "scale-[1.10] rotate-[-16deg]",
                   "origin-top-left",
-                  "opacity-75",
+                  isBlueprintDark ? "opacity-75" : "opacity-95",
                   blueprintMaskClassName,
                 )}
               />
@@ -170,10 +172,12 @@ export function AppBackground() {
                 y={-5}
                 strokeDasharray="2 10"
                 className={cn(
-                  "fill-accent/12 stroke-foreground/18",
+                  isBlueprintDark
+                    ? "fill-accent/12 stroke-foreground/18"
+                    : "fill-accent/18 stroke-foreground/30",
                   "scale-[1.03] rotate-[12deg]",
                   "origin-top-left",
-                  "opacity-65",
+                  isBlueprintDark ? "opacity-65" : "opacity-85",
                   blueprintMaskClassName,
                 )}
               />
@@ -184,10 +188,12 @@ export function AppBackground() {
                 y={-2}
                 strokeDasharray="1 7"
                 className={cn(
-                  "stroke-primary/22 fill-transparent",
+                  isBlueprintDark
+                    ? "stroke-primary/22 fill-transparent"
+                    : "stroke-primary/34 fill-transparent",
                   "rotate-[26deg]",
                   "origin-top-left",
-                  "opacity-55",
+                  isBlueprintDark ? "opacity-55" : "opacity-75",
                   blueprintMaskClassName,
                 )}
               />
@@ -244,7 +250,7 @@ export function AppBackground() {
             aria-hidden
             className={cn(
               "absolute top-10 left-10 h-[1px] w-[42vw]",
-              "bg-primary/35",
+              isBlueprintDark ? "bg-primary/35" : "bg-primary/50",
               "[mask-image:linear-gradient(to_right,white,transparent)]",
             )}
           />
@@ -252,7 +258,7 @@ export function AppBackground() {
             aria-hidden
             className={cn(
               "absolute top-10 left-10 h-[42vh] w-[1px]",
-              "bg-primary/35",
+              isBlueprintDark ? "bg-primary/35" : "bg-primary/50",
               "[mask-image:linear-gradient(to_bottom,white,transparent)]",
             )}
           />

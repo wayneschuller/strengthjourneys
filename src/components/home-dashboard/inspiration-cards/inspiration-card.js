@@ -34,10 +34,12 @@ export function InspirationCard({
     >
       <div className="flex items-center gap-2">
         <Icon className={`h-3.5 w-3.5 shrink-0 ${iconColor}`} />
-        <span className="text-muted-foreground text-xs">{description}</span>
+        <span className="text-muted-foreground blueprint:font-mono blueprint:tracking-wider blueprint:uppercase text-xs">
+          {description}
+        </span>
         {action && <span className="ml-1">{action}</span>}
       </div>
-      <div className="text-sm leading-snug font-semibold tabular-nums sm:text-base">
+      <div className="blueprint:font-mono text-sm leading-snug font-semibold tabular-nums sm:text-base">
         {title}
       </div>
       {footer && (

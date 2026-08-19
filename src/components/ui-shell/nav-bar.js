@@ -299,6 +299,9 @@ export function DesktopNav() {
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
   const [logoSrc, setLogoSrc] = useState(() => getLogoForTheme("light"));
+  const isStarryNight = (theme ?? resolvedTheme ?? "").startsWith(
+    "starry-night",
+  );
 
   // Update logo after mount and on theme changes to avoid hydration mismatch
   useEffect(() => {
@@ -318,10 +321,13 @@ export function DesktopNav() {
         <Image
           src={logoSrc}
           key={logoSrc}
-          width={100}
+          width={110}
           height="auto"
           alt="Strength Journeys logo"
-          className="inline-block origin-left scale-[1.2] rounded-lg"
+          className={cn(
+            "inline-block origin-left scale-[1.2] rounded-lg",
+            isStarryNight && "ring-border shadow-sm ring-1",
+          )}
           priority={true}
         />
       </Link>

@@ -38,7 +38,7 @@ export function StarryNightLayer({ className, animated = false }) {
 
   const baseClassName = cn("relative h-full w-full overflow-hidden", className);
   const imageLayerClassName =
-    "pointer-events-none absolute inset-0 select-none opacity-[0.03] dark:opacity-[0.055]";
+    "pointer-events-none absolute inset-0 select-none opacity-[0.05] dark:opacity-[0.08]";
 
   if (!animated) {
     return (

@@ -4,7 +4,7 @@
  * carousel while reinforcing data ownership and long-term training continuity.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Autoplay from "embla-carousel-autoplay";
 
 import {
@@ -58,6 +58,25 @@ export function SloganCarousel() {
   const shuffledSlogansRef = useRef(null);
   const [slogans, setSlogans] = useState(SLOGANS);
 
+  // Respect prefers-reduced-motion: an auto-advancing carousel is motion the
+  // user asked not to receive. The ref also gates the resume handlers below so
+  // a hover or focus pass cannot restart autoplay behind their back.
+  const prefersReducedMotionRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      prefersReducedMotionRef.current = true;
+      plugin.current.stop();
+    }
+  }, []);
+
+  const pauseAutoplay = useCallback(() => plugin.current.stop(), []);
+  const resumeAutoplay = useCallback(() => {
+    if (prefersReducedMotionRef.current) return;
+    plugin.current.reset();
+  }, []);
+
   useEffect(() => {
     if (!shuffledSlogansRef.current) {
       const [firstSlogan, ...remainingSlogans] = SLOGANS;
@@ -72,18 +91,18 @@ export function SloganCarousel() {
   return (
     <Carousel
       plugins={[plugin.current]}
-      className="w-full h-20"
-      onMouseEnter={plugin.current.stop}
-      onMouseLeave={plugin.current.reset}
-      onFocusCapture={plugin.current.stop}
-      onBlurCapture={plugin.current.reset}
-      onPointerDownCapture={plugin.current.stop}
-      onPointerUpCapture={plugin.current.reset}
+      className="h-14 w-full"
+      onMouseEnter={pauseAutoplay}
+      onMouseLeave={resumeAutoplay}
+      onFocusCapture={pauseAutoplay}
+      onBlurCapture={resumeAutoplay}
+      onPointerDownCapture={pauseAutoplay}
+      onPointerUpCapture={resumeAutoplay}
     >
       <CarouselContent>
         {slogans.map((slogan) => (
           <CarouselItem key={slogan}>
-            <p className="flex h-20 items-center justify-center px-2 text-balance text-center text-2xl leading-tight text-amber-500 md:text-3xl">
+            <p className="flex h-14 items-center justify-center px-2 text-center text-lg leading-tight text-balance text-amber-500 md:text-xl">
               {slogan}
             </p>
           </CarouselItem>

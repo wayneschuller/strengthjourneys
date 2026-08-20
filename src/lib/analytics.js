@@ -65,6 +65,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   HOME_DASHBOARD_STAGE_ENTERED: "SJ_home_dashboard_stage_entered", // ~Mar 2026: User entered a staged onboarding/dashboard phase.
   HOME_IMPORT_NUDGE: "SJ_home_import_nudge", // ~Jun 2026: User saw/clicked/dismissed an in-app import/merge nudge.
   HERO_IMPORT_CLICK: "SJ_hero_import_click", // ~Mar 2026: User clicked "Import Your Lifting Data" CTA on hero.
+  HERO_DEMO_CLICK: "SJ_hero_demo_click", // ~Aug 2026: User clicked the hero product showcase or its demo link through to /log.
   IMPORT_PROCESS: "SJ_import_process", // ~Mar 2026: Client-side import/save lifecycle for preview and history imports.
   COFFEE_NUDGE_CLICK: "SJ_coffee_nudge_click", // ~Apr 2026: User clicked a Buy-Me-a-Coffee link in an in-app nudge surface.
 });

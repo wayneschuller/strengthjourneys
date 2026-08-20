@@ -160,21 +160,30 @@ const SLIDE_DURATION = 3500; // ms per slide
 // Product-only rotation. Order is deliberate: the log is what a lifter touches
 // every session, so it leads; the E1RM chart is the payoff for logging; the
 // heatmap is the long-game payoff that only a permanent data store can offer.
+// Each slide links to the feature it shows, so the showcase doubles as a way
+// into the product rather than decoration. To add a feature, drop a 16:9
+// screenshot in /public and add an entry: src, alt, caption, href, linkLabel.
 const SHOWCASE_SLIDES = [
   {
     src: "/log-hero.png",
     alt: "Strength Journeys workout log showing a barbell session with sets, reps, lifter notes and personal record badges",
     caption: "Log today's session in seconds",
+    href: "/log",
+    linkLabel: "Explore the live demo",
   },
   {
     src: "/app1.png",
     alt: "Chart of estimated one rep max trending upward for back squat, bench press, deadlift and power clean",
     caption: "Watch your one rep max climb, lift by lift",
+    href: "/visualizer",
+    linkLabel: "Open the strength visualizer",
   },
   {
     src: "/app3.png",
     alt: "Multi-year heatmap of every lifting session with personal records highlighted",
     caption: "Ten years of training in one picture",
+    href: "/lift-explorer",
+    linkLabel: "Explore your lifting history",
   },
 ];
 
@@ -201,8 +210,8 @@ export default function ProductShowcase() {
     return () => clearInterval(timer);
   }, [prefersReducedMotion, isPaused]);
 
-  const handleDemoClick = useCallback(() => {
-    gaEvent(GA_EVENT_TAGS.HERO_DEMO_CLICK, { page: "/" });
+  const handleSlideClick = useCallback((href) => {
+    gaEvent(GA_EVENT_TAGS.HERO_DEMO_CLICK, { page: "/", destination: href });
   }, []);
 
   const slide = SHOWCASE_SLIDES[index];
@@ -221,9 +230,9 @@ export default function ProductShowcase() {
   return (
     <div className="flex flex-col items-center gap-3 md:py-4">
       <Link
-        href="/log"
-        onClick={handleDemoClick}
-        aria-label="Open the live Strength Journeys workout log demo"
+        href={slide.href}
+        onClick={() => handleSlideClick(slide.href)}
+        aria-label={`${slide.linkLabel}: ${slide.caption}`}
         className="ring-primary/60 block w-full max-w-2xl rounded-2xl transition hover:ring-2 focus-visible:ring-2 focus-visible:outline-none"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
@@ -318,11 +327,11 @@ export default function ProductShowcase() {
             Stored in a Google Sheet you own
           </span>
           <Link
-            href="/log"
-            onClick={handleDemoClick}
+            href={slide.href}
+            onClick={() => handleSlideClick(slide.href)}
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs font-medium underline-offset-4 transition-colors hover:underline"
           >
-            Explore the live demo
+            {slide.linkLabel}
             <ArrowRight className="h-3 w-3" />
           </Link>
         </div>

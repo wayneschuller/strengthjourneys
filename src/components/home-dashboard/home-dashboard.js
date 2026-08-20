@@ -2,11 +2,20 @@ import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
-import { DataSheetStatus, RowProcessingIndicator } from "@/components/home-dashboard/row-processing-indicator";
+import {
+  DashboardHeaderStatus,
+  DataSheetStatus,
+  RowProcessingIndicator,
+} from "@/components/home-dashboard/row-processing-indicator";
 import { TheWeekInIronCard } from "@/components/home-dashboard/the-week-in-iron-card";
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/components/ui/card";
 import { motion } from "motion/react";
 import {
   gaTrackHomeDashboardFirstView,
@@ -188,11 +197,13 @@ export function HomeDashboard() {
     <div>
       {hasUserData && (
         <div className="relative mb-4 2xl:mb-6 text-xl">
-          {/* 2xl: welcome left + status right in one row, vertically centered with circles */}
-          <div className="2xl:flex 2xl:items-start 2xl:justify-between">
+          {/* 2xl: welcome left + status right in one row; below that they stack.
+              The status slot holds the load indicator first and the synced-sheet line
+              afterwards, so hydration never pushes the dashboard down and back up. */}
+          <div className="flex flex-col items-center gap-2 2xl:flex-row 2xl:items-start 2xl:justify-between 2xl:gap-4">
             {session?.user?.name && (
               <motion.div
-                className="mb-2 text-center 2xl:mb-0 2xl:text-left"
+                className="text-center 2xl:text-left"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
@@ -205,43 +216,32 @@ export function HomeDashboard() {
                 </span>
               </motion.div>
             )}
-            {hasDataLoaded && !isImportedData && (
-              <div className="hidden 2xl:block">
-                <DataSheetStatus
-                  rawRows={rawRows}
-                  parsedData={parsedData}
-                  dataSyncedAt={dataSyncedAt}
-                  isValidating={isValidating}
-                  sheetURL={sheetInfo?.url}
-                  sheetFilename={sheetInfo?.filename}
-                  mutate={mutate}
+            <DashboardHeaderStatus
+              isProgressDone={isProgressDone}
+              indicator={
+                <RowProcessingIndicator
+                  mode={isImportedData ? "preview" : "sheet"}
+                  count={isImportedData ? previewEntryCount : rawRows}
+                  isProgressDone={isProgressDone}
+                  setIsProgressDone={setIsProgressDone}
                 />
-              </div>
-            )}
+              }
+              status={
+                isImportedData ? null : (
+                  <DataSheetStatus
+                    rawRows={rawRows}
+                    parsedData={parsedData}
+                    dataSyncedAt={dataSyncedAt}
+                    isValidating={isValidating}
+                    sheetURL={sheetInfo?.url}
+                    sheetFilename={sheetInfo?.filename}
+                    mutate={mutate}
+                  />
+                )
+              }
+            />
           </div>
-          {/* Mobile: status below circles */}
-          {hasDataLoaded && !isImportedData && (
-            <div className="mt-2 flex justify-center 2xl:hidden">
-              <DataSheetStatus
-                rawRows={rawRows}
-                parsedData={parsedData}
-                dataSyncedAt={dataSyncedAt}
-                isValidating={isValidating}
-                sheetURL={sheetInfo?.url}
-                sheetFilename={sheetInfo?.filename}
-                mutate={mutate}
-              />
-            </div>
-          )}
         </div>
-      )}
-      {hasUserData && (
-        <RowProcessingIndicator
-          mode={isImportedData ? "preview" : "sheet"}
-          count={isImportedData ? previewEntryCount : rawRows}
-          isProgressDone={isProgressDone}
-          setIsProgressDone={setIsProgressDone}
-        />
       )}
       {/* The first week is intentionally quieter: skip the inspiration row until
           the user has enough real data for those cards to feel earned. */}
@@ -281,26 +281,72 @@ export function HomeDashboard() {
   );
 }
 
+// One entry per headline card: The Week in Iron, The Month in Iron, The Long Game. At three
+// columns the grid stretches them level, so these shapes only show themselves once the cards
+// stack - which is exactly where a wrong guess costs the most scroll.
+const HOME_CARD_SKELETON_SHAPES = [
+  {
+    minHeight: "min-h-[42rem]",
+    hasHeaderActions: true,
+    blocks: [
+      "h-10 w-full rounded-lg",
+      "h-10 w-full rounded-lg",
+      "h-10 w-11/12 rounded-lg",
+      "h-36 w-full rounded-xl",
+      "h-20 w-full rounded-xl",
+    ],
+  },
+  {
+    minHeight: "min-h-[34rem]",
+    hasHeaderActions: true,
+    blocks: [
+      "h-10 w-full rounded-lg",
+      "h-36 w-full rounded-xl",
+      "h-20 w-full rounded-xl",
+      "h-10 w-11/12 rounded-lg",
+    ],
+  },
+  // The Long Game is a fixed-height chart with no header actions, so it sits shorter.
+  {
+    minHeight: "min-h-[22rem]",
+    hasHeaderActions: false,
+    blocks: ["h-64 w-full rounded-xl"],
+  },
+];
+
 function HomeDashboardCardsSkeleton() {
   return (
     <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: 3 }, (_, index) => (
-        <div
+      {HOME_CARD_SKELETON_SHAPES.map((shape, index) => (
+        // Built from the same Card primitives as the real cards, so the swap only changes the
+        // contents: radius, border, shadow and theme treatment all carry over untouched.
+        <Card
           key={`home-dashboard-card-skeleton-${index}`}
-          className="border-border/50 bg-card flex min-h-[28rem] flex-col rounded-xl border p-6"
+          className={`flex h-full flex-1 flex-col ${shape.minHeight}`}
         >
-          <div className="space-y-2">
-            <Skeleton className="h-9 w-48" />
-            <Skeleton className="h-5 w-64" />
-          </div>
-          <div className="mt-6 flex-1 space-y-4">
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-10 w-11/12 rounded-lg" />
-            <Skeleton className="h-36 w-full rounded-xl" />
-            <Skeleton className="h-20 w-full rounded-xl" />
-          </div>
-        </div>
+          <CardHeader className={shape.hasHeaderActions ? "pb-3" : undefined}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                {/* Matches CardTitle (text-2xl, leading-none) then CardDescription. */}
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="h-5 w-52" />
+              </div>
+              {/* Week and Month carry an AI review link and two icon buttons up here. */}
+              {shape.hasHeaderActions && (
+                <div className="flex shrink-0 items-center gap-2">
+                  <Skeleton className="h-8 w-24 rounded-md" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col space-y-4">
+            {shape.blocks.map((block, blockIndex) => (
+              <Skeleton key={`${index}-${blockIndex}`} className={block} />
+            ))}
+          </CardContent>
+        </Card>
       ))}
     </section>
   );

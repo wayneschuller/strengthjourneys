@@ -78,6 +78,7 @@ import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/homepage/big-four-lift-cards";
+import { BigFourSubtitle } from "@/components/homepage/big-four-subtitle";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
@@ -495,9 +496,10 @@ export default function Home() {
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
         <>
-          <h2 className="mt-8 mb-4 text-xl font-semibold">
+          <h2 className="mt-8 mb-1 text-xl font-semibold">
             🏋️ The Big Four Barbell Lifts
           </h2>
+          <BigFourSubtitle className="mb-4" />
 
           <BigFourLiftCards
             lifts={mainBarbellLifts}

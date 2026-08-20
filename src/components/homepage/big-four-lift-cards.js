@@ -9,15 +9,10 @@ import {
   STRENGTH_LEVEL_EMOJI,
   getStrengthRatingForE1RM,
 } from "@/hooks/use-athlete-biodata";
-import { useIsClient, useLocalStorage, useMediaQuery } from "usehooks-ts";
+import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { BIG_FOUR_LIFT_ICON_SRC_BY_TYPE } from "@/lib/big-four-lifts";
-import {
-  BENEFIT_SSR_KEY,
-  getBenefitRotationKey,
-  getBigFourBenefits,
-} from "@/lib/big-four-benefits";
 import {
   getAverageLiftSessionTonnageFromPrecomputed,
   getLiftVolumeMultiplier,
@@ -81,14 +76,6 @@ export function BigFourLiftCards({
     initializeWithValue: false,
   });
   const [statsVisibleCount, setStatsVisibleCount] = useState(0);
-  // The landing page is statically generated, so the benefit rotation cannot
-  // read a clock during render without baking build-time copy into the HTML and
-  // mismatching on hydration. Render the SSR variant, then rotate after mount.
-  const isClient = useIsClient();
-  const benefitsByLift = getBigFourBenefits(
-    lifts.map((lift) => lift.liftType),
-    isClient ? getBenefitRotationKey() : BENEFIT_SSR_KEY,
-  );
   const todayBadgeLabelsRef = useRef({});
   const favoriteBadgeLabelsRef = useRef({});
   const leastFavoriteBadgeLabelsRef = useRef({});
@@ -255,9 +242,6 @@ export function BigFourLiftCards({
 
         const showStats = statsVisibleCount > index;
 
-        // Guest-mode only: the pitch is for people who have not started yet.
-        const benefit = isStatsMode ? null : benefitsByLift[lift.liftType];
-
         const miniBarData =
           isStatsMode && parsedData
             ? getMiniBarData(
@@ -317,14 +301,6 @@ export function BigFourLiftCards({
                     <p className="text-muted-foreground text-sm">
                       {lift.liftDescription}
                     </p>
-                    {benefit && (
-                      // Reserve the height so a one-line benefit and a
-                      // three-line one leave the four lift diagrams aligned
-                      // across the row.
-                      <p className="text-muted-foreground/80 mt-2 min-h-[3.25rem] text-xs leading-relaxed italic">
-                        {benefit}
-                      </p>
-                    )}
                   </CardContent>
                 )}
                 {miniBarData && (

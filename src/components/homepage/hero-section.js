@@ -85,8 +85,11 @@ function HeroPrimaryCta() {
 
   return (
     <div className="flex flex-col items-center gap-4 md:items-start">
-      {/* Primary + secondary CTAs side by side on sm+, stacked on mobile */}
-      <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+      {/* Primary + secondary CTAs side by side on sm+, stacked on mobile.
+          Once side by side the columns must top-align: the two descriptions
+          wrap to different line counts, so centering them vertically pushes the
+          buttons out of line with each other. */}
+      <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-start sm:justify-center lg:justify-start">
         {/* Primary CTA column */}
         <div className="flex w-full flex-col items-center sm:w-auto">
           {isAuthed ? (

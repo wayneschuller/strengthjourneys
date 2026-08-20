@@ -2,7 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
-import { DataSheetStatus, RowProcessingIndicator } from "@/components/home-dashboard/row-processing-indicator";
+import {
+  DashboardHeaderStatus,
+  DataSheetStatus,
+  RowProcessingIndicator,
+} from "@/components/home-dashboard/row-processing-indicator";
 import { TheWeekInIronCard } from "@/components/home-dashboard/the-week-in-iron-card";
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
@@ -188,11 +192,13 @@ export function HomeDashboard() {
     <div>
       {hasUserData && (
         <div className="relative mb-4 2xl:mb-6 text-xl">
-          {/* 2xl: welcome left + status right in one row, vertically centered with circles */}
-          <div className="2xl:flex 2xl:items-start 2xl:justify-between">
+          {/* 2xl: welcome left + status right in one row; below that they stack.
+              The status slot holds the load indicator first and the synced-sheet line
+              afterwards, so hydration never pushes the dashboard down and back up. */}
+          <div className="flex flex-col items-center gap-2 2xl:flex-row 2xl:items-start 2xl:justify-between 2xl:gap-4">
             {session?.user?.name && (
               <motion.div
-                className="mb-2 text-center 2xl:mb-0 2xl:text-left"
+                className="text-center 2xl:text-left"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
@@ -205,43 +211,32 @@ export function HomeDashboard() {
                 </span>
               </motion.div>
             )}
-            {hasDataLoaded && !isImportedData && (
-              <div className="hidden 2xl:block">
-                <DataSheetStatus
-                  rawRows={rawRows}
-                  parsedData={parsedData}
-                  dataSyncedAt={dataSyncedAt}
-                  isValidating={isValidating}
-                  sheetURL={sheetInfo?.url}
-                  sheetFilename={sheetInfo?.filename}
-                  mutate={mutate}
+            <DashboardHeaderStatus
+              isProgressDone={isProgressDone}
+              indicator={
+                <RowProcessingIndicator
+                  mode={isImportedData ? "preview" : "sheet"}
+                  count={isImportedData ? previewEntryCount : rawRows}
+                  isProgressDone={isProgressDone}
+                  setIsProgressDone={setIsProgressDone}
                 />
-              </div>
-            )}
+              }
+              status={
+                isImportedData ? null : (
+                  <DataSheetStatus
+                    rawRows={rawRows}
+                    parsedData={parsedData}
+                    dataSyncedAt={dataSyncedAt}
+                    isValidating={isValidating}
+                    sheetURL={sheetInfo?.url}
+                    sheetFilename={sheetInfo?.filename}
+                    mutate={mutate}
+                  />
+                )
+              }
+            />
           </div>
-          {/* Mobile: status below circles */}
-          {hasDataLoaded && !isImportedData && (
-            <div className="mt-2 flex justify-center 2xl:hidden">
-              <DataSheetStatus
-                rawRows={rawRows}
-                parsedData={parsedData}
-                dataSyncedAt={dataSyncedAt}
-                isValidating={isValidating}
-                sheetURL={sheetInfo?.url}
-                sheetFilename={sheetInfo?.filename}
-                mutate={mutate}
-              />
-            </div>
-          )}
         </div>
-      )}
-      {hasUserData && (
-        <RowProcessingIndicator
-          mode={isImportedData ? "preview" : "sheet"}
-          count={isImportedData ? previewEntryCount : rawRows}
-          isProgressDone={isProgressDone}
-          setIsProgressDone={setIsProgressDone}
-        />
       )}
       {/* The first week is intentionally quieter: skip the inspiration row until
           the user has enough real data for those cards to feel earned. */}

@@ -26,15 +26,17 @@ import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 /**
- * Landing page hero section. Renders the headline stack, the primary CTAs, and
- * the product showcase slideshow side by side, with the slogan carousel
- * demoted below the fold-level content as brand texture.
+ * Landing page hero section. Renders the slogan carousel as a full-width band,
+ * then the headline stack and primary CTAs beside the product showcase.
  *
  * @param {Object} props - No props.
  */
 export function HeroSection() {
   return (
     <div>
+      <div className="mb-8 flex flex-row justify-center">
+        <SloganCarousel />
+      </div>
       <div className="grid grid-cols-1 items-center gap-8 xl:grid-cols-2 xl:gap-12">
         <div>
           <p className="text-muted-foreground text-center text-sm font-semibold tracking-wide uppercase lg:text-left">
@@ -51,9 +53,6 @@ export function HeroSection() {
           <HeroPrimaryCta />
         </div>
         <ProductShowcase />
-      </div>
-      <div className="mt-10 flex flex-row justify-center">
-        <SloganCarousel />
       </div>
     </div>
   );

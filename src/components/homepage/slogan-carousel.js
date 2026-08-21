@@ -91,7 +91,7 @@ export function SloganCarousel() {
   return (
     <Carousel
       plugins={[plugin.current]}
-      className="h-14 w-full"
+      className="h-20 w-full"
       onMouseEnter={pauseAutoplay}
       onMouseLeave={resumeAutoplay}
       onFocusCapture={pauseAutoplay}
@@ -102,7 +102,7 @@ export function SloganCarousel() {
       <CarouselContent>
         {slogans.map((slogan) => (
           <CarouselItem key={slogan}>
-            <p className="flex h-14 items-center justify-center px-2 text-center text-lg leading-tight text-balance text-amber-500 md:text-xl">
+            <p className="flex h-20 items-center justify-center px-2 text-center text-2xl leading-tight text-balance text-amber-500 md:text-3xl">
               {slogan}
             </p>
           </CarouselItem>

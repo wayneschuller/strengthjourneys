@@ -400,8 +400,6 @@ export default function Home() {
       }),
     [parsedData, rawRows, sheetInfo],
   );
-  // Keep the Big Four cards visible for early users, but delay the personalized
-  // stats treatment until they have enough history for those comparisons to land.
   // The Big Four pitch is aimed at someone deciding whether to start. A lifter
   // with a deep history has already decided, so retire it at the final
   // dashboard stage. Also suppressed while a returning user's sheet resolves,
@@ -410,6 +408,8 @@ export default function Home() {
     !isReturningUserLoading &&
     !(hasUserData && dashboardStage === "established");
 
+  // Keep the Big Four cards visible for early users, but delay the personalized
+  // stats treatment until they have enough history for those comparisons to land.
   const showEnhancedBigFourStats =
     hasUserData &&
     (dashboardStage === "early_base" || dashboardStage === "established");

@@ -402,6 +402,14 @@ export default function Home() {
   );
   // Keep the Big Four cards visible for early users, but delay the personalized
   // stats treatment until they have enough history for those comparisons to land.
+  // The Big Four pitch is aimed at someone deciding whether to start. A lifter
+  // with a deep history has already decided, so retire it at the final
+  // dashboard stage. Also suppressed while a returning user's sheet resolves,
+  // so it never flashes in and straight back out.
+  const showBigFourSubtitle =
+    !isReturningUserLoading &&
+    !(hasUserData && dashboardStage === "established");
+
   const showEnhancedBigFourStats =
     hasUserData &&
     (dashboardStage === "early_base" || dashboardStage === "established");
@@ -496,10 +504,12 @@ export default function Home() {
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
         <>
-          <h2 className="mt-8 mb-1 text-xl font-semibold">
+          <h2
+            className={`mt-8 text-xl font-semibold ${showBigFourSubtitle ? "mb-1" : "mb-4"}`}
+          >
             🏋️ The Big Four Barbell Lifts
           </h2>
-          <BigFourSubtitle className="mb-4" />
+          {showBigFourSubtitle && <BigFourSubtitle className="mb-4" />}
 
           <BigFourLiftCards
             lifts={mainBarbellLifts}

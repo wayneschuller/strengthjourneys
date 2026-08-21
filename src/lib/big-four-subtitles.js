@@ -8,9 +8,12 @@
  * preachy — this is one muted line under a heading, not a manifesto.
  *
  * Health claims are kept to ground that is genuinely well supported (loading
- * builds bone density; grip strength tracks with healthy ageing). A single
- * sentence has no room to qualify anything, so nothing here touches injury,
- * rehab, or any claim that would need a caveat to be honest.
+ * builds bone density; grip strength tracks with healthy ageing; adults lose
+ * muscle mass each decade from about 30 and resistance training is the direct
+ * counter). A single sentence has no room to qualify anything, so nothing here
+ * touches injury, rehab, or any claim that would need a caveat to be honest —
+ * and superlatives stay hedged ("little else", "one of the few") rather than
+ * absolute, because the reader we want is the skeptical one.
  *
  * Keep every line under ~90 characters. The subtitle reserves two lines of
  * height so the cards below hold still during the delayed reveal, and a longer
@@ -31,6 +34,15 @@ export const BIG_FOUR_SUBTITLES = [
   "Being able to put something heavy on a high shelf at 75. That is what this is for.",
   "Runners and cyclists build strong legs in one narrow range. These cover the rest.",
   "Four lifts, one bar, and a number that goes up. That is the entire sport.",
+  "Learn these four lifts properly once and you have them for the rest of your life.",
+  "Four lifts, a few months, and most people stop recognising their old self.",
+  "Nobody expects a barbell to change much beyond their body. It usually does.",
+  "The point is not lifting at 40. The point is still lifting at 80.",
+  "Muscle is the tissue you spend your last decades either keeping or missing.",
+  "Strength is one of the few things about ageing you get a real say in.",
+  "Adults lose muscle every decade after 30. Barbells are the most direct way back.",
+  "Little else builds muscle per hour like a heavy compound lift with a barbell.",
+  "Four compound lifts recruit more muscle per session than a circuit of machines.",
 ];
 
 /**

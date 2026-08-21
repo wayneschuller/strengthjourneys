@@ -78,6 +78,7 @@ import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/homepage/big-four-lift-cards";
+import { BigFourSubtitle } from "@/components/homepage/big-four-subtitle";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
@@ -399,6 +400,14 @@ export default function Home() {
       }),
     [parsedData, rawRows, sheetInfo],
   );
+  // The Big Four pitch is aimed at someone deciding whether to start. A lifter
+  // with a deep history has already decided, so retire it at the final
+  // dashboard stage. Also suppressed while a returning user's sheet resolves,
+  // so it never flashes in and straight back out.
+  const showBigFourSubtitle =
+    !isReturningUserLoading &&
+    !(hasUserData && dashboardStage === "established");
+
   // Keep the Big Four cards visible for early users, but delay the personalized
   // stats treatment until they have enough history for those comparisons to land.
   const showEnhancedBigFourStats =
@@ -495,9 +504,12 @@ export default function Home() {
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
         <>
-          <h2 className="mt-8 mb-4 text-xl font-semibold">
+          <h2
+            className={`mt-8 text-xl font-semibold ${showBigFourSubtitle ? "mb-1" : "mb-4"}`}
+          >
             🏋️ The Big Four Barbell Lifts
           </h2>
+          {showBigFourSubtitle && <BigFourSubtitle className="mb-4" />}
 
           <BigFourLiftCards
             lifts={mainBarbellLifts}

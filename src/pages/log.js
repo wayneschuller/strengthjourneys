@@ -56,20 +56,33 @@ const BIG_FOUR = BIG_FOUR_LIFT_META.map(
 
 const LOG_PAGE_TITLE = "Workout Log and Session Tracker | Strength Journeys";
 const LOG_PAGE_DESCRIPTION =
-  "Log barbell sets, browse sessions by date, use smart warm-up suggestions, and connect Google Sheets for a free strength training log with PR context.";
+  "A free barbell workout log. Browse the live demo, log sets in seconds with warm-up and PR context, and keep every session in a Google Sheet you own.";
 const LOG_PAGE_CANONICAL_URL = "https://www.strengthjourneys.xyz/log";
 const LOG_PAGE_OG_IMAGE_URL =
   "https://www.strengthjourneys.xyz/202409-og-image.png";
 const LOG_PAGE_KEYWORDS =
-  "workout log, strength training log, barbell log, lifting tracker, workout tracker, Google Sheets workout log, PR tracker, warmup suggestions, strength journeys";
+  "workout log, strength training log, barbell log, lifting tracker, workout tracker, olympic lifting log, accessory lift tracker, Google Sheets workout log, PR tracker, warmup suggestions, strength journeys";
+// Copy note: this block only renders for signed-out visitors, so it is read by
+// someone standing in the demo log above wondering what they are looking at.
+// It answers that first, then carries the same three promises as the landing
+// hero in the same order — log it in seconds, watch the number climb, keep the
+// history in a sheet you own. The Google Sheet is the guarantee, not the
+// feature: say it as permanence, never as spreadsheet admin.
+//
+// Scope note: this is not a powerlifting app and the copy must not imply it.
+// Anything with reps and a weight is logged, and PR tracking, e1RM and session
+// history run across every lift type (see buildTopLiftsByTypeAndReps, which
+// loops all types). Strength ratings are the single Big Four exclusive, because
+// LiftingStandardsKG only carries those four. State the general case first and
+// the Big Four as an addition on top — never the other way round.
 const LOG_PAGE_STATIC_CONTENT = {
-  heading: "Workout log for barbell sessions",
+  heading: "A free barbell workout log you will never lose",
   intro:
-    "Strength Journeys turns a lifter's training history into a session-by-session log: sets, reps, weight, notes, video links, PR context, and warm-up suggestions stay connected to the same data source.",
+    "The session above is a demo, loaded with somebody else's training so you can look around before you sign in. Browse the dates, open a lift, see what your own log would look like. Once it is yours, every set, rep, weight and note lives in a Google Sheet in your own Drive — so the history you build here outlasts any app, including this one.",
   highlights: [
-    "Browse sessions by date and see each lift as a focused training block.",
-    "Use prior sessions to suggest practical next sets and warm-up jumps.",
-    "Keep the source of truth portable with Google Sheets instead of a locked-in database.",
+    "Log today's session in seconds. Open a lift and your recent sets are already there to work from.",
+    "Any lift that takes reps and a weight is tracked the same way: PR badges, estimated one rep max, and warm-up jumps beside the sets that earned them.",
+    "Keep the whole history in a Google Sheet you own: readable, exportable, and still yours if you never come back.",
   ],
   lifts: BIG_FOUR.map(({ name, slug }) => ({
     name,
@@ -77,19 +90,29 @@ const LOG_PAGE_STATIC_CONTENT = {
   })),
   faq: [
     {
-      question: "Can I try the workout log before linking a sheet?",
+      question: "Is the session above real training data?",
       answer:
-        "Yes. First-time visitors can browse the log with demo lifting data before connecting their own Google Sheet.",
+        "No, it is a demo log you can browse freely. Sign in and link a Google Sheet and the same view fills with your own sessions instead.",
+    },
+    {
+      question: "Can I log lifts other than the big four?",
+      answer:
+        "Yes. Anything that takes reps and a weight belongs in the log — Olympic lifts, hex bar, weighted chin-ups, curls, hip thrust, whatever your program calls for. Every lift you log gets PR tracking, estimated one rep max and full session history. Strength ratings against your age, bodyweight and sex are the one thing limited to the squat, bench press, deadlift and strict press.",
+    },
+    {
+      question: "Do I have to start logging from scratch?",
+      answer:
+        "No. Bring an export from Hevy, Strong, Wodify or a spreadsheet and it merges into one continuous timeline. You can preview the import before signing in.",
     },
     {
       question: "What can I record for each set?",
       answer:
-        "Each set supports reps, weight, unit, notes, and an optional video URL, with PR and strength-level context shown beside the session.",
+        "Reps, weight, unit, a note, and an optional video link. Each set shows its PR and strength-level context beside it, so you can see what the number meant at the time.",
     },
     {
-      question: "Does Strength Journeys replace my spreadsheet?",
+      question: "What does it cost, and who owns the data?",
       answer:
-        "No. The linked Google Sheet remains the portable source of truth while Strength Journeys provides the log, analysis, and coaching context on top.",
+        "It is free, and the sheet is yours. It lives in your own Google Drive, Strength Journeys simply reads and writes to it, and you can revoke access or take the file elsewhere whenever you like.",
     },
   ],
 };
@@ -861,11 +884,14 @@ function LogStaticContent({ content }) {
       </dl>
       <div className="border-border/50 mt-6 border-t pt-5">
         <h2 className="text-base font-semibold">
-          Built around the main barbell lifts
+          Log any lift, not just the big four
         </h2>
         <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-6">
-          The log works for any movement, with richer strength context for the
-          squat, bench press, deadlift, and strict press.
+          If a movement takes reps and a weight it belongs here, and every lift
+          you log is tracked the same way: personal records, estimated one rep
+          max, and session history. The squat, bench press, deadlift and strict
+          press add one thing on top — strength ratings for your age, bodyweight
+          and sex, plus a progress guide of their own.
         </p>
         <ul className="mt-4 flex flex-wrap gap-2">
           {content.lifts.map(({ name, href }) => (

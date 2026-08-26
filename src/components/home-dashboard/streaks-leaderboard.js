@@ -1,12 +1,13 @@
 /**
  * Ranked streak-bar view for The Long Game card.
  *
- * A bar's length is the streak's length in weeks. Inside it, one segment per week
- * shaded on the same heatmap scale the daily view uses, so a grinding three-a-week
- * run and a run with several six-session weeks no longer draw identically. Bar
- * thickness still carries average weekly tonnage, over a deliberately narrow range —
- * enough to feel the difference between a heavy block and a light one without the
- * list looking ragged.
+ * A bar's length is the streak's length in weeks and its thickness is the average
+ * weekly tonnage, over a deliberately narrow range so the list never looks ragged.
+ * Nothing else is encoded in the bar. An earlier version shaded one block per week
+ * by session count, which looked good but promised a per-week explanation the UI
+ * never gave — every marked-out block asked a question nothing answered. The bar is
+ * a single solid form again; older runs simply fade back so the list reads as a
+ * timeline, which the date beside each bar already explains.
  */
 import { useMemo, useState } from "react";
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
@@ -42,14 +43,13 @@ const MAX_VISIBLE_STREAKS = 8;
 const MIN_BAR_HEIGHT_PX = 20;
 const MAX_BAR_HEIGHT_PX = 34;
 
-// A streak week is 3+ sessions by definition, so the scale starts there and tops
-// out at six. Fixed thresholds rather than per-user relative ones: a five-session
-// week should look the same shade on everybody's dashboard.
-function getWeekHeatLevel(sessions) {
-  if (sessions >= 6) return 4;
-  if (sessions === 5) return 3;
-  if (sessions === 4) return 2;
-  return 1;
+// 0 for the oldest streak on the board, 1 for the most recent. Linear on the end
+// date so a run of streaks in the same year sits at the same depth.
+function getRecencyFraction(endWeek, oldestEnd, newestEnd) {
+  if (oldestEnd === newestEnd) return 1;
+  const span = parseISO(newestEnd) - parseISO(oldestEnd);
+  if (span <= 0) return 1;
+  return (parseISO(endWeek) - parseISO(oldestEnd)) / span;
 }
 
 function formatStreakRange(startWeek, endWeek) {
@@ -95,6 +95,12 @@ export function StreaksLeaderboard({
     const maxT = Math.max(...weeklyTonnages);
     const range = Math.max(maxT - minT, 1);
 
+    // Recency drives how far back a bar sits visually. Measured on the end date
+    // rather than rank so a cluster of streaks in one year fades together.
+    const endWeeks = ranked.map((s) => s.endWeek);
+    const oldestEnd = endWeeks.reduce((a, b) => (a < b ? a : b));
+    const newestEnd = endWeeks.reduce((a, b) => (a > b ? a : b));
+
     const weeksOnStreak = ranked.reduce((total, s) => total + s.weeks, 0);
     // "305 weeks on streak" means nothing without knowing how many weeks of
     // training it is drawn from, so the denominator travels with it.
@@ -112,7 +118,16 @@ export function StreaksLeaderboard({
       ? Math.round((weeksOnStreak / trainingWeeks) * 100)
       : null;
 
-    return { maxWeeks, minT, range, weeksOnStreak, trainingWeeks, streakShare };
+    return {
+      maxWeeks,
+      minT,
+      range,
+      oldestEnd,
+      newestEnd,
+      weeksOnStreak,
+      trainingWeeks,
+      streakShare,
+    };
   }, [ranked, firstSessionDate]);
 
   if (!ranked.length) {
@@ -159,12 +174,18 @@ export function StreaksLeaderboard({
                 (MAX_BAR_HEIGHT_PX - MIN_BAR_HEIGHT_PX),
             );
           const key = `${s.startWeek}-${s.endWeek}`;
+          const recency = getRecencyFraction(
+            s.endWeek,
+            stats.oldestEnd,
+            stats.newestEnd,
+          );
           return (
             <StreakBar
               key={key}
               streak={s}
               lengthPct={lengthPct}
               heightPx={heightPx}
+              recency={recency}
               isMetric={isMetric}
               isSharing={isSharing}
               animationIndex={Math.min(index, MAX_VISIBLE_STREAKS)}
@@ -250,31 +271,19 @@ function StreakSummaryLine({
   );
 }
 
-// Shaded week blocks invite the question "why is that one darker?", so the scale
-// gets named once at the foot of the list alongside the rule for what counts as a
-// streak at all. Cheaper than a tooltip on every block and it does not move layout.
+// States the rule for what counts as a streak, and names the one thing about a bar
+// that is not self-evident. Bar length is obviously weeks — it has the number
+// beside it — and the fade is obviously age, because the date is right there.
+// Thickness is the encoding nobody would guess, so it is the one spelled out.
 function StreakLegend() {
   return (
-    <div className="text-muted-foreground/80 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-1 text-[10px] leading-none">
+    <div className="text-muted-foreground/80 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 pt-1 text-[10px] leading-none">
       <span>
         Streak = {MIN_STREAK_WEEKS}+ weeks in a row at {MIN_SESSIONS_PER_WEEK}+
         sessions
       </span>
-      <span className="flex items-center gap-1">
-        <span>Each block is a week ·</span>
-        <span className="tabular-nums">{MIN_SESSIONS_PER_WEEK}</span>
-        <span className="flex items-center gap-px" aria-hidden>
-          {[1, 2, 3, 4].map((level) => (
-            <span
-              key={`legend-${level}`}
-              className="h-2 w-2 rounded-[1px]"
-              style={{ backgroundColor: `var(--heatmap-${level})` }}
-            />
-          ))}
-        </span>
-        <span className="tabular-nums">6+</span>
-        <span>sessions</span>
-      </span>
+      <span aria-hidden>·</span>
+      <span>bar thickness = average weekly tonnage</span>
     </div>
   );
 }
@@ -283,6 +292,7 @@ function StreakBar({
   streak,
   lengthPct,
   heightPx,
+  recency,
   isMetric,
   isSharing,
   animationIndex,
@@ -292,9 +302,6 @@ function StreakBar({
   onToggle,
 }) {
   const dateLabel = formatStreakRange(streak.startWeek, streak.endWeek);
-  const weekCounts = streak.weekCounts?.length
-    ? streak.weekCounts
-    : Array.from({ length: streak.weeks }, () => 3);
 
   // mask-image is unsupported by html2canvas-pro, so skip the active-streak
   // fade-trail during capture — the bar would otherwise still get the mask
@@ -302,6 +309,15 @@ function StreakBar({
   const barStyle = {
     width: `${lengthPct}%`,
     height: `${heightPx}px`,
+    borderRadius: "5px",
+    backgroundColor: streak.isActive ? "var(--primary)" : "var(--heatmap-2)",
+    // A light-to-dark wash across the bar's height reads as a lit surface rather
+    // than as data, which a left-to-right gradient would have implied.
+    backgroundImage:
+      "linear-gradient(to bottom, rgba(255,255,255,0.16), rgba(255,255,255,0) 55%, rgba(0,0,0,0.10))",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+    // Oldest run on the board sits furthest back; the date beside it says why.
+    opacity: streak.isActive ? 1 : 0.45 + 0.55 * recency,
     ...(streak.isActive && !isSharing
       ? {
           maskImage: "linear-gradient(to right, black 88%, transparent 100%)",
@@ -357,7 +373,6 @@ function StreakBar({
         {/* Clip-wipe rather than a width tween so the week segments keep their
             shape while the bar reveals. */}
         <motion.div
-          className="flex items-stretch gap-px overflow-hidden rounded-[3px]"
           style={barStyle}
           initial={shouldAnimate ? { clipPath: "inset(0 100% 0 0)" } : false}
           animate={shouldAnimate ? { clipPath: "inset(0 0% 0 0)" } : undefined}
@@ -370,17 +385,7 @@ function StreakBar({
                 }
               : undefined
           }
-        >
-          {weekCounts.map((sessions, weekIndex) => (
-            <span
-              key={`${streak.startWeek}-week-${weekIndex}`}
-              className="min-w-px flex-1"
-              style={{
-                backgroundColor: `var(--heatmap-${getWeekHeatLevel(sessions)})`,
-              }}
-            />
-          ))}
-        </motion.div>
+        />
       </div>
 
       {/* Fixed width so every bar ends at the same x and lengths stay comparable. */}

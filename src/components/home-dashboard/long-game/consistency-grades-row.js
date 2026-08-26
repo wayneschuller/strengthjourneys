@@ -3,13 +3,16 @@
  * compact animated row shown above the Long Game heatmaps.
  */
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 
 import { processConsistency } from "@/lib/consistency";
 
-import { getGradeAndColor } from "@/lib/consistency-grades";
+import {
+  getConsistencyRingPalette,
+  getGradeAndColor,
+} from "@/lib/consistency-grades";
 
 import {
   Tooltip,
@@ -57,7 +60,10 @@ function splitIntoBalancedRows(items, maxItemsPerRow = 5) {
 
 // Animated SVG ring showing a consistency grade letter and percentage fill for one time window.
 // Short-term rings (W/M/3M) render with a thicker stroke and full opacity to emphasise recent form;
-// long-term rings use a thinner stroke and 60% opacity so they recede without disappearing.
+// long-term rings use a thinner stroke and reduced opacity so they recede without disappearing.
+// The arc sweeps clockwise from twelve o'clock on first reveal and the letter lands just behind it,
+// so a row of rings reads as a wave rather than a static chart. Capture mode and reduced-motion both
+// short-circuit to the finished state.
 function ConsistencyGradeCircle({
   percentage,
   label,
@@ -68,34 +74,52 @@ function ConsistencyGradeCircle({
   isShortTerm = true,
   isCaptureMode = false,
 }) {
-  const { grade, color } = getGradeAndColor(percentage);
-  const strokeWidth = isShortTerm ? 3.5 : 2.5;
-  const targetOpacity = isCaptureMode ? 1 : isShortTerm ? 1 : 0.6;
+  const gradientId = `grade-arc-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const prefersReducedMotion = useReducedMotion();
+  const isStatic = isCaptureMode || !!prefersReducedMotion;
+
+  const { grade, light, dark } = getConsistencyRingPalette(percentage);
+  const strokeWidth = isShortTerm ? size * 0.115 : size * 0.075;
+  const targetOpacity = isCaptureMode ? 1 : isShortTerm ? 1 : 0.72;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
   const abbrev = getConsistencyLabelAbbrev(label);
+  // The halo is the reward for a filled ring, so only the upper grade bands get one.
+  const glowStrength = isShortTerm ? 1 : 0.55;
+  const showGlow = percentage >= 50;
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <motion.div
-            className="flex flex-col items-center gap-1"
+            className="flex cursor-default flex-col items-center gap-1"
+            style={{
+              "--ring-from": light.from,
+              "--ring-to": light.to,
+              "--ring-ink": light.ink,
+              "--ring-glow": light.glow,
+              "--ring-from-dark": dark.from,
+              "--ring-to-dark": dark.to,
+              "--ring-ink-dark": dark.ink,
+              "--ring-glow-dark": dark.glow,
+            }}
             initial={
-              isCaptureMode
+              isStatic
                 ? { opacity: targetOpacity, y: 0 }
                 : { opacity: 0, y: -20 }
             }
             animate={
-              isCaptureMode
+              isStatic
                 ? { opacity: targetOpacity, y: 0 }
                 : isVisible
                   ? { opacity: targetOpacity, y: 0 }
                   : { opacity: 0, y: -20 }
             }
+            whileHover={isStatic ? undefined : { opacity: 1, scale: 1.06 }}
             transition={
-              isCaptureMode
+              isStatic
                 ? { duration: 0 }
                 : {
                     type: "spring",
@@ -105,46 +129,126 @@ function ConsistencyGradeCircle({
                   }
             }
           >
-            <svg
-              width={size}
-              height={size}
-              viewBox={`0 0 ${size} ${size}`}
-              className="shrink-0"
+            <div
+              className="relative dark:[--ring-from:var(--ring-from-dark)] dark:[--ring-glow:var(--ring-glow-dark)] dark:[--ring-ink:var(--ring-ink-dark)] dark:[--ring-to:var(--ring-to-dark)]"
+              style={{ width: size, height: size }}
             >
-              <circle
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={strokeWidth}
-                className="text-muted/40"
-              />
-              <circle
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                fill="none"
-                stroke={color}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={offset}
-                transform={`rotate(-90 ${size / 2} ${size / 2})`}
-              />
-              <text
-                x={size / 2}
-                y={size / 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill={color}
-                fontSize={grade.length > 1 ? size * 0.32 : size * 0.39}
-                fontWeight="600"
+              {showGlow && (
+                <motion.span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute rounded-full"
+                  style={{
+                    inset: -size * 0.18,
+                    background:
+                      "radial-gradient(circle closest-side, transparent 55%, var(--ring-glow) 74%, transparent 92%)",
+                  }}
+                  initial={{ opacity: isStatic ? glowStrength : 0 }}
+                  animate={{
+                    opacity: isStatic || isVisible ? glowStrength : 0,
+                  }}
+                  transition={
+                    isStatic
+                      ? { duration: 0 }
+                      : { duration: 0.8, delay: delay + 0.5 }
+                  }
+                />
+              )}
+              <svg
+                width={size}
+                height={size}
+                viewBox={`0 0 ${size} ${size}`}
+                className="relative shrink-0"
               >
-                {grade}
-              </text>
-            </svg>
-            <span className="text-muted-foreground text-[11px] leading-none">
+                <defs>
+                  <linearGradient
+                    id={gradientId}
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="1"
+                    gradientUnits="objectBoundingBox"
+                  >
+                    <stop offset="0%" stopColor="var(--ring-from)" />
+                    <stop offset="100%" stopColor="var(--ring-to)" />
+                  </linearGradient>
+                </defs>
+                <circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={radius}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={strokeWidth}
+                  className="text-foreground/10"
+                />
+                {/* Rotation lives on a plain <g> so Motion only ever touches strokeDashoffset. */}
+                <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
+                  <motion.circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="none"
+                    stroke={`url(#${gradientId})`}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    initial={{
+                      strokeDashoffset: isStatic ? offset : circumference,
+                    }}
+                    animate={{
+                      strokeDashoffset:
+                        isStatic || isVisible ? offset : circumference,
+                    }}
+                    transition={
+                      isStatic
+                        ? { duration: 0 }
+                        : {
+                            duration: 1.1,
+                            delay: delay + 0.1,
+                            // Fast out of the gate, long settle.
+                            ease: [0.16, 1, 0.3, 1],
+                          }
+                    }
+                  />
+                </g>
+                <motion.text
+                  x={size / 2}
+                  y={size / 2}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="var(--ring-ink)"
+                  fontSize={grade.length > 1 ? size * 0.32 : size * 0.39}
+                  fontWeight="700"
+                  style={{
+                    transformOrigin: "center",
+                    transformBox: "fill-box",
+                  }}
+                  initial={
+                    isStatic
+                      ? { opacity: 1, scale: 1 }
+                      : { opacity: 0, scale: 0.6 }
+                  }
+                  animate={
+                    isStatic || isVisible
+                      ? { opacity: 1, scale: 1 }
+                      : { opacity: 0, scale: 0.6 }
+                  }
+                  transition={
+                    isStatic
+                      ? { duration: 0 }
+                      : {
+                          type: "spring",
+                          stiffness: 420,
+                          damping: 18,
+                          delay: delay + 0.45,
+                        }
+                  }
+                >
+                  {grade}
+                </motion.text>
+              </svg>
+            </div>
+            <span className="text-muted-foreground text-[11px] leading-none tracking-wide tabular-nums">
               {abbrev}
             </span>
           </motion.div>
@@ -210,7 +314,7 @@ export function ConsistencyGradesRow({
                 label={item.label}
                 tooltip={item.tooltip}
                 size={circleSize}
-                delay={sequenceIndex * 0.05}
+                delay={sequenceIndex * 0.07}
                 isVisible={isVisible}
                 isShortTerm={SHORT_TERM_LABELS.has(item.label)}
                 isCaptureMode={isCaptureMode}

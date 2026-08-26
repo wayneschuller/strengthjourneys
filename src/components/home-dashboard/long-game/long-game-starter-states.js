@@ -14,7 +14,7 @@ import { Fragment, useMemo } from "react";
 
 import Link from "next/link";
 
-import { gaTrackHomeImportNudge } from "@/lib/analytics";
+import { gaTrackHomeImportNudge, gaTrackLongGameLogCta } from "@/lib/analytics";
 
 import { formatMilestoneRemaining } from "@/lib/home-dashboard/long-game-milestones";
 
@@ -47,11 +47,38 @@ export function LongGameImportNudge({ dashboardStage, sessionCount }) {
   );
 }
 
+// Every early-stage message on this card ends in "go and lift", so the phrase that
+// says it is the phrase that takes you there. One component, three registers: the
+// day dot, the milestone button, and the closing sentence.
+function LogSessionLink({
+  cta,
+  dashboardStage,
+  sessionCount,
+  className = "",
+  children,
+}) {
+  return (
+    <Link
+      href={`/log?source=long-game-${cta}`}
+      onClick={() =>
+        gaTrackLongGameLogCta({ cta, dashboardStage, sessionCount })
+      }
+      className={className}
+    >
+      {children}
+    </Link>
+  );
+}
+
 /**
  * The next threshold, with a bar that moves. Rendered in every pre-established
  * stage, including alongside the mature heatmap at early_base.
  */
-export function LongGameMilestone({ milestone }) {
+export function LongGameMilestone({
+  milestone,
+  dashboardStage = null,
+  sessionCount = 0,
+}) {
   if (!milestone) return null;
 
   const { title, body, current, target } = milestone;
@@ -76,7 +103,17 @@ export function LongGameMilestone({ milestone }) {
           style={{ width: `${Math.round(progress * 100)}%` }}
         />
       </div>
-      <p className="text-muted-foreground mt-2 text-xs leading-5">{body}</p>
+      <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <p className="text-muted-foreground text-xs leading-5">{body}</p>
+        <LogSessionLink
+          cta="milestone"
+          dashboardStage={dashboardStage}
+          sessionCount={sessionCount}
+          className="text-foreground shrink-0 text-xs font-medium whitespace-nowrap underline underline-offset-2"
+        >
+          Log a session →
+        </LogSessionLink>
+      </div>
     </div>
   );
 }
@@ -97,6 +134,7 @@ export function StarterLongGameState({
   parsedData,
   sessionCount = 0,
   milestone = null,
+  dashboardStage = null,
 }) {
   // Anchored on the current week rather than the week of the last session, so the
   // row always answers "where am I right now" and today has a fixed place on it.
@@ -150,17 +188,14 @@ export function StarterLongGameState({
           {days.map((label, index) => {
             const isLit = litDayIndexes.has(index);
             const isToday = index === todayIndex;
-            return (
-              <div
-                key={`${label}-${index}`}
-                className="flex flex-col items-center gap-2"
-              >
-                <div
+            const dot = (
+              <>
+                <span
                   className={`h-5 w-5 rounded-full border ${
                     isLit
                       ? "border-primary/40 bg-primary"
                       : isToday
-                        ? "border-primary/60 bg-muted/30 border-dashed"
+                        ? "border-primary/60 bg-muted/30 group-hover:bg-primary/20 border-dashed"
                         : "border-border/70 bg-muted/30"
                   }`}
                 />
@@ -173,6 +208,34 @@ export function StarterLongGameState({
                 >
                   {label}
                 </span>
+              </>
+            );
+
+            // The dashed ring marks today; making it the link means the thing
+            // pointing at today is also the thing that lets you fill it in.
+            if (isToday) {
+              return (
+                <LogSessionLink
+                  key={`${label}-${index}`}
+                  cta="today"
+                  dashboardStage={dashboardStage}
+                  sessionCount={sessionCount}
+                  className="focus-visible:ring-ring group flex flex-col items-center gap-2 rounded transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <span className="sr-only">
+                    {isLit ? "Add to today's session" : "Log today's session"}
+                  </span>
+                  {dot}
+                </LogSessionLink>
+              );
+            }
+
+            return (
+              <div
+                key={`${label}-${index}`}
+                className="flex flex-col items-center gap-2"
+              >
+                {dot}
               </div>
             );
           })}
@@ -181,12 +244,40 @@ export function StarterLongGameState({
 
       {sessionCount > 0 && <LoggedSessionCount sessionCount={sessionCount} />}
 
-      <LongGameMilestone milestone={milestone} />
+      <LongGameMilestone
+        milestone={milestone}
+        dashboardStage={dashboardStage}
+        sessionCount={sessionCount}
+      />
 
       <p className="text-muted-foreground text-sm">
-        {sessionCount === 0
-          ? "Nothing logged yet. The first session you record puts the first square on this map."
-          : "Right now the story is just one week wide. That is normal. Keep logging and the timeline grows with you."}
+        {sessionCount === 0 ? (
+          <>
+            Nothing logged yet. The{" "}
+            <LogSessionLink
+              cta="sentence"
+              dashboardStage={dashboardStage}
+              sessionCount={sessionCount}
+              className="text-foreground font-medium underline underline-offset-2"
+            >
+              first session you record
+            </LogSessionLink>{" "}
+            puts the first square on this map.
+          </>
+        ) : (
+          <>
+            Right now the story is just one week wide. That is normal.{" "}
+            <LogSessionLink
+              cta="sentence"
+              dashboardStage={dashboardStage}
+              sessionCount={sessionCount}
+              className="text-foreground font-medium underline underline-offset-2"
+            >
+              Keep logging
+            </LogSessionLink>{" "}
+            and the timeline grows with you.
+          </>
+        )}
       </p>
     </div>
   );
@@ -196,6 +287,7 @@ export function FirstMonthLongGameState({
   parsedData,
   sessionCount = 0,
   milestone = null,
+  dashboardStage = null,
 }) {
   // The grid ends on the current week rather than starting at the first session,
   // so today always has a square. A lifter can reach twenty sessions across more
@@ -314,11 +406,24 @@ export function FirstMonthLongGameState({
 
       {sessionCount > 0 && <LoggedSessionCount sessionCount={sessionCount} />}
 
-      <LongGameMilestone milestone={milestone} />
+      <LongGameMilestone
+        milestone={milestone}
+        dashboardStage={dashboardStage}
+        sessionCount={sessionCount}
+      />
 
       <p className="text-muted-foreground text-sm">
         A few training days each week is all it takes to turn these squares into
-        a rhythm you can see.
+        a rhythm you can see.{" "}
+        <LogSessionLink
+          cta="sentence"
+          dashboardStage={dashboardStage}
+          sessionCount={sessionCount}
+          className="text-foreground font-medium underline underline-offset-2"
+        >
+          Log today&apos;s session
+        </LogSessionLink>
+        .
       </p>
     </div>
   );

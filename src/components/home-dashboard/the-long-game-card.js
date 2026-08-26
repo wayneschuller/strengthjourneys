@@ -384,6 +384,7 @@ export function TheLongGameCard({
               parsedData={parsedData}
               sessionCount={sessionCount}
               milestone={milestone}
+              dashboardStage={dashboardStage}
             />
           )}
           {!intervals && !isFirstWeekIntroState && (
@@ -464,6 +465,7 @@ export function TheLongGameCard({
                   parsedData={parsedData}
                   sessionCount={sessionCount}
                   milestone={milestone}
+                  dashboardStage={dashboardStage}
                 />
               )}
               {!isFirstMonthFocusState && effectiveViewMode === "daily" && (
@@ -610,7 +612,11 @@ export function TheLongGameCard({
               {!isSharing &&
                 !isFirstWeekIntroState &&
                 !isFirstMonthFocusState && (
-                  <LongGameMilestone milestone={milestone} />
+                  <LongGameMilestone
+                    milestone={milestone}
+                    dashboardStage={dashboardStage}
+                    sessionCount={sessionCount}
+                  />
                 )}
               {showImportMergeNudge && (
                 <LongGameImportNudge

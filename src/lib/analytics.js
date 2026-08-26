@@ -68,10 +68,17 @@ export const GA_EVENT_TAGS = Object.freeze({
   HERO_DEMO_CLICK: "SJ_hero_demo_click", // ~Aug 2026: User clicked the hero product showcase or its demo link through to /log.
   IMPORT_PROCESS: "SJ_import_process", // ~Mar 2026: Client-side import/save lifecycle for preview and history imports.
   COFFEE_NUDGE_CLICK: "SJ_coffee_nudge_click", // ~Apr 2026: User clicked a Buy-Me-a-Coffee link in an in-app nudge surface.
+  LONG_GAME_LOG_CTA: "SJ_long_game_log_cta", // ~Aug 2026: User clicked a "log a session" CTA on an early-stage Long Game card.
 });
 
 const UTM_STORAGE_KEY = "ga_utm";
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+const UTM_KEYS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+];
 
 /**
  * Send a custom GA4 event using the exact event name provided.
@@ -154,7 +161,8 @@ export function pageView(fullURL) {
   if (!id) return;
   captureUtmFromUrl();
   const params = buildParams({
-    page_location: fullURL || (typeof window !== "undefined" ? window.location.href : ""),
+    page_location:
+      fullURL || (typeof window !== "undefined" ? window.location.href : ""),
   });
   window.gtag("config", id, params);
 }
@@ -193,7 +201,10 @@ export function gaTrackSignInSuccess() {
 }
 
 export function gaTrackSheetConnectClick(page) {
-  gaEvent(GA_EVENT_TAGS.FUNNEL_SHEET_CONNECT_CLICK, typeof page === "string" ? { page } : {});
+  gaEvent(
+    GA_EVENT_TAGS.FUNNEL_SHEET_CONNECT_CLICK,
+    typeof page === "string" ? { page } : {},
+  );
 }
 
 export function gaTrackSheetPickerCancelled() {
@@ -264,7 +275,8 @@ export function gaTrackHomeDashboardFirstView({
     parsed_data_count: parsedDataCount,
     non_goal_parsed_data_count: nonGoalParsedDataCount,
   };
-  if (typeof dashboardStage === "string") params.dashboard_stage = dashboardStage;
+  if (typeof dashboardStage === "string")
+    params.dashboard_stage = dashboardStage;
   if (typeof starterSheetState === "string") {
     params.starter_sheet_state = starterSheetState;
   }
@@ -321,10 +333,34 @@ export function gaTrackHomeImportNudge({
   if (typeof surface !== "string" || surface.length === 0) return;
 
   const params = { action, surface };
-  if (typeof dashboardStage === "string") params.dashboard_stage = dashboardStage;
+  if (typeof dashboardStage === "string")
+    params.dashboard_stage = dashboardStage;
   if (typeof sessionCount === "number") params.session_count = sessionCount;
 
   gaEvent(GA_EVENT_TAGS.HOME_IMPORT_NUDGE, params);
+}
+
+/**
+ * Track a click on one of the Long Game card's "go and lift" CTAs.
+ *
+ * The early card tells a new lifter to log a session; these are the links that let
+ * them act on it. `cta` names which one, so we can see whether the day dot, the
+ * milestone button or the sentence link is what people actually use. Params match
+ * gaTrackHomeImportNudge so the two nudge surfaces stay comparable.
+ */
+export function gaTrackLongGameLogCta({
+  cta,
+  dashboardStage,
+  sessionCount,
+} = {}) {
+  if (typeof cta !== "string" || cta.length === 0) return;
+
+  const params = { cta, surface: "long_game_card" };
+  if (typeof dashboardStage === "string")
+    params.dashboard_stage = dashboardStage;
+  if (typeof sessionCount === "number") params.session_count = sessionCount;
+
+  gaEvent(GA_EVENT_TAGS.LONG_GAME_LOG_CTA, params);
 }
 
 /**

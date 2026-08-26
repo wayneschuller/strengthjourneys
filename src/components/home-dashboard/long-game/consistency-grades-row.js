@@ -10,7 +10,9 @@
 
 import { motion, useReducedMotion } from "motion/react";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo } from "react";
+
+import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 
 import { processConsistency } from "@/lib/consistency";
 
@@ -68,24 +70,6 @@ function splitIntoBalancedRows(items, maxItemsPerRow = 5) {
   }
 
   return rows;
-}
-
-// Touch devices never fire the hover events Radix tooltips rely on, so the ring
-// detail has to be delivered by a tap-driven popover instead. Starts false so
-// server and first client render agree, then corrects on mount.
-function useHasCoarsePointer() {
-  const [hasCoarsePointer, setHasCoarsePointer] = useState(false);
-
-  useEffect(() => {
-    const query = window.matchMedia("(hover: none), (pointer: coarse)");
-    const update = () => setHasCoarsePointer(query.matches);
-
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-
-  return hasCoarsePointer;
 }
 
 // Windows shorter than about a year read better in days; anything longer reads

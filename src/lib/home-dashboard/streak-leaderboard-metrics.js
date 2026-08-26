@@ -8,8 +8,9 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 const BIG_FOUR_SET = new Set(BIG_FOUR_LIFT_TYPES);
 
-const MIN_STREAK_WEEKS = 3;
-const MIN_SESSIONS_PER_WEEK = 3;
+// Exported so the leaderboard legend states the same rule the maths enforces.
+export const MIN_STREAK_WEEKS = 3;
+export const MIN_SESSIONS_PER_WEEK = 3;
 const TOP_PRS_PER_STREAK = 5;
 
 // PR significance tiers (lower = more significant)
@@ -36,7 +37,7 @@ function subtractOneYear(dateStr) {
  * @param {string[]} allSessionDates - distinct session dates "yyyy-MM-dd" sorted asc
  * @param {object} [opts]
  * @param {string} [opts.referenceDate] - "yyyy-MM-dd" for "today" (default: now)
- * @returns {Array<{startWeek:string,endWeek:string,weeks:number,isActive:boolean}>}
+ * @returns {Array<{startWeek:string,endWeek:string,weeks:number,weekCounts:number[],isActive:boolean}>}
  */
 export function extractStreaks(allSessionDates, { referenceDate = null } = {}) {
   if (!allSessionDates || allSessionDates.length === 0) return [];
@@ -66,6 +67,10 @@ export function extractStreaks(allSessionDates, { referenceDate = null } = {}) {
   let runStart = null;
   let runEnd = null;
   let runLen = 0;
+  // Session count for each week of the current run. The leaderboard draws one
+  // segment per week shaded by this, so a grinding 3-a-week run and a run with
+  // several 6-session weeks no longer look identical.
+  let runCounts = [];
 
   let cursor = earliestWeek;
   while (cursor <= thisWeekKey) {
@@ -75,18 +80,21 @@ export function extractStreaks(allSessionDates, { referenceDate = null } = {}) {
       if (runLen === 0) runStart = cursor;
       runEnd = cursor;
       runLen++;
+      runCounts.push(count);
     } else {
       if (runLen >= MIN_STREAK_WEEKS) {
         streaks.push({
           startWeek: runStart,
           endWeek: runEnd,
           weeks: runLen,
+          weekCounts: runCounts,
           isActive: false,
         });
       }
       runLen = 0;
       runStart = null;
       runEnd = null;
+      runCounts = [];
     }
     cursor = addDaysFromStr(cursor, 7);
   }
@@ -96,6 +104,7 @@ export function extractStreaks(allSessionDates, { referenceDate = null } = {}) {
       startWeek: runStart,
       endWeek: runEnd,
       weeks: runLen,
+      weekCounts: runCounts,
       isActive: false,
     });
   }
@@ -136,9 +145,7 @@ export function enrichStreaks(
       for (let r = 0; r < 10; r++) {
         const top = repsArr?.[r]?.[0];
         if (top) {
-          stillStanding.add(
-            `${liftType}|${r + 1}|${top.date}|${top.weight}`,
-          );
+          stillStanding.add(`${liftType}|${r + 1}|${top.date}|${top.weight}`);
         }
       }
     });
@@ -276,7 +283,11 @@ export function processStreakLeaderboard({
   const startTime = performance.now();
 
   if (!allSessionDates?.length || !parsedData?.length) {
-    recordTiming("Streak Leaderboard", performance.now() - startTime, "no data");
+    recordTiming(
+      "Streak Leaderboard",
+      performance.now() - startTime,
+      "no data",
+    );
     return [];
   }
 

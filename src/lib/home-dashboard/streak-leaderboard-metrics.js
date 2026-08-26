@@ -36,7 +36,7 @@ function subtractOneYear(dateStr) {
  * @param {string[]} allSessionDates - distinct session dates "yyyy-MM-dd" sorted asc
  * @param {object} [opts]
  * @param {string} [opts.referenceDate] - "yyyy-MM-dd" for "today" (default: now)
- * @returns {Array<{startWeek:string,endWeek:string,weeks:number,isActive:boolean}>}
+ * @returns {Array<{startWeek:string,endWeek:string,weeks:number,weekCounts:number[],isActive:boolean}>}
  */
 export function extractStreaks(allSessionDates, { referenceDate = null } = {}) {
   if (!allSessionDates || allSessionDates.length === 0) return [];
@@ -66,6 +66,10 @@ export function extractStreaks(allSessionDates, { referenceDate = null } = {}) {
   let runStart = null;
   let runEnd = null;
   let runLen = 0;
+  // Session count for each week of the current run. The leaderboard draws one
+  // segment per week shaded by this, so a grinding 3-a-week run and a run with
+  // several 6-session weeks no longer look identical.
+  let runCounts = [];
 
   let cursor = earliestWeek;
   while (cursor <= thisWeekKey) {
@@ -75,18 +79,21 @@ export function extractStreaks(allSessionDates, { referenceDate = null } = {}) {
       if (runLen === 0) runStart = cursor;
       runEnd = cursor;
       runLen++;
+      runCounts.push(count);
     } else {
       if (runLen >= MIN_STREAK_WEEKS) {
         streaks.push({
           startWeek: runStart,
           endWeek: runEnd,
           weeks: runLen,
+          weekCounts: runCounts,
           isActive: false,
         });
       }
       runLen = 0;
       runStart = null;
       runEnd = null;
+      runCounts = [];
     }
     cursor = addDaysFromStr(cursor, 7);
   }
@@ -96,6 +103,7 @@ export function extractStreaks(allSessionDates, { referenceDate = null } = {}) {
       startWeek: runStart,
       endWeek: runEnd,
       weeks: runLen,
+      weekCounts: runCounts,
       isActive: false,
     });
   }

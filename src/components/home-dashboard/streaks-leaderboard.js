@@ -1,9 +1,15 @@
 /**
  * Ranked streak-bar view for The Long Game card.
- * Streak length drives bar width; average weekly tonnage drives bar thickness.
+ *
+ * A bar's length is the streak's length in weeks. Inside it, one segment per week
+ * shaded on the same heatmap scale the daily view uses, so a grinding three-a-week
+ * run and a run with several six-session weeks no longer draw identically. Bar
+ * thickness still carries average weekly tonnage, over a deliberately narrow range —
+ * enough to feel the difference between a heavy block and a light one without the
+ * list looking ragged.
  */
-import { useMemo } from "react";
-import { format, parseISO } from "date-fns";
+import { useMemo, useState } from "react";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { motion, useReducedMotion } from "motion/react";
 import {
   Tooltip,
@@ -23,12 +29,25 @@ import { cn } from "@/lib/utils";
 const TIER_META = {
   [PR_TIER_STILL_STANDING]: { emoji: "⭐", label: "still stands" },
   [PR_TIER_LIFETIME_AT_TIME]: { emoji: "\u{1F3C6}", label: "lifetime PR then" },
-  [PR_TIER_TWELVE_MONTH_AT_TIME]: { emoji: "\u{1F538}", label: "12-mo PR then" },
+  [PR_TIER_TWELVE_MONTH_AT_TIME]: {
+    emoji: "\u{1F538}",
+    label: "12-mo PR then",
+  },
 };
 
 const MAX_VISIBLE_STREAKS = 8;
-const MIN_BAR_HEIGHT_PX = 14;
-const MAX_BAR_HEIGHT_PX = 45;
+const MIN_BAR_HEIGHT_PX = 20;
+const MAX_BAR_HEIGHT_PX = 34;
+
+// A streak week is 3+ sessions by definition, so the scale starts there and tops
+// out at six. Fixed thresholds rather than per-user relative ones: a five-session
+// week should look the same shade on everybody's dashboard.
+function getWeekHeatLevel(sessions) {
+  if (sessions >= 6) return 4;
+  if (sessions === 5) return 3;
+  if (sessions === 4) return 2;
+  return 1;
+}
 
 function formatStreakRange(startWeek, endWeek) {
   const s = parseISO(startWeek);
@@ -39,9 +58,14 @@ function formatStreakRange(startWeek, endWeek) {
   return `${format(s, "MMM yyyy")} → ${format(e, "MMM yyyy")}`;
 }
 
-export function StreaksLeaderboard({ streaks, isSharing = false }) {
+export function StreaksLeaderboard({
+  streaks,
+  firstSessionDate = null,
+  isSharing = false,
+}) {
   const { isMetric } = useAthleteBio();
   const prefersReducedMotion = useReducedMotion();
+  const [showAll, setShowAll] = useState(false);
 
   const ranked = useMemo(() => {
     if (!streaks?.length) return [];
@@ -64,8 +88,24 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
     const minT = Math.min(...weeklyTonnages);
     const maxT = Math.max(...weeklyTonnages);
     const range = Math.max(maxT - minT, 1);
-    return { maxWeeks, minT, range };
-  }, [ranked]);
+
+    const weeksOnStreak = ranked.reduce((total, s) => total + s.weeks, 0);
+    const trainingWeeks = firstSessionDate
+      ? Math.max(
+          1,
+          Math.ceil(
+            (differenceInCalendarDays(new Date(), parseISO(firstSessionDate)) +
+              1) /
+              7,
+          ),
+        )
+      : null;
+    const streakShare = trainingWeeks
+      ? Math.round((weeksOnStreak / trainingWeeks) * 100)
+      : null;
+
+    return { maxWeeks, minT, range, weeksOnStreak, streakShare };
+  }, [ranked, firstSessionDate]);
 
   if (!ranked.length) {
     return (
@@ -75,7 +115,8 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
     );
   }
 
-  const visible = ranked.slice(0, MAX_VISIBLE_STREAKS);
+  const visible =
+    showAll && !isSharing ? ranked : ranked.slice(0, MAX_VISIBLE_STREAKS);
   const hidden = ranked.length - visible.length;
 
   return (
@@ -91,6 +132,14 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
             </span>
           </div>
         )}
+
+        <StreakSummaryLine
+          streakCount={ranked.length}
+          longestWeeks={stats.maxWeeks}
+          weeksOnStreak={stats.weeksOnStreak}
+          streakShare={stats.streakShare}
+        />
+
         {visible.map((s, index) => {
           const lengthPct = (s.weeks / stats.maxWeeks) * 100;
           const heightPx =
@@ -107,13 +156,24 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
               heightPx={heightPx}
               isMetric={isMetric}
               isSharing={isSharing}
-              isLeader={index === 0}
-              animationIndex={index}
+              animationIndex={Math.min(index, MAX_VISIBLE_STREAKS)}
               shouldAnimate={!isSharing && !prefersReducedMotion}
             />
           );
         })}
-        {hidden > 0 && (
+
+        {!isSharing && (hidden > 0 || showAll) && (
+          <button
+            type="button"
+            onClick={() => setShowAll((previous) => !previous)}
+            className="text-muted-foreground/70 hover:text-foreground focus-visible:ring-ring rounded pt-1 text-center text-[10px] transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            {showAll
+              ? "Show fewer"
+              : `+${hidden} more ${hidden === 1 ? "streak" : "streaks"}`}
+          </button>
+        )}
+        {isSharing && hidden > 0 && (
           <div className="text-muted-foreground/70 pt-1 text-center text-[10px]">
             +{hidden} more {hidden === 1 ? "streak" : "streaks"}
           </div>
@@ -123,86 +183,144 @@ export function StreaksLeaderboard({ streaks, isSharing = false }) {
   );
 }
 
+// One quiet line of context above the bars. For a lifter with years of history the
+// share of training life spent on a streak is the most interesting number here, so
+// it goes last where the eye lands.
+function StreakSummaryLine({
+  streakCount,
+  longestWeeks,
+  weeksOnStreak,
+  streakShare,
+}) {
+  return (
+    <div className="text-muted-foreground mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] leading-tight">
+      <span>
+        <span className="text-foreground font-semibold tabular-nums">
+          {streakCount}
+        </span>{" "}
+        {streakCount === 1 ? "streak" : "streaks"}
+      </span>
+      <span aria-hidden>·</span>
+      <span>
+        longest{" "}
+        <span className="text-foreground font-semibold tabular-nums">
+          {longestWeeks}
+        </span>{" "}
+        weeks
+      </span>
+      <span aria-hidden>·</span>
+      <span>
+        <span className="text-foreground font-semibold tabular-nums">
+          {weeksOnStreak}
+        </span>{" "}
+        weeks on streak
+        {streakShare !== null && (
+          <span className="opacity-80">
+            {" "}
+            ({streakShare}% of your training life)
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
 function StreakBar({
   streak,
   lengthPct,
   heightPx,
   isMetric,
   isSharing,
-  isLeader,
   animationIndex,
   shouldAnimate,
 }) {
   const dateLabel = formatStreakRange(streak.startWeek, streak.endWeek);
+  const weekCounts = streak.weekCounts?.length
+    ? streak.weekCounts
+    : Array.from({ length: streak.weeks }, () => 3);
 
-  const barClass = streak.isActive
-    ? "bg-primary"
-    : "bg-muted-foreground/40";
   // mask-image is unsupported by html2canvas-pro, so skip the active-streak
   // fade-trail during capture — the bar would otherwise still get the mask
   // computed-style and the captured image would clip the right edge.
   const barStyle = {
     width: `${lengthPct}%`,
     height: `${heightPx}px`,
-    borderRadius: "3px",
     ...(streak.isActive && !isSharing
       ? {
-          maskImage:
-            "linear-gradient(to right, black 65%, transparent 100%)",
+          maskImage: "linear-gradient(to right, black 88%, transparent 100%)",
           WebkitMaskImage:
-            "linear-gradient(to right, black 65%, transparent 100%)",
+            "linear-gradient(to right, black 88%, transparent 100%)",
         }
       : null),
   };
-  const labelClass = streak.isActive
-    ? "text-primary-foreground"
-    : "text-foreground/85";
 
   const row = (
     <motion.div
-      className={cn(
-        "flex cursor-default items-center gap-2",
-        isLeader &&
-          streak.isActive &&
-          !isSharing &&
-          "animate-streak-leader-shake",
-      )}
-      initial={
-        shouldAnimate
-          ? { opacity: 0, y: 8, scaleX: 0.96, transformOrigin: "left" }
-          : false
-      }
-      animate={shouldAnimate ? { opacity: 1, y: 0, scaleX: 1 } : undefined}
+      className="flex cursor-default items-center gap-2"
+      initial={shouldAnimate ? { opacity: 0, y: 6 } : false}
+      animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
       transition={
         shouldAnimate
           ? {
-              duration: 0.34,
-              delay: animationIndex * 0.055,
+              duration: 0.3,
+              delay: animationIndex * 0.05,
               ease: [0.22, 1, 0.36, 1],
             }
           : undefined
       }
     >
-      <div className="relative min-w-0 flex-1">
-        <div
-          className={`${barClass} relative flex items-center overflow-hidden`}
-          style={barStyle}
-        >
-          <span
-            className={`truncate px-2 text-[10px] leading-none font-medium ${labelClass}`}
-          >
-            {dateLabel}
-          </span>
-        </div>
-      </div>
       <span
-        className={`shrink-0 text-[10px] tabular-nums ${
+        className={cn(
+          "w-[86px] shrink-0 truncate text-[10px] leading-none sm:w-[104px]",
           streak.isActive
             ? "text-foreground font-semibold"
-            : "text-muted-foreground/80"
-        }`}
+            : "text-muted-foreground",
+        )}
       >
-        {streak.weeks}wk
+        {dateLabel}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        {/* Clip-wipe rather than a width tween so the week segments keep their
+            shape while the bar reveals. */}
+        <motion.div
+          className="flex items-stretch gap-px overflow-hidden rounded-[3px]"
+          style={barStyle}
+          initial={shouldAnimate ? { clipPath: "inset(0 100% 0 0)" } : false}
+          animate={shouldAnimate ? { clipPath: "inset(0 0% 0 0)" } : undefined}
+          transition={
+            shouldAnimate
+              ? {
+                  duration: 0.65,
+                  delay: animationIndex * 0.05 + 0.08,
+                  ease: [0.16, 1, 0.3, 1],
+                }
+              : undefined
+          }
+        >
+          {weekCounts.map((sessions, weekIndex) => (
+            <span
+              key={`${streak.startWeek}-week-${weekIndex}`}
+              className="min-w-px flex-1"
+              style={{
+                backgroundColor: `var(--heatmap-${getWeekHeatLevel(sessions)})`,
+              }}
+            />
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Fixed width so every bar ends at the same x and lengths stay comparable. */}
+      <span
+        className={cn(
+          "w-[38px] shrink-0 text-right text-sm leading-none font-semibold tabular-nums",
+          streak.isActive ? "text-primary" : "text-foreground",
+        )}
+      >
+        {streak.weeks}
+        <span className="text-muted-foreground ml-0.5 text-[10px] font-normal">
+          wk
+        </span>
       </span>
     </motion.div>
   );
@@ -262,6 +380,9 @@ function StreakInlineSummary({ streak, isMetric }) {
 
 function StreakTooltipContent({ streak, dateLabel, isMetric }) {
   const avgWeekly = Math.round((streak.avgWeeklyTonnage || 0) / 1000);
+  const bestWeek = streak.weekCounts?.length
+    ? Math.max(...streak.weekCounts)
+    : null;
   return (
     <div className="space-y-1.5 text-xs">
       <div className="flex items-baseline justify-between gap-2">
@@ -273,6 +394,7 @@ function StreakTooltipContent({ streak, dateLabel, isMetric }) {
       </div>
       <div className="text-muted-foreground">
         Avg weekly tonnage: ~{avgWeekly.toLocaleString()}k
+        {bestWeek !== null && ` · best week: ${bestWeek} sessions`}
       </div>
       {streak.prs?.length > 0 ? (
         <ul className="space-y-0.5">

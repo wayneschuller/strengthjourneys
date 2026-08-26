@@ -581,6 +581,7 @@ export function TheLongGameCard({
                 showStreaksToggle && (
                   <StreaksLeaderboard
                     streaks={streakLeaderboard}
+                    firstSessionDate={parsedData?.[0]?.date ?? null}
                     isSharing={isSharing}
                   />
                 )}

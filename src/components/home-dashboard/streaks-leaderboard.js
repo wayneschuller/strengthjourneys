@@ -10,7 +10,7 @@
  */
 import { useMemo, useState } from "react";
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   Tooltip,
   TooltipContent,
@@ -18,8 +18,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import {
+  MIN_SESSIONS_PER_WEEK,
+  MIN_STREAK_WEEKS,
   PR_TIER_STILL_STANDING,
   PR_TIER_LIFETIME_AT_TIME,
   PR_TIER_TWELVE_MONTH_AT_TIME,
@@ -65,7 +68,10 @@ export function StreaksLeaderboard({
 }) {
   const { isMetric } = useAthleteBio();
   const prefersReducedMotion = useReducedMotion();
+  const hasCoarsePointer = useHasCoarsePointer();
   const [showAll, setShowAll] = useState(false);
+  // One open row at a time — several expanded details would shunt the list around.
+  const [expandedKey, setExpandedKey] = useState(null);
 
   const ranked = useMemo(() => {
     if (!streaks?.length) return [];
@@ -90,9 +96,11 @@ export function StreaksLeaderboard({
     const range = Math.max(maxT - minT, 1);
 
     const weeksOnStreak = ranked.reduce((total, s) => total + s.weeks, 0);
+    // "305 weeks on streak" means nothing without knowing how many weeks of
+    // training it is drawn from, so the denominator travels with it.
     const trainingWeeks = firstSessionDate
       ? Math.max(
-          1,
+          weeksOnStreak,
           Math.ceil(
             (differenceInCalendarDays(new Date(), parseISO(firstSessionDate)) +
               1) /
@@ -104,13 +112,14 @@ export function StreaksLeaderboard({
       ? Math.round((weeksOnStreak / trainingWeeks) * 100)
       : null;
 
-    return { maxWeeks, minT, range, weeksOnStreak, streakShare };
+    return { maxWeeks, minT, range, weeksOnStreak, trainingWeeks, streakShare };
   }, [ranked, firstSessionDate]);
 
   if (!ranked.length) {
     return (
       <div className="text-muted-foreground py-8 text-center text-xs">
-        No streaks yet. A streak is 3+ consecutive weeks with 3+ sessions each.
+        No streaks yet. A streak is {MIN_STREAK_WEEKS}+ consecutive weeks with{" "}
+        {MIN_SESSIONS_PER_WEEK}+ sessions each.
       </div>
     );
   }
@@ -128,7 +137,7 @@ export function StreaksLeaderboard({
               Training Streaks
             </h3>
             <span className="text-muted-foreground text-[10px]">
-              3+ weeks · 3+ sessions/week
+              {MIN_STREAK_WEEKS}+ weeks · {MIN_SESSIONS_PER_WEEK}+ sessions/week
             </span>
           </div>
         )}
@@ -137,6 +146,7 @@ export function StreaksLeaderboard({
           streakCount={ranked.length}
           longestWeeks={stats.maxWeeks}
           weeksOnStreak={stats.weeksOnStreak}
+          trainingWeeks={stats.trainingWeeks}
           streakShare={stats.streakShare}
         />
 
@@ -148,9 +158,10 @@ export function StreaksLeaderboard({
               (((s.avgWeeklyTonnage || 0) - stats.minT) / stats.range) *
                 (MAX_BAR_HEIGHT_PX - MIN_BAR_HEIGHT_PX),
             );
+          const key = `${s.startWeek}-${s.endWeek}`;
           return (
             <StreakBar
-              key={`${s.startWeek}-${s.endWeek}`}
+              key={key}
               streak={s}
               lengthPct={lengthPct}
               heightPx={heightPx}
@@ -158,6 +169,11 @@ export function StreaksLeaderboard({
               isSharing={isSharing}
               animationIndex={Math.min(index, MAX_VISIBLE_STREAKS)}
               shouldAnimate={!isSharing && !prefersReducedMotion}
+              hasCoarsePointer={hasCoarsePointer}
+              isExpanded={expandedKey === key}
+              onToggle={() =>
+                setExpandedKey((previous) => (previous === key ? null : key))
+              }
             />
           );
         })}
@@ -178,6 +194,8 @@ export function StreaksLeaderboard({
             +{hidden} more {hidden === 1 ? "streak" : "streaks"}
           </div>
         )}
+
+        <StreakLegend />
       </div>
     </TooltipProvider>
   );
@@ -190,6 +208,7 @@ function StreakSummaryLine({
   streakCount,
   longestWeeks,
   weeksOnStreak,
+  trainingWeeks,
   streakShare,
 }) {
   return (
@@ -212,14 +231,49 @@ function StreakSummaryLine({
       <span>
         <span className="text-foreground font-semibold tabular-nums">
           {weeksOnStreak}
-        </span>{" "}
+        </span>
+        {trainingWeeks !== null && (
+          <>
+            {" of "}
+            <span className="tabular-nums">{trainingWeeks}</span>
+          </>
+        )}{" "}
         weeks on streak
         {streakShare !== null && (
-          <span className="opacity-80">
+          <span className="text-foreground font-semibold">
             {" "}
-            ({streakShare}% of your training life)
+            ({streakShare}%)
           </span>
         )}
+      </span>
+    </div>
+  );
+}
+
+// Shaded week blocks invite the question "why is that one darker?", so the scale
+// gets named once at the foot of the list alongside the rule for what counts as a
+// streak at all. Cheaper than a tooltip on every block and it does not move layout.
+function StreakLegend() {
+  return (
+    <div className="text-muted-foreground/80 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-1 text-[10px] leading-none">
+      <span>
+        Streak = {MIN_STREAK_WEEKS}+ weeks in a row at {MIN_SESSIONS_PER_WEEK}+
+        sessions
+      </span>
+      <span className="flex items-center gap-1">
+        <span>Each block is a week ·</span>
+        <span className="tabular-nums">{MIN_SESSIONS_PER_WEEK}</span>
+        <span className="flex items-center gap-px" aria-hidden>
+          {[1, 2, 3, 4].map((level) => (
+            <span
+              key={`legend-${level}`}
+              className="h-2 w-2 rounded-[1px]"
+              style={{ backgroundColor: `var(--heatmap-${level})` }}
+            />
+          ))}
+        </span>
+        <span className="tabular-nums">6+</span>
+        <span>sessions</span>
       </span>
     </div>
   );
@@ -233,6 +287,9 @@ function StreakBar({
   isSharing,
   animationIndex,
   shouldAnimate,
+  hasCoarsePointer,
+  isExpanded,
+  onToggle,
 }) {
   const dateLabel = formatStreakRange(streak.startWeek, streak.endWeek);
   const weekCounts = streak.weekCounts?.length
@@ -254,9 +311,25 @@ function StreakBar({
       : null),
   };
 
+  const RowTag = isSharing ? motion.div : motion.button;
+  const rowInteractionProps = isSharing
+    ? {}
+    : {
+        type: "button",
+        onClick: onToggle,
+        "aria-expanded": isExpanded,
+        "aria-label": `${dateLabel}, ${streak.weeks} week streak`,
+      };
+
   const row = (
-    <motion.div
-      className="flex cursor-default items-center gap-2"
+    <RowTag
+      {...rowInteractionProps}
+      className={cn(
+        "flex w-full items-center gap-2 rounded text-left",
+        isSharing
+          ? "cursor-default"
+          : "focus-visible:ring-ring cursor-pointer focus-visible:ring-2 focus-visible:outline-none",
+      )}
       initial={shouldAnimate ? { opacity: 0, y: 6 } : false}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
       transition={
@@ -322,7 +395,7 @@ function StreakBar({
           wk
         </span>
       </span>
-    </motion.div>
+    </RowTag>
   );
 
   if (isSharing) {
@@ -334,17 +407,43 @@ function StreakBar({
     );
   }
 
+  const detail = (
+    <StreakDetail streak={streak} dateLabel={dateLabel} isMetric={isMetric} />
+  );
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{row}</TooltipTrigger>
-      <TooltipContent side="top" align="start" className="max-w-[18rem]">
-        <StreakTooltipContent
-          streak={streak}
-          dateLabel={dateLabel}
-          isMetric={isMetric}
-        />
-      </TooltipContent>
-    </Tooltip>
+    <div className="flex flex-col">
+      {/* Hover gets a tooltip because it must not disturb the list while the
+          pointer travels down it. A tap has no hover to fall back on, so the same
+          detail opens inline underneath — and clicking pins it open on desktop too. */}
+      {hasCoarsePointer ? (
+        row
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>{row}</TooltipTrigger>
+          <TooltipContent side="top" align="start" className="max-w-[18rem]">
+            {detail}
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            key="streak-detail"
+            className="overflow-hidden"
+            initial={shouldAnimate ? { height: 0, opacity: 0 } : false}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="border-border/50 mt-2 ml-[94px] border-l pb-1 pl-3 sm:ml-[112px]">
+              {detail}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -378,7 +477,8 @@ function StreakInlineSummary({ streak, isMetric }) {
   );
 }
 
-function StreakTooltipContent({ streak, dateLabel, isMetric }) {
+// Shared by the desktop hover tooltip and the inline tap disclosure.
+function StreakDetail({ streak, dateLabel, isMetric }) {
   const avgWeekly = Math.round((streak.avgWeeklyTonnage || 0) / 1000);
   const bestWeek = streak.weekCounts?.length
     ? Math.max(...streak.weekCounts)

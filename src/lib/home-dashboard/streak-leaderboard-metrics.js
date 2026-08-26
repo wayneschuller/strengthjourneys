@@ -8,8 +8,9 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 const BIG_FOUR_SET = new Set(BIG_FOUR_LIFT_TYPES);
 
-const MIN_STREAK_WEEKS = 3;
-const MIN_SESSIONS_PER_WEEK = 3;
+// Exported so the leaderboard legend states the same rule the maths enforces.
+export const MIN_STREAK_WEEKS = 3;
+export const MIN_SESSIONS_PER_WEEK = 3;
 const TOP_PRS_PER_STREAK = 5;
 
 // PR significance tiers (lower = more significant)
@@ -144,9 +145,7 @@ export function enrichStreaks(
       for (let r = 0; r < 10; r++) {
         const top = repsArr?.[r]?.[0];
         if (top) {
-          stillStanding.add(
-            `${liftType}|${r + 1}|${top.date}|${top.weight}`,
-          );
+          stillStanding.add(`${liftType}|${r + 1}|${top.date}|${top.weight}`);
         }
       }
     });
@@ -284,7 +283,11 @@ export function processStreakLeaderboard({
   const startTime = performance.now();
 
   if (!allSessionDates?.length || !parsedData?.length) {
-    recordTiming("Streak Leaderboard", performance.now() - startTime, "no data");
+    recordTiming(
+      "Streak Leaderboard",
+      performance.now() - startTime,
+      "no data",
+    );
     return [];
   }
 

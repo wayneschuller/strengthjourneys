@@ -71,13 +71,13 @@ export function getConsistencyRingPalette(progress) {
       from: `hsl(${ringHue}, ${62 + 18 * intensity}%, ${52 - 6 * intensity}%)`,
       to: `hsl(${ringHue}, ${78 + 14 * intensity}%, ${39 - 5 * intensity}%)`,
       ink: `hsl(${ringHue}, ${58 + 16 * intensity}%, ${31 - 5 * intensity}%)`,
-      glow: `hsla(${ringHue}, 85%, 45%, ${(0.08 + 0.2 * intensity).toFixed(3)})`,
+      glow: `hsla(${ringHue}, 85%, 45%, ${(0.05 + 0.09 * intensity).toFixed(3)})`,
     },
     dark: {
       from: `hsl(${ringHue}, ${70 + 20 * intensity}%, ${64 + 4 * intensity}%)`,
       to: `hsl(${ringHue}, ${82 + 12 * intensity}%, ${48 + 5 * intensity}%)`,
       ink: `hsl(${ringHue}, ${72 + 16 * intensity}%, ${70 + 8 * intensity}%)`,
-      glow: `hsla(${ringHue}, 90%, 60%, ${(0.12 + 0.28 * intensity).toFixed(3)})`,
+      glow: `hsla(${ringHue}, 90%, 60%, ${(0.07 + 0.13 * intensity).toFixed(3)})`,
     },
   };
 }

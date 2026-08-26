@@ -17,6 +17,13 @@
  * - `established`: enough history for the full dashboard experience
  */
 
+// Stage boundaries, exported so the Long Game card can tell a new lifter exactly
+// what the next threshold is instead of promising vaguely that things "unlock
+// with more history". Changing a number here changes the promise the UI makes.
+export const FIRST_WEEK_SPAN_DAYS = 7;
+export const FIRST_MONTH_MAX_SESSIONS = 20;
+export const EARLY_BASE_MAX_SESSIONS = 60;
+
 function getNonGoalEntries(parsedData) {
   if (!Array.isArray(parsedData)) return [];
   return parsedData.filter((entry) => !entry?.isGoal);
@@ -36,7 +43,13 @@ export function getNonGoalSessionCount(parsedData) {
   return uniqueDates.size;
 }
 
-function getTrainingSpanDays(parsedData) {
+/**
+ * Days between the first and last logged session. Zero for a single session.
+ *
+ * @param {Array|null|undefined} parsedData
+ * @returns {number}
+ */
+export function getTrainingSpanDays(parsedData) {
   const uniqueDates = Array.from(
     new Set(
       getNonGoalEntries(parsedData)
@@ -64,12 +77,18 @@ function getTrainingSpanDays(parsedData) {
  * @param {{filename?: string}|null|undefined} params.sheetInfo
  * @returns {"starter_sample"|"active_sheet"}
  */
-export function detectStarterSheetState({ parsedData, rawRows, sheetInfo } = {}) {
+export function detectStarterSheetState({
+  parsedData,
+  rawRows,
+  sheetInfo,
+} = {}) {
   const nonGoalEntries = getNonGoalEntries(parsedData);
   const sessionCount = getNonGoalSessionCount(parsedData);
   const firstEntry = nonGoalEntries[0] ?? null;
   const lowerFilename = sheetInfo?.filename?.toLowerCase?.() ?? "";
-  const uniqueDates = new Set(nonGoalEntries.map((entry) => entry?.date).filter(Boolean));
+  const uniqueDates = new Set(
+    nonGoalEntries.map((entry) => entry?.date).filter(Boolean),
+  );
   const uniqueLiftTypes = new Set(
     nonGoalEntries.map((entry) => entry?.liftType).filter(Boolean),
   );
@@ -161,7 +180,7 @@ export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
   // Treat "first real week" as the first 7-day window after the first real
   // session: day 0 through day 6. Once the log reaches day 7, users have
   // entered week two even if they only have a handful of sessions.
-  if (sessionCount > 0 && trainingSpanDays < 7) {
+  if (sessionCount > 0 && trainingSpanDays < FIRST_WEEK_SPAN_DAYS) {
     return {
       dashboardStage: "first_real_week",
       starterSheetState,
@@ -170,7 +189,7 @@ export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
     };
   }
 
-  if (sessionCount <= 20) {
+  if (sessionCount <= FIRST_MONTH_MAX_SESSIONS) {
     return {
       dashboardStage: "first_month",
       starterSheetState,
@@ -179,7 +198,7 @@ export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
     };
   }
 
-  if (sessionCount <= 60) {
+  if (sessionCount <= EARLY_BASE_MAX_SESSIONS) {
     return {
       dashboardStage: "early_base",
       starterSheetState,

@@ -46,8 +46,11 @@ import { MemoizedDailyTrainingHeatmap } from "@/components/home-dashboard/long-g
 import {
   FirstMonthLongGameState,
   LongGameImportNudge,
+  LongGameMilestone,
   StarterLongGameState,
 } from "@/components/home-dashboard/long-game/long-game-starter-states";
+import { getTrainingSpanDays } from "@/lib/home-dashboard/dashboard-stage";
+import { getNextLongGameMilestone } from "@/lib/home-dashboard/long-game-milestones";
 import { MonthlyTrainingPatternGrid } from "@/components/home-dashboard/long-game/monthly-training-pattern-grid";
 import { WeeklyTrainingPatternGrid } from "@/components/home-dashboard/long-game/weekly-training-pattern-grid";
 
@@ -120,6 +123,15 @@ export function TheLongGameCard({
   const isFirstWeekIntroState =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
   const isFirstMonthFocusState = dashboardStage === "first_month";
+  const milestone = useMemo(
+    () =>
+      getNextLongGameMilestone({
+        dashboardStage,
+        sessionCount,
+        trainingSpanDays: getTrainingSpanDays(parsedData),
+      }),
+    [dashboardStage, sessionCount, parsedData],
+  );
   const canShareHeatmaps = dashboardStage === "established";
   const showWeeklyToggle =
     (dashboardStage === "early_base" || dashboardStage === "established") &&
@@ -130,12 +142,11 @@ export function TheLongGameCard({
     dashboardStage === "established" &&
     Array.isArray(streakLeaderboard) &&
     streakLeaderboard.length >= 1;
+  // Shown from the very first session. Someone six sessions in is the most likely
+  // person in the whole funnel to have years of history sitting in another app,
+  // and until now this was the one stage where we never made the offer.
   const showImportMergeNudge =
-    !isSharing &&
-    !isImportedData &&
-    dashboardStage !== "starter_sample" &&
-    dashboardStage !== "first_real_week" &&
-    dashboardStage !== "established";
+    !isSharing && !isImportedData && dashboardStage !== "established";
   const effectiveViewMode = useMemo(() => {
     if (dashboardStage === "starter_sample") return "daily";
     if (dashboardStage === "first_real_week") return "daily";
@@ -336,40 +347,32 @@ export function TheLongGameCard({
         <CardHeader data-share-section="header">
           <CardTitle>
             <span data-share-title="true">
-              {isFirstWeekIntroState
-                ? "The Long Game Starts Here"
-                : dataMaturityStage === "no_sessions"
-                  ? "The Long Game Starts Here"
-                  : cardTitle}
+              {isFirstWeekIntroState ? "The Long Game Starts Here" : cardTitle}
             </span>
           </CardTitle>
           {isFirstWeekIntroState ? (
             <CardDescription>
+              {/* getDashboardStage guarantees no_sessions implies starter_sample,
+                  so the zero-session copy has to live inside this branch — as its
+                  own case further down it was unreachable. */}
               <span data-share-description="true">
-                Every training day adds another square to your map.
-              </span>
-            </CardDescription>
-          ) : dataMaturityStage === "no_sessions" ? (
-            <CardDescription>
-              <span data-share-description="true">
-                Your heatmap will light up as soon as you log your first
-                session.
+                {sessionCount === 0
+                  ? "Your heatmap lights up the moment you log your first session."
+                  : "Every training day adds another square to your map."}
               </span>
             </CardDescription>
           ) : (
             intervals && (
               <CardDescription>
                 <span data-share-description="true">
+                  {/* Only first_month and up reach here; the two intro stages are
+                      handled by the branch above. */}
                   {dataMaturityStage !== "mature" && "Your journey has begun. "}
-                  {dashboardStage === "starter_sample"
-                    ? "A close-up of your first training days."
-                    : dashboardStage === "first_real_week"
-                      ? "A close-up of your first weeks under the bar."
-                      : dashboardStage === "first_month"
-                        ? "A close-up of your first months of training."
-                        : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
-                            intervals[intervals.length - 1].endDate,
-                          ).getFullYear()}.`}
+                  {dashboardStage === "first_month"
+                    ? "A close-up of your first months of training."
+                    : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
+                        intervals[intervals.length - 1].endDate,
+                      ).getFullYear()}.`}
                 </span>
               </CardDescription>
             )
@@ -380,56 +383,48 @@ export function TheLongGameCard({
             <StarterLongGameState
               parsedData={parsedData}
               sessionCount={sessionCount}
+              milestone={milestone}
+              dashboardStage={dashboardStage}
             />
           )}
-          {!intervals &&
-            !isFirstWeekIntroState &&
-            dataMaturityStage !== "no_sessions" && (
-              <Skeleton className="h-64 w-11/12 flex-1" />
-            )}
-          {!intervals &&
-            !isFirstWeekIntroState &&
-            dataMaturityStage === "no_sessions" && (
-              <div className="bg-muted/20 flex h-64 flex-col items-center justify-center rounded-lg border border-dashed px-5 text-center">
-                <p className="text-muted-foreground text-sm">
-                  Your first training day is the first pixel in this map. Keep
-                  showing up and the pattern builds.
-                </p>
-              </div>
-            )}
+          {!intervals && !isFirstWeekIntroState && (
+            <Skeleton className="h-64 w-11/12 flex-1" />
+          )}
           {intervals && !isFirstWeekIntroState && (
             <>
-              {/* Consistency grade rings — always included in capture output */}
-              {!isFirstMonthFocusState && (
-                <>
-                  <div className="mb-3" data-share-section="consistency">
-                    {isSharing ? (
-                      <div className="flex w-full items-start">
-                        <div
-                          className="shrink-0"
-                          style={{ width: LONG_GAME_YEAR_LABEL_WIDTH }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <ConsistencyGradesRow
-                            parsedData={parsedData}
-                            isVisible={!!intervals}
-                            isCaptureMode={isSharing}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex justify-center">
+              {/* Consistency grade rings — always included in capture output.
+                  Shown from the first-month stage: a week of training is enough to
+                  earn a real Week grade, and processConsistency only returns the
+                  windows a lifter actually has history for. Withheld before that,
+                  where an 8-day window mostly predates the first session. */}
+              <>
+                <div className="mb-3" data-share-section="consistency">
+                  {isSharing ? (
+                    <div className="flex w-full items-start">
+                      <div
+                        className="shrink-0"
+                        style={{ width: LONG_GAME_YEAR_LABEL_WIDTH }}
+                      />
+                      <div className="min-w-0 flex-1">
                         <ConsistencyGradesRow
                           parsedData={parsedData}
                           isVisible={!!intervals}
                           isCaptureMode={isSharing}
                         />
                       </div>
-                    )}
-                  </div>
-                  {!isSharing && <hr className="border-border/60 mb-2" />}
-                </>
-              )}
+                    </div>
+                  ) : (
+                    <div className="flex justify-center">
+                      <ConsistencyGradesRow
+                        parsedData={parsedData}
+                        isVisible={!!intervals}
+                        isCaptureMode={isSharing}
+                      />
+                    </div>
+                  )}
+                </div>
+                {!isSharing && <hr className="border-border/60 mb-2" />}
+              </>
               {/* View selector — right-justified, anchored just above the heatmap grid */}
               {!isSharing &&
                 !isFirstMonthFocusState &&
@@ -466,7 +461,12 @@ export function TheLongGameCard({
                   </div>
                 )}
               {isFirstMonthFocusState && (
-                <FirstMonthLongGameState parsedData={parsedData} />
+                <FirstMonthLongGameState
+                  parsedData={parsedData}
+                  sessionCount={sessionCount}
+                  milestone={milestone}
+                  dashboardStage={dashboardStage}
+                />
               )}
               {!isFirstMonthFocusState && effectiveViewMode === "daily" && (
                 <div
@@ -606,9 +606,18 @@ export function TheLongGameCard({
             </>
           )}
         </CardContent>
-        {intervals && !isFirstWeekIntroState && (
+        {(showImportMergeNudge || (intervals && !isFirstWeekIntroState)) && (
           <CardFooter id="ignoreCopy">
             <div className="flex w-full flex-col gap-2">
+              {!isSharing &&
+                !isFirstWeekIntroState &&
+                !isFirstMonthFocusState && (
+                  <LongGameMilestone
+                    milestone={milestone}
+                    dashboardStage={dashboardStage}
+                    sessionCount={sessionCount}
+                  />
+                )}
               {showImportMergeNudge && (
                 <LongGameImportNudge
                   dashboardStage={dashboardStage}

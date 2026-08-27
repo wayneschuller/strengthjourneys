@@ -17,6 +17,7 @@ import {
 } from "@/components/playlist-leaderboard/playlist-utils";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
+import { PlaylistPodium } from "@/components/playlist-leaderboard/playlist-podium";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
 import { TrendingUp, Clock, Heart, Music, ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -100,6 +101,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     { initializeWithValue: false },
   );
   const [currentTab, setCurrentTab] = useState("top");
+  const [playingId, setPlayingId] = useState(null); // Only one inline player open at a time
   const [selectedCategories, setSelectedCategories] = useState([]);
 
   const { toast } = useToast();
@@ -333,6 +335,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
   };
 
   const toggleCategory = (category) => {
+    setPlayingId(null); // Don't leave a player running for a card we're about to filter away
     setSelectedCategories((prev) =>
       prev.includes(category)
         ? prev.filter((c) => c !== category)
@@ -410,8 +413,23 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     : { opacity: 0, scale: 0.97 };
 
   const handlePageChange = (newPage) => {
+    setPlayingId(null);
     setCurrentPage(newPage);
   };
+
+  const togglePlay = (id) => {
+    setPlayingId((prev) => (prev === id ? null : id));
+  };
+
+  // The podium only earns its place where the ranking is real: the Top tab, first page.
+  const showPodium =
+    currentTab === "top" && currentPage === 1 && paginatedPlaylists.length >= 3;
+  const podiumPlaylists = showPodium ? paginatedPlaylists.slice(0, 3) : [];
+  const cardPlaylists = showPodium
+    ? paginatedPlaylists.slice(3)
+    : paginatedPlaylists;
+  const firstCardRank =
+    (currentPage - 1) * ITEMS_PER_PAGE + (showPodium ? 3 : 0) + 1;
 
   // devLog(votes);
   // devLog(playlists);
@@ -510,7 +528,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
 
           <Tabs
             value={currentTab}
-            onValueChange={(value) => setCurrentTab(value)}
+            onValueChange={(value) => {
+              setPlayingId(null);
+              setCurrentTab(value);
+            }}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-3">
@@ -546,33 +567,52 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                   </p>
                 </div>
               ) : (
-                <div className="relative grid grid-cols-1 gap-5 lg:grid-cols-2">
-                  <AnimatePresence initial={false} mode="popLayout">
-                    {paginatedPlaylists.map((playlist) => (
-                      <motion.div
-                        key={playlist.id}
-                        layout
-                        initial={cardInitial}
-                        animate={cardAnimate}
-                        exit={cardExit}
-                        transition={cardTransition}
-                      >
-                        <PlaylistCard
-                          className="h-full"
-                          playlist={playlist}
-                          votes={clientVotes}
-                          handleVote={handleVote}
-                          isAdmin={isAdmin}
-                          onDelete={deletePlaylist}
-                          onEdit={openEditDialog}
-                          onRefresh={refreshPlaylistMetadata}
-                          onSave={toggleSavePlaylist}
-                          isSaved={savedPlaylists.includes(playlist.id)}
-                        />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
+                <>
+                  {showPodium && (
+                    <PlaylistPodium
+                      playlists={podiumPlaylists}
+                      votes={clientVotes}
+                      handleVote={handleVote}
+                      isAdmin={isAdmin}
+                      onSave={toggleSavePlaylist}
+                      savedPlaylists={savedPlaylists}
+                      playingId={playingId}
+                      onTogglePlay={togglePlay}
+                    />
+                  )}
+                  <div className="relative grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <AnimatePresence initial={false} mode="popLayout">
+                      {cardPlaylists.map((playlist, index) => (
+                        <motion.div
+                          key={playlist.id}
+                          layout
+                          initial={cardInitial}
+                          animate={cardAnimate}
+                          exit={cardExit}
+                          transition={cardTransition}
+                        >
+                          <PlaylistCard
+                            className="h-full"
+                            playlist={playlist}
+                            votes={clientVotes}
+                            handleVote={handleVote}
+                            isAdmin={isAdmin}
+                            onDelete={deletePlaylist}
+                            onEdit={openEditDialog}
+                            onRefresh={refreshPlaylistMetadata}
+                            onSave={toggleSavePlaylist}
+                            isSaved={savedPlaylists.includes(playlist.id)}
+                            rank={
+                              currentTab === "top" ? firstCardRank + index : null
+                            }
+                            isPlaying={playingId === playlist.id}
+                            onTogglePlay={togglePlay}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </>
               )}
               <Pagination
                 currentPage={currentPage}

@@ -69,14 +69,14 @@ export function PlaylistReportDialog({ playlist, onOpenChange, onReported }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Report this playlist</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words">
             {playlist
               ? `Tell us what's wrong with "${playlist.title}" and it goes straight to the site owner.`
               : ""}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
           <RadioGroup value={reason} onValueChange={setReason} className="gap-2">
             {PLAYLIST_REPORT_REASONS.map((option) => (
               <div key={option.value} className="flex items-center space-x-2">

@@ -229,8 +229,10 @@ export function validateAndProcessPlaylist(playlistData, isServer = false) {
     typeof playlistData?.description === "string" ? playlistData.description : "";
   const rawUrl = typeof playlistData?.url === "string" ? playlistData.url : "";
 
-  if (!rawTitle || !rawDescription || !rawUrl) {
-    errors.push("Missing required fields");
+  // Description is deliberately optional: it was the field that stopped people submitting,
+  // and the platform gives us a title and artwork from the URL alone.
+  if (!rawTitle || !rawUrl) {
+    errors.push("A playlist link is required");
   }
 
   if (rawTitle.length > 120) {

@@ -9,6 +9,7 @@ import {
   Flag,
   ImageOff,
   ScanEye,
+  Unlink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ export function PlaylistAdminBanner({
   playlistCount,
   reportCount,
   withheldArtCount,
+  brokenLinkCount,
   className,
 }) {
   const [isRevalidating, setIsRevalidating] = useState(false);
@@ -41,7 +43,7 @@ export function PlaylistAdminBanner({
   const handleSweep = async () => {
     if (
       !confirm(
-        "Re-run image moderation over every stored cover art? This calls the moderation API once per playlist.",
+        "Run the health sweep? This re-checks every playlist link and re-moderates every cover image.",
       )
     ) {
       return;
@@ -49,23 +51,19 @@ export function PlaylistAdminBanner({
 
     setIsSweeping(true);
     try {
-      const response = await fetch("/api/playlist-art", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sweep" }),
-      });
+      const response = await fetch("/api/playlist-health", { method: "POST" });
       const data = await response.json();
 
       if (response.ok) {
-        const { checked, approved, rejected, pending, skipped } = data.summary;
+        const s = data.summary;
         alert(
-          `Sweep complete.\n\nChecked: ${checked}\nApproved: ${approved}\nBlocked: ${rejected}\nNo verdict: ${pending}\nNo art: ${skipped}\n\nReload to see the updated page.`,
+          `Health sweep complete.\n\nLinks checked: ${s.checked}\n  live: ${s.live}\n  unreachable: ${s.unreachable}\n  no verdict: ${s.unknown}\n  newly broken: ${s.newlyBroken}\n  recovered: ${s.recovered}\n\nCover art re-checked: ${s.artRechecked}\n  blocked: ${s.artBlocked}\n\nReload to see the updated page.`,
         );
       } else {
         alert(data?.error || "Sweep failed");
       }
     } catch (error) {
-      console.error("Error sweeping cover art:", error);
+      console.error("Error running health sweep:", error);
       alert("Sweep failed");
     } finally {
       setIsSweeping(false);
@@ -115,6 +113,12 @@ export function PlaylistAdminBanner({
             {reportCount} report{reportCount === 1 ? "" : "s"}
           </Badge>
         )}
+        {brokenLinkCount > 0 && (
+          <Badge variant="destructive" className="gap-1">
+            <Unlink className="h-3 w-3" />
+            {brokenLinkCount} broken link{brokenLinkCount === 1 ? "" : "s"}
+          </Badge>
+        )}
         {withheldArtCount > 0 && (
           <Badge variant="secondary" className="gap-1">
             <ImageOff className="h-3 w-3" />
@@ -135,7 +139,7 @@ export function PlaylistAdminBanner({
           className="flex items-center"
         >
           <ScanEye className={cn("mr-1 h-4 w-4", isSweeping && "animate-pulse")} />
-          {isSweeping ? "Sweeping..." : "Moderate all cover art"}
+          {isSweeping ? "Sweeping..." : "Run health sweep"}
         </Button>
         <Button
           variant="outline"

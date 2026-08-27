@@ -22,6 +22,8 @@ import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/play
 import { PlaylistReportDialog } from "@/components/playlist-leaderboard/playlist-report";
 import { PlaylistArtReviewDialog } from "@/components/playlist-leaderboard/playlist-art-review";
 import { PlaylistAdminBanner } from "@/components/playlist-leaderboard/playlist-admin";
+import { VoteWeightBanner } from "@/components/playlist-leaderboard/playlist-vote-weight";
+import { buildLeaderboardJsonLd } from "@/components/playlist-leaderboard/playlist-jsonld";
 import { TrendingUp, Clock, Heart, Music, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   PageContainer,
@@ -460,6 +462,9 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     (total, playlist) => total + (playlist.reportCount || 0),
     0,
   );
+  const brokenLinkCount = playlists.filter(
+    (playlist) => playlist.linkStatus === "broken",
+  ).length;
   const withheldArtCount = playlists.filter(
     (playlist) =>
       playlist.thumbnailStatus === "pending" ||
@@ -510,6 +515,20 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImageURL} />
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(
+              buildLeaderboardJsonLd({
+                playlists: filteredAndSortedPlaylists,
+                canonicalURL,
+                title,
+                description,
+              }),
+            ),
+          }}
+        />
       </Head>
       <PageContainer>
         <PageHeader>
@@ -523,23 +542,13 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
           </PageHeaderDescription>
         </PageHeader>
         <section className="mx-0 md:mx-[10vw]">
-          <h2 className="mb-6 text-sm text-muted-foreground">
-            {authStatus !== "authenticated" ? (
-              <div>
-                Vote for your favorites. Sign in via Google for extra vote
-                weighting.
-              </div>
-            ) : (
-              <div>
-                Your votes count extra — thanks for being a signed-in athlete.
-              </div>
-            )}
-          </h2>
+          <VoteWeightBanner authStatus={authStatus} />
           {isAdmin && (
             <PlaylistAdminBanner
               playlistCount={playlists.length}
               reportCount={totalReports}
               withheldArtCount={withheldArtCount}
+              brokenLinkCount={brokenLinkCount}
             />
           )}
 

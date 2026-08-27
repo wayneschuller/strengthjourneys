@@ -122,7 +122,7 @@ export function PlaylistArtReviewDialog({ playlist, onOpenChange, onUpdated }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Review cover art</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words">
             {playlist ? playlist.title : ""}
           </DialogDescription>
         </DialogHeader>
@@ -141,7 +141,7 @@ export function PlaylistArtReviewDialog({ playlist, onOpenChange, onUpdated }) {
         )}
 
         {!isLoading && art?.thumbnailUrl && (
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             <div className="flex flex-col items-center gap-3">
               <button
                 type="button"

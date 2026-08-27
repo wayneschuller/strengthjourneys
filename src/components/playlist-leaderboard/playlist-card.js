@@ -20,6 +20,7 @@ import {
   Play,
   Pause,
   Flag,
+  Unlink,
 } from "lucide-react";
 
 // Medal treatment for the top three. Deliberately literal colours rather than theme tokens —
@@ -238,15 +239,26 @@ export function PlaylistCard({
             {playlist.title}
           </a>
 
-          <a
-            href={playlist.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <span>{platform.name}</span>
-            <ExternalLink className="h-3 w-3 shrink-0" />
-          </a>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <a
+              href={playlist.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <span>{platform.name}</span>
+              <ExternalLink className="h-3 w-3 shrink-0" />
+            </a>
+            {playlist.linkStatus === "broken" && (
+              <span
+                className="flex items-center gap-1 text-xs text-destructive"
+                title="Our last few checks couldn't reach this playlist"
+              >
+                <Unlink className="h-3 w-3 shrink-0" />
+                Link may be broken
+              </span>
+            )}
+          </div>
 
           <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">
             {playlist.description}

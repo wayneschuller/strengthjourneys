@@ -8,7 +8,6 @@ import {
   moderateThumbnail,
   thumbnailStatusFromVerdict,
 } from "@/lib/playlist-security";
-import { notifyPlaylistModeration } from "@/lib/playlist-moderation-mail";
 
 /*
  * Admin-only cover art moderation.
@@ -29,46 +28,6 @@ async function writeStatus(id, playlist, status) {
   const updated = { ...playlist, id, thumbnailStatus: status };
   await kv.hset("playlists", { [id]: JSON.stringify(updated) });
   return updated;
-}
-
-/**
- * Re-runs image moderation across every stored thumbnail. Written for the backlog of art that
- * predates moderation, but equally useful as a periodic sweep since platform cover art can be
- * swapped out after approval.
- */
-async function sweepAllArt(res) {
-  const playlists = (await kv.hgetall("playlists")) || {};
-  const summary = { checked: 0, approved: 0, rejected: 0, pending: 0, skipped: 0 };
-
-  for (const [id, stored] of Object.entries(playlists)) {
-    const playlist = parseStoredPlaylist(stored);
-    if (!playlist?.thumbnailUrl) {
-      summary.skipped += 1;
-      continue;
-    }
-
-    const verdict = await moderateThumbnail(playlist.thumbnailUrl);
-    const status = thumbnailStatusFromVerdict(verdict);
-    summary.checked += 1;
-    summary[status] += 1;
-
-    if (status !== playlist.thumbnailStatus) {
-      await writeStatus(id, playlist, status);
-    }
-
-    if (status === "rejected") {
-      await notifyPlaylistModeration({
-        event: "image-rejected",
-        playlist: { ...playlist, id },
-        detail: verdict.reason || "flagged during sweep",
-        source: "admin sweep",
-        imageUrl: playlist.thumbnailUrl,
-      });
-    }
-  }
-
-  await revalidateLeaderboard(res);
-  return summary;
 }
 
 export default async function handler(req, res) {
@@ -102,16 +61,6 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     const { id, action } = req.body || {};
-
-    if (action === "sweep") {
-      try {
-        const summary = await sweepAllArt(res);
-        return res.status(200).json({ message: "Sweep complete", summary });
-      } catch (error) {
-        console.error("Error sweeping playlist art:", error);
-        return res.status(500).json({ error: "Sweep failed" });
-      }
-    }
 
     if (action !== "approve" && action !== "reject" && action !== "recheck") {
       return res.status(400).json({ error: "Invalid action" });

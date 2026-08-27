@@ -66,7 +66,18 @@ const MODERATION_MODEL = "omni-moderation-latest";
 
 // The classifier's own `flagged` threshold is tuned for unambiguous violations. Cover art trends
 // "suggestive" long before it trips that, so images get a tighter bar on the sexual categories.
-const SUGGESTIVE_SCORE_LIMIT = 0.2;
+//
+// Calibrated 2026-08-27 against the live library and reference imagery. The model scores intent
+// rather than skin, which leaves a lot of room under the bar:
+//   0.0002 - 0.019  every cover currently in the KV store (highest: "Powerlifting Rage Music")
+//   0.010           a bodybuilding photo, the realistic false-positive risk for a gym site
+//   0.0008          an encyclopedic bikini photo
+//   0.289           a pole dancing photo, which OpenAI's own `flagged` still returns false for
+//
+// 0.1 sits five times above anything real in the library and still catches the suggestive band
+// the built-in threshold waves through. False positives are cheap now that flagged art is held
+// for review rather than discarded: it costs one approve click and an email.
+const SUGGESTIVE_SCORE_LIMIT = 0.1;
 
 /**
  * Single call into OpenAI's moderation endpoint.

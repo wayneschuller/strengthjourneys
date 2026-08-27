@@ -5,21 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 
 /**
- * Shows the visitor what their vote is actually worth, and gives them a way to increase it.
+ * Shows the visitor what their vote is actually worth, and what would make it worth more.
  *
- * The weighting has existed in getVoteWeight() since launch but was never surfaced, and the
- * page promised "extra vote weighting" without offering a sign-in button anywhere.
+ * Weight rides the same ladder as the unlockable themes, so the tier shown here is the theme
+ * the lifter has earned. One body of logged training, two rewards.
  *
  * @param {string} authStatus - next-auth session status.
+ * @param {string} [ssid] - Linked spreadsheet id, so the server can verify training volume.
  */
-export function VoteWeightBanner({ authStatus }) {
+export function VoteWeightBanner({ authStatus, ssid }) {
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
     if (authStatus === "loading") return;
 
     let isCurrent = true;
-    fetch("/api/vote-weight")
+    fetch(`/api/vote-weight${ssid ? `?ssid=${encodeURIComponent(ssid)}` : ""}`)
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => isCurrent && setInfo(data))
       .catch(() => {});
@@ -27,7 +28,7 @@ export function VoteWeightBanner({ authStatus }) {
     return () => {
       isCurrent = false;
     };
-  }, [authStatus]);
+  }, [authStatus, ssid]);
 
   const handleSignIn = () => {
     gaTrackSignInClick("gym-playlist-leaderboard", "vote-weight-banner");
@@ -46,9 +47,13 @@ export function VoteWeightBanner({ authStatus }) {
         </span>
         <div className="min-w-0">
           <p className="font-medium">
-            {isSignedIn
-              ? `Your votes count ${weight}×`
-              : "Your votes count 1×"}
+            Your votes count {weight}&times;
+            {isSignedIn && info?.label && info.unlockedCount > 0 && (
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                &middot; {info.label}
+              </span>
+            )}
           </p>
           {info?.blurb && (
             <p className="text-xs text-muted-foreground">{info.blurb}</p>

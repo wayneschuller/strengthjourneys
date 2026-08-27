@@ -105,6 +105,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     [],
     { initializeWithValue: false },
   );
+  // Vote weight is verified server-side from the linked sheet, so the requests carry its id.
+  const [sheetInfo] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_INFO, null, {
+    initializeWithValue: false,
+  });
   const [reportedPlaylists, setReportedPlaylists] = useLocalStorage(
     LOCAL_STORAGE_KEYS.REPORTED_PLAYLISTS,
     [],
@@ -204,7 +208,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     if (isAdmin) setClientVotes({}); // Just clear votes so UI doesn't get set
 
     try {
-      const result = await sendVote(id, voteType, action);
+      const result = await sendVote(id, voteType, action, sheetInfo?.ssid);
       if (result?.throttled) {
         toast({ description: "You already voted for this recently." });
         return;
@@ -542,7 +546,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
           </PageHeaderDescription>
         </PageHeader>
         <section className="mx-0 md:mx-[10vw]">
-          <VoteWeightBanner authStatus={authStatus} />
+          <VoteWeightBanner authStatus={authStatus} ssid={sheetInfo?.ssid} />
           {isAdmin && (
             <PlaylistAdminBanner
               playlistCount={playlists.length}
@@ -711,7 +715,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
   );
 }
 
-export async function sendVote(id, voteType, action) {
+export async function sendVote(id, voteType, action, ssid) {
   if (voteType !== "upVote" && voteType !== "downVote") {
     throw new Error('Invalid voteType. Must be "upvote" or "downvote".');
   }
@@ -726,7 +730,7 @@ export async function sendVote(id, voteType, action) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id, voteType }),
+      body: JSON.stringify({ id, voteType, ssid }),
     });
 
     if (response.status === 429) {

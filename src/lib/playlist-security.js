@@ -1,5 +1,6 @@
 import { kv } from "@/lib/kv";
-import { getUserKvKey } from "@/lib/user-kv-keys";
+import { getVoteWeightFromMetrics } from "@/lib/rewards/vote-weight";
+import { getVerifiedTrainingMetrics } from "@/lib/rewards/server-metrics";
 
 const LEADERBOARD_ADMIN_ENV = "STRENGTH_JOURNEYS_LEADERBOARD_ADMINS";
 
@@ -30,29 +31,26 @@ export function getRequestClientIp(req) {
 }
 
 /**
- * Returns a vote weight (1–11) based on the user's app tenure from KV.
- *   Anonymous              → 1
- *   Signed in, no sheet    → 3
- *   Sheet linked < 30 days → 5
- *   Sheet linked 30-180d   → 8
- *   Sheet linked 180d+     → 11
+ * Resolves the caller's vote weight from server-verified training history.
+ *
+ * This used to score how long ago someone linked a sheet, which rewarded holding an account
+ * rather than doing the work. It now rides the same ladder as the unlockable themes, so one
+ * body of logged training drives both: see lib/rewards/vote-weight.js.
+ *
+ * @param {Object|null} session - next-auth session for the voter.
+ * @param {string} [ssid] - Spreadsheet id from the client, used only when KV has none.
+ * @returns {Promise<Object>} Weight descriptor from getVoteWeightFromMetrics().
  */
-export async function getVoteWeight(email) {
-  if (!email) return 1;
+export async function getVoteWeightInfo(session, ssid) {
+  const email = session?.user?.email;
+  if (!email) return getVoteWeightFromMetrics(null, false);
 
   try {
-    const record = await kv.get(getUserKvKey(email));
-    if (!record?.connectedAt) return 3;
-
-    const daysSinceConnected =
-      (Date.now() - new Date(record.connectedAt).getTime()) /
-      (1000 * 60 * 60 * 24);
-
-    if (daysSinceConnected < 30) return 5;
-    if (daysSinceConnected < 180) return 8;
-    return 11;
+    const metrics = await getVerifiedTrainingMetrics({ session, ssid });
+    return getVoteWeightFromMetrics(metrics, true);
   } catch {
-    return 3; // fail safe: treat as signed-in but no sheet
+    // Fail to the signed-in floor rather than denying someone their vote.
+    return getVoteWeightFromMetrics(null, true);
   }
 }
 

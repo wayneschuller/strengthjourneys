@@ -69,6 +69,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   IMPORT_PROCESS: "SJ_import_process", // ~Mar 2026: Client-side import/save lifecycle for preview and history imports.
   COFFEE_NUDGE_CLICK: "SJ_coffee_nudge_click", // ~Apr 2026: User clicked a Buy-Me-a-Coffee link in an in-app nudge surface.
   LONG_GAME_LOG_CTA: "SJ_long_game_log_cta", // ~Aug 2026: User clicked a "log a session" CTA on an early-stage Long Game card.
+  HOME_WELCOME_ACTION: "SJ_home_welcome_action", // ~Aug 2026: Signed-in lifter without a linked sheet acted on the activation home (fork CTA or reading rail).
 });
 
 const UTM_STORAGE_KEY = "ga_utm";

@@ -109,6 +109,7 @@ export const LOCAL_STORAGE_KEYS = {
   // Playlist leaderboard
   PLAYLIST_VOTES: "SJ_playlistVotes",
   SAVED_PLAYLISTS: "SJ_savedPlaylists",
+  REPORTED_PLAYLISTS: "SJ_reportedPlaylists",
 
   // Visualizer
   TIME_RANGE: "SJ_timeRange",

@@ -26,7 +26,6 @@
     "@fontsource/ibm-plex-sans-condensed": "^5.2.8",
     "@fontsource/libre-baskerville": "^5.2.10",
     "@fontsource/outfit": "^5.2.8",
-    "@formkit/auto-animate": "^0.10.0",
     "@googleworkspace/drive-picker-react": "^0.2.0",
     "@portabletext/react": "^6.2.0",
     "@radix-ui/react-accordion": "^1.2.16",

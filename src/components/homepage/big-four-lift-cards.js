@@ -53,11 +53,15 @@ import { Badge } from "@/components/ui/badge";
  * @param {boolean} [props.enhancedStats=true] - When false, always render the plain descriptive
  *   version even if the user has linked data. Used to delay the richer personalized treatment
  *   until the dashboard has enough history for it to feel earned.
+ * @param {string} [props.gridClassName] - Tailwind grid classes for the card container. Defaults
+ *   to the full-width landing page row. The signed-in-no-sheet welcome state passes a 2x2 grid so
+ *   the four lifts can sit in the hero slot beside the activation CTAs.
  */
 export function BigFourLiftCards({
   lifts,
   animated = true,
   enhancedStats = true,
+  gridClassName = "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4",
 }) {
   const {
     hasUserData,
@@ -197,7 +201,7 @@ export function BigFourLiftCards({
   })();
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div className={gridClassName}>
       {lifts.map((lift, index) => {
         const stats = getStatsForLift(lift.liftType);
         const hasAnyData =

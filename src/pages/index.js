@@ -9,6 +9,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
+import { sanityIOClient } from "@/lib/sanity-io.js";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useMemo } from "react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -77,6 +78,7 @@ import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
+import { HomeWelcome } from "@/components/homepage/home-welcome";
 import { BigFourLiftCards } from "@/components/homepage/big-four-lift-cards";
 import { BigFourSubtitle } from "@/components/homepage/big-four-subtitle";
 import { GorillaIcon } from "@/components/gorilla-icon";
@@ -371,7 +373,38 @@ const structuredData = {
   ],
 };
 
-export default function Home() {
+/**
+ * Fetches the featured articles used by the signed-in-no-sheet reading rail.
+ *
+ * Wrapped so a Sanity outage degrades the rail to its evergreen tile instead of
+ * failing the whole home page build. The JSON round-trip strips any undefined
+ * fields Sanity may omit, which Next refuses to serialize.
+ */
+export async function getStaticProps() {
+  let starterArticles = [];
+
+  try {
+    const articles = await sanityIOClient.fetch(`
+      *[_type == "post" && publishedAt < now() && "Featured Articles" in categories[]->title] | order(publishedAt desc)[0...2] {
+        title,
+        "slug": slug.current,
+        publishedAt,
+        mainImage,
+        description,
+      }
+    `);
+    starterArticles = JSON.parse(JSON.stringify(articles || []));
+  } catch (error) {
+    console.error("Home page featured article fetch failed:", error?.message);
+  }
+
+  return {
+    props: { starterArticles },
+    revalidate: 60 * 60, // Revalidate hourly, matching /articles
+  };
+}
+
+export default function Home({ starterArticles = [] }) {
   const title = "Free Barbell Lifting Analysis Tools | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/";
   const description =
@@ -413,6 +446,20 @@ export default function Home() {
   const showEnhancedBigFourStats =
     hasUserData &&
     (dashboardStage === "early_base" || dashboardStage === "established");
+
+  // Signed in but nothing linked. Under today's auth this is the gap between
+  // sign-in and sheet setup; once sign-in stops asking for Drive scope up front
+  // it becomes the state every new account lands in, so it gets its own home
+  // rather than the stranger-facing hero with one swapped button.
+  //
+  // isReturningUserLoading keeps a returning lifter from flashing through this
+  // on their way to the dashboard, and hasUserData covers the case where a CSV
+  // import has already given us real data without a sheet.
+  const showWelcome =
+    !isReturningUserLoading &&
+    authStatus === "authenticated" &&
+    !hasUserData &&
+    !sheetInfo?.ssid;
 
   // Only collapse the landing hero once the user has real linked data and can
   // meaningfully land on the dashboard. Signed-in demo mode should still feel
@@ -486,7 +533,14 @@ export default function Home() {
       />
       <main className="mb-4 px-3 md:px-0">
         <div className="flex min-h-[480px] flex-col items-center justify-center transition-all duration-800">
-          {showHeroSection && !isReturningUserLoading ? (
+          {showWelcome ? (
+            <div className="inset-0 h-full w-full">
+              <HomeWelcome
+                starterArticles={starterArticles}
+                lifts={mainBarbellLifts}
+              />
+            </div>
+          ) : showHeroSection && !isReturningUserLoading ? (
             <div
               className={`inset-0 h-full w-full transition-all duration-800 ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
             >
@@ -503,20 +557,24 @@ export default function Home() {
 
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
-        <>
-          <h2
-            className={`mt-8 text-xl font-semibold ${showBigFourSubtitle ? "mb-1" : "mb-4"}`}
-          >
-            🏋️ The Big Four Barbell Lifts
-          </h2>
-          {showBigFourSubtitle && <BigFourSubtitle className="mb-4" />}
+        {/* The welcome state promotes these into the hero slot, so skip the
+            second copy rather than showing the same four cards twice. */}
+        {!showWelcome && (
+          <>
+            <h2
+              className={`mt-8 text-xl font-semibold ${showBigFourSubtitle ? "mb-1" : "mb-4"}`}
+            >
+              🏋️ The Big Four Barbell Lifts
+            </h2>
+            {showBigFourSubtitle && <BigFourSubtitle className="mb-4" />}
 
-          <BigFourLiftCards
-            lifts={mainBarbellLifts}
-            animated={bigFourAnimated}
-            enhancedStats={showEnhancedBigFourStats}
-          />
-        </>
+            <BigFourLiftCards
+              lifts={mainBarbellLifts}
+              animated={bigFourAnimated}
+              enhancedStats={showEnhancedBigFourStats}
+            />
+          </>
+        )}
 
         <Separator className="my-8" />
 

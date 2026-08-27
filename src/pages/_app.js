@@ -10,6 +10,7 @@ import { Layout } from "@/components/ui-shell/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { AnalyticsSession } from "@/components/ui-shell/analytics-session";
 import { SessionProvider } from "next-auth/react";
+import { MotionConfig } from "motion/react";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import Script from "next/script";
@@ -54,42 +55,44 @@ export default function App({ Component, pageProps, session }) {
 
   return (
     <>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="light"
-        enableSystem={false}
-        // New themes added to globals.css get added here
-        themes={[
-          "light",
-          "dark",
-          "blueprint",
-          "blueprint-dark",
-          "starry-night",
-          "starry-night-dark",
-          "retro-arcade",
-          "retro-arcade-dark",
-          "neo-brutalism",
-          "neo-brutalism-dark",
-        ]}
-        // Keep theme changes instant; transitions remain enabled for now.
-        // disableTransitionOnChange
-      >
-        <SessionProvider session={session}>
-          <AnalyticsSession />
-          <UserLiftingDataProvider>
-            <TimerProvider>
-              <LiftColorsProvider>
-                <AthleteBioProvider>
-                  <Layout>
-                    <Component {...pageProps} />
-                    <Toaster />
-                  </Layout>
-                </AthleteBioProvider>
-              </LiftColorsProvider>
-            </TimerProvider>
-          </UserLiftingDataProvider>
-        </SessionProvider>
-      </ThemeProvider>
+      <MotionConfig reducedMotion="user">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          // New themes added to globals.css get added here
+          themes={[
+            "light",
+            "dark",
+            "blueprint",
+            "blueprint-dark",
+            "starry-night",
+            "starry-night-dark",
+            "retro-arcade",
+            "retro-arcade-dark",
+            "neo-brutalism",
+            "neo-brutalism-dark",
+          ]}
+          // Keep theme changes instant; transitions remain enabled for now.
+          // disableTransitionOnChange
+        >
+          <SessionProvider session={session}>
+            <AnalyticsSession />
+            <UserLiftingDataProvider>
+              <TimerProvider>
+                <LiftColorsProvider>
+                  <AthleteBioProvider>
+                    <Layout>
+                      <Component {...pageProps} />
+                      <Toaster />
+                    </Layout>
+                  </AthleteBioProvider>
+                </LiftColorsProvider>
+              </TimerProvider>
+            </UserLiftingDataProvider>
+          </SessionProvider>
+        </ThemeProvider>
+      </MotionConfig>
       <Analytics />
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}

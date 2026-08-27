@@ -15,7 +15,7 @@ import {
   fetchPlaylists,
   PLAYLIST_CATEGORIES,
 } from "@/components/playlist-leaderboard/playlist-utils";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
 import { TrendingUp, Clock, Heart, Music, ChevronLeft, ChevronRight } from "lucide-react";
@@ -103,7 +103,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
   const [selectedCategories, setSelectedCategories] = useState([]);
 
   const { toast } = useToast();
-  const [parent] = useAutoAnimate();
+  const prefersReducedMotion = useReducedMotion();
   const isAdmin = Boolean(session?.user?.isLeaderboardAdmin);
 
   // On mount - delete all the localstorage votes older than 10 minutes so the user can vote again
@@ -394,6 +394,21 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     currentPage * ITEMS_PER_PAGE,
   );
 
+  // Cards enter, leave and reshuffle whenever the tab, category filter or page
+  // changes. Matches the lift card motion in src/pages/log.js.
+  const cardTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.22, ease: "easeOut" };
+  const cardInitial = prefersReducedMotion
+    ? { opacity: 1 }
+    : { opacity: 0, y: 12, scale: 0.98 };
+  const cardAnimate = prefersReducedMotion
+    ? { opacity: 1 }
+    : { opacity: 1, y: 0, scale: 1 };
+  const cardExit = prefersReducedMotion
+    ? { opacity: 0 }
+    : { opacity: 0, scale: 0.97 };
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
@@ -531,21 +546,32 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                   </p>
                 </div>
               ) : (
-                <div ref={parent} className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                  {paginatedPlaylists.map((playlist) => (
-                    <PlaylistCard
-                      key={playlist.id}
-                      playlist={playlist}
-                      votes={clientVotes}
-                      handleVote={handleVote}
-                      isAdmin={isAdmin}
-                      onDelete={deletePlaylist}
-                      onEdit={openEditDialog}
-                      onRefresh={refreshPlaylistMetadata}
-                      onSave={toggleSavePlaylist}
-                      isSaved={savedPlaylists.includes(playlist.id)}
-                    />
-                  ))}
+                <div className="relative grid grid-cols-1 gap-5 lg:grid-cols-2">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {paginatedPlaylists.map((playlist) => (
+                      <motion.div
+                        key={playlist.id}
+                        layout
+                        initial={cardInitial}
+                        animate={cardAnimate}
+                        exit={cardExit}
+                        transition={cardTransition}
+                      >
+                        <PlaylistCard
+                          className="h-full"
+                          playlist={playlist}
+                          votes={clientVotes}
+                          handleVote={handleVote}
+                          isAdmin={isAdmin}
+                          onDelete={deletePlaylist}
+                          onEdit={openEditDialog}
+                          onRefresh={refreshPlaylistMetadata}
+                          onSave={toggleSavePlaylist}
+                          isSaved={savedPlaylists.includes(playlist.id)}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
               )}
               <Pagination

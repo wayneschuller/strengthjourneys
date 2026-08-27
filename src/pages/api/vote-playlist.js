@@ -2,13 +2,13 @@ import { kv } from "@/lib/kv";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { parseStoredPlaylist } from "@/components/playlist-leaderboard/playlist-utils";
-import { getRequestClientIp, isValidPlaylistId, isLeaderboardAdminEmail, getVoteWeight } from "@/lib/playlist-security";
+import { getRequestClientIp, isValidPlaylistId, isLeaderboardAdminEmail, getVoteWeightInfo } from "@/lib/playlist-security";
 
 const VOTE_THROTTLE_SECONDS = 10 * 60;
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
-  const { id, voteType } = req.body || {};
+  const { id, voteType, ssid } = req.body || {};
 
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method Not Allowed" });
@@ -51,10 +51,15 @@ export default async function handler(req, res) {
       }
     }
 
-    const voteWeight = await getVoteWeight(session?.user?.email);
-    const newVotes = await kv.hincrby(`playlists:${id}`, field, voteWeight);
+    const weightInfo = await getVoteWeightInfo(session, ssid);
+    const newVotes = await kv.hincrby(`playlists:${id}`, field, weightInfo.weight);
 
-    res.status(200).json({ id, [field]: newVotes });
+    res.status(200).json({
+      id,
+      [field]: newVotes,
+      weight: weightInfo.weight,
+      weightLabel: weightInfo.label,
+    });
   } catch (error) {
     res
       .status(500)

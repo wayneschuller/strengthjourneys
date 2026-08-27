@@ -47,7 +47,7 @@ export function getRewardRequirement(reward) {
   return requirements.join(", ").replace(/, ([^,]*)$/, ", or $1");
 }
 
-function getTrainingRewardMetrics(parsedData) {
+export function getTrainingRewardMetrics(parsedData) {
   const completedSets = Array.isArray(parsedData)
     ? parsedData.filter((lift) => !lift?.isGoal)
     : [];
@@ -77,7 +77,7 @@ function getTrainingRewardMetrics(parsedData) {
   };
 }
 
-function isRewardUnlocked(reward, metrics) {
+export function isRewardUnlocked(reward, metrics) {
   if (!metrics.hasTrainingData) return false;
 
   const criteriaMatch = reward.criteria.some(

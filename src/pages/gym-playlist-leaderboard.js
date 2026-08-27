@@ -17,7 +17,13 @@ import {
 } from "@/components/playlist-leaderboard/playlist-utils";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
+import { PlaylistPodium } from "@/components/playlist-leaderboard/playlist-podium";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
+import { PlaylistReportDialog } from "@/components/playlist-leaderboard/playlist-report";
+import { PlaylistArtReviewDialog } from "@/components/playlist-leaderboard/playlist-art-review";
+import { PlaylistAdminBanner } from "@/components/playlist-leaderboard/playlist-admin";
+import { VoteWeightBanner } from "@/components/playlist-leaderboard/playlist-vote-weight";
+import { buildLeaderboardJsonLd } from "@/components/playlist-leaderboard/playlist-jsonld";
 import { TrendingUp, Clock, Heart, Music, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   PageContainer,
@@ -99,7 +105,19 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     [],
     { initializeWithValue: false },
   );
+  // Vote weight is verified server-side from the linked sheet, so the requests carry its id.
+  const [sheetInfo] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_INFO, null, {
+    initializeWithValue: false,
+  });
+  const [reportedPlaylists, setReportedPlaylists] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.REPORTED_PLAYLISTS,
+    [],
+    { initializeWithValue: false },
+  );
   const [currentTab, setCurrentTab] = useState("top");
+  const [playingId, setPlayingId] = useState(null); // Only one inline player open at a time
+  const [reportTarget, setReportTarget] = useState(null);
+  const [artReviewTarget, setArtReviewTarget] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
 
   const { toast } = useToast();
@@ -190,7 +208,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     if (isAdmin) setClientVotes({}); // Just clear votes so UI doesn't get set
 
     try {
-      const result = await sendVote(id, voteType, action);
+      const result = await sendVote(id, voteType, action, sheetInfo?.ssid);
       if (result?.throttled) {
         toast({ description: "You already voted for this recently." });
         return;
@@ -333,6 +351,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
   };
 
   const toggleCategory = (category) => {
+    setPlayingId(null); // Don't leave a player running for a card we're about to filter away
     setSelectedCategories((prev) =>
       prev.includes(category)
         ? prev.filter((c) => c !== category)
@@ -410,8 +429,61 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     : { opacity: 0, scale: 0.97 };
 
   const handlePageChange = (newPage) => {
+    setPlayingId(null);
     setCurrentPage(newPage);
   };
+
+  const togglePlay = (id) => {
+    setPlayingId((prev) => (prev === id ? null : id));
+  };
+
+  const handleReported = (id) => {
+    setReportedPlaylists((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    toast({
+      title: "Report sent",
+      description:
+        "Thanks — that goes straight to the site owner. We'll take a look.",
+    });
+  };
+
+  // An admin approving or hiding cover art changes what the public payload would contain,
+  // so mirror the new shape into local state rather than waiting on revalidation.
+  const applyArtDecision = (updatedPlaylist) => {
+    setPlaylists((prev) =>
+      prev.map((playlist) =>
+        playlist.id === updatedPlaylist.id
+          ? {
+              ...playlist,
+              thumbnailUrl: updatedPlaylist.thumbnailUrl,
+              thumbnailStatus: updatedPlaylist.thumbnailStatus,
+            }
+          : playlist,
+      ),
+    );
+  };
+
+  const totalReports = playlists.reduce(
+    (total, playlist) => total + (playlist.reportCount || 0),
+    0,
+  );
+  const brokenLinkCount = playlists.filter(
+    (playlist) => playlist.linkStatus === "broken",
+  ).length;
+  const withheldArtCount = playlists.filter(
+    (playlist) =>
+      playlist.thumbnailStatus === "pending" ||
+      playlist.thumbnailStatus === "rejected",
+  ).length;
+
+  // The podium only earns its place where the ranking is real: the Top tab, first page.
+  const showPodium =
+    currentTab === "top" && currentPage === 1 && paginatedPlaylists.length >= 3;
+  const podiumPlaylists = showPodium ? paginatedPlaylists.slice(0, 3) : [];
+  const cardPlaylists = showPodium
+    ? paginatedPlaylists.slice(3)
+    : paginatedPlaylists;
+  const firstCardRank =
+    (currentPage - 1) * ITEMS_PER_PAGE + (showPodium ? 3 : 0) + 1;
 
   // devLog(votes);
   // devLog(playlists);
@@ -447,6 +519,20 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImageURL} />
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(
+              buildLeaderboardJsonLd({
+                playlists: filteredAndSortedPlaylists,
+                canonicalURL,
+                title,
+                description,
+              }),
+            ),
+          }}
+        />
       </Head>
       <PageContainer>
         <PageHeader>
@@ -460,18 +546,16 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
           </PageHeaderDescription>
         </PageHeader>
         <section className="mx-0 md:mx-[10vw]">
-          <h2 className="mb-6 text-sm text-muted-foreground">
-            {authStatus !== "authenticated" ? (
-              <div>
-                Vote for your favorites. Sign in via Google for extra vote
-                weighting.
-              </div>
-            ) : (
-              <div>
-                Your votes count extra — thanks for being a signed-in athlete.
-              </div>
-            )}
-          </h2>
+          <VoteWeightBanner authStatus={authStatus} ssid={sheetInfo?.ssid} />
+          {isAdmin && (
+            <PlaylistAdminBanner
+              playlistCount={playlists.length}
+              reportCount={totalReports}
+              withheldArtCount={withheldArtCount}
+              brokenLinkCount={brokenLinkCount}
+            />
+          )}
+
           {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
           <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
             <div className="flex-grow pr-4">
@@ -499,6 +583,18 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
             </div>
           </div>
 
+          <PlaylistReportDialog
+            playlist={reportTarget}
+            onOpenChange={(open) => !open && setReportTarget(null)}
+            onReported={handleReported}
+          />
+
+          <PlaylistArtReviewDialog
+            playlist={artReviewTarget}
+            onOpenChange={(open) => !open && setArtReviewTarget(null)}
+            onUpdated={applyArtDecision}
+          />
+
           <PlaylistCreateEditDialog
             isOpen={isDialogOpen}
             onOpenChange={setIsDialogOpen}
@@ -510,7 +606,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
 
           <Tabs
             value={currentTab}
-            onValueChange={(value) => setCurrentTab(value)}
+            onValueChange={(value) => {
+              setPlayingId(null);
+              setCurrentTab(value);
+            }}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-3">
@@ -546,33 +645,61 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                   </p>
                 </div>
               ) : (
-                <div className="relative grid grid-cols-1 gap-5 lg:grid-cols-2">
-                  <AnimatePresence initial={false} mode="popLayout">
-                    {paginatedPlaylists.map((playlist) => (
-                      <motion.div
-                        key={playlist.id}
-                        layout
-                        initial={cardInitial}
-                        animate={cardAnimate}
-                        exit={cardExit}
-                        transition={cardTransition}
-                      >
-                        <PlaylistCard
-                          className="h-full"
-                          playlist={playlist}
-                          votes={clientVotes}
-                          handleVote={handleVote}
-                          isAdmin={isAdmin}
-                          onDelete={deletePlaylist}
-                          onEdit={openEditDialog}
-                          onRefresh={refreshPlaylistMetadata}
-                          onSave={toggleSavePlaylist}
-                          isSaved={savedPlaylists.includes(playlist.id)}
-                        />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
+                <>
+                  {showPodium && (
+                    <PlaylistPodium
+                      playlists={podiumPlaylists}
+                      votes={clientVotes}
+                      handleVote={handleVote}
+                      isAdmin={isAdmin}
+                      onSave={toggleSavePlaylist}
+                      savedPlaylists={savedPlaylists}
+                      playingId={playingId}
+                      onTogglePlay={togglePlay}
+                      onReport={setReportTarget}
+                      reportedPlaylists={reportedPlaylists}
+                      onReviewArt={setArtReviewTarget}
+                      onEdit={openEditDialog}
+                      onDelete={deletePlaylist}
+                      onRefresh={refreshPlaylistMetadata}
+                    />
+                  )}
+                  <div className="relative grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <AnimatePresence initial={false} mode="popLayout">
+                      {cardPlaylists.map((playlist, index) => (
+                        <motion.div
+                          key={playlist.id}
+                          layout
+                          initial={cardInitial}
+                          animate={cardAnimate}
+                          exit={cardExit}
+                          transition={cardTransition}
+                        >
+                          <PlaylistCard
+                            className="h-full"
+                            playlist={playlist}
+                            votes={clientVotes}
+                            handleVote={handleVote}
+                            isAdmin={isAdmin}
+                            onDelete={deletePlaylist}
+                            onEdit={openEditDialog}
+                            onRefresh={refreshPlaylistMetadata}
+                            onSave={toggleSavePlaylist}
+                            isSaved={savedPlaylists.includes(playlist.id)}
+                            rank={
+                              currentTab === "top" ? firstCardRank + index : null
+                            }
+                            isPlaying={playingId === playlist.id}
+                            onTogglePlay={togglePlay}
+                            onReport={setReportTarget}
+                            isReported={reportedPlaylists.includes(playlist.id)}
+                            onReviewArt={setArtReviewTarget}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </>
               )}
               <Pagination
                 currentPage={currentPage}
@@ -588,7 +715,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
   );
 }
 
-export async function sendVote(id, voteType, action) {
+export async function sendVote(id, voteType, action, ssid) {
   if (voteType !== "upVote" && voteType !== "downVote") {
     throw new Error('Invalid voteType. Must be "upvote" or "downvote".');
   }
@@ -603,7 +730,7 @@ export async function sendVote(id, voteType, action) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id, voteType }),
+      body: JSON.stringify({ id, voteType, ssid }),
     });
 
     if (response.status === 429) {

@@ -12,7 +12,12 @@ import {
   isLeaderboardAdminEmail,
   isValidPlaylistId,
   isContentFlaggedByAI,
+  moderateThumbnail,
+  thumbnailStatusFromVerdict,
 } from "@/lib/playlist-security";
+import {
+  notifyPlaylistModeration,
+} from "@/lib/playlist-moderation-mail";
 import { RegExpMatcher, englishDataset } from "obscenity";
 
 // Initialize obscenity matcher
@@ -56,22 +61,24 @@ export default async function handler(req, res) {
         }
 
         const oembedData = await fetchPlaylistOembedData(validatedPlaylist.url);
+        const candidateThumbnail = oembedData?.thumbnailUrl || null;
         const playlistRecord = {
           ...validatedPlaylist,
           id: generateShortUuid(),
           timestamp: Date.now(),
           ...(oembedData?.title && { title: oembedData.title }),
-          ...(oembedData?.thumbnailUrl && { thumbnailUrl: oembedData.thumbnailUrl }),
         };
 
-        // Check for profanity/AI-flagged content in title and description
+        // Check for profanity/AI-flagged content in title and description, and run the cover
+        // art through image moderation at the same time.
         const combinedText = `${playlistRecord.title} ${playlistRecord.description}`;
-        const [hasProfanity, isFlagged] = await Promise.all([
+        const [hasProfanity, isFlagged, thumbnailVerdict] = await Promise.all([
           Promise.resolve(
             containsProfanity(playlistRecord.title) ||
               containsProfanity(playlistRecord.description),
           ),
           isContentFlaggedByAI(combinedText),
+          moderateThumbnail(candidateThumbnail),
         ]);
 
         if (hasProfanity || isFlagged) {
@@ -80,11 +87,47 @@ export default async function handler(req, res) {
             `Content rejected for new playlist submission. ID: ${playlistRecord.id} (IP: ${clientIp}) profanity=${hasProfanity} ai=${isFlagged}`,
           );
 
+          await notifyPlaylistModeration({
+            event: "text-rejected",
+            playlist: playlistRecord,
+            detail: hasProfanity ? "profanity filter" : "AI moderation",
+            source: "new submission",
+            imageUrl: candidateThumbnail,
+          });
+
           // Return a success response to the client to avoid tipping off bad actors
           return res.status(201).json({
             message: "Playlist added successfully",
             playlist: playlistRecord,
           });
+        }
+
+        // Art is stored either way so an admin can review it, but only "approved" art is ever
+        // handed to the public page. Flagged art holds the playlist rather than binning it —
+        // a false positive should cost the submitter their cover, not their submission.
+        if (candidateThumbnail) {
+          playlistRecord.thumbnailUrl = candidateThumbnail;
+          playlistRecord.thumbnailStatus =
+            thumbnailStatusFromVerdict(thumbnailVerdict);
+
+          if (playlistRecord.thumbnailStatus !== "approved") {
+            console.log(
+              `Cover art withheld for playlist ${playlistRecord.id} (IP: ${clientIp}) status=${playlistRecord.thumbnailStatus} reason=${thumbnailVerdict.reason || "no verdict"}`,
+            );
+
+            await notifyPlaylistModeration({
+              event:
+                playlistRecord.thumbnailStatus === "rejected"
+                  ? "image-rejected"
+                  : "image-pending",
+              playlist: playlistRecord,
+              detail:
+                thumbnailVerdict.reason ||
+                "moderation unavailable (no key, timeout or API error)",
+              source: "new submission",
+              imageUrl: candidateThumbnail,
+            });
+          }
         }
 
         // Normal case - good playlist gets added to the KV store.
@@ -103,6 +146,9 @@ export default async function handler(req, res) {
           message: "Playlist added successfully",
           playlist: {
             ...playlistRecord,
+            ...(playlistRecord.thumbnailStatus !== "approved" && {
+              thumbnailUrl: undefined,
+            }),
             upVotes: 0,
             downVotes: 0,
           },
@@ -219,11 +265,52 @@ export default async function handler(req, res) {
         }
 
         const oembedData = await fetchPlaylistOembedData(existingPlaylist.url);
+        const refreshedThumbnail = oembedData?.thumbnailUrl || null;
+
+        // Cover art on the source platform is editable after submission, so a refresh has to
+        // re-moderate rather than trust the earlier verdict. Art that changed goes back through
+        // review; art that is byte-for-byte the same URL keeps an admin's earlier approval.
+        const isSameArt =
+          refreshedThumbnail && refreshedThumbnail === existingPlaylist.thumbnailUrl;
+        const keepsAdminApproval =
+          isSameArt && existingPlaylist.thumbnailStatus === "approved";
+
+        const refreshVerdict = keepsAdminApproval
+          ? { flagged: false, checked: true, reason: null }
+          : await moderateThumbnail(refreshedThumbnail);
+
         const refreshedPlaylist = {
           ...existingPlaylist,
-          ...(oembedData?.thumbnailUrl && { thumbnailUrl: oembedData.thumbnailUrl }),
           ...(oembedData?.title && { title: oembedData.title }),
         };
+
+        delete refreshedPlaylist.thumbnailUrl;
+        delete refreshedPlaylist.thumbnailStatus;
+
+        if (refreshedThumbnail) {
+          refreshedPlaylist.thumbnailUrl = refreshedThumbnail;
+          refreshedPlaylist.thumbnailStatus =
+            thumbnailStatusFromVerdict(refreshVerdict);
+
+          if (refreshedPlaylist.thumbnailStatus !== "approved") {
+            console.log(
+              `Cover art withheld on refresh for playlist ${rawId} status=${refreshedPlaylist.thumbnailStatus} reason=${refreshVerdict.reason || "no verdict"}`,
+            );
+
+            await notifyPlaylistModeration({
+              event:
+                refreshedPlaylist.thumbnailStatus === "rejected"
+                  ? "image-rejected"
+                  : "image-pending",
+              playlist: refreshedPlaylist,
+              detail:
+                refreshVerdict.reason ||
+                "moderation unavailable (no key, timeout or API error)",
+              source: "metadata refresh",
+              imageUrl: refreshedThumbnail,
+            });
+          }
+        }
 
         await kv.hset("playlists", {
           [rawId]: JSON.stringify(refreshedPlaylist),

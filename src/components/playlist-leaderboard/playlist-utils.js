@@ -15,6 +15,7 @@ if (typeof window !== "undefined") {
 export async function fetchPlaylists() {
   try {
     const playlists = (await kv.hgetall("playlists")) || {};
+    const reportCounts = (await kv.hgetall("playlist-reports")) || {};
 
     const playlistsWithVotes = await Promise.all(
       Object.entries(playlists).map(async ([id, storedPlaylist]) => {
@@ -27,10 +28,22 @@ export async function fetchPlaylists() {
         const upVotes = parseInt(votes?.upVotes) || 0;
         const downVotes = parseInt(votes?.downVotes) || 0;
 
+        // Cover art only reaches the public page once it is approved. Records written before
+        // image moderation existed have no status and stay grandfathered in — the admin
+        // banner's sweep is how those get a real verdict.
+        const thumbnailStatus = playlist.thumbnailUrl
+          ? playlist.thumbnailStatus || "legacy"
+          : null;
+        const isArtPublic =
+          thumbnailStatus === "approved" || thumbnailStatus === "legacy";
+
         return {
           ...playlist,
+          thumbnailUrl: isArtPublic ? playlist.thumbnailUrl : null,
+          thumbnailStatus,
           upVotes: upVotes,
           downVotes: downVotes,
+          reportCount: parseInt(reportCounts[id]) || 0,
         };
       }),
     );
@@ -60,6 +73,17 @@ export const WHITELISTED_SITES = [
   "last.fm", // Music discovery and streaming
   "iheartradio.com", // Streaming radio and custom playlists
   "boomplay.com", // African music streaming service
+];
+
+// Reasons offered in the report dialog. Kept here so the client dialog and the API route
+// validate against exactly the same list.
+export const PLAYLIST_REPORT_REASONS = [
+  { value: "explicit-image", label: "Sexual or explicit cover art" },
+  { value: "offensive", label: "Offensive or hateful content" },
+  { value: "not-music", label: "Not a music playlist" },
+  { value: "broken", label: "Broken or dead link" },
+  { value: "spam", label: "Spam or self-promotion" },
+  { value: "other", label: "Something else" },
 ];
 
 export const PLAYLIST_CATEGORIES = [

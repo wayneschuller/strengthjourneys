@@ -12,10 +12,12 @@ import {
   scoreColor,
 } from "@/components/playlist-leaderboard/playlist-card";
 import { getPlaylistPlatform } from "@/components/playlist-leaderboard/playlist-utils";
+import { PlaylistAdminMenu } from "@/components/playlist-leaderboard/playlist-admin";
 import {
   ArrowBigUp,
   ArrowBigDown,
   Crown,
+  Flag,
   Heart,
   Music,
   Play,
@@ -49,6 +51,12 @@ function PodiumTile({
   isSaved,
   isPlaying,
   onTogglePlay,
+  onReport,
+  isReported,
+  onReviewArt,
+  onEdit,
+  onDelete,
+  onRefresh,
 }) {
   const [hasThumbnailError, setHasThumbnailError] = useState(false);
   const showThumbnail = playlist.thumbnailUrl && !hasThumbnailError;
@@ -80,7 +88,7 @@ function PodiumTile({
       className={cn(
         // Single column on mobile: the winner keeps a full-width square, the runners-up
         // drop to compact rows so the podium doesn't eat three screens of scroll.
-        "flex min-w-0 gap-3 sm:flex-col sm:gap-2",
+        "relative flex min-w-0 gap-3 sm:flex-col sm:gap-2",
         isFirst && "flex-col",
         DESKTOP_ORDER[rank],
       )}
@@ -141,6 +149,18 @@ function PodiumTile({
           </span>
         )}
       </ArtTag>
+
+      {isAdmin && (
+        <div className="absolute right-1 top-1 rounded-full bg-background/80 backdrop-blur-sm">
+          <PlaylistAdminMenu
+            playlist={playlist}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onRefresh={onRefresh}
+            onReviewArt={onReviewArt}
+          />
+        </div>
+      )}
 
       <div
         className={cn(
@@ -247,6 +267,12 @@ export function PlaylistPodium({
   savedPlaylists,
   playingId,
   onTogglePlay,
+  onReport,
+  reportedPlaylists,
+  onReviewArt,
+  onEdit,
+  onDelete,
+  onRefresh,
 }) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -275,6 +301,12 @@ export function PlaylistPodium({
               isSaved={savedPlaylists.includes(playlist.id)}
               isPlaying={playingId === playlist.id}
               onTogglePlay={onTogglePlay}
+              onReport={onReport}
+              isReported={reportedPlaylists.includes(playlist.id)}
+              onReviewArt={onReviewArt}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onRefresh={onRefresh}
             />
           );
         })}

@@ -19,6 +19,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistPodium } from "@/components/playlist-leaderboard/playlist-podium";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
+import { PlaylistReportDialog } from "@/components/playlist-leaderboard/playlist-report";
+import { PlaylistArtReviewDialog } from "@/components/playlist-leaderboard/playlist-art-review";
+import { PlaylistAdminBanner } from "@/components/playlist-leaderboard/playlist-admin";
 import { TrendingUp, Clock, Heart, Music, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   PageContainer,
@@ -100,8 +103,15 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     [],
     { initializeWithValue: false },
   );
+  const [reportedPlaylists, setReportedPlaylists] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.REPORTED_PLAYLISTS,
+    [],
+    { initializeWithValue: false },
+  );
   const [currentTab, setCurrentTab] = useState("top");
   const [playingId, setPlayingId] = useState(null); // Only one inline player open at a time
+  const [reportTarget, setReportTarget] = useState(null);
+  const [artReviewTarget, setArtReviewTarget] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
 
   const { toast } = useToast();
@@ -421,6 +431,41 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     setPlayingId((prev) => (prev === id ? null : id));
   };
 
+  const handleReported = (id) => {
+    setReportedPlaylists((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    toast({
+      title: "Report sent",
+      description:
+        "Thanks — that goes straight to the site owner. We'll take a look.",
+    });
+  };
+
+  // An admin approving or hiding cover art changes what the public payload would contain,
+  // so mirror the new shape into local state rather than waiting on revalidation.
+  const applyArtDecision = (updatedPlaylist) => {
+    setPlaylists((prev) =>
+      prev.map((playlist) =>
+        playlist.id === updatedPlaylist.id
+          ? {
+              ...playlist,
+              thumbnailUrl: updatedPlaylist.thumbnailUrl,
+              thumbnailStatus: updatedPlaylist.thumbnailStatus,
+            }
+          : playlist,
+      ),
+    );
+  };
+
+  const totalReports = playlists.reduce(
+    (total, playlist) => total + (playlist.reportCount || 0),
+    0,
+  );
+  const withheldArtCount = playlists.filter(
+    (playlist) =>
+      playlist.thumbnailStatus === "pending" ||
+      playlist.thumbnailStatus === "rejected",
+  ).length;
+
   // The podium only earns its place where the ranking is real: the Top tab, first page.
   const showPodium =
     currentTab === "top" && currentPage === 1 && paginatedPlaylists.length >= 3;
@@ -490,6 +535,14 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
               </div>
             )}
           </h2>
+          {isAdmin && (
+            <PlaylistAdminBanner
+              playlistCount={playlists.length}
+              reportCount={totalReports}
+              withheldArtCount={withheldArtCount}
+            />
+          )}
+
           {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
           <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
             <div className="flex-grow pr-4">
@@ -516,6 +569,18 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
               </Button>
             </div>
           </div>
+
+          <PlaylistReportDialog
+            playlist={reportTarget}
+            onOpenChange={(open) => !open && setReportTarget(null)}
+            onReported={handleReported}
+          />
+
+          <PlaylistArtReviewDialog
+            playlist={artReviewTarget}
+            onOpenChange={(open) => !open && setArtReviewTarget(null)}
+            onUpdated={applyArtDecision}
+          />
 
           <PlaylistCreateEditDialog
             isOpen={isDialogOpen}
@@ -578,6 +643,12 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                       savedPlaylists={savedPlaylists}
                       playingId={playingId}
                       onTogglePlay={togglePlay}
+                      onReport={setReportTarget}
+                      reportedPlaylists={reportedPlaylists}
+                      onReviewArt={setArtReviewTarget}
+                      onEdit={openEditDialog}
+                      onDelete={deletePlaylist}
+                      onRefresh={refreshPlaylistMetadata}
                     />
                   )}
                   <div className="relative grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -607,6 +678,9 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                             }
                             isPlaying={playingId === playlist.id}
                             onTogglePlay={togglePlay}
+                            onReport={setReportTarget}
+                            isReported={reportedPlaylists.includes(playlist.id)}
+                            onReviewArt={setArtReviewTarget}
                           />
                         </motion.div>
                       ))}

@@ -60,15 +60,22 @@ export function isValidPlaylistId(id) {
   return typeof id === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(id);
 }
 
+// The omni model is the one that accepts images as well as text. Both checks go through it so
+// there is a single moderation path to reason about.
+const MODERATION_MODEL = "omni-moderation-latest";
+
+// The classifier's own `flagged` threshold is tuned for unambiguous violations. Cover art trends
+// "suggestive" long before it trips that, so images get a tighter bar on the sexual categories.
+const SUGGESTIVE_SCORE_LIMIT = 0.2;
+
 /**
- * Checks text against OpenAI's moderation endpoint.
- * Returns true if the content is flagged, false if clean.
- * Fails open (returns false) if the API call fails, so a flaky network
- * doesn't silently block legitimate submissions.
+ * Single call into OpenAI's moderation endpoint.
+ * @param {Array} input - Moderation input array (text and/or image_url parts).
+ * @returns {Promise<Object|null>} The first result object, or null when the check could not be completed.
  */
-export async function isContentFlaggedByAI(text) {
+async function callModeration(input) {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return false;
+  if (!apiKey) return null;
 
   try {
     const res = await fetch("https://api.openai.com/v1/moderations", {
@@ -77,15 +84,88 @@ export async function isContentFlaggedByAI(text) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ input: text }),
-      signal: AbortSignal.timeout(5000),
+      body: JSON.stringify({ model: MODERATION_MODEL, input }),
+      signal: AbortSignal.timeout(8000),
     });
 
-    if (!res.ok) return false;
+    if (!res.ok) {
+      console.error("Moderation request failed with status", res.status);
+      return null;
+    }
 
     const data = await res.json();
-    return data.results?.[0]?.flagged === true;
-  } catch {
-    return false;
+    return data.results?.[0] || null;
+  } catch (error) {
+    console.error("Moderation request errored:", error.message);
+    return null;
   }
+}
+
+/**
+ * Checks text against OpenAI's moderation endpoint.
+ * Returns true if the content is flagged, false if clean.
+ * Fails open (returns false) if the API call fails, so a flaky network
+ * doesn't silently block legitimate submissions.
+ */
+export async function isContentFlaggedByAI(text) {
+  const result = await callModeration([{ type: "text", text }]);
+  return result?.flagged === true;
+}
+
+/**
+ * Maps a moderation verdict onto the stored thumbnail status.
+ *   approved - checked and clean, safe to serve publicly
+ *   rejected - the classifier objected; held for an admin to overturn
+ *   pending  - no verdict available; withheld until a human looks
+ * @param {{flagged: boolean, checked: boolean}} verdict - Result from moderateThumbnail().
+ * @returns {"approved"|"rejected"|"pending"}
+ */
+export function thumbnailStatusFromVerdict(verdict) {
+  if (verdict.flagged) return "rejected";
+  return verdict.checked ? "approved" : "pending";
+}
+
+/**
+ * Checks a playlist thumbnail against OpenAI's image moderation.
+ *
+ * Unlike the text check this fails CLOSED: if we can't get a verdict we report the image as
+ * unchecked and the caller drops the thumbnail rather than publishing an image nobody has looked
+ * at. The playlist itself still goes live, just with the music-note placeholder.
+ *
+ * @param {string|null} imageUrl - Thumbnail URL returned by oEmbed.
+ * @returns {Promise<{flagged: boolean, checked: boolean, reason: string|null}>}
+ */
+export async function moderateThumbnail(imageUrl) {
+  if (!imageUrl) return { flagged: false, checked: true, reason: null };
+
+  const result = await callModeration([
+    { type: "image_url", image_url: { url: imageUrl } },
+  ]);
+
+  if (!result) return { flagged: false, checked: false, reason: null };
+
+  if (result.flagged === true) {
+    const reason =
+      Object.entries(result.categories || {})
+        .filter(([, isFlagged]) => isFlagged)
+        .map(([category]) => category)
+        .join(", ") || "flagged";
+    return { flagged: true, checked: true, reason };
+  }
+
+  const scores = result.category_scores || {};
+  const suggestiveScore = Math.max(
+    scores.sexual || 0,
+    scores["sexual/minors"] || 0,
+  );
+
+  if (suggestiveScore > SUGGESTIVE_SCORE_LIMIT) {
+    return {
+      flagged: true,
+      checked: true,
+      reason: `suggestive (sexual score ${suggestiveScore.toFixed(2)})`,
+    };
+  }
+
+  return { flagged: false, checked: true, reason: null };
 }

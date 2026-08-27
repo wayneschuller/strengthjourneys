@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { PlaylistAdminTools } from "@/components/playlist-leaderboard/playlist-admin";
+import { PlaylistAdminMenu } from "@/components/playlist-leaderboard/playlist-admin";
 import { getPlaylistPlatform } from "@/components/playlist-leaderboard/playlist-utils";
 import {
   getPlaylistEmbed,
@@ -19,6 +19,7 @@ import {
   Heart,
   Play,
   Pause,
+  Flag,
 } from "lucide-react";
 
 // Medal treatment for the top three. Deliberately literal colours rather than theme tokens —
@@ -118,6 +119,9 @@ export function PlaylistCard({
   rank,
   isPlaying,
   onTogglePlay,
+  onReport,
+  isReported,
+  onReviewArt,
   className,
 }) {
   const inTimeout = isAdmin ? false : checkTimeout(votes, playlist.id);
@@ -261,18 +265,19 @@ export function PlaylistCard({
             ))}
           </div>
 
-          {isAdmin && (
-            <PlaylistAdminTools
-              playlist={playlist}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onRefresh={onRefresh}
-            />
-          )}
         </div>
 
         {/* Vote column */}
         <div className="flex shrink-0 flex-col items-center gap-0.5">
+          {isAdmin && (
+            <PlaylistAdminMenu
+              playlist={playlist}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onRefresh={onRefresh}
+              onReviewArt={onReviewArt}
+            />
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -298,6 +303,24 @@ export function PlaylistCard({
             inTimeout={inTimeout}
             onClick={() => handleVote(playlist.id, false)}
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onReport(playlist)}
+            disabled={isReported}
+            aria-label={isReported ? "Already reported" : "Report this playlist"}
+            title={
+              isReported
+                ? "You've reported this — thanks, we're on it"
+                : "Report this playlist"
+            }
+            className={cn(
+              "mt-1 h-6 w-6 text-muted-foreground/50 hover:text-destructive",
+              isReported && "text-destructive opacity-70",
+            )}
+          >
+            <Flag className={cn("h-3.5 w-3.5", isReported && "fill-current")} />
+          </Button>
         </div>
       </div>
 

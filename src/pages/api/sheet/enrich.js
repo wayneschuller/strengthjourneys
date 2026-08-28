@@ -21,7 +21,6 @@ import { devLog } from "@/lib/processing-utils";
 import {
   createDebug,
   enrichCandidatesByIds,
-  getExistingRecord,
   normalizeIntent,
   requireSheetFlowContext,
   toClientCandidate,
@@ -39,10 +38,13 @@ export default async function handler(req, res) {
   if (!base) return;
 
   const intent = normalizeIntent(req.body?.intent);
-  const candidateIds = Array.isArray(req.body?.candidateIds) ? req.body.candidateIds : [];
-  const candidates = Array.isArray(req.body?.candidates) ? req.body.candidates : [];
+  const candidateIds = Array.isArray(req.body?.candidateIds)
+    ? req.body.candidateIds
+    : [];
+  const candidates = Array.isArray(req.body?.candidates)
+    ? req.body.candidates
+    : [];
   const debug = createDebug(intent, "enrich_candidates");
-  await getExistingRecord(base.kvKey);
 
   try {
     devLog("[sheet/enrich] enrich:start", {
@@ -71,6 +73,8 @@ export default async function handler(req, res) {
     );
   } catch (error) {
     console.error("[sheet/enrich] enrich failed:", error);
-    res.status(500).json({ error: error.message || "Candidate enrichment failed" });
+    res
+      .status(500)
+      .json({ error: error.message || "Candidate enrichment failed" });
   }
 }

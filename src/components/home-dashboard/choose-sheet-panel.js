@@ -1,30 +1,64 @@
 /**
- * Sheet chooser cards summarize candidate logs during onboarding and recovery.
- * Keep sheet selection separate from "open in Google Sheets" so titles are not mistaken for primary CTAs.
+ * Sheet chooser shown inside the setup dialog once Drive has been asked to spot us.
+ * Single column on purpose: recommendation first, escape hatches second, the long
+ * tail of other sheets folded away. Keep sheet selection separate from "open in
+ * Google Sheets" so titles are not mistaken for primary CTAs.
  */
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
 import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
   FileUp,
-  FolderOpen,
   Link2,
   LoaderCircle,
-  PlusSquare,
   Unplug,
 } from "lucide-react";
+
+/**
+ * Google Drive mark, inlined the same way the sign-in button inlines the "G".
+ * Pairs with the Sheets icon so both escape hatches name the product they open.
+ */
+function GoogleDriveIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      viewBox="0 0 87.3 78"
+      className={className}
+      aria-hidden
+      focusable="false"
+    >
+      <path
+        fill="#0066da"
+        d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z"
+      />
+      <path
+        fill="#00ac47"
+        d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44C.4 49.9 0 51.45 0 53h27.5z"
+      />
+      <path
+        fill="#ea4335"
+        d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.798l5.852 11.5z"
+      />
+      <path
+        fill="#00832d"
+        d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z"
+      />
+      <path
+        fill="#2684fc"
+        d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"
+      />
+      <path
+        fill="#ffba00"
+        d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"
+      />
+    </svg>
+  );
+}
 
 function formatYearLabel(isoDate) {
   if (!isoDate) return null;
@@ -90,10 +124,10 @@ function formatRecommendedMeta(candidate, isEnriching = false) {
       bits.push(`${startYear}-${endYear}`);
     }
   }
+  // Returns "" rather than a filler phrase: this string is appended to a
+  // sentence that already says we think this is the lifter's log.
   if (bits.length === 0) {
-    return isEnriching
-      ? "Analyzing workouts and date range..."
-      : "Lifting log detected";
+    return isEnriching ? "Analyzing workouts and date range..." : "";
   }
   return bits.join(" • ");
 }
@@ -183,6 +217,130 @@ function SheetNameWithExternalLink({
   );
 }
 
+/**
+ * Secondary escape hatches: browse Drive by hand, or rack a brand new sheet.
+ * Rendered full width under the recommendation so "start fresh" reads as a real
+ * choice rather than the third button in a side rail.
+ */
+function OtherOptionsRow({
+  hasPrimary,
+  isSwitchSheet,
+  openPicker,
+  isWorking,
+  showImportOption,
+  onImportFile,
+  onCreateBlank,
+}) {
+  const importFileRef = useRef(null);
+  const buttonCount = showImportOption ? 3 : 2;
+
+  return (
+    <div className="border-border/60 bg-muted/30 rounded-xl border px-4 py-4">
+      <p className="text-foreground text-sm font-semibold">
+        {hasPrimary ? "Not the right sheet?" : "Two ways to get started"}
+      </p>
+      <p className="text-muted-foreground mt-0.5 text-sm">
+        {hasPrimary
+          ? "Pick a different sheet from your Drive, or start with an empty one."
+          : "Choose a sheet from your Drive, or start with an empty one."}
+      </p>
+      <div
+        className={cn(
+          "mt-3 grid gap-2",
+          buttonCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2",
+        )}
+      >
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={!openPicker || isWorking}
+          onClick={() => {
+            if (openPicker) handleOpenFilePicker(openPicker);
+          }}
+        >
+          <GoogleDriveIcon className="mr-2 h-4 w-4" />
+          Browse Google Drive
+        </Button>
+        {showImportOption && (
+          <>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={isWorking || !onImportFile}
+              onClick={() => importFileRef.current?.click()}
+            >
+              <FileUp className="mr-2 h-4 w-4" />
+              Import data file
+            </Button>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".csv,.txt"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file && onImportFile) onImportFile(file);
+                e.target.value = "";
+              }}
+            />
+          </>
+        )}
+        <Button
+          // With nothing detected there is no hero CTA, so this becomes the
+          // primary path rather than a fallback.
+          variant={hasPrimary ? "outline" : "default"}
+          className="w-full"
+          onClick={onCreateBlank}
+          disabled={isWorking}
+        >
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="mr-2 h-4 w-4"
+            aria-hidden
+          />
+          {isSwitchSheet ? "Start a fresh sheet" : "Start fresh"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Compact reminder of what is connected today, shown only when switching. */
+function CurrentSourceStrip({
+  currentSheetInfo,
+  isWorking,
+  isDisconnectingCurrent,
+  onDisconnectCurrent,
+}) {
+  return (
+    <div className="border-border/70 bg-card/70 flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0 space-y-0.5">
+        <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          Currently connected
+        </p>
+        <SheetNameWithExternalLink
+          name={currentSheetInfo.filename || "Connected lifting log"}
+          url={currentSheetInfo?.url || null}
+          textClassName="text-foreground truncate text-sm font-semibold"
+          linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
+          iconClassName="h-3.5 w-3.5"
+        />
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+        disabled={isWorking || isDisconnectingCurrent}
+        onClick={onDisconnectCurrent}
+      >
+        <Unplug className="mr-2 h-4 w-4" />
+        {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+      </Button>
+    </div>
+  );
+}
+
 export function ChooseSheetPanel({
   intent = "recovery",
   candidates,
@@ -203,9 +361,7 @@ export function ChooseSheetPanel({
   onDisconnectCurrent,
   onImportFile,
   showImportOption = true,
-  embedded = false,
 }) {
-  const importFileRef = useRef(null);
   const isSwitchSheet = intent === "switch_sheet";
   const primaryCandidate =
     candidates.find((candidate) => candidate.id === recommendedId) ||
@@ -220,484 +376,268 @@ export function ChooseSheetPanel({
   const freshnessLabel = formatRelativeFreshness(
     primaryCandidate?.modifiedByMeTime || primaryCandidate?.modifiedTime,
   );
+  const recommendedMeta = primaryCandidate
+    ? formatRecommendedMeta(primaryCandidate, isEnriching)
+    : "";
+  const showCurrentSourceStrip =
+    isSwitchSheet && currentSheetInfo?.ssid && !isPrimaryCurrent;
 
-  const content = (
-    <>
-      {!embedded && (
-        <CardHeader className="xl:px-10 2xl:px-16">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <img
-              src={GOOGLE_SHEETS_ICON_URL}
-              alt=""
-              className="h-5 w-5 shrink-0"
-              aria-hidden
-            />
-            {isSwitchSheet
-              ? "Switch your lifting data"
-              : "Connect your lifting log"}
-          </CardTitle>
-          <CardDescription>
-            {isSwitchSheet
-              ? "Pick the sheet you want to use instead of your current one."
-              : "Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or start fresh with a new sheet."}
-          </CardDescription>
-          {statusMessage && (
-            <div className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
-              {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
-              <span>{statusMessage}</span>
-            </div>
-          )}
-        </CardHeader>
+  return (
+    <div className="space-y-4">
+      {/* Only a live progress line earns space here; the dialog title already
+          tells the lifter to pick a sheet. */}
+      {isEnriching && statusMessage && (
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+          <LoaderCircle className="h-4 w-4 animate-spin" />
+          <span>{statusMessage}</span>
+        </div>
       )}
-      <CardContent
-        className={
-          embedded ? "space-y-5 px-0 pt-0 pb-0" : "space-y-5 xl:px-10 2xl:px-16"
-        }
-      >
-        <div className="space-y-3">
-          {showImportedPreviewWarning && (
-            <div className="rounded-lg border border-amber-300/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
-              <div className="space-y-3">
-                <p>
-                  Choosing a sheet here leaves preview mode and forgets the
-                  imported file
-                  {importedPreviewFileName
-                    ? ` (${importedPreviewFileName}).`
-                    : "."}
+
+      {showImportedPreviewWarning && (
+        <div className="rounded-lg border border-amber-300/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
+          <div className="space-y-3">
+            <p>
+              Choosing a sheet here leaves preview mode and forgets the imported
+              file
+              {importedPreviewFileName ? ` (${importedPreviewFileName}).` : "."}
+            </p>
+            {onMergeImportedPreview && currentSheetInfo?.ssid ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-amber-900/80 dark:text-amber-100/80">
+                  Or merge {importedPreviewEntryCount.toLocaleString()} imported{" "}
+                  {importedPreviewEntryCount === 1 ? "entry" : "entries"} into
+                  your current sheet first.
                 </p>
-                {onMergeImportedPreview && currentSheetInfo?.ssid ? (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs text-amber-900/80 dark:text-amber-100/80">
-                      Or merge {importedPreviewEntryCount.toLocaleString()}{" "}
-                      imported{" "}
-                      {importedPreviewEntryCount === 1 ? "entry" : "entries"}{" "}
-                      into your current sheet first.
-                    </p>
-                    <Button
-                      size="sm"
-                      className="bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400"
-                      disabled={isWorking}
-                      onClick={onMergeImportedPreview}
-                    >
-                      Merge into current sheet
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-xs text-amber-900/80 dark:text-amber-100/80">
-                    Use the preview banner&apos;s save action if you want to
-                    merge that import into a sheet instead.
-                  </p>
-                )}
+                <Button
+                  size="sm"
+                  className="bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400"
+                  disabled={isWorking}
+                  onClick={onMergeImportedPreview}
+                >
+                  Merge into current sheet
+                </Button>
               </div>
-            </div>
-          )}
-          {statusMessage && embedded && (
-            <div className="border-border/60 bg-card/50 text-muted-foreground flex items-center gap-2 rounded-lg border px-4 py-3 text-sm">
-              {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
-              <span>{statusMessage}</span>
-            </div>
-          )}
-          {primaryCandidate && (
-            <>
-              <p className="text-foreground/80 text-sm font-semibold">
+            ) : (
+              <p className="text-xs text-amber-900/80 dark:text-amber-100/80">
+                Use the preview banner&apos;s save action if you want to merge
+                that import into a sheet instead.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showCurrentSourceStrip && (
+        <CurrentSourceStrip
+          currentSheetInfo={currentSheetInfo}
+          isWorking={isWorking}
+          isDisconnectingCurrent={isDisconnectingCurrent}
+          onDisconnectCurrent={onDisconnectCurrent}
+        />
+      )}
+
+      {primaryCandidate && (
+        <div className="border-primary/25 bg-card/80 space-y-5 rounded-2xl border px-5 py-5 shadow-sm sm:px-6">
+          <div className="min-w-0 space-y-2">
+            {candidates.length > 1 && (
+              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                 {isSwitchSheet ? "Best replacement" : "Recommended for you"}
               </p>
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
-                <div
-                  key={primaryCandidate.id}
-                  className="border-primary/20 bg-card/80 rounded-2xl border px-6 py-6 shadow-sm"
-                >
-                  <div className="max-w-2xl space-y-5">
-                    <div className="min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <SheetNameWithExternalLink
-                          name={primaryCandidate.name}
-                          url={getCandidateUrl(primaryCandidate)}
-                          textClassName="text-foreground truncate text-lg font-semibold"
-                          linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
-                        />
-                        {freshnessLabel && (
-                          <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[11px] font-semibold">
-                            {freshnessLabel}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground text-sm font-medium">
-                        {isSwitchSheet
-                          ? "This looks like the best replacement for your current data source."
-                          : "This looks like your main lifting log."}
-                      </p>
-                      <p className="text-muted-foreground text-sm">
-                        {formatRecommendedMeta(primaryCandidate, isEnriching)}
-                      </p>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {typeof primaryCandidate?.approxSessions === "number" &&
-                          primaryCandidate.approxSessions >= 20 && (
-                            <span className="border-border bg-background text-foreground/80 rounded-full border px-2.5 py-1 text-xs font-medium">
-                              Most complete history
-                            </span>
-                          )}
-                        {typeof primaryCandidate?.approxRows === "number" &&
-                          primaryCandidate.approxRows >= 250 && (
-                            <span className="border-border bg-background text-foreground/80 rounded-full border px-2.5 py-1 text-xs font-medium">
-                              High-confidence match
-                            </span>
-                          )}
-                      </div>
-                      {isPrimaryCurrent && (
-                        <p className="text-primary text-xs font-semibold tracking-wide uppercase">
-                          Currently connected
-                        </p>
-                      )}
-                      {Array.isArray(primaryCandidate.bigFourPreview) &&
-                        primaryCandidate.bigFourPreview.length > 0 && (
-                          <div className="space-y-2 pt-1">
-                            <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                              Best actual sets detected
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {primaryCandidate.bigFourPreview.map(
-                                (preview) => (
-                                  <div
-                                    key={preview.liftType}
-                                    className="bg-background/90 flex min-w-[120px] items-center gap-2 rounded-md border border-black/10 px-2.5 py-2"
-                                  >
-                                    <LiftSvg
-                                      liftType={preview.liftType}
-                                      size="sm"
-                                      animate={false}
-                                      className="h-8 w-8"
-                                    />
-                                    <div className="min-w-0">
-                                      <p className="text-muted-foreground text-[11px] leading-tight font-medium">
-                                        {getPreviewLiftLabel(preview.liftType)}
-                                      </p>
-                                      <p className="text-foreground text-base leading-tight font-semibold">
-                                        {formatPreviewPrimaryValue(preview)}
-                                      </p>
-                                      <p className="text-muted-foreground truncate text-[10px] leading-tight">
-                                        {formatPreviewSetDetail(preview)}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ),
-                              )}
-                            </div>
-                          </div>
-                        )}
-                    </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                      <Button
-                        size="lg"
-                        className="w-full sm:w-auto sm:min-w-56"
-                        disabled={
-                          isWorking || currentSsid === primaryCandidate.id
-                        }
-                        onClick={() => onChooseSheet(primaryCandidate.id)}
-                      >
-                        <Link2 className="mr-2 h-4 w-4" />
-                        {currentSsid === primaryCandidate.id
-                          ? "Currently connected"
-                          : isSwitchSheet
-                            ? "Switch to this sheet"
-                            : "Connect this lifting log"}
-                      </Button>
-                      {isPrimaryCurrent && (
-                        <Button
-                          variant="destructive"
-                          size="lg"
-                          className="w-full sm:w-auto"
-                          disabled={isWorking || isDisconnectingCurrent}
-                          onClick={onDisconnectCurrent}
-                        >
-                          <Unplug className="mr-2 h-4 w-4" />
-                          {isDisconnectingCurrent
-                            ? "Disconnecting..."
-                            : "Disconnect"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-start justify-center lg:pt-1">
-                  <div className="w-full max-w-sm space-y-3">
-                    {isSwitchSheet &&
-                      currentSheetInfo?.ssid &&
-                      !isPrimaryCurrent && (
-                        <div className="border-border/70 bg-card/70 rounded-2xl border px-5 py-4">
-                          <div className="flex flex-col gap-3">
-                            <div className="min-w-0 space-y-1">
-                              <p className="text-foreground/80 text-sm font-semibold">
-                                Current data source
-                              </p>
-                              <SheetNameWithExternalLink
-                                name={
-                                  currentSheetInfo.filename ||
-                                  "Connected lifting log"
-                                }
-                                url={currentSheetInfo?.url || null}
-                                textClassName="text-foreground truncate text-base font-semibold"
-                                linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
-                              />
-                              <p className="text-muted-foreground text-sm">
-                                Disconnect it if you want to remove it without
-                                switching to another sheet.
-                              </p>
-                            </div>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="w-full"
-                              disabled={isWorking || isDisconnectingCurrent}
-                              onClick={onDisconnectCurrent}
-                            >
-                              <Unplug className="mr-2 h-4 w-4" />
-                              {isDisconnectingCurrent
-                                ? "Disconnecting..."
-                                : "Disconnect"}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    <div className="border-primary/20 bg-primary/5 w-full rounded-lg border p-3">
-                      <p className="text-foreground text-sm font-semibold">
-                        Other options
-                      </p>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        {showImportOption
-                          ? "Browse Google Drive, import a data file, or start fresh."
-                          : "Browse Google Drive or start fresh."}
-                      </p>
-                      <div className="mt-3 flex flex-col gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          disabled={!openPicker || isWorking}
-                          onClick={() => {
-                            if (openPicker) handleOpenFilePicker(openPicker);
-                          }}
-                        >
-                          <FolderOpen className="mr-2 h-4 w-4" />
-                          Browse Google Drive
-                        </Button>
-                        {showImportOption && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              disabled={isWorking || !onImportFile}
-                              onClick={() => importFileRef.current?.click()}
-                            >
-                              <FileUp className="mr-2 h-4 w-4" />
-                              Import data file
-                            </Button>
-                            <input
-                              ref={importFileRef}
-                              type="file"
-                              accept=".csv,.txt"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file && onImportFile) onImportFile(file);
-                                e.target.value = "";
-                              }}
-                            />
-                          </>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={onCreateBlank}
-                          disabled={isWorking}
-                        >
-                          <PlusSquare className="mr-2 h-4 w-4" />
-                          Start fresh
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-          {!primaryCandidate && (
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div />
-              <div className="flex items-start justify-center lg:pt-1">
-                <div className="w-full max-w-sm space-y-3">
-                  {isSwitchSheet &&
-                    currentSheetInfo?.ssid &&
-                    !isPrimaryCurrent && (
-                      <div className="border-border/70 bg-card/70 rounded-2xl border px-5 py-4">
-                        <div className="flex flex-col gap-3">
-                          <div className="min-w-0 space-y-1">
-                            <p className="text-foreground/80 text-sm font-semibold">
-                              Current data source
-                            </p>
-                            <SheetNameWithExternalLink
-                              name={
-                                currentSheetInfo.filename ||
-                                "Connected lifting log"
-                              }
-                              url={currentSheetInfo?.url || null}
-                              textClassName="text-foreground truncate text-base font-semibold"
-                              linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
-                            />
-                            <p className="text-muted-foreground text-sm">
-                              Disconnect it if you want to remove it without
-                              switching to another sheet.
-                            </p>
-                          </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="w-full"
-                            disabled={isWorking || isDisconnectingCurrent}
-                            onClick={onDisconnectCurrent}
-                          >
-                            <Unplug className="mr-2 h-4 w-4" />
-                            {isDisconnectingCurrent
-                              ? "Disconnecting..."
-                              : "Disconnect"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  <div className="border-primary/20 bg-primary/5 w-full rounded-lg border p-3">
-                    <p className="text-foreground text-sm font-semibold">
-                      Other options
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-sm">
-                      {showImportOption
-                        ? "Browse Google Drive, import a data file, or start fresh."
-                        : "Browse Google Drive or start fresh."}
-                    </p>
-                    <div className="mt-3 flex flex-col gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        disabled={!openPicker || isWorking}
-                        onClick={() => {
-                          if (openPicker) handleOpenFilePicker(openPicker);
-                        }}
-                      >
-                        <FolderOpen className="mr-2 h-4 w-4" />
-                        Browse Google Drive
-                      </Button>
-                      {showImportOption && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          disabled={isWorking || !onImportFile}
-                          onClick={() => importFileRef.current?.click()}
-                        >
-                          <FileUp className="mr-2 h-4 w-4" />
-                          Import data file
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={onCreateBlank}
-                        disabled={isWorking}
-                      >
-                        <PlusSquare className="mr-2 h-4 w-4" />
-                        Start fresh
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <img
+                src={GOOGLE_SHEETS_ICON_URL}
+                alt=""
+                className="h-5 w-5 shrink-0"
+                aria-hidden
+              />
+              <SheetNameWithExternalLink
+                name={primaryCandidate.name}
+                url={getCandidateUrl(primaryCandidate)}
+                textClassName="text-foreground truncate text-lg font-semibold"
+                linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
+              />
+              {freshnessLabel && (
+                <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                  {freshnessLabel}
+                </span>
+              )}
             </div>
-          )}
-          {otherCandidates.length > 0 && (
-            <>
-              <div className="bg-card/70 rounded-xl border">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between px-4 py-3 text-left"
-                  onClick={() => setShowOtherSheets((prev) => !prev)}
-                >
-                  <div>
-                    <p className="text-foreground text-sm font-semibold">
-                      {isSwitchSheet
-                        ? "Other accessible sheets"
-                        : "Other detected sheets"}
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      {otherCandidates.length} more option
-                      {otherCandidates.length === 1 ? "" : "s"}
-                    </p>
-                  </div>
-                  {showOtherSheets ? (
-                    <ChevronUp className="text-muted-foreground h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="text-muted-foreground h-4 w-4" />
-                  )}
-                </button>
-                {showOtherSheets && (
-                  <div className="grid grid-cols-1 gap-3 border-t px-4 py-4 md:grid-cols-2">
-                    {otherCandidates.map((candidate) => (
+            <p className="text-muted-foreground text-sm">
+              {isSwitchSheet
+                ? "This looks like the best replacement for your current data source."
+                : "This looks like your main lifting log."}{" "}
+              {recommendedMeta ? (
+                <span className="text-foreground/80 font-medium">
+                  {recommendedMeta}
+                </span>
+              ) : null}
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {typeof primaryCandidate?.approxSessions === "number" &&
+                primaryCandidate.approxSessions >= 20 && (
+                  <span className="border-border bg-background text-foreground/80 rounded-full border px-2.5 py-1 text-xs font-medium">
+                    Most complete history
+                  </span>
+                )}
+              {typeof primaryCandidate?.approxRows === "number" &&
+                primaryCandidate.approxRows >= 250 && (
+                  <span className="border-border bg-background text-foreground/80 rounded-full border px-2.5 py-1 text-xs font-medium">
+                    High-confidence match
+                  </span>
+                )}
+            </div>
+            {isPrimaryCurrent && (
+              <p className="text-primary text-xs font-semibold tracking-wide uppercase">
+                Currently connected
+              </p>
+            )}
+            {Array.isArray(primaryCandidate.bigFourPreview) &&
+              primaryCandidate.bigFourPreview.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                    Best actual sets detected
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {primaryCandidate.bigFourPreview.map((preview) => (
                       <div
-                        key={candidate.id}
-                        className="bg-background/80 flex flex-col gap-3 rounded-xl border px-4 py-3"
+                        key={preview.liftType}
+                        className="bg-background/90 border-border/70 flex items-center gap-2 rounded-md border px-2.5 py-2"
                       >
+                        <LiftSvg
+                          liftType={preview.liftType}
+                          size="sm"
+                          animate={false}
+                          className="h-8 w-8"
+                        />
                         <div className="min-w-0">
-                          <div className="mb-1 flex min-w-0 items-center gap-2">
-                            <img
-                              src={GOOGLE_SHEETS_ICON_URL}
-                              alt=""
-                              className="h-4 w-4 shrink-0"
-                              aria-hidden
-                            />
-                            <SheetNameWithExternalLink
-                              name={candidate.name}
-                              url={getCandidateUrl(candidate)}
-                              textClassName="text-foreground text-sm leading-snug font-semibold break-words"
-                              linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
-                            />
-                          </div>
-                          <p className="text-muted-foreground text-sm">
-                            {formatCandidateMeta(candidate, isEnriching)}
+                          <p className="text-muted-foreground text-[11px] leading-tight font-medium">
+                            {getPreviewLiftLabel(preview.liftType)}
+                          </p>
+                          <p className="text-foreground text-base leading-tight font-semibold">
+                            {formatPreviewPrimaryValue(preview)}
+                          </p>
+                          <p className="text-muted-foreground truncate text-[10px] leading-tight">
+                            {formatPreviewSetDetail(preview)}
                           </p>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto"
-                          disabled={isWorking || currentSsid === candidate.id}
-                          onClick={() => onChooseSheet(candidate.id)}
-                        >
-                          <Link2 className="mr-2 h-4 w-4" />
-                          {currentSsid === candidate.id
-                            ? "Currently connected"
-                            : isSwitchSheet
-                              ? "Switch to this sheet"
-                              : "Use this"}
-                        </Button>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            </>
+                </div>
+              )}
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto sm:min-w-64"
+              disabled={isWorking || currentSsid === primaryCandidate.id}
+              onClick={() => onChooseSheet(primaryCandidate.id)}
+            >
+              <Link2 className="mr-2 h-4 w-4" />
+              {currentSsid === primaryCandidate.id
+                ? "Currently connected"
+                : isSwitchSheet
+                  ? "Switch to this sheet"
+                  : "Connect this lifting log"}
+            </Button>
+            {isPrimaryCurrent && (
+              <Button
+                variant="destructive"
+                size="lg"
+                className="w-full sm:w-auto"
+                disabled={isWorking || isDisconnectingCurrent}
+                onClick={onDisconnectCurrent}
+              >
+                <Unplug className="mr-2 h-4 w-4" />
+                {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <OtherOptionsRow
+        hasPrimary={Boolean(primaryCandidate)}
+        isSwitchSheet={isSwitchSheet}
+        openPicker={openPicker}
+        isWorking={isWorking}
+        showImportOption={showImportOption}
+        onImportFile={onImportFile}
+        onCreateBlank={onCreateBlank}
+      />
+
+      {otherCandidates.length > 0 && (
+        <div className="bg-card/70 rounded-xl border">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-left"
+            onClick={() => setShowOtherSheets((prev) => !prev)}
+            aria-expanded={showOtherSheets}
+          >
+            <div>
+              <p className="text-foreground text-sm font-semibold">
+                {isSwitchSheet
+                  ? "Other accessible sheets"
+                  : "Other detected sheets"}
+              </p>
+              <p className="text-muted-foreground text-sm">
+                {otherCandidates.length} more option
+                {otherCandidates.length === 1 ? "" : "s"}
+              </p>
+            </div>
+            {showOtherSheets ? (
+              <ChevronUp className="text-muted-foreground h-4 w-4" />
+            ) : (
+              <ChevronDown className="text-muted-foreground h-4 w-4" />
+            )}
+          </button>
+          {showOtherSheets && (
+            <div className="grid grid-cols-1 gap-3 border-t px-4 py-4 md:grid-cols-2">
+              {otherCandidates.map((candidate) => (
+                <div
+                  key={candidate.id}
+                  className="bg-background/80 flex flex-col justify-between gap-3 rounded-xl border px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <div className="mb-1 flex min-w-0 items-center gap-2">
+                      <img
+                        src={GOOGLE_SHEETS_ICON_URL}
+                        alt=""
+                        className="h-4 w-4 shrink-0"
+                        aria-hidden
+                      />
+                      <SheetNameWithExternalLink
+                        name={candidate.name}
+                        url={getCandidateUrl(candidate)}
+                        textClassName="text-foreground text-sm leading-snug font-semibold break-words"
+                        linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
+                      />
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      {formatCandidateMeta(candidate, isEnriching)}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={isWorking || currentSsid === candidate.id}
+                    onClick={() => onChooseSheet(candidate.id)}
+                  >
+                    <Link2 className="mr-2 h-4 w-4" />
+                    {currentSsid === candidate.id
+                      ? "Currently connected"
+                      : isSwitchSheet
+                        ? "Switch to this sheet"
+                        : "Use this"}
+                  </Button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-      </CardContent>
-    </>
-  );
-
-  if (embedded) return content;
-
-  return (
-    <Card className="border-primary/20 bg-background/95 mb-4 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
-      {content}
-    </Card>
+      )}
+    </div>
   );
 }

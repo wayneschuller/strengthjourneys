@@ -95,7 +95,11 @@ export default async function handler(req, res) {
         res.status(400).json({ error: "Missing selectedSsid" });
         return;
       }
-      metadata = await validateAndFetchSelectedSheet(selectedSsid, base.headers, debug);
+      metadata = await validateAndFetchSelectedSheet(
+        selectedSsid,
+        base.headers,
+        debug,
+      );
       connectionMethod =
         intent === "switch_sheet"
           ? "switch_sheet_selection"
@@ -109,16 +113,24 @@ export default async function handler(req, res) {
     if (mode === "create_blank") {
       metadata = await createBootstrapSheet(sheetName, base.headers);
       connectionMethod =
-        intent === "switch_sheet" ? "switch_sheet_selection" : "user_created_blank";
+        intent === "switch_sheet"
+          ? "switch_sheet_selection"
+          : "user_created_blank";
       provisioningMethod = "bootstrap_sheet_headers";
       reason = "created_blank";
       wasCreated = true;
     }
 
     if (mode === "create_sample") {
-      metadata = await copyTemplate(sheetName, SAMPLE_TEMPLATE_SSID, base.headers);
+      metadata = await copyTemplate(
+        sheetName,
+        SAMPLE_TEMPLATE_SSID,
+        base.headers,
+      );
       connectionMethod =
-        intent === "switch_sheet" ? "switch_sheet_selection" : "user_created_sample";
+        intent === "switch_sheet"
+          ? "switch_sheet_selection"
+          : "user_created_sample";
       provisioningMethod = "template_copy";
       reason = "created_sample";
       wasCreated = true;

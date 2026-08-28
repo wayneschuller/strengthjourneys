@@ -37,7 +37,7 @@ import {
 
 import dynamic from "next/dynamic";
 
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 
 import {
   Card,
@@ -421,8 +421,6 @@ export default function Home({ starterArticles = [] }) {
     sheetInfo,
     isReturningUserLoading,
   } = useUserLiftingData();
-  const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
-  const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
   const { dashboardStage } = useMemo(
     () =>
@@ -447,36 +445,24 @@ export default function Home({ starterArticles = [] }) {
     hasUserData &&
     (dashboardStage === "early_base" || dashboardStage === "established");
 
-  // Signed in but nothing linked. Under today's auth this is the gap between
-  // sign-in and sheet setup; once sign-in stops asking for Drive scope up front
-  // it becomes the state every new account lands in, so it gets its own home
-  // rather than the stranger-facing hero with one swapped button.
+  // Which of the three home surfaces belongs in the top slot.
   //
-  // isReturningUserLoading keeps a returning lifter from flashing through this
-  // on their way to the dashboard, and hasUserData covers the case where a CSV
-  // import has already given us real data without a sheet.
-  const showWelcome =
-    !isReturningUserLoading &&
-    authStatus === "authenticated" &&
-    !hasUserData &&
-    !sheetInfo?.ssid;
+  // This used to be a pair of booleans (showHeroSection / isFadingHero) driving a CSS class
+  // swap, and the pair could describe combinations the render ternary had no branch for — which
+  // is how a disconnected sheet left the slot empty. One name for one surface cannot land in a
+  // state nobody renders, and it lets AnimatePresence animate every transition between them
+  // rather than only the hero's exit.
+  //
+  //   hero      - the stranger-facing landing page
+  //   welcome   - signed in, nothing linked yet: the activation home
+  //   dashboard - real data, from a linked sheet or an imported file
+  const surface = useMemo(() => {
+    if (hasUserData) return "dashboard";
+    if (authStatus === "authenticated" && !sheetInfo?.ssid) return "welcome";
+    return "hero";
+  }, [authStatus, hasUserData, sheetInfo?.ssid]);
 
-  // Only collapse the landing hero once the user has real linked data and can
-  // meaningfully land on the dashboard. Signed-in demo mode should still feel
-  // like the public landing page with stronger setup prompts.
-  useEffect(() => {
-    if (hasUserData && showHeroSection && !isFadingHero) {
-      setIsFadingHero(true); // start fade-out
-      setTimeout(() => setShowHeroSection(false), 800); // <-- match duration below
-    }
-  }, [hasUserData, showHeroSection, isFadingHero]);
-
-  useEffect(() => {
-    if (!hasUserData) {
-      setShowHeroSection(true);
-      setIsFadingHero(false);
-    }
-  }, [hasUserData]);
+  const showWelcome = surface === "welcome";
 
   // Delay the Big Four lift cards entrance until after the home dashboard intro
   // (hero fade + row processing ~1.2s + top stat cards ~2.2s). For guests and
@@ -532,27 +518,34 @@ export default function Home({ starterArticles = [] }) {
         ]}
       />
       <main className="mb-4 px-3 md:px-0">
-        <div className="flex min-h-[480px] flex-col items-center justify-center transition-all duration-800">
-          {showWelcome ? (
-            <div className="inset-0 h-full w-full">
-              <HomeWelcome
-                starterArticles={starterArticles}
-                lifts={mainBarbellLifts}
-              />
-            </div>
-          ) : showHeroSection && !isReturningUserLoading ? (
-            <div
-              className={`inset-0 h-full w-full transition-all duration-800 ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
-            >
-              <HeroSection />
-            </div>
-          ) : !showHeroSection ? (
-            <div
-              className={`inset-0 h-full w-full transition-opacity duration-800 ${showHeroSection ? "opacity-0" : "opacity-100"} `}
-            >
-              <HomeDashboard />
-            </div>
-          ) : null}
+        <div className="flex min-h-[480px] flex-col items-center justify-center">
+          {/* A returning lifter's sheet is still resolving, so we hold the slot empty rather than
+              flashing a surface we are about to replace. AnimatePresence is unmounted entirely
+              here on purpose: were it merely childless it would run an exit animation, which
+              would paint the very hero this guard exists to suppress. */}
+          {isReturningUserLoading ? null : (
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={surface}
+                className="w-full"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10, transition: { duration: 0.22 } }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {surface === "dashboard" ? (
+                  <HomeDashboard />
+                ) : surface === "welcome" ? (
+                  <HomeWelcome
+                    starterArticles={starterArticles}
+                    lifts={mainBarbellLifts}
+                  />
+                ) : (
+                  <HeroSection />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
 
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />

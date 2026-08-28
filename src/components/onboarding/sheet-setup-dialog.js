@@ -35,7 +35,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
   ArrowRight,
@@ -242,23 +243,31 @@ function getSheetDialogCopy({
 
   if (state === "choose_sheet") {
     const hasMultipleCandidates = candidateCount > 1;
+    if (intent === "switch_sheet") {
+      return {
+        eyebrow: "Choose a new data source",
+        title: "Select your lifting data.",
+        description: hasMultipleCandidates
+          ? `${candidateCount} sheets on the rack. Our pick is up top.`
+          : "Here is the one worth switching to.",
+        tone: "ready",
+      };
+    }
+    if (candidateCount === 0) {
+      return {
+        eyebrow: "Nothing on the bar yet",
+        title: "Let's start you fresh.",
+        description:
+          "Nothing in your Drive looks like a lifting log, so we will rack a new one for you.",
+        tone: "ready",
+      };
+    }
     return {
-      eyebrow:
-        intent === "switch_sheet" ? "Choose a new data source" : "Sheets found",
-      title: hasMultipleCandidates
-        ? intent === "switch_sheet"
-          ? "Select your lifting data."
-          : "Pick your lifting log."
-        : intent === "switch_sheet"
-          ? "Select your lifting data."
-          : "Your sheet is ready.",
+      eyebrow: "Sheets found",
+      title: hasMultipleCandidates ? "Pick your lifting log." : "Found it.",
       description: hasMultipleCandidates
-        ? intent === "switch_sheet"
-          ? `We found ${candidateCount} likely data sources.`
-          : `We found ${candidateCount} likely sheets.`
-        : intent === "switch_sheet"
-          ? "We found a likely lifting data source."
-          : "We found the sheet that looks like your lifting log.",
+        ? `Google Drive spotted ${candidateCount}. Our best guess is up top.`
+        : "This one looks like your lifting log. Connect it and you are back in business.",
       tone: "ready",
     };
   }
@@ -347,6 +356,23 @@ export function SheetSetupDialog() {
     statusMessage: sheetDiscoveryStatusMessage,
     loadingQuip,
   });
+  // Discovering and linking are one visual beat: sharing a phase key keeps the
+  // barbell loading up instead of resetting when the flow moves between them.
+  const dialogPhase =
+    onboardingState === "discovering" ||
+    onboardingState === "linking_or_creating"
+      ? "working"
+      : onboardingState;
+  // Size the shell to the state. A spinner does not need 1220px, and the old
+  // fixed width left the chooser marooned in whitespace.
+  const dialogWidthClass =
+    {
+      working: "w-[min(96vw,560px)]",
+      choose_sheet: "w-[min(96vw,820px)]",
+      created_confirmation: "w-[min(96vw,1100px)]",
+      fallback_error: "w-[min(96vw,720px)]",
+      scope_reauth_required: "w-[min(96vw,720px)]",
+    }[dialogPhase] || "w-[min(96vw,560px)]";
 
   const resetUiState = useCallback(() => {
     setProvisionError(null);
@@ -1517,144 +1543,161 @@ export function SheetSetupDialog() {
       >
         <DialogContent
           aria-describedby={undefined}
-          className="max-h-[92vh] w-[min(96vw,1220px)] max-w-[1220px] overflow-hidden border-0 bg-transparent p-0 shadow-none"
+          className={cn(
+            "max-h-[92vh] max-w-[96vw] overflow-hidden border-0 bg-transparent p-0 shadow-none",
+            "transition-[width] duration-300 ease-out",
+            dialogWidthClass,
+          )}
         >
-          <Card className="border-primary/20 bg-background/95 flex max-h-[92vh] flex-col overflow-hidden xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
-            <CardHeader className="shrink-0 space-y-3 xl:px-10 2xl:px-16">
-              {dialogCopy.tone === "working" ? null : (
-                <div className="text-primary inline-flex items-center gap-2 text-sm font-medium">
-                  {dialogCopy.tone === "warning" ? (
-                    <AlertTriangle className="h-4 w-4" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4" />
+          <Card className="border-primary/20 bg-background/95 flex max-h-[92vh] flex-col overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={dialogPhase}
+                className="flex min-h-0 flex-1 flex-col"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8, transition: { duration: 0.12 } }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <CardHeader className="shrink-0 space-y-3 sm:px-8">
+                  {dialogCopy.tone === "working" ? null : (
+                    <div className="text-primary inline-flex items-center gap-2 text-sm font-medium">
+                      {dialogCopy.tone === "warning" ? (
+                        <AlertTriangle className="h-4 w-4" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4" />
+                      )}
+                      {dialogCopy.eyebrow}
+                    </div>
                   )}
-                  {dialogCopy.eyebrow}
-                </div>
-              )}
-              <DialogTitle className="max-w-3xl text-2xl leading-tight md:text-3xl">
-                {dialogCopy.title}
-              </DialogTitle>
-              {dialogCopy.description ? (
-                <CardDescription className="max-w-3xl text-base leading-relaxed">
-                  {dialogCopy.description}
-                </CardDescription>
-              ) : null}
-            </CardHeader>
-            <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto xl:px-10 2xl:px-16">
-              {(onboardingState === "discovering" ||
-                onboardingState === "linking_or_creating") && (
-                <div className="flex flex-col items-center gap-3 py-2">
-                  <PlateLoadingAnimation isActive={true} />
-                  {dialogCopy.status ? (
-                    <p
-                      className="text-muted-foreground flex items-center gap-2 text-sm"
-                      aria-live="polite"
-                    >
-                      <LoaderCircle
-                        className="h-3.5 w-3.5 animate-spin"
-                        aria-hidden
-                      />
-                      {dialogCopy.status}
-                    </p>
+                  <DialogTitle className="max-w-3xl text-2xl leading-tight md:text-3xl">
+                    {dialogCopy.title}
+                  </DialogTitle>
+                  {dialogCopy.description ? (
+                    <CardDescription className="max-w-3xl text-base leading-relaxed">
+                      {dialogCopy.description}
+                    </CardDescription>
                   ) : null}
-                  {onboardingState === "discovering" ? (
-                    <p className="text-muted-foreground/80 max-w-md text-center text-xs leading-relaxed">
-                      Strength Journeys can only see spreadsheets you have
-                      opened with it &mdash; never the rest of your Google
-                      Drive.
-                    </p>
-                  ) : null}
-                </div>
-              )}
-              {onboardingState === "choose_sheet" && (
-                <ChooseSheetPanel
-                  embedded
-                  intent={flowIntent}
-                  candidates={candidateSheets}
-                  currentSsid={sheetInfo?.ssid || null}
-                  currentSheetInfo={sheetInfo}
-                  recommendedId={recommendedCandidateId}
-                  showImportedPreviewWarning={isImportedData}
-                  importedPreviewEntryCount={
-                    parsedData?.filter((entry) => !entry.isGoal)?.length || 0
-                  }
-                  importedPreviewFileName={importedFileName || ""}
-                  openPicker={openPicker}
-                  isWorking={isProvisionActionLoading}
-                  isDisconnectingCurrent={isDisconnectingCurrentSheet}
-                  isEnriching={isCandidateEnrichmentLoading}
-                  statusMessage={sheetDiscoveryStatusMessage}
-                  onMergeImportedPreview={
-                    isImportedData && sheetInfo?.ssid
-                      ? handleMergeImportedIntoCurrentSheet
-                      : null
-                  }
-                  onChooseSheet={(ssid) =>
-                    runLinkAction({
-                      mode: "select_existing",
-                      selectedSsid: ssid,
-                    })
-                  }
-                  onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
-                  onImportFile={handleImportFile}
-                  showImportOption={false}
-                  onDisconnectCurrent={() => {
-                    void disconnectCurrentSheet();
-                  }}
-                />
-              )}
-              {onboardingState === "fallback_error" && (
-                <FallbackConnectPanel
-                  intent={flowIntent}
-                  openPicker={openPicker}
-                  onRetry={() => {
-                    provisioningStartedRef.current = false;
-                    resolveSheetFlow({
-                      intent:
-                        flowIntent === "switch_sheet"
-                          ? "switch_sheet"
-                          : "recovery",
-                      hadLocalBefore: true,
-                    });
-                  }}
-                  isWorking={isProvisionActionLoading}
-                  errorMessage={provisionError}
-                />
-              )}
-              {onboardingState === "scope_reauth_required" && (
-                <ScopeRepairPanel
-                  errorMessage={provisionError}
-                  callbackUrl={router.asPath}
-                  onDismiss={() => {
-                    clearPendingSheetAction();
-                    setOpen(false);
-                    resetUiState();
-                    provisioningStartedRef.current = false;
-                  }}
-                  onBeforeReauth={() => {
-                    // Rare recovery rail only: remember the interrupted save so
-                    // the dialog can resume it after Google re-consent returns.
-                    persistPendingSheetAction({
-                      type:
-                        dialogAction ||
-                        PENDING_SHEET_ACTIONS.BOOTSTRAP_PROVISION,
-                      hadLocalBefore: hadLocalSheetBefore,
-                      intent: flowIntent || "bootstrap",
-                      returnPath: router.asPath,
-                    });
-                  }}
-                />
-              )}
-              {onboardingState === "created_confirmation" && (
-                <CreatedSheetPanel
-                  sheetInfo={createdSheetInfo || sheetInfo}
-                  reason={createdSheetReason}
-                  action={createdSheetAction}
-                  intent={flowIntent}
-                  onGoToDashboard={closeDialog}
-                />
-              )}
-            </CardContent>
+                </CardHeader>
+                <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto sm:px-8">
+                  {(onboardingState === "discovering" ||
+                    onboardingState === "linking_or_creating") && (
+                    <div className="flex flex-col items-center gap-3 py-2">
+                      <PlateLoadingAnimation isActive={true} />
+                      {dialogCopy.status ? (
+                        <p
+                          className="text-muted-foreground flex items-center gap-2 text-sm"
+                          aria-live="polite"
+                        >
+                          <LoaderCircle
+                            className="h-3.5 w-3.5 animate-spin"
+                            aria-hidden
+                          />
+                          {dialogCopy.status}
+                        </p>
+                      ) : null}
+                      {onboardingState === "discovering" ? (
+                        <p className="text-muted-foreground/80 max-w-md text-center text-xs leading-relaxed">
+                          Strength Journeys can only see spreadsheets you have
+                          opened with it &mdash; never the rest of your Google
+                          Drive.
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                  {onboardingState === "choose_sheet" && (
+                    <ChooseSheetPanel
+                      intent={flowIntent}
+                      candidates={candidateSheets}
+                      currentSsid={sheetInfo?.ssid || null}
+                      currentSheetInfo={sheetInfo}
+                      recommendedId={recommendedCandidateId}
+                      showImportedPreviewWarning={isImportedData}
+                      importedPreviewEntryCount={
+                        parsedData?.filter((entry) => !entry.isGoal)?.length ||
+                        0
+                      }
+                      importedPreviewFileName={importedFileName || ""}
+                      openPicker={openPicker}
+                      isWorking={isProvisionActionLoading}
+                      isDisconnectingCurrent={isDisconnectingCurrentSheet}
+                      isEnriching={isCandidateEnrichmentLoading}
+                      statusMessage={sheetDiscoveryStatusMessage}
+                      onMergeImportedPreview={
+                        isImportedData && sheetInfo?.ssid
+                          ? handleMergeImportedIntoCurrentSheet
+                          : null
+                      }
+                      onChooseSheet={(ssid) =>
+                        runLinkAction({
+                          mode: "select_existing",
+                          selectedSsid: ssid,
+                        })
+                      }
+                      onCreateBlank={() =>
+                        runLinkAction({ mode: "create_blank" })
+                      }
+                      onImportFile={handleImportFile}
+                      showImportOption={false}
+                      onDisconnectCurrent={() => {
+                        void disconnectCurrentSheet();
+                      }}
+                    />
+                  )}
+                  {onboardingState === "fallback_error" && (
+                    <FallbackConnectPanel
+                      intent={flowIntent}
+                      openPicker={openPicker}
+                      onRetry={() => {
+                        provisioningStartedRef.current = false;
+                        resolveSheetFlow({
+                          intent:
+                            flowIntent === "switch_sheet"
+                              ? "switch_sheet"
+                              : "recovery",
+                          hadLocalBefore: true,
+                        });
+                      }}
+                      isWorking={isProvisionActionLoading}
+                      errorMessage={provisionError}
+                    />
+                  )}
+                  {onboardingState === "scope_reauth_required" && (
+                    <ScopeRepairPanel
+                      errorMessage={provisionError}
+                      callbackUrl={router.asPath}
+                      onDismiss={() => {
+                        clearPendingSheetAction();
+                        setOpen(false);
+                        resetUiState();
+                        provisioningStartedRef.current = false;
+                      }}
+                      onBeforeReauth={() => {
+                        // Rare recovery rail only: remember the interrupted save so
+                        // the dialog can resume it after Google re-consent returns.
+                        persistPendingSheetAction({
+                          type:
+                            dialogAction ||
+                            PENDING_SHEET_ACTIONS.BOOTSTRAP_PROVISION,
+                          hadLocalBefore: hadLocalSheetBefore,
+                          intent: flowIntent || "bootstrap",
+                          returnPath: router.asPath,
+                        });
+                      }}
+                    />
+                  )}
+                  {onboardingState === "created_confirmation" && (
+                    <CreatedSheetPanel
+                      sheetInfo={createdSheetInfo || sheetInfo}
+                      reason={createdSheetReason}
+                      action={createdSheetAction}
+                      intent={flowIntent}
+                      onGoToDashboard={closeDialog}
+                    />
+                  )}
+                </CardContent>
+              </motion.div>
+            </AnimatePresence>
           </Card>
         </DialogContent>
       </Dialog>

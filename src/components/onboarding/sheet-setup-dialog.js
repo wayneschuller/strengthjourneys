@@ -1521,14 +1521,16 @@ export function SheetSetupDialog() {
         >
           <Card className="border-primary/20 bg-background/95 flex max-h-[92vh] flex-col overflow-hidden xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
             <CardHeader className="shrink-0 space-y-3 xl:px-10 2xl:px-16">
-              <div className="text-primary inline-flex items-center gap-2 text-sm font-medium">
-                {dialogCopy.tone === "ready" ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                )}
-                {dialogCopy.eyebrow}
-              </div>
+              {dialogCopy.tone === "working" ? null : (
+                <div className="text-primary inline-flex items-center gap-2 text-sm font-medium">
+                  {dialogCopy.tone === "warning" ? (
+                    <AlertTriangle className="h-4 w-4" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                  {dialogCopy.eyebrow}
+                </div>
+              )}
               <DialogTitle className="max-w-3xl text-2xl leading-tight md:text-3xl">
                 {dialogCopy.title}
               </DialogTitle>

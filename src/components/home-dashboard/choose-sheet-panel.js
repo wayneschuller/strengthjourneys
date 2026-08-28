@@ -15,12 +15,50 @@ import {
   ChevronUp,
   ExternalLink,
   FileUp,
-  FolderOpen,
   Link2,
   LoaderCircle,
-  PlusSquare,
   Unplug,
 } from "lucide-react";
+
+/**
+ * Google Drive mark, inlined the same way the sign-in button inlines the "G".
+ * Pairs with the Sheets icon so both escape hatches name the product they open.
+ */
+function GoogleDriveIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      viewBox="0 0 87.3 78"
+      className={className}
+      aria-hidden
+      focusable="false"
+    >
+      <path
+        fill="#0066da"
+        d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z"
+      />
+      <path
+        fill="#00ac47"
+        d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44C.4 49.9 0 51.45 0 53h27.5z"
+      />
+      <path
+        fill="#ea4335"
+        d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.798l5.852 11.5z"
+      />
+      <path
+        fill="#00832d"
+        d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z"
+      />
+      <path
+        fill="#2684fc"
+        d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"
+      />
+      <path
+        fill="#ffba00"
+        d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"
+      />
+    </svg>
+  );
+}
 
 function formatYearLabel(isoDate) {
   if (!isoDate) return null;
@@ -199,7 +237,7 @@ function OtherOptionsRow({
   return (
     <div className="border-border/60 bg-muted/30 rounded-xl border px-4 py-4">
       <p className="text-foreground text-sm font-semibold">
-        {hasPrimary ? "Not the right bar?" : "Let's load a bar for you"}
+        {hasPrimary ? "Not the right sheet?" : "Two ways to get started"}
       </p>
       <p className="text-muted-foreground mt-0.5 text-sm">
         {hasPrimary
@@ -220,7 +258,7 @@ function OtherOptionsRow({
             if (openPicker) handleOpenFilePicker(openPicker);
           }}
         >
-          <FolderOpen className="mr-2 h-4 w-4" />
+          <GoogleDriveIcon className="mr-2 h-4 w-4" />
           Browse Google Drive
         </Button>
         {showImportOption && (
@@ -255,7 +293,12 @@ function OtherOptionsRow({
           onClick={onCreateBlank}
           disabled={isWorking}
         >
-          <PlusSquare className="mr-2 h-4 w-4" />
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="mr-2 h-4 w-4"
+            aria-hidden
+          />
           {isSwitchSheet ? "Start a fresh sheet" : "Start fresh"}
         </Button>
       </div>

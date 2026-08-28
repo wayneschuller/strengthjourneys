@@ -22,6 +22,7 @@
 //          (same shape as sheetInfo in localStorage)
 
 import { devLog } from "@/lib/processing-utils";
+import { deferAfterResponse } from "@/lib/defer-after-response";
 import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
 import {
   buildImportedSheetName,
@@ -95,7 +96,11 @@ export default async function handler(req, res) {
         res.status(400).json({ error: "Missing selectedSsid" });
         return;
       }
-      metadata = await validateAndFetchSelectedSheet(selectedSsid, base.headers, debug);
+      metadata = await validateAndFetchSelectedSheet(
+        selectedSsid,
+        base.headers,
+        debug,
+      );
       connectionMethod =
         intent === "switch_sheet"
           ? "switch_sheet_selection"
@@ -109,16 +114,24 @@ export default async function handler(req, res) {
     if (mode === "create_blank") {
       metadata = await createBootstrapSheet(sheetName, base.headers);
       connectionMethod =
-        intent === "switch_sheet" ? "switch_sheet_selection" : "user_created_blank";
+        intent === "switch_sheet"
+          ? "switch_sheet_selection"
+          : "user_created_blank";
       provisioningMethod = "bootstrap_sheet_headers";
       reason = "created_blank";
       wasCreated = true;
     }
 
     if (mode === "create_sample") {
-      metadata = await copyTemplate(sheetName, SAMPLE_TEMPLATE_SSID, base.headers);
+      metadata = await copyTemplate(
+        sheetName,
+        SAMPLE_TEMPLATE_SSID,
+        base.headers,
+      );
       connectionMethod =
-        intent === "switch_sheet" ? "switch_sheet_selection" : "user_created_sample";
+        intent === "switch_sheet"
+          ? "switch_sheet_selection"
+          : "user_created_sample";
       provisioningMethod = "template_copy";
       reason = "created_sample";
       wasCreated = true;
@@ -150,33 +163,37 @@ export default async function handler(req, res) {
       lifecycle.isTrueNewUser &&
       !existingRecord.activationPromptedAt;
     if (shouldNotifyActivation) {
-      const prompted = await maybePromptActivation({
-        existingRecord,
-        session: base.session,
-        meta: {
+      // The prompt and the breadcrumb that records it must stay together, so
+      // a frozen invocation cannot leave an email sent but unmarked.
+      await deferAfterResponse("sheet/link:activation", async () => {
+        const prompted = await maybePromptActivation({
+          existingRecord,
+          session: base.session,
+          meta: {
+            connectionMethod,
+            provisioningMethod,
+            sheetName: metadata.name || sheetName,
+          },
+        });
+        if (prompted) {
+          await markActivationPrompted({
+            kvKey: base.kvKey,
+            existingRecord: {
+              ...existingRecord,
+              connectedAt: nowIso,
+              connectionMethod,
+              provisionedSheetId: metadata.id,
+              provisioningMethod,
+              lastSeenAt: nowIso,
+            },
+            nowIso,
+          });
+        }
+        devLog("[sheet/link] founder activation after link", {
+          prompted,
           connectionMethod,
           provisioningMethod,
-          sheetName: metadata.name || sheetName,
-        },
-      });
-      if (prompted) {
-        await markActivationPrompted({
-          kvKey: base.kvKey,
-          existingRecord: {
-            ...existingRecord,
-            connectedAt: nowIso,
-            connectionMethod,
-            provisionedSheetId: metadata.id,
-            provisioningMethod,
-            lastSeenAt: nowIso,
-          },
-          nowIso,
         });
-      }
-      devLog("[sheet/link] founder activation after link", {
-        prompted,
-        connectionMethod,
-        provisioningMethod,
       });
     }
 

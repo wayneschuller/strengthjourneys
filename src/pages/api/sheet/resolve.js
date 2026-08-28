@@ -83,28 +83,46 @@ export default async function handler(req, res) {
     : "bootstrap";
   const hadLocalSheetBefore = Boolean(req.body?.hadLocalSheetBefore);
   const debug = createDebug(intent, "discover");
-  const existingRecord = await getExistingRecord(base.kvKey);
   const sheetName = buildSheetName(base.session.user.name);
   let onboardingFlowToken = null;
 
   try {
-    onboardingFlowToken = await issueOnboardingFlowToken({
-      email: base.session.user.email,
-      intent,
-    });
-  } catch (error) {
-    console.error("[sheet/resolve] onboarding flow token issue failed:", error);
-  }
-
-  try {
     debug.path.push("resolve:start");
+
+    // The KV record, the flow token and the Drive scan do not feed each other,
+    // so they cost one round trip between them rather than three in a row.
+    const [recordResult, tokenResult, candidatesResult] =
+      await Promise.allSettled([
+        getExistingRecord(base.kvKey),
+        issueOnboardingFlowToken({
+          email: base.session.user.email,
+          intent,
+        }),
+        discoverValidCandidates(base.headers, debug),
+      ]);
+
+    // A missing flow token only costs us founder telemetry, so it stays
+    // non-fatal exactly as it was when it had its own try/catch.
+    if (tokenResult.status === "fulfilled") {
+      onboardingFlowToken = tokenResult.value;
+    } else {
+      console.error(
+        "[sheet/resolve] onboarding flow token issue failed:",
+        tokenResult.reason,
+      );
+    }
+
+    if (recordResult.status === "rejected") throw recordResult.reason;
+    if (candidatesResult.status === "rejected") throw candidatesResult.reason;
+
+    const existingRecord = recordResult.value || {};
+    const validCandidates = candidatesResult.value;
+
     devLog("[sheet/resolve] resolve:start", {
       intent,
       hadLocalSheetBefore,
       hasKvRecord: Boolean(Object.keys(existingRecord || {}).length),
     });
-
-    const validCandidates = await discoverValidCandidates(base.headers, debug);
     const rankedCandidates = scoreAndSortCandidates(
       validCandidates,
       getNameTokens(base.session.user.name),

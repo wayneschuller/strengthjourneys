@@ -21,7 +21,6 @@ import { devLog } from "@/lib/processing-utils";
 import {
   createDebug,
   enrichCandidatesByIds,
-  getExistingRecord,
   normalizeIntent,
   requireSheetFlowContext,
   toClientCandidate,
@@ -42,7 +41,6 @@ export default async function handler(req, res) {
   const candidateIds = Array.isArray(req.body?.candidateIds) ? req.body.candidateIds : [];
   const candidates = Array.isArray(req.body?.candidates) ? req.body.candidates : [];
   const debug = createDebug(intent, "enrich_candidates");
-  await getExistingRecord(base.kvKey);
 
   try {
     devLog("[sheet/enrich] enrich:start", {

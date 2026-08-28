@@ -15,7 +15,7 @@ export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO
 export const PROVISION_VERSION = 3;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 12;
-const METADATA_SCAN_ROW_CAP = 10000;
+const METADATA_SCAN_ROW_CAP = 30000;
 const BIG_FOUR_LIFTS = STANDARD_BIG_FOUR_LIFT_TYPES;
 const BIG_FOUR_LIFTS_SET = new Set(BIG_FOUR_LIFTS);
 const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
@@ -407,6 +407,13 @@ function shouldReplacePreviewSet(current, candidate) {
   return false;
 }
 
+// readHeaderInfo only ever inspects A1:Z1, so a hinted column index cannot
+// exceed 25 and a single letter is always enough here.
+function columnIndexToLetter(index) {
+  const clamped = Math.min(25, Math.max(0, index));
+  return String.fromCharCode(65 + clamped);
+}
+
 export async function enrichCandidateMetadata(
   candidate,
   headers,
@@ -417,10 +424,42 @@ export async function enrichCandidateMetadata(
   liftTypeColumnIndex,
   goalColumnIndex = -1,
 ) {
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values/A2:Z${METADATA_SCAN_ROW_CAP + 1}?dateTimeRenderOption=FORMATTED_STRING`,
-    { method: "GET", headers },
+  // Only five columns are ever read below, so asking for A:Z pulled roughly
+  // six times the cells we use. Narrowing to the last hinted column is what
+  // pays for the much higher METADATA_SCAN_ROW_CAP.
+  const lastColumn = columnIndexToLetter(
+    Math.max(
+      dateColumnIndex,
+      repsColumnIndex,
+      weightColumnIndex,
+      liftTypeColumnIndex,
+      goalColumnIndex,
+      0,
+    ),
   );
+  const probeStart = METADATA_SCAN_ROW_CAP + 2;
+  const dataRange = `A2:${lastColumn}${METADATA_SCAN_ROW_CAP + 1}`;
+  const probeRange = `A${probeStart}:${lastColumn}${probeStart + 25}`;
+
+  const fetchRanges = (ranges) => {
+    const params = new URLSearchParams({
+      dateTimeRenderOption: "FORMATTED_STRING",
+    });
+    ranges.forEach((range) => params.append("ranges", range));
+    return fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values:batchGet?${params.toString()}`,
+      { method: "GET", headers },
+    );
+  };
+
+  // Range 1 is the scan; range 2 tells us whether the sheet runs past the cap.
+  // batchGet answers both in one round trip. The probe used to live in its own
+  // best-effort try/catch, so losing it cost nothing — keep that property by
+  // retrying without it rather than dropping the candidate entirely.
+  let response = await fetchRanges([dataRange, probeRange]);
+  if (!response.ok) {
+    response = await fetchRanges([dataRange]);
+  }
   if (!response.ok) {
     return {
       ...candidate,
@@ -433,7 +472,13 @@ export async function enrichCandidateMetadata(
   }
 
   const json = await response.json().catch(() => ({}));
-  const rows = Array.isArray(json?.values) ? json.values : [];
+  const valueRanges = Array.isArray(json?.valueRanges) ? json.valueRanges : [];
+  const rows = Array.isArray(valueRanges[0]?.values)
+    ? valueRanges[0].values
+    : [];
+  const probeRows = Array.isArray(valueRanges[1]?.values)
+    ? valueRanges[1].values
+    : [];
 
   const sessions = new Set();
   let nonEmptyRowCount = 0;
@@ -511,25 +556,11 @@ export async function enrichCandidateMetadata(
     }
   }
 
-  let hasRowsBeyondScanCap = false;
-  try {
-    const probeStart = METADATA_SCAN_ROW_CAP + 2;
-    const probeResponse = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values/A${probeStart}:Z${probeStart + 25}?dateTimeRenderOption=FORMATTED_STRING`,
-      { method: "GET", headers },
-    );
-    if (probeResponse.ok) {
-      const probeJson = await probeResponse.json().catch(() => ({}));
-      const probeRows = Array.isArray(probeJson?.values) ? probeJson.values : [];
-      hasRowsBeyondScanCap = probeRows.some((row) =>
-        Array.isArray(row)
-          ? row.some((cell) => String(cell || "").trim() !== "")
-          : false,
-      );
-    }
-  } catch {
-    // Best-effort probe only.
-  }
+  const hasRowsBeyondScanCap = probeRows.some((row) =>
+    Array.isArray(row)
+      ? row.some((cell) => String(cell || "").trim() !== "")
+      : false,
+  );
 
   return {
     ...candidate,
@@ -604,20 +635,42 @@ export async function discoverValidCandidates(headers, debug) {
     ...toClientCandidate(candidate),
   }));
 
+  // Header checks are independent probes of unrelated sheets. In series they
+  // made every dialog open pay one round trip per spreadsheet Drive returned,
+  // long before anyone knew whether a chooser was even needed.
+  const checkable = rankedCandidates.slice(0, MAX_HEADER_CHECKS);
+  const t0 = Date.now();
+  const settled = await Promise.allSettled(
+    checkable.map((candidate) => readHeaderInfo(candidate.id, headers)),
+  );
+  devLog(
+    `[sheet-flow] ${checkable.length} header checks in ${Date.now() - t0}ms`,
+  );
+
   const validCandidates = [];
-  for (let i = 0; i < Math.min(rankedCandidates.length, MAX_HEADER_CHECKS); i += 1) {
-    const candidate = rankedCandidates[i];
-    const headerInfo = await readHeaderInfo(candidate.id, headers);
-    const checkResult = {
-      rank: i + 1,
+  settled.forEach((result, index) => {
+    const candidate = checkable[index];
+    if (result.status === "rejected") {
+      // One unreachable sheet must not sink discovery for the rest.
+      devLog(
+        "[sheet-flow] header check failed:",
+        candidate.id,
+        result.reason?.message || result.reason,
+      );
+    }
+    const headerInfo =
+      result.status === "fulfilled"
+        ? result.value
+        : { valid: false, status: null, headerCount: 0, sampleHeaders: [] };
+    debug.headerChecks.push({
+      rank: index + 1,
       id: candidate.id,
       name: candidate.name,
       valid: headerInfo.valid,
       status: headerInfo.status,
       headerCount: headerInfo.headerCount,
       sampleHeaders: headerInfo.sampleHeaders,
-    };
-    debug.headerChecks.push(checkResult);
+    });
     if (headerInfo.valid) {
       validCandidates.push({
         ...candidate,
@@ -630,7 +683,7 @@ export async function discoverValidCandidates(headers, debug) {
         },
       });
     }
-  }
+  });
   return validCandidates;
 }
 
@@ -838,7 +891,7 @@ export async function createBlankSheet(sheetName, headers) {
 export async function createBootstrapSheet(sheetName, headers) {
   const { ssid, sheetId } = await createSpreadsheet(sheetName, headers);
 
-  const valuesResponse = await fetch(
+  const valuesRequest = fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
     {
       method: "PUT",
@@ -853,12 +906,7 @@ export async function createBootstrapSheet(sheetName, headers) {
       }),
     },
   );
-  if (!valuesResponse.ok) {
-    const body = await valuesResponse.json().catch(() => ({}));
-    throw new Error(body?.error?.message || "Failed to seed sheet headers");
-  }
-
-  const formatResponse = await fetch(
+  const formatRequest = fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
     {
       method: "POST",
@@ -999,6 +1047,14 @@ export async function createBootstrapSheet(sheetName, headers) {
       }),
     },
   );
+  const [valuesResponse, formatResponse] = await Promise.all([
+    valuesRequest,
+    formatRequest,
+  ]);
+  if (!valuesResponse.ok) {
+    const body = await valuesResponse.json().catch(() => ({}));
+    throw new Error(body?.error?.message || "Failed to seed sheet headers");
+  }
   if (!formatResponse.ok) {
     devLog("[sheet-flow] bootstrap formatting failed; continuing with headers only");
   }

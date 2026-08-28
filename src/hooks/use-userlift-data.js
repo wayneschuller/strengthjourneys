@@ -344,9 +344,18 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [hasMounted, setHasMounted] = useState(false);
   useIsomorphicLayoutEffect(() => setHasMounted(true), []);
 
+  // _hadSheetOnLoad is a snapshot taken once at module load, so it cannot know about a sheet
+  // removed later in the same session. Without this flag it stays true after a disconnect while
+  // sheetInfo.ssid goes null, so isReturningUserLoading latches on for the rest of the page's
+  // life — and every surface that waits on it renders nothing. On the home page that showed up
+  // as a blank hero area after "disconnect sheet"; it also silently removed the getting-started
+  // cards and the strength-levels onboarding block.
+  const [sheetClearedInSession, setSheetClearedInSession] = useState(false);
+
   const isReturningUserLoading =
     hasMounted &&
     _hadSheetOnLoad &&
+    !sheetClearedInSession &&
     !(authStatus === "authenticated" && !!sheetInfo?.ssid) &&
     authStatus !== "unauthenticated";
 
@@ -365,7 +374,13 @@ export const UserLiftingDataProvider = ({ children }) => {
     [setSheetInfo, setSignedInDemoMode],
   );
 
-  const clearSheet = useCallback(() => setSheetInfo(null), [setSheetInfo]);
+  // Every path that removes a sheet routes through here — user disconnect, the setup dialog's
+  // switch flow, and the parse-error recovery — so this is the one place that has to retire the
+  // stale module-load snapshot above.
+  const clearSheet = useCallback(() => {
+    setSheetClearedInSession(true);
+    setSheetInfo(null);
+  }, [setSheetInfo]);
   const enterSignedInDemoMode = useCallback(
     () => setSignedInDemoMode(true),
     [setSignedInDemoMode],

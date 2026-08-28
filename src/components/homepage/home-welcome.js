@@ -7,11 +7,28 @@
  * dashboard is no better — it is a mirror, and there is nothing yet to reflect.
  *
  * So the job here is activation: name the lifter, then ask the one question that
- * actually branches — do they have training history somewhere else, or are they
- * starting from nothing? That fork is also the segmentation. An importer with
- * five years of Hevy data does not want to be told how to squat; a genuine
- * beginner does. Answering it routes each to the right next thing instead of
- * showing both the same compromise.
+ * actually branches — is their training history in another app, or are they
+ * starting to log here? An importer with five years of Hevy data does not want
+ * to be told how to squat; a genuine beginner does.
+ *
+ * Three populations reach this page, not two:
+ *   1. new lifters, with no history anywhere
+ *   2. Strength Journeys users on a new device, whose sheet is sitting in Drive
+ *   3. experienced lifters whose history lives in another app
+ *
+ * Only two of them get a branch. The setup dialog auto-opens for anyone signed
+ * in without a linked sheet, and it searches Drive before it offers to create
+ * anything — so case 2 is normally solved before this page is ever seen. The
+ * case-2 lifter who ends up here is one who dismissed that dialog, which makes
+ * this a recovery path rather than a peer decision, and it gets the quieter
+ * line beneath the fork. It still has to be visible: someone with ten years of
+ * training they cannot currently see is in the most alarming state on the site,
+ * and needs to be told the sheet is still there.
+ *
+ * Case 3 is deliberately routed to import before sheet setup. The preview runs
+ * entirely client-side, so they see their own history rendered before we ask
+ * for Drive scope — the ask lands at loss aversion rather than at suspicion,
+ * and a refusal still leaves them a working session.
  *
  * The Big Four cards take the slot the product showcase holds on the public
  * hero. Screenshots of features sell the app to a stranger; this lifter has
@@ -25,6 +42,7 @@
  */
 
 import Link from "next/link";
+import { motion } from "motion/react";
 import { useSession } from "next-auth/react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +52,53 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 
+/*
+ * Entrance choreography. The page arrives in reading order — who you are, what we are asking,
+ * then the two ways out — so the eye is led rather than presented with everything at once.
+ *
+ * Only opacity and transform are animated, both of which Motion drops automatically for anyone
+ * with prefers-reduced-motion set, because _app.js wraps the tree in MotionConfig
+ * reducedMotion="user". Those lifters get the same layout, arriving instantly.
+ */
+const columnStagger = {
+  hidden: {},
+  show: { transition: { delayChildren: 0.15, staggerChildren: 0.07 } },
+};
+
+const riseIn = {
+  hidden: { opacity: 0, y: 18 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 240, damping: 26 },
+  },
+};
+
+const optionsStagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09 } },
+};
+
+// The lifts arrive a beat after the headline: they are the invitation, not the ask.
+const showcaseIn = {
+  hidden: { opacity: 0, y: 26, scale: 0.97 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { delay: 0.3, duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const railIn = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { delay: 0.55, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 /**
  * One branch of the "where are you starting from?" fork. Both branches carry
  * equal visual weight on purpose — we genuinely do not know which lifter this
@@ -42,7 +107,12 @@ import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
  */
 function StartingPointOption({ title, description, children }) {
   return (
-    <div className="border-border bg-card flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <motion.div
+      variants={riseIn}
+      whileHover={{ y: -2 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      className="border-border bg-card hover:border-foreground/25 flex flex-col gap-3 rounded-xl border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+    >
       <div className="min-w-0">
         <p className="text-sm font-semibold">{title}</p>
         <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
@@ -50,7 +120,7 @@ function StartingPointOption({ title, description, children }) {
         </p>
       </div>
       <div className="shrink-0">{children}</div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -69,27 +139,36 @@ export function HomeWelcome({ starterArticles = [], lifts }) {
   const firstName = session?.user?.name?.trim()?.split(/\s+/)[0] || null;
 
   return (
-    <div className="w-full">
+    <motion.div className="w-full" initial="hidden" animate="show">
       <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2 xl:gap-12">
-        <div>
-          <p className="text-muted-foreground text-center text-sm font-semibold tracking-wide uppercase lg:text-left">
+        <motion.div variants={columnStagger}>
+          <motion.p
+            variants={riseIn}
+            className="text-muted-foreground text-center text-sm font-semibold tracking-wide uppercase lg:text-left"
+          >
             You&rsquo;re signed in
-          </p>
-          <h1 className="mt-3 mb-4 text-center text-3xl leading-tight font-extrabold tracking-tight text-balance lg:text-left lg:text-4xl">
+          </motion.p>
+          <motion.h1
+            variants={riseIn}
+            className="mt-3 mb-4 text-center text-3xl leading-tight font-extrabold tracking-tight text-balance lg:text-left lg:text-4xl"
+          >
             {firstName ? `Welcome, ${firstName}.` : "Welcome."}
             <br className="hidden sm:block" />
             <span className="sm:hidden"> </span>
             Let&rsquo;s find your starting point.
-          </h1>
-          <p className="text-muted-foreground mb-6 max-w-xl text-center text-base leading-relaxed text-pretty lg:text-left">
+          </motion.h1>
+          <motion.p
+            variants={riseIn}
+            className="text-muted-foreground mb-6 max-w-xl text-center text-base leading-relaxed text-pretty lg:text-left"
+          >
             Nothing is linked yet, so there is nothing to lose. Pick whichever of
             these sounds like you.
-          </p>
+          </motion.p>
 
-          <div className="flex flex-col gap-3">
+          <motion.div variants={optionsStagger} className="flex flex-col gap-3">
             <StartingPointOption
-              title="I&rsquo;ve been lifting elsewhere"
-              description="Hevy, Strong, Wodify, or your own spreadsheet. Instant preview first — nothing is saved until you say so."
+              title="I&rsquo;ve been training in another app"
+              description="Hevy, Strong, Wodify, or your own spreadsheet. See it here instantly — nothing is saved until you say so."
             >
               <Button
                 className="w-full sm:w-auto"
@@ -114,8 +193,8 @@ export function HomeWelcome({ starterArticles = [], lifts }) {
             </StartingPointOption>
 
             <StartingPointOption
-              title="I&rsquo;m starting fresh"
-              description="New to the barbell, or you have never kept a log. We create a Google Sheet you own and you log your first session into it."
+              title="I want to start logging here"
+              description="We&rsquo;ll set up a Google Sheet you own, and you can log your first session into it today."
             >
               <Button
                 className="w-full sm:w-auto"
@@ -132,20 +211,46 @@ export function HomeWelcome({ starterArticles = [], lifts }) {
                   className="mr-2 h-4 w-4 shrink-0"
                   aria-hidden
                 />
-                Create My Lifting Log
+                Set Up My Lifting Log
               </Button>
             </StartingPointOption>
-          </div>
+          </motion.div>
 
-          <p className="text-muted-foreground mt-3 text-center text-xs lg:text-left">
+          {/* The recovery path for a returning lifter whose sheet is already in Drive. Quiet,
+              because the setup dialog auto-opens and normally resolves this before the page is
+              seen — anyone reading it here dismissed that dialog. Visible, because they have
+              training history they currently cannot see, and need telling it still exists. */}
+          <motion.p
+            variants={riseIn}
+            className="text-muted-foreground mt-4 text-center text-xs lg:text-left"
+          >
+            Used Strength Journeys before?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                gaEvent(GA_EVENT_TAGS.HOME_WELCOME_ACTION, {
+                  action: "recover_existing_sheet",
+                });
+                openSheetSetupDialog("bootstrap");
+              }}
+              className="text-foreground font-medium underline underline-offset-4 hover:no-underline"
+            >
+              We&rsquo;ll find your sheet in Drive.
+            </button>
+          </motion.p>
+
+          <motion.p
+            variants={riseIn}
+            className="text-muted-foreground mt-2 text-center text-xs lg:text-left"
+          >
             Free forever. Your data stays yours.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* The Big Four in the slot the public hero gives to product screenshots.
             Nothing here needs a sheet, so it stays useful for as long as the
             lifter takes to decide. */}
-        <div>
+        <motion.div variants={showcaseIn}>
           <p className="text-muted-foreground mb-3 text-center text-sm font-semibold tracking-wide uppercase lg:text-left">
             Or start by learning the lifts
           </p>
@@ -155,10 +260,12 @@ export function HomeWelcome({ starterArticles = [], lifts }) {
             enhancedStats={false}
             gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2"
           />
-        </div>
+        </motion.div>
       </div>
 
-      <StarterContentRail articles={starterArticles} />
-    </div>
+      <motion.div variants={railIn}>
+        <StarterContentRail articles={starterArticles} />
+      </motion.div>
+    </motion.div>
   );
 }

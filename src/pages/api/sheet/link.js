@@ -22,7 +22,6 @@
 //          (same shape as sheetInfo in localStorage)
 
 import { devLog } from "@/lib/processing-utils";
-import { deferAfterResponse } from "@/lib/defer-after-response";
 import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
 import {
   buildImportedSheetName,
@@ -163,37 +162,33 @@ export default async function handler(req, res) {
       lifecycle.isTrueNewUser &&
       !existingRecord.activationPromptedAt;
     if (shouldNotifyActivation) {
-      // The prompt and the breadcrumb that records it must stay together, so
-      // a frozen invocation cannot leave an email sent but unmarked.
-      await deferAfterResponse("sheet/link:activation", async () => {
-        const prompted = await maybePromptActivation({
-          existingRecord,
-          session: base.session,
-          meta: {
-            connectionMethod,
-            provisioningMethod,
-            sheetName: metadata.name || sheetName,
-          },
-        });
-        if (prompted) {
-          await markActivationPrompted({
-            kvKey: base.kvKey,
-            existingRecord: {
-              ...existingRecord,
-              connectedAt: nowIso,
-              connectionMethod,
-              provisionedSheetId: metadata.id,
-              provisioningMethod,
-              lastSeenAt: nowIso,
-            },
-            nowIso,
-          });
-        }
-        devLog("[sheet/link] founder activation after link", {
-          prompted,
+      const prompted = await maybePromptActivation({
+        existingRecord,
+        session: base.session,
+        meta: {
           connectionMethod,
           provisioningMethod,
+          sheetName: metadata.name || sheetName,
+        },
+      });
+      if (prompted) {
+        await markActivationPrompted({
+          kvKey: base.kvKey,
+          existingRecord: {
+            ...existingRecord,
+            connectedAt: nowIso,
+            connectionMethod,
+            provisionedSheetId: metadata.id,
+            provisioningMethod,
+            lastSeenAt: nowIso,
+          },
+          nowIso,
         });
+      }
+      devLog("[sheet/link] founder activation after link", {
+        prompted,
+        connectionMethod,
+        provisioningMethod,
       });
     }
 

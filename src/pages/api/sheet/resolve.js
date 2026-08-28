@@ -1,5 +1,4 @@
 import { devLog } from "@/lib/processing-utils";
-import { deferAfterResponse } from "@/lib/defer-after-response";
 import { issueOnboardingFlowToken } from "@/lib/onboarding-flow-events";
 import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
 import {
@@ -212,35 +211,31 @@ export default async function handler(req, res) {
         connectionMethod: "auto_provision",
         provisioningMethod: "bootstrap_sheet_headers",
       });
-      // The prompt and the breadcrumb that records it must stay together, so
-      // a frozen invocation cannot leave an email sent but unmarked.
-      await deferAfterResponse("sheet/resolve:activation", async () => {
-        const prompted = await maybePromptActivation({
-          existingRecord,
-          session: base.session,
-          meta: {
+      const prompted = await maybePromptActivation({
+        existingRecord,
+        session: base.session,
+        meta: {
+          connectionMethod: "auto_provision",
+          provisioningMethod: "bootstrap_sheet_headers",
+          sheetName: created.name || sheetName,
+        },
+      });
+      if (prompted) {
+        await markActivationPrompted({
+          kvKey: base.kvKey,
+          existingRecord: {
+            ...existingRecord,
+            connectedAt: nowIso,
             connectionMethod: "auto_provision",
+            provisionedSheetId: created.id,
             provisioningMethod: "bootstrap_sheet_headers",
-            sheetName: created.name || sheetName,
+            lastSeenAt: nowIso,
           },
+          nowIso,
         });
-        if (prompted) {
-          await markActivationPrompted({
-            kvKey: base.kvKey,
-            existingRecord: {
-              ...existingRecord,
-              connectedAt: nowIso,
-              connectionMethod: "auto_provision",
-              provisionedSheetId: created.id,
-              provisioningMethod: "bootstrap_sheet_headers",
-              lastSeenAt: nowIso,
-            },
-            nowIso,
-          });
-        }
-        devLog("[sheet/resolve] founder activation after bootstrap headers", {
-          prompted,
-        });
+      }
+      devLog("[sheet/resolve] founder activation after bootstrap headers", {
+        prompted,
       });
       return respondCreateNewUserSheet(res, created, debug, {
         onboardingFlowToken,
@@ -291,20 +286,18 @@ export default async function handler(req, res) {
           existingRecord?.connectionMethod ||
           existingRecord?.lastSeenAt,
         );
-        await deferAfterResponse("sheet/resolve:reprovision", () =>
-          promptDeveloper(
-            hadPriorSheetEvidence ? "reprovisioned" : "first-time-provisioned",
-            base.session.user,
-            {
-              connectionMethod: "reprovision_after_missing_sheet",
-              provisioningMethod: "bootstrap_sheet_headers",
-              sheetName: created.name || sheetName,
-              previousProvisionedSheetId,
-              previousSheetState: priorSheetCheck.state,
-              previousSheetName: priorSheetCheck.metadata?.name || null,
-              previousSheetHttpStatus: priorSheetCheck.httpStatus,
-            },
-          ),
+        await promptDeveloper(
+          hadPriorSheetEvidence ? "reprovisioned" : "first-time-provisioned",
+          base.session.user,
+          {
+            connectionMethod: "reprovision_after_missing_sheet",
+            provisioningMethod: "bootstrap_sheet_headers",
+            sheetName: created.name || sheetName,
+            previousProvisionedSheetId,
+            previousSheetState: priorSheetCheck.state,
+            previousSheetName: priorSheetCheck.metadata?.name || null,
+            previousSheetHttpStatus: priorSheetCheck.httpStatus,
+          },
         );
         return respondCreateNewUserSheet(res, created, debug, {
           reason: "reprovision_after_missing_sheet",

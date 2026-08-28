@@ -1707,44 +1707,90 @@ export function SheetSetupDialog() {
 
 /**
  * Barbell loading animation shown during onboarding API calls.
- * Adds one blue plate per side at each interval to suggest "loading up"
- * while the user waits for sheet discovery or creation.
+ *
+ * Loads plates onto the bar, holds at the top, then strips back to a bare bar
+ * and goes again. The cycle matters: discovery can run for several seconds, and
+ * the old version filled the bar in 1.5s and then sat frozen for the rest of
+ * the wait, which reads as a hung dialog rather than work in progress.
+ *
+ * Loading is deliberate and stripping is quick, so the down phase reads as
+ * clearing the bar for the next set rather than as progress being undone.
  * @param {boolean} props.isActive - Whether to run the animation.
- * @param {number} [props.stepDurationMs=300] - Ms between each plate addition.
  */
-function PlateLoadingAnimation({ isActive, stepDurationMs = 300 }) {
-  const [plateCount, setPlateCount] = useState(0);
+function PlateLoadingAnimation({ isActive }) {
+  const MAX_PLATES = 5;
+  const LOAD_STEP_MS = 320;
+  const STRIP_STEP_MS = 110;
+  const HOLD_AT_TOP_MS = 750;
+  const HOLD_AT_BOTTOM_MS = 400;
+
+  const [bar, setBar] = useState({ plateCount: 0, direction: 1 });
   // Read the unit preference once: this component re-renders on every plate.
   const [isMetric] = useState(() => getPreferredUnitTypeFromClient() === "kg");
-  const MAX_PLATES = 5;
+  const { plateCount, direction } = bar;
 
   useEffect(() => {
     if (!isActive) {
-      setPlateCount(0);
+      setBar({ plateCount: 0, direction: 1 });
       return;
     }
-    const timer = setInterval(() => {
-      setPlateCount((prev) => (prev < MAX_PLATES ? prev + 1 : prev));
-    }, stepDurationMs);
-    return () => clearInterval(timer);
-  }, [isActive, stepDurationMs]);
+
+    const isLoading = direction === 1;
+    const atTop = isLoading && plateCount >= MAX_PLATES;
+    const atBottom = !isLoading && plateCount <= 0;
+    const delay = atTop
+      ? HOLD_AT_TOP_MS
+      : atBottom
+        ? HOLD_AT_BOTTOM_MS
+        : isLoading
+          ? LOAD_STEP_MS
+          : STRIP_STEP_MS;
+
+    const timer = setTimeout(() => {
+      setBar((prev) => {
+        if (prev.direction === 1 && prev.plateCount >= MAX_PLATES) {
+          return { plateCount: MAX_PLATES - 1, direction: -1 };
+        }
+        if (prev.direction === -1 && prev.plateCount <= 0) {
+          return { plateCount: 1, direction: 1 };
+        }
+        return {
+          plateCount: prev.plateCount + prev.direction,
+          direction: prev.direction,
+        };
+      });
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [isActive, plateCount, direction]);
 
   const barWeight = isMetric ? 20 : 45;
-  const bluePlate = isMetric
+  const plate = isMetric
     ? { weight: 20, color: "#2563EB", name: "20kg" }
     : { weight: 45, color: "#2563EB", name: "45lb" };
-  const platesPerSide =
-    plateCount > 0 ? [{ ...bluePlate, count: plateCount }] : [];
+  const platesPerSide = plateCount > 0 ? [{ ...plate, count: plateCount }] : [];
+  // Bar plus both sides: the familiar 20/60/100/140/180/220 (45/135/225/...)
+  // ladder every lifter counts in their head while loading up.
+  const totalWeight = barWeight + plateCount * 2 * plate.weight;
 
   return (
-    <div className="mx-auto w-fit py-6 opacity-70">
-      <PlateDiagram
-        platesPerSide={platesPerSide}
-        barWeight={barWeight}
-        isMetric={isMetric}
-        hideLabels={true}
-        useScrollTrigger={false}
-      />
+    <div className="flex flex-col items-center gap-1 py-4">
+      <div className="mx-auto w-fit opacity-70">
+        <PlateDiagram
+          platesPerSide={platesPerSide}
+          barWeight={barWeight}
+          isMetric={isMetric}
+          hideLabels={true}
+          useScrollTrigger={false}
+        />
+      </div>
+      <p
+        className="text-muted-foreground/70 text-sm font-semibold tabular-nums"
+        aria-hidden
+      >
+        {totalWeight}
+        {isMetric ? "kg" : "lb"}
+      </p>
     </div>
   );
 }

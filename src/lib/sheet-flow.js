@@ -893,11 +893,32 @@ async function createSpreadsheet(sheetName, headers) {
   const created = await createResponse.json();
   const ssid = created?.spreadsheetId;
   if (!ssid) throw new Error("Sheet was created but spreadsheetId was missing");
-  return { ssid, sheetId: created?.sheets?.[0]?.properties?.sheetId || 0 };
+  return {
+    ssid,
+    sheetId: created?.sheets?.[0]?.properties?.sheetId || 0,
+    title: created?.properties?.title || null,
+    spreadsheetUrl: created?.spreadsheetUrl || null,
+  };
+}
+
+// spreadsheets.create already hands back the title and the URL, and a sheet
+// made moments ago has no modified time worth asking Drive about. copyTemplate
+// has always taken its metadata straight off the create call; these two used to
+// spend a whole extra round trip re-reading what they had just been told.
+function describeCreatedSheet({ ssid, title, spreadsheetUrl }, sheetName) {
+  const nowIso = new Date().toISOString();
+  return {
+    id: ssid,
+    name: title || sheetName,
+    webViewLink: spreadsheetUrl || null,
+    modifiedTime: nowIso,
+    modifiedByMeTime: nowIso,
+  };
 }
 
 export async function createBlankSheet(sheetName, headers) {
-  const { ssid } = await createSpreadsheet(sheetName, headers);
+  const created = await createSpreadsheet(sheetName, headers);
+  const { ssid } = created;
 
   const headerResponse = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
@@ -918,18 +939,12 @@ export async function createBlankSheet(sheetName, headers) {
     const body = await headerResponse.json().catch(() => ({}));
     throw new Error(body?.error?.message || "Failed to seed sheet headers");
   }
-  const metadata = await fetchDriveMetadata(ssid, headers);
-  return {
-    id: ssid,
-    name: metadata?.name || sheetName,
-    webViewLink: metadata?.webViewLink || null,
-    modifiedTime: metadata?.modifiedTime || null,
-    modifiedByMeTime: metadata?.modifiedByMeTime || null,
-  };
+  return describeCreatedSheet(created, sheetName);
 }
 
 export async function createBootstrapSheet(sheetName, headers) {
-  const { ssid, sheetId } = await createSpreadsheet(sheetName, headers);
+  const created = await createSpreadsheet(sheetName, headers);
+  const { ssid, sheetId } = created;
 
   const valuesRequest = fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
@@ -1193,14 +1208,7 @@ export async function createBootstrapSheet(sheetName, headers) {
     );
   }
 
-  const metadata = await fetchDriveMetadata(ssid, headers);
-  return {
-    id: ssid,
-    name: metadata?.name || sheetName,
-    webViewLink: metadata?.webViewLink || null,
-    modifiedTime: metadata?.modifiedTime || null,
-    modifiedByMeTime: metadata?.modifiedByMeTime || null,
-  };
+  return describeCreatedSheet(created, sheetName);
 }
 
 export async function persistLinkedSheet({

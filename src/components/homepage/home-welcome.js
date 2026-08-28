@@ -7,11 +7,28 @@
  * dashboard is no better — it is a mirror, and there is nothing yet to reflect.
  *
  * So the job here is activation: name the lifter, then ask the one question that
- * actually branches — do they have training history somewhere else, or are they
- * starting from nothing? That fork is also the segmentation. An importer with
- * five years of Hevy data does not want to be told how to squat; a genuine
- * beginner does. Answering it routes each to the right next thing instead of
- * showing both the same compromise.
+ * actually branches — is their training history in another app, or are they
+ * starting to log here? An importer with five years of Hevy data does not want
+ * to be told how to squat; a genuine beginner does.
+ *
+ * Three populations reach this page, not two:
+ *   1. new lifters, with no history anywhere
+ *   2. Strength Journeys users on a new device, whose sheet is sitting in Drive
+ *   3. experienced lifters whose history lives in another app
+ *
+ * Only two of them get a branch. The setup dialog auto-opens for anyone signed
+ * in without a linked sheet, and it searches Drive before it offers to create
+ * anything — so case 2 is normally solved before this page is ever seen. The
+ * case-2 lifter who ends up here is one who dismissed that dialog, which makes
+ * this a recovery path rather than a peer decision, and it gets the quieter
+ * line beneath the fork. It still has to be visible: someone with ten years of
+ * training they cannot currently see is in the most alarming state on the site,
+ * and needs to be told the sheet is still there.
+ *
+ * Case 3 is deliberately routed to import before sheet setup. The preview runs
+ * entirely client-side, so they see their own history rendered before we ask
+ * for Drive scope — the ask lands at loss aversion rather than at suspicion,
+ * and a refusal still leaves them a working session.
  *
  * The Big Four cards take the slot the product showcase holds on the public
  * hero. Screenshots of features sell the app to a stranger; this lifter has
@@ -150,8 +167,8 @@ export function HomeWelcome({ starterArticles = [], lifts }) {
 
           <motion.div variants={optionsStagger} className="flex flex-col gap-3">
             <StartingPointOption
-              title="I&rsquo;ve been lifting elsewhere"
-              description="Hevy, Strong, Wodify, or your own spreadsheet. Instant preview first — nothing is saved until you say so."
+              title="I&rsquo;ve been training in another app"
+              description="Hevy, Strong, Wodify, or your own spreadsheet. See it here instantly — nothing is saved until you say so."
             >
               <Button
                 className="w-full sm:w-auto"
@@ -176,8 +193,8 @@ export function HomeWelcome({ starterArticles = [], lifts }) {
             </StartingPointOption>
 
             <StartingPointOption
-              title="I&rsquo;m starting fresh"
-              description="New to the barbell, or you have never kept a log. We create a Google Sheet you own and you log your first session into it."
+              title="I want to start logging here"
+              description="We&rsquo;ll set up a Google Sheet you own, and you can log your first session into it today."
             >
               <Button
                 className="w-full sm:w-auto"
@@ -194,14 +211,37 @@ export function HomeWelcome({ starterArticles = [], lifts }) {
                   className="mr-2 h-4 w-4 shrink-0"
                   aria-hidden
                 />
-                Create My Lifting Log
+                Set Up My Lifting Log
               </Button>
             </StartingPointOption>
           </motion.div>
 
+          {/* The recovery path for a returning lifter whose sheet is already in Drive. Quiet,
+              because the setup dialog auto-opens and normally resolves this before the page is
+              seen — anyone reading it here dismissed that dialog. Visible, because they have
+              training history they currently cannot see, and need telling it still exists. */}
           <motion.p
             variants={riseIn}
-            className="text-muted-foreground mt-3 text-center text-xs lg:text-left"
+            className="text-muted-foreground mt-4 text-center text-xs lg:text-left"
+          >
+            Used Strength Journeys before?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                gaEvent(GA_EVENT_TAGS.HOME_WELCOME_ACTION, {
+                  action: "recover_existing_sheet",
+                });
+                openSheetSetupDialog("bootstrap");
+              }}
+              className="text-foreground font-medium underline underline-offset-4 hover:no-underline"
+            >
+              We&rsquo;ll find your sheet in Drive.
+            </button>
+          </motion.p>
+
+          <motion.p
+            variants={riseIn}
+            className="text-muted-foreground mt-2 text-center text-xs lg:text-left"
           >
             Free forever. Your data stays yours.
           </motion.p>

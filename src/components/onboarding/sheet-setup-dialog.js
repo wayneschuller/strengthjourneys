@@ -34,16 +34,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { motion } from "motion/react";
 import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  ExternalLink,
   FolderOpen,
   LoaderCircle,
   Activity,
@@ -238,6 +235,7 @@ function getSheetDialogCopy({
       title:
         intent === "switch_sheet" ? "Reviewing your options." : "Almost there.",
       description: loadingQuip,
+      status: statusMessage,
       tone: "working",
     };
   }
@@ -283,7 +281,8 @@ function getSheetDialogCopy({
       intent === "switch_sheet"
         ? "Loading your sheet options."
         : "Getting your sheet ready.",
-    description: loadingQuip || statusMessage,
+    description: loadingQuip,
+    status: statusMessage,
     tone: "working",
   };
 }
@@ -746,8 +745,8 @@ export function SheetSetupDialog() {
       setOnboardingState("discovering");
       setSheetDiscoveryStatusMessage(
         intent === "switch_sheet"
-          ? "Loading accessible data sources."
-          : "Scanning Google Drive for existing lifting logs.",
+          ? "Rounding up the sheets you can connect."
+          : "Asking Google Drive to spot us.",
       );
 
       try {
@@ -809,6 +808,11 @@ export function SheetSetupDialog() {
       setProvisionError(null);
       setIsProvisionActionLoading(true);
       setOnboardingState("linking_or_creating");
+      setSheetDiscoveryStatusMessage(
+        mode === "select_existing"
+          ? "Connecting your lifting log."
+          : "Racking a fresh sheet in your Google Drive.",
+      );
       try {
         const response = await fetch("/api/sheet/link", {
           method: "POST",
@@ -991,6 +995,9 @@ export function SheetSetupDialog() {
       setOpen(true);
       setFlowIntent("bootstrap");
       setOnboardingState("linking_or_creating");
+      setSheetDiscoveryStatusMessage(
+        "Saving your preview into a new lifting log.",
+      );
       setLoadingQuip(pickRandomSheetSetupQuip());
 
       try {
@@ -1106,6 +1113,7 @@ export function SheetSetupDialog() {
       setProvisionError(null);
       setIsProvisionActionLoading(true);
       setOnboardingState("linking_or_creating");
+      setSheetDiscoveryStatusMessage("Reading your file.");
       try {
         // Step 1: Parse the file
         const {
@@ -1119,6 +1127,9 @@ export function SheetSetupDialog() {
         }
 
         // Step 2: Create a blank sheet
+        setSheetDiscoveryStatusMessage(
+          `Racking a fresh sheet for ${count.toLocaleString()} ${formatName} entries.`,
+        );
         const linkRes = await fetch("/api/sheet/link", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1142,6 +1153,9 @@ export function SheetSetupDialog() {
         const importedEntries = entries.filter((entry) => !entry.isGoal);
 
         if (importedEntries.length > 0) {
+          setSheetDiscoveryStatusMessage(
+            `Loading ${importedEntries.length.toLocaleString()} entries onto the bar.`,
+          );
           const apiEntries = importedEntries.map((e) => ({
             date: e.date,
             liftType: e.liftType,
@@ -1515,9 +1529,9 @@ export function SheetSetupDialog() {
                 )}
                 {dialogCopy.eyebrow}
               </div>
-              <CardTitle className="max-w-3xl text-2xl md:text-3xl">
+              <DialogTitle className="max-w-3xl text-2xl leading-tight md:text-3xl">
                 {dialogCopy.title}
-              </CardTitle>
+              </DialogTitle>
               {dialogCopy.description ? (
                 <CardDescription className="max-w-3xl text-base leading-relaxed">
                   {dialogCopy.description}
@@ -1527,7 +1541,28 @@ export function SheetSetupDialog() {
             <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto xl:px-10 2xl:px-16">
               {(onboardingState === "discovering" ||
                 onboardingState === "linking_or_creating") && (
-                <PlateLoadingAnimation isActive={true} />
+                <div className="flex flex-col items-center gap-3 py-2">
+                  <PlateLoadingAnimation isActive={true} />
+                  {dialogCopy.status ? (
+                    <p
+                      className="text-muted-foreground flex items-center gap-2 text-sm"
+                      aria-live="polite"
+                    >
+                      <LoaderCircle
+                        className="h-3.5 w-3.5 animate-spin"
+                        aria-hidden
+                      />
+                      {dialogCopy.status}
+                    </p>
+                  ) : null}
+                  {onboardingState === "discovering" ? (
+                    <p className="text-muted-foreground/80 max-w-md text-center text-xs leading-relaxed">
+                      Strength Journeys can only see spreadsheets you have
+                      opened with it &mdash; never the rest of your Google
+                      Drive.
+                    </p>
+                  ) : null}
+                </div>
               )}
               {onboardingState === "choose_sheet" && (
                 <ChooseSheetPanel
@@ -1630,10 +1665,12 @@ export function SheetSetupDialog() {
  * Adds one blue plate per side at each interval to suggest "loading up"
  * while the user waits for sheet discovery or creation.
  * @param {boolean} props.isActive - Whether to run the animation.
- * @param {number} [props.stepDurationMs=1800] - Ms between each plate addition.
+ * @param {number} [props.stepDurationMs=300] - Ms between each plate addition.
  */
 function PlateLoadingAnimation({ isActive, stepDurationMs = 300 }) {
   const [plateCount, setPlateCount] = useState(0);
+  // Read the unit preference once: this component re-renders on every plate.
+  const [isMetric] = useState(() => getPreferredUnitTypeFromClient() === "kg");
   const MAX_PLATES = 5;
 
   useEffect(() => {
@@ -1647,7 +1684,6 @@ function PlateLoadingAnimation({ isActive, stepDurationMs = 300 }) {
     return () => clearInterval(timer);
   }, [isActive, stepDurationMs]);
 
-  const isMetric = getPreferredUnitTypeFromClient() === "kg";
   const barWeight = isMetric ? 20 : 45;
   const bluePlate = isMetric
     ? { weight: 20, color: "#2563EB", name: "20kg" }
@@ -1825,6 +1861,17 @@ function CreatedSheetPanel({
           <CheckCircle2 className="h-3.5 w-3.5" />
           {badgeText}
         </p>
+        {sheetUrl ? (
+          <a
+            href={sheetUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-primary mt-3 inline-flex items-center gap-1.5 text-sm font-medium underline underline-offset-4 transition-colors"
+          >
+            Open in Google Sheets
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+          </a>
+        ) : null}
       </div>
     </div>
   );
@@ -1846,7 +1893,7 @@ function CreatedSheetPanel({
         transition={{ duration: 0.35, ease: "easeOut", delay: 0.1 }}
         className="mx-auto w-full max-w-2xl"
       >
-        <div className="border-border/70 rounded-lg border bg-[#fafafa] p-5 text-left">
+        <div className="border-border/70 bg-muted/30 rounded-lg border p-5 text-left">
           {sheetCard}
         </div>
       </motion.div>

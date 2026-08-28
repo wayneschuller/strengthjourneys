@@ -233,7 +233,7 @@ function getSheetDialogCopy({
           ? "Checking your lifting logs"
           : "Linking your lifting log",
       title:
-        intent === "switch_sheet" ? "Reviewing your options." : "Almost there.",
+        intent === "switch_sheet" ? "Swapping the bar over." : "Almost there.",
       description: loadingQuip,
       status: statusMessage,
       tone: "working",
@@ -279,8 +279,8 @@ function getSheetDialogCopy({
         : "Setting up your lifting log",
     title:
       intent === "switch_sheet"
-        ? "Loading your sheet options."
-        : "Getting your sheet ready.",
+        ? "Seeing what else is on the rack."
+        : "Asking Google Drive to spot us.",
     description: loadingQuip,
     status: statusMessage,
     tone: "working",
@@ -745,8 +745,8 @@ export function SheetSetupDialog() {
       setOnboardingState("discovering");
       setSheetDiscoveryStatusMessage(
         intent === "switch_sheet"
-          ? "Rounding up the sheets you can connect."
-          : "Asking Google Drive to spot us.",
+          ? "Checking which sheets you can connect."
+          : "Checking for a lifting log you have used before.",
       );
 
       try {

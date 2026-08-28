@@ -78,7 +78,9 @@ export default async function handler(req, res) {
   const base = await requireSheetFlowContext(req, res);
   if (!base) return;
 
-  const intent = ["bootstrap", "recovery", "switch_sheet"].includes(req.body?.intent)
+  const intent = ["bootstrap", "recovery", "switch_sheet"].includes(
+    req.body?.intent,
+  )
     ? req.body.intent
     : "bootstrap";
   const hadLocalSheetBefore = Boolean(req.body?.hadLocalSheetBefore);
@@ -232,7 +234,9 @@ export default async function handler(req, res) {
           nowIso,
         });
       }
-      devLog("[sheet/resolve] founder activation after bootstrap headers", { prompted });
+      devLog("[sheet/resolve] founder activation after bootstrap headers", {
+        prompted,
+      });
       return respondCreateNewUserSheet(res, created, debug, {
         onboardingFlowToken,
       });
@@ -243,7 +247,8 @@ export default async function handler(req, res) {
       lifecycle.hasKvRecord &&
       rankedCandidates.length === 0
     ) {
-      const previousProvisionedSheetId = existingRecord?.provisionedSheetId || null;
+      const previousProvisionedSheetId =
+        existingRecord?.provisionedSheetId || null;
       const priorSheetCheck = await inspectProvisionedSheet(
         previousProvisionedSheetId,
         base.headers,
@@ -277,9 +282,9 @@ export default async function handler(req, res) {
         });
         const hadPriorSheetEvidence = Boolean(
           existingRecord?.connectedAt ||
-            existingRecord?.provisionedSheetId ||
-            existingRecord?.connectionMethod ||
-            existingRecord?.lastSeenAt,
+          existingRecord?.provisionedSheetId ||
+          existingRecord?.connectionMethod ||
+          existingRecord?.lastSeenAt,
         );
         await promptDeveloper(
           hadPriorSheetEvidence ? "reprovisioned" : "first-time-provisioned",

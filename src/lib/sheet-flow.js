@@ -11,7 +11,8 @@ import { devLog } from "@/lib/processing-utils";
 import { getUserKvKey, mergeUserRecord } from "@/lib/user-kv-keys";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
-export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
+export const SAMPLE_TEMPLATE_SSID =
+  "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 export const PROVISION_VERSION = 3;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 12;
@@ -30,7 +31,11 @@ const BOOTSTRAP_HEADERS = [
 ];
 
 const VALID_INTENTS = new Set(["bootstrap", "recovery", "switch_sheet"]);
-const VALID_LINK_MODES = new Set(["select_existing", "create_blank", "create_sample"]);
+const VALID_LINK_MODES = new Set([
+  "select_existing",
+  "create_blank",
+  "create_sample",
+]);
 const isDevEnv =
   process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
@@ -167,7 +172,9 @@ function scoreCandidate(candidate, userNameTokens) {
     title.includes("sample") || title.includes("demo") ? -28 : 0;
   factors.copyPenalty = title.includes("copy of") ? -12 : 0;
 
-  const containsUserName = userNameTokens.some((token) => title.includes(token));
+  const containsUserName = userNameTokens.some((token) =>
+    title.includes(token),
+  );
   factors.userNameBonus = containsUserName ? 10 : 0;
   factors.otherPersonPenalty = hasLikelyOtherPersonName(title, userNameTokens)
     ? -35
@@ -226,7 +233,9 @@ export function toClientCandidate(candidate) {
       Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
         ? {
             ...candidate.headerHint,
-            goalColumnIndex: Number.isInteger(candidate.headerHint.goalColumnIndex)
+            goalColumnIndex: Number.isInteger(
+              candidate.headerHint.goalColumnIndex,
+            )
               ? candidate.headerHint.goalColumnIndex
               : -1,
           }
@@ -302,8 +311,10 @@ export async function listRecentSpreadsheetCandidates(headers) {
     const aRank = normalizeHeader(a?.name).includes("strength journey") ? 0 : 1;
     const bRank = normalizeHeader(b?.name).includes("strength journey") ? 0 : 1;
     if (aRank !== bRank) return aRank - bRank;
-    return toTimestamp(b?.modifiedByMeTime || b?.modifiedTime) -
-      toTimestamp(a?.modifiedByMeTime || a?.modifiedTime);
+    return (
+      toTimestamp(b?.modifiedByMeTime || b?.modifiedTime) -
+      toTimestamp(a?.modifiedByMeTime || a?.modifiedTime)
+    );
   });
 
   devLog(
@@ -332,7 +343,9 @@ export async function readHeaderInfo(ssid, headers) {
   const canonical = row.map(normalizeColumnName);
 
   return {
-    valid: REQUIRED_HEADER_CORE.every((required) => normalized.includes(required)),
+    valid: REQUIRED_HEADER_CORE.every((required) =>
+      normalized.includes(required),
+    ),
     status: response.status,
     sampleHeaders: row.slice(0, 8),
     headerCount: row.length,
@@ -389,20 +402,27 @@ function parseWeightAndUnit(value) {
 }
 
 function isGoalCellValue(value) {
-  return String(value || "").trim().toLowerCase() === "true";
+  return (
+    String(value || "")
+      .trim()
+      .toLowerCase() === "true"
+  );
 }
 
 function shouldReplacePreviewSet(current, candidate) {
   // Use e1RM only as a ranking score; client previews show the actual set.
   if (!current) return true;
   if (candidate.e1rm > current.e1rm) {
-    const relativeDelta = (candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
+    const relativeDelta =
+      (candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
     if (relativeDelta > PREVIEW_E1RM_TIE_TOLERANCE_RATIO) return true;
   }
-  const relativeGap = Math.abs(candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
+  const relativeGap =
+    Math.abs(candidate.e1rm - current.e1rm) / Math.max(current.e1rm, 1);
   if (relativeGap <= PREVIEW_E1RM_TIE_TOLERANCE_RATIO) {
     if (candidate.reps < current.reps) return true;
-    if (candidate.reps === current.reps && candidate.weight > current.weight) return true;
+    if (candidate.reps === current.reps && candidate.weight > current.weight)
+      return true;
   }
   return false;
 }
@@ -499,7 +519,11 @@ export async function enrichCandidateMetadata(
     nonEmptyRowCount += 1;
 
     const parsedDateFromCell = parseYmd(row?.[dateColumnIndex], locale);
-    if (parsedDateFromCell && previousDate && parsedDateFromCell !== previousDate) {
+    if (
+      parsedDateFromCell &&
+      previousDate &&
+      parsedDateFromCell !== previousDate
+    ) {
       previousSessionLiftType = null;
     }
     if (parsedDateFromCell) previousDate = parsedDateFromCell;
@@ -508,7 +532,8 @@ export async function enrichCandidateMetadata(
     if (rawLiftType) previousSessionLiftType = rawLiftType;
 
     const hasReps =
-      repsColumnIndex >= 0 && String(row?.[repsColumnIndex] || "").trim() !== "";
+      repsColumnIndex >= 0 &&
+      String(row?.[repsColumnIndex] || "").trim() !== "";
     const hasWeight =
       weightColumnIndex >= 0 &&
       String(row?.[weightColumnIndex] || "").trim() !== "";
@@ -529,7 +554,8 @@ export async function enrichCandidateMetadata(
     if (!minDate || parsedDate < minDate) minDate = parsedDate;
     if (!maxDate || parsedDate > maxDate) maxDate = parsedDate;
 
-    if (!normalizedLiftType || !BIG_FOUR_LIFTS_SET.has(normalizedLiftType)) continue;
+    if (!normalizedLiftType || !BIG_FOUR_LIFTS_SET.has(normalizedLiftType))
+      continue;
 
     const reps = parseReps(row?.[repsColumnIndex]);
     const weightInfo = parseWeightAndUnit(row?.[weightColumnIndex]);
@@ -568,28 +594,34 @@ export async function enrichCandidateMetadata(
     approxSessions: sessions.size || null,
     dateRangeStart: minDate,
     dateRangeEnd: maxDate,
-    bigFourPreview: BIG_FOUR_LIFTS.map((liftType) => bestByLift[liftType]).filter(Boolean),
+    bigFourPreview: BIG_FOUR_LIFTS.map(
+      (liftType) => bestByLift[liftType],
+    ).filter(Boolean),
     metadataSampled:
       nonEmptyRowCount >= METADATA_SCAN_ROW_CAP || hasRowsBeyondScanCap,
   };
 }
 
 export function scoreAndSortCandidates(candidates, userNameTokens, debug) {
-  const scored = (Array.isArray(candidates) ? candidates : []).map((candidate) => {
-    const result = scoreCandidate(candidate, userNameTokens);
-    return {
-      ...candidate,
-      __score: result.score,
-      __scoreFactors: result.factors,
-      __ageDays: result.ageDays,
-      __rowsForScore: result.rows,
-    };
-  });
+  const scored = (Array.isArray(candidates) ? candidates : []).map(
+    (candidate) => {
+      const result = scoreCandidate(candidate, userNameTokens);
+      return {
+        ...candidate,
+        __score: result.score,
+        __scoreFactors: result.factors,
+        __ageDays: result.ageDays,
+        __rowsForScore: result.rows,
+      };
+    },
+  );
 
   scored.sort((a, b) => {
     if (a.__score !== b.__score) return b.__score - a.__score;
-    return toTimestamp(b.modifiedByMeTime || b.modifiedTime) -
-      toTimestamp(a.modifiedByMeTime || a.modifiedTime);
+    return (
+      toTimestamp(b.modifiedByMeTime || b.modifiedTime) -
+      toTimestamp(a.modifiedByMeTime || a.modifiedTime)
+    );
   });
 
   if (debug) {
@@ -614,7 +646,10 @@ export function scoreAndSortCandidates(candidates, userNameTokens, debug) {
   });
 }
 
-export function pickEnrichCandidateIds(candidates, limit = MAX_DEEP_ENRICH_CANDIDATES) {
+export function pickEnrichCandidateIds(
+  candidates,
+  limit = MAX_DEEP_ENRICH_CANDIDATES,
+) {
   const selected = [];
   const seenNames = new Set();
   for (const candidate of Array.isArray(candidates) ? candidates : []) {
@@ -699,7 +734,9 @@ export async function enrichCandidatesByIds({
     if (candidate?.id) candidateMap.set(candidate.id, candidate);
   });
   const ids = (Array.isArray(candidateIds) ? candidateIds : [])
-    .filter((id, index, arr) => typeof id === "string" && arr.indexOf(id) === index)
+    .filter(
+      (id, index, arr) => typeof id === "string" && arr.indexOf(id) === index,
+    )
     .slice(0, MAX_DEEP_ENRICH_CANDIDATES);
 
   const enriched = [];
@@ -838,14 +875,17 @@ export async function copyTemplate(sheetName, templateSsid, headers) {
 }
 
 async function createSpreadsheet(sheetName, headers) {
-  const createResponse = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
-    method: "POST",
-    headers: {
-      ...headers,
-      "Content-Type": "application/json",
+  const createResponse = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets",
+    {
+      method: "POST",
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ properties: { title: sheetName } }),
     },
-    body: JSON.stringify({ properties: { title: sheetName } }),
-  });
+  );
   if (!createResponse.ok) {
     const body = await createResponse.json().catch(() => ({}));
     throw new Error(body?.error?.message || "Failed to create a new sheet");
@@ -933,48 +973,79 @@ export async function createBootstrapSheet(sheetName, headers) {
                   textFormat: { bold: true },
                 },
               },
-              fields: "userEnteredFormat.backgroundColor,userEnteredFormat.textFormat.bold",
+              fields:
+                "userEnteredFormat.backgroundColor,userEnteredFormat.textFormat.bold",
             },
           },
           // Column widths
           {
             updateDimensionProperties: {
-              range: { sheetId, dimension: "COLUMNS", startIndex: 0, endIndex: 1 },
+              range: {
+                sheetId,
+                dimension: "COLUMNS",
+                startIndex: 0,
+                endIndex: 1,
+              },
               properties: { pixelSize: 110 },
               fields: "pixelSize",
             },
           },
           {
             updateDimensionProperties: {
-              range: { sheetId, dimension: "COLUMNS", startIndex: 1, endIndex: 2 },
+              range: {
+                sheetId,
+                dimension: "COLUMNS",
+                startIndex: 1,
+                endIndex: 2,
+              },
               properties: { pixelSize: 170 },
               fields: "pixelSize",
             },
           },
           {
             updateDimensionProperties: {
-              range: { sheetId, dimension: "COLUMNS", startIndex: 2, endIndex: 3 },
+              range: {
+                sheetId,
+                dimension: "COLUMNS",
+                startIndex: 2,
+                endIndex: 3,
+              },
               properties: { pixelSize: 75 },
               fields: "pixelSize",
             },
           },
           {
             updateDimensionProperties: {
-              range: { sheetId, dimension: "COLUMNS", startIndex: 3, endIndex: 4 },
+              range: {
+                sheetId,
+                dimension: "COLUMNS",
+                startIndex: 3,
+                endIndex: 4,
+              },
               properties: { pixelSize: 90 },
               fields: "pixelSize",
             },
           },
           {
             updateDimensionProperties: {
-              range: { sheetId, dimension: "COLUMNS", startIndex: 4, endIndex: 5 },
+              range: {
+                sheetId,
+                dimension: "COLUMNS",
+                startIndex: 4,
+                endIndex: 5,
+              },
               properties: { pixelSize: 380 },
               fields: "pixelSize",
             },
           },
           {
             updateDimensionProperties: {
-              range: { sheetId, dimension: "COLUMNS", startIndex: 5, endIndex: 6 },
+              range: {
+                sheetId,
+                dimension: "COLUMNS",
+                startIndex: 5,
+                endIndex: 6,
+              },
               properties: { pixelSize: 300 },
               fields: "pixelSize",
             },
@@ -982,63 +1053,124 @@ export async function createBootstrapSheet(sheetName, headers) {
           // Header cell notes — one per column
           {
             repeatCell: {
-              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 1 },
-              cell: { note: "Enter the date in YYYY-MM-DD format (e.g. 2026-03-07). Only fill in the date on the first set of each session — leave it blank for additional sets on the same day." },
+              range: {
+                sheetId,
+                startRowIndex: 0,
+                endRowIndex: 1,
+                startColumnIndex: 0,
+                endColumnIndex: 1,
+              },
+              cell: {
+                note: "Enter the date in YYYY-MM-DD format (e.g. 2026-03-07). Only fill in the date on the first set of each session — leave it blank for additional sets on the same day.",
+              },
               fields: "note",
             },
           },
           {
             repeatCell: {
-              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 1, endColumnIndex: 2 },
-              cell: { note: "The name of the exercise (e.g. Back Squat, Deadlift, Bench Press, Strict Press). Use the same spelling every time so Strength Journeys can track your progress correctly." },
+              range: {
+                sheetId,
+                startRowIndex: 0,
+                endRowIndex: 1,
+                startColumnIndex: 1,
+                endColumnIndex: 2,
+              },
+              cell: {
+                note: "The name of the exercise (e.g. Back Squat, Deadlift, Bench Press, Strict Press). Use the same spelling every time so Strength Journeys can track your progress correctly.",
+              },
               fields: "note",
             },
           },
           {
             repeatCell: {
-              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 2, endColumnIndex: 3 },
-              cell: { note: "The number of repetitions performed in this set (e.g. 5). Enter whole numbers only." },
+              range: {
+                sheetId,
+                startRowIndex: 0,
+                endRowIndex: 1,
+                startColumnIndex: 2,
+                endColumnIndex: 3,
+              },
+              cell: {
+                note: "The number of repetitions performed in this set (e.g. 5). Enter whole numbers only.",
+              },
               fields: "note",
             },
           },
           {
             repeatCell: {
-              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 3, endColumnIndex: 4 },
-              cell: { note: "The weight lifted, including the unit — kg or lb (e.g. 100kg or 225lb). For bodyweight-only pull-ups, chin-ups, dips, or muscle-ups, enter 0kg or 0lb. Always include the unit so Strength Journeys knows which system you use." },
+              range: {
+                sheetId,
+                startRowIndex: 0,
+                endRowIndex: 1,
+                startColumnIndex: 3,
+                endColumnIndex: 4,
+              },
+              cell: {
+                note: "The weight lifted, including the unit — kg or lb (e.g. 100kg or 225lb). For bodyweight-only pull-ups, chin-ups, dips, or muscle-ups, enter 0kg or 0lb. Always include the unit so Strength Journeys knows which system you use.",
+              },
               fields: "note",
             },
           },
           {
             repeatCell: {
-              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 4, endColumnIndex: 5 },
-              cell: { note: "Optional free text. Add anything useful — coaching cues, RPE, how the session felt. Great for your own records." },
+              range: {
+                sheetId,
+                startRowIndex: 0,
+                endRowIndex: 1,
+                startColumnIndex: 4,
+                endColumnIndex: 5,
+              },
+              cell: {
+                note: "Optional free text. Add anything useful — coaching cues, RPE, how the session felt. Great for your own records.",
+              },
               fields: "note",
             },
           },
           {
             repeatCell: {
-              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 5, endColumnIndex: 6 },
-              cell: { note: "Optional link to a video of this set — e.g. a YouTube or Google Photos URL. Strength Journeys will make these available so you can review your lifts alongside your data." },
+              range: {
+                sheetId,
+                startRowIndex: 0,
+                endRowIndex: 1,
+                startColumnIndex: 5,
+                endColumnIndex: 6,
+              },
+              cell: {
+                note: "Optional link to a video of this set — e.g. a YouTube or Google Photos URL. Strength Journeys will make these available so you can review your lifts alongside your data.",
+              },
               fields: "note",
             },
           },
           // Column A data rows: date format + bold
           {
             repeatCell: {
-              range: { sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 1 },
+              range: {
+                sheetId,
+                startRowIndex: 1,
+                endRowIndex: 1000,
+                startColumnIndex: 0,
+                endColumnIndex: 1,
+              },
               cell: {
                 userEnteredFormat: {
                   numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" },
                   textFormat: { bold: true },
                 },
               },
-              fields: "userEnteredFormat.numberFormat,userEnteredFormat.textFormat.bold",
+              fields:
+                "userEnteredFormat.numberFormat,userEnteredFormat.textFormat.bold",
             },
           },
           // Column C (Reps) data rows: right-align
           {
             repeatCell: {
-              range: { sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
+              range: {
+                sheetId,
+                startRowIndex: 1,
+                endRowIndex: 1000,
+                startColumnIndex: 2,
+                endColumnIndex: 3,
+              },
               cell: { userEnteredFormat: { horizontalAlignment: "RIGHT" } },
               fields: "userEnteredFormat.horizontalAlignment",
             },
@@ -1056,7 +1188,9 @@ export async function createBootstrapSheet(sheetName, headers) {
     throw new Error(body?.error?.message || "Failed to seed sheet headers");
   }
   if (!formatResponse.ok) {
-    devLog("[sheet-flow] bootstrap formatting failed; continuing with headers only");
+    devLog(
+      "[sheet-flow] bootstrap formatting failed; continuing with headers only",
+    );
   }
 
   const metadata = await fetchDriveMetadata(ssid, headers);
@@ -1083,10 +1217,13 @@ export async function persistLinkedSheet({
   return mergeUserRecord(kvKey, (latest) => ({
     connectedAt: latest.connectedAt || existingRecord.connectedAt || nowIso,
     activationPromptedAt:
-      latest.activationPromptedAt || existingRecord.activationPromptedAt || null,
+      latest.activationPromptedAt ||
+      existingRecord.activationPromptedAt ||
+      null,
     connectionMethod,
     provisionedSheetId: metadata.id,
-    provisionedAt: latest.provisionedAt || existingRecord.provisionedAt || nowIso,
+    provisionedAt:
+      latest.provisionedAt || existingRecord.provisionedAt || nowIso,
     provisionVersion: PROVISION_VERSION,
     provisioningMethod,
     lastSeenAt: nowIso,
@@ -1099,7 +1236,11 @@ export async function maybePromptActivation({ existingRecord, session, meta }) {
   return true;
 }
 
-export async function markActivationPrompted({ kvKey, existingRecord, nowIso }) {
+export async function markActivationPrompted({
+  kvKey,
+  existingRecord,
+  nowIso,
+}) {
   // Activation support may add delayed-email metadata while the caller still
   // holds an older record snapshot. mergeUserRecord re-reads the latest KV
   // value so that metadata is not lost when activationPromptedAt is written.

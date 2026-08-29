@@ -9,6 +9,7 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
+import { BIG_FOUR_REMARK_PLUGINS } from "@/lib/big-four-links";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   AI_REVIEW_PROMPTS,
@@ -1266,12 +1267,25 @@ function AILiftingAssistantCard({
                               parts
                                 .filter((part) => part.type === "text")
                                 .map((part, i) => (
-                                  <MessageResponse key={`${message.id}-${i}`}>
+                                  <MessageResponse
+                                    key={`${message.id}-${i}`}
+                                    remarkPlugins={
+                                      message.role === "assistant"
+                                        ? BIG_FOUR_REMARK_PLUGINS
+                                        : undefined
+                                    }
+                                  >
                                     {part.text}
                                   </MessageResponse>
                                 ))
                             ) : message.content ? (
-                              <MessageResponse>
+                              <MessageResponse
+                                remarkPlugins={
+                                  message.role === "assistant"
+                                    ? BIG_FOUR_REMARK_PLUGINS
+                                    : undefined
+                                }
+                              >
                                 {typeof message.content === "string"
                                   ? message.content
                                   : JSON.stringify(message.content)}

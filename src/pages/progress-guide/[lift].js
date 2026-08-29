@@ -5,7 +5,8 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
-import { Crown, Shield, Skull, Luggage, ExternalLink } from "lucide-react";
+import { motion } from "motion/react";
+import { Crown, Shield, Skull, Luggage, Dumbbell, ExternalLink } from "lucide-react";
 
 import {
   Card,
@@ -32,6 +33,13 @@ import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
 import { RelatedArticles } from "@/components/article-cards";
+import { Button } from "@/components/ui/button";
+import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
+import { LiftKeyStats } from "@/components/big-four/lift-key-stats";
+import {
+  SectionEyebrow,
+  SectionReveal,
+} from "@/components/big-four/section-reveal";
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 
 import {
@@ -205,12 +213,21 @@ export default function BigFourBarbellInsights({
 /**
  * Inner client component for a Big Four lift insight page. Renders the full dashboard of lift-specific
  * cards: strength levels, lift journey, articles, visualizer charts, PR tables, and video guides.
+ *
+ * Section order still flips on whether the visitor has their own data — lifters
+ * get their numbers first, anonymous visitors get the movement and the
+ * editorial first — but both orders are now built from the same two blocks so
+ * the two branches cannot drift apart, and every block scroll-reveals so the
+ * long page reads as chapters rather than one flat column of cards.
  */
 function BarbellInsightsMain({
   liftInsightData,
   relatedArticles,
 }) {
   const { hasUserData } = useUserLiftingData();
+  const { getColor } = useLiftColors();
+  const liftType = liftInsightData.liftType;
+  const liftColor = getColor(liftType);
 
   const bigFourIcons = {
     "Back Squat": Crown,
@@ -225,199 +242,238 @@ function BarbellInsightsMain({
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",
   };
-  const navLiftLabel = getNavLiftLabel(liftInsightData.liftType);
+  const navLiftLabel = getNavLiftLabel(liftType);
+
+  // Personal analysis. Anonymous visitors see the same block driven by demo
+  // data, so the eyebrow has to stop short of claiming the numbers are theirs.
+  const analysisSections = (
+    <>
+      <SectionEyebrow
+        eyebrow={hasUserData ? "Your data" : "See it in action"}
+        title={
+          hasUserData
+            ? `My ${liftType} analysis`
+            : `What ${liftType} tracking looks like`
+        }
+        color={liftColor}
+      />
+      <SectionReveal className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div id="progress-history" className="scroll-mt-24">
+          <LiftJourneyCard liftType={liftType} />
+        </div>
+        <div className="scroll-mt-24 lg:col-span-2" id="recent-sessions">
+          <MostRecentSessionCard
+            key={liftType}
+            liftType={liftType}
+            defaultVisibleCount={5}
+          />
+        </div>
+      </SectionReveal>
+      {/* Self-hides in demo mode, so anonymous visitors never see it. */}
+      <SectionReveal>
+        <LiftLogCta liftType={liftType} />
+      </SectionReveal>
+      <SectionReveal>
+        <VisualizerMini liftType={liftType} />
+      </SectionReveal>
+      <SectionReveal id="tonnage-chart">
+        <TonnageChart liftType={liftType} />
+      </SectionReveal>
+      <SectionReveal id="strength-circles">
+        <SingleLiftStrengthCirclesSection liftType={liftType} />
+      </SectionReveal>
+      <SectionReveal id="strength-potential">
+        <StrengthPotentialBarChart liftType={liftType} />
+      </SectionReveal>
+      <SectionReveal>
+        <VisualizerReps liftType={liftType} />
+      </SectionReveal>
+      <SectionReveal id="lift-prs">
+        <MyLiftTypePRsCard liftType={liftType} />
+      </SectionReveal>
+    </>
+  );
+
+  const editorialSections = (
+    <>
+      <SectionEyebrow
+        eyebrow="Learn the lift"
+        title={`${liftType} coaching, technique and reading`}
+        color={liftColor}
+      />
+      <SectionReveal id="video-guides">
+        <VideoCard liftType={liftType} videos={liftInsightData.videos} />
+      </SectionReveal>
+      <SectionReveal className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <IntroductionCard introduction={liftInsightData.introduction} />
+        </div>
+        <ResourcesCard resources={liftInsightData.resources} />
+      </SectionReveal>
+      <SectionReveal>
+        <LiftQuoteCard
+          title={liftInsightData.quoteSectionTitle}
+          quote={liftInsightData.liftQuote}
+          author={liftInsightData.liftQuoteAuthor}
+        />
+      </SectionReveal>
+    </>
+  );
 
   return (
     <PageContainer>
       <PageHeader>
-        <PageHeaderHeading icon={bigFourIcons[liftInsightData.liftType]}>
+        <PageHeaderHeading icon={bigFourIcons[liftType]}>
           {liftInsightData.pageTitle}
         </PageHeaderHeading>
         <PageHeaderDescription>
           <p>{liftInsightData.pageDescription}</p>
-          {(STRENGTH_STANDARDS_LINKS[liftInsightData.liftType] || liftInsightData.calculatorUrl) && (
-            <div className="mt-5 flex flex-wrap gap-3">
-              {STRENGTH_STANDARDS_LINKS[liftInsightData.liftType] && (
-                <Link
-                  href={STRENGTH_STANDARDS_LINKS[liftInsightData.liftType]}
-                  className="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-                >
-                  {liftInsightData.liftType} Strength Levels →
+          <div className="mt-5 flex flex-wrap gap-3">
+            {/* Primary action: the same log entry point the Lift Explorer uses,
+                so a lifter reading their own numbers can act on them here. */}
+            <Button asChild size="lg" className="h-11">
+              <Link
+                href={{ pathname: "/log", query: { startLift: liftType } }}
+              >
+                <Dumbbell className="h-5 w-5" />
+                {`Log ${liftType}`}
+              </Link>
+            </Button>
+            {STRENGTH_STANDARDS_LINKS[liftType] && (
+              <Button asChild variant="outline" size="lg" className="h-11">
+                <Link href={STRENGTH_STANDARDS_LINKS[liftType]}>
+                  {liftType} Strength Levels →
                 </Link>
-              )}
-              {liftInsightData.calculatorUrl && (
-                <Link
-                  href={liftInsightData.calculatorUrl}
-                  className="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-                >
-                  {liftInsightData.liftType} 1RM Calculator →
+              </Button>
+            )}
+            {liftInsightData.calculatorUrl && (
+              <Button asChild variant="outline" size="lg" className="h-11">
+                <Link href={liftInsightData.calculatorUrl}>
+                  {liftType} 1RM Calculator →
                 </Link>
-              )}
-            </div>
-          )}
-          <nav
-            aria-label={`${liftInsightData.liftType} page sections`}
-            className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-y py-3 text-sm text-muted-foreground"
-          >
-            <Link href="#strength-standards" className="hover:text-foreground">
-              {navLiftLabel} Standards
-            </Link>
-            <Link href="#progress-history" className="hover:text-foreground">
-              {navLiftLabel} Progress
-            </Link>
-            <Link href="#strength-circles" className="hover:text-foreground">
-              {navLiftLabel} Percentiles
-            </Link>
-            <Link href="#strength-potential" className="hover:text-foreground">
-              {navLiftLabel} Potential
-            </Link>
-            <Link href="#recent-sessions" className="hover:text-foreground">
-              {navLiftLabel} Sessions
-            </Link>
-            <Link href="#video-guides" className="hover:text-foreground">
-              Videos
-            </Link>
-            <Link href="#lift-prs" className="hover:text-foreground">
-              Rep PRs
-            </Link>
-            <Link href="#lift-faq" className="hover:text-foreground">
-              FAQ
-            </Link>
-            <Link href="#related-articles" className="hover:text-foreground">
-              Related Articles
-            </Link>
-          </nav>
+              </Button>
+            )}
+          </div>
         </PageHeaderDescription>
         <PageHeaderRight>
-          <div className="w-32 md:w-auto md:max-w-[10vw]">
+          {/* Soft lift-coloured glow behind the diagram so the hero has a focal
+              point instead of a flat SVG floating in whitespace. */}
+          <motion.div
+            className="relative w-32 md:w-auto md:max-w-[10vw]"
+            initial={{ opacity: 0, scale: 0.85, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.1 }}
+          >
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 -z-10 rounded-full opacity-20 blur-3xl"
+              style={{ backgroundColor: liftColor }}
+            />
             <img
-              src={bigFourDiagrams[liftInsightData.liftType]}
-              alt={`${liftInsightData.liftType} Diagram`}
+              src={bigFourDiagrams[liftType]}
+              alt={`${liftType} Diagram`}
               className="mx-auto"
             />
-          </div>
+          </motion.div>
         </PageHeaderRight>
       </PageHeader>
 
-      {/* Shared: strength standards always first */}
-      <div className="flex flex-col gap-6">
-        <div id="strength-standards">
-          <StrengthLevelsCard liftType={liftInsightData.liftType} />
-        </div>
+      <LiftSectionNav liftType={liftType} navLiftLabel={navLiftLabel} />
+
+      <div className="flex flex-col gap-6 pt-6">
+        {/* Key numbers sit above everything: they are the fastest read on the
+            page and they set up every chart underneath. */}
+        <SectionReveal>
+          <LiftKeyStats liftType={liftType} />
+        </SectionReveal>
+
+        <SectionReveal id="strength-standards">
+          <StrengthLevelsCard liftType={liftType} />
+        </SectionReveal>
 
         {hasUserData ? (
           <>
-            {/* Authenticated: personal data first, editorial lower */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div id="progress-history">
-                <LiftJourneyCard liftType={liftInsightData.liftType} />
-              </div>
-              <div className="lg:col-span-2" id="recent-sessions">
-                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} defaultVisibleCount={5} />
-              </div>
-            </div>
-            <VisualizerMini liftType={liftInsightData.liftType} />
-            <div id="tonnage-chart">
-              <TonnageChart liftType={liftInsightData.liftType} />
-            </div>
-            <div id="strength-circles">
-              <SingleLiftStrengthCirclesSection
-                liftType={liftInsightData.liftType}
-              />
-            </div>
-            <div id="strength-potential">
-              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
-            </div>
-            <VisualizerReps liftType={liftInsightData.liftType} />
-            <div id="lift-prs">
-              <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
-            </div>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <IntroductionCard introduction={liftInsightData.introduction} />
-              </div>
-              <ResourcesCard resources={liftInsightData.resources} />
-            </div>
-            <div id="video-guides">
-              <VideoCard
-                liftType={liftInsightData.liftType}
-                videos={liftInsightData.videos}
-              />
-            </div>
-            <LiftQuoteCard
-              title={liftInsightData.quoteSectionTitle}
-              quote={liftInsightData.liftQuote}
-              author={liftInsightData.liftQuoteAuthor}
-            />
+            {analysisSections}
+            {editorialSections}
           </>
         ) : (
           <>
-            {/* Anonymous: videos first (show the movement), then editorial, demo charts lower */}
-            <div id="video-guides">
-              <VideoCard
-                liftType={liftInsightData.liftType}
-                videos={liftInsightData.videos}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <IntroductionCard introduction={liftInsightData.introduction} />
-              </div>
-              <ResourcesCard resources={liftInsightData.resources} />
-            </div>
-            <LiftQuoteCard
-              title={liftInsightData.quoteSectionTitle}
-              quote={liftInsightData.liftQuote}
-              author={liftInsightData.liftQuoteAuthor}
-            />
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div id="progress-history">
-                <LiftJourneyCard liftType={liftInsightData.liftType} />
-              </div>
-              <div className="lg:col-span-2" id="recent-sessions">
-                <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} defaultVisibleCount={5} />
-              </div>
-            </div>
-            <VisualizerMini liftType={liftInsightData.liftType} />
-            <div id="tonnage-chart">
-              <TonnageChart liftType={liftInsightData.liftType} />
-            </div>
-            <div id="strength-circles">
-              <SingleLiftStrengthCirclesSection
-                liftType={liftInsightData.liftType}
-              />
-            </div>
-            <div id="strength-potential">
-              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
-            </div>
-            <VisualizerReps liftType={liftInsightData.liftType} />
+            {editorialSections}
+            {analysisSections}
           </>
         )}
 
-        {/* Shared: FAQ and related articles always at bottom */}
         {liftInsightData.faqItems?.length > 0 && (
-          <section id="lift-faq">
-            <h2 className="mb-4 text-xl font-semibold">
-              {liftInsightData.liftType} FAQ
-            </h2>
-            <div className="space-y-4">
-              {liftInsightData.faqItems.map(({ question, answer }) => (
-                <article key={question} className="rounded-lg border p-4">
-                  <h3 className="text-base font-semibold">{question}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
-                </article>
-              ))}
-            </div>
-          </section>
+          <>
+            <SectionEyebrow
+              eyebrow="Common questions"
+              title={`${liftType} FAQ`}
+              color={liftColor}
+            />
+            <SectionReveal as="section" id="lift-faq">
+              <div className="grid gap-4 md:grid-cols-2">
+                {liftInsightData.faqItems.map(({ question, answer }) => (
+                  <article
+                    key={question}
+                    className="rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent/30"
+                  >
+                    <h3 className="text-base font-semibold">{question}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {renderAnswer(answer)}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </SectionReveal>
+          </>
         )}
       </div>
-      <section id="related-articles">
+      <SectionReveal as="section" id="related-articles" className="mt-6">
         <RelatedArticles articles={relatedArticles} />
-      </section>
+      </SectionReveal>
     </PageContainer>
   );
 }
 
+/**
+ * Sticky in-page section nav.
+ *
+ * Lifted out of PageHeader so it can stick to the top of the viewport for the
+ * whole scroll. These pages are long enough that a nav which scrolls away with
+ * the header is only useful for the first screenful.
+ */
+function LiftSectionNav({ liftType, navLiftLabel }) {
+  const sections = [
+    { href: "#strength-standards", label: `${navLiftLabel} Standards` },
+    { href: "#progress-history", label: `${navLiftLabel} Progress` },
+    { href: "#strength-circles", label: `${navLiftLabel} Percentiles` },
+    { href: "#strength-potential", label: `${navLiftLabel} Potential` },
+    { href: "#recent-sessions", label: `${navLiftLabel} Sessions` },
+    { href: "#video-guides", label: "Videos" },
+    { href: "#lift-prs", label: "Rep PRs" },
+    { href: "#lift-faq", label: "FAQ" },
+    { href: "#related-articles", label: "Related Articles" },
+  ];
+
+  return (
+    <nav
+      aria-label={`${liftType} page sections`}
+      className="sticky top-0 z-20 -mx-4 border-y border-border/40 bg-background/90 px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+    >
+      <div className="flex gap-x-4 gap-y-2 overflow-x-auto text-sm whitespace-nowrap text-muted-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {sections.map((section) => (
+          <Link
+            key={section.href}
+            href={section.href}
+            className="transition-colors hover:text-foreground"
+          >
+            {section.label}
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
 
 /**
  * Card displaying the user's all-time PR table for a specific lift type.

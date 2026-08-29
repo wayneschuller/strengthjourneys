@@ -146,24 +146,25 @@ export default async function handler(req, res) {
     });
   }
 
+  // grok-4.20-non-reasoning generates at roughly 2.3x the throughput of
+  // grok-4.5 and starts ~1.8s sooner, which on a measured turn is the
+  // difference between a 17s answer and a 6s one. It rejects reasoningEffort
+  // outright, so no xAI provider options are sent.
   let AI_model;
   if (useXai) {
-    AI_model = xai.responses("grok-4.5");
+    AI_model = xai.responses("grok-4.20-non-reasoning");
   } else {
     AI_model = openai("gpt-4.1");
   }
 
   const convertedUserMessages = await convertToModelMessages(userMessages);
 
-  const providerOptions = buildProviderOptions({ useXai });
-
   devLog(`AI model: ${AI_model.modelId}`);
 
-  const result = await streamText({
+  const result = streamText({
     model: AI_model,
     instructions: systemMessages,
     messages: convertedUserMessages,
-    providerOptions,
   });
 
   const stream = createUIMessageStream({
@@ -323,15 +324,6 @@ function buildUserLiftingContextPrompt(userProvidedMetadata) {
 }
 
 
-function buildProviderOptions({ useXai }) {
-  if (!useXai) return undefined;
-
-  return {
-    xai: {
-      reasoningEffort: "low",
-    },
-  };
-}
 
 
 

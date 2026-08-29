@@ -28,6 +28,7 @@ import {
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
 import { StrengthBar } from "@/components/strength-level/strength-bar";
 import { LiftPercentileLine } from "@/components/strength-level/lift-percentile-line";
@@ -167,6 +168,20 @@ export function LiftBlock({
   const closeCustomSetDraft = useCallback(() => {
     setCustomDraftConfig(null);
   }, []);
+
+  // Reserve the video column for the whole lift once any of its sets carries a
+  // playable link, so the marks line up and the notes column stops jumping
+  // between filmed and unfilmed rows.
+  const hasAnyVideo = useMemo(
+    () =>
+      sets.some((set) => {
+        // Matches the key SetRow reports its optimistic fields under.
+        const url =
+          optimisticFieldsByKey[getSetIdentityKey(set)]?.url ?? set.URL ?? "";
+        return Boolean(getVideoSourceMeta(url));
+      }),
+    [sets, optimisticFieldsByKey],
+  );
 
   const optimisticSetsForStrength = useMemo(
     () =>
@@ -613,6 +628,7 @@ export function LiftBlock({
               isDeleteDisabled={isStructuralSaving || isDeleteCooldownActive}
               usedSessionUrls={usedSessionUrls}
               onSessionUrlAccepted={onSessionUrlAccepted}
+              reserveVideoSlot={hasAnyVideo}
               strengthBadge={
                 idx === bestE1rmIndex ? (
                   <LiftStrengthLevel

@@ -47,6 +47,7 @@ export function SetRow({
   strengthBadge,
   usedSessionUrls,
   onSessionUrlAccepted,
+  reserveVideoSlot = false,
 }) {
   const isLocked = Boolean(set._pending);
   const isReadOnly = !onUpdate;
@@ -319,6 +320,7 @@ export function SetRow({
   const videoSourceTooltip = videoSource?.name
     ? `Watch on ${videoSource.name}`
     : "Open the video link";
+  const showVideoSlot = reserveVideoSlot || Boolean(videoSource);
   const hasBadges = !set._pending && Boolean(strengthBadge);
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
   const prBadgeTooltip = getLogPRBadgeTooltip(set.liftType);
@@ -407,6 +409,39 @@ export function SetRow({
             </button>
           )}
           <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
+
+          {/* Video mark — the clip belongs to the set, so it rides with the
+              numbers rather than crowding the badge rail on the right. The
+              slot is reserved for every row of a lift that has any video at
+              all, which keeps the marks in one clean vertical line and stops
+              notes reflowing between filmed and unfilmed sets. */}
+          {showVideoSlot && (
+            <div className="ml-1.5 flex w-8 shrink-0 justify-center">
+              {videoSource && (
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={displayUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:bg-muted focus-visible:ring-ring inline-flex h-8 w-8 items-center justify-center rounded-full opacity-85 transition hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
+                        aria-label={`${videoSourceTooltip} (opens in a new tab)`}
+                      >
+                        <VideoSourceIcon
+                          source={videoSource}
+                          className="h-[18px] w-[18px]"
+                        />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{videoSourceTooltip} — opens in a new tab</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Notes + URL — flex-1, tap to edit */}
@@ -476,31 +511,6 @@ export function SetRow({
             </div>
           )}
         </div>
-
-        {/* Video link — the destination's own mark, because a lifter knows
-            their clips live in Photos or on YouTube long before they can read
-            a label, and colour survives being 20px wide. Always opens in a new
-            tab; the log stays where it was. */}
-        {videoSource && (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href={displayUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:bg-muted focus-visible:ring-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-80 transition hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
-                  aria-label={`${videoSourceTooltip} (opens in a new tab)`}
-                >
-                  <VideoSourceIcon source={videoSource} className="h-5 w-5" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>{videoSourceTooltip} — opens in a new tab</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
 
         <div className="hidden w-[17rem] shrink-0 items-center justify-end gap-2 md:flex">
           {set._pending ? (

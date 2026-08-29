@@ -456,10 +456,16 @@ When the user says "deploy", they mean:
 1. Ensure the worktree is clean.
 2. Fetch `origin main stable`.
 3. Switch to `stable`.
-4. Merge `main` into `stable`.
+4. Fast-forward `stable` to `main`: `git merge --ff-only main`.
 5. Push `stable` to origin.
 6. Switch back to `main`.
 7. Confirm the worktree is clean and report the resulting `stable` commit.
+
+Deploys fast-forward, so `stable` stays an exact pointer into `main`'s
+history and GitHub reports it as neither ahead nor behind. If step 4 refuses
+because it is not a fast-forward, `stable` has commits `main` does not —
+stop and report it. Merge `stable` into `main` to reconcile; never force
+push to fix it.
 
 ---
 

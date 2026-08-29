@@ -621,7 +621,10 @@ export default function LogSessionPage({
           </aside>
 
           <main className="min-w-0">
-            <div className="w-full max-w-[56rem] min-[1800px]:max-w-[68rem] 2xl:max-w-[62rem]">
+            {/* mx-auto matters: below xl there is no grid, and from 2xl the
+                column is wider than this cap, so without it the session sits
+                left of centre in its own space. */}
+            <div className="mx-auto w-full max-w-[56rem] 2xl:max-w-none">
               <LogDateNav
                 datePickerOpen={datePickerOpen}
                 isToday={isToday}

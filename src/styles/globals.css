@@ -22,6 +22,7 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-link: var(--link, var(--primary));
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-destructive: var(--destructive);
@@ -364,7 +365,8 @@
     --popover-foreground: hsl(192.2034 80.8219% 14.3137%);
     --primary: hsl(330.9554 64.0816% 51.9608%);
     --primary-foreground: hsl(0 0% 100%);
-    --secondary: hsl(175.4622 58.6207% 39.8039%);
+    --link: hsl(330.9554 64.0816% 38%);
+    --secondary: hsl(175.4622 58.6207% 28%);
     --secondary-foreground: hsl(0 0% 100%);
     --muted: hsl(180 6.9307% 60.3922%);
     --muted-foreground: hsl(192.2034 80.8219% 14.3137%);
@@ -384,7 +386,7 @@
     --sidebar-foreground: hsl(192.2034 80.8219% 14.3137%);
     --sidebar-primary: hsl(330.9554 64.0816% 51.9608%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(175.4622 58.6207% 39.8039%);
+    --sidebar-accent: hsl(175.4622 58.6207% 28%);
     --sidebar-accent-foreground: hsl(0 0% 100%);
     --sidebar-border: hsl(186.3158 8.2969% 55.098%);
     --sidebar-ring: hsl(330.9554 64.0816% 51.9608%);
@@ -434,7 +436,8 @@
     --popover-foreground: hsl(180 6.9307% 60.3922%);
     --primary: hsl(330.9554 64.0816% 51.9608%);
     --primary-foreground: hsl(0 0% 100%);
-    --secondary: hsl(175.4622 58.6207% 39.8039%);
+    --link: hsl(330.9554 70% 72%);
+    --secondary: hsl(175.4622 58.6207% 28%);
     --secondary-foreground: hsl(0 0% 100%);
     --muted: hsl(194.4828 14.1463% 40.1961%);
     --muted-foreground: hsl(180 6.9307% 60.3922%);
@@ -454,7 +457,7 @@
     --sidebar-foreground: hsl(180 6.9307% 60.3922%);
     --sidebar-primary: hsl(330.9554 64.0816% 51.9608%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(175.4622 58.6207% 39.8039%);
+    --sidebar-accent: hsl(175.4622 58.6207% 28%);
     --sidebar-accent-foreground: hsl(0 0% 100%);
     --sidebar-border: hsl(194.4828 14.1463% 40.1961%);
     --sidebar-ring: hsl(330.9554 64.0816% 51.9608%);

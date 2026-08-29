@@ -51,7 +51,7 @@ function MessageLink({ href, children, className, ...props }) {
   if (internalHref) {
     return (
       <Link
-        className={cn("wrap-anywhere font-medium text-primary underline", className)}
+        className={cn("wrap-anywhere font-medium text-link underline underline-offset-2", className)}
         href={internalHref}
         {...props}
       >
@@ -62,7 +62,7 @@ function MessageLink({ href, children, className, ...props }) {
 
   return (
     <a
-      className={cn("wrap-anywhere font-medium text-primary underline", className)}
+      className={cn("wrap-anywhere font-medium text-link underline underline-offset-2", className)}
       href={href}
       rel="noreferrer noopener"
       target="_blank"
@@ -94,8 +94,10 @@ export const MessageContent = ({
 }) => (
   <div
     className={cn(
-      "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
-      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
+      "flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
+      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-secondary-foreground",
+      // Links inside the user bubble read against the bubble, not the page
+      "group-[.is-user]:[&_a]:text-current",
       "group-[.is-assistant]:text-foreground",
       className
     )}

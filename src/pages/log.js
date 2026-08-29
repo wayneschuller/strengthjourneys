@@ -342,9 +342,8 @@ export default function LogSessionPage({
       buildLogSessionReviewPrompt({
         sessionDate,
         sessionSummaries,
-        tonnageSummaries: buildLogSessionTonnagePromptSummaries(
-          perLiftTonnageStats,
-        ),
+        tonnageSummaries:
+          buildLogSessionTonnagePromptSummaries(perLiftTonnageStats),
       }),
       { resetChat: true },
     );
@@ -606,15 +605,26 @@ export default function LogSessionPage({
           </script>
         </Head>
         <style dangerouslySetInnerHTML={{ __html: CELEBRATION_KEYFRAMES }} />
-        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:gap-20">
-          <aside className="hidden xl:block">
-            <div className="sticky top-20 mr-auto w-full max-w-[9rem] space-y-4 pt-3 2xl:max-w-[10rem]">
+        {/* The quote rail only earns its place once the grid can guarantee
+            it 10rem. Below that it gets crushed to a word per line, so from
+            lg to 2xl the quote goes under the session instead and the session
+            runs centred and rail-free.
+
+            From 2xl the rails take a 10rem floor and the session column takes
+            everything left over, up to 76rem, so it grows with the window
+            rather than in steps that miss whatever width you sit at. */}
+        <div className="2xl:grid 2xl:grid-cols-[minmax(10rem,1fr)_minmax(0,76rem)_minmax(10rem,1fr)] 2xl:gap-20">
+          <aside className="hidden 2xl:block">
+            <div className="sticky top-20 mr-auto w-full max-w-[10rem] space-y-4 pt-3">
               {secondaryQuoteCard}
             </div>
           </aside>
 
           <main className="min-w-0">
-            <div className="w-full max-w-[56rem]">
+            {/* mx-auto matters: below 2xl there is no grid, and from 2xl the
+                column is wider than this cap, so without it the session sits
+                left of centre in its own space. */}
+            <div className="mx-auto w-full max-w-[56rem] xl:max-w-[62rem] 2xl:max-w-none">
               <LogDateNav
                 datePickerOpen={datePickerOpen}
                 isToday={isToday}
@@ -751,13 +761,13 @@ export default function LogSessionPage({
                 </div>
               )}
 
-              <div className="mt-10 hidden lg:block xl:hidden">
+              <div className="mt-10 hidden lg:block 2xl:hidden">
                 <div className="max-w-[11rem]">{secondaryQuoteCard}</div>
               </div>
             </div>
           </main>
 
-          <aside className="hidden xl:block" aria-hidden="true" />
+          <aside className="hidden 2xl:block" aria-hidden="true" />
         </div>
         {authStatus !== "authenticated" && (
           <LogStaticContent content={staticContent} />
@@ -785,9 +795,7 @@ function buildLogSessionPromptSummaries({ sessionLiftsWithPending, isMetric }) {
       const visibleSets = Array.isArray(sets)
         ? sets.filter(
             (set) =>
-              (set.reps ?? 0) > 0 &&
-              (set.weight ?? 0) > 0 &&
-              !set._pending,
+              (set.reps ?? 0) > 0 && (set.weight ?? 0) > 0 && !set._pending,
           )
         : [];
       if (visibleSets.length === 0) return null;
@@ -827,7 +835,9 @@ function buildLogSessionTonnagePromptSummaries(perLiftTonnageStats) {
       const pct = Math.round(stats.pctDiff);
       const sign = pct > 0 ? "+" : "";
       const sessionCountText =
-        stats.sessionCount > 0 ? ` across ${stats.sessionCount} prior sessions` : "";
+        stats.sessionCount > 0
+          ? ` across ${stats.sessionCount} prior sessions`
+          : "";
 
       return `- ${liftType}: tonnage=${current}${unit} (${sign}${pct}% vs average${sessionCountText})`;
     })

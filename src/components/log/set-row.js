@@ -7,9 +7,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { motion } from "motion/react";
-import { Link2, Loader2, PlayCircle, Trash2 } from "lucide-react";
+import { Link2, Loader2, Trash2 } from "lucide-react";
 
 import { getCelebrationStyles } from "@/lib/celebration";
+import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { getSetIdentityKey } from "@/lib/pr-ranking";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ import {
   parseWeightInput,
 } from "@/components/log/sheet-snapshot-utils";
 import { CelebrationReveal } from "@/components/log/celebration-reveal";
+import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { UnitLabel } from "@/components/log/unit-label";
 
 // --- Set row (click-to-edit) ---
@@ -45,6 +47,7 @@ export function SetRow({
   strengthBadge,
   usedSessionUrls,
   onSessionUrlAccepted,
+  reserveVideoSlot = false,
 }) {
   const isLocked = Boolean(set._pending);
   const isReadOnly = !onUpdate;
@@ -190,7 +193,10 @@ export function SetRow({
   const rowKey = getSetIdentityKey(set);
   const optimisticFields = useMemo(() => {
     const hasOptimisticOverride =
-      pendingReps !== null || pendingWeight !== null || pendingNotes !== null || pendingUrl !== null;
+      pendingReps !== null ||
+      pendingWeight !== null ||
+      pendingNotes !== null ||
+      pendingUrl !== null;
 
     if (!hasOptimisticOverride) return null;
 
@@ -293,17 +299,28 @@ export function SetRow({
     // Try to pre-fill URL from clipboard if the field is currently empty
     // and the URL hasn't already been assigned to another set this session.
     if (!draftUrl && navigator?.clipboard?.readText) {
-      navigator.clipboard.readText().then((text) => {
-        const trimmed = text?.trim() ?? "";
-        if (isHttpUrl(trimmed)) {
-          if (!usedSessionUrls?.has(trimmed)) {
-            setDraftUrl(trimmed);
+      navigator.clipboard
+        .readText()
+        .then((text) => {
+          const trimmed = text?.trim() ?? "";
+          if (isHttpUrl(trimmed)) {
+            if (!usedSessionUrls?.has(trimmed)) {
+              setDraftUrl(trimmed);
+            }
           }
-        }
-      }).catch(() => {});
+        })
+        .catch(() => {});
     }
   }
 
+  const videoSource = useMemo(
+    () => getVideoSourceMeta(displayUrl),
+    [displayUrl],
+  );
+  const videoSourceTooltip = videoSource?.name
+    ? `Watch on ${videoSource.name}`
+    : "Open the video link";
+  const showVideoSlot = reserveVideoSlot || Boolean(videoSource);
   const hasBadges = !set._pending && Boolean(strengthBadge);
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
   const prBadgeTooltip = getLogPRBadgeTooltip(set.liftType);
@@ -338,9 +355,10 @@ export function SetRow({
       {/* Main row: reps@weight + notes + desktop meta rail */}
       <div className="flex items-center gap-4">
         {/* Reps @ Weight unit — tight visual unit.
-            Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width.
-            min-w keeps notes aligned across rows with different weight widths. */}
-        <div className="flex min-w-[7.5rem] items-center">
+            Every part of this cluster is a fixed width, so the notes column
+            starts at the same x on every row. min-w is not enough: a wide
+            value like 132.5 outgrows it and drags that row's notes right. */}
+        <div className="flex shrink-0 items-center">
           <div className="w-7">
             {editingReps && !isReadOnly ? (
               <input
@@ -367,31 +385,69 @@ export function SetRow({
             )}
           </div>
           <span className="text-muted-foreground mx-0.5 text-base">@</span>
-          {editingWeight && !isReadOnly ? (
-            <input
-              type="text"
-              inputMode="decimal"
-              className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-              value={draftWeight}
-              disabled={isLocked}
-              onChange={(e) => setDraftWeight(e.target.value)}
-              onBlur={commitWeight}
-              onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-              autoFocus
-            />
-          ) : isLocked || isReadOnly ? (
-            <div className="text-foreground/80 py-0.5 text-left text-xl font-semibold tabular-nums">
-              {displayWeight}
+          {/* Weight and unit share one fixed box, wide enough for a four digit
+              weight with a decimal. The unit still hugs the number rather than
+              floating at the far edge. */}
+          <div className="flex w-[5.5rem] shrink-0 items-center">
+            {editingWeight && !isReadOnly ? (
+              <input
+                type="text"
+                inputMode="decimal"
+                className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+                value={draftWeight}
+                disabled={isLocked}
+                onChange={(e) => setDraftWeight(e.target.value)}
+                onBlur={commitWeight}
+                onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+                autoFocus
+              />
+            ) : isLocked || isReadOnly ? (
+              <div className="text-foreground/80 py-0.5 text-left text-xl font-semibold tabular-nums">
+                {displayWeight}
+              </div>
+            ) : (
+              <button
+                className="hover:bg-muted/60 rounded py-0.5 text-left text-xl font-semibold tabular-nums"
+                onClick={() => setEditingWeight(true)}
+              >
+                {displayWeight}
+              </button>
+            )}
+            <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
+          </div>
+
+          {/* Video mark — the clip belongs to the set, so it rides with the
+              numbers rather than crowding the badge rail on the right. The
+              slot is reserved for every row of a lift that has any video at
+              all, which keeps the marks in one clean vertical line and stops
+              notes reflowing between filmed and unfilmed sets. */}
+          {showVideoSlot && (
+            <div className="flex w-8 shrink-0 justify-center">
+              {videoSource && (
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={displayUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:bg-muted focus-visible:ring-ring inline-flex h-8 w-8 items-center justify-center rounded-full opacity-85 transition hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
+                        aria-label={`${videoSourceTooltip} (opens in a new tab)`}
+                      >
+                        <VideoSourceIcon
+                          source={videoSource}
+                          className="h-[18px] w-[18px]"
+                        />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{videoSourceTooltip} — opens in a new tab</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
-          ) : (
-            <button
-              className="hover:bg-muted/60 rounded py-0.5 text-left text-xl font-semibold tabular-nums"
-              onClick={() => setEditingWeight(true)}
-            >
-              {displayWeight}
-            </button>
           )}
-          <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
         </div>
 
         {/* Notes + URL — flex-1, tap to edit */}
@@ -431,7 +487,10 @@ export function SetRow({
                   value={draftUrl}
                   disabled={isLocked}
                   onChange={(e) => setDraftUrl(e.target.value)}
-                  onBlur={() => { commitUrl(); setEditingNotes(false); }}
+                  onBlur={() => {
+                    commitUrl();
+                    setEditingNotes(false);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === "Escape") {
                       closeNotesEdit();
@@ -458,28 +517,6 @@ export function SetRow({
             </div>
           )}
         </div>
-
-        {/* Video link — only shown when URL is populated */}
-        {displayUrl && (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href={displayUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground/60 hover:text-foreground shrink-0 rounded p-1 transition-colors"
-                  aria-label="Watch video"
-                >
-                  <PlayCircle className="h-4 w-4" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Watch video</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
 
         <div className="hidden w-[17rem] shrink-0 items-center justify-end gap-2 md:flex">
           {set._pending ? (
@@ -521,7 +558,9 @@ export function SetRow({
                                     getPrToneClass(badge.scope),
                                   )}
                                 >
-                                  <span className="truncate">{badge.message}</span>
+                                  <span className="truncate">
+                                    {badge.message}
+                                  </span>
                                 </Badge>
                               </CelebrationReveal>
                             </Link>
@@ -600,7 +639,9 @@ export function SetRow({
                                   getPrToneClass(badge.scope),
                                 )}
                               >
-                                <span className="truncate">{badge.message}</span>
+                                <span className="truncate">
+                                  {badge.message}
+                                </span>
                               </Badge>
                             </CelebrationReveal>
                           </Link>

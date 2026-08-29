@@ -347,16 +347,7 @@ export function LiftJourneyCard({
   // Withheld until the data has landed: mid-load the counters all read zero,
   // and "log your first set" is the wrong thing to say to an athlete with
   // twelve years of history.
-  const storyLine =
-    isLoading || !liftTypes
-      ? null
-      : buildStoryLine({
-          liftType,
-          firstDate: journey?.firstDate ?? oldestDate,
-          yearsTraining,
-          sessionCount: journey?.sessionCount ?? 0,
-          totalReps,
-        });
+  const hasStory = !isLoading && !!liftTypes;
 
   return (
     <Wrapper className={asCard ? "min-h-[300px] overflow-hidden" : undefined}>
@@ -405,10 +396,14 @@ export function LiftJourneyCard({
           )}
         </div>
 
-        {storyLine ? (
-          <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-            {storyLine}
-          </p>
+        {hasStory ? (
+          <StoryLine
+            liftType={liftType}
+            firstDate={journey?.firstDate ?? oldestDate}
+            yearsTraining={yearsTraining}
+            sessionCount={journey?.sessionCount ?? 0}
+            totalReps={totalReps}
+          />
         ) : (
           <Skeleton className="mt-2 h-4 w-64 max-w-full" />
         )}
@@ -810,22 +805,66 @@ function buildMomentumVital(journey, unit) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * One sentence of narrative under the card title. This is the line that is
- * meant to make the numbers underneath feel like a history rather than a
- * readout, so it names the athlete's start date and the scale of the work.
+ * The narrative line under the card title.
+ *
+ * Two short sentences rather than one long one, with every number carrying
+ * foreground weight against muted connective words — the point is that the
+ * scale of the work is what the eye lands on. The header already says "athlete
+ * journey", so this line does not say it again.
  */
-function buildStoryLine({ liftType, firstDate, yearsTraining, sessionCount, totalReps }) {
+function StoryLine({ liftType, firstDate, yearsTraining, sessionCount, totalReps }) {
+  const className = "mt-2 max-w-prose text-sm text-muted-foreground";
+
   if (!firstDate || totalReps === 0) {
-    return `Log your first ${liftType} set and this athlete journey starts here.`;
+    return (
+      <p className={className}>
+        No {liftType} logged yet.{" "}
+        <span className="font-semibold text-foreground">
+          Your first set starts this story.
+        </span>
+      </p>
+    );
   }
 
-  const parts = [`Athlete of the ${liftType} since ${formatMonthYear(firstDate)}`];
-  const detail = [];
-  if (yearsTraining > 0) detail.push(formatYears(yearsTraining));
-  if (sessionCount > 0) detail.push(`${sessionCount.toLocaleString()} sessions`);
-  if (totalReps > 0) detail.push(`${totalReps.toLocaleString()} reps`);
+  const facts = [];
+  if (yearsTraining > 0) facts.push(formatYearsLong(yearsTraining));
+  if (sessionCount > 0) facts.push(`${sessionCount.toLocaleString()} sessions`);
+  if (totalReps > 0) facts.push(`${totalReps.toLocaleString()} reps`);
 
-  return `${parts[0]} — ${detail.join(", ")}.`;
+  const startedAt = formatMonthYear(firstDate);
+
+  return (
+    <p className={className}>
+      {liftType} since{" "}
+      <span className="font-semibold text-foreground">{startedAt}</span>.
+      {facts.length > 0 && (
+        <>
+          {" "}
+          {facts.map((fact, index) => (
+            <span key={fact}>
+              {index > 0 && ", "}
+              <span className="font-semibold text-foreground">{fact}</span>
+            </span>
+          ))}{" "}
+          deep.
+        </>
+      )}
+    </p>
+  );
+}
+
+/**
+ * Whole years, or whole months in the first year. The tier progress bars carry
+ * the exact figure; this line only needs the sense of scale, and "3 yr 4 mo"
+ * reads as an abbreviation in the middle of a sentence.
+ */
+function formatYearsLong(years) {
+  const wholeYears = Math.floor(years);
+  if (wholeYears < 1) {
+    const months = Math.max(1, Math.round(years * 12));
+    return `${months} month${months === 1 ? "" : "s"}`;
+  }
+  return `${wholeYears} year${wholeYears === 1 ? "" : "s"}`;
 }
 
 function formatMonthYear(dateStr) {

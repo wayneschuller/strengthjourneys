@@ -605,12 +605,7 @@ const TonnageTooltipMinimal = ({
   if (!payload || payload.length === 0) return null;
 
   const tonnage = payload[0].value;
-  const date = new Date(label);
-  const dateLabel = date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+  const dateLabel = getReadableDateString(dateStr ?? label, true);
   const unitType = isMetric ? "kg" : "lb";
 
   return (
@@ -671,13 +666,7 @@ const TonnageTooltipContent = ({
 
   const tonnage = payload[0].value;
   const rollingAverageTonnage = payload[0].payload?.rollingAverageTonnage;
-  const date = new Date(label);
-
-  const dateLabel = date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+  const dateLabel = getReadableDateString(dateStr ?? label, true);
 
   const unitType = isMetric ? "kg" : "lb";
   const seriesColor = liftColor || "var(--chart-1)";

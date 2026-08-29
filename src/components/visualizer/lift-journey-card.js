@@ -29,7 +29,10 @@ import {
   getDisplayWeight,
   findBestE1RM,
 } from "@/lib/processing-utils";
-import { getReadableDateString, parseYmdLocal } from "@/lib/date-utils";
+import {
+  getLongReadableDateString,
+  getReadableDateString,
+} from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { isBodyweightLoadLift } from "@/lib/estimate-e1rm";
 import { summarizeLiftJourney, MOMENTUM_WINDOW_DAYS } from "@/lib/lift-journey-stats";
@@ -437,7 +440,7 @@ export function LiftJourneyCard({
                 className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
               >
                 {bestLift.reps}@{bestLiftDisplay.value}
-                {bestLiftDisplay.unit} ({getReadableDateString(bestLift.date)},{" "}
+                {bestLiftDisplay.unit} ({getReadableDateString(bestLift.date, true)},{" "}
                 {e1rmFormula})
               </Link>
             </p>
@@ -541,8 +544,8 @@ export function LiftJourneyCard({
                           {entry.reps}@{w.value}
                           {w.unit}
                         </span>
-                        <span className="w-16 shrink-0 text-muted-foreground">
-                          {getReadableDateString(entry.date)}
+                        <span className="w-32 shrink-0 text-muted-foreground">
+                          {getReadableDateString(entry.date, true)}
                         </span>
                         <span className="flex-1 text-muted-foreground">
                           {getCelebrationEmoji(entry.entryIndex)}{" "}
@@ -571,7 +574,7 @@ export function LiftJourneyCard({
                       {Math.round(heaviestSessionDisplay.value).toLocaleString()}
                       {heaviestSessionDisplay.unit}
                     </span>{" "}
-                    ({getReadableDateString(heaviestSession.date)})
+                    ({getReadableDateString(heaviestSession.date, true)})
                   </Link>
                 )}
                 {showHeaviestLast12 && heaviestLast12Display && (
@@ -584,7 +587,7 @@ export function LiftJourneyCard({
                       {Math.round(heaviestLast12Display.value).toLocaleString()}
                       {heaviestLast12Display.unit}
                     </span>{" "}
-                    ({getReadableDateString(heaviestLast12.date)})
+                    ({getReadableDateString(heaviestLast12.date, true)})
                   </Link>
                 )}
               </div>
@@ -669,7 +672,9 @@ function JourneyVitals({
     icon: CalendarClock,
     label: "Last trained",
     value: formatDaysSince(journey.daysSinceLast),
-    sub: journey.lastDate ? getReadableDateString(journey.lastDate) : "—",
+    sub: journey.lastDate
+      ? getReadableDateString(journey.lastDate, true)
+      : "—",
     href: journey.lastDate ? getLogHref(journey.lastDate) : null,
   });
 
@@ -824,9 +829,12 @@ function buildStoryLine({ liftType, firstDate, yearsTraining, sessionCount, tota
 }
 
 function formatMonthYear(dateStr) {
-  const date = parseYmdLocal(dateStr);
-  if (Number.isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  // Deliberately the long form without the weekday: "since Monday, January
+  // 2014" would be nonsense, and the exact day the athlete started is not the
+  // point of the sentence.
+  const long = getLongReadableDateString(dateStr, false);
+  if (!long) return dateStr;
+  return long.replace(/^\d+ /, "");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

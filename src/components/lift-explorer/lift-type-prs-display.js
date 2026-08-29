@@ -213,7 +213,7 @@ const PRCard = ({
             )}
           </div>
           <div className="text-sm text-muted-foreground">
-            {getReadableDateString(pr.date)}
+            {getReadableDateString(pr.date, true)}
           </div>
         </div>
 
@@ -340,7 +340,7 @@ const RepRangeDetailView = ({
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {getReadableDateString(lift.date)}
+                        {getReadableDateString(lift.date, true)}
                       </div>
                     </div>
                   </div>

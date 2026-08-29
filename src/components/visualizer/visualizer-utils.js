@@ -1,5 +1,5 @@
 import { devLog, getDisplayWeight } from "@/lib/processing-utils";
-import { getReadableDateString, parseYmdLocal } from "@/lib/date-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { brightenHexColor, saturateHexColor } from "@/lib/color-tools";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
@@ -26,13 +26,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 export const SessionRow = ({ date, lifts, isMetric, showDate = true }) => {
   if (!lifts || lifts.length === 0) return null;
 
-  const formattedDate = date
-    ? parseYmdLocal(date).toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      })
-    : null;
+  const formattedDate = date ? getReadableDateString(date, true) : null;
 
   const groups = getConsecutiveWorkoutGroups(lifts);
 
@@ -124,7 +118,7 @@ export const MultiLiftTooltipContent = ({
   if (!active || !payload?.length) return null;
 
   const tuple = payload[0].payload;
-  const dateLabel = getReadableDateString(tuple.date);
+  const dateLabel = getReadableDateString(tuple.date, true);
   const tooltipsPerLift = selectedLiftTypes
     .map((liftType) =>
       createLiftTooltipContent(liftType, tuple, payload[0].color),
@@ -185,7 +179,7 @@ export const SingleLiftTooltipContent = ({
 
   const tuple = payload[0].payload;
   const dateStr = tuple.date; // "YYYY-MM-DD" format
-  const dateLabel = getReadableDateString(tuple.date);
+  const dateLabel = getReadableDateString(tuple.date, true);
   const tooltipContent = createLiftTooltipContent(
     liftType,
     tuple,

@@ -6,7 +6,7 @@ import { getDisplayWeight } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
 import { motion } from "motion/react";
-import { Crown, Shield, Skull, Luggage, Dumbbell, ExternalLink } from "lucide-react";
+import { Crown, Shield, Skull, Luggage, Plus, ExternalLink } from "lucide-react";
 
 import {
   Card,
@@ -336,7 +336,7 @@ function BarbellInsightsMain({
               <Link
                 href={{ pathname: "/log", query: { startLift: liftType } }}
               >
-                <Dumbbell className="h-5 w-5" />
+                <Plus className="h-5 w-5" strokeWidth={2.5} />
                 {`Log ${liftType}`}
               </Link>
             </Button>

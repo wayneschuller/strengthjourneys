@@ -31,7 +31,7 @@ export function DeleteSessionControls({
           <p className="text-muted-foreground text-sm">
             {isStructuralSaving
               ? "Finish the current sheet change, then delete this session."
-              : `Delete all rows for ${sessionDate}?`}
+              : `Delete all rows for ${getLongReadableDateString(sessionDate) ?? sessionDate}?`}
           </p>
           <Button
             size="sm"

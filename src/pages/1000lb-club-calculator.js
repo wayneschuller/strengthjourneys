@@ -12,6 +12,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { ImportDataOwnershipPromo } from "@/components/import-data-ownership-promo";
+import { getLongReadableDateString } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
@@ -81,13 +82,6 @@ const LIFT_GRAPHICS = {
 const TARGET_TOTAL = 1000;
 const roundTo5 = (v) => Math.round(v / 5) * 5;
 const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
-const SOURCE_DATE_FORMATTER = new Intl.DateTimeFormat("en-AU", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 const FAQ_ITEMS = [
   {
     question: "What is the 1000lb club?",
@@ -324,9 +318,7 @@ function formatE1RMSourceText(source) {
     ? String(weight)
     : weight.toFixed(1).replace(/\.0$/, "");
   const unitText = source.unitType === "lb" ? "lbs" : source.unitType;
-  const dateText = SOURCE_DATE_FORMATTER.format(
-    new Date(`${source.date}T00:00:00Z`),
-  );
+  const dateText = getLongReadableDateString(source.date) ?? source.date;
 
   return `Based on your ${source.reps}@${weightText} ${unitText} set on ${dateText}`;
 }

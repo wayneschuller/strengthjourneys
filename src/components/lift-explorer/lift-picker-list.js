@@ -10,6 +10,7 @@
  *    most-trained lift, so the ranking is legible at a glance without spending
  *    horizontal space on numbers — the sidebar is narrow.
  */
+import { getLongReadableDateString } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 /**
@@ -65,7 +66,7 @@ export function LiftPickerList({
               {item.age && (
                 <span
                   className="text-muted-foreground relative shrink-0 text-[10px] tabular-nums"
-                  title={`Last trained ${item.lastDate}`}
+                  title={`Last trained ${getLongReadableDateString(item.lastDate) ?? item.lastDate}`}
                 >
                   {item.age}
                 </span>

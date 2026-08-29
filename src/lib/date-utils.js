@@ -93,6 +93,26 @@ const READABLE_DAY_NAMES = [
   "Saturday",
 ];
 
+// Long month names for the full-sentence date form. Kept as a table rather
+// than Intl.DateTimeFormat on purpose: Intl resolves against the *runtime*
+// locale, which differs between the Next.js server render and the browser, and
+// that mismatch turns into a React hydration error. Every date the app shows
+// must render identically on both sides.
+const READABLE_MONTH_NAMES_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 const READABLE_MONTH_NAMES = [
   "Jan",
   "Feb",
@@ -135,6 +155,43 @@ export function getReadableDateString(ISOdate, includeDayOfWeek = false) {
   }
 
   return dateString;
+}
+
+/**
+ * Convert "YYYY-MM-DD" to a full readable date (e.g. "Monday, 8 August 2026").
+ *
+ * Use this wherever a date stands on its own in a sentence or a caption and
+ * there is room for it. RULE: never render a raw "YYYY-MM-DD" string in the UI
+ * — the ISO form is our storage and sorting format, not something to show a
+ * lifter. Reach for getReadableDateString() instead only when space is tight,
+ * such as dense lists and chart labels.
+ *
+ * Day-first ordering, matching how the date would be spoken. The year is
+ * dropped when it is the current year, because it is implicit. Uses the same
+ * UTC round-trip as getReadableDateString so every reader sees the calendar day
+ * that was actually logged — see the timezone model at the top of this file.
+ *
+ * @param {string} ISOdate - Date in "YYYY-MM-DD" form.
+ * @param {boolean} [includeDayOfWeek=true] - Prefix the weekday name.
+ * @returns {string|null} e.g. "Monday, 24 August" or "Wednesday, 30 January 2013".
+ */
+export function getLongReadableDateString(ISOdate, includeDayOfWeek = true) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(ISOdate || ""))) return null;
+
+  const date = parseYmdUtc(ISOdate);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const dayOfMonth = date.getUTCDate();
+  const month = READABLE_MONTH_NAMES_LONG[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
+  const body =
+    year === new Date().getFullYear()
+      ? `${dayOfMonth} ${month}`
+      : `${dayOfMonth} ${month} ${year}`;
+
+  return includeDayOfWeek
+    ? `${READABLE_DAY_NAMES[date.getUTCDay()]}, ${body}`
+    : body;
 }
 
 /**

@@ -15,6 +15,7 @@ import {
   estimateLiftWeightForReps,
   isBodyweightLoadLift,
 } from "@/lib/estimate-e1rm";
+import { getReadableDateString } from "@/lib/date-utils";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -177,7 +178,8 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                         className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
                       >
                         {bestLift.reps}@{getDisplayWeight(bestLift, isMetric).value}
-                        {getDisplayWeight(bestLift, isMetric).unit} ({formatDate(bestLift.date)})
+                        {getDisplayWeight(bestLift, isMetric).unit} (
+                        {getReadableDateString(bestLift.date, true)})
                       </Link>
                     </>
                   )

@@ -46,7 +46,11 @@ import { postImportHistory } from "@/lib/import-history-client";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
-import { addDaysFromStr, getWeekKeyFromDateStr } from "@/lib/date-utils";
+import {
+  addDaysFromStr,
+  getReadableDateString,
+  getWeekKeyFromDateStr,
+} from "@/lib/date-utils";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
@@ -63,16 +67,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
-function getReadableDateShort(isoDate) {
-  if (!isoDate) return "";
-  const d = new Date(isoDate + "T00:00:00");
-  return d.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function clampFileName(rawName) {
   if (!rawName) return null;
@@ -336,8 +330,8 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
           </p>
         )}
         <p>
-          Your training spans {getReadableDateShort(stats.first)} to{" "}
-          {getReadableDateShort(stats.last)}.
+          Your training spans {getReadableDateString(stats.first)} to{" "}
+          {getReadableDateString(stats.last)}.
         </p>
         <p>
           That&apos;s{" "}
@@ -566,8 +560,8 @@ function ImportedDataOverview({ parsedData, label }) {
             &bull;
           </span>
           <span>
-            {getReadableDateShort(stats.dateRange.first)} to{" "}
-            {getReadableDateShort(stats.dateRange.last)}
+            {getReadableDateString(stats.dateRange.first)} to{" "}
+            {getReadableDateString(stats.dateRange.last)}
           </span>
         </div>
       )}
@@ -584,7 +578,7 @@ function ImportedDataOverview({ parsedData, label }) {
                   Longest streak: {stats.bestStreak} week
                   {stats.bestStreak === 1 ? "" : "s"}
                   {stats.bestStreakStart
-                    ? ` (${getReadableDateShort(stats.bestStreakStart)})`
+                    ? ` (${getReadableDateString(stats.bestStreakStart)})`
                     : ""}
                 </p>
               )}
@@ -684,7 +678,7 @@ function ImportedDataOverview({ parsedData, label }) {
                           className="hover:text-foreground hover:underline"
                         >
                           Best: {lift.reps}x{lift.weight}
-                          {lift.unitType} on {getReadableDateShort(lift.date)}
+                          {lift.unitType} on {getReadableDateString(lift.date, true)}
                         </Link>
                       </div>
                     </div>

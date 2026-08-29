@@ -9,10 +9,14 @@
  */
 
 import Link from "next/link";
-import { ArrowRight, Clock3, Dumbbell } from "lucide-react";
+import { Clock3, Plus } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { formatDateToYmdLocal, parseYmdLocal } from "@/lib/date-utils";
+import {
+  formatDateToYmdLocal,
+  getLongReadableDateString,
+  parseYmdLocal,
+} from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 
 const LIFT_LOG_CTA_PHRASES = {
@@ -144,9 +148,8 @@ export function LiftLogCta({ liftType }) {
               query: { startLift: liftType },
             }}
           >
-            <Dumbbell className="h-5 w-5" />
+            <Plus className="h-5 w-5" strokeWidth={2.5} />
             <span>{`Log ${liftType} now`}</span>
-            <ArrowRight className="h-5 w-5" />
           </Link>
         </Button>
       </div>
@@ -158,7 +161,7 @@ export function LiftLogCta({ liftType }) {
             href={{ pathname: "/log", query: { date: latestLiftDate } }}
             className="font-medium text-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
           >
-            {latestLiftDate}
+            {getLongReadableDateString(latestLiftDate)}
           </Link>
         </div>
       )}

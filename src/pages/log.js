@@ -605,11 +605,15 @@ export default function LogSessionPage({
           </script>
         </Head>
         <style dangerouslySetInnerHTML={{ __html: CELEBRATION_KEYFRAMES }} />
-        {/* The session column steps up on wider screens. The right column is
-            a pure spacer that keeps the session centred, and the quote rail
-            only ever needs 10rem, so the extra width is there to be spent —
-            but not at xl, where taking it would squeeze the rail. */}
-        <div className="min-[1800px]:grid-cols-[minmax(0,1fr)_minmax(0,68rem)_minmax(0,1fr)] xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:grid-cols-[minmax(0,1fr)_minmax(0,62rem)_minmax(0,1fr)] 2xl:gap-20">
+        {/* Below 2xl the session column is a fixed 56rem and the rails take
+            what is left — at xl there is not enough for the quote card's full
+            width, and giving the session less would be worse.
+
+            From 2xl the rails claim a 10rem floor instead and the session
+            column takes everything else up to 76rem, so it grows with the
+            window rather than in steps that miss whatever width you happen to
+            sit at. */}
+        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:grid-cols-[minmax(10rem,1fr)_minmax(0,76rem)_minmax(10rem,1fr)] 2xl:gap-20">
           <aside className="hidden xl:block">
             <div className="sticky top-20 mr-auto w-full max-w-[9rem] space-y-4 pt-3 2xl:max-w-[10rem]">
               {secondaryQuoteCard}

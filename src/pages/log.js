@@ -342,9 +342,8 @@ export default function LogSessionPage({
       buildLogSessionReviewPrompt({
         sessionDate,
         sessionSummaries,
-        tonnageSummaries: buildLogSessionTonnagePromptSummaries(
-          perLiftTonnageStats,
-        ),
+        tonnageSummaries:
+          buildLogSessionTonnagePromptSummaries(perLiftTonnageStats),
       }),
       { resetChat: true },
     );
@@ -606,7 +605,11 @@ export default function LogSessionPage({
           </script>
         </Head>
         <style dangerouslySetInnerHTML={{ __html: CELEBRATION_KEYFRAMES }} />
-        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:gap-20">
+        {/* The session column steps up on wider screens. The right column is
+            a pure spacer that keeps the session centred, and the quote rail
+            only ever needs 10rem, so the extra width is there to be spent —
+            but not at xl, where taking it would squeeze the rail. */}
+        <div className="min-[1800px]:grid-cols-[minmax(0,1fr)_minmax(0,68rem)_minmax(0,1fr)] xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:grid-cols-[minmax(0,1fr)_minmax(0,62rem)_minmax(0,1fr)] 2xl:gap-20">
           <aside className="hidden xl:block">
             <div className="sticky top-20 mr-auto w-full max-w-[9rem] space-y-4 pt-3 2xl:max-w-[10rem]">
               {secondaryQuoteCard}
@@ -614,7 +617,7 @@ export default function LogSessionPage({
           </aside>
 
           <main className="min-w-0">
-            <div className="w-full max-w-[56rem]">
+            <div className="w-full max-w-[56rem] min-[1800px]:max-w-[68rem] 2xl:max-w-[62rem]">
               <LogDateNav
                 datePickerOpen={datePickerOpen}
                 isToday={isToday}
@@ -785,9 +788,7 @@ function buildLogSessionPromptSummaries({ sessionLiftsWithPending, isMetric }) {
       const visibleSets = Array.isArray(sets)
         ? sets.filter(
             (set) =>
-              (set.reps ?? 0) > 0 &&
-              (set.weight ?? 0) > 0 &&
-              !set._pending,
+              (set.reps ?? 0) > 0 && (set.weight ?? 0) > 0 && !set._pending,
           )
         : [];
       if (visibleSets.length === 0) return null;
@@ -827,7 +828,9 @@ function buildLogSessionTonnagePromptSummaries(perLiftTonnageStats) {
       const pct = Math.round(stats.pctDiff);
       const sign = pct > 0 ? "+" : "";
       const sessionCountText =
-        stats.sessionCount > 0 ? ` across ${stats.sessionCount} prior sessions` : "";
+        stats.sessionCount > 0
+          ? ` across ${stats.sessionCount} prior sessions`
+          : "";
 
       return `- ${liftType}: tonnage=${current}${unit} (${sign}${pct}% vs average${sessionCountText})`;
     })

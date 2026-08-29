@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { motion } from "motion/react";
-import { Link2, Loader2, Play, Trash2 } from "lucide-react";
+import { Link2, Loader2, Trash2 } from "lucide-react";
 
 import { getCelebrationStyles } from "@/lib/celebration";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
@@ -26,6 +26,7 @@ import {
   parseWeightInput,
 } from "@/components/log/sheet-snapshot-utils";
 import { CelebrationReveal } from "@/components/log/celebration-reveal";
+import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { UnitLabel } from "@/components/log/unit-label";
 
 // --- Set row (click-to-edit) ---
@@ -315,6 +316,9 @@ export function SetRow({
     () => getVideoSourceMeta(displayUrl),
     [displayUrl],
   );
+  const videoSourceTooltip = videoSource?.name
+    ? `Watch on ${videoSource.name}`
+    : "Open the video link";
   const hasBadges = !set._pending && Boolean(strengthBadge);
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
   const prBadgeTooltip = getLogPRBadgeTooltip(set.liftType);
@@ -473,10 +477,10 @@ export function SetRow({
           )}
         </div>
 
-        {/* Video link — a named chip, because the clip could be anywhere from
-            YouTube to the lifter's own Google Photos, and knowing which one
-            you are about to open is half of wanting to open it. Always opens
-            in a new tab; the log stays where it was. */}
+        {/* Video link — the destination's own mark, because a lifter knows
+            their clips live in Photos or on YouTube long before they can read
+            a label, and colour survives being 20px wide. Always opens in a new
+            tab; the log stays where it was. */}
         {videoSource && (
           <TooltipProvider delayDuration={0}>
             <Tooltip>
@@ -485,15 +489,14 @@ export function SetRow({
                   href={displayUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="border-border/70 bg-background/60 text-muted-foreground hover:border-foreground/30 hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
-                  aria-label={`${videoSource.tooltip} (opens in a new tab)`}
+                  className="hover:bg-muted focus-visible:ring-ring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-80 transition hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
+                  aria-label={`${videoSourceTooltip} (opens in a new tab)`}
                 >
-                  <Play className="h-3 w-3 shrink-0 fill-current" />
-                  <span>{videoSource.label}</span>
+                  <VideoSourceIcon source={videoSource} className="h-5 w-5" />
                 </a>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{videoSource.tooltip} — opens in a new tab</p>
+                <p>{videoSourceTooltip} — opens in a new tab</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

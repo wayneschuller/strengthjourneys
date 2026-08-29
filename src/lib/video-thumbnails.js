@@ -82,51 +82,47 @@ export function getVideoThumbnailInfo(url) {
 }
 
 // Known hosts get a proper name so the log can say where a clip actually
-// lives. Keyed by hostname suffix, matched after stripping "www.".
-const VIDEO_SOURCE_NAMES = [
+// lives, and a kind so the row can draw that service's own mark.
+const VIDEO_SOURCES = [
   {
-    match: (h) => h === "youtu.be" || h.endsWith("youtube.com"),
-    label: "YouTube",
+    kind: "youtube",
     name: "YouTube",
+    match: (h) => h === "youtu.be" || h.endsWith("youtube.com"),
   },
   {
+    kind: "google-photos",
+    name: "Google Photos",
     match: (h) =>
       h.endsWith("photos.google.com") || h.endsWith("photos.app.goo.gl"),
-    label: "Photos",
-    name: "Google Photos",
   },
   {
-    match: (h) => h.endsWith("drive.google.com"),
-    label: "Drive",
+    kind: "google-drive",
     name: "Google Drive",
+    match: (h) => h.endsWith("drive.google.com"),
   },
-  { match: (h) => h.endsWith("icloud.com"), label: "iCloud", name: "iCloud" },
+  { kind: "icloud", name: "iCloud", match: (h) => h.endsWith("icloud.com") },
+  { kind: "dropbox", name: "Dropbox", match: (h) => h.endsWith("dropbox.com") },
+  { kind: "vimeo", name: "Vimeo", match: (h) => h.endsWith("vimeo.com") },
   {
-    match: (h) => h.endsWith("dropbox.com"),
-    label: "Dropbox",
-    name: "Dropbox",
-  },
-  { match: (h) => h.endsWith("vimeo.com"), label: "Vimeo", name: "Vimeo" },
-  {
-    match: (h) => h.endsWith("instagram.com"),
-    label: "Instagram",
+    kind: "instagram",
     name: "Instagram",
+    match: (h) => h.endsWith("instagram.com"),
   },
-  { match: (h) => h.endsWith("tiktok.com"), label: "TikTok", name: "TikTok" },
+  { kind: "tiktok", name: "TikTok", match: (h) => h.endsWith("tiktok.com") },
   {
-    match: (h) => h.endsWith("facebook.com") || h.endsWith("fb.watch"),
-    label: "Facebook",
+    kind: "facebook",
     name: "Facebook",
+    match: (h) => h.endsWith("facebook.com") || h.endsWith("fb.watch"),
   },
 ];
 
 /**
- * Name the destination behind a stored video link, so a lifter can tell at a
- * glance whether a set's clip is on YouTube, in their own Google Photos, or
- * somewhere else entirely. Unknown hosts fall back to their own domain name
- * where that reads cleanly, and to a plain "Video" where it does not.
+ * Identify the destination behind a stored video link, so a set row can show
+ * that service's own mark rather than a generic play button. Hosts we do not
+ * recognise still return their hostname, which is enough for the row to fall
+ * back to the site's favicon, and a readable name for the tooltip.
  * @param {string} url - The stored set URL.
- * @returns {{label: string, tooltip: string}|null} Short chip label and its tooltip sentence, or null when the value is not a usable http(s) link.
+ * @returns {{kind: string, name: string|null, host: string}|null} Destination descriptor, or null when the value is not a usable http(s) link.
  */
 export function getVideoSourceMeta(url) {
   if (!url || typeof url !== "string") return null;
@@ -140,17 +136,19 @@ export function getVideoSourceMeta(url) {
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
 
   const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-  const known = VIDEO_SOURCE_NAMES.find(({ match }) => match(host));
-  if (known) return { label: known.label, tooltip: `Watch on ${known.name}` };
+  if (!host) return null;
 
-  // e.g. clips.example.com -> "Example". Anything long or unsplittable stays
-  // generic rather than stretching the chip across the row.
+  const known = VIDEO_SOURCES.find(({ match }) => match(host));
+  if (known) return { kind: known.kind, name: known.name, host };
+
+  // e.g. clips.example.com -> "Example", which reads better in a tooltip than
+  // the full hostname. Anything odd stays nameless and the tooltip goes
+  // generic rather than saying something wrong.
   const labels = host.split(".");
   const stem = labels.length > 1 ? labels[labels.length - 2] : labels[0];
-  if (stem && /^[a-z0-9-]{2,12}$/.test(stem)) {
-    const pretty = stem.charAt(0).toUpperCase() + stem.slice(1);
-    return { label: pretty, tooltip: `Watch on ${pretty}` };
-  }
+  const name = /^[a-z0-9-]{2,16}$/.test(stem)
+    ? stem.charAt(0).toUpperCase() + stem.slice(1)
+    : null;
 
-  return { label: "Video", tooltip: "Open the video link" };
+  return { kind: "other", name, host };
 }

@@ -7,9 +7,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { motion } from "motion/react";
-import { Link2, Loader2, PlayCircle, Trash2 } from "lucide-react";
+import { Link2, Loader2, Play, Trash2 } from "lucide-react";
 
 import { getCelebrationStyles } from "@/lib/celebration";
+import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { getSetIdentityKey } from "@/lib/pr-ranking";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -190,7 +191,10 @@ export function SetRow({
   const rowKey = getSetIdentityKey(set);
   const optimisticFields = useMemo(() => {
     const hasOptimisticOverride =
-      pendingReps !== null || pendingWeight !== null || pendingNotes !== null || pendingUrl !== null;
+      pendingReps !== null ||
+      pendingWeight !== null ||
+      pendingNotes !== null ||
+      pendingUrl !== null;
 
     if (!hasOptimisticOverride) return null;
 
@@ -293,17 +297,24 @@ export function SetRow({
     // Try to pre-fill URL from clipboard if the field is currently empty
     // and the URL hasn't already been assigned to another set this session.
     if (!draftUrl && navigator?.clipboard?.readText) {
-      navigator.clipboard.readText().then((text) => {
-        const trimmed = text?.trim() ?? "";
-        if (isHttpUrl(trimmed)) {
-          if (!usedSessionUrls?.has(trimmed)) {
-            setDraftUrl(trimmed);
+      navigator.clipboard
+        .readText()
+        .then((text) => {
+          const trimmed = text?.trim() ?? "";
+          if (isHttpUrl(trimmed)) {
+            if (!usedSessionUrls?.has(trimmed)) {
+              setDraftUrl(trimmed);
+            }
           }
-        }
-      }).catch(() => {});
+        })
+        .catch(() => {});
     }
   }
 
+  const videoSource = useMemo(
+    () => getVideoSourceMeta(displayUrl),
+    [displayUrl],
+  );
   const hasBadges = !set._pending && Boolean(strengthBadge);
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
   const prBadgeTooltip = getLogPRBadgeTooltip(set.liftType);
@@ -431,7 +442,10 @@ export function SetRow({
                   value={draftUrl}
                   disabled={isLocked}
                   onChange={(e) => setDraftUrl(e.target.value)}
-                  onBlur={() => { commitUrl(); setEditingNotes(false); }}
+                  onBlur={() => {
+                    commitUrl();
+                    setEditingNotes(false);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === "Escape") {
                       closeNotesEdit();
@@ -459,8 +473,11 @@ export function SetRow({
           )}
         </div>
 
-        {/* Video link — only shown when URL is populated */}
-        {displayUrl && (
+        {/* Video link — a named chip, because the clip could be anywhere from
+            YouTube to the lifter's own Google Photos, and knowing which one
+            you are about to open is half of wanting to open it. Always opens
+            in a new tab; the log stays where it was. */}
+        {videoSource && (
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -468,14 +485,15 @@ export function SetRow({
                   href={displayUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground/60 hover:text-foreground shrink-0 rounded p-1 transition-colors"
-                  aria-label="Watch video"
+                  className="border-border/70 bg-background/60 text-muted-foreground hover:border-foreground/30 hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
+                  aria-label={`${videoSource.tooltip} (opens in a new tab)`}
                 >
-                  <PlayCircle className="h-4 w-4" />
+                  <Play className="h-3 w-3 shrink-0 fill-current" />
+                  <span>{videoSource.label}</span>
                 </a>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Watch video</p>
+                <p>{videoSource.tooltip} — opens in a new tab</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -521,7 +539,9 @@ export function SetRow({
                                     getPrToneClass(badge.scope),
                                   )}
                                 >
-                                  <span className="truncate">{badge.message}</span>
+                                  <span className="truncate">
+                                    {badge.message}
+                                  </span>
                                 </Badge>
                               </CelebrationReveal>
                             </Link>
@@ -600,7 +620,9 @@ export function SetRow({
                                   getPrToneClass(badge.scope),
                                 )}
                               >
-                                <span className="truncate">{badge.message}</span>
+                                <span className="truncate">
+                                  {badge.message}
+                                </span>
                               </Badge>
                             </CelebrationReveal>
                           </Link>

@@ -15,6 +15,10 @@
  * a progress guide from a sentence about equipment.
  */
 
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
+
 const BIG_FOUR = [
   {
     id: "squat",
@@ -72,30 +76,60 @@ function findEarliestMatch(value, remaining) {
   return best;
 }
 
-function linkifyTextNode(node, remaining) {
-  let value = node.value;
-  const replacement = [];
+/**
+ * Finds each lift's first mention in one text node, in order, consuming it from
+ * `remaining` so a lift is only ever linked once per message.
+ */
+function collectMatches(value, remaining) {
+  const matches = [];
+  let offset = 0;
+  let rest = value;
 
-  while (value && remaining.length > 0) {
-    const hit = findEarliestMatch(value, remaining);
+  while (rest && remaining.length > 0) {
+    const hit = findEarliestMatch(rest, remaining);
     if (!hit) break;
 
-    if (hit.index > 0) {
-      replacement.push({ type: "text", value: value.slice(0, hit.index) });
-    }
-
-    replacement.push({
-      type: "link",
-      url: hit.lift.href,
-      children: [{ type: "text", value: hit.text }],
+    matches.push({
+      lift: hit.lift,
+      start: offset + hit.index,
+      end: offset + hit.index + hit.text.length,
+      text: hit.text,
     });
 
-    value = value.slice(hit.index + hit.text.length);
+    offset += hit.index + hit.text.length;
+    rest = rest.slice(hit.index + hit.text.length);
     remaining.splice(remaining.indexOf(hit.lift), 1);
   }
 
-  if (replacement.length === 0) return null;
-  if (value) replacement.push({ type: "text", value });
+  return matches;
+}
+
+/** Rewrites a text node into text/link/text nodes. Used by the remark plugin. */
+function linkifyTextNode(node, remaining) {
+  const matches = collectMatches(node.value, remaining);
+  if (matches.length === 0) return null;
+
+  const replacement = [];
+  let cursor = 0;
+
+  for (const match of matches) {
+    if (match.start > cursor) {
+      replacement.push({
+        type: "text",
+        value: node.value.slice(cursor, match.start),
+      });
+    }
+    replacement.push({
+      type: "link",
+      url: match.lift.href,
+      children: [{ type: "text", value: match.text }],
+    });
+    cursor = match.end;
+  }
+
+  if (cursor < node.value.length) {
+    replacement.push({ type: "text", value: node.value.slice(cursor) });
+  }
 
   return replacement;
 }
@@ -103,7 +137,7 @@ function linkifyTextNode(node, remaining) {
 /**
  * Drops any lift the message already links itself. Without this a
  * model-generated link would not consume the lift and we would add a second
- * link for it - the exact duplication this plugin exists to prevent.
+ * link for it - the exact duplication this module exists to prevent.
  */
 function excludeAlreadyLinked(node, remaining) {
   if (node.type === "link" && typeof node.url === "string") {
@@ -115,7 +149,7 @@ function excludeAlreadyLinked(node, remaining) {
   for (const child of node.children) excludeAlreadyLinked(child, remaining);
 }
 
-function walk(node, remaining) {
+function walk(node, remaining, linkify = linkifyTextNode) {
   if (!Array.isArray(node.children)) return;
 
   for (let index = 0; index < node.children.length; index += 1) {
@@ -125,11 +159,11 @@ function walk(node, remaining) {
     if (SKIPPED_NODE_TYPES.has(child.type)) continue;
 
     if (child.type !== "text") {
-      walk(child, remaining);
+      walk(child, remaining, linkify);
       continue;
     }
 
-    const replacement = linkifyTextNode(child, remaining);
+    const replacement = linkify(child, remaining);
     if (replacement) {
       node.children.splice(index, 1, ...replacement);
       index += replacement.length - 1;
@@ -147,3 +181,60 @@ export function remarkBigFourLinks() {
 }
 
 export const BIG_FOUR_REMARK_PLUGINS = [remarkBigFourLinks];
+
+/**
+ * Returns `markdown` with the same links the renderer would add, for the
+ * "Download chat" export.
+ *
+ * Rather than re-serialising the tree (which would reformat the user's whole
+ * transcript), this parses to find match positions and splices the link syntax
+ * into the original string, so every other byte is preserved exactly.
+ */
+export function linkifyBigFourMarkdown(markdown) {
+  if (typeof markdown !== "string" || !markdown.trim()) return markdown;
+
+  const tree = unified().use(remarkParse).use(remarkGfm).parse(markdown);
+  const remaining = [...BIG_FOUR];
+  excludeAlreadyLinked(tree, remaining);
+
+  const edits = [];
+
+  walk(tree, remaining, (node, stillRemaining) => {
+    const start = node.position?.start?.offset;
+    const end = node.position?.end?.offset;
+    if (typeof start !== "number" || typeof end !== "number") return null;
+
+    // A node's value diverges from its source text wherever markdown escapes
+    // or character references were resolved ("\\*squat\\*" -> "*squat*"), so
+    // offsets within the value cannot be trusted. Locate each match in the
+    // source slice instead, advancing a cursor to keep matches in order. A
+    // match whose own text was escaped simply will not be found, and is
+    // skipped rather than spliced into the wrong place.
+    const source = markdown.slice(start, end);
+    let cursor = 0;
+
+    for (const match of collectMatches(node.value, stillRemaining)) {
+      const found = source.indexOf(match.text, cursor);
+      if (found === -1) continue;
+
+      edits.push({
+        start: start + found,
+        end: start + found + match.text.length,
+        text: match.text,
+        href: match.lift.href,
+      });
+      cursor = found + match.text.length;
+    }
+
+    return null;
+  });
+
+  // Apply back to front so earlier offsets stay valid.
+  return edits
+    .sort((a, b) => b.start - a.start)
+    .reduce(
+      (text, edit) =>
+        `${text.slice(0, edit.start)}[${edit.text}](${edit.href})${text.slice(edit.end)}`,
+      markdown,
+    );
+}

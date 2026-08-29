@@ -9,7 +9,10 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
-import { BIG_FOUR_REMARK_PLUGINS } from "@/lib/big-four-links";
+import {
+  BIG_FOUR_REMARK_PLUGINS,
+  linkifyBigFourMarkdown,
+} from "@/lib/big-four-links";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   AI_REVIEW_PROMPTS,
@@ -1129,6 +1132,12 @@ function AILiftingAssistantCard({
       } else if (m.content) {
         // Fallback for other content types
         content = JSON.stringify(m.content);
+      }
+
+      // Match what the reader saw: the renderer adds these links, so the
+      // export would otherwise be missing them.
+      if (m.role === "assistant") {
+        content = linkifyBigFourMarkdown(content);
       }
 
       return `${m.role.toUpperCase()}:\n${content}`;

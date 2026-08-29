@@ -54,6 +54,11 @@ function MessageLink({ href, children, className, ...props }) {
         className={cn("wrap-anywhere font-medium text-link underline underline-offset-2", className)}
         href={internalHref}
         {...props}
+        // After the spread on purpose: our own pages always open in the same
+        // tab, whatever the markdown pipeline or the model's link markup asks
+        // for.
+        target={undefined}
+        rel={undefined}
       >
         {children}
       </Link>

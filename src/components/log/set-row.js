@@ -355,9 +355,10 @@ export function SetRow({
       {/* Main row: reps@weight + notes + desktop meta rail */}
       <div className="flex items-center gap-4">
         {/* Reps @ Weight unit — tight visual unit.
-            Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width.
-            min-w keeps notes aligned across rows with different weight widths. */}
-        <div className="flex min-w-[7.5rem] items-center">
+            Every part of this cluster is a fixed width, so the notes column
+            starts at the same x on every row. min-w is not enough: a wide
+            value like 132.5 outgrows it and drags that row's notes right. */}
+        <div className="flex shrink-0 items-center">
           <div className="w-7">
             {editingReps && !isReadOnly ? (
               <input
@@ -384,31 +385,36 @@ export function SetRow({
             )}
           </div>
           <span className="text-muted-foreground mx-0.5 text-base">@</span>
-          {editingWeight && !isReadOnly ? (
-            <input
-              type="text"
-              inputMode="decimal"
-              className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-              value={draftWeight}
-              disabled={isLocked}
-              onChange={(e) => setDraftWeight(e.target.value)}
-              onBlur={commitWeight}
-              onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-              autoFocus
-            />
-          ) : isLocked || isReadOnly ? (
-            <div className="text-foreground/80 py-0.5 text-left text-xl font-semibold tabular-nums">
-              {displayWeight}
-            </div>
-          ) : (
-            <button
-              className="hover:bg-muted/60 rounded py-0.5 text-left text-xl font-semibold tabular-nums"
-              onClick={() => setEditingWeight(true)}
-            >
-              {displayWeight}
-            </button>
-          )}
-          <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
+          {/* Weight and unit share one fixed box, wide enough for a four digit
+              weight with a decimal. The unit still hugs the number rather than
+              floating at the far edge. */}
+          <div className="flex w-[5.5rem] shrink-0 items-center">
+            {editingWeight && !isReadOnly ? (
+              <input
+                type="text"
+                inputMode="decimal"
+                className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+                value={draftWeight}
+                disabled={isLocked}
+                onChange={(e) => setDraftWeight(e.target.value)}
+                onBlur={commitWeight}
+                onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+                autoFocus
+              />
+            ) : isLocked || isReadOnly ? (
+              <div className="text-foreground/80 py-0.5 text-left text-xl font-semibold tabular-nums">
+                {displayWeight}
+              </div>
+            ) : (
+              <button
+                className="hover:bg-muted/60 rounded py-0.5 text-left text-xl font-semibold tabular-nums"
+                onClick={() => setEditingWeight(true)}
+              >
+                {displayWeight}
+              </button>
+            )}
+            <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
+          </div>
 
           {/* Video mark — the clip belongs to the set, so it rides with the
               numbers rather than crowding the badge rail on the right. The
@@ -416,7 +422,7 @@ export function SetRow({
               all, which keeps the marks in one clean vertical line and stops
               notes reflowing between filmed and unfilmed sets. */}
           {showVideoSlot && (
-            <div className="ml-1.5 flex w-8 shrink-0 justify-center">
+            <div className="flex w-8 shrink-0 justify-center">
               {videoSource && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>

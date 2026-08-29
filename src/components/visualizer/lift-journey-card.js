@@ -2,18 +2,37 @@
 /**
  * Summarizes one lift's long-term journey and links dated milestones back to
  * the session log so exploration can jump from aggregate insight to raw context.
+ *
+ * This card is the athlete's strength story for a single lift, so it leads with
+ * narrative — how long they have been at it, how much they have moved — before
+ * it gets to tables and charts. It addresses the reader as an athlete on
+ * purpose: the numbers below belong to someone with a training history, not to
+ * a dashboard.
+ *
+ * Rendered both at one third width (the Big Four guide pages) and full width
+ * (Lift Explorer), so the internal grids use container queries rather than
+ * viewport breakpoints.
  */
-import { motion } from "motion/react";
+import { useEffect, useMemo } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
+import { CalendarClock, Layers, Scale, TrendingDown, TrendingUp } from "lucide-react";
 
 import {
   getCelebrationEmoji,
   getDisplayWeight,
   findBestE1RM,
 } from "@/lib/processing-utils";
-import { getReadableDateString } from "@/lib/date-utils";
+import { getReadableDateString, parseYmdLocal } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { isBodyweightLoadLift } from "@/lib/estimate-e1rm";
+import { summarizeLiftJourney, MOMENTUM_WINDOW_DAYS } from "@/lib/lift-journey-stats";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -246,6 +265,15 @@ export function LiftJourneyCard({
     (heaviestLast12.date !== heaviestSession.date ||
       heaviestLast12.tonnage !== heaviestSession.tonnage);
 
+  // ── Athlete story numbers ────────────────────────────────────────────────
+  // One pass over parsedData for the lifetime and momentum figures the PR
+  // tables and tier bars cannot express.
+  const journey = useMemo(
+    () =>
+      summarizeLiftJourney({ parsedData, liftType, isMetric, e1rmFormula }),
+    [parsedData, liftType, isMetric, e1rmFormula],
+  );
+
   // ── Tier ─────────────────────────────────────────────────────────────────
   const yearsTraining = oldestDate
     ? (new Date() - new Date(oldestDate)) / (365.25 * 24 * 60 * 60 * 1000)
@@ -313,39 +341,111 @@ export function LiftJourneyCard({
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")}`;
 
+  // Withheld until the data has landed: mid-load the counters all read zero,
+  // and "log your first set" is the wrong thing to say to an athlete with
+  // twelve years of history.
+  const storyLine =
+    isLoading || !liftTypes
+      ? null
+      : buildStoryLine({
+          liftType,
+          firstDate: journey?.firstDate ?? oldestDate,
+          yearsTraining,
+          sessionCount: journey?.sessionCount ?? 0,
+          totalReps,
+        });
+
   return (
-    <Wrapper className={asCard ? "min-h-[300px]" : undefined}>
-      <CardHeader className="px-4 pb-3 sm:px-6">
-        {/* Title + tier badge */}
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {isDemoMode && <DemoModeBadge />}
-            <h2
-              className="text-2xl font-semibold leading-none tracking-tight"
-              style={{
-                textDecoration: "underline",
-                textDecorationColor: liftColor,
-              }}
-            >
+    <Wrapper className={asCard ? "min-h-[300px] overflow-hidden" : undefined}>
+      {/* Hero band. The lift colour wash gives each of the four lifts its own
+          identity at a glance without recolouring the whole card. */}
+      <CardHeader className="relative overflow-hidden border-b px-4 pt-5 pb-4 sm:px-6">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 opacity-[0.07]"
+          style={{
+            background: `linear-gradient(135deg, ${liftColor} 0%, transparent 62%)`,
+          }}
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-1"
+          style={{ backgroundColor: liftColor }}
+        />
+
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
+                Athlete journey
+              </span>
+              {isDemoMode && <DemoModeBadge size="sm" />}
+            </div>
+            <h2 className="mt-1 text-2xl leading-none font-semibold tracking-tight">
               My {liftType} Journey
             </h2>
           </div>
 
           {!isLoading && totalReps > 0 && (
-            <span
+            <motion.span
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.15 }}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold",
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold shadow-sm",
                 tier.bg,
                 tier.text,
               )}
             >
               {tier.icon} {liftType} {tier.name}
-            </span>
+            </motion.span>
           )}
         </div>
 
+        {storyLine ? (
+          <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+            {storyLine}
+          </p>
+        ) : (
+          <Skeleton className="mt-2 h-4 w-64 max-w-full" />
+        )}
+
+        {/* The estimated 1RM is the headline of the whole story, so it is the
+            largest thing on the card rather than a line of body copy. */}
+        {bestLift && e1rmDisplay && (
+          <div className="mt-4 flex flex-wrap items-end gap-x-4 gap-y-1">
+            <div>
+              <div
+                className="text-4xl leading-none font-bold tracking-tight tabular-nums sm:text-5xl"
+                style={{ color: liftColor }}
+              >
+                <CountUp value={e1rmDisplay.value} />
+                <span className="text-xl font-semibold sm:text-2xl">
+                  {e1rmDisplay.unit}
+                </span>
+              </div>
+              <div className="mt-1.5 text-[11px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+                {usesBodyweightEstimate
+                  ? "Estimated added-load 1RM"
+                  : "Estimated 1RM"}
+              </div>
+            </div>
+            <p className="pb-1 text-xs text-muted-foreground">
+              based on{" "}
+              <Link
+                href={getLogHref(bestLift.date)}
+                className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
+              >
+                {bestLift.reps}@{bestLiftDisplay.value}
+                {bestLiftDisplay.unit} ({getReadableDateString(bestLift.date)},{" "}
+                {e1rmFormula})
+              </Link>
+            </p>
+          </div>
+        )}
+
         {isDemoMode && (
-          <p className="mt-2 text-sm italic text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground italic">
             This is sample data. Sign in with Google and connect your sheet to
             see your own numbers.
           </p>
@@ -357,6 +457,19 @@ export function LiftJourneyCard({
           <Skeleton className="h-[260px] w-full" />
         ) : (
           <>
+            {/* Athlete vitals: the four numbers that describe the shape of this
+                lift right now, rather than its all-time bests. */}
+            <JourneyVitals
+              journey={journey}
+              liftType={liftType}
+              liftColor={liftColor}
+              bestE1RM={e1rmDisplay?.value ?? null}
+              unit={e1rmDisplay?.unit ?? (isMetric ? "kg" : "lb")}
+              bodyWeight={bodyWeight}
+              bodyWeightIsDefault={bodyWeightIsDefault}
+              isMetric={isMetric}
+            />
+
             {/* PR Trio */}
             {prRecords.some((r) => r.lift) && (
               <div className="grid grid-cols-3 gap-3">
@@ -384,26 +497,6 @@ export function LiftJourneyCard({
                   );
                 })}
               </div>
-            )}
-
-            {/* E1RM estimate */}
-            {bestLift && e1rmDisplay && (
-              <p className="text-sm text-muted-foreground">
-                {usesBodyweightEstimate ? "Est. added-load 1RM" : "Est. 1RM"}:{" "}
-                <span className="font-semibold text-foreground">
-                  {e1rmDisplay.value}
-                  {e1rmDisplay.unit}
-                </span>
-                {" · based on "}
-                <Link
-                  href={getLogHref(bestLift.date)}
-                  className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
-                >
-                  {bestLift.reps}@{bestLiftDisplay.value}
-                  {bestLiftDisplay.unit} ({getReadableDateString(bestLift.date)},{" "}
-                  {e1rmFormula})
-                </Link>
-              </p>
             )}
 
             {/* Tier progress */}
@@ -507,4 +600,284 @@ export function LiftJourneyCard({
       </CardContent>
     </Wrapper>
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Athlete vitals
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Four numbers describing the current shape of the athlete's relationship with
+ * this lift — as opposed to the PR trio above, which is all-time bests.
+ *
+ * Laid out with container queries because this card renders at roughly a third
+ * of the page on the Big Four guides and at full width in Lift Explorer; a
+ * viewport breakpoint would get one of those two wrong.
+ *
+ * @param {Object} props
+ * @param {Object|null} props.journey - Output of summarizeLiftJourney().
+ * @param {number|null} props.bestE1RM - Best estimated 1RM in display units.
+ * @param {string} props.unit - Display unit label ("kg" / "lb").
+ */
+function JourneyVitals({
+  journey,
+  liftType,
+  liftColor,
+  bestE1RM,
+  unit,
+  bodyWeight,
+  bodyWeightIsDefault,
+  isMetric,
+}) {
+  if (!journey) return null;
+
+  const vitals = [];
+
+  // Strength-to-bodyweight is the number lifters actually quote to each other,
+  // but it is nonsense for lifts whose E1RM is added load on top of bodyweight.
+  if (!isBodyweightLoadLift(liftType)) {
+    const bw =
+      bodyWeight != null && !bodyWeightIsDefault
+        ? getDisplayWeight(
+            { weight: bodyWeight, unitType: isMetric ? "kg" : "lb" },
+            isMetric,
+          )
+        : null;
+
+    vitals.push(
+      bw?.value > 0 && bestE1RM > 0
+        ? {
+            icon: Scale,
+            label: "Bodyweight ratio",
+            value: (bestE1RM / bw.value).toFixed(2),
+            suffix: "×",
+            sub: `of ${Math.round(bw.value)}${unit} bodyweight`,
+          }
+        : {
+            icon: Scale,
+            label: "Bodyweight ratio",
+            value: "—",
+            sub: "Add your bodyweight to unlock this",
+            muted: true,
+          },
+    );
+  }
+
+  vitals.push(buildMomentumVital(journey, unit));
+
+  vitals.push({
+    icon: CalendarClock,
+    label: "Last trained",
+    value: formatDaysSince(journey.daysSinceLast),
+    sub: journey.lastDate ? getReadableDateString(journey.lastDate) : "—",
+    href: journey.lastDate ? getLogHref(journey.lastDate) : null,
+  });
+
+  vitals.push({
+    icon: Layers,
+    label: "Lifetime volume",
+    value: formatCompactNumber(journey.tonnage),
+    suffix: unit,
+    sub: `moved across ${journey.totalSets.toLocaleString()} sets`,
+  });
+
+  return (
+    <div className="@container">
+      <div className="grid grid-cols-2 gap-2 @2xl:grid-cols-4">
+        {vitals.map((vital, index) => (
+          <VitalTile
+            key={vital.label}
+            vital={vital}
+            index={index}
+            accent={liftColor}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VitalTile({ vital, index, accent }) {
+  const Icon = vital.icon;
+  const body = (
+    <>
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+        <Icon className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{vital.label}</span>
+      </div>
+      <div
+        className={cn(
+          "mt-1 text-xl leading-none font-bold tracking-tight tabular-nums",
+          vital.muted && "text-muted-foreground",
+          vital.valueClassName,
+        )}
+      >
+        {vital.value}
+        {vital.suffix && (
+          <span className="ml-0.5 text-sm font-semibold text-muted-foreground">
+            {vital.suffix}
+          </span>
+        )}
+      </div>
+      <div className="mt-1 text-[11px] leading-snug text-muted-foreground">
+        {vital.sub}
+      </div>
+    </>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: index * 0.06 }}
+      className="relative overflow-hidden rounded-lg bg-muted/40 p-2.5"
+    >
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-0 left-0 w-0.5 opacity-70"
+        style={{ backgroundColor: vital.accent ?? accent }}
+      />
+      {vital.href ? (
+        <Link href={vital.href} className="block">
+          {body}
+        </Link>
+      ) : (
+        body
+      )}
+    </motion.div>
+  );
+}
+
+/**
+ * Best estimated 1RM in the last 90 days against the 90 days before that.
+ * A gentle decline is deliberately amber rather than red — deloads, rehab and
+ * off-season blocks are not failures.
+ */
+function buildMomentumVital(journey, unit) {
+  const { recentBestE1RM, priorBestE1RM } = journey;
+  const label = `${MOMENTUM_WINDOW_DAYS}-day momentum`;
+
+  if (recentBestE1RM === 0) {
+    return {
+      icon: TrendingUp,
+      label,
+      value: "—",
+      sub: `Nothing logged in ${MOMENTUM_WINDOW_DAYS} days`,
+      muted: true,
+    };
+  }
+
+  if (priorBestE1RM === 0) {
+    return {
+      icon: TrendingUp,
+      label,
+      value: formatWeight(recentBestE1RM),
+      suffix: unit,
+      sub: "Best est. 1RM in this window",
+    };
+  }
+
+  const delta = recentBestE1RM - priorBestE1RM;
+  const pct = (delta / priorBestE1RM) * 100;
+  const isUp = delta > 0.05;
+  const isDown = delta < -0.05;
+
+  return {
+    icon: isDown ? TrendingDown : TrendingUp,
+    label,
+    value: `${isUp ? "+" : ""}${formatWeight(delta)}`,
+    suffix: unit,
+    valueClassName: isUp
+      ? "text-green-600 dark:text-green-400"
+      : isDown
+        ? "text-amber-600 dark:text-amber-400"
+        : undefined,
+    accent: isUp ? "#22c55e" : isDown ? "#f59e0b" : undefined,
+    sub: isUp || isDown
+      ? `${isUp ? "+" : ""}${pct.toFixed(1)}% vs the prior ${MOMENTUM_WINDOW_DAYS} days`
+      : `Holding steady vs the prior ${MOMENTUM_WINDOW_DAYS} days`,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Story line
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * One sentence of narrative under the card title. This is the line that is
+ * meant to make the numbers underneath feel like a history rather than a
+ * readout, so it names the athlete's start date and the scale of the work.
+ */
+function buildStoryLine({ liftType, firstDate, yearsTraining, sessionCount, totalReps }) {
+  if (!firstDate || totalReps === 0) {
+    return `Log your first ${liftType} set and this athlete journey starts here.`;
+  }
+
+  const parts = [`Athlete of the ${liftType} since ${formatMonthYear(firstDate)}`];
+  const detail = [];
+  if (yearsTraining > 0) detail.push(formatYears(yearsTraining));
+  if (sessionCount > 0) detail.push(`${sessionCount.toLocaleString()} sessions`);
+  if (totalReps > 0) detail.push(`${totalReps.toLocaleString()} reps`);
+
+  return `${parts[0]} — ${detail.join(", ")}.`;
+}
+
+function formatMonthYear(dateStr) {
+  const date = parseYmdLocal(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatting + animation helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Counts a number up from zero on mount, without re-rendering the card on every
+ * frame — this card sits above a Recharts chronology chart and a page of other
+ * charts, so a 60fps setState here would be felt.
+ */
+function CountUp({ value, decimals = 1 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const motionValue = useMotionValue(prefersReducedMotion ? value : 0);
+  const text = useTransform(motionValue, (latest) => formatWeight(latest, decimals));
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      motionValue.set(value);
+      return;
+    }
+    const controls = animate(motionValue, value, {
+      duration: 1.1,
+      ease: [0.16, 1, 0.3, 1],
+    });
+    return () => controls.stop();
+  }, [value, motionValue, prefersReducedMotion]);
+
+  return <motion.span>{text}</motion.span>;
+}
+
+function formatWeight(value, decimals = 1) {
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded)
+    ? rounded.toLocaleString()
+    : rounded.toFixed(decimals);
+}
+
+// Lifetime tonnage runs into the millions, which is unreadable in full.
+function formatCompactNumber(value) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 10_000) return `${Math.round(value / 1000).toLocaleString()}k`;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+  return Math.round(value).toLocaleString();
+}
+
+function formatDaysSince(days) {
+  if (days == null) return "—";
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 60) return `${days}d ago`;
+  if (days < 730) return `${Math.round(days / 30.44)}mo ago`;
+  return `${(days / 365.25).toFixed(1)}yr ago`;
 }

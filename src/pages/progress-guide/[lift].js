@@ -35,7 +35,6 @@ import { StrengthPotentialBarChart } from "@/components/visualizer/strength-pote
 import { RelatedArticles } from "@/components/article-cards";
 import { Button } from "@/components/ui/button";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
-import { LiftKeyStats } from "@/components/big-four/lift-key-stats";
 import {
   SectionEyebrow,
   SectionReveal,
@@ -257,21 +256,23 @@ function BarbellInsightsMain({
         }
         color={liftColor}
       />
-      <SectionReveal className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Even halves: the journey card is now dense enough to hold its own
+          against the session list, and the log CTA reads as the natural next
+          step under the sessions it would add to — rather than as a full-width
+          band cutting across both columns. */}
+      <SectionReveal className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <div id="progress-history" className="scroll-mt-24">
           <LiftJourneyCard liftType={liftType} />
         </div>
-        <div className="scroll-mt-24 lg:col-span-2" id="recent-sessions">
+        <div className="flex scroll-mt-24 flex-col gap-6" id="recent-sessions">
           <MostRecentSessionCard
             key={liftType}
             liftType={liftType}
             defaultVisibleCount={5}
           />
+          {/* Self-hides in demo mode, so anonymous visitors never see it. */}
+          <LiftLogCta liftType={liftType} />
         </div>
-      </SectionReveal>
-      {/* Self-hides in demo mode, so anonymous visitors never see it. */}
-      <SectionReveal>
-        <LiftLogCta liftType={liftType} />
       </SectionReveal>
       <SectionReveal>
         <VisualizerMini liftType={liftType} />
@@ -381,12 +382,6 @@ function BarbellInsightsMain({
       <LiftSectionNav liftType={liftType} navLiftLabel={navLiftLabel} />
 
       <div className="flex flex-col gap-6 pt-6">
-        {/* Key numbers sit above everything: they are the fastest read on the
-            page and they set up every chart underneath. */}
-        <SectionReveal>
-          <LiftKeyStats liftType={liftType} />
-        </SectionReveal>
-
         <SectionReveal id="strength-standards">
           <StrengthLevelsCard liftType={liftType} />
         </SectionReveal>

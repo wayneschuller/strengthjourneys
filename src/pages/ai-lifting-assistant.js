@@ -886,6 +886,11 @@ function AILiftingAssistantCard({
     }),
     [userProvidedProfileData],
   );
+
+  // Follow-up suggestions are fetched separately once an answer finishes, so a
+  // slow suggestion model can never hold the main chat stream open.
+  const [suggestionsByMessageId, setSuggestionsByMessageId] = useState({});
+  const suggestionRequestRef = useRef(null);
   const clearPromptQueryParams = useCallback(() => {
     if (!router.isReady) return;
     if (
@@ -956,8 +961,10 @@ function AILiftingAssistantCard({
     if (shouldResetChatForPrompt) {
       try {
         sessionStorage.removeItem("chat:/ai");
+        sessionStorage.removeItem("chat:/ai:suggestions");
       } catch {}
       setMessages([]);
+      setSuggestionsByMessageId({});
     }
     pendingAiPromptRef.current = nextPrompt;
     pendingAiPromptKeyRef.current = nextPromptKey;
@@ -976,6 +983,12 @@ function AILiftingAssistantCard({
     try {
       const raw = sessionStorage.getItem("chat:/ai");
       if (raw) setMessages(JSON.parse(raw));
+      const rawSuggestions = sessionStorage.getItem("chat:/ai:suggestions");
+      if (rawSuggestions) {
+        setSuggestionsByMessageId(JSON.parse(rawSuggestions));
+        // Restored suggestions belong to the restored last answer; don't refetch.
+        suggestionRequestRef.current = "hydrated";
+      }
     } catch {
     } finally {
       setIsChatHydrated(true);
@@ -991,6 +1004,64 @@ function AILiftingAssistantCard({
       sessionStorage.setItem("chat:/ai", JSON.stringify(capped));
     } catch {}
   }, [messages]);
+
+  // save whenever suggestions change
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (Object.keys(suggestionsByMessageId).length === 0) return;
+    try {
+      sessionStorage.setItem(
+        "chat:/ai:suggestions",
+        JSON.stringify(suggestionsByMessageId),
+      );
+    } catch {}
+  }, [suggestionsByMessageId]);
+
+  // Fetch follow-up suggestions once the answer has fully arrived.
+  useEffect(() => {
+    if (status !== "ready") {
+      suggestionRequestRef.current = null;
+      return;
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || lastMessage.role !== "assistant") return;
+    if (suggestionRequestRef.current === lastMessage.id) return;
+    if (suggestionsByMessageId[lastMessage.id]) return;
+
+    const assistantText = getMessageText(lastMessage);
+    const latestUserText = getMessageText(
+      [...messages].reverse().find((message) => message.role === "user") || {},
+    );
+    if (!assistantText.trim() || !latestUserText.trim()) return;
+
+    suggestionRequestRef.current = lastMessage.id;
+
+    (async () => {
+      try {
+        const response = await fetch("/api/chat/suggestions", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            latestUserMessage: latestUserText,
+            assistantText,
+            userProvidedMetadata: userProvidedProfileData,
+          }),
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!Array.isArray(data?.questions) || data.questions.length === 0) {
+          return;
+        }
+        setSuggestionsByMessageId((previous) => ({
+          ...previous,
+          [lastMessage.id]: data.questions,
+        }));
+      } catch (error) {
+        devLog("Failed to load AI follow-up suggestions", error);
+      }
+    })();
+  }, [messages, status, suggestionsByMessageId, userProvidedProfileData]);
 
   useEffect(() => {
     const pendingPrompt = pendingAiPromptRef.current;
@@ -1018,8 +1089,10 @@ function AILiftingAssistantCard({
   const handleResetChat = () => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("chat:/ai");
+      sessionStorage.removeItem("chat:/ai:suggestions");
     }
     setMessages([]);
+    setSuggestionsByMessageId({});
     clearPromptQueryParams();
   };
 
@@ -1153,7 +1226,7 @@ function AILiftingAssistantCard({
                       (part) => part.type === "source-url",
                     );
                     const suggestedQuestions =
-                      getSuggestedQuestionsFromParts(parts);
+                      suggestionsByMessageId[message.id] ?? [];
 
                     // Get text content for actions (last text part or fallback to content)
                     const lastTextPart = parts
@@ -1672,20 +1745,6 @@ function buildLatestSessionDetailLines(sessionDate, analyzedLifts) {
     });
 
   return lines;
-}
-
-function getSuggestedQuestionsFromParts(parts) {
-  const suggestionPart = parts.find(
-    (part) => part.type === "data-suggested-questions",
-  );
-  const questions = suggestionPart?.data?.questions;
-
-  if (!Array.isArray(questions)) return [];
-
-  return questions
-    .filter((question) => typeof question === "string")
-    .map((question) => question.trim())
-    .filter(Boolean);
 }
 
 function getDaysBetweenDates(olderDate, newerDate) {

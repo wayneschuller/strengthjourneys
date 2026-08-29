@@ -13,13 +13,13 @@ import {
   createUIMessageStreamResponse,
   streamText,
   convertToModelMessages,
-  generateText,
 } from "ai";
 import { devLog } from "@/lib/processing-utils";
 import {
   appendAiChatQuotaHeaders,
   resolveAiChatQuota,
 } from "@/lib/ai-chat-quota";
+import { isAllowedOrigin } from "@/lib/ai-chat-origin";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
@@ -40,34 +40,7 @@ const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 3000;
 const MAX_TOTAL_MESSAGE_CHARS = 12000;
 const MAX_METADATA_CHARS = 4500;
-const MAX_SUGGESTION_INPUT_CHARS = 5000;
-const MAX_SUGGESTION_TEXT_CHARS = 90;
-const MAX_SUGGESTIONS = 3;
 const ALLOWED_CLIENT_ROLES = new Set(["user", "assistant"]);
-
-const ALLOWED_EXACT_HOSTS = [
-  "localhost:3000",
-  "127.0.0.1:3000",
-];
-
-const ALLOWED_HOST_SUFFIXES = ["strengthjourneys.xyz"];
-
-function isAllowedOrigin(origin) {
-  if (!origin) return true;
-
-  try {
-    const { host, hostname } = new URL(origin);
-
-    return (
-      ALLOWED_EXACT_HOSTS.includes(host) ||
-      ALLOWED_HOST_SUFFIXES.some(
-        (suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`),
-      )
-    );
-  } catch {
-    return false;
-  }
-}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -198,45 +171,16 @@ export default async function handler(req, res) {
       const uiStream = result.toUIMessageStream({
         originalMessages: userMessages,
         sendSources: true,
-        sendReasoning: true,
+        // The UI never renders reasoning parts, so don't pay to ship them.
+        sendReasoning: false,
       });
       const reader = uiStream.getReader();
-      let assistantText = "";
-      let finishChunk = null;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        if (value?.type === "text-delta") {
-          assistantText += value.delta;
-        }
-
-        if (value?.type === "finish") {
-          finishChunk = value;
-          continue;
-        }
-
         writer.write(value);
-      }
-
-      const suggestedQuestions = await generateSuggestedQuestions({
-        model: AI_model,
-        userMessages,
-        assistantText,
-        userProvidedMetadata,
-        providerOptions,
-      });
-
-      if (suggestedQuestions.length > 0) {
-        writer.write({
-          type: "data-suggested-questions",
-          data: { questions: suggestedQuestions },
-        });
-      }
-
-      if (finishChunk) {
-        writer.write(finishChunk);
       }
     },
   });
@@ -378,45 +322,6 @@ function buildUserLiftingContextPrompt(userProvidedMetadata) {
   ].join("\n");
 }
 
-async function generateSuggestedQuestions({
-  model,
-  userMessages,
-  assistantText,
-  userProvidedMetadata,
-  providerOptions,
-}) {
-  const latestUserMessage = getLatestUserMessageText(userMessages);
-  if (!latestUserMessage || !assistantText.trim()) return [];
-
-  try {
-    const result = await generateText({
-      model,
-      instructions: [
-        "Create clickable suggested next questions for a strength coaching chat.",
-        "Return only JSON in this shape: {\"questions\":[\"...\"]}.",
-        `Return exactly ${MAX_SUGGESTIONS} questions.`,
-        `Each question must be under ${MAX_SUGGESTION_TEXT_CHARS} characters.`,
-        "Each question must be from the user's point of view, addressed to the AI coach.",
-        "Do not ask the user for information. Do not write questions the coach would ask the user.",
-        "Good: \"Estimate my e1RM from 112.5x3\".",
-        "Bad: \"How did 112.5x3 feel?\".",
-        "Prefer concrete next-step questions tied to the latest answer.",
-        "Do not include medical diagnosis prompts.",
-      ].join(" "),
-      prompt: buildSuggestionPrompt({
-        latestUserMessage,
-        assistantText,
-        userProvidedMetadata,
-      }),
-      providerOptions,
-    });
-
-    return parseSuggestedQuestions(result.text);
-  } catch (error) {
-    devLog("Failed to generate AI follow-up suggestions", error);
-    return [];
-  }
-}
 
 function buildProviderOptions({ useXai }) {
   if (!useXai) return undefined;
@@ -428,80 +333,7 @@ function buildProviderOptions({ useXai }) {
   };
 }
 
-function buildSuggestionPrompt({
-  latestUserMessage,
-  assistantText,
-  userProvidedMetadata,
-}) {
-  return truncateText(
-    [
-      "Latest user message:",
-      latestUserMessage,
-      "",
-      "Latest assistant answer:",
-      assistantText,
-      "",
-      "Optional lifting context summary:",
-      extractMetadataSection(userProvidedMetadata, "data_context") ||
-        "No lifting context summary shared.",
-    ].join("\n"),
-    MAX_SUGGESTION_INPUT_CHARS,
-  );
-}
 
-function parseSuggestedQuestions(text) {
-  const trimmedText = text?.trim();
-  if (!trimmedText) return [];
 
-  try {
-    const jsonText =
-      trimmedText.match(/\{[\s\S]*\}/)?.[0] || trimmedText;
-    const parsed = JSON.parse(jsonText);
-    const questions = Array.isArray(parsed?.questions)
-      ? parsed.questions
-      : [];
 
-    return [...new Set(
-      questions
-        .filter((question) => typeof question === "string")
-        .map((question) => question.trim())
-        .filter((question) => question.length > 0)
-        .map((question) =>
-          question.length > MAX_SUGGESTION_TEXT_CHARS
-            ? `${question.slice(0, MAX_SUGGESTION_TEXT_CHARS - 1).trim()}?`
-            : question,
-        ),
-    )].slice(0, MAX_SUGGESTIONS);
-  } catch {
-    return [];
-  }
-}
 
-function getLatestUserMessageText(messages) {
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    if (messages[index]?.role === "user") {
-      return getMessageText(messages[index]);
-    }
-  }
-
-  return "";
-}
-
-function extractMetadataSection(metadata, sectionName) {
-  const sectionStart = `[${sectionName}]`;
-  const startIndex = metadata.indexOf(sectionStart);
-  if (startIndex === -1) return "";
-
-  const nextSectionIndex = metadata.indexOf("\n[", startIndex + sectionStart.length);
-  return metadata
-    .slice(
-      startIndex,
-      nextSectionIndex === -1 ? undefined : nextSectionIndex,
-    )
-    .trim();
-}
-
-function truncateText(text, maxChars) {
-  if (text.length <= maxChars) return text;
-  return `${text.slice(0, maxChars).trim()}\n[truncated]`;
-}

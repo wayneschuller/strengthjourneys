@@ -605,26 +605,26 @@ export default function LogSessionPage({
           </script>
         </Head>
         <style dangerouslySetInnerHTML={{ __html: CELEBRATION_KEYFRAMES }} />
-        {/* Below 2xl the session column is a fixed 56rem and the rails take
-            what is left — at xl there is not enough for the quote card's full
-            width, and giving the session less would be worse.
+        {/* The quote rail only earns its place once the grid can guarantee
+            it 10rem. Below that it gets crushed to a word per line, so from
+            lg to 2xl the quote goes under the session instead and the session
+            runs centred and rail-free.
 
-            From 2xl the rails claim a 10rem floor instead and the session
-            column takes everything else up to 76rem, so it grows with the
-            window rather than in steps that miss whatever width you happen to
-            sit at. */}
-        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,56rem)_minmax(0,1fr)] xl:gap-16 2xl:grid-cols-[minmax(10rem,1fr)_minmax(0,76rem)_minmax(10rem,1fr)] 2xl:gap-20">
-          <aside className="hidden xl:block">
-            <div className="sticky top-20 mr-auto w-full max-w-[9rem] space-y-4 pt-3 2xl:max-w-[10rem]">
+            From 2xl the rails take a 10rem floor and the session column takes
+            everything left over, up to 76rem, so it grows with the window
+            rather than in steps that miss whatever width you sit at. */}
+        <div className="2xl:grid 2xl:grid-cols-[minmax(10rem,1fr)_minmax(0,76rem)_minmax(10rem,1fr)] 2xl:gap-20">
+          <aside className="hidden 2xl:block">
+            <div className="sticky top-20 mr-auto w-full max-w-[10rem] space-y-4 pt-3">
               {secondaryQuoteCard}
             </div>
           </aside>
 
           <main className="min-w-0">
-            {/* mx-auto matters: below xl there is no grid, and from 2xl the
+            {/* mx-auto matters: below 2xl there is no grid, and from 2xl the
                 column is wider than this cap, so without it the session sits
                 left of centre in its own space. */}
-            <div className="mx-auto w-full max-w-[56rem] 2xl:max-w-none">
+            <div className="mx-auto w-full max-w-[56rem] xl:max-w-[62rem] 2xl:max-w-none">
               <LogDateNav
                 datePickerOpen={datePickerOpen}
                 isToday={isToday}
@@ -761,13 +761,13 @@ export default function LogSessionPage({
                 </div>
               )}
 
-              <div className="mt-10 hidden lg:block xl:hidden">
+              <div className="mt-10 hidden lg:block 2xl:hidden">
                 <div className="max-w-[11rem]">{secondaryQuoteCard}</div>
               </div>
             </div>
           </main>
 
-          <aside className="hidden xl:block" aria-hidden="true" />
+          <aside className="hidden 2xl:block" aria-hidden="true" />
         </div>
         {authStatus !== "authenticated" && (
           <LogStaticContent content={staticContent} />

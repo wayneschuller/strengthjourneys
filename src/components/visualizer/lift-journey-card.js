@@ -332,6 +332,23 @@ export function LiftJourneyCard({
       )
     : null;
 
+  // The two biggest training days, as tile inputs. Built here because the
+  // display-unit conversion already happened above; JourneyStats only has to
+  // decide how they look.
+  const heaviestSessions = [
+    heaviestSession &&
+      heaviestSessionDisplay && {
+        label: "Heaviest day",
+        display: heaviestSessionDisplay,
+        date: heaviestSession.date,
+      },
+    showHeaviestLast12 &&
+      heaviestLast12Display && {
+        label: "Heaviest 12mo",
+        display: heaviestLast12Display,
+        date: heaviestLast12.date,
+      },
+  ].filter(Boolean);
 
   const prRecords = [
     { label: "Best Single", lift: oneRM },
@@ -344,10 +361,13 @@ export function LiftJourneyCard({
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")}`;
 
-  // Withheld until the data has landed: mid-load the counters all read zero,
-  // and "log your first set" is the wrong thing to say to an athlete with
-  // twelve years of history.
-  const hasStory = !isLoading && !!liftTypes;
+  const firstDate = journey?.firstDate ?? oldestDate;
+
+  // Withheld until the data has landed, because "log your first set" is the
+  // wrong thing to say to an athlete with twelve years of history that simply
+  // has not arrived yet.
+  const hasLoaded = !isLoading && !!liftTypes;
+  const hasHistory = !!firstDate && totalReps > 0;
 
   return (
     <Wrapper className={asCard ? "min-h-[300px] overflow-hidden" : undefined}>
@@ -396,16 +416,17 @@ export function LiftJourneyCard({
           )}
         </div>
 
-        {hasStory ? (
-          <StoryLine
-            liftType={liftType}
-            firstDate={journey?.firstDate ?? oldestDate}
-            yearsTraining={yearsTraining}
-            sessionCount={journey?.sessionCount ?? 0}
-            totalReps={totalReps}
-          />
-        ) : (
-          <Skeleton className="mt-2 h-4 w-64 max-w-full" />
+        {/* Only the empty state gets a sentence here. The story a lifter with
+            history wants — when they started, how many sessions, how many reps
+            — is told by the stat tiles and the tier bars below, and saying it
+            twice made the header a paragraph before the headline number. */}
+        {hasLoaded && !hasHistory && (
+          <p className="text-muted-foreground mt-2 max-w-prose text-sm">
+            No {liftType} logged yet.{" "}
+            <span className="font-semibold text-foreground">
+              Your first set starts this story.
+            </span>
+          </p>
         )}
 
         {/* The estimated 1RM is the headline of the whole story, so it is the
@@ -461,6 +482,8 @@ export function LiftJourneyCard({
             <JourneyStats
               prRecords={prRecords}
               journey={journey}
+              heaviestSessions={heaviestSessions}
+              firstDate={firstDate}
               liftColor={liftColor}
               unit={e1rmDisplay?.unit ?? (isMetric ? "kg" : "lb")}
               isMetric={isMetric}
@@ -525,38 +548,6 @@ export function LiftJourneyCard({
               </div>
             )}
 
-            {/* Heaviest session stats */}
-            {(heaviestSession || showHeaviestLast12) && (
-              <div className="space-y-0.5 text-sm text-muted-foreground">
-                {heaviestSession && heaviestSessionDisplay && (
-                  <Link
-                    href={getLogHref(heaviestSession.date)}
-                    className="block rounded px-2 py-1 transition-colors hover:bg-muted/50"
-                  >
-                    Heaviest session:{" "}
-                    <span className="font-medium text-foreground">
-                      {Math.round(heaviestSessionDisplay.value).toLocaleString()}
-                      {heaviestSessionDisplay.unit}
-                    </span>{" "}
-                    ({getReadableDateString(heaviestSession.date, true)})
-                  </Link>
-                )}
-                {showHeaviestLast12 && heaviestLast12Display && (
-                  <Link
-                    href={getLogHref(heaviestLast12.date)}
-                    className="block rounded px-2 py-1 transition-colors hover:bg-muted/50"
-                  >
-                    Heaviest (last 12 months):{" "}
-                    <span className="font-medium text-foreground">
-                      {Math.round(heaviestLast12Display.value).toLocaleString()}
-                      {heaviestLast12Display.unit}
-                    </span>{" "}
-                    ({getReadableDateString(heaviestLast12.date, true)})
-                  </Link>
-                )}
-              </div>
-            )}
-
             {/* Color picker */}
             <div>
               <LiftColorPicker liftType={liftType} />
@@ -592,9 +583,19 @@ export function LiftJourneyCard({
  * @param {Object} props
  * @param {Array} props.prRecords - [{ label, lift }] best single / triple / five.
  * @param {Object|null} props.journey - Output of summarizeLiftJourney().
+ * @param {Array} props.heaviestSessions - [{ label, display, date }] biggest days.
+ * @param {string|null} props.firstDate - First logged set of this lift, ISO.
  * @param {string} props.unit - Display unit label ("kg" / "lb").
  */
-function JourneyStats({ prRecords, journey, liftColor, unit, isMetric }) {
+function JourneyStats({
+  prRecords,
+  journey,
+  heaviestSessions,
+  firstDate,
+  liftColor,
+  unit,
+  isMetric,
+}) {
   const prTiles = prRecords
     .filter(({ lift }) => lift)
     .map(({ label, lift }) => {
@@ -608,7 +609,9 @@ function JourneyStats({ prRecords, journey, liftColor, unit, isMetric }) {
       };
     });
 
-  const vitalTiles = journey ? buildJourneyVitals(journey, unit) : [];
+  const vitalTiles = journey
+    ? buildJourneyVitals(journey, heaviestSessions, firstDate, unit)
+    : [];
 
   if (prTiles.length === 0 && vitalTiles.length === 0) return null;
 
@@ -665,7 +668,7 @@ function StatTile({ tile, index, accent }) {
       >
         {tile.value}
         {tile.suffix && (
-          <span className="text-sm font-normal text-muted-foreground">
+          <span className="text-muted-foreground text-sm font-normal">
             {tile.suffix}
           </span>
         )}
@@ -707,25 +710,54 @@ function StatTile({ tile, index, accent }) {
 }
 
 /**
- * The three "how is this lift going right now" numbers, as opposed to the
- * all-time bests above them.
+ * Everything below the PR trio, in reading order: how the lift is going, then
+ * how much has been moved.
+ *
+ * One flat list rather than fixed rows, because the last-12-months tile only
+ * exists when it differs from the all-time heaviest day. Flowing the tiles
+ * through a three-column grid keeps any gap at the very end instead of
+ * punching a hole in the middle of the block.
+ *
+ * The heaviest days keep their exact tonnage — a specific memorable session
+ * deserves "12,450kg", not "12k" — while lifetime volume stays compact,
+ * because nobody reads a seven-digit number off a tile.
  */
-function buildJourneyVitals(journey, unit) {
-  return [
+function buildJourneyVitals(journey, heaviestSessions, firstDate, unit) {
+  const tiles = [
     buildMomentumVital(journey, unit),
     {
       label: "Last trained",
       value: formatDaysSince(journey.daysSinceLast),
-      sub: journey.lastDate ? getReadableDateString(journey.lastDate, true) : "—",
+      sub: journey.lastDate
+        ? getReadableDateString(journey.lastDate, true)
+        : "—",
       href: journey.lastDate ? getLogHref(journey.lastDate) : null,
     },
     {
-      label: "Lifetime volume",
-      value: formatCompactNumber(journey.tonnage),
-      suffix: unit,
-      sub: `moved across ${journey.totalSets.toLocaleString()} sets`,
+      label: "Sessions",
+      value: journey.sessionCount.toLocaleString(),
+      sub: firstDate ? `since ${formatMonthYear(firstDate)}` : "—",
     },
   ];
+
+  for (const { label, display, date } of heaviestSessions) {
+    tiles.push({
+      label,
+      value: Math.round(display.value).toLocaleString(),
+      suffix: display.unit,
+      sub: getReadableDateString(date, true),
+      href: getLogHref(date),
+    });
+  }
+
+  tiles.push({
+    label: "Lifetime volume",
+    value: formatCompactNumber(journey.tonnage),
+    suffix: unit,
+    sub: `moved across ${journey.totalSets.toLocaleString()} sets`,
+  });
+
+  return tiles;
 }
 
 /**
@@ -777,84 +809,20 @@ function buildMomentumVital(journey, unit) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Story line
+// Formatting + animation helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * The narrative line under the card title.
- *
- * Two short sentences rather than one long one, with every number carrying
- * foreground weight against muted connective words — the point is that the
- * scale of the work is what the eye lands on. The header already says "athlete
- * journey", so this line does not say it again.
+ * "January 2014" — the month an athlete started, for the "since ..." caption.
+ * Deliberately the long form with the weekday and the day of the month
+ * stripped: "since Monday, 14 January 2014" claims a precision the caption
+ * does not want, and the first session's exact weekday is not the point.
  */
-function StoryLine({ liftType, firstDate, yearsTraining, sessionCount, totalReps }) {
-  const className = "mt-2 max-w-prose text-sm text-muted-foreground";
-
-  if (!firstDate || totalReps === 0) {
-    return (
-      <p className={className}>
-        No {liftType} logged yet.{" "}
-        <span className="font-semibold text-foreground">
-          Your first set starts this story.
-        </span>
-      </p>
-    );
-  }
-
-  const facts = [];
-  if (yearsTraining > 0) facts.push(formatYearsLong(yearsTraining));
-  if (sessionCount > 0) facts.push(`${sessionCount.toLocaleString()} sessions`);
-  if (totalReps > 0) facts.push(`${totalReps.toLocaleString()} reps`);
-
-  const startedAt = formatMonthYear(firstDate);
-
-  return (
-    <p className={className}>
-      {liftType} since{" "}
-      <span className="font-semibold text-foreground">{startedAt}</span>.
-      {facts.length > 0 && (
-        <>
-          {" "}
-          {facts.map((fact, index) => (
-            <span key={fact}>
-              {index > 0 && ", "}
-              <span className="font-semibold text-foreground">{fact}</span>
-            </span>
-          ))}{" "}
-          deep.
-        </>
-      )}
-    </p>
-  );
-}
-
-/**
- * Whole years, or whole months in the first year. The tier progress bars carry
- * the exact figure; this line only needs the sense of scale, and "3 yr 4 mo"
- * reads as an abbreviation in the middle of a sentence.
- */
-function formatYearsLong(years) {
-  const wholeYears = Math.floor(years);
-  if (wholeYears < 1) {
-    const months = Math.max(1, Math.round(years * 12));
-    return `${months} month${months === 1 ? "" : "s"}`;
-  }
-  return `${wholeYears} year${wholeYears === 1 ? "" : "s"}`;
-}
-
 function formatMonthYear(dateStr) {
-  // Deliberately the long form without the weekday: "since Monday, January
-  // 2014" would be nonsense, and the exact day the athlete started is not the
-  // point of the sentence.
   const long = getLongReadableDateString(dateStr, false);
   if (!long) return dateStr;
   return long.replace(/^\d+ /, "");
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Formatting + animation helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Counts a number up from zero on mount, without re-rendering the card on every

@@ -21,12 +21,16 @@ import { getDisplayWeight } from "@/lib/processing-utils";
 import { formatDateToYmdLocal, subtractDaysFromStr } from "@/lib/date-utils";
 
 // Tried smallest-first. The first window holding enough separate training days
-// to be worth ranking wins, so a lifter training this lift twice a week gets
-// the last month and someone on a six-week rotation still gets a real list
-// rather than an empty one.
+// to be worth ranking wins, so someone on a six-week rotation still gets a
+// real list rather than an empty one.
+//
+// Three months is the floor rather than one, because a month of a single lift
+// is one training block: the top five sets in it tend to be the same wave
+// climbing, and four of them say nothing the fifth did not. A quarter is long
+// enough to hold a deload, a peak and a return, which is a story. It also
+// matches DORMANT_AFTER_DAYS, so "recent" means the same span in the heading
+// as it does in the decision to show recent work at all.
 export const HIGHLIGHT_WINDOWS = [
-  { days: 28, label: "last 4 weeks" },
-  { days: 56, label: "last 8 weeks" },
   { days: 91, label: "last 3 months" },
   { days: 182, label: "last 6 months" },
   { days: 365, label: "last 12 months" },

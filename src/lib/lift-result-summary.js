@@ -94,8 +94,13 @@ export function formatLiftResultText(summary) {
   } = summary;
 
   const subject = liftName ? `${liftName} ` : "";
+  // A single needs no algorithm — every formula returns the lifted weight at
+  // one rep, so crediting one in a pasted result invites an argument about a
+  // number nobody estimated.
   const blocks = [
-    `${subject}${reps}@${weight}${unit} indicates a one rep max of ${e1rm}${unit}, using the ${formula} algorithm.`,
+    Number(reps) === 1
+      ? `${subject}${reps}@${weight}${unit} is a one rep max of ${e1rm}${unit} — lifted, not estimated.`
+      : `${subject}${reps}@${weight}${unit} indicates a one rep max of ${e1rm}${unit}, using the ${formula} algorithm.`,
   ];
 
   // Bodyweight multiple and tier read as one thought, so keep them on one line.

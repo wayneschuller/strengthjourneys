@@ -737,7 +737,7 @@ export function E1RMCalculatorMain({
                   </div>
                 </div>
                 <div style={{ fontSize: "15px", opacity: 0.45 }}>
-                  {e1rmFormula} formula
+                  {Number(reps) === 1 ? "lifted, not estimated" : `${e1rmFormula} formula`}
                 </div>
               </div>
 
@@ -1110,6 +1110,10 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
  */
 const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, forceLift = null }) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  // At one rep every formula hands back the weight untouched, so there is
+  // nothing estimated about the headline — the lifter is looking at a number
+  // they actually hit. Saying "estimated" there hedges a fact.
+  const isTrueSingle = Number(reps) === 1;
   const { bodyWeight, bioDataIsDefault, standards, age, sex } = useAthleteBio();
 
   const motionVal = useMotionValue(e1rmWeight);
@@ -1154,9 +1158,9 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
             {forceLift ? (
               <>
                 <div>{forceLift}</div>
-                <div className="text-lg md:text-2xl font-semibold text-muted-foreground">Estimated 1RM</div>
+                <div className="text-lg md:text-2xl font-semibold text-muted-foreground">{isTrueSingle ? "Actual 1RM" : "Estimated 1RM"}</div>
               </>
-            ) : "Estimated One Rep Max"}
+            ) : (isTrueSingle ? "Your One Rep Max" : "Estimated One Rep Max")}
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-2">
@@ -1196,7 +1200,11 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
         </CardContent>
         <CardFooter className="text-muted-foreground">
           <div className="flex-1 text-center">
-            Using the <strong>{e1rmFormula}</strong> formula
+            {isTrueSingle ? (
+              <>A single <strong>is</strong> a one rep max — no formula needed</>
+            ) : (
+              <>Using the <strong>{e1rmFormula}</strong> formula</>
+            )}
           </div>
         </CardFooter>
       </Card>
@@ -1572,7 +1580,7 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null
         {forceLift ? `${forceLift} Percentage Calculator` : "Percentage Calculator"}
       </h2>
       <p className="mb-3 text-sm text-muted-foreground">
-        Based on {e1rmWeight}{unit} estimated max
+        Based on {e1rmWeight}{unit} {Number(reps) === 1 ? "max" : "estimated max"}
       </p>
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-sm">

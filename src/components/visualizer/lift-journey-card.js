@@ -25,11 +25,7 @@ import {
 import { useReadLocalStorage } from "usehooks-ts";
 import { Play } from "lucide-react";
 
-import {
-  getCelebrationEmoji,
-  getDisplayWeight,
-  findBestE1RM,
-} from "@/lib/processing-utils";
+import { getDisplayWeight, findBestE1RM } from "@/lib/processing-utils";
 import {
   getLongReadableDateString,
   getReadableDateString,
@@ -39,6 +35,7 @@ import { isBodyweightLoadLift } from "@/lib/estimate-e1rm";
 import { summarizeLiftJourney, MOMENTUM_WINDOW_DAYS } from "@/lib/lift-journey-stats";
 import { buildLiftHighlights } from "@/lib/lift-highlights";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
+import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -305,15 +302,8 @@ export function LiftJourneyCard({
   // Window, ranking and spacing all live in the lib; see lift-highlights.js
   // for why a fixed four weeks of all-time rep PRs was the wrong rule.
   const highlights = useMemo(
-    () =>
-      buildLiftHighlights({
-        parsedData,
-        liftType,
-        isMetric,
-        e1rmFormula,
-        topLiftsByReps,
-      }),
-    [parsedData, liftType, isMetric, e1rmFormula, topLiftsByReps],
+    () => buildLiftHighlights({ parsedData, liftType, isMetric, e1rmFormula }),
+    [parsedData, liftType, isMetric, e1rmFormula],
   );
 
   // ── Display helpers ───────────────────────────────────────────────────────
@@ -325,6 +315,20 @@ export function LiftJourneyCard({
         )
       : null;
   const bestLiftDisplay = bestLift ? getDisplayWeight(bestLift, isMetric) : null;
+  // A heavy single needs no formula — estimateE1RM hands back the lifted
+  // weight untouched at one rep. Calling that an estimate hedges a number the
+  // lifter actually hit, so the label and the credit line both change.
+  const isTrueSingle = bestLift?.reps === 1;
+  // If the best lift was filmed, the clip is the best evidence on the card, so
+  // it gets a play button sized to the headline rather than the 6px chip the
+  // highlight rows use. Same link treatment and same branded mark as a filmed
+  // set on the log page.
+  const bestLiftVideoSource = bestLift?.URL
+    ? getVideoSourceMeta(bestLift.URL)
+    : null;
+  const bestLiftVideoTooltip = bestLiftVideoSource?.name
+    ? `Watch on ${bestLiftVideoSource.name}`
+    : "Watch this lift";
   const heaviestSessionDisplay = heaviestSession
     ? getDisplayWeight(
         { weight: heaviestSession.tonnage, unitType: heaviestSession.unitType },
@@ -450,22 +454,51 @@ export function LiftJourneyCard({
                 </span>
               </div>
               <div className="mt-1.5 text-[11px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-                {usesBodyweightEstimate
-                  ? "Estimated added-load 1RM"
-                  : "Estimated 1RM"}
+                {isTrueSingle
+                  ? usesBodyweightEstimate
+                    ? "Actual added-load 1RM"
+                    : "Actual 1RM"
+                  : usesBodyweightEstimate
+                    ? "Estimated added-load 1RM"
+                    : "Estimated 1RM"}
               </div>
             </div>
             <p className="pb-1 text-xs text-muted-foreground">
-              based on{" "}
+              {isTrueSingle ? "lifted " : "based on "}
               <Link
                 href={getLogHref(bestLift.date)}
                 className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
               >
-                {bestLift.reps}@{bestLiftDisplay.value}
-                {bestLiftDisplay.unit} ({getReadableDateString(bestLift.date, true)},{" "}
-                {e1rmFormula})
+                {isTrueSingle ? (
+                  getReadableDateString(bestLift.date, true)
+                ) : (
+                  <>
+                    {bestLift.reps}@{bestLiftDisplay.value}
+                    {bestLiftDisplay.unit} (
+                    {getReadableDateString(bestLift.date, true)}, {e1rmFormula})
+                  </>
+                )}
               </Link>
             </p>
+            {bestLiftVideoSource && (
+              <a
+                href={bestLift.URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={bestLiftVideoTooltip}
+                aria-label={`${bestLiftVideoTooltip} (opens in a new tab)`}
+                className="group relative mb-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-foreground/10 transition-colors hover:bg-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                style={{ color: liftColor }}
+              >
+                <Play className="h-5 w-5 translate-x-px fill-current" />
+                <span className="absolute -right-0.5 -bottom-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-background shadow-sm">
+                  <VideoSourceIcon
+                    source={bestLiftVideoSource}
+                    className="h-3.5 w-3.5"
+                  />
+                </span>
+              </a>
+            )}
           </div>
         )}
 
@@ -556,10 +589,9 @@ export function LiftJourneyCard({
 /**
  * One picked set: what was lifted, when, and why it earned a place.
  *
- * A highlight that is also an all-time rep PR says so, because that is the
- * bigger claim. Everything else shows the estimated 1RM, which is the number
- * that got it picked in the first place — otherwise a row in a long career
- * looks arbitrary.
+ * The note is whatever claim earned the set its place — see describeSet in
+ * lift-highlights.js. Sets picked on raw estimate alone have no claim to make,
+ * so they show the estimate itself rather than an empty column.
  *
  * The row is not one big link. The set links to its day in the log and the
  * video links out to wherever it is hosted, and an anchor inside an anchor is
@@ -567,14 +599,14 @@ export function LiftJourneyCard({
  * hover surface.
  */
 function HighlightRow({ highlight }) {
-  const { date, reps, weight, unit, e1rm, url, prRank } = highlight;
+  const { date, reps, weight, unit, e1rm, url, emoji, note } = highlight;
   const videoSource = url ? getVideoSourceMeta(url) : null;
 
   return (
     <div className="even:bg-muted/40 hover:bg-muted/70 flex items-center rounded transition-colors">
       <Link
         href={getLogHref(date)}
-        className="flex min-w-0 flex-1 items-center gap-3 px-2 py-1 text-sm"
+        className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 px-2 py-1 text-sm"
       >
         <span className="w-24 shrink-0 font-mono font-medium">
           {reps}@{weight}
@@ -583,14 +615,16 @@ function HighlightRow({ highlight }) {
         <span className="text-muted-foreground w-32 shrink-0">
           {getReadableDateString(date, true)}
         </span>
-        <span className="text-muted-foreground min-w-0 flex-1">
-          {prRank != null ? (
+        {/* Wraps onto its own line rather than truncating once the row is
+            narrower than the three columns need. A note is the reason the set
+            is in the list at all, so it is the last thing that should be cut,
+            and the card is half width on the Big Four guides and full width in
+            Lift Explorer — a viewport breakpoint would get one of them wrong. */}
+        <span className="text-muted-foreground min-w-[9rem] flex-1">
+          {note ? (
             <>
-              {getCelebrationEmoji(prRank)}{" "}
-              <span className="text-foreground font-medium">
-                #{prRank + 1} best {reps}RM
-              </span>{" "}
-              ever
+              {emoji}{" "}
+              <span className="text-foreground font-medium">{note}</span>
             </>
           ) : (
             <>

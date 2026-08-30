@@ -23,6 +23,7 @@ import {
   useTransform,
 } from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
+import { Play } from "lucide-react";
 
 import {
   getCelebrationEmoji,
@@ -36,6 +37,8 @@ import {
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { isBodyweightLoadLift } from "@/lib/estimate-e1rm";
 import { summarizeLiftJourney, MOMENTUM_WINDOW_DAYS } from "@/lib/lift-journey-stats";
+import { buildLiftHighlights } from "@/lib/lift-highlights";
+import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -298,17 +301,20 @@ export function LiftJourneyCard({
     isMetric,
   );
 
-  // ── Recent highlights (last 4 weeks) ─────────────────────────────────────
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  const oneMonthAgoStr = oneMonthAgo.toISOString().slice(0, 10);
-  const recentHighlights = topLiftsByReps
-    ?.flatMap((repRange, repIndex) =>
-      repRange.map((entry, entryIndex) => ({ ...entry, repIndex, entryIndex })),
-    )
-    .filter((e) => e.date >= oneMonthAgoStr)
-    .sort((a, b) => a.entryIndex - b.entryIndex)
-    .slice(0, 8);
+  // ── Highlights ───────────────────────────────────────────────────────────
+  // Window, ranking and spacing all live in the lib; see lift-highlights.js
+  // for why a fixed four weeks of all-time rep PRs was the wrong rule.
+  const highlights = useMemo(
+    () =>
+      buildLiftHighlights({
+        parsedData,
+        liftType,
+        isMetric,
+        e1rmFormula,
+        topLiftsByReps,
+      }),
+    [parsedData, liftType, isMetric, e1rmFormula, topLiftsByReps],
+  );
 
   // ── Display helpers ───────────────────────────────────────────────────────
   const e1rmDisplay =
@@ -509,41 +515,24 @@ export function LiftJourneyCard({
               density={chartDensity}
             />
 
-            {/* Recent highlights */}
-            {recentHighlights && recentHighlights.length > 0 && (
+            {/* Highlights */}
+            {highlights && highlights.highlights.length > 0 && (
               <div>
                 <div className="mb-2 text-sm font-semibold">
-                  Recent Highlights{" "}
-                  <span className="font-normal text-muted-foreground">
-                    (last 4 weeks)
+                  {highlights.scope === "recent"
+                    ? "Recent Highlights"
+                    : `${liftType} Highlights`}{" "}
+                  <span className="text-muted-foreground font-normal">
+                    ({highlights.windowLabel})
                   </span>
                 </div>
                 <div className="space-y-0.5">
-                  {recentHighlights.map((entry, i) => {
-                    const w = getDisplayWeight(entry, isMetric);
-                    return (
-                      <Link
-                        key={i}
-                        href={getLogHref(entry.date)}
-                        className="flex items-center gap-3 rounded px-2 py-1 text-sm transition-colors even:bg-muted/40 hover:bg-muted/70"
-                      >
-                        <span className="w-24 shrink-0 font-mono font-medium">
-                          {entry.reps}@{w.value}
-                          {w.unit}
-                        </span>
-                        <span className="w-32 shrink-0 text-muted-foreground">
-                          {getReadableDateString(entry.date, true)}
-                        </span>
-                        <span className="flex-1 text-muted-foreground">
-                          {getCelebrationEmoji(entry.entryIndex)}{" "}
-                          <span className="font-medium text-foreground">
-                            #{entry.entryIndex + 1} best {entry.reps}RM
-                          </span>{" "}
-                          ever
-                        </span>
-                      </Link>
-                    );
-                  })}
+                  {highlights.highlights.map((highlight) => (
+                    <HighlightRow
+                      key={`${highlight.date}-${highlight.reps}-${highlight.weight}`}
+                      highlight={highlight}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -557,6 +546,83 @@ export function LiftJourneyCard({
         )}
       </CardContent>
     </Wrapper>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Highlights
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * One picked set: what was lifted, when, and why it earned a place.
+ *
+ * A highlight that is also an all-time rep PR says so, because that is the
+ * bigger claim. Everything else shows the estimated 1RM, which is the number
+ * that got it picked in the first place — otherwise a row in a long career
+ * looks arbitrary.
+ *
+ * The row is not one big link. The set links to its day in the log and the
+ * video links out to wherever it is hosted, and an anchor inside an anchor is
+ * neither valid nor clickable, so the two live side by side in a shared
+ * hover surface.
+ */
+function HighlightRow({ highlight }) {
+  const { date, reps, weight, unit, e1rm, url, prRank } = highlight;
+  const videoSource = url ? getVideoSourceMeta(url) : null;
+
+  return (
+    <div className="even:bg-muted/40 hover:bg-muted/70 flex items-center rounded transition-colors">
+      <Link
+        href={getLogHref(date)}
+        className="flex min-w-0 flex-1 items-center gap-3 px-2 py-1 text-sm"
+      >
+        <span className="w-24 shrink-0 font-mono font-medium">
+          {reps}@{weight}
+          {unit}
+        </span>
+        <span className="text-muted-foreground w-32 shrink-0">
+          {getReadableDateString(date, true)}
+        </span>
+        <span className="text-muted-foreground min-w-0 flex-1">
+          {prRank != null ? (
+            <>
+              {getCelebrationEmoji(prRank)}{" "}
+              <span className="text-foreground font-medium">
+                #{prRank + 1} best {reps}RM
+              </span>{" "}
+              ever
+            </>
+          ) : (
+            <>
+              <span className="text-foreground font-medium">
+                {formatWeight(e1rm)}
+                {unit}
+              </span>{" "}
+              est. 1RM
+            </>
+          )}
+        </span>
+      </Link>
+
+      {videoSource && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={
+            videoSource.name ? `Watch on ${videoSource.name}` : "Watch this set"
+          }
+          aria-label={
+            videoSource.name
+              ? `Watch this set on ${videoSource.name} (opens in a new tab)`
+              : "Watch this set (opens in a new tab)"
+          }
+          className="bg-foreground/10 text-foreground hover:bg-foreground/20 mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors"
+        >
+          <Play className="h-3 w-3 translate-x-px fill-current" />
+        </a>
+      )}
+    </div>
   );
 }
 

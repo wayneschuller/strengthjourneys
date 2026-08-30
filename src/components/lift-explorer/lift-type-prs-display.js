@@ -288,12 +288,6 @@ function RepRangeCard({
     () => getVideoSourceMeta(record?.URL),
     [record?.URL],
   );
-  // Cheap presence check rather than a full parse per row: it only decides
-  // whether the list holds a column open, not what mark goes in it.
-  const hasFilmedRunnerUp = useMemo(
-    () => repRange.slice(1).some((lift) => Boolean(lift?.URL)),
-    [repRange],
-  );
 
   if (!record) return null;
 
@@ -539,7 +533,6 @@ function RepRangeCard({
                     standards={standards}
                     e1rmFormula={e1rmFormula}
                     isMetric={isMetric}
-                    reserveVideoSlot={hasFilmedRunnerUp}
                   />
                 ))}
               </ul>
@@ -643,7 +636,6 @@ function RecordRow({
   standards,
   e1rmFormula,
   isMetric,
-  reserveVideoSlot,
 }) {
   const videoSource = useMemo(() => getVideoSourceMeta(lift.URL), [lift.URL]);
   const { value, unit } = getDisplayWeight(lift, isMetric ?? false);
@@ -655,15 +647,6 @@ function RecordRow({
       <span className="text-muted-foreground w-8 shrink-0 pt-0.5 text-sm font-medium tabular-nums">
         {medal ?? `#${rank}`}
       </span>
-      {/* A rail beside the set, the way the log does it, rather than a mark
-          marooned at the far edge of a very wide row. The slot is only held
-          open when something in this rep range was actually filmed, so an
-          unfilmed range does not pay for a column it never uses. */}
-      {reserveVideoSlot && (
-        <div className="flex w-12 shrink-0 justify-center">
-          <VideoLinkButton url={lift.URL} source={videoSource} size="lg" />
-        </div>
-      )}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Link
@@ -699,6 +682,12 @@ function RecordRow({
               asBadge
             />
           )}
+          {/* Hangs off the near right of the set, after the weight and the
+              rating. The eye scans the numbers down the list first; the clip
+              is something you reach for once a set has caught your attention,
+              so it must not arrive before the number or sit out at the far
+              edge of a very wide row. */}
+          <VideoLinkButton url={lift.URL} source={videoSource} />
         </div>
         <div className="text-muted-foreground text-sm">
           {getReadableDateString(lift.date, true)}

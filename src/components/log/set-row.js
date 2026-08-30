@@ -26,7 +26,7 @@ import {
   parseWeightInput,
 } from "@/components/log/sheet-snapshot-utils";
 import { CelebrationReveal } from "@/components/log/celebration-reveal";
-import { VideoSourceIcon } from "@/components/log/video-source-icon";
+import { VideoLinkButton } from "@/components/log/video-link-button";
 import { UnitLabel } from "@/components/log/unit-label";
 
 // --- Set row (click-to-edit) ---
@@ -317,9 +317,6 @@ export function SetRow({
     () => getVideoSourceMeta(displayUrl),
     [displayUrl],
   );
-  const videoSourceTooltip = videoSource?.name
-    ? `Watch on ${videoSource.name}`
-    : "Open the video link";
   const showVideoSlot = reserveVideoSlot || Boolean(videoSource);
   const hasBadges = !set._pending && Boolean(strengthBadge);
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
@@ -423,29 +420,7 @@ export function SetRow({
               notes reflowing between filmed and unfilmed sets. */}
           {showVideoSlot && (
             <div className="flex w-8 shrink-0 justify-center">
-              {videoSource && (
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a
-                        href={displayUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:bg-muted focus-visible:ring-ring inline-flex h-8 w-8 items-center justify-center rounded-full opacity-85 transition hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
-                        aria-label={`${videoSourceTooltip} (opens in a new tab)`}
-                      >
-                        <VideoSourceIcon
-                          source={videoSource}
-                          className="h-[18px] w-[18px]"
-                        />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p>{videoSourceTooltip} — opens in a new tab</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              <VideoLinkButton url={displayUrl} source={videoSource} />
             </div>
           )}
         </div>

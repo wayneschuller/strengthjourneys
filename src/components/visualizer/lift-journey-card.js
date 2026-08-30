@@ -23,7 +23,6 @@ import {
   useTransform,
 } from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
-import { Play } from "lucide-react";
 
 import { getDisplayWeight, findBestE1RM } from "@/lib/processing-utils";
 import {
@@ -35,7 +34,7 @@ import { isBodyweightLoadLift } from "@/lib/estimate-e1rm";
 import { summarizeLiftJourney, MOMENTUM_WINDOW_DAYS } from "@/lib/lift-journey-stats";
 import { buildLiftHighlights } from "@/lib/lift-highlights";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
-import { VideoSourceIcon } from "@/components/log/video-source-icon";
+import { VideoLinkButton } from "@/components/log/video-link-button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -326,9 +325,6 @@ export function LiftJourneyCard({
   const bestLiftVideoSource = bestLift?.URL
     ? getVideoSourceMeta(bestLift.URL)
     : null;
-  const bestLiftVideoTooltip = bestLiftVideoSource?.name
-    ? `Watch on ${bestLiftVideoSource.name}`
-    : "Watch this lift";
   const heaviestSessionDisplay = heaviestSession
     ? getDisplayWeight(
         { weight: heaviestSession.tonnage, unitType: heaviestSession.unitType },
@@ -480,25 +476,13 @@ export function LiftJourneyCard({
                 )}
               </Link>
             </p>
-            {bestLiftVideoSource && (
-              <a
-                href={bestLift.URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={bestLiftVideoTooltip}
-                aria-label={`${bestLiftVideoTooltip} (opens in a new tab)`}
-                className="group relative mb-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-foreground/10 transition-colors hover:bg-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                style={{ color: liftColor }}
-              >
-                <Play className="h-5 w-5 translate-x-px fill-current" />
-                <span className="absolute -right-0.5 -bottom-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-background shadow-sm">
-                  <VideoSourceIcon
-                    source={bestLiftVideoSource}
-                    className="h-3.5 w-3.5"
-                  />
-                </span>
-              </a>
-            )}
+            <VideoLinkButton
+              url={bestLift.URL}
+              source={bestLiftVideoSource}
+              size="lg"
+              fallbackLabel="Watch this lift"
+              className="mb-0.5"
+            />
           </div>
         )}
 
@@ -638,24 +622,12 @@ function HighlightRow({ highlight }) {
         </span>
       </Link>
 
-      {videoSource && (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={
-            videoSource.name ? `Watch on ${videoSource.name}` : "Watch this set"
-          }
-          aria-label={
-            videoSource.name
-              ? `Watch this set on ${videoSource.name} (opens in a new tab)`
-              : "Watch this set (opens in a new tab)"
-          }
-          className="bg-foreground/10 text-foreground hover:bg-foreground/20 mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors"
-        >
-          <Play className="h-3 w-3 translate-x-px fill-current" />
-        </a>
-      )}
+      <VideoLinkButton
+        url={url}
+        source={videoSource}
+        fallbackLabel="Watch this set"
+        className="mr-1"
+      />
     </div>
   );
 }

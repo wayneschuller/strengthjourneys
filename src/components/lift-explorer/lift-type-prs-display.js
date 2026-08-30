@@ -18,7 +18,7 @@
  * is the whole reason to bother filming a set.
  */
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -83,8 +83,19 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
+  // Two ways of learning our own width, because one is not enough. The
+  // observer only ever attaches in a mount-only effect (usehooks-ts 3.1.1), so
+  // it silently measures nothing if the node is not there on the first pass.
+  // The callback ref measures whenever the node actually lands, whichever
+  // render that turns out to be, and the observer takes over for later resizes.
   const containerRef = useRef(null);
-  const { width = 0 } = useResizeObserver({ ref: containerRef });
+  const [attachedWidth, setAttachedWidth] = useState(0);
+  const setContainerNode = useCallback((node) => {
+    containerRef.current = node;
+    if (node) setAttachedWidth(node.getBoundingClientRect().width);
+  }, []);
+  const { width: observedWidth = 0 } = useResizeObserver({ ref: containerRef });
+  const width = observedWidth || attachedWidth;
 
   // Read the clock once on mount so "standing 5 years" stays pure across renders.
   const [todayYmd] = useState(() => formatDateToYmdLocal(new Date()));
@@ -143,21 +154,11 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
       .slice(0, 10);
   }, [topLiftsByReps, compact]);
 
-  if (!topLiftsByTypeAndReps || !topLiftsByReps) return null;
-
   const hasYearlyData = Boolean(
     topLiftsByTypeAndRepsLast12Months?.[liftType]?.some(
       (repRange) => repRange?.length > 0,
     ),
   );
-
-  if (repRangesWithData.length === 0) {
-    return (
-      <div className="text-muted-foreground text-center">
-        No PRs recorded for {liftType} yet.
-      </div>
-    );
-  }
 
   // A rep range requested by URL may not exist in the active scope.
   const effectiveOpenRep = repRangesWithData.some(
@@ -180,67 +181,82 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
     setOpenRepOverride(effectiveOpenRep === repCount ? -1 : repCount);
   };
 
+  // Single return on purpose. useResizeObserver attaches its observer in a
+  // mount-only effect, so a container that is absent on the first render —
+  // while the sheet read is still in flight — is never observed at all, width
+  // stays 0, and the grid is stuck at one column for the life of the page.
+  // The measured div must exist from the first paint, empty or not.
   return (
-    <div ref={containerRef} className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold sm:text-2xl">
-          {isDemoMode && <DemoModeBadge size="sm" />}
-          {liftType} PRs
-        </h2>
-        {hasYearlyData && (
-          <div className="flex items-center rounded-full border p-0.5 text-xs">
-            <ScopeButton
-              isActive={scope === "lifetime"}
-              onClick={() => setScopeOverride("lifetime")}
-            >
-              Lifetime
-            </ScopeButton>
-            <ScopeButton
-              isActive={scope === "yearly"}
-              onClick={() => setScopeOverride("yearly")}
-            >
-              12 months
-            </ScopeButton>
+    <div ref={setContainerNode} className="space-y-4">
+      {repRangesWithData.length === 0 ? (
+        topLiftsByReps && (
+          <p className="text-muted-foreground text-center">
+            No PRs recorded for {liftType} yet.
+          </p>
+        )
+      ) : (
+        <>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold sm:text-2xl">
+              {isDemoMode && <DemoModeBadge size="sm" />}
+              {liftType} PRs
+            </h2>
+            {hasYearlyData && (
+              <div className="flex items-center rounded-full border p-0.5 text-xs">
+                <ScopeButton
+                  isActive={scope === "lifetime"}
+                  onClick={() => setScopeOverride("lifetime")}
+                >
+                  Lifetime
+                </ScopeButton>
+                <ScopeButton
+                  isActive={scope === "yearly"}
+                  onClick={() => setScopeOverride("yearly")}
+                >
+                  12 months
+                </ScopeButton>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <p className="text-muted-foreground text-sm">
-        Your best {liftType} set at every rep range
-        {scope === "yearly" ? " in the last 12 months" : ", all time"}. Open a
-        record to see the rest of that rep range.
-      </p>
+          <p className="text-muted-foreground text-sm">
+            Your best {liftType} set at every rep range
+            {scope === "yearly" ? " in the last 12 months" : ", all time"}. Open
+            a record to see the rest of that rep range.
+          </p>
 
-      <div
-        className="grid gap-4"
-        style={{
-          gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-        }}
-      >
-        {repRangesWithData.map(({ repRange, repCount }) => (
-          <RepRangeCard
-            key={`${liftType}-${scope}-${repCount}`}
-            repRange={repRange}
-            repCount={repCount}
-            liftType={liftType}
-            liftColor={liftColor}
-            isOpen={effectiveOpenRep === repCount}
-            // The single is the number people came for, so it gets the room.
-            isHero={repCount === 1 && columnCount > 1}
-            columnCount={columnCount}
-            onToggle={() => handleToggleRep(repCount)}
-            scope={scope}
-            todayYmd={todayYmd}
-            bio={bio}
-            standards={hasBioData ? standards : null}
-            e1rmFormula={e1rmFormula}
-            isMetric={isMetric}
-            prefersReducedMotion={prefersReducedMotion}
-            isLayoutAnimated={isLayoutAnimated}
-            hideNotes={compact}
-          />
-        ))}
-      </div>
+          <div
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+            }}
+          >
+            {repRangesWithData.map(({ repRange, repCount }) => (
+              <RepRangeCard
+                key={`${liftType}-${scope}-${repCount}`}
+                repRange={repRange}
+                repCount={repCount}
+                liftType={liftType}
+                liftColor={liftColor}
+                isOpen={effectiveOpenRep === repCount}
+                // The single is the number people came for, so it gets the room.
+                isHero={repCount === 1 && columnCount > 1}
+                columnCount={columnCount}
+                onToggle={() => handleToggleRep(repCount)}
+                scope={scope}
+                todayYmd={todayYmd}
+                bio={bio}
+                standards={hasBioData ? standards : null}
+                e1rmFormula={e1rmFormula}
+                isMetric={isMetric}
+                prefersReducedMotion={prefersReducedMotion}
+                isLayoutAnimated={isLayoutAnimated}
+                hideNotes={compact}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -384,15 +400,27 @@ function RepRangeCard({
           </div>
 
           <div className="mt-auto space-y-1">
-            <div
-              className={cn(
-                "leading-none font-bold",
-                isHero ? "text-5xl" : "text-4xl",
-              )}
-              style={{ color: hasPoster ? "#fff" : liftColor }}
-            >
-              {value}
-              <span className={isHero ? "text-3xl" : "text-2xl"}>{unit}</span>
+            {/* The clip belongs beside the number it proves, not exiled to the
+                far corner of the card. */}
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "leading-none font-bold",
+                  isHero ? "text-5xl" : "text-4xl",
+                )}
+                style={{ color: hasPoster ? "#fff" : liftColor }}
+              >
+                {value}
+                <span className={isHero ? "text-3xl" : "text-2xl"}>{unit}</span>
+              </div>
+              <div className="pointer-events-auto">
+                <VideoLinkButton
+                  url={record.URL}
+                  source={videoSource}
+                  size="lg"
+                  className={hasPoster ? "bg-white/15 hover:bg-white/25" : ""}
+                />
+              </div>
             </div>
             <div
               className={cn(
@@ -420,26 +448,17 @@ function RepRangeCard({
             )}
           </div>
 
-          <div className="flex items-end justify-between gap-2">
-            <span
-              className={cn(
-                "text-xs",
-                hasPoster ? "text-white/70" : "text-muted-foreground",
-              )}
-            >
-              {olderRecords.length > 0
-                ? `+${olderRecords.length} more ${repCount}RM${olderRecords.length > 1 ? "s" : ""}`
-                : "Your only one"}
-              <ChevronDown className="ml-1 inline h-3.5 w-3.5" />
-            </span>
-            <div className="pointer-events-auto">
-              <VideoLinkButton
-                url={record.URL}
-                source={videoSource}
-                className={hasPoster ? "bg-white/15 hover:bg-white/25" : ""}
-              />
-            </div>
-          </div>
+          <span
+            className={cn(
+              "text-xs",
+              hasPoster ? "text-white/70" : "text-muted-foreground",
+            )}
+          >
+            {olderRecords.length > 0
+              ? `+${olderRecords.length} more ${repCount}RM${olderRecords.length > 1 ? "s" : ""}`
+              : "Your only one"}
+            <ChevronDown className="ml-1 inline h-3.5 w-3.5" />
+          </span>
         </div>
       ) : (
         <div className="relative z-20 space-y-5 p-5">

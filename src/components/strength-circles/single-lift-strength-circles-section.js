@@ -14,6 +14,7 @@ import {
   YAxis,
   Tooltip as RechartsTooltip,
   ReferenceLine,
+  ReferenceDot,
 } from "recharts";
 import { differenceInCalendarYears } from "date-fns";
 import { useReadLocalStorage } from "usehooks-ts";
@@ -488,11 +489,16 @@ function SingleLiftPercentileTimelineChart({
     return `holding around ${ordinal(firstPercentile)} since ${fromYear}`;
   })();
 
+  // Only worth drawing the peak marker when the athlete is meaningfully below
+  // it — otherwise the line just hugs the current one and says nothing.
+  const isOffPeak =
+    story?.peakPercentile != null &&
+    story.latestPercentile != null &&
+    story.peakPercentile - story.latestPercentile >= 3;
+
   const peakNote = (() => {
     if (!story?.peakPercentile || story.latestPercentile == null) return null;
-    if (story.peakPercentile - story.latestPercentile < 3) {
-      return "your best stretch yet";
-    }
+    if (!isOffPeak) return "your best stretch yet";
     return `peak ${ordinal(story.peakPercentile)} in ${formatMonthYear(story.peakDate)}`;
   })();
 
@@ -562,12 +568,19 @@ function SingleLiftPercentileTimelineChart({
                 />
               }
             />
-            {story?.peakPercentile != null && (
+            {isOffPeak && (
               <ReferenceLine
                 y={story.peakPercentile}
                 stroke={activeColor}
                 strokeDasharray="3 3"
                 strokeOpacity={0.5}
+                label={{
+                  value: `peak ${ordinal(story.peakPercentile)} · ${formatMonthYear(story.peakDate)}`,
+                  position: "insideTopLeft",
+                  fontSize: 10,
+                  fill: activeColor,
+                  offset: 6,
+                }}
               />
             )}
             {drawOrder.map((universe) => {
@@ -593,6 +606,17 @@ function SingleLiftPercentileTimelineChart({
                 />
               );
             })}
+            {isOffPeak && (
+              <ReferenceDot
+                x={story.peakDate}
+                y={story.peakPercentile}
+                r={3.5}
+                fill={activeColor}
+                stroke="var(--card)"
+                strokeWidth={1.5}
+                isFront
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>

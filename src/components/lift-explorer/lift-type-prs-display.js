@@ -303,6 +303,19 @@ function RepRangeCard({
     ? { duration: 0 }
     : { duration: 0.28, ease: [0.22, 1, 0.36, 1] };
 
+  // An open card is full of things worth clicking — session links, video
+  // links, strength badges, Show more — so closing on a click has to mean a
+  // click on the card itself, not on anything standing on it. The X is a
+  // button, so its own handler runs and this bows out rather than toggling
+  // twice. A click that ends a text selection is not a click either.
+  const handleOpenSurfaceClick = (event) => {
+    if (event.target.closest?.("a, button, input, textarea, [role='button']")) {
+      return;
+    }
+    if (window.getSelection?.()?.toString()) return;
+    onToggle();
+  };
+
   const strengthBadge = bio ? (
     <LiftStrengthLevel
       liftType={liftType}
@@ -461,7 +474,13 @@ function RepRangeCard({
           </span>
         </div>
       ) : (
-        <div className="relative z-20 space-y-5 p-5">
+        // Clicking the open card shuts it again, the same way clicking the
+        // closed one opened it. The X stays as the visible, keyboard-reachable
+        // control; this is the mouse shortcut on top of it.
+        <div
+          className="relative z-20 cursor-pointer space-y-5 p-5"
+          onClick={handleOpenSurfaceClick}
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold sm:text-xl">

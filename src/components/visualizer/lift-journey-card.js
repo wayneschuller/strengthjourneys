@@ -10,8 +10,9 @@
  * a dashboard.
  *
  * Rendered both at one third width (the Big Four guide pages) and full width
- * (Lift Explorer), so the internal grids use container queries rather than
- * viewport breakpoints.
+ * (Lift Explorer), so the stat grids keep a fixed three-across shape and let
+ * the tiles themselves shrink, rather than reflowing at a viewport breakpoint
+ * that only one of those two placements would agree with.
  */
 import { useEffect, useMemo } from "react";
 import {
@@ -22,7 +23,6 @@ import {
   useTransform,
 } from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
-import { CalendarClock, Layers, Scale, TrendingDown, TrendingUp } from "lucide-react";
 
 import {
   getCelebrationEmoji,
@@ -455,47 +455,16 @@ export function LiftJourneyCard({
           <Skeleton className="h-[260px] w-full" />
         ) : (
           <>
-            {/* Athlete vitals: the four numbers that describe the shape of this
-                lift right now, rather than its all-time bests. */}
-            <JourneyVitals
+            {/* All-time bests on top, current shape underneath. Same tile,
+                two rows of three, so the eye reads the whole thing as one
+                block of evidence rather than two unrelated widgets. */}
+            <JourneyStats
+              prRecords={prRecords}
               journey={journey}
-              liftType={liftType}
               liftColor={liftColor}
-              bestE1RM={e1rmDisplay?.value ?? null}
               unit={e1rmDisplay?.unit ?? (isMetric ? "kg" : "lb")}
-              bodyWeight={bodyWeight}
-              bodyWeightIsDefault={bodyWeightIsDefault}
               isMetric={isMetric}
             />
-
-            {/* PR Trio */}
-            {prRecords.some((r) => r.lift) && (
-              <div className="grid grid-cols-3 gap-3">
-                {prRecords.map(({ label, lift: prLift }) => {
-                  if (!prLift) return null;
-                  const w = getDisplayWeight(prLift, isMetric);
-                  return (
-                    <Link
-                      key={label}
-                      href={getLogHref(prLift.date)}
-                      className="rounded-lg border bg-card p-3 text-center block transition-colors hover:bg-muted/50"
-                      style={{ borderTopWidth: 3, borderTopColor: liftColor }}
-                    >
-                      <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        {label}
-                      </div>
-                      <div className="mt-1 text-2xl font-bold">
-                        {w.value}
-                        <span className="text-sm font-normal">{w.unit}</span>
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {getReadableDateString(prLift.date)}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
 
             {/* Tier progress */}
             {totalReps > 0 && (
@@ -601,152 +570,162 @@ export function LiftJourneyCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Athlete vitals
+// Journey stats
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Four numbers describing the current shape of the athlete's relationship with
- * this lift — as opposed to the PR trio above, which is all-time bests.
+ * The card's evidence block: the all-time PR trio, then three vitals that
+ * describe the lift's current shape.
  *
- * Laid out with container queries because this card renders at roughly a third
- * of the page on the Big Four guides and at full width in Lift Explorer; a
- * viewport breakpoint would get one of those two wrong.
+ * Both rows are the same tile in the same grid on purpose. The PRs are the
+ * numbers a lifter quotes and comes back to, so they lead; the vitals qualify
+ * them ("...and here is where that sits today"). Giving the two groups
+ * different visual languages, as an earlier version did, made the vitals read
+ * as a separate widget that had wandered in above the records.
+ *
+ * There is deliberately no strength-to-bodyweight ratio here. We only know
+ * today's bodyweight, so dividing a PR set from years ago by it produces a
+ * confident-looking number that is simply wrong for anyone whose weight has
+ * moved since. It can come back once bodyweight is recorded against time and
+ * the ratio can use the bodyweight the athlete actually had on the day.
  *
  * @param {Object} props
+ * @param {Array} props.prRecords - [{ label, lift }] best single / triple / five.
  * @param {Object|null} props.journey - Output of summarizeLiftJourney().
- * @param {number|null} props.bestE1RM - Best estimated 1RM in display units.
  * @param {string} props.unit - Display unit label ("kg" / "lb").
  */
-function JourneyVitals({
-  journey,
-  liftType,
-  liftColor,
-  bestE1RM,
-  unit,
-  bodyWeight,
-  bodyWeightIsDefault,
-  isMetric,
-}) {
-  if (!journey) return null;
+function JourneyStats({ prRecords, journey, liftColor, unit, isMetric }) {
+  const prTiles = prRecords
+    .filter(({ lift }) => lift)
+    .map(({ label, lift }) => {
+      const w = getDisplayWeight(lift, isMetric);
+      return {
+        label,
+        value: w.value,
+        suffix: w.unit,
+        sub: getReadableDateString(lift.date),
+        href: getLogHref(lift.date),
+      };
+    });
 
-  const vitals = [];
+  const vitalTiles = journey ? buildJourneyVitals(journey, unit) : [];
 
-  // Strength-to-bodyweight is the number lifters actually quote to each other,
-  // but it is nonsense for lifts whose E1RM is added load on top of bodyweight.
-  if (!isBodyweightLoadLift(liftType)) {
-    const bw =
-      bodyWeight != null && !bodyWeightIsDefault
-        ? getDisplayWeight(
-            { weight: bodyWeight, unitType: isMetric ? "kg" : "lb" },
-            isMetric,
-          )
-        : null;
-
-    vitals.push(
-      bw?.value > 0 && bestE1RM > 0
-        ? {
-            icon: Scale,
-            label: "Bodyweight ratio",
-            value: (bestE1RM / bw.value).toFixed(2),
-            suffix: "×",
-            sub: `of ${Math.round(bw.value)}${unit} bodyweight`,
-          }
-        : {
-            icon: Scale,
-            label: "Bodyweight ratio",
-            value: "—",
-            sub: "Add your bodyweight to unlock this",
-            muted: true,
-          },
-    );
-  }
-
-  vitals.push(buildMomentumVital(journey, unit));
-
-  vitals.push({
-    icon: CalendarClock,
-    label: "Last trained",
-    value: formatDaysSince(journey.daysSinceLast),
-    sub: journey.lastDate
-      ? getReadableDateString(journey.lastDate, true)
-      : "—",
-    href: journey.lastDate ? getLogHref(journey.lastDate) : null,
-  });
-
-  vitals.push({
-    icon: Layers,
-    label: "Lifetime volume",
-    value: formatCompactNumber(journey.tonnage),
-    suffix: unit,
-    sub: `moved across ${journey.totalSets.toLocaleString()} sets`,
-  });
+  if (prTiles.length === 0 && vitalTiles.length === 0) return null;
 
   return (
-    <div className="@container">
-      <div className="grid grid-cols-2 gap-2 @2xl:grid-cols-4">
-        {vitals.map((vital, index) => (
-          <VitalTile
-            key={vital.label}
-            vital={vital}
-            index={index}
-            accent={liftColor}
-          />
-        ))}
-      </div>
+    <div className="space-y-2 sm:space-y-3">
+      {prTiles.length > 0 && <StatTileRow tiles={prTiles} accent={liftColor} />}
+      {vitalTiles.length > 0 && (
+        <StatTileRow
+          tiles={vitalTiles}
+          accent={liftColor}
+          indexOffset={prTiles.length}
+        />
+      )}
     </div>
   );
 }
 
-function VitalTile({ vital, index, accent }) {
-  const Icon = vital.icon;
+/**
+ * One row of three tiles. Always three across, even at the third-width the card
+ * gets on the Big Four guides, so the PR row and the vitals row line up into a
+ * grid instead of reflowing into a ragged stack.
+ */
+function StatTileRow({ tiles, accent, indexOffset = 0 }) {
+  return (
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      {tiles.map((tile, index) => (
+        <StatTile
+          key={tile.label}
+          tile={tile}
+          index={indexOffset + index}
+          accent={accent}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Label, number, caption — under a lift-coloured top edge. Linked tiles get a
+ * hover state; the ones that go nowhere do not pretend to be clickable.
+ */
+function StatTile({ tile, index, accent }) {
   const body = (
     <>
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-        <Icon className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">{vital.label}</span>
+      <div className="text-muted-foreground text-[10px] font-semibold tracking-widest uppercase">
+        {tile.label}
       </div>
       <div
         className={cn(
-          "mt-1 text-xl leading-none font-bold tracking-tight tabular-nums",
-          vital.muted && "text-muted-foreground",
-          vital.valueClassName,
+          "mt-1 text-2xl leading-none font-bold tracking-tight tabular-nums",
+          tile.muted && "text-muted-foreground",
+          tile.valueClassName,
         )}
       >
-        {vital.value}
-        {vital.suffix && (
-          <span className="ml-0.5 text-sm font-semibold text-muted-foreground">
-            {vital.suffix}
+        {tile.value}
+        {tile.suffix && (
+          <span className="text-sm font-normal text-muted-foreground">
+            {tile.suffix}
           </span>
         )}
       </div>
-      <div className="mt-1 text-[11px] leading-snug text-muted-foreground">
-        {vital.sub}
+      <div className="text-muted-foreground mt-1 text-[11px] leading-snug text-balance">
+        {tile.sub}
       </div>
     </>
   );
+
+  const shell = cn(
+    "block rounded-lg border bg-card p-3 text-center",
+    tile.href && "transition-colors hover:bg-muted/50",
+  );
+  const style = { borderTopWidth: 3, borderTopColor: tile.accent ?? accent };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: index * 0.06 }}
-      className="relative overflow-hidden rounded-lg bg-muted/40 p-2.5"
+      transition={{
+        duration: 0.35,
+        ease: [0.16, 1, 0.3, 1],
+        delay: index * 0.06,
+      }}
     >
-      <span
-        aria-hidden="true"
-        className="absolute inset-y-0 left-0 w-0.5 opacity-70"
-        style={{ backgroundColor: vital.accent ?? accent }}
-      />
-      {vital.href ? (
-        <Link href={vital.href} className="block">
+      {tile.href ? (
+        <Link href={tile.href} className={shell} style={style}>
           {body}
         </Link>
       ) : (
-        body
+        <div className={shell} style={style}>
+          {body}
+        </div>
       )}
     </motion.div>
   );
+}
+
+/**
+ * The three "how is this lift going right now" numbers, as opposed to the
+ * all-time bests above them.
+ */
+function buildJourneyVitals(journey, unit) {
+  return [
+    buildMomentumVital(journey, unit),
+    {
+      label: "Last trained",
+      value: formatDaysSince(journey.daysSinceLast),
+      sub: journey.lastDate ? getReadableDateString(journey.lastDate, true) : "—",
+      href: journey.lastDate ? getLogHref(journey.lastDate) : null,
+    },
+    {
+      label: "Lifetime volume",
+      value: formatCompactNumber(journey.tonnage),
+      suffix: unit,
+      sub: `moved across ${journey.totalSets.toLocaleString()} sets`,
+    },
+  ];
 }
 
 /**
@@ -760,7 +739,6 @@ function buildMomentumVital(journey, unit) {
 
   if (recentBestE1RM === 0) {
     return {
-      icon: TrendingUp,
       label,
       value: "—",
       sub: `Nothing logged in ${MOMENTUM_WINDOW_DAYS} days`,
@@ -770,7 +748,6 @@ function buildMomentumVital(journey, unit) {
 
   if (priorBestE1RM === 0) {
     return {
-      icon: TrendingUp,
       label,
       value: formatWeight(recentBestE1RM),
       suffix: unit,
@@ -784,7 +761,6 @@ function buildMomentumVital(journey, unit) {
   const isDown = delta < -0.05;
 
   return {
-    icon: isDown ? TrendingDown : TrendingUp,
     label,
     value: `${isUp ? "+" : ""}${formatWeight(delta)}`,
     suffix: unit,

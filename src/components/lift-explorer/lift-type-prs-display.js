@@ -1,604 +1,756 @@
+/**
+ * The rep-range trophy cabinet for one lift: your best set at one rep, two
+ * reps, three, and so on down the ladder.
+ *
+ * Deliberately not a chart. Every chart view of this data already exists above
+ * it on the guide page — e1RM over time, singles/triples/fives over time, and
+ * achieved-versus-potential by rep range. What none of those show is the set
+ * itself: the day, the note you wrote, the clip you filmed, and the way back
+ * to that session. Read down the column of weights and the strength curve is
+ * there anyway, without drawing it a fourth time.
+ *
+ * One card per rep range, all on one page, no tabs — a second view of ten
+ * records mostly repeats the first. Opening a record grows it to full width in
+ * place and lists the rest of that rep range beneath it, so the overview never
+ * goes away and there is nothing to navigate back from.
+ *
+ * Records that were filmed use the clip's own poster frame as the card, which
+ * is the whole reason to bother filming a set.
+ */
 
-import { useState, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+
+import { motion, useReducedMotion } from "motion/react";
+import { ChevronDown, X } from "lucide-react";
 import { useReadLocalStorage, useResizeObserver } from "usehooks-ts";
+
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import {
-  useAthleteBio,
-  getStrengthRatingForE1RM,
-  getStandardForLiftDate,
-} from "@/hooks/use-athlete-biodata";
-import { getCelebrationEmoji } from "@/lib/processing-utils";
-import { getReadableDateString } from "@/lib/date-utils";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, Play } from "lucide-react";
-import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
-import { LiftStrengthLevel } from "@/components/home-dashboard/session-exercise-block";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { getDisplayWeight } from "@/lib/processing-utils";
+import {
+  formatDateToYmdLocal,
+  getReadableDateString,
+  parseYmdUtc,
+} from "@/lib/date-utils";
+import {
+  getVideoSourceMeta,
+  getVideoThumbnailInfo,
+} from "@/lib/video-thumbnails";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { VideoLinkButton } from "@/components/log/video-link-button";
+import { VideoSourceIcon } from "@/components/log/video-source-icon";
+import { LiftStrengthLevel } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
-/** Helper: strength rating from reps/weight. Uses age-at-lift when bio+liftDate provided for accurate historical ratings. */
-const getStrengthRating = (
-  repCount,
-  weight,
-  liftType,
-  standards,
-  { age, liftDate, bodyWeight, sex, isMetric } = {},
-) => {
-  let standard = standards?.[liftType];
-  if (liftDate && age && bodyWeight && sex != null) {
-    standard = getStandardForLiftDate(
-      age,
-      liftDate,
-      bodyWeight,
-      sex,
-      liftType,
-      isMetric ?? false,
+// Medals stop at bronze on purpose. The old ladder ran on to 💪👌👏🏆🔥💯🤩,
+// which gave #7 a trophy and #9 a hundred-points and read as clip art.
+const RANK_MEDALS = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
+
+const RECENT_RECORD_DAYS = 30;
+
+// Below this the date line already tells the story; "standing 6 weeks" is not
+// a boast worth making.
+const STANDING_SINCE_MIN_DAYS = 60;
+
+// Rows merged in by an old import carry a machine-written note. It is not a
+// training note and should not occupy the slot reserved for what you thought
+// about the lift.
+const IMPORT_BOILERPLATE_NOTE = /^\s*strength journeys import\b/i;
+
+// The four rep ranges a cramped panel shows when the caller asks for compact.
+const COMPACT_REP_COUNTS = [1, 3, 5, 10];
+
+/**
+ * Best set at every rep range for a single lift, as an openable card grid.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
+ * @param {boolean} [props.compact] - Show only the headline rep ranges, for narrow panels.
+ */
+export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
+  const {
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    isDemoMode,
+  } = useUserLiftingData();
+  const { getColor } = useLiftColors();
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
+  const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
+  const containerRef = useRef(null);
+  const { width = 0 } = useResizeObserver({ ref: containerRef });
+
+  // Read the clock once on mount so "standing 5 years" stays pure across renders.
+  const [todayYmd] = useState(() => formatDateToYmdLocal(new Date()));
+  const [openRepOverride, setOpenRepOverride] = useState(null);
+  const [scopeOverride, setScopeOverride] = useState(null);
+
+  const e1rmFormula =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+      initializeWithValue: false,
+    }) ?? "Brzycki";
+
+  // A PR badge in the log links here with ?prScope and ?prReps, so the URL
+  // opens the matching record rather than just landing near it.
+  const requestedScope =
+    router.query.prScope === "yearly" || router.query.prScope === "lifetime"
+      ? router.query.prScope
+      : null;
+  const requestedReps = Number(router.query.prReps);
+  const requestedRep =
+    Number.isInteger(requestedReps) && requestedReps >= 1 && requestedReps <= 10
+      ? requestedReps
+      : null;
+
+  const scope = scopeOverride ?? requestedScope ?? "lifetime"; // "lifetime" | "yearly"
+  // null means untouched, so the URL still decides; -1 means deliberately closed.
+  const openRep =
+    openRepOverride === null
+      ? requestedRep
+      : openRepOverride === -1
+        ? null
+        : openRepOverride;
+
+  const hasBioData = Boolean(
+    age && bodyWeight && standards && Object.keys(standards).length > 0,
+  );
+  const bio = hasBioData ? { age, bodyWeight, sex, isMetric } : null;
+
+  const activeSource =
+    scope === "yearly"
+      ? topLiftsByTypeAndRepsLast12Months
+      : topLiftsByTypeAndReps;
+  const topLiftsByReps = activeSource?.[liftType];
+
+  const repRangesWithData = useMemo(() => {
+    if (!topLiftsByReps) return [];
+
+    return topLiftsByReps
+      .map((repRange, index) => ({
+        repRange,
+        repCount: index + 1,
+      }))
+      .filter(({ repRange }) => repRange?.length > 0)
+      .filter(
+        ({ repCount }) => !compact || COMPACT_REP_COUNTS.includes(repCount),
+      )
+      .slice(0, 10);
+  }, [topLiftsByReps, compact]);
+
+  if (!topLiftsByTypeAndReps || !topLiftsByReps) return null;
+
+  const hasYearlyData = Boolean(
+    topLiftsByTypeAndRepsLast12Months?.[liftType]?.some(
+      (repRange) => repRange?.length > 0,
+    ),
+  );
+
+  if (repRangesWithData.length === 0) {
+    return (
+      <div className="text-muted-foreground text-center">
+        No PRs recorded for {liftType} yet.
+      </div>
     );
   }
-  if (!standard) return null;
-  const oneRepMax = estimateE1RM(repCount, weight, "Brzycki");
-  return getStrengthRatingForE1RM(oneRepMax, standard);
+
+  // A rep range requested by URL may not exist in the active scope.
+  const effectiveOpenRep = repRangesWithData.some(
+    ({ repCount }) => repCount === openRep,
+  )
+    ? openRep
+    : null;
+
+  const liftColor = getColor(liftType);
+
+  // Container-aware, not viewport-aware: this renders both at full page width
+  // on the guide pages and inside a narrow explorer panel.
+  const columnCount = compact ? 2 : width >= 1040 ? 3 : width >= 620 ? 2 : 1;
+  // Width arrives one paint late, so the grid always starts as a single column.
+  // Holding the layout animation until then keeps that first correction from
+  // playing as a shuffle every time the page mounts.
+  const isLayoutAnimated = !prefersReducedMotion && width > 0;
+
+  const handleToggleRep = (repCount) => {
+    setOpenRepOverride(effectiveOpenRep === repCount ? -1 : repCount);
+  };
+
+  return (
+    <div ref={containerRef} className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold sm:text-2xl">
+          {isDemoMode && <DemoModeBadge size="sm" />}
+          {liftType} PRs
+        </h2>
+        {hasYearlyData && (
+          <div className="flex items-center rounded-full border p-0.5 text-xs">
+            <ScopeButton
+              isActive={scope === "lifetime"}
+              onClick={() => setScopeOverride("lifetime")}
+            >
+              Lifetime
+            </ScopeButton>
+            <ScopeButton
+              isActive={scope === "yearly"}
+              onClick={() => setScopeOverride("yearly")}
+            >
+              12 months
+            </ScopeButton>
+          </div>
+        )}
+      </div>
+
+      <p className="text-muted-foreground text-sm">
+        Your best {liftType} set at every rep range
+        {scope === "yearly" ? " in the last 12 months" : ", all time"}. Open a
+        record to see the rest of that rep range.
+      </p>
+
+      <div
+        className="grid gap-4"
+        style={{
+          gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+        }}
+      >
+        {repRangesWithData.map(({ repRange, repCount }) => (
+          <RepRangeCard
+            key={`${liftType}-${scope}-${repCount}`}
+            repRange={repRange}
+            repCount={repCount}
+            liftType={liftType}
+            liftColor={liftColor}
+            isOpen={effectiveOpenRep === repCount}
+            // The single is the number people came for, so it gets the room.
+            isHero={repCount === 1 && columnCount > 1}
+            columnCount={columnCount}
+            onToggle={() => handleToggleRep(repCount)}
+            scope={scope}
+            todayYmd={todayYmd}
+            bio={bio}
+            standards={hasBioData ? standards : null}
+            e1rmFormula={e1rmFormula}
+            isMetric={isMetric}
+            prefersReducedMotion={prefersReducedMotion}
+            isLayoutAnimated={isLayoutAnimated}
+            hideNotes={compact}
+          />
+        ))}
+      </div>
+    </div>
+  );
 };
 
+// One rep range: the record as a card, and — when opened — everything else you
+// have done at that rep count underneath it.
+function RepRangeCard({
+  repRange,
+  repCount,
+  liftType,
+  liftColor,
+  isOpen,
+  isHero,
+  columnCount,
+  onToggle,
+  scope,
+  todayYmd,
+  bio,
+  standards,
+  e1rmFormula,
+  isMetric,
+  prefersReducedMotion,
+  isLayoutAnimated,
+  hideNotes,
+}) {
+  const record = repRange[0];
+  const poster = useVideoPoster(record?.URL);
+  const videoSource = useMemo(
+    () => getVideoSourceMeta(record?.URL),
+    [record?.URL],
+  );
+
+  if (!record) return null;
+
+  const { value, unit } = getDisplayWeight(record, isMetric ?? false);
+  const isRecent = isRecordRecent(record.date, todayYmd);
+  const standingFor =
+    scope === "lifetime" ? formatStandingFor(record.date, todayYmd) : null;
+  const note = getDisplayNote(record.notes);
+  const olderRecords = repRange.slice(1);
+  const hasPoster = Boolean(poster.src);
+
+  const layoutTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.28, ease: [0.22, 1, 0.36, 1] };
+
+  const strengthBadge = bio ? (
+    <LiftStrengthLevel
+      liftType={liftType}
+      workouts={[
+        { reps: repCount, weight: record.weight, unitType: record.unitType },
+      ]}
+      standards={standards}
+      e1rmFormula={e1rmFormula}
+      sessionDate={record.date}
+      age={bio.age}
+      bodyWeight={bio.bodyWeight}
+      sex={bio.sex}
+      isMetric={bio.isMetric}
+      inline
+      asBadge
+    />
+  ) : null;
+
+  return (
+    <motion.div
+      layout={isLayoutAnimated ? "position" : false}
+      transition={layoutTransition}
+      className={cn(
+        "bg-card relative overflow-hidden rounded-xl border transition-colors",
+        !isOpen && "hover:border-foreground/40",
+      )}
+      style={{
+        gridColumn: isOpen
+          ? "1 / -1"
+          : isHero && columnCount === 3
+            ? "span 2"
+            : isHero && columnCount === 2
+              ? "1 / -1"
+              : undefined,
+        borderColor: isOpen ? liftColor : undefined,
+        // Unfilmed records still get to wear the lift's colour, just quietly.
+        backgroundImage: hasPoster
+          ? undefined
+          : `linear-gradient(135deg, ${liftColor}1f, transparent 62%)`,
+      }}
+    >
+      {hasPoster && !isOpen && (
+        <>
+          <Image
+            src={poster.src}
+            alt=""
+            fill
+            unoptimized
+            aria-hidden="true"
+            className="object-cover"
+            onError={poster.onError}
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/55 to-black/25"
+          />
+        </>
+      )}
+
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={false}
+          aria-label={`Show all ${repCount}-rep ${liftType} records`}
+          className="focus-visible:ring-ring absolute inset-0 z-10 rounded-xl focus-visible:ring-2 focus-visible:outline-none"
+        />
+      )}
+
+      {!isOpen ? (
+        <div
+          className={cn(
+            "pointer-events-none relative z-20 flex flex-col gap-3 p-4",
+            isHero ? "min-h-[13rem]" : "min-h-[10.5rem]",
+            hasPoster && "text-white",
+          )}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <span
+              className={cn(
+                "text-xs font-semibold tracking-widest uppercase",
+                hasPoster ? "text-white/80" : "text-muted-foreground",
+              )}
+            >
+              {repCount}RM
+            </span>
+            <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1.5">
+              {isRecent && (
+                <Badge variant="secondary" className="text-xs">
+                  ⚡ Recent
+                </Badge>
+              )}
+              {strengthBadge}
+            </div>
+          </div>
+
+          <div className="mt-auto space-y-1">
+            <div
+              className={cn(
+                "leading-none font-bold",
+                isHero ? "text-5xl" : "text-4xl",
+              )}
+              style={{ color: hasPoster ? "#fff" : liftColor }}
+            >
+              {value}
+              <span className={isHero ? "text-3xl" : "text-2xl"}>{unit}</span>
+            </div>
+            <div
+              className={cn(
+                "text-sm",
+                hasPoster ? "text-white/85" : "text-muted-foreground",
+              )}
+            >
+              {getReadableDateString(record.date, true)}
+              {standingFor && (
+                <span className={hasPoster ? "text-white/70" : ""}>
+                  {" · "}
+                  {standingFor}
+                </span>
+              )}
+            </div>
+            {!hideNotes && note && (
+              <p
+                className={cn(
+                  "line-clamp-2 text-sm text-pretty italic",
+                  hasPoster ? "text-white/80" : "text-muted-foreground",
+                )}
+              >
+                {note}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-end justify-between gap-2">
+            <span
+              className={cn(
+                "text-xs",
+                hasPoster ? "text-white/70" : "text-muted-foreground",
+              )}
+            >
+              {olderRecords.length > 0
+                ? `+${olderRecords.length} more ${repCount}RM${olderRecords.length > 1 ? "s" : ""}`
+                : "Your only one"}
+              <ChevronDown className="ml-1 inline h-3.5 w-3.5" />
+            </span>
+            <div className="pointer-events-auto">
+              <VideoLinkButton
+                url={record.URL}
+                source={videoSource}
+                className={hasPoster ? "bg-white/15 hover:bg-white/25" : ""}
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="relative z-20 space-y-5 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold sm:text-xl">
+                {repCount}RM records for {liftType}
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                {scope === "yearly" ? "Last 12 months" : "All time"}, heaviest
+                first. Open a set to see the session it came from.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-label={`Close ${repCount}RM records`}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted -mt-1 -mr-1 rounded-full p-1.5 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={layoutTransition}
+            className="space-y-5"
+          >
+            <RecordHero
+              record={record}
+              liftColor={liftColor}
+              poster={poster}
+              videoSource={videoSource}
+              isMetric={isMetric}
+              isRecent={isRecent}
+              standingFor={standingFor}
+              strengthBadge={strengthBadge}
+              note={note}
+            />
+
+            {olderRecords.length > 0 && (
+              <ul className="divide-border/70 divide-y border-t pt-1">
+                {olderRecords.map((lift, index) => (
+                  <RecordRow
+                    key={`${lift.date}-${lift.weight}-${index}`}
+                    lift={lift}
+                    rank={index + 2}
+                    repCount={repCount}
+                    liftType={liftType}
+                    todayYmd={todayYmd}
+                    bio={bio}
+                    standards={standards}
+                    e1rmFormula={e1rmFormula}
+                    isMetric={isMetric}
+                  />
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// The record itself, given room: the clip as a real poster frame rather than a
+// background, beside the number and whatever you wrote that day.
+function RecordHero({
+  record,
+  liftColor,
+  poster,
+  videoSource,
+  isMetric,
+  isRecent,
+  standingFor,
+  strengthBadge,
+  note,
+}) {
+  const { value, unit } = getDisplayWeight(record, isMetric ?? false);
+
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+      {poster.src && (
+        <a
+          href={record.URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${videoSource?.name ? `Watch on ${videoSource.name}` : "Open the video link"} (opens in a new tab)`}
+          className="group bg-muted relative block aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-64"
+        >
+          <Image
+            src={poster.src}
+            alt=""
+            aria-hidden="true"
+            fill
+            unoptimized
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            onError={poster.onError}
+          />
+          <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/10" />
+          {/* The source mark rather than a VideoLinkButton: that control is an
+              anchor of its own, and the whole poster is already the link. */}
+          <span className="absolute right-2 bottom-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition group-hover:bg-white/35">
+            <VideoSourceIcon source={videoSource} className="h-5 w-5" />
+          </span>
+        </a>
+      )}
+
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className="text-4xl leading-none font-bold"
+            style={{ color: liftColor }}
+          >
+            {value}
+            <span className="text-2xl">{unit}</span>
+          </span>
+          {isRecent && (
+            <Badge variant="secondary" className="text-xs">
+              ⚡ Recent
+            </Badge>
+          )}
+          {strengthBadge}
+          {!poster.src && (
+            <VideoLinkButton url={record.URL} source={videoSource} />
+          )}
+        </div>
+        <div className="text-muted-foreground text-sm">
+          <Link
+            href={`/log?date=${record.date}`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
+            {getReadableDateString(record.date, true)}
+          </Link>
+          {standingFor && ` · ${standingFor}`}
+        </div>
+        {note && <TruncatedText text={note} className="mt-2 text-sm" />}
+      </div>
+    </div>
+  );
+}
+
+// One of the also-rans for a rep range. A row rather than a card: ten cards of
+// ragged height was the old detail view, and it read as a wall.
+function RecordRow({
+  lift,
+  rank,
+  repCount,
+  liftType,
+  todayYmd,
+  bio,
+  standards,
+  e1rmFormula,
+  isMetric,
+}) {
+  const videoSource = useMemo(() => getVideoSourceMeta(lift.URL), [lift.URL]);
+  const { value, unit } = getDisplayWeight(lift, isMetric ?? false);
+  const note = getDisplayNote(lift.notes);
+  const medal = RANK_MEDALS[rank - 1];
+
+  return (
+    <li className="flex items-start gap-3 py-3">
+      <span className="text-muted-foreground w-8 shrink-0 pt-0.5 text-sm font-medium tabular-nums">
+        {medal ?? `#${rank}`}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/log?date=${lift.date}`}
+            className="text-base font-semibold hover:underline"
+          >
+            {repCount}@{value}
+            {unit}
+          </Link>
+          {isRecordRecent(lift.date, todayYmd) && (
+            <Badge variant="secondary" className="text-xs">
+              ⚡ Recent
+            </Badge>
+          )}
+          {bio && (
+            <LiftStrengthLevel
+              liftType={liftType}
+              workouts={[
+                {
+                  reps: repCount,
+                  weight: lift.weight,
+                  unitType: lift.unitType,
+                },
+              ]}
+              standards={standards}
+              e1rmFormula={e1rmFormula}
+              sessionDate={lift.date}
+              age={bio.age}
+              bodyWeight={bio.bodyWeight}
+              sex={bio.sex}
+              isMetric={bio.isMetric}
+              inline
+              asBadge
+            />
+          )}
+        </div>
+        <div className="text-muted-foreground text-sm">
+          {getReadableDateString(lift.date, true)}
+        </div>
+        {note && (
+          <p className="text-muted-foreground mt-1 line-clamp-2 text-sm text-pretty italic">
+            {note}
+          </p>
+        )}
+      </div>
+      <VideoLinkButton url={lift.URL} source={videoSource} />
+    </li>
+  );
+}
+
+function ScopeButton({ isActive, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full px-3 py-1 font-medium transition-colors",
+        isActive
+          ? "bg-foreground text-background"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 // Inline text that truncates to 300 characters with a "Show more / Show less" toggle.
-const TruncatedText = ({ text, className }) => {
+function TruncatedText({ text, className }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const truncLength = 300;
 
   if (!text) return null;
 
   const truncatedText =
-    text.length > truncLength ? text.substring(0, truncLength) + "..." : text;
+    text.length > truncLength ? `${text.substring(0, truncLength)}...` : text;
 
   return (
-    <div
-      className={cn("text-pretty italic text-muted-foreground", className)}
-      onClick={() => setIsExpanded(!isExpanded)}
-    >
+    <div className={cn("text-muted-foreground text-pretty italic", className)}>
       {isExpanded ? text : truncatedText}
       {text.length > truncLength && (
         <button
-          className="ml-2 text-xs text-primary hover:underline"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-          }}
+          type="button"
+          className="text-primary ml-2 text-xs hover:underline"
+          onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? "Show less" : "Show more"}
         </button>
       )}
     </div>
   );
-};
-
-// Card for a single rep-range PR showing weight, date, strength badge, video link, and expand/collapse chevron.
-const PRCard = ({
-  repRange,
-  repIndex,
-  liftType,
-  liftColor,
-  onCardClick,
-  isExpanded,
-  standards,
-  age,
-  bodyWeight,
-  sex,
-  isMetric,
-  hasBioData,
-  e1rmFormula = "Brzycki",
-  compact = false,
-}) => {
-  if (!repRange || repRange.length === 0) return null;
-
-  const pr = repRange[0]; // First item is the PR
-  const repCount = repIndex + 1; // 1-10 reps
-  const celebrationEmoji = getCelebrationEmoji(0); // PR is always #1
-
-  // Check if this PR was set within the last 30 days
-  const isRecent = (() => {
-    if (!pr.date) return false;
-    const prDate = new Date(pr.date + "T00:00:00");
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return prDate >= thirtyDaysAgo;
-  })();
-
-  return (
-    <Card
-      className={cn(
-        "cursor-pointer transition-all duration-200 border-2",
-        isExpanded
-          ? "ring-2"
-          : "border-transparent hover:border-foreground/50"
-      )}
-      style={{
-        borderColor: isExpanded ? liftColor : undefined,
-      }}
-      onClick={onCardClick}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">
-            {repCount}RM
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {isRecent && (
-              <Badge variant="secondary" className="text-xs">
-                ⚡ Recent
-              </Badge>
-            )}
-            {hasBioData && (
-              <LiftStrengthLevel
-                liftType={liftType}
-                workouts={[
-                  {
-                    reps: repCount,
-                    weight: pr.weight,
-                    unitType: pr.unitType,
-                  },
-                ]}
-                standards={standards}
-                e1rmFormula={e1rmFormula}
-                sessionDate={pr.date}
-                age={age}
-                bodyWeight={bodyWeight}
-                sex={sex}
-                isMetric={isMetric}
-                inline
-                asBadge
-              />
-            )}
-            <Badge
-              variant="outline"
-              style={{
-                borderColor: liftColor,
-                color: liftColor,
-              }}
-            >
-              {celebrationEmoji} PR
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {/* PR Weight - Large and prominent */}
-        <div>
-          <div className="flex items-center gap-2">
-            <div
-              className="text-3xl font-bold"
-              style={{ color: liftColor }}
-            >
-              {getDisplayWeight(pr, isMetric ?? false).value}
-              {getDisplayWeight(pr, isMetric ?? false).unit}
-            </div>
-            {pr.URL && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <a
-                      href={pr.URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-primary hover:text-primary/80 transition-all duration-200 hover:scale-110"
-                      aria-label="Open video in new tab"
-                    >
-                      <Play className="h-5 w-5" />
-                    </a>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Open video in new tab</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {getReadableDateString(pr.date, true)}
-          </div>
-        </div>
-
-        {/* Notes */}
-        {!compact && pr.notes && (
-          <TruncatedText text={pr.notes} className="mt-2" />
-        )}
-
-        {/* Additional PRs indicator */}
-        {repRange.length > 1 && (
-          <div className="pt-2 text-xs text-muted-foreground">
-            +{repRange.length - 1} more {repCount}RM{repRange.length > 2 ? "s" : ""}
-          </div>
-        )}
-
-        {/* Expand indicator */}
-        <div className="flex items-center justify-center pt-2 transition-transform duration-200">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Grid of all lifts for a given rep range, ranked by weight with strength badges and video links.
-const RepRangeDetailView = ({
-  repRange,
-  repIndex,
-  liftType,
-  liftColor,
-  standards,
-  bioForDateRating,
-  e1rmFormula = "Brzycki",
-}) => {
-  if (!repRange || repRange.length === 0) return null;
-
-  const repCount = repIndex + 1;
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {repRange.map((lift, liftIndex) => (
-          <Link
-            key={liftIndex}
-            href={`/log?date=${lift.date}`}
-            className="block transition-opacity hover:opacity-80"
-          >
-            <Card
-              className={cn(
-                liftIndex === 0 && "ring-2 ring-foreground/50",
-                "h-full",
-              )}
-            >
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  {/* Rank and Weight */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-lg font-semibold">
-                          {getCelebrationEmoji(liftIndex)} #{liftIndex + 1}
-                        </span>
-                        <span className="text-xl font-bold text-foreground">
-                          {repCount}@{getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).value}
-                          {getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).unit}
-                        </span>
-                        {(() => {
-                          if (!lift.date) return null;
-                          const d = new Date(lift.date + "T00:00:00");
-                          const cutoff = new Date();
-                          cutoff.setDate(cutoff.getDate() - 30);
-                          if (d < cutoff) return null;
-                          return (
-                            <Badge variant="secondary" className="text-xs">
-                              ⚡ Recent
-                            </Badge>
-                          );
-                        })()}
-                        {bioForDateRating && (
-                          <LiftStrengthLevel
-                            liftType={liftType}
-                            workouts={[
-                              {
-                                reps: repCount,
-                                weight: lift.weight,
-                                unitType: lift.unitType,
-                              },
-                            ]}
-                            standards={standards}
-                            e1rmFormula={e1rmFormula}
-                            sessionDate={lift.date}
-                            age={bioForDateRating.age}
-                            bodyWeight={bioForDateRating.bodyWeight}
-                            sex={bioForDateRating.sex}
-                            isMetric={bioForDateRating.isMetric}
-                            inline
-                            asBadge
-                          />
-                        )}
-                        {lift.URL && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <a
-                                  href={lift.URL}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-primary hover:text-primary/80 transition-all duration-200 hover:scale-110"
-                                  aria-label="Open video in new tab"
-                                >
-                                  <Play className="h-5 w-5" />
-                                </a>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Open video in new tab</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {getReadableDateString(lift.date, true)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notes */}
-                  {lift.notes && (
-                    <TruncatedText text={lift.notes} className="mt-2" />
-                  )}
-
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-};
+}
 
 /**
- * Displays PRs by rep range (1RM through 10RM) for a single lift. Card grid for overview,
- * tabs for detail view. Shows strength rating when bio data is available.
- *
- * @param {Object} props
- * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
+ * Poster frame for a filmed record, with the graceful climb down built in:
+ * maxresdefault does not exist for every upload, and only YouTube exposes a
+ * thumbnail at all, so a Google Photos clip simply has no poster.
  */
-export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
-  const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, isDemoMode } = useUserLiftingData();
-  const { getColor } = useLiftColors();
-  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
-  const router = useRouter();
-  const requestedPrScope =
-    router.query.prScope === "yearly" || router.query.prScope === "lifetime"
-      ? router.query.prScope
-      : null;
-  const requestedPrReps = Number(router.query.prReps);
-  const requestedPrTab =
-    Number.isInteger(requestedPrReps) &&
-    requestedPrReps >= 1 &&
-    requestedPrReps <= 10
-      ? `rep-${requestedPrReps - 1}`
-      : null;
-  const [activeTabOverride, setActiveTabOverride] = useState(null);
-  const [prScopeOverride, setPrScopeOverride] = useState(null);
-  const activeTab = activeTabOverride ?? requestedPrTab ?? "overview";
-  const prScope = prScopeOverride ?? requestedPrScope ?? "lifetime"; // "lifetime" | "yearly"
-  const e1rmFormula =
-    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
-      initializeWithValue: false,
-    }) ?? "Brzycki";
-  const containerRef = useRef(null);
-  const { width = 0 } = useResizeObserver({ ref: containerRef });
+function useVideoPoster(url) {
+  const info = useMemo(() => getVideoThumbnailInfo(url), [url]);
+  const [failedSrc, setFailedSrc] = useState(null);
 
-  // Check if we have the necessary data for strength ratings
-  const hasBioData = age && bodyWeight && standards && Object.keys(standards).length > 0;
+  const src =
+    info.thumbnailUrl && info.thumbnailUrl !== failedSrc
+      ? info.thumbnailUrl
+      : info.fallbackThumbnailUrl && info.fallbackThumbnailUrl !== failedSrc
+        ? info.fallbackThumbnailUrl
+        : null;
 
-  if (!topLiftsByTypeAndReps) return null;
+  return { src, onError: () => setFailedSrc(src) };
+}
 
-  const activeDataSource = prScope === "yearly" ? topLiftsByTypeAndRepsLast12Months : topLiftsByTypeAndReps;
-  const topLiftsByReps = activeDataSource?.[liftType];
-  if (!topLiftsByReps) return null;
+function isRecordRecent(dateStr, todayYmd) {
+  const days = daysBetweenYmd(dateStr, todayYmd);
+  return days !== null && days >= 0 && days <= RECENT_RECORD_DAYS;
+}
 
-  const hasYearlyData = !!topLiftsByTypeAndRepsLast12Months?.[liftType]?.some(
-    (reps) => reps?.length > 0,
-  );
+// "standing 5 years" turns a date into a challenge, which is the one thing a
+// rep-range cross-section can say that none of the charts above it can.
+function formatStandingFor(dateStr, todayYmd) {
+  const days = daysBetweenYmd(dateStr, todayYmd);
+  if (days === null || days < STANDING_SINCE_MIN_DAYS) return null;
 
-  const liftColor = getColor(liftType);
-
-  // Filter out empty rep ranges and get rep ranges with data
-  const repRangesWithData = topLiftsByReps
-    .map((repRange, index) => ({
-      repRange,
-      repIndex: index,
-      repCount: index + 1,
-    }))
-    .filter(({ repRange }) => repRange && repRange.length > 0)
-    .slice(0, 10); // Show top 10 rep ranges
-
-  // If current tab points to a rep range missing in this scope, fall back to overview
-  const activeRepMatch = activeTab.match(/^rep-(\d+)$/);
-  const effectiveTab =
-    activeRepMatch && !repRangesWithData.some(({ repIndex }) => repIndex === Number(activeRepMatch[1]))
-      ? "overview"
-      : activeTab;
-
-  if (repRangesWithData.length === 0) {
-    return (
-      <div className="text-center text-muted-foreground">
-        No PRs recorded for {liftType} yet.
-      </div>
-    );
+  const years = Math.floor(days / 365);
+  if (years >= 1) {
+    return `standing ${years} year${years > 1 ? "s" : ""}`;
   }
 
-  const handleCardClick = (repIndex) => {
-    setActiveTabOverride(`rep-${repIndex}`);
-  };
+  const months = Math.round(days / 30);
+  return `standing ${months} months`;
+}
 
-  const handleScopeChange = (nextScope) => {
-    setPrScopeOverride(nextScope);
-  };
+function daysBetweenYmd(dateStr, todayYmd) {
+  if (!dateStr || !todayYmd) return null;
+  const from = parseYmdUtc(dateStr);
+  const to = parseYmdUtc(todayYmd);
+  if (!from || !to) return null;
 
-  const handleTabChange = (nextTab) => {
-    setActiveTabOverride(nextTab);
-  };
+  const days = Math.round((to.getTime() - from.getTime()) / 86400000);
+  return Number.isFinite(days) ? days : null;
+}
 
-  // Featured rep ranges for smaller screens
-  const mobileRepTabs = repRangesWithData.filter(({ repCount }) =>
-    [1, 3, 5, 10].includes(repCount),
-  );
-
-  // Container-aware column counts — responds to actual rendered width, not viewport
-  const isWide = width >= 750;
-  const overviewGridCols =
-    !compact ? (
-      width >= 780 ? "grid-cols-3" :
-      width >= 340 ? "grid-cols-2" :
-      "grid-cols-1"
-    ) : "grid-cols-2";
-
-  return (
-    <div ref={containerRef} className="space-y-4">
-      <Tabs value={effectiveTab} onValueChange={handleTabChange}>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold sm:text-2xl">
-            {isDemoMode && <DemoModeBadge size="sm" />}
-            {liftType} PRs
-          </h2>
-          {hasYearlyData && (
-            <div className="flex items-center rounded-full border p-0.5 text-xs">
-              <button
-                className={cn(
-                  "rounded-full px-3 py-1 font-medium transition-colors",
-                  prScope === "lifetime"
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                onClick={() => handleScopeChange("lifetime")}
-              >
-                Lifetime
-              </button>
-              <button
-                className={cn(
-                  "rounded-full px-3 py-1 font-medium transition-colors",
-                  prScope === "yearly"
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                onClick={() => handleScopeChange("yearly")}
-              >
-                12 months
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Narrow container: only show key rep ranges to reduce crowding */}
-        {!isWide && (
-          <div className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger
-                value="overview"
-                className="whitespace-nowrap text-xs"
-              >
-                Overview
-              </TabsTrigger>
-              {mobileRepTabs.map(({ repIndex, repCount }) => (
-                <TabsTrigger
-                  key={repIndex}
-                  value={`rep-${repIndex}`}
-                  className="whitespace-nowrap text-xs"
-                >
-                  {repCount}RM
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-        )}
-
-        {/* Wide container: show full set of rep-range tabs */}
-        {isWide && (
-          <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-11">
-              <TabsTrigger value="overview" className="text-xs">
-                Overview
-              </TabsTrigger>
-              {repRangesWithData.map(({ repIndex, repCount }) => (
-                <TabsTrigger key={repIndex} value={`rep-${repIndex}`} className="text-xs">
-                  {repCount}RM
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-        )}
-
-        {/* Overview tab: summary grid of rep range PR cards */}
-        <TabsContent value="overview" className="mt-4 space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Overview of your {prScope === "yearly" ? "best 12-month" : "all-time best"} {liftType} sets across different rep ranges. Click
-            a card or a tab above to explore all lifts for that rep range.
-          </p>
-          <div className={`grid gap-4 ${overviewGridCols}`}>
-            {repRangesWithData
-              .filter(({ repCount }) => !compact || [1, 3, 5, 10].includes(repCount))
-              .map(({ repRange, repIndex, repCount }) => (
-              <PRCard
-                key={repIndex}
-                repRange={repRange}
-                repIndex={repIndex}
-                liftType={liftType}
-                liftColor={liftColor}
-                onCardClick={() => handleCardClick(repIndex)}
-                isExpanded={effectiveTab === `rep-${repIndex}`}
-                hasBioData={hasBioData}
-                standards={standards}
-                age={age}
-                bodyWeight={bodyWeight}
-                sex={sex}
-                isMetric={isMetric}
-                e1rmFormula={e1rmFormula}
-                compact={compact}
-              />
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Per-rep-range detail tabs */}
-        {repRangesWithData.map(({ repRange, repIndex }) => (
-          <TabsContent
-            key={repIndex}
-            value={`rep-${repIndex}`}
-            className="mt-4 space-y-4"
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="text-lg sm:text-xl font-semibold">
-                {repIndex + 1}RM PRs for {liftType}
-              </h3>
-              <button
-                type="button"
-                onClick={() => handleTabChange("overview")}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground self-start sm:self-auto"
-              >
-                ← Back to overview
-              </button>
-            </div>
-            <RepRangeDetailView
-              repRange={repRange}
-              repIndex={repIndex}
-              liftType={liftType}
-              liftColor={liftColor}
-              standards={hasBioData ? standards : null}
-              bioForDateRating={
-                hasBioData ? { age, bodyWeight, sex, isMetric } : null
-              }
-              e1rmFormula={e1rmFormula}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
-  );
-};
+function getDisplayNote(note) {
+  if (typeof note !== "string") return null;
+  const trimmed = note.trim();
+  if (!trimmed || IMPORT_BOILERPLATE_NOTE.test(trimmed)) return null;
+  return trimmed;
+}

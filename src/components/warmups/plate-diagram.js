@@ -93,7 +93,9 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
         {renderBar()}
 
         {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
-        <div key={animationKey ?? "static"} className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
+        {/* The innermost plate stays against the same shoulder; added plates
+            extend outward to the right, as they do when loading a real bar. */}
+        <div key={animationKey ?? "static"} className="absolute left-16 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {/* Plates stacked from heaviest (inside) to lightest (outside) */}
           {platesPerSide
             .flatMap((plate) =>

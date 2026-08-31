@@ -154,16 +154,6 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
                 </motion.div>
               );
             })}
-          {/* A short sleeve tail beyond the plates preserves the visual
-              direction of the bar without adding a separate collar graphic. */}
-          <motion.span
-            aria-hidden="true"
-            className="h-2 w-5 rounded-r-full border-y border-r border-slate-950/50"
-            style={BAR_STYLE}
-            initial={{ x: slideFromLeft ? -18 : 18, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.25, delay: animationDelay + platesPerSide.length * 0.07 + 0.08 }}
-          />
         </div>
       </div>
 

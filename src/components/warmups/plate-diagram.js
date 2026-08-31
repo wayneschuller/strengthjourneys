@@ -150,19 +150,8 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
                 </motion.div>
               );
             })}
-          <motion.div
-            aria-hidden="true"
-            className="relative h-5 w-2.5 rounded-full border border-black/90 bg-gradient-to-b from-slate-700 via-slate-950 to-black shadow-[1px_2px_3px_rgb(15_23_42_/_0.35)]"
-            initial={{ x: slideFromLeft ? -24 : 24, opacity: 0, scaleY: 0.8 }}
-            animate={{ x: 0, opacity: 1, scaleY: 1 }}
-            transition={{ duration: 0.3, delay: animationDelay + platesPerSide.length * 0.07 }}
-          >
-            {/* The red locking tab makes this unmistakably a spring collar while
-                keeping it small enough that the plate colors remain dominant. */}
-            <span className="absolute left-1/2 top-1/2 h-1 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-[2px] bg-red-600 shadow-[0_1px_1px_rgb(0_0_0_/_0.5)]" />
-          </motion.div>
-          {/* A short sleeve tail beyond the collar makes the clamp's position
-              unambiguous and preserves the visual direction of the bar. */}
+          {/* A short sleeve tail beyond the plates preserves the visual
+              direction of the bar without adding a separate collar graphic. */}
           <motion.span
             aria-hidden="true"
             className="h-2 w-5 rounded-r-full border-y border-r border-slate-950/50"

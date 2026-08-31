@@ -9,6 +9,7 @@
  */
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
@@ -17,8 +18,9 @@ import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
-import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
+import { useReadLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
+import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -72,6 +74,8 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
+import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
+import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
 
 import {
   ResponsiveContainer,
@@ -762,6 +766,7 @@ function NotchedMilestoneSlider({
 
 // --- Main component ---
 function PlateMilestonesMain({ relatedArticles }) {
+  const router = useRouter();
   const { toast } = useToast();
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
@@ -774,36 +779,59 @@ function PlateMilestonesMain({ relatedArticles }) {
   });
   const e1rmFormula = storedFormula ?? "Brzycki";
   const hasAutoPopulatedRef = useRef(false);
+  const hasExplicitQueryRef = useRef(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
-  const [press, setPress] = useLocalStorage(
+  const [press, setPress, , , pressIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.PLATE_MILESTONE_PRESS,
     MILESTONES[0].defaultValue,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= MILESTONES[0].maxLb,
   );
-  const [bench, setBench] = useLocalStorage(
+  const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.PLATE_MILESTONE_BENCH,
     MILESTONES[1].defaultValue,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= MILESTONES[1].maxLb,
   );
-  const [squat, setSquat] = useLocalStorage(
+  const [squat, setSquat, , , squatIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.PLATE_MILESTONE_SQUAT,
     MILESTONES[2].defaultValue,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= MILESTONES[2].maxLb,
   );
-  const [deadlift, setDeadlift] = useLocalStorage(
+  const [deadlift, setDeadlift, , , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.PLATE_MILESTONE_DEADLIFT,
     MILESTONES[3].defaultValue,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= MILESTONES[3].maxLb,
   );
 
   // Achievement display mode: "actual" (heaviest bar load — honest default) or
   // "e1rm" (PR-derived estimated 1RM — optimistic, what your reps predict).
   // Toggle is visible only for users with parsed lifting data.
-  const [achievementMode, setAchievementMode] = useLocalStorage(
+  const [achievementMode, setAchievementMode, , , achievementModeIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.PLATE_MILESTONE_MODE,
     "actual",
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => value === "actual" || value === "e1rm",
   );
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    hasExplicitQueryRef.current = MILESTONES.some(
+      (milestone) =>
+        parseQueryNumber(router.query[milestone.key], {
+          min: 0,
+          max: milestone.maxLb,
+        }) !== null,
+    );
+  }, [router.isReady, router.query]);
 
   const setters = useMemo(
     () => ({
@@ -818,6 +846,27 @@ function PlateMilestonesMain({ relatedArticles }) {
     () => ({ press, bench, squat, deadlift }),
     [press, bench, squat, deadlift],
   );
+  const plateMilestoneQuery = useMemo(
+    () => ({
+      ...Object.fromEntries(
+        Object.entries(values).map(([key, value]) => [key, String(value)]),
+      ),
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: String(isMetric),
+      [LOCAL_STORAGE_KEYS.PLATE_MILESTONE_MODE]: achievementMode,
+    }),
+    [achievementMode, isMetric, values],
+  );
+  useCalculatorQuerySync({
+    router,
+    query: plateMilestoneQuery,
+    isInitialized:
+      pressIsInitialized &&
+      benchIsInitialized &&
+      squatIsInitialized &&
+      deadliftIsInitialized &&
+      achievementModeIsInitialized,
+    hasInteracted,
+  });
 
   // Classic-club + total-tier counts are computed further down, once
   // `actualBestByLift` is in scope. See after `actualBestByLift` definition.
@@ -1087,7 +1136,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   // currently-selected mode's basis (actual best or PR-E1RM); afterwards the
   // slider is free-floating, so mode-toggling mid-session doesn't yank it.
   useEffect(() => {
-    if (hasAutoPopulatedRef.current) return;
+    if (hasExplicitQueryRef.current || hasAutoPopulatedRef.current) return;
     if (!prWeightsLb && !actualBestByLift) return;
     hasAutoPopulatedRef.current = true;
     for (const milestone of MILESTONES) {
@@ -1342,6 +1391,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
   const handleResetToPRs = useCallback(() => {
     if (!prWeightsLb) return;
+    setHasInteracted(true);
     for (const m of MILESTONES) {
       const v = prWeightsLb[m.key];
       if (v != null) setters[m.key](v);
@@ -1350,6 +1400,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
   const handleResetTo6m = useCallback(() => {
     if (!recent6mLb) return;
+    setHasInteracted(true);
     for (const m of MILESTONES) {
       const v = recent6mLb[m.key];
       if (v != null) setters[m.key](v);
@@ -1358,6 +1409,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
   const handleResetToActual = useCallback(() => {
     if (!actualBestByLift) return;
+    setHasInteracted(true);
     for (const m of MILESTONES) {
       const v = actualBestByLift[m.key];
       if (v != null) setters[m.key](v);
@@ -1392,6 +1444,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   const handleLiftValueChange = useCallback(
     (liftKey, setter) =>
       ([v]) => {
+        setHasInteracted(true);
         const milestone = MILESTONES.find((item) => item.key === liftKey);
         const nextValue = milestone ? clampToMax(v, milestone.maxLb) : v;
 
@@ -1414,7 +1467,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   );
 
   const handleCopyResult = () => {
-    const url = "https://www.strengthjourneys.xyz/plate-milestones";
+    const url = buildShareUrl("/plate-milestones", plateMilestoneQuery);
     const lines = [
       classicClubAchieved
         ? "I've conquered the 1/2/3/4 Plate Club!"
@@ -1496,9 +1549,10 @@ function PlateMilestonesMain({ relatedArticles }) {
               <Switch
                 id="plate-milestone-mode"
                 checked={achievementMode === "e1rm"}
-                onCheckedChange={(checked) =>
-                  setAchievementMode(checked ? "e1rm" : "actual")
-                }
+                onCheckedChange={(checked) => {
+                  setHasInteracted(true);
+                  setAchievementMode(checked ? "e1rm" : "actual");
+                }}
                 aria-label="Toggle between actual lifts and E1RM potential"
               />
               <Label

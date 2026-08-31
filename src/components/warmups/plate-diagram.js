@@ -14,12 +14,6 @@ const BAR_STYLE = {
   boxShadow: "0 2px 5px rgb(15 23 42 / 0.3), inset 0 1px rgb(255 255 255 / 0.7)",
 };
 
-const SLEEVE_STYLE = {
-  background:
-    "linear-gradient(90deg, #334155 0%, #e2e8f0 14%, #64748b 30%, #1e293b 52%, #94a3b8 76%, #334155 100%)",
-  boxShadow: "0 3px 7px rgb(15 23 42 / 0.35), inset 0 1px rgb(255 255 255 / 0.35)",
-};
-
 /**
  * Visual representation of plates on one side of a barbell
  * @param {Object} props
@@ -35,11 +29,16 @@ const SLEEVE_STYLE = {
 export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className, hideLabels = false, animationDelay = 0, animationKey, useScrollTrigger = false, slideFromLeft = false }) {
   const unit = isMetric ? "kg" : "lb";
 
-  const renderBar = (hasPlates = false) => (
+  const renderBar = () => (
     <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 items-center justify-end">
       <motion.div
         className="relative h-3 w-48 overflow-hidden rounded-full"
-        style={BAR_STYLE}
+        style={{
+          ...BAR_STYLE,
+          // Fade the unloaded end so this reads as the loaded half of a barbell.
+          maskImage: "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
+          WebkitMaskImage: "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
+        }}
         initial={{ opacity: 0.7 }}
         animate={{ opacity: [0.7, 1, 0.82] }}
         transition={{ duration: 0.8, delay: animationDelay, ease: "easeOut" }}
@@ -65,16 +64,6 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
         <span aria-hidden="true" className="absolute inset-y-[-1px] left-[43%] w-px bg-slate-950/45" />
         <span aria-hidden="true" className="absolute inset-y-[-1px] left-[47%] w-px bg-slate-950/45" />
       </motion.div>
-      {hasPlates && (
-        <motion.div
-          aria-hidden="true"
-          className="absolute right-0 h-9 w-3 rounded-sm border-2 border-slate-950/70"
-          style={SLEEVE_STYLE}
-          initial={{ scaleY: 0.7, opacity: 0 }}
-          animate={{ scaleY: 1, opacity: 1 }}
-          transition={{ duration: 0.25, delay: animationDelay + 0.1 }}
-        />
-      )}
     </div>
   );
 
@@ -100,8 +89,8 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
     <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
       {/* Base barbell (same as bar-only state) with plates overlaid on the right */}
       <div className="relative flex min-h-[72px] w-56 items-center justify-end px-2 py-1">
-        {/* The sleeve remains visible beyond the plates so the loading direction is clear. */}
-        {renderBar(true)}
+        {/* The shaft remains visible behind the plates so the loading direction is clear. */}
+        {renderBar()}
 
         {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
         <div key={animationKey ?? "static"} className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -163,12 +152,16 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
             })}
           <motion.div
             aria-hidden="true"
-            className="h-9 w-2 rounded-sm border border-slate-950/40"
-            style={SLEEVE_STYLE}
+            className="relative h-7 w-3 rounded-[3px] border border-black/80 bg-gradient-to-b from-slate-700 via-slate-950 to-black shadow-[1px_2px_3px_rgb(15_23_42_/_0.35)]"
             initial={{ x: slideFromLeft ? -24 : 24, opacity: 0, scaleY: 0.8 }}
             animate={{ x: 0, opacity: 1, scaleY: 1 }}
             transition={{ duration: 0.3, delay: animationDelay + platesPerSide.length * 0.07 }}
-          />
+          >
+            {/* The red locking tab makes this unmistakably a spring collar while
+                keeping it small enough that the plate colors remain dominant. */}
+            <span className="absolute -left-px -top-1 h-1.5 w-2.5 rotate-[-8deg] rounded-[2px] bg-red-600 shadow-[0_1px_1px_rgb(0_0_0_/_0.4)]" />
+            <span className="absolute inset-x-0 top-1/2 h-px bg-slate-500/70" />
+          </motion.div>
         </div>
       </div>
 

@@ -28,9 +28,18 @@ Powerlifters and barbell weirdos will love this app, but our real target audienc
 
 ## Google Sheets as data source
 
-Requires user data in a Google Sheet with columns: date, lift type, reps, weight (kg or lb). The app uses Google's `drive.file` scope, which grants access only to the specific spreadsheet you pick or that the app creates for you — never the rest of your Drive. Access can be revoked at any time.
+Requires user data in a Google Sheet with columns: date, lift type, reps, weight (kg or lb).
 
-Reads power every visualization; writes are what let the [log page](https://www.strengthjourneys.xyz/log) record sets and merge imported history back into your own sheet.
+### What the app can actually touch
+
+Strength Journeys asks for exactly one Google scope: **`drive.file`**. This is Google's per-file scope, and it is the narrowest one that allows an app to write. It means:
+
+- **We can only see the sheet you hand us.** Access is limited to a file you explicitly choose in the Google file picker, or one the app creates for you from the sample template. Nothing else.
+- **Every other file in your Drive is invisible to us.** Not readable, not writable, not even listable — we cannot see that it exists. This is enforced by Google on their side, not by a promise in our code. Even where the app asks Drive for a list of your spreadsheets during setup, Google returns only the files you have already granted.
+- **Reads and writes both go to that one linked sheet.** Reads render your charts. Writes happen only when you do something that is meant to change your data: logging a set on the [log page](https://www.strengthjourneys.xyz/log), correcting a date typo, or merging imported history in.
+- **We never touch your Drive settings, folders, sharing, or any other Google service.** The other two scopes we request are your email address and profile name, used to identify your account.
+
+You can revoke access at any time from your [Google account permissions](https://myaccount.google.com/permissions), and your sheet stays exactly where it is — it is your file, in your Drive, and it remains readable without this app.
 
 Open our [sample data format in Google Sheets](https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0) (click File menu, then 'Make A Copy').
 
@@ -63,7 +72,7 @@ The server does keep a small operational record per account (sign-in timestamps,
 
 **Auth & data:**
 - [NextAuth.js v4](https://next-auth.js.org/) with Google OAuth
-- Google Sheets API for user lifting data (`drive.file` scope — read and write, limited to the linked sheet)
+- Google Sheets API for user lifting data — `drive.file` scope only, so read/write access is limited to the single linked sheet
 - [SWR](https://swr.vercel.app/) for data fetching and caching
 - [Vercel KV](https://vercel.com/storage/kv) for server-side storage (playlists, leaderboard, and lightweight per-account onboarding/support metadata — never lifting data)
 

@@ -7,7 +7,7 @@ import {
   MOST_TRAINED_LIFT_LABELS,
 } from "@/components/year-recap/phrases";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { getLiftVolumeMultiplier } from "@/lib/processing-utils";
+import { computeMostTrainedLiftForYear } from "@/lib/year-recap-stats";
 import { Trophy } from "lucide-react";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
 
@@ -133,55 +133,4 @@ function ordinal(n) {
   if (last === "2") return `${n}nd`;
   if (last === "3") return `${n}rd`;
   return `${n}th`;
-}
-
-function computeMostTrainedLiftForYear(parsedData, year) {
-  const empty = {
-    mostTrainedLift: null,
-    mostTrainedLiftSets: 0,
-    mostTrainedLiftReps: 0,
-    mostTrainedLiftSessions: 0,
-    sessionCount: 0,
-  };
-  if (!parsedData || !year) return empty;
-  const yearStart = `${year}-01-01`;
-  const yearEnd = `${year}-12-31`;
-  const sessionDates = new Set();
-  const liftTypeSets = {};
-  const liftTypeReps = {};
-  const liftTypeSessionDates = {};
-  parsedData.forEach((entry) => {
-    if (entry.isGoal || !entry.date) return;
-    if (entry.date < yearStart || entry.date > yearEnd) return;
-    sessionDates.add(entry.date);
-    const lt = entry.liftType;
-    liftTypeSets[lt] = (liftTypeSets[lt] ?? 0) + 1;
-    liftTypeReps[lt] = (liftTypeReps[lt] ?? 0) + (entry.reps ?? 0);
-    if (!liftTypeSessionDates[lt]) liftTypeSessionDates[lt] = new Set();
-    liftTypeSessionDates[lt].add(entry.date);
-  });
-  const sessionCount = sessionDates.size;
-  const mostTrainedEntry =
-    Object.keys(liftTypeSets).length > 0
-      ? Object.entries(liftTypeSets)
-          .sort(
-            (a, b) =>
-              b[1] * getLiftVolumeMultiplier(b[0]) -
-              a[1] * getLiftVolumeMultiplier(a[0]),
-          )[0]
-      : null;
-  const mostTrainedLift = mostTrainedEntry ? mostTrainedEntry[0] : null;
-  const mostTrainedLiftSets = mostTrainedLift ? liftTypeSets[mostTrainedLift] : 0;
-  const mostTrainedLiftReps = mostTrainedLift ? liftTypeReps[mostTrainedLift] : 0;
-  const mostTrainedLiftSessions =
-    mostTrainedLift && liftTypeSessionDates[mostTrainedLift]
-      ? liftTypeSessionDates[mostTrainedLift].size
-      : 0;
-  return {
-    mostTrainedLift,
-    mostTrainedLiftSets,
-    mostTrainedLiftReps,
-    mostTrainedLiftSessions,
-    sessionCount,
-  };
 }

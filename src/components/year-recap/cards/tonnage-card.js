@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Dumbbell } from "lucide-react";
-import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
+import { computeTonnageForYear } from "@/lib/year-recap-stats";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 
 /**
@@ -221,82 +221,4 @@ function pickTonnageEquivalent(tonnage, unitType, ref, key) {
   if (!ref.current) ref.current = {};
   ref.current[key] = result;
   return result;
-}
-
-function computeTonnageForYear(parsedData, year, preferredUnit) {
-  if (!parsedData || !year) {
-    return {
-      tonnage: 0,
-      primaryUnit: preferredUnit || "lb",
-      prevYearTonnage: null,
-      tonnageByLift: [],
-    };
-  }
-  const prevYear = String(parseInt(year, 10) - 1);
-  const yearStart = `${year}-01-01`;
-  const yearEnd = `${year}-12-31`;
-  const prevYearStart = `${prevYear}-01-01`;
-  const prevYearEnd = `${prevYear}-12-31`;
-  const tonnageByUnit = {};
-  const prevYearTonnageByUnit = {};
-  const tonnageByLiftRaw = {};
-  parsedData.forEach((entry) => {
-    if (entry.isGoal || !entry.date) return;
-    const t = (entry.weight ?? 0) * (entry.reps ?? 0);
-    const u = entry.unitType || "lb";
-    if (entry.date >= yearStart && entry.date <= yearEnd) {
-      tonnageByUnit[u] = (tonnageByUnit[u] ?? 0) + t;
-      if (BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) {
-        if (!tonnageByLiftRaw[entry.liftType])
-          tonnageByLiftRaw[entry.liftType] = {};
-        tonnageByLiftRaw[entry.liftType][u] =
-          (tonnageByLiftRaw[entry.liftType][u] ?? 0) + t;
-      }
-    }
-    if (entry.date >= prevYearStart && entry.date <= prevYearEnd) {
-      prevYearTonnageByUnit[u] = (prevYearTonnageByUnit[u] ?? 0) + t;
-    }
-  });
-  const unitKeys = Object.keys(tonnageByUnit);
-  const primaryUnit =
-    preferredUnit && unitKeys.includes(preferredUnit)
-      ? preferredUnit
-      : unitKeys[0] || "lb";
-  const KG_PER_LB = 1 / 2.2046;
-  const LB_PER_KG = 2.2046;
-  let tonnage = tonnageByUnit[primaryUnit] ?? 0;
-  unitKeys.forEach((u) => {
-    if (u === primaryUnit) return;
-    const v = tonnageByUnit[u] ?? 0;
-    if (u === "kg" && primaryUnit === "lb") tonnage += v * LB_PER_KG;
-    else if (u === "lb" && primaryUnit === "kg") tonnage += v * KG_PER_LB;
-  });
-  const prevUnitKeys = Object.keys(prevYearTonnageByUnit);
-  let prevYearTonnage = prevYearTonnageByUnit[primaryUnit] ?? 0;
-  prevUnitKeys.forEach((u) => {
-    if (u === primaryUnit) return;
-    const v = prevYearTonnageByUnit[u] ?? 0;
-    if (u === "kg" && primaryUnit === "lb") prevYearTonnage += v * LB_PER_KG;
-    else if (u === "lb" && primaryUnit === "kg") prevYearTonnage += v * KG_PER_LB;
-  });
-
-  const tonnageByLift = BIG_FOUR_LIFT_TYPES.map((liftType) => {
-    const byUnit = tonnageByLiftRaw[liftType] ?? {};
-    let liftTonnage = byUnit[primaryUnit] ?? 0;
-    Object.keys(byUnit).forEach((u) => {
-      if (u === primaryUnit) return;
-      const v = byUnit[u] ?? 0;
-      if (u === "kg" && primaryUnit === "lb") liftTonnage += v * LB_PER_KG;
-      else if (u === "lb" && primaryUnit === "kg")
-        liftTonnage += v * KG_PER_LB;
-    });
-    return { liftType, tonnage: liftTonnage };
-  }).filter((r) => r.tonnage > 0);
-
-  return {
-    tonnage,
-    primaryUnit,
-    prevYearTonnage: prevYearTonnage > 0 ? prevYearTonnage : null,
-    tonnageByLift,
-  };
 }

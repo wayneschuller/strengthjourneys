@@ -2,8 +2,10 @@
 import { useRef, useMemo, useState, useEffect } from "react";
 import { motion, animate } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { getGradeAndColor } from "@/lib/consistency-grades";
-import { addDaysFromStr, getWeekKeyFromDateStr } from "@/lib/date-utils";
+import {
+  computeSessionStatsForYear,
+  STREAK_SESSIONS_PER_WEEK,
+} from "@/lib/year-recap-stats";
 import { CircularProgressWithLetter } from "@/components/year-recap/cards/circular-progress-with-letter";
 import { pickQuirkyPhrase, SESSIONS_PHRASES, CONSISTENCY_PHRASES } from "@/components/year-recap/phrases";
 import { Calendar } from "lucide-react";
@@ -28,7 +30,14 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
     [parsedData, year],
   );
 
-  const { count, prevYearCount, bestStreak, consistencyGrade, consistencyPercentage } = stats;
+  const {
+    count,
+    prevYearCount,
+    bestStreak,
+    consistencyGrade,
+    consistencyPercentage,
+    isPartialYear,
+  } = stats;
 
   const [animatedProgress, setAnimatedProgress] = useState(0);
   useEffect(() => {
@@ -65,7 +74,13 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
 
   const grade = consistencyGrade?.grade ?? null;
   const showGrade = grade && grade !== ".";
-  const periodLabel = isCurrentYear ? "in the last year" : `in ${year}`;
+  // The count is always calendar-year (Jan 1 to Dec 31), so the label has to say
+  // "so far" rather than the old "in the last year", which read as a rolling
+  // twelve months and did not match the maths.
+  const periodLabel = isPartialYear ? `so far in ${year}` : `in ${year}`;
+  const consistencyLabel = isPartialYear
+    ? `${year} consistency so far`
+    : "Yearly consistency";
 
   return (
     <div className="flex flex-col items-center justify-center gap-0 text-center">
@@ -123,7 +138,7 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
             animate={isActive ? { opacity: 1 } : { opacity: 0 }}
             transition={{ delay: isActive ? 0.3 : 0 }}
           >
-            Yearly consistency
+            {consistencyLabel}
           </motion.p>
         )}
         {comparisonText && (
@@ -150,6 +165,9 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
           <p className="text-2xl font-bold tabular-nums text-foreground md:text-3xl">
             {bestStreak} week{bestStreak !== 1 ? "s" : ""}
           </p>
+          <p className="text-xs text-muted-foreground">
+            weeks with {STREAK_SESSIONS_PER_WEEK}+ sessions
+          </p>
         </motion.div>
       )}
 
@@ -163,93 +181,4 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
       </motion.p>
     </div>
   );
-}
-
-// --- Supporting functions ---
-
-function computeBestStreakForYear(sessionDates, year) {
-  if (!sessionDates.length) return 0;
-  const yearStart = `${year}-01-01`;
-  const yearEnd = `${year}-12-31`;
-  const weekMap = new Map();
-  const dateToWeekKey = new Map();
-  sessionDates.forEach((dateStr) => {
-    if (dateStr < yearStart || dateStr > yearEnd) return;
-    let weekKey = dateToWeekKey.get(dateStr);
-    if (weekKey === undefined) {
-      weekKey = getWeekKeyFromDateStr(dateStr);
-      dateToWeekKey.set(dateStr, weekKey);
-    }
-    if (!weekMap.has(weekKey)) weekMap.set(weekKey, new Set());
-    weekMap.get(weekKey).add(dateStr);
-  });
-  const weekSessionCount = new Map();
-  weekMap.forEach((dates, weekKey) => {
-    weekSessionCount.set(weekKey, dates.size);
-  });
-  const firstMonday = getWeekKeyFromDateStr(yearStart);
-  const lastMonday = getWeekKeyFromDateStr(yearEnd);
-  let bestStreak = 0;
-  let tempStreak = 0;
-  let weekKey = firstMonday;
-  while (weekKey <= lastMonday) {
-    const sessionCount = weekSessionCount.get(weekKey) || 0;
-    if (sessionCount >= 3) {
-      tempStreak++;
-      bestStreak = Math.max(bestStreak, tempStreak);
-    } else {
-      tempStreak = 0;
-    }
-    weekKey = addDaysFromStr(weekKey, 7);
-  }
-  return bestStreak;
-}
-
-function computeSessionStatsForYear(parsedData, year) {
-  const empty = {
-    count: 0,
-    prevYearCount: null,
-    bestStreak: 0,
-    consistencyGrade: null,
-    consistencyPercentage: 0,
-  };
-  if (!parsedData || !year) return empty;
-
-  const prevYear = String(parseInt(year, 10) - 1);
-  const yearStart = `${year}-01-01`;
-  const yearEnd = `${year}-12-31`;
-  const prevYearStart = `${prevYear}-01-01`;
-  const prevYearEnd = `${prevYear}-12-31`;
-
-  const sessionDates = new Set();
-  const prevYearDates = new Set();
-
-  parsedData.forEach((entry) => {
-    if (entry.isGoal || !entry.date) return;
-    if (entry.date >= yearStart && entry.date <= yearEnd) {
-      sessionDates.add(entry.date);
-    }
-    if (entry.date >= prevYearStart && entry.date <= prevYearEnd) {
-      prevYearDates.add(entry.date);
-    }
-  });
-
-  const sortedDates = Array.from(sessionDates).sort();
-  const count = sessionDates.size;
-  const bestStreak = computeBestStreakForYear(sortedDates, year);
-  const expectedSessions = Math.round((365 / 7) * 3);
-  const consistencyPercentage = Math.min(
-    100,
-    Math.round((count / expectedSessions) * 100),
-  );
-  const consistencyGrade = getGradeAndColor(consistencyPercentage);
-  const prevCount = prevYearDates.size;
-
-  return {
-    count,
-    prevYearCount: prevCount > 0 ? prevCount : null,
-    bestStreak,
-    consistencyGrade,
-    consistencyPercentage,
-  };
 }

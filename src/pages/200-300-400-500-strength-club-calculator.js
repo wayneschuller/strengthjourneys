@@ -328,6 +328,26 @@ const toKgF = (lbs) => (Number(lbs) * KG_PER_LB).toFixed(1);
 const toLb = (weight, unitType) => (unitType === "lb" ? weight : weight * 2.2046);
 const roundTo5 = (value) => Math.round(value / 5) * 5;
 const clampLbToMax = (value, max) => Math.min(max, Math.max(0, roundTo5(value)));
+const formatFullDate = (dateStr) => {
+  const d = new Date(dateStr + "T00:00:00Z");
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+};
+
+// Provenance reads back the set as the user logged it — their own kg stays kg,
+// even though the sliders and milestones are lb.
+const formatSourceSet = (source) => {
+  const weight = Math.round(Number(source.weight));
+  const unit = source.unitType === "kg" ? "kg" : "lb";
+  return source.reps === 1
+    ? `a ${weight} ${unit} single on ${formatFullDate(source.date)}`
+    : `${source.reps} \u00d7 ${weight} ${unit} on ${formatFullDate(source.date)}`;
+};
+
 const getStrengthClubPlateBreakdown = (totalWeightLb) =>
   calculatePlateBreakdown(
     totalWeightLb,
@@ -544,10 +564,11 @@ function StrengthClubMain({ relatedArticles }) {
       deadliftIsInitialized,
     hasInteracted,
   });
-  const prWeightsLb = useMemo(() => {
+  const prData = useMemo(() => {
     if (!topLiftsByTypeAndReps || isDemoMode) return null;
 
-    const nextPrWeights = {};
+    const weights = {};
+    const sources = {};
 
     for (const milestone of MILESTONES) {
       const result = findBestE1RM(
@@ -556,15 +577,26 @@ function StrengthClubMain({ relatedArticles }) {
         e1rmFormula,
       );
       const bestWeight = result?.bestE1RMWeight;
-      nextPrWeights[milestone.key] = bestWeight
+      weights[milestone.key] = bestWeight
         ? clampLbToMax(toLb(bestWeight, result.unitType), milestone.max)
         : null;
+      sources[milestone.key] =
+        bestWeight && result.bestLift
+          ? {
+              reps: result.bestLift.reps,
+              weight: result.bestLift.weight,
+              unitType: result.bestLift.unitType || result.unitType,
+              date: result.bestLift.date,
+            }
+          : null;
     }
 
-    return Object.values(nextPrWeights).some((value) => value != null)
-      ? nextPrWeights
+    return Object.values(weights).some((value) => value != null)
+      ? { weights, sources }
       : null;
   }, [e1rmFormula, isDemoMode, topLiftsByTypeAndReps]);
+  const prWeightsLb = prData?.weights ?? null;
+  const prSources = prData?.sources ?? null;
   const usingUserData = Boolean(prWeightsLb);
   const showPlaceholderHint = allValuesArePlaceholders && !usingUserData;
 
@@ -583,7 +615,7 @@ function StrengthClubMain({ relatedArticles }) {
     }
   }, [prWeightsLb, setters]);
 
-  const recent90dLb = useMemo(() => {
+  const recent90dData = useMemo(() => {
     if (!prWeightsLb || !parsedData?.length || isDemoMode) return null;
 
     const liftKeyByType = Object.fromEntries(
@@ -591,6 +623,9 @@ function StrengthClubMain({ relatedArticles }) {
     );
     const best = Object.fromEntries(
       MILESTONES.map((milestone) => [milestone.key, 0]),
+    );
+    const bestEntry = Object.fromEntries(
+      MILESTONES.map((milestone) => [milestone.key, null]),
     );
 
     for (const entry of parsedData) {
@@ -602,10 +637,13 @@ function StrengthClubMain({ relatedArticles }) {
         entry.reps === 1
           ? weightLb
           : estimateE1RM(entry.reps, weightLb, e1rmFormula);
-      if (e1rm > best[key]) best[key] = e1rm;
+      if (e1rm > best[key]) {
+        best[key] = e1rm;
+        bestEntry[key] = entry;
+      }
     }
 
-    const result = Object.fromEntries(
+    const weights = Object.fromEntries(
       MILESTONES.map((milestone) => [
         milestone.key,
         best[milestone.key] > 0
@@ -613,15 +651,80 @@ function StrengthClubMain({ relatedArticles }) {
           : null,
       ]),
     );
+    const sources = Object.fromEntries(
+      MILESTONES.map((milestone) => {
+        const entry = bestEntry[milestone.key];
+        return [
+          milestone.key,
+          entry
+            ? {
+                reps: entry.reps,
+                weight: entry.weight,
+                unitType: entry.unitType,
+                date: entry.date,
+              }
+            : null,
+        ];
+      }),
+    );
 
     const hasDistinct = MILESTONES.some(
       (milestone) =>
-        result[milestone.key] != null &&
-        result[milestone.key] !== prWeightsLb?.[milestone.key],
+        weights[milestone.key] != null &&
+        weights[milestone.key] !== prWeightsLb?.[milestone.key],
     );
 
-    return hasDistinct ? result : null;
+    return hasDistinct ? { weights, sources } : null;
   }, [e1rmFormula, isDemoMode, parsedData, prWeightsLb, recent90dCutoffDate]);
+  const recent90dLb = recent90dData?.weights ?? null;
+  const recent90dSources = recent90dData?.sources ?? null;
+
+  // One line per card explaining where the number on screen came from: the set
+  // it was estimated from, when it was lifted, and whether the user has since
+  // dragged the slider away from it.
+  const provenanceByKey = useMemo(() => {
+    if (!prWeightsLb) return null;
+
+    const formulaSuffix = (source) =>
+      source.reps === 1 ? "" : `, ${e1rmFormula} e1RM`;
+
+    return Object.fromEntries(
+      MILESTONES.map((milestone) => {
+        const value = values[milestone.key];
+        const prVal = prWeightsLb[milestone.key];
+        const prSource = prSources?.[milestone.key];
+        const r90Val = recent90dLb?.[milestone.key];
+        const r90Source = recent90dSources?.[milestone.key];
+
+        if (prVal != null && value === prVal && prSource) {
+          return [
+            milestone.key,
+            `Your best ever — ${formatSourceSet(prSource)}${formulaSuffix(prSource)}`,
+          ];
+        }
+        if (r90Val != null && value === r90Val && r90Source) {
+          return [
+            milestone.key,
+            `Your best in the last 90 days — ${formatSourceSet(r90Source)}${formulaSuffix(r90Source)}`,
+          ];
+        }
+        if (prVal != null && prSource) {
+          return [
+            milestone.key,
+            `A what-if — your best ever is ${prVal} lb, from ${formatSourceSet(prSource)}`,
+          ];
+        }
+        return [milestone.key, null];
+      }),
+    );
+  }, [
+    e1rmFormula,
+    prSources,
+    prWeightsLb,
+    recent90dLb,
+    recent90dSources,
+    values,
+  ]);
 
   const handleResetToPRs = useCallback(() => {
     if (!prWeightsLb) return;
@@ -863,6 +966,7 @@ function StrengthClubMain({ relatedArticles }) {
                   prefersReducedMotion={prefersReducedMotion}
                   prVal={prWeightsLb?.[milestone.key]}
                   r90Val={recent90dLb?.[milestone.key]}
+                  provenance={provenanceByKey?.[milestone.key]}
                 />
               ))}
             </div>
@@ -1077,6 +1181,7 @@ function MilestoneCard({
   prefersReducedMotion,
   prVal,
   r90Val,
+  provenance,
 }) {
   const { key, liftType, target, max } = milestone;
   const percent = Math.min(100, Math.round((value / target) * 100));
@@ -1234,6 +1339,11 @@ function MilestoneCard({
             className={`${prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}`}
           />
         </div>
+
+        {/* Where this number came from, for users with training data linked */}
+        {provenance && (
+          <p className="text-muted-foreground mb-2 text-xs">{provenance}</p>
+        )}
 
         {/* Status badge — the plain-language verdict for this milestone */}
         <div

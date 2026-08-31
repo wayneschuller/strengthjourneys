@@ -2,34 +2,52 @@
 
 ## Interactive strength progress visualizations for barbell and other gym lifts
 
-Strength Journeys is a free, open-source web app to visualize your barbell lifting data from Google Sheets. Privacy-first — no user data is stored on any server. All analysis happens client-side in your browser. Chalk not included.
+Strength Journeys is a free, open-source web app to visualize your barbell lifting data from Google Sheets. Privacy-first — your lifting data is never stored on our servers. All analysis happens client-side in your browser. Chalk not included.
 
 Powerlifters and barbell weirdos will love this app, but our real target audience is the novice. If we can help someone start barbell training and keep them going for ten years, their life and their family will be transformed. Barbell strength training is one of the most effective things you can do for your health, longevity, and quality of life. Stronger people are harder to kill, more useful in general, and tend to live longer.
 
 ## Features
 
+- **[Home dashboard](https://www.strengthjourneys.xyz/)** — activity heatmaps, PR tracking and session highlights across all your lifts (this was formerly the separate Analyzer page)
 - **Big four lift cards** — at-a-glance dashboard showing PRs, estimated 1RM, tonnage, and recent activity for [squat](https://www.strengthjourneys.xyz/progress-guide/squat), [bench press](https://www.strengthjourneys.xyz/progress-guide/bench-press), [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), and [strict press](https://www.strengthjourneys.xyz/progress-guide/strict-press)
 - **[Visualizer](https://www.strengthjourneys.xyz/visualizer)** — interactive line charts of your lift history over time with E1RM (estimated one-rep max) curves
-- **[Analyzer](https://www.strengthjourneys.xyz/analyzer)** — activity heatmaps and PR tracking across all your lifts
+- **[Log](https://www.strengthjourneys.xyz/log)** — record today's session set by set, writing straight back to your own sheet
+- **[Lift Explorer](https://www.strengthjourneys.xyz/lift-explorer)** — per-lift deep dive: top lifts, rep-range PRs and strength potential
 - **[Tonnage tracking](https://www.strengthjourneys.xyz/tonnage)** — volume analysis showing total weight moved over time
 - **[One rep max calculator](https://www.strengthjourneys.xyz/calculator)** — estimate your 1RM from any rep/weight combination
-- **[Strength level calculator](https://www.strengthjourneys.xyz/strength-level-calculator)** — see how your lifts compare to strength standards
+- **[Strength levels](https://www.strengthjourneys.xyz/strength-levels)** — see how your lifts compare to strength standards
+- **[How strong am I](https://www.strengthjourneys.xyz/how-strong-am-i)** — percentile comparison against the lifting population
 - **[1000lb club calculator](https://www.strengthjourneys.xyz/1000lb-club-calculator)** — track your squat/bench/deadlift total
 - **[Warm-up sets calculator](https://www.strengthjourneys.xyz/warm-up-sets-calculator)** — generate warm-up ramp sets for any working weight
 - **[Strength year in review](https://www.strengthjourneys.xyz/strength-year-in-review)** — annual recap of your lifting highlights
 - **[AI lifting assistant](https://www.strengthjourneys.xyz/ai-lifting-assistant)** — chat-based analysis of your training data
 - **[Gym timer](https://www.strengthjourneys.xyz/timer)** — rest timer with audio cues
+- **[Plate milestones](https://www.strengthjourneys.xyz/plate-milestones)** — track the classic gym-floor one/two/three-plate milestones
 - **[Gym playlist leaderboard](https://www.strengthjourneys.xyz/gym-playlist-leaderboard)** — community-voted workout playlists
+- **[Import from other apps](https://www.strengthjourneys.xyz/import)** — drag in a CSV or XLSX export from Hevy, Strong, StrongLifts, Wodify, BTWB or TurnKey. Parsing runs entirely in your browser and works without signing in; signed-in users can merge the history into their own sheet
 
 ## Google Sheets as data source
 
-Requires user data in a Google Sheet with columns: date, lift type, reps, weight (kg or lb). The app requests read-only access to your specific spreadsheet, which can be revoked at any time.
+Requires user data in a Google Sheet with columns: date, lift type, reps, weight (kg or lb).
+
+### What the app can actually touch
+
+Strength Journeys asks for exactly one Google scope: **`drive.file`**. This is Google's per-file scope, and it is the narrowest one that allows an app to write. It means:
+
+- **We can only see the sheet you hand us.** Access is limited to a file you explicitly choose in the Google file picker, or one the app creates for you from the sample template. Nothing else.
+- **Every other file in your Drive is invisible to us.** Not readable, not writable, not even listable — we cannot see that it exists. This is enforced by Google on their side, not by a promise in our code. Even where the app asks Drive for a list of your spreadsheets during setup, Google returns only the files you have already granted.
+- **Reads and writes both go to that one linked sheet.** Reads render your charts. Writes happen only when you do something that is meant to change your data: logging a set on the [log page](https://www.strengthjourneys.xyz/log), correcting a date typo, or merging imported history in.
+- **We never touch your Drive settings, folders, sharing, or any other Google service.** The other two scopes we request are your email address and profile name, used to identify your account.
+
+You can revoke access at any time from your [Google account permissions](https://myaccount.google.com/permissions), and your sheet stays exactly where it is — it is your file, in your Drive, and it remains readable without this app.
 
 Open our [sample data format in Google Sheets](https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0) (click File menu, then 'Make A Copy').
 
 ## Privacy
 
-No user data is stored server-side. Google Sheet reads are authenticated via Google OAuth and requested through a Next.js API route proxy, then processed client-side in the browser. The app does not persist your lifting data in a database.
+Your lifting data is never stored server-side. Google Sheet reads and writes are authenticated via Google OAuth and go through a Next.js API route proxy, but the rows are parsed and analyzed entirely client-side in your browser. The app does not persist your training data in a database — your Google Sheet remains the only copy.
+
+The server does keep a small operational record per account (sign-in timestamps, which page you signed up from, the id of the sheet you linked, and when it was last read) so that onboarding, sheet recovery, and support requests work. It holds no lifts, no weights, and no analysis.
 
 ## Tech stack
 
@@ -54,12 +72,12 @@ No user data is stored server-side. Google Sheet reads are authenticated via Goo
 
 **Auth & data:**
 - [NextAuth.js v4](https://next-auth.js.org/) with Google OAuth
-- Google Sheets API for user lifting data (read-only)
+- Google Sheets API for user lifting data — `drive.file` scope only, so read/write access is limited to the single linked sheet
 - [SWR](https://swr.vercel.app/) for data fetching and caching
-- [Vercel KV](https://vercel.com/storage/kv) for server-side storage (playlists, leaderboard)
+- [Vercel KV](https://vercel.com/storage/kv) for server-side storage (playlists, leaderboard, and lightweight per-account onboarding/support metadata — never lifting data)
 
 **AI features:**
-- [Vercel AI SDK](https://sdk.vercel.ai/) with OpenAI provider
+- [Vercel AI SDK](https://sdk.vercel.ai/) with [xAI](https://x.ai/) (Grok) as the primary provider and OpenAI as fallback
 - [Streamdown](https://github.com/nicolo-ribaudo/streamdown) for streaming markdown rendering
 - [Shiki](https://shiki.style/) for code syntax highlighting in AI responses
 
@@ -71,26 +89,29 @@ See [package.json](https://github.com/wayneschuller/strengthjourneys/blob/main/p
 
 ## Codebase structure (quick contributor map)
 
-This repo has grown into a multi-tool lifting app (analyzer, visualizer, calculators, AI assistant, playlists, articles) that shares a common app shell and lifting-data pipeline.
+This repo has grown into a multi-tool lifting app (home dashboard, visualizer, session log, calculators, AI assistant, playlists, articles) that shares a common app shell and lifting-data pipeline.
 
 - `src/pages/` — Next.js Pages Router routes (tool pages, article pages, API routes)
 - `src/pages/_app.js` — global providers + app layout wrapper (theme, auth, lifting data, athlete bio, timer)
 - `src/components/` — feature UI and shared UI
-- `src/components/analyzer/` — PR Analyzer dashboard cards
+- `src/components/home-dashboard/` — home dashboard cards (PRs, heatmaps, session highlights)
 - `src/components/visualizer/` — charting + visualizer UI
+- `src/components/ui-shell/` — app shell: layout, nav, footer, theme provider and backgrounds
 - `src/components/ai-elements/` — composable chat UI building blocks used by the AI assistant
 - `src/components/ui/` — shadcn/Radix-based primitives
 - `src/hooks/use-userlift-data.js` — central Google Sheets fetch/parse/cache context (SWR + demo mode + derived metrics)
-- `src/lib/parse-data.js` — normalizes raw Google Sheets rows into the app’s canonical lift-entry format
+- `src/lib/data-sources/import-dispatcher.js` — the single parsing entry point: `parseData()` for Google Sheets rows, `parseImportedFile()` for drag-and-drop CSV/XLSX
+- `src/lib/data-sources/` — one parser per supported export format, plus shared decode/normalize helpers
 - `src/lib/processing-utils.js` — shared processing/aggregation helpers (PRs, tonnage, timing logs, unit conversion)
-- `src/pages/api/read-gsheet.js` — authenticated Google Sheets + Drive metadata proxy
+- `src/pages/api/sheet/read.js` — authenticated Google Sheets + Drive metadata proxy
+- `src/pages/api/sheet/` — the rest of the sheet surface: linking, provisioning, and the operation-oriented write routes
 - `src/pages/api/auth/[...nextauth].js` — NextAuth Google OAuth setup + token refresh
 - `src/lib/sanity-io.js` — Sanity CMS fetch helpers for article pages and related content
 
 ### Core data flow (at a glance)
 
 1. User signs in with Google (`next-auth`) and picks a spreadsheet.
-2. `use-userlift-data` fetches `/api/read-gsheet` via SWR.
+2. `use-userlift-data` fetches `/api/sheet/read` via SWR.
 3. API route reads Google Sheets + Drive metadata and returns JSON.
 4. `parseData()` normalizes rows into canonical lift entries.
 5. Shared derived metrics (PRs, tonnage, lift types, session lookups) are computed once in context and consumed by pages/cards.
@@ -98,9 +119,11 @@ This repo has grown into a multi-tool lifting app (analyzer, visualizer, calcula
 ### Common contributor entry points
 
 - Build a new tool page (or improve an existing one): start in `src/pages/<tool>.js`, then add/adjust feature components under `src/components/<feature>/`
-- Improve parser tolerance for real-world spreadsheets (header variations, blank-row patterns, date/weight formats): `src/lib/parse-data.js`
+- Improve parser tolerance for real-world spreadsheets (header variations, blank-row patterns, date/weight formats): `src/lib/data-sources/strength-journeys-parser.js` and the shared `parser-utilities.js`
 - UI polish and usability improvements (layout spacing, card composition, mobile tweaks, theme details): `src/components/`, `src/components/ui/`, `src/styles/globals.css`
-- Add import support for other lifting apps/export formats: branch from `src/lib/parse-data.js`, reuse `src/lib/parse-turnkey-importer.js` as an example, or add a new parser module under `src/lib/`
+- Add import support for another lifting app: add a parser under `src/lib/data-sources/` (copy the shape of `hevy-parser.js`), then register its detection in `import-dispatcher.js`. There is a regression script for this — `npm run validate:hevy`, run against fixtures in `fixtures/imports/`
+
+> `src/lib/parse-data.js` and `src/lib/parse-turnkey-importer.js` are thin re-exports kept for older import sites. New work should reach for `src/lib/data-sources/` directly.
 
 ## Branch strategy
 

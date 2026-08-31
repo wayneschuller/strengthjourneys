@@ -29,8 +29,24 @@ export function getRewardProgress({
   return { metrics, unlockedRewardIds, nextReward };
 }
 
+const METRIC_LABELS = {
+  setCount: "sets",
+  repCount: "reps",
+  historyDays: "days",
+};
+
+/**
+ * Criteria that actually stand between a lifter and a reward. A zero threshold
+ * means the metric is not gating this reward at all — Blueprint asks nothing of
+ * history so an honest first session earns something on day one — and listing
+ * "0 weeks of history" as a hurdle would read as nonsense.
+ */
+export function getActiveCriteria(reward) {
+  return reward.criteria.filter(({ threshold }) => threshold > 0);
+}
+
 export function getRewardRequirement(reward) {
-  const requirements = reward.criteria.map(({ metric, threshold }) => {
+  const requirements = getActiveCriteria(reward).map(({ metric, threshold }) => {
     if (metric === "setCount") {
       return threshold === 1 ? "your first set" : `${threshold} sets`;
     }
@@ -45,7 +61,48 @@ export function getRewardRequirement(reward) {
   });
 
   if (requirements[0] === "your first set") return "Log your first set";
-  return requirements.join(", ").replace(/, ([^,]*)$/, ", or $1");
+  return joinRequirements(
+    requirements,
+    reward.unlockMode === "all" ? "and" : "or",
+  );
+}
+
+/**
+ * "12/60 sets", "80/200 reps", "5/14 days" — a lifter's standing against each
+ * criterion that still applies, for showing progress towards the next reward.
+ * @param {Object} reward
+ * @param {Object} metrics - From getTrainingRewardMetrics().
+ * @returns {string[]}
+ */
+export function getRewardProgressParts(reward, metrics) {
+  return getActiveCriteria(reward).map(
+    ({ metric, threshold }) =>
+      `${metrics?.[metric] ?? 0}/${threshold} ${METRIC_LABELS[metric] ?? metric}`,
+  );
+}
+
+/**
+ * The sentence that explains how the criteria combine, or null when there is
+ * only one criterion and the rule would be stating the obvious.
+ * @param {Object} reward
+ * @returns {string|null}
+ */
+export function getRewardUnlockRule(reward) {
+  if (getActiveCriteria(reward).length < 2) return null;
+  return reward.unlockMode === "all"
+    ? "Reach all of these to unlock it."
+    : "Reach any one to unlock it.";
+}
+
+function joinRequirements(requirements, conjunction) {
+  if (requirements.length === 0) return "";
+  if (requirements.length === 1) return requirements[0];
+  if (requirements.length === 2) {
+    return `${requirements[0]} ${conjunction} ${requirements[1]}`;
+  }
+  return `${requirements.slice(0, -1).join(", ")}, ${conjunction} ${
+    requirements[requirements.length - 1]
+  }`;
 }
 
 export function getTrainingRewardMetrics(parsedData) {

@@ -28,6 +28,10 @@ import {
 } from "@/components/ui/tooltip";
 import { useRewardProgress } from "@/hooks/use-reward-progress";
 import {
+  getRewardProgressParts,
+  getRewardUnlockRule,
+} from "@/lib/rewards/progression";
+import {
   getUnlockedThemes,
   isThemeLocked,
 } from "@/lib/rewards/theme-unlocks";
@@ -171,20 +175,14 @@ export function ThemeChooser() {
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="max-w-64 whitespace-normal text-xs font-normal">
               <span className="font-medium">Next: {nextReward.label}</span>
-              {nextReward.criteria[0].threshold === 1 ? (
+              <span className="text-muted-foreground block">
+                {getRewardProgressParts(nextReward, metrics).join(" · ")}
+              </span>
+              {getRewardUnlockRule(nextReward) && (
                 <span className="text-muted-foreground block">
-                  Log your first real set to unlock it.
-                </span>
-              ) : (
-                <span className="text-muted-foreground block">
-                  {metrics.setCount}/{nextReward.criteria[0].threshold} sets ·{" "}
-                  {metrics.repCount}/{nextReward.criteria[1].threshold} reps ·{" "}
-                  {metrics.historyDays}/{nextReward.criteria[2].threshold} days
+                  {getRewardUnlockRule(nextReward)}
                 </span>
               )}
-              <span className="text-muted-foreground block">
-                Reach any one to unlock it.
-              </span>
             </DropdownMenuLabel>
           </>
         )}

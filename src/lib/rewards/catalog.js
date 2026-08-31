@@ -3,27 +3,37 @@
  * Add future cosmetic or celebratory rewards here without changing consumers.
  */
 
-// The ladder shifted up one rung on 2026-09-01: every theme now costs what the
-// theme above it used to, and a new top rung was extrapolated from the same
-// curve. The old first rung was a single set, which unlocked before anyone had
-// trained — a reward that arrives for free is not a reward. Blueprint now takes
-// roughly one full session.
+// Calibration (2026-09-01). Every reward now unlocks on ALL of its criteria,
+// not any one of them, because a single criterion could be satisfied by data
+// that represents no training at all: one fabricated old date gave a lifter a
+// history span of years and, with it, every theme on the ladder. Requiring all
+// three means thin-but-old data earns nothing while a genuine multi-year import
+// still earns everything.
 //
-// Each reward carries three thresholds and unlocks on ANY one of them, so the
-// numbers are three routes to the same rung rather than a checklist.
+// With "all" in force the three numbers have to describe the same lifter, so
+// they are pegged to a modest 3x/week hour: 10 sets and ~35 reps a session, or
+// 30 sets and 100 reps a week. Each rung is two more weeks of that — +60 sets,
+// +200 reps, +14 days — which keeps the calendar the visible pacer for anyone
+// training properly and leaves the volume gates to bite only when the training
+// is thinner than the dates claim. Reps are deliberately pegged at a bit over
+// 3x sets rather than 5x so a lifter working heavy triples is not held back by
+// a threshold built for sets of five.
+//
+// Blueprint is the exception: no history requirement at all, so an honest first
+// session still earns something on day one.
 export const THEME_REWARDS = [
-  createThemeReward("blueprint", "Blueprint", 10, 50, 7),
-  createThemeReward("blueprint-dark", "Blueprint Dark", 25, 100, 14),
-  createThemeReward("starry-night", "Starry Night", 45, 250, 28),
-  createThemeReward("starry-night-dark", "Starry Night Dark", 75, 500, 42),
-  createThemeReward("retro-arcade", "Retro Arcade", 100, 700, 56),
-  createThemeReward("retro-arcade-dark", "Retro Arcade Dark", 125, 850, 70),
-  createThemeReward("neo-brutalism", "Neo Brutalism", 150, 1000, 84),
+  createThemeReward("blueprint", "Blueprint", 10, 40, 0),
+  createThemeReward("blueprint-dark", "Blueprint Dark", 60, 200, 14),
+  createThemeReward("starry-night", "Starry Night", 120, 400, 28),
+  createThemeReward("starry-night-dark", "Starry Night Dark", 180, 600, 42),
+  createThemeReward("retro-arcade", "Retro Arcade", 240, 800, 56),
+  createThemeReward("retro-arcade-dark", "Retro Arcade Dark", 300, 1000, 70),
+  createThemeReward("neo-brutalism", "Neo Brutalism", 360, 1200, 84),
   createThemeReward(
     "neo-brutalism-dark",
     "Neo Brutalism Dark",
-    175,
-    1200,
+    420,
+    1400,
     98,
   ),
 ];
@@ -41,7 +51,7 @@ function createThemeReward(theme, label, sets, reps, historyDays) {
     category: "theme",
     value: theme,
     label,
-    unlockMode: "any",
+    unlockMode: "all",
     criteria: [
       { metric: "setCount", threshold: sets },
       { metric: "repCount", threshold: reps },

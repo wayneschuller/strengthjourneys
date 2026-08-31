@@ -21,13 +21,21 @@
 //
 // Blueprint is the exception: no history requirement at all, so an honest first
 // session still earns something on day one.
+//
+// Running order is a judgement about the themes themselves, not their cost to
+// build: the early rungs are the ones most lifters will ever see, so they carry
+// the themes worth showing off (Retro Arcade moved up on 2026-09-01 for exactly
+// this reason), while the loudest, most divisive themes sit at the top where
+// being polarising reads as a badge. Reordering here reorders the ladder — the
+// thresholds belong to the position, not to the theme — so keep the themes list
+// in _app.js in the same order, since that is what the pickers render.
 export const THEME_REWARDS = [
   createThemeReward("blueprint", "Blueprint", 10, 40, 0),
   createThemeReward("blueprint-dark", "Blueprint Dark", 60, 200, 14),
-  createThemeReward("starry-night", "Starry Night", 120, 400, 28),
-  createThemeReward("starry-night-dark", "Starry Night Dark", 180, 600, 42),
-  createThemeReward("retro-arcade", "Retro Arcade", 240, 800, 56),
-  createThemeReward("retro-arcade-dark", "Retro Arcade Dark", 300, 1000, 70),
+  createThemeReward("retro-arcade", "Retro Arcade", 120, 400, 28),
+  createThemeReward("retro-arcade-dark", "Retro Arcade Dark", 180, 600, 42),
+  createThemeReward("starry-night", "Starry Night", 240, 800, 56),
+  createThemeReward("starry-night-dark", "Starry Night Dark", 300, 1000, 70),
   createThemeReward("neo-brutalism", "Neo Brutalism", 360, 1200, 84),
   createThemeReward(
     "neo-brutalism-dark",

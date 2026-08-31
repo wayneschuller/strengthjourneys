@@ -60,16 +60,19 @@ export default function App({ Component, pageProps, session }) {
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
-          // New themes added to globals.css get added here
+          // New themes added to globals.css get added here.
+          // Order matters twice over: the theme pickers render this list in
+          // order, and it should match the reward ladder in lib/rewards/catalog.js
+          // so an unlocked theme never sits below a locked one.
           themes={[
             "light",
             "dark",
             "blueprint",
             "blueprint-dark",
-            "starry-night",
-            "starry-night-dark",
             "retro-arcade",
             "retro-arcade-dark",
+            "starry-night",
+            "starry-night-dark",
             "neo-brutalism",
             "neo-brutalism-dark",
           ]}

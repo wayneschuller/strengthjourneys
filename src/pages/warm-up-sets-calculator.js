@@ -35,12 +35,15 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
+import { useTransientSuccess } from "@/hooks/use-transient-success";
+import { ShareCopyButton } from "@/components/share-copy-button";
 import {
   getDefaultBarbellWeight,
   getDefaultBarType,
 } from "@/lib/barbell-defaults";
 import { generateSessionSets, formatPlateBreakdown } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
+import { buildShareUrl } from "@/lib/share-url";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -117,6 +120,7 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
  */
 function WarmUpSetsCalculatorMain({ relatedArticles }) {
   const router = useRouter();
+  const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
   const { sex, bioDataIsInitialized } = useAthleteBio();
   const [isMetric, setIsMetric, , , isMetricIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
@@ -258,6 +262,20 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     [weight, reps, warmupSetCount, effectiveBarType, platePreference, isMetric],
   );
 
+  const handleCopyResult = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        `Warm-up sets for ${weight}${unit} × ${reps}: ${buildShareUrl(
+          "/warm-up-sets-calculator",
+          warmupQuery,
+        )}`,
+      );
+      triggerCopied();
+    } catch {
+      // The share button remains non-blocking when clipboard permissions fail.
+    }
+  };
+
   return (
     <PageContainer>
       <PageHeader>
@@ -272,11 +290,19 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       </PageHeader>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Target Top Set</CardTitle>
-          <CardDescription>
-            Enter the weight and reps for your working set/s
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Target Top Set</CardTitle>
+            <CardDescription>
+              Enter the weight and reps for your working set/s
+            </CardDescription>
+          </div>
+          <ShareCopyButton
+            label="Share"
+            successLabel="Copied"
+            isSuccess={isCopied}
+            onClick={handleCopyResult}
+          />
         </CardHeader>
         <CardContent>
           {/* Reps and Weight Inputs */}

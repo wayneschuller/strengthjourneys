@@ -81,6 +81,5 @@ public/robots.txt
 /skills/
 /skills-lock.json
 
-# CLAUDE.md is intentionally tracked: it is the repo's committed agent guide,
-# the Claude Code counterpart to AGENTS.md. It used to be ignored here as a
-# personal scratch file; it is now shared project documentation.
+# Claude Code project docs
+CLAUDE.md

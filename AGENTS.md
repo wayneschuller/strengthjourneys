@@ -574,33 +574,6 @@ Prefer a concise output table:
 
 ---
 
-## 5.7. Environment Variables
-
----
-
-Set in `.env` locally and in Vercel. None of this belongs in git — `.env` is
-gitignored and should stay that way.
-
-- **Auth/Google:** `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_SECRET`,
-  `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `NEXT_PUBLIC_GOOGLE_APP_ID`
-- **KV:** `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `UPSTASH_REDIS_REST_URL`,
-  `UPSTASH_REDIS_REST_TOKEN`
-- **AI:** `OPENAI_API_KEY`, `XAI_API_KEY`, `EXTENDED_AI_PROMPT`,
-  `AI_RATE_LIMIT_SALT`
-- **CMS:** `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`
-- **Email/support:** `RESEND_API_KEY`, `FEEDBACK_EMAIL_TO`,
-  `ENABLE_FOUNDER_IMPORT_MERGED_EMAIL`, `ENABLE_AUTOMATED_FOUNDER_OUTREACH`
-- **Misc:** `NEXT_PUBLIC_GOOGLE_ANALYTICS`, `NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV`,
-  `NEXT_PUBLIC_USE_DEMO_PLAYLISTS`, `CRON_SECRET`, `PLAYLIST_HEALTH_BUDGET_MS`,
-  `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`
-
-`deploy_extended_AI_prompt.sh` pushes the multiline `EXTENDED_AI_PROMPT` from
-`.env` into all three Vercel environments. It parses the value out of `.env`
-with awk rather than sourcing the file, so a prompt containing apostrophes or
-shell metacharacters is not executed.
-
----
-
 ## 5. Git & Branching
 
 ---

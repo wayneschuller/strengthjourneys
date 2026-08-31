@@ -145,10 +145,6 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
                     aria-hidden="true"
                     className="absolute inset-y-0 -left-3 w-2/3 -skew-x-12 bg-white/35 blur-[2px]"
                   />
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-1/2 top-1/2 h-2 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-950/20 shadow-[0_0_0_1px_rgb(255_255_255_/_0.35)]"
-                  />
                 </motion.div>
               );
             })}

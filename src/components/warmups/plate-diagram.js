@@ -7,6 +7,9 @@
  * Motion here is meant to be informative rather than decorative: when the
  * caller supplies the previous set's loading, only the plates you actually walk
  * over and add animate in. Plates already on the bar are simply there.
+ *
+ * The assembly itself is hidden from screen readers - it restates loading that
+ * the card already gives in text - while the per-side plate list stays readable.
  */
 
 import { motion } from "motion/react";
@@ -16,8 +19,26 @@ import { FULL_PLATE_DIAMETER, getPlateDimensions } from "@/lib/warmups";
 const BAR_STYLE = {
   background:
     "linear-gradient(180deg, #f8fafc 0%, #94a3b8 18%, #334155 48%, #cbd5e1 76%, #475569 100%)",
-  boxShadow: "0 2px 5px rgb(15 23 42 / 0.3), inset 0 1px rgb(255 255 255 / 0.7)",
 };
+
+// Steel reads the same in either theme, but the shadow that seats it on the
+// card does not: a slate drop shadow vanishes against a dark surface.
+const BAR_SHADOW =
+  "shadow-[0_2px_5px_rgb(15_23_42/0.3),inset_0_1px_rgb(255_255_255/0.7)] " +
+  "dark:shadow-[0_2px_6px_rgb(0_0_0/0.6),inset_0_1px_rgb(255_255_255/0.5)]";
+
+// Likewise the plate edge: a near-black border disappears on a dark card, so
+// the discs need a light rim there to keep their separation.
+const PLATE_SHADOW =
+  "border-slate-950/25 shadow-[2px_3px_5px_rgb(15_23_42/0.3),inset_1px_0_rgb(255_255_255/0.55),inset_-2px_0_rgb(15_23_42/0.2)] " +
+  "dark:border-slate-100/30 dark:shadow-[2px_3px_6px_rgb(0_0_0/0.55),inset_1px_0_rgb(255_255_255/0.35),inset_-2px_0_rgb(0_0_0/0.4)]";
+
+// The legend chip sits inside a line of text, where the plate's drop shadow
+// would bleed into the words around it. Keep the rim and the edge highlight,
+// which are what make it read as a disc, and drop the cast shadow.
+const LEGEND_PLATE_SHADOW =
+  "border-slate-950/30 shadow-[inset_1px_0_rgb(255_255_255/0.5)] " +
+  "dark:border-slate-100/35 dark:shadow-[inset_1px_0_rgb(255_255_255/0.3)]";
 
 // Diagram geometry, in px, matching the Tailwind classes on the containers.
 const DIAGRAM_WIDTH = 224; // w-56
@@ -25,6 +46,8 @@ const SLEEVE_ANCHOR = 128; // left-32: where the innermost plate meets the shoul
 const SLEEVE_LENGTH = DIAGRAM_WIDTH - SLEEVE_ANCHOR;
 const FULL_PLATE_HEIGHT = 80; // a 450mm disc at full scale
 const MIN_PLATE_WIDTH = 5; // a true-to-scale 1.25kg would be too thin to read
+const LEGEND_PLATE_HEIGHT = 14; // full-diameter disc, at legend scale
+const PLATE_CASCADE_CAP = 0.24; // seconds; longest a plate waits on the cards before it
 const PLATE_GAP = 4;
 const TIGHT_PLATE_GAP = 2; // crowded bars close the collars up
 const CROWDED_PLATE_COUNT = 5;
@@ -50,6 +73,21 @@ function plateGeometry(weight, isMetric) {
     // A 2px border would swallow a change plate whole.
     borderWidth: width >= 8 ? 2 : 1,
     radius: Math.max(2, Math.round(height / 20)),
+  };
+}
+
+/**
+ * The legend chip is a miniature of the real disc rather than a plain colour
+ * square, so the swatch and the plate on the bar read as the same object.
+ * Thickness is exaggerated: at legend scale a true-to-ratio 25kg would be under
+ * three pixels wide, which reads as a rendering seam rather than a plate.
+ */
+function legendGeometry(weight, isMetric) {
+  const { diameter, thickness } = getPlateDimensions(weight, isMetric);
+  const scale = LEGEND_PLATE_HEIGHT / FULL_PLATE_DIAMETER;
+  return {
+    height: Math.round(diameter * scale),
+    width: Math.max(3, Math.round(thickness * scale * 2)),
   };
 }
 
@@ -97,9 +135,8 @@ function buildLoadedPlates(platesPerSide, previousPlatesPerSide, isMetric) {
  * @param {boolean} props.isMetric - Whether using kg (true) or lb (false)
  * @param {string} props.className - Additional CSS classes
  * @param {boolean} props.hideLabels - Whether to hide the plate labels
- * @param {number} [props.animationDelay] - Base delay (seconds) before plates animate in (for stagger between sets)
- * @param {string} [props.animationKey] - Key that changes when sliders change, retriggers plate animation
- * @param {boolean} [props.useScrollTrigger] - If true, animate when card scrolls into view (mobile); if false, animate immediately (desktop)
+ * @param {number} [props.animationDelay] - Base delay (seconds) before plates cascade in on first reveal
+ * @param {boolean} [props.useScrollTrigger] - If true, animate when the card scrolls into view; if false, animate on mount
  */
 export function PlateDiagram({
   platesPerSide = [],
@@ -109,15 +146,21 @@ export function PlateDiagram({
   className,
   hideLabels = false,
   animationDelay = 0,
-  animationKey,
   useScrollTrigger = false,
 }) {
   const unit = isMetric ? "kg" : "lb";
 
+  // Plates no longer remount when the sliders move, so a plate that animates is
+  // genuinely new - which means its delay is felt as lag while dragging rather
+  // than admired as a cascade. The bar keeps the full across-the-grid stagger;
+  // the plates take a capped share of it, enough to read as a sweep on load
+  // without making a dragged-in plate wait on cards above it.
+  const plateDelay = Math.min(animationDelay, PLATE_CASCADE_CAP);
+
   const renderBar = () => (
     <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 items-center justify-end">
       <motion.div
-        className="relative h-2 w-48 overflow-hidden rounded-full"
+        className={cn("relative h-2 w-48 overflow-hidden rounded-full", BAR_SHADOW)}
         style={{
           ...BAR_STYLE,
           // Fade the unloaded end so this reads as the loaded half of a barbell.
@@ -156,7 +199,12 @@ export function PlateDiagram({
     return (
       <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
         {/* Base barbell - same structure as plates version for alignment */}
-        <div className="relative flex min-h-[72px] w-56 items-center justify-end px-2 py-1">
+        {/* The picture restates the loading already written out above the
+            diagram, so it is decoration as far as a screen reader is concerned. */}
+        <div
+          aria-hidden="true"
+          className="relative flex min-h-[72px] w-56 items-center justify-end px-2 py-1"
+        >
           {renderBar()}
         </div>
 
@@ -191,17 +239,17 @@ export function PlateDiagram({
   return (
     <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
       {/* Base barbell (same as bar-only state) with plates overlaid on the right */}
-      <div className="relative flex min-h-[72px] w-56 items-center justify-end px-2 py-1">
+      <div
+        aria-hidden="true"
+        className="relative flex min-h-[72px] w-56 items-center justify-end px-2 py-1"
+      >
         {/* The shaft remains visible behind the plates so the loading direction is clear. */}
         {renderBar()}
 
         {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
         {/* The innermost plate stays against the same shoulder; added plates
             extend outward to the right, as they do when loading a real bar. */}
-        <div
-          key={animationKey ?? "static"}
-          className="absolute left-32 top-1/2 -translate-y-1/2"
-        >
+        <div className="absolute left-32 top-1/2 -translate-y-1/2">
           <div
             className="flex items-center"
             style={{
@@ -215,8 +263,8 @@ export function PlateDiagram({
               // Only the plates you have to add carry the loading motion; the
               // rest are already on the bar and just need to be present.
               const delay = plate.isNew
-                ? animationDelay + newPlateIndex++ * 0.08
-                : animationDelay;
+                ? plateDelay + newPlateIndex++ * 0.08
+                : plateDelay;
               const rest = { x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 };
               const initial = plate.isNew
                 ? { x: 26, y: -6, rotate: 4, scale: 0.86, opacity: 0 }
@@ -236,7 +284,10 @@ export function PlateDiagram({
                       }
                     : { animate: rest })}
                   transition={transition}
-                  className="group relative shrink-0 overflow-hidden border-slate-950/25"
+                  className={cn(
+                    "group relative shrink-0 overflow-hidden",
+                    PLATE_SHADOW,
+                  )}
                   style={{
                     height: `${plate.height}px`,
                     width: `${plate.width}px`,
@@ -244,10 +295,7 @@ export function PlateDiagram({
                     borderWidth: `${plate.borderWidth}px`,
                     borderStyle: "solid",
                     background: `linear-gradient(105deg, rgb(255 255 255 / 0.48) 0%, ${plateColor} 24%, ${plateColor} 72%, rgb(15 23 42 / 0.28) 100%)`,
-                    boxShadow:
-                      "2px 3px 5px rgb(15 23 42 / 0.3), inset 1px 0 rgb(255 255 255 / 0.55), inset -2px 0 rgb(15 23 42 / 0.2)",
                   }}
-                  title={`${plate.weight}${unit}`}
                 >
                   <span
                     aria-hidden="true"
@@ -274,16 +322,33 @@ export function PlateDiagram({
       {/* Plate labels - right-aligned, showing one side only */}
       {!hideLabels && (
         <div className="flex flex-wrap justify-end gap-1 text-xs text-muted-foreground">
-          {platesPerSide.map((plate, idx) => (
-            <span key={idx} className="flex items-center gap-1">
-              <span
-                className="inline-block h-3 w-3 rounded border border-border"
-                style={{ backgroundColor: displayColor(plate.color) }}
-              />
-              {plate.count}x {plate.weight}
-              {unit}
-            </span>
-          ))}
+          {/* The text above the diagram counts both sides; this counts one, so
+              say which without adding a visible label to the design. */}
+          <span className="sr-only">Per side:</span>
+          {platesPerSide.map((plate, idx) => {
+            const chip = legendGeometry(plate.weight, isMetric);
+            const plateColor = displayColor(plate.color);
+            return (
+              <span key={idx} className="flex items-center gap-1">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "inline-block shrink-0 rounded-[1px]",
+                    LEGEND_PLATE_SHADOW,
+                  )}
+                  style={{
+                    height: `${chip.height}px`,
+                    width: `${chip.width}px`,
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    background: `linear-gradient(105deg, rgb(255 255 255 / 0.48) 0%, ${plateColor} 24%, ${plateColor} 72%, rgb(15 23 42 / 0.28) 100%)`,
+                  }}
+                />
+                {plate.count}x {plate.weight}
+                {unit}
+              </span>
+            );
+          })}
         </div>
       )}
     </div>

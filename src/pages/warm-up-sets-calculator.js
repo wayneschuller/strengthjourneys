@@ -5,7 +5,6 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/router";
-import { useMediaQuery } from "usehooks-ts";
 import { NextSeo } from "next-seo";
 import { Flame } from "lucide-react";
 
@@ -287,13 +286,6 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
 
   const unit = isMetric ? "kg" : "lb";
 
-  // Changes whenever sliders/options change – used to retrigger barbell animations
-  const animationKey = useMemo(
-    () =>
-      `${weight}-${reps}-${warmupSetCount}-${effectiveBarType}-${platePreference}-${isMetric}`,
-    [weight, reps, warmupSetCount, effectiveBarType, platePreference, isMetric],
-  );
-
   const handleCopyResult = async () => {
     try {
       await navigator.clipboard.writeText(
@@ -498,7 +490,6 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
         unit={unit}
         barWeight={barWeight}
         isMetric={isMetric}
-        animationKey={animationKey}
       />
 
       {relatedArticles && relatedArticles.length > 0 && (
@@ -521,13 +512,7 @@ function WarmupSetsDisplayCard({
   unit,
   barWeight,
   isMetric,
-  animationKey,
 }) {
-  const isDesktop = useMediaQuery("(min-width: 768px)", {
-    initializeWithValue: false,
-  });
-  const useScrollTrigger = !isDesktop;
-
   if (sessionSets.length === 0) {
     return null;
   }
@@ -593,8 +578,7 @@ function WarmupSetsDisplayCard({
                     barWeight={barWeight}
                     isMetric={isMetric}
                     animationDelay={idx * 0.12}
-                    animationKey={animationKey}
-                    useScrollTrigger={useScrollTrigger}
+                    useScrollTrigger
                   />
                 </div>
               </div>

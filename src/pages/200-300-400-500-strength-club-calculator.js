@@ -5,6 +5,7 @@
  */
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react";
 import { NextSeo } from "next-seo";
 import { motion, useReducedMotion } from "motion/react";
@@ -13,8 +14,9 @@ import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
-import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
+import { useReadLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
+import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -54,6 +56,8 @@ import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
+import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
+import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
 
 const LIFT_GRAPHICS = {
   "Strict Press": "/strict_press.svg",
@@ -410,6 +414,7 @@ const SHAKE_KEYFRAMES = `
  * Inner client component for the 200/300/400/500 Strength Club Calculator.
  */
 function StrengthClubMain({ relatedArticles }) {
+  const router = useRouter();
   const { toast } = useToast();
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
@@ -426,31 +431,53 @@ function StrengthClubMain({ relatedArticles }) {
   const activeLiftTimeoutRef = useRef(null);
   const celebrationFrameRef = useRef(null);
   const hasAutoPopulatedRef = useRef(false);
+  const hasExplicitQueryRef = useRef(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [activeLiftKey, setActiveLiftKey] = useState(null);
   const [recent90dCutoffDate] = useState(() =>
     new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10),
   );
 
-  const [press, setPress] = useLocalStorage(
+  const [press, setPress, , , pressIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
     115,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= 400,
   );
-  const [bench, setBench] = useLocalStorage(
+  const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_BENCH,
     185,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= 500,
   );
-  const [squat, setSquat] = useLocalStorage(
+  const [squat, setSquat, , , squatIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_SQUAT,
     255,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= 700,
   );
-  const [deadlift, setDeadlift] = useLocalStorage(
+  const [deadlift, setDeadlift, , , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_DEADLIFT,
     315,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= 800,
   );
+
+  // Detect valid shared values before authenticated PR auto-population can run.
+  useEffect(() => {
+    if (!router.isReady) return;
+    hasExplicitQueryRef.current = MILESTONES.some(
+      (milestone) =>
+        parseQueryNumber(router.query[milestone.key], {
+          min: 0,
+          max: milestone.max,
+        }) !== null,
+    );
+  }, [router.isReady, router.query]);
 
   const setters = useMemo(
     () => ({
@@ -464,6 +491,22 @@ function StrengthClubMain({ relatedArticles }) {
   const values = useMemo(() => ({ press, bench, squat, deadlift }), [press, bench, squat, deadlift]);
   const total = press + bench + squat + deadlift;
   const allAchieved = MILESTONES.every((m) => values[m.key] >= m.target);
+  const strengthClubQuery = useMemo(
+    () => Object.fromEntries(
+      Object.entries(values).map(([key, value]) => [key, String(value)]),
+    ),
+    [values],
+  );
+  useCalculatorQuerySync({
+    router,
+    query: strengthClubQuery,
+    isInitialized:
+      pressIsInitialized &&
+      benchIsInitialized &&
+      squatIsInitialized &&
+      deadliftIsInitialized,
+    hasInteracted,
+  });
   const prWeightsLb = useMemo(() => {
     if (!topLiftsByTypeAndReps || isDemoMode) return null;
 
@@ -488,7 +531,7 @@ function StrengthClubMain({ relatedArticles }) {
   const usingUserData = Boolean(prWeightsLb);
 
   useEffect(() => {
-    if (hasAutoPopulatedRef.current || !prWeightsLb) {
+    if (hasExplicitQueryRef.current || hasAutoPopulatedRef.current || !prWeightsLb) {
       return;
     }
 
@@ -544,6 +587,7 @@ function StrengthClubMain({ relatedArticles }) {
 
   const handleResetToPRs = useCallback(() => {
     if (!prWeightsLb) return;
+    setHasInteracted(true);
     for (const milestone of MILESTONES) {
       const nextValue = prWeightsLb[milestone.key];
       if (nextValue != null) {
@@ -554,6 +598,7 @@ function StrengthClubMain({ relatedArticles }) {
 
   const handleResetTo90d = useCallback(() => {
     if (!recent90dLb) return;
+    setHasInteracted(true);
     for (const milestone of MILESTONES) {
       const nextValue = recent90dLb[milestone.key];
       if (nextValue != null) {
@@ -595,6 +640,7 @@ function StrengthClubMain({ relatedArticles }) {
   const handleLiftValueChange = useCallback(
     (liftKey, setter) =>
       ([v]) => {
+        setHasInteracted(true);
         const milestone = MILESTONES.find((item) => item.key === liftKey);
         const nextValue = milestone ? clampLbToMax(v, milestone.max) : v;
         const prVal = prWeightsLb?.[liftKey];
@@ -675,8 +721,10 @@ function StrengthClubMain({ relatedArticles }) {
 
   const handleCopyResult = () => {
     const achieved = MILESTONES.filter((m) => values[m.key] >= m.target);
-    const url =
-      "https://www.strengthjourneys.xyz/200-300-400-500-strength-club-calculator";
+    const url = buildShareUrl(
+      "/200-300-400-500-strength-club-calculator",
+      values,
+    );
     const lines = [
       allAchieved
         ? "I've conquered the 200/300/400/500 Strength Club!"

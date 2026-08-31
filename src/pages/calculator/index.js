@@ -601,6 +601,7 @@ export function E1RMCalculatorMain({
   const storedPlatePreference = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, { initializeWithValue: false }) ?? "red";
   const plateBarWeight = isMetric ? (storedBarType === "womens" ? 15 : 20) : (storedBarType === "womens" ? 35 : 45);
   const plateBreakdown = calculatePlateBreakdown(e1rmWeight, plateBarWeight, isMetric, storedPlatePreference);
+  const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
   const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
   const calculatorE1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
   const circlesLiftType = forceLift ? (LIFT_SLUG_TO_BIG_FOUR[forceLift] ?? forceLift) : null;
@@ -782,6 +783,7 @@ export function E1RMCalculatorMain({
                         barWeight={plateBarWeight}
                         isMetric={isMetric}
                         hideLabels={true}
+                        animationKey={diagramAnimKey}
                         useScrollTrigger={false}
                       />
                     </Link>
@@ -799,6 +801,7 @@ export function E1RMCalculatorMain({
                       barWeight={plateBarWeight}
                       isMetric={isMetric}
                       hideLabels={true}
+                      animationKey={diagramAnimKey}
                       useScrollTrigger={false}
                     />
                   </Link>

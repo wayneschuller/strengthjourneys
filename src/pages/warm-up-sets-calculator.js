@@ -286,6 +286,15 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
 
   const unit = isMetric ? "kg" : "lb";
 
+  // Changes whenever the loading changes; the diagram debounces it and then
+  // replays the whole bar, so watching the plates go back on is the reward
+  // for moving a slider.
+  const animationKey = useMemo(
+    () =>
+      `${weight}-${reps}-${warmupSetCount}-${effectiveBarType}-${platePreference}-${isMetric}`,
+    [weight, reps, warmupSetCount, effectiveBarType, platePreference, isMetric],
+  );
+
   const handleCopyResult = async () => {
     try {
       await navigator.clipboard.writeText(
@@ -490,6 +499,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
         unit={unit}
         barWeight={barWeight}
         isMetric={isMetric}
+        animationKey={animationKey}
       />
 
       {relatedArticles && relatedArticles.length > 0 && (
@@ -512,6 +522,7 @@ function WarmupSetsDisplayCard({
   unit,
   barWeight,
   isMetric,
+  animationKey,
 }) {
   if (sessionSets.length === 0) {
     return null;
@@ -578,6 +589,7 @@ function WarmupSetsDisplayCard({
                     barWeight={barWeight}
                     isMetric={isMetric}
                     animationDelay={idx * 0.12}
+                    animationKey={animationKey}
                     useScrollTrigger
                   />
                 </div>

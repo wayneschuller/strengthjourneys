@@ -1147,6 +1147,7 @@ function MilestoneCard({
             isMetric={STRENGTH_CLUB_DIAGRAM_IS_METRIC}
             hideLabels
             animationDelay={0.3 + index * 0.1}
+            animationKey={`plates-${key}-${value}`}
           />
           <p className="text-muted-foreground mt-2 text-xs">
             Plate diagram uses standard lb plates, even if you train in kg.

@@ -12,6 +12,7 @@
  * the card already gives in text - while the per-side plate list stays readable.
  */
 
+import { useDebounceValue } from "usehooks-ts";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { FULL_PLATE_DIAMETER, getPlateDimensions } from "@/lib/warmups";
@@ -47,7 +48,7 @@ const SLEEVE_LENGTH = DIAGRAM_WIDTH - SLEEVE_ANCHOR;
 const FULL_PLATE_HEIGHT = 80; // a 450mm disc at full scale
 const MIN_PLATE_WIDTH = 5; // a true-to-scale 1.25kg would be too thin to read
 const LEGEND_PLATE_HEIGHT = 14; // full-diameter disc, at legend scale
-const PLATE_CASCADE_CAP = 0.24; // seconds; longest a plate waits on the cards before it
+const ANIMATION_SETTLE_MS = 200; // quiet time before the bar reloads itself
 const PLATE_GAP = 4;
 const TIGHT_PLATE_GAP = 2; // crowded bars close the collars up
 const CROWDED_PLATE_COUNT = 5;
@@ -135,7 +136,8 @@ function buildLoadedPlates(platesPerSide, previousPlatesPerSide, isMetric) {
  * @param {boolean} props.isMetric - Whether using kg (true) or lb (false)
  * @param {string} props.className - Additional CSS classes
  * @param {boolean} props.hideLabels - Whether to hide the plate labels
- * @param {number} [props.animationDelay] - Base delay (seconds) before plates cascade in on first reveal
+ * @param {number} [props.animationDelay] - Base delay (seconds) before this bar joins the cascade
+ * @param {string} [props.animationKey] - Changes when the loading changes; replays the whole bar once the value settles
  * @param {boolean} [props.useScrollTrigger] - If true, animate when the card scrolls into view; if false, animate on mount
  */
 export function PlateDiagram({
@@ -146,20 +148,24 @@ export function PlateDiagram({
   className,
   hideLabels = false,
   animationDelay = 0,
+  animationKey,
   useScrollTrigger = false,
 }) {
   const unit = isMetric ? "kg" : "lb";
 
-  // Plates no longer remount when the sliders move, so a plate that animates is
-  // genuinely new - which means its delay is felt as lag while dragging rather
-  // than admired as a cascade. The bar keeps the full across-the-grid stagger;
-  // the plates take a capped share of it, enough to read as a sweep on load
-  // without making a dragged-in plate wait on cards above it.
-  const plateDelay = Math.min(animationDelay, PLATE_CASCADE_CAP);
+  // Reloading the whole bar on every change is the point: watching the plates
+  // go back on is the reward for moving the slider. Replaying it on every
+  // intermediate value of a drag is not - that is a strobe. So the replay waits
+  // for the value to settle, and while it is still moving the plates update in
+  // place with no motion at all.
+  const currentKey = animationKey ?? "static";
+  const [settledKey] = useDebounceValue(currentKey, ANIMATION_SETTLE_MS);
+  const isSettling = settledKey !== currentKey;
 
   const renderBar = () => (
     <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 items-center justify-end">
       <motion.div
+        key={settledKey}
         className={cn("relative h-2 w-48 overflow-hidden rounded-full", BAR_SHADOW)}
         style={{
           ...BAR_STYLE,
@@ -234,8 +240,6 @@ export function PlateDiagram({
     gap * (loadedPlates.length - 1);
   const fitScale = Math.min(1, SLEEVE_LENGTH / stackWidth);
 
-  let newPlateIndex = 0;
-
   return (
     <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
       {/* Base barbell (same as bar-only state) with plates overlaid on the right */}
@@ -249,7 +253,7 @@ export function PlateDiagram({
         {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
         {/* The innermost plate stays against the same shoulder; added plates
             extend outward to the right, as they do when loading a real bar. */}
-        <div className="absolute left-32 top-1/2 -translate-y-1/2">
+        <div key={settledKey} className="absolute left-32 top-1/2 -translate-y-1/2">
           <div
             className="flex items-center"
             style={{
@@ -260,23 +264,22 @@ export function PlateDiagram({
           >
             {loadedPlates.map((plate, idx) => {
               const plateColor = displayColor(plate.color);
-              // Only the plates you have to add carry the loading motion; the
-              // rest are already on the bar and just need to be present.
-              const delay = plate.isNew
-                ? plateDelay + newPlateIndex++ * 0.08
-                : plateDelay;
+              // Every plate goes back on the bar, outermost last, so the discs
+              // you add land as the punchline of the sequence rather than
+              // needing a separate stagger of their own.
+              const delay = animationDelay + idx * 0.06;
               const rest = { x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 };
-              const initial = plate.isNew
-                ? { x: 26, y: -6, rotate: 4, scale: 0.86, opacity: 0 }
-                : { opacity: 0 };
-              const transition = plate.isNew
-                ? { duration: 0.42, delay, ease: [0.22, 1, 0.36, 1] }
-                : { duration: 0.18, delay, ease: "easeOut" };
+              const transition = { duration: 0.42, delay, ease: [0.22, 1, 0.36, 1] };
 
               return (
                 <motion.div
                   key={`${plate.weight}-${idx}`}
-                  initial={initial}
+                  // Mid-drag the loading changes in place; the reload waits.
+                  initial={
+                    isSettling
+                      ? false
+                      : { x: 26, y: -6, rotate: 4, scale: 0.86, opacity: 0 }
+                  }
                   {...(useScrollTrigger
                     ? {
                         whileInView: rest,
@@ -303,7 +306,7 @@ export function PlateDiagram({
                   />
                   {/* A brief flash as the plate lands, so the eye catches which
                       discs changed between one set and the next. */}
-                  {plate.isNew && previousPlatesPerSide && (
+                  {plate.isNew && previousPlatesPerSide && !isSettling && (
                     <motion.span
                       aria-hidden="true"
                       className="absolute inset-0 bg-white"

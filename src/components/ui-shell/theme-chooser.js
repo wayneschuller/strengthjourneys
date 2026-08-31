@@ -27,11 +27,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRewardProgress } from "@/hooks/use-reward-progress";
+import {
+  getUnlockedThemes,
+  isThemeLocked,
+} from "@/lib/rewards/theme-unlocks";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
-
-const BASIC_THEMES = ["light", "dark"];
 
 /**
  * Dropdown button that lets the user select from all available app themes.
@@ -57,13 +59,10 @@ export function ThemeChooser() {
     true,
     { initializeWithValue: false },
   );
-  const unlockedThemes = useMemo(() => {
-    const unlocked = new Set(BASIC_THEMES);
-    rewards.forEach((reward) => {
-      if (unlockedRewardIds.has(reward.id)) unlocked.add(reward.value);
-    });
-    return unlocked;
-  }, [rewards, unlockedRewardIds]);
+  const unlockedThemes = useMemo(
+    () => getUnlockedThemes(rewards, unlockedRewardIds),
+    [rewards, unlockedRewardIds],
+  );
 
   useEffect(() => {
     if (isProgressLoading || !theme) return;
@@ -107,11 +106,11 @@ export function ThemeChooser() {
           }}
         >
           {themes.map((t) => {
-            // While reward progress is still loading, don't flash the
-            // currently-active theme as locked — we just haven't confirmed
-            // its status yet. Other themes stay locked until proven unlocked.
-            const isLocked =
-              !unlockedThemes.has(t) && !(isProgressLoading && t === theme);
+            const isLocked = isThemeLocked(t, {
+              unlockedThemes,
+              isProgressLoading,
+              activeTheme: theme,
+            });
             return (
               <DropdownMenuRadioItem
                 key={t}

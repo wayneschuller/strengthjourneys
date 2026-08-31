@@ -12,13 +12,25 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { Sparkles, Palette, Share2 } from "lucide-react";
+import { Sparkles, Palette, Share2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
 import { YearSelector } from "@/components/year-recap/year-selector";
 import { DemoModeSignInCard, ConnectSheetRecapCard } from "@/components/onboarding/instructions-cards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useRewardProgress } from "@/hooks/use-reward-progress";
+import {
+  getThemeUnlockSentence,
+  getUnlockedThemes,
+  isThemeLocked,
+} from "@/lib/rewards/theme-unlocks";
 
 export async function getStaticProps() {
   return { props: {}, revalidate: 60 * 60 };
@@ -100,14 +112,27 @@ function formatThemeLabel(theme) {
 }
 
 /**
- * Sidebar panel (visible at xl breakpoint) that lets authenticated users switch app theme
- * to customise the appearance of their year recap before sharing it.
+ * Sidebar panel (visible at xl breakpoint) that lets lifters restyle their recap
+ * before sharing it.
+ *
+ * Themes are earned from real training history, so this panel has to gate them
+ * exactly the way the nav-bar ThemeChooser does. It sets the app theme globally
+ * (that is how the recap cards pick up the palette), and ThemeChooser demotes an
+ * unearned theme back to light on the next load — so offering a locked theme
+ * here would hand out something the app immediately takes back.
  */
 function RecapCustomiseSidebar() {
   const { theme, setTheme, themes } = useTheme();
+  const { rewards, unlockedRewardIds, nextReward, isProgressLoading } =
+    useRewardProgress("theme");
+
   const customThemes = useMemo(
     () => (themes || []).filter((t) => t !== "system"),
     [themes],
+  );
+  const unlockedThemes = useMemo(
+    () => getUnlockedThemes(rewards, unlockedRewardIds),
+    [rewards, unlockedRewardIds],
   );
 
   if (customThemes.length === 0) return null;
@@ -127,19 +152,65 @@ function RecapCustomiseSidebar() {
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Theme
         </span>
-        <div className="grid grid-cols-1 gap-1.5">
-          {customThemes.map((t) => (
-            <Button
-              key={t}
-              variant={theme === t ? "secondary" : "outline"}
-              size="sm"
-              className="justify-start font-normal"
-              onClick={() => setTheme(t)}
-            >
-              {formatThemeLabel(t)}
-            </Button>
-          ))}
-        </div>
+        <TooltipProvider>
+          <div className="grid grid-cols-1 gap-1.5">
+            {customThemes.map((t) => {
+              const isLocked = isThemeLocked(t, {
+                unlockedThemes,
+                isProgressLoading,
+                activeTheme: theme,
+              });
+              const requirement = isLocked
+                ? getThemeUnlockSentence(t, rewards)
+                : null;
+
+              const button = (
+                <Button
+                  variant={theme === t ? "secondary" : "outline"}
+                  size="sm"
+                  disabled={isLocked}
+                  aria-label={
+                    isLocked
+                      ? `${formatThemeLabel(t)} (locked)`
+                      : formatThemeLabel(t)
+                  }
+                  className={cn(
+                    "w-full justify-start gap-2 font-normal",
+                    isLocked && "opacity-50",
+                  )}
+                  onClick={() => !isLocked && setTheme(t)}
+                >
+                  <span className="flex-1 text-left">{formatThemeLabel(t)}</span>
+                  {isLocked && <Lock className="h-3 w-3 shrink-0" aria-hidden />}
+                </Button>
+              );
+
+              if (!requirement) return <div key={t}>{button}</div>;
+
+              return (
+                <Tooltip key={t}>
+                  {/* A disabled button fires no pointer events, so the trigger
+                      wraps it rather than replacing it. */}
+                  <TooltipTrigger asChild>
+                    <div>{button}</div>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="max-w-56">
+                    {requirement}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
+        {nextReward && !isProgressLoading && (
+          <p className="mt-1 text-xs leading-snug text-muted-foreground">
+            Next up:{" "}
+            <span className="font-medium text-foreground">
+              {nextReward.label}
+            </span>{" "}
+            — {getThemeUnlockSentence(nextReward.value, rewards)}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -38,7 +38,8 @@ export function getRewardRequirement(reward) {
       return threshold === 1 ? "your first rep" : `${threshold} reps`;
     }
     if (metric === "historyDays") {
-      return `${Math.round(threshold / 7)} weeks of history`;
+      const weeks = Math.round(threshold / 7);
+      return `${weeks} week${weeks === 1 ? "" : "s"} of history`;
     }
     return `${threshold} ${metric}`;
   });

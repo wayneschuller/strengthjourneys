@@ -51,11 +51,24 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
           animate={{ x: 210, opacity: [0, 0.8, 0] }}
           transition={{ duration: 0.9, delay: animationDelay + 0.18, ease: "easeInOut" }}
         />
+        {/* A compact knurl band gives the shaft a tactile power-bar cue without
+            turning the symbolic diagram into a photo-realistic illustration. */}
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-0 left-1/4 right-1/4 opacity-35"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(135deg, transparent 0 2px, rgb(15 23 42 / 0.55) 2px 3px, transparent 3px 5px)",
+          }}
+        />
+        {/* Subtle powerlifting reference marks, kept generic rather than branded. */}
+        <span aria-hidden="true" className="absolute inset-y-[-1px] left-[43%] w-px bg-slate-950/45" />
+        <span aria-hidden="true" className="absolute inset-y-[-1px] left-[47%] w-px bg-slate-950/45" />
       </motion.div>
       {hasPlates && (
         <motion.div
           aria-hidden="true"
-          className="absolute right-0 h-8 w-2 rounded-sm border border-slate-900/40"
+          className="absolute right-0 h-9 w-3 rounded-sm border-2 border-slate-950/70"
           style={SLEEVE_STYLE}
           initial={{ scaleY: 0.7, opacity: 0 }}
           animate={{ scaleY: 1, opacity: 1 }}

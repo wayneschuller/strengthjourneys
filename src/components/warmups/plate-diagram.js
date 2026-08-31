@@ -34,6 +34,12 @@ const PLATE_STOP_STYLE = {
  */
 export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className, hideLabels = false, animationDelay = 0, animationKey, useScrollTrigger = false, slideFromLeft = false }) {
   const unit = isMetric ? "kg" : "lb";
+  const innermostPlate = platesPerSide[0];
+  const innermostPlateIsFractional =
+    innermostPlate?.weight === 2.5 || innermostPlate?.weight === 1.25;
+  // The stop sits behind the plate, so it should never visually outsize the
+  // plate it supports; fractional plates need a proportionally smaller stop.
+  const plateStopHeightClass = innermostPlateIsFractional ? "h-7" : "h-12";
 
   const renderBar = () => (
     <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 items-center justify-end">
@@ -104,7 +110,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
               plate presses against; it adds useful loading context without a collar graphic. */}
           <motion.div
             aria-hidden="true"
-            className="h-20 w-2 rounded-full border border-slate-950/35"
+            className={cn(plateStopHeightClass, "w-2 rounded-full border border-slate-950/35")}
             style={PLATE_STOP_STYLE}
             initial={{ x: slideFromLeft ? -20 : 20, opacity: 0, scaleY: 0.85 }}
             animate={{ x: 0, opacity: 1, scaleY: 1 }}

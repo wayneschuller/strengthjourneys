@@ -81,6 +81,36 @@ export function generateSessionSets(
     return map;
   };
 
+  /**
+   * Find the next practical loading landmark after an anchor set. A landmark
+   * adds one pair of the next smaller standard plate, so a 60kg bar with blue
+   * 20s naturally moves to 90kg by adding yellow 15s. This reflects how lifters
+   * actually load a bar: preserve the plates already on it and change plate
+   * family only when that creates a useful, achievable jump.
+   */
+  const getNextPlateLandmarkTarget = () => {
+    if (previousPlateMap.size === 0) {
+      return null;
+    }
+
+    const allPlates = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
+    const allowedPlates = getAllowedPlates(allPlates, isMetric, platePreference);
+    const largestLoadedPlate = Math.max(...previousPlateMap.keys());
+    const nextSmallerPlate = allowedPlates.find(
+      (plate) => plate.weight < largestLoadedPlate,
+    );
+
+    if (!nextSmallerPlate) {
+      return null;
+    }
+
+    const loadedWeightPerSide = Array.from(previousPlateMap.entries()).reduce(
+      (sum, [weight, count]) => sum + weight * count,
+      0,
+    );
+    return barWeight + (loadedWeightPerSide + nextSmallerPlate.weight) * 2;
+  };
+
   // ============================================
   // OPENING SETS: Empty bar and anchor plate set
   // ============================================
@@ -263,7 +293,14 @@ export function generateSessionSets(
     
     for (let i = 0; i < pairsToAdd; i++) {
       const newPairsPerSide = anchorPairsPerSide + i + 1;
-      const targetWeight = barWeight + (newPairsPerSide * anchorPlateWeight * 2);
+      const anchorTargetWeight =
+        barWeight + newPairsPerSide * anchorPlateWeight * 2;
+      // Prefer a plate-family transition such as blue 20s to yellow 15s over
+      // blindly adding another pair of the anchor plate. The anchor progression
+      // remains the fallback when the landmark cannot fit the remaining range.
+      const landmarkTargetWeight =
+        i === 0 ? getNextPlateLandmarkTarget() : null;
+      const targetWeight = landmarkTargetWeight || anchorTargetWeight;
       
       if (targetWeight >= finalWarmupWeight) {
         break; // Don't go past final warmup

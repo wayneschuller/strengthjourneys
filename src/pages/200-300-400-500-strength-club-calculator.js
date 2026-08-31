@@ -848,9 +848,6 @@ function StrengthClubMain({ relatedArticles }) {
                 </span>
               </div>
             )}
-            <p className="text-muted-foreground mb-4 text-xs">
-              Plate diagrams use standard lb plates, even if you train in kg.
-            </p>
             <div className="grid gap-6 md:grid-cols-2">
               {MILESTONES.map((milestone, index) => (
                 <MilestoneCard
@@ -976,6 +973,9 @@ function StrengthClubMain({ relatedArticles }) {
               >
                 Deadlift
               </Link>
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Plate diagrams use standard lb plates, even if you train in kg.
             </p>
           </CardFooter>
         </Card>

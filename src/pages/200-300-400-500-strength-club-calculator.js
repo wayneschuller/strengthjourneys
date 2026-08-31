@@ -339,6 +339,9 @@ const getStrengthClubPlateBreakdown = (totalWeightLb) =>
 function SliderWithMarkers({
   value,
   max,
+  target,
+  achieved,
+  ariaLabel,
   prVal,
   r90Val,
   onValueChange,
@@ -347,20 +350,48 @@ function SliderWithMarkers({
 }) {
   const showPr = prVal != null && prVal > 0 && prVal <= max;
   const showR90 = r90Val != null && r90Val > 0 && r90Val <= max && r90Val !== prVal;
+  const showTarget = target != null && target > 0 && target <= max;
   const prPercent = showPr ? (prVal / max) * 100 : 0;
   const r90Percent = showR90 ? (r90Val / max) * 100 : 0;
+  const targetPercent = showTarget ? (target / max) * 100 : 0;
 
   return (
-    <div className="relative pb-6">
+    <div className="relative pt-5 pb-6">
       <Slider
         value={[value]}
         min={0}
         max={max}
         step={5}
+        aria-label={ariaLabel}
         onValueChange={onValueChange}
         onValueCommit={onValueCommit}
         className={`mt-2 ${className}`}
       />
+      {/* The milestone itself. Tracks run 0-max, so without this notch there is
+          nothing on the track showing where the goal actually sits. */}
+      {showTarget && (
+        <div
+          className="pointer-events-none absolute top-0 flex flex-col items-center"
+          style={{ left: `${targetPercent}%`, transform: "translateX(-50%)" }}
+        >
+          <span
+            className={cn(
+              "text-[10px] leading-none font-bold tabular-nums",
+              achieved
+                ? "text-green-600"
+                : "text-amber-600 dark:text-amber-500",
+            )}
+          >
+            {target}
+          </span>
+          <div
+            className={cn(
+              "mt-0.5 h-3 w-0.5",
+              achieved ? "bg-emerald-500" : "bg-amber-500",
+            )}
+          />
+        </div>
+      )}
       {showPr && (
         <div
           className="pointer-events-none absolute bottom-0 flex flex-col items-center"
@@ -439,28 +470,28 @@ function StrengthClubMain({ relatedArticles }) {
     new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10),
   );
 
-  const [press, setPress, , , pressIsInitialized] = useStateFromQueryOrLocalStorage(
+  const [press, setPress, pressIsDefault, , pressIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
     115,
     false,
     null,
     (value) => Number.isFinite(value) && value >= 0 && value <= 400,
   );
-  const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
+  const [bench, setBench, benchIsDefault, , benchIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_BENCH,
     185,
     false,
     null,
     (value) => Number.isFinite(value) && value >= 0 && value <= 500,
   );
-  const [squat, setSquat, , , squatIsInitialized] = useStateFromQueryOrLocalStorage(
+  const [squat, setSquat, squatIsDefault, , squatIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_SQUAT,
     255,
     false,
     null,
     (value) => Number.isFinite(value) && value >= 0 && value <= 700,
   );
-  const [deadlift, setDeadlift, , , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
+  const [deadlift, setDeadlift, deadliftIsDefault, , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_DEADLIFT,
     315,
     false,
@@ -493,6 +524,10 @@ function StrengthClubMain({ relatedArticles }) {
   const total = press + bench + squat + deadlift;
   const remaining = MILESTONES.filter((m) => values[m.key] < m.target);
   const allAchieved = remaining.length === 0;
+  // True only when nothing came from the URL, localStorage, or a slider drag —
+  // i.e. every number on screen is a starting placeholder we invented.
+  const allValuesArePlaceholders =
+    pressIsDefault && benchIsDefault && squatIsDefault && deadliftIsDefault;
   const strengthClubQuery = useMemo(
     () => Object.fromEntries(
       Object.entries(values).map(([key, value]) => [key, String(value)]),
@@ -531,6 +566,7 @@ function StrengthClubMain({ relatedArticles }) {
       : null;
   }, [e1rmFormula, isDemoMode, topLiftsByTypeAndReps]);
   const usingUserData = Boolean(prWeightsLb);
+  const showPlaceholderHint = allValuesArePlaceholders && !usingUserData;
 
   useEffect(() => {
     if (hasExplicitQueryRef.current || hasAutoPopulatedRef.current || !prWeightsLb) {
@@ -801,6 +837,20 @@ function StrengthClubMain({ relatedArticles }) {
 
         <Card className="pt-4">
           <CardContent className="pt-4">
+            {showPlaceholderHint && (
+              <div className="mb-4 rounded-lg border border-dashed p-3 text-sm">
+                <span className="font-medium">
+                  These are placeholder numbers, not your lifts.
+                </span>{" "}
+                <span className="text-muted-foreground">
+                  Drag each slider to your best single — or your estimated one-rep
+                  max — for that lift.
+                </span>
+              </div>
+            )}
+            <p className="text-muted-foreground mb-4 text-xs">
+              Plate diagrams use standard lb plates, even if you train in kg.
+            </p>
             <div className="grid gap-6 md:grid-cols-2">
               {MILESTONES.map((milestone, index) => (
                 <MilestoneCard
@@ -1151,9 +1201,6 @@ function MilestoneCard({
             animationDelay={0.3 + index * 0.1}
             animationKey={`plates-${key}-${value}`}
           />
-          <p className="text-muted-foreground mt-2 text-xs">
-            Plate diagram uses standard lb plates, even if you train in kg.
-          </p>
         </div>
 
         {/* Slider */}
@@ -1177,6 +1224,9 @@ function MilestoneCard({
           <SliderWithMarkers
             value={value}
             max={max}
+            target={target}
+            achieved={achieved}
+            ariaLabel={`${liftType} weight in pounds`}
             prVal={prVal}
             r90Val={r90Val}
             onValueChange={onValueChange(key, setter)}

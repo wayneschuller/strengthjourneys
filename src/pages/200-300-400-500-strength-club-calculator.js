@@ -43,6 +43,7 @@ import {
   CircleDashed,
   Anvil,
   RotateCcw,
+  Check,
 } from "lucide-react";
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
@@ -490,7 +491,8 @@ function StrengthClubMain({ relatedArticles }) {
   );
   const values = useMemo(() => ({ press, bench, squat, deadlift }), [press, bench, squat, deadlift]);
   const total = press + bench + squat + deadlift;
-  const allAchieved = MILESTONES.every((m) => values[m.key] >= m.target);
+  const remaining = MILESTONES.filter((m) => values[m.key] < m.target);
+  const allAchieved = remaining.length === 0;
   const strengthClubQuery = useMemo(
     () => Object.fromEntries(
       Object.entries(values).map(([key, value]) => [key, String(value)]),
@@ -830,12 +832,14 @@ function StrengthClubMain({ relatedArticles }) {
               <div
                 className={cn("mt-1 text-sm font-semibold", {
                   "text-green-600": allAchieved,
-                  "text-muted-foreground": !allAchieved,
+                  "text-amber-600 dark:text-amber-500": !allAchieved,
                 })}
               >
                 {allAchieved
                   ? "All four milestones achieved! You're in the 200/300/400/500 club!"
-                  : `${MILESTONES.filter((m) => values[m.key] >= m.target).length} of 4 milestones achieved`}
+                  : `${MILESTONES.length - remaining.length} of 4 milestones achieved — still to go: ${remaining
+                      .map((m) => `${m.liftType} (${m.target - values[m.key]} lbs)`)
+                      .join(", ")}`}
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 {hasMovedFromPR && (
@@ -1034,7 +1038,9 @@ function MilestoneCard({
   // Green gradient fill that rises from bottom based on progress
   const fillPercent = Math.min(100, (value / target) * 100);
 
-  // Border/glow color based on progress
+  // The green border and glow are reserved for milestones actually hit. An
+  // unfinished card keeps a dashed neutral border no matter how close it is,
+  // so 93% never reads as done at a glance.
   const getBorderStyle = () => {
     if (achieved) {
       return {
@@ -1042,23 +1048,14 @@ function MilestoneCard({
         boxShadow: "0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.15)",
       };
     }
-    if (percent >= 75) {
-      return {
-        borderColor: `rgba(16, 185, 129, ${0.3 + (percent - 75) * 0.028})`,
-        boxShadow: `0 0 ${(percent - 75) * 0.6}px rgba(16, 185, 129, 0.2)`,
-      };
-    }
-    if (percent >= 50) {
-      return {
-        borderColor: `rgba(16, 185, 129, ${(percent - 50) * 0.012})`,
-      };
-    }
     return {};
   };
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-lg border-2 p-4"
+      className={cn("relative overflow-hidden rounded-lg border-2 p-4", {
+        "border-dashed border-muted-foreground/30": !achieved,
+      })}
       style={getBorderStyle()}
       initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
@@ -1069,14 +1066,14 @@ function MilestoneCard({
         delay: 0.15 + index * 0.12,
       }}
     >
-      {/* Green gradient fill background */}
+      {/* Progress fill background — amber while climbing, green once hit */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 transition-all duration-300"
         style={{
           height: `${fillPercent}%`,
           background: achieved
             ? "linear-gradient(to top, rgba(16, 185, 129, 0.18), rgba(52, 211, 153, 0.08))"
-            : `linear-gradient(to top, rgba(16, 185, 129, ${0.04 + fillPercent * 0.001}), transparent)`,
+            : `linear-gradient(to top, rgba(245, 158, 11, ${0.03 + fillPercent * 0.0008}), transparent)`,
         }}
       />
 
@@ -1128,7 +1125,7 @@ function MilestoneCard({
               </Link>
             </div>
           </div>
-          {achieved && (
+          {achieved ? (
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -1136,6 +1133,11 @@ function MilestoneCard({
             >
               <Trophy className="h-8 w-8 text-amber-500" />
             </motion.div>
+          ) : (
+            <CircleDashed
+              className="text-muted-foreground/40 h-8 w-8"
+              aria-hidden="true"
+            />
           )}
         </div>
 
@@ -1166,7 +1168,7 @@ function MilestoneCard({
             <span
               className={cn("text-sm font-semibold tabular-nums", {
                 "text-green-600": achieved,
-                "text-muted-foreground": !achieved,
+                "text-amber-600 dark:text-amber-500": !achieved,
               })}
             >
               {percent}%
@@ -1183,16 +1185,23 @@ function MilestoneCard({
           />
         </div>
 
-        {/* Status text */}
+        {/* Status badge — the plain-language verdict for this milestone */}
         <div
-          className={cn("text-sm font-medium", {
-            "text-green-600": achieved,
-            "text-muted-foreground": !achieved,
-          })}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm font-semibold",
+            achieved
+              ? "border-emerald-500/40 bg-emerald-500/10 text-green-700 dark:text-green-400"
+              : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+          )}
         >
+          {achieved ? (
+            <Check className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+          ) : (
+            <CircleDashed className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+          )}
           {achieved
-            ? `${value - target} lbs past the milestone!`
-            : `${target - value} lbs to go`}
+            ? `Milestone hit — ${value - target} lbs past`
+            : `Not yet — ${target - value} lbs to go`}
         </div>
       </div>
     </motion.div>

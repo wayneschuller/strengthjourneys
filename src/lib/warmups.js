@@ -111,6 +111,73 @@ export function generateSessionSets(
     return barWeight + (loadedWeightPerSide + nextSmallerPlate.weight) * 2;
   };
 
+  /**
+   * Choose between practical plate landmarks with a one-step look-ahead. The
+   * smoothest immediate jump is not always the best choice: 60 -> 90 leaves a
+   * large 90 -> 117.5kg jump, while 60 -> 100 leaves a much smaller final gap.
+   * Squared gaps penalize awkward jumps, and the final gap is weighted twice so
+   * the progression naturally favours major-plate landmarks as the top set
+   * approaches without requiring a growing list of hard-coded thresholds.
+   */
+  const chooseMiddleTargetWeight = ({
+    anchorTargetWeight,
+    landmarkTargetWeight,
+    finalWarmupWeight,
+  }) => {
+    const candidates = [landmarkTargetWeight, anchorTargetWeight].filter(
+      (target, index, all) =>
+        target != null && all.indexOf(target) === index,
+    );
+    let bestCandidate = null;
+
+    candidates.forEach((targetWeight) => {
+      if (
+        targetWeight >= finalWarmupWeight - effectiveMinJump ||
+        targetWeight <= previousWeight + effectiveMinJump
+      ) {
+        return;
+      }
+
+      const currentPlatesPerSide = Array.from(previousPlateMap.entries())
+        .map(([weight, count]) => {
+          const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(
+            (p) => p.weight === weight,
+          );
+          return plateInfo ? { ...plateInfo, count } : null;
+        })
+        .filter(Boolean);
+      const breakdown = calculatePlateBreakdownWithExisting(
+        targetWeight,
+        barWeight,
+        currentPlatesPerSide,
+        isMetric,
+        platePreference,
+      );
+      const actualWeight = breakdown.closestWeight;
+      const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
+      const onlyAdding = Array.from(previousPlateMap.entries()).every(
+        ([weight, count]) => (newPlateMap.get(weight) || 0) >= count,
+      );
+
+      if (
+        !onlyAdding ||
+        actualWeight <= previousWeight + effectiveMinJump ||
+        actualWeight >= finalWarmupWeight - effectiveMinJump
+      ) {
+        return;
+      }
+
+      const immediateJump = actualWeight - previousWeight;
+      const finalGap = finalWarmupWeight - actualWeight;
+      const score = immediateJump ** 2 + 2 * finalGap ** 2;
+      if (!bestCandidate || score < bestCandidate.score) {
+        bestCandidate = { score, weight: targetWeight };
+      }
+    });
+
+    return bestCandidate?.weight || anchorTargetWeight;
+  };
+
   // ============================================
   // OPENING SETS: Empty bar and anchor plate set
   // ============================================
@@ -295,12 +362,15 @@ export function generateSessionSets(
       const newPairsPerSide = anchorPairsPerSide + i + 1;
       const anchorTargetWeight =
         barWeight + newPairsPerSide * anchorPlateWeight * 2;
-      // Prefer a plate-family transition such as blue 20s to yellow 15s over
-      // blindly adding another pair of the anchor plate. The anchor progression
-      // remains the fallback when the landmark cannot fit the remaining range.
-      const landmarkTargetWeight =
-        i === 0 ? getNextPlateLandmarkTarget() : null;
-      const targetWeight = landmarkTargetWeight || anchorTargetWeight;
+      // Prefer a plate-family transition such as blue 20s to yellow 15s when
+      // it keeps the whole remaining progression smooth. The look-ahead may
+      // instead choose another pair of blue 20s for a heavier goal, avoiding a
+      // large jump into the final primer without a numeric load threshold.
+      const targetWeight = chooseMiddleTargetWeight({
+        anchorTargetWeight,
+        landmarkTargetWeight: getNextPlateLandmarkTarget(),
+        finalWarmupWeight,
+      });
       
       if (targetWeight >= finalWarmupWeight) {
         break; // Don't go past final warmup

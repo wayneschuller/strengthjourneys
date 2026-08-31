@@ -4,6 +4,7 @@
  */
 
 import { useMemo } from "react";
+import { useRouter } from "next/router";
 import { useMediaQuery } from "usehooks-ts";
 import { NextSeo } from "next-seo";
 import { Flame } from "lucide-react";
@@ -33,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
+import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import {
   getDefaultBarbellWeight,
   getDefaultBarType,
@@ -114,68 +116,77 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
 function WarmUpSetsCalculatorMain({ relatedArticles }) {
-  const { sex } = useAthleteBio();
-  // Order matters: each includes the ones before it when syncing to URL.
-  // Weight is last so changing it syncs the full state → shareable URL on any change.
-  const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
+  const router = useRouter();
+  const { sex, bioDataIsInitialized } = useAthleteBio();
+  const [isMetric, setIsMetric, , , isMetricIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     false,
-    true,
+    false,
   );
-  const [barType, setBarType, barTypeIsDefault] =
+  const [barType, setBarType, barTypeIsDefault, , barTypeIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE,
       "standard",
-      true,
-      { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
+      false,
+      null,
+      (value) => value === "standard" || value === "womens",
     );
   const explicitBarType = barTypeIsDefault ? null : barType;
   const effectiveBarType = getDefaultBarType({
     sex,
     storedBarType: explicitBarType,
   });
-  const [platePreference, setPlatePreference] = useStateFromQueryOrLocalStorage(
+  const [platePreference, setPlatePreference, , , platePreferenceIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE,
     "red",
-    true,
-    {
-      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: effectiveBarType,
-    },
+    false,
+    null,
+    (value) => value === "red" || value === "blue",
   );
-  const [warmupSetCount, setWarmupSetCount] = useStateFromQueryOrLocalStorage(
+  const [warmupSetCount, setWarmupSetCount, , , warmupSetCountIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT,
     4,
-    true,
-    {
-      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: effectiveBarType,
-      [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
-    },
+    false,
+    null,
+    (value) => Number.isInteger(value) && value >= 2 && value <= 6,
   );
-  const [reps, setReps] = useStateFromQueryOrLocalStorage(
+  const [reps, setReps, , , repsIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WARMUP_REPS,
     5,
-    true,
-    {
-      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: effectiveBarType,
-      [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
-      [LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT]: warmupSetCount,
-    },
+    false,
+    null,
+    (value) => Number.isInteger(value) && value >= 1 && value <= 12,
   );
-  const [weight, setWeight] = useStateFromQueryOrLocalStorage(
+  const [weight, setWeight, , , weightIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WARMUP_WEIGHT,
     100,
-    true,
-    {
-      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+    false,
+    null,
+    (value) => Number.isFinite(value) && value > 0,
+  );
+  const warmupQuery = useMemo(
+    () => ({
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: String(isMetric),
       [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: effectiveBarType,
       [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
-      [LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT]: warmupSetCount,
-      [LOCAL_STORAGE_KEYS.WARMUP_REPS]: reps,
-    },
+      [LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT]: String(warmupSetCount),
+      [LOCAL_STORAGE_KEYS.WARMUP_REPS]: String(reps),
+      [LOCAL_STORAGE_KEYS.WARMUP_WEIGHT]: String(weight),
+    }),
+    [effectiveBarType, isMetric, platePreference, reps, warmupSetCount, weight],
   );
+  useCalculatorQuerySync({
+    router,
+    query: warmupQuery,
+    isInitialized:
+      isMetricIsInitialized &&
+      barTypeIsInitialized &&
+      platePreferenceIsInitialized &&
+      warmupSetCountIsInitialized &&
+      repsIsInitialized &&
+      weightIsInitialized &&
+      bioDataIsInitialized,
+  });
 
   const barWeight = getDefaultBarbellWeight({
     isMetric,
@@ -234,9 +245,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       newWeight = Math.round(Number(weight) / 2.2046);
       setIsMetric(true);
     }
-    setTimeout(() => {
-      setWeight(newWeight);
-    }, 100);
+    setWeight(newWeight);
   };
 
   const unit = isMetric ? "kg" : "lb";

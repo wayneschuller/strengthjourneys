@@ -49,6 +49,7 @@ import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { buildLiftResultSummary, formatLiftResultText } from "@/lib/lift-result-summary";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
+import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { Calculator } from "lucide-react";
 import {
   motion,
@@ -317,26 +318,24 @@ export function E1RMCalculatorMain({
     age,
     sex,
     bioDataIsDefault,
+    bioDataIsInitialized,
   } = useAthleteBio({ modifyURLQuery: true });
-  // Order matters: each includes the ones before it when syncing to URL.
-  // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
-  const [reps, setReps] = useStateFromQueryOrLocalStorage(
+  const [reps, setReps, , , repsIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.REPS,
     5,
-    true,
-    { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
-  ); // Will be a string
+    false,
+    null,
+    (value) => Number.isInteger(value) && value >= 1 && value <= 20,
+  );
   // For normal pages: URL query → localStorage → defaultFormula.
   // For formula slug pages: forceFormula prop drives the display directly (no state involved).
   // Clicking a different formula redirects to /calculator with all current state in the query.
-  const [hookFormula, setHookFormula] = useStateFromQueryOrLocalStorage(
+  const [hookFormula, setHookFormula, , , formulaIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.FORMULA,
     defaultFormula,
-    true,
-    {
-      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.REPS]: reps,
-    },
+    false,
+    null,
+    (value) => e1rmFormulae.includes(value),
   );
   const e1rmFormula = forceFormula ?? hookFormula;
   const setE1rmFormula = forceFormula !== null
@@ -350,16 +349,31 @@ export function E1RMCalculatorMain({
         },
       })
     : setHookFormula;
-  const [weight, setWeight] = useStateFromQueryOrLocalStorage(
+  const [weight, setWeight, , , weightIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WEIGHT,
     225,
-    true,
-    {
-      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
-      [LOCAL_STORAGE_KEYS.REPS]: reps,
+    false,
+    null,
+    (value) => Number.isFinite(value) && value > 0,
+  );
+  const calculatorQuery = useMemo(
+    () => ({
+      [LOCAL_STORAGE_KEYS.REPS]: String(reps),
+      [LOCAL_STORAGE_KEYS.WEIGHT]: String(weight),
       [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
-    },
-  ); // Will be a string
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: String(isMetric),
+    }),
+    [e1rmFormula, isMetric, reps, weight],
+  );
+  useCalculatorQuerySync({
+    router,
+    query: calculatorQuery,
+    isInitialized:
+      repsIsInitialized &&
+      formulaIsInitialized &&
+      weightIsInitialized &&
+      bioDataIsInitialized,
+  });
   const isClient = useIsClient();
   const [isCapturingImage, setIsCapturingImage] = useState(false);
   const { isSuccess: isTextCopied, triggerSuccess: triggerTextCopied } = useTransientSuccess();
@@ -370,18 +384,6 @@ export function E1RMCalculatorMain({
   useEffect(() => {
     setThemeFontFamily(window.getComputedStyle(document.body).fontFamily);
   }, []);
-  // Helper function
-  const updateQueryParams = (updatedParams) => {
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: { ...router.query, ...updatedParams },
-      },
-      undefined,
-      { shallow: true },
-    );
-  };
-
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
 
@@ -427,16 +429,10 @@ export function E1RMCalculatorMain({
       setIsMetric(true);
     }
 
-    // Delay setting weight and bodyWeight states by 100ms
-    // This hack allows the query params to update the above isMetric value before we update other values
-    // We have race conditions with router updates and useEffects - please don't judge me, this works
-    setTimeout(() => {
-      setWeight(newWeight);
-    }, 100); // Adjust delay as needed
-
-    setTimeout(() => {
-      setBodyWeight(newBodyWeight);
-    }, 200); // Adjust delay as needed
+    // The page-level query serializer captures all updated values together, so
+    // unit conversion does not need timing delays to order URL writes.
+    setWeight(newWeight);
+    setBodyWeight(newBodyWeight);
   };
 
   const handleCopyToClipboard = async () => {

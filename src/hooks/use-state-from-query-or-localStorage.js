@@ -1,6 +1,41 @@
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef, useCallback } from "react";
 
+function parseStateValue(value, defaultValue, validateValue) {
+  // Next.js represents repeated query keys as arrays. Use the first value so a
+  // malformed repeated key cannot leak an array into calculator state.
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  try {
+    const parsedValue = JSON.parse(rawValue);
+    const typedValue =
+      typeof defaultValue === "number"
+        ? typeof parsedValue === "number" && Number.isFinite(parsedValue)
+          ? parsedValue
+          : defaultValue
+        : typeof defaultValue === "boolean"
+          ? typeof parsedValue === "boolean"
+            ? parsedValue
+            : defaultValue
+          : typeof defaultValue === "string"
+            ? typeof parsedValue === "string"
+              ? parsedValue
+              : defaultValue
+            : parsedValue;
+    return !validateValue || validateValue(typedValue) ? typedValue : defaultValue;
+  } catch {
+    const fallbackValue = typeof defaultValue === "string" && typeof rawValue === "string"
+      ? rawValue
+      : defaultValue;
+    return !validateValue || validateValue(fallbackValue)
+      ? fallbackValue
+      : defaultValue;
+  }
+}
+
+function stringifyStateValue(value) {
+  return JSON.stringify(value);
+}
+
 /**
  * State from URL query → localStorage → defaultValue. Used across calculators, biodata, warm-ups.
  *
@@ -19,7 +54,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
  * @param {string} key - localStorage key and query param (use LOCAL_STORAGE_KEYS)
  * @param {*} defaultValue
  * @param {boolean} [syncQuery=false]
- * @param {Record<string, *>|null} [includeWhenSyncing=null]
+ * @param {Record<string, *>|null} [includeWhenSyncing=null] - Legacy field-level URL extras.
+ * @param {Function|null} [validateValue=null] - Optional validator for URL/localStorage values.
  * @returns {[*, Function, boolean, Function]} [state, setter, isDefault, silentSetter]
  *   - setter: marks value as user-supplied, persists to localStorage + URL
  *   - isDefault: true when the value was never explicitly provided (URL, localStorage, or setter)
@@ -31,6 +67,7 @@ export const useStateFromQueryOrLocalStorage = (
   defaultValue,
   syncQuery = false,
   includeWhenSyncing = null,
+  validateValue = null,
 ) => {
   const router = useRouter();
   const [state, setState] = useState(defaultValue);
@@ -38,22 +75,14 @@ export const useStateFromQueryOrLocalStorage = (
   const [isDefault, setIsDefault] = useState(true); // true until a real value is found or user sets
   const hasUserInteractedRef = useRef(false); // Gates URL sync: only after user interaction
   const routerRef = useRef(router); // Stable ref to avoid depending on router/includeWhenSyncing in effects
-  routerRef.current = router;
   const includeWhenSyncingRef = useRef(includeWhenSyncing);
-  includeWhenSyncingRef.current = includeWhenSyncing;
+  const validateValueRef = useRef(validateValue);
 
-  // Query/localStorage store strings; JSON.parse for numbers, booleans, objects
-  const parseValue = (value) => {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
-    }
-  };
-
-  const stringifyValue = (value) => {
-    return JSON.stringify(value);
-  };
+  useEffect(() => {
+    routerRef.current = router;
+    includeWhenSyncingRef.current = includeWhenSyncing;
+    validateValueRef.current = validateValue;
+  }, [includeWhenSyncing, router, validateValue]);
 
   // Init: query → localStorage → default.
   // Only persist to localStorage when the value came from a real source — never write defaults.
@@ -67,12 +96,16 @@ export const useStateFromQueryOrLocalStorage = (
     let usingDefault = true;
 
     if (queryValue !== undefined) {
-      initialState = parseValue(queryValue);
+      initialState = parseStateValue(queryValue, defaultValue, validateValueRef.current);
       usingDefault = false;
     } else if (typeof window !== "undefined") {
       const localStorageValue = localStorage.getItem(key);
       if (localStorageValue !== null) {
-        initialState = parseValue(localStorageValue);
+        initialState = parseStateValue(
+          localStorageValue,
+          defaultValue,
+          validateValueRef.current,
+        );
         usingDefault = false;
       } else {
         initialState = defaultValue;
@@ -86,7 +119,7 @@ export const useStateFromQueryOrLocalStorage = (
     setIsInitialized(true);
 
     if (!usingDefault && typeof window !== "undefined") {
-      localStorage.setItem(key, stringifyValue(initialState));
+      localStorage.setItem(key, stringifyStateValue(initialState));
     }
   }, [router.isReady, key, defaultValue]);
 
@@ -100,12 +133,12 @@ export const useStateFromQueryOrLocalStorage = (
       const extras = includeWhenSyncingRef.current;
       const newQueryParams = {
         ...r.query,
-        [key]: stringifyValue(state),
+        [key]: stringifyStateValue(state),
         ...(extras &&
           Object.fromEntries(
             Object.entries(extras).map(([k, v]) => [
               k,
-              stringifyValue(v),
+              stringifyStateValue(v),
             ]),
           )),
       };
@@ -121,7 +154,7 @@ export const useStateFromQueryOrLocalStorage = (
     }
 
     if (typeof window !== "undefined") {
-      localStorage.setItem(key, stringifyValue(state));
+      localStorage.setItem(key, stringifyStateValue(state));
     }
   }, [state, isInitialized, syncQuery, key, isDefault]);
 

@@ -122,10 +122,14 @@
  * Year recap "there is more than one card" nudge.
  *
  * The recap carousel is the whole page, and a first-time viewer can read the
- * title card without ever learning that seven more sit behind it. If the deck
- * has not been touched after a few seconds the next arrow gives three small
- * pushes to the right and then rests. Three is deliberate — enough to catch
- * peripheral vision, few enough that it does not become a tic.
+ * title card without ever learning that seven more sit behind it. Once the deck
+ * has sat untouched for a few seconds the next arrow starts double-tapping to
+ * the right, and keeps doing it until someone touches the carousel — a hint
+ * that gives up after three goes is a hint the person who looked away for a
+ * moment never sees.
+ *
+ * One cycle is two quick pushes followed by a 2.5s rest, so it reads as an
+ * occasional invitation rather than a twitch.
  *
  * The movement is on the arrow glyph rather than the button, because the button
  * already carries a -translate-y-1/2 that a transform animation would clobber
@@ -135,32 +139,36 @@
  */
 @keyframes recap-nudge-arrow {
   0%,
-  55%,
+  15%,
+  30%,
   100% {
     transform: translateX(0);
   }
-  25% {
+  7%,
+  22% {
     transform: translateX(3px);
   }
 }
 
 @keyframes recap-nudge-ring {
   0%,
-  55%,
+  15%,
+  30%,
   100% {
     box-shadow: 0 0 0 0 transparent;
   }
-  25% {
+  7%,
+  22% {
     box-shadow: 0 0 0 5px color-mix(in oklab, var(--primary) 16%, transparent);
   }
 }
 
 .recap-next-nudge {
-  animation: recap-nudge-ring 1.2s ease-in-out 3;
+  animation: recap-nudge-ring 3.6s ease-in-out infinite;
 }
 
 .recap-next-nudge svg {
-  animation: recap-nudge-arrow 1.2s ease-in-out 3;
+  animation: recap-nudge-arrow 3.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

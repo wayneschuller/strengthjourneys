@@ -77,8 +77,9 @@ export function YearRecapCarousel({ year, isDemo }) {
 
   // The carousel is the whole page here: nothing else on screen says there are
   // eight cards. If nobody has touched it after a few seconds, the next arrow
-  // nudges. Any interaction at all retires the nudge for the rest of the visit —
-  // once someone knows the deck moves, pointing at the arrow is just noise.
+  // starts nudging and keeps nudging (see .recap-next-nudge in globals.css).
+  // Any interaction at all retires it for the rest of the visit — once someone
+  // knows the deck moves, pointing at the arrow is just noise.
   const hasInteractedRef = useRef(false);
   const [showNudge, setShowNudge] = useState(false);
 

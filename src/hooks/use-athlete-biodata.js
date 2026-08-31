@@ -297,7 +297,6 @@ export const useAthleteBio = (options = {}) => {
           }),
           [LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE]: JSON.stringify(ctx.liftType),
           [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(ctx.isMetric),
-          [ADVANCED_QUERY_PARAM]: "true",
         },
       },
       undefined,
@@ -325,8 +324,6 @@ export const useAthleteBio = (options = {}) => {
     toggleIsMetric,
   };
 };
-
-const ADVANCED_QUERY_PARAM = "advanced";
 
 // A custom hook to get and store the athlete provided bio data in localStorage
 // Also provide some custom strength levels for the main lifts based on this bio data.
@@ -431,7 +428,6 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
           }),
           [LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE]: JSON.stringify(liftType),
           [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(isMetric),
-          [ADVANCED_QUERY_PARAM]: "true", // Explicit flag so recipient knows to show advanced UI
         },
       },
       undefined,

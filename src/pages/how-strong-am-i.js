@@ -65,7 +65,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
-import { buildShareUrl } from "@/lib/share-url";
+import { buildShareUrl, getFirstQueryValue, parseQueryNumber } from "@/lib/share-url";
 import { cn } from "@/lib/utils";
 import {
   computeStrengthResults,
@@ -266,7 +266,7 @@ function HowStrongAmIPageMain() {
 
     const queryWeights = {};
     for (const lift of LIFTS) {
-      const value = parsePositiveQueryNumber(router.query[lift.key]);
+      const value = parseQueryNumber(router.query[lift.key], { min: 1 });
       if (value !== null) queryWeights[lift.key] = toKg(value, isMetric);
     }
 
@@ -501,7 +501,6 @@ function HowStrongAmIPageMain() {
             [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: String(age),
             [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: sex,
             [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: String(bodyWeight),
-            advanced: "true",
           }),
     }),
     [age, bioDataIsDefault, bodyWeight, isMetric, liftWeights, selectedUniverse, sex],
@@ -756,16 +755,6 @@ function toKg(weight, isMetric) {
   return isMetric ? weight : weight / 2.2046;
 }
 
-function getFirstQueryValue(value) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function parsePositiveQueryNumber(value) {
-  const numericValue = Number(getFirstQueryValue(value));
-  return Number.isFinite(numericValue) && numericValue > 0
-    ? numericValue
-    : null;
-}
 
 function convertWeight(weight, fromMetric, toMetric) {
   if (fromMetric === toMetric) return weight;

@@ -20,3 +20,14 @@ export function buildShareUrl(pathname, query, origin = null) {
   const queryString = params.toString();
   return `${resolvedOrigin}${pathname}${queryString ? `?${queryString}` : ""}`;
 }
+
+export function getFirstQueryValue(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export function parseQueryNumber(value, { min = -Infinity, max = Infinity } = {}) {
+  const numericValue = Number(getFirstQueryValue(value));
+  return Number.isFinite(numericValue) && numericValue >= min && numericValue <= max
+    ? numericValue
+    : null;
+}

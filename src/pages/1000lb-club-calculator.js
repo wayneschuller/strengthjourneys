@@ -5,6 +5,7 @@
  */
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
@@ -16,8 +17,9 @@ import { getLongReadableDateString } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
-import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
+import { useReadLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
+import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import {
   Card,
   CardContent,
@@ -73,6 +75,8 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
+import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
+import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
 
 const LIFT_GRAPHICS = {
   "Back Squat": "/back_squat.svg",
@@ -370,6 +374,7 @@ function SliderWithMarkers({ value, prVal, r90Val, onValueChange, onValueCommit,
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
 function ThousandPoundClubCalculatorMain({ relatedArticles }) {
+  const router = useRouter();
   const { toast } = useToast();
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
@@ -387,27 +392,43 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   });
   const e1rmFormula = storedFormula ?? "Brzycki";
 
-  const [squat, setSquat] = useLocalStorage(
+  const [squat, setSquat, , , squatIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
     275,
-    {
-      initializeWithValue: false,
-    },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= 700,
   );
-  const [bench, setBench] = useLocalStorage(
+  const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_BENCH,
     205,
-    {
-      initializeWithValue: false,
-    },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= 700,
   );
-  const [deadlift, setDeadlift] = useLocalStorage(
+  const [deadlift, setDeadlift, , , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT,
     315,
-    {
-      initializeWithValue: false,
-    },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= 700,
   );
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const hasExplicitQueryRef = useRef(false);
+
+  // Shared links use readable pound values. URL values override localStorage and
+  // also prevent authenticated PR auto-population from replacing the shared set.
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    for (const key of ["squat", "bench", "deadlift"]) {
+      const value = parseQueryNumber(router.query[key], { min: 0, max: 700 });
+      if (value !== null) {
+        hasExplicitQueryRef.current = true;
+        break;
+      }
+    }
+  }, [router.isReady, router.query]);
   const prevTotalRef = useRef(null);
   const hasCelebratedRef = useRef(false);
   const activeLiftTimeoutRef = useRef(null);
@@ -421,7 +442,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const prWeightsLbRef = useRef(null);
 
   useEffect(() => {
-    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps || isDemoMode)
+    if (
+      hasExplicitQueryRef.current ||
+      hasAutoPopulatedRef.current ||
+      !topLiftsByTypeAndReps ||
+      isDemoMode
+    )
       return;
 
     const sq = findBestE1RM("Back Squat", topLiftsByTypeAndReps, e1rmFormula);
@@ -523,6 +549,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const handleResetToPRs = () => {
     const pr = prWeightsLbRef.current;
     if (!pr) return;
+    setHasInteracted(true);
     if (pr.squat != null) setSquat(pr.squat);
     if (pr.bench != null) setBench(pr.bench);
     if (pr.deadlift != null) setDeadlift(pr.deadlift);
@@ -530,6 +557,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   const handleResetTo90d = () => {
     if (!recent90dLb) return;
+    setHasInteracted(true);
     if (recent90dLb.squat != null) setSquat(recent90dLb.squat);
     if (recent90dLb.bench != null) setBench(recent90dLb.bench);
     if (recent90dLb.deadlift != null) setDeadlift(recent90dLb.deadlift);
@@ -681,6 +709,20 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   const total = squat + bench + deadlift;
   const inClub = total >= 1000;
+  const thousandClubQuery = useMemo(
+    () => ({
+      squat: String(squat),
+      bench: String(bench),
+      deadlift: String(deadlift),
+    }),
+    [bench, deadlift, squat],
+  );
+  useCalculatorQuerySync({
+    router,
+    query: thousandClubQuery,
+    isInitialized: squatIsInitialized && benchIsInitialized && deadliftIsInitialized,
+    hasInteracted,
+  });
 
   const toKgF = (n) => (Number(n) * KG_PER_LB).toFixed(1);
   const awayLbs = Math.max(0, 1000 - total);
@@ -699,6 +741,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const handleLiftValueChange =
     (liftKey, setter) =>
     ([v]) => {
+      setHasInteracted(true);
       const prVal = prWeightsLbRef.current?.[liftKey];
       const r90Val = recent90dLb?.[liftKey];
       // Snap to whichever marker is closest within 1 step
@@ -768,7 +811,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   const handleCopyResult = () => {
     const percent = Math.min(100, Math.round((total / 1000) * 100));
-    const url = "https://www.strengthjourneys.xyz/1000lb-club-calculator";
+    const url = buildShareUrl("/1000lb-club-calculator", thousandClubQuery);
     const lines = [
       inClub
         ? "I'm in the 1000 lb club!"

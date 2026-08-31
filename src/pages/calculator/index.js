@@ -369,7 +369,6 @@ export function E1RMCalculatorMain({
             [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: String(age),
             [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: sex,
             [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: String(bodyWeight),
-            advanced: "true",
           }),
     }),
     [age, bodyWeight, bioDataIsDefault, e1rmFormula, isMetric, reps, sex, weight],
@@ -468,7 +467,6 @@ export function E1RMCalculatorMain({
       shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_AGE] = age;
       shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_SEX] = sex;
       shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT] = bodyWeight;
-      shareQuery.advanced = "true";
     }
     const shareUrl = buildShareUrl(router.asPath.split("?")[0], shareQuery);
 
@@ -1715,7 +1713,6 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
       shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_AGE] = age;
       shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_SEX] = sex;
       shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT] = bodyWeight;
-      shareQuery.advanced = "true";
     }
 
     const lines = [

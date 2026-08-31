@@ -3,20 +3,28 @@
  * Add future cosmetic or celebratory rewards here without changing consumers.
  */
 
+// The ladder shifted up one rung on 2026-09-01: every theme now costs what the
+// theme above it used to, and a new top rung was extrapolated from the same
+// curve. The old first rung was a single set, which unlocked before anyone had
+// trained — a reward that arrives for free is not a reward. Blueprint now takes
+// roughly one full session.
+//
+// Each reward carries three thresholds and unlocks on ANY one of them, so the
+// numbers are three routes to the same rung rather than a checklist.
 export const THEME_REWARDS = [
-  createThemeReward("blueprint", "Blueprint", 1, 1, 0),
-  createThemeReward("blueprint-dark", "Blueprint Dark", 10, 50, 7),
-  createThemeReward("starry-night", "Starry Night", 25, 100, 14),
-  createThemeReward("starry-night-dark", "Starry Night Dark", 45, 250, 28),
-  createThemeReward("retro-arcade", "Retro Arcade", 75, 500, 42),
-  createThemeReward("retro-arcade-dark", "Retro Arcade Dark", 100, 700, 56),
-  createThemeReward("neo-brutalism", "Neo Brutalism", 125, 850, 70),
+  createThemeReward("blueprint", "Blueprint", 10, 50, 7),
+  createThemeReward("blueprint-dark", "Blueprint Dark", 25, 100, 14),
+  createThemeReward("starry-night", "Starry Night", 45, 250, 28),
+  createThemeReward("starry-night-dark", "Starry Night Dark", 75, 500, 42),
+  createThemeReward("retro-arcade", "Retro Arcade", 100, 700, 56),
+  createThemeReward("retro-arcade-dark", "Retro Arcade Dark", 125, 850, 70),
+  createThemeReward("neo-brutalism", "Neo Brutalism", 150, 1000, 84),
   createThemeReward(
     "neo-brutalism-dark",
     "Neo Brutalism Dark",
-    150,
-    1000,
-    84,
+    175,
+    1200,
+    98,
   ),
 ];
 

@@ -50,6 +50,7 @@ import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { buildLiftResultSummary, formatLiftResultText } from "@/lib/lift-result-summary";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
+import { buildShareUrl } from "@/lib/share-url";
 import { Calculator } from "lucide-react";
 import {
   motion,
@@ -319,7 +320,7 @@ export function E1RMCalculatorMain({
     sex,
     bioDataIsDefault,
     bioDataIsInitialized,
-  } = useAthleteBio({ modifyURLQuery: true });
+  } = useAthleteBio();
   const [reps, setReps, , , repsIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.REPS,
     5,
@@ -362,8 +363,16 @@ export function E1RMCalculatorMain({
       [LOCAL_STORAGE_KEYS.WEIGHT]: String(weight),
       [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: String(isMetric),
+      ...(bioDataIsDefault
+        ? {}
+        : {
+            [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: String(age),
+            [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: sex,
+            [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: String(bodyWeight),
+            advanced: "true",
+          }),
     }),
-    [e1rmFormula, isMetric, reps, weight],
+    [age, bodyWeight, bioDataIsDefault, e1rmFormula, isMetric, reps, sex, weight],
   );
   useCalculatorQuerySync({
     router,
@@ -448,18 +457,20 @@ export function E1RMCalculatorMain({
     const liftData = bigFourName ? getLiftBarData(bigFourName, standards, e1rmWeight) : null;
     const hasBio = !bioDataIsDefault && bodyWeight > 0;
 
-    const params = new URLSearchParams({
+    const shareQuery = {
       [LOCAL_STORAGE_KEYS.REPS]: reps,
       [LOCAL_STORAGE_KEYS.WEIGHT]: weight,
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
       [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
-    });
-    params.set("unit", unit);
+      unit,
+    };
     if (!bioDataIsDefault) {
-      params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
-      params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
-      params.set(LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT, bodyWeight);
+      shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_AGE] = age;
+      shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_SEX] = sex;
+      shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT] = bodyWeight;
+      shareQuery.advanced = "true";
     }
+    const shareUrl = buildShareUrl(router.asPath.split("?")[0], shareQuery);
 
     let sharePercentiles = null;
     const pctKey = bigFourName ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName] : null;
@@ -487,7 +498,7 @@ export function E1RMCalculatorMain({
               diff: liftData.diff,
             }
           : null,
-      sourceUrl: `https://www.strengthjourneys.xyz${router.asPath.split("?")[0]}?${params.toString()}`,
+      sourceUrl: shareUrl,
     });
 
     const sentenceToCopy = formatLiftResultText(summary);
@@ -1694,16 +1705,17 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   }, [bioDataIsDefault, bodyWeight, e1rmWeight, isMetric, age, sex]);
 
   const handleCopyLift = (liftType, rating, emoji, nextTierInfo, diff) => {
-    const params = new URLSearchParams({
+    const shareQuery = {
       [LOCAL_STORAGE_KEYS.REPS]: reps,
       [LOCAL_STORAGE_KEYS.WEIGHT]: weight,
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
       [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
-    });
+    };
     if (!bioDataIsDefault) {
-      params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
-      params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
-      params.set(LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT, bodyWeight);
+      shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_AGE] = age;
+      shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_SEX] = sex;
+      shareQuery[LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT] = bodyWeight;
+      shareQuery.advanced = "true";
     }
 
     const lines = [
@@ -1716,7 +1728,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
     if (nextTierInfo && diff) {
       lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} ${nextTierInfo.name} — ${diff}${unit} away`);
     }
-    lines.push(`Source: https://www.strengthjourneys.xyz/calculator?${params.toString()}`);
+    lines.push(`Source: ${buildShareUrl("/calculator", shareQuery)}`);
 
     const textarea = document.createElement("textarea");
     try {

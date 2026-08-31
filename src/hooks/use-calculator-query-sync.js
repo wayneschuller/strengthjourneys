@@ -11,12 +11,14 @@ import { useEffect, useRef } from "react";
  * @param {Object} params.query - Complete calculator query state to serialize.
  * @param {boolean} params.isInitialized - Whether all calculator fields have loaded.
  * @param {boolean} [params.enabled=true] - Whether URL synchronization is enabled.
+ * @param {boolean} [params.hasInteracted=true] - Prevents auto-populated data from being written.
  */
 export function useCalculatorQuerySync({
   router,
   query,
   isInitialized,
   enabled = true,
+  hasInteracted = true,
 }) {
   const hasMountedRef = useRef(false);
   const lastSerializedQueryRef = useRef("");
@@ -32,6 +34,8 @@ export function useCalculatorQuerySync({
       lastSerializedQueryRef.current = serializedQuery;
       return undefined;
     }
+
+    if (!hasInteracted) return undefined;
 
     if (serializedQuery === lastSerializedQueryRef.current) return undefined;
 
@@ -51,5 +55,5 @@ export function useCalculatorQuerySync({
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [enabled, isInitialized, query, router]);
+  }, [enabled, hasInteracted, isInitialized, query, router]);
 }

@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { useReadLocalStorage } from "usehooks-ts";
 import { NextSeo } from "next-seo";
@@ -63,6 +64,8 @@ import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
+import { buildShareUrl } from "@/lib/share-url";
 import { cn } from "@/lib/utils";
 import {
   computeStrengthResults,
@@ -223,7 +226,16 @@ export default function HowStrongAmIPage({ relatedArticles }) {
 }
 
 function HowStrongAmIPageMain() {
-  const { age, sex, bodyWeight, isMetric, toggleIsMetric } = useAthleteBio();
+  const router = useRouter();
+  const {
+    age,
+    sex,
+    bodyWeight,
+    isMetric,
+    toggleIsMetric,
+    bioDataIsDefault,
+    bioDataIsInitialized,
+  } = useAthleteBio();
   const { toast } = useToast();
   const { data: session, status: authStatus } = useSession();
   const {
@@ -240,6 +252,51 @@ function HowStrongAmIPageMain() {
     bench: toKg(155, false),
     deadlift: toKg(265, false),
   }));
+  const [queryHydrated, setQueryHydrated] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [selectedUniverse, setSelectedUniverse] = useState("General Population");
+  const [hoveredUniverse, setHoveredUniverse] = useState(null);
+  const hasExplicitQueryRef = useRef(false);
+  const previousBioSignatureRef = useRef(null);
+
+  // URL values are stored in the displayed unit so shared links remain readable.
+  // Explicit URL values take precedence over logged-in auto-population.
+  useEffect(() => {
+    if (!router.isReady || !bioDataIsInitialized) return;
+
+    const queryWeights = {};
+    for (const lift of LIFTS) {
+      const value = parsePositiveQueryNumber(router.query[lift.key]);
+      if (value !== null) queryWeights[lift.key] = toKg(value, isMetric);
+    }
+
+    if (Object.keys(queryWeights).length > 0) {
+      hasExplicitQueryRef.current = true;
+      setLiftWeightsKg((previous) => ({ ...previous, ...queryWeights }));
+    }
+
+    const requestedUniverse = getFirstQueryValue(router.query.universe);
+    if (UNIVERSES.includes(requestedUniverse)) {
+      setSelectedUniverse(requestedUniverse);
+    }
+
+    setQueryHydrated(true);
+  }, [bioDataIsInitialized, isMetric, router.isReady, router.query]);
+
+  // Bio controls are shared context, so detect explicit edits here and include
+  // those values in the next shareable URL snapshot.
+  useEffect(() => {
+    if (!bioDataIsInitialized) return;
+    const signature = JSON.stringify({ age, sex, bodyWeight });
+    if (previousBioSignatureRef.current === null) {
+      previousBioSignatureRef.current = signature;
+      return;
+    }
+    if (signature !== previousBioSignatureRef.current) {
+      previousBioSignatureRef.current = signature;
+      if (!bioDataIsDefault) setHasInteracted(true);
+    }
+  }, [age, bioDataIsDefault, bioDataIsInitialized, bodyWeight, sex]);
 
   // Track whether we've auto-populated from user data
   const [usingUserData, setUsingUserData] = useState(false);
@@ -248,7 +305,12 @@ function HowStrongAmIPageMain() {
 
   // Auto-populate sliders from user's actual best E1RMs (skip demo data)
   useEffect(() => {
-    if (hasAutoPopulatedRef.current || !topLiftsByTypeAndReps || isDemoMode) return;
+    if (
+      hasExplicitQueryRef.current ||
+      hasAutoPopulatedRef.current ||
+      !topLiftsByTypeAndReps ||
+      isDemoMode
+    ) return;
 
     const squat = findBestE1RM("Back Squat", topLiftsByTypeAndReps, "Brzycki");
     const bench = findBestE1RM("Bench Press", topLiftsByTypeAndReps, "Brzycki");
@@ -388,24 +450,32 @@ function HowStrongAmIPageMain() {
     };
   }, [usingUserData, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, parsedData]);
 
-  const [selectedUniverse, setSelectedUniverse] = useState("General Population");
-  const [hoveredUniverse, setHoveredUniverse] = useState(null);
-
   const liftWeights = useMemo(
     () => convertLiftWeights(liftWeightsKg, true, isMetric),
     [liftWeightsKg, isMetric],
   );
 
-  const handleLiftChange = (key, value) =>
+  const handleLiftChange = (key, value) => {
+    setHasInteracted(true);
     setLiftWeightsKg((prev) => ({ ...prev, [key]: toKg(value, isMetric) }));
+  };
+
+  const handleUniverseChange = (value) => {
+    setHasInteracted(true);
+    setSelectedUniverse(value);
+  };
 
   const handleResetToPRs = () => {
-    if (prWeightsKgRef.current) setLiftWeightsKg({ ...prWeightsKgRef.current });
+    if (prWeightsKgRef.current) {
+      setHasInteracted(true);
+      setLiftWeightsKg({ ...prWeightsKgRef.current });
+    }
   };
 
   const handleResetTo90d = () => {
     const r90 = recent90dKgRef.current;
     if (!r90) return;
+    setHasInteracted(true);
     setLiftWeightsKg((prev) => ({
       squat: r90.squat ?? prev.squat,
       bench: r90.bench ?? prev.bench,
@@ -414,8 +484,34 @@ function HowStrongAmIPageMain() {
   };
 
   const handleUnitSwitch = (nextIsMetric) => {
+    setHasInteracted(true);
     toggleIsMetric(nextIsMetric);
   };
+
+  const strengthQuery = useMemo(
+    () => ({
+      squat: String(liftWeights.squat),
+      bench: String(liftWeights.bench),
+      deadlift: String(liftWeights.deadlift),
+      universe: selectedUniverse,
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: String(isMetric),
+      ...(bioDataIsDefault
+        ? {}
+        : {
+            [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: String(age),
+            [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: sex,
+            [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: String(bodyWeight),
+            advanced: "true",
+          }),
+    }),
+    [age, bioDataIsDefault, bodyWeight, isMetric, liftWeights, selectedUniverse, sex],
+  );
+  useCalculatorQuerySync({
+    router,
+    query: strengthQuery,
+    isInitialized: queryHydrated && bioDataIsInitialized,
+    hasInteracted,
+  });
 
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
   const bodyWeightKg = toKg(bodyWeight, isMetric);
@@ -532,7 +628,12 @@ function HowStrongAmIPageMain() {
 
   const handleShare = () => {
     const percentile = chartPercentiles[activeUniverse];
-    const text = `I'm stronger than ${percentile}% of ${activeUniverse.toLowerCase()} — Strength Journeys: How Strong Am I? ${CANONICAL}`;
+    const shareQuery = {
+      ...strengthQuery,
+      universe: activeUniverse,
+    };
+    const shareUrl = buildShareUrl("/how-strong-am-i", shareQuery);
+    const text = `I'm stronger than ${percentile}% of ${activeUniverse.toLowerCase()} — Strength Journeys: How Strong Am I? ${shareUrl}`;
 
     navigator.clipboard
       .writeText(text)
@@ -595,7 +696,7 @@ function HowStrongAmIPageMain() {
                 <StrengthCirclesChart
                   percentiles={chartPercentiles}
                   activeUniverse={activeUniverse}
-                  onUniverseChange={setSelectedUniverse}
+                onUniverseChange={handleUniverseChange}
                   onUniverseHoverChange={setHoveredUniverse}
                 />
               </div>
@@ -653,6 +754,17 @@ function HowStrongAmIPageMain() {
 
 function toKg(weight, isMetric) {
   return isMetric ? weight : weight / 2.2046;
+}
+
+function getFirstQueryValue(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parsePositiveQueryNumber(value) {
+  const numericValue = Number(getFirstQueryValue(value));
+  return Number.isFinite(numericValue) && numericValue > 0
+    ? numericValue
+    : null;
 }
 
 function convertWeight(weight, fromMetric, toMetric) {

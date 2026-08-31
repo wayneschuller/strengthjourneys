@@ -162,6 +162,16 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
             <span className="absolute -left-px -top-1 h-1.5 w-2.5 rotate-[-8deg] rounded-[2px] bg-red-600 shadow-[0_1px_1px_rgb(0_0_0_/_0.4)]" />
             <span className="absolute inset-x-0 top-1/2 h-px bg-slate-500/70" />
           </motion.div>
+          {/* A short sleeve tail beyond the collar makes the clamp's position
+              unambiguous and preserves the visual direction of the bar. */}
+          <motion.span
+            aria-hidden="true"
+            className="h-2 w-5 rounded-r-full border-y border-r border-slate-950/50"
+            style={BAR_STYLE}
+            initial={{ x: slideFromLeft ? -18 : 18, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.25, delay: animationDelay + platesPerSide.length * 0.07 + 0.08 }}
+          />
         </div>
       </div>
 

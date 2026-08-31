@@ -118,6 +118,51 @@
   animation-delay: 1.1s;
 }
 
+/*
+ * Year recap "there is more than one card" nudge.
+ *
+ * The recap carousel is the whole page, and a first-time viewer can read the
+ * title card without ever learning that seven more sit behind it. If the deck
+ * has not been touched after a few seconds the next arrow gives three small
+ * pushes to the right and then rests. Three is deliberate — enough to catch
+ * peripheral vision, few enough that it does not become a tic.
+ *
+ * The movement is on the arrow glyph rather than the button, because the button
+ * already carries a -translate-y-1/2 that a transform animation would clobber
+ * and drop it half a button below the card. The button itself pulses a soft
+ * ring instead, which needs no transform. The global reduced-motion rule below
+ * flattens both.
+ */
+@keyframes recap-nudge-arrow {
+  0%,
+  55%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes recap-nudge-ring {
+  0%,
+  55%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  25% {
+    box-shadow: 0 0 0 5px color-mix(in oklab, var(--primary) 16%, transparent);
+  }
+}
+
+.recap-next-nudge {
+  animation: recap-nudge-ring 1.2s ease-in-out 3;
+}
+
+.recap-next-nudge svg {
+  animation: recap-nudge-arrow 1.2s ease-in-out 3;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

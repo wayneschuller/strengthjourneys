@@ -12,10 +12,9 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { Sparkles, Palette, Share2, LayoutGrid, GalleryVerticalEnd } from "lucide-react";
+import { Sparkles, Palette, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
-import { YearRecapContactSheet } from "@/components/year-recap/year-recap-contact-sheet";
 import { YearSelector } from "@/components/year-recap/year-selector";
 import { DemoModeSignInCard, ConnectSheetRecapCard } from "@/components/onboarding/instructions-cards";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -147,40 +146,6 @@ function RecapCustomiseSidebar() {
 }
 
 /**
- * Story / all-cards switch for the recap, shown only on wide screens where the
- * eight-card grid has room to breathe. On smaller screens the story carousel is
- * the only sensible layout, so the toggle stays hidden.
- */
-function RecapViewToggle({ view, onChange }) {
-  const options = [
-    { id: "story", label: "Story", Icon: GalleryVerticalEnd },
-    { id: "grid", label: "All cards", Icon: LayoutGrid },
-  ];
-
-  return (
-    <div
-      role="group"
-      aria-label="Recap layout"
-      className="hidden self-end rounded-lg border border-border/60 bg-muted/30 p-1 xl:flex xl:items-center xl:gap-1"
-    >
-      {options.map(({ id, label, Icon }) => (
-        <Button
-          key={id}
-          size="sm"
-          variant={view === id ? "secondary" : "ghost"}
-          aria-pressed={view === id}
-          onClick={() => onChange(id)}
-          className="h-8 gap-1.5 font-normal"
-        >
-          <Icon className="h-4 w-4" aria-hidden />
-          {label}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-/**
  * Inner client component for the Strength Year in Review page. Resolves which years have lifting data,
  * manages year selection state (including URL sync), and renders the recap carousel with optional
  * year selector and customisation sidebar.
@@ -205,12 +170,6 @@ function StrengthYearInReviewMain() {
     : null;
   const [selectedYear, setSelectedYear] = useState(null);
 
-  // "story" is the phone-shaped carousel; "grid" is the wide-screen contact
-  // sheet. storyStartIndex remembers which tile was opened from the grid so the
-  // carousel lands on that card rather than back at the title.
-  const [recapView, setRecapView] = useState("story");
-  const [storyStartIndex, setStoryStartIndex] = useState(0);
-
   useEffect(() => {
     if (yearFromQuery && yearsWithData.includes(yearFromQuery)) {
       setSelectedYear(yearFromQuery);
@@ -228,11 +187,6 @@ function StrengthYearInReviewMain() {
 
   const showYearSelector = hasMultipleYears;
   const showCarousel = !!effectiveYear;
-
-  const handleOpenCard = (index) => {
-    setStoryStartIndex(index);
-    setRecapView("story");
-  };
 
   const handleYearSelect = (year) => {
     setSelectedYear(year);
@@ -299,21 +253,8 @@ function StrengthYearInReviewMain() {
             )}
           >
             {showCarousel && (
-              <div className="order-1 flex flex-col items-center gap-3 xl:order-2 xl:col-start-2 xl:min-w-0">
-                <RecapViewToggle view={recapView} onChange={setRecapView} />
-                {recapView === "grid" ? (
-                  <YearRecapContactSheet
-                    year={effectiveYear}
-                    isDemo={isDemoMode}
-                    onOpenCard={handleOpenCard}
-                  />
-                ) : (
-                  <YearRecapCarousel
-                    year={effectiveYear}
-                    isDemo={isDemoMode}
-                    startIndex={storyStartIndex}
-                  />
-                )}
+              <div className="order-1 flex justify-center xl:order-2 xl:col-start-2 xl:min-w-0">
+                <YearRecapCarousel year={effectiveYear} isDemo={isDemoMode} />
               </div>
             )}
             {showYearSelector && (

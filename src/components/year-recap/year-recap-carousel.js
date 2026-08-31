@@ -28,7 +28,13 @@ import { buildRecapSummaryText } from "@/lib/year-recap-stats";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { RECAP_CARDS } from "@/components/year-recap/recap-cards";
+import { cn } from "@/lib/utils";
 import { Copy, Download, MoreHorizontal, Type } from "lucide-react";
+
+// How long the recap sits untouched before the next arrow points out that there
+// are seven more cards behind the title. Long enough to read the title card,
+// short enough to catch someone before they leave.
+const NUDGE_DELAY_MS = 4500;
 
 function fireTitleConfetti() {
   import("canvas-confetti").then((confetti) => {
@@ -48,11 +54,10 @@ function fireTitleConfetti() {
  * @param {Object} props
  * @param {number|string} props.year - The recap year to display across all slide cards.
  * @param {boolean} props.isDemo - When true, suppresses confetti and hides sharing in favour of a "Demo mode" label.
- * @param {number} [props.startIndex] - Slide to open on. Used when arriving from the contact sheet.
  */
-export function YearRecapCarousel({ year, isDemo, startIndex = 0 }) {
+export function YearRecapCarousel({ year, isDemo }) {
   const [api, setApi] = useState(null);
-  const [selectedIndex, setSelectedIndex] = useState(startIndex);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const shareRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
@@ -70,12 +75,42 @@ export function YearRecapCarousel({ year, isDemo, startIndex = 0 }) {
 
   const hasFiredConfettiRef = useRef(false);
 
+  // The carousel is the whole page here: nothing else on screen says there are
+  // eight cards. If nobody has touched it after a few seconds, the next arrow
+  // nudges. Any interaction at all retires the nudge for the rest of the visit —
+  // once someone knows the deck moves, pointing at the arrow is just noise.
+  const hasInteractedRef = useRef(false);
+  const [showNudge, setShowNudge] = useState(false);
+
   useEffect(() => {
     if (!api) return;
-    if (startIndex > 0) api.scrollTo(startIndex, true);
     setSelectedIndex(api.selectedScrollSnap());
-    api.on("select", () => setSelectedIndex(api.selectedScrollSnap()));
-  }, [api, startIndex]);
+
+    const markInteracted = () => {
+      hasInteractedRef.current = true;
+      setShowNudge(false);
+    };
+    const onSelect = () => {
+      setSelectedIndex(api.selectedScrollSnap());
+      markInteracted();
+    };
+
+    api.on("select", onSelect);
+    // Counts a swipe or a drag that lands back on the same card as interaction.
+    api.on("pointerDown", markInteracted);
+    return () => {
+      api.off("select", onSelect);
+      api.off("pointerDown", markInteracted);
+    };
+  }, [api]);
+
+  useEffect(() => {
+    if (hasInteractedRef.current) return;
+    const timer = setTimeout(() => {
+      if (!hasInteractedRef.current) setShowNudge(true);
+    }, NUDGE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [year]);
 
   useEffect(() => {
     if (year) hasFiredConfettiRef.current = false;
@@ -221,7 +256,12 @@ export function YearRecapCarousel({ year, isDemo, startIndex = 0 }) {
             ))}
           </CarouselContent>
           <CarouselPrevious className="-left-4 top-1/2 hidden md:flex" />
-          <CarouselNext className="-right-4 top-1/2 hidden md:flex" />
+          <CarouselNext
+            className={cn(
+              "-right-4 top-1/2 hidden md:flex",
+              showNudge && "recap-next-nudge",
+            )}
+          />
         </Carousel>
 
         <div

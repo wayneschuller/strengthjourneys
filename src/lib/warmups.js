@@ -746,28 +746,76 @@ export function generateSessionSets(
 }
 
 /**
- * Standard plate sets for kg and lb
+ * Standard plate sets for kg and lb.
+ *
+ * Colours follow the IPF/IWF competition code that Rogue and Eliko use on their
+ * competition bumpers and calibrated steel, rather than generic Tailwind hues.
+ * The code repeats down the ladder (25kg and 2.5kg are both red), which is
+ * unambiguous in a real rack because the discs are obviously different objects -
+ * so the physical dimensions carry that second signal into the plate diagram.
+ *
+ * The four coded main plates all share the full 450mm diameter; what separates
+ * them on the sleeve is thickness. Only the change plates step down in
+ * diameter.
+ *
+ * @property {number} diameter - Plate diameter in millimetres.
+ * @property {number} thickness - Plate thickness in millimetres.
  */
+const ROGUE = {
+  red: "#C8102E",
+  blue: "#0057B8",
+  yellow: "#FFD100",
+  green: "#00843D",
+  white: "#FFFFFF",
+  chrome: "#B6B8BA",
+};
+
 export const PLATE_SETS = {
   kg: [
-    { weight: 25, color: "#DC2626", name: "25kg" }, // Red
-    { weight: 20, color: "#2563EB", name: "20kg" }, // Blue
-    { weight: 15, color: "#FACC15", name: "15kg" }, // Yellow (vivid yellow)
-    { weight: 10, color: "#22C55E", name: "10kg" }, // Green (more vivid)
-    { weight: 5, color: "#FFFFFF", name: "5kg" }, // White
-    { weight: 2.5, color: "#F59E0B", name: "2.5kg" }, // Orange/Small
-    { weight: 1.25, color: "#6B7280", name: "1.25kg" }, // Gray/Micro
+    { weight: 25, color: ROGUE.red, diameter: 450, thickness: 87, name: "25kg" },
+    { weight: 20, color: ROGUE.blue, diameter: 450, thickness: 72, name: "20kg" },
+    { weight: 15, color: ROGUE.yellow, diameter: 450, thickness: 56, name: "15kg" },
+    { weight: 10, color: ROGUE.green, diameter: 450, thickness: 43, name: "10kg" },
+    { weight: 5, color: ROGUE.white, diameter: 228, thickness: 26, name: "5kg" },
+    { weight: 2.5, color: ROGUE.red, diameter: 190, thickness: 20, name: "2.5kg" },
+    { weight: 1.25, color: ROGUE.chrome, diameter: 160, thickness: 16, name: "1.25kg" },
   ],
   lb: [
-    { weight: 55, color: "#DC2626", name: "55lb" }, // Red (like 25kg)
-    { weight: 45, color: "#2563EB", name: "45lb" }, // Blue (like 20kg)
-    { weight: 35, color: "#FACC15", name: "35lb" }, // Yellow (like 15kg)
-    { weight: 25, color: "#22C55E", name: "25lb" }, // Green (like 10kg)
-    { weight: 10, color: "#10B981", name: "10lb" }, // Green
-    { weight: 5, color: "#FFFFFF", name: "5lb" }, // White
-    { weight: 2.5, color: "#F59E0B", name: "2.5lb" }, // Orange/Small
+    { weight: 55, color: ROGUE.red, diameter: 450, thickness: 87, name: "55lb" },
+    { weight: 45, color: ROGUE.blue, diameter: 450, thickness: 72, name: "45lb" },
+    { weight: 35, color: ROGUE.yellow, diameter: 450, thickness: 56, name: "35lb" },
+    { weight: 25, color: ROGUE.green, diameter: 450, thickness: 43, name: "25lb" },
+    { weight: 10, color: ROGUE.white, diameter: 228, thickness: 26, name: "10lb" },
+    { weight: 5, color: ROGUE.red, diameter: 190, thickness: 20, name: "5lb" },
+    { weight: 2.5, color: ROGUE.chrome, diameter: 160, thickness: 16, name: "2.5lb" },
   ],
 };
+
+/**
+ * Diameter of a full-size disc, used as the reference when the diagram scales
+ * plates relative to one another. Both dimensions share this scale, so a plate
+ * drawn from the diagram keeps its real width-to-height ratio.
+ */
+export const FULL_PLATE_DIAMETER = 450;
+
+/**
+ * Look up the physical dimensions for a plate weight so callers that build
+ * plate objects by hand (the onboarding demo bar) still get sensible
+ * proportions.
+ *
+ * @param {number} weight - Plate weight in the current unit
+ * @param {boolean} isMetric - Whether the weight is kg (true) or lb (false)
+ * @returns {{diameter: number, thickness: number}} Dimensions in millimetres
+ */
+export function getPlateDimensions(weight, isMetric) {
+  const plate = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(
+    (p) => p.weight === weight,
+  );
+  return {
+    diameter: plate?.diameter ?? FULL_PLATE_DIAMETER,
+    thickness: plate?.thickness ?? 72,
+  };
+}
 
 /**
  * Get allowed plate set based on preference.

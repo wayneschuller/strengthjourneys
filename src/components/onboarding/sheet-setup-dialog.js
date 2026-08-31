@@ -48,6 +48,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
+import { PLATE_SETS } from "@/lib/warmups";
 
 const ENRICH_CANDIDATE_LIMIT = 12;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
@@ -1765,9 +1766,11 @@ function PlateLoadingAnimation({ isActive }) {
   }, [isActive, plateCount, direction]);
 
   const barWeight = isMetric ? 20 : 45;
-  const plate = isMetric
-    ? { weight: 20, color: "#2563EB", name: "20kg" }
-    : { weight: 45, color: "#2563EB", name: "45lb" };
+  // Pull the disc straight from the plate set so the demo bar tracks the same
+  // competition colours and proportions as the warm-up calculator.
+  const plate = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(
+    (p) => p.weight === (isMetric ? 20 : 45),
+  );
   const platesPerSide = plateCount > 0 ? [{ ...plate, count: plateCount }] : [];
   // Bar plus both sides: the familiar 20/60/100/140/180/220 (45/135/225/...)
   // ladder every lifter counts in their head while loading up.

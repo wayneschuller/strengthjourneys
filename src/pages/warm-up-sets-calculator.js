@@ -587,10 +587,13 @@ function WarmupSetsDisplayCard({
                 <div className="mt-2 self-end">
                   <PlateDiagram
                     platesPerSide={breakdown.platesPerSide}
+                    previousPlatesPerSide={
+                      sessionSets[idx - 1]?.plateBreakdown?.platesPerSide
+                    }
                     barWeight={barWeight}
                     isMetric={isMetric}
-                    animationDelay={idx === 0 ? 0 : (idx - 1) * 0.15}
-                    animationKey={idx === 0 ? null : animationKey}
+                    animationDelay={idx * 0.12}
+                    animationKey={animationKey}
                     useScrollTrigger={useScrollTrigger}
                   />
                 </div>

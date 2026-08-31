@@ -56,6 +56,7 @@ function stringifyStateValue(value) {
  * @param {boolean} [syncQuery=false]
  * @param {Record<string, *>|null} [includeWhenSyncing=null] - Legacy field-level URL extras.
  * @param {Function|null} [validateValue=null] - Optional validator for URL/localStorage values.
+ * @param {string} [queryKey=key] - Optional URL key when it differs from the localStorage key.
  * @returns {[*, Function, boolean, Function]} [state, setter, isDefault, silentSetter]
  *   - setter: marks value as user-supplied, persists to localStorage + URL
  *   - isDefault: true when the value was never explicitly provided (URL, localStorage, or setter)
@@ -68,6 +69,7 @@ export const useStateFromQueryOrLocalStorage = (
   syncQuery = false,
   includeWhenSyncing = null,
   validateValue = null,
+  queryKey = key,
 ) => {
   const router = useRouter();
   const [state, setState] = useState(defaultValue);
@@ -91,7 +93,7 @@ export const useStateFromQueryOrLocalStorage = (
     if (!router.isReady) return;
 
     const query = routerRef.current.query;
-    const queryValue = query[key];
+    const queryValue = query[queryKey];
     let initialState;
     let usingDefault = true;
 
@@ -121,7 +123,7 @@ export const useStateFromQueryOrLocalStorage = (
     if (!usingDefault && typeof window !== "undefined") {
       localStorage.setItem(key, stringifyStateValue(initialState));
     }
-  }, [router.isReady, key, defaultValue]);
+  }, [router.isReady, key, queryKey, defaultValue]);
 
   // Persist to localStorage; sync to URL when syncQuery + user interacted.
   // Skipped entirely when isDefault — we never write defaults to localStorage.

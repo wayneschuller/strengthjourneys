@@ -1,9 +1,9 @@
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useEffect, useMemo, useState } from "react";
-import { useLocalStorage } from "usehooks-ts";
 import { motion } from "motion/react";
 import { Share2, Shield } from "lucide-react";
 import { GorillaIcon } from "@/components/gorilla-icon";
@@ -28,6 +28,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
+import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
+import { buildShareUrl } from "@/lib/share-url";
 
 const LB_PER_KG = 2.20462;
 const KG_PER_LB = 0.453592;
@@ -160,17 +163,35 @@ export default function GorillaStrengthPage({ relatedArticles }) {
 }
 
 function GorillaStrengthMain({ relatedArticles }) {
+  const router = useRouter();
   const [isCopied, setIsCopied] = useState(false);
-  const [isMetric, setIsMetric] = useLocalStorage(
+  const [isMetric, setIsMetric, , , isMetricIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.GORILLA_IS_METRIC,
     false,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => typeof value === "boolean",
+    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
   );
-  const [bench, setBench] = useLocalStorage(
+  const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.GORILLA_BENCH,
     DEFAULT_BENCH_LB,
-    { initializeWithValue: false },
+    false,
+    null,
+    (value) => Number.isFinite(value) && value >= 0 && value <= 1000,
+    "bench",
   );
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const gorillaQuery = useMemo(
+    () => ({ bench: String(bench), calcIsMetric: String(isMetric) }),
+    [bench, isMetric],
+  );
+  useCalculatorQuerySync({
+    router,
+    query: gorillaQuery,
+    isInitialized: isMetricIsInitialized && benchIsInitialized,
+    hasInteracted,
+  });
 
   useEffect(() => {
     if (!isCopied) return;
@@ -198,6 +219,7 @@ function GorillaStrengthMain({ relatedArticles }) {
 
   const handleUnitSwitch = () => {
     const nextIsMetric = !isMetric;
+    setHasInteracted(true);
     setIsMetric(nextIsMetric);
     setBench((prev) => Math.max(0, Math.round(convertWeight(prev, isMetric, nextIsMetric))));
   };
@@ -205,7 +227,7 @@ function GorillaStrengthMain({ relatedArticles }) {
   const copyResult = async () => {
     const text =
       `My bench press is ~${Math.round(gorillaPercent)}% of a gorilla's. ` +
-      "https://www.strengthjourneys.xyz/how-strong-is-a-gorilla";
+      buildShareUrl("/how-strong-is-a-gorilla", gorillaQuery);
     try {
       await navigator.clipboard.writeText(text);
       setIsCopied(true);
@@ -402,7 +424,10 @@ function GorillaStrengthMain({ relatedArticles }) {
                   max={isMetric ? 320 : 700}
                   step={isMetric ? 2.5 : 5}
                   value={[bench]}
-                  onValueChange={(vals) => setBench(vals[0])}
+                  onValueChange={(vals) => {
+                    setHasInteracted(true);
+                    setBench(vals[0]);
+                  }}
                   aria-label={`Bench press 1RM in ${scoreUnit}`}
                 />
               </div>

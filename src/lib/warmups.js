@@ -155,12 +155,8 @@ export function generateSessionSets(
       );
       const actualWeight = breakdown.closestWeight;
       const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
-      const onlyAdding = Array.from(previousPlateMap.entries()).every(
-        ([weight, count]) => (newPlateMap.get(weight) || 0) >= count,
-      );
 
       if (
-        !onlyAdding ||
         actualWeight <= previousWeight + effectiveMinJump ||
         actualWeight >= finalWarmupWeight - effectiveMinJump
       ) {
@@ -398,25 +394,17 @@ export function generateSessionSets(
       ) {
         const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
         
-        // Verify only-add-plates constraint
-        let onlyAdding = true;
-        previousPlateMap.forEach((prevCount, weight) => {
-          const nextCount = newPlateMap.get(weight) || 0;
-          if (nextCount < prevCount) {
-            onlyAdding = false;
-          }
+        // A warm-up may now change plates, not only add them: the breakdown swaps
+        // only when the resulting bar is clearly simpler to load. What still has to
+        // hold is that the bar goes up, and the weight checks above already do that.
+        warmupSets.push({
+          weight: actualWeight,
+          reps: 5, // All middle sets are 5 reps
+          percentage: Math.round((actualWeight / topWeight) * 100),
+          plateBreakdown: breakdown,
         });
-        
-        if (onlyAdding) {
-          warmupSets.push({
-            weight: actualWeight,
-            reps: 5, // All middle sets are 5 reps
-            percentage: Math.round((actualWeight / topWeight) * 100),
-            plateBreakdown: breakdown,
-          });
-          previousWeight = actualWeight;
-          previousPlateMap = newPlateMap;
-        }
+        previousWeight = actualWeight;
+        previousPlateMap = newPlateMap;
       }
     }
     
@@ -478,26 +466,19 @@ export function generateSessionSets(
           ) {
             const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
             
-            let onlyAdding = true;
-            previousPlateMap.forEach((prevCount, weight) => {
-              const nextCount = newPlateMap.get(weight) || 0;
-              if (nextCount < prevCount) {
-                onlyAdding = false;
-              }
+            // A warm-up may now change plates, not only add them: the breakdown swaps
+            // only when the resulting bar is clearly simpler to load. What still has to
+            // hold is that the bar goes up, and the weight checks above already do that.
+            warmupSets.push({
+              weight: actualWeight,
+              reps: 5,
+              percentage: Math.round((actualWeight / topWeight) * 100),
+              plateBreakdown: breakdown,
             });
-            
-            if (onlyAdding) {
-              warmupSets.push({
-                weight: actualWeight,
-                reps: 5,
-                percentage: Math.round((actualWeight / topWeight) * 100),
-                plateBreakdown: breakdown,
-              });
-              previousWeight = actualWeight;
-              previousPlateMap = newPlateMap;
-              stillNeeded--;
-              continue; // Successfully added, try again
-            }
+            previousWeight = actualWeight;
+            previousPlateMap = newPlateMap;
+            stillNeeded--;
+            continue; // Successfully added, try again
           }
         }
         
@@ -579,24 +560,18 @@ export function generateSessionSets(
         actualWeight < finalWarmupTarget - relaxedJump
       ) {
         const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
-        let onlyAdding = true;
-        previousPlateMap.forEach((prevCount, weight) => {
-          if ((newPlateMap.get(weight) || 0) < prevCount) {
-            onlyAdding = false;
-          }
+        // A warm-up may now change plates, not only add them: the breakdown swaps
+        // only when the resulting bar is clearly simpler to load. What still has to
+        // hold is that the bar goes up, and the weight checks above already do that.
+        warmupSets.push({
+          weight: actualWeight,
+          reps: 5,
+          percentage: Math.round((actualWeight / topWeight) * 100),
+          plateBreakdown: breakdown,
         });
-
-        if (onlyAdding) {
-          warmupSets.push({
-            weight: actualWeight,
-            reps: 5,
-            percentage: Math.round((actualWeight / topWeight) * 100),
-            plateBreakdown: breakdown,
-          });
-          previousWeight = actualWeight;
-          previousPlateMap = newPlateMap;
-          continue;
-        }
+        previousWeight = actualWeight;
+        previousPlateMap = newPlateMap;
+        continue;
       }
     }
 
@@ -652,19 +627,6 @@ export function generateSessionSets(
     }
 
     const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
-
-    // Enforce only-add-plates constraint
-    let onlyAdding = true;
-    previousPlateMap.forEach((prevCount, weight) => {
-      const nextCount = newPlateMap.get(weight) || 0;
-      if (nextCount < prevCount) {
-        onlyAdding = false;
-      }
-    });
-
-    if (!onlyAdding) {
-      return false;
-    }
 
     warmupSets.push({
       weight: actualWeight,
@@ -844,6 +806,88 @@ function getAllowedPlates(allPlates, isMetric, platePreference) {
  * @param {string} platePreference - "red" or "blue" to prefer red or blue plates
  * @returns {Object} { platesPerSide, remainder, closestWeight }
  */
+/**
+ * Keeping the plates already on the bar is worth something, but not everything.
+ * A loading has to be clearly simpler than the incremental one before it earns
+ * a plate change - below this margin, continuity wins.
+ */
+const LOADING_SWAP_MARGIN = 2;
+
+/**
+ * How awkward a loading is to actually put on a bar. Every disc costs one, and
+ * a change plate costs an extra one on top: a sleeve carrying three pairs of
+ * fractionals is far fiddlier than the disc count alone suggests, and it buries
+ * the big coded plates that tell a lifter at a glance what is on the bar.
+ *
+ * @param {Array} platesPerSide - {weight, count} objects for one side
+ * @param {boolean} isMetric - Whether weights are kg
+ * @returns {number} Cost, where lower is a nicer bar to load
+ */
+function plateCost(plate) {
+  const isChangePlate =
+    (plate?.diameter ?? FULL_PLATE_DIAMETER) < FULL_PLATE_DIAMETER;
+  return isChangePlate ? 2 : 1;
+}
+
+function loadingCost(platesPerSide, isMetric) {
+  const plateSet = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
+  return platesPerSide.reduce((cost, plate) => {
+    const info = plateSet.find((p) => p.weight === plate.weight);
+    return cost + plate.count * plateCost(info);
+  }, 0);
+}
+
+/**
+ * Cheapest way to make a given weight on one sleeve.
+ *
+ * Loading largest-plate-first is not actually the simplest bar: 180lb a side
+ * greedily becomes 55+55+55+10+5, where four 45s do the same job with no change
+ * plates at all. This walks every reachable weight once and keeps the cheapest
+ * way to reach each, which finds those even splits. Plates are considered
+ * heaviest first and ties keep the incumbent, so an even split lands on the
+ * biggest plates that produce it.
+ *
+ * @param {number} weightPerSide - Target weight for one side
+ * @param {Array} allowedPlates - Permitted plates, heaviest first
+ * @returns {Array|null} {weight, count} objects, or null if it cannot be searched
+ */
+function cheapestLoading(weightPerSide, allowedPlates) {
+  const smallest = allowedPlates[allowedPlates.length - 1]?.weight;
+  if (!smallest || weightPerSide <= 0) return [];
+
+  // Work in whole units of the smallest plate so the walk is over integers.
+  const steps = Math.floor(weightPerSide / smallest + 1e-9);
+  if (steps > 20000) return null; // absurd input; let the caller fall back
+
+  const cost = new Array(steps + 1).fill(Infinity);
+  const via = new Array(steps + 1).fill(null);
+  cost[0] = 0;
+  for (let step = 1; step <= steps; step += 1) {
+    for (const plate of allowedPlates) {
+      const plateSteps = Math.round(plate.weight / smallest);
+      if (plateSteps > step) continue;
+      const previous = cost[step - plateSteps];
+      if (previous === Infinity) continue;
+      const candidate = previous + plateCost(plate);
+      if (candidate < cost[step]) {
+        cost[step] = candidate;
+        via[step] = plate;
+      }
+    }
+  }
+  if (cost[steps] === Infinity) return null;
+
+  const counts = new Map();
+  for (let step = steps; step > 0; ) {
+    const plate = via[step];
+    counts.set(plate.weight, (counts.get(plate.weight) ?? 0) + 1);
+    step -= Math.round(plate.weight / smallest);
+  }
+  return allowedPlates
+    .filter((plate) => counts.has(plate.weight))
+    .map((plate) => ({ ...plate, count: counts.get(plate.weight) }));
+}
+
 export function calculatePlateBreakdownWithExisting(
   targetWeight,
   barWeight,
@@ -903,12 +947,30 @@ export function calculatePlateBreakdownWithExisting(
   );
   const actualWeight = barWeight + totalPlatesWeight * 2;
   const remainder = targetWeight - actualWeight;
-
-  return {
+  const incremental = {
     platesPerSide: result,
     remainder: Math.abs(remainder) < 0.01 ? 0 : remainder,
     closestWeight: actualWeight,
   };
+
+  // Only ever adding to the bar is what turns a 105kg top set into eight discs
+  // a side when three would do: each warm-up inherits the last one's change
+  // plates and piles more on top. So compare against stripping the bar and
+  // loading it clean, and take that when it is clearly the better bar - which
+  // is also the one that puts the big coded plates back on show.
+  const clean = calculatePlateBreakdown(
+    targetWeight,
+    barWeight,
+    isMetric,
+    platePreference,
+  );
+  const reachesTarget =
+    Math.abs(clean.remainder) <= Math.abs(incremental.remainder) + 0.01;
+  const worthTheChange =
+    loadingCost(clean.platesPerSide, isMetric) <=
+    loadingCost(incremental.platesPerSide, isMetric) - LOADING_SWAP_MARGIN;
+
+  return reachesTarget && worthTheChange ? clean : incremental;
 }
 
 /**
@@ -966,14 +1028,18 @@ export function calculatePlateBreakdown(
     };
   }
 
-  // Greedy: largest plates first. Minimizes plate count; for red preference, 25 > 20 so red is preferred when both work.
-  const result = [];
-  let remaining = weightPerSide;
-  for (const plate of allowedPlates) {
-    const count = Math.floor(remaining / plate.weight);
-    if (count > 0) {
-      result.push({ ...plate, count });
-      remaining -= count * plate.weight;
+  // Prefer the cheapest bar to load. Greedy stays as the fallback for inputs too
+  // large to search, where largest-plates-first is the sane answer anyway.
+  let result = cheapestLoading(weightPerSide, allowedPlates);
+  if (result === null) {
+    result = [];
+    let remaining = weightPerSide;
+    for (const plate of allowedPlates) {
+      const count = Math.floor(remaining / plate.weight);
+      if (count > 0) {
+        result.push({ ...plate, count });
+        remaining -= count * plate.weight;
+      }
     }
   }
 

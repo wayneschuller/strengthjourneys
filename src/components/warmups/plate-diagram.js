@@ -14,18 +14,6 @@ const BAR_STYLE = {
   boxShadow: "0 2px 5px rgb(15 23 42 / 0.3), inset 0 1px rgb(255 255 255 / 0.7)",
 };
 
-const PLATE_STOP_STYLE = {
-  background:
-    "linear-gradient(90deg, #475569 0%, #f8fafc 28%, #cbd5e1 54%, #64748b 78%, #1e293b 100%)",
-  boxShadow: "1px 2px 4px rgb(15 23 42 / 0.35), inset 1px 0 rgb(255 255 255 / 0.8)",
-};
-
-const KNURL_SECTION_STYLE = {
-  background:
-    "repeating-linear-gradient(135deg, #1e293b 0 2px, #64748b 2px 3px, #0f172a 3px 5px)",
-  boxShadow: "inset 0 1px rgb(255 255 255 / 0.25), 0 2px 3px rgb(15 23 42 / 0.3)",
-};
-
 /**
  * Visual representation of plates on one side of a barbell
  * @param {Object} props
@@ -40,12 +28,6 @@ const KNURL_SECTION_STYLE = {
  */
 export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className, hideLabels = false, animationDelay = 0, animationKey, useScrollTrigger = false, slideFromLeft = false }) {
   const unit = isMetric ? "kg" : "lb";
-  const innermostPlate = platesPerSide[0];
-  const innermostPlateIsFractional =
-    innermostPlate?.weight === 2.5 || innermostPlate?.weight === 1.25;
-  // The stop sits behind the plate, so it should never visually outsize the
-  // plate it supports; fractional plates need a proportionally smaller stop.
-  const plateStopHeightClass = innermostPlateIsFractional ? "h-7" : "h-12";
 
   const renderBar = () => (
     <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 items-center justify-end">
@@ -112,26 +94,6 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
 
         {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
         <div key={animationKey ?? "static"} className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {/* This is a compact sleeve assembly rather than a second plate:
-              chrome stop nearest the plates, a thick dark shoulder, then a
-              short knurled section returning into the shaft. */}
-          <motion.div
-            aria-hidden="true"
-            className="flex items-center gap-0"
-            initial={{ x: slideFromLeft ? -20 : 20, opacity: 0, scaleY: 0.85 }}
-            animate={{ x: 0, opacity: 1, scaleY: 1 }}
-            transition={{ duration: 0.3, delay: animationDelay + 0.08 }}
-          >
-            <span
-              className="h-4 w-5 rounded-l-sm"
-              style={KNURL_SECTION_STYLE}
-            />
-            <span className="h-7 w-2.5 rounded-sm border border-black/80 bg-gradient-to-b from-slate-700 via-slate-950 to-black shadow-[1px_2px_3px_rgb(15_23_42_/_0.35)]" />
-            <span
-              className={cn(plateStopHeightClass, "w-1.5 rounded-r-full border border-slate-950/35")}
-              style={PLATE_STOP_STYLE}
-            />
-          </motion.div>
           {/* Plates stacked from heaviest (inside) to lightest (outside) */}
           {platesPerSide
             .flatMap((plate) =>

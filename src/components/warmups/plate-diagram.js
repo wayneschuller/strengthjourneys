@@ -32,7 +32,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
   const renderBar = () => (
     <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 items-center justify-end">
       <motion.div
-        className="relative h-3 w-48 overflow-hidden rounded-full"
+        className="relative h-2 w-48 overflow-hidden rounded-full"
         style={{
           ...BAR_STYLE,
           // Fade the unloaded end so this reads as the loaded half of a barbell.
@@ -105,7 +105,9 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
             .map((plate, idx) => {
               // Fractional plates (2.5kg/2.5lb, 1.25kg) should be smaller
               const isFractional = plate.weight === 2.5 || plate.weight === 1.25;
-              const heightClass = isFractional ? "h-9" : "h-16"; 
+              // Olympic plates are much taller than the shaft diameter; keep
+              // fractional plates proportionate instead of making them tiny bars.
+              const heightClass = isFractional ? "h-10" : "h-20";
               const widthClass = isFractional ? "w-2" : "w-4";
               
               const transition = {

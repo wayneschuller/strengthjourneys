@@ -176,9 +176,10 @@ export function generateSessionSets(
           ? anchorWeight + 40 // Add another pair of 20s
           : anchorWeight + 90; // Add another pair of 45s
         if (secondAnchorWeight < topWeight - effectiveMinJump) {
-          const secondAnchorBreakdown = calculatePlateBreakdown(
+          const secondAnchorBreakdown = calculatePlateBreakdownWithExisting(
             secondAnchorWeight,
             barWeight,
+            anchorBreakdown.platesPerSide,
             isMetric,
             platePreference,
           );
@@ -405,6 +406,99 @@ export function generateSessionSets(
     }
   }
 
+  // Fill remaining slots before adding the reduced-rep final warmups. Keeping
+  // this pass here preserves the intended taper instead of appending a 5-rep
+  // set after the final primer.
+  let attempts = 0;
+  const maxAttempts = 50;
+  const finalJumpForSpacing =
+    topReps <= 2
+      ? baseJump
+      : topWeight > (isMetric ? 100 : 220)
+        ? isMetric
+          ? 10
+          : 25
+        : baseJump;
+  const finalWarmupTarget = topWeight - finalJumpForSpacing;
+
+  while (
+    warmupSets.length < clampedTargetCount - finalWarmupCount &&
+    warmupSets.length > 0 &&
+    attempts < maxAttempts
+  ) {
+    attempts++;
+    const lastSet = warmupSets[warmupSets.length - 1];
+    const gap = finalWarmupTarget - lastSet.weight;
+    const setsStillNeeded =
+      clampedTargetCount - finalWarmupCount - warmupSets.length;
+    const minGapPerSet = gap / (setsStillNeeded + 1);
+
+    if (gap < minIncrement * 2) {
+      break;
+    }
+
+    const relaxedJump = Math.max(
+      effectiveMinJump * 0.5,
+      minGapPerSet * 0.8,
+    );
+    const roundedWeight = roundToIncrement(
+      lastSet.weight + minGapPerSet,
+      minIncrement,
+    );
+
+    if (
+      roundedWeight > lastSet.weight + relaxedJump &&
+      roundedWeight < finalWarmupTarget - relaxedJump
+    ) {
+      const currentPlatesPerSide = Array.from(previousPlateMap.entries())
+        .map(([weight, count]) => {
+          const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(
+            (p) => p.weight === weight,
+          );
+          return plateInfo ? { ...plateInfo, count } : null;
+        })
+        .filter(Boolean);
+      const breakdown = calculatePlateBreakdownWithExisting(
+        roundedWeight,
+        barWeight,
+        currentPlatesPerSide,
+        isMetric,
+        platePreference,
+      );
+      const actualWeight = breakdown.closestWeight;
+
+      if (
+        actualWeight > lastSet.weight + relaxedJump &&
+        actualWeight < finalWarmupTarget - relaxedJump
+      ) {
+        const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
+        let onlyAdding = true;
+        previousPlateMap.forEach((prevCount, weight) => {
+          if ((newPlateMap.get(weight) || 0) < prevCount) {
+            onlyAdding = false;
+          }
+        });
+
+        if (onlyAdding) {
+          warmupSets.push({
+            weight: actualWeight,
+            reps: 5,
+            percentage: Math.round((actualWeight / topWeight) * 100),
+            plateBreakdown: breakdown,
+          });
+          previousWeight = actualWeight;
+          previousPlateMap = newPlateMap;
+          continue;
+        }
+      }
+    }
+
+    const nextAttemptWeight = lastSet.weight + minGapPerSet + minIncrement;
+    if (nextAttemptWeight >= finalWarmupTarget - relaxedJump) {
+      break;
+    }
+  }
+
   // ============================================
   // FINAL WARMUPS: Reduce reps to prime CNS for top set
   // ============================================
@@ -416,10 +510,14 @@ export function generateSessionSets(
     }
 
     const roundedWeight = roundToIncrement(targetWeight, minIncrement);
+    // Final primers may use the smallest available plate jump. Requiring the
+    // normal average jump here can suppress the primer after a finely spaced
+    // fill set, especially at lighter loads.
+    const finalMinJump = Math.min(effectiveMinJump, minIncrement);
     
     if (
-      roundedWeight <= previousWeight + effectiveMinJump ||
-      roundedWeight >= topWeight - effectiveMinJump
+      roundedWeight < previousWeight + finalMinJump ||
+      roundedWeight > topWeight - finalMinJump
     ) {
       return false;
     }
@@ -440,8 +538,8 @@ export function generateSessionSets(
     const actualWeight = breakdown.closestWeight;
 
     if (
-      actualWeight <= previousWeight + effectiveMinJump ||
-      actualWeight >= topWeight - effectiveMinJump
+      actualWeight < previousWeight + finalMinJump ||
+      actualWeight > topWeight - finalMinJump
     ) {
       return false;
     }
@@ -502,90 +600,6 @@ export function generateSessionSets(
     }
   }
 
-  // Fill remaining slots if we're still short of target warmup count
-  // Add evenly-spaced sets while maintaining the "only add plates" progression
-  // Be aggressive about hitting the target count
-  let attempts = 0;
-  const maxAttempts = 50; // Prevent infinite loops
-  
-  while (warmupSets.length < clampedTargetCount && warmupSets.length > 0 && attempts < maxAttempts) {
-    attempts++;
-    const lastSet = warmupSets[warmupSets.length - 1];
-    const gap = topWeight - lastSet.weight;
-    const setsStillNeeded = clampedTargetCount - warmupSets.length;
-
-    // Calculate minimum gap needed per remaining set
-    const minGapPerSet = gap / (setsStillNeeded + 1);
-    
-    // If gap is too small even with relaxed constraints, we can't fit more
-    if (gap < minIncrement * 2) {
-      break;
-    }
-
-    // Progressively relax jump requirements as we get closer to target
-    const relaxedJump = Math.max(
-      effectiveMinJump * 0.5, // Very relaxed
-      minGapPerSet * 0.8 // Or based on remaining sets
-    );
-
-    // Try to add a set at evenly spaced intervals
-    const targetWeight = lastSet.weight + minGapPerSet;
-    const roundedWeight = roundToIncrement(targetWeight, minIncrement);
-
-    if (
-      roundedWeight > lastSet.weight + relaxedJump &&
-      roundedWeight < topWeight - relaxedJump
-    ) {
-      // Use existing plates to build on
-      const currentPlatesPerSide = Array.from(previousPlateMap.entries()).map(([weight, count]) => {
-        const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(p => p.weight === weight);
-        return plateInfo ? { ...plateInfo, count } : null;
-      }).filter(Boolean);
-      
-      const breakdown = calculatePlateBreakdownWithExisting(
-        roundedWeight,
-        barWeight,
-        currentPlatesPerSide,
-        isMetric,
-        platePreference,
-      );
-      const actualWeight = breakdown.closestWeight;
-
-      if (
-        actualWeight > lastSet.weight + relaxedJump &&
-        actualWeight < topWeight - relaxedJump
-      ) {
-        const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
-        let onlyAdding = true;
-        previousPlateMap.forEach((prevCount, weight) => {
-          const nextCount = newPlateMap.get(weight) || 0;
-          if (nextCount < prevCount) {
-            onlyAdding = false;
-          }
-        });
-
-        if (onlyAdding) {
-          warmupSets.push({
-            weight: actualWeight,
-            reps: 5, // Default to 5 reps for fill-in sets
-            percentage: Math.round((actualWeight / topWeight) * 100),
-            plateBreakdown: breakdown,
-          });
-          previousWeight = actualWeight;
-          previousPlateMap = newPlateMap;
-          continue; // Successfully added, try again
-        }
-      }
-    }
-    
-    // If we couldn't add at that position, try a slightly different position
-    // by incrementing the target weight
-    const nextAttemptWeight = lastSet.weight + minGapPerSet + minIncrement;
-    if (nextAttemptWeight >= topWeight - relaxedJump) {
-      break; // Can't fit more
-    }
-  }
-
   // Remove duplicates (can happen with very light weights)
   const uniqueSets = [];
   const seenWeights = new Set();
@@ -595,51 +609,6 @@ export function generateSessionSets(
       uniqueSets.push(set);
     }
   });
-
-  // Final aggressive pass: if we're still short, add sets even more aggressively
-  if (uniqueSets.length < clampedTargetCount && uniqueSets.length > 0) {
-    const lastSet = uniqueSets[uniqueSets.length - 1];
-    const gap = topWeight - lastSet.weight;
-    const stillNeeded = clampedTargetCount - uniqueSets.length;
-    
-    if (gap > minIncrement && stillNeeded > 0) {
-      // Calculate evenly spaced positions
-      for (let i = 0; i < stillNeeded && uniqueSets.length < clampedTargetCount; i++) {
-        const targetWeight = lastSet.weight + (gap * (i + 1) / (stillNeeded + 1));
-        const roundedWeight = roundToIncrement(targetWeight, minIncrement);
-        
-        if (roundedWeight > lastSet.weight && roundedWeight < topWeight) {
-          // Get plates from last set to build on
-          const lastSetBreakdown = calculatePlateBreakdown(
-            lastSet.weight,
-            barWeight,
-            isMetric,
-            platePreference,
-          );
-          
-          const breakdown = calculatePlateBreakdownWithExisting(
-            roundedWeight,
-            barWeight,
-            lastSetBreakdown.platesPerSide,
-            isMetric,
-            platePreference,
-          );
-          const actualWeight = breakdown.closestWeight;
-          
-          // Very relaxed constraints - just make sure it's different and below top
-          if (actualWeight > lastSet.weight && actualWeight < topWeight && !seenWeights.has(actualWeight)) {
-            uniqueSets.push({
-              weight: actualWeight,
-              reps: 5,
-              percentage: Math.round((actualWeight / topWeight) * 100),
-              plateBreakdown: breakdown,
-            });
-            seenWeights.add(actualWeight);
-          }
-        }
-      }
-    }
-  }
 
   // Calculate top set plate breakdown based on the last warmup set's plates
   let topSetBreakdown;

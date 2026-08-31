@@ -225,6 +225,27 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     setWeight(newWeight);
   };
 
+  const maxWeight = isMetric ? 300 : 700;
+  const normalizeWeight = (
+    value,
+    metric = isMetric,
+    minimum = barWeight,
+    maximum = maxWeight,
+  ) => {
+    const numericWeight = Number(value);
+    if (!Number.isFinite(numericWeight) || numericWeight <= 0) {
+      return minimum;
+    }
+
+    const minIncrement = metric ? 2.5 : 5;
+    const roundedWeight = minIncrement * Math.ceil(numericWeight / minIncrement);
+    return Math.min(maximum, Math.max(minimum, roundedWeight));
+  };
+
+  const handleWeightBlur = () => {
+    setWeight(normalizeWeight(weight));
+  };
+
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       event.target.blur();
@@ -249,11 +270,22 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       newWeight = Math.round(Number(weight) / 2.2046);
       setIsMetric(true);
     }
-    setWeight(newWeight);
+    const newBarWeight = getDefaultBarbellWeight({
+      isMetric: newIsMetric,
+      sex,
+      storedBarType: explicitBarType,
+    });
+    setWeight(
+      normalizeWeight(
+        newWeight,
+        newIsMetric,
+        newBarWeight,
+        newIsMetric ? 300 : 700,
+      ),
+    );
   };
 
   const unit = isMetric ? "kg" : "lb";
-  const maxWeight = isMetric ? 300 : 700;
 
   // Changes whenever sliders/options change – used to retrigger barbell animations
   const animationKey = useMemo(
@@ -333,6 +365,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
                   id="weightInput"
                   value={weight}
                   onChange={(event) => setWeight(event.target.value)}
+                  onBlur={handleWeightBlur}
                   onKeyPress={handleKeyPress}
                   onKeyDown={handleKeyDown}
                   aria-label="Weight"
@@ -361,6 +394,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
                   id="weightInput"
                   value={weight}
                   onChange={(event) => setWeight(event.target.value)}
+                  onBlur={handleWeightBlur}
                   onKeyPress={handleKeyPress}
                   onKeyDown={handleKeyDown}
                   aria-label="Weight"

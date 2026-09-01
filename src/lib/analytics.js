@@ -69,6 +69,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   IMPORT_PROCESS: "SJ_import_process", // ~Mar 2026: Client-side import/save lifecycle for preview and history imports.
   COFFEE_NUDGE_CLICK: "SJ_coffee_nudge_click", // ~Apr 2026: User clicked a Buy-Me-a-Coffee link in an in-app nudge surface.
   LONG_GAME_LOG_CTA: "SJ_long_game_log_cta", // ~Aug 2026: User clicked a "log a session" CTA on an early-stage Long Game card.
+  STARTER_FIRST_MOVE: "SJ_starter_first_move", // ~Sep 2026: New user chose (or ignored) a first-move pathway on the intro dashboard.
   HOME_WELCOME_ACTION: "SJ_home_welcome_action", // ~Aug 2026: Signed-in lifter without a linked sheet acted on the activation home (fork CTA or reading rail).
 });
 
@@ -362,6 +363,33 @@ export function gaTrackLongGameLogCta({
   if (typeof sessionCount === "number") params.session_count = sessionCount;
 
   gaEvent(GA_EVENT_TAGS.LONG_GAME_LOG_CTA, params);
+}
+
+/**
+ * Track the intro dashboard's first-move band: the moment a brand-new lifter
+ * picks between importing existing history and logging a first session.
+ *
+ * Both pathways report through one event so the choice itself is measurable -
+ * splitting them across two events would make the ratio, which is the whole
+ * question, something you have to reconstruct by hand. `cta` names the
+ * pathway; params otherwise match gaTrackHomeImportNudge so every onboarding
+ * surface stays comparable.
+ */
+export function gaTrackStarterFirstMove({
+  action,
+  cta,
+  dashboardStage,
+  sessionCount,
+} = {}) {
+  if (typeof action !== "string" || action.length === 0) return;
+
+  const params = { action, surface: "starter_first_move" };
+  if (typeof cta === "string" && cta.length > 0) params.cta = cta;
+  if (typeof dashboardStage === "string")
+    params.dashboard_stage = dashboardStage;
+  if (typeof sessionCount === "number") params.session_count = sessionCount;
+
+  gaEvent(GA_EVENT_TAGS.STARTER_FIRST_MOVE, params);
 }
 
 /**

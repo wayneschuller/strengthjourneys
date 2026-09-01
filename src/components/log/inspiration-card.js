@@ -84,6 +84,12 @@ const INSPIRATIONAL_QUOTES = [
     author: "Socrates",
     URL: "https://grokipedia.com/page/Socrates",
   },
+  {
+    quote:
+      "You can get 95% of the results you want by calmly putting one foot in front of the other. One former Navy SEAL friend texted me a principle used in their training: 'Slow is smooth. Smooth is fast.'",
+    author: "Tim Ferriss",
+    URL: "https://tim.blog/",
+  },
 ];
 
 function getSeededQuote(seedKey = "default") {

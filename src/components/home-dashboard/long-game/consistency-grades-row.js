@@ -19,6 +19,7 @@ import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 import { processConsistency } from "@/lib/consistency";
 
 import {
+  REST_GRADE,
   getConsistencyRingPalette,
   getGradeAndColor,
 } from "@/lib/consistency-grades";
@@ -39,10 +40,6 @@ import {
 // --- Consistency Grades ---
 
 const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
-// The bottom grade band. A full stop said nothing; a bed says the one thing that is
-// both true and kind about an empty window, and stays funny rather than scolding if
-// the window in question is three months long.
-const REST_GRADE = ".";
 const DAYS_PER_YEAR = 365.25;
 
 function getConsistencyLabelAbbrev(label) {

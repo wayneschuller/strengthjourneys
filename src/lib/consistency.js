@@ -22,6 +22,7 @@ import {
   TARGET_SESSIONS_PER_WEEK,
   getHoldSessionsPerWeek,
   getTargetSessions,
+  isRestGrade,
 } from "@/lib/consistency-grades";
 
 const DAYS_PER_YEAR = 365.25;
@@ -143,6 +144,47 @@ function hashPhraseSeed(seed) {
 
 function pickPhrase(variants, rotation) {
   return variants[rotation % variants.length];
+}
+
+// --- Rest phrases ---
+
+// A window with almost nothing in it draws a bed, and the bed gets to say something.
+// Tone tracks the length of the gap, because one joke does not stretch across every
+// scale. A week off is worth affirming, since that is where the adaptation happens.
+// A month off earns a gentle ribbing. From a quarter onwards the odds that this is
+// injury, illness or life rather than laziness get high enough that the right move
+// is sincerity, so those windows share one set and talk about the long game instead.
+const REST_MONTH_MIN_PERIOD_DAYS = 30;
+const REST_LONG_MIN_PERIOD_DAYS = 91;
+
+const REST_WEEK_PHRASES = [
+  `A week off. Muscle is built between sessions, not during them, so this is the half nobody photographs.`,
+  `Nothing logged, everything repairing. A rest week is when the last block turns into actual strength.`,
+  `A blank week. Your fortnight a year is built into the target, so this one is already paid for.`,
+  `Recovery week. Tendons and connective tissue heal slower than muscle, and they are using the time.`,
+  `Zero sessions, full adaptation. The bar will feel better for it.`,
+];
+
+const REST_MONTH_PHRASES = [
+  `A month off. Have you been running? Blink twice if you have been running.`,
+  `Thirty days, no barbell. If somebody has talked you into a parkrun, we can still fix this.`,
+  `A quiet month. Cardio is fine. Cardio is a perfectly fine thing that other people do.`,
+  `One month in bed. The good news is muscle memory is real. The bad news is the bar remembers too.`,
+  `A month off the tools. Somewhere your squat is telling people you two are still together.`,
+];
+
+const REST_LONG_PHRASES = [
+  `A long quiet stretch. Nothing holds on to strength and bone with age like lifting does, and it restarts the moment you do.`,
+  `Time away. Lifting was never about this window. It is about carrying your own shopping at eighty.`,
+  `A long gap. Muscle is the tissue that shapes how you age, and it is remarkably willing to come back.`,
+  `Quiet for a while. The lifters who last are not the ones who never stopped, they are the ones who always restarted.`,
+  `A long rest. Nothing in your history is lost, and the first session back counts for more than any session you missed.`,
+];
+
+function getRestPhrases(periodDays) {
+  if (periodDays < REST_MONTH_MIN_PERIOD_DAYS) return REST_WEEK_PHRASES;
+  if (periodDays < REST_LONG_MIN_PERIOD_DAYS) return REST_MONTH_PHRASES;
+  return REST_LONG_PHRASES;
 }
 
 // Sessions are moving out the back of the window this week, so this many keeps the
@@ -354,6 +396,11 @@ export function processConsistency(parsedData) {
       if (date <= expiryCutoffDate) expiringSessions += 1;
     }
 
+    // Stepped by the ring's position so no two rings in the row land on the same
+    // wording, and offset by the date so the row reads fresh tomorrow. Shared by the
+    // headline and the rolling note, which never draw from the same set.
+    const phraseRotation = dayPhraseOffset + periodIndex;
+
     let graceDayWarning = false;
     if (period.label === "Week" && actualWorkouts >= targetWorkouts) {
       const strictStartDate = subtractDays(today, 6);
@@ -373,7 +420,9 @@ export function processConsistency(parsedData) {
     const surplusSessions = Math.max(0, actualWorkouts - targetWorkouts);
 
     let headline = "";
-    if (graceDayWarning) {
+    if (isRestGrade(consistencyPercentage)) {
+      headline = pickPhrase(getRestPhrases(period.days), phraseRotation);
+    } else if (graceDayWarning) {
       headline = "Riding the grace day. One lift today locks in the week.";
     } else if (surplusSessions > 0) {
       headline = `${surplusSessions} ${pluraliseSessions(surplusSessions)} clear of target for this window`;
@@ -398,8 +447,6 @@ export function processConsistency(parsedData) {
       holdSessionsPerWeek = isPartiallyTracked
         ? getHoldSessionsPerWeek(consistencyPercentage)
         : expiringSessions;
-
-      const phraseRotation = dayPhraseOffset + periodIndex;
 
       if (period.days >= LONG_VIEW_MIN_PERIOD_DAYS) {
         rollingNote = isPartiallyTracked

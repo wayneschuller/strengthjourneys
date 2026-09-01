@@ -57,6 +57,14 @@ export function getHoldSessionsPerWeek(percentage) {
   return (EFFECTIVE_SESSIONS_PER_WEEK * percentage) / 100;
 }
 
+// The bottom band. Rendered as a bed rather than a full stop, so it needs a name
+// that both the rings and the phrase picker can agree on.
+export const REST_GRADE = ".";
+
+export function isRestGrade(progress) {
+  return getGradeAndColor(progress).grade === REST_GRADE;
+}
+
 export function getGradeAndColor(progress) {
   for (let i = 0; i < CONSISTENCY_GRADE_THRESHOLDS.length; i++) {
     if (progress >= CONSISTENCY_GRADE_THRESHOLDS[i].minProgress) {

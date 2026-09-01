@@ -1359,6 +1359,18 @@ export function SheetSetupDialog() {
     sheetInfo?.ssid,
   ]);
 
+  // The success button says "Go to Home Dashboard", and until now it only
+  // closed the dialog. Setup can start from /strength-levels/[lift], the
+  // 1000lb club calculator and the homepage hero, so for everyone who did not
+  // happen to already be on "/" the button quietly did nothing and they never
+  // reached the dashboard the copy promised them.
+  const goToDashboard = useCallback(() => {
+    closeDialog();
+    if (router.pathname !== "/") {
+      void router.push("/");
+    }
+  }, [closeDialog, router]);
+
   useEffect(() => {
     if (authStatus !== "authenticated") {
       setOpen(false);
@@ -1693,7 +1705,7 @@ export function SheetSetupDialog() {
                       reason={createdSheetReason}
                       action={createdSheetAction}
                       intent={flowIntent}
-                      onGoToDashboard={closeDialog}
+                      onGoToDashboard={goToDashboard}
                     />
                   )}
                 </CardContent>

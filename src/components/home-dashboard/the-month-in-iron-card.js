@@ -205,6 +205,16 @@ export function TheMonthInIronCard({
     ],
   );
 
+  /*
+   * The verdict strip scores this month against the previous one, so it only
+   * has something to say when the previous one has sessions in it. Without
+   * that baseline every check passes by default and the strip reports a green
+   * score to a lifter who has not trained, which is the one claim this card
+   * must never make. Covers both lifters who arrive here with no previous
+   * month: the brand new one, and the one coming back.
+   */
+  const hasComparisonMonth = (stats?.sessions?.last ?? 0) > 0;
+
   // Buy-Me-a-Coffee nudge: shown when the user is clearly winning a month.
   // Current month: only in the final week (avoid false positives mid-month).
   // Past month: any winning historical month qualifies.
@@ -216,6 +226,7 @@ export function TheMonthInIronCard({
   const isPastMonthWin = !!boundaries && !boundaries.isCurrentMonthView;
   const showCoffeeNudge =
     !isDemoMode &&
+    hasComparisonMonth &&
     verdictHeadline?.tone === "win" &&
     highlightsComplete &&
     (isCurrentMonthLastWeekWin || isPastMonthWin);
@@ -449,47 +460,53 @@ export function TheMonthInIronCard({
               revealedRows={revealedRows}
             />
 
-            <Separator />
-            <motion.div
-              className={`flex items-center gap-4 rounded-xl border px-3 py-2.5 transition-colors duration-500 ${
-                highlightsComplete && verdictHeadline?.tone === "win"
-                  ? "border-emerald-500/30 bg-emerald-500/10 shadow-[0_0_18px_-6px_rgba(16,185,129,0.45)]"
-                  : highlightsComplete && verdictHeadline?.tone === "progress"
-                    ? "border-amber-500/30 bg-amber-500/10"
-                    : "border-border/40 bg-muted/10"
-              }`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.35 }}
-            >
-              {checksSummary && (
-                <MonthScoreRing
-                  met={highlightsComplete ? checksSummary.checksMet : 0}
-                  total={checksSummary.checksTotal}
-                  tone={highlightsComplete ? verdictHeadline?.tone : null}
-                  size={44}
-                />
-              )}
-              <div className="min-w-0">
-                <div className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
-                  {verdictHeadline?.phaseLabel}
-                  {highlightsComplete && verdictHeadline?.scoreText
-                    ? ` · ${verdictHeadline.scoreText}`
-                    : ""}
-                </div>
-                <p className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
-                  <span
-                    className={
-                      !highlightsComplete || verdictHeadline?.tone === "neutral"
-                        ? "text-muted-foreground"
-                        : "text-foreground"
-                    }
-                  >
-                    {verdictHeadline?.text || "Keep forging ⚒️"}
-                  </span>
-                </p>
-              </div>
-            </motion.div>
+            {hasComparisonMonth && (
+              <>
+                <Separator />
+                <motion.div
+                  className={`flex items-center gap-4 rounded-xl border px-3 py-2.5 transition-colors duration-500 ${
+                    highlightsComplete && verdictHeadline?.tone === "win"
+                      ? "border-emerald-500/30 bg-emerald-500/10 shadow-[0_0_18px_-6px_rgba(16,185,129,0.45)]"
+                      : highlightsComplete &&
+                          verdictHeadline?.tone === "progress"
+                        ? "border-amber-500/30 bg-amber-500/10"
+                        : "border-border/40 bg-muted/10"
+                  }`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.35 }}
+                >
+                  {checksSummary && (
+                    <MonthScoreRing
+                      met={highlightsComplete ? checksSummary.checksMet : 0}
+                      total={checksSummary.checksTotal}
+                      tone={highlightsComplete ? verdictHeadline?.tone : null}
+                      size={44}
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
+                      {verdictHeadline?.phaseLabel}
+                      {highlightsComplete && verdictHeadline?.scoreText
+                        ? ` · ${verdictHeadline.scoreText}`
+                        : ""}
+                    </div>
+                    <p className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
+                      <span
+                        className={
+                          !highlightsComplete ||
+                          verdictHeadline?.tone === "neutral"
+                            ? "text-muted-foreground"
+                            : "text-foreground"
+                        }
+                      >
+                        {verdictHeadline?.text || "Keep forging ⚒️"}
+                      </span>
+                    </p>
+                  </div>
+                </motion.div>
+              </>
+            )}
 
             {showCoffeeNudge && (
               <motion.div
@@ -514,7 +531,10 @@ export function TheMonthInIronCard({
           </>
         )}
       </CardContent>
-      {stats && dashboardStage === "established" && (
+      {/* Asking "Useful?" under the invitation panel asks the wrong question:
+          there is no verdict to rate, only an offer to come back. The widget
+          belongs to the comparison, so it appears with it. */}
+      {stats && hasComparisonMonth && dashboardStage === "established" && (
         <CardFooter className="pt-0">
           <MiniFeedbackWidget
             contextId="this_month_in_iron_card"
@@ -2636,13 +2656,22 @@ function BigFourInvitationPanel({
                 ease: [0.22, 1, 0.36, 1],
               }}
             >
-              <Link href={href} className="shrink-0">
-                <LiftSvg
-                  liftType={liftType}
-                  size="sm"
-                  animate={false}
-                  className="h-14 w-14"
-                />
+              <Link
+                href={href}
+                className="focus-visible:ring-ring shrink-0 rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              >
+                <motion.div
+                  className="bg-muted/10 ring-border/40 rounded-full p-1.5 ring-1"
+                  whileHover={{ scale: 1.06, y: -1 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                >
+                  <LiftSvg
+                    liftType={liftType}
+                    size="sm"
+                    animate={false}
+                    className="h-14 w-14"
+                  />
+                </motion.div>
               </Link>
               <div className="min-w-0">
                 <Link

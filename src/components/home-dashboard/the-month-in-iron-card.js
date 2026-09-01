@@ -458,6 +458,7 @@ export function TheMonthInIronCard({
               boundaries={boundaries}
               unit={unit}
               revealedRows={revealedRows}
+              hasComparisonMonth={hasComparisonMonth}
             />
 
             {hasComparisonMonth && (
@@ -2066,9 +2067,10 @@ function BigFourCriteriaTable({
   boundaries,
   unit,
   revealedRows = 0,
+  hasComparisonMonth = true,
 }) {
   const isCurrentMonthView = boundaries?.isCurrentMonthView;
-  const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
+  const allRows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const tonnage = bigFourByLift?.[liftType] ?? {
       current: 0,
       last: 0,
@@ -2078,12 +2080,23 @@ function BigFourCriteriaTable({
       current: null,
       last: null,
     };
-    return { liftType, tonnage, strength };
-  }).filter(({ tonnage, strength }) => {
     const hasTonnage = (tonnage.current ?? 0) > 0 || (tonnage.last ?? 0) > 0;
     const hasStrength = strength.current !== null || strength.last !== null;
-    return hasTonnage || hasStrength;
+    return { liftType, tonnage, strength, hasData: hasTonnage || hasStrength };
   });
+
+  const rows = allRows.filter((row) => row.hasData);
+
+  /*
+   * A lift with nothing in either month has no comparison to draw, so in a
+   * normal month it stays out of the table. In a month with no baseline it
+   * earns an invitation row instead: that month is a fresh start, and the
+   * lifter working through it should see the whole set rather than watch the
+   * other three lifts disappear the moment they log the first one.
+   */
+  const invitationRows = hasComparisonMonth
+    ? []
+    : allRows.filter((row) => !row.hasData);
 
   if (rows.length === 0) {
     return (
@@ -2599,6 +2612,21 @@ function BigFourCriteriaTable({
         );
       })}
 
+      {invitationRows.length > 0 && (
+        <div className="space-y-2 pt-1">
+          <p className="text-muted-foreground text-[10px] font-semibold tracking-[0.12em] uppercase">
+            Still in the set
+          </p>
+          {invitationRows.map(({ liftType }, i) => (
+            <BigFourInvitationRow
+              key={liftType}
+              liftType={liftType}
+              index={i}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="space-y-1 pt-0.5">
         <AthleteBioInlineSettings
           forceStackedControls
@@ -2639,57 +2667,13 @@ function BigFourInvitationPanel({
       <p className="text-muted-foreground text-sm">{headline}</p>
 
       <div className="space-y-2">
-        {BIG_FOUR_LIFT_TYPES.map((liftType, index) => {
-          const copy = getBigFourBodyBenefit(liftType);
-          if (!copy) return null;
-          const href = getLiftDetailUrl(liftType);
-
-          return (
-            <motion.div
-              key={liftType}
-              className="border-border/40 bg-muted/10 flex items-start gap-3 rounded-lg border px-2.5 py-2"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.35,
-                delay: 0.06 * index,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            >
-              <Link
-                href={href}
-                className="focus-visible:ring-ring shrink-0 rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-              >
-                <motion.div
-                  className="bg-muted/10 ring-border/40 rounded-full p-1.5 ring-1"
-                  whileHover={{ scale: 1.06, y: -1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 18 }}
-                >
-                  <LiftSvg
-                    liftType={liftType}
-                    size="sm"
-                    animate={false}
-                    className="h-14 w-14"
-                  />
-                </motion.div>
-              </Link>
-              <div className="min-w-0">
-                <Link
-                  href={href}
-                  className="text-foreground text-sm font-semibold hover:underline"
-                >
-                  {liftType}
-                </Link>
-                <p className="text-muted-foreground/80 text-[11px] font-medium tracking-wide uppercase">
-                  {copy.tagline}
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-                  {copy.benefit}
-                </p>
-              </div>
-            </motion.div>
-          );
-        })}
+        {BIG_FOUR_LIFT_TYPES.map((liftType, index) => (
+          <BigFourInvitationRow
+            key={liftType}
+            liftType={liftType}
+            index={index}
+          />
+        ))}
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
@@ -2704,5 +2688,65 @@ function BigFourInvitationPanel({
         </p>
       </div>
     </div>
+  );
+}
+
+/*
+ * One lift as an invitation rather than a score: the illustration in the same
+ * ringed circle the comparison column uses, and what the lift gives the body.
+ *
+ * Used both for the full panel and, once a lifter is part way through a
+ * no-baseline month, for the lifts they have not trained yet. Keeping them in
+ * the list means the set stays whole and visibly fills in, rather than three
+ * quarters of the card vanishing as a reward for coming back.
+ */
+function BigFourInvitationRow({ liftType, index = 0 }) {
+  const copy = getBigFourBodyBenefit(liftType);
+  if (!copy) return null;
+  const href = getLiftDetailUrl(liftType);
+
+  return (
+    <motion.div
+      className="border-border/40 bg-muted/10 flex items-start gap-3 rounded-lg border px-2.5 py-2"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.35,
+        delay: 0.06 * index,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+    >
+      <Link
+        href={href}
+        className="focus-visible:ring-ring shrink-0 rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      >
+        <motion.div
+          className="bg-muted/10 ring-border/40 rounded-full p-1.5 ring-1"
+          whileHover={{ scale: 1.06, y: -1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 18 }}
+        >
+          <LiftSvg
+            liftType={liftType}
+            size="sm"
+            animate={false}
+            className="h-14 w-14"
+          />
+        </motion.div>
+      </Link>
+      <div className="min-w-0">
+        <Link
+          href={href}
+          className="text-foreground text-sm font-semibold hover:underline"
+        >
+          {liftType}
+        </Link>
+        <p className="text-muted-foreground/80 text-[11px] font-medium tracking-wide uppercase">
+          {copy.tagline}
+        </p>
+        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+          {copy.benefit}
+        </p>
+      </div>
+    </motion.div>
   );
 }

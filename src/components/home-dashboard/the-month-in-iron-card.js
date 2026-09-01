@@ -35,10 +35,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  BIG_FOUR_LIFT_TYPES,
-  getDisplayWeight,
-} from "@/lib/processing-utils";
+import { BIG_FOUR_LIFT_TYPES, getDisplayWeight } from "@/lib/processing-utils";
 import {
   getStrengthRatingForE1RM,
   getStandardForLiftDate,
@@ -72,7 +69,8 @@ export function TheMonthInIronCard({
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
   const sessionCount = useMemo(() => {
-    if (typeof sessionCountFromParent === "number") return sessionCountFromParent;
+    if (typeof sessionCountFromParent === "number")
+      return sessionCountFromParent;
     if (!Array.isArray(parsedData)) return 0;
     const dates = new Set();
     parsedData.forEach((entry) => {
@@ -130,7 +128,8 @@ export function TheMonthInIronCard({
   }, [parsedData, boundaries]);
 
   const strengthLevelStats = useMemo(() => {
-    if (!Array.isArray(parsedData) || parsedData.length === 0 || !bio) return null;
+    if (!Array.isArray(parsedData) || parsedData.length === 0 || !bio)
+      return null;
     return computeStrengthLevelStats(parsedData, boundaries, bio);
   }, [parsedData, bio, boundaries]);
 
@@ -147,10 +146,18 @@ export function TheMonthInIronCard({
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
 
   const sessionsPaceStatus = stats
-    ? getPaceStatus(stats.sessions.current, stats.sessions.last, stats.progressRatio)
+    ? getPaceStatus(
+        stats.sessions.current,
+        stats.sessions.last,
+        stats.progressRatio,
+      )
     : null;
   const bigFourPaceStatus = stats
-    ? getPaceStatus(stats.bigFourTonnage.current, stats.bigFourTonnage.last, stats.progressRatio)
+    ? getPaceStatus(
+        stats.bigFourTonnage.current,
+        stats.bigFourTonnage.last,
+        stats.progressRatio,
+      )
     : null;
 
   const strengthSetupRequired = !!bio?.bioDataIsDefault;
@@ -169,7 +176,8 @@ export function TheMonthInIronCard({
     () => getMonthlyRevealRowCount(stats, strengthLevelStats),
     [stats, strengthLevelStats],
   );
-  const highlightsComplete = totalRevealRows > 0 && revealedRows >= totalRevealRows;
+  const highlightsComplete =
+    totalRevealRows > 0 && revealedRows >= totalRevealRows;
   const verdictHeadline = useMemo(
     () =>
       getVerdictHeadline({
@@ -265,16 +273,19 @@ export function TheMonthInIronCard({
     }, HIGHLIGHT_REVEAL_DELAY_MS);
   }, [isCardInView, stats, totalRevealRows, revealedRows]);
 
-  useEffect(() => () => {
-    if (highlightStartTimerRef.current) {
-      clearTimeout(highlightStartTimerRef.current);
-      highlightStartTimerRef.current = null;
-    }
-    if (highlightStepTimerRef.current) {
-      clearInterval(highlightStepTimerRef.current);
-      highlightStepTimerRef.current = null;
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (highlightStartTimerRef.current) {
+        clearTimeout(highlightStartTimerRef.current);
+        highlightStartTimerRef.current = null;
+      }
+      if (highlightStepTimerRef.current) {
+        clearInterval(highlightStepTimerRef.current);
+        highlightStepTimerRef.current = null;
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const isPastMonthView = !!boundaries && !boundaries.isCurrentMonthView;
@@ -295,7 +306,8 @@ export function TheMonthInIronCard({
     if (confettiFiredRef.current) return;
     if (typeof window === "undefined") return;
     if (!highlightsComplete) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)
+      return;
 
     confettiFiredRef.current = true;
     const timer = setTimeout(
@@ -380,7 +392,7 @@ export function TheMonthInIronCard({
                 <span className="hidden sm:inline">AI review</span>
               </Link>
             </Button>
-            <div className="flex items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
+            <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -458,7 +470,7 @@ export function TheMonthInIronCard({
                 />
               )}
               <div className="min-w-0">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
                   {verdictHeadline?.phaseLabel}
                   {highlightsComplete && verdictHeadline?.scoreText
                     ? ` · ${verdictHeadline.scoreText}`
@@ -562,11 +574,11 @@ function EarlyMonthMomentumCard({
       ? "Get into the gym and start the week strong."
       : dashboardStage === "first_real_week"
         ? "Keep the week simple, learn the lifts, and add only small jumps."
-      : dataMaturityStage === "first_week"
-        ? "Your first week is about showing up and building rhythm."
-        : dataMaturityStage === "first_month"
-          ? "Momentum now becomes measurable progress."
-          : "Log your first session and this card will start scoring your month.";
+        : dataMaturityStage === "first_week"
+          ? "Your first week is about showing up and building rhythm."
+          : dataMaturityStage === "first_month"
+            ? "Momentum now becomes measurable progress."
+            : "Log your first session and this card will start scoring your month.";
 
   const guidanceItems =
     dataMaturityStage === "no_sessions"
@@ -613,41 +625,35 @@ function EarlyMonthMomentumCard({
         }`}
       >
         {showWeekTemplate ? (
-          <div className="rounded-lg bg-background/60 px-3 py-3">
-            <p className="text-sm text-muted-foreground">
+          <div className="bg-background/60 rounded-lg px-3 py-3">
+            <p className="text-muted-foreground text-sm">
               Start with{" "}
-              <span className="font-medium text-foreground">
-                an empty bar
-              </span>{" "}
+              <span className="text-foreground font-medium">an empty bar</span>{" "}
               and work up to{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 a moderate weight
               </span>
               .{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 3x5 means three sets of five reps
               </span>
               . Rest a few minutes between sets.
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              The days are only a suggestion. Start today if you can, then
-              leave about two days between sessions.
+            <p className="text-muted-foreground mt-2 text-sm">
+              The days are only a suggestion. Start today if you can, then leave
+              about two days between sessions.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanLiftSession
                 title="Session 1"
                 dayLabel={weekPlanDays[0].label}
                 isToday={weekPlanDays[0].isToday}
-                lifts={[
-                  { liftType: "Back Squat", prescription: "3×5" },
-                ]}
+                lifts={[{ liftType: "Back Squat", prescription: "3×5" }]}
               />
               <WeekPlanLiftSession
                 title="Session 2"
                 dayLabel={weekPlanDays[1].label}
-                lifts={[
-                  { liftType: "Bench Press", prescription: "3×5" },
-                ]}
+                lifts={[{ liftType: "Bench Press", prescription: "3×5" }]}
               />
               <WeekPlanLiftSession
                 title="Session 3"
@@ -658,29 +664,27 @@ function EarlyMonthMomentumCard({
                 ]}
               />
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-4 text-sm">
               Each work set should feel{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 solid and challenging
               </span>
               , but never like a desperate grind. You will finish knowing you
               could have done{" "}
-              <span className="font-medium text-foreground">
-                2-3 more reps
-              </span>{" "}
+              <span className="text-foreground font-medium">2-3 more reps</span>{" "}
               if needed. Over the following weeks,{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 add small amounts of weight
               </span>{" "}
               so the lifts get heavier while still moving cleanly.
             </p>
           </div>
         ) : showFirstMonthTemplate ? (
-          <div className="rounded-lg bg-background/60 px-3 py-3">
-            <p className="text-sm text-muted-foreground">
-              You can continue what you did in the previous week, or feel free to
-              start adding more lifts to each session as the movements begin to
-              feel more natural. Keep the sessions simple, use manageable
+          <div className="bg-background/60 rounded-lg px-3 py-3">
+            <p className="text-muted-foreground text-sm">
+              You can continue what you did in the previous week, or feel free
+              to start adding more lifts to each session as the movements begin
+              to feel more natural. Keep the sessions simple, use manageable
               weights, and add small amounts over time.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -716,13 +720,13 @@ function EarlyMonthMomentumCard({
                 ]}
               />
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-4 text-sm">
               If you are especially keen, try implementing the{" "}
               <a
                 href="https://startingstrength.com/get-started/programs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-primary hover:underline"
+                className="text-primary font-medium hover:underline"
               >
                 Starting Strength Novice Linear Progression
               </a>
@@ -736,22 +740,22 @@ function EarlyMonthMomentumCard({
               <MomentumStat label="Sets Logged" value={stats.sets} />
               <MomentumStat label="Big Four" value={stats.bigFourTouches} />
             </div>
-            <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+            <p className="bg-muted/20 text-muted-foreground rounded-lg border border-dashed px-3 py-2 text-sm">
               Total volume so far:{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 {stats.tonnageValue.toLocaleString()} {stats.tonnageUnit}
               </span>
               . Keep stacking consistent sessions.
             </p>
-            <div className="rounded-lg border bg-background/80 px-3 py-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Coaching Notes
-            </p>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              {guidanceItems.map((item) => (
-                <p key={item}>{item}</p>
-              ))}
-            </div>
+            <div className="bg-background/80 rounded-lg border px-3 py-3">
+              <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-[0.12em] uppercase">
+                Coaching Notes
+              </p>
+              <div className="text-muted-foreground space-y-2 text-sm">
+                {guidanceItems.map((item) => (
+                  <p key={item}>{item}</p>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -771,33 +775,33 @@ function EarlyMonthMomentumCard({
 
 function MomentumStat({ label, value }) {
   return (
-    <div className="rounded-lg border bg-background/80 px-2 py-3 text-center">
+    <div className="bg-background/80 rounded-lg border px-2 py-3 text-center">
       <div className="text-lg font-semibold">{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-muted-foreground text-xs">{label}</div>
     </div>
   );
 }
 
 function WeekPlanSession({ title, items }) {
   return (
-    <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-3">
-      <p className="mb-2 text-sm font-semibold text-foreground">{title}</p>
-      <div className="space-y-2 text-sm text-muted-foreground">
-        {items.map((item) => (
+    <div className="border-border/70 bg-muted/10 rounded-lg border px-3 py-3">
+      <p className="text-foreground mb-2 text-sm font-semibold">{title}</p>
+      <div className="text-muted-foreground space-y-2 text-sm">
+        {items.map((item) =>
           typeof item === "string" ? (
             <p key={item}>{item}</p>
           ) : (
             <p key={`${title}-${item.liftType}-${item.prescription}`}>
               <Link
                 href={getLiftDetailUrl(item.liftType)}
-                className="font-medium text-primary hover:underline"
+                className="text-primary font-medium hover:underline"
               >
                 {item.liftType}
               </Link>{" "}
               — {item.prescription}
             </p>
-          )
-        ))}
+          ),
+        )}
       </div>
     </div>
   );
@@ -826,7 +830,7 @@ function getWeekPlanDays(today = new Date()) {
 function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
   return (
     <div
-      className={`group relative rounded-lg border bg-muted/10 px-3 py-3 ${
+      className={`group bg-muted/10 relative rounded-lg border px-3 py-3 ${
         isToday ? "border-primary/40" : "border-border/70"
       }`}
     >
@@ -834,9 +838,9 @@ function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
           is only a suggested day to put that session on. */}
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-foreground text-sm font-semibold">{title}</p>
           {dayLabel && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {isToday ? `Today, ${dayLabel}` : dayLabel}
             </p>
           )}
@@ -844,7 +848,7 @@ function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
         {isToday && (
           // The Log button sits over this badge on hover, so the badge fades
           // rather than the two stacking on top of each other.
-          <span className="text-primary shrink-0 text-[10px] font-semibold tracking-[0.12em] uppercase transition-opacity md:group-hover:opacity-0 md:group-focus-within:opacity-0">
+          <span className="text-primary shrink-0 text-[10px] font-semibold tracking-[0.12em] uppercase transition-opacity md:group-focus-within:opacity-0 md:group-hover:opacity-0">
             Start here
           </span>
         )}
@@ -856,7 +860,7 @@ function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
       {isToday && (
         <Link
           href="/log?source=month-card-week-plan"
-          className="border-primary/40 bg-background text-foreground focus-visible:ring-ring absolute top-2 right-2 hidden items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none md:inline-flex"
+          className="border-primary/40 bg-background text-foreground focus-visible:ring-ring absolute top-2 right-2 hidden items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium opacity-0 shadow-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none md:inline-flex"
         >
           <Plus className="h-3 w-3" strokeWidth={2.5} />
           Log
@@ -867,7 +871,10 @@ function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
           const href = getLiftDetailUrl(liftType);
 
           return (
-            <div key={`${title}-${liftType}`} className="flex items-center gap-3">
+            <div
+              key={`${title}-${liftType}`}
+              className="flex items-center gap-3"
+            >
               <Link href={href} className="shrink-0">
                 <LiftSvg
                   liftType={liftType}
@@ -879,11 +886,11 @@ function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
               <div className="min-w-0">
                 <Link
                   href={href}
-                  className="font-medium text-primary hover:underline"
+                  className="text-primary font-medium hover:underline"
                 >
                   {liftType}
                 </Link>
-                <p className="text-sm text-muted-foreground">{prescription}</p>
+                <p className="text-muted-foreground text-sm">{prescription}</p>
               </div>
             </div>
           );
@@ -1027,7 +1034,12 @@ const LEVEL_EMOJIS = ["🏃", "🌱", "💪", "🔥", "👑"];
 const TONNAGE_CLOSE_ENOUGH_RATIO = 0.9; // Tonnage/session checks: within 10% of last month still counts as a win.
 // Returns "ahead" | "on-pace" | "behind" | "no-data".
 // expected = last * (dayOfMonth / daysInCurrentMonth); green if current >= expected * 0.9.
-function getLiftPaceStatus(currentTonnage, lastTonnage, dayOfMonth, daysInCurrentMonth) {
+function getLiftPaceStatus(
+  currentTonnage,
+  lastTonnage,
+  dayOfMonth,
+  daysInCurrentMonth,
+) {
   if (!lastTonnage || !dayOfMonth || !daysInCurrentMonth) return "no-data";
   const expected = lastTonnage * (dayOfMonth / daysInCurrentMonth);
   if (expected <= 0) return "no-data";
@@ -1105,11 +1117,15 @@ function MonthScoreRing({ met, total, tone, size = 36 }) {
           className={ringColorClass}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference * (1 - pct) }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: revealed ? 0.1 : 0 }}
+          transition={{
+            duration: 0.8,
+            ease: [0.22, 1, 0.36, 1],
+            delay: revealed ? 0.1 : 0,
+          }}
         />
       </svg>
       <span
-        className={`absolute inset-0 flex items-center justify-center font-bold tabular-nums text-foreground transition-opacity duration-300 ${
+        className={`text-foreground absolute inset-0 flex items-center justify-center font-bold tabular-nums transition-opacity duration-300 ${
           size >= 44 ? "text-[11px]" : "text-[9px]"
         } ${revealed ? "opacity-100" : "opacity-0"}`}
       >
@@ -1153,7 +1169,9 @@ function getMonthBoundaries(monthOffset = 0) {
     daysInCurrentMonth,
     daysRemainingInCurrentMonth: Math.max(0, daysInCurrentMonth - d),
     daysInPrevMonth,
-    currentMonthName: targetMonthDate.toLocaleString("default", { month: "long" }),
+    currentMonthName: targetMonthDate.toLocaleString("default", {
+      month: "long",
+    }),
     currentMonthShortYear: targetMonthDate.toLocaleString("default", {
       month: "short",
       year: "numeric",
@@ -1263,9 +1281,21 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
   }
 
   return {
-    tonnage: { current: currentTonnage, last: lastTonnage, lastSameDay: lastTonnageSameDay },
-    sessions: { current: currentDates.size, last: lastDates.size, lastSameDay: lastDatesSameDay.size },
-    bigFourTonnage: { current: currentBigFour, last: lastBigFour, lastSameDay: lastBigFourSameDay },
+    tonnage: {
+      current: currentTonnage,
+      last: lastTonnage,
+      lastSameDay: lastTonnageSameDay,
+    },
+    sessions: {
+      current: currentDates.size,
+      last: lastDates.size,
+      lastSameDay: lastDatesSameDay.size,
+    },
+    bigFourTonnage: {
+      current: currentBigFour,
+      last: lastBigFour,
+      lastSameDay: lastBigFourSameDay,
+    },
     bigFourByLift,
     progressRatio: boundaries.dayOfMonth / boundaries.daysInPrevMonth,
     nativeUnit,
@@ -1334,14 +1364,20 @@ function getStrengthLevelPassed(strengthLevelStats) {
 // ─── Pace status ───────────────────────────────────────────────────────────
 
 function getPaceStatus(current, last, progressRatio) {
-  if (last === 0) return { status: "no-data", fillPct: 0, needed: 0, projected: 0 };
+  if (last === 0)
+    return { status: "no-data", fillPct: 0, needed: 0, projected: 0 };
   const fillPct = Math.min(100, (current / last) * 100);
   const paceTarget = last * progressRatio;
   const pacePct = paceTarget > 0 ? current / paceTarget : 1;
   const status =
     pacePct >= 1.0 ? "ahead" : pacePct >= 0.85 ? "on-pace" : "behind";
   const projected = progressRatio > 0 ? current / progressRatio : current;
-  return { status, fillPct, needed: Math.max(0, Math.round(last - current)), projected };
+  return {
+    status,
+    fillPct,
+    needed: Math.max(0, Math.round(last - current)),
+    projected,
+  };
 }
 
 // ─── Verdict ───────────────────────────────────────────────────────────────
@@ -1349,11 +1385,7 @@ function getPaceStatus(current, last, progressRatio) {
 function getVerdict(stats, strengthLevelPassed, boundaries) {
   const { sessions, bigFourTonnage, tonnage, bigFourByLift } = stats;
 
-  if (
-    sessions.last === 0 &&
-    bigFourTonnage.last === 0 &&
-    tonnage.last === 0
-  ) {
+  if (sessions.last === 0 && bigFourTonnage.last === 0 && tonnage.last === 0) {
     return { label: "Writing History", emoji: "📖", won: false };
   }
 
@@ -1365,13 +1397,17 @@ function getVerdict(stats, strengthLevelPassed, boundaries) {
       const current = lift?.current ?? 0;
       const last = lift?.last ?? 0;
       if (isCurrentMonth && boundaries.dayOfMonth > 0) {
-        const ps = getLiftPaceStatus(current, last, boundaries.dayOfMonth, boundaries.daysInCurrentMonth);
+        const ps = getLiftPaceStatus(
+          current,
+          last,
+          boundaries.dayOfMonth,
+          boundaries.daysInCurrentMonth,
+        );
         return ps === "ahead" || ps === "on-pace";
       }
       return passesTonnageThreshold(current, last);
     });
-  const strengthOK =
-    strengthLevelPassed.skipped || strengthLevelPassed.passed;
+  const strengthOK = strengthLevelPassed.skipped || strengthLevelPassed.passed;
 
   if (primaryMet && strengthOK) {
     return { label: "Month Crushed", emoji: "💥", won: true };
@@ -1409,7 +1445,9 @@ function getVerdictHeadline({
     if (verdict?.label === "Writing History") {
       return {
         tone: "neutral",
-        text: pastMonthNoBaselineHeadline || "No prior month to beat. Baseline set.",
+        text:
+          pastMonthNoBaselineHeadline ||
+          "No prior month to beat. Baseline set.",
         scoreText: checksText ? `${checksText} green` : null,
         phaseLabel,
       };
@@ -1418,14 +1456,18 @@ function getVerdictHeadline({
     return {
       tone: monthWon ? "win" : "neutral",
       text: monthWon
-        ? (pastMonthWinHeadline || "Month Won ✅")
-        : (pastMonthLossHeadline || "Month Lost ❌"),
+        ? pastMonthWinHeadline || "Month Won ✅"
+        : pastMonthLossHeadline || "Month Lost ❌",
       scoreText: checksText ? `${checksText} green` : null,
       phaseLabel,
     };
   }
 
-  if (monthPhase === "last-week" && hasFullChecks && checksSummary.checksMet >= 7) {
+  if (
+    monthPhase === "last-week" &&
+    hasFullChecks &&
+    checksSummary.checksMet >= 7
+  ) {
     return {
       tone: "win",
       text: topTierPhrase || "Month Won ✅",
@@ -1437,9 +1479,10 @@ function getVerdictHeadline({
   if (monthPhase === "last-week" && verdict?.won) {
     return {
       tone: "win",
-      text: verdict.label === "Month Crushed"
-        ? (topTierPhrase || "Month Won ✅")
-        : "Month Won ✅",
+      text:
+        verdict.label === "Month Crushed"
+          ? topTierPhrase || "Month Won ✅"
+          : "Month Won ✅",
       scoreText: checksText ? `${checksText} green` : null,
       phaseLabel,
     };
@@ -1592,7 +1635,9 @@ function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
   let checksMet = 0;
   let checksTotal = 1; // sessions
 
-  if (passesTonnageThreshold(stats.sessions.current, stats.sessions.lastSameDay)) {
+  if (
+    passesTonnageThreshold(stats.sessions.current, stats.sessions.lastSameDay)
+  ) {
     checksMet += 1;
   }
 
@@ -1604,7 +1649,12 @@ function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
     const last = lift?.last ?? 0;
     let passed;
     if (isCurrentMonth && boundaries?.dayOfMonth > 0) {
-      const ps = getLiftPaceStatus(current, last, boundaries.dayOfMonth, boundaries.daysInCurrentMonth);
+      const ps = getLiftPaceStatus(
+        current,
+        last,
+        boundaries.dayOfMonth,
+        boundaries.daysInCurrentMonth,
+      );
       passed = ps === "ahead" || ps === "on-pace";
     } else {
       passed = passesTonnageThreshold(current, last);
@@ -1724,7 +1774,10 @@ function getMonthlyRevealRowCount(stats, strengthLevelStats) {
       current: 0,
       last: 0,
     };
-    const strength = strengthLevelStats?.[liftType] ?? { current: null, last: null };
+    const strength = strengthLevelStats?.[liftType] ?? {
+      current: null,
+      last: null,
+    };
     const hasTonnage = (tonnage.current ?? 0) > 0 || (tonnage.last ?? 0) > 0;
     const hasStrength = strength.current !== null || strength.last !== null;
     return hasTonnage || hasStrength;
@@ -1782,11 +1835,14 @@ function getTonnageStatusTooltip({
     return `First ${liftLabel} tonnage recorded this month — baseline set.`;
   }
   if (isCurrentMonthView && liftPaceStatus !== "no-data") {
-    if (liftPaceStatus === "ahead") return `Ahead of expected ${liftLabel} pace for this point in the month.`;
-    if (liftPaceStatus === "on-pace") return `Within 10% of expected ${liftLabel} pace — on track.`;
+    if (liftPaceStatus === "ahead")
+      return `Ahead of expected ${liftLabel} pace for this point in the month.`;
+    if (liftPaceStatus === "on-pace")
+      return `Within 10% of expected ${liftLabel} pace — on track.`;
     return `Behind expected ${liftLabel} pace for this point in the month.`;
   }
-  if (currentTonnage > lastTonnage) return `Passed previous month ${liftLabel} tonnage.`;
+  if (currentTonnage > lastTonnage)
+    return `Passed previous month ${liftLabel} tonnage.`;
   if (tonnagePassed) return `Matched previous month ${liftLabel} tonnage.`;
   return `Below previous month ${liftLabel} tonnage.`;
 }
@@ -1818,7 +1874,7 @@ const STATUS_TRACK_COLORS = {
 function PaceStatusLine({ status, needed, hideNeeded, projectedLabel }) {
   if (status === "no-data") {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         No data for last month yet — keep logging!
       </p>
     );
@@ -1885,8 +1941,10 @@ function MetricRow({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">{currentLabel}</span>
+          <span className="text-muted-foreground text-xs">
+            <span className="text-foreground font-semibold">
+              {currentLabel}
+            </span>
             {" vs "}
             {lastLabel}
           </span>
@@ -1897,8 +1955,8 @@ function MetricRow({
       </Tooltip>
     </TooltipProvider>
   ) : (
-    <span className="text-xs text-muted-foreground">
-      <span className="font-semibold text-foreground">{currentLabel}</span>
+    <span className="text-muted-foreground text-xs">
+      <span className="text-foreground font-semibold">{currentLabel}</span>
       {" vs "}
       {lastLabel}
     </span>
@@ -1923,7 +1981,11 @@ function MetricRow({
             className={`h-full rounded-full ${STATUS_COLORS[status]}`}
             initial={{ width: "0%" }}
             animate={{ width: `${fillPct}%` }}
-            transition={{ duration: 0.7, delay: rowDelay + 0.1, ease: "easeOut" }}
+            transition={{
+              duration: 0.7,
+              delay: rowDelay + 0.1,
+              ease: "easeOut",
+            }}
           />
         </div>
         {showPaceMarker && status !== "no-data" && (
@@ -1934,7 +1996,7 @@ function MetricRow({
                   className="absolute top-0 h-full w-2 -translate-x-1/2 cursor-default"
                   style={{ left: `${paceMarkerPct}%` }}
                 >
-                  <div className="mx-auto h-full w-0.5 bg-foreground/40" />
+                  <div className="bg-foreground/40 mx-auto h-full w-0.5" />
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={4}>
@@ -1972,7 +2034,10 @@ function BigFourCriteriaTable({
       last: 0,
       lastSameDay: 0,
     };
-    const strength = strengthLevelStats?.[liftType] ?? { current: null, last: null };
+    const strength = strengthLevelStats?.[liftType] ?? {
+      current: null,
+      last: null,
+    };
     return { liftType, tonnage, strength };
   }).filter(({ tonnage, strength }) => {
     const hasTonnage = (tonnage.current ?? 0) > 0 || (tonnage.last ?? 0) > 0;
@@ -1982,7 +2047,7 @@ function BigFourCriteriaTable({
 
   if (rows.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground/60">
+      <p className="text-muted-foreground/60 text-xs">
         No Big Four lift criteria to compare yet this month or last.
       </p>
     );
@@ -1994,7 +2059,7 @@ function BigFourCriteriaTable({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex cursor-help items-center gap-1 rounded-full border border-border/40 bg-muted/30 px-2 py-0.5">
+              <div className="border-border/40 bg-muted/30 flex cursor-help items-center gap-1 rounded-full border px-2 py-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
@@ -2011,139 +2076,182 @@ function BigFourCriteriaTable({
         </TooltipProvider>
       </div>
 
-      {!!sessions && (() => {
-        const rowHighlighted = revealedRows >= 1;
-        const isCurrentMonthView = boundaries?.isCurrentMonthView;
-        const previousSessionsCompared = sessions.last ?? 0;
-        const baseline = previousSessionsCompared === 0;
-        const sessionPace = isCurrentMonthView
-          ? getLiftPaceStatus(sessions.current ?? 0, previousSessionsCompared, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
-          : "no-data";
-        const passed = baseline
-          || (isCurrentMonthView ? sessionPace === "ahead" || sessionPace === "on-pace" : passesTonnageThreshold(sessions.current ?? 0, previousSessionsCompared));
-        const currentSessionsReporting = formatCurrentSessionsReporting(
-          sessions.current ?? 0,
-          boundaries,
-        );
-        const currentMonthSuffix = isCurrentMonthView
-          ? currentSessionsReporting.replace(`${sessions.current ?? 0} `, "")
-          : null;
-        const rowBg = baseline
-          ? "bg-muted/20"
-          : passed
-            ? "bg-emerald-50/30 dark:bg-emerald-950/15"
-            : "bg-red-50/30 dark:bg-red-950/15";
-        const rightColor = baseline
-          ? "text-muted-foreground"
-          : passed
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-red-600 dark:text-red-400";
-        const revealRowBg = rowHighlighted ? rowBg : "bg-transparent";
-        const revealRightColor = rowHighlighted ? rightColor : "text-foreground";
+      {!!sessions &&
+        (() => {
+          const rowHighlighted = revealedRows >= 1;
+          const isCurrentMonthView = boundaries?.isCurrentMonthView;
+          const previousSessionsCompared = sessions.last ?? 0;
+          const baseline = previousSessionsCompared === 0;
+          const sessionPace = isCurrentMonthView
+            ? getLiftPaceStatus(
+                sessions.current ?? 0,
+                previousSessionsCompared,
+                boundaries.dayOfMonth,
+                boundaries.daysInCurrentMonth,
+              )
+            : "no-data";
+          const passed =
+            baseline ||
+            (isCurrentMonthView
+              ? sessionPace === "ahead" || sessionPace === "on-pace"
+              : passesTonnageThreshold(
+                  sessions.current ?? 0,
+                  previousSessionsCompared,
+                ));
+          const currentSessionsReporting = formatCurrentSessionsReporting(
+            sessions.current ?? 0,
+            boundaries,
+          );
+          const currentMonthSuffix = isCurrentMonthView
+            ? currentSessionsReporting.replace(`${sessions.current ?? 0} `, "")
+            : null;
+          const rowBg = baseline
+            ? "bg-muted/20"
+            : passed
+              ? "bg-emerald-50/30 dark:bg-emerald-950/15"
+              : "bg-red-50/30 dark:bg-red-950/15";
+          const rightColor = baseline
+            ? "text-muted-foreground"
+            : passed
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400";
+          const revealRowBg = rowHighlighted ? rowBg : "bg-transparent";
+          const revealRightColor = rowHighlighted
+            ? rightColor
+            : "text-foreground";
 
-        return (
-          <motion.div
-            className={`grid grid-cols-[1fr_100px_1fr] items-start gap-2 rounded-md border border-border/25 px-2 py-1 transition-colors duration-500 ${revealRowBg}`}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-right">
-                    <AnimatedInteger
-                      value={previousSessionsCompared}
-                      className={`tabular-nums text-2xl font-semibold tracking-tight transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
-                    />
-                    <div className={`text-[10px] font-medium uppercase tracking-wide transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
-                      {boundaries.prevMonthName}
-                    </div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={4}>
-                  <p className="max-w-56 text-center text-xs">
-                    Total sessions logged in {boundaries.prevMonthName}, counted from unique training dates.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <div className={`self-center text-center text-xs font-medium transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}>
-              Sessions
-            </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-left">
-                    <div className="flex items-baseline gap-1">
+          return (
+            <motion.div
+              className={`border-border/25 grid grid-cols-[1fr_100px_1fr] items-start gap-2 rounded-md border px-2 py-1 transition-colors duration-500 ${revealRowBg}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.3,
+                delay: 0.04,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-right">
                       <AnimatedInteger
-                        value={sessions.current}
-                        className={`tabular-nums text-2xl font-bold tracking-tight transition-colors duration-500 ${revealRightColor}`}
+                        value={previousSessionsCompared}
+                        className={`text-2xl font-semibold tracking-tight tabular-nums transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
                       />
-                      {rowHighlighted && passed && !baseline && (
-                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">✓</span>
+                      <div
+                        className={`text-[10px] font-medium tracking-wide uppercase transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}
+                      >
+                        {boundaries.prevMonthName}
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={4}>
+                    <p className="max-w-56 text-center text-xs">
+                      Total sessions logged in {boundaries.prevMonthName},
+                      counted from unique training dates.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <div
+                className={`self-center text-center text-xs font-medium transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
+              >
+                Sessions
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-left">
+                      <div className="flex items-baseline gap-1">
+                        <AnimatedInteger
+                          value={sessions.current}
+                          className={`text-2xl font-bold tracking-tight tabular-nums transition-colors duration-500 ${revealRightColor}`}
+                        />
+                        {rowHighlighted && passed && !baseline && (
+                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                            ✓
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
+                        {boundaries.currentMonthName}
+                        {currentMonthSuffix ? ` · ${currentMonthSuffix}` : ""}
+                      </div>
+                      {rowHighlighted && isCurrentMonthView && !baseline && (
+                        <div
+                          className={`text-[10px] font-medium ${
+                            sessionPace === "ahead"
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : sessionPace === "on-pace"
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
+                          {sessionPace === "ahead"
+                            ? "▲ Ahead of pace"
+                            : sessionPace === "on-pace"
+                              ? "→ On track"
+                              : "▼ Behind pace"}
+                        </div>
+                      )}
+                      {rowHighlighted && !baseline && (
+                        <div className="bg-muted/40 mt-1 h-1 w-full overflow-hidden rounded-full">
+                          <motion.div
+                            className={`h-full rounded-full ${passed ? "bg-emerald-500" : "bg-red-500"}`}
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: `${Math.min(100, ((sessions.current ?? 0) / previousSessionsCompared) * 100)}%`,
+                            }}
+                            transition={{
+                              duration: 0.6,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
-                    <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      {boundaries.currentMonthName}
-                      {currentMonthSuffix ? ` · ${currentMonthSuffix}` : ""}
-                    </div>
-                    {rowHighlighted && isCurrentMonthView && !baseline && (
-                      <div className={`text-[10px] font-medium ${
-                        sessionPace === "ahead" ? "text-emerald-600 dark:text-emerald-400"
-                        : sessionPace === "on-pace" ? "text-amber-600 dark:text-amber-400"
-                        : "text-red-600 dark:text-red-400"
-                      }`}>
-                        {sessionPace === "ahead" ? "▲ Ahead of pace"
-                          : sessionPace === "on-pace" ? "→ On track"
-                          : "▼ Behind pace"}
-                      </div>
-                    )}
-                    {rowHighlighted && !baseline && (
-                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted/40">
-                        <motion.div
-                          className={`h-full rounded-full ${passed ? "bg-emerald-500" : "bg-red-500"}`}
-                          initial={{ width: 0 }}
-                          animate={{
-                            width: `${Math.min(100, ((sessions.current ?? 0) / previousSessionsCompared) * 100)}%`,
-                          }}
-                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={4}>
-                  <p className="max-w-56 text-center text-xs">
-                    Compared with {boundaries.prevMonthName}&apos;s total of {previousSessionsCompared}; being within 10% of pace counts as on track.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </motion.div>
-        );
-      })()}
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={4}>
+                    <p className="max-w-56 text-center text-xs">
+                      Compared with {boundaries.prevMonthName}&apos;s total of{" "}
+                      {previousSessionsCompared}; being within 10% of pace
+                      counts as on track.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </motion.div>
+          );
+        })()}
 
       {rows.map(({ liftType, tonnage, strength }, i) => {
         const rowHighlightIndex = sessions ? i + 2 : i + 1;
         const rowHighlighted = revealedRows >= rowHighlightIndex;
         const currentTonnage = tonnage.current ?? 0;
         const lastTonnage = tonnage.last ?? 0;
-        const liftPaceStatus = isCurrentMonthView && boundaries.dayOfMonth > 0
-          ? getLiftPaceStatus(currentTonnage, lastTonnage, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
-          : "no-data";
+        const liftPaceStatus =
+          isCurrentMonthView && boundaries.dayOfMonth > 0
+            ? getLiftPaceStatus(
+                currentTonnage,
+                lastTonnage,
+                boundaries.dayOfMonth,
+                boundaries.daysInCurrentMonth,
+              )
+            : "no-data";
         const tonnageBaseline = lastTonnage === 0;
         const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
         const tonnagePassed = tonnageBaseline
           ? tonnageNewWin
           : isCurrentMonthView
-            ? (liftPaceStatus === "ahead" || liftPaceStatus === "on-pace")
+            ? liftPaceStatus === "ahead" || liftPaceStatus === "on-pace"
             : passesTonnageThreshold(currentTonnage, lastTonnage);
-        const tonnageColor = tonnageBaseline && !tonnageNewWin
-          ? "text-muted-foreground"
-          : tonnageNewWin || tonnagePassed
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-red-600 dark:text-red-400";
+        const tonnageColor =
+          tonnageBaseline && !tonnageNewWin
+            ? "text-muted-foreground"
+            : tonnageNewWin || tonnagePassed
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400";
 
         const currentStrengthFmt = formatStrengthLevel(strength.current);
         const lastStrengthFmt = formatStrengthLevel(strength.last);
@@ -2160,26 +2268,30 @@ function BigFourCriteriaTable({
         const strengthColor = strengthLocked
           ? "text-muted-foreground"
           : strengthBaseline && !strengthNewWin
-          ? "text-muted-foreground"
-          : strengthNewWin || strengthPassed
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-red-600 dark:text-red-400";
+            ? "text-muted-foreground"
+            : strengthNewWin || strengthPassed
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400";
         const strengthBg =
           strengthLocked || (strengthBaseline && !strengthNewWin)
             ? "bg-muted/20"
             : strengthPassed
-          ? "bg-emerald-50/30 dark:bg-emerald-950/15"
-          : "bg-red-50/30 dark:bg-red-950/15";
+              ? "bg-emerald-50/30 dark:bg-emerald-950/15"
+              : "bg-red-50/30 dark:bg-red-950/15";
         const tonnageBg =
           tonnageBaseline && !tonnageNewWin
             ? "bg-muted/20"
             : tonnagePassed
-          ? "bg-emerald-50/30 dark:bg-emerald-950/15"
-          : "bg-red-50/30 dark:bg-red-950/15";
+              ? "bg-emerald-50/30 dark:bg-emerald-950/15"
+              : "bg-red-50/30 dark:bg-red-950/15";
         const revealStrengthBg = rowHighlighted ? strengthBg : "bg-transparent";
         const revealTonnageBg = rowHighlighted ? tonnageBg : "bg-transparent";
-        const revealStrengthColor = rowHighlighted ? strengthColor : "text-foreground";
-        const revealTonnageColor = rowHighlighted ? tonnageColor : "text-foreground";
+        const revealStrengthColor = rowHighlighted
+          ? strengthColor
+          : "text-foreground";
+        const revealTonnageColor = rowHighlighted
+          ? tonnageColor
+          : "text-foreground";
 
         const strengthStatusTooltip = getStrengthStatusTooltip({
           liftType,
@@ -2210,7 +2322,7 @@ function BigFourCriteriaTable({
         return (
           <motion.div
             key={liftType}
-            className="grid grid-cols-[1fr_100px_1fr] grid-rows-2 items-center gap-x-2 gap-y-0.5 rounded-md border border-border/25 px-2 py-1.5"
+            className="border-border/25 grid grid-cols-[1fr_100px_1fr] grid-rows-2 items-center gap-x-2 gap-y-0.5 rounded-md border px-2 py-1.5"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover="hover"
@@ -2220,19 +2332,39 @@ function BigFourCriteriaTable({
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            <div className={`rounded px-1.5 py-0.5 text-right transition-colors duration-500 ${revealStrengthBg}`}>
+            <div
+              className={`rounded px-1.5 py-0.5 text-right transition-colors duration-500 ${revealStrengthBg}`}
+            >
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="text-xs">
                       {strengthLocked ? (
-                        <span className={rowHighlighted ? "text-muted-foreground/70" : "text-foreground"}>Locked</span>
+                        <span
+                          className={
+                            rowHighlighted
+                              ? "text-muted-foreground/70"
+                              : "text-foreground"
+                          }
+                        >
+                          Locked
+                        </span>
                       ) : lastStrengthFmt ? (
-                        <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-muted/60 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}>
+                        <span
+                          className={`bg-muted/60 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
+                        >
                           {lastStrengthFmt.emoji} {lastStrengthFmt.label}
                         </span>
                       ) : (
-                        <span className={rowHighlighted ? "text-muted-foreground/40" : "text-foreground"}>—</span>
+                        <span
+                          className={
+                            rowHighlighted
+                              ? "text-muted-foreground/40"
+                              : "text-foreground"
+                          }
+                        >
+                          —
+                        </span>
                       )}
                     </div>
                   </TooltipTrigger>
@@ -2249,7 +2381,7 @@ function BigFourCriteriaTable({
 
             <Link
               href={liftInsightHref}
-              className="row-span-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="focus-visible:ring-ring row-span-2 rounded-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               <motion.div
                 className="flex flex-col items-center justify-center gap-1"
@@ -2276,19 +2408,25 @@ function BigFourCriteriaTable({
                     className="h-16 w-16"
                   />
                 </div>
-                <span className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
+                <span
+                  className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}
+                >
                   {formatLiftTypeLabel(liftType)}
                 </span>
               </motion.div>
             </Link>
 
-            <div className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealStrengthBg}`}>
+            <div
+              className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealStrengthBg}`}
+            >
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center gap-1 text-xs font-medium">
                       {strengthLocked ? (
-                        <span className={revealStrengthColor}>Setup required</span>
+                        <span className={revealStrengthColor}>
+                          Setup required
+                        </span>
                       ) : currentStrengthFmt ? (
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition-colors duration-500 ${
@@ -2302,11 +2440,18 @@ function BigFourCriteriaTable({
                           {currentStrengthFmt.emoji} {currentStrengthFmt.label}
                         </span>
                       ) : (
-                        <span className={revealStrengthColor}>{strength.last !== null ? "Not trained" : "—"}</span>
+                        <span className={revealStrengthColor}>
+                          {strength.last !== null ? "Not trained" : "—"}
+                        </span>
                       )}
-                      {rowHighlighted && !strengthLocked && strengthPassed && (strengthNewWin || !strengthBaseline) && (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
-                      )}
+                      {rowHighlighted &&
+                        !strengthLocked &&
+                        strengthPassed &&
+                        (strengthNewWin || !strengthBaseline) && (
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                            ✓
+                          </span>
+                        )}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="top" sideOffset={4}>
@@ -2321,9 +2466,19 @@ function BigFourCriteriaTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={`rounded px-1.5 py-0.5 text-right transition-colors duration-500 ${revealTonnageBg}`}>
-                    <div className={`text-xs transition-colors duration-500 ${revealTonnageColor}`}>
-                      <span className={rowHighlighted ? "text-muted-foreground" : "text-foreground"}>
+                  <div
+                    className={`rounded px-1.5 py-0.5 text-right transition-colors duration-500 ${revealTonnageBg}`}
+                  >
+                    <div
+                      className={`text-xs transition-colors duration-500 ${revealTonnageColor}`}
+                    >
+                      <span
+                        className={
+                          rowHighlighted
+                            ? "text-muted-foreground"
+                            : "text-foreground"
+                        }
+                      >
                         {formatTonnage(tonnage.last ?? 0, unit)} lifted
                       </span>
                     </div>
@@ -2340,26 +2495,40 @@ function BigFourCriteriaTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealTonnageBg}`}>
-                    <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
+                  <div
+                    className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealTonnageBg}`}
+                  >
+                    <div
+                      className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}
+                    >
                       <span>{formatTonnage(currentTonnage, unit)} lifted</span>
                       {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          ✓
+                        </span>
                       )}
                     </div>
-                    {rowHighlighted && isCurrentMonthView && liftPaceStatus !== "no-data" && (
-                      <div className={`text-[10px] font-medium ${
-                        liftPaceStatus === "ahead" ? "text-emerald-600 dark:text-emerald-400"
-                        : liftPaceStatus === "on-pace" ? "text-amber-600 dark:text-amber-400"
-                        : "text-red-600 dark:text-red-400"
-                      }`}>
-                        {liftPaceStatus === "ahead" ? "▲ Ahead of pace"
-                          : liftPaceStatus === "on-pace" ? "→ On track"
-                          : "▼ Behind pace"}
-                      </div>
-                    )}
+                    {rowHighlighted &&
+                      isCurrentMonthView &&
+                      liftPaceStatus !== "no-data" && (
+                        <div
+                          className={`text-[10px] font-medium ${
+                            liftPaceStatus === "ahead"
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : liftPaceStatus === "on-pace"
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
+                          {liftPaceStatus === "ahead"
+                            ? "▲ Ahead of pace"
+                            : liftPaceStatus === "on-pace"
+                              ? "→ On track"
+                              : "▼ Behind pace"}
+                        </div>
+                      )}
                     {rowHighlighted && !tonnageBaseline && (
-                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted/40">
+                      <div className="bg-muted/40 mt-1 h-1 w-full overflow-hidden rounded-full">
                         <motion.div
                           className={`h-full rounded-full ${
                             tonnagePassed ? "bg-emerald-500" : "bg-red-500"
@@ -2368,7 +2537,10 @@ function BigFourCriteriaTable({
                           animate={{
                             width: `${Math.min(100, (currentTonnage / lastTonnage) * 100)}%`,
                           }}
-                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                          transition={{
+                            duration: 0.6,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
                         />
                       </div>
                     )}

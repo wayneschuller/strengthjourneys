@@ -14,6 +14,8 @@ import { Fragment, useMemo } from "react";
 
 import Link from "next/link";
 
+import { FileUp } from "lucide-react";
+
 import { gaTrackHomeImportNudge, gaTrackLongGameLogCta } from "@/lib/analytics";
 
 import { formatMilestoneRemaining } from "@/lib/home-dashboard/long-game-milestones";
@@ -28,22 +30,25 @@ export function LongGameImportNudge({ dashboardStage, sessionCount }) {
     });
   };
 
+  // Moved here from the week card so the whole intro dashboard makes the import
+  // offer exactly once, at the end of the row, rather than twice in two voices.
   return (
-    <p
-      className="text-muted-foreground text-left text-xs leading-5 sm:text-center"
+    <Link
+      href="/import?source=long-game-card"
+      onClick={trackClick}
+      className="border-border/70 bg-muted/20 hover:border-primary hover:bg-muted/40 flex w-full items-center gap-3 rounded-xl border border-dashed px-4 py-3 transition-colors"
       data-share-ignore="true"
     >
-      Your strength journey did not start here. Bring in lifting history from
-      other fitness apps and{" "}
-      <Link
-        href="/import?source=long-game-card"
-        onClick={trackClick}
-        className="text-foreground font-medium underline underline-offset-2"
-      >
-        merge it into this timeline
-      </Link>
-      .
-    </p>
+      <FileUp className="text-muted-foreground h-5 w-5 shrink-0" />
+      <span className="min-w-0 flex-1">
+        <span className="text-foreground block text-sm font-medium">
+          Already have training data?
+        </span>
+        <span className="text-muted-foreground block text-xs">
+          Import a data file to merge your history into your Google Sheet.
+        </span>
+      </span>
+    </Link>
   );
 }
 

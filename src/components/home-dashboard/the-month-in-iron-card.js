@@ -13,7 +13,8 @@ import {
 } from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
-import { Bot, ChevronLeft, ChevronRight } from "lucide-react";
+import { addDays, format } from "date-fns";
+import { Bot, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
@@ -593,6 +594,7 @@ function EarlyMonthMomentumCard({
             ];
   const showWeekTemplate =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
+  const weekPlanDays = useMemo(() => getWeekPlanDays(), []);
   const showFirstMonthTemplate = dashboardStage === "first_month";
   const isTemplateMode = showWeekTemplate || showFirstMonthTemplate;
 
@@ -629,19 +631,20 @@ function EarlyMonthMomentumCard({
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanLiftSession
-                title="Session 1"
+                title={weekPlanDays[0].label}
+                isToday={weekPlanDays[0].isToday}
                 lifts={[
                   { liftType: "Back Squat", prescription: "3×5" },
                 ]}
               />
               <WeekPlanLiftSession
-                title="Session 2"
+                title={weekPlanDays[1].label}
                 lifts={[
                   { liftType: "Bench Press", prescription: "3×5" },
                 ]}
               />
               <WeekPlanLiftSession
-                title="Session 3"
+                title={weekPlanDays[2].label}
                 lifts={[
                   { liftType: "Deadlift", prescription: "1×5" },
                   { liftType: "Strict Press", prescription: "3×5" },
@@ -793,10 +796,56 @@ function WeekPlanSession({ title, items }) {
   );
 }
 
-function WeekPlanLiftSession({ title, lifts }) {
+/*
+ * Names the three template sessions after real weekdays instead of "Session 1".
+ *
+ * A novice reading "Session 1" still has to decide when session one happens.
+ * Anchoring on today and stepping two days removes that decision: it is
+ * Wednesday, so squat today, press Friday, pull Sunday. Recomputed on each
+ * render, so the plan always starts from the day the lifter is actually
+ * looking at it rather than drifting behind the week.
+ */
+function getWeekPlanDays(today = new Date()) {
+  return [0, 2, 4].map((offset) => {
+    const date = addDays(today, offset);
+    return {
+      key: format(date, "yyyy-MM-dd"),
+      label: format(date, "EEEE"),
+      isToday: offset === 0,
+    };
+  });
+}
+
+function WeekPlanLiftSession({ title, lifts, isToday = false }) {
   return (
-    <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-3">
-      <p className="mb-3 text-sm font-semibold text-foreground">{title}</p>
+    <div
+      className={`group relative rounded-lg border bg-muted/10 px-3 py-3 ${
+        isToday ? "border-primary/40" : "border-border/70"
+      }`}
+    >
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        {isToday && (
+          // The Log button sits over this badge on hover, so the badge fades
+          // rather than the two stacking on top of each other.
+          <span className="text-primary text-[10px] font-semibold tracking-[0.12em] uppercase transition-opacity md:group-hover:opacity-0 md:group-focus-within:opacity-0">
+            Today
+          </span>
+        )}
+      </div>
+      {/* Only today's card offers to log: the other two name days that have not
+          happened yet, where a log button would be an invitation to record a
+          session nobody has done. Revealed on hover so the plan stays calm,
+          and on focus so it is reachable without a mouse. */}
+      {isToday && (
+        <Link
+          href="/log?source=month-card-week-plan"
+          className="border-primary/40 bg-background text-foreground focus-visible:ring-ring absolute top-2 right-2 hidden items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none md:inline-flex"
+        >
+          <Plus className="h-3 w-3" strokeWidth={2.5} />
+          Log
+        </Link>
+      )}
       <div className="space-y-3">
         {lifts.map(({ liftType, prescription }) => {
           const href = getLiftDetailUrl(liftType);

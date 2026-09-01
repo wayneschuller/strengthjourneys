@@ -9,6 +9,7 @@ import {
   discoverValidCandidates,
   getExistingRecord,
   getNameTokens,
+  hasSheetHistory,
   inspectProvisionedSheet,
   markActivationPrompted,
   maybePromptActivation,
@@ -55,7 +56,9 @@ import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 // - KV is a lifecycle hint, not the sole proof of whether a user is new.
 // - Some legacy users predate KV. If localStorage previously existed or Drive
 //   scan finds plausible lifting sheets, treat them as returning/recoverable.
-// - True new users are only users with no KV record and no recovery evidence.
+// - True new users are users with no *sheet* history and no recovery evidence.
+//   A bare KV record does not count: sign-in telemetry is written before this
+//   flow runs, so every user has one by the time they get here.
 // - Automatic provisioning is reserved for true new users only.
 // - Returning users with no recoverable sheet normally go to recovery UI.
 //   Exception: bootstrap can reprovision when the previously provisioned sheet
@@ -271,26 +274,31 @@ export default async function handler(req, res) {
           sheetName,
         });
         const nowIso = new Date().toISOString();
+        // Reached with no Drive candidates and nothing to restore, which covers
+        // two very different people: someone whose log was deleted, and someone
+        // who has never had one. Only the first should hear the word "restore",
+        // so the evidence check drives the label, the telemetry, and the UI.
+        const hadPriorSheetEvidence = hasSheetHistory(existingRecord);
+        const connectionMethod = hadPriorSheetEvidence
+          ? "reprovision_after_missing_sheet"
+          : "auto_provision";
+        const clientReason = hadPriorSheetEvidence
+          ? "reprovision_after_missing_sheet"
+          : "true_new_user";
         const created = await createBootstrapSheet(sheetName, base.headers);
         await persistLinkedSheet({
           kvKey: base.kvKey,
           existingRecord,
           nowIso,
           metadata: created,
-          connectionMethod: "reprovision_after_missing_sheet",
+          connectionMethod,
           provisioningMethod: "bootstrap_sheet_headers",
         });
-        const hadPriorSheetEvidence = Boolean(
-          existingRecord?.connectedAt ||
-          existingRecord?.provisionedSheetId ||
-          existingRecord?.connectionMethod ||
-          existingRecord?.lastSeenAt,
-        );
         await promptDeveloper(
           hadPriorSheetEvidence ? "reprovisioned" : "first-time-provisioned",
           base.session.user,
           {
-            connectionMethod: "reprovision_after_missing_sheet",
+            connectionMethod,
             provisioningMethod: "bootstrap_sheet_headers",
             sheetName: created.name || sheetName,
             previousProvisionedSheetId,
@@ -300,7 +308,7 @@ export default async function handler(req, res) {
           },
         );
         return respondCreateNewUserSheet(res, created, debug, {
-          reason: "reprovision_after_missing_sheet",
+          reason: clientReason,
           onboardingFlowToken,
         });
       }

@@ -188,6 +188,32 @@ function scoreCandidate(candidate, userNameTokens) {
   };
 }
 
+/*
+ * Fields that only ever get written once someone has actually connected a
+ * lifting log. Everything else in the per-user record - firstSignInAt,
+ * signInCount, granted scopes, entry page - is sign-in telemetry the NextAuth
+ * callback writes before the user reaches this flow at all.
+ */
+const SHEET_HISTORY_FIELDS = [
+  "connectedAt",
+  "provisionedSheetId",
+  "connectionMethod",
+  "lastSeenAt",
+];
+
+/**
+ * Has this person ever had a sheet before?
+ *
+ * The honest test is sheet lifecycle evidence, not "does a KV record exist".
+ * Those two meant the same thing until sign-in tracking landed; from that day
+ * every user arrives here with a record already written, so a bare existence
+ * check silently classifies every brand-new lifter as a returning one.
+ */
+export function hasSheetHistory(existingRecord) {
+  if (!existingRecord) return false;
+  return SHEET_HISTORY_FIELDS.some((field) => Boolean(existingRecord[field]));
+}
+
 export function classifyLifecycle({
   existingRecord,
   hadLocalSheetBefore,
@@ -196,14 +222,16 @@ export function classifyLifecycle({
   const hasKvRecord = Boolean(
     existingRecord && Object.keys(existingRecord).length > 0,
   );
+  const hasPriorSheetEvidence = hasSheetHistory(existingRecord);
   const hasDriveRecoveryEvidence =
     Array.isArray(validCandidates) && validCandidates.length > 0;
   const hasAnyRecoveryEvidence =
     Boolean(hadLocalSheetBefore) || hasDriveRecoveryEvidence;
-  const isTrueNewUser = !hasKvRecord && !hasAnyRecoveryEvidence;
+  const isTrueNewUser = !hasPriorSheetEvidence && !hasAnyRecoveryEvidence;
 
   return {
     hasKvRecord,
+    hasPriorSheetEvidence,
     hasDriveRecoveryEvidence,
     hasAnyRecoveryEvidence,
     isTrueNewUser,

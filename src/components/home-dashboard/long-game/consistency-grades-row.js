@@ -80,6 +80,13 @@ function formatSpan(days) {
   return `${years >= 10 ? Math.round(years) : years.toFixed(1)} years`;
 }
 
+// Same span, hyphenated so it can sit in front of a noun: "this 15-year window".
+function formatSpanAdjective(days) {
+  if (days < 400) return `${days}-day`;
+  const years = days / DAYS_PER_YEAR;
+  return `${years >= 10 ? Math.round(years) : years.toFixed(1)}-year`;
+}
+
 // The numbers behind one ring: what the window is, how the grade was earned, and
 // the single most useful next step. Shared by the hover tooltip and the tap popover.
 function ConsistencyRingDetail({ item, grade }) {
@@ -91,6 +98,7 @@ function ConsistencyRingDetail({ item, grade }) {
     sessionsPerWeek,
     targetSessionsPerWeek,
     headline,
+    rollingNote,
     graceDayWarning,
     isPartiallyTracked,
     trackedDays,
@@ -129,11 +137,19 @@ function ConsistencyRingDetail({ item, grade }) {
         {headline}
       </div>
 
+      {/* The cost of standing still. Rings are a scoreboard; this is the only line
+          that tells you what next week has to look like. */}
+      {rollingNote && (
+        <div className="text-muted-foreground text-xs leading-snug">
+          {rollingNote}
+        </div>
+      )}
+
       {isPartiallyTracked && (
         <div className="text-muted-foreground border-border/60 mt-0.5 border-t pt-1.5 text-[11px] leading-snug">
-          Graded against the full {formatSpan(periodDays)}, but your log only
-          covers {formatSpan(trackedDays)} of it — this window starts before
-          your first logged session.
+          Your log covers {formatSpan(trackedDays)} of this{" "}
+          {formatSpanAdjective(periodDays)} window, so the grade is measured
+          over that.
         </div>
       )}
     </div>

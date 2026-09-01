@@ -6,16 +6,36 @@
  * the window? The window lengths below are true calendar lengths so a ring labelled
  * "Year" really does cover a year — the single exception is Week, which runs eight
  * days on purpose so one late session does not tank an otherwise solid week.
+ *
+ * A window wider than the log itself is graded only over the part the log covers,
+ * so the oldest ring measures the lifter rather than the date they started logging.
  */
-import { format, parseISO, subDays, differenceInCalendarDays } from "date-fns";
+import {
+  addDays,
+  format,
+  parseISO,
+  subDays,
+  differenceInCalendarDays,
+} from "date-fns";
 import { CONSISTENCY_GRADE_THRESHOLDS } from "@/lib/consistency-grades";
 
 const TARGET_SESSIONS_PER_WEEK = 3;
 const DAYS_PER_YEAR = 365.25;
+// A rolling window sheds its oldest week every week. Seven days is the horizon we
+// report on, because "what do I owe this week" is the only actionable version of it.
+const ROLLING_HORIZON_DAYS = 7;
+// The Week ring is itself a week long, so "sessions ageing out this week" is the
+// whole window and says nothing useful. Every longer window gets the note.
+const ROLLING_NOTE_MIN_PERIOD_DAYS = 30;
 
 function subtractDays(dateStr, days) {
   const date = parseISO(dateStr);
   return format(subDays(date, days), "yyyy-MM-dd");
+}
+
+function addDaysTo(dateStr, days) {
+  const date = parseISO(dateStr);
+  return format(addDays(date, days), "yyyy-MM-dd");
 }
 
 function daysForYears(years) {
@@ -116,7 +136,8 @@ function calculateGradeJump(
  *
  * Each returned entry carries the raw counts as well as the derived detail the UI
  * needs (weekly rate, next grade, how much of the window your logged history
- * actually covers) so presentation layers do not recompute any of it.
+ * actually covers, what it costs to hold the grade for another week) so
+ * presentation layers do not recompute any of it.
  *
  * @param {Array|null} parsedData
  * @returns {Array|null}
@@ -159,19 +180,37 @@ export function processConsistency(parsedData) {
     }
   }
 
-  return relevantPeriods.map((period) => {
-    const actualWorkouts = periodDates[period.label].size;
+  return relevantPeriods.map((period, periodIndex) => {
+    const sessionDates = periodDates[period.label];
+    const actualWorkouts = sessionDates.size;
+
+    // The widest window always reaches further back than the logged history. Grading
+    // it against the full span would cap it at a grade nobody could ever earn — the
+    // lifter gets marked down for the years before they kept a log — so every window
+    // is graded against the part of it the log actually covers. Floored at a week so
+    // a two-day-old log cannot divide by a target of zero.
+    const trackedDays = Math.min(period.days, workoutRangeDays + 1);
+    const isPartiallyTracked = trackedDays < period.days;
+    const gradedDays = Math.max(trackedDays, 7);
+
     const targetWorkouts = Math.round(
-      (period.days / 7) * TARGET_SESSIONS_PER_WEEK,
+      (gradedDays / 7) * TARGET_SESSIONS_PER_WEEK,
     );
     const rawPercentage = (actualWorkouts / targetWorkouts) * 100;
     const consistencyPercentage = Math.min(Math.round(rawPercentage), 100);
 
-    // The widest ring always reaches further back than the logged history, which
-    // caps the grade it can possibly earn. Report the overlap so the UI can say so
-    // rather than leaving the user wondering why their oldest ring looks weak.
-    const trackedDays = Math.min(period.days, workoutRangeDays + 1);
-    const isPartiallyTracked = trackedDays < period.days;
+    // Sessions sitting in the oldest week of the window: they drop out of it over the
+    // next seven days. This is the number a lifter has to match just to stand still,
+    // which is the whole argument for consistency in a single figure.
+    const windowStartDate = periodStartDates[periodIndex].startDate;
+    const expiryCutoffDate = addDaysTo(
+      windowStartDate,
+      ROLLING_HORIZON_DAYS - 1,
+    );
+    let expiringSessions = 0;
+    for (const date of sessionDates) {
+      if (date <= expiryCutoffDate) expiringSessions += 1;
+    }
 
     let graceDayWarning = false;
     if (period.label === "Week" && actualWorkouts >= targetWorkouts) {
@@ -206,12 +245,39 @@ export function processConsistency(parsedData) {
       headline = `${actualWorkouts} ${pluraliseSessions(actualWorkouts)} logged`;
     }
 
+    // What it costs to simply hold this grade for another week. Two different sums,
+    // one message: a window the log has already filled slides forward and sheds its
+    // oldest week, while a window the log has not filled yet keeps growing, so its
+    // target grows with it and holding the ratio means matching your own rate.
+    let rollingNote = null;
+    let holdSessionsPerWeek = null;
+    if (period.days >= ROLLING_NOTE_MIN_PERIOD_DAYS) {
+      if (isPartiallyTracked) {
+        holdSessionsPerWeek =
+          (TARGET_SESSIONS_PER_WEEK * consistencyPercentage) / 100;
+        rollingNote =
+          consistencyPercentage >= 100
+            ? `Still filling — ${TARGET_SESSIONS_PER_WEEK} a week keeps it maxed`
+            : `Still filling — ${holdSessionsPerWeek.toFixed(1)} a week holds this grade, ${TARGET_SESSIONS_PER_WEEK} climbs it`;
+      } else {
+        holdSessionsPerWeek = expiringSessions;
+        rollingNote =
+          expiringSessions === 0
+            ? "Nothing ages out this week — every session from here lifts this grade"
+            : `${expiringSessions} ${pluraliseSessions(expiringSessions)} age out this week — log ${expiringSessions} to hold this grade`;
+      }
+    }
+
     return {
       label: period.label,
       windowLabel: getPeriodWindowLabel(period.label, period.days),
       periodDays: period.days,
       trackedDays,
+      gradedDays,
       isPartiallyTracked,
+      expiringSessions,
+      holdSessionsPerWeek,
+      rollingNote,
       actualWorkouts,
       targetWorkouts,
       surplusSessions,

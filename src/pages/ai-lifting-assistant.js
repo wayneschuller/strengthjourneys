@@ -1426,14 +1426,21 @@ function formatConsistencyLine({
   actualWorkouts,
   targetWorkouts,
   periodDays,
+  gradedDays,
+  isPartiallyTracked,
   percentage,
 }) {
   const parts = [
     `sessions=${actualWorkouts}`,
     `target=${targetWorkouts}`,
     `period_days=${periodDays}`,
-    `score=${percentage}%`,
   ];
+
+  // The oldest window reaches back past the start of the log and is graded only over
+  // the tracked part, so say so — otherwise the target looks unrelated to the period.
+  if (isPartiallyTracked) parts.push(`graded_days=${gradedDays}`);
+
+  parts.push(`score=${percentage}%`);
 
   return `${label}: ${parts.join(" | ")}`;
 }

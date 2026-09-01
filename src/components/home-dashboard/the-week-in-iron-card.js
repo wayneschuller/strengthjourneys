@@ -17,6 +17,7 @@ import {
   Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,16 @@ const BIG_FOUR_STARTERS = [
   { liftType: "Deadlift", icon: "/deadlift.svg" },
   { liftType: "Strict Press", icon: "/strict_press.svg" },
 ];
+
+// Someone on their first week may not yet know which lift is which. The
+// canonical one-liners already exist for the homepage, so the starter tiles
+// borrow them rather than inventing a second description of the same lift.
+const BIG_FOUR_DESCRIPTIONS = Object.fromEntries(
+  BIG_FOUR_LIFT_META.map(({ liftType, homepageDescription }) => [
+    liftType,
+    homepageDescription,
+  ]),
+);
 
 // Shown for historical weeks with 3+ sessions — sober, pro-consistency tone
 const CONSISTENCY_PHRASES = [
@@ -934,6 +945,7 @@ function EarlyWeekCard({
           authStatus={authStatus}
           isImportedData={isImportedData}
           isReadOnly={isReadOnly}
+          dashboardStage={dashboardStage}
         />
         {isReadOnly && (
           <ReadOnlyWeekCta
@@ -960,15 +972,27 @@ function EarlyWeekCard({
           </Link>
         )}
         <div className="mt-5 w-full">
-          <StartLiftPrompt />
+          <StartLiftPrompt showLiftCoaching={dashboardStage === "starter_sample"} />
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function EmptyWeekState({ authStatus, isImportedData = false, isReadOnly }) {
+function EmptyWeekState({
+  authStatus,
+  isImportedData = false,
+  isReadOnly,
+  dashboardStage,
+}) {
   if (!isReadOnly) {
+    // On a brand-new sheet the CardDescription directly above already says the
+    // summary arrives with the first session. Saying it a second time in a
+    // grey box costs the card its best vertical space and tells the reader
+    // nothing they did not just read, so the lift tiles below carry this
+    // stage instead.
+    if (dashboardStage === "starter_sample") return null;
+
     return (
       <p className="bg-muted/30 text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
         Log your training sessions and this card will track your weekly rhythm —
@@ -1292,6 +1316,7 @@ function getNextStepCopy(stats, streakStats, boundaries, weeklySessionRows) {
 function StartLiftPrompt({
   showIntro = true,
   showStarterButtons = true,
+  showLiftCoaching = false,
   trainedLiftTypes = [],
 }) {
   // Show only untrained big four lifts when the user has already trained some
@@ -1334,7 +1359,18 @@ function StartLiftPrompt({
                 height={40}
                 className="h-10 w-10 shrink-0"
               />
-              <span className="text-sm leading-tight font-medium">{`Log ${liftType} activity`}</span>
+              {showLiftCoaching ? (
+                <span className="min-w-0">
+                  <span className="block text-sm leading-tight font-medium">
+                    {liftType}
+                  </span>
+                  <span className="text-muted-foreground mt-0.5 block text-xs leading-snug">
+                    {BIG_FOUR_DESCRIPTIONS[liftType]}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-sm leading-tight font-medium">{`Log ${liftType} activity`}</span>
+              )}
             </Link>
           ))}
         </div>

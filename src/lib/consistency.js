@@ -27,6 +27,10 @@ const ROLLING_HORIZON_DAYS = 7;
 // The Week ring is itself a week long, so counting what rolls off it says nothing
 // the ring has not already said. Every longer window gets the note.
 const ROLLING_NOTE_MIN_PERIOD_DAYS = 30;
+// Past a year the weekly arithmetic stops being advice. Telling someone to log two
+// sessions to protect a ten year grade is technically true and completely the wrong
+// scale, so these windows swap the sums for the long view.
+const LONG_VIEW_MIN_PERIOD_DAYS = 400;
 
 function subtractDays(dateStr, days) {
   const date = parseISO(dateStr);
@@ -40,6 +44,20 @@ function addDaysTo(dateStr, days) {
 
 function daysForYears(years) {
   return Math.round(years * DAYS_PER_YEAR);
+}
+
+// Window lengths are whole years by construction, so they round cleanly.
+function formatWindowYears(days) {
+  return Math.round(days / DAYS_PER_YEAR);
+}
+
+// A log is however long it is. Keep a decimal until the span is long enough that
+// the decimal has stopped carrying any meaning.
+function formatTrackedYears(days) {
+  const years = days / DAYS_PER_YEAR;
+  if (years >= 10) return String(Math.round(years));
+  const rounded = Math.round(years * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
 }
 
 const BASE_PERIOD_TARGETS = [
@@ -102,6 +120,11 @@ function pluraliseSessions(count) {
 // it is what makes showing up this week matter. It is not worth saying as a threat,
 // so every line below leads with what training buys rather than what skipping costs.
 //
+// Two registers. Up to a year the sums are actionable, so the copy does the sums:
+// this many this week keeps it level, more climbs. Past a year they stop being
+// advice and start being noise, so those windows drop the arithmetic and say the
+// only thing that is actually true at that scale, which is that no week decides it.
+//
 // Five ways of saying each idea, so a row of nine rings does not read like one
 // sentence printed nine times. The pick steps with the ring's position, so
 // neighbours never land on the same wording, and the whole row is offset by the
@@ -161,6 +184,38 @@ const ROLLING_FILLING_PHRASES = [
     `You are still writing this window. Keep ${holdRate} a week and the grade holds, ${target} a week lifts it.`,
   (holdRate, target) =>
     `Room left in this window. ${holdRate} a week keeps the grade where it is, ${target} a week moves it up.`,
+];
+
+// Past a year. No week moves a grade like this, and saying so is more honest and
+// more encouraging than a target: a window this wide is the one place a bad month
+// genuinely does not matter.
+const LONG_VIEW_PHRASES = [
+  (windowYears) =>
+    `Nothing you do in one week moves ${windowYears} years of training, and that is exactly why this one is worth having.`,
+  () =>
+    `The long view. Grades out here answer to the years, not to any single week.`,
+  (windowYears) =>
+    `${windowYears} years averaged into one mark. It shifts when the habit shifts, and habits are slow.`,
+  (windowYears) =>
+    `Out this far the maths goes quiet. This is simply what ${windowYears} years of showing up looks like.`,
+  (windowYears) =>
+    `A ${windowYears}-year window has room for every bad month you have ever had. Keep showing up and it absorbs them.`,
+];
+
+// Past a year, and the log has not reached the back of it yet. The window is still
+// growing into the lifter rather than the other way round, so there is nothing to
+// chase: continuing is the whole instruction.
+const LONG_VIEW_FILLING_PHRASES = [
+  (trackedYears, windowYears) =>
+    `You are ${trackedYears} years into a ${windowYears}-year window, and the rest of it is still ahead of you.`,
+  () =>
+    `This window reaches back further than your log does, so it fills in as you go. No hurry.`,
+  (trackedYears) =>
+    `Still growing into this one. ${trackedYears} years down, and the window keeps making room.`,
+  (trackedYears, windowYears) =>
+    `A ${windowYears}-year window with ${trackedYears} years of log in it. It improves simply by continuing.`,
+  (trackedYears) =>
+    `Out here the only instruction is to keep going. ${trackedYears} years so far, and the window grows with you.`,
 ];
 
 // Same growing window, but already at the ceiling. There is no climb left to offer,
@@ -330,18 +385,31 @@ export function processConsistency(parsedData) {
       headline = `${actualWorkouts} ${pluraliseSessions(actualWorkouts)} logged`;
     }
 
-    // What this week is worth to this ring. Two different sums, one message: a window
-    // the log has already filled slides forward and leaves its oldest week behind,
-    // while a window the log has not filled yet keeps growing, so its target grows
-    // with it and holding the ratio means matching your own rate.
+    // What this week is worth to this ring. A window the log has already filled slides
+    // forward and leaves its oldest week behind; a window the log has not filled yet
+    // keeps growing instead, taking its target with it, so holding the ratio means
+    // matching your own rate. Either sum still gets computed past a year, because the
+    // number is useful to the AI layer, but the copy up there stops quoting it.
     let rollingNote = null;
     let holdSessionsPerWeek = null;
     if (period.days >= ROLLING_NOTE_MIN_PERIOD_DAYS) {
+      holdSessionsPerWeek = isPartiallyTracked
+        ? (TARGET_SESSIONS_PER_WEEK * consistencyPercentage) / 100
+        : expiringSessions;
+
       const phraseRotation = dayPhraseOffset + periodIndex;
 
-      if (isPartiallyTracked) {
-        holdSessionsPerWeek =
-          (TARGET_SESSIONS_PER_WEEK * consistencyPercentage) / 100;
+      if (period.days >= LONG_VIEW_MIN_PERIOD_DAYS) {
+        rollingNote = isPartiallyTracked
+          ? pickPhrase(LONG_VIEW_FILLING_PHRASES, phraseRotation)(
+              formatTrackedYears(trackedDays),
+              formatWindowYears(period.days),
+            )
+          : pickPhrase(
+              LONG_VIEW_PHRASES,
+              phraseRotation,
+            )(formatWindowYears(period.days));
+      } else if (isPartiallyTracked) {
         rollingNote =
           consistencyPercentage >= 100
             ? pickPhrase(
@@ -353,7 +421,6 @@ export function processConsistency(parsedData) {
                 TARGET_SESSIONS_PER_WEEK,
               );
       } else {
-        holdSessionsPerWeek = expiringSessions;
         rollingNote =
           expiringSessions === 0
             ? pickPhrase(ROLLING_CLEAR_PHRASES, phraseRotation)()

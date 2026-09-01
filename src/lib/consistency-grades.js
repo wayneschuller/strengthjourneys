@@ -19,6 +19,44 @@ export const CONSISTENCY_GRADE_THRESHOLDS = [
   { minProgress: 0, grade: ".", hue: HUE_RED }, // Red for low progress
 ];
 
+// --- The training target ---
+
+// One model, stated the way a lifter would state it: three sessions a week, with a
+// fortnight off a year. Everybody takes a holiday, gets sick, or goes away for
+// Christmas, and the evidence is clear that a couple of weeks off costs a trained
+// lifter almost nothing in strength. Grading as though those weeks should have been
+// training makes an A+ reachable only by someone who never has a life.
+//
+// The fortnight is deducted pro rata rather than only from windows a year or longer,
+// so a six month ring is never graded harder than the Year ring beside it. At short
+// windows the deduction rounds away to nothing, which is correct: "a fortnight a
+// year" has nothing to say about how this particular week went.
+export const TARGET_SESSIONS_PER_WEEK = 3;
+export const REST_WEEKS_PER_YEAR = 2;
+
+const WEEKS_PER_YEAR = 365.25 / 7;
+const EFFECTIVE_SESSIONS_PER_WEEK =
+  TARGET_SESSIONS_PER_WEEK *
+  ((WEEKS_PER_YEAR - REST_WEEKS_PER_YEAR) / WEEKS_PER_YEAR);
+
+/**
+ * Sessions a lifter is graded against over a span of days. The single source of
+ * truth for the target, so the Long Game rings and the year recap cannot disagree
+ * about what an A means.
+ *
+ * @param {number} days
+ * @returns {number}
+ */
+export function getTargetSessions(days) {
+  return Math.round((days / 7) * EFFECTIVE_SESSIONS_PER_WEEK);
+}
+
+// The rate that holds a grade steady on a window still growing into the lifter: the
+// target grows every week, so keeping the same ratio means matching this pace.
+export function getHoldSessionsPerWeek(percentage) {
+  return (EFFECTIVE_SESSIONS_PER_WEEK * percentage) / 100;
+}
+
 export function getGradeAndColor(progress) {
   for (let i = 0; i < CONSISTENCY_GRADE_THRESHOLDS.length; i++) {
     if (progress >= CONSISTENCY_GRADE_THRESHOLDS[i].minProgress) {

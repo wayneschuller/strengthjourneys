@@ -459,6 +459,14 @@ export function ConsistencyGradesRow({
             })}
           </div>
         ))}
+
+        {/* The whole grading contract, in the one sentence a lifter would use to
+            describe it. Without this the targets look arbitrary: the Year ring asks
+            for 150 sessions, not 156, and nobody can work out why. Kept in step with
+            getTargetSessions in lib/consistency-grades. */}
+        <p className="text-muted-foreground mt-0.5 text-center text-[11px] leading-snug">
+          Graded on 3 sessions a week, with a fortnight off a year.
+        </p>
       </div>
     </TooltipProvider>
   );

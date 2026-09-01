@@ -2,8 +2,8 @@
  * Shared consistency analysis used across dashboard and AI features.
  * Keep the logic UI-free so dormant card components do not own active data processing.
  *
- * Every period grades the same thing: did you average three sessions a week across
- * the window? The window lengths below are true calendar lengths so a ring labelled
+ * Every period grades the same thing: did you train three times a week across the
+ * window, allowing the fortnight off a year that everybody takes? The window lengths below are true calendar lengths so a ring labelled
  * "Year" really does cover a year — the single exception is Week, which runs eight
  * days on purpose so one late session does not tank an otherwise solid week.
  *
@@ -17,9 +17,13 @@ import {
   subDays,
   differenceInCalendarDays,
 } from "date-fns";
-import { CONSISTENCY_GRADE_THRESHOLDS } from "@/lib/consistency-grades";
+import {
+  CONSISTENCY_GRADE_THRESHOLDS,
+  TARGET_SESSIONS_PER_WEEK,
+  getHoldSessionsPerWeek,
+  getTargetSessions,
+} from "@/lib/consistency-grades";
 
-const TARGET_SESSIONS_PER_WEEK = 3;
 const DAYS_PER_YEAR = 365.25;
 // A rolling window sheds its oldest week every week. Seven days is the horizon we
 // report on, because "what do I owe this week" is the only actionable version of it.
@@ -333,9 +337,7 @@ export function processConsistency(parsedData) {
     const isPartiallyTracked = trackedDays < period.days;
     const gradedDays = Math.max(trackedDays, 7);
 
-    const targetWorkouts = Math.round(
-      (gradedDays / 7) * TARGET_SESSIONS_PER_WEEK,
-    );
+    const targetWorkouts = getTargetSessions(gradedDays);
     const rawPercentage = (actualWorkouts / targetWorkouts) * 100;
     const consistencyPercentage = Math.min(Math.round(rawPercentage), 100);
 
@@ -374,9 +376,9 @@ export function processConsistency(parsedData) {
     if (graceDayWarning) {
       headline = "Riding the grace day. One lift today locks in the week.";
     } else if (surplusSessions > 0) {
-      headline = `${surplusSessions} ${pluraliseSessions(surplusSessions)} clear of the ${TARGET_SESSIONS_PER_WEEK}-per-week target`;
+      headline = `${surplusSessions} ${pluraliseSessions(surplusSessions)} clear of target for this window`;
     } else if (actualWorkouts === targetWorkouts) {
-      headline = `Exactly on the ${TARGET_SESSIONS_PER_WEEK}-per-week target`;
+      headline = `Exactly on target for this window`;
     } else if (nextGrade) {
       headline = `${nextGrade.sessionsNeeded} more ${pluraliseSessions(
         nextGrade.sessionsNeeded,
@@ -394,7 +396,7 @@ export function processConsistency(parsedData) {
     let holdSessionsPerWeek = null;
     if (period.days >= ROLLING_NOTE_MIN_PERIOD_DAYS) {
       holdSessionsPerWeek = isPartiallyTracked
-        ? (TARGET_SESSIONS_PER_WEEK * consistencyPercentage) / 100
+        ? getHoldSessionsPerWeek(consistencyPercentage)
         : expiringSessions;
 
       const phraseRotation = dayPhraseOffset + periodIndex;

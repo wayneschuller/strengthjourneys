@@ -24,10 +24,9 @@ import {
   formatDateToYmdLocal,
   getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
-import { getGradeAndColor } from "@/lib/consistency-grades";
+import { getGradeAndColor, getTargetSessions } from "@/lib/consistency-grades";
 
 // The consistency grade assumes a 3-sessions-per-week training habit.
-const TARGET_SESSIONS_PER_WEEK = 3;
 
 // A week counts towards a streak once it contains this many sessions.
 const STREAK_SESSIONS_PER_WEEK = 3;
@@ -90,10 +89,9 @@ export function computeSessionStatsForYear(parsedData, year, todayYmd) {
   const bestStreak = computeBestStreakForYear(sortedDates, year);
 
   const { elapsedDays, isPartialYear } = getElapsedDaysInYear(year, todayYmd);
-  const expectedSessions = Math.max(
-    1,
-    Math.round((elapsedDays / 7) * TARGET_SESSIONS_PER_WEEK),
-  );
+  // Shares the Long Game target so a year cannot grade A here and A- on the
+  // dashboard rings: three a week, less the fortnight off a year.
+  const expectedSessions = Math.max(1, getTargetSessions(elapsedDays));
   const consistencyPercentage = Math.min(
     100,
     Math.round((count / expectedSessions) * 100),
@@ -177,7 +175,8 @@ export function computeTonnageForYear(parsedData, year, preferredUnit) {
     if (u === primaryUnit) return;
     const v = prevYearTonnageByUnit[u] ?? 0;
     if (u === "kg" && primaryUnit === "lb") prevYearTonnage += v * LB_PER_KG;
-    else if (u === "lb" && primaryUnit === "kg") prevYearTonnage += v * KG_PER_LB;
+    else if (u === "lb" && primaryUnit === "kg")
+      prevYearTonnage += v * KG_PER_LB;
   });
 
   const tonnageByLift = BIG_FOUR_LIFT_TYPES.map((liftType) => {
@@ -244,8 +243,12 @@ export function computeMostTrainedLiftForYear(parsedData, year) {
         )[0]
       : null;
   const mostTrainedLift = mostTrainedEntry ? mostTrainedEntry[0] : null;
-  const mostTrainedLiftSets = mostTrainedLift ? liftTypeSets[mostTrainedLift] : 0;
-  const mostTrainedLiftReps = mostTrainedLift ? liftTypeReps[mostTrainedLift] : 0;
+  const mostTrainedLiftSets = mostTrainedLift
+    ? liftTypeSets[mostTrainedLift]
+    : 0;
+  const mostTrainedLiftReps = mostTrainedLift
+    ? liftTypeReps[mostTrainedLift]
+    : 0;
   const mostTrainedLiftSessions =
     mostTrainedLift && liftTypeSessionDates[mostTrainedLift]
       ? liftTypeSessionDates[mostTrainedLift].size

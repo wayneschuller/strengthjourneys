@@ -24,8 +24,8 @@ const DAYS_PER_YEAR = 365.25;
 // A rolling window sheds its oldest week every week. Seven days is the horizon we
 // report on, because "what do I owe this week" is the only actionable version of it.
 const ROLLING_HORIZON_DAYS = 7;
-// The Week ring is itself a week long, so "sessions ageing out this week" is the
-// whole window and says nothing useful. Every longer window gets the note.
+// The Week ring is itself a week long, so counting what rolls off it says nothing
+// the ring has not already said. Every longer window gets the note.
 const ROLLING_NOTE_MIN_PERIOD_DAYS = 30;
 
 function subtractDays(dateStr, days) {
@@ -94,6 +94,89 @@ function getPeriodWindowLabel(label, days) {
 function pluraliseSessions(count) {
   return count === 1 ? "session" : "sessions";
 }
+
+// --- Rolling window encouragement ---
+
+// A window this wide moves forward as the calendar does, so a few of the oldest
+// sessions in it fall behind the start line each week. That is worth saying, because
+// it is what makes showing up this week matter. It is not worth saying as a threat,
+// so every line below leads with what training buys rather than what skipping costs.
+//
+// Five ways of saying each idea, so a row of nine rings does not read like one
+// sentence printed nine times. The pick steps with the ring's position, so
+// neighbours never land on the same wording, and the whole row is offset by the
+// date, so it reads fresh tomorrow instead of reshuffling on every render.
+function hashPhraseSeed(seed) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function pickPhrase(variants, rotation) {
+  return variants[rotation % variants.length];
+}
+
+// Sessions are moving out the back of the window this week, so this many keeps the
+// grade level and anything past that raises it.
+const ROLLING_PACE_PHRASES = [
+  (count, sessions) =>
+    `${count} ${sessions} this week and this grade stays right where you built it. Anything more climbs.`,
+  (count, sessions) =>
+    `This window rolls forward this week. Log ${count} ${sessions} to keep the grade level, more to lift it.`,
+  (count, sessions) =>
+    `Match ${count} ${sessions} this week and the grade stays yours. Beat it and it climbs.`,
+  (count, sessions) =>
+    `The pace this grade sits at is ${count} ${sessions} a week. Go past it and it rises.`,
+  (count, sessions) =>
+    `Hold this grade with ${count} ${sessions} this week. Every one after that builds it higher.`,
+];
+
+// Nothing falls behind the start line in the next seven days, so the whole week is
+// upside. This is the best news a ring can carry, so it gets to sound like it.
+const ROLLING_CLEAR_PHRASES = [
+  () =>
+    `Nothing rolls off this window this week, so every session you log lifts this grade.`,
+  () =>
+    `Clear run ahead. Nothing leaves this window for seven days, so anything you log is gain.`,
+  () =>
+    `A free week for this ring. Nothing drops out, so every session moves it up.`,
+  () =>
+    `No ground to make up this week. Everything between now and next week is pure upside.`,
+  () =>
+    `This window loses nothing over the next seven days, so the grade has only one direction to go.`,
+];
+
+// The log has not filled this window yet, so the window grows a week every week and
+// takes its target with it. Holding the ratio means matching your own current rate.
+const ROLLING_FILLING_PHRASES = [
+  (holdRate, target) =>
+    `This window is still filling. ${holdRate} a week keeps this grade, ${target} a week climbs it.`,
+  (holdRate, target) =>
+    `Still filling out. ${holdRate} a week holds this grade, ${target} a week takes it higher.`,
+  (holdRate, target) =>
+    `The window grows as you do. ${holdRate} a week keeps this grade steady, ${target} builds it.`,
+  (holdRate, target) =>
+    `You are still writing this window. Keep ${holdRate} a week and the grade holds, ${target} a week lifts it.`,
+  (holdRate, target) =>
+    `Room left in this window. ${holdRate} a week keeps the grade where it is, ${target} a week moves it up.`,
+];
+
+// Same growing window, but already at the ceiling. There is no climb left to offer,
+// so the line just says how good that is.
+const ROLLING_FILLING_MAXED_PHRASES = [
+  (target) =>
+    `This window is still filling and you are filling it perfectly. ${target} a week keeps it there.`,
+  (target) =>
+    `Still growing, and still topped out. ${target} a week keeps it that way.`,
+  (target) =>
+    `Full marks with room left to fill. ${target} a week holds the top.`,
+  (target) =>
+    `You are keeping pace with a window that is still growing. ${target} a week keeps it perfect.`,
+  (target) =>
+    `Nothing left to catch up on here. ${target} a week keeps this maxed.`,
+];
 
 // Grades are A/B/C bands plus ".", so only the A band needs "an".
 function indefiniteArticle(grade) {
@@ -180,6 +263,8 @@ export function processConsistency(parsedData) {
     }
   }
 
+  const dayPhraseOffset = hashPhraseSeed(today);
+
   return relevantPeriods.map((period, periodIndex) => {
     const sessionDates = periodDates[period.label];
     const actualWorkouts = sessionDates.size;
@@ -232,7 +317,7 @@ export function processConsistency(parsedData) {
 
     let headline = "";
     if (graceDayWarning) {
-      headline = "Riding the grace day — lift today to hold this grade";
+      headline = "Riding the grace day. One lift today locks in the week.";
     } else if (surplusSessions > 0) {
       headline = `${surplusSessions} ${pluraliseSessions(surplusSessions)} clear of the ${TARGET_SESSIONS_PER_WEEK}-per-week target`;
     } else if (actualWorkouts === targetWorkouts) {
@@ -245,26 +330,37 @@ export function processConsistency(parsedData) {
       headline = `${actualWorkouts} ${pluraliseSessions(actualWorkouts)} logged`;
     }
 
-    // What it costs to simply hold this grade for another week. Two different sums,
-    // one message: a window the log has already filled slides forward and sheds its
-    // oldest week, while a window the log has not filled yet keeps growing, so its
-    // target grows with it and holding the ratio means matching your own rate.
+    // What this week is worth to this ring. Two different sums, one message: a window
+    // the log has already filled slides forward and leaves its oldest week behind,
+    // while a window the log has not filled yet keeps growing, so its target grows
+    // with it and holding the ratio means matching your own rate.
     let rollingNote = null;
     let holdSessionsPerWeek = null;
     if (period.days >= ROLLING_NOTE_MIN_PERIOD_DAYS) {
+      const phraseRotation = dayPhraseOffset + periodIndex;
+
       if (isPartiallyTracked) {
         holdSessionsPerWeek =
           (TARGET_SESSIONS_PER_WEEK * consistencyPercentage) / 100;
         rollingNote =
           consistencyPercentage >= 100
-            ? `Still filling — ${TARGET_SESSIONS_PER_WEEK} a week keeps it maxed`
-            : `Still filling — ${holdSessionsPerWeek.toFixed(1)} a week holds this grade, ${TARGET_SESSIONS_PER_WEEK} climbs it`;
+            ? pickPhrase(
+                ROLLING_FILLING_MAXED_PHRASES,
+                phraseRotation,
+              )(TARGET_SESSIONS_PER_WEEK)
+            : pickPhrase(ROLLING_FILLING_PHRASES, phraseRotation)(
+                holdSessionsPerWeek.toFixed(1),
+                TARGET_SESSIONS_PER_WEEK,
+              );
       } else {
         holdSessionsPerWeek = expiringSessions;
         rollingNote =
           expiringSessions === 0
-            ? "Nothing ages out this week — every session from here lifts this grade"
-            : `${expiringSessions} ${pluraliseSessions(expiringSessions)} age out this week — log ${expiringSessions} to hold this grade`;
+            ? pickPhrase(ROLLING_CLEAR_PHRASES, phraseRotation)()
+            : pickPhrase(ROLLING_PACE_PHRASES, phraseRotation)(
+                expiringSessions,
+                pluraliseSessions(expiringSessions),
+              );
       }
     }
 

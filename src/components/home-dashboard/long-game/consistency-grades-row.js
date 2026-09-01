@@ -137,8 +137,9 @@ function ConsistencyRingDetail({ item, grade }) {
         {headline}
       </div>
 
-      {/* The cost of standing still. Rings are a scoreboard; this is the only line
-          that tells you what next week has to look like. */}
+      {/* Rings are a scoreboard; this is the line that says what this week is worth
+          to them. processConsistency owns the wording, including the hashed variety
+          that stops a row of rings reading like one sentence nine times over. */}
       {rollingNote && (
         <div className="text-muted-foreground text-xs leading-snug">
           {rollingNote}

@@ -629,22 +629,29 @@ function EarlyMonthMomentumCard({
               </span>
               . Rest a few minutes between sets.
             </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              The days are only a suggestion. Start today if you can, then
+              leave about two days between sessions.
+            </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanLiftSession
-                title={weekPlanDays[0].label}
+                title="Session 1"
+                dayLabel={weekPlanDays[0].label}
                 isToday={weekPlanDays[0].isToday}
                 lifts={[
                   { liftType: "Back Squat", prescription: "3×5" },
                 ]}
               />
               <WeekPlanLiftSession
-                title={weekPlanDays[1].label}
+                title="Session 2"
+                dayLabel={weekPlanDays[1].label}
                 lifts={[
                   { liftType: "Bench Press", prescription: "3×5" },
                 ]}
               />
               <WeekPlanLiftSession
-                title={weekPlanDays[2].label}
+                title="Session 3"
+                dayLabel={weekPlanDays[2].label}
                 lifts={[
                   { liftType: "Deadlift", prescription: "1×5" },
                   { liftType: "Strict Press", prescription: "3×5" },
@@ -816,20 +823,29 @@ function getWeekPlanDays(today = new Date()) {
   });
 }
 
-function WeekPlanLiftSession({ title, lifts, isToday = false }) {
+function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
   return (
     <div
       className={`group relative rounded-lg border bg-muted/10 px-3 py-3 ${
         isToday ? "border-primary/40" : "border-border/70"
       }`}
     >
-      <div className="mb-3 flex items-baseline justify-between gap-2">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
+      {/* The session number is the structure and leads; the weekday under it
+          is only a suggested day to put that session on. */}
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          {dayLabel && (
+            <p className="text-xs text-muted-foreground">
+              {isToday ? `Today, ${dayLabel}` : dayLabel}
+            </p>
+          )}
+        </div>
         {isToday && (
           // The Log button sits over this badge on hover, so the badge fades
           // rather than the two stacking on top of each other.
-          <span className="text-primary text-[10px] font-semibold tracking-[0.12em] uppercase transition-opacity md:group-hover:opacity-0 md:group-focus-within:opacity-0">
-            Today
+          <span className="text-primary shrink-0 text-[10px] font-semibold tracking-[0.12em] uppercase transition-opacity md:group-hover:opacity-0 md:group-focus-within:opacity-0">
+            Start here
           </span>
         )}
       </div>

@@ -42,6 +42,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
+import { getBigFourBodyBenefit } from "@/lib/big-four-body-benefits";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";
@@ -992,6 +993,25 @@ const LAST_WEEK_CATCH_UP_HEADLINES = [
   "Last chance to catch last month",
   "Make the week count.",
   "Close the gap now.",
+];
+
+// Headlines for the Big Four invitation panel, shown when there is nothing to
+// compare in either month. Every line has to work for someone whose last
+// session was a long time ago, so they open a door rather than mark a return.
+const BIG_FOUR_INVITATION_HEADLINES = [
+  "Four lifts, and here is what each one gives back.",
+  "A fresh month, and four good reasons to pick up a bar.",
+  "The bar is still there, and so is everything it builds.",
+  "Whenever you are ready, these four are ready too.",
+  "The month is wide open. Here is what the big four are for.",
+];
+
+// Same panel, but the lifter has trained this month without touching a Big
+// Four lift, so the invitation is to add one rather than to begin.
+const BIG_FOUR_INVITATION_PARTIAL_HEADLINES = [
+  "You are training. Add one of these four and the month starts scoring.",
+  "Sessions are going in. Here is what each big four lift would add.",
+  "Good month so far. Any one of these four builds on it.",
 ];
 
 // Surface only in the final week of a month the user is winning. Hashed by today's date for daily variety.
@@ -2047,9 +2067,11 @@ function BigFourCriteriaTable({
 
   if (rows.length === 0) {
     return (
-      <p className="text-muted-foreground/60 text-xs">
-        No Big Four lift criteria to compare yet this month or last.
-      </p>
+      <BigFourInvitationPanel
+        monthPhraseKey={boundaries?.currentMonthStart}
+        hasSessionsThisMonth={(sessions?.current ?? 0) > 0}
+        monthName={boundaries?.currentMonthName}
+      />
     );
   }
 
@@ -2562,6 +2584,95 @@ function BigFourCriteriaTable({
           forceStackedControls
           defaultBioPrompt="Enter your details to unlock this feature."
         />
+      </div>
+    </div>
+  );
+}
+
+// ─── Big Four invitation (nothing to compare in either month) ──────────────
+
+/*
+ * Shown in place of the comparison table when neither this month nor last
+ * month has a Big Four lift to score. That is almost always a lifter with real
+ * history who has been away a while, and the honest reading of their data is
+ * an empty table, so the card stops scoring and says something useful instead:
+ * the four lifts, and what each one gives the body.
+ *
+ * Deliberately says nothing about the time away. Counting the weeks would be
+ * accurate and would also be the reason to close the tab. The four lifts are a
+ * better argument than any number we could put here.
+ */
+function BigFourInvitationPanel({
+  monthPhraseKey,
+  hasSessionsThisMonth = false,
+  monthName,
+}) {
+  const headline = pickPhraseForMonth(
+    hasSessionsThisMonth
+      ? BIG_FOUR_INVITATION_PARTIAL_HEADLINES
+      : BIG_FOUR_INVITATION_HEADLINES,
+    monthPhraseKey,
+  );
+
+  return (
+    <div className="flex flex-1 flex-col gap-3">
+      <p className="text-muted-foreground text-sm">{headline}</p>
+
+      <div className="space-y-2">
+        {BIG_FOUR_LIFT_TYPES.map((liftType, index) => {
+          const copy = getBigFourBodyBenefit(liftType);
+          if (!copy) return null;
+          const href = getLiftDetailUrl(liftType);
+
+          return (
+            <motion.div
+              key={liftType}
+              className="border-border/40 bg-muted/10 flex items-start gap-3 rounded-lg border px-2.5 py-2"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.35,
+                delay: 0.06 * index,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
+              <Link href={href} className="shrink-0">
+                <LiftSvg
+                  liftType={liftType}
+                  size="sm"
+                  animate={false}
+                  className="h-14 w-14"
+                />
+              </Link>
+              <div className="min-w-0">
+                <Link
+                  href={href}
+                  className="text-foreground text-sm font-semibold hover:underline"
+                >
+                  {liftType}
+                </Link>
+                <p className="text-muted-foreground/80 text-[11px] font-medium tracking-wide uppercase">
+                  {copy.tagline}
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                  {copy.benefit}
+                </p>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
+        <Button asChild size="sm" className="gap-1.5">
+          <Link href="/log?source=month-card-invitation">
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            Log any lift
+          </Link>
+        </Button>
+        <p className="text-muted-foreground text-xs">
+          One session puts {monthName || "this month"} on the board.
+        </p>
       </div>
     </div>
   );

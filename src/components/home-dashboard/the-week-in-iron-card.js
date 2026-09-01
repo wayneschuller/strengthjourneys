@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  FileUp,
   TrendingUp,
   TrendingDown,
   Bot,
@@ -941,6 +942,22 @@ function EarlyWeekCard({
             hasLoggedSessions={false}
             className="mt-4"
           />
+        )}
+        {!isDemoMode && dashboardStage === "starter_sample" && (
+          <Link
+            href="/import"
+            className="border-primary/40 bg-primary/5 hover:border-primary hover:bg-primary/10 mt-4 flex w-full items-center gap-3 rounded-xl border border-dashed px-4 py-3 transition-colors"
+          >
+            <FileUp className="text-primary h-5 w-5 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-foreground text-sm font-medium">
+                Already have training data?
+              </p>
+              <p className="text-muted-foreground text-xs">
+                Import a data file to merge your history into your Google Sheet.
+              </p>
+            </div>
+          </Link>
         )}
         <div className="mt-5 w-full">
           <StartLiftPrompt />

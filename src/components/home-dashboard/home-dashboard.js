@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
-import { FirstMovePanel } from "@/components/home-dashboard/first-move-panel";
 import {
   DashboardHeaderStatus,
   DataSheetStatus,
@@ -243,15 +242,6 @@ export function HomeDashboard() {
             />
           </div>
         </div>
-      )}
-      {/* Nothing below has data yet, so lead with the two things that change
-          that. Gated on sessionCount so it disappears the moment the first
-          session lands rather than lingering over a log that has started. */}
-      {hasUserData && hasDataLoaded && dashboardStage === "starter_sample" && sessionCount === 0 && (
-        <FirstMovePanel
-          dashboardStage={dashboardStage}
-          sessionCount={sessionCount}
-        />
       )}
       {/* The first week is intentionally quieter: skip the inspiration row until
           the user has enough real data for those cards to feel earned. */}

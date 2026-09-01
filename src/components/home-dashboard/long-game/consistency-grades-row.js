@@ -8,6 +8,8 @@
  * rings are the most interesting thing on the card.
  */
 
+import { Bed } from "lucide-react";
+
 import { motion, useReducedMotion } from "motion/react";
 
 import { useId, useMemo } from "react";
@@ -37,6 +39,10 @@ import {
 // --- Consistency Grades ---
 
 const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
+// The bottom grade band. A full stop said nothing; a bed says the one thing that is
+// both true and kind about an empty window, and stays funny rather than scolding if
+// the window in question is three months long.
+const REST_GRADE = ".";
 const DAYS_PER_YEAR = 365.25;
 
 function getConsistencyLabelAbbrev(label) {
@@ -112,7 +118,14 @@ function ConsistencyRingDetail({ item, grade }) {
           {windowLabel}
         </span>
         <span className="text-[13px] leading-none font-bold tabular-nums">
-          {grade}
+          {grade === REST_GRADE ? (
+            <Bed
+              className="text-muted-foreground inline size-3.5 align-[-3px]"
+              aria-label="Rest"
+            />
+          ) : (
+            grade
+          )}
           <span className="text-muted-foreground ml-1.5 font-medium">
             {percentage}%
           </span>
@@ -188,6 +201,11 @@ function ConsistencyGradeCircle({
   const glowStrength = isShortTerm ? 1 : 0.55;
   const showGlow = percentage >= 50;
 
+  // An empty window draws a bed instead of a letter. It reads as approval on a rest
+  // week and as a gentle joke on a rest quarter, which is the right range of tone for
+  // something the lifter may have chosen on purpose.
+  const isResting = grade === REST_GRADE;
+
   // Every grade draws its letter at one size and hangs any +/- off it as a raised
   // modifier, so an "A" and an "A+" have identically sized letters across the row.
   const gradeLetter = grade.charAt(0);
@@ -201,7 +219,11 @@ function ConsistencyGradeCircle({
   const ring = (
     <motion.button
       type="button"
-      aria-label={`${label} consistency: grade ${grade}, ${percentage} percent`}
+      aria-label={
+        isResting
+          ? `${label} consistency: resting, no sessions logged`
+          : `${label} consistency: grade ${grade}, ${percentage} percent`
+      }
       className="focus-visible:ring-ring flex cursor-default flex-col items-center gap-1 rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
       style={{
         "--ring-from": light.from,
@@ -316,18 +338,58 @@ function ConsistencyGradeCircle({
               }
             />
           </g>
-          <motion.text
-            x={letterX}
-            y={size / 2}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fill="var(--ring-ink)"
-            fontSize={letterFontSize}
-            fontWeight="700"
-            style={{
-              transformOrigin: "center",
-              transformBox: "fill-box",
-            }}
+          {!isResting && (
+            <motion.text
+              x={letterX}
+              y={size / 2}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="var(--ring-ink)"
+              fontSize={letterFontSize}
+              fontWeight="700"
+              style={{
+                transformOrigin: "center",
+                transformBox: "fill-box",
+              }}
+              initial={
+                isStatic ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.6 }
+              }
+              animate={
+                isStatic || isVisible
+                  ? { opacity: 1, scale: 1 }
+                  : { opacity: 0, scale: 0.6 }
+              }
+              transition={
+                isStatic
+                  ? { duration: 0 }
+                  : {
+                      type: "spring",
+                      stiffness: 420,
+                      damping: 18,
+                      delay: delay + 0.45,
+                    }
+              }
+            >
+              {gradeLetter}
+              {gradeModifier && (
+                <tspan
+                  fontSize={modifierFontSize}
+                  dy={-letterFontSize * 0.24}
+                  fontWeight="700"
+                >
+                  {gradeModifier}
+                </tspan>
+              )}
+            </motion.text>
+          )}
+        </svg>
+
+        {/* Overlaid rather than drawn into the SVG so it stays a real lucide icon,
+            centred on the same box the letter would have used. */}
+        {isResting && (
+          <motion.span
+            aria-hidden="true"
+            className="text-muted-foreground pointer-events-none absolute inset-0 flex items-center justify-center"
             initial={
               isStatic ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.6 }
             }
@@ -347,18 +409,9 @@ function ConsistencyGradeCircle({
                   }
             }
           >
-            {gradeLetter}
-            {gradeModifier && (
-              <tspan
-                fontSize={modifierFontSize}
-                dy={-letterFontSize * 0.24}
-                fontWeight="700"
-              >
-                {gradeModifier}
-              </tspan>
-            )}
-          </motion.text>
-        </svg>
+            <Bed size={Math.round(size * 0.44)} strokeWidth={2} />
+          </motion.span>
+        )}
       </div>
       <span className="text-muted-foreground text-[11px] leading-none tracking-wide tabular-nums">
         {abbrev}

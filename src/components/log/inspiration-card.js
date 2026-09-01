@@ -139,22 +139,22 @@ export function InspirationCard({
         className,
       )}
     >
-      <CardHeader className={cn(isRail ? "space-y-2 px-4 pb-0 pt-4" : "")}>
+      <CardHeader className={cn(isRail ? "space-y-2 px-4 pt-4 pb-0" : "")}>
         <CardTitle
           className={cn(
             isRail
-              ? "text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+              ? "text-muted-foreground text-[11px] font-semibold tracking-[0.22em] uppercase"
               : "",
           )}
         >
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className={cn(isRail ? "space-y-4 px-4 pb-4 pt-3" : "")}>
+      <CardContent className={cn(isRail ? "space-y-4 px-4 pt-3 pb-4" : "")}>
         <blockquote
           className={cn(
             isRail
-              ? "text-sm leading-6 text-muted-foreground"
+              ? "text-muted-foreground text-sm leading-6"
               : "text-xl italic md:text-2xl",
           )}
         >
@@ -165,7 +165,7 @@ export function InspirationCard({
         <div
           className={cn(
             isRail
-              ? "text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              ? "text-muted-foreground text-xs font-medium tracking-[0.18em] uppercase"
               : "text-right text-lg md:text-xl",
           )}
         >
@@ -176,7 +176,7 @@ export function InspirationCard({
               rel="noopener noreferrer"
               className={cn(
                 isRail
-                  ? "transition-colors hover:text-foreground"
+                  ? "hover:text-foreground transition-colors"
                   : "underline underline-offset-4 hover:opacity-80",
               )}
             >

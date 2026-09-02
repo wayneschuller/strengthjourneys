@@ -70,6 +70,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   COFFEE_NUDGE_CLICK: "SJ_coffee_nudge_click", // ~Apr 2026: User clicked a Buy-Me-a-Coffee link in an in-app nudge surface.
   LONG_GAME_LOG_CTA: "SJ_long_game_log_cta", // ~Aug 2026: User clicked a "log a session" CTA on an early-stage Long Game card.
   HOME_WELCOME_ACTION: "SJ_home_welcome_action", // ~Aug 2026: Signed-in lifter without a linked sheet acted on the activation home (fork CTA or reading rail).
+  PAGE_NOT_FOUND: "SJ_page_not_found", // ~Sep 2026: Visitor landed on the 404 page. `page` is the missing path, `surface` the referring host.
 });
 
 const UTM_STORAGE_KEY = "ga_utm";
@@ -411,4 +412,19 @@ export function gaTrackImportProcess({
 export function gaTrackCoffeeNudgeClick(surface, extra = {}) {
   if (typeof surface !== "string" || surface.length === 0) return;
   gaEvent(GA_EVENT_TAGS.COFFEE_NUDGE_CLICK, { surface, ...extra });
+}
+
+/**
+ * Track a 404 landing so broken inbound links show up in GA4 without needing a
+ * paid log-drain tier.
+ *
+ * Both params reuse dimensions that are already registered in GA4 (`page` since
+ * Mar 2026, `surface` since Aug 2026) so the report works on day one rather
+ * than after someone remembers to register a new one.
+ *
+ * @param {string} page - The path that 404ed, query string stripped.
+ * @param {string} surface - Referring host, or "direct" / "internal".
+ */
+export function gaTrackPageNotFound(page, surface) {
+  gaEvent(GA_EVENT_TAGS.PAGE_NOT_FOUND, { page, surface });
 }

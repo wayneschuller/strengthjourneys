@@ -121,6 +121,7 @@ const FAQ_ITEMS = [
         Not really. It means you have graduated from beginner bragging rights
         and earned the right to start side-eyeing the{" "}
         <Link
+          prefetch={false}
           href="/200-300-400-500-strength-club-calculator"
           className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
         >
@@ -850,6 +851,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
             <Link
+              prefetch={false}
               href="/how-strong-am-i"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
@@ -859,6 +861,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               </p>
             </Link>
             <Link
+              prefetch={false}
               href="/strength-levels"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
@@ -912,6 +915,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   }}
                 >
                   <Link
+                    prefetch={false}
                     href={getLiftDetailUrl(liftType)}
                     className="flex-shrink-0"
                     aria-hidden
@@ -942,6 +946,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   <div className="min-w-0 flex-1">
                     <div className="text-lg font-semibold">
                       <Link
+                        prefetch={false}
                         href={getLiftDetailUrl(liftType)}
                         className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
                       >
@@ -965,6 +970,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                     >
                       {visibleE1rmSources?.[key] ? (
                         <Link
+                          prefetch={false}
                           href={`/log?date=${visibleE1rmSources[key].date}`}
                           className="underline decoration-dotted underline-offset-2 hover:text-foreground"
                         >
@@ -1074,6 +1080,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           <p>
             To see your beginner-to-elite standards per lift, see our{" "}
             <Link
+              prefetch={false}
               href="/strength-levels"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
@@ -1081,6 +1088,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </Link>
             . Explore:{" "}
             <Link
+              prefetch={false}
               href={getLiftDetailUrl("Back Squat")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
@@ -1088,6 +1096,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </Link>
             {" · "}
             <Link
+              prefetch={false}
               href={getLiftDetailUrl("Bench Press")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
@@ -1095,6 +1104,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </Link>
             {" · "}
             <Link
+              prefetch={false}
               href={getLiftDetailUrl("Deadlift")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
@@ -1102,6 +1112,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </Link>
             {" · "}
             <Link
+              prefetch={false}
               href={getLiftDetailUrl("Strict Press")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
@@ -1134,6 +1145,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           {WHATS_NEXT_FEATURES.map(
             ({ href, title, description, IconComponent }) => (
               <Link
+                prefetch={false}
                 key={href}
                 href={href}
                 className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
@@ -1164,6 +1176,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             Use the sliders to estimate your current total, then compare your
             progress with our{" "}
             <Link
+              prefetch={false}
               href="/strength-levels"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
@@ -1171,6 +1184,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </Link>{" "}
             and project training loads with the{" "}
             <Link
+              prefetch={false}
               href="/calculator"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >

@@ -262,7 +262,7 @@ export function BigFourLiftCards({
             key={lift.slug}
             className="group ring-ring relative shadow-lg ring-0 hover:ring-1"
           >
-              <Link href={`/${lift.slug}`}>
+              <Link href={`/${lift.slug}`} prefetch={false}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start gap-3">
                     <CardTitle className="min-w-0 flex-1 text-xl leading-tight sm:text-2xl lg:min-h-[3.8rem]">

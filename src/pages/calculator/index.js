@@ -623,6 +623,7 @@ export function E1RMCalculatorMain({
         {forceLift && getLiftSvgPath(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
           <PageHeaderRight>
             <Link
+              prefetch={false}
               href={LIFT_SLUG_TO_INSIGHTS_URL[forceLift]}
               className="hover:bg-muted flex w-64 items-center gap-3 rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
@@ -777,7 +778,7 @@ export function E1RMCalculatorMain({
 
                   {/* Floating plate annotation: absolute in right whitespace on desktop */}
                   <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
-                    <Link href={warmupURL}>
+                    <Link href={warmupURL} prefetch={false}>
                       <PlateDiagram
                         platesPerSide={plateBreakdown.platesPerSide}
                         barWeight={plateBarWeight}
@@ -787,7 +788,7 @@ export function E1RMCalculatorMain({
                         useScrollTrigger={false}
                       />
                     </Link>
-                    <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
+                    <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground" prefetch={false}>
                       See warm-up sets →
                     </Link>
                   </div>
@@ -795,7 +796,7 @@ export function E1RMCalculatorMain({
 
                 {/* Mobile: plate diagram + link below card */}
                 <div className="flex flex-col items-center md:hidden">
-                  <Link href={warmupURL}>
+                  <Link href={warmupURL} prefetch={false}>
                     <PlateDiagram
                       platesPerSide={plateBreakdown.platesPerSide}
                       barWeight={plateBarWeight}
@@ -805,7 +806,7 @@ export function E1RMCalculatorMain({
                       useScrollTrigger={false}
                     />
                   </Link>
-                  <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground">
+                  <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground" prefetch={false}>
                     See warm-up sets →
                   </Link>
                 </div>
@@ -903,6 +904,7 @@ export function E1RMCalculatorMain({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {FORMULA_GUIDE_LINKS.map((formulaLink) => (
               <Link
+                prefetch={false}
                 key={formulaLink.href}
                 href={formulaLink.href}
                 className="block rounded-lg border p-4 transition-colors hover:bg-muted"
@@ -928,6 +930,7 @@ function renderInlineContent(content) {
   return content.map((seg, i) =>
     typeof seg === "string" ? seg : (
       <Link
+        prefetch={false}
         key={i}
         href={seg.href}
         className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
@@ -1011,6 +1014,7 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
           <CardContent className="space-y-2 text-sm">
             {liftLinks.map((link) => (
               <Link
+                prefetch={false}
                 key={link.href}
                 href={link.href}
                 className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
@@ -1085,6 +1089,7 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
           <CardContent className="space-y-2 text-sm">
             {formulaSupport.links.map((link) => (
               <Link
+                prefetch={false}
                 key={link.href}
                 href={link.href}
                 className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
@@ -1185,14 +1190,14 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
           )}
           {gymGoerPercentile != null && (
             <div className="mt-1 text-center text-sm text-muted-foreground">
-              <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70">
+              <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70" prefetch={false}>
                 Stronger than {gymGoerPercentile}% of gym-goers your age
               </Link>
             </div>
           )}
           {gymGoerPercentile == null && standardsComparisonCopy && strengthStandardsUrl && (
             <div className="mt-1 text-center text-sm text-muted-foreground">
-              <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70">
+              <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70" prefetch={false}>
                 {standardsComparisonCopy}
               </Link>
             </div>
@@ -1768,13 +1773,14 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
       <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
         {/* Row 1 on mobile: SVG + lift name + rating badge */}
         <div className="flex items-center gap-3">
-          <Link href={calculatorUrl} className="shrink-0 transition-opacity hover:opacity-50">
+          <Link href={calculatorUrl} className="shrink-0 transition-opacity hover:opacity-50" prefetch={false}>
             {svgPath
               ? <img src={svgPath} alt={liftType} className={cn("object-contain opacity-90", featured ? "h-16 w-16" : "h-12 w-12")} />
               : <div className={featured ? "h-16 w-16" : "h-12 w-12"} />
             }
           </Link>
           <Link
+            prefetch={false}
             href={calculatorUrl}
             className={cn("flex-1 text-muted-foreground transition-opacity hover:opacity-70 md:flex-none md:truncate", featured ? "text-sm font-medium md:w-28" : "text-xs md:w-24")}
           >
@@ -1783,6 +1789,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           {/* Rating badge: mobile only (desktop shows it at the end) */}
           <div className={cn("shrink-0 text-right md:hidden", featured ? "text-sm" : "text-xs")}>
             <Link
+              prefetch={false}
               href={calculatorUrl}
               className="font-medium transition-opacity hover:opacity-70"
             >
@@ -1872,6 +1879,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         {/* Rating at end — desktop only (shown in row 1 on mobile) */}
         <div className={cn("hidden w-36 shrink-0 text-right md:block", featured ? "text-sm" : "text-xs")}>
           <Link
+            prefetch={false}
             href={calculatorUrl}
             className="font-medium transition-opacity hover:opacity-70"
           >
@@ -1894,6 +1902,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         <div className="border-t pt-3">
           <h2 className="text-center text-base font-semibold">
             <Link
+              prefetch={false}
               href={featuredBigFourName ? (STRENGTH_STANDARDS_LINKS[featuredBigFourName] ?? "/strength-levels") : "/strength-levels"}
               className="transition-opacity hover:opacity-70"
             >

@@ -268,6 +268,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                       />
                       <div className="flex flex-wrap gap-3">
                         <Link
+                          prefetch={false}
                           href={getStrengthStandardsUrl(page.slug)}
                           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                         >
@@ -275,6 +276,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                           {page.navLabel} Standards
                         </Link>
                         <Link
+                          prefetch={false}
                           href={page.calculatorUrl}
                           className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                         >
@@ -282,6 +284,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                           {page.navLabel} 1RM Calculator
                         </Link>
                         <Link
+                          prefetch={false}
                           href={page.insightUrl}
                           className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                         >
@@ -317,6 +320,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                                   ? ", and "
                                   : ", "}
                                 <Link
+                                  prefetch={false}
                                   href={link.href}
                                   className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
                                 >
@@ -331,6 +335,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                           <>
                             {" "}
                             <Link
+                              prefetch={false}
                               href={ctaHref}
                               className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
                             >

@@ -1509,6 +1509,7 @@ function PlateMilestonesMain({ relatedArticles }) {
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
             <Link
+              prefetch={false}
               href="/1000lb-club-calculator"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
@@ -1518,6 +1519,7 @@ function PlateMilestonesMain({ relatedArticles }) {
               </p>
             </Link>
             <Link
+              prefetch={false}
               href="/200-300-400-500-strength-club-calculator"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
@@ -1673,6 +1675,7 @@ function PlateMilestonesMain({ relatedArticles }) {
               You have conquered the 1/2/3/4 Plate Club. Ready for the next
               challenge? See if your squat, bench, and deadlift total hits{" "}
               <Link
+                prefetch={false}
                 href="/1000lb-club-calculator"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
@@ -1799,6 +1802,7 @@ function PlateMilestonesMain({ relatedArticles }) {
           {WHATS_NEXT_FEATURES.map(
             ({ href, title, description, IconComponent }) => (
               <Link
+                prefetch={false}
                 key={href}
                 href={href}
                 className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
@@ -1837,6 +1841,7 @@ function PlateMilestonesMain({ relatedArticles }) {
             universal gym experience. Use the sliders above to see where you
             stand, then check your detailed standards with our{" "}
             <Link
+              prefetch={false}
               href="/strength-levels"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
@@ -1951,6 +1956,7 @@ function MilestoneRow({
         {/* Left: lift SVG + plate icons — fixed width sized for the widest row (deadlift) */}
         <div className="flex flex-shrink-0 items-center gap-3 md:w-[440px]">
           <Link
+            prefetch={false}
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"
           >
@@ -1994,6 +2000,7 @@ function MilestoneRow({
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
               <Link
+                prefetch={false}
                 href={getLiftDetailUrl(liftType)}
                 className="text-sm font-bold underline decoration-dotted underline-offset-2 hover:text-blue-600"
               >
@@ -2243,6 +2250,7 @@ function PlateTimelinesSection({ liftTimelines, isMetric }) {
                 className="flex items-stretch gap-3 rounded-lg border p-2"
               >
                 <Link
+                  prefetch={false}
                   href={getLiftDetailUrl(milestone.liftType)}
                   className="flex flex-shrink-0 items-center"
                 >
@@ -2254,6 +2262,7 @@ function PlateTimelinesSection({ liftTimelines, isMetric }) {
                 </Link>
                 <div className="min-w-0 flex-1">
                   <Link
+                    prefetch={false}
                     href={getLiftDetailUrl(milestone.liftType)}
                     className="text-sm font-semibold underline decoration-dotted underline-offset-2 hover:text-blue-600"
                   >

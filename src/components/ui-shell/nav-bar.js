@@ -171,7 +171,7 @@ export function NavBar() {
                   size="sm"
                   className="mr-0 inline-flex h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:mr-2 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
                 >
-                  <Link href="/log">
+                  <Link href="/log" prefetch={false}>
                     {canOpenLog && !isImportedData ? (
                       <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                     ) : (
@@ -204,7 +204,7 @@ export function NavBar() {
                   size="sm"
                   className="mr-2 hidden h-9 shrink-0 rounded-full px-3 xl:inline-flex"
                 >
-                  <Link href={hasImportRitual ? importHref : "/import"}>
+                  <Link href={hasImportRitual ? importHref : "/import"} prefetch={false}>
                     <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
                     Import / Export
                   </Link>
@@ -312,6 +312,7 @@ export function DesktopNav() {
   return (
     <div className="hidden align-middle md:flex">
       <Link
+        prefetch={false}
         href="/"
         className={cn(
           "mr-10 flex items-center",
@@ -340,6 +341,7 @@ export function DesktopNav() {
         <CalculatorsMenu />
 
         <Link
+          prefetch={false}
           href="/gym-playlist-leaderboard"
           className={cn(
             "hover:text-foreground/80 transition-colors",
@@ -352,6 +354,7 @@ export function DesktopNav() {
           Music
         </Link>
         <Link
+          prefetch={false}
           href="/articles"
           className={cn(
             "hover:text-foreground/80 transition-colors",
@@ -520,6 +523,7 @@ function BigFourBarbellInsightsMenu() {
         <li>
           <NavigationMenuLink asChild>
             <Link
+              prefetch={false}
               ref={ref}
               className={cn(
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
@@ -631,6 +635,7 @@ function StrengthInsightsMenu() {
         <li>
           <NavigationMenuLink asChild>
             <Link
+              prefetch={false}
               ref={ref}
               className={cn(
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
@@ -748,6 +753,7 @@ function CalculatorsMenu() {
         <li>
           <NavigationMenuLink asChild>
             <Link
+              prefetch={false}
               ref={ref}
               className={cn(
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",

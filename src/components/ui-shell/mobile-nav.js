@@ -80,6 +80,7 @@ export function MobileNav() {
   const NavLink = ({ href, title, IconComponent }) => (
     <SheetClose asChild>
       <Link
+        prefetch={false}
         href={href}
         className={cn(
           "flex flex-row items-center gap-3 transition-colors hover:text-foreground/80",
@@ -110,7 +111,7 @@ export function MobileNav() {
           <SheetHeader>
             <SheetTitle>
               <SheetClose asChild>
-                <Link href="/" className="flex flex-col">
+                <Link href="/" className="flex flex-col" prefetch={false}>
                   {/* <span className="inline-block text-xl text-left font-bold tracking-tighter"> Strength Journeys Home </span> */}
                   <Image
                     src={logoSrc}
@@ -177,7 +178,7 @@ export function MobileNav() {
         variant="ghost"
         className="text-muted-foreground h-9 px-2 hover:bg-transparent hover:text-foreground md:hidden"
       >
-        <Link href="/" aria-label="Home dashboard">
+        <Link href="/" aria-label="Home dashboard" prefetch={false}>
           <House className="h-5 w-5" />
         </Link>
       </Button>

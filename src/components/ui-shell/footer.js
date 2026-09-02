@@ -76,6 +76,7 @@ function FooterLink({ href, label, external }) {
   }
   return (
     <Link
+      prefetch={false}
       href={href}
       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
     >
@@ -153,6 +154,7 @@ export function Footer() {
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {[...LIFT_CALCULATORS, ...FORMULA_CALCULATORS].map(({ href, label }) => (
                   <Link
+                    prefetch={false}
                     key={href}
                     href={href}
                     className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
@@ -170,6 +172,7 @@ export function Footer() {
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {STRENGTH_STANDARDS_LINKS.map(({ href, label }) => (
                   <Link
+                    prefetch={false}
                     key={href}
                     href={href}
                     className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
@@ -187,6 +190,7 @@ export function Footer() {
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {PROGRESS_GUIDES.map(({ href, label }) => (
                   <Link
+                    prefetch={false}
                     key={href}
                     href={href}
                     className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"

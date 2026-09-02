@@ -159,6 +159,7 @@ const FAQ_ITEMS = [
         species, but a gorilla could casually toss you and the barbell. Find out
         exactly how you measure up with our{" "}
         <Link
+          prefetch={false}
           href="/how-strong-is-a-gorilla"
           className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
         >
@@ -915,6 +916,7 @@ function StrengthClubMain({ relatedArticles }) {
           <PageHeaderRight>
             <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
               <Link
+                prefetch={false}
                 href="/1000lb-club-calculator"
                 className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
               >
@@ -924,6 +926,7 @@ function StrengthClubMain({ relatedArticles }) {
                 </p>
               </Link>
               <Link
+                prefetch={false}
                 href="/strength-levels"
                 className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
               >
@@ -1044,6 +1047,7 @@ function StrengthClubMain({ relatedArticles }) {
             <p>
               See your beginner-to-elite standards per lift at our{" "}
               <Link
+                prefetch={false}
                 href="/strength-levels"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
@@ -1051,6 +1055,7 @@ function StrengthClubMain({ relatedArticles }) {
               </Link>
               . Explore:{" "}
               <Link
+                prefetch={false}
                 href={getLiftDetailUrl("Strict Press")}
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
@@ -1058,6 +1063,7 @@ function StrengthClubMain({ relatedArticles }) {
               </Link>
               {" · "}
               <Link
+                prefetch={false}
                 href={getLiftDetailUrl("Bench Press")}
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
@@ -1065,6 +1071,7 @@ function StrengthClubMain({ relatedArticles }) {
               </Link>
               {" · "}
               <Link
+                prefetch={false}
                 href={getLiftDetailUrl("Back Squat")}
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
@@ -1072,6 +1079,7 @@ function StrengthClubMain({ relatedArticles }) {
               </Link>
               {" · "}
               <Link
+                prefetch={false}
                 href={getLiftDetailUrl("Deadlift")}
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
@@ -1092,6 +1100,7 @@ function StrengthClubMain({ relatedArticles }) {
             {WHATS_NEXT_FEATURES.map(
               ({ href, title, description, IconComponent }) => (
                 <Link
+                  prefetch={false}
                   key={href}
                   href={href}
                   className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
@@ -1126,6 +1135,7 @@ function StrengthClubMain({ relatedArticles }) {
               satisfying to achieve. Use the sliders above to see how close
               you are, then check your per-lift standards with our{" "}
               <Link
+                prefetch={false}
                 href="/strength-levels"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
@@ -1245,7 +1255,7 @@ function MilestoneCard({
         {/* Header: target number + lift name + SVG */}
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={getLiftDetailUrl(liftType)} className="flex-shrink-0">
+            <Link href={getLiftDetailUrl(liftType)} className="flex-shrink-0" prefetch={false}>
               <motion.img
                 src={LIFT_GRAPHICS[liftType]}
                 alt={`${liftType} illustration`}
@@ -1273,6 +1283,7 @@ function MilestoneCard({
                 </span>
               </div>
               <Link
+                prefetch={false}
                 href={getLiftDetailUrl(liftType)}
                 className="text-muted-foreground text-sm font-semibold underline decoration-dotted underline-offset-2 hover:text-blue-600"
               >

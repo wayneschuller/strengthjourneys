@@ -62,7 +62,7 @@ export function ArticleSummaryCard({ article }) {
   // devLog(article);
 
   return (
-    <Link href={`/articles/${article.slug}`}>
+    <Link href={`/articles/${article.slug}`} prefetch={false}>
       <Card className="group h-full transition-colors duration-200 hover:bg-muted">
         <CardHeader className="flex flex-col gap-4 md:flex-row">
           <div className="order-2 flex-1 md:order-1">
@@ -121,6 +121,7 @@ export function RelatedArticles({ articles }) {
           {limitedArticles.map((article) => (
             <div key={article.slug} className="group h-full rounded-lg border">
               <Link
+                prefetch={false}
                 href={`/articles/${article.slug}`}
                 className="flex h-full items-center justify-center rounded-md p-2 align-middle transition-colors duration-200 hover:bg-muted"
               >

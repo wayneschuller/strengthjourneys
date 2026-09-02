@@ -70,7 +70,7 @@ function renderAnswer(answer) {
   if (typeof answer === "string") return answer;
   return answer.map((seg, i) =>
     typeof seg === "string" ? seg : (
-      <Link key={i} href={seg.href}
+      <Link key={i} href={seg.href} prefetch={false}
         className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
         {seg.text}
       </Link>
@@ -342,14 +342,14 @@ function BarbellInsightsMain({
             </Button>
             {STRENGTH_STANDARDS_LINKS[liftType] && (
               <Button asChild variant="outline" size="lg" className="h-11">
-                <Link href={STRENGTH_STANDARDS_LINKS[liftType]}>
+                <Link href={STRENGTH_STANDARDS_LINKS[liftType]} prefetch={false}>
                   {liftType} Strength Levels →
                 </Link>
               </Button>
             )}
             {liftInsightData.calculatorUrl && (
               <Button asChild variant="outline" size="lg" className="h-11">
-                <Link href={liftInsightData.calculatorUrl}>
+                <Link href={liftInsightData.calculatorUrl} prefetch={false}>
                   {liftType} 1RM Calculator →
                 </Link>
               </Button>
@@ -622,6 +622,7 @@ function StrengthLevelsCard({ liftType }) {
         <AthleteBioInlineSettings />
         {STRENGTH_STANDARDS_LINKS[liftType] && (
           <Link
+            prefetch={false}
             href={STRENGTH_STANDARDS_LINKS[liftType]}
             className="text-xs text-muted-foreground hover:text-foreground whitespace-nowrap"
           >

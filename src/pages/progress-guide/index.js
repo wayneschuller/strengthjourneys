@@ -109,7 +109,7 @@ export default function ProgressGuideHub() {
                   delay: prefersReducedMotion ? 0 : index * 0.08,
                 }}
               >
-                <Link href={`/progress-guide/${card.slug}`} className="block">
+                <Link href={`/progress-guide/${card.slug}`} className="block" prefetch={false}>
                   <Card className="group h-full overflow-hidden transition-shadow hover:shadow-lg">
                     <div
                       className="flex flex-col items-center gap-4 px-6 py-8"

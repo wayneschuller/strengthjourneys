@@ -659,6 +659,7 @@ function HowStrongAmIPageMain() {
         <PageHeaderRight>
           <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
             <Link
+              prefetch={false}
               href="/strength-levels"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
@@ -670,6 +671,7 @@ function HowStrongAmIPageMain() {
               </p>
             </Link>
             <Link
+              prefetch={false}
               href="/calculator"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
@@ -908,6 +910,7 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
                 <div className="flex items-center gap-1.5 text-sm font-medium">
                   <img src={svg} alt="" className="h-10 w-10 dark:invert" aria-hidden />
                   <Link
+                    prefetch={false}
                     href={LIFT_INSIGHT_URLS[label]}
                     className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
                   >
@@ -1287,6 +1290,7 @@ function ExplainerSection() {
         handled automatically by the underlying standards data. If you want to
         compare the same lifts against beginner-to-elite benchmarks, use the{" "}
         <Link
+          prefetch={false}
           href="/strength-levels"
           className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
         >
@@ -1322,6 +1326,7 @@ const FAQ_ITEMS = [
       <>
         Enter your best 1-rep max. If you only know a recent heavy set, use the{" "}
         <Link
+          prefetch={false}
           href="/calculator"
           className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
         >
@@ -1397,6 +1402,7 @@ function NextToolsSection() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {NEXT_TOOL_LINKS.map(({ href, title, description, IconComponent }) => (
           <Link
+            prefetch={false}
             key={href}
             href={href}
             className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"

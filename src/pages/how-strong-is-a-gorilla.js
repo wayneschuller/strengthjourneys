@@ -249,6 +249,7 @@ function GorillaStrengthMain({ relatedArticles }) {
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
             <Link
+              prefetch={false}
               href="/strength-levels"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
@@ -256,6 +257,7 @@ function GorillaStrengthMain({ relatedArticles }) {
               <p className="text-sm">Check squat, bench, deadlift, and press benchmarks.</p>
             </Link>
             <Link
+              prefetch={false}
               href="/calculator"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >

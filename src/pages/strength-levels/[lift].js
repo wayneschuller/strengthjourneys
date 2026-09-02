@@ -308,6 +308,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
               isMetric={isMetric}
               ratingRightSlot={
                 <Link
+                  prefetch={false}
                   href={page.calculatorUrl}
                   className="whitespace-nowrap hover:text-foreground"
                 >
@@ -317,6 +318,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
             />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <Link
+                prefetch={false}
                 href={page.calculatorUrl}
                 className="underline underline-offset-2 hover:text-foreground"
               >
@@ -324,6 +326,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
               </Link>
               <span className="hidden sm:inline" aria-hidden>·</span>
               <Link
+                prefetch={false}
                 href={page.insightUrl}
                 className="underline underline-offset-2 hover:text-foreground"
               >
@@ -477,6 +480,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                 const otherColor = getColor(other.liftType);
                 return (
                   <Link
+                    prefetch={false}
                     key={other.slug}
                     href={getStrengthStandardsUrl(other.slug)}
                     className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted"

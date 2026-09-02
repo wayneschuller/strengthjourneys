@@ -326,7 +326,12 @@ function StreakBar({
     width: `${lengthPct}%`,
     height: `${heightPx}px`,
     borderRadius: "5px",
-    backgroundColor: streak.isActive ? "var(--primary)" : "var(--heatmap-2)",
+    // Every bar is the same heatmap green so the board reads as one material.
+    // The run in progress used to be painted in --primary, which is near-black
+    // in the default theme and landed like a hole punched in the list. It now
+    // carries its own weight through full opacity, the fade-trail off its right
+    // edge, and its bold date label.
+    backgroundColor: "var(--heatmap-2)",
     // A light-to-dark wash across the bar's height reads as a lit surface rather
     // than as data, which a left-to-right gradient would have implied.
     backgroundImage:

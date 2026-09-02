@@ -141,7 +141,46 @@ export function StreaksLeaderboard({
 
   const visible =
     showAll && !isSharing ? ranked : ranked.slice(0, MAX_VISIBLE_STREAKS);
-  const hidden = ranked.length - visible.length;
+  // A run in progress is the one streak worth seeing whatever it ranks, so when
+  // the board's top rows are all older and longer it gets pinned below them.
+  const activeStreak = ranked.find((s) => s.isActive) || null;
+  const pinnedActive =
+    activeStreak && !visible.includes(activeStreak) ? activeStreak : null;
+  const hidden = ranked.length - visible.length - (pinnedActive ? 1 : 0);
+
+  const renderStreakBar = (s, index) => {
+    const lengthPct = (s.weeks / stats.maxWeeks) * 100;
+    const heightPx =
+      MIN_BAR_HEIGHT_PX +
+      Math.round(
+        (((s.avgWeeklyTonnage || 0) - stats.minT) / stats.range) *
+          (MAX_BAR_HEIGHT_PX - MIN_BAR_HEIGHT_PX),
+      );
+    const key = `${s.startWeek}-${s.endWeek}`;
+    const recency = getRecencyFraction(
+      s.endWeek,
+      stats.oldestEnd,
+      stats.newestEnd,
+    );
+    return (
+      <StreakBar
+        key={key}
+        streak={s}
+        lengthPct={lengthPct}
+        heightPx={heightPx}
+        recency={recency}
+        isMetric={isMetric}
+        isSharing={isSharing}
+        animationIndex={Math.min(index, MAX_VISIBLE_STREAKS)}
+        shouldAnimate={!isSharing && !prefersReducedMotion}
+        hasCoarsePointer={hasCoarsePointer}
+        isExpanded={expandedKey === key}
+        onToggle={() =>
+          setExpandedKey((previous) => (previous === key ? null : key))
+        }
+      />
+    );
+  };
 
   return (
     <TooltipProvider delayDuration={120}>
@@ -165,39 +204,7 @@ export function StreaksLeaderboard({
           streakShare={stats.streakShare}
         />
 
-        {visible.map((s, index) => {
-          const lengthPct = (s.weeks / stats.maxWeeks) * 100;
-          const heightPx =
-            MIN_BAR_HEIGHT_PX +
-            Math.round(
-              (((s.avgWeeklyTonnage || 0) - stats.minT) / stats.range) *
-                (MAX_BAR_HEIGHT_PX - MIN_BAR_HEIGHT_PX),
-            );
-          const key = `${s.startWeek}-${s.endWeek}`;
-          const recency = getRecencyFraction(
-            s.endWeek,
-            stats.oldestEnd,
-            stats.newestEnd,
-          );
-          return (
-            <StreakBar
-              key={key}
-              streak={s}
-              lengthPct={lengthPct}
-              heightPx={heightPx}
-              recency={recency}
-              isMetric={isMetric}
-              isSharing={isSharing}
-              animationIndex={Math.min(index, MAX_VISIBLE_STREAKS)}
-              shouldAnimate={!isSharing && !prefersReducedMotion}
-              hasCoarsePointer={hasCoarsePointer}
-              isExpanded={expandedKey === key}
-              onToggle={() =>
-                setExpandedKey((previous) => (previous === key ? null : key))
-              }
-            />
-          );
-        })}
+        {visible.map((s, index) => renderStreakBar(s, index))}
 
         {!isSharing && (hidden > 0 || showAll) && (
           <button
@@ -213,6 +220,15 @@ export function StreaksLeaderboard({
         {isSharing && hidden > 0 && (
           <div className="text-muted-foreground/70 pt-1 text-center text-[10px]">
             +{hidden} more {hidden === 1 ? "streak" : "streaks"}
+          </div>
+        )}
+
+        {pinnedActive && (
+          <div className="border-border/50 mt-2 flex flex-col gap-1.5 border-t pt-3">
+            <div className="text-muted-foreground text-[10px] leading-none">
+              Current streak
+            </div>
+            {renderStreakBar(pinnedActive, MAX_VISIBLE_STREAKS)}
           </div>
         )}
 

@@ -3,6 +3,23 @@ const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["geist"],
 
+  // Vercel's Hobby plan bills edge requests, and this site is nowhere near its
+  // bandwidth ceiling while sitting at 70% of the request one. Turbopack's default
+  // chunking optimises for repeat visits by splitting finely, which is the wrong
+  // trade here: /how-strong-am-i shipped 38 script chunks totalling 2.2 MB, with
+  // 14 of them under 1 KB. Search visitors arrive once, so we would rather pay in
+  // bytes we have to spare than in requests we do not.
+  experimental: {
+    turbopackSharedRuntime: true,
+    turbopackChunking: {
+      // Most visits here are a single page from search, so weight the first load.
+      firstPageLoadPriority: 0.8,
+      minChunkSize: 150000,
+      maxChunkCountPerGroup: 20,
+      requestCost: 600000,
+    },
+  },
+
   // Added by WS 20240901
   images: {
     remotePatterns: [

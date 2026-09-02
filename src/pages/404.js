@@ -23,12 +23,12 @@ import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { motion } from "motion/react";
 import {
+  Anvil,
   BicepsFlexed,
   Calculator,
-  LibraryBig,
   LineChart,
   Mountain,
-  Timer,
+  NotebookText,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -38,10 +38,18 @@ import { getNotFoundLine } from "@/lib/not-found-lines";
 import { gaTrackPageNotFound } from "@/lib/analytics";
 
 /**
- * Where a lost visitor is most likely to have been heading. Ordered by how much
- * of our search traffic each one carries, so the first card is the best guess.
+ * Where to send a lost visitor. Logging leads because it is the thing the site
+ * actually does, and someone who arrived on a dead URL has probably never seen
+ * it. The rest follow the share of search traffic they carry.
  */
 const RESCUE_LINKS = [
+  {
+    href: "/log",
+    title: "Log & Session Browser",
+    description:
+      "Log a set, browse past sessions, and get your warm-up loading worked out. Open it on the demo data.",
+    icon: <NotebookText className="h-5 w-5" />,
+  },
   {
     href: "/how-strong-am-i",
     title: "How Strong Am I",
@@ -57,6 +65,13 @@ const RESCUE_LINKS = [
     icon: <Mountain className="h-5 w-5" />,
   },
   {
+    href: "/1000lb-club-calculator",
+    title: "1000lb Club Calculator",
+    description:
+      "Squat plus bench plus deadlift. Find out how far off the thousand you are.",
+    icon: <Anvil className="h-5 w-5" />,
+  },
+  {
     href: "/calculator",
     title: "One Rep Max Calculator",
     description:
@@ -69,19 +84,6 @@ const RESCUE_LINKS = [
     description:
       "Walk through a lifting history one lift at a time. Try it with the demo data.",
     icon: <LineChart className="h-5 w-5" />,
-  },
-  {
-    href: "/timer",
-    title: "Gym Timer",
-    description:
-      "Rest periods and set timing, big enough to read from the rack.",
-    icon: <Timer className="h-5 w-5" />,
-  },
-  {
-    href: "/articles",
-    title: "Articles",
-    description: "Long form writing on barbell training and the long game.",
-    icon: <LibraryBig className="h-5 w-5" />,
   },
 ];
 

@@ -225,7 +225,7 @@ export function StreaksLeaderboard({
 
         {pinnedActive && (
           <div className="border-border/50 mt-2 flex flex-col gap-1.5 border-t pt-3">
-            <div className="text-muted-foreground text-[10px] leading-none">
+            <div className="text-foreground/80 text-[10px] leading-none font-medium">
               Current streak
             </div>
             {renderStreakBar(pinnedActive, MAX_VISIBLE_STREAKS)}
@@ -333,10 +333,15 @@ function StreakBar({
     // edge, and its bold date label.
     backgroundColor: "var(--heatmap-2)",
     // A light-to-dark wash across the bar's height reads as a lit surface rather
-    // than as data, which a left-to-right gradient would have implied.
-    backgroundImage:
-      "linear-gradient(to bottom, rgba(255,255,255,0.16), rgba(255,255,255,0) 55%, rgba(0,0,0,0.10))",
-    boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+    // than as data, which a left-to-right gradient would have implied. The run in
+    // progress gets the wash turned up and a hairline lit edge, so it sits under
+    // a brighter light than the finished runs without leaving the green family.
+    backgroundImage: streak.isActive
+      ? "linear-gradient(to bottom, rgba(255,255,255,0.32), rgba(255,255,255,0.04) 55%, rgba(0,0,0,0.12))"
+      : "linear-gradient(to bottom, rgba(255,255,255,0.16), rgba(255,255,255,0) 55%, rgba(0,0,0,0.10))",
+    boxShadow: streak.isActive
+      ? "inset 0 0 0 1px rgba(255,255,255,0.40), 0 1px 4px rgba(0,0,0,0.18)"
+      : "0 1px 2px rgba(0,0,0,0.08)",
     // Oldest run on the board sits furthest back; the date beside it says why.
     opacity: streak.isActive ? 1 : 0.45 + 0.55 * recency,
     ...(streak.isActive && !isSharing
@@ -390,7 +395,7 @@ function StreakBar({
         {dateLabel}
       </span>
 
-      <div className="min-w-0 flex-1">
+      <div className="relative min-w-0 flex-1">
         {/* Clip-wipe rather than a width tween so the week segments keep their
             shape while the bar reveals. */}
         <motion.div
@@ -407,6 +412,24 @@ function StreakBar({
               : undefined
           }
         />
+        {/* A live dot just past where the bar fades out. It is a sibling of the
+            bar rather than part of it so the bar's fade mask leaves it alone,
+            and it says the thing a short bar cannot: this one is still running.
+            Held out of the share capture, where a paused pulse would freeze at
+            whatever opacity the animation happened to be at. */}
+        {streak.isActive && !isSharing && (
+          <span
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full",
+              shouldAnimate && "animate-pulse",
+            )}
+            style={{
+              left: `calc(${Math.min(lengthPct, 98)}% + 6px)`,
+              backgroundColor: "var(--heatmap-2)",
+            }}
+          />
+        )}
       </div>
 
       {/* Fixed width so every bar ends at the same x and lengths stay comparable. */}

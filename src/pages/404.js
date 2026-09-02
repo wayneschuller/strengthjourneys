@@ -122,15 +122,25 @@ export default function NotFound() {
           >
             404
           </span>
-          <motion.img
-            src="/deadlift.svg"
-            alt=""
-            aria-hidden="true"
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 220, damping: 22 }}
-            className="absolute h-36 w-36 object-contain sm:h-52 sm:w-52 md:h-64 md:w-64 dark:invert"
-          />
+          {/* The lifter is the most obvious thing on the page, so it may as
+              well be a way out. The link carries the sizing and the figure
+              fills it, keeping the hit area to the figure itself. */}
+          <Link
+            href="/"
+            aria-label="Back to the main page"
+            className="absolute h-36 w-36 sm:h-52 sm:w-52 md:h-64 md:w-64"
+          >
+            <motion.img
+              src="/deadlift.svg"
+              alt=""
+              aria-hidden="true"
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 220, damping: 22 }}
+              className="h-full w-full object-contain dark:invert"
+            />
+          </Link>
         </div>
 
         <h1 className="mt-4 text-3xl font-bold tracking-tight md:text-5xl">
@@ -162,7 +172,7 @@ export default function NotFound() {
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Button asChild size="lg">
-            <Link href="/">Back to the home dashboard</Link>
+            <Link href="/">Back to the main page</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link href="/log" prefetch={false}>

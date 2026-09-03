@@ -291,9 +291,10 @@ function buildUserEmailHtml(text) {
  * The two doors, in the order the first-week dashboard offers them:
  *   1. Log a session. The big four each have their own block on /log.
  *   2. Bring an existing history in from another app and merge it.
- * The "stalled" variant has no sheet yet, so its version of door 2 is the
- * signed-out import preview, which is a real destination rather than a
- * consolation for declining Drive.
+ * There are two notes, not three: "smooth" and "recovered" share one, because
+ * both readers finish with a sheet. The "stalled" reader has no sheet yet, so
+ * their version of door 2 is the signed-out import preview, which is a real
+ * destination rather than a consolation for declining Drive.
  *
  * Keep this short. The note is meant to earn a reply, not to be a tour.
  */
@@ -339,17 +340,18 @@ function buildUserEmail(user, outcome) {
     };
   }
 
-  const question =
-    outcome === "recovered"
-      ? "The Google connection step can be the awkward part. Did anything there feel unclear or untrustworthy?"
-      : "What were you hoping Strength Journeys would help you see or do?";
-
+  // "smooth" and "recovered" both end the same way: a sheet exists and both
+  // doors are open, so they get the same note. Someone who missed the Drive
+  // scope and then granted it has already solved that problem, and asking them
+  // to relive it would spend the one question we get on friction they are past.
+  // The outcomes still diverge everywhere else, including the [SJ] founder
+  // notification and the Resend idempotency key.
   return {
     subject: "Quick question about Strength Journeys",
     text: [
       ...sharedOpening,
       ...signedInPathways,
-      question,
+      "What were you hoping Strength Journeys would help you see or do?",
       ...sharedClosing,
     ].join("\n"),
   };

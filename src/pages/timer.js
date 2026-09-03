@@ -4,13 +4,25 @@
 // The gym timer page: a giant clock built to be read from arm's length while
 // standing at a rack. It always counts forward, with an optional repeating ping
 // that nudges the lifter without ever telling them their rest is over.
+// Layout intent: the clock takes every pixel it can get, and everything else is
+// a single control deck underneath it. On a phone that deck stacks; on a desktop
+// it runs transport buttons on the left and ping tools on the right, so the
+// whole timer sits inside one screen with nothing to scroll past.
+//
 // Everything about the timing itself (wall-clock accuracy, screen wake lock, the
 // ping) lives in the shared TimerProvider so the nav bar MiniTimer keeps
 // counting when a lifter navigates away mid-set.
 
 import React, { useCallback, useEffect, useRef } from "react";
 
-import { Volume2, VolumeX } from "lucide-react";
+import {
+  Pause,
+  Play,
+  RotateCcw,
+  TimerReset,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/article-cards";
@@ -29,12 +41,12 @@ const PAGE_TITLE = "Gym Timer | Strength Journeys";
 // gets the next, and the numbers match how rest between working sets actually
 // runs. The clock never stops at any of them.
 const PING_INTERVALS = [
-  { label: "Off", seconds: 0 },
-  { label: "2 min", seconds: 120 },
-  { label: "3 min", seconds: 180 },
-  { label: "5 min", seconds: 300 },
-  { label: "7 min", seconds: 420 },
-  { label: "10 min", seconds: 600 },
+  { label: "Off", shortLabel: "Off", seconds: 0 },
+  { label: "2 min", shortLabel: "2m", seconds: 120 },
+  { label: "3 min", shortLabel: "3m", seconds: 180 },
+  { label: "5 min", shortLabel: "5m", seconds: 300 },
+  { label: "7 min", shortLabel: "7m", seconds: 420 },
+  { label: "10 min", shortLabel: "10m", seconds: 600 },
 ];
 
 export async function getStaticProps() {
@@ -101,7 +113,7 @@ export default function Timer({ relatedArticles }) {
       <section className="flex flex-col items-center">
         {/* The clock itself is the desktop headline, so the h1 goes screen-reader
             only above md rather than disappearing from the page entirely. */}
-        <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:sr-only lg:text-5xl">
+        <h1 className="mb-5 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:sr-only lg:text-5xl">
           Lifting Set Timer
         </h1>
         <LargeTimer />
@@ -112,9 +124,9 @@ export default function Timer({ relatedArticles }) {
 }
 
 /**
- * Full-screen timer display with a giant forward-running clock, optional alarm
- * points and restart/start-stop/reset controls. Starts counting on mount and
- * supports spacebar restart via a keyboard listener.
+ * The timer itself: a clock sized to fill its card, a progress line running to
+ * the next ping, and a control deck of transport buttons and ping tools. Starts
+ * counting on mount and supports spacebar restart via a keyboard listener.
  */
 function LargeTimer() {
   const {
@@ -133,41 +145,69 @@ function LargeTimer() {
     handleRestart,
   } = useTimer();
 
+  const wrapperRef = useRef(null);
   const readoutRef = useRef(null);
   const display = formatTime(time);
   const isAlerting = activePingSeconds !== null;
+  const hasPingHistory = pingCount > 0;
+
+  // How far the clock has travelled between the last ping and the next one.
+  const pingProgress =
+    pingIntervalSeconds > 0
+      ? ((time % pingIntervalSeconds) / pingIntervalSeconds) * 100
+      : 0;
 
   useEffect(() => {
     // Start the timer on first mount of this page
     ensureRunning();
   }, [ensureRunning]); // It only needs to run on [] mount but eslint wants the dependency put in
 
-  // Digit widths vary by theme font, viewport and how many characters the clock
-  // is showing, so rather than guessing a size per breakpoint we measure what the
-  // readout wants and shrink it until it fits. The CSS sizes below stay the
-  // ideal; this only ever scales down.
+  // Size the clock to fill the space it actually has. Digit widths vary by theme
+  // font and by how many characters are showing, so we measure at a known size
+  // and scale once rather than predicting a size per breakpoint. The height
+  // budget is whatever the viewport has left once the control deck below has
+  // taken its share, which is what keeps the whole timer on one screen.
   useEffect(() => {
     const node = readoutRef.current;
-    if (!node) return;
+    const wrapper = wrapperRef.current;
+    if (!node || !wrapper) return;
 
-    const fitToWidth = () => {
-      node.style.fontSize = ""; // Back to the CSS ideal before measuring
-      const available = node.clientWidth;
-      const wanted = node.scrollWidth;
-      if (!available || !wanted || wanted <= available) return;
+    const fitToBox = () => {
+      const inner = node.firstElementChild;
+      if (!inner) return;
 
-      const idealSize = parseFloat(window.getComputedStyle(node).fontSize);
-      node.style.fontSize = `${Math.floor(idealSize * (available / wanted))}px`;
+      const availableWidth = node.clientWidth;
+      if (!availableWidth) return;
+
+      // Measure everything with the clock at a known size, so the leftover space
+      // below it can be worked out without the two chasing each other.
+      node.style.fontSize = `${PROBE_FONT_PX}px`;
+
+      const probeWidth = inner.getBoundingClientRect().width;
+      const wrapperBox = wrapper.getBoundingClientRect();
+      const readoutHeight = node.getBoundingClientRect().height;
+      if (!probeWidth) return;
+
+      const heightOfEverythingElse = wrapperBox.height - readoutHeight;
+      const spaceBelowTheNav =
+        window.innerHeight - (wrapperBox.top + window.scrollY);
+      const heightLimit =
+        spaceBelowTheNav - heightOfEverythingElse - CLOCK_BOTTOM_GUTTER_PX;
+      const widthLimit = (availableWidth / probeWidth) * PROBE_FONT_PX;
+
+      const size = Math.min(widthLimit, heightLimit, CLOCK_MAX_PX);
+      node.style.fontSize = `${Math.floor(Math.max(size, CLOCK_MIN_PX))}px`;
     };
 
-    fitToWidth();
-    window.addEventListener("resize", fitToWidth);
+    fitToBox();
+    window.addEventListener("resize", fitToBox);
 
     // Theme fonts land after first paint and change every digit width with them.
-    document.fonts?.ready?.then(fitToWidth).catch(() => {});
+    document.fonts?.ready?.then(fitToBox).catch(() => {});
 
-    return () => window.removeEventListener("resize", fitToWidth);
-  }, [display.length]);
+    return () => window.removeEventListener("resize", fitToBox);
+    // The ping tools change how much room is left, so a refit follows them too.
+  }, [display.length, pingIntervalSeconds, hasPingHistory]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -227,45 +267,13 @@ function LargeTimer() {
   );
 
   return (
-    <div className="flex w-full flex-col items-center">
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        <span className="text-muted-foreground mr-1 text-sm">Ping every</span>
-        {PING_INTERVALS.map((interval) => {
-          const isChosen = pingIntervalSeconds === interval.seconds;
-
-          return (
-            <Button
-              key={interval.seconds}
-              variant={isChosen ? "default" : "outline"}
-              size="sm"
-              aria-pressed={isChosen}
-              className="tabular-nums"
-              onClick={() => setPingInterval(interval.seconds)}
-            >
-              {interval.label}
-            </Button>
-          );
-        })}
-        {pingIntervalSeconds > 0 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMuted(!isMuted)}
-            title={
-              isMuted ? "Turn the ping sound on" : "Turn the ping sound off"
-            }
-          >
-            {isMuted ? <VolumeX /> : <Volume2 />}
-            <span className="sr-only">
-              {isMuted ? "Turn the ping sound on" : "Turn the ping sound off"}
-            </span>
-          </Button>
-        )}
-      </div>
-
+    <div
+      ref={wrapperRef}
+      className="flex w-full flex-col items-center gap-6 md:gap-6"
+    >
       <Card
         className={cn(
-          "bg-muted focus-visible:ring-primary my-6 w-full ring-4 transition-colors hover:cursor-pointer hover:ring-blue-900 focus-visible:outline-none md:my-5",
+          "focus-visible:ring-primary bg-muted w-full ring-4 transition-colors hover:cursor-pointer hover:ring-blue-900 focus-visible:outline-none",
           // Inverting the whole card is the only alert that reads the same in
           // every theme: primary and its foreground are guaranteed to contrast,
           // while a colour change on the digits alone disappears in the default
@@ -278,64 +286,158 @@ function LargeTimer() {
         onClick={handleRestart}
         onKeyDown={handleCardKeyDown}
       >
-        <CardContent className="px-4 py-6">
+        <CardContent className="p-4 md:p-5">
           <div
             ref={readoutRef}
             role="timer"
             aria-live="off"
             className={cn(
-              "w-full overflow-hidden text-center leading-none font-bold whitespace-nowrap tabular-nums",
-              "text-8xl md:text-[11rem] lg:text-[15rem] xl:text-[19rem] 2xl:text-[22rem]",
+              // The vw/vh sizes are a first-paint approximation only. The fitter
+              // above replaces them with a measured size a frame later.
+              "flex w-full items-center justify-center overflow-hidden text-[30vw] leading-none font-bold tabular-nums md:text-[26vh]",
               isAlerting && "text-primary-foreground",
             )}
           >
             <TimerDigits value={display} />
           </div>
+
+          {pingIntervalSeconds > 0 && (
+            <div
+              className={cn(
+                "mt-3 h-1.5 w-full overflow-hidden rounded-full",
+                isAlerting ? "bg-primary-foreground/25" : "bg-foreground/10",
+              )}
+            >
+              {/* Runs to the next ping, then starts over. The one second
+                  transition matches the tick, so it slides rather than jumps. */}
+              <div
+                className={cn(
+                  "h-full rounded-full transition-[width] duration-1000 ease-linear",
+                  isAlerting ? "bg-primary-foreground" : "bg-primary",
+                )}
+                style={{ width: `${pingProgress}%` }}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Doubles as the screen-reader announcement, so an alarm point reaches
-          everyone the same way. Height is reserved to keep the page steady. */}
-      <p
-        className={cn(
-          // The motion lives on the label rather than the clock: a pulsing card
-          // spends half its cycle too faded to read from across a gym floor.
-          "text-primary min-h-6 text-center text-lg font-semibold",
-          isAlerting && "animate-pulse",
-        )}
-        role="status"
-        aria-live="assertive"
-      >
+      {/* Announced when a ping lands. The clock stays silent for screen readers
+          because reading out every second is unusable. */}
+      <p className="sr-only" role="status" aria-live="assertive">
         {isAlerting ? `${formatAlarmLabel(activePingSeconds)} reached` : ""}
       </p>
 
-      <TimerPingHistory
-        pingIntervalSeconds={pingIntervalSeconds}
-        pingCount={pingCount}
-        seed={nudgeSeed}
-        isAlerting={isAlerting}
-      />
+      <div className="flex w-full flex-col items-center gap-6 md:flex-row md:justify-center md:gap-8">
+        <div className="flex items-center gap-3">
+          <Button
+            className="h-14 rounded-full px-8 text-lg tracking-tight transition-transform active:scale-95 md:h-16 md:px-10 md:text-xl [&_svg]:size-5"
+            onClick={handleRestart}
+          >
+            <RotateCcw />
+            Restart
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 rounded-full transition-transform active:scale-95 [&_svg]:size-5"
+            onClick={handleStartStop}
+            title={isRunning ? "Stop the clock" : "Start the clock"}
+          >
+            {isRunning ? <Pause /> : <Play />}
+            <span className="sr-only">
+              {isRunning ? "Stop the clock" : "Start the clock"}
+            </span>
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 rounded-full transition-transform active:scale-95 [&_svg]:size-5"
+            onClick={handleReset}
+            title="Reset to zero"
+          >
+            <TimerReset />
+            <span className="sr-only">Reset to zero</span>
+          </Button>
+        </div>
 
-      <Button
-        className="my-2 text-xl tracking-tight hover:ring md:px-6 md:py-8 md:text-3xl lg:text-6xl xl:my-4 xl:px-10 xl:py-20 xl:text-9xl"
-        onClick={handleRestart}
-      >
-        Restart
-      </Button>
-      <div className="mt-2 flex gap-2">
-        <Button variant="secondary" onClick={handleStartStop}>
-          {isRunning ? "Stop" : "Start"}
-        </Button>
-        <Button variant="destructive" onClick={handleReset}>
-          Reset
-        </Button>
+        <div className="bg-border hidden h-16 w-px md:block" />
+
+        <div className="flex flex-col items-center gap-2 md:items-start">
+          {/* The label sits above the chips on a phone, where putting it inline
+              costs enough width to wrap a chip onto its own lonely row. */}
+          <div className="flex flex-col items-center gap-1.5 md:flex-row">
+            <span className="text-muted-foreground text-sm md:mr-1">
+              Ping every
+            </span>
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              {PING_INTERVALS.map((interval) => {
+                const isChosen = pingIntervalSeconds === interval.seconds;
+
+                return (
+                  <Button
+                    key={interval.seconds}
+                    variant={isChosen ? "default" : "outline"}
+                    size="sm"
+                    aria-pressed={isChosen}
+                    className="rounded-full tabular-nums"
+                    onClick={() => setPingInterval(interval.seconds)}
+                  >
+                    <span className="md:hidden">{interval.shortLabel}</span>
+                    <span className="hidden md:inline">{interval.label}</span>
+                  </Button>
+                );
+              })}
+              {pingIntervalSeconds > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  onClick={() => setIsMuted(!isMuted)}
+                  title={
+                    isMuted
+                      ? "Turn the ping sound on"
+                      : "Turn the ping sound off"
+                  }
+                >
+                  {isMuted ? <VolumeX /> : <Volume2 />}
+                  <span className="sr-only">
+                    {isMuted
+                      ? "Turn the ping sound on"
+                      : "Turn the ping sound off"}
+                  </span>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <TimerPingHistory
+            pingIntervalSeconds={pingIntervalSeconds}
+            pingCount={pingCount}
+            seed={nudgeSeed}
+            isAlerting={isAlerting}
+          />
+        </div>
       </div>
-      <p className="text-muted-foreground mt-4 text-center text-sm md:hidden">
-        Tap the clock to restart your set timer.
-      </p>
-      <p className="text-muted-foreground mt-4 hidden text-center text-sm md:block">
-        Press the space bar or click the clock to restart your set timer.
+
+      <p className="text-muted-foreground text-center text-sm">
+        <span className="md:hidden">Tap the clock to restart your set.</span>
+        <span className="hidden md:inline">
+          Press the space bar or click the clock to restart your set.
+        </span>
       </p>
     </div>
   );
 }
+
+// Measuring at a known font size and scaling once beats guessing, and 100px is
+// large enough that rounding in the measurement does not matter.
+const PROBE_FONT_PX = 100;
+
+// A little air under the clock so it never sits flush against the fold.
+const CLOCK_BOTTOM_GUTTER_PX = 16;
+
+// Bounds of sanity: big enough to read across a gym, never so big that a short
+// window renders a single unreadable digit.
+const CLOCK_MAX_PX = 640;
+const CLOCK_MIN_PX = 48;

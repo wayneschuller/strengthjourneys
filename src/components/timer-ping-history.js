@@ -2,8 +2,9 @@
  * The trail of pings the clock has already sounded, drawn as a decorated line
  * under the gym timer, with a rotating nudge back to the bar.
  *
- * Desktop only. On a phone the giant clock is the whole point and there is no
- * room to spare; on a laptop propped up in a home gym there is plenty.
+ * The marker line is desktop only, because on a phone the giant clock is the
+ * whole point and there is no room to spare. The nudge itself shows everywhere:
+ * it is one line, and it is the fun part.
  *
  * Phrases are chosen by hashing a per-session seed with the ping number rather
  * than at random, so a given ping keeps its wording across every re-render (the
@@ -53,8 +54,8 @@ export function TimerPingHistory({
   const nudge = pickNudge(`${seed}-${pingCount}`);
 
   return (
-    <div className="hidden w-full flex-col items-center md:flex">
-      <div className="flex max-w-full justify-center overflow-x-auto">
+    <div className="flex w-full flex-col items-center gap-1 md:items-start">
+      <div className="hidden max-w-full justify-center overflow-x-auto md:flex">
         {columns.map((column, index) => {
           const isFirst = index === 0;
           const isLast = index === columns.length - 1;
@@ -110,7 +111,7 @@ export function TimerPingHistory({
         })}
       </div>
 
-      <p className="text-muted-foreground mt-3 text-center text-sm italic">
+      <p className="text-muted-foreground mt-1 max-w-xs text-center text-sm italic md:mt-2 md:max-w-sm md:text-left">
         {nudge}
       </p>
     </div>

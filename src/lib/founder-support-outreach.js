@@ -32,6 +32,11 @@ const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";
 const MIN_DELAY_HOURS = 24;
 const DELAY_WINDOW_HOURS = 49;
 const SUPPORT_LOCK_SECONDS = 30;
+// How close to the "signed in without the Drive scope" notification a recovery
+// has to be before the follow-up is not worth a second email. Most recoveries
+// that happen at all happen inside a minute, so this mostly catches someone
+// tapping through the consent screen twice.
+const QUICK_RECOVERY_MS = 5 * 60 * 1000;
 const FOUNDER_EMAIL_HISTORY_LIMIT = 25;
 
 function normalizeEmail(email) {
@@ -739,6 +744,18 @@ export async function handleSupportActivation(
     const hadMissingScope = Boolean(record.firstMissingDriveScopeAt);
     const outcome = hadMissingScope ? "recovered" : "smooth";
 
+    // Someone who grants the scope a minute after skipping it would otherwise
+    // produce two notifications about the same minute of their life. The first
+    // has already been sent, so the second is the one held back. The outcome is
+    // still written to the record, so a later scan of KV sees the real ending
+    // even though no email was sent about it.
+    const signInNotifiedMs = record.supportSignInNotifiedAt
+      ? new Date(record.supportSignInNotifiedAt).getTime()
+      : null;
+    const isQuickRecovery =
+      Number.isFinite(signInNotifiedMs) &&
+      now.getTime() - signInNotifiedMs < QUICK_RECOVERY_MS;
+
     const note = await ensureUserNoteScheduled({
       context,
       user,
@@ -754,17 +771,20 @@ export async function handleSupportActivation(
         : {}),
       supportOutcome: outcome,
       supportOutcomeAt: nowIso,
+      supportOutcomeNotifiedAt: isQuickRecovery ? null : nowIso,
       supportUserNoteScheduledFor: scheduledAt || null,
     };
 
-    await sendFounderOutcome({
-      context,
-      user,
-      outcome,
-      record: { ...record, ...authoredFields },
-      scheduledAt,
-      userNoteSubject: note?.subject ?? null,
-    });
+    if (!isQuickRecovery) {
+      await sendFounderOutcome({
+        context,
+        user,
+        outcome,
+        record: { ...record, ...authoredFields },
+        scheduledAt,
+        userNoteSubject: note?.subject ?? null,
+      });
+    }
     // Write only the fields authored here: the sign-in callback may have
     // bumped counters or scope timestamps while these emails were in flight.
     await mergeUserRecord(writeKey, authoredFields);

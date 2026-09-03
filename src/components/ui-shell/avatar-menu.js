@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useRouter } from "next/router";
 import { signOut, useSession } from "next-auth/react";
 import {
   Coffee,
@@ -39,6 +40,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
  * @param {Object} props - No props; all data is sourced from session and lifting data context.
  */
 export function AvatarDropdown() {
+  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
   const { sheetInfo } = useUserLiftingData();
@@ -173,9 +175,7 @@ export function AvatarDropdown() {
               <Coffee className="mr-2 h-4 w-4" />
               Buy Me A Coffee
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => (window.location.href = "/import")}
-            >
+            <DropdownMenuItem onClick={() => router.push("/import")}>
               <Upload className="mr-2 h-4 w-4" />
               Import / Export
             </DropdownMenuItem>

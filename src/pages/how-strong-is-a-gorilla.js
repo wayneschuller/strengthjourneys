@@ -293,11 +293,12 @@ function GorillaStrengthMain({ relatedArticles }) {
                   animate={{ rotate: [0, -6, 6, -4, 3, 0], y: [0, -6, 0, -3, 0] }}
                   transition={{ duration: 0.65, ease: "easeInOut" }}
                 >
-                  <img
+                  <Image
                     src="/gorilla1.png"
                     alt=""
-                    width="420"
-                    height="420"
+                    width={934}
+                    height={509}
+                    sizes="(min-width: 768px) 235px, 205px"
                     aria-hidden="true"
                     className="h-28 w-auto md:h-32"
                   />

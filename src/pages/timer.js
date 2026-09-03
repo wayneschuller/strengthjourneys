@@ -24,6 +24,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { NextSeo } from "next-seo";
+import { useTheme } from "next-themes";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { PageContainer } from "@/components/page-header";
@@ -147,6 +148,9 @@ function LargeTimer() {
 
   const wrapperRef = useRef(null);
   const readoutRef = useRef(null);
+  // Each theme brings its own font, and the digit slots are sized in ch units,
+  // so a theme change resizes the clock underneath us.
+  const { resolvedTheme } = useTheme();
   const display = formatTime(time);
   const isAlerting = activePingSeconds !== null;
   const hasPingHistory = pingCount > 0;
@@ -172,12 +176,18 @@ function LargeTimer() {
     const wrapper = wrapperRef.current;
     if (!node || !wrapper) return;
 
+    // Our own font-size changes resize the very box we are watching, so the
+    // observer below has to sit out a frame while we work.
+    let isFitting = false;
+
     const fitToBox = () => {
       const inner = node.firstElementChild;
-      if (!inner) return;
+      if (!inner || isFitting) return;
 
       const availableWidth = node.clientWidth;
       if (!availableWidth) return;
+
+      isFitting = true;
 
       // Measure everything with the clock at a known size, so the leftover space
       // below it can be worked out without the two chasing each other.
@@ -186,28 +196,48 @@ function LargeTimer() {
       const probeWidth = inner.getBoundingClientRect().width;
       const wrapperBox = wrapper.getBoundingClientRect();
       const readoutHeight = node.getBoundingClientRect().height;
-      if (!probeWidth) return;
 
-      const heightOfEverythingElse = wrapperBox.height - readoutHeight;
-      const spaceBelowTheNav =
-        window.innerHeight - (wrapperBox.top + window.scrollY);
-      const heightLimit =
-        spaceBelowTheNav - heightOfEverythingElse - CLOCK_BOTTOM_GUTTER_PX;
-      const widthLimit = (availableWidth / probeWidth) * PROBE_FONT_PX;
+      if (probeWidth) {
+        const heightOfEverythingElse = wrapperBox.height - readoutHeight;
+        const spaceBelowTheNav =
+          window.innerHeight - (wrapperBox.top + window.scrollY);
+        const heightLimit =
+          spaceBelowTheNav - heightOfEverythingElse - CLOCK_BOTTOM_GUTTER_PX;
+        // A whisker under the full width, because a display font's ink can sit
+        // wider than the character box it is measured in.
+        const widthLimit =
+          (availableWidth / probeWidth) * PROBE_FONT_PX * CLOCK_WIDTH_SAFETY;
 
-      const size = Math.min(widthLimit, heightLimit, CLOCK_MAX_PX);
-      node.style.fontSize = `${Math.floor(Math.max(size, CLOCK_MIN_PX))}px`;
+        const size = Math.min(widthLimit, heightLimit, CLOCK_MAX_PX);
+        node.style.fontSize = `${Math.floor(Math.max(size, CLOCK_MIN_PX))}px`;
+      }
+
+      requestAnimationFrame(() => {
+        isFitting = false;
+      });
     };
 
     fitToBox();
     window.addEventListener("resize", fitToBox);
 
+    // The clock's own box changing size is the one signal that catches every
+    // cause at once: a theme swapping the font, a late font download, or the
+    // browser zooming. Watching it beats trying to enumerate the triggers.
+    const observer = new ResizeObserver(fitToBox);
+    if (node.firstElementChild) observer.observe(node.firstElementChild);
+
     // Theme fonts land after first paint and change every digit width with them.
     document.fonts?.ready?.then(fitToBox).catch(() => {});
+    document.fonts?.addEventListener?.("loadingdone", fitToBox);
 
-    return () => window.removeEventListener("resize", fitToBox);
-    // The ping tools change how much room is left, so a refit follows them too.
-  }, [display.length, pingIntervalSeconds, hasPingHistory]);
+    return () => {
+      window.removeEventListener("resize", fitToBox);
+      observer.disconnect();
+      document.fonts?.removeEventListener?.("loadingdone", fitToBox);
+    };
+    // The ping tools change how much room is left, and a theme change brings a
+    // new font with new digit widths, so a refit follows both.
+  }, [display.length, pingIntervalSeconds, hasPingHistory, resolvedTheme]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -294,7 +324,7 @@ function LargeTimer() {
             className={cn(
               // The vw/vh sizes are a first-paint approximation only. The fitter
               // above replaces them with a measured size a frame later.
-              "flex w-full items-center justify-center overflow-hidden text-[30vw] leading-none font-bold tabular-nums md:text-[26vh]",
+              "flex w-full items-center justify-center text-[30vw] leading-none font-bold tabular-nums md:text-[26vh]",
               isAlerting && "text-primary-foreground",
             )}
           >
@@ -313,7 +343,10 @@ function LargeTimer() {
               <div
                 className={cn(
                   "h-full rounded-full transition-[width] duration-1000 ease-linear",
-                  isAlerting ? "bg-primary-foreground" : "bg-primary",
+                  // A chart token rather than primary, because that is where the
+                  // themes keep their second colour: neo-brutalism's yellow,
+                  // the default theme's teal.
+                  isAlerting ? "bg-primary-foreground" : "bg-chart-2",
                 )}
                 style={{ width: `${pingProgress}%` }}
               />
@@ -363,31 +396,13 @@ function LargeTimer() {
 
         <div className="bg-border hidden h-16 w-px md:block" />
 
-        <div className="flex flex-col items-center gap-2 md:items-start">
-          {/* The label sits above the chips on a phone, where putting it inline
-              costs enough width to wrap a chip onto its own lonely row. */}
-          <div className="flex flex-col items-center gap-1.5 md:flex-row">
-            <span className="text-muted-foreground text-sm md:mr-1">
-              Ping every
-            </span>
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
-              {PING_INTERVALS.map((interval) => {
-                const isChosen = pingIntervalSeconds === interval.seconds;
-
-                return (
-                  <Button
-                    key={interval.seconds}
-                    variant={isChosen ? "default" : "outline"}
-                    size="sm"
-                    aria-pressed={isChosen}
-                    className="rounded-full tabular-nums"
-                    onClick={() => setPingInterval(interval.seconds)}
-                  >
-                    <span className="md:hidden">{interval.shortLabel}</span>
-                    <span className="hidden md:inline">{interval.label}</span>
-                  </Button>
-                );
-              })}
+        <div className="flex w-full flex-col items-center gap-2 md:w-auto md:items-start">
+          {/* On a phone the intervals become a full-width row of thumb-sized
+              targets, because this is a control people press with chalk on
+              their hands. On a desktop they collapse back to inline pills. */}
+          <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row md:gap-3">
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground text-sm">Ping every</span>
               {pingIntervalSeconds > 0 && (
                 <Button
                   variant="ghost"
@@ -408,6 +423,26 @@ function LargeTimer() {
                   </span>
                 </Button>
               )}
+            </div>
+
+            <div className="grid w-full grid-cols-6 gap-1.5 md:flex md:w-auto md:items-center">
+              {PING_INTERVALS.map((interval) => {
+                const isChosen = pingIntervalSeconds === interval.seconds;
+
+                return (
+                  <Button
+                    key={interval.seconds}
+                    variant={isChosen ? "default" : "outline"}
+                    size="sm"
+                    aria-pressed={isChosen}
+                    className="h-11 w-full rounded-full px-1 tabular-nums md:h-9 md:w-auto md:px-3"
+                    onClick={() => setPingInterval(interval.seconds)}
+                  >
+                    <span className="md:hidden">{interval.shortLabel}</span>
+                    <span className="hidden md:inline">{interval.label}</span>
+                  </Button>
+                );
+              })}
             </div>
           </div>
 
@@ -436,6 +471,10 @@ const PROBE_FONT_PX = 100;
 
 // A little air under the clock so it never sits flush against the fold.
 const CLOCK_BOTTOM_GUTTER_PX = 16;
+
+// Display fonts paint ink outside the character box they are measured in, so
+// the clock stops a whisker short of the full width.
+const CLOCK_WIDTH_SAFETY = 0.97;
 
 // Bounds of sanity: big enough to read across a gym, never so big that a short
 // window renders a single unreadable digit.

@@ -6,6 +6,11 @@
  * whole point and there is no room to spare. The nudge itself shows everywhere:
  * it is one line, and it is the fun part.
  *
+ * Each ping takes the next colour from the theme's chart palette, which is the
+ * one set of tokens every theme fills with real hue (the neutral --secondary and
+ * --accent are near-white in the default themes). The trail ends up a string of
+ * coloured beads in whatever palette the lifter is wearing.
+ *
  * Phrases are chosen by hashing a per-session seed with the ping number rather
  * than at random, so a given ping keeps its wording across every re-render (the
  * clock re-renders four times a second) while a new session gets a new run of
@@ -18,6 +23,16 @@ import { cn } from "@/lib/utils";
 // Enough markers to show the shape of a long rest without the line running off
 // the side of the card.
 const MAX_VISIBLE_PINGS = 8;
+
+// Written out in full because Tailwind only sees class names it can read in the
+// source. Indexed by ping number, so a bead keeps its colour as the trail scrolls.
+const PING_BEAD_COLORS = [
+  "bg-chart-1",
+  "bg-chart-2",
+  "bg-chart-3",
+  "bg-chart-4",
+  "bg-chart-5",
+];
 
 export function TimerPingHistory({
   pingIntervalSeconds,
@@ -43,6 +58,9 @@ export function TimerPingHistory({
       key: seconds,
       kind: index === visiblePings.length - 1 ? "newest" : "done",
       seconds,
+      // The absolute ping number, so hiding earlier beads never reshuffles the
+      // colours of the ones still on screen.
+      color: PING_BEAD_COLORS[(hiddenCount + index) % PING_BEAD_COLORS.length],
     })),
     {
       key: "next",
@@ -85,8 +103,12 @@ export function TimerPingHistory({
                 ) : (
                   <span
                     className={cn(
-                      "bg-muted-foreground/50 relative h-2 w-2 rounded-full",
-                      column.kind === "newest" && "bg-primary h-2.5 w-2.5",
+                      "relative h-2 w-2 rounded-full",
+                      column.color ?? "bg-muted-foreground/50",
+                      // The newest bead is bigger and ringed, so the eye lands on
+                      // it before it reads any of the times.
+                      column.kind === "newest" &&
+                        "ring-background h-3 w-3 ring-2",
                       column.kind === "newest" && isAlerting && "animate-pulse",
                       column.kind === "next" &&
                         "border-muted-foreground/50 h-2 w-2 border bg-transparent",

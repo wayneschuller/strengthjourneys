@@ -281,13 +281,36 @@ function buildUserEmailHtml(text) {
   return `<div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#111">${paragraphs.join("")}</div>`;
 }
 
+/**
+ * Every recipient of these notes is a brand new lifter: outreach eligibility
+ * requires an empty KV record at first sign-in, so nobody established ever
+ * lands here. That means the middle of each message can do what the intro
+ * dashboard does and name the two doors out of an empty log, rather than
+ * assuming the reader already found them.
+ *
+ * The two doors, in the order the first-week dashboard offers them:
+ *   1. Log a session. The big four each have their own block on /log.
+ *   2. Bring an existing history in from another app and merge it.
+ * The "stalled" variant has no sheet yet, so its version of door 2 is the
+ * signed-out import preview, which is a real destination rather than a
+ * consolation for declining Drive.
+ *
+ * Keep this short. The note is meant to earn a reply, not to be a tour.
+ */
 function buildUserEmail(user, outcome) {
   const sharedOpening = [
     getGreeting(user),
     "",
     "Thanks for signing into Strength Journeys recently.",
     "",
-    "I'm Wayne, the person building it. I'm a garage gym lifter who started in CrossFit, but these days I mainly train the big four lifts — hopefully for the rest of my life.",
+    "I'm Wayne, the person building it. I'm a garage gym lifter who started in CrossFit, but these days I mainly train the big four lifts, hopefully for the rest of my life.",
+    "",
+  ];
+  // Only for readers who already have a sheet, so both doors are open to them.
+  const signedInPathways = [
+    "Two ways in from here, whichever suits you. To start logging, the big four lifts each have their own block on the log page: https://www.strengthjourneys.xyz/log",
+    "",
+    "Or if you already have training history in Hevy, Strong, StrongLifts, Wodify, BTWB or a spreadsheet, you can bring that file in and merge it into your sheet: https://www.strengthjourneys.xyz/import",
     "",
   ];
   const sharedClosing = [
@@ -304,9 +327,11 @@ function buildUserEmail(user, outcome) {
       subject: "Did Google Drive stop you?",
       text: [
         ...sharedOpening,
-        "It looks like setup may have stopped at the Google Drive permission step. Strength Journeys can only access the lifting Sheet it creates for you — it cannot access anything else in your Drive.",
+        "It looks like setup may have stopped at the Google Drive permission step. Strength Journeys can only access the one lifting Sheet it creates for you. It cannot see anything else in your Drive.",
         "",
-        "If you'd rather not connect Drive, you can also explore your exported lifting data entirely in your browser: https://www.strengthjourneys.xyz/import",
+        "You can also try the whole thing without signing in. Drop in an export from Hevy, Strong, StrongLifts, Wodify, BTWB or a spreadsheet, and your lifting history gets charted in your browser: https://www.strengthjourneys.xyz/import",
+        "",
+        "If you like what you see there, that same history can be saved into a Google Sheet you own whenever you are ready.",
         "",
         "Was it mainly a privacy concern, or did the Google setup simply not work?",
         ...sharedClosing,
@@ -321,7 +346,12 @@ function buildUserEmail(user, outcome) {
 
   return {
     subject: "Quick question about Strength Journeys",
-    text: [...sharedOpening, question, ...sharedClosing].join("\n"),
+    text: [
+      ...sharedOpening,
+      ...signedInPathways,
+      question,
+      ...sharedClosing,
+    ].join("\n"),
   };
 }
 

@@ -357,8 +357,13 @@ function buildUserEmail(user, outcome) {
   };
 }
 
+// Wayne reads these, so they are in his time, not the server's. AEST and AEDT
+// are picked up from the zone rather than hard-coded, so the daylight saving
+// switch needs no attention here.
+const FOUNDER_TIME_ZONE = "Australia/Melbourne";
+
 /**
- * Absolute and readable, always UTC.
+ * Absolute and readable.
  *
  * Deliberately not relative ("2 hours ago"). The "stalled" notification is
  * composed now and handed to Resend for delivery 24 to 72 hours later, so any
@@ -371,15 +376,17 @@ function formatStamp(isoString) {
   const date = new Date(isoString);
   if (Number.isNaN(date.getTime())) return null;
 
-  return `${date.toLocaleString("en-GB", {
+  return date.toLocaleString("en-AU", {
+    weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
-    hour12: false,
-    timeZone: "UTC",
-  })} UTC`;
+    hour12: true,
+    timeZone: FOUNDER_TIME_ZONE,
+    timeZoneName: "short",
+  });
 }
 
 function formatGap(fromIso, toIso) {
@@ -398,23 +405,54 @@ function formatGap(fromIso, toIso) {
   return `${days} days`;
 }
 
-// Where the lifter came in. Drive decline rate varies a lot by CTA, so this is
-// the one field worth carrying up into the subject line rather than leaving it
-// three lines down in a body that gets skimmed.
-function formatEntrySource(record) {
-  const cta = record.firstSignInCta || null;
-  const page = record.firstSignInPage || null;
-  if (cta && page) return `${cta} on ${page}`;
-  return cta || page || null;
+/**
+ * Plain-English names for the sign-in CTA slugs, so a subject line reads like a
+ * sentence instead of like a log field. Keep in step with the `cta` props on
+ * GoogleSignInButton and friends; an unmapped slug degrades to its own words
+ * rather than disappearing, which is noisy enough to notice and fix.
+ */
+const SIGN_IN_SOURCE_LABELS = {
+  "1000lb_club_preview_save": "the 1000lb Club calculator",
+  ai_assistant: "the AI lifting assistant",
+  demo_banner: "the demo mode banner",
+  demo_toast: "a demo mode toast",
+  getting_started_card: "the Getting Started card",
+  hero: "the home page hero",
+  how_strong_am_i: "the How Strong Am I page",
+  import_overview: "the import walkthrough",
+  lift_page_card: "a Big Four lift card",
+  milestone: "a Long Game milestone",
+  nav_avatar: "the nav avatar menu",
+  preview_banner: "the preview banner",
+  sentence: "a Long Game prompt",
+  sheet_scope_repair: "the Drive scope repair panel",
+  sign_in_invite: "the sign-in invite card",
+  strength_levels_page: "a Strength Levels page",
+  theme_chooser: "the theme chooser",
+  today: "the Long Game today marker",
+  week_in_iron_read_only_cta: "the Week in Iron card",
+  year_recap_card: "the See Your Year card",
+};
+
+function describeCta(cta) {
+  if (!cta) return null;
+  return SIGN_IN_SOURCE_LABELS[cta] || cta.replaceAll("_", " ");
 }
 
-// Subject labels lead with the outcome because that is what is being scanned
-// for, and they avoid a shared first word so the three are told apart at a
-// glance in a list view.
-const FOUNDER_SUBJECT_LABELS = {
-  smooth: "Set up",
-  recovered: "Set up after Drive retry",
-  stalled: "Stopped at Drive consent",
+// Where they came in. The Drive decline rate varies a lot by CTA, so this is
+// the one fact worth carrying up into the subject line rather than leaving it
+// in a body that gets skimmed.
+function describeEntry(record) {
+  const label = describeCta(record.firstSignInCta);
+  const page = record.firstSignInPage || null;
+  if (label && page) return `${label} (${page})`;
+  return label || page || null;
+}
+
+const FOUNDER_SUBJECT_OUTCOMES = {
+  smooth: "is set up",
+  recovered: "is set up after a Drive retry",
+  stalled: "stopped at the Google Drive step",
 };
 
 const FOUNDER_SUMMARIES = {
@@ -433,73 +471,72 @@ const FOUNDER_SUMMARIES = {
  * already gone out, or a cancel failed and it is still queued, the stalled
  * wording is what lands. Callers pass what is really scheduled so this message
  * never claims a send that is not happening.
+ *
+ * `nudge` is a whole sentence written by the caller, not a flag. Anything that
+ * needs doing by hand is said in the body in plain words with the thing to do
+ * in it. It stays out of the subject line on purpose: a shouted prefix that
+ * does not say what to do is worse than a calm sentence that does.
  */
 function buildFounderEmail(
   user,
   outcome,
   record,
   scheduledAt = null,
-  cancelWarning = null,
+  nudge = null,
   userNoteSubject = null,
 ) {
   const name = getFounderName(user);
   const identity =
     user?.email && name !== user.email ? `${name} <${user.email}>` : name;
-  const entrySource = formatEntrySource(record);
-  const subjectTag = record.firstSignInCta || record.firstSignInPage || null;
+  const entry = describeEntry(record);
+  const subjectSource =
+    describeCta(record.firstSignInCta) || record.firstSignInPage;
   const scopeGap =
     record.firstMissingDriveScopeAt && record.driveScopeRecoveredAt
       ? formatGap(record.firstMissingDriveScopeAt, record.driveScopeRecoveredAt)
       : null;
 
   const arrivedLine = record.firstSignInAt
-    ? `Arrived: ${formatStamp(record.firstSignInAt)}${entrySource ? ` via ${entrySource}` : ""}`
-    : entrySource
-      ? `Arrived via ${entrySource}`
+    ? `Arrived ${formatStamp(record.firstSignInAt)}${entry ? ` from ${entry}` : ""}.`
+    : entry
+      ? `Arrived from ${entry}.`
       : null;
 
   // A second sign-in is the strongest early signal there is, so it gets its
-  // own line rather than being folded into the arrival line.
+  // own sentence rather than being folded into the arrival line.
+  const returnLabel = describeCta(record.lastSignInCta);
   const signInLine =
     record.signInCount > 1
-      ? `Sign-ins: ${record.signInCount}${
+      ? `Signed in ${record.signInCount === 2 ? "twice" : `${record.signInCount} times`}${
           record.lastSignInAt
-            ? ` (latest ${formatStamp(record.lastSignInAt)}${record.lastSignInCta ? ` via ${record.lastSignInCta}` : ""})`
+            ? `, most recently ${formatStamp(record.lastSignInAt)}${returnLabel ? ` from ${returnLabel}` : ""}`
             : ""
-        }`
+        }.`
       : record.signInCount
-        ? "Sign-ins: 1, no return visit yet"
+        ? "Signed in once, no return visit yet."
         : null;
 
+  const sheetLine = record.provisionedSheetId
+    ? `Sheet created for them${record.provisioningMethod ? ` (${record.provisioningMethod})` : ""}.`
+    : "No sheet created for them yet.";
+
   const scopeLine = record.firstMissingDriveScopeAt
-    ? `Drive scope: missed at ${formatStamp(record.firstMissingDriveScopeAt)}, ${
-        record.driveScopeRecoveredAt
-          ? scopeGap
-            ? `granted ${scopeGap} later`
-            : `granted at ${formatStamp(record.driveScopeRecoveredAt)}`
-          : "still not granted"
-      }`
-    : "Drive scope: granted on the first ask";
+    ? record.driveScopeRecoveredAt
+      ? `Drive scope missed at first, ${scopeGap ? `granted ${scopeGap} later` : `granted ${formatStamp(record.driveScopeRecoveredAt)}`}.`
+      : "Drive scope missed at first and still not granted."
+    : "Drive scope granted on the first ask.";
 
   return {
-    subject: [
-      "[SJ]",
-      cancelWarning ? "ACTION NEEDED ·" : null,
-      `${FOUNDER_SUBJECT_LABELS[outcome]}:`,
-      name,
-      subjectTag ? `(${subjectTag})` : null,
-    ]
-      .filter(Boolean)
-      .join(" "),
+    subject: `[SJ] ${name} ${FOUNDER_SUBJECT_OUTCOMES[outcome]}${
+      subjectSource ? `, from ${subjectSource}` : ""
+    }`,
     text: [
       identity,
       FOUNDER_SUMMARIES[outcome],
       "",
       arrivedLine,
       signInLine,
-      record.provisionedSheetId
-        ? `Sheet: created${record.provisioningMethod ? ` (${record.provisioningMethod})` : ""}`
-        : "Sheet: none yet",
+      sheetLine,
       scopeLine,
       "",
       userNoteSubject && scheduledAt
@@ -510,7 +547,7 @@ function buildFounderEmail(
       outcome === "stalled"
         ? "Everything above was true when this was queued, a day or two before it reached you. They may have signed in again since."
         : null,
-      cancelWarning ? `\nWARNING: ${cancelWarning}` : null,
+      nudge ? `\n${nudge}` : null,
     ]
       .filter((line) => line !== null)
       .join("\n")
@@ -626,7 +663,7 @@ async function sendFounderOutcome({
   outcome,
   record,
   scheduledAt,
-  cancelWarning = null,
+  nudge = null,
   userNoteSubject = null,
 }) {
   const message = buildFounderEmail(
@@ -634,7 +671,7 @@ async function sendFounderOutcome({
     outcome,
     record,
     scheduledAt,
-    cancelWarning,
+    nudge,
     userNoteSubject,
   );
   await sendEmail(
@@ -854,8 +891,15 @@ export async function handleSupportActivation(
           }),
     };
 
-    const cancelWarning = cancelFailed
-      ? `Could not cancel the previously scheduled "stalled" email(s) — user email ${record.supportStalledUserEmailId || "(none)"}${stalledUserEmailCancelled ? "" : " [cancel failed]"}, founder email ${record.supportStalledFounderEmailId || "(none)"}${stalledFounderEmailCancelled ? "" : " [cancel failed]"}. These may still be delivered as originally scheduled (around ${record.supportUserOutreachScheduledFor || "unknown time"}) — check the Resend dashboard and cancel manually if needed.`
+    // Written as the sentence it will be read as, with the ids needed to act on
+    // it. The old version led with "WARNING" and then made the reader work out
+    // what had gone wrong and what to do about it.
+    const stuckEmailIds = [
+      stalledUserEmailCancelled ? null : record.supportStalledUserEmailId,
+      stalledFounderEmailCancelled ? null : record.supportStalledFounderEmailId,
+    ].filter(Boolean);
+    const nudge = cancelFailed
+      ? `Worth two minutes when you get a chance. The stalled note could not be cancelled, so ${getFirstName(user) || "they"} may still receive "${buildUserEmail(user, "stalled").subject}" around ${formatStamp(record.supportUserOutreachScheduledFor) || "its original time"}, which now reads wrong. Cancel ${stuckEmailIds.join(" and ") || "it"} in the Resend dashboard.`
       : null;
 
     await sendFounderOutcome({
@@ -864,7 +908,7 @@ export async function handleSupportActivation(
       outcome,
       record: { ...record, ...authoredFields },
       scheduledAt,
-      cancelWarning,
+      nudge,
       userNoteSubject: landingNoteOutcome
         ? buildUserEmail(user, landingNoteOutcome).subject
         : null,

@@ -65,6 +65,7 @@ export const TimerProvider = ({ children }) => {
   const bankedMsRef = useRef(0);
 
   const entriesForTodayRef = useRef(0);
+  const hasSeenTodaysEntriesRef = useRef(false);
   // Alarm points already sounded on this run, so a ping happens once per point.
   const soundedAlarmsRef = useRef(new Set());
   const { parsedData } = useUserLiftingData();
@@ -93,9 +94,19 @@ export const TimerProvider = ({ children }) => {
     return bankedMsRef.current + runningLegMs;
   }, []);
 
-  const zeroTheClock = useCallback((keepRunning) => {
+  /**
+   * Sends the clock back to zero. Whether it keeps counting is read from the
+   * timestamp ref rather than from `isRunning`, because an effect that closes
+   * over a stale `isRunning` would otherwise clear the running leg and leave the
+   * clock frozen at 00:00.
+   *
+   * @param {boolean} [run] - Force running or stopped. Omit to keep as-is.
+   */
+  const resetClock = useCallback((run) => {
+    const shouldRun = run === undefined ? startedAtRef.current !== null : run;
+
     bankedMsRef.current = 0;
-    startedAtRef.current = keepRunning ? Date.now() : null;
+    startedAtRef.current = shouldRun ? Date.now() : null;
     soundedAlarmsRef.current = new Set();
     setElapsedMs(0);
   }, []);
@@ -104,6 +115,11 @@ export const TimerProvider = ({ children }) => {
   // smoothness only, because every tick re-reads the wall clock.
   useEffect(() => {
     if (!isRunning) return;
+
+    // A running clock always has a start timestamp. Enforcing the invariant here
+    // rather than trusting every caller means a lifter can never end up staring
+    // at a timer that says it is running while frozen on 00:00.
+    if (startedAtRef.current === null) startedAtRef.current = Date.now();
 
     const tick = () => setElapsedMs(readElapsedMs());
 
@@ -173,12 +189,19 @@ export const TimerProvider = ({ children }) => {
       (item) => item.date === todayString,
     ).length;
 
-    if (newEntriesForToday > entriesForTodayRef.current) {
-      zeroTheClock(isRunning);
+    // The first load only establishes the baseline. Without that guard, simply
+    // arriving with sets already logged today reads as a brand new set and
+    // sends the clock back to zero a moment after the page appears.
+    if (
+      hasSeenTodaysEntriesRef.current &&
+      newEntriesForToday > entriesForTodayRef.current
+    ) {
+      resetClock();
     }
 
+    hasSeenTodaysEntriesRef.current = true;
     entriesForTodayRef.current = newEntriesForToday;
-  }, [parsedData, isRunning, zeroTheClock]);
+  }, [parsedData, resetClock]);
 
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
@@ -239,26 +262,29 @@ export const TimerProvider = ({ children }) => {
   }, [isRunning, readElapsedMs]);
 
   const handleReset = useCallback(() => {
-    zeroTheClock(false);
+    resetClock(false);
     setIsRunning(false);
 
     gaEvent(GA_EVENT_TAGS.TIMER_RESET);
-  }, [zeroTheClock]);
+  }, [resetClock]);
 
   const handleRestart = useCallback(() => {
     primeAudio();
-    zeroTheClock(true);
+    resetClock(true);
     setIsRunning(true);
 
     gaEvent(GA_EVENT_TAGS.TIMER_RESTARTED);
-  }, [zeroTheClock]);
+  }, [resetClock]);
 
   // Used when a page wants the timer live on arrival without stomping on a
   // count that is already under way.
   const ensureRunning = useCallback(() => {
-    if (startedAtRef.current !== null) return; // Already counting
+    // Keep an in-progress leg rather than restarting it, but always assert the
+    // running state: React bails out of the re-render when it is already true,
+    // and an early return here would strand a clock whose timestamp survived
+    // while the running state did not.
+    if (startedAtRef.current === null) startedAtRef.current = Date.now();
 
-    startedAtRef.current = Date.now();
     setIsRunning(true);
   }, []);
 

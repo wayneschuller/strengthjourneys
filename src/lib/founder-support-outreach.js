@@ -357,46 +357,165 @@ function buildUserEmail(user, outcome) {
   };
 }
 
+/**
+ * Absolute and readable, always UTC.
+ *
+ * Deliberately not relative ("2 hours ago"). The "stalled" notification is
+ * composed now and handed to Resend for delivery 24 to 72 hours later, so any
+ * phrase measured against composition time would be wrong by the time it is
+ * read. A gap between two timestamps that are both in the message is safe,
+ * which is what `formatGap` is for.
+ */
+function formatStamp(isoString) {
+  if (!isoString) return null;
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return `${date.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  })} UTC`;
+}
+
+function formatGap(fromIso, toIso) {
+  const from = new Date(fromIso).getTime();
+  const to = new Date(toIso).getTime();
+  if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) return null;
+
+  const minutes = Math.round((to - from) / 60000);
+  if (minutes < 1) return "under a minute";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return `${hours} hour${hours === 1 ? "" : "s"}`;
+
+  const days = Math.round(hours / 24);
+  return `${days} days`;
+}
+
+// Where the lifter came in. Drive decline rate varies a lot by CTA, so this is
+// the one field worth carrying up into the subject line rather than leaving it
+// three lines down in a body that gets skimmed.
+function formatEntrySource(record) {
+  const cta = record.firstSignInCta || null;
+  const page = record.firstSignInPage || null;
+  if (cta && page) return `${cta} on ${page}`;
+  return cta || page || null;
+}
+
+// Subject labels lead with the outcome because that is what is being scanned
+// for, and they avoid a shared first word so the three are told apart at a
+// glance in a list view.
+const FOUNDER_SUBJECT_LABELS = {
+  smooth: "Set up",
+  recovered: "Set up after Drive retry",
+  stalled: "Stopped at Drive consent",
+};
+
+const FOUNDER_SUMMARIES = {
+  smooth: "New lifter. Granted Drive on the first ask and finished setup.",
+  recovered:
+    "New lifter. Missed the Drive scope at first, then granted it and finished setup.",
+  stalled:
+    "New lifter. Never granted the Drive scope, so no sheet was created for them.",
+};
+
+/**
+ * The founder-facing `[SJ]` notification.
+ *
+ * `userNoteSubject` is the subject of the note the lifter will actually
+ * receive, which is not always the note for `outcome`: when a stalled note has
+ * already gone out, or a cancel failed and it is still queued, the stalled
+ * wording is what lands. Callers pass what is really scheduled so this message
+ * never claims a send that is not happening.
+ */
 function buildFounderEmail(
   user,
   outcome,
   record,
   scheduledAt = null,
   cancelWarning = null,
+  userNoteSubject = null,
 ) {
   const name = getFounderName(user);
-  const labels = {
-    smooth: "Smooth onboarding",
-    recovered: "Drive scope recovered",
-    stalled: "Drive scope still missing",
-  };
-  const descriptions = {
-    smooth: "granted the required Drive scope and completed activation smoothly.",
-    recovered:
-      "initially missed the required Drive scope, then granted it and continued setup.",
-    stalled:
-      "has not recovered from the missing Drive scope by the time this delayed check was sent.",
-  };
+  const identity =
+    user?.email && name !== user.email ? `${name} <${user.email}>` : name;
+  const entrySource = formatEntrySource(record);
+  const subjectTag = record.firstSignInCta || record.firstSignInPage || null;
+  const scopeGap =
+    record.firstMissingDriveScopeAt && record.driveScopeRecoveredAt
+      ? formatGap(record.firstMissingDriveScopeAt, record.driveScopeRecoveredAt)
+      : null;
+
+  const arrivedLine = record.firstSignInAt
+    ? `Arrived: ${formatStamp(record.firstSignInAt)}${entrySource ? ` via ${entrySource}` : ""}`
+    : entrySource
+      ? `Arrived via ${entrySource}`
+      : null;
+
+  // A second sign-in is the strongest early signal there is, so it gets its
+  // own line rather than being folded into the arrival line.
+  const signInLine =
+    record.signInCount > 1
+      ? `Sign-ins: ${record.signInCount}${
+          record.lastSignInAt
+            ? ` (latest ${formatStamp(record.lastSignInAt)}${record.lastSignInCta ? ` via ${record.lastSignInCta}` : ""})`
+            : ""
+        }`
+      : record.signInCount
+        ? "Sign-ins: 1, no return visit yet"
+        : null;
+
+  const scopeLine = record.firstMissingDriveScopeAt
+    ? `Drive scope: missed at ${formatStamp(record.firstMissingDriveScopeAt)}, ${
+        record.driveScopeRecoveredAt
+          ? scopeGap
+            ? `granted ${scopeGap} later`
+            : `granted at ${formatStamp(record.driveScopeRecoveredAt)}`
+          : "still not granted"
+      }`
+    : "Drive scope: granted on the first ask";
 
   return {
-    subject: `[SJ] ${labels[outcome]}${cancelWarning ? " (action needed)" : ""} — ${name}`,
-    text: [
-      `${name} (${user.email}) ${descriptions[outcome]}`,
-      record.firstSignInPage
-        ? `First sign-in page: ${record.firstSignInPage}`
-        : null,
-      record.firstSignInCta ? `First sign-in CTA: ${record.firstSignInCta}` : null,
-      record.firstMissingDriveScopeAt
-        ? `First missing scope: ${record.firstMissingDriveScopeAt}`
-        : null,
-      record.driveScopeRecoveredAt
-        ? `Scope recovered: ${record.driveScopeRecoveredAt}`
-        : null,
-      scheduledAt ? `User support email scheduled for: ${scheduledAt}` : null,
-      cancelWarning ? `\nWARNING: ${cancelWarning}` : null,
+    subject: [
+      "[SJ]",
+      cancelWarning ? "ACTION NEEDED ·" : null,
+      `${FOUNDER_SUBJECT_LABELS[outcome]}:`,
+      name,
+      subjectTag ? `(${subjectTag})` : null,
     ]
       .filter(Boolean)
-      .join("\n"),
+      .join(" "),
+    text: [
+      identity,
+      FOUNDER_SUMMARIES[outcome],
+      "",
+      arrivedLine,
+      signInLine,
+      record.provisionedSheetId
+        ? `Sheet: created${record.provisioningMethod ? ` (${record.provisioningMethod})` : ""}`
+        : "Sheet: none yet",
+      scopeLine,
+      "",
+      userNoteSubject && scheduledAt
+        ? `Their note "${userNoteSubject}" is scheduled for ${formatStamp(scheduledAt)}. You are bcc'd on it and their replies come to you.`
+        : scheduledAt
+          ? `A note to them is scheduled for ${formatStamp(scheduledAt)}.`
+          : null,
+      outcome === "stalled"
+        ? "Everything above was true when this was queued, a day or two before it reached you. They may have signed in again since."
+        : null,
+      cancelWarning ? `\nWARNING: ${cancelWarning}` : null,
+    ]
+      .filter((line) => line !== null)
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim(),
   };
 }
 
@@ -480,7 +599,14 @@ async function scheduleUserNote({ context, user, outcome, scheduledAt }) {
 }
 
 async function scheduleStalledFounderNote({ context, user, record, scheduledAt }) {
-  const message = buildFounderEmail(user, "stalled", record, scheduledAt);
+  const message = buildFounderEmail(
+    user,
+    "stalled",
+    record,
+    scheduledAt,
+    null,
+    buildUserEmail(user, "stalled").subject,
+  );
   return scheduleEmail(
     context.resend,
     {
@@ -501,6 +627,7 @@ async function sendFounderOutcome({
   record,
   scheduledAt,
   cancelWarning = null,
+  userNoteSubject = null,
 }) {
   const message = buildFounderEmail(
     user,
@@ -508,6 +635,7 @@ async function sendFounderOutcome({
     record,
     scheduledAt,
     cancelWarning,
+    userNoteSubject,
   );
   await sendEmail(
     context.resend,
@@ -654,6 +782,13 @@ export async function handleSupportActivation(
       ? record.supportUserOutreachScheduledFor
       : getScheduledAt(context.userEmail, now);
     let userEmailId = record.supportStalledUserEmailId || null;
+    // Which note the lifter actually ends up receiving. It starts as whatever
+    // is already queued (the stalled note, if there is one) and only becomes
+    // this outcome's note once that note is genuinely scheduled below, so the
+    // founder notification never announces a send that did not happen.
+    let landingNoteOutcome = record.supportStalledUserEmailId
+      ? "stalled"
+      : null;
     let founderEmailHistory = Array.isArray(record.founderEmailHistory)
       ? record.founderEmailHistory
       : [];
@@ -677,6 +812,7 @@ export async function handleSupportActivation(
         outcome,
         scheduledAt,
       });
+      landingNoteOutcome = outcome;
       founderEmailHistory = appendFounderEmailHistory(
         { founderEmailHistory },
         {
@@ -729,6 +865,9 @@ export async function handleSupportActivation(
       record: { ...record, ...authoredFields },
       scheduledAt,
       cancelWarning,
+      userNoteSubject: landingNoteOutcome
+        ? buildUserEmail(user, landingNoteOutcome).subject
+        : null,
     });
     // Write only the fields authored here: the sign-in callback may have
     // bumped counters or scope timestamps while these emails were in flight.

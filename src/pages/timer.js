@@ -2,11 +2,13 @@
 // pages/timer.js
 //
 // The gym timer page: a giant clock built to be read from arm's length while
-// standing at a rack. Everything about the timing itself (wall-clock accuracy,
-// screen wake lock, the end-of-rest chime) lives in the shared TimerProvider so
-// the nav bar MiniTimer keeps counting when a lifter navigates away mid-rest.
+// standing at a rack. It always counts forward, with optional alarm points a
+// lifter can arm for a ping and a visual alert on the way past. Everything about
+// the timing itself (wall-clock accuracy, screen wake lock, the ping) lives in
+// the shared TimerProvider so the nav bar MiniTimer keeps counting when a lifter
+// navigates away mid-set.
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 import { Volume2, VolumeX } from "lucide-react";
 import { NextSeo } from "next-seo";
@@ -15,17 +17,17 @@ import { RelatedArticles } from "@/components/article-cards";
 import { PageContainer } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { formatTime, useTimer } from "@/hooks/use-timer";
+import { formatAlarmLabel, formatTime, useTimer } from "@/hooks/use-timer";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { cn } from "@/lib/utils";
 
 const PAGE_TITLE = "Gym Timer | Strength Journeys";
 
-// Rest targets a lifter actually uses: a minute for accessories, ninety seconds
-// to three minutes for most working sets, five for heavy singles.
-const REST_PRESETS = [
-  { label: "Stopwatch", seconds: 0 },
+// Optional alarm points. The clock never stops at one of these: it pings, shows
+// the alert, and keeps counting, because how long a lifter needs between sets is
+// a decision for the lifter rather than for the timer.
+const ALARM_PRESETS = [
+  { label: "0:45", seconds: 45 },
   { label: "1:00", seconds: 60 },
   { label: "1:30", seconds: 90 },
   { label: "2:00", seconds: 120 },
@@ -108,42 +110,60 @@ export default function Timer({ relatedArticles }) {
 }
 
 /**
- * Full-screen timer display with a giant time readout, rest-target presets and
- * restart/start-stop/reset controls. Starts counting on mount and supports
- * spacebar restart via a keyboard listener.
+ * Full-screen timer display with a giant forward-running clock, optional alarm
+ * points and restart/start-stop/reset controls. Starts counting on mount and
+ * supports spacebar restart via a keyboard listener.
  */
 function LargeTimer() {
   const {
     time,
     isRunning,
-    hasRestTarget,
-    restTargetSeconds,
-    remainingSeconds,
-    isOvertime,
+    armedAlarms,
+    activeAlarmSeconds,
     isMuted,
     setIsMuted,
-    setRestTarget,
+    toggleAlarm,
     ensureRunning,
     handleStartStop,
     handleReset,
     handleRestart,
   } = useTimer();
 
-  // Mid-rest the useful number is the time left. Once the target is behind us we
-  // count the overtime instead, because "how far over am I" is the next question.
-  let display = formatTime(time);
-  if (hasRestTarget) {
-    display = isOvertime
-      ? `+${formatTime(-remainingSeconds)}`
-      : formatTime(remainingSeconds);
-  }
-
-  const isWideDisplay = display.length > 5;
+  const readoutRef = useRef(null);
+  const display = formatTime(time);
+  const isAlerting = activeAlarmSeconds !== null;
 
   useEffect(() => {
     // Start the timer on first mount of this page
     ensureRunning();
   }, [ensureRunning]); // It only needs to run on [] mount but eslint wants the dependency put in
+
+  // Digit widths vary by theme font, viewport and how many characters the clock
+  // is showing, so rather than guessing a size per breakpoint we measure what the
+  // readout wants and shrink it until it fits. The CSS sizes below stay the
+  // ideal; this only ever scales down.
+  useEffect(() => {
+    const node = readoutRef.current;
+    if (!node) return;
+
+    const fitToWidth = () => {
+      node.style.fontSize = ""; // Back to the CSS ideal before measuring
+      const available = node.clientWidth;
+      const wanted = node.scrollWidth;
+      if (!available || !wanted || wanted <= available) return;
+
+      const idealSize = parseFloat(window.getComputedStyle(node).fontSize);
+      node.style.fontSize = `${Math.floor(idealSize * (available / wanted))}px`;
+    };
+
+    fitToWidth();
+    window.addEventListener("resize", fitToWidth);
+
+    // Theme fonts land after first paint and change every digit width with them.
+    document.fonts?.ready?.then(fitToWidth).catch(() => {});
+
+    return () => window.removeEventListener("resize", fitToWidth);
+  }, [display.length]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -178,7 +198,7 @@ function LargeTimer() {
     };
   }, [handleRestart]);
 
-  // Put the live clock in the tab title so a lifter who switches tabs mid-rest
+  // Put the live clock in the tab title so a lifter who switches tabs mid-set
   // can still see where they are up to.
   useEffect(() => {
     if (!isRunning) return;
@@ -202,77 +222,82 @@ function LargeTimer() {
     [handleRestart],
   );
 
-  const restProgress = hasRestTarget
-    ? Math.min(100, (time / restTargetSeconds) * 100)
-    : 0;
-
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex w-full flex-col items-center">
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        {REST_PRESETS.map((preset) => (
-          <Button
-            key={preset.label}
-            variant={
-              restTargetSeconds === preset.seconds ? "default" : "outline"
-            }
-            aria-pressed={restTargetSeconds === preset.seconds}
-            className="tabular-nums"
-            onClick={() => setRestTarget(preset.seconds)}
-          >
-            {preset.label}
-          </Button>
-        ))}
-        {hasRestTarget && (
+        <span className="text-muted-foreground mr-1 text-sm">Ping me at</span>
+        {ALARM_PRESETS.map((preset) => {
+          const isArmed = armedAlarms.includes(preset.seconds);
+
+          return (
+            <Button
+              key={preset.seconds}
+              variant={isArmed ? "default" : "outline"}
+              size="sm"
+              aria-pressed={isArmed}
+              className="tabular-nums"
+              onClick={() => toggleAlarm(preset.seconds)}
+            >
+              {preset.label}
+            </Button>
+          );
+        })}
+        {armedAlarms.length > 0 && (
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsMuted(!isMuted)}
             title={
-              isMuted ? "Turn the rest chime on" : "Turn the rest chime off"
+              isMuted ? "Turn the alarm ping on" : "Turn the alarm ping off"
             }
           >
             {isMuted ? <VolumeX /> : <Volume2 />}
             <span className="sr-only">
-              {isMuted ? "Turn the rest chime on" : "Turn the rest chime off"}
+              {isMuted ? "Turn the alarm ping on" : "Turn the alarm ping off"}
             </span>
           </Button>
         )}
       </div>
 
       <Card
-        className="bg-muted focus-visible:ring-primary my-10 flex-1 ring-4 hover:cursor-pointer hover:ring-blue-900 focus-visible:outline-none md:my-5"
+        className={cn(
+          "bg-muted focus-visible:ring-primary my-6 w-full ring-4 transition-colors hover:cursor-pointer hover:ring-blue-900 focus-visible:outline-none md:my-5",
+          // Inverting the whole card is the only alert that reads the same in
+          // every theme: primary and its foreground are guaranteed to contrast,
+          // while a colour change on the digits alone disappears in the default
+          // theme, where primary and foreground are both near black.
+          isAlerting && "bg-primary ring-primary animate-pulse",
+        )}
         role="button"
         tabIndex={0}
         aria-label="Restart the set timer"
         onClick={handleRestart}
         onKeyDown={handleCardKeyDown}
       >
-        <CardContent>
+        <CardContent className="px-4 py-6">
           <div
+            ref={readoutRef}
             role="timer"
             aria-live="off"
             className={cn(
-              "pt-6 text-center font-bold tabular-nums",
-              // An overtime "+" or an hour digit adds a character, so the longer
-              // readouts step down a size to stay inside a phone screen.
-              isWideDisplay
-                ? "text-7xl md:text-[12rem] lg:text-[16rem] xl:text-[20rem] 2xl:text-[24rem]"
-                : "text-9xl md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]",
-              isOvertime && "text-primary",
+              "w-full overflow-hidden text-center leading-none font-bold whitespace-nowrap tabular-nums",
+              "text-8xl md:text-[11rem] lg:text-[15rem] xl:text-[19rem] 2xl:text-[22rem]",
+              isAlerting && "text-primary-foreground",
             )}
           >
             {display}
           </div>
-          {hasRestTarget && (
-            <Progress value={restProgress} className="mt-4 h-2" />
-          )}
         </CardContent>
       </Card>
 
-      {/* Announced once when the rest period ends. The ticking clock above stays
-          silent for screen readers because reading every second is unusable. */}
-      <p className="sr-only" role="status" aria-live="assertive">
-        {isOvertime ? "Rest complete" : ""}
+      {/* Doubles as the screen-reader announcement, so an alarm point reaches
+          everyone the same way. Height is reserved to keep the page steady. */}
+      <p
+        className="text-primary min-h-6 text-center text-lg font-semibold"
+        role="status"
+        aria-live="assertive"
+      >
+        {isAlerting ? `${formatAlarmLabel(activeAlarmSeconds)} reached` : ""}
       </p>
 
       <Button

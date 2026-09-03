@@ -48,3 +48,18 @@ export function getLogoForTheme(theme) {
 
   return fallbackLightLogo;
 }
+
+/**
+ * Height that keeps a logo's own aspect ratio at a given render width.
+ * Static imports carry their intrinsic dimensions, so the nav never has to
+ * hardcode a height per theme.
+ *
+ * @param {object} logo - Logo import object from getLogoForTheme
+ * @param {number} width - Render width in pixels
+ * @returns {number} - Matching height in pixels
+ */
+export function getLogoHeight(logo, width) {
+  if (!logo?.width || !logo?.height) return width;
+
+  return Math.round((width * logo.height) / logo.width);
+}

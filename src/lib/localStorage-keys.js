@@ -130,8 +130,9 @@ export const LOCAL_STORAGE_KEYS = {
   HEATMAP_VIEW_MODE: "SJ_heatmapViewMode",
 
   // Gym timer
-  // Rest target in seconds; 0 means the timer runs as a plain stopwatch.
-  TIMER_REST_TARGET: "SJ_timerRestTarget",
+  // Armed alarm points, as an array of seconds. The clock always counts forward;
+  // these are optional pings along the way rather than a rest period to obey.
+  TIMER_ALARM_POINTS: "SJ_timerAlarmPoints",
   TIMER_MUTED: "SJ_timerMuted",
 
   // Analytics flags

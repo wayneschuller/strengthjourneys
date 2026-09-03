@@ -14,7 +14,7 @@ import { ThemeChooser } from "@/components/ui-shell/theme-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { getLogoForTheme } from "@/lib/theme-logos";
+import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 import { getRepeatImportHref } from "@/lib/import/import-sources";
 import { cn } from "@/lib/utils";
 import { featurePages } from "@/pages";
@@ -29,8 +29,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+// Wordmark size for the compact bar between sm and the desktop nav.
+const BAR_LOGO_WIDTH = 88;
+
 /**
- * Slide-out mobile navigation drawer triggered by a hamburger button.
+ * Slide-out navigation drawer triggered by a hamburger button, used below lg.
  * Renders the app logo, all feature page links, and Big Four lift insight links inside a shadcn Sheet.
  */
 export function MobileNav() {
@@ -44,9 +47,7 @@ export function MobileNav() {
   );
   const logoWidth = 150;
   const { resolvedTheme, theme } = useTheme();
-  const isStarryNight = (theme ?? resolvedTheme ?? "").startsWith(
-    "starry-night",
-  );
+  const [isStarryNight, setIsStarryNight] = useState(false);
   const [logoSrc, setLogoSrc] = useState(() => {
     // Start with default theme for SSR/hydration consistency
     return getLogoForTheme("light");
@@ -65,6 +66,7 @@ export function MobileNav() {
     }
 
     setLogoSrc(getLogoForTheme(currentTheme || "light"));
+    setIsStarryNight((currentTheme || "light").startsWith("starry-night"));
   }, [theme, resolvedTheme]);
 
   const lifts = bigFourLiftInsightData;
@@ -99,7 +101,7 @@ export function MobileNav() {
         <SheetTrigger asChild>
           <Button
             variant="ghost"
-            className="px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
+            className="px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 lg:hidden"
             aria-expanded={open}
           >
             <Menu className="h-7 w-7 sm:mr-2" />
@@ -117,10 +119,10 @@ export function MobileNav() {
                     src={logoSrc}
                     key={logoSrc}
                     width={logoWidth}
-                    height="auto"
+                    height={getLogoHeight(logoSrc, logoWidth)}
                     alt="Strength Journeys logo"
                     className={cn(
-                      "inline-block origin-left scale-[1.2] rounded-lg",
+                      "inline-block h-auto w-[150px] shrink-0 origin-left scale-[1.2] rounded-lg",
                       isStarryNight && "ring-border shadow-sm ring-1",
                     )}
                   />
@@ -176,12 +178,32 @@ export function MobileNav() {
       <Button
         asChild
         variant="ghost"
-        className="text-muted-foreground h-9 px-2 hover:bg-transparent hover:text-foreground md:hidden"
+        className="text-muted-foreground hover:text-foreground h-9 px-2 hover:bg-transparent sm:hidden"
       >
         <Link href="/" aria-label="Home dashboard" prefetch={false}>
           <House className="h-5 w-5" />
         </Link>
       </Button>
+      {/* From sm up to the desktop nav there is room for the wordmark itself,
+          so the brand rides in the bar instead of a house icon. */}
+      <Link
+        href="/"
+        prefetch={false}
+        aria-label="Home dashboard"
+        className="ml-1 hidden shrink-0 sm:block lg:hidden"
+      >
+        <Image
+          src={logoSrc}
+          key={`bar-${logoSrc}`}
+          width={BAR_LOGO_WIDTH}
+          height={getLogoHeight(logoSrc, BAR_LOGO_WIDTH)}
+          alt="Strength Journeys logo"
+          className={cn(
+            "h-auto w-[88px] shrink-0 rounded-lg",
+            isStarryNight && "ring-border shadow-sm ring-1",
+          )}
+        />
+      </Link>
     </>
   );
 }

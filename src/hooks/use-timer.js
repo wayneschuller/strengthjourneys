@@ -1,7 +1,12 @@
 /**
  * Shared gym timer context.
  *
- * Two design constraints drive everything in this file:
+ * The clock only ever runs forwards. A lifter should be reading their own
+ * readiness rather than obeying a countdown, so instead of enforcing a rest
+ * period we let them arm optional alarm points: a ping and a visual alert as
+ * each one passes, while the clock keeps counting.
+ *
+ * Two design constraints drive the rest of this file:
  *
  * 1. The clock is derived from wall-clock timestamps, never from counting
  *    interval ticks. Mobile browsers throttle background timers to roughly one
@@ -10,7 +15,7 @@
  *    running leg began and subtract, so the interval only decides how smoothly
  *    the display refreshes, not how much time has passed.
  *
- * 2. A rest timer is useless if the screen sleeps mid-set, so we hold a Screen
+ * 2. A gym timer is useless if the screen sleeps mid-set, so we hold a Screen
  *    Wake Lock while the timer runs. The lock is only ever held while the tab is
  *    visible (the browser enforces that), so it releases itself as soon as the
  *    lifter switches apps or locks the phone.
@@ -45,6 +50,11 @@ export const useTimer = () => useContext(TimerContext);
 // cheap. The display only reads a timestamp, so this is purely refresh rate.
 const TICK_INTERVAL_MS = 250;
 
+// How long an alarm stays visually lit after it passes. Long enough to catch
+// from across a gym floor, short enough that the clock returns to normal before
+// the next set.
+const ALARM_ALERT_SECONDS = 8;
+
 export const TimerProvider = ({ children }) => {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -55,12 +65,13 @@ export const TimerProvider = ({ children }) => {
   const bankedMsRef = useRef(0);
 
   const entriesForTodayRef = useRef(0);
-  const restAlertFiredRef = useRef(false);
+  // Alarm points already sounded on this run, so a ping happens once per point.
+  const soundedAlarmsRef = useRef(new Set());
   const { parsedData } = useUserLiftingData();
 
-  const [restTargetSeconds, setRestTargetSeconds] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.TIMER_REST_TARGET,
-    0,
+  const [alarmPoints, setAlarmPoints] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.TIMER_ALARM_POINTS,
+    [],
     { initializeWithValue: false },
   );
 
@@ -68,6 +79,11 @@ export const TimerProvider = ({ children }) => {
     LOCAL_STORAGE_KEYS.TIMER_MUTED,
     false,
     { initializeWithValue: false },
+  );
+
+  const armedAlarms = useMemo(
+    () => (Array.isArray(alarmPoints) ? alarmPoints : []),
+    [alarmPoints],
   );
 
   const readElapsedMs = useCallback(() => {
@@ -80,7 +96,7 @@ export const TimerProvider = ({ children }) => {
   const zeroTheClock = useCallback((keepRunning) => {
     bankedMsRef.current = 0;
     startedAtRef.current = keepRunning ? Date.now() : null;
-    restAlertFiredRef.current = false;
+    soundedAlarmsRef.current = new Set();
     setElapsedMs(0);
   }, []);
 
@@ -108,7 +124,7 @@ export const TimerProvider = ({ children }) => {
     return () => document.removeEventListener("visibilitychange", resync);
   }, [readElapsedMs]);
 
-  // Keep the screen alive while resting. Re-request on every return to
+  // Keep the screen alive while the clock runs. Re-request on every return to
   // visibility because the browser drops the lock whenever the tab is hidden.
   useEffect(() => {
     if (!isRunning) return;
@@ -165,29 +181,45 @@ export const TimerProvider = ({ children }) => {
   }, [parsedData, isRunning, zeroTheClock]);
 
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
-  const hasRestTarget = restTargetSeconds > 0;
-  const isOvertime = hasRestTarget && elapsedSeconds >= restTargetSeconds;
-  const remainingSeconds = hasRestTarget
-    ? restTargetSeconds - elapsedSeconds
-    : null;
 
-  // Announce the end of the rest period once per running leg.
+  // The lit alarm is derived from the clock rather than stored in state, so it
+  // clears itself as the seconds move on. No timeouts to cancel, and a paused
+  // clock holds its alert until the lifter starts moving again.
+  const activeAlarmSeconds = useMemo(() => {
+    const passed = armedAlarms.filter((seconds) => elapsedSeconds >= seconds);
+    if (passed.length === 0) return null;
+
+    const mostRecent = Math.max(...passed);
+
+    return elapsedSeconds - mostRecent < ALARM_ALERT_SECONDS
+      ? mostRecent
+      : null;
+  }, [armedAlarms, elapsedSeconds]);
+
+  // Sound each armed point once as the clock passes it.
   useEffect(() => {
-    if (!hasRestTarget) return;
-    if (!isOvertime) return;
-    if (restAlertFiredRef.current) return;
+    if (!isRunning) return;
 
-    restAlertFiredRef.current = true;
+    const due = armedAlarms.filter(
+      (seconds) =>
+        seconds > 0 &&
+        elapsedSeconds >= seconds &&
+        !soundedAlarmsRef.current.has(seconds),
+    );
 
-    if (!isMuted) playRestChime();
+    if (due.length === 0) return;
+
+    due.forEach((seconds) => soundedAlarmsRef.current.add(seconds));
+
+    if (!isMuted) playAlarmPing();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate([120, 60, 120, 60, 200]);
     }
 
-    gaEvent(GA_EVENT_TAGS.TIMER_REST_COMPLETE, {
-      rest_target_seconds: restTargetSeconds,
+    gaEvent(GA_EVENT_TAGS.TIMER_ALARM_FIRED, {
+      alarm_seconds: Math.max(...due),
     });
-  }, [hasRestTarget, isOvertime, isMuted, restTargetSeconds]);
+  }, [elapsedSeconds, armedAlarms, isMuted, isRunning]);
 
   const handleStartStop = useCallback(() => {
     primeAudio();
@@ -230,35 +262,43 @@ export const TimerProvider = ({ children }) => {
     setIsRunning(true);
   }, []);
 
-  const setRestTarget = useCallback(
+  const toggleAlarm = useCallback(
     (seconds) => {
       primeAudio();
 
-      // Picking a target you are already past should not set off the chime: it
-      // belongs to the end of a rest period, not to the act of choosing one.
-      restAlertFiredRef.current =
-        seconds > 0 && readElapsedMs() >= seconds * 1000;
+      const wasArmed = armedAlarms.includes(seconds);
 
-      setRestTargetSeconds(seconds);
+      if (wasArmed) {
+        soundedAlarmsRef.current.delete(seconds);
+      } else if (readElapsedMs() >= seconds * 1000) {
+        // Arming a point the clock has already passed stays quiet: the ping
+        // belongs to the moment the time arrives, not to the act of choosing it.
+        soundedAlarmsRef.current.add(seconds);
+      }
 
-      gaEvent(GA_EVENT_TAGS.TIMER_REST_TARGET_SET, {
-        rest_target_seconds: seconds,
+      setAlarmPoints(
+        wasArmed
+          ? armedAlarms.filter((armed) => armed !== seconds)
+          : [...armedAlarms, seconds].sort((a, b) => a - b),
+      );
+
+      gaEvent(GA_EVENT_TAGS.TIMER_ALARM_TOGGLED, {
+        alarm_seconds: seconds,
+        enabled: !wasArmed,
       });
     },
-    [readElapsedMs, setRestTargetSeconds],
+    [armedAlarms, readElapsedMs, setAlarmPoints],
   );
 
   const value = useMemo(
     () => ({
       time: elapsedSeconds,
       isRunning,
-      restTargetSeconds,
-      hasRestTarget,
-      remainingSeconds,
-      isOvertime,
+      armedAlarms,
+      activeAlarmSeconds,
       isMuted,
       setIsMuted,
-      setRestTarget,
+      toggleAlarm,
       ensureRunning,
       handleStartStop,
       handleReset,
@@ -267,13 +307,11 @@ export const TimerProvider = ({ children }) => {
     [
       elapsedSeconds,
       isRunning,
-      restTargetSeconds,
-      hasRestTarget,
-      remainingSeconds,
-      isOvertime,
+      armedAlarms,
+      activeAlarmSeconds,
       isMuted,
       setIsMuted,
-      setRestTarget,
+      toggleAlarm,
       ensureRunning,
       handleStartStop,
       handleReset,
@@ -311,7 +349,16 @@ export const formatTime = (totalSeconds) => {
   return `${String(minutes).padStart(2, "0")}:${paddedSeconds}`;
 };
 
-// A synthesised chime beats shipping an audio file: nothing to download, works
+/**
+ * Short label for an alarm point, e.g. 90 becomes "1:30".
+ *
+ * @param {number} seconds
+ * @returns {string}
+ */
+export const formatAlarmLabel = (seconds) =>
+  formatTime(seconds).replace(/^0(?=\d:)/, "");
+
+// A synthesised ping beats shipping an audio file: nothing to download, works
 // offline, and no bundle cost. Created lazily because Safari counts an unused
 // AudioContext against the page.
 let sharedAudioContext = null;
@@ -326,7 +373,7 @@ const getAudioContext = () => {
     try {
       sharedAudioContext = new AudioContextClass();
     } catch (error) {
-      devLog(`Audio unavailable for timer chime: ${error?.message}`);
+      devLog(`Audio unavailable for timer ping: ${error?.message}`);
       return null;
     }
   }
@@ -336,15 +383,15 @@ const getAudioContext = () => {
 
 /**
  * iOS keeps an AudioContext suspended until a user gesture touches it, so every
- * timer control runs this on the way through. By the time a rest period ends the
- * context is already awake and the chime can play.
+ * timer control runs this on the way through. By the time an alarm point arrives
+ * the context is already awake and the ping can play.
  */
 const primeAudio = () => {
   const context = getAudioContext();
   if (context?.state === "suspended") context.resume().catch(() => {});
 };
 
-const playRestChime = () => {
+const playAlarmPing = () => {
   const context = getAudioContext();
   if (!context) return;
 
@@ -374,6 +421,6 @@ const playRestChime = () => {
       oscillator.stop(noteStart + 0.18);
     });
   } catch (error) {
-    devLog(`Timer chime failed: ${error?.message}`);
+    devLog(`Timer ping failed: ${error?.message}`);
   }
 };

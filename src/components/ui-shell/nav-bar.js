@@ -67,7 +67,7 @@ import {
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { GorillaIcon } from "@/components/gorilla-icon";
 
-import { getLogoForTheme } from "@/lib/theme-logos";
+import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
@@ -156,7 +156,7 @@ export function NavBar() {
   const importHref = getRepeatImportHref(importProfile, "repeat-import-nav");
 
   return (
-    <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-24">
+    <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-12 2xl:mx-24">
       <div className="flex items-center px-3 md:px-6">
         <div className="flex items-center">
           <DesktopNav />
@@ -288,9 +288,13 @@ export function NavBar() {
 
 // FIXME: use the featurePages array in index.js?
 
+const LOGO_WIDTH = 110;
+
 /**
- * Desktop-only navigation area showing the logo and the main nav menus.
- * Hidden on mobile; the logo pulses while user data is validating.
+ * Desktop navigation area showing the logo and the main nav menus.
+ * Shown from lg up, where the row has room for the logo at full size;
+ * below that the mobile sheet takes over. The logo pulses while user data
+ * is validating.
  *
  * @param {Object} props - No props; reads theme and validating state from context/hooks.
  */
@@ -299,41 +303,42 @@ export function DesktopNav() {
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
   const [logoSrc, setLogoSrc] = useState(() => getLogoForTheme("light"));
-  const isStarryNight = (theme ?? resolvedTheme ?? "").startsWith(
-    "starry-night",
-  );
+  const [isStarryNight, setIsStarryNight] = useState(false);
 
   // Update logo after mount and on theme changes to avoid hydration mismatch
   useEffect(() => {
+    const activeTheme = theme ?? resolvedTheme ?? "light";
+
     // eslint-disable-next-line react-hooks/set-state-in-effect -- derived client-only logo swap avoids hydration mismatch
-    setLogoSrc(getLogoForTheme(theme ?? resolvedTheme ?? "light"));
+    setLogoSrc(getLogoForTheme(activeTheme));
+    setIsStarryNight(activeTheme.startsWith("starry-night"));
   }, [theme, resolvedTheme]);
 
   return (
-    <div className="hidden align-middle md:flex">
+    <div className="hidden align-middle lg:flex">
       <Link
         prefetch={false}
         href="/"
         className={cn(
-          "mr-10 flex items-center",
+          "mr-6 flex shrink-0 items-center 2xl:mr-10",
           isValidating && "animate-pulse",
         )}
       >
         <Image
           src={logoSrc}
           key={logoSrc}
-          width={110}
-          height="auto"
+          width={LOGO_WIDTH}
+          height={getLogoHeight(logoSrc, LOGO_WIDTH)}
           alt="Strength Journeys logo"
           className={cn(
-            "inline-block origin-left scale-[1.2] rounded-lg",
+            "inline-block h-auto w-[110px] shrink-0 origin-left scale-[1.2] rounded-lg",
             isStarryNight && "ring-border shadow-sm ring-1",
           )}
           priority={true}
         />
       </Link>
 
-      <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
+      <nav className="flex min-w-0 flex-1 items-center space-x-2 text-sm font-medium lg:space-x-4 2xl:space-x-6">
         <BigFourBarbellInsightsMenu />
 
         <StrengthInsightsMenu />
@@ -348,7 +353,7 @@ export function DesktopNav() {
             pathname === "/gym-playlist-leaderboard"
               ? "text-foreground"
               : "text-foreground/60",
-            "hidden lg:block",
+            "hidden min-[1700px]:block",
           )}
         >
           Music
@@ -361,7 +366,7 @@ export function DesktopNav() {
             pathname.startsWith("/articles")
               ? "text-foreground"
               : "text-foreground/60",
-            "hidden lg:block", // Only show articles on LG
+            "hidden min-[1700px]:block", // Room for articles once the row is wide
           )}
         >
           Articles
@@ -408,7 +413,7 @@ function WhatsNewButton() {
       onClick={handleClick}
       className={cn(
         "text-muted-foreground hover:text-foreground/80",
-        "hidden 2xl:block", // Only show articles on 2XL
+        "hidden min-[1800px]:block", // Last link in, first to wait
       )}
       aria-busy={isLoading}
     >

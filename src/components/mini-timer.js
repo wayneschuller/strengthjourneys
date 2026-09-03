@@ -13,36 +13,24 @@ import { formatTime, useTimer } from "@/hooks/use-timer";
 import { cn } from "@/lib/utils";
 
 export function MiniTimer() {
-  const {
-    time,
-    isRunning,
-    hasRestTarget,
-    remainingSeconds,
-    isOvertime,
-    handleRestart,
-  } = useTimer();
+  const { time, isRunning, activeAlarmSeconds, handleRestart } = useTimer();
 
   if (!isRunning) return null; // Don't show if not running
 
-  // Mid-rest the useful number is the time left. Once the target is behind us we
-  // count the overtime instead, because "how far over am I" is the next question.
-  let display = formatTime(time);
-  if (hasRestTarget) {
-    display = isOvertime
-      ? `+${formatTime(-remainingSeconds)}`
-      : formatTime(remainingSeconds);
-  }
+  // An armed alarm point lights up here too, so the ping still has something
+  // visible attached to it when the lifter is on another page.
+  const isAlerting = activeAlarmSeconds !== null;
 
   return (
     <div
       className={cn(
         "cursor-pointer tracking-wide tabular-nums",
-        isOvertime && "text-primary",
+        isAlerting && "text-primary animate-pulse font-semibold",
       )}
       onClick={handleRestart}
       title="Gym timer. Click to restart."
     >
-      {display}
+      {formatTime(time)}
     </div>
   );
 }

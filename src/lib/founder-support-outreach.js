@@ -1,18 +1,25 @@
 /**
- * Turns noisy onboarding events into one founder outcome notification and one
- * delayed, reply-first support note to the user. Resend owns the delay so this
- * flow does not need a cron job or a queue worker.
+ * Turns noisy onboarding events into one founder notification and one delayed,
+ * reply-first note to the lifter. Resend owns the delay so this flow needs no
+ * cron job and no queue worker.
  *
- * BY DESIGN, the founder receives two messages per user outcome:
- *   1. A structured `[SJ]` notification, sent immediately, carrying the KV
- *      context (entry page, CTA, scope timeline, when the user note will land).
- *   2. A bcc of the user-facing note itself, arriving whenever that note is
- *      actually delivered, so the exact wording the user saw can be observed
- *      and tracked as a real conversation.
- * Two purposeful messages replace the previous behaviour, where a single
- * successful onboarding could fan out into five separate founder emails about
- * intermediate steps. See `DEFAULT_DISABLED_EVENTS` in "@/lib/founder-
- * notifications" for the legacy event emails this superseded.
+ * ONE note goes to the lifter, whatever happens during setup. An earlier design
+ * had a separate "you seem to have stopped at the Drive step" note, which meant
+ * committing to that wording at sign-in, days before the outcome was known, and
+ * then reaching back to cancel it if the person carried on. When a restricted
+ * API key silently broke every cancel, lifters who were fully set up received a
+ * note telling them setup had failed. Nothing is scheduled in advance that can
+ * become untrue, so there is nothing to cancel and no queue to police.
+ *
+ * The single note works for a reader with a sheet and for one without: it names
+ * the log page and the import page, and says the history ends up in a Google
+ * Sheet they own that the app never reads beyond. For anyone who skipped the
+ * Drive permission, that is the invitation to grant it, offered as something
+ * worth having rather than as a failure to correct.
+ *
+ * The founder gets `[SJ]` notifications immediately, as things happen, plus a
+ * bcc of the note itself when it lands. See `DEFAULT_DISABLED_EVENTS` in
+ * "@/lib/founder-notifications" for the legacy per-step emails this superseded.
  */
 
 import { Resend } from "resend";
@@ -67,18 +74,6 @@ function appendFounderEmailHistory(record, entry) {
     ? record.founderEmailHistory
     : [];
   return [...history, entry].slice(-FOUNDER_EMAIL_HISTORY_LIMIT);
-}
-
-function markFounderEmailCancelled(record, resendEmailId, cancelledAt) {
-  const history = Array.isArray(record.founderEmailHistory)
-    ? record.founderEmailHistory
-    : [];
-
-  return history.map((entry) =>
-    entry.resendEmailId === resendEmailId
-      ? { ...entry, status: "cancelled", cancelledAt }
-      : entry,
-  );
 }
 
 function getDelayMs(email) {
@@ -282,77 +277,45 @@ function buildUserEmailHtml(text) {
 }
 
 /**
- * Every recipient of these notes is a brand new lifter: outreach eligibility
- * requires an empty KV record at first sign-in, so nobody established ever
- * lands here. That means the middle of each message can do what the intro
- * dashboard does and name the two doors out of an empty log, rather than
- * assuming the reader already found them.
+ * The one note a new lifter receives, roughly a day or two after signing in.
+ *
+ * Everyone who receives it is new: outreach eligibility requires an empty KV
+ * record at first sign-in. It does not branch on how setup went, because the
+ * reader knows how their own setup went and does not need it recounted. What
+ * they may not know is what the app is for, which is what the middle says.
  *
  * The two doors, in the order the first-week dashboard offers them:
  *   1. Log a session. The big four each have their own block on /log.
- *   2. Bring an existing history in from another app and merge it.
- * There are two notes, not three: "smooth" and "recovered" share one, because
- * both readers finish with a sheet. The "stalled" reader has no sheet yet, so
- * their version of door 2 is the signed-out import preview, which is a real
- * destination rather than a consolation for declining Drive.
+ *   2. Bring an existing history in from another app and see it charted.
+ * Both work signed out, so the note reads correctly for someone who never
+ * granted the Drive permission, and the sheet sentence after them is the
+ * reason to grant it.
  *
- * Keep this short. The note is meant to earn a reply, not to be a tour.
+ * Keep it short. The note is meant to earn a reply, not to be a tour.
  */
-function buildUserEmail(user, outcome) {
-  const sharedOpening = [
-    getGreeting(user),
-    "",
-    "Thanks for signing into Strength Journeys recently.",
-    "",
-    "I'm Wayne, the person building it. I'm a garage gym lifter who started in CrossFit, but these days I mainly train the big four lifts, hopefully for the rest of my life.",
-    "",
-  ];
-  // Only for readers who already have a sheet, so both doors are open to them.
-  const signedInPathways = [
-    "Two ways in from here, whichever suits you. To start logging, the big four lifts each have their own block on the log page: https://www.strengthjourneys.xyz/log",
-    "",
-    "Or if you already have training history in Hevy, Strong, StrongLifts, Wodify, BTWB or a spreadsheet, you can bring that file in and merge it into your sheet: https://www.strengthjourneys.xyz/import",
-    "",
-  ];
-  const sharedClosing = [
-    "",
-    "Even a quick sentence helps a lot.",
-    "",
-    "Thanks again for checking it out,",
-    "Wayne",
-    "https://www.instagram.com/wayneschuller/",
-  ];
-
-  if (outcome === "stalled") {
-    return {
-      subject: "Did Google Drive stop you?",
-      text: [
-        ...sharedOpening,
-        "It looks like setup may have stopped at the Google Drive permission step. Strength Journeys can only access the one lifting Sheet it creates for you. It cannot see anything else in your Drive.",
-        "",
-        "You can also try the whole thing without signing in. Drop in an export from Hevy, Strong, StrongLifts, Wodify, BTWB or a spreadsheet, and your lifting history gets charted in your browser: https://www.strengthjourneys.xyz/import",
-        "",
-        "If you like what you see there, that same history can be saved into a Google Sheet you own whenever you are ready.",
-        "",
-        "Was it mainly a privacy concern, or did the Google setup simply not work?",
-        ...sharedClosing,
-      ].join("\n"),
-    };
-  }
-
-  // "smooth" and "recovered" both end the same way: a sheet exists and both
-  // doors are open, so they get the same note. Someone who missed the Drive
-  // scope and then granted it has already solved that problem, and asking them
-  // to relive it would spend the one question we get on friction they are past.
-  // The outcomes still diverge everywhere else, including the [SJ] founder
-  // notification and the Resend idempotency key.
+function buildUserEmail(user) {
   return {
     subject: "Quick question about Strength Journeys",
     text: [
-      ...sharedOpening,
-      ...signedInPathways,
+      getGreeting(user),
+      "",
+      "Thanks for signing into Strength Journeys recently.",
+      "",
+      "I'm Wayne, the person building it. I'm a garage gym lifter who started in CrossFit, but these days I mainly train the big four lifts, hopefully for the rest of my life.",
+      "",
+      "Two ways in from here, whichever suits you. To start logging, the big four lifts each have their own block on the log page: https://www.strengthjourneys.xyz/log",
+      "",
+      "Or if you already have training history in Hevy, Strong, StrongLifts, Wodify, BTWB or a spreadsheet, you can bring that file in and see the whole thing charted straight away: https://www.strengthjourneys.xyz/import",
+      "",
+      "Either way it ends up in a Google Sheet you own and keep. Strength Journeys only ever touches that one sheet, and nothing else in your Drive.",
+      "",
       "What were you hoping Strength Journeys would help you see or do?",
-      ...sharedClosing,
+      "",
+      "Even a quick sentence helps a lot.",
+      "",
+      "Thanks again for checking it out,",
+      "Wayne",
+      "https://www.instagram.com/wayneschuller/",
     ].join("\n"),
   };
 }
@@ -450,40 +413,38 @@ function describeEntry(record) {
   return page ? `[${page}]` : null;
 }
 
+// Stated as what happened, not as a verdict on it. "awaiting_scope" is a
+// lifter who signed in and did not grant drive.file, which by implication means
+// no sheet was bootstrapped for them. They still have a working dashboard, the
+// demo log and the import preview, so there is nothing here to call a failure.
 const FOUNDER_SUBJECT_OUTCOMES = {
   smooth: "is set up",
-  recovered: "is set up after a Drive retry",
-  stalled: "stopped at the Google Drive step",
+  recovered: "is set up, Drive granted on a later try",
+  awaiting_scope: "signed in without the Drive scope",
 };
 
 const FOUNDER_SUMMARIES = {
   smooth: "New lifter. Granted Drive on the first ask and finished setup.",
   recovered:
-    "New lifter. Missed the Drive scope at first, then granted it and finished setup.",
-  stalled:
-    "New lifter. Never granted the Drive scope, so no sheet was created for them.",
+    "New lifter. Did not grant Drive on the first ask, granted it later and finished setup.",
+  awaiting_scope:
+    "New lifter. Signed in without the drive.file scope, so no sheet was bootstrapped. The dashboard, the demo log and the import preview all still work for them.",
 };
 
 /**
- * The founder-facing `[SJ]` notification.
+ * The founder-facing `[SJ]` notification, sent immediately as each thing
+ * happens. A lifter who signs in without the scope and later grants it produces
+ * two of these, which is the story worth telling: they arrived, then they came
+ * back and finished.
  *
- * `userNoteSubject` is the subject of the note the lifter will actually
- * receive, which is not always the note for `outcome`: when a stalled note has
- * already gone out, or a cancel failed and it is still queued, the stalled
- * wording is what lands. Callers pass what is really scheduled so this message
- * never claims a send that is not happening.
- *
- * `nudge` is a whole sentence written by the caller, not a flag. Anything that
- * needs doing by hand is said in the body in plain words with the thing to do
- * in it. It stays out of the subject line on purpose: a shouted prefix that
- * does not say what to do is worse than a calm sentence that does.
+ * `userNoteSubject` is passed only once the note to the lifter is actually
+ * scheduled, so this message never announces a send that did not happen.
  */
 function buildFounderEmail(
   user,
   outcome,
   record,
   scheduledAt = null,
-  nudge = null,
   userNoteSubject = null,
 ) {
   const name = getFounderName(user);
@@ -519,10 +480,13 @@ function buildFounderEmail(
     ? `Sheet created for them${record.provisioningMethod ? ` (${record.provisioningMethod})` : ""}.`
     : "No sheet created for them yet.";
 
+  // Said as of now, because this goes out as it happens. "Not granted at this
+  // sign-in" is a fact; "still not granted" would be a verdict on someone who
+  // may well grant it an hour from now.
   const scopeLine = record.firstMissingDriveScopeAt
     ? record.driveScopeRecoveredAt
-      ? `Drive scope missed at first, ${scopeGap ? `granted ${scopeGap} later` : `granted ${formatStamp(record.driveScopeRecoveredAt)}`}.`
-      : "Drive scope missed at first and still not granted."
+      ? `Drive scope not granted at first, ${scopeGap ? `granted ${scopeGap} later` : `granted ${formatStamp(record.driveScopeRecoveredAt)}`}.`
+      : "Drive scope not granted at this sign-in."
     : "Drive scope granted on the first ask.";
 
   return {
@@ -545,10 +509,6 @@ function buildFounderEmail(
         : scheduledAt
           ? `A note to them is scheduled for ${formatStamp(scheduledAt)}.`
           : null,
-      outcome === "stalled"
-        ? "Everything above was true when this was queued, a day or two before it reached you. They may have signed in again since."
-        : null,
-      nudge ? `\n${nudge}` : null,
     ]
       .filter((line) => line !== null)
       .join("\n")
@@ -608,18 +568,8 @@ async function sendEmail(resend, payload, idempotencyKey) {
   if (error) throw new Error(error.message || "Resend failed to send email");
 }
 
-async function cancelScheduledEmail(resend, emailId) {
-  if (!emailId) return true;
-  const { error } = await resend.emails.cancel(emailId);
-  if (error) {
-    console.error("[founder-support] scheduled email cancellation failed:", error);
-    return false;
-  }
-  return true;
-}
-
-async function scheduleUserNote({ context, user, outcome, scheduledAt }) {
-  const message = buildUserEmail(user, outcome);
+async function scheduleUserNote({ context, user, scheduledAt }) {
+  const message = buildUserEmail(user);
   return scheduleEmail(
     context.resend,
     {
@@ -632,29 +582,9 @@ async function scheduleUserNote({ context, user, outcome, scheduledAt }) {
       text: message.text,
       scheduledAt,
     },
-    `founder-support/user/${outcome}/${context.userEmail}`,
-  );
-}
-
-async function scheduleStalledFounderNote({ context, user, record, scheduledAt }) {
-  const message = buildFounderEmail(
-    user,
-    "stalled",
-    record,
-    scheduledAt,
-    null,
-    buildUserEmail(user, "stalled").subject,
-  );
-  return scheduleEmail(
-    context.resend,
-    {
-      from: FROM_EMAIL,
-      to: context.founderEmail,
-      subject: message.subject,
-      text: message.text,
-      scheduledAt,
-    },
-    `founder-support/founder/stalled/${context.userEmail}`,
+    // One note per lifter, so the key carries no outcome. Two racing events
+    // cannot produce two notes even if both get past the lock.
+    `founder-support/user/${context.userEmail}`,
   );
 }
 
@@ -663,8 +593,7 @@ async function sendFounderOutcome({
   user,
   outcome,
   record,
-  scheduledAt,
-  nudge = null,
+  scheduledAt = null,
   userNoteSubject = null,
 }) {
   const message = buildFounderEmail(
@@ -672,7 +601,6 @@ async function sendFounderOutcome({
     outcome,
     record,
     scheduledAt,
-    nudge,
     userNoteSubject,
   );
   await sendEmail(
@@ -687,6 +615,53 @@ async function sendFounderOutcome({
   );
 }
 
+/**
+ * Schedules the one note to the lifter, if it is not already on its way.
+ *
+ * Returns the subject the lifter will receive, or null when nothing was
+ * scheduled here, so the founder notification only mentions a send that is
+ * really happening.
+ */
+async function ensureUserNoteScheduled({
+  context,
+  user,
+  record,
+  writeKey,
+  now,
+}) {
+  if (record.supportUserNoteEmailId) return null;
+
+  const scheduledAt = getScheduledAt(context.userEmail, now);
+  const message = buildUserEmail(user);
+  const emailId = await scheduleUserNote({ context, user, scheduledAt });
+
+  // Append onto the freshest history so anything a concurrent request added
+  // survives. The outreach lock excludes the only other writer of this field,
+  // but the read happened before the network call above.
+  await mergeUserRecord(writeKey, (latest) => ({
+    founderEmailHistory: appendFounderEmailHistory(latest, {
+      category: "founder_support",
+      recordedAt: now.toISOString(),
+      resendEmailId: emailId,
+      scheduledAt,
+      status: "scheduled",
+    }),
+    supportUserNoteEmailId: emailId,
+    supportUserNoteScheduledFor: scheduledAt,
+  }));
+
+  return { scheduledAt, subject: message.subject };
+}
+
+/**
+ * A new lifter signed in without granting drive.file, so no sheet was
+ * bootstrapped for them.
+ *
+ * Both the founder notification and the note to the lifter happen here and now.
+ * Nothing is held back waiting to see whether they come good, because the note
+ * says the same thing either way and the notification is a statement about this
+ * moment rather than a verdict on how it ends.
+ */
 export async function handleSupportSignIn(user, meta = {}) {
   if (meta.hasRequiredDriveScope !== false) return;
 
@@ -700,64 +675,46 @@ export async function handleSupportSignIn(user, meta = {}) {
       !record.supportOutreachEligibleAt ||
       hasFounderSupportOptOut(record) ||
       record.supportOutcomeAt ||
-      record.supportStalledUserEmailId ||
-      record.supportUserOutreachSentOrScheduledAt
+      record.supportSignInNotifiedAt
     ) {
       return;
     }
 
-    const scheduledAt = getScheduledAt(context.userEmail);
-    const stalledRecord = {
-      ...record,
-      firstMissingDriveScopeAt:
-        record.firstMissingDriveScopeAt || new Date().toISOString(),
-    };
-    const pendingFields = {
-      firstMissingDriveScopeAt: stalledRecord.firstMissingDriveScopeAt,
-      supportPendingOutcome: "stalled",
-      supportUserOutreachScheduledFor: scheduledAt,
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const authoredFields = {
+      firstMissingDriveScopeAt: record.firstMissingDriveScopeAt || nowIso,
+      supportSignInNotifiedAt: nowIso,
     };
 
-    if (!record.supportStalledFounderEmailId) {
-      const founderEmailId = await scheduleStalledFounderNote({
-        context,
-        user,
-        record: stalledRecord,
-        scheduledAt,
-      });
-      await mergeUserRecord(writeKey, {
-        ...pendingFields,
-        supportStalledFounderEmailId: founderEmailId,
-      });
-    }
+    const note = await ensureUserNoteScheduled({
+      context,
+      user,
+      record,
+      writeKey,
+      now,
+    });
 
-    if (!record.supportStalledUserEmailId) {
-      const userEmailId = await scheduleUserNote({
-        context,
-        user,
-        outcome: "stalled",
-        scheduledAt,
-      });
-      // Append onto the freshest history so the founder email ID written a
-      // moment ago (and anything a concurrent request added) survives.
-      await mergeUserRecord(writeKey, (latest) => ({
-        ...pendingFields,
-        founderEmailHistory: appendFounderEmailHistory(latest, {
-          category: "founder_support",
-          outcome: "stalled",
-          recordedAt: new Date().toISOString(),
-          resendEmailId: userEmailId,
-          scheduledAt,
-          status: "scheduled",
-        }),
-        supportStalledUserEmailId: userEmailId,
-      }));
-    }
+    await sendFounderOutcome({
+      context,
+      user,
+      outcome: "awaiting_scope",
+      record: { ...record, ...authoredFields },
+      scheduledAt: note?.scheduledAt ?? record.supportUserNoteScheduledFor,
+      userNoteSubject: note?.subject ?? null,
+    });
+    await mergeUserRecord(writeKey, authoredFields);
   } finally {
     await releaseLock(context.userEmail);
   }
 }
 
+/**
+ * A new lifter finished setup and has a sheet.
+ *
+ * `supportOutcomeAt` closes the record: this is the last notification either of
+ * them gets from this flow.
+ */
 export async function handleSupportActivation(
   user,
   { requirePriorMissingScope = false } = {},
@@ -780,128 +737,25 @@ export async function handleSupportActivation(
     const now = new Date();
     const nowIso = now.toISOString();
     const hadMissingScope = Boolean(record.firstMissingDriveScopeAt);
-    const pendingSendMs = record.supportUserOutreachScheduledFor
-      ? new Date(record.supportUserOutreachScheduledFor).getTime()
-      : null;
-    const pendingEmailHasLikelySent =
-      Number.isFinite(pendingSendMs) && pendingSendMs <= now.getTime();
-
-    // Both calls are attempted even if the first fails, so a cancellable
-    // founder email isn't left behind just because the user email cancel
-    // errored (and vice versa).
-    let stalledUserEmailCancelled = true;
-    let stalledFounderEmailCancelled = true;
-    if (!pendingEmailHasLikelySent) {
-      stalledUserEmailCancelled = await cancelScheduledEmail(
-        context.resend,
-        record.supportStalledUserEmailId,
-      );
-      stalledFounderEmailCancelled = await cancelScheduledEmail(
-        context.resend,
-        record.supportStalledFounderEmailId,
-      );
-    }
-
-    // A cancel that was actually attempted and came back with an error is
-    // different from one skipped because the stalled email had likely
-    // already gone out: here Resend still holds a live, wrongly-worded
-    // "stalled" send, and treating that as resolved would tell the founder
-    // everything is fine while the user is still about to get the wrong
-    // email. This guards against a real incident: a send-only-restricted
-    // Resend API key silently failed every cancel call, and the outcome was
-    // finalized (with the only pointers to the stale email discarded)
-    // regardless.
-    const cancelFailed =
-      !pendingEmailHasLikelySent &&
-      (!stalledUserEmailCancelled || !stalledFounderEmailCancelled);
-
     const outcome = hadMissingScope ? "recovered" : "smooth";
-    const scheduledAt = pendingEmailHasLikelySent
-      ? record.supportUserOutreachScheduledFor
-      : getScheduledAt(context.userEmail, now);
-    let userEmailId = record.supportStalledUserEmailId || null;
-    // Which note the lifter actually ends up receiving. It starts as whatever
-    // is already queued (the stalled note, if there is one) and only becomes
-    // this outcome's note once that note is genuinely scheduled below, so the
-    // founder notification never announces a send that did not happen.
-    let landingNoteOutcome = record.supportStalledUserEmailId
-      ? "stalled"
-      : null;
-    let founderEmailHistory = Array.isArray(record.founderEmailHistory)
-      ? record.founderEmailHistory
-      : [];
 
-    if (
-      !pendingEmailHasLikelySent &&
-      stalledUserEmailCancelled &&
-      record.supportStalledUserEmailId
-    ) {
-      founderEmailHistory = markFounderEmailCancelled(
-        record,
-        record.supportStalledUserEmailId,
-        nowIso,
-      );
-    }
+    const note = await ensureUserNoteScheduled({
+      context,
+      user,
+      record,
+      writeKey,
+      now,
+    });
+    const scheduledAt = note?.scheduledAt ?? record.supportUserNoteScheduledFor;
 
-    if (!pendingEmailHasLikelySent && stalledUserEmailCancelled) {
-      userEmailId = await scheduleUserNote({
-        context,
-        user,
-        outcome,
-        scheduledAt,
-      });
-      landingNoteOutcome = outcome;
-      founderEmailHistory = appendFounderEmailHistory(
-        { founderEmailHistory },
-        {
-          category: "founder_support",
-          outcome,
-          recordedAt: nowIso,
-          resendEmailId: userEmailId,
-          scheduledAt,
-          status: "scheduled",
-        },
-      );
-    }
-
-    // `founderEmailHistory` is derived from the snapshot above, which is safe
-    // because the outreach lock excludes the only other writer of that field.
     const authoredFields = {
       ...(hadMissingScope && !record.driveScopeRecoveredAt
         ? { driveScopeRecoveredAt: nowIso }
         : {}),
-      founderEmailHistory,
-      supportUserOutreachSentOrScheduledAt:
-        record.supportUserOutreachSentOrScheduledAt || nowIso,
-      ...(cancelFailed
-        ? // Deliberately leave supportOutcome/supportOutcomeAt and the
-          // supportStalled*EmailId pointers untouched: the next sign-in or
-          // activation event should retry the cancel rather than treating
-          // this as resolved, and the stale IDs must survive so they stay
-          // discoverable (in the founder warning email and in KV) until a
-          // cancel actually succeeds.
-          { supportPendingOutcome: outcome }
-        : {
-            supportOutcome: outcome,
-            supportOutcomeAt: nowIso,
-            supportPendingOutcome: null,
-            supportStalledFounderEmailId: null,
-            supportStalledUserEmailId: null,
-            supportUserEmailId: userEmailId,
-            supportUserOutreachScheduledFor: scheduledAt,
-          }),
+      supportOutcome: outcome,
+      supportOutcomeAt: nowIso,
+      supportUserNoteScheduledFor: scheduledAt || null,
     };
-
-    // Written as the sentence it will be read as, with the ids needed to act on
-    // it. The old version led with "WARNING" and then made the reader work out
-    // what had gone wrong and what to do about it.
-    const stuckEmailIds = [
-      stalledUserEmailCancelled ? null : record.supportStalledUserEmailId,
-      stalledFounderEmailCancelled ? null : record.supportStalledFounderEmailId,
-    ].filter(Boolean);
-    const nudge = cancelFailed
-      ? `Worth two minutes when you get a chance. The stalled note could not be cancelled, so ${getFirstName(user) || "they"} may still receive "${buildUserEmail(user, "stalled").subject}" around ${formatStamp(record.supportUserOutreachScheduledFor) || "its original time"}, which now reads wrong. Cancel ${stuckEmailIds.join(" and ") || "it"} in the Resend dashboard.`
-      : null;
 
     await sendFounderOutcome({
       context,
@@ -909,10 +763,7 @@ export async function handleSupportActivation(
       outcome,
       record: { ...record, ...authoredFields },
       scheduledAt,
-      nudge,
-      userNoteSubject: landingNoteOutcome
-        ? buildUserEmail(user, landingNoteOutcome).subject
-        : null,
+      userNoteSubject: note?.subject ?? null,
     });
     // Write only the fields authored here: the sign-in callback may have
     // bumped counters or scope timestamps while these emails were in flight.

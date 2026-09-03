@@ -755,7 +755,7 @@ async function createBlankSheet(sheetName, headers) {
 // Re-reads KV immediately before writing rather than spreading the
 // request-start `existingRecord` snapshot. The Drive scan/copy calls between
 // that snapshot and this write can take long enough for a concurrent sign-in
-// to write outreach-tracking fields (supportOutcomeAt, supportStalled*EmailId,
+// to write outreach-tracking fields (supportOutcomeAt, supportUserNoteEmailId,
 // etc.) in between — a blind overwrite here would silently drop those and
 // make the founder-support flow treat an already-emailed user as fresh again,
 // queuing a second user-facing email. Mirrors the same fix already applied to

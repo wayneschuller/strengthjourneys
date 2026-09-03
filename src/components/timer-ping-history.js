@@ -33,51 +33,81 @@ export function TimerPingHistory({
   const visiblePings = allPings.slice(-MAX_VISIBLE_PINGS);
   const hiddenCount = allPings.length - visiblePings.length;
 
+  // One column per marker, the last of them being the ping still to come. Every
+  // column draws its own slice of the connecting line, so the line always runs
+  // through the dots rather than being positioned against them.
+  const columns = [
+    ...(hiddenCount > 0 ? [{ key: "earlier", kind: "earlier" }] : []),
+    ...visiblePings.map((seconds, index) => ({
+      key: seconds,
+      kind: index === visiblePings.length - 1 ? "newest" : "done",
+      seconds,
+    })),
+    {
+      key: "next",
+      kind: "next",
+      seconds: (pingCount + 1) * pingIntervalSeconds,
+    },
+  ];
+
   const nudge = pickNudge(`${seed}-${pingCount}`);
 
   return (
     <div className="hidden w-full flex-col items-center md:flex">
-      <div className="flex items-end justify-center">
-        {hiddenCount > 0 && (
-          <span className="text-muted-foreground mr-1 mb-4 text-xs">
-            +{hiddenCount}
-          </span>
-        )}
-        {visiblePings.map((seconds, index) => {
-          const isNewest = index === visiblePings.length - 1;
+      <div className="flex max-w-full justify-center overflow-x-auto">
+        {columns.map((column, index) => {
+          const isFirst = index === 0;
+          const isLast = index === columns.length - 1;
 
           return (
-            <div key={seconds} className="flex items-end">
-              <span
-                className={cn(
-                  "bg-border mb-[0.3rem] h-px w-8",
-                  index === 0 && hiddenCount === 0 && "w-4",
-                )}
-              />
-              <div className="flex flex-col items-center">
+            <div
+              key={column.key}
+              className={cn(
+                "flex shrink-0 flex-col items-center",
+                column.kind === "next" ? "w-20" : "w-14",
+              )}
+            >
+              <div className="relative flex h-3 w-full items-center justify-center">
                 <span
                   className={cn(
-                    "bg-muted-foreground/50 h-2 w-2 rounded-full",
-                    isNewest && "bg-primary h-2.5 w-2.5",
-                    isNewest && isAlerting && "animate-pulse",
+                    "bg-border absolute top-1/2 h-px -translate-y-1/2",
+                    // The line never runs past the outermost markers.
+                    isFirst && "right-0 left-1/2",
+                    isLast && "right-1/2 left-0",
+                    !isFirst && !isLast && "inset-x-0",
                   )}
                 />
-                <span
-                  className={cn(
-                    "text-muted-foreground mt-1 text-xs tabular-nums",
-                    isNewest && "text-foreground font-semibold",
-                  )}
-                >
-                  {formatAlarmLabel(seconds)}
-                </span>
+                {column.kind === "earlier" ? (
+                  <span className="text-muted-foreground relative text-xs">
+                    ...
+                  </span>
+                ) : (
+                  <span
+                    className={cn(
+                      "bg-muted-foreground/50 relative h-2 w-2 rounded-full",
+                      column.kind === "newest" && "bg-primary h-2.5 w-2.5",
+                      column.kind === "newest" && isAlerting && "animate-pulse",
+                      column.kind === "next" &&
+                        "border-muted-foreground/50 h-2 w-2 border bg-transparent",
+                    )}
+                  />
+                )}
               </div>
+              <span
+                className={cn(
+                  "text-muted-foreground mt-1 text-xs whitespace-nowrap tabular-nums",
+                  column.kind === "newest" && "text-foreground font-semibold",
+                )}
+              >
+                {column.kind === "earlier"
+                  ? `+${hiddenCount}`
+                  : column.kind === "next"
+                    ? `next ${formatAlarmLabel(column.seconds)}`
+                    : formatAlarmLabel(column.seconds)}
+              </span>
             </div>
           );
         })}
-        <span className="bg-border mb-[0.3rem] ml-0 h-px w-8" />
-        <span className="text-muted-foreground mb-3 text-xs">
-          next {formatAlarmLabel((pingCount + 1) * pingIntervalSeconds)}
-        </span>
       </div>
 
       <p className="text-muted-foreground mt-3 text-center text-sm italic">

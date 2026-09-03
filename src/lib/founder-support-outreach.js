@@ -441,12 +441,13 @@ function describeCta(cta) {
 
 // Where they came in. The Drive decline rate varies a lot by CTA, so this is
 // the one fact worth carrying up into the subject line rather than leaving it
-// in a body that gets skimmed.
+// in a body that gets skimmed. The plain name reads first and the path follows
+// in brackets, so the sentence scans and the exact URL is still there to act on.
 function describeEntry(record) {
   const label = describeCta(record.firstSignInCta);
   const page = record.firstSignInPage || null;
-  if (label && page) return `${label} (${page})`;
-  return label || page || null;
+  if (label) return page ? `${label} [${page}]` : label;
+  return page ? `[${page}]` : null;
 }
 
 const FOUNDER_SUBJECT_OUTCOMES = {
@@ -487,10 +488,8 @@ function buildFounderEmail(
 ) {
   const name = getFounderName(user);
   const identity =
-    user?.email && name !== user.email ? `${name} <${user.email}>` : name;
+    user?.email && name !== user.email ? `${name} (${user.email})` : name;
   const entry = describeEntry(record);
-  const subjectSource =
-    describeCta(record.firstSignInCta) || record.firstSignInPage;
   const scopeGap =
     record.firstMissingDriveScopeAt && record.driveScopeRecoveredAt
       ? formatGap(record.firstMissingDriveScopeAt, record.driveScopeRecoveredAt)
@@ -527,8 +526,10 @@ function buildFounderEmail(
     : "Drive scope granted on the first ask.";
 
   return {
-    subject: `[SJ] ${name} ${FOUNDER_SUBJECT_OUTCOMES[outcome]}${
-      subjectSource ? `, from ${subjectSource}` : ""
+    // The full address rides in the subject so a search for someone's email
+    // finds the notification as well as the thread it started.
+    subject: `[SJ] ${identity} ${FOUNDER_SUBJECT_OUTCOMES[outcome]}${
+      entry ? `, from ${entry}` : ""
     }`,
     text: [
       identity,

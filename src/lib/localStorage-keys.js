@@ -129,6 +129,11 @@ export const LOCAL_STORAGE_KEYS = {
   // Analyzer
   HEATMAP_VIEW_MODE: "SJ_heatmapViewMode",
 
+  // Gym timer
+  // Rest target in seconds; 0 means the timer runs as a plain stopwatch.
+  TIMER_REST_TARGET: "SJ_timerRestTarget",
+  TIMER_MUTED: "SJ_timerMuted",
+
   // Analytics flags
   HOME_DASHBOARD_FIRST_VIEW_TRACKED: "SJ_homeDashboardFirstViewTracked",
   HOME_DASHBOARD_LAST_TRACKED_STAGE: "SJ_homeDashboardLastTrackedStage",

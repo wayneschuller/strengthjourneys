@@ -54,6 +54,8 @@ export const GA_EVENT_TAGS = Object.freeze({
   TIMER_START_STOP_TOGGLE: "timer_start_stop_toggle", // ~May 2024: Timer play/pause toggled.
   TIMER_RESET: "timer_reset", // ~May 2024: Timer reset to zero and stopped.
   TIMER_RESTARTED: "timer_restarted", // ~Apr 2024: Timer restarted from zero and running.
+  TIMER_REST_TARGET_SET: "SJ_timer_rest_target_set", // ~Sep 2026: Lifter chose a rest target (or stopwatch mode) on the gym timer.
+  TIMER_REST_COMPLETE: "SJ_timer_rest_complete", // ~Sep 2026: A rest target elapsed and the timer alerted the lifter.
   GSHEET_API_ERROR: "gSheetAPIError", // ~Apr 2024: Google Sheets API request failed.
   GSHEET_DATA_UPDATED: "gSheetDataUpdated", // ~Dec 2023: Sheet data loaded and parsed successfully.
   GSHEET_READ_REJECTED: "gSheetReadRejected", // ~Mar 2024: Sheet read/parse rejected as invalid.

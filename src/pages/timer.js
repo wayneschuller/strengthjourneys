@@ -1,19 +1,37 @@
 /** @format */
 // pages/timer.js
+//
+// The gym timer page: a giant clock built to be read from arm's length while
+// standing at a rack. Everything about the timing itself (wall-clock accuracy,
+// screen wake lock, the end-of-rest chime) lives in the shared TimerProvider so
+// the nav bar MiniTimer keeps counting when a lifter navigates away mid-rest.
 
+import React, { useCallback, useEffect } from "react";
 
-import Head from "next/head";
-import React, { useState, useEffect, useContext } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useTimer } from "@/hooks/use-timer";
-import { devLog } from "@/lib/processing-utils";
+import { Volume2, VolumeX } from "lucide-react";
 import { NextSeo } from "next-seo";
 
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
 import { PageContainer } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { formatTime, useTimer } from "@/hooks/use-timer";
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { cn } from "@/lib/utils";
+
+const PAGE_TITLE = "Gym Timer | Strength Journeys";
+
+// Rest targets a lifter actually uses: a minute for accessories, ninety seconds
+// to three minutes for most working sets, five for heavy singles.
+const REST_PRESETS = [
+  { label: "Stopwatch", seconds: 0 },
+  { label: "1:00", seconds: 60 },
+  { label: "1:30", seconds: 90 },
+  { label: "2:00", seconds: 120 },
+  { label: "3:00", seconds: 180 },
+  { label: "5:00", seconds: 300 },
+];
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Gym Timer";
@@ -34,11 +52,9 @@ export async function getStaticProps() {
  * @param {Array} props.relatedArticles - CMS articles related to the Gym Timer topic, fetched via ISR.
  */
 export default function Timer({ relatedArticles }) {
-  // const { time } = useTimer();
-
   // OG Meta Tags
   const canonicalURL = "https://www.strengthjourneys.xyz/timer";
-  const title = "Gym Timer | Strength Journeys";
+  const title = PAGE_TITLE;
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_timer_og.png";
   const description =
@@ -79,7 +95,9 @@ export default function Timer({ relatedArticles }) {
       />
 
       <section className="flex flex-col items-center">
-        <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
+        {/* The clock itself is the desktop headline, so the h1 goes screen-reader
+            only above md rather than disappearing from the page entirely. */}
+        <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:sr-only lg:text-5xl">
           Lifting Set Timer
         </h1>
         <LargeTimer />
@@ -90,33 +108,65 @@ export default function Timer({ relatedArticles }) {
 }
 
 /**
- * Full-screen timer display with a giant time readout and restart/start-stop/reset controls.
- * Starts automatically on mount and supports spacebar restart via keyboard listener.
+ * Full-screen timer display with a giant time readout, rest-target presets and
+ * restart/start-stop/reset controls. Starts counting on mount and supports
+ * spacebar restart via a keyboard listener.
  */
 function LargeTimer() {
   const {
     time,
-    setTime,
     isRunning,
-    setIsRunning,
+    hasRestTarget,
+    restTargetSeconds,
+    remainingSeconds,
+    isOvertime,
+    isMuted,
+    setIsMuted,
+    setRestTarget,
+    ensureRunning,
     handleStartStop,
     handleReset,
     handleRestart,
   } = useTimer();
 
+  // Mid-rest the useful number is the time left. Once the target is behind us we
+  // count the overtime instead, because "how far over am I" is the next question.
+  let display = formatTime(time);
+  if (hasRestTarget) {
+    display = isOvertime
+      ? `+${formatTime(-remainingSeconds)}`
+      : formatTime(remainingSeconds);
+  }
+
+  const isWideDisplay = display.length > 5;
+
   useEffect(() => {
     // Start the timer on first mount of this page
-    setIsRunning(true);
-  }, [setIsRunning]); // It only needs to run on [] mount but eslint wants the dependency put in
+    ensureRunning();
+  }, [ensureRunning]); // It only needs to run on [] mount but eslint wants the dependency put in
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      // Check if the pressed key is 'Space'
-      if (event.code === "Space") {
-        // Prevent the default action to avoid scrolling the page
-        event.preventDefault();
-        handleRestart();
-      }
+      if (event.code !== "Space") return;
+
+      // Space belongs to whatever the lifter is actually focused on: typing in a
+      // field, or activating a button. We only claim it when it would otherwise
+      // just scroll the page.
+      const target = event.target;
+      const tagName = target?.tagName;
+      const isInteractiveTarget =
+        target?.isContentEditable ||
+        tagName === "INPUT" ||
+        tagName === "TEXTAREA" ||
+        tagName === "SELECT" ||
+        tagName === "BUTTON" ||
+        tagName === "A";
+
+      if (isInteractiveTarget) return;
+
+      // Prevent the default action to avoid scrolling the page
+      event.preventDefault();
+      handleRestart();
     };
 
     // Add event listener for 'keydown' on window
@@ -126,79 +176,125 @@ function LargeTimer() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [setIsRunning, handleRestart]); // The empty array ensures this effect runs only once on mount
+  }, [handleRestart]);
+
+  // Put the live clock in the tab title so a lifter who switches tabs mid-rest
+  // can still see where they are up to.
+  useEffect(() => {
+    if (!isRunning) return;
+
+    document.title = `${display} · Gym Timer`;
+
+    return () => {
+      document.title = PAGE_TITLE;
+    };
+  }, [display, isRunning]);
+
+  const handleCardKeyDown = useCallback(
+    (event) => {
+      // Space is already handled globally above; Enter needs its own path so the
+      // clock behaves like the button it looks like.
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleRestart();
+      }
+    },
+    [handleRestart],
+  );
+
+  const restProgress = hasRestTarget
+    ? Math.min(100, (time / restTargetSeconds) * 100)
+    : 0;
 
   return (
     <div className="flex flex-col items-center">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        {REST_PRESETS.map((preset) => (
+          <Button
+            key={preset.label}
+            variant={
+              restTargetSeconds === preset.seconds ? "default" : "outline"
+            }
+            aria-pressed={restTargetSeconds === preset.seconds}
+            className="tabular-nums"
+            onClick={() => setRestTarget(preset.seconds)}
+          >
+            {preset.label}
+          </Button>
+        ))}
+        {hasRestTarget && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMuted(!isMuted)}
+            title={
+              isMuted ? "Turn the rest chime on" : "Turn the rest chime off"
+            }
+          >
+            {isMuted ? <VolumeX /> : <Volume2 />}
+            <span className="sr-only">
+              {isMuted ? "Turn the rest chime on" : "Turn the rest chime off"}
+            </span>
+          </Button>
+        )}
+      </div>
+
       <Card
-        className="my-10 flex-1 bg-muted ring-4 hover:cursor-pointer hover:ring-blue-900 md:my-5"
+        className="bg-muted focus-visible:ring-primary my-10 flex-1 ring-4 hover:cursor-pointer hover:ring-blue-900 focus-visible:outline-none md:my-5"
+        role="button"
+        tabIndex={0}
+        aria-label="Restart the set timer"
         onClick={handleRestart}
+        onKeyDown={handleCardKeyDown}
       >
         <CardContent>
           <div
-            className={`pt-6 text-center text-9xl font-bold tabular-nums md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]`}
+            role="timer"
+            aria-live="off"
+            className={cn(
+              "pt-6 text-center font-bold tabular-nums",
+              // An overtime "+" or an hour digit adds a character, so the longer
+              // readouts step down a size to stay inside a phone screen.
+              isWideDisplay
+                ? "text-7xl md:text-[12rem] lg:text-[16rem] xl:text-[20rem] 2xl:text-[24rem]"
+                : "text-9xl md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]",
+              isOvertime && "text-primary",
+            )}
           >
-            {formatTime(time)}
+            {display}
           </div>
+          {hasRestTarget && (
+            <Progress value={restProgress} className="mt-4 h-2" />
+          )}
         </CardContent>
       </Card>
+
+      {/* Announced once when the rest period ends. The ticking clock above stays
+          silent for screen readers because reading every second is unusable. */}
+      <p className="sr-only" role="status" aria-live="assertive">
+        {isOvertime ? "Rest complete" : ""}
+      </p>
+
       <Button
         className="my-2 text-xl tracking-tight hover:ring md:px-6 md:py-8 md:text-3xl lg:text-6xl xl:my-4 xl:px-10 xl:py-20 xl:text-9xl"
         onClick={handleRestart}
       >
         Restart
       </Button>
-      <div className="mt-2">
-        <button
-          className="mx-2 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
-          onClick={handleStartStop}
-        >
+      <div className="mt-2 flex gap-2">
+        <Button variant="secondary" onClick={handleStartStop}>
           {isRunning ? "Stop" : "Start"}
-        </button>
-        <button
-          className="mx-2 rounded bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-700"
-          onClick={handleReset}
-        >
+        </Button>
+        <Button variant="destructive" onClick={handleReset}>
           Reset
-        </button>
+        </Button>
       </div>
-    </div>
-  );
-}
-
-const formatTime = (totalSeconds) => {
-  const minutes = Math.floor(totalSeconds / 60);
-  const remainingSeconds = totalSeconds % 60;
-
-  const formattedMinutes = String(minutes).padStart(2, "0");
-  const formattedSeconds = String(remainingSeconds).padStart(2, "0");
-
-  return `${formattedMinutes}:${formattedSeconds}`;
-};
-
-/**
- * Compact inline timer display used in the site navigation bar. Renders only while the timer is running,
- * showing the elapsed time and restarting on click.
- */
-export function MiniTimer() {
-  const {
-    time,
-    setTime,
-    isRunning,
-    setIsRunning,
-    handleStartStop,
-    handleReset,
-    handleRestart,
-  } = useTimer();
-
-  if (!isRunning) return null; // Don't show if not running
-
-  return (
-    <div
-      className={`cursor-pointer tabular-nums tracking-wide`}
-      onClick={() => handleRestart()}
-    >
-      {formatTime(time)}
+      <p className="text-muted-foreground mt-4 text-center text-sm md:hidden">
+        Tap the clock to restart your set timer.
+      </p>
+      <p className="text-muted-foreground mt-4 hidden text-center text-sm md:block">
+        Press the space bar or click the clock to restart your set timer.
+      </p>
     </div>
   );
 }

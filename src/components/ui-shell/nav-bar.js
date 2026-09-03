@@ -18,7 +18,7 @@ import { AvatarDropdown } from "@/components/ui-shell/avatar-menu";
 import { Table2, Loader2, Layers, LineChart, NotebookText, Plus, Disc, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
-import { MiniTimer } from "@/pages/timer";
+import { MiniTimer } from "@/components/mini-timer";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";

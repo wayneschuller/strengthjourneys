@@ -288,7 +288,7 @@ export function NavBar() {
 
 // FIXME: use the featurePages array in index.js?
 
-const LOGO_WIDTH = 110;
+const LOGO_WIDTH = 118;
 
 /**
  * Desktop navigation area showing the logo and the main nav menus.
@@ -320,7 +320,7 @@ export function DesktopNav() {
         prefetch={false}
         href="/"
         className={cn(
-          "mr-6 flex shrink-0 items-center 2xl:mr-10",
+          "mr-4 flex shrink-0 items-center xl:mr-6 2xl:mr-10",
           isValidating && "animate-pulse",
         )}
       >
@@ -331,7 +331,7 @@ export function DesktopNav() {
           height={getLogoHeight(logoSrc, LOGO_WIDTH)}
           alt="Strength Journeys logo"
           className={cn(
-            "inline-block h-auto w-[110px] shrink-0 origin-left scale-[1.2] rounded-lg",
+            "inline-block h-auto w-[118px] shrink-0 rounded-lg",
             isStarryNight && "ring-border shadow-sm ring-1",
           )}
           priority={true}

@@ -110,8 +110,9 @@ export default async function handler(req, res) {
     : "unknown";
   const baseUrl = getBaseUrl(req);
   const pageUrl = toAbsolutePageUrl(req, pagePath);
-  const logoUrl =
-    "https://www.strengthjourneys.xyz/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fnav_logo_light.14bdfd15.png&w=256&q=75";
+  // Straight from public/ so the URL survives asset changes. The optimizer
+  // path carries a content hash that dies whenever the logo is touched.
+  const logoUrl = "https://www.strengthjourneys.xyz/nav_logo_light.png";
   const safeMessage = message.trim();
   const safeName = escapeHtml(userName);
   const safeContactEmail = escapeHtml(contactEmailLabel);

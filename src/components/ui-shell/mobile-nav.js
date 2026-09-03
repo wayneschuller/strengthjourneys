@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/sheet";
 
 // Wordmark size for the compact bar between sm and the desktop nav.
-const BAR_LOGO_WIDTH = 88;
+const BAR_LOGO_WIDTH = 100;
 
 /**
  * Slide-out navigation drawer triggered by a hamburger button, used below lg.
@@ -45,7 +45,7 @@ export function MobileNav() {
     importProfile,
     "repeat-import-mobile-menu",
   );
-  const logoWidth = 150;
+  const logoWidth = 160;
   const { resolvedTheme, theme } = useTheme();
   const [isStarryNight, setIsStarryNight] = useState(false);
   const [logoSrc, setLogoSrc] = useState(() => {
@@ -122,7 +122,7 @@ export function MobileNav() {
                     height={getLogoHeight(logoSrc, logoWidth)}
                     alt="Strength Journeys logo"
                     className={cn(
-                      "inline-block h-auto w-[150px] shrink-0 origin-left scale-[1.2] rounded-lg",
+                      "inline-block h-auto w-[160px] shrink-0 rounded-lg",
                       isStarryNight && "ring-border shadow-sm ring-1",
                     )}
                   />
@@ -199,7 +199,7 @@ export function MobileNav() {
           height={getLogoHeight(logoSrc, BAR_LOGO_WIDTH)}
           alt="Strength Journeys logo"
           className={cn(
-            "h-auto w-[88px] shrink-0 rounded-lg",
+            "h-auto w-[100px] shrink-0 rounded-lg",
             isStarryNight && "ring-border shadow-sm ring-1",
           )}
         />

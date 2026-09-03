@@ -130,9 +130,10 @@ export const LOCAL_STORAGE_KEYS = {
   HEATMAP_VIEW_MODE: "SJ_heatmapViewMode",
 
   // Gym timer
-  // Armed alarm points, as an array of seconds. The clock always counts forward;
-  // these are optional pings along the way rather than a rest period to obey.
-  TIMER_ALARM_POINTS: "SJ_timerAlarmPoints",
+  // Repeating ping interval in seconds; 0 means the clock runs silently. The
+  // clock always counts forward, so these are nudges along the way rather than
+  // a rest period to obey.
+  TIMER_PING_INTERVAL: "SJ_timerPingInterval",
   TIMER_MUTED: "SJ_timerMuted",
 
   // Analytics flags

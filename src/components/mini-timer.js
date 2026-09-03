@@ -9,17 +9,18 @@
  * majority of visitors who never touch the gym timer.
  */
 
+import { TimerDigits } from "@/components/timer-digits";
 import { formatTime, useTimer } from "@/hooks/use-timer";
 import { cn } from "@/lib/utils";
 
 export function MiniTimer() {
-  const { time, isRunning, activeAlarmSeconds, handleRestart } = useTimer();
+  const { time, isRunning, activePingSeconds, handleRestart } = useTimer();
 
   if (!isRunning) return null; // Don't show if not running
 
-  // An armed alarm point lights up here too, so the ping still has something
-  // visible attached to it when the lifter is on another page.
-  const isAlerting = activeAlarmSeconds !== null;
+  // A ping lights up here too, so it still has something visible attached to it
+  // when the lifter is on another page.
+  const isAlerting = activePingSeconds !== null;
 
   return (
     <div
@@ -30,7 +31,7 @@ export function MiniTimer() {
       onClick={handleRestart}
       title="Gym timer. Click to restart."
     >
-      {formatTime(time)}
+      <TimerDigits value={formatTime(time)} />
     </div>
   );
 }

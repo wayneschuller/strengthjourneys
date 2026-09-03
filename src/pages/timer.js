@@ -2,11 +2,11 @@
 // pages/timer.js
 //
 // The gym timer page: a giant clock built to be read from arm's length while
-// standing at a rack. It always counts forward, with optional alarm points a
-// lifter can arm for a ping and a visual alert on the way past. Everything about
-// the timing itself (wall-clock accuracy, screen wake lock, the ping) lives in
-// the shared TimerProvider so the nav bar MiniTimer keeps counting when a lifter
-// navigates away mid-set.
+// standing at a rack. It always counts forward, with an optional repeating ping
+// that nudges the lifter without ever telling them their rest is over.
+// Everything about the timing itself (wall-clock accuracy, screen wake lock, the
+// ping) lives in the shared TimerProvider so the nav bar MiniTimer keeps
+// counting when a lifter navigates away mid-set.
 
 import React, { useCallback, useEffect, useRef } from "react";
 
@@ -15,6 +15,8 @@ import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { PageContainer } from "@/components/page-header";
+import { TimerDigits } from "@/components/timer-digits";
+import { TimerPingHistory } from "@/components/timer-ping-history";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatAlarmLabel, formatTime, useTimer } from "@/hooks/use-timer";
@@ -23,16 +25,16 @@ import { cn } from "@/lib/utils";
 
 const PAGE_TITLE = "Gym Timer | Strength Journeys";
 
-// Optional alarm points. The clock never stops at one of these: it pings, shows
-// the alert, and keeps counting, because how long a lifter needs between sets is
-// a decision for the lifter rather than for the timer.
-const ALARM_PRESETS = [
-  { label: "0:45", seconds: 45 },
-  { label: "1:00", seconds: 60 },
-  { label: "1:30", seconds: 90 },
-  { label: "2:00", seconds: 120 },
-  { label: "3:00", seconds: 180 },
-  { label: "5:00", seconds: 300 },
+// A repeating ping rather than a one-shot alarm: a lifter who misses one still
+// gets the next, and the numbers match how rest between working sets actually
+// runs. The clock never stops at any of them.
+const PING_INTERVALS = [
+  { label: "Off", seconds: 0 },
+  { label: "2 min", seconds: 120 },
+  { label: "3 min", seconds: 180 },
+  { label: "5 min", seconds: 300 },
+  { label: "7 min", seconds: 420 },
+  { label: "10 min", seconds: 600 },
 ];
 
 export async function getStaticProps() {
@@ -118,11 +120,13 @@ function LargeTimer() {
   const {
     time,
     isRunning,
-    armedAlarms,
-    activeAlarmSeconds,
+    pingIntervalSeconds,
+    pingCount,
+    activePingSeconds,
+    nudgeSeed,
     isMuted,
     setIsMuted,
-    toggleAlarm,
+    setPingInterval,
     ensureRunning,
     handleStartStop,
     handleReset,
@@ -131,7 +135,7 @@ function LargeTimer() {
 
   const readoutRef = useRef(null);
   const display = formatTime(time);
-  const isAlerting = activeAlarmSeconds !== null;
+  const isAlerting = activePingSeconds !== null;
 
   useEffect(() => {
     // Start the timer on first mount of this page
@@ -225,35 +229,35 @@ function LargeTimer() {
   return (
     <div className="flex w-full flex-col items-center">
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        <span className="text-muted-foreground mr-1 text-sm">Ping me at</span>
-        {ALARM_PRESETS.map((preset) => {
-          const isArmed = armedAlarms.includes(preset.seconds);
+        <span className="text-muted-foreground mr-1 text-sm">Ping every</span>
+        {PING_INTERVALS.map((interval) => {
+          const isChosen = pingIntervalSeconds === interval.seconds;
 
           return (
             <Button
-              key={preset.seconds}
-              variant={isArmed ? "default" : "outline"}
+              key={interval.seconds}
+              variant={isChosen ? "default" : "outline"}
               size="sm"
-              aria-pressed={isArmed}
+              aria-pressed={isChosen}
               className="tabular-nums"
-              onClick={() => toggleAlarm(preset.seconds)}
+              onClick={() => setPingInterval(interval.seconds)}
             >
-              {preset.label}
+              {interval.label}
             </Button>
           );
         })}
-        {armedAlarms.length > 0 && (
+        {pingIntervalSeconds > 0 && (
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsMuted(!isMuted)}
             title={
-              isMuted ? "Turn the alarm ping on" : "Turn the alarm ping off"
+              isMuted ? "Turn the ping sound on" : "Turn the ping sound off"
             }
           >
             {isMuted ? <VolumeX /> : <Volume2 />}
             <span className="sr-only">
-              {isMuted ? "Turn the alarm ping on" : "Turn the alarm ping off"}
+              {isMuted ? "Turn the ping sound on" : "Turn the ping sound off"}
             </span>
           </Button>
         )}
@@ -266,7 +270,7 @@ function LargeTimer() {
           // every theme: primary and its foreground are guaranteed to contrast,
           // while a colour change on the digits alone disappears in the default
           // theme, where primary and foreground are both near black.
-          isAlerting && "bg-primary ring-primary animate-pulse",
+          isAlerting && "bg-primary ring-primary",
         )}
         role="button"
         tabIndex={0}
@@ -285,7 +289,7 @@ function LargeTimer() {
               isAlerting && "text-primary-foreground",
             )}
           >
-            {display}
+            <TimerDigits value={display} />
           </div>
         </CardContent>
       </Card>
@@ -293,12 +297,24 @@ function LargeTimer() {
       {/* Doubles as the screen-reader announcement, so an alarm point reaches
           everyone the same way. Height is reserved to keep the page steady. */}
       <p
-        className="text-primary min-h-6 text-center text-lg font-semibold"
+        className={cn(
+          // The motion lives on the label rather than the clock: a pulsing card
+          // spends half its cycle too faded to read from across a gym floor.
+          "text-primary min-h-6 text-center text-lg font-semibold",
+          isAlerting && "animate-pulse",
+        )}
         role="status"
         aria-live="assertive"
       >
-        {isAlerting ? `${formatAlarmLabel(activeAlarmSeconds)} reached` : ""}
+        {isAlerting ? `${formatAlarmLabel(activePingSeconds)} reached` : ""}
       </p>
+
+      <TimerPingHistory
+        pingIntervalSeconds={pingIntervalSeconds}
+        pingCount={pingCount}
+        seed={nudgeSeed}
+        isAlerting={isAlerting}
+      />
 
       <Button
         className="my-2 text-xl tracking-tight hover:ring md:px-6 md:py-8 md:text-3xl lg:text-6xl xl:my-4 xl:px-10 xl:py-20 xl:text-9xl"

@@ -3,8 +3,9 @@
  *
  * The clock only ever runs forwards. A lifter should be reading their own
  * readiness rather than obeying a countdown, so instead of enforcing a rest
- * period we let them arm optional alarm points: a ping and a visual alert as
- * each one passes, while the clock keeps counting.
+ * period we offer a repeating ping: a sound and a visual alert every few
+ * minutes, while the clock keeps counting. Repeating rather than one-shot means
+ * a missed ping is never the end of it, another one is always on the way.
  *
  * Two design constraints drive the rest of this file:
  *
@@ -50,10 +51,10 @@ export const useTimer = () => useContext(TimerContext);
 // cheap. The display only reads a timestamp, so this is purely refresh rate.
 const TICK_INTERVAL_MS = 250;
 
-// How long an alarm stays visually lit after it passes. Long enough to catch
+// How long a ping stays visually lit after it comes due. Long enough to catch
 // from across a gym floor, short enough that the clock returns to normal before
 // the next set.
-const ALARM_ALERT_SECONDS = 8;
+const PING_ALERT_SECONDS = 8;
 
 export const TimerProvider = ({ children }) => {
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -66,25 +67,25 @@ export const TimerProvider = ({ children }) => {
 
   const entriesForTodayRef = useRef(0);
   const hasSeenTodaysEntriesRef = useRef(false);
-  // Alarm points already sounded on this run, so a ping happens once per point.
-  const soundedAlarmsRef = useRef(new Set());
+  // How many pings have already sounded on this run, so each one lands once.
+  const soundedPingsRef = useRef(0);
   const { parsedData } = useUserLiftingData();
 
-  const [alarmPoints, setAlarmPoints] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.TIMER_ALARM_POINTS,
-    [],
+  const [pingIntervalSeconds, setPingIntervalSeconds] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.TIMER_PING_INTERVAL,
+    0,
     { initializeWithValue: false },
   );
+
+  // Seeds the rotating nudge phrases. Lazily initialised once per session so the
+  // wording varies between workouts while staying stable across every render of
+  // this one.
+  const [nudgeSeed] = useState(() => Date.now());
 
   const [isMuted, setIsMuted] = useLocalStorage(
     LOCAL_STORAGE_KEYS.TIMER_MUTED,
     false,
     { initializeWithValue: false },
-  );
-
-  const armedAlarms = useMemo(
-    () => (Array.isArray(alarmPoints) ? alarmPoints : []),
-    [alarmPoints],
   );
 
   const readElapsedMs = useCallback(() => {
@@ -107,7 +108,7 @@ export const TimerProvider = ({ children }) => {
 
     bankedMsRef.current = 0;
     startedAtRef.current = shouldRun ? Date.now() : null;
-    soundedAlarmsRef.current = new Set();
+    soundedPingsRef.current = 0;
     setElapsedMs(0);
   }, []);
 
@@ -205,34 +206,27 @@ export const TimerProvider = ({ children }) => {
 
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
-  // The lit alarm is derived from the clock rather than stored in state, so it
+  // How many pings the clock has passed, and when the most recent one landed.
+  const pingCount =
+    pingIntervalSeconds > 0
+      ? Math.floor(elapsedSeconds / pingIntervalSeconds)
+      : 0;
+  const lastPingSeconds = pingCount * pingIntervalSeconds;
+
+  // The lit ping is derived from the clock rather than stored in state, so it
   // clears itself as the seconds move on. No timeouts to cancel, and a paused
   // clock holds its alert until the lifter starts moving again.
-  const activeAlarmSeconds = useMemo(() => {
-    const passed = armedAlarms.filter((seconds) => elapsedSeconds >= seconds);
-    if (passed.length === 0) return null;
-
-    const mostRecent = Math.max(...passed);
-
-    return elapsedSeconds - mostRecent < ALARM_ALERT_SECONDS
-      ? mostRecent
+  const activePingSeconds =
+    pingCount > 0 && elapsedSeconds - lastPingSeconds < PING_ALERT_SECONDS
+      ? lastPingSeconds
       : null;
-  }, [armedAlarms, elapsedSeconds]);
 
-  // Sound each armed point once as the clock passes it.
+  // Sound each ping once as it comes due.
   useEffect(() => {
     if (!isRunning) return;
+    if (pingCount <= soundedPingsRef.current) return;
 
-    const due = armedAlarms.filter(
-      (seconds) =>
-        seconds > 0 &&
-        elapsedSeconds >= seconds &&
-        !soundedAlarmsRef.current.has(seconds),
-    );
-
-    if (due.length === 0) return;
-
-    due.forEach((seconds) => soundedAlarmsRef.current.add(seconds));
+    soundedPingsRef.current = pingCount;
 
     if (!isMuted) playAlarmPing();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -240,9 +234,10 @@ export const TimerProvider = ({ children }) => {
     }
 
     gaEvent(GA_EVENT_TAGS.TIMER_ALARM_FIRED, {
-      alarm_seconds: Math.max(...due),
+      ping_interval_seconds: pingIntervalSeconds,
+      ping_number: pingCount,
     });
-  }, [elapsedSeconds, armedAlarms, isMuted, isRunning]);
+  }, [pingCount, pingIntervalSeconds, isMuted, isRunning]);
 
   const handleStartStop = useCallback(() => {
     primeAudio();
@@ -288,43 +283,35 @@ export const TimerProvider = ({ children }) => {
     setIsRunning(true);
   }, []);
 
-  const toggleAlarm = useCallback(
+  const setPingInterval = useCallback(
     (seconds) => {
       primeAudio();
 
-      const wasArmed = armedAlarms.includes(seconds);
+      // Count the pings the clock has already run past as sounded, so choosing
+      // an interval mid-set never fires a burst of catch-up pings.
+      soundedPingsRef.current =
+        seconds > 0 ? Math.floor(readElapsedMs() / 1000 / seconds) : 0;
 
-      if (wasArmed) {
-        soundedAlarmsRef.current.delete(seconds);
-      } else if (readElapsedMs() >= seconds * 1000) {
-        // Arming a point the clock has already passed stays quiet: the ping
-        // belongs to the moment the time arrives, not to the act of choosing it.
-        soundedAlarmsRef.current.add(seconds);
-      }
+      setPingIntervalSeconds(seconds);
 
-      setAlarmPoints(
-        wasArmed
-          ? armedAlarms.filter((armed) => armed !== seconds)
-          : [...armedAlarms, seconds].sort((a, b) => a - b),
-      );
-
-      gaEvent(GA_EVENT_TAGS.TIMER_ALARM_TOGGLED, {
-        alarm_seconds: seconds,
-        enabled: !wasArmed,
+      gaEvent(GA_EVENT_TAGS.TIMER_PING_INTERVAL_SET, {
+        ping_interval_seconds: seconds,
       });
     },
-    [armedAlarms, readElapsedMs, setAlarmPoints],
+    [readElapsedMs, setPingIntervalSeconds],
   );
 
   const value = useMemo(
     () => ({
       time: elapsedSeconds,
       isRunning,
-      armedAlarms,
-      activeAlarmSeconds,
+      pingIntervalSeconds,
+      pingCount,
+      activePingSeconds,
+      nudgeSeed,
       isMuted,
       setIsMuted,
-      toggleAlarm,
+      setPingInterval,
       ensureRunning,
       handleStartStop,
       handleReset,
@@ -333,11 +320,13 @@ export const TimerProvider = ({ children }) => {
     [
       elapsedSeconds,
       isRunning,
-      armedAlarms,
-      activeAlarmSeconds,
+      pingIntervalSeconds,
+      pingCount,
+      activePingSeconds,
+      nudgeSeed,
       isMuted,
       setIsMuted,
-      toggleAlarm,
+      setPingInterval,
       ensureRunning,
       handleStartStop,
       handleReset,

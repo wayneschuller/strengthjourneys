@@ -1,6 +1,8 @@
 # Strength Journeys
 
-> Free, privacy-first barbell lifting analysis tools. Connect your Google Sheet training log and get visual insights, strength benchmarks, and PR tracking. No data stored server-side.
+> Free, privacy-first barbell lifting analysis tools. Connect your Google Sheet training log and get visual insights, strength benchmarks, and PR tracking. Your lifting data stays in your own Google Sheet and is never stored on our servers.
+
+- [Strength Journeys Home](https://www.strengthjourneys.xyz/): Landing page and personal dashboard, showing recent PRs and lifetime highlights once a Google Sheet is connected.
 
 ## Core Tools
 
@@ -19,7 +21,15 @@
 - [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer): Interactive charts of your estimated 1RM trends over time.
 - [Tonnage Tracker](https://www.strengthjourneys.xyz/tonnage): Weekly and monthly training volume analysis.
 - [Strength Year in Review](https://www.strengthjourneys.xyz/strength-year-in-review): Annual recap of PRs, consistency, and milestones.
-- [Import Data](https://www.strengthjourneys.xyz/import): Import lifting history from Strong, Hevy, BTWB, or Wodify.
+
+## Import Guides
+
+- [Import Data](https://www.strengthjourneys.xyz/import): Import lifting history from Hevy, Strong, StrongLifts 5x5, Wodify, or BTWB into your Google Sheet.
+- [Import from Hevy](https://www.strengthjourneys.xyz/import/hevy)
+- [Import from Strong](https://www.strengthjourneys.xyz/import/strong)
+- [Import from StrongLifts 5x5](https://www.strengthjourneys.xyz/import/stronglifts)
+- [Import from Wodify](https://www.strengthjourneys.xyz/import/wodify)
+- [Import from BTWB (CrossFit)](https://www.strengthjourneys.xyz/import/btwb)
 
 ## Other Tools
 
@@ -30,30 +40,31 @@
 
 ## Lift-Specific Calculators
 
-- [Squat 1RM Calculator](https://www.strengthjourneys.xyz/calculator/squat-one-rep-max-calculator)
-- [Bench Press 1RM Calculator](https://www.strengthjourneys.xyz/calculator/bench-press-one-rep-max-calculator)
-- [Deadlift 1RM Calculator](https://www.strengthjourneys.xyz/calculator/deadlift-one-rep-max-calculator)
-- [Strict Press 1RM Calculator](https://www.strengthjourneys.xyz/calculator/strict-press-one-rep-max-calculator)
+- [Squat 1RM Calculator](https://www.strengthjourneys.xyz/calculator/squat-1rm-calculator)
+- [Bench Press 1RM Calculator](https://www.strengthjourneys.xyz/calculator/bench-press-1rm-calculator)
+- [Deadlift 1RM Calculator](https://www.strengthjourneys.xyz/calculator/deadlift-1rm-calculator)
+- [Strict Press 1RM Calculator](https://www.strengthjourneys.xyz/calculator/strict-press-1rm-calculator)
 
 ## Formula-Specific Calculators
 
-- [Epley Formula Calculator](https://www.strengthjourneys.xyz/calculator/epley-one-rep-max-formula)
-- [Brzycki Formula Calculator](https://www.strengthjourneys.xyz/calculator/brzycki-one-rep-max-formula)
-- [Mayhew Formula Calculator](https://www.strengthjourneys.xyz/calculator/mayhew-one-rep-max-formula)
-- [Wathan Formula Calculator](https://www.strengthjourneys.xyz/calculator/wathan-one-rep-max-formula)
-- [McGlothin Formula Calculator](https://www.strengthjourneys.xyz/calculator/mcglothin-one-rep-max-formula)
-- [Lombardi Formula Calculator](https://www.strengthjourneys.xyz/calculator/lombardi-one-rep-max-formula)
-- [O'Conner Formula Calculator](https://www.strengthjourneys.xyz/calculator/oconner-one-rep-max-formula)
+- [Epley Formula Calculator](https://www.strengthjourneys.xyz/calculator/epley-formula-1rm-calculator)
+- [Brzycki Formula Calculator](https://www.strengthjourneys.xyz/calculator/brzycki-formula-1rm-calculator)
+- [Mayhew Formula Calculator](https://www.strengthjourneys.xyz/calculator/mayhew-1rm-formula-calculator)
+- [Wathan Formula Calculator](https://www.strengthjourneys.xyz/calculator/wathan-1rm-formula-calculator)
+- [McGlothin Formula Calculator](https://www.strengthjourneys.xyz/calculator/mcglothin-formula-1rm-calculator)
+- [Lombardi Formula Calculator](https://www.strengthjourneys.xyz/calculator/lombardi-formula-1rm-calculator)
+- [O'Conner Formula Calculator](https://www.strengthjourneys.xyz/calculator/oconner-formula-1rm-calculator)
 
 ## Strength Level Pages
 
-- [Squat Strength Levels](https://www.strengthjourneys.xyz/strength-levels/squat-strength-levels)
-- [Bench Press Strength Levels](https://www.strengthjourneys.xyz/strength-levels/bench-press-strength-levels)
-- [Deadlift Strength Levels](https://www.strengthjourneys.xyz/strength-levels/deadlift-strength-levels)
-- [Strict Press Strength Levels](https://www.strengthjourneys.xyz/strength-levels/strict-press-strength-levels)
+- [Squat Strength Levels](https://www.strengthjourneys.xyz/strength-levels/squat)
+- [Bench Press Strength Levels](https://www.strengthjourneys.xyz/strength-levels/bench-press)
+- [Deadlift Strength Levels](https://www.strengthjourneys.xyz/strength-levels/deadlift)
+- [Strict Press Strength Levels](https://www.strengthjourneys.xyz/strength-levels/strict-press)
 
 ## Progress Guides
 
+- [Progress Guides](https://www.strengthjourneys.xyz/progress-guide): Hub for the big four lift progress guides.
 - [Squat Progress Guide](https://www.strengthjourneys.xyz/progress-guide/squat)
 - [Bench Press Progress Guide](https://www.strengthjourneys.xyz/progress-guide/bench-press)
 - [Deadlift Progress Guide](https://www.strengthjourneys.xyz/progress-guide/deadlift)
@@ -61,6 +72,7 @@
 
 ## Articles
 
+- [Articles Library](https://www.strengthjourneys.xyz/articles): Full index of strength training articles.
 - [How Strong Am I? How Do I Work Out My Strength Level?](https://www.strengthjourneys.xyz/articles/how-strong-am-i-how-do-i-work-out-my-strength-level)
 - [How to Calculate Your E1RM: 7 Formulas + Free Calculator](https://www.strengthjourneys.xyz/articles/how-do-i-calculate-my-e1rm-estimated-one-rep-max)
 - [What Is an E1RM (Estimated One Rep Max)?](https://www.strengthjourneys.xyz/articles/what-is-an-e1rm-estimated-one-rep-max)

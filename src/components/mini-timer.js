@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { formatTime, useTimer } from "@/hooks/use-timer";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 export function MiniTimer() {
@@ -52,11 +51,6 @@ export function MiniTimer() {
   const isAlerting = activePingSeconds !== null;
   const display = formatTime(time);
 
-  const handleOpenChange = (nextOpen) => {
-    setIsPanelOpen(nextOpen);
-    if (nextOpen) gaEvent(GA_EVENT_TAGS.TIMER_MINI_PANEL_OPENED);
-  };
-
   return (
     <div
       className={cn(
@@ -70,7 +64,7 @@ export function MiniTimer() {
         isRunning={isRunning}
       />
 
-      <Popover open={isPanelOpen} onOpenChange={handleOpenChange}>
+      <Popover open={isPanelOpen} onOpenChange={setIsPanelOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"

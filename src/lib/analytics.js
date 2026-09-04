@@ -56,6 +56,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   TIMER_RESTARTED: "timer_restarted", // ~Apr 2024: Timer restarted from zero and running.
   TIMER_PING_INTERVAL_SET: "SJ_timer_ping_interval_set", // ~Sep 2026: Lifter chose (or cleared) the repeating ping interval on the gym timer.
   TIMER_ALARM_FIRED: "SJ_timer_alarm_fired", // ~Sep 2026: A repeating ping came due and the timer nudged the lifter.
+  TIMER_MINI_PANEL_OPENED: "SJ_timer_mini_panel_opened", // ~Sep 2026: Lifter opened the nav bar mini timer's control panel mid-workout.
   GSHEET_API_ERROR: "gSheetAPIError", // ~Apr 2024: Google Sheets API request failed.
   GSHEET_DATA_UPDATED: "gSheetDataUpdated", // ~Dec 2023: Sheet data loaded and parsed successfully.
   GSHEET_READ_REJECTED: "gSheetReadRejected", // ~Mar 2024: Sheet read/parse rejected as invalid.

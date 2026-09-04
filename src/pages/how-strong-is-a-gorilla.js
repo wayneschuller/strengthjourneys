@@ -46,9 +46,12 @@ const DEADLIFT_COLOR_SOFT = "rgba(0, 95, 115, 0.12)";
 const TRAINED_HUMAN_BASE_BENCH_LB = 175;
 
 // Gorilla bench equivalents (fixed — nobody is actually measuring this)
-const GORILLA_BENCH_LOW_LB = TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_LOW;  // 1050
-const GORILLA_BENCH_MID_LB = TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_MID;  // 1400
-const GORILLA_BENCH_HIGH_LB = TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_HIGH; // 1750
+const GORILLA_BENCH_LOW_LB =
+  TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_LOW; // 1050
+const GORILLA_BENCH_MID_LB =
+  TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_MID; // 1400
+const GORILLA_BENCH_HIGH_LB =
+  TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_HIGH; // 1750
 
 const DEFAULT_BENCH_LB = 135;
 const ASSUMED_BODYWEIGHT_LB = 185;
@@ -117,7 +120,8 @@ export async function getStaticProps() {
 }
 
 export default function GorillaStrengthPage({ relatedArticles }) {
-  const canonicalURL = "https://www.strengthjourneys.xyz/how-strong-is-a-gorilla";
+  const canonicalURL =
+    "https://www.strengthjourneys.xyz/how-strong-is-a-gorilla";
   const title = "How Strong Are You Compared to a Gorilla? | Strength Journeys";
   const description =
     "Playful gorilla strength comparison tool. Estimate your upper-body strength score versus a silverback range.";
@@ -165,22 +169,24 @@ export default function GorillaStrengthPage({ relatedArticles }) {
 function GorillaStrengthMain({ relatedArticles }) {
   const router = useRouter();
   const [isCopied, setIsCopied] = useState(false);
-  const [isMetric, setIsMetric, , , isMetricIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.GORILLA_IS_METRIC,
-    false,
-    false,
-    null,
-    (value) => typeof value === "boolean",
-    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
-  );
-  const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.GORILLA_BENCH,
-    DEFAULT_BENCH_LB,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= 1000,
-    "bench",
-  );
+  const [isMetric, setIsMetric, , , isMetricIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.GORILLA_IS_METRIC,
+      false,
+      false,
+      null,
+      (value) => typeof value === "boolean",
+      LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
+    );
+  const [bench, setBench, , , benchIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.GORILLA_BENCH,
+      DEFAULT_BENCH_LB,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value >= 0 && value <= 1000,
+      "bench",
+    );
   const [hasInteracted, setHasInteracted] = useState(false);
   const gorillaQuery = useMemo(
     () => ({ bench: String(bench), calcIsMetric: String(isMetric) }),
@@ -221,7 +227,9 @@ function GorillaStrengthMain({ relatedArticles }) {
     const nextIsMetric = !isMetric;
     setHasInteracted(true);
     setIsMetric(nextIsMetric);
-    setBench((prev) => Math.max(0, Math.round(convertWeight(prev, isMetric, nextIsMetric))));
+    setBench((prev) =>
+      Math.max(0, Math.round(convertWeight(prev, isMetric, nextIsMetric))),
+    );
   };
 
   const copyResult = async () => {
@@ -243,8 +251,8 @@ function GorillaStrengthMain({ relatedArticles }) {
           How Strong Are You Compared to a Gorilla?
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Enter your bench press. Find out how badly you&apos;d lose.
-          Please do not challenge an actual gorilla.
+          Enter your bench press. Find out how badly you&apos;d lose. Please do
+          not challenge an actual gorilla.
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
@@ -254,7 +262,9 @@ function GorillaStrengthMain({ relatedArticles }) {
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <h3 className="text-base font-semibold">Strength Levels</h3>
-              <p className="text-sm">Check squat, bench, deadlift, and press benchmarks.</p>
+              <p className="text-sm">
+                Check squat, bench, deadlift, and press benchmarks.
+              </p>
             </Link>
             <Link
               prefetch={false}
@@ -272,12 +282,14 @@ function GorillaStrengthMain({ relatedArticles }) {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-4">
             <CardTitle>Your Gorilla Number</CardTitle>
-            <UnitChooser isMetric={isMetric} onSwitchChange={handleUnitSwitch} />
+            <UnitChooser
+              isMetric={isMetric}
+              onSwitchChange={handleUnitSwitch}
+            />
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-8 pb-6 pt-2">
-
+        <CardContent className="space-y-8 pt-2 pb-6">
           {/* ── HERO RESULT ── */}
           <div
             className="relative rounded-2xl p-6 text-center"
@@ -285,12 +297,15 @@ function GorillaStrengthMain({ relatedArticles }) {
           >
             {/* Percentage centered in row; right card is right-justified on desktop */}
             <div className="relative overflow-visible py-3 md:grid md:grid-cols-[1fr_auto_1fr] md:items-start md:gap-4">
-              <div className="md:col-start-2 flex flex-col items-center justify-center gap-1">
+              <div className="flex flex-col items-center justify-center gap-1 md:col-start-2">
                 <motion.div
                   key={`gorilla-wobble-${bench}`}
                   className="pointer-events-none hidden sm:block"
                   initial={{ rotate: 0, y: 0 }}
-                  animate={{ rotate: [0, -6, 6, -4, 3, 0], y: [0, -6, 0, -3, 0] }}
+                  animate={{
+                    rotate: [0, -6, 6, -4, 3, 0],
+                    y: [0, -6, 0, -3, 0],
+                  }}
                   transition={{ duration: 0.65, ease: "easeInOut" }}
                 >
                   <Image
@@ -304,14 +319,14 @@ function GorillaStrengthMain({ relatedArticles }) {
                   />
                 </motion.div>
                 <p
-                  className="text-center text-[6rem] font-black leading-none tabular-nums tracking-tighter sm:text-[7rem]"
+                  className="text-center text-[6rem] leading-none font-black tracking-tighter tabular-nums sm:text-[7rem]"
                   style={{ color: DEADLIFT_COLOR }}
                 >
                   {Math.round(gorillaPercent)}%
                 </p>
               </div>
 
-              <div className="mx-auto mt-4 hidden w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:left-0 md:top-1/2 md:mt-0 md:block md:w-fit md:-translate-y-1/2">
+              <div className="bg-background/65 mx-auto mt-4 hidden w-full max-w-[640px] rounded-xl border p-3 text-center backdrop-blur-[1px] md:absolute md:top-1/2 md:left-0 md:mt-0 md:block md:w-fit md:-translate-y-1/2">
                 <ComparisonBenchCard
                   label="Human bench"
                   value={displayBench}
@@ -321,7 +336,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                 />
               </div>
 
-              <div className="mx-auto mt-4 hidden w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-0 md:top-1/2 md:mt-0 md:block md:w-fit md:-translate-y-1/2">
+              <div className="bg-background/65 mx-auto mt-4 hidden w-full max-w-[640px] rounded-xl border p-3 text-center backdrop-blur-[1px] md:absolute md:top-1/2 md:right-0 md:mt-0 md:block md:w-fit md:-translate-y-1/2">
                 <ComparisonBenchCard
                   label="Gorilla bench"
                   value={`${displayGorillaCardValue}+`}
@@ -336,7 +351,9 @@ function GorillaStrengthMain({ relatedArticles }) {
             <p className="mt-3 text-base font-semibold">
               of a silverback gorilla&apos;s bench press
             </p>
-            <p className="mt-1.5 text-sm italic text-muted-foreground">{bragLine}</p>
+            <p className="text-muted-foreground mt-1.5 text-sm italic">
+              {bragLine}
+            </p>
 
             {/* Progress bar */}
             <div className="mt-6 space-y-1.5">
@@ -344,10 +361,13 @@ function GorillaStrengthMain({ relatedArticles }) {
                 <span>You</span>
                 <div className="flex items-center gap-1">
                   <span>Silverback</span>
-                  <GorillaIcon className="h-4 w-4" style={{ color: DEADLIFT_COLOR }} />
+                  <GorillaIcon
+                    className="h-4 w-4"
+                    style={{ color: DEADLIFT_COLOR }}
+                  />
                 </div>
               </div>
-              <div className="relative h-5 w-full overflow-hidden rounded-full bg-muted">
+              <div className="bg-muted relative h-5 w-full overflow-hidden rounded-full">
                 <div
                   className="h-full rounded-full transition-all duration-150 ease-out"
                   style={{
@@ -358,7 +378,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                 {[25, 50, 75].map((pct) => (
                   <div
                     key={pct}
-                    className="absolute inset-y-0 w-0.5 bg-background/50"
+                    className="bg-background/50 absolute inset-y-0 w-0.5"
                     style={{ left: `${pct}%` }}
                   />
                 ))}
@@ -367,7 +387,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                 {[25, 50, 75, 100].map((pct) => (
                   <span
                     key={pct}
-                    className="absolute -translate-x-1/2 text-[10px] text-muted-foreground"
+                    className="text-muted-foreground absolute -translate-x-1/2 text-[10px]"
                     style={{ left: `${pct}%` }}
                   >
                     {pct}%
@@ -394,13 +414,16 @@ function GorillaStrengthMain({ relatedArticles }) {
 
           {/* ── SINGLE SLIDER ── */}
           <div className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <p className="text-muted-foreground text-xs font-bold tracking-widest uppercase">
               Your bench press
             </p>
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <Label className="flex items-center gap-1.5 text-sm font-semibold">
-                  <Shield className="h-4 w-4 shrink-0" style={{ color: DEADLIFT_COLOR }} />
+                  <Shield
+                    className="h-4 w-4 shrink-0"
+                    style={{ color: DEADLIFT_COLOR }}
+                  />
                   Bench Press 1RM
                 </Label>
                 <span
@@ -408,7 +431,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                   style={{ color: DEADLIFT_COLOR }}
                 >
                   {displayBench}
-                  <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                  <span className="text-muted-foreground ml-0.5 text-xs font-normal">
                     {scoreUnit}
                   </span>
                 </span>
@@ -434,13 +457,13 @@ function GorillaStrengthMain({ relatedArticles }) {
                   aria-label={`Bench press 1RM in ${scoreUnit}`}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Your best single rep — form optional, honesty required.
               </p>
             </div>
 
             <div className="space-y-3 md:hidden">
-              <div className="w-full rounded-xl border bg-background/65 p-3 backdrop-blur-[1px]">
+              <div className="bg-background/65 w-full rounded-xl border p-3 backdrop-blur-[1px]">
                 <ComparisonBenchCard
                   label="Human bench"
                   value={displayBench}
@@ -449,7 +472,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                   imageObjectPosition="object-right"
                 />
               </div>
-              <div className="w-full rounded-xl border bg-background/65 p-3 backdrop-blur-[1px]">
+              <div className="bg-background/65 w-full rounded-xl border p-3 backdrop-blur-[1px]">
                 <ComparisonBenchCard
                   label="Gorilla bench"
                   value={`${displayGorillaCardValue}+`}
@@ -482,8 +505,9 @@ function GorillaStrengthMain({ relatedArticles }) {
           </div>
         </CardContent>
 
-        <CardFooter className="pt-0 text-xs text-muted-foreground">
-          For entertainment only. We accept no liability for gorilla-related incidents.
+        <CardFooter className="text-muted-foreground pt-0 text-xs">
+          For entertainment only. We accept no liability for gorilla-related
+          incidents.
         </CardFooter>
       </Card>
 
@@ -494,7 +518,7 @@ function GorillaStrengthMain({ relatedArticles }) {
           {FAQ_ITEMS.map(({ question, answer }) => (
             <article key={question} className="rounded-lg border p-4">
               <h3 className="text-base font-semibold">{question}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{answer}</p>
+              <p className="text-muted-foreground mt-1 text-sm">{answer}</p>
             </article>
           ))}
         </div>
@@ -509,20 +533,32 @@ function GorillaStrengthMain({ relatedArticles }) {
 
 function StatTile({ label, value, sub }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-0.5 rounded-xl border bg-muted/30 p-4 text-center">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-xl font-black tabular-nums" style={{ color: DEADLIFT_COLOR }}>
+    <div className="bg-muted/30 flex flex-col items-center justify-center gap-0.5 rounded-xl border p-4 text-center">
+      <p className="text-muted-foreground text-xs">{label}</p>
+      <p
+        className="text-xl font-black tabular-nums"
+        style={{ color: DEADLIFT_COLOR }}
+      >
         {value}
       </p>
-      <p className="text-xs text-muted-foreground">{sub}</p>
+      <p className="text-muted-foreground text-xs">{sub}</p>
     </div>
   );
 }
 
-function ComparisonBenchCard({ label, value, unit, imageSrc, imageObjectPosition, reverse = false }) {
+function ComparisonBenchCard({
+  label,
+  value,
+  unit,
+  imageSrc,
+  imageObjectPosition,
+  reverse = false,
+}) {
   return (
-    <div className={`flex items-center gap-1 text-left ${reverse ? "flex-row-reverse" : ""}`}>
-      <div className="relative h-[clamp(80px,12.8vh,136px)] aspect-[1200/700]">
+    <div
+      className={`flex items-center gap-1 text-left ${reverse ? "flex-row-reverse" : ""}`}
+    >
+      <div className="relative aspect-[1200/700] h-[clamp(80px,12.8vh,136px)]">
         <Image
           src={imageSrc}
           alt=""
@@ -532,10 +568,13 @@ function ComparisonBenchCard({ label, value, unit, imageSrc, imageObjectPosition
         />
       </div>
       <div className="shrink-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-2xl font-black tabular-nums md:text-3xl" style={{ color: DEADLIFT_COLOR }}>
+        <p className="text-muted-foreground text-xs">{label}</p>
+        <p
+          className="text-2xl font-black tabular-nums md:text-3xl"
+          style={{ color: DEADLIFT_COLOR }}
+        >
           {value}
-          <span className="ml-1 text-base font-semibold text-muted-foreground">
+          <span className="text-muted-foreground ml-1 text-base font-semibold">
             {unit}
           </span>
         </p>
@@ -589,8 +628,10 @@ function getBragLine(percent, benchLb) {
   if (benchLb <= MOCKING_THRESHOLD_LB) {
     if (percent < 5) return "A gorilla could bench you. As a warm-up set.";
     if (percent < 10) return "You are in the game. A small, very brave game.";
-    if (percent < 20) return "About 1/10th of a gorilla. Solid for your species.";
-    if (percent < 28) return "Closing in on primate territory. The gorilla is not concerned.";
+    if (percent < 20)
+      return "About 1/10th of a gorilla. Solid for your species.";
+    if (percent < 28)
+      return "Closing in on primate territory. The gorilla is not concerned.";
     return "Big human numbers. The gorilla has noticed you now.";
   }
 

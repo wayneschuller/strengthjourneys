@@ -263,7 +263,11 @@ export default async function auth(req, res) {
           req?.cookies?.[SIGN_IN_ATTRIBUTION_COOKIE],
         );
         const grantedScopeMeta = getGrantedScopeSupportMeta(account);
-        await persistSignInSupportMeta(user?.email, grantedScopeMeta, signInSource);
+        await persistSignInSupportMeta(
+          user?.email,
+          grantedScopeMeta,
+          signInSource,
+        );
         await incrementSignInAttributionMetric(signInSource);
         const signInMeta = await getSignInSupportMeta(user?.email);
         await promptDeveloper("sign-in", user, {
@@ -323,7 +327,9 @@ const PROMPT_MESSAGES = {
         ? `Granted scopes: ${meta.grantedScopes.join(", ")}`
         : null,
       meta.kvLookupFailed ? `KV lookup failed: ${meta.kvLookupFailed}` : null,
-      meta.hasKvRecord != null ? `KV record exists: ${meta.hasKvRecord ? "yes" : "no"}` : null,
+      meta.hasKvRecord != null
+        ? `KV record exists: ${meta.hasKvRecord ? "yes" : "no"}`
+        : null,
       meta.firstSignInAt
         ? `First sign-in seen: ${friendlyDate(meta.firstSignInAt)}`
         : null,
@@ -331,16 +337,24 @@ const PROMPT_MESSAGES = {
         ? `Last sign-in seen: ${friendlyDate(meta.lastSignInAt)} (${daysAgo(meta.lastSignInAt)})`
         : null,
       meta.signInCount != null ? `Sign-in count: ${meta.signInCount}` : null,
-      meta.firstSignInPage ? `First sign-in page: ${meta.firstSignInPage}` : null,
+      meta.firstSignInPage
+        ? `First sign-in page: ${meta.firstSignInPage}`
+        : null,
       meta.firstSignInCta ? `First sign-in CTA: ${meta.firstSignInCta}` : null,
       meta.lastSignInPage ? `Last sign-in page: ${meta.lastSignInPage}` : null,
       meta.lastSignInCta ? `Last sign-in CTA: ${meta.lastSignInCta}` : null,
-      meta.connectedAt ? `Connected at: ${friendlyDate(meta.connectedAt)}` : null,
+      meta.connectedAt
+        ? `Connected at: ${friendlyDate(meta.connectedAt)}`
+        : null,
       meta.lastSeenAt
         ? `Last seen: ${friendlyDate(meta.lastSeenAt)} (${daysAgo(meta.lastSeenAt)})`
         : null,
-      meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
-      meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
       meta.provisionedSheetId != null
         ? `Provisioned sheet ID exists: ${meta.provisionedSheetId ? "yes" : "no"}`
         : null,
@@ -358,8 +372,12 @@ const PROMPT_MESSAGES = {
     subject: `[SJ] Activated — ${name}`,
     text: [
       `${name} (${email}) activated at ${timeStr}.`,
-      meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
-      meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
       meta.sheetName ? `Sheet: ${meta.sheetName}` : null,
       meta.rowCount != null ? `Rows: ${meta.rowCount}` : null,
       `\nThey're set up and in the app. Worth a welcome message.`,
@@ -554,8 +572,10 @@ const PROMPT_MESSAGES = {
 };
 
 function getOAuthNameLines(user) {
-  const firstName = typeof user?.firstName === "string" ? user.firstName.trim() : "";
-  const lastName = typeof user?.lastName === "string" ? user.lastName.trim() : "";
+  const firstName =
+    typeof user?.firstName === "string" ? user.firstName.trim() : "";
+  const lastName =
+    typeof user?.lastName === "string" ? user.lastName.trim() : "";
 
   if (!firstName && !lastName) return [];
 
@@ -649,7 +669,8 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
         grantedScopeMeta.hasRequiredDriveScope;
     }
     if (grantedScopeMeta.hasRequiredDriveScope === false) {
-      authored.firstMissingDriveScopeAt = base.firstMissingDriveScopeAt || nowIso;
+      authored.firstMissingDriveScopeAt =
+        base.firstMissingDriveScopeAt || nowIso;
       authored.lastMissingDriveScopeAt = nowIso;
     }
     if (

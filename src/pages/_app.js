@@ -16,6 +16,11 @@ import { useRouter } from "next/router";
 import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
 import { pageView, captureUtmFromUrl } from "@/lib/analytics";
+import {
+  REDDIT_PIXEL_ID,
+  isRedditPixelEnabled,
+  rdtTrackPageVisit,
+} from "@/lib/reddit-pixel";
 import { TimerProvider } from "@/hooks/use-timer";
 import { UserLiftingDataProvider } from "@/hooks/use-userlift-data";
 import { LiftColorsProvider } from "@/hooks/use-lift-colors";
@@ -48,6 +53,7 @@ export default function App({ Component, pageProps, session }) {
         "Google Analytics pageView:",
         typeof window !== "undefined" ? window.location.href : "",
       );
+      rdtTrackPageVisit(); // Reddit Ads: the base pixel only counts the landing page itself
     };
     router.events.on("routeChangeComplete", handleRouteChange);
     return () => router.events.off("routeChangeComplete", handleRouteChange);
@@ -109,6 +115,18 @@ export default function App({ Component, pageProps, session }) {
           gtag('config', '${GA_MEASUREMENT_ID}');
         `}
       </Script>
+      {/* Reddit Ads pixel. Reddit's own base snippet, verbatim apart from the
+          pixel ID, so it keeps working if they change what pixel.js expects.
+          Skipped entirely in development. See lib/reddit-pixel.js. */}
+      {isRedditPixelEnabled() && (
+        <Script id="reddit-pixel" strategy="afterInteractive">
+          {`
+            !function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement("script");t.src="https://www.redditstatic.com/ads/pixel.js",t.async=!0;var s=d.getElementsByTagName("script")[0];s.parentNode.insertBefore(t,s)}}(window,document);
+            rdt('init','${REDDIT_PIXEL_ID}');
+            rdt('track','PageVisit');
+          `}
+        </Script>
+      )}
     </>
   );
 }

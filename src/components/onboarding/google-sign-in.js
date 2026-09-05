@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
-import { gaTrackSignInClick } from "@/lib/analytics";
+import { gaTrackSignInClick, getStoredUtmSource } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { isReturningLifter } from "@/lib/sign-in-dialog-gate";
 
@@ -73,8 +73,14 @@ function getCurrentPathname() {
  * is required so the cookie survives the Google → callback redirect.
  *
  * Privacy boundary: this is support metadata for understanding where a user
- * started Google OAuth. Keep it limited to CTA + pathname + callback path. Do
- * not add training data, sheet data, full URLs, query strings, or page history.
+ * started Google OAuth. Keep it limited to CTA + pathname + callback path +
+ * campaign source. Do not add training data, sheet data, full URLs, query
+ * strings, or page history.
+ *
+ * `source` is the campaign label from the landing URL's utm_source, which is
+ * how a paid click is told apart from everything else. It describes an ad
+ * campaign rather than a person, and it lands in an aggregate counter, never
+ * in the per-user record.
  */
 export function tagSignInSource(cta, callbackUrl = "/") {
   if (typeof document === "undefined") return;
@@ -83,6 +89,7 @@ export function tagSignInSource(cta, callbackUrl = "/") {
     cta: cta || "untagged",
     page: getCurrentPathname(),
     callbackUrl,
+    source: getStoredUtmSource(),
   };
   document.cookie = `sj_signin_source=${encodeURIComponent(
     JSON.stringify(source),

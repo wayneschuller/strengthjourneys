@@ -149,6 +149,21 @@ function getStoredUtm() {
 }
 
 /**
+ * The campaign source stored for this session, or null when the lifter arrived
+ * without one (direct, organic search, an untagged link).
+ *
+ * Exported for the sign-in attribution cookie, which needs the same first-touch
+ * value GA events carry so the server-side counter and GA4 agree on where a
+ * sign-in came from. Returns the raw stored string; the caller normalizes it.
+ */
+export function getStoredUtmSource() {
+  const stored = getStoredUtm();
+  return typeof stored.utm_source === "string" && stored.utm_source.trim()
+    ? stored.utm_source.trim()
+    : null;
+}
+
+/**
  * Merge stored UTM + optional page into a params object for Google Analytics gtag.
  */
 function buildParams(extra = {}) {

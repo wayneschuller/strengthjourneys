@@ -89,6 +89,7 @@ function parseSignInSourceCookie(rawValue) {
       cta: normalizeSourceSlug(parsed?.cta, "untagged"),
       page: normalizeSourcePath(parsed?.page),
       callbackUrl: normalizeSourcePath(parsed?.callbackUrl, "/"),
+      source: normalizeSourceSlug(parsed?.source, "direct"),
     };
   } catch {
     let legacyValue = "untagged";
@@ -101,6 +102,7 @@ function parseSignInSourceCookie(rawValue) {
       cta: normalizeSourceSlug(legacyValue, "untagged"),
       page: "/unknown",
       callbackUrl: "/",
+      source: "direct",
     };
   }
 }
@@ -113,10 +115,22 @@ async function incrementSignInAttributionMetric(source) {
   if (!source?.page || !source?.cta) return;
 
   // Privacy boundary: this KV metric is intentionally aggregate-only. It stores
-  // sanitized OAuth entry page + CTA counts, never training data, sheet IDs,
-  // full URLs, query strings, user agent details, or browsing history.
+  // sanitized OAuth entry page + CTA + campaign source counts, never training
+  // data, sheet IDs, full URLs, query strings, user agent details, or browsing
+  // history. Nothing here is keyed to a person; the per-user record in
+  // sj:user:* is untouched by this path.
+  //
+  // The campaign source is counted server-side because the client-side paths
+  // that would otherwise answer "did this sign-in come from an ad" — GA4 and
+  // the Reddit pixel — are both blockable, and the audiences most worth
+  // measuring are the most likely to block them.
+  //
+  // Field shape gained a third segment on 2026-09-05. Keys are per-day, so
+  // days before that carry "<page>|<cta>" and days after carry
+  // "<page>|<cta>|<source>". Nothing in the app reads these back; they are
+  // read by hand.
   const metricKey = `${SIGN_IN_METRICS_PREFIX}:${getUtcDateKey()}`;
-  const field = `${source.page}|${source.cta}`;
+  const field = `${source.page}|${source.cta}|${source.source || "direct"}`;
   try {
     await kv.hincrby(metricKey, field, 1);
   } catch (error) {

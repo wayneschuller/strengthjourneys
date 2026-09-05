@@ -97,8 +97,12 @@ function getScheduledAt(email, now = new Date()) {
 }
 
 function isWhitespace(character) {
-  return character === " " || character === "\t" || character === "\n"
-    || character === "\r";
+  return (
+    character === " " ||
+    character === "\t" ||
+    character === "\n" ||
+    character === "\r"
+  );
 }
 
 function getFirstWord(value) {
@@ -112,7 +116,7 @@ function getFirstWord(value) {
 // Punctuation that legitimately appears inside a given name.
 const NAME_PUNCTUATION = "'’-";
 // ASCII characters that never do.
-const NON_NAME_ASCII = "0123456789!\"#$%&()*+,./:;<=>?@[\\]^_`{|}~";
+const NON_NAME_ASCII = '0123456789!"#$%&()*+,./:;<=>?@[\\]^_`{|}~';
 // Non-ASCII blocks that hold symbols and punctuation rather than letters, so a
 // display name like "🔥Wayne" or "「Bob」" still falls back to "Hi there,".
 // Everything outside these ranges is allowed through, which keeps Cyrillic
@@ -289,12 +293,27 @@ function buildUserEmailHtml(text) {
  * reader knows how their own setup went and does not need it recounted. What
  * they may not know is what the app is for, which is what the middle says.
  *
- * The two doors, in the order the first-week dashboard offers them:
- *   1. Log a session. The big four each have their own block on /log.
- *   2. Bring an existing history in from another app and see it charted.
- * Both work signed out, so the note reads correctly for someone who never
- * granted the Drive permission, and the sheet sentence after them is the
+ * The two doors, with import first on purpose. Measured 6 Sep 2026 over the 91
+ * lifters whose first sheet read was at least a fortnight old: those who
+ * arrived with a history already in Drive came back at 79%, while those who
+ * started from an empty sheet came back at 31% and never exceeded three active
+ * days. Having data in the app is the strongest thing we can observe about who
+ * stays, and importing is the one action that puts it there, so it leads and it
+ * carries a reason rather than being offered as an equal alternative.
+ *
+ * Logging follows as the next step rather than a competing option, and it names
+ * the payoff a lifter gets on a single set with no history at all: an estimated
+ * one rep max and a strength ranking. That is the only immediate value we can
+ * offer someone starting empty, which is exactly the group that leaves.
+ *
+ * Both doors work signed out, so the note reads correctly for someone who never
+ * granted the Drive permission, and the sheet sentence between them is the
  * reason to grant it.
+ *
+ * The closing question fishes for product feedback rather than for rapport. It
+ * is the only touch a lifter gets, and the open question is why people leave,
+ * so it spends the ask on something we can act on. "One thing" is load bearing:
+ * it caps the effort and makes a reply feel finishable.
  *
  * Keep it short. The note is meant to earn a reply, not to be a tour.
  */
@@ -304,19 +323,21 @@ function buildUserEmail(user) {
     text: [
       getGreeting(user),
       "",
-      "Thanks for signing into Strength Journeys recently.",
+      "Thanks for signing into Strength Journeys the other day.",
       "",
-      "I'm Wayne, the person building it. I'm a garage gym lifter who started in CrossFit, but these days I mainly train the big four lifts, hopefully for the rest of my life.",
+      "I'm Wayne, the person building it. I'm a garage gym lifter who started in CrossFit, and these days I mainly train the big four, hopefully for the rest of my life.",
       "",
-      "Two ways in from here, whichever suits you. To start logging, the big four lifts each have their own block on the log page: https://www.strengthjourneys.xyz/log",
+      "One thing worth knowing early. If you already have training history in Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey or a spreadsheet, you can bring that file in and see the whole thing charted in about two minutes: https://www.strengthjourneys.xyz/import",
       "",
-      "Or if you already have training history in Hevy, Strong, StrongLifts, Wodify, BTWB or a spreadsheet, you can bring that file in and see the whole thing charted straight away: https://www.strengthjourneys.xyz/import",
+      "You can bring in as many files as you like. If your training is scattered across a couple of apps you have moved between and an old spreadsheet, they merge into one clean history, duplicates skipped, sessions stitched back together. Every chart, estimated one rep max and PR then comes out of the whole archive rather than whichever app you happened to be using that year.",
       "",
-      "Either way it ends up in a Google Sheet you own and keep. Strength Journeys only ever touches that one sheet, and nothing else in your Drive.",
+      "It all lands in a Google Sheet you own and keep. Strength Journeys only ever touches that one sheet, and nothing else in your Drive.",
       "",
-      "What were you hoping Strength Journeys would help you see or do?",
+      "And if you want to do more than look at the analytics, you can log your lifts here too. Recent sessions, or that bench PR from high school you still bring up. Enter a single set and you get your estimated one rep max and where it ranks for your age and bodyweight: https://www.strengthjourneys.xyz/log",
       "",
-      "Even a quick sentence helps a lot.",
+      "What is one thing you would change about Strength Journeys?",
+      "",
+      "Even a few words is great. I read every reply.",
       "",
       "Thanks again for checking it out,",
       "Wayne",
@@ -528,14 +549,16 @@ function getResendContext(user) {
   const userEmail = normalizeEmail(user?.email);
 
   if (!apiKey || !founderEmail || !userEmail) return null;
-  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") return null;
+  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development")
+    return null;
   if (
     process.env.ENABLE_AUTOMATED_FOUNDER_OUTREACH?.trim().toLowerCase() ===
     "false"
   ) {
     return null;
   }
-  if (userEmail === founderEmail || isLeaderboardAdminEmail(userEmail)) return null;
+  if (userEmail === founderEmail || isLeaderboardAdminEmail(userEmail))
+    return null;
 
   return {
     founderEmail,
@@ -563,7 +586,9 @@ async function releaseLock(email) {
 async function scheduleEmail(resend, payload, idempotencyKey) {
   const { data, error } = await resend.emails.send(payload, { idempotencyKey });
   if (error || !data?.id) {
-    throw new Error(error?.message || "Resend did not return a scheduled email ID");
+    throw new Error(
+      error?.message || "Resend did not return a scheduled email ID",
+    );
   }
   return data.id;
 }

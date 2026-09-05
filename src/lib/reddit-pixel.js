@@ -10,8 +10,12 @@
  *   way GA4 re-sends page_view (see lib/analytics.js). Next.js only emits
  *   routeChangeComplete for real navigations, so the landing page is not
  *   counted twice.
- * - SignUp is the conversion Reddit campaigns optimise against. It fires when a
- *   lifter first becomes authenticated (see ui-shell/analytics-session.js).
+ * - SignUp fires when a lifter first becomes authenticated (see
+ *   ui-shell/analytics-session.js).
+ * - Lead fires when a lifter links a sheet (see hooks/use-userlift-data.js), which
+ *   is the real activation and the conversion campaigns should optimise against.
+ *   Signing in is not activation: a lifter can authenticate and still never grant
+ *   the Drive scope or pick a sheet. Linking one proves both.
  *
  * Why the pixel ID is a constant and not an env var:
  * - It is a public identifier that ships in the page source, there is one Reddit
@@ -39,6 +43,7 @@ export const REDDIT_PIXEL_ID = "t2_sgy9pwjx";
 export const RDT_EVENT_TAGS = Object.freeze({
   PAGE_VISIT: "PageVisit", // ~Sep 2026: Any page view, including client-side route changes.
   SIGN_UP: "SignUp", // ~Sep 2026: Lifter completed Google sign-in for the first time this browser session.
+  LEAD: "Lead", // ~Sep 2026: Lifter linked a Google Sheet. Reddit's vocabulary has no "activated" event, and Lead is the standard one campaigns can optimise against.
 });
 
 function isDevelopmentEnv() {
@@ -76,4 +81,12 @@ export function rdtTrackPageVisit() {
 
 export function rdtTrackSignUp() {
   rdtEvent(RDT_EVENT_TAGS.SIGN_UP);
+}
+
+/**
+ * Fires on a real sheet selection, not on render, so a returning lifter with a
+ * sheet already linked does not re-convert on every page load.
+ */
+export function rdtTrackSheetLinked() {
+  rdtEvent(RDT_EVENT_TAGS.LEAD);
 }

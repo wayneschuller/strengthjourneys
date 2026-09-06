@@ -1268,7 +1268,14 @@ export async function persistLinkedSheet({
 
 export async function maybePromptActivation({ existingRecord, session, meta }) {
   if (existingRecord.activationPromptedAt) return false;
-  await promptDeveloper("activated", session.user, meta);
+  // The acquisition source was written onto this record at sign-in, which is
+  // always earlier than activation, so it is already here to be read. Carrying
+  // it into the activation email is what closes the loop: a campaign click is
+  // only worth anything once the person it brought in actually starts lifting.
+  await promptDeveloper("activated", session.user, {
+    ...meta,
+    firstSignInSource: existingRecord.firstSignInSource || null,
+  });
   return true;
 }
 

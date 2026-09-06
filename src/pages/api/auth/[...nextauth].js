@@ -355,6 +355,9 @@ const PROMPT_MESSAGES = {
         ? `First sign-in page: ${meta.firstSignInPage}`
         : null,
       meta.firstSignInCta ? `First sign-in CTA: ${meta.firstSignInCta}` : null,
+      meta.firstSignInSource
+        ? `Came from campaign: ${meta.firstSignInSource}`
+        : null,
       meta.lastSignInPage ? `Last sign-in page: ${meta.lastSignInPage}` : null,
       meta.lastSignInCta ? `Last sign-in CTA: ${meta.lastSignInCta}` : null,
       meta.connectedAt
@@ -394,6 +397,9 @@ const PROMPT_MESSAGES = {
         : null,
       meta.sheetName ? `Sheet: ${meta.sheetName}` : null,
       meta.rowCount != null ? `Rows: ${meta.rowCount}` : null,
+      meta.firstSignInSource
+        ? `Came from campaign: ${meta.firstSignInSource}`
+        : null,
       `\nThey're set up and in the app. Worth a welcome message.`,
     ]
       .filter(Boolean)
@@ -622,6 +628,7 @@ async function getSignInSupportMeta(email) {
       firstSignInCta: record?.firstSignInCta || null,
       lastSignInPage: record?.lastSignInPage || null,
       lastSignInCta: record?.lastSignInCta || null,
+      firstSignInSource: record?.firstSignInSource || null,
     };
   } catch (error) {
     return {
@@ -673,6 +680,14 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
     if (signInSource?.cta) {
       authored.firstSignInCta = base.firstSignInCta || signInSource.cta;
       authored.lastSignInCta = signInSource.cta;
+    }
+    // First touch only, unlike the page/cta pairs above. Acquisition is by
+    // definition the campaign that first brought someone here, and a
+    // lastSignInSource would be "direct" for almost everyone on almost every
+    // return, so it would cost a field per person to say nothing.
+    if (signInSource?.source && signInSource.source !== "direct") {
+      authored.firstSignInSource =
+        base.firstSignInSource || signInSource.source;
     }
 
     if (grantedScopeMeta.grantedScopesKnown) {

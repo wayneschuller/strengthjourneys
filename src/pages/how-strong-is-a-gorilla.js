@@ -443,7 +443,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                   width={64}
                   height={64}
                   aria-hidden="true"
-                  className="shrink-0 opacity-90"
+                  className="shrink-0 object-contain opacity-90"
                 />
                 <Slider
                   min={isMetric ? 20 : 45}

@@ -916,7 +916,12 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
             <div key={key} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-sm font-medium">
-                  <img src={svg} alt="" className="h-10 w-10 dark:invert" aria-hidden />
+                  <img
+                    src={svg}
+                    alt=""
+                    className="h-10 w-10 object-contain dark:invert"
+                    aria-hidden
+                  />
                   <Link
                     prefetch={false}
                     href={LIFT_INSIGHT_URLS[label]}

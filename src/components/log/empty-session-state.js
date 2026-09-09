@@ -48,7 +48,7 @@ export function EmptySessionState({
                   alt={name}
                   width={80}
                   height={80}
-                  className="h-20 w-20 md:h-28 md:w-28"
+                  className="h-20 w-20 object-contain md:h-28 md:w-28"
                 />
                 <span className="text-sm leading-tight font-medium">
                   {name}

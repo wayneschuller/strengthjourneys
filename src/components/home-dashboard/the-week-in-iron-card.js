@@ -1340,7 +1340,7 @@ function StartLiftPrompt({
                 alt=""
                 width={40}
                 height={40}
-                className="h-10 w-10 shrink-0"
+                className="h-10 w-10 shrink-0 object-contain"
               />
               {showLiftCoaching ? (
                 <span className="min-w-0">

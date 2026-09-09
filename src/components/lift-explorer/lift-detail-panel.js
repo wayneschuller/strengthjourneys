@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
+import { LiftSvg, getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
 import { LiftTypeRepPRsDisplay } from "@/components/lift-explorer/lift-type-prs-display";
@@ -25,23 +26,33 @@ import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 export function LiftDetailPanel({ liftType }) {
   if (!liftType) return null;
 
-  // Only the big four have an editorial guide page; every other lift resolves
-  // back to this explorer, so link out only when there is somewhere new to go.
-  // This is the destination the sidebar rows used to compete with.
+  // A lift earns a guide link once it has an editorial page of its own. Today
+  // that is the big four, and everything else resolves back to this explorer,
+  // so link out only when there is somewhere new to go. Adding a guide for
+  // another lift lights this up on its own, with no change needed here.
   const guideUrl = getLiftDetailUrl(liftType);
   const hasGuidePage = guideUrl && !guideUrl.startsWith("/lift-explorer");
 
+  // Artwork and guide page are independent: a lift can have either, both, or
+  // neither. The header carries whatever exists and collapses when nothing
+  // does, so drawing a new diagram is the only step needed to show one here.
+  const hasArtwork = Boolean(getLiftSvgPath(liftType));
+
   return (
     <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 2xl:max-w-[1180px]">
-      {hasGuidePage && (
-        <div className="-mb-2 flex justify-end">
-          <Link
-            href={guideUrl}
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline"
-          >
-            Full {liftType} guide
-            <ArrowUpRight className="size-4" />
-          </Link>
+      {(hasArtwork || hasGuidePage) && (
+        <div className="-mb-2 flex items-center gap-4">
+          {/* Renders nothing when the lift has no diagram. */}
+          <LiftSvg liftType={liftType} size="md" animate={false} />
+          {hasGuidePage && (
+            <Link
+              href={guideUrl}
+              className="text-muted-foreground hover:text-foreground ml-auto inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline"
+            >
+              Full {liftType} guide
+              <ArrowUpRight className="size-4" />
+            </Link>
+          )}
         </div>
       )}
       <LiftJourneyCard

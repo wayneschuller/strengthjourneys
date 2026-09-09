@@ -1,10 +1,15 @@
 import { motion } from "motion/react";
 
+// Artwork for lifts we have drawn. Any lift missing from here simply renders
+// without an illustration, so entries can be added one at a time as the set
+// grows. Values are image paths, not necessarily SVG: every diagram sits on
+// the same 5:3 canvas, so the format is free to vary per lift.
 export const LIFT_SVG_MAP = {
   "Back Squat": "/back_squat.svg",
   "Bench Press": "/bench_press.svg",
   Deadlift: "/deadlift.svg",
   "Strict Press": "/strict_press.svg",
+  "Power Snatch": "/power_snatch.png",
   // Fallbacks for similar lifts
   "Front Squat": "/back_squat.svg",
   Squat: "/back_squat.svg",

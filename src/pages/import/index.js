@@ -268,7 +268,7 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
           width={48}
           height={48}
           aria-hidden="true"
-          className="dark:invert"
+          className="object-contain dark:invert"
         />
         <span className="flex-1 font-semibold">{lift.name}</span>
         {filledCount > 0 && (

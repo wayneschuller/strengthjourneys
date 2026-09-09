@@ -532,7 +532,7 @@ export function LiftBlock({
               alt=""
               width={104}
               height={104}
-              className="opacity-80 transition-opacity hover:opacity-100"
+              className="object-contain opacity-80 transition-opacity hover:opacity-100"
             />
           </Link>
         </div>
@@ -545,7 +545,13 @@ export function LiftBlock({
             href={getLiftDetailUrl(liftType)}
             className="shrink-0 self-start md:hidden"
           >
-            <Image src={bigFourEntry.icon} alt="" width={52} height={52} />
+            <Image
+              src={bigFourEntry.icon}
+              alt=""
+              width={52}
+              height={52}
+              className="object-contain"
+            />
           </Link>
         )}
         <div className="min-w-0 flex-1">

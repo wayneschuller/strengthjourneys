@@ -376,7 +376,7 @@ export function BigFourLiftCards({
                           BIG_FOUR_LIFT_ICON_SRC_BY_TYPE[lift.liftType]
                         }
                         alt={`${lift.liftType} diagram`}
-                        className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
+                        className="h-36 w-auto max-w-full object-contain transition-transform group-hover:scale-110"
                       />
                     </motion.div>
                   </motion.div>

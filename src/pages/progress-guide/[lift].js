@@ -360,7 +360,7 @@ function BarbellInsightsMain({
           {/* Soft lift-coloured glow behind the diagram so the hero has a focal
               point instead of a flat SVG floating in whitespace. */}
           <motion.div
-            className="relative w-32 md:w-auto md:max-w-[10vw]"
+            className="relative w-40 md:w-auto md:max-w-[14vw]"
             initial={{ opacity: 0, scale: 0.85, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.1 }}

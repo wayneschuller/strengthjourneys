@@ -1,4 +1,3 @@
-
 import { motion } from "motion/react";
 
 export const LIFT_SVG_MAP = {
@@ -38,10 +37,14 @@ export function LiftSvg({
   const src = getLiftSvgPath(liftType);
   if (!src) return null;
 
+  // The artwork is landscape and each lift has its own aspect ratio, so md and
+  // lg pin the height and let the width follow. That is what makes a row of
+  // different lifts render at a consistent lifter size. sm stays square: it
+  // sits inline beside text, where a variable width would unsettle the row.
   const sizeClasses = {
     sm: "h-10 w-10",
-    md: "h-24 w-24 md:h-32 md:w-32",
-    lg: "h-36 w-36 md:h-44 md:w-44",
+    md: "h-24 w-auto max-w-full md:h-32",
+    lg: "h-36 w-auto max-w-full md:h-44",
   };
 
   const img = (

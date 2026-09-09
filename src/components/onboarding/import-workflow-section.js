@@ -661,7 +661,7 @@ function ImportedDataOverview({ parsedData, label }) {
                         alt={lift.name}
                         width={32}
                         height={32}
-                        className="shrink-0 dark:invert"
+                        className="shrink-0 object-contain dark:invert"
                       />
                     )}
                     <div className="min-w-0">
@@ -678,7 +678,8 @@ function ImportedDataOverview({ parsedData, label }) {
                           className="hover:text-foreground hover:underline"
                         >
                           Best: {lift.reps}x{lift.weight}
-                          {lift.unitType} on {getReadableDateString(lift.date, true)}
+                          {lift.unitType} on{" "}
+                          {getReadableDateString(lift.date, true)}
                         </Link>
                       </div>
                     </div>

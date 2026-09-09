@@ -339,7 +339,7 @@ export function BigFourLiftCards({
                     </div>
                   </motion.div>
                 )}
-                <CardFooter className="flex justify-center p-2 pt-0">
+                <CardFooter className="flex justify-center px-2 pt-4 pb-6">
                   <motion.div
                     className="flex justify-center"
                     initial={false}

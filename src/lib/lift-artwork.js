@@ -102,11 +102,11 @@ const warned = new Set();
 
 /**
  * Development-only nudge when a drawing is off the house format. Never throws,
- * never blocks a build, and is silent in production. Wire it to an image's
- * onLoad, which is the only point where the real dimensions are known.
+ * never blocks a build, is silent in production, and speaks once per file.
+ * Wire it to an image's onLoad, the only point where real dimensions are known.
  *
  * @param {HTMLImageElement|null} img - The loaded image element.
- * @param {string} src - Path, used to name the file in the warning.
+ * @param {string} src - Path, used to name the file in the message.
  */
 export function warnIfArtworkOffFormat(img, src) {
   if (process.env.NODE_ENV === "production") return;
@@ -116,26 +116,26 @@ export function warnIfArtworkOffFormat(img, src) {
   const h = img.naturalHeight;
   if (!w || !h) return;
 
-  const ratio = w / h;
-  if (Math.abs(ratio - LIFT_ART_ASPECT_RATIO) > 0.02) {
+  const name = src.split("/").pop();
+  const ideal = `${LIFT_ART_WIDTH}x${LIFT_ART_HEIGHT}`;
+
+  // A wrong ratio is the one worth interrupting for: it makes this lifter a
+  // different size to every other. A wrong resolution is only ever cosmetic,
+  // so it gets the gentler channel.
+  if (Math.abs(w / h - LIFT_ART_ASPECT_RATIO) > 0.02) {
     warned.add(src);
     console.warn(
-      `[lift-artwork] ${src} is ${w}x${h}, a ratio of ${ratio.toFixed(3)}. ` +
-        `Lift artwork should be 5:3 (${LIFT_ART_ASPECT_RATIO.toFixed(3)}), ` +
-        `otherwise it renders at a different height to the rest of the set. ` +
-        `It will still display.`,
+      `🏋️ ${name} is ${w}x${h}. Lift art wants 5:3 (${ideal}) so it lines up with the set.`,
     );
     return;
   }
 
-  // Resolution is meaningless for SVG, so only nag about raster files.
+  // Resolution is meaningless for SVG, so only mention it for raster files.
   const isRaster = !src.toLowerCase().endsWith(".svg");
   if (isRaster && (w !== LIFT_ART_WIDTH || h !== LIFT_ART_HEIGHT)) {
     warned.add(src);
-    console.warn(
-      `[lift-artwork] ${src} is ${w}x${h}. Preferred size is ` +
-        `${LIFT_ART_WIDTH}x${LIFT_ART_HEIGHT}. The ratio is right, so this is ` +
-        `cosmetic and it will display correctly.`,
+    console.info(
+      `🏋️ ${name} is ${w}x${h}. Ratio is spot on; ${ideal} is leaner.`,
     );
   }
 }

@@ -2,27 +2,99 @@
  * Lift artwork: the one place that knows which drawing belongs to which lift,
  * where it lives, and how to put it on screen.
  *
+ * ===========================================================================
+ * MAKING A NEW DRAWING
+ *
+ * These are hard-won rather than arbitrary. Each one is here because getting
+ * it wrong produced something visibly broken, and the note says which.
  * ---------------------------------------------------------------------------
- * HOUSE FORMAT for every new drawing, in order of how much it matters:
  *
- *   1. Aspect ratio 5:3. This is the one that genuinely matters.
- *   2. 1000x600 PNG, indexed colour, transparent background.
- *   3. The lifter filling about 95% of the canvas height.
+ * THE CANVAS
  *
- * The ratio matters because containers across the app size artwork by height
- * and let the width follow. A diagram on a different ratio renders at a
- * different height to its neighbours, and since the lifter fills the frame,
- * the lifters themselves come out visibly different sizes. That is a bug you
- * see rather than read about.
+ *  1. Aspect ratio 5:3. The one that genuinely matters. Containers across the
+ *     app size artwork by height and let the width follow, so a drawing on a
+ *     different ratio renders at a different height to its neighbours. Since
+ *     the lifter fills the frame, the lifters themselves then come out
+ *     different sizes, which reads as a bug rather than as variety.
  *
- * 1000x600 is a preference rather than a rule. It covers 3.4x device pixel
- * ratio at the largest slot we render into (about 293 CSS px wide) and lands
- * near 13 KB once indexed, which is roughly parity with the hand-drawn SVGs.
+ *  2. 1000x600. A preference, not a rule. Covers 3.4x device pixel ratio at
+ *     the largest slot we render into (about 293 CSS px wide) and lands near
+ *     13 KB once indexed, roughly parity with the hand-drawn SVGs.
  *
- * Nothing here enforces any of it. Odd sizes still render, and builds never
- * fail over artwork. In development you get a one-off console note naming the
- * file, and that is the whole enforcement story.
- * ---------------------------------------------------------------------------
+ *  3. The lifter fills about 95% of the canvas height, with only a thin
+ *     margin. Padding baked into a drawing can never be removed by a
+ *     container, whereas CSS padding can be tuned per slot.
+ *
+ *  4. The two figures sit close together, so the drawing's own bounding box is
+ *     no wider than 5:3 either. Miss this and rule 3 becomes unreachable: the
+ *     power clean came back with its figures spread to a 1.985 ratio, so even
+ *     cropped perfectly tight the lifter could only reach 82% of the height,
+ *     because the width ran out first.
+ *
+ * WHAT IS IN FRAME
+ *
+ *  5. Two figures, the start of the lift and the finish, sharing one camera,
+ *     one scale and one ground line.
+ *
+ *  6. Only the barbell, plus whatever equipment the lift strictly requires.
+ *     Equipment competes with the lifter for canvas height, which is why the
+ *     bench press reads smaller than the rest of the set.
+ *
+ *  7. Camera chosen per lift, from a small fixed set, so that the whole
+ *     catalogue uses three or four angles rather than twenty. Pick the one
+ *     that makes the lift legible and never one where the working joints
+ *     overlap into a single mass: side profile for hinges and vertical bar
+ *     paths, three-quarter for squats and racked positions, front on for
+ *     symmetric overhead work, three-quarter from above for lifts done lying
+ *     down.
+ *
+ * HOW IT IS DRAWN
+ *
+ *  8. Flat fills only. No gradients, no soft shading, no drop shadows, no
+ *     outlines or strokes. Depth comes from placing a separate flat shape in a
+ *     darker tint of the same colour, with a crisp edge against it.
+ *
+ *  9. No texture, grain, noise or mottling, on the plates above all. This is
+ *     the rule generators break most often, and it is expensive: a drawing
+ *     with speckled plates arrived carrying 13,213 distinct colours and
+ *     weighed 429 KB, against 23 KB for the same picture snapped flat.
+ *
+ * 10. The fourteen palette colours and no others, listed against LIFT_ARTWORK
+ *     below. Skin, its two shade tints, hair, singlet and its shade, whites,
+ *     bar steel, and four plate darks.
+ *
+ * 11. Transparent background, asked for plainly. Generators manage it: the
+ *     power snatch came back three quarters transparent. So an opaque
+ *     background means regenerate, not reach for a chroma key and a flood
+ *     fill. Relatedly, never let a generator paint background colour over the
+ *     artwork to carve out the gaps between limbs. That only looks right while
+ *     the background stays opaque and it cannot be undone afterwards, which is
+ *     how one attempt ended up with figures fused into skin-coloured blobs the
+ *     moment its background was removed.
+ *
+ * THE FILE ITSELF
+ *
+ * 12. Indexed PNG, quantised to those fourteen colours. Flat colour art
+ *     compresses into an indexed palette far better than into a photographic
+ *     codec: at 384px the same drawing is 4 KB indexed, 10 KB as AVIF and
+ *     18 KB as WebP, which is why this component asks next/image not to
+ *     optimise.
+ *
+ * 13. Format follows the source. Hand-drawn vectors stay SVG, generated raster
+ *     stays PNG, and neither gets converted. Tracing a raster to SVG is lossy
+ *     and was measured to be both larger and worse: legible traces cost 31 KB
+ *     against 13 KB for the PNG, and cheaper ones shredded the hair and face.
+ *
+ * 14. Sex of the figure is a deliberate editorial choice per lift, not a user
+ *     setting. The catalogue is mixed so it reads as mixed to everyone,
+ *     including a first-time visitor who has told us nothing. Keep it near an
+ *     even split, and keep women on some of the heavy compounds rather than
+ *     only on the accessory lifts.
+ *
+ * Nothing here is enforced. Odd sizes still render and builds never fail over
+ * artwork. In development you get a one-off console note naming the file, and
+ * that is the whole enforcement story.
+ * ===========================================================================
  *
  * ADDING A LIFT: drop the file in public/lifts/default/ and add one line to
  * LIFT_ARTWORK below. Everywhere that shows lift artwork picks it up.

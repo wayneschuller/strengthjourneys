@@ -3,38 +3,27 @@ import { motion } from "motion/react";
 import { getLiftArtwork, warnIfArtworkOffFormat } from "@/lib/lift-artwork";
 
 /**
- * Path to a lift's illustration, or null when we have not drawn it.
+ * Renders the illustration for a lift, optionally with a spring entrance
+ * animation. Returns null when we have no artwork for the lift, so a caller
+ * can render it unconditionally and let it collapse.
  *
- * The registry itself lives in src/lib/lift-artwork.js, which also documents
- * the house format for new drawings. This stays as the name most of the app
- * already imports.
- */
-export function getLiftSvgPath(liftType) {
-  return getLiftArtwork(liftType);
-}
-
-/**
- * Renders the illustration for a known lift type, optionally with a spring
- * entrance animation. Returns null if we have no artwork for the lift, so a
- * caller can render this unconditionally and let it collapse.
+ * For the path alone, call getLiftArtwork from @/lib/lift-artwork.
  *
  * @param {Object} props
- * @param {string} props.liftType - The lift name used to look up the artwork (e.g. "Back Squat", "Deadlift").
+ * @param {string} props.liftType - The lift name, e.g. "Back Squat".
  * @param {string} [props.size] - Size preset: "sm", "md", or "lg".
  * @param {boolean} [props.animate] - When true, wraps the image in a motion.div with a spring animation.
  * @param {boolean} [props.isActive] - Controls whether the animation plays (scale/opacity in) or reverses (scale/opacity out).
  * @param {string} [props.className] - Additional CSS classes applied to the img element.
- * @param {string} [props.set] - Artwork set to draw from; falls back to the default set per lift.
  */
-export function LiftSvg({
+export function LiftArtwork({
   liftType,
   size = "md",
   animate = true,
   isActive = true,
   className = "",
-  set,
 }) {
-  const src = getLiftArtwork(liftType, set ? { set } : undefined);
+  const src = getLiftArtwork(liftType);
   if (!src) return null;
 
   // Artwork is landscape, so md and lg pin the height and let the width

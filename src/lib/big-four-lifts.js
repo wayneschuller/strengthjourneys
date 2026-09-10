@@ -2,16 +2,15 @@
  * Canonical lightweight metadata for the four core barbell lifts.
  * Keep SEO-heavy progress-guide copy in big-four-insight-data.js; this file is
  * safe to import from log, parsers, API routes, and shared data processors.
+ * Artwork deliberately lives elsewhere: ask getLiftArtwork in lib/lift-artwork
+ * for a lift's illustration rather than carrying a derived path in here.
  */
-
-import { getLiftArtwork } from "@/lib/lift-artwork";
 
 export const BIG_FOUR_LIFT_META = [
   {
     liftType: "Back Squat",
     slug: "squat",
     progressGuidePath: "/progress-guide/squat",
-    iconSrc: getLiftArtwork("Back Squat"),
     homepageDescription:
       "A barbell squat to full depth, resting across the upper back.",
   },
@@ -19,7 +18,6 @@ export const BIG_FOUR_LIFT_META = [
     liftType: "Bench Press",
     slug: "bench-press",
     progressGuidePath: "/progress-guide/bench-press",
-    iconSrc: getLiftArtwork("Bench Press"),
     homepageDescription:
       "A horizontal press from the chest while lying on a bench.",
   },
@@ -27,7 +25,6 @@ export const BIG_FOUR_LIFT_META = [
     liftType: "Deadlift",
     slug: "deadlift",
     progressGuidePath: "/progress-guide/deadlift",
-    iconSrc: getLiftArtwork("Deadlift"),
     homepageDescription:
       "Lifting a barbell from the floor to a standing lockout.",
   },
@@ -35,7 +32,6 @@ export const BIG_FOUR_LIFT_META = [
     liftType: "Strict Press",
     slug: "strict-press",
     progressGuidePath: "/progress-guide/strict-press",
-    iconSrc: getLiftArtwork("Strict Press"),
     homepageDescription: "A standing overhead press with no leg drive.",
   },
 ];
@@ -51,10 +47,6 @@ export const BIG_FOUR_PROGRESS_GUIDE_PATHS = Object.fromEntries(
     liftType,
     progressGuidePath,
   ]),
-);
-
-export const BIG_FOUR_LIFT_ICON_SRC_BY_TYPE = Object.fromEntries(
-  BIG_FOUR_LIFT_META.map(({ liftType, iconSrc }) => [liftType, iconSrc]),
 );
 
 export function getBigFourProgressGuidePath(liftType) {

@@ -11,7 +11,8 @@ import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-setting
 import { RelatedArticles } from "@/components/article-cards";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { QuickLinkCard } from "@/components/quick-link-card";
-import { LiftSvg, getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { LiftArtwork } from "@/components/lift-artwork-image";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 import {
   PageContainer,
   PageHeader,
@@ -278,7 +279,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
               className="flex items-center justify-center"
               style={{ filter: `drop-shadow(0 4px 12px ${liftColor}40)` }}
             >
-              <LiftSvg
+              <LiftArtwork
                 liftType={page.liftType}
                 size="lg"
                 animate={false}
@@ -486,7 +487,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                     className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted"
                     style={{ borderColor: `${otherColor}30` }}
                   >
-                    <LiftSvg liftType={other.liftType} size="sm" animate={false} />
+                    <LiftArtwork liftType={other.liftType} size="sm" animate={false} />
                     <div>
                       <span className="text-sm font-semibold">
                         {other.navLabel}

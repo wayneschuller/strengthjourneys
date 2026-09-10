@@ -11,7 +11,8 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Trophy } from "lucide-react";
 import { motion } from "motion/react";
-import { LiftSvg, getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { LiftArtwork } from "@/components/lift-artwork-image";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 
 /**
  * Recap slide listing all lifetime personal records the user achieved during the given year.
@@ -67,9 +68,9 @@ export function LifetimePRsCard({ year, isDemo, isActive = true }) {
               transition={{ delay: isActive ? i * 0.08 : 0, duration: 0.25 }}
               className={`flex items-center gap-2 border-l-4 pl-2 ${barColors[i % 5]}`}
             >
-              {getLiftSvgPath(pr.liftType) ? (
+              {getLiftArtwork(pr.liftType) ? (
                 <span className="shrink-0">
-                  <LiftSvg liftType={pr.liftType} size="sm" animate={false} />
+                  <LiftArtwork liftType={pr.liftType} size="sm" animate={false} />
                 </span>
               ) : null}
               <span>

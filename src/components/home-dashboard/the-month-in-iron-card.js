@@ -41,7 +41,7 @@ import {
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { LiftSvg } from "@/components/year-recap/lift-svg";
+import { LiftArtwork } from "@/components/lift-artwork-image";
 import { getBigFourBodyBenefit } from "@/lib/big-four-body-benefits";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
@@ -898,7 +898,7 @@ function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
               className="flex items-center gap-3"
             >
               <Link href={href} className="shrink-0">
-                <LiftSvg
+                <LiftArtwork
                   liftType={liftType}
                   size="sm"
                   animate={false}
@@ -2456,7 +2456,7 @@ function BigFourCriteriaTable({
                           : "bg-red-500/10 ring-red-500/40"
                   }`}
                 >
-                  <LiftSvg
+                  <LiftArtwork
                     liftType={liftType}
                     size="sm"
                     animate={false}
@@ -2725,7 +2725,7 @@ function BigFourInvitationRow({ liftType, index = 0 }) {
           whileHover={{ scale: 1.06, y: -1 }}
           transition={{ type: "spring", stiffness: 260, damping: 18 }}
         >
-          <LiftSvg
+          <LiftArtwork
             liftType={liftType}
             size="sm"
             animate={false}

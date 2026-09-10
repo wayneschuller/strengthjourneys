@@ -52,7 +52,7 @@ import {
   getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
-import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
@@ -645,7 +645,7 @@ function ImportedDataOverview({ parsedData, label }) {
                   })()
                 : null;
 
-              const svgPath = getLiftSvgPath(lift.name);
+              const svgPath = getLiftArtwork(lift.name);
               const liftUrl = getLiftDetailUrl(lift.name);
               const strengthLevelUrl = STRENGTH_STANDARDS_LINKS[lift.name];
 

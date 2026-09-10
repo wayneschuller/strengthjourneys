@@ -22,7 +22,7 @@ import {
   LiftTypeIndicator,
   getLiftDetailUrl,
 } from "@/components/lift-type-indicator";
-import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 import {
   getStrengthLevelForWorkouts,
   getStandardForLiftDate,
@@ -145,7 +145,7 @@ export function SessionExerciseBlock({
   const isCompact = variant === "compact";
 
   // Compact: big four uses SVG; full always uses LiftTypeIndicator
-  const svgPath = isCompact && !hideSvg ? getLiftSvgPath(liftType) : null;
+  const svgPath = isCompact && !hideSvg ? getLiftArtwork(liftType) : null;
 
   const { hasUserData } = useUserLiftingData();
 

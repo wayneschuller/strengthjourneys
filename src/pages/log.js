@@ -46,10 +46,11 @@ import { DeleteSessionControls } from "@/components/log/delete-session-controls"
 import { EmptySessionState } from "@/components/log/empty-session-state";
 import { LogDateNav } from "@/components/log/log-date-nav";
 
+import { getLiftArtwork } from "@/lib/lift-artwork";
 const BIG_FOUR = BIG_FOUR_LIFT_META.map(
-  ({ liftType, iconSrc, progressGuidePath }) => ({
+  ({ liftType, progressGuidePath }) => ({
     name: liftType,
-    icon: iconSrc,
+    icon: getLiftArtwork(liftType),
     slug: progressGuidePath.replace(/^\//, ""),
   }),
 );

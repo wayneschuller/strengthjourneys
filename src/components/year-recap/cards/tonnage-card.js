@@ -5,7 +5,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Dumbbell } from "lucide-react";
 import { computeTonnageForYear } from "@/lib/year-recap-stats";
-import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 
 /**
  * Recap slide displaying total weight moved (tonnage) for the year, a fun real-world equivalent comparison, and per-lift bar chart for the Big Four lifts.
@@ -112,7 +112,7 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
               1,
             );
             const pct = (liftTonnage / maxTonnage) * 100;
-            const svgPath = getLiftSvgPath(liftType);
+            const svgPath = getLiftArtwork(liftType);
             return (
               <motion.div
                 key={liftType}

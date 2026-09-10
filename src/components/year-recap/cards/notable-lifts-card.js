@@ -17,7 +17,8 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
-import { LiftSvg, getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { LiftArtwork } from "@/components/lift-artwork-image";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 
 /**
  * Recap slide listing notable PR highlights for the year, excluding any already shown as lifetime PRs.
@@ -87,9 +88,9 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
               transition={{ delay: isActive ? i * 0.08 : 0, duration: 0.25 }}
               className={`flex items-center gap-2 border-l-4 pl-2 ${barColors[i % 5]}`}
             >
-              {getLiftSvgPath(pr.liftType) ? (
+              {getLiftArtwork(pr.liftType) ? (
                 <span className="shrink-0">
-                  <LiftSvg liftType={pr.liftType} size="sm" animate={false} />
+                  <LiftArtwork liftType={pr.liftType} size="sm" animate={false} />
                 </span>
               ) : null}
               <span>

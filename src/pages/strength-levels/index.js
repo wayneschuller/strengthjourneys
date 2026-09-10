@@ -36,7 +36,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { StandardsSlider } from "@/components/standards-slider";
-import { LiftSvg } from "@/components/year-recap/lift-svg";
+import { LiftArtwork } from "@/components/lift-artwork-image";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { fetchRelatedArticles } from "@/lib/sanity-io";
@@ -256,7 +256,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                         </p>
                       </div>
                       <div className="shrink-0">
-                        <LiftSvg liftType={page.liftType} size="md" />
+                        <LiftArtwork liftType={page.liftType} size="md" />
                       </div>
                     </div>
                     <CardContent className="flex flex-col gap-4 pt-3">

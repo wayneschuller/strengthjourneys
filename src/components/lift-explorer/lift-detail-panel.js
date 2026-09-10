@@ -9,7 +9,8 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
-import { LiftSvg, getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { LiftArtwork } from "@/components/lift-artwork-image";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
 import { LiftTypeRepPRsDisplay } from "@/components/lift-explorer/lift-type-prs-display";
@@ -36,14 +37,14 @@ export function LiftDetailPanel({ liftType }) {
   // Artwork and guide page are independent: a lift can have either, both, or
   // neither. The header carries whatever exists and collapses when nothing
   // does, so drawing a new diagram is the only step needed to show one here.
-  const hasArtwork = Boolean(getLiftSvgPath(liftType));
+  const hasArtwork = Boolean(getLiftArtwork(liftType));
 
   return (
     <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 2xl:max-w-[1180px]">
       {(hasArtwork || hasGuidePage) && (
         <div className="-mb-2 flex items-center gap-4">
           {/* Renders nothing when the lift has no diagram. */}
-          <LiftSvg liftType={liftType} size="md" animate={false} />
+          <LiftArtwork liftType={liftType} size="md" animate={false} />
           {hasGuidePage && (
             <Link
               href={guideUrl}

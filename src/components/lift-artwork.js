@@ -110,9 +110,25 @@ export function LiftArtwork({
   };
 
   const img = (
+    // A plain img on purpose, rather than next/image. Four of the five
+    // drawings are SVG, which next/image does not optimise, and the fifth is
+    // indexed PNG, a format flat colour compresses into far better than the
+    // WebP or AVIF next/image would re-encode it as. At 384px next/image's
+    // WebP is 18 KB against 23 KB for the whole 1619px PNG we ship once and
+    // cache everywhere; by 640px it is larger outright. The width and height
+    // below buy the layout stability that next/image is usually reached for.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={`${liftType} diagram`}
+      // Every drawing is 5:3, so these are the same for all of them. They
+      // reserve the right box before the file lands, which stops the width
+      // jumping under w-auto, and they keep an off-format drawing boxed to
+      // 5:3 rather than letting it push the layout around.
+      width={IDEAL_WIDTH}
+      height={IDEAL_HEIGHT}
+      loading="lazy"
+      decoding="async"
       className={`object-contain ${sizeClasses[size]} ${className}`}
       onLoad={(e) => noteIfOffFormat(e.currentTarget, src)}
     />

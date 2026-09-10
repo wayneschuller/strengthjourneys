@@ -33,6 +33,7 @@
  * have to learn a new argument in the meantime.
  */
 
+import Image from "next/image";
 import { motion } from "motion/react";
 
 const ASPECT_RATIO = 5 / 3;
@@ -110,15 +111,7 @@ export function LiftArtwork({
   };
 
   const img = (
-    // A plain img on purpose, rather than next/image. Four of the five
-    // drawings are SVG, which next/image does not optimise, and the fifth is
-    // indexed PNG, a format flat colour compresses into far better than the
-    // WebP or AVIF next/image would re-encode it as. At 384px next/image's
-    // WebP is 18 KB against 23 KB for the whole 1619px PNG we ship once and
-    // cache everywhere; by 640px it is larger outright. The width and height
-    // below buy the layout stability that next/image is usually reached for.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={src}
       alt={`${liftType} diagram`}
       // Every drawing is 5:3, so these are the same for all of them. They
@@ -127,8 +120,20 @@ export function LiftArtwork({
       // 5:3 rather than letting it push the layout around.
       width={IDEAL_WIDTH}
       height={IDEAL_HEIGHT}
-      loading="lazy"
-      decoding="async"
+      // Served straight from public/ rather than through the optimiser. Some
+      // drawings are SVG, which the optimiser declines to touch anyway, and
+      // the rest are indexed PNG: flat colour art compresses into an indexed
+      // palette far better than into the WebP or AVIF the optimiser would
+      // re-encode it as, so optimising here would cost bytes rather than save
+      // them.
+      unoptimized
+      // Eager, against next/image's lazy default. Several callers mount this
+      // inside a spring that starts at scale(0), which has no area for an
+      // intersection check, so a lazy image would wait for the animation
+      // before it even began fetching. The whole catalogue is a handful of
+      // files of 9 to 23 KB, shared across every page and cached after the
+      // first, so there is nothing worth deferring here.
+      loading="eager"
       className={`object-contain ${sizeClasses[size]} ${className}`}
       onLoad={(e) => noteIfOffFormat(e.currentTarget, src)}
     />

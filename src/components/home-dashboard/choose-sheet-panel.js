@@ -9,7 +9,7 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LiftArtwork } from "@/components/lift-artwork-image";
+import { LiftArtwork } from "@/components/lift-artwork";
 import {
   ChevronDown,
   ChevronUp,

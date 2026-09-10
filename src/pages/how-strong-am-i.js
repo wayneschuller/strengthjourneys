@@ -59,7 +59,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, getFirstQueryValue, parseQueryNumber } from "@/lib/share-url";
 import { cn } from "@/lib/utils";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import {
   computeStrengthResults,
   UNIVERSES,

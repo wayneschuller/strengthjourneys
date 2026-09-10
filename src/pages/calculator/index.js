@@ -37,7 +37,7 @@ import { devLog } from "@/lib/processing-utils";
 import { gaTrackCalcShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import { cn } from "@/lib/utils";
 
 import { useLocalStorage, useIsClient, useReadLocalStorage } from "usehooks-ts";

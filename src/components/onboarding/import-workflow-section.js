@@ -52,7 +52,7 @@ import {
   getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";

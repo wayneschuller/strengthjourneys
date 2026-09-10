@@ -62,7 +62,7 @@ import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 // Keep this page template generic across all four lift insight pages.
 // Lift-specific SEO copy, hero wording, and lower-page personality should live
 // in src/lib/big-four-insight-data.js so we do not reintroduce per-lift branching here.

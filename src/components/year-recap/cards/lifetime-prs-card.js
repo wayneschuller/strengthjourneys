@@ -11,8 +11,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Trophy } from "lucide-react";
 import { motion } from "motion/react";
-import { LiftArtwork } from "@/components/lift-artwork-image";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
 
 /**
  * Recap slide listing all lifetime personal records the user achieved during the given year.

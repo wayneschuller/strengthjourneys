@@ -41,7 +41,7 @@ import {
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { LiftArtwork } from "@/components/lift-artwork-image";
+import { LiftArtwork } from "@/components/lift-artwork";
 import { getBigFourBodyBenefit } from "@/lib/big-four-body-benefits";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";

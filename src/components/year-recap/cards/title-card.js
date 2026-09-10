@@ -1,6 +1,6 @@
 
 import { motion } from "motion/react";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 
 const TOP_LIFTS = ["Back Squat", "Bench Press"];
 const BOTTOM_LIFTS = ["Deadlift", "Strict Press"];

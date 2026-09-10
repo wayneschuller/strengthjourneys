@@ -45,7 +45,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { BIG_FOUR_LIFT_TYPES, getDisplayWeight } from "@/lib/processing-utils";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import {
   formatDateToYmdLocal,
   addDaysFromStr,

@@ -11,7 +11,7 @@ import {
   PageHeaderHeading,
 } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { LiftArtwork } from "@/components/lift-artwork-image";
+import { LiftArtwork } from "@/components/lift-artwork";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 

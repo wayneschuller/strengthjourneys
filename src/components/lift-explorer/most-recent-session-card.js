@@ -27,7 +27,7 @@ import {
   getConsecutiveWorkoutGroups,
   SessionExerciseBlock,
 } from "@/components/home-dashboard/session-exercise-block";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import {
   buildAiAssistantPromptLink,

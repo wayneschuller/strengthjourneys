@@ -17,8 +17,7 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
-import { LiftArtwork } from "@/components/lift-artwork-image";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
 
 /**
  * Recap slide listing notable PR highlights for the year, excluding any already shown as lifetime PRs.

@@ -11,8 +11,7 @@ import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-setting
 import { RelatedArticles } from "@/components/article-cards";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { QuickLinkCard } from "@/components/quick-link-card";
-import { LiftArtwork } from "@/components/lift-artwork-image";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
 import {
   PageContainer,
   PageHeader,

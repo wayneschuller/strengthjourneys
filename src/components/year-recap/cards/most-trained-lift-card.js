@@ -9,7 +9,7 @@ import {
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { computeMostTrainedLiftForYear } from "@/lib/year-recap-stats";
 import { Trophy } from "lucide-react";
-import { LiftArtwork } from "@/components/lift-artwork-image";
+import { LiftArtwork } from "@/components/lift-artwork";
 
 /**
  * Recap slide highlighting the lift the user trained most frequently during the given year, with set/rep counts and a session frequency sentence.

@@ -47,7 +47,7 @@ import { SetRow } from "@/components/log/set-row";
 import { getLiftBlockCoachingState } from "@/components/log/lift-block-coaching-state";
 import { getAutoTimestampNotes } from "@/components/log/sheet-snapshot-utils";
 
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 const BIG_FOUR = BIG_FOUR_LIFT_META.map(({ liftType }) => ({
   name: liftType,
   icon: getLiftArtwork(liftType),

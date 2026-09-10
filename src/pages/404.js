@@ -37,7 +37,7 @@ import { QuickLinkCard } from "@/components/quick-link-card";
 import { getNotFoundLine } from "@/lib/not-found-lines";
 import { gaTrackPageNotFound } from "@/lib/analytics";
 
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 /**
  * Where to send a lost visitor. Logging leads because it is the thing the site
  * actually does, and someone who arrived on a dead URL has probably never seen

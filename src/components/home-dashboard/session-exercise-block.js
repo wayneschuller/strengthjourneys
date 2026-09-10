@@ -22,7 +22,7 @@ import {
   LiftTypeIndicator,
   getLiftDetailUrl,
 } from "@/components/lift-type-indicator";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import {
   getStrengthLevelForWorkouts,
   getStandardForLiftDate,

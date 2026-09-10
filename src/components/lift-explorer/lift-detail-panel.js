@@ -9,8 +9,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
-import { LiftArtwork } from "@/components/lift-artwork-image";
-import { getLiftArtwork } from "@/lib/lift-artwork";
+import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
 import { LiftTypeRepPRsDisplay } from "@/components/lift-explorer/lift-type-prs-display";

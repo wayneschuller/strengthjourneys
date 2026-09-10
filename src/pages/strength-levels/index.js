@@ -36,7 +36,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { StandardsSlider } from "@/components/standards-slider";
-import { LiftArtwork } from "@/components/lift-artwork-image";
+import { LiftArtwork } from "@/components/lift-artwork";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { fetchRelatedArticles } from "@/lib/sanity-io";

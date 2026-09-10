@@ -1,6 +1,6 @@
 
 import { motion } from "motion/react";
-import { LIFT_SVG_MAP } from "@/components/year-recap/lift-svg";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 
 const TOP_LIFTS = ["Back Squat", "Bench Press"];
 const BOTTOM_LIFTS = ["Deadlift", "Strict Press"];
@@ -89,7 +89,7 @@ function CornerIcon({ liftType, index, isActive, variants }) {
         }}
       >
         <img
-          src={LIFT_SVG_MAP[liftType]}
+          src={getLiftArtwork(liftType)}
           alt=""
           aria-hidden
           className="h-24 w-24 [filter:opacity(0.9)] md:h-28 md:w-28"

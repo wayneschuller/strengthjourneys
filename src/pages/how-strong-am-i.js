@@ -59,6 +59,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, getFirstQueryValue, parseQueryNumber } from "@/lib/share-url";
 import { cn } from "@/lib/utils";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 import {
   computeStrengthResults,
   UNIVERSES,
@@ -73,19 +74,19 @@ const LIFTS = [
   {
     key: "squat",
     label: "Back Squat",
-    svg: "/back_squat.svg",
+    svg: getLiftArtwork("Back Squat"),
     standardKey: "Back Squat",
   },
   {
     key: "bench",
     label: "Bench Press",
-    svg: "/bench_press.svg",
+    svg: getLiftArtwork("Bench Press"),
     standardKey: "Bench Press",
   },
   {
     key: "deadlift",
     label: "Deadlift",
-    svg: "/deadlift.svg",
+    svg: getLiftArtwork("Deadlift"),
     standardKey: "Deadlift",
   },
 ];

@@ -32,6 +32,7 @@ import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl } from "@/lib/share-url";
 
+import { getLiftArtwork } from "@/lib/lift-artwork";
 const LB_PER_KG = 2.20462;
 const KG_PER_LB = 0.453592;
 const GORILLA_MULTIPLIER_LOW = 6;
@@ -438,7 +439,7 @@ function GorillaStrengthMain({ relatedArticles }) {
               </div>
               <div className="flex items-center gap-2">
                 <Image
-                  src="/bench_press.svg"
+                  src={getLiftArtwork("Bench Press")}
                   alt=""
                   width={64}
                   height={64}

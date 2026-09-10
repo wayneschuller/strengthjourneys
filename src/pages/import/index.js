@@ -57,11 +57,12 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { postImportHistory } from "@/lib/import-history-client";
 import { IMPORT_APP_PAGES } from "@/lib/import-app-guides";
 
+import { getLiftArtwork } from "@/lib/lift-artwork";
 const BIG_FOUR = [
-  { name: "Back Squat", icon: "/back_squat.svg" },
-  { name: "Bench Press", icon: "/bench_press.svg" },
-  { name: "Deadlift", icon: "/deadlift.svg" },
-  { name: "Strict Press", icon: "/strict_press.svg" },
+  { name: "Back Squat", icon: getLiftArtwork("Back Squat") },
+  { name: "Bench Press", icon: getLiftArtwork("Bench Press") },
+  { name: "Deadlift", icon: getLiftArtwork("Deadlift") },
+  { name: "Strict Press", icon: getLiftArtwork("Strict Press") },
 ];
 
 // Default placeholder weights per unit

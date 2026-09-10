@@ -1,36 +1,30 @@
 import { motion } from "motion/react";
 
-// Artwork for lifts we have drawn. Any lift missing from here simply renders
-// without an illustration, so entries can be added one at a time as the set
-// grows. Values are image paths, not necessarily SVG: every diagram sits on
-// the same 5:3 canvas, so the format is free to vary per lift.
-export const LIFT_SVG_MAP = {
-  "Back Squat": "/back_squat.svg",
-  "Bench Press": "/bench_press.svg",
-  Deadlift: "/deadlift.svg",
-  "Strict Press": "/strict_press.svg",
-  "Power Snatch": "/power_snatch.png",
-  // Fallbacks for similar lifts
-  "Front Squat": "/back_squat.svg",
-  Squat: "/back_squat.svg",
-  "Overhead Press": "/strict_press.svg",
-  Press: "/strict_press.svg",
-};
+import { getLiftArtwork, warnIfArtworkOffFormat } from "@/lib/lift-artwork";
 
+/**
+ * Path to a lift's illustration, or null when we have not drawn it.
+ *
+ * The registry itself lives in src/lib/lift-artwork.js, which also documents
+ * the house format for new drawings. This stays as the name most of the app
+ * already imports.
+ */
 export function getLiftSvgPath(liftType) {
-  if (!liftType) return null;
-  return LIFT_SVG_MAP[liftType] ?? null;
+  return getLiftArtwork(liftType);
 }
 
 /**
- * Renders the SVG illustration for a known lift type, optionally with a spring entrance animation.
- * Returns null if no SVG mapping exists for the given liftType.
+ * Renders the illustration for a known lift type, optionally with a spring
+ * entrance animation. Returns null if we have no artwork for the lift, so a
+ * caller can render this unconditionally and let it collapse.
+ *
  * @param {Object} props
- * @param {string} props.liftType - The lift name used to look up the SVG path (e.g. "Back Squat", "Deadlift").
+ * @param {string} props.liftType - The lift name used to look up the artwork (e.g. "Back Squat", "Deadlift").
  * @param {string} [props.size] - Size preset: "sm", "md", or "lg".
  * @param {boolean} [props.animate] - When true, wraps the image in a motion.div with a spring animation.
  * @param {boolean} [props.isActive] - Controls whether the animation plays (scale/opacity in) or reverses (scale/opacity out).
  * @param {string} [props.className] - Additional CSS classes applied to the img element.
+ * @param {string} [props.set] - Artwork set to draw from; falls back to the default set per lift.
  */
 export function LiftSvg({
   liftType,
@@ -38,14 +32,16 @@ export function LiftSvg({
   animate = true,
   isActive = true,
   className = "",
+  set,
 }) {
-  const src = getLiftSvgPath(liftType);
+  const src = getLiftArtwork(liftType, set ? { set } : undefined);
   if (!src) return null;
 
-  // The artwork is landscape and each lift has its own aspect ratio, so md and
-  // lg pin the height and let the width follow. That is what makes a row of
-  // different lifts render at a consistent lifter size. sm stays square: it
-  // sits inline beside text, where a variable width would unsettle the row.
+  // Artwork is landscape, so md and lg pin the height and let the width
+  // follow. Every drawing shares one aspect ratio, so pinning height is what
+  // renders a row of different lifts at a consistent lifter size. sm stays
+  // square: it sits inline beside text, where a variable width would unsettle
+  // the row.
   const sizeClasses = {
     sm: "h-10 w-10",
     md: "h-24 w-auto max-w-full md:h-32",
@@ -57,6 +53,9 @@ export function LiftSvg({
       src={src}
       alt={`${liftType} diagram`}
       className={`object-contain ${sizeClasses[size]} ${className}`}
+      // Development-only nudge if a drawing is off the house format. Silent in
+      // production, and never blocks anything either way.
+      onLoad={(e) => warnIfArtworkOffFormat(e.currentTarget, src)}
     />
   );
 

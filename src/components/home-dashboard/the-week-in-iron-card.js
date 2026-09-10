@@ -45,6 +45,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { BIG_FOUR_LIFT_TYPES, getDisplayWeight } from "@/lib/processing-utils";
+import { getLiftArtwork } from "@/lib/lift-artwork";
 import {
   formatDateToYmdLocal,
   addDaysFromStr,
@@ -60,10 +61,10 @@ import {
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
 
 const BIG_FOUR_STARTERS = [
-  { liftType: "Back Squat", icon: "/back_squat.svg" },
-  { liftType: "Bench Press", icon: "/bench_press.svg" },
-  { liftType: "Deadlift", icon: "/deadlift.svg" },
-  { liftType: "Strict Press", icon: "/strict_press.svg" },
+  { liftType: "Back Squat", icon: getLiftArtwork("Back Squat") },
+  { liftType: "Bench Press", icon: getLiftArtwork("Bench Press") },
+  { liftType: "Deadlift", icon: getLiftArtwork("Deadlift") },
+  { liftType: "Strict Press", icon: getLiftArtwork("Strict Press") },
 ];
 
 // Someone on their first week may not yet know which lift is which. The

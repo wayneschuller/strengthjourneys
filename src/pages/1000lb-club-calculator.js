@@ -78,11 +78,7 @@ import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
 
-const LIFT_GRAPHICS = {
-  "Back Squat": "/back_squat.svg",
-  "Bench Press": "/bench_press.svg",
-  Deadlift: "/deadlift.svg",
-};
+import { getLiftArtwork } from "@/lib/lift-artwork";
 const TARGET_TOTAL = 1000;
 const roundTo5 = (v) => Math.round(v / 5) * 5;
 const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
@@ -921,7 +917,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                     aria-hidden
                   >
                     <motion.img
-                      src={LIFT_GRAPHICS[liftType]}
+                      src={getLiftArtwork(liftType)}
                       alt={`${liftType} exercise illustration`}
                       className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24 xl:h-32 xl:w-32"
                       animate={

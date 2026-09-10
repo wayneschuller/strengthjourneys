@@ -4,12 +4,14 @@
  * safe to import from log, parsers, API routes, and shared data processors.
  */
 
+import { getLiftArtwork } from "@/lib/lift-artwork";
+
 export const BIG_FOUR_LIFT_META = [
   {
     liftType: "Back Squat",
     slug: "squat",
     progressGuidePath: "/progress-guide/squat",
-    iconSrc: "/back_squat.svg",
+    iconSrc: getLiftArtwork("Back Squat"),
     homepageDescription:
       "A barbell squat to full depth, resting across the upper back.",
   },
@@ -17,7 +19,7 @@ export const BIG_FOUR_LIFT_META = [
     liftType: "Bench Press",
     slug: "bench-press",
     progressGuidePath: "/progress-guide/bench-press",
-    iconSrc: "/bench_press.svg",
+    iconSrc: getLiftArtwork("Bench Press"),
     homepageDescription:
       "A horizontal press from the chest while lying on a bench.",
   },
@@ -25,7 +27,7 @@ export const BIG_FOUR_LIFT_META = [
     liftType: "Deadlift",
     slug: "deadlift",
     progressGuidePath: "/progress-guide/deadlift",
-    iconSrc: "/deadlift.svg",
+    iconSrc: getLiftArtwork("Deadlift"),
     homepageDescription:
       "Lifting a barbell from the floor to a standing lockout.",
   },
@@ -33,7 +35,7 @@ export const BIG_FOUR_LIFT_META = [
     liftType: "Strict Press",
     slug: "strict-press",
     progressGuidePath: "/progress-guide/strict-press",
-    iconSrc: "/strict_press.svg",
+    iconSrc: getLiftArtwork("Strict Press"),
     homepageDescription: "A standing overhead press with no leg drive.",
   },
 ];

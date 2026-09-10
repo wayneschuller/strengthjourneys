@@ -124,9 +124,7 @@ export function warnIfArtworkOffFormat(img, src) {
   // so it gets the gentler channel.
   if (Math.abs(w / h - LIFT_ART_ASPECT_RATIO) > 0.02) {
     warned.add(src);
-    console.warn(
-      `🏋️ ${name} is ${w}x${h}. Lift art wants 5:3 (${ideal}) so it lines up with the set.`,
-    );
+    console.warn(`🏋️ ${name} is ${w}x${h}. We prefer 5:3 (${ideal}).`);
     return;
   }
 
@@ -134,8 +132,6 @@ export function warnIfArtworkOffFormat(img, src) {
   const isRaster = !src.toLowerCase().endsWith(".svg");
   if (isRaster && (w !== LIFT_ART_WIDTH || h !== LIFT_ART_HEIGHT)) {
     warned.add(src);
-    console.info(
-      `🏋️ ${name} is ${w}x${h}. Ratio is spot on; ${ideal} is leaner.`,
-    );
+    console.info(`🏋️ ${name} is ${w}x${h}. We prefer ${ideal}.`);
   }
 }

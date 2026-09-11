@@ -102,6 +102,12 @@ export function LiftTechniqueAssist({
     <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-34" : ""}`}>
       {techniqueAssist?.cues?.length > 0 && (
         <div className="space-y-2">
+          {/* What the lift is, for someone who only has the artwork to go on */}
+          {techniqueAssist.summary && (
+            <p className="pb-1 text-sm text-foreground/80">
+              {techniqueAssist.summary}
+            </p>
+          )}
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
             Form cues
           </p>

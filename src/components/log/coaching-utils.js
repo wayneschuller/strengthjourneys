@@ -86,10 +86,14 @@ export function getJourneyTechniqueAssist({
     !mostRecentLiftDate ||
     isLiftReintroduction;
   const cues = shouldShowFullAssist ? defaultCues : [];
+  // The plain-English summary travels with the cues: whoever needs cues may
+  // not know the lift at all, and a regular does not need either.
+  const summary = shouldShowFullAssist ? match.summary ?? null : null;
 
   if (!cues.length && !videoAssist) return null;
 
   return {
+    summary,
     cues,
     videoAssist,
   };

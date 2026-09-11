@@ -140,6 +140,7 @@ const LIFT_ARTWORK = {
   "Power Snatch": "/lifts/default/power-snatch.png", // male
   "Power Clean": "/lifts/default/power-clean.png", // male
   "Front Squat": "/lifts/default/front-squat.png", // female
+  "Overhead Squat": "/lifts/default/overhead-squat.png", // female
 };
 
 /**

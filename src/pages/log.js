@@ -421,13 +421,13 @@ export default function LogSessionPage({
       ...DEFAULT_ADD_LIFT_CHIPS,
       ...drawnLifts,
       ...frequentExtras,
-    ].filter(
-      ({ name }) => {
+    ]
+      .filter(({ name }) => {
         if (seen.has(name)) return false;
         seen.add(name);
         return true;
-      },
-    );
+      })
+      .map((chip) => ({ ...chip, frequency: freq[chip.name] ?? 0 }));
   }, [parsedData]);
 
   const sessionLiftTypes = useMemo(

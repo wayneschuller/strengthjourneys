@@ -528,7 +528,7 @@ export function AddLiftButton({
   onAddLift,
   chips,
   excludeLiftTypes,
-  label = "Add a lift",
+  label = "Log another lift type",
   disabled = false,
 }) {
   const [showInput, setShowInput] = useState(false);
@@ -537,8 +537,14 @@ export function AddLiftButton({
   const otherButtonRef = useRef(null);
   const { drawnLifts, searchLifts } = useMemo(() => {
     const excluded = new Set(excludeLiftTypes ?? []);
+    const frequency = new Map(
+      (chips ?? []).map(({ name, frequency = 0 }) => [name, frequency]),
+    );
     return {
-      drawnLifts: DRAWN_LIFT_TYPES.filter((name) => !excluded.has(name)),
+      // Stable ties keep catalogue order for lifts with no logged history.
+      drawnLifts: DRAWN_LIFT_TYPES.filter((name) => !excluded.has(name)).sort(
+        (a, b) => (frequency.get(b) ?? 0) - (frequency.get(a) ?? 0),
+      ),
       searchLifts: [...new Set((chips ?? []).map(({ name }) => name))].filter(
         (name) => !excluded.has(name),
       ),
@@ -574,11 +580,14 @@ export function AddLiftButton({
     ({ name }) => name.toLowerCase() === typed.toLowerCase(),
   );
   const tileClass =
-    "group flex min-w-0 flex-col items-center justify-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-3 py-4 text-center shadow-sm transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:py-5";
+    "group flex min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/80 px-2 py-3 text-center shadow-sm transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
   return (
-    <section aria-label={label} className="w-full space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+    <section aria-labelledby={`${searchId}-heading`} className="w-full space-y-3">
+      <h2 id={`${searchId}-heading`} className="text-base font-semibold">
+        {label}
+      </h2>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
         {drawnLifts.map((name) => (
           <button
             key={name}
@@ -590,7 +599,7 @@ export function AddLiftButton({
           >
             <span
               aria-hidden="true"
-              className="flex h-24 w-full items-center justify-center sm:h-28"
+              className="flex h-12 w-full items-center justify-center sm:h-14"
             >
               <LiftArtwork
                 liftType={name}
@@ -615,10 +624,10 @@ export function AddLiftButton({
         >
           <span
             aria-hidden="true"
-            className="flex h-24 items-center justify-center sm:h-28"
+            className="flex h-12 items-center justify-center sm:h-14"
           >
-            <span className="bg-primary/10 text-primary group-hover:bg-primary/15 flex size-16 items-center justify-center rounded-full transition-colors">
-              <Plus className="size-7" strokeWidth={1.5} />
+            <span className="bg-primary/10 text-primary group-hover:bg-primary/15 flex size-8 items-center justify-center rounded-full transition-colors">
+              <Plus className="size-4" strokeWidth={1.5} />
             </span>
           </span>
           <span className="flex min-h-10 items-center text-sm leading-snug font-medium">

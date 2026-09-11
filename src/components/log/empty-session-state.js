@@ -31,6 +31,7 @@ export function EmptySessionState({
           </div>
 
           <AddLiftButton
+            label="Log a lift type"
             onAddLift={onAddLift}
             chips={addLiftChips}
             disabled={isStructuralSaving}

@@ -228,7 +228,14 @@ export function LiftArtwork({
       // files of 9 to 23 KB, shared across every page and cached after the
       // first, so there is nothing worth deferring here.
       loading="eager"
-      className={`object-contain ${sizeClasses[size]} ${className}`}
+      // The drawings are flat colour with black shorts and dark hair, which
+      // sink into the page in dark themes. A hairline light edge traces the
+      // silhouette so the figure stays readable, and costs nothing in the
+      // artwork itself. 1px is deliberate: the filter works in rendered
+      // pixels, so it stays a hairline at every size, and anything larger
+      // reads as a glow rather than an edge. The dark variant already covers
+      // every dark theme pack, not just .dark.
+      className={`object-contain dark:[filter:drop-shadow(0_0_1px_#ffffff80)] ${sizeClasses[size]} ${className}`}
       onLoad={(e) => noteIfOffFormat(e.currentTarget, src)}
     />
   );

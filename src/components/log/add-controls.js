@@ -96,7 +96,7 @@ export function LiftTechniqueAssist({
   if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist) return null;
 
   return (
-    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-28 lg:ml-32" : ""}`}>
+    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-34" : ""}`}>
       {techniqueAssist?.cues?.length > 0 && (
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
@@ -505,7 +505,7 @@ export function SmartAddButtons({
     <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
       <LiftCoachCopy
         inSessionCoaching={inSessionCoachState.inSessionCoaching}
-        alignClass={hasBigFourIcon ? "md:pl-28 lg:pl-32" : ""}
+        alignClass={hasBigFourIcon ? "md:pl-34" : ""}
       />
       <SmartAddButtonGrid
         buttons={inSessionCoachState.buttons}

@@ -47,6 +47,11 @@
  * None of this is enforced. Odd sizes still render, builds never fail over
  * artwork, and development logs one console note per offending file.
  *
+ * RENDERING: always pass unoptimized, including when a caller puts the path
+ * from getLiftArtwork on its own next/image. The optimiser costs bytes and
+ * Vercel CPU on flat indexed PNGs, and it quietly skips SVG, so a missing flag
+ * only shows up once a lift has a PNG.
+ *
  * ADDING A LIFT: drop the file in public/lifts/default/ and add one line to
  * LIFT_ARTWORK. A SECOND SET: public/lifts/ is laid out to hold one, but no
  * code knows about sets yet. Teach this file when a second set exists.

@@ -499,8 +499,8 @@ export function LiftBlock({
     e1rmFormula,
   ]);
 
-  const desktopIconInsetClass = "md:pl-28 lg:pl-32";
-  const desktopIconOffsetClass = "md:ml-28 lg:ml-32";
+  const desktopIconInsetClass = "md:pl-34";
+  const desktopIconOffsetClass = "md:ml-34";
 
   return (
     <div

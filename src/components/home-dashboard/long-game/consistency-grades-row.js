@@ -10,9 +10,9 @@
 
 import { Bed } from "lucide-react";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useInView, useReducedMotion } from "motion/react";
 
-import { useId, useMemo } from "react";
+import { useId, useMemo, useRef } from "react";
 
 import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 
@@ -460,7 +460,7 @@ function trimTrailingDots(items) {
 
 // Renders a horizontal row of ConsistencyGradeCircle rings for every consistency window the user has enough
 // data to fill. Trims trailing dot-grade periods before rendering, and spring-animates the rings
-// in from above once the card's interval data is ready.
+// in from above once the card's interval data is ready and the rings are on screen.
 export function ConsistencyGradesRow({
   parsedData,
   isVisible = false,
@@ -475,13 +475,42 @@ export function ConsistencyGradesRow({
 
   if (!consistency || consistency.length === 0) return null;
 
+  return (
+    <ConsistencyRings
+      consistency={consistency}
+      isVisible={isVisible}
+      isCaptureMode={isCaptureMode}
+      hasCoarsePointer={hasCoarsePointer}
+    />
+  );
+}
+
+/*
+ * The ring grid itself, split out so its in-view watcher mounts together with
+ * the element it watches. Motion's useInView only looks for its element once,
+ * so a hook sitting above the empty-data early return would miss the rings if
+ * they appeared later, and they would stay hidden.
+ */
+function ConsistencyRings({
+  consistency,
+  isVisible,
+  isCaptureMode,
+  hasCoarsePointer,
+}) {
+  // The Long Game sits below the inspiration row, and on phones and two-column
+  // layouts well below the fold. Waiting for the data alone played the wave
+  // before anyone scrolled to it, so the rings also wait until they are seen.
+  const ringsRef = useRef(null);
+  const isInView = useInView(ringsRef, { once: true, amount: 0.5 });
+  const shouldPlay = isVisible && isInView;
+
   const circleSize =
     consistency.length >= 11 ? 48 : consistency.length >= 7 ? 56 : 64;
   const rows = splitIntoBalancedRows(consistency);
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="flex flex-col items-center gap-3">
+      <div ref={ringsRef} className="flex flex-col items-center gap-3">
         {rows.map((row, rowIndex) => (
           <div
             key={`consistency-row-${rowIndex}`}
@@ -500,7 +529,7 @@ export function ConsistencyGradesRow({
                   item={item}
                   size={circleSize}
                   delay={sequenceIndex * 0.07}
-                  isVisible={isVisible}
+                  isVisible={shouldPlay}
                   isShortTerm={SHORT_TERM_LABELS.has(item.label)}
                   isCaptureMode={isCaptureMode}
                   hasCoarsePointer={hasCoarsePointer}

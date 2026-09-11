@@ -78,5 +78,10 @@ export function getBigFourSubtitle(rotationKey) {
   for (let i = 0; i < seed.length; i += 1) {
     hash = ((hash << 5) + hash + seed.charCodeAt(i)) | 0;
   }
+  // djb2 alone moves by one when the key's last digit does, which walked the
+  // list in order and skipped whole lines. One multiply-xorshift round
+  // scatters neighbouring hours.
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
+  hash ^= hash >>> 16;
   return BIG_FOUR_SUBTITLES[Math.abs(hash) % BIG_FOUR_SUBTITLES.length];
 }

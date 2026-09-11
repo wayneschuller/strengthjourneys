@@ -13,7 +13,7 @@ export const ANY_LIFT_EXAMPLES = [
   "Barbell rows, weighted chin-ups, hex bar deadlifts, dumbbell curls, even carrying all the groceries in one trip.",
   "Push presses, weighted dips, Bulgarian split squats, kettlebell swings, even lifting the dog onto the couch.",
   "Sumo deadlifts, incline bench presses, lat pulldowns, good mornings, even deadlifting the couch to find the remote.",
-  "Pendlay rows, close-grip bench presses, walking lunges, calf raises, even a watermelon, Zercher style.",
+  "Pendlay rows, close-grip bench presses, walking lunges, calf raises, even crushing watermelons with your thighs.",
   "Rack pulls, landmine presses, goblet squats, skull crushers, even carrying a sleeping kid up the stairs.",
 ];
 

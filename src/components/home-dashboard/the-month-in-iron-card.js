@@ -4,13 +4,7 @@
  */
 import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  motion,
-  useInView,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "motion/react";
+import { motion, useInView } from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
 import { addDays, format } from "date-fns";
@@ -28,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { CountUp, formatCountUpInteger } from "@/components/count-up";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -765,7 +760,12 @@ function EarlyMonthMomentumCard({
             <p className="bg-muted/20 text-muted-foreground rounded-lg border border-dashed px-3 py-2 text-sm">
               Total volume so far:{" "}
               <span className="text-foreground font-medium">
-                {stats.tonnageValue.toLocaleString()} {stats.tonnageUnit}
+                <CountUp
+                  value={stats.tonnageValue}
+                  format={formatCountUpInteger}
+                  duration={MONTH_COUNT_UP_SECONDS}
+                />{" "}
+                {stats.tonnageUnit}
               </span>
               . Keep stacking consistent sessions.
             </p>
@@ -798,7 +798,13 @@ function EarlyMonthMomentumCard({
 function MomentumStat({ label, value }) {
   return (
     <div className="bg-background/80 rounded-lg border px-2 py-3 text-center">
-      <div className="text-lg font-semibold">{value}</div>
+      <div className="text-lg font-semibold tabular-nums">
+        <CountUp
+          value={value}
+          format={formatCountUpInteger}
+          duration={MONTH_COUNT_UP_SECONDS}
+        />
+      </div>
       <div className="text-muted-foreground text-xs">{label}</div>
     </div>
   );
@@ -1049,6 +1055,10 @@ const COFFEE_WIN_NUDGES = [
   "Strong month. No ads, no tracking, just one dev and a coffee habit.",
 ];
 
+// Slower than the Lift Explorer E1RM on purpose: this card's numbers keep
+// settling while the rows light up green one by one, so the count and the
+// verdict land together instead of the figures finishing first.
+const MONTH_COUNT_UP_SECONDS = 2.2;
 const HIGHLIGHT_REVEAL_DELAY_MS = 650;
 const HIGHLIGHT_ROW_STAGGER_MS = 170;
 const CONFETTI_AFTER_HIGHLIGHT_DELAY_MS = 200;
@@ -1104,18 +1114,6 @@ function isStrengthLevelRegressed(current, last) {
 
 function passesTonnageThreshold(current, last) {
   return current >= last * TONNAGE_CLOSE_ENOUGH_RATIO;
-}
-
-function AnimatedInteger({ value, className = "" }) {
-  const motionVal = useMotionValue(0);
-  const springVal = useSpring(motionVal, { stiffness: 180, damping: 22 });
-  const displayVal = useTransform(springVal, (v) => Math.round(v));
-
-  useEffect(() => {
-    motionVal.set(value ?? 0);
-  }, [value, motionVal]);
-
-  return <motion.span className={className}>{displayVal}</motion.span>;
 }
 
 // Compact circular progress ring showing "checks met / checks total" for the month.
@@ -1648,10 +1646,14 @@ function fireMonthWinConfetti(cardRef) {
 // ─── Formatting helpers ────────────────────────────────────────────────────
 
 function formatTonnage(value, unit) {
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}k ${unit}`;
-  }
-  return `${Math.round(value)} ${unit}`;
+  return `${formatTonnageFigure(value)} ${unit}`;
+}
+
+// The number half of formatTonnage, split out so CountUp can tick the figure
+// while the unit beside it stays still.
+function formatTonnageFigure(value) {
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+  return `${Math.round(value)}`;
 }
 
 function formatLiftTypeLabel(liftType) {
@@ -2190,8 +2192,10 @@ function BigFourCriteriaTable({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="text-right">
-                      <AnimatedInteger
+                      <CountUp
                         value={previousSessionsCompared}
+                        format={formatCountUpInteger}
+                        duration={MONTH_COUNT_UP_SECONDS}
                         className={`text-2xl font-semibold tracking-tight tabular-nums transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
                       />
                       <div
@@ -2219,8 +2223,10 @@ function BigFourCriteriaTable({
                   <TooltipTrigger asChild>
                     <div className="text-left">
                       <div className="flex items-baseline gap-1">
-                        <AnimatedInteger
+                        <CountUp
                           value={sessions.current}
+                          format={formatCountUpInteger}
+                          duration={MONTH_COUNT_UP_SECONDS}
                           className={`text-2xl font-bold tracking-tight tabular-nums transition-colors duration-500 ${revealRightColor}`}
                         />
                         {rowHighlighted && passed && !baseline && (
@@ -2534,7 +2540,12 @@ function BigFourCriteriaTable({
                             : "text-foreground"
                         }
                       >
-                        {formatTonnage(tonnage.last ?? 0, unit)} lifted
+                        <CountUp
+                          value={tonnage.last ?? 0}
+                          format={formatTonnageFigure}
+                          duration={MONTH_COUNT_UP_SECONDS}
+                        />{" "}
+                        {unit} lifted
                       </span>
                     </div>
                   </div>
@@ -2556,7 +2567,14 @@ function BigFourCriteriaTable({
                     <div
                       className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}
                     >
-                      <span>{formatTonnage(currentTonnage, unit)} lifted</span>
+                      <span>
+                        <CountUp
+                          value={currentTonnage}
+                          format={formatTonnageFigure}
+                          duration={MONTH_COUNT_UP_SECONDS}
+                        />{" "}
+                        {unit} lifted
+                      </span>
                       {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
                         <span className="font-bold text-emerald-600 dark:text-emerald-400">
                           ✓

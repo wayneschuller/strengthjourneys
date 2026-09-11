@@ -119,6 +119,8 @@
 import Image from "next/image";
 import { motion } from "motion/react";
 
+import { useLiftColors } from "@/hooks/use-lift-colors";
+
 const ASPECT_RATIO = 5 / 3;
 const IDEAL_WIDTH = 1000;
 const IDEAL_HEIGHT = 600;
@@ -190,8 +192,17 @@ export function LiftArtwork({
   isActive = true,
   className = "",
 }) {
+  const { getColor } = useLiftColors();
   const src = getLiftArtwork(liftType);
   if (!src) return null;
+
+  // Dark themes swallow the black shorts and dark hair, so a figure loses its
+  // silhouette and reads as floating legs. Wash the lift's own colour behind
+  // the artwork instead, the treatment the progress guide heroes already use.
+  // It paints through the PNG's own transparency, so there is no wrapper
+  // element and nothing in any layout moves. sm is left alone: at 40px beside
+  // a line of text a glow is noise rather than help.
+  const glow = size !== "sm";
 
   // Artwork is landscape, so md and lg pin the height and let the width
   // follow. Every drawing shares one aspect ratio, so pinning height is what
@@ -228,14 +239,21 @@ export function LiftArtwork({
       // files of 9 to 23 KB, shared across every page and cached after the
       // first, so there is nothing worth deferring here.
       loading="eager"
-      // The drawings are flat colour with black shorts and dark hair, which
-      // sink into the page in dark themes. A hairline light edge traces the
-      // silhouette so the figure stays readable, and costs nothing in the
-      // artwork itself. 1px is deliberate: the filter works in rendered
-      // pixels, so it stays a hairline at every size, and anything larger
-      // reads as a glow rather than an edge. The dark variant already covers
-      // every dark theme pack, not just .dark.
-      className={`object-contain dark:[filter:drop-shadow(0_0_1px_#ffffff80)] ${sizeClasses[size]} ${className}`}
+      // The colour rides as a custom property so the gradient itself can sit
+      // behind a dark: variant, which already covers every dark theme pack.
+      // Light themes need none of this and get none of it.
+      style={
+        glow
+          ? {
+              "--lift-glow": `color-mix(in srgb, ${getColor(liftType)} 34%, transparent)`,
+            }
+          : undefined
+      }
+      className={`object-contain ${
+        glow
+          ? "dark:[background-image:radial-gradient(closest-side,var(--lift-glow),transparent)]"
+          : ""
+      } ${sizeClasses[size]} ${className}`}
       onLoad={(e) => noteIfOffFormat(e.currentTarget, src)}
     />
   );

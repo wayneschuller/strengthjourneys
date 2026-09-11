@@ -66,6 +66,7 @@ const LIFT_ARTWORK = {
   "Power Clean": "/lifts/default/power-clean.png", // male
   "Front Squat": "/lifts/default/front-squat.png", // female
   "Overhead Squat": "/lifts/default/overhead-squat.png", // female
+  "Romanian Deadlift": "/lifts/default/romanian-deadlift.png", // male
 };
 
 /**

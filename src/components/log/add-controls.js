@@ -36,6 +36,7 @@ import { DRAWN_LIFT_TYPES, LiftArtwork } from "@/components/lift-artwork";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getDaysBetweenYmd, getReadableDateString } from "@/lib/date-utils";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { getAnyLiftExamples } from "@/lib/any-lift-examples";
 import {
   getYouTubeThumbnailSrc,
   getYouTubeWatchHref,
@@ -521,11 +522,6 @@ export function SmartAddButtons({
   );
 }
 
-// Under the read-only gallery's catch-all tile: four real lifts without a
-// drawing, then one that keeps it light.
-const ANY_LIFT_EXAMPLES =
-  "Barbell rows, weighted chin-ups, hex bar deadlifts, dumbbell curls, even carrying all the groceries in one trip.";
-
 /**
  * When a lift was last trained, for its gallery tile. Relative on today's
  * session, where "how long since?" is the question being asked; a plain date
@@ -567,6 +563,8 @@ export function AddLiftButton({
   const searchId = useId();
   const otherButtonRef = useRef(null);
   const { getColor } = useLiftColors();
+  // Read once per mount, so the line holds still if the hour turns mid-visit.
+  const [anyLiftExamples] = useState(() => getAnyLiftExamples());
   const { drawnLifts, searchLifts } = useMemo(() => {
     const excluded = new Set(excludeLiftTypes ?? []);
     const chipsByName = new Map((chips ?? []).map((chip) => [chip.name, chip]));
@@ -714,7 +712,7 @@ export function AddLiftButton({
               Plus anything with reps and a weight
             </span>
             <span className="text-muted-foreground text-xs text-pretty">
-              {ANY_LIFT_EXAMPLES}
+              {anyLiftExamples}
             </span>
           </div>
         )}

@@ -521,6 +521,11 @@ export function SmartAddButtons({
   );
 }
 
+// Under the read-only gallery's catch-all tile: four real lifts without a
+// drawing, then one that keeps it light.
+const ANY_LIFT_EXAMPLES =
+  "Barbell rows, weighted chin-ups, hex bar deadlifts, dumbbell curls, even carrying all the groceries in one trip.";
+
 /**
  * When a lift was last trained, for its gallery tile. Relative on today's
  * session, where "how long since?" is the question being asked; a plain date
@@ -691,6 +696,28 @@ export function AddLiftButton({
             </span>
           </TileElement>
         ))}
+        {readOnly && (
+          // Stands where signed-in lifters see "Add other lift types", so a
+          // visitor never reads the drawings as the whole catalogue.
+          <div
+            className={`${tileClass} bg-muted/20 col-span-2 border-dashed px-4`}
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-12 items-center justify-center sm:h-14"
+            >
+              <span className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-full">
+                <Plus className="size-4" strokeWidth={1.5} />
+              </span>
+            </span>
+            <span className="text-sm leading-snug font-medium">
+              Plus anything with reps and a weight
+            </span>
+            <span className="text-muted-foreground text-xs text-pretty">
+              {ANY_LIFT_EXAMPLES}
+            </span>
+          </div>
+        )}
         {!readOnly && (
           <button
             ref={otherButtonRef}

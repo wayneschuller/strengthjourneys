@@ -139,9 +139,18 @@ const LIFT_ARTWORK = {
   "Power Clean": "/lifts/default/power-clean.png", // male
 };
 
-/** Lifts close enough to borrow another lift's drawing until they get their own. */
-const LIFT_ART_ALIASES = {
-  "Front Squat": "Back Squat",
+/**
+ * Other names for a lift we have already drawn. Synonyms only: an overhead
+ * press IS a strict press, and an unqualified squat is a back squat.
+ *
+ * Never point one lift at a different lift's drawing, however alike the two
+ * look. The diagram is here to show where the bar sits, so a stand-in teaches
+ * the wrong thing rather than nothing. Front Squat pointed at Back Squat here
+ * for seven months, showing a bar across the upper back for a lift racked at
+ * the front. A lift we have not drawn should render no illustration at all,
+ * which is what returning null already does.
+ */
+const LIFT_ART_SYNONYMS = {
   Squat: "Back Squat",
   "Overhead Press": "Strict Press",
   Press: "Strict Press",
@@ -156,7 +165,7 @@ const LIFT_ART_ALIASES = {
  */
 export function getLiftArtwork(liftType) {
   if (!liftType) return null;
-  return LIFT_ARTWORK[LIFT_ART_ALIASES[liftType] ?? liftType] ?? null;
+  return LIFT_ARTWORK[LIFT_ART_SYNONYMS[liftType] ?? liftType] ?? null;
 }
 
 /**

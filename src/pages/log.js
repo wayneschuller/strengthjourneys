@@ -9,7 +9,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
-import { Bot } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIsClient } from "usehooks-ts";
 
@@ -21,12 +20,10 @@ import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import {
   buildAiAssistantPromptLink,
   buildLogSessionReviewPrompt,
-  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
 import { InspirationCard } from "@/components/log/inspiration-card";
 import { AddLiftButton } from "@/components/log/add-controls";
 import { LogSessionSkeleton } from "@/components/log/session-summary";
@@ -43,19 +40,17 @@ import {
 import { DEFAULT_ADD_LIFT_CHIPS } from "@/components/log/coached-lifts";
 import { useLogSheetSync } from "@/components/log/use-log-sheet-sync";
 import { LiftBlock } from "@/components/log/lift-block";
-import { DeleteSessionControls } from "@/components/log/delete-session-controls";
+import { SessionFooterActions } from "@/components/log/session-footer-actions";
 import { EmptySessionState } from "@/components/log/empty-session-state";
 import { LogDateNav } from "@/components/log/log-date-nav";
 import { PreviewLogCta } from "@/components/log/preview-log-cta";
 
 import { DRAWN_LIFT_TYPES, getLiftArtwork } from "@/components/lift-artwork";
-const BIG_FOUR = BIG_FOUR_LIFT_META.map(
-  ({ liftType, progressGuidePath }) => ({
-    name: liftType,
-    icon: getLiftArtwork(liftType),
-    slug: progressGuidePath.replace(/^\//, ""),
-  }),
-);
+const BIG_FOUR = BIG_FOUR_LIFT_META.map(({ liftType, progressGuidePath }) => ({
+  name: liftType,
+  icon: getLiftArtwork(liftType),
+  slug: progressGuidePath.replace(/^\//, ""),
+}));
 
 const LOG_PAGE_TITLE = "Workout Log and Session Tracker | Strength Journeys";
 const LOG_PAGE_DESCRIPTION =
@@ -765,39 +760,17 @@ export default function LogSessionPage({
                     />
                   )}
 
-                  {aiSessionReviewLink && (
-                    <div>
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="w-full gap-2"
-                      >
-                        <Link
-                          href={aiSessionReviewLink.href}
-                          onClick={() =>
-                            stashAiAssistantPrompt(aiSessionReviewLink)
-                          }
-                        >
-                          <Bot className="h-4 w-4" />
-                          <span>AI session feedback</span>
-                        </Link>
-                      </Button>
-                    </div>
-                  )}
-
-                  {!previewMode && (
-                    <>
-                      <DeleteSessionControls
-                        isStructuralSaving={isExistingRowWriteBlocked}
-                        onCancel={() => setShowDeleteConfirm(false)}
-                        onConfirm={handleDeleteSession}
-                        onRequestConfirm={() => setShowDeleteConfirm(true)}
-                        sessionDate={sessionDate}
-                        showConfirm={showDeleteConfirm}
-                      />
-                    </>
-                  )}
+                  <SessionFooterActions
+                    aiReviewLink={aiSessionReviewLink}
+                    isToday={isToday}
+                    isStructuralSaving={isExistingRowWriteBlocked}
+                    onCancel={() => setShowDeleteConfirm(false)}
+                    onConfirm={handleDeleteSession}
+                    onRequestConfirm={() => setShowDeleteConfirm(true)}
+                    previewMode={previewMode}
+                    sessionDate={sessionDate}
+                    showConfirm={showDeleteConfirm}
+                  />
                 </div>
               )}
 

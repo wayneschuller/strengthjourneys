@@ -33,6 +33,7 @@ import { LogSessionSkeleton } from "@/components/log/session-summary";
 import { getLiftAnchorId } from "@/components/log/utils";
 import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 import {
+  getLiftHistoryBeforeDate,
   getNextSessionDate,
   getPerLiftTonnageStats,
   getPrevSessionDate,
@@ -45,6 +46,7 @@ import { LiftBlock } from "@/components/log/lift-block";
 import { DeleteSessionControls } from "@/components/log/delete-session-controls";
 import { EmptySessionState } from "@/components/log/empty-session-state";
 import { LogDateNav } from "@/components/log/log-date-nav";
+import { PreviewLogCta } from "@/components/log/preview-log-cta";
 
 import { DRAWN_LIFT_TYPES, getLiftArtwork } from "@/components/lift-artwork";
 const BIG_FOUR = BIG_FOUR_LIFT_META.map(
@@ -401,6 +403,8 @@ export default function LogSessionPage({
   const addLiftChips = useMemo(() => {
     const seen = new Set();
     const freq = {};
+    // Recency and last-trained date, as of this session's date.
+    const history = getLiftHistoryBeforeDate(parsedData, sessionDate);
     if (parsedData) {
       for (const entry of parsedData) {
         if (!entry.isGoal) {
@@ -427,8 +431,13 @@ export default function LogSessionPage({
         seen.add(name);
         return true;
       })
-      .map((chip) => ({ ...chip, frequency: freq[chip.name] ?? 0 }));
-  }, [parsedData]);
+      .map((chip) => ({
+        ...chip,
+        frequency: freq[chip.name] ?? 0,
+        recentSets: history[chip.name]?.recentSets ?? 0,
+        lastDate: history[chip.name]?.lastDate ?? null,
+      }));
+  }, [parsedData, sessionDate]);
 
   const sessionLiftTypes = useMemo(
     () => Object.keys(sessionLiftsWithPending),
@@ -583,6 +592,11 @@ export default function LogSessionPage({
     />
   );
 
+  // Heads the read-only lift gallery that preview visitors browse.
+  const previewLogCta = (
+    <PreviewLogCta isDemoMode={isDemoMode} isImportedData={isImportedData} />
+  );
+
   return (
     <>
       <NextSeo
@@ -666,6 +680,8 @@ export default function LogSessionPage({
                   isToday={isToday}
                   onAddLift={handleAddLift}
                   previewMode={previewMode}
+                  previewCta={previewLogCta}
+                  sessionDate={sessionDate}
                 />
               )}
 
@@ -730,11 +746,21 @@ export default function LogSessionPage({
                     )}
                   </AnimatePresence>
 
-                  {!previewMode && (
+                  {previewMode ? (
+                    <AddLiftButton
+                      readOnly
+                      readOnlyCta={previewLogCta}
+                      chips={addLiftChips}
+                      sessionDate={sessionDate}
+                      isToday={isToday}
+                    />
+                  ) : (
                     <AddLiftButton
                       onAddLift={handleAddLift}
                       chips={addLiftChips}
                       excludeLiftTypes={sessionLiftTypes}
+                      sessionDate={sessionDate}
+                      isToday={isToday}
                       disabled={isAddBlocked}
                     />
                   )}

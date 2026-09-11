@@ -410,6 +410,7 @@ const SIGN_IN_SOURCE_LABELS = {
   how_strong_am_i: "the How Strong Am I page",
   import_overview: "the import walkthrough",
   lift_page_card: "a Big Four lift card",
+  log_lift_gallery: "the log's lift gallery",
   milestone: "a Long Game milestone",
   nav_avatar: "the nav avatar menu",
   preview_banner: "the preview banner",

@@ -6,6 +6,42 @@
 
 import { getAverageLiftSessionTonnageFromPrecomputed } from "@/lib/processing-utils";
 import { hasMatchingRealSetForPendingSet } from "@/lib/sheet-row-identity";
+import { getDaysBetweenYmd } from "@/lib/date-utils";
+
+// A set counts half as much every 60 days, so the add-lift gallery follows a
+// program change within weeks while a long break keeps the old order intact.
+const RECENT_LIFT_HALF_LIFE_DAYS = 60;
+
+/**
+ * For each lift type, the last date it was trained before `sessionDate` and a
+ * recency-weighted set count. Sets on or after the session date are ignored,
+ * so logging in the current session never reshuffles the add-lift gallery,
+ * and a past date shows the history as it stood on that day.
+ *
+ * @returns {Object<string, {lastDate: string, recentSets: number}>}
+ */
+export function getLiftHistoryBeforeDate(parsedData, sessionDate) {
+  const history = {};
+  if (!parsedData || !sessionDate) return history;
+  const weightByDate = new Map();
+  for (const entry of parsedData) {
+    if (entry.isGoal || entry.date >= sessionDate) continue;
+    let weight = weightByDate.get(entry.date);
+    if (weight === undefined) {
+      const daysAgo = getDaysBetweenYmd(entry.date, sessionDate);
+      weight = 0.5 ** (daysAgo / RECENT_LIFT_HALF_LIFE_DAYS);
+      weightByDate.set(entry.date, weight);
+    }
+    const lift = history[entry.liftType];
+    if (!lift) {
+      history[entry.liftType] = { lastDate: entry.date, recentSets: weight };
+      continue;
+    }
+    if (entry.date > lift.lastDate) lift.lastDate = entry.date;
+    lift.recentSets += weight;
+  }
+  return history;
+}
 
 export function getSessionDates(parsedData) {
   if (!parsedData) return [];

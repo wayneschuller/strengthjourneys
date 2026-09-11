@@ -34,7 +34,8 @@ import {
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
 import { DRAWN_LIFT_TYPES, LiftArtwork } from "@/components/lift-artwork";
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { getReadableDateString } from "@/lib/date-utils";
+import { getDaysBetweenYmd, getReadableDateString } from "@/lib/date-utils";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import {
   getYouTubeThumbnailSrc,
   getYouTubeWatchHref,
@@ -521,35 +522,76 @@ export function SmartAddButtons({
 }
 
 /**
+ * When a lift was last trained, for its gallery tile. Relative on today's
+ * session, where "how long since?" is the question being asked; a plain date
+ * when back-filling or browsing another day, where "ago" would mislead.
+ */
+function getLastLiftedLabel(lastDate, sessionDate, isToday) {
+  if (!lastDate || !sessionDate) return null;
+  if (!isToday) return `Last ${getReadableDateString(lastDate)}`;
+
+  const days = getDaysBetweenYmd(lastDate, sessionDate);
+  if (days <= 1) return "Yesterday";
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.round(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.round(days / 30)} months ago`;
+  const years = Math.floor(days / 365);
+  return years === 1 ? "A year ago" : `${years} years ago`;
+}
+
+/**
  * A visible gallery of every illustrated lift, followed by a search tile for
  * other lift types. Both empty and active sessions use this same catalogue.
+ * Tiles lead with what has been trained lately and say when each was last
+ * done. `readOnly` shows the same gallery to preview visitors with nothing to
+ * tap, headed by `readOnlyCta` so the reason is plain.
  */
 export function AddLiftButton({
   onAddLift,
   chips,
   excludeLiftTypes,
-  label = "Log another lift type",
+  sessionDate,
+  isToday = false,
+  label,
   disabled = false,
+  readOnly = false,
+  readOnlyCta = null,
 }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
   const searchId = useId();
   const otherButtonRef = useRef(null);
+  const { getColor } = useLiftColors();
   const { drawnLifts, searchLifts } = useMemo(() => {
     const excluded = new Set(excludeLiftTypes ?? []);
-    const frequency = new Map(
-      (chips ?? []).map(({ name, frequency = 0 }) => [name, frequency]),
-    );
+    const chipsByName = new Map((chips ?? []).map((chip) => [chip.name, chip]));
+    const recentSets = (name) => chipsByName.get(name)?.recentSets ?? 0;
+    const frequency = (name) => chipsByName.get(name)?.frequency ?? 0;
     return {
-      // Stable ties keep catalogue order for lifts with no logged history.
-      drawnLifts: DRAWN_LIFT_TYPES.filter((name) => !excluded.has(name)).sort(
-        (a, b) => (frequency.get(b) ?? 0) - (frequency.get(a) ?? 0),
-      ),
+      // Recent training leads, lifetime volume breaks ties, and stable ties
+      // keep catalogue order for lifts with no logged history.
+      drawnLifts: DRAWN_LIFT_TYPES.filter((name) => !excluded.has(name))
+        .sort(
+          (a, b) =>
+            recentSets(b) - recentSets(a) || frequency(b) - frequency(a),
+        )
+        .map((name) => ({
+          name,
+          color: getColor(name),
+          lastLiftedLabel: getLastLiftedLabel(
+            chipsByName.get(name)?.lastDate,
+            sessionDate,
+            isToday,
+          ),
+        })),
       searchLifts: [...new Set((chips ?? []).map(({ name }) => name))].filter(
         (name) => !excluded.has(name),
       ),
     };
-  }, [chips, excludeLiftTypes]);
+  }, [chips, excludeLiftTypes, sessionDate, isToday, getColor]);
+  // Keep a row's drawings level when only some tiles have a date under them,
+  // without reserving the line for a lifter who has no history yet.
+  const hasAnyLastLifted = drawnLifts.some((lift) => lift.lastLiftedLabel);
 
   function close() {
     setShowInput(false);
@@ -580,23 +622,46 @@ export function AddLiftButton({
     ({ name }) => name.toLowerCase() === typed.toLowerCase(),
   );
   const tileClass =
-    "group flex min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/80 px-2 py-3 text-center shadow-sm transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    "group relative flex min-w-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-border/60 bg-card/80 px-2 py-3 text-center shadow-sm transition-colors";
+  const interactiveTileClass =
+    "hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+  // The strip along the top is the lift block's own colour bar, so a tile
+  // already looks like the card it becomes. Hover tints the border to match.
+  const liftTileClass = `${tileClass} ${
+    readOnly
+      ? ""
+      : `${interactiveTileClass} hover:border-[color:color-mix(in_srgb,var(--lift-color)_55%,transparent)]`
+  }`;
+  const TileElement = readOnly ? "div" : "button";
 
   return (
     <section aria-labelledby={`${searchId}-heading`} className="w-full space-y-3">
       <h2 id={`${searchId}-heading`} className="text-base font-semibold">
-        {label}
+        {label ?? (readOnly ? "Lifts you can log" : "Log another lift type")}
       </h2>
+      {readOnly && readOnlyCta}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-        {drawnLifts.map((name) => (
-          <button
+        {drawnLifts.map(({ name, color, lastLiftedLabel }) => (
+          <TileElement
             key={name}
-            type="button"
-            aria-label={`Add ${name}`}
-            disabled={disabled}
-            onClick={() => submit(name)}
-            className={tileClass}
+            {...(readOnly
+              ? {}
+              : {
+                  type: "button",
+                  "aria-label": lastLiftedLabel
+                    ? `Add ${name}. ${lastLiftedLabel}`
+                    : `Add ${name}`,
+                  disabled,
+                  onClick: () => submit(name),
+                })}
+            className={liftTileClass}
+            style={{ "--lift-color": color }}
           >
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-1"
+              style={{ backgroundColor: color }}
+            />
             <span
               aria-hidden="true"
               className="flex h-12 w-full items-center justify-center sm:h-14"
@@ -608,32 +673,45 @@ export function AddLiftButton({
                 className="h-full max-h-full w-auto md:h-full"
               />
             </span>
+            <span className="flex flex-col items-center">
+              <span className="flex min-h-10 items-center text-sm leading-snug font-medium">
+                {name}
+              </span>
+              {hasAnyLastLifted && (
+                <span
+                  className={`text-muted-foreground text-xs ${
+                    lastLiftedLabel ? "" : "invisible"
+                  }`}
+                >
+                  {lastLiftedLabel ?? "\u00a0"}
+                </span>
+              )}
+            </span>
+          </TileElement>
+        ))}
+        {!readOnly && (
+          <button
+            ref={otherButtonRef}
+            type="button"
+            disabled={disabled}
+            aria-expanded={showInput}
+            aria-controls={searchId}
+            onClick={() => (showInput ? close() : setShowInput(true))}
+            className={`${tileClass} ${interactiveTileClass} hover:border-primary/40 bg-muted/20 border-dashed`}
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-12 items-center justify-center sm:h-14"
+            >
+              <span className="bg-primary/10 text-primary group-hover:bg-primary/15 flex size-8 items-center justify-center rounded-full transition-colors">
+                <Plus className="size-4" strokeWidth={1.5} />
+              </span>
+            </span>
             <span className="flex min-h-10 items-center text-sm leading-snug font-medium">
-              {name}
+              Add other lift types
             </span>
           </button>
-        ))}
-        <button
-          ref={otherButtonRef}
-          type="button"
-          disabled={disabled}
-          aria-expanded={showInput}
-          aria-controls={searchId}
-          onClick={() => (showInput ? close() : setShowInput(true))}
-          className={`${tileClass} bg-muted/20 border-dashed`}
-        >
-          <span
-            aria-hidden="true"
-            className="flex h-12 items-center justify-center sm:h-14"
-          >
-            <span className="bg-primary/10 text-primary group-hover:bg-primary/15 flex size-8 items-center justify-center rounded-full transition-colors">
-              <Plus className="size-4" strokeWidth={1.5} />
-            </span>
-          </span>
-          <span className="flex min-h-10 items-center text-sm leading-snug font-medium">
-            Add other lift types
-          </span>
-        </button>
+        )}
       </div>
       {showInput && (
         <div

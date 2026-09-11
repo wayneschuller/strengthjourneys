@@ -59,9 +59,20 @@
  *     with speckled plates arrived carrying 13,213 distinct colours and
  *     weighed 429 KB, against 23 KB for the same picture snapped flat.
  *
- * 10. The fourteen palette colours and no others, listed against LIFT_ARTWORK
- *     below. Skin, its two shade tints, hair, singlet and its shade, whites,
- *     bar steel, and four plate darks.
+ * 10. These fifteen colours and no others:
+ *
+ *       skin      #fbc398  #eaae83  #de966d
+ *       hair      #372a23
+ *       singlet   #3970c0  #2d609f
+ *       whites    #f4f3f3  #b0b0ae
+ *       bar       #8e8e8e  #656769
+ *       plates    #4e4f51  #3e3d3f  #343434  #252323  #100f0d
+ *
+ *     #343434 earns its place the hard way. A generated plate grey of
+ *     #333333 sits 19 away from both #3e3d3f and the hair brown #372a23, so
+ *     quantising flipped between them pixel by pixel and mottled the plates
+ *     brown. #343434 is 2 away, and restoring it both fixed the plates and
+ *     made the file smaller, since clean boundaries compress better.
  *
  * 11. Transparent background, asked for plainly. Generators manage it: the
  *     power snatch came back three quarters transparent. So an opaque
@@ -74,7 +85,7 @@
  *
  * THE FILE ITSELF
  *
- * 12. Indexed PNG, quantised to those fourteen colours. Flat colour art
+ * 12. Indexed PNG, quantised to those fifteen colours. Flat colour art
  *     compresses into an indexed palette far better than into a photographic
  *     codec: at 384px the same drawing is 4 KB indexed, 10 KB as AVIF and
  *     18 KB as WebP, which is why this component asks next/image not to
@@ -125,6 +136,7 @@ const LIFT_ARTWORK = {
   Deadlift: "/lifts/default/deadlift.svg", // female
   "Strict Press": "/lifts/default/strict-press.svg", // male
   "Power Snatch": "/lifts/default/power-snatch.png", // male
+  "Power Clean": "/lifts/default/power-clean.png", // male
 };
 
 /** Lifts close enough to borrow another lift's drawing until they get their own. */

@@ -137,6 +137,7 @@ const LIFT_ARTWORK = {
   "Strict Press": "/lifts/default/strict-press.svg", // male
   "Power Snatch": "/lifts/default/power-snatch.png", // male
   "Power Clean": "/lifts/default/power-clean.png", // male
+  "Front Squat": "/lifts/default/front-squat.png", // female
 };
 
 /**

@@ -106,6 +106,28 @@ export const COACHED_LIFTS = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=qbES7k4HDf8",
   },
+  {
+    liftType: "Hip Thrust",
+    // Most lifters thrust more than they squat, so 1.0 starts on the light side.
+    standardsRef: { liftType: "Back Squat", ratio: 1.0 },
+    cues: [
+      "Rest the bench just under your shoulder blades and pad the bar in the hip crease.",
+      "Tuck the chin and keep the ribs down so the hips do the work, not the lower back.",
+      "Drive through the heels to full lockout with shins vertical, then lower under control.",
+    ],
+    videoUrl: "https://www.youtube.com/watch?v=pF17m_CXfL0", // "Hip Thrust Tutorial - Proper Form and Technique" - Runna
+  },
+  {
+    liftType: "Overhead Squat",
+    // Mobility caps this well below the back squat for most people starting out.
+    standardsRef: { liftType: "Back Squat", ratio: 0.5 },
+    cues: [
+      "Take a wide grip, lock the elbows, and press up into the bar before you descend.",
+      "Keep the bar stacked over mid-foot and sit straight down between the hips.",
+      "Keep pushing up into the bar and stand without letting it drift forward.",
+    ],
+    videoUrl: "https://www.youtube.com/watch?v=pn8mqlG0nkE", // "The Overhead Squat" - CrossFit
+  },
 ];
 
 export const DEFAULT_ADD_LIFT_CHIPS = COACHED_LIFTS.filter(

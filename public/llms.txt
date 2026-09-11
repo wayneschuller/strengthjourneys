@@ -16,7 +16,7 @@
 
 ## Tracking and Visualization (requires Google Sheet connection)
 
-- [Session Logger](https://www.strengthjourneys.xyz/log): Log sets directly to your Google Sheet from the browser.
+- [Session Logger](https://www.strengthjourneys.xyz/log): Log sets directly to your Google Sheet from the browser. The page opens on a live demo log that anyone can browse without signing in.
 - [Lift Explorer](https://www.strengthjourneys.xyz/lift-explorer): Browse and search your full lifting history.
 - [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer): Interactive charts of your estimated 1RM trends over time.
 - [Tonnage Tracker](https://www.strengthjourneys.xyz/tonnage): Weekly and monthly training volume analysis.
@@ -76,10 +76,13 @@
 - [How Strong Am I? How Do I Work Out My Strength Level?](https://www.strengthjourneys.xyz/articles/how-strong-am-i-how-do-i-work-out-my-strength-level)
 - [How to Calculate Your E1RM: 7 Formulas + Free Calculator](https://www.strengthjourneys.xyz/articles/how-do-i-calculate-my-e1rm-estimated-one-rep-max)
 - [What Is an E1RM (Estimated One Rep Max)?](https://www.strengthjourneys.xyz/articles/what-is-an-e1rm-estimated-one-rep-max)
+- [Strength Training for Beginners: Understanding Key Phrases like 1RM, PR, RPE, and More](https://www.strengthjourneys.xyz/articles/strength-training-for-beginners-understanding-key-phrases-like-1rm-pr-rpe-and-more)
 - [What Is a Good Bench Press? (By Age, Weight & Experience)](https://www.strengthjourneys.xyz/articles/what-is-a-good-bench-press-by-age-weight-and-experience)
 - [How Often Should I Test My One Rep Max?](https://www.strengthjourneys.xyz/articles/how-often-should-i-test-my-one-rep-max)
 - [Tracking Tonnage As a Simple Programming Guide](https://www.strengthjourneys.xyz/articles/tracking-tonnage-as-a-simple-programming-guide)
 - [The Power of Owning Your Lifting Data with Google Sheets](https://www.strengthjourneys.xyz/articles/the-power-of-owning-your-lifting-data-with-google-sheets)
+- [Getting the Most out of the Strength Journeys Home Dashboard](https://www.strengthjourneys.xyz/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard)
+- [Tracking Big Picture Progress: How to Use the Strength Visualizer](https://www.strengthjourneys.xyz/articles/tracking-big-picture-progress-how-to-use-the-strength-visualizer)
 - [Using AI in Barbell Strength Training](https://www.strengthjourneys.xyz/articles/using-ai-in-barbell-strength-training)
 - [What Are Barbells Good For?](https://www.strengthjourneys.xyz/articles/what-are-barbells-good-for)
 - [What Barbell Should I Start With?](https://www.strengthjourneys.xyz/articles/what-barbell-should-i-start-with)
@@ -91,3 +94,5 @@
 - [What Is the Difference Between Strength Training and Resistance Training?](https://www.strengthjourneys.xyz/articles/what-is-the-difference-between-strength-training-and-resistance-training)
 - [The Iron and the Soul by Henry Rollins](https://www.strengthjourneys.xyz/articles/the-iron-and-the-soul-author-henry-rollins)
 - [Greg Glassman's Blueprint: Quotes That Shaped CrossFit](https://www.strengthjourneys.xyz/articles/greg-glassman-s-blueprint-quotes-that-shaped-crossfit)
+- [Why It's Good to Be a Barbell Weirdo](https://www.strengthjourneys.xyz/articles/why-it-s-good-to-be-a-barbell-weirdo)
+- [Why Gym Music Matters](https://www.strengthjourneys.xyz/articles/why-gym-music-matters)

@@ -3,9 +3,6 @@
  * Preview users can only browse; linked-sheet users can start a lift block.
  */
 
-import { useMemo } from "react";
-import Image from "next/image";
-
 import { AddLiftButton } from "@/components/log/add-controls";
 
 export function EmptySessionState({
@@ -13,15 +10,8 @@ export function EmptySessionState({
   isStructuralSaving,
   isToday,
   onAddLift,
-  parsedData,
   previewMode,
-  starterLifts,
 }) {
-  const starterLiftTypes = useMemo(
-    () => starterLifts.map(({ name }) => name),
-    [starterLifts],
-  );
-
   return (
     <div className="mt-6 flex flex-col items-center gap-6">
       {previewMode ? (
@@ -40,38 +30,9 @@ export function EmptySessionState({
             <p className="text-muted-foreground text-sm">Pick a lift to begin.</p>
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
-            {starterLifts.map(({ name, icon }) => (
-              <button
-                key={name}
-                title={`Start with ${name}`}
-                disabled={isStructuralSaving}
-                onClick={() => onAddLift(name)}
-                className="border-border bg-card hover:border-primary hover:bg-muted/40 flex flex-col items-center gap-4 rounded-xl border px-4 py-6 shadow-sm transition-colors active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-card md:gap-5 md:py-8"
-              >
-                <Image
-                  src={icon}
-                  alt={name}
-                  width={80}
-                  height={80}
-                  unoptimized
-                  className="h-20 w-20 object-contain md:h-28 md:w-28"
-                />
-                <span className="text-sm leading-tight font-medium">
-                  {name}
-                </span>
-              </button>
-            ))}
-          </div>
-
           <AddLiftButton
-            parsedData={parsedData}
             onAddLift={onAddLift}
             chips={addLiftChips}
-            // The starters are the big buttons just above, so "other" means
-            // everything else.
-            excludeLiftTypes={starterLiftTypes}
-            label="Add other lift type"
             disabled={isStructuralSaving}
           />
         </>

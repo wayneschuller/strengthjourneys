@@ -3,7 +3,7 @@
  * in-session coaching, smart set suggestions, and custom lift entry.
  */
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -32,7 +32,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
-import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
+import { DRAWN_LIFT_TYPES, LiftArtwork } from "@/components/lift-artwork";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import {
@@ -521,164 +521,171 @@ export function SmartAddButtons({
 }
 
 /**
- * The "add a lift" control. Closed, it is one dashed row with a peek of the
- * drawings waiting inside. Open, it is a searchable picker: every lift we have
- * drawn as a picture tile first, then the rest as plain names, then free text
- * for anything else. Tiles come from getLiftArtwork, so each new drawing in
- * lift-artwork.js joins the grid without touching this file.
+ * A visible gallery of every illustrated lift, followed by a search tile for
+ * other lift types. Both empty and active sessions use this same catalogue.
  */
 export function AddLiftButton({
-  parsedData,
   onAddLift,
   chips,
   excludeLiftTypes,
-  label = "Add another lift type",
+  label = "Add a lift",
   disabled = false,
 }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
-
-  // Split once into drawn and undrawn, keeping the caller's order within each.
-  // Lifts already in the session are left out: picking one would only add a
-  // set to the block that is already on screen.
-  const { drawnChips, plainChips } = useMemo(() => {
-    const seen = new Set(excludeLiftTypes ?? []);
-    const drawn = [];
-    const plain = [];
-    for (const chip of chips ?? []) {
-      if (seen.has(chip.name)) continue;
-      seen.add(chip.name);
-      (getLiftArtwork(chip.name) ? drawn : plain).push(chip);
-    }
-    return { drawnChips: drawn, plainChips: plain };
+  const searchId = useId();
+  const otherButtonRef = useRef(null);
+  const { drawnLifts, searchLifts } = useMemo(() => {
+    const excluded = new Set(excludeLiftTypes ?? []);
+    return {
+      drawnLifts: DRAWN_LIFT_TYPES.filter((name) => !excluded.has(name)),
+      searchLifts: [...new Set((chips ?? []).map(({ name }) => name))].filter(
+        (name) => !excluded.has(name),
+      ),
+    };
   }, [chips, excludeLiftTypes]);
 
   function close() {
     setShowInput(false);
     setLiftType("");
+    otherButtonRef.current?.focus();
   }
 
-  function submit(lt) {
+  function submit(name) {
     if (disabled) return;
-    const raw = (lt ?? liftType).trim();
+    const raw = (name ?? liftType).trim();
     if (!raw) return;
-    const clean = raw.replace(/\S+/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+    // Preserve existing spelling (including acronyms) when matching a lift.
+    const known = (chips ?? []).find(
+      (chip) => chip.name.toLowerCase() === raw.toLowerCase(),
+    );
+    const clean =
+      known?.name ??
+      raw.replace(
+        /\S+/g,
+        (word) => word[0].toUpperCase() + word.slice(1).toLowerCase(),
+      );
     close();
     onAddLift(clean);
   }
 
-  if (!showInput) {
-    return (
-      <Button
-        variant="outline"
-        className="h-auto w-full justify-start gap-3 border-dashed px-4 py-2.5"
-        disabled={disabled}
-        onClick={() => setShowInput(true)}
-      >
-        <span className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-full">
-          <Plus className="h-4 w-4" />
-        </span>
-        <span className="font-medium">{label}</span>
-        {drawnChips.length > 0 && (
-          <span className="ml-auto flex items-center gap-1" aria-hidden="true">
-            {/* Two on phones, where a third would push the label off the row. */}
-            {drawnChips.slice(0, 3).map(({ name }, i) => (
-              <LiftArtwork
-                key={name}
-                liftType={name}
-                size="sm"
-                animate={false}
-                className={`opacity-80 ${i === 2 ? "max-sm:hidden" : ""}`}
-              />
-            ))}
-          </span>
-        )}
-      </Button>
-    );
-  }
-
   const typed = liftType.trim();
+  const hasExactMatch = (chips ?? []).some(
+    ({ name }) => name.toLowerCase() === typed.toLowerCase(),
+  );
+  const tileClass =
+    "group flex min-w-0 flex-col items-center justify-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-3 py-4 text-center shadow-sm transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:py-5";
 
   return (
-    <div className="bg-card mx-auto w-full max-w-2xl space-y-3 rounded-xl border p-3 shadow-sm">
-      <Command
-        className="bg-background rounded-lg border"
-        onKeyDown={(e) => {
-          if (e.key === "Escape") close();
-        }}
-      >
-        <CommandInput
-          placeholder="Search, or type a new lift"
-          value={liftType}
+    <section aria-label={label} className="w-full space-y-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {drawnLifts.map((name) => (
+          <button
+            key={name}
+            type="button"
+            aria-label={`Add ${name}`}
+            disabled={disabled}
+            onClick={() => submit(name)}
+            className={tileClass}
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-24 w-full items-center justify-center sm:h-28"
+            >
+              <LiftArtwork
+                liftType={name}
+                size="md"
+                animate={false}
+                className="h-full max-h-full w-auto md:h-full"
+              />
+            </span>
+            <span className="flex min-h-10 items-center text-sm leading-snug font-medium">
+              {name}
+            </span>
+          </button>
+        ))}
+        <button
+          ref={otherButtonRef}
+          type="button"
           disabled={disabled}
-          onValueChange={setLiftType}
-        />
-        <CommandList className="max-h-[min(28rem,60vh)]">
-          <CommandEmpty>No lift found.</CommandEmpty>
-          {typed ? (
-            <CommandGroup heading="Add new">
-              <CommandItem
-                value={`create-${typed}`}
-                disabled={disabled}
-                onSelect={() => submit(liftType)}
-              >
-                <ClipboardPlus className="h-4 w-4" />
-                {`Add "${typed}"`}
-              </CommandItem>
-            </CommandGroup>
-          ) : null}
-          {drawnChips.length > 0 && (
-            <CommandGroup heading="Lifts">
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
-                {drawnChips.map(({ name }) => (
-                  <CommandItem
-                    key={name}
-                    value={name}
-                    disabled={disabled}
-                    onSelect={() => submit(name)}
-                    className="data-[selected=true]:border-border min-w-0 flex-col gap-1.5 rounded-lg border border-transparent px-2 py-2.5"
-                  >
-                    <LiftArtwork liftType={name} size="tile" animate={false} />
-                    <span className="w-full truncate text-center text-xs font-medium">
-                      {name}
-                    </span>
-                  </CommandItem>
-                ))}
-              </div>
-            </CommandGroup>
-          )}
-          {plainChips.length > 0 && (
-            <CommandGroup heading={drawnChips.length > 0 ? "More lifts" : "Lifts"}>
-              <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
-                {plainChips.map(({ name }) => (
-                  <CommandItem
-                    key={name}
-                    value={name}
-                    disabled={disabled}
-                    onSelect={() => submit(name)}
-                    className="min-w-0"
-                  >
-                    <span className="truncate">{name}</span>
-                  </CommandItem>
-                ))}
-              </div>
-            </CommandGroup>
-          )}
-        </CommandList>
-      </Command>
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => submit()} disabled={disabled || !typed}>
-          Add
-        </Button>
-        <Button size="sm" variant="ghost" onClick={close}>
-          Cancel
-        </Button>
+          aria-expanded={showInput}
+          aria-controls={searchId}
+          onClick={() => (showInput ? close() : setShowInput(true))}
+          className={`${tileClass} bg-muted/20 border-dashed`}
+        >
+          <span
+            aria-hidden="true"
+            className="flex h-24 items-center justify-center sm:h-28"
+          >
+            <span className="bg-primary/10 text-primary group-hover:bg-primary/15 flex size-16 items-center justify-center rounded-full transition-colors">
+              <Plus className="size-7" strokeWidth={1.5} />
+            </span>
+          </span>
+          <span className="flex min-h-10 items-center text-sm leading-snug font-medium">
+            Add other lift types
+          </span>
+        </button>
       </div>
-      {disabled ? (
-        <p className="text-xs text-muted-foreground">
-          Row positions are updating. Add controls will re-enable once the current save finishes.
+      {showInput && (
+        <div
+          id={searchId}
+          className="bg-card space-y-3 rounded-2xl border p-3 shadow-sm"
+        >
+          <Command
+            className="bg-background rounded-xl border"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.stopPropagation();
+                close();
+              }
+            }}
+          >
+            <CommandInput
+              autoFocus
+              aria-label="Search or name a lift"
+              placeholder="Search, or type a new lift"
+              value={liftType}
+              disabled={disabled}
+              onValueChange={setLiftType}
+            />
+            <CommandList className="max-h-64">
+              <CommandEmpty>No other lifts found.</CommandEmpty>
+              <CommandGroup heading="Lift types">
+                {searchLifts.map((name) => (
+                  <CommandItem
+                    key={name}
+                    value={name}
+                    disabled={disabled}
+                    onSelect={() => submit(name)}
+                  >
+                    {name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              {typed && !hasExactMatch && (
+                <CommandGroup heading="New lift type">
+                  <CommandItem
+                    value={`create-${typed}`}
+                    disabled={disabled}
+                    onSelect={() => submit()}
+                  >
+                    <ClipboardPlus className="size-4" />
+                    {`Add "${typed}"`}
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+          <Button size="sm" variant="ghost" onClick={close}>
+            Cancel
+          </Button>
+        </div>
+      )}
+      {disabled && (
+        <p className="text-muted-foreground text-xs">
+          Add controls will re-enable once the current update finishes.
         </p>
-      ) : null}
-    </div>
+      )}
+    </section>
   );
 }

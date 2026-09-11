@@ -665,9 +665,7 @@ export default function LogSessionPage({
                   isStructuralSaving={isAddBlocked}
                   isToday={isToday}
                   onAddLift={handleAddLift}
-                  parsedData={parsedData}
                   previewMode={previewMode}
-                  starterLifts={BIG_FOUR}
                 />
               )}
 
@@ -734,7 +732,6 @@ export default function LogSessionPage({
 
                   {!previewMode && (
                     <AddLiftButton
-                      parsedData={parsedData}
                       onAddLift={handleAddLift}
                       chips={addLiftChips}
                       excludeLiftTypes={sessionLiftTypes}

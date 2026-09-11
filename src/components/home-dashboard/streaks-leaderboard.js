@@ -93,6 +93,7 @@ export function StreaksLeaderboard({
   streaks,
   firstSessionDate = null,
   isSharing = false,
+  canStart = true,
 }) {
   const { isMetric } = useAthleteBio();
   const prefersReducedMotion = useReducedMotion();
@@ -106,7 +107,9 @@ export function StreaksLeaderboard({
   // screen means the lifter sees the bars grow rather than a finished board.
   const boardRef = useRef(null);
   const isBoardInView = useInView(boardRef, { once: true, amount: 0.25 });
-  const isRevealed = !shouldAnimate || isBoardInView;
+  // canStart hands the card control of the running order: the consistency rings
+  // above open first, and the bars grow on the back of that wave.
+  const isRevealed = !shouldAnimate || (isBoardInView && canStart);
 
   const ranked = useMemo(() => {
     if (!streaks?.length) return [];

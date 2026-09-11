@@ -76,6 +76,11 @@ export function TheLongGameCard({
     isImportedData,
   } = useUserLiftingData();
   const [intervals, setIntervals] = useState(null);
+  // The card opens top to bottom: the consistency rings run their wave, then the
+  // streak board grows its bars. The rings report when they are done, so nothing
+  // here has to guess at their timing.
+  const [ringsRevealed, setRingsRevealed] = useState(false);
+  const handleRingsRevealed = useCallback(() => setRingsRevealed(true), []);
   const shareRef = useRef(null);
   const dailyHeatmapScrollRef = useRef(null);
   const yearRowRefs = useRef({});
@@ -410,6 +415,7 @@ export function TheLongGameCard({
                           parsedData={parsedData}
                           isVisible={!!intervals}
                           isCaptureMode={isSharing}
+                          onRevealComplete={handleRingsRevealed}
                         />
                       </div>
                     </div>
@@ -419,6 +425,7 @@ export function TheLongGameCard({
                         parsedData={parsedData}
                         isVisible={!!intervals}
                         isCaptureMode={isSharing}
+                        onRevealComplete={handleRingsRevealed}
                       />
                     </div>
                   )}
@@ -583,6 +590,7 @@ export function TheLongGameCard({
                     streaks={streakLeaderboard}
                     firstSessionDate={parsedData?.[0]?.date ?? null}
                     isSharing={isSharing}
+                    canStart={ringsRevealed}
                   />
                 )}
               {/* Footer with app branding - only visible during image capture */}

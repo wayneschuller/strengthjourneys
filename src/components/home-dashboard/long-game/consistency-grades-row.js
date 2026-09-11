@@ -12,7 +12,7 @@ import { Bed } from "lucide-react";
 
 import { motion, useInView, useReducedMotion } from "motion/react";
 
-import { useId, useMemo, useRef } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 
 import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 
@@ -41,6 +41,17 @@ import {
 
 const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
 const DAYS_PER_YEAR = 365.25;
+
+// Rings open one after another, left to right. The streak board below waits for
+// this wave, so the timing is named here rather than buried in the JSX: the tail
+// covers the last ring's arc sweep and the letter landing behind it.
+const RING_SEQUENCE_STAGGER_S = 0.07;
+const RING_WAVE_TAIL_S = 1.05;
+
+function getRingsWaveMs(ringCount) {
+  const seconds = (ringCount - 1) * RING_SEQUENCE_STAGGER_S + RING_WAVE_TAIL_S;
+  return Math.round(seconds * 1000);
+}
 
 function getConsistencyLabelAbbrev(label) {
   if (label === "Week") return "W";
@@ -465,6 +476,7 @@ export function ConsistencyGradesRow({
   parsedData,
   isVisible = false,
   isCaptureMode = false,
+  onRevealComplete,
 }) {
   const hasCoarsePointer = useHasCoarsePointer();
 
@@ -473,7 +485,15 @@ export function ConsistencyGradesRow({
     return raw ? trimTrailingDots(raw) : null;
   }, [parsedData]);
 
-  if (!consistency || consistency.length === 0) return null;
+  const isEmpty = !consistency || consistency.length === 0;
+
+  // A lifter with no gradeable window yet has no wave to play, so anything
+  // waiting on this row is released now rather than held for good.
+  useEffect(() => {
+    if (isEmpty) onRevealComplete?.();
+  }, [isEmpty, onRevealComplete]);
+
+  if (isEmpty) return null;
 
   return (
     <ConsistencyRings
@@ -481,6 +501,7 @@ export function ConsistencyGradesRow({
       isVisible={isVisible}
       isCaptureMode={isCaptureMode}
       hasCoarsePointer={hasCoarsePointer}
+      onRevealComplete={onRevealComplete}
     />
   );
 }
@@ -496,13 +517,30 @@ function ConsistencyRings({
   isVisible,
   isCaptureMode,
   hasCoarsePointer,
+  onRevealComplete,
 }) {
   // The Long Game sits below the inspiration row, and on phones and two-column
   // layouts well below the fold. Waiting for the data alone played the wave
   // before anyone scrolled to it, so the rings also wait until they are seen.
   const ringsRef = useRef(null);
   const isInView = useInView(ringsRef, { once: true, amount: 0.5 });
+  const prefersReducedMotion = useReducedMotion();
+  const isStatic = isCaptureMode || !!prefersReducedMotion;
   const shouldPlay = isVisible && isInView;
+  const ringCount = consistency.length;
+
+  // The streak board opens on the back of this wave, so the row reports when it
+  // has finished. A still row has nothing to wait for and says so immediately.
+  useEffect(() => {
+    if (!onRevealComplete) return;
+    if (isStatic) {
+      onRevealComplete();
+      return;
+    }
+    if (!shouldPlay) return;
+    const timer = setTimeout(onRevealComplete, getRingsWaveMs(ringCount));
+    return () => clearTimeout(timer);
+  }, [onRevealComplete, isStatic, shouldPlay, ringCount]);
 
   const circleSize =
     consistency.length >= 11 ? 48 : consistency.length >= 7 ? 56 : 64;
@@ -528,7 +566,7 @@ function ConsistencyRings({
                   key={item.label}
                   item={item}
                   size={circleSize}
-                  delay={sequenceIndex * 0.07}
+                  delay={sequenceIndex * RING_SEQUENCE_STAGGER_S}
                   isVisible={shouldPlay}
                   isShortTerm={SHORT_TERM_LABELS.has(item.label)}
                   isCaptureMode={isCaptureMode}

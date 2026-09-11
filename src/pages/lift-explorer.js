@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -121,6 +122,19 @@ function LiftExplorerMain({ relatedArticles }) {
 
   return (
     <PageContainer>
+      {/* Lead the tab title with the lift so a bookmark or history entry reads
+          "Deadlift - Lift Explorer" and opens straight onto that lift. Only an
+          explicit ?liftType earns the prefix: the bare /lift-explorer URL is the
+          canonical, indexed page, and prefixing its auto-picked lift would swap
+          its search title for whichever lift the demo data leads with. next/head
+          keeps the last <title>, so this overrides the static NextSeo one. */}
+      {requestedLiftSelection && (
+        <Head>
+          <title key="title">
+            {`${requestedLiftSelection} - Lift Explorer | Strength Journeys`}
+          </title>
+        </Head>
+      )}
       <PageHeader>
         <PageHeaderHeading icon={Layers}>Lift Explorer</PageHeaderHeading>
         <PageHeaderDescription>

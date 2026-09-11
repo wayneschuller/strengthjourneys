@@ -553,7 +553,8 @@ function BigFourBarbellInsightsMenu() {
 
   return (
     <>
-      <NavigationMenu>
+      {/* Open on hover straight away; Radix waits 200ms by default. */}
+      <NavigationMenu delayDuration={0}>
         <NavigationMenuList>
           <NavigationMenuItem>
             <NavigationMenuTrigger
@@ -663,8 +664,9 @@ function StrengthInsightsMenu() {
   );
   ListItem.displayName = "ListItem";
 
+  // Open on hover straight away; Radix waits 200ms by default.
   return (
-    <NavigationMenu>
+    <NavigationMenu delayDuration={0}>
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuTrigger
@@ -781,8 +783,9 @@ function CalculatorsMenu() {
   );
   ListItem.displayName = "ListItem";
 
+  // Open on hover straight away; Radix waits 200ms by default.
   return (
-    <NavigationMenu>
+    <NavigationMenu delayDuration={0}>
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuTrigger

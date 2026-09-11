@@ -22,6 +22,10 @@
  *    comes out narrow: the front squat fills 50% of its width, the overhead
  *    squat 94%.
  *  - Camera is an editorial choice, per lift and per figure.
+ *  - Only draw lifts whose equipment the name already implies. A hip thrust is
+ *    always a barbell, so one drawing serves everyone who logs it. A curl is
+ *    not, so a barbell curl drawing would be wrong for the dumbbells half the
+ *    people logging "Curl" actually used.
  *  - So is the sex of the figure. Keep the catalogue near an even split, with
  *    women on some of the heavy compounds, so it reads as mixed to a
  *    first-time visitor who has told us nothing.

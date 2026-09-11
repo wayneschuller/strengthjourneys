@@ -19,7 +19,8 @@ import {
 
 // Expo-style ease-out: most of the distance goes by in the first third, then
 // the last few digits settle slowly, which is what reads as "ticking in".
-const COUNT_UP_EASE = [0.16, 1, 0.3, 1];
+// Exported so a bar or ring growing beside a number can move in step with it.
+export const COUNT_UP_EASE = [0.16, 1, 0.3, 1];
 
 /**
  * Counts a number up to `value` once it scrolls into view. A card below the
@@ -32,6 +33,9 @@ const COUNT_UP_EASE = [0.16, 1, 0.3, 1];
  *   frame. Defaults to one decimal, dropped when the figure is whole.
  * @param {number} [props.duration] - Seconds for the count.
  * @param {number} [props.delay] - Seconds to wait before counting.
+ * @param {boolean} [props.start] - Starts the count when true. Pass it to keep
+ *   the number in step with a parent's own reveal; omit it to start when this
+ *   number scrolls into view.
  * @param {string} [props.className]
  */
 export function CountUp({
@@ -39,11 +43,13 @@ export function CountUp({
   format = formatCountUpDecimal,
   duration = 1.1,
   delay = 0,
+  start,
   className,
 }) {
   const target = value ?? 0;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
+  const shouldStart = start ?? isInView;
   const prefersReducedMotion = useReducedMotion();
   const motionValue = useMotionValue(prefersReducedMotion ? target : 0);
   const text = useTransform(motionValue, (latest) => format(latest));
@@ -53,14 +59,14 @@ export function CountUp({
       motionValue.set(target);
       return;
     }
-    if (!isInView) return;
+    if (!shouldStart) return;
     const controls = animate(motionValue, target, {
       duration,
       delay,
       ease: COUNT_UP_EASE,
     });
     return () => controls.stop();
-  }, [target, motionValue, prefersReducedMotion, isInView, duration, delay]);
+  }, [target, motionValue, prefersReducedMotion, shouldStart, duration, delay]);
 
   return (
     <motion.span ref={ref} className={className}>

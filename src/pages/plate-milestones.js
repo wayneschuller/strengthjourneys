@@ -77,6 +77,7 @@ import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
 
+import { getLiftArtwork } from "@/components/lift-artwork";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -86,13 +87,6 @@ import {
   ReferenceLine,
   Tooltip as RechartsTooltip,
 } from "recharts";
-
-const LIFT_GRAPHICS = {
-  "Strict Press": "/strict_press.svg",
-  "Bench Press": "/bench_press.svg",
-  "Back Squat": "/back_squat.svg",
-  Deadlift: "/deadlift.svg",
-};
 
 // Plate weights: 20 kg / 45 lb per plate per side
 const PLATE_KG = 20;
@@ -1961,7 +1955,7 @@ function MilestoneRow({
             className="flex flex-shrink-0"
           >
             <img
-              src={LIFT_GRAPHICS[liftType]}
+              src={getLiftArtwork(liftType)}
               alt={`${liftType} illustration`}
               className="h-20 w-20 object-contain md:h-24 md:w-24"
             />
@@ -2255,7 +2249,7 @@ function PlateTimelinesSection({ liftTimelines, isMetric }) {
                   className="flex flex-shrink-0 items-center"
                 >
                   <img
-                    src={LIFT_GRAPHICS[milestone.liftType]}
+                    src={getLiftArtwork(milestone.liftType)}
                     alt={`${milestone.liftType} illustration`}
                     className="h-24 w-24 object-contain md:h-28 md:w-28"
                   />

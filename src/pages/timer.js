@@ -11,44 +11,29 @@
 //
 // Everything about the timing itself (wall-clock accuracy, screen wake lock, the
 // ping) lives in the shared TimerProvider so the nav bar MiniTimer keeps
-// counting when a lifter navigates away mid-set.
+// counting when a lifter navigates away mid-set. The deck's buttons live in
+// components/timer-controls.js, because the MiniTimer's panel offers the same
+// set of actions to a lifter who is somewhere else in the app.
 
 import React, { useCallback, useEffect, useRef } from "react";
 
-import {
-  Pause,
-  Play,
-  RotateCcw,
-  TimerReset,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
 import { NextSeo } from "next-seo";
 import { useTheme } from "next-themes";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { PageContainer } from "@/components/page-header";
+import {
+  TimerPingControls,
+  TimerTransportControls,
+} from "@/components/timer-controls";
 import { TimerDigits } from "@/components/timer-digits";
 import { TimerPingHistory } from "@/components/timer-ping-history";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatAlarmLabel, formatTime, useTimer } from "@/hooks/use-timer";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { cn } from "@/lib/utils";
 
 const PAGE_TITLE = "Gym Timer | Strength Journeys";
-
-// A repeating ping rather than a one-shot alarm: a lifter who misses one still
-// gets the next, and the numbers match how rest between working sets actually
-// runs. The clock never stops at any of them.
-const PING_INTERVALS = [
-  { label: "Off", shortLabel: "Off", seconds: 0 },
-  { label: "2 min", shortLabel: "2m", seconds: 120 },
-  { label: "3 min", shortLabel: "3m", seconds: 180 },
-  { label: "5 min", shortLabel: "5m", seconds: 300 },
-  { label: "7 min", shortLabel: "7m", seconds: 420 },
-  { label: "10 min", shortLabel: "10m", seconds: 600 },
-];
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Gym Timer";
@@ -126,10 +111,12 @@ export default function Timer({ relatedArticles }) {
 
 /**
  * The timer itself: a clock sized to fill its card, a progress line running to
- * the next ping, and a control deck of transport buttons and ping tools. Starts
- * counting on mount and supports spacebar restart via a keyboard listener.
+ * the next ping, and the shared control deck of transport buttons and ping
+ * tools. Starts counting on mount and supports spacebar restart via a keyboard
+ * listener.
  */
 function LargeTimer() {
+  // The control deck below reads the rest of the timer context for itself.
   const {
     time,
     isRunning,
@@ -137,12 +124,7 @@ function LargeTimer() {
     pingCount,
     activePingSeconds,
     nudgeSeed,
-    isMuted,
-    setIsMuted,
-    setPingInterval,
     ensureRunning,
-    handleStartStop,
-    handleReset,
     handleRestart,
   } = useTimer();
 
@@ -362,89 +344,12 @@ function LargeTimer() {
       </p>
 
       <div className="flex w-full flex-col items-center gap-6 md:flex-row md:justify-center md:gap-8">
-        <div className="flex items-center gap-3">
-          <Button
-            className="h-14 rounded-full px-8 text-lg tracking-tight transition-transform active:scale-95 md:h-16 md:px-10 md:text-xl [&_svg]:size-5"
-            onClick={handleRestart}
-          >
-            <RotateCcw />
-            Restart
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-12 w-12 rounded-full transition-transform active:scale-95 [&_svg]:size-5"
-            onClick={handleStartStop}
-            title={isRunning ? "Stop the clock" : "Start the clock"}
-          >
-            {isRunning ? <Pause /> : <Play />}
-            <span className="sr-only">
-              {isRunning ? "Stop the clock" : "Start the clock"}
-            </span>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-12 w-12 rounded-full transition-transform active:scale-95 [&_svg]:size-5"
-            onClick={handleReset}
-            title="Reset to zero"
-          >
-            <TimerReset />
-            <span className="sr-only">Reset to zero</span>
-          </Button>
-        </div>
+        <TimerTransportControls />
 
         <div className="bg-border hidden h-16 w-px md:block" />
 
         <div className="flex w-full flex-col items-center gap-2 md:w-auto md:items-start">
-          {/* On a phone the intervals become a full-width row of thumb-sized
-              targets, because this is a control people press with chalk on
-              their hands. On a desktop they collapse back to inline pills. */}
-          <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row md:gap-3">
-            <div className="flex items-center gap-1">
-              <span className="text-muted-foreground text-sm">Ping every</span>
-              {pingIntervalSeconds > 0 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={() => setIsMuted(!isMuted)}
-                  title={
-                    isMuted
-                      ? "Turn the ping sound on"
-                      : "Turn the ping sound off"
-                  }
-                >
-                  {isMuted ? <VolumeX /> : <Volume2 />}
-                  <span className="sr-only">
-                    {isMuted
-                      ? "Turn the ping sound on"
-                      : "Turn the ping sound off"}
-                  </span>
-                </Button>
-              )}
-            </div>
-
-            <div className="grid w-full grid-cols-6 gap-1.5 md:flex md:w-auto md:items-center">
-              {PING_INTERVALS.map((interval) => {
-                const isChosen = pingIntervalSeconds === interval.seconds;
-
-                return (
-                  <Button
-                    key={interval.seconds}
-                    variant={isChosen ? "default" : "outline"}
-                    size="sm"
-                    aria-pressed={isChosen}
-                    className="h-11 w-full rounded-full px-1 tabular-nums md:h-9 md:w-auto md:px-3"
-                    onClick={() => setPingInterval(interval.seconds)}
-                  >
-                    <span className="md:hidden">{interval.shortLabel}</span>
-                    <span className="hidden md:inline">{interval.label}</span>
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
+          <TimerPingControls />
 
           <TimerPingHistory
             pingIntervalSeconds={pingIntervalSeconds}

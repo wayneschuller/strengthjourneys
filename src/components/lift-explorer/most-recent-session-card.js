@@ -27,7 +27,7 @@ import {
   getConsecutiveWorkoutGroups,
   SessionExerciseBlock,
 } from "@/components/home-dashboard/session-exercise-block";
-import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import {
   buildAiAssistantPromptLink,
@@ -234,7 +234,7 @@ export function MostRecentSessionCard({
 
   if (showMultipleSessions) {
     const titlePrefix = `Recent ${liftType} sessions`;
-    const svgPath = getLiftSvgPath(liftType);
+    const svgPath = getLiftArtwork(liftType);
     return (
       <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
         <Card className="mt-4 rounded-xl border">

@@ -9,7 +9,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
-import { Bot } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIsClient } from "usehooks-ts";
 
@@ -21,18 +20,17 @@ import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import {
   buildAiAssistantPromptLink,
   buildLogSessionReviewPrompt,
-  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
 import { InspirationCard } from "@/components/log/inspiration-card";
 import { AddLiftButton } from "@/components/log/add-controls";
 import { LogSessionSkeleton } from "@/components/log/session-summary";
 import { getLiftAnchorId } from "@/components/log/utils";
 import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 import {
+  getLiftHistoryBeforeDate,
   getNextSessionDate,
   getPerLiftTonnageStats,
   getPrevSessionDate,
@@ -42,17 +40,17 @@ import {
 import { DEFAULT_ADD_LIFT_CHIPS } from "@/components/log/coached-lifts";
 import { useLogSheetSync } from "@/components/log/use-log-sheet-sync";
 import { LiftBlock } from "@/components/log/lift-block";
-import { DeleteSessionControls } from "@/components/log/delete-session-controls";
+import { SessionFooterActions } from "@/components/log/session-footer-actions";
 import { EmptySessionState } from "@/components/log/empty-session-state";
 import { LogDateNav } from "@/components/log/log-date-nav";
+import { PreviewLogCta } from "@/components/log/preview-log-cta";
 
-const BIG_FOUR = BIG_FOUR_LIFT_META.map(
-  ({ liftType, iconSrc, progressGuidePath }) => ({
-    name: liftType,
-    icon: iconSrc,
-    slug: progressGuidePath.replace(/^\//, ""),
-  }),
-);
+import { DRAWN_LIFT_TYPES, getLiftArtwork } from "@/components/lift-artwork";
+const BIG_FOUR = BIG_FOUR_LIFT_META.map(({ liftType, progressGuidePath }) => ({
+  name: liftType,
+  icon: getLiftArtwork(liftType),
+  slug: progressGuidePath.replace(/^\//, ""),
+}));
 
 const LOG_PAGE_TITLE = "Workout Log and Session Tracker | Strength Journeys";
 const LOG_PAGE_DESCRIPTION =
@@ -400,6 +398,8 @@ export default function LogSessionPage({
   const addLiftChips = useMemo(() => {
     const seen = new Set();
     const freq = {};
+    // Recency and last-trained date, as of this session's date.
+    const history = getLiftHistoryBeforeDate(parsedData, sessionDate);
     if (parsedData) {
       for (const entry of parsedData) {
         if (!entry.isGoal) {
@@ -410,14 +410,34 @@ export default function LogSessionPage({
     const frequentExtras = Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
       .map(([name]) => ({ name, icon: null }));
-    return [...BIG_FOUR, ...DEFAULT_ADD_LIFT_CHIPS, ...frequentExtras].filter(
-      ({ name }) => {
+    // Every drawn lift is on offer, so each new drawing reaches the picker.
+    const drawnLifts = DRAWN_LIFT_TYPES.map((name) => ({
+      name,
+      icon: getLiftArtwork(name),
+    }));
+    return [
+      ...BIG_FOUR,
+      ...DEFAULT_ADD_LIFT_CHIPS,
+      ...drawnLifts,
+      ...frequentExtras,
+    ]
+      .filter(({ name }) => {
         if (seen.has(name)) return false;
         seen.add(name);
         return true;
-      },
-    );
-  }, [parsedData]);
+      })
+      .map((chip) => ({
+        ...chip,
+        frequency: freq[chip.name] ?? 0,
+        recentSets: history[chip.name]?.recentSets ?? 0,
+        lastDate: history[chip.name]?.lastDate ?? null,
+      }));
+  }, [parsedData, sessionDate]);
+
+  const sessionLiftTypes = useMemo(
+    () => Object.keys(sessionLiftsWithPending),
+    [sessionLiftsWithPending],
+  );
 
   const handleAddLift = useCallback(
     (liftType) => {
@@ -567,6 +587,11 @@ export default function LogSessionPage({
     />
   );
 
+  // Heads the read-only lift gallery that preview visitors browse.
+  const previewLogCta = (
+    <PreviewLogCta isDemoMode={isDemoMode} isImportedData={isImportedData} />
+  );
+
   return (
     <>
       <NextSeo
@@ -649,9 +674,9 @@ export default function LogSessionPage({
                   isStructuralSaving={isAddBlocked}
                   isToday={isToday}
                   onAddLift={handleAddLift}
-                  parsedData={parsedData}
                   previewMode={previewMode}
-                  starterLifts={BIG_FOUR}
+                  previewCta={previewLogCta}
+                  sessionDate={sessionDate}
                 />
               )}
 
@@ -716,48 +741,36 @@ export default function LogSessionPage({
                     )}
                   </AnimatePresence>
 
-                  {!previewMode && (
+                  {previewMode ? (
                     <AddLiftButton
-                      parsedData={parsedData}
+                      readOnly
+                      readOnlyCta={previewLogCta}
+                      chips={addLiftChips}
+                      sessionDate={sessionDate}
+                      isToday={isToday}
+                    />
+                  ) : (
+                    <AddLiftButton
                       onAddLift={handleAddLift}
                       chips={addLiftChips}
+                      excludeLiftTypes={sessionLiftTypes}
+                      sessionDate={sessionDate}
+                      isToday={isToday}
                       disabled={isAddBlocked}
                     />
                   )}
 
-                  {aiSessionReviewLink && (
-                    <div>
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="w-full gap-2"
-                      >
-                        <Link
-                          href={aiSessionReviewLink.href}
-                          onClick={() =>
-                            stashAiAssistantPrompt(aiSessionReviewLink)
-                          }
-                        >
-                          <Bot className="h-4 w-4" />
-                          <span>AI session feedback</span>
-                        </Link>
-                      </Button>
-                    </div>
-                  )}
-
-                  {!previewMode && (
-                    <>
-                      <DeleteSessionControls
-                        isStructuralSaving={isExistingRowWriteBlocked}
-                        onCancel={() => setShowDeleteConfirm(false)}
-                        onConfirm={handleDeleteSession}
-                        onRequestConfirm={() => setShowDeleteConfirm(true)}
-                        sessionDate={sessionDate}
-                        showConfirm={showDeleteConfirm}
-                      />
-                    </>
-                  )}
+                  <SessionFooterActions
+                    aiReviewLink={aiSessionReviewLink}
+                    isToday={isToday}
+                    isStructuralSaving={isExistingRowWriteBlocked}
+                    onCancel={() => setShowDeleteConfirm(false)}
+                    onConfirm={handleDeleteSession}
+                    onRequestConfirm={() => setShowDeleteConfirm(true)}
+                    previewMode={previewMode}
+                    sessionDate={sessionDate}
+                    showConfirm={showDeleteConfirm}
+                  />
                 </div>
               )}
 

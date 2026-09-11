@@ -59,13 +59,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
-
-const LIFT_GRAPHICS = {
-  "Strict Press": "/strict_press.svg",
-  "Bench Press": "/bench_press.svg",
-  "Back Squat": "/back_squat.svg",
-  Deadlift: "/deadlift.svg",
-};
+import { getLiftArtwork } from "@/components/lift-artwork";
 
 const MILESTONES = [
   {
@@ -1257,7 +1251,7 @@ function MilestoneCard({
           <div className="flex items-center gap-4">
             <Link href={getLiftDetailUrl(liftType)} className="flex-shrink-0" prefetch={false}>
               <motion.img
-                src={LIFT_GRAPHICS[liftType]}
+                src={getLiftArtwork(liftType)}
                 alt={`${liftType} illustration`}
                 className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24"
                 animate={

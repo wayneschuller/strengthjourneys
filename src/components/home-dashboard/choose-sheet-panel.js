@@ -9,7 +9,7 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LiftSvg } from "@/components/year-recap/lift-svg";
+import { LiftArtwork } from "@/components/lift-artwork";
 import {
   ChevronDown,
   ChevronUp,
@@ -504,7 +504,7 @@ export function ChooseSheetPanel({
                         key={preview.liftType}
                         className="bg-background/90 border-border/70 flex items-center gap-2 rounded-md border px-2.5 py-2"
                       >
-                        <LiftSvg
+                        <LiftArtwork
                           liftType={preview.liftType}
                           size="sm"
                           animate={false}

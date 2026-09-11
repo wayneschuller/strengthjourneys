@@ -27,7 +27,7 @@ export const BIG_FOUR_SUBTITLES = [
   "Loading your spine and hips is one of the few things that builds bone, not just keeps it.",
   "Grip strength tracks with healthy ageing better than almost anything else in a gym.",
   "Standing up, pushing, pulling, reaching overhead: the strength you notice losing first.",
-  "Everyone starts these unimpressive. The empty bar is 20kg and a legitimate place to begin.",
+  "Everyone starts these unimpressive. The empty bar is a legitimate place to begin.",
   "Small jumps across a year add up to a number you would not have believed in January.",
   "There is no shortcut to a body that looks trained. There is a barbell.",
   "Nothing else asks your whole body to cooperate quite like a loaded bar.",
@@ -78,5 +78,10 @@ export function getBigFourSubtitle(rotationKey) {
   for (let i = 0; i < seed.length; i += 1) {
     hash = ((hash << 5) + hash + seed.charCodeAt(i)) | 0;
   }
+  // djb2 alone moves by one when the key's last digit does, which walked the
+  // list in order and skipped whole lines. One multiply-xorshift round
+  // scatters neighbouring hours.
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
+  hash ^= hash >>> 16;
   return BIG_FOUR_SUBTITLES[Math.abs(hash) % BIG_FOUR_SUBTITLES.length];
 }

@@ -89,6 +89,7 @@ function parseSignInSourceCookie(rawValue) {
       cta: normalizeSourceSlug(parsed?.cta, "untagged"),
       page: normalizeSourcePath(parsed?.page),
       callbackUrl: normalizeSourcePath(parsed?.callbackUrl, "/"),
+      source: normalizeSourceSlug(parsed?.source, "direct"),
     };
   } catch {
     let legacyValue = "untagged";
@@ -101,6 +102,7 @@ function parseSignInSourceCookie(rawValue) {
       cta: normalizeSourceSlug(legacyValue, "untagged"),
       page: "/unknown",
       callbackUrl: "/",
+      source: "direct",
     };
   }
 }
@@ -113,10 +115,22 @@ async function incrementSignInAttributionMetric(source) {
   if (!source?.page || !source?.cta) return;
 
   // Privacy boundary: this KV metric is intentionally aggregate-only. It stores
-  // sanitized OAuth entry page + CTA counts, never training data, sheet IDs,
-  // full URLs, query strings, user agent details, or browsing history.
+  // sanitized OAuth entry page + CTA + campaign source counts, never training
+  // data, sheet IDs, full URLs, query strings, user agent details, or browsing
+  // history. Nothing here is keyed to a person; the per-user record in
+  // sj:user:* is untouched by this path.
+  //
+  // The campaign source is counted server-side because the client-side paths
+  // that would otherwise answer "did this sign-in come from an ad" — GA4 and
+  // the Reddit pixel — are both blockable, and the audiences most worth
+  // measuring are the most likely to block them.
+  //
+  // Field shape gained a third segment on 2026-09-05. Keys are per-day, so
+  // days before that carry "<page>|<cta>" and days after carry
+  // "<page>|<cta>|<source>". Nothing in the app reads these back; they are
+  // read by hand.
   const metricKey = `${SIGN_IN_METRICS_PREFIX}:${getUtcDateKey()}`;
-  const field = `${source.page}|${source.cta}`;
+  const field = `${source.page}|${source.cta}|${source.source || "direct"}`;
   try {
     await kv.hincrby(metricKey, field, 1);
   } catch (error) {
@@ -263,7 +277,11 @@ export default async function auth(req, res) {
           req?.cookies?.[SIGN_IN_ATTRIBUTION_COOKIE],
         );
         const grantedScopeMeta = getGrantedScopeSupportMeta(account);
-        await persistSignInSupportMeta(user?.email, grantedScopeMeta, signInSource);
+        await persistSignInSupportMeta(
+          user?.email,
+          grantedScopeMeta,
+          signInSource,
+        );
         await incrementSignInAttributionMetric(signInSource);
         const signInMeta = await getSignInSupportMeta(user?.email);
         await promptDeveloper("sign-in", user, {
@@ -323,7 +341,9 @@ const PROMPT_MESSAGES = {
         ? `Granted scopes: ${meta.grantedScopes.join(", ")}`
         : null,
       meta.kvLookupFailed ? `KV lookup failed: ${meta.kvLookupFailed}` : null,
-      meta.hasKvRecord != null ? `KV record exists: ${meta.hasKvRecord ? "yes" : "no"}` : null,
+      meta.hasKvRecord != null
+        ? `KV record exists: ${meta.hasKvRecord ? "yes" : "no"}`
+        : null,
       meta.firstSignInAt
         ? `First sign-in seen: ${friendlyDate(meta.firstSignInAt)}`
         : null,
@@ -331,16 +351,27 @@ const PROMPT_MESSAGES = {
         ? `Last sign-in seen: ${friendlyDate(meta.lastSignInAt)} (${daysAgo(meta.lastSignInAt)})`
         : null,
       meta.signInCount != null ? `Sign-in count: ${meta.signInCount}` : null,
-      meta.firstSignInPage ? `First sign-in page: ${meta.firstSignInPage}` : null,
+      meta.firstSignInPage
+        ? `First sign-in page: ${meta.firstSignInPage}`
+        : null,
       meta.firstSignInCta ? `First sign-in CTA: ${meta.firstSignInCta}` : null,
+      meta.firstSignInSource
+        ? `Came from campaign: ${meta.firstSignInSource}`
+        : null,
       meta.lastSignInPage ? `Last sign-in page: ${meta.lastSignInPage}` : null,
       meta.lastSignInCta ? `Last sign-in CTA: ${meta.lastSignInCta}` : null,
-      meta.connectedAt ? `Connected at: ${friendlyDate(meta.connectedAt)}` : null,
+      meta.connectedAt
+        ? `Connected at: ${friendlyDate(meta.connectedAt)}`
+        : null,
       meta.lastSeenAt
         ? `Last seen: ${friendlyDate(meta.lastSeenAt)} (${daysAgo(meta.lastSeenAt)})`
         : null,
-      meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
-      meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
       meta.provisionedSheetId != null
         ? `Provisioned sheet ID exists: ${meta.provisionedSheetId ? "yes" : "no"}`
         : null,
@@ -358,10 +389,17 @@ const PROMPT_MESSAGES = {
     subject: `[SJ] Activated — ${name}`,
     text: [
       `${name} (${email}) activated at ${timeStr}.`,
-      meta.connectionMethod ? `Connection method: ${meta.connectionMethod}` : null,
-      meta.provisioningMethod ? `Provisioning method: ${meta.provisioningMethod}` : null,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
       meta.sheetName ? `Sheet: ${meta.sheetName}` : null,
       meta.rowCount != null ? `Rows: ${meta.rowCount}` : null,
+      meta.firstSignInSource
+        ? `Came from campaign: ${meta.firstSignInSource}`
+        : null,
       `\nThey're set up and in the app. Worth a welcome message.`,
     ]
       .filter(Boolean)
@@ -554,8 +592,10 @@ const PROMPT_MESSAGES = {
 };
 
 function getOAuthNameLines(user) {
-  const firstName = typeof user?.firstName === "string" ? user.firstName.trim() : "";
-  const lastName = typeof user?.lastName === "string" ? user.lastName.trim() : "";
+  const firstName =
+    typeof user?.firstName === "string" ? user.firstName.trim() : "";
+  const lastName =
+    typeof user?.lastName === "string" ? user.lastName.trim() : "";
 
   if (!firstName && !lastName) return [];
 
@@ -588,6 +628,7 @@ async function getSignInSupportMeta(email) {
       firstSignInCta: record?.firstSignInCta || null,
       lastSignInPage: record?.lastSignInPage || null,
       lastSignInCta: record?.lastSignInCta || null,
+      firstSignInSource: record?.firstSignInSource || null,
     };
   } catch (error) {
     return {
@@ -640,6 +681,14 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
       authored.firstSignInCta = base.firstSignInCta || signInSource.cta;
       authored.lastSignInCta = signInSource.cta;
     }
+    // First touch only, unlike the page/cta pairs above. Acquisition is by
+    // definition the campaign that first brought someone here, and a
+    // lastSignInSource would be "direct" for almost everyone on almost every
+    // return, so it would cost a field per person to say nothing.
+    if (signInSource?.source && signInSource.source !== "direct") {
+      authored.firstSignInSource =
+        base.firstSignInSource || signInSource.source;
+    }
 
     if (grantedScopeMeta.grantedScopesKnown) {
       authored.lastGrantedScopes = grantedScopeMeta.grantedScopes || [];
@@ -649,7 +698,8 @@ async function persistSignInSupportMeta(email, grantedScopeMeta, signInSource) {
         grantedScopeMeta.hasRequiredDriveScope;
     }
     if (grantedScopeMeta.hasRequiredDriveScope === false) {
-      authored.firstMissingDriveScopeAt = base.firstMissingDriveScopeAt || nowIso;
+      authored.firstMissingDriveScopeAt =
+        base.firstMissingDriveScopeAt || nowIso;
       authored.lastMissingDriveScopeAt = nowIso;
     }
     if (

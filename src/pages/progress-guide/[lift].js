@@ -62,6 +62,7 @@ import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
+import { getLiftArtwork } from "@/components/lift-artwork";
 // Keep this page template generic across all four lift insight pages.
 // Lift-specific SEO copy, hero wording, and lower-page personality should live
 // in src/lib/big-four-insight-data.js so we do not reintroduce per-lift branching here.
@@ -235,12 +236,6 @@ function BarbellInsightsMain({
     "Strict Press": Luggage,
   };
 
-  const bigFourDiagrams = {
-    "Back Squat": "/back_squat.svg",
-    "Bench Press": "/bench_press.svg",
-    Deadlift: "/deadlift.svg",
-    "Strict Press": "/strict_press.svg",
-  };
   const navLiftLabel = getNavLiftLabel(liftType);
 
   // Personal analysis. Anonymous visitors see the same block driven by demo
@@ -360,7 +355,7 @@ function BarbellInsightsMain({
           {/* Soft lift-coloured glow behind the diagram so the hero has a focal
               point instead of a flat SVG floating in whitespace. */}
           <motion.div
-            className="relative w-32 md:w-auto md:max-w-[10vw]"
+            className="relative w-40 md:w-auto md:max-w-[14vw]"
             initial={{ opacity: 0, scale: 0.85, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.1 }}
@@ -371,7 +366,7 @@ function BarbellInsightsMain({
               style={{ backgroundColor: liftColor }}
             />
             <img
-              src={bigFourDiagrams[liftType]}
+              src={getLiftArtwork(liftType)}
               alt={`${liftType} Diagram`}
               className="mx-auto"
             />

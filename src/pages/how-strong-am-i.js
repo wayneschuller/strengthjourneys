@@ -59,6 +59,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, getFirstQueryValue, parseQueryNumber } from "@/lib/share-url";
 import { cn } from "@/lib/utils";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import {
   computeStrengthResults,
   UNIVERSES,
@@ -73,19 +74,19 @@ const LIFTS = [
   {
     key: "squat",
     label: "Back Squat",
-    svg: "/back_squat.svg",
+    svg: getLiftArtwork("Back Squat"),
     standardKey: "Back Squat",
   },
   {
     key: "bench",
     label: "Bench Press",
-    svg: "/bench_press.svg",
+    svg: getLiftArtwork("Bench Press"),
     standardKey: "Bench Press",
   },
   {
     key: "deadlift",
     label: "Deadlift",
-    svg: "/deadlift.svg",
+    svg: getLiftArtwork("Deadlift"),
     standardKey: "Deadlift",
   },
 ];
@@ -916,7 +917,12 @@ function LiftSliders({ liftWeights, onChange, onReset, onResetTo90d, isMetric, u
             <div key={key} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-sm font-medium">
-                  <img src={svg} alt="" className="h-10 w-10 dark:invert" aria-hidden />
+                  <img
+                    src={svg}
+                    alt=""
+                    className="h-10 w-10 object-contain dark:invert"
+                    aria-hidden
+                  />
                   <Link
                     prefetch={false}
                     href={LIFT_INSIGHT_URLS[label]}

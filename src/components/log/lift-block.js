@@ -26,7 +26,6 @@ import {
   getTrainingAgeYears,
 } from "@/lib/celebration";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
@@ -46,11 +45,7 @@ import { CustomSetDraftRow } from "@/components/log/custom-set-draft-row";
 import { SetRow } from "@/components/log/set-row";
 import { getLiftBlockCoachingState } from "@/components/log/lift-block-coaching-state";
 import { getAutoTimestampNotes } from "@/components/log/sheet-snapshot-utils";
-
-const BIG_FOUR = BIG_FOUR_LIFT_META.map(({ liftType, iconSrc }) => ({
-  name: liftType,
-  icon: iconSrc,
-}));
+import { getLiftArtwork } from "@/components/lift-artwork";
 
 export function LiftBlock({
   liftType,
@@ -90,7 +85,8 @@ export function LiftBlock({
   // Only use confirmed (non-pending) sets for last-set reference
   const realSets = sets.filter((s) => !s._pending);
   const lastRealSet = realSets[realSets.length - 1];
-  const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
+  // Any lift we have drawn gets its diagram, not only the Big Four.
+  const artworkSrc = getLiftArtwork(liftType);
   const liftColor = getColor(liftType);
   const liftBlockRef = useRef(null);
   const shakeTimerRef = useRef(null);
@@ -503,8 +499,8 @@ export function LiftBlock({
     e1rmFormula,
   ]);
 
-  const desktopIconInsetClass = "md:pl-28 lg:pl-32";
-  const desktopIconOffsetClass = "md:ml-28 lg:ml-32";
+  const desktopIconInsetClass = "md:pl-34";
+  const desktopIconOffsetClass = "md:ml-34";
 
   return (
     <div
@@ -524,15 +520,18 @@ export function LiftBlock({
         style={{ backgroundColor: liftColor }}
       />
       {/* Desktop: large icon in left gutter */}
-      {bigFourEntry && (
+      {artworkSrc && (
         <div className="absolute top-4 left-4 hidden md:block">
           <Link href={getLiftDetailUrl(liftType)}>
             <Image
-              src={bigFourEntry.icon}
+              src={artworkSrc}
               alt=""
               width={104}
               height={104}
-              className="opacity-80 transition-opacity hover:opacity-100"
+              // PNG drawings would otherwise go through the optimiser, which
+              // costs more bytes than the indexed file (see lift-artwork.js).
+              unoptimized
+              className="object-contain opacity-80 transition-opacity hover:opacity-100"
             />
           </Link>
         </div>
@@ -540,12 +539,19 @@ export function LiftBlock({
 
       {/* Header: icon + lift name + last session */}
       <div className={`flex gap-3 px-4 pt-4 ${desktopIconInsetClass}`}>
-        {bigFourEntry && (
+        {artworkSrc && (
           <Link
             href={getLiftDetailUrl(liftType)}
             className="shrink-0 self-start md:hidden"
           >
-            <Image src={bigFourEntry.icon} alt="" width={52} height={52} />
+            <Image
+              src={artworkSrc}
+              alt=""
+              width={52}
+              height={52}
+              unoptimized
+              className="object-contain"
+            />
           </Link>
         )}
         <div className="min-w-0 flex-1">

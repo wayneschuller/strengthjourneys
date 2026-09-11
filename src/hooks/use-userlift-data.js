@@ -16,6 +16,7 @@ import {
 } from "@/lib/data-sources/import-dispatcher";
 import { getDemoParsedData } from "@/lib/data-sources/sample-parsed-data";
 import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
+import { rdtTrackSheetLinked } from "@/lib/reddit-pixel";
 import {
   flushTimings,
   processTopLiftsByTypeAndReps,
@@ -362,6 +363,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const selectSheet = useCallback(
     (ssid, metadata = {}) => {
       gaTrackSheetLinked();
+      rdtTrackSheetLinked(); // Reddit Ads: the activation conversion campaigns optimise against
       setSignedInDemoMode(false);
       setSheetInfo({
         ssid,

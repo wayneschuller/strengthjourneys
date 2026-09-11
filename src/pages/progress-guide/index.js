@@ -11,7 +11,7 @@ import {
   PageHeaderHeading,
 } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { LiftSvg } from "@/components/year-recap/lift-svg";
+import { LiftArtwork } from "@/components/lift-artwork";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
@@ -117,7 +117,7 @@ export default function ProgressGuideHub() {
                         background: `linear-gradient(to bottom, ${liftColor}15, transparent)`,
                       }}
                     >
-                      <LiftSvg
+                      <LiftArtwork
                         liftType={card.liftType}
                         size="lg"
                         className="transition-transform group-hover:scale-105"

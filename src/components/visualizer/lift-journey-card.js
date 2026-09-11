@@ -14,14 +14,8 @@
  * the tiles themselves shrink, rather than reflowing at a viewport breakpoint
  * that only one of those two placements would agree with.
  */
-import { useEffect, useMemo } from "react";
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-} from "motion/react";
+import { useMemo } from "react";
+import { motion } from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
 
 import { getDisplayWeight, findBestE1RM } from "@/lib/processing-utils";
@@ -45,6 +39,7 @@ import {
 } from "@/components/mini-lift-chronology-chart";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CountUp } from "@/components/count-up";
 import { cn } from "@/lib/utils";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
@@ -894,31 +889,6 @@ function formatMonthYear(dateStr) {
   const long = getLongReadableDateString(dateStr, false);
   if (!long) return dateStr;
   return long.replace(/^\d+ /, "");
-}
-
-/**
- * Counts a number up from zero on mount, without re-rendering the card on every
- * frame — this card sits above a Recharts chronology chart and a page of other
- * charts, so a 60fps setState here would be felt.
- */
-function CountUp({ value, decimals = 1 }) {
-  const prefersReducedMotion = useReducedMotion();
-  const motionValue = useMotionValue(prefersReducedMotion ? value : 0);
-  const text = useTransform(motionValue, (latest) => formatWeight(latest, decimals));
-
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      motionValue.set(value);
-      return;
-    }
-    const controls = animate(motionValue, value, {
-      duration: 1.1,
-      ease: [0.16, 1, 0.3, 1],
-    });
-    return () => controls.stop();
-  }, [value, motionValue, prefersReducedMotion]);
-
-  return <motion.span>{text}</motion.span>;
 }
 
 function formatWeight(value, decimals = 1) {

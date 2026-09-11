@@ -12,7 +12,7 @@ import {
 import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { BIG_FOUR_LIFT_ICON_SRC_BY_TYPE } from "@/lib/big-four-lifts";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import {
   getAverageLiftSessionTonnageFromPrecomputed,
   getLiftVolumeMultiplier,
@@ -44,7 +44,7 @@ import { Badge } from "@/components/ui/badge";
  *   badges for recent PRs, training frequency, volume, and lift preference.
  *
  * @param {Object} props
- * @param {Array<{liftType: string, slug: string, liftDescription: string, iconSrc?: string}>} props.lifts - Array of
+ * @param {Array<{liftType: string, slug: string, liftDescription: string}>} props.lifts - Array of
  *   lift config objects. Each must have liftType (display name), slug (URL path), and
  *   liftDescription (short description shown in guest mode).
  * @param {boolean} [props.animated=true] - When true, stats and badges stagger in with a short
@@ -339,7 +339,7 @@ export function BigFourLiftCards({
                     </div>
                   </motion.div>
                 )}
-                <CardFooter className="flex justify-center p-2 pt-0">
+                <CardFooter className="flex justify-center px-2 pt-4 pb-6">
                   <motion.div
                     className="flex justify-center"
                     initial={false}
@@ -371,12 +371,9 @@ export function BigFourLiftCards({
                       }}
                     >
                       <img
-                        src={
-                          lift.iconSrc ??
-                          BIG_FOUR_LIFT_ICON_SRC_BY_TYPE[lift.liftType]
-                        }
+                        src={getLiftArtwork(lift.liftType)}
                         alt={`${lift.liftType} diagram`}
-                        className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
+                        className="h-36 w-auto max-w-full object-contain transition-transform group-hover:scale-110"
                       />
                     </motion.div>
                   </motion.div>

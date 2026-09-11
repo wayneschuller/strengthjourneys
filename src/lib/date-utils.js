@@ -220,6 +220,18 @@ export function getCompactAgeFromYmd(dateStr, todayYmd) {
   return `${Math.floor(days / 365)}y`;
 }
 
+/**
+ * Whole days from one YYYY-MM-DD date to another, negative when `toYmd` is
+ * the earlier one. Taken inside the UTC round-trip, so the answer is
+ * timezone-invariant (see the timezone model at the top of this file).
+ */
+export function getDaysBetweenYmd(fromYmd, toYmd) {
+  const dayMs = 24 * 60 * 60 * 1000;
+  return Math.round(
+    (parseYmdUtc(toYmd).getTime() - parseYmdUtc(fromYmd).getTime()) / dayMs,
+  );
+}
+
 export function getYearFromYmd(dateStr) {
   if (!dateStr || dateStr.length < 4) return null;
   const year = Number.parseInt(dateStr.slice(0, 4), 10);

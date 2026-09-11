@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { gaTrackSignInSuccess } from "@/lib/analytics";
+import { rdtTrackSignUp } from "@/lib/reddit-pixel";
 
 // sessionStorage key used to ensure funnel_sign_in_success fires at most once
 // per browser session. sessionStorage persists across same-tab page loads
@@ -12,7 +13,9 @@ const SIGN_IN_TRACKED_KEY = "sj_sign_in_success_tracked";
 
 /**
  * Invisible tracking component that fires a Google Analytics sign-in success event
- * exactly once per browser session when the user first becomes authenticated.
+ * exactly once per browser session when the user first becomes authenticated, and
+ * the matching Reddit Ads SignUp conversion alongside it. Reddit campaigns optimise
+ * against that conversion, so the two must stay on the same trigger.
  *
  * Why sessionStorage instead of just prevStatusRef:
  *   prevStatusRef resets to null on every page load, so without the sessionStorage
@@ -28,12 +31,16 @@ export function AnalyticsSession() {
   const prevStatusRef = useRef(null);
 
   useEffect(() => {
-    if (status === "authenticated" && prevStatusRef.current !== "authenticated") {
+    if (
+      status === "authenticated" &&
+      prevStatusRef.current !== "authenticated"
+    ) {
       // Guard: only fire once per browser session. Without this, the event fires
       // on every page load because prevStatusRef resets to null on every mount.
       const alreadyTracked = sessionStorage.getItem(SIGN_IN_TRACKED_KEY);
       if (!alreadyTracked) {
         gaTrackSignInSuccess();
+        rdtTrackSignUp();
         sessionStorage.setItem(SIGN_IN_TRACKED_KEY, "1");
       }
     }

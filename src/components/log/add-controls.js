@@ -3,7 +3,7 @@
  * in-session coaching, smart set suggestions, and custom lift entry.
  */
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -32,8 +32,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
+import { DRAWN_LIFT_TYPES, LiftArtwork } from "@/components/lift-artwork";
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { getReadableDateString } from "@/lib/date-utils";
+import { getDaysBetweenYmd, getReadableDateString } from "@/lib/date-utils";
+import { useLiftColors } from "@/hooks/use-lift-colors";
+import { getAnyLiftExamples } from "@/lib/any-lift-examples";
 import {
   getYouTubeThumbnailSrc,
   getYouTubeWatchHref,
@@ -96,9 +99,15 @@ export function LiftTechniqueAssist({
   if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist) return null;
 
   return (
-    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-28 lg:ml-32" : ""}`}>
+    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-34" : ""}`}>
       {techniqueAssist?.cues?.length > 0 && (
         <div className="space-y-2">
+          {/* What the lift is, for someone who only has the artwork to go on */}
+          {techniqueAssist.summary && (
+            <p className="pb-1 text-sm text-foreground/80">
+              {techniqueAssist.summary}
+            </p>
+          )}
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
             Form cues
           </p>
@@ -505,7 +514,7 @@ export function SmartAddButtons({
     <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
       <LiftCoachCopy
         inSessionCoaching={inSessionCoachState.inSessionCoaching}
-        alignClass={hasBigFourIcon ? "md:pl-28 lg:pl-32" : ""}
+        alignClass={hasBigFourIcon ? "md:pl-34" : ""}
       />
       <SmartAddButtonGrid
         buttons={inSessionCoachState.buttons}
@@ -519,106 +528,284 @@ export function SmartAddButtons({
   );
 }
 
+/**
+ * When a lift was last trained, for its gallery tile. Relative on today's
+ * session, where "how long since?" is the question being asked; a plain date
+ * when back-filling or browsing another day, where "ago" would mislead.
+ */
+function getLastLiftedLabel(lastDate, sessionDate, isToday) {
+  if (!lastDate || !sessionDate) return null;
+  if (!isToday) return `Last ${getReadableDateString(lastDate)}`;
+
+  const days = getDaysBetweenYmd(lastDate, sessionDate);
+  if (days <= 1) return "Yesterday";
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.round(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.round(days / 30)} months ago`;
+  const years = Math.floor(days / 365);
+  return years === 1 ? "A year ago" : `${years} years ago`;
+}
+
+/**
+ * A visible gallery of every illustrated lift, followed by a search tile for
+ * other lift types. Both empty and active sessions use this same catalogue.
+ * Tiles lead with what has been trained lately and say when each was last
+ * done. `readOnly` shows the same gallery to preview visitors with nothing to
+ * tap, headed by `readOnlyCta` so the reason is plain.
+ */
 export function AddLiftButton({
-  parsedData,
   onAddLift,
   chips,
-  label = "Add another lift type",
+  excludeLiftTypes,
+  sessionDate,
+  isToday = false,
+  label,
   disabled = false,
+  readOnly = false,
+  readOnlyCta = null,
 }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
+  const searchId = useId();
+  const otherButtonRef = useRef(null);
+  const { getColor } = useLiftColors();
+  // Read once per mount, so the line holds still if the hour turns mid-visit.
+  const [anyLiftExamples] = useState(() => getAnyLiftExamples());
+  const { drawnLifts, searchLifts } = useMemo(() => {
+    const excluded = new Set(excludeLiftTypes ?? []);
+    const chipsByName = new Map((chips ?? []).map((chip) => [chip.name, chip]));
+    const recentSets = (name) => chipsByName.get(name)?.recentSets ?? 0;
+    const frequency = (name) => chipsByName.get(name)?.frequency ?? 0;
+    return {
+      // Recent training leads, lifetime volume breaks ties, and stable ties
+      // keep catalogue order for lifts with no logged history.
+      drawnLifts: DRAWN_LIFT_TYPES.filter((name) => !excluded.has(name))
+        .sort(
+          (a, b) =>
+            recentSets(b) - recentSets(a) || frequency(b) - frequency(a),
+        )
+        .map((name) => ({
+          name,
+          color: getColor(name),
+          lastLiftedLabel: getLastLiftedLabel(
+            chipsByName.get(name)?.lastDate,
+            sessionDate,
+            isToday,
+          ),
+        })),
+      // The search covers what the tiles don't, so a drawn lift never shows
+      // up twice.
+      searchLifts: [...new Set((chips ?? []).map(({ name }) => name))].filter(
+        (name) => !excluded.has(name) && !DRAWN_LIFT_TYPES.includes(name),
+      ),
+    };
+  }, [chips, excludeLiftTypes, sessionDate, isToday, getColor]);
+  // Keep a row's drawings level when only some tiles have a date under them,
+  // without reserving the line for a lifter who has no history yet.
+  const hasAnyLastLifted = drawnLifts.some((lift) => lift.lastLiftedLabel);
 
-  const mergedChips = useMemo(() => {
-    const seen = new Set();
-    return (chips ?? []).filter(({ name }) => {
-      if (seen.has(name)) return false;
-      seen.add(name);
-      return true;
-    });
-  }, [chips]);
-
-  function submit(lt) {
-    if (disabled) return;
-    const raw = (lt ?? liftType).trim();
-    if (!raw) return;
-    const clean = raw.replace(/\S+/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+  function close() {
     setShowInput(false);
     setLiftType("");
+    otherButtonRef.current?.focus();
+  }
+
+  function submit(name) {
+    if (disabled) return;
+    const raw = (name ?? liftType).trim();
+    if (!raw) return;
+    // Preserve existing spelling (including acronyms) when matching a lift.
+    const known = (chips ?? []).find(
+      (chip) => chip.name.toLowerCase() === raw.toLowerCase(),
+    );
+    const clean =
+      known?.name ??
+      raw.replace(
+        /\S+/g,
+        (word) => word[0].toUpperCase() + word.slice(1).toLowerCase(),
+      );
+    close();
     onAddLift(clean);
   }
 
-  if (!showInput) {
-    return (
-      <Button
-        variant="outline"
-        className="w-full gap-2"
-        disabled={disabled}
-        onClick={() => setShowInput(true)}
-      >
-        <ClipboardPlus className="h-4 w-4" />
-        {label}
-      </Button>
-    );
-  }
+  const typed = liftType.trim();
+  const hasExactMatch = (chips ?? []).some(
+    ({ name }) => name.toLowerCase() === typed.toLowerCase(),
+  );
+  const tileClass =
+    "group relative flex min-w-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-border/60 bg-card/80 px-2 py-3 text-center shadow-sm transition-colors";
+  const interactiveTileClass =
+    "hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+  // The strip along the top is the lift block's own colour bar, so a tile
+  // already looks like the card it becomes. Hover tints the border to match.
+  const liftTileClass = `${tileClass} ${
+    readOnly
+      ? ""
+      : `${interactiveTileClass} hover:border-[color:color-mix(in_srgb,var(--lift-color)_55%,transparent)]`
+  }`;
+  const TileElement = readOnly ? "div" : "button";
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-3 rounded-lg border p-4">
-      <Command className="rounded-lg border bg-background">
-        <CommandInput
-          placeholder="Lift type (e.g. Back Squat)"
-          value={liftType}
-          disabled={disabled}
-          onValueChange={setLiftType}
-        />
-        <CommandList className="max-h-56">
-          <CommandEmpty>
-            {liftType.trim()
-              ? `No match. Add "${liftType.trim()}" below.`
-              : "No lift found."}
-          </CommandEmpty>
-          {liftType.trim() ? (
-            <CommandGroup heading="Add new">
-              <CommandItem
-                value={`create-${liftType.trim()}`}
-                disabled={disabled}
-                onSelect={() => submit(liftType)}
-              >
-                <ClipboardPlus className="h-4 w-4" />
-                {`Add "${liftType.trim()}"`}
-              </CommandItem>
-            </CommandGroup>
-          ) : null}
-          <CommandGroup heading="Lifts">
-            <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
-              {mergedChips.map(({ name }) => (
-                <CommandItem
-                  key={name}
-                  value={name}
-                  disabled={disabled}
-                  onSelect={() => submit(name)}
-                  className="min-w-0"
+    <section aria-labelledby={`${searchId}-heading`} className="w-full space-y-3">
+      <h2 id={`${searchId}-heading`} className="text-base font-semibold">
+        {label ?? (readOnly ? "Lifts you can log" : "Log another lift type")}
+      </h2>
+      {readOnly && readOnlyCta}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+        {drawnLifts.map(({ name, color, lastLiftedLabel }) => (
+          <TileElement
+            key={name}
+            {...(readOnly
+              ? {}
+              : {
+                  type: "button",
+                  "aria-label": lastLiftedLabel
+                    ? `Add ${name}. ${lastLiftedLabel}`
+                    : `Add ${name}`,
+                  disabled,
+                  onClick: () => submit(name),
+                })}
+            className={liftTileClass}
+            style={{ "--lift-color": color }}
+          >
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-1"
+              style={{ backgroundColor: color }}
+            />
+            <span
+              aria-hidden="true"
+              className="flex h-12 w-full items-center justify-center sm:h-14"
+            >
+              <LiftArtwork
+                liftType={name}
+                size="md"
+                animate={false}
+                className="h-full max-h-full w-auto md:h-full"
+              />
+            </span>
+            <span className="flex flex-col items-center">
+              <span className="flex min-h-10 items-center text-sm leading-snug font-medium">
+                {name}
+              </span>
+              {hasAnyLastLifted && (
+                <span
+                  className={`text-muted-foreground text-xs ${
+                    lastLiftedLabel ? "" : "invisible"
+                  }`}
                 >
-                  <span className="truncate">{name}</span>
-                </CommandItem>
-              ))}
-            </div>
-          </CommandGroup>
-        </CommandList>
-      </Command>
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => submit()} disabled={disabled || !liftType.trim()}>
-          Add
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => { setShowInput(false); setLiftType(""); }}>
-          Cancel
-        </Button>
+                  {lastLiftedLabel ?? "\u00a0"}
+                </span>
+              )}
+            </span>
+          </TileElement>
+        ))}
+        {readOnly && (
+          // Stands where signed-in lifters see "Add other lift types", so a
+          // visitor never reads the drawings as the whole catalogue.
+          <div
+            className={`${tileClass} bg-muted/20 col-span-2 border-dashed px-4`}
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-12 items-center justify-center sm:h-14"
+            >
+              <span className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-full">
+                <Plus className="size-4" strokeWidth={1.5} />
+              </span>
+            </span>
+            <span className="text-sm leading-snug font-medium">
+              Plus anything with reps and a weight
+            </span>
+            <span className="text-muted-foreground text-xs text-pretty">
+              {anyLiftExamples}
+            </span>
+          </div>
+        )}
+        {!readOnly && (
+          <button
+            ref={otherButtonRef}
+            type="button"
+            disabled={disabled}
+            aria-expanded={showInput}
+            aria-controls={searchId}
+            onClick={() => (showInput ? close() : setShowInput(true))}
+            className={`${tileClass} ${interactiveTileClass} hover:border-primary/40 bg-muted/20 border-dashed`}
+          >
+            <span
+              aria-hidden="true"
+              className="flex h-12 items-center justify-center sm:h-14"
+            >
+              <span className="bg-primary/10 text-primary group-hover:bg-primary/15 flex size-8 items-center justify-center rounded-full transition-colors">
+                <Plus className="size-4" strokeWidth={1.5} />
+              </span>
+            </span>
+            <span className="flex min-h-10 items-center text-sm leading-snug font-medium">
+              Add other lift types
+            </span>
+          </button>
+        )}
       </div>
-      {disabled ? (
-        <p className="text-xs text-muted-foreground">
-          Row positions are updating. Add controls will re-enable once the current save finishes.
+      {showInput && (
+        <div
+          id={searchId}
+          className="bg-card space-y-3 rounded-2xl border p-3 shadow-sm"
+        >
+          <Command
+            className="bg-background rounded-xl border"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.stopPropagation();
+                close();
+              }
+            }}
+          >
+            <CommandInput
+              autoFocus
+              aria-label="Search or name a lift"
+              placeholder="Search, or type a new lift"
+              value={liftType}
+              disabled={disabled}
+              onValueChange={setLiftType}
+            />
+            <CommandList className="max-h-64">
+              <CommandEmpty>No other lifts found.</CommandEmpty>
+              <CommandGroup heading="Lift types">
+                {searchLifts.map((name) => (
+                  <CommandItem
+                    key={name}
+                    value={name}
+                    disabled={disabled}
+                    onSelect={() => submit(name)}
+                  >
+                    {name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              {typed && !hasExactMatch && (
+                <CommandGroup heading="New lift type">
+                  <CommandItem
+                    value={`create-${typed}`}
+                    disabled={disabled}
+                    onSelect={() => submit()}
+                  >
+                    <ClipboardPlus className="size-4" />
+                    {`Add "${typed}"`}
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+          <Button size="sm" variant="ghost" onClick={close}>
+            Cancel
+          </Button>
+        </div>
+      )}
+      {disabled && (
+        <p className="text-muted-foreground text-xs">
+          Add controls will re-enable once the current update finishes.
         </p>
-      ) : null}
-    </div>
+      )}
+    </section>
   );
 }

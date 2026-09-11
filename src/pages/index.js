@@ -330,11 +330,10 @@ const moreTools = [
 ];
 
 const mainBarbellLifts = BIG_FOUR_LIFT_META.map(
-  ({ liftType, progressGuidePath, homepageDescription, iconSrc }) => ({
+  ({ liftType, progressGuidePath, homepageDescription }) => ({
     slug: progressGuidePath.replace(/^\//, ""),
     liftType,
     liftDescription: homepageDescription,
-    iconSrc,
   }),
 );
 

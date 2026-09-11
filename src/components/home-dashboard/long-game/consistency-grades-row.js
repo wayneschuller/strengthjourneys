@@ -10,9 +10,9 @@
 
 import { Bed } from "lucide-react";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useInView, useReducedMotion } from "motion/react";
 
-import { useId, useMemo } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 
 import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 
@@ -41,6 +41,17 @@ import {
 
 const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
 const DAYS_PER_YEAR = 365.25;
+
+// Rings open one after another, left to right. The streak board below waits for
+// this wave, so the timing is named here rather than buried in the JSX: the tail
+// covers the last ring's arc sweep and the letter landing behind it.
+const RING_SEQUENCE_STAGGER_S = 0.07;
+const RING_WAVE_TAIL_S = 1.05;
+
+function getRingsWaveMs(ringCount) {
+  const seconds = (ringCount - 1) * RING_SEQUENCE_STAGGER_S + RING_WAVE_TAIL_S;
+  return Math.round(seconds * 1000);
+}
 
 function getConsistencyLabelAbbrev(label) {
   if (label === "Week") return "W";
@@ -460,11 +471,12 @@ function trimTrailingDots(items) {
 
 // Renders a horizontal row of ConsistencyGradeCircle rings for every consistency window the user has enough
 // data to fill. Trims trailing dot-grade periods before rendering, and spring-animates the rings
-// in from above once the card's interval data is ready.
+// in from above once the card's interval data is ready and the rings are on screen.
 export function ConsistencyGradesRow({
   parsedData,
   isVisible = false,
   isCaptureMode = false,
+  onRevealComplete,
 }) {
   const hasCoarsePointer = useHasCoarsePointer();
 
@@ -473,7 +485,62 @@ export function ConsistencyGradesRow({
     return raw ? trimTrailingDots(raw) : null;
   }, [parsedData]);
 
-  if (!consistency || consistency.length === 0) return null;
+  const isEmpty = !consistency || consistency.length === 0;
+
+  // A lifter with no gradeable window yet has no wave to play, so anything
+  // waiting on this row is released now rather than held for good.
+  useEffect(() => {
+    if (isEmpty) onRevealComplete?.();
+  }, [isEmpty, onRevealComplete]);
+
+  if (isEmpty) return null;
+
+  return (
+    <ConsistencyRings
+      consistency={consistency}
+      isVisible={isVisible}
+      isCaptureMode={isCaptureMode}
+      hasCoarsePointer={hasCoarsePointer}
+      onRevealComplete={onRevealComplete}
+    />
+  );
+}
+
+/*
+ * The ring grid itself, split out so its in-view watcher mounts together with
+ * the element it watches. Motion's useInView only looks for its element once,
+ * so a hook sitting above the empty-data early return would miss the rings if
+ * they appeared later, and they would stay hidden.
+ */
+function ConsistencyRings({
+  consistency,
+  isVisible,
+  isCaptureMode,
+  hasCoarsePointer,
+  onRevealComplete,
+}) {
+  // The Long Game sits below the inspiration row, and on phones and two-column
+  // layouts well below the fold. Waiting for the data alone played the wave
+  // before anyone scrolled to it, so the rings also wait until they are seen.
+  const ringsRef = useRef(null);
+  const isInView = useInView(ringsRef, { once: true, amount: 0.5 });
+  const prefersReducedMotion = useReducedMotion();
+  const isStatic = isCaptureMode || !!prefersReducedMotion;
+  const shouldPlay = isVisible && isInView;
+  const ringCount = consistency.length;
+
+  // The streak board opens on the back of this wave, so the row reports when it
+  // has finished. A still row has nothing to wait for and says so immediately.
+  useEffect(() => {
+    if (!onRevealComplete) return;
+    if (isStatic) {
+      onRevealComplete();
+      return;
+    }
+    if (!shouldPlay) return;
+    const timer = setTimeout(onRevealComplete, getRingsWaveMs(ringCount));
+    return () => clearTimeout(timer);
+  }, [onRevealComplete, isStatic, shouldPlay, ringCount]);
 
   const circleSize =
     consistency.length >= 11 ? 48 : consistency.length >= 7 ? 56 : 64;
@@ -481,7 +548,7 @@ export function ConsistencyGradesRow({
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="flex flex-col items-center gap-3">
+      <div ref={ringsRef} className="flex flex-col items-center gap-3">
         {rows.map((row, rowIndex) => (
           <div
             key={`consistency-row-${rowIndex}`}
@@ -499,8 +566,8 @@ export function ConsistencyGradesRow({
                   key={item.label}
                   item={item}
                   size={circleSize}
-                  delay={sequenceIndex * 0.07}
-                  isVisible={isVisible}
+                  delay={sequenceIndex * RING_SEQUENCE_STAGGER_S}
+                  isVisible={shouldPlay}
                   isShortTerm={SHORT_TERM_LABELS.has(item.label)}
                   isCaptureMode={isCaptureMode}
                   hasCoarsePointer={hasCoarsePointer}

@@ -9,9 +9,19 @@
  * a single solid form again; older runs simply fade back so the list reads as a
  * timeline, which the date beside each bar already explains.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useReducedMotion,
+} from "motion/react";
+import {
+  COUNT_UP_EASE,
+  CountUp,
+  formatCountUpInteger,
+} from "@/components/count-up";
 import {
   Tooltip,
   TooltipContent,
@@ -43,6 +53,24 @@ const MAX_VISIBLE_STREAKS = 8;
 const MIN_BAR_HEIGHT_PX = 20;
 const MAX_BAR_HEIGHT_PX = 34;
 
+// Opening sequence, in seconds. Each bar grows for a time scaled to its length,
+// so the longer runs keep building after the shorter ones have landed and the
+// longest on the board arrives last, the way those weeks actually piled up. The
+// week count beside each bar ticks up on the same curve, so the number and the
+// bar reach the end together.
+const ROW_STAGGER_S = 0.08;
+const BAR_START_S = 0.1;
+const BAR_MIN_GROW_S = 0.5;
+const BAR_EXTRA_GROW_S = 1.0;
+const LONGEST_LANDS_S = BAR_START_S + BAR_MIN_GROW_S + BAR_EXTRA_GROW_S;
+const SHEEN_S = 0.9;
+
+function getBarTiming(animationIndex, lengthFraction) {
+  const delay = BAR_START_S + animationIndex * ROW_STAGGER_S;
+  const duration = BAR_MIN_GROW_S + BAR_EXTRA_GROW_S * lengthFraction;
+  return { delay, duration, landsAt: delay + duration };
+}
+
 // 0 for the oldest streak on the board, 1 for the most recent. Linear on the end
 // date so a run of streaks in the same year sits at the same depth.
 function getRecencyFraction(endWeek, oldestEnd, newestEnd) {
@@ -65,6 +93,7 @@ export function StreaksLeaderboard({
   streaks,
   firstSessionDate = null,
   isSharing = false,
+  canStart = true,
 }) {
   const { isMetric } = useAthleteBio();
   const prefersReducedMotion = useReducedMotion();
@@ -72,6 +101,15 @@ export function StreaksLeaderboard({
   const [showAll, setShowAll] = useState(false);
   // One open row at a time — several expanded details would shunt the list around.
   const [expandedKey, setExpandedKey] = useState(null);
+  const shouldAnimate = !isSharing && !prefersReducedMotion;
+  // The card remembers its last view, so the board can arrive with the page
+  // while still below the fold. Holding the opening until it is actually on
+  // screen means the lifter sees the bars grow rather than a finished board.
+  const boardRef = useRef(null);
+  const isBoardInView = useInView(boardRef, { once: true, amount: 0.25 });
+  // canStart hands the card control of the running order: the consistency rings
+  // above open first, and the bars grow on the back of that wave.
+  const isRevealed = !shouldAnimate || (isBoardInView && canStart);
 
   const ranked = useMemo(() => {
     if (!streaks?.length) return [];
@@ -171,8 +209,14 @@ export function StreaksLeaderboard({
         recency={recency}
         isMetric={isMetric}
         isSharing={isSharing}
+        isLongest={s === ranked[0]}
+        timing={getBarTiming(
+          Math.min(index, MAX_VISIBLE_STREAKS),
+          s.weeks / stats.maxWeeks,
+        )}
         animationIndex={Math.min(index, MAX_VISIBLE_STREAKS)}
-        shouldAnimate={!isSharing && !prefersReducedMotion}
+        shouldAnimate={shouldAnimate}
+        isRevealed={isRevealed}
         hasCoarsePointer={hasCoarsePointer}
         isExpanded={expandedKey === key}
         onToggle={() =>
@@ -184,7 +228,7 @@ export function StreaksLeaderboard({
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="flex flex-col gap-2 px-1 pb-2">
+      <div ref={boardRef} className="flex flex-col gap-2 px-1 pb-2">
         {isSharing && (
           <div className="mb-1 flex items-baseline justify-between gap-2 border-b pb-1">
             <h3 className="text-foreground text-sm font-semibold">
@@ -202,6 +246,8 @@ export function StreaksLeaderboard({
           weeksOnStreak={stats.weeksOnStreak}
           trainingWeeks={stats.trainingWeeks}
           streakShare={stats.streakShare}
+          shouldAnimate={shouldAnimate}
+          isRevealed={isRevealed}
         />
 
         {visible.map((s, index) => renderStreakBar(s, index))}
@@ -247,12 +293,18 @@ function StreakSummaryLine({
   weeksOnStreak,
   trainingWeeks,
   streakShare,
+  shouldAnimate,
+  isRevealed,
 }) {
+  // These count up on the longest bar's clock, so "longest 48 weeks" and the
+  // 48-week bar land at the same moment. The denominator stays still: it is
+  // the frame the other figures are read against, not a result.
+  const countProps = { shouldAnimate, isRevealed, duration: LONGEST_LANDS_S };
   return (
     <div className="text-muted-foreground mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] leading-tight">
       <span>
         <span className="text-foreground font-semibold tabular-nums">
-          {streakCount}
+          <StreakCount value={streakCount} {...countProps} />
         </span>{" "}
         {streakCount === 1 ? "streak" : "streaks"}
       </span>
@@ -260,14 +312,14 @@ function StreakSummaryLine({
       <span>
         longest{" "}
         <span className="text-foreground font-semibold tabular-nums">
-          {longestWeeks}
+          <StreakCount value={longestWeeks} {...countProps} />
         </span>{" "}
         weeks
       </span>
       <span aria-hidden>·</span>
       <span>
         <span className="text-foreground font-semibold tabular-nums">
-          {weeksOnStreak}
+          <StreakCount value={weeksOnStreak} {...countProps} />
         </span>
         {trainingWeeks !== null && (
           <>
@@ -277,13 +329,39 @@ function StreakSummaryLine({
         )}{" "}
         weeks on streak
         {streakShare !== null && (
-          <span className="text-foreground font-semibold">
+          <span className="text-foreground font-semibold tabular-nums">
             {" "}
-            ({streakShare}%)
+            (<StreakCount value={streakShare} {...countProps} />
+            %)
           </span>
         )}
       </span>
     </div>
+  );
+}
+
+/*
+ * A whole number that ticks in with the board's opening, or sits still when the
+ * board is not animating. The still path matters for the share image: its
+ * capture remounts the rows, and a fresh count would start again from zero
+ * and could be photographed as "0 wk".
+ */
+function StreakCount({
+  value,
+  shouldAnimate,
+  isRevealed,
+  duration,
+  delay = 0,
+}) {
+  if (!shouldAnimate) return value;
+  return (
+    <CountUp
+      value={value}
+      format={formatCountUpInteger}
+      duration={duration}
+      delay={delay}
+      start={isRevealed}
+    />
   );
 }
 
@@ -311,8 +389,11 @@ function StreakBar({
   recency,
   isMetric,
   isSharing,
+  isLongest,
+  timing,
   animationIndex,
   shouldAnimate,
+  isRevealed,
   hasCoarsePointer,
   isExpanded,
   onToggle,
@@ -323,6 +404,9 @@ function StreakBar({
   // fade-trail during capture — the bar would otherwise still get the mask
   // computed-style and the captured image would clip the right edge.
   const barStyle = {
+    position: "relative",
+    // Keeps the opening sheen inside the bar's rounded corners.
+    overflow: "hidden",
     width: `${lengthPct}%`,
     height: `${heightPx}px`,
     borderRadius: "5px",
@@ -373,12 +457,18 @@ function StreakBar({
           : "focus-visible:ring-ring cursor-pointer focus-visible:ring-2 focus-visible:outline-none",
       )}
       initial={shouldAnimate ? { opacity: 0, y: 6 } : false}
-      animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
+      animate={
+        shouldAnimate
+          ? isRevealed
+            ? { opacity: 1, y: 0 }
+            : { opacity: 0, y: 6 }
+          : undefined
+      }
       transition={
         shouldAnimate
           ? {
-              duration: 0.3,
-              delay: animationIndex * 0.05,
+              duration: 0.35,
+              delay: animationIndex * ROW_STAGGER_S,
               ease: [0.22, 1, 0.36, 1],
             }
           : undefined
@@ -396,39 +486,84 @@ function StreakBar({
       </span>
 
       <div className="relative min-w-0 flex-1">
-        {/* Clip-wipe rather than a width tween so the week segments keep their
-            shape while the bar reveals. */}
+        {/* Clip-wipe rather than a width tween so the bar's lit surface keeps
+            its shape while it reveals. */}
         <motion.div
           style={barStyle}
           initial={shouldAnimate ? { clipPath: "inset(0 100% 0 0)" } : false}
-          animate={shouldAnimate ? { clipPath: "inset(0 0% 0 0)" } : undefined}
-          transition={
+          // Left unset when not animating so the share capture, which does not
+          // handle every CSS effect, gets a bar with no clip-path at all.
+          animate={
             shouldAnimate
               ? {
-                  duration: 0.65,
-                  delay: animationIndex * 0.05 + 0.08,
-                  ease: [0.16, 1, 0.3, 1],
+                  clipPath: isRevealed
+                    ? "inset(0 0% 0 0)"
+                    : "inset(0 100% 0 0)",
                 }
               : undefined
           }
-        />
+          transition={
+            shouldAnimate
+              ? {
+                  duration: timing.duration,
+                  delay: timing.delay,
+                  ease: COUNT_UP_EASE,
+                }
+              : undefined
+          }
+        >
+          {/* One pass of light across the longest run as it lands: the record
+              on the board gets its moment, once, and then the board goes still. */}
+          {isLongest && shouldAnimate && (
+            <motion.span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 w-1/4"
+              style={{
+                backgroundImage:
+                  "linear-gradient(100deg, transparent, rgba(255,255,255,0.55), transparent)",
+              }}
+              initial={{ x: "-100%" }}
+              animate={{ x: isRevealed ? "400%" : "-100%" }}
+              transition={{
+                duration: SHEEN_S,
+                delay: timing.landsAt - 0.25,
+                ease: "easeInOut",
+              }}
+            />
+          )}
+        </motion.div>
         {/* A live dot just past where the bar fades out. It is a sibling of the
             bar rather than part of it so the bar's fade mask leaves it alone,
             and it says the thing a short bar cannot: this one is still running.
-            Held out of the share capture, where a paused pulse would freeze at
-            whatever opacity the animation happened to be at. */}
+            It pops in as the bar reaches it, so the run arrives and then shows
+            it is alive. Held out of the share capture, where a paused pulse
+            would freeze at whatever opacity the animation happened to be at. */}
         {streak.isActive && !isSharing && (
-          <span
+          <motion.span
             aria-hidden
-            className={cn(
-              "pointer-events-none absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full",
-              shouldAnimate && "animate-pulse",
-            )}
-            style={{
-              left: `calc(${Math.min(lengthPct, 98)}% + 6px)`,
-              backgroundColor: "var(--heatmap-2)",
-            }}
-          />
+            className="pointer-events-none absolute top-1/2 -translate-y-1/2"
+            style={{ left: `calc(${Math.min(lengthPct, 98)}% + 6px)` }}
+            initial={shouldAnimate ? { scale: 0 } : false}
+            animate={{ scale: isRevealed ? 1 : 0 }}
+            transition={
+              shouldAnimate
+                ? {
+                    type: "spring",
+                    stiffness: 520,
+                    damping: 16,
+                    delay: timing.landsAt - 0.1,
+                  }
+                : undefined
+            }
+          >
+            <span
+              className={cn(
+                "block h-1.5 w-1.5 rounded-full",
+                shouldAnimate && "animate-pulse",
+              )}
+              style={{ backgroundColor: "var(--heatmap-2)" }}
+            />
+          </motion.span>
         )}
       </div>
 
@@ -439,7 +574,13 @@ function StreakBar({
           streak.isActive ? "text-primary" : "text-foreground",
         )}
       >
-        {streak.weeks}
+        <StreakCount
+          value={streak.weeks}
+          shouldAnimate={shouldAnimate}
+          isRevealed={isRevealed}
+          duration={timing.duration}
+          delay={timing.delay}
+        />
         <span className="text-muted-foreground ml-0.5 text-[10px] font-normal">
           wk
         </span>

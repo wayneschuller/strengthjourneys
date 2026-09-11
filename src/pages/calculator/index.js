@@ -37,7 +37,7 @@ import { devLog } from "@/lib/processing-utils";
 import { gaTrackCalcShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
-import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { getLiftArtwork } from "@/components/lift-artwork";
 import { cn } from "@/lib/utils";
 
 import { useLocalStorage, useIsClient, useReadLocalStorage } from "usehooks-ts";
@@ -620,7 +620,7 @@ export function E1RMCalculatorMain({
             {formulaBlurb.equation} {"\u2014"} {renderInlineContent(formulaBlurb.text)}
           </p>
         )}
-        {forceLift && getLiftSvgPath(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
+        {forceLift && getLiftArtwork(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
           <PageHeaderRight>
             <Link
               prefetch={false}
@@ -634,7 +634,7 @@ export function E1RMCalculatorMain({
                 </p>
               </div>
               <img
-                src={getLiftSvgPath(forceLift)}
+                src={getLiftArtwork(forceLift)}
                 alt={forceLift}
                 className="h-24 w-24 flex-shrink-0 object-contain opacity-90 transition-opacity hover:opacity-50"
               />
@@ -1646,7 +1646,7 @@ function getLiftBarData(liftType, standards, e1rmWeight) {
   const nextTierInfo = NEXT_TIER[rating];
   const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
   const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
-  const svgPath = getLiftSvgPath(liftType);
+  const svgPath = getLiftArtwork(liftType);
   return { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath };
 }
 

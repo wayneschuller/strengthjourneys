@@ -594,6 +594,38 @@ Sentence-case, plain English, describing the change in the author's voice — e.
 *"Close an open PR card by clicking it, not only by finding the X"*. No
 `feat:`/`fix:` prefixes, no ticket numbers, no tooling identifiers.
 
+### Working Alongside Other Agents
+
+Several agents may be working in this one checkout at the same time, and the
+user is always running a local dev server against it. That is deliberate: work
+has to be visible the moment it is written, so agents do not hide in worktrees
+here. It means the working tree, the index, and the branch are shared with
+people and agents you cannot see.
+
+Stay in your own lane:
+
+- Keep a list of the files you touched, and stage only those:
+  `git add -- <your paths>`
+- Commit with an explicit pathspec: `git commit -- <your paths>`. That form
+  commits the working-tree version of those paths and ignores the index, so a
+  neighbour's staged work cannot ride along in your commit
+- Never `git add -A`, `git add .`, or `git commit -a`
+- Never `git reset --hard`, `git checkout -- .`, or `git stash`. The stash is
+  shared, and a hard reset destroys work that is not yours
+- Never switch branches. Another agent is mid-edit on this one
+- Do not rebase. Rebase demands a clean tree, so with neighbours mid-edit it
+  either refuses or, with `--autostash`, pockets their work. To catch up before
+  pushing: `git fetch origin main && git merge origin/main`, which tolerates a
+  dirty tree as long as the incoming commit does not touch the dirty files.
+  Agents on separate areas satisfy that; an occasional merge commit on `main`
+  is the accepted cost
+- Lint your own files (`npx eslint <your paths>`), not the repo. A repo-wide
+  run reports a neighbour's half-finished code as your problem
+- A red dev server or a failing build may belong to someone else. Check whether
+  the error is in a file you touched before chasing it
+- If you do find yourself needing a file another agent is clearly editing, say
+  so rather than working around them
+
 ### Deploy Shortcut
 
 When the user says "deploy", they mean:
@@ -621,6 +653,8 @@ push to fix it.
 Agents operating in this repo should:
 
 - Prefer minimal, surgical edits
+- Work directly in this checkout, never in a worktree, and follow *Working
+  Alongside Other Agents* above. The user is testing against a live dev server
 - Preserve visual design consistency
 - Avoid architectural rewrites unless explicitly requested
 - Run lint after every change

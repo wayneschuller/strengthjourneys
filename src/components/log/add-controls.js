@@ -584,8 +584,10 @@ export function AddLiftButton({
             isToday,
           ),
         })),
+      // The search covers what the tiles don't, so a drawn lift never shows
+      // up twice.
       searchLifts: [...new Set((chips ?? []).map(({ name }) => name))].filter(
-        (name) => !excluded.has(name),
+        (name) => !excluded.has(name) && !DRAWN_LIFT_TYPES.includes(name),
       ),
     };
   }, [chips, excludeLiftTypes, sessionDate, isToday, getColor]);

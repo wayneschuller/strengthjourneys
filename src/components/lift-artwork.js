@@ -80,6 +80,7 @@ const LIFT_ARTWORK = {
   "Romanian Deadlift": "/lifts/default/romanian-deadlift.png", // male
   "Hip Thrust": "/lifts/default/hip-thrust.png", // female
   "Barbell Row": "/lifts/default/barbell-row.png", // male
+  "Rack Pull": "/lifts/default/rack-pull.png", // male
 };
 
 /** Every lift we have a drawing for, in the order they were drawn. */

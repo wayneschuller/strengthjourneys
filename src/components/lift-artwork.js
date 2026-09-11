@@ -53,8 +53,10 @@
  * only shows up once a lift has a PNG.
  *
  * ADDING A LIFT: drop the file in public/lifts/default/ and add one line to
- * LIFT_ARTWORK. A SECOND SET: public/lifts/ is laid out to hold one, but no
- * code knows about sets yet. Teach this file when a second set exists.
+ * LIFT_ARTWORK. That is all: the log's add-lift picker reads DRAWN_LIFT_TYPES,
+ * so a new drawing shows up there as a tile with no other change. A SECOND SET:
+ * public/lifts/ is laid out to hold one, but no code knows about sets yet.
+ * Teach this file when a second set exists.
  */
 
 import Image from "next/image";
@@ -78,6 +80,9 @@ const LIFT_ARTWORK = {
   "Romanian Deadlift": "/lifts/default/romanian-deadlift.png", // male
   "Hip Thrust": "/lifts/default/hip-thrust.png", // female
 };
+
+/** Every lift we have a drawing for, in the order they were drawn. */
+export const DRAWN_LIFT_TYPES = Object.keys(LIFT_ARTWORK);
 
 /**
  * Other names for a lift we have already drawn. Synonyms only: an overhead
@@ -111,7 +116,7 @@ export function getLiftArtwork(liftType) {
  *
  * @param {Object} props
  * @param {string} props.liftType - The lift name, e.g. "Back Squat".
- * @param {string} [props.size] - Size preset: "sm", "md", or "lg".
+ * @param {string} [props.size] - Size preset: "sm", "tile", "md", or "lg".
  * @param {boolean} [props.animate] - Wrap in a motion.div with a spring entrance.
  * @param {boolean} [props.isActive] - Whether that animation plays or reverses.
  * @param {string} [props.className] - Extra classes for the img.
@@ -134,9 +139,11 @@ export function LiftArtwork({
 
   // md and lg pin the height and let width follow, which is what renders a row
   // of different lifts at a consistent lifter size. sm stays square because it
-  // sits inline beside text, where a variable width unsettles the row.
+  // sits inline beside text, where a variable width unsettles the row. tile is
+  // for pickers: a grid of many lifts at once, small enough to scan the lot.
   const sizeClasses = {
     sm: "h-10 w-10",
+    tile: "h-12 w-auto max-w-full md:h-14",
     md: "h-24 w-auto max-w-full md:h-32",
     lg: "h-36 w-auto max-w-full md:h-44",
   };

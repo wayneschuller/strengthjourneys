@@ -3,6 +3,7 @@
  * Preview users can only browse; linked-sheet users can start a lift block.
  */
 
+import { useMemo } from "react";
 import Image from "next/image";
 
 import { AddLiftButton } from "@/components/log/add-controls";
@@ -16,6 +17,11 @@ export function EmptySessionState({
   previewMode,
   starterLifts,
 }) {
+  const starterLiftTypes = useMemo(
+    () => starterLifts.map(({ name }) => name),
+    [starterLifts],
+  );
+
   return (
     <div className="mt-6 flex flex-col items-center gap-6">
       {previewMode ? (
@@ -48,6 +54,7 @@ export function EmptySessionState({
                   alt={name}
                   width={80}
                   height={80}
+                  unoptimized
                   className="h-20 w-20 object-contain md:h-28 md:w-28"
                 />
                 <span className="text-sm leading-tight font-medium">
@@ -61,6 +68,9 @@ export function EmptySessionState({
             parsedData={parsedData}
             onAddLift={onAddLift}
             chips={addLiftChips}
+            // The starters are the big buttons just above, so "other" means
+            // everything else.
+            excludeLiftTypes={starterLiftTypes}
             label="Add other lift type"
             disabled={isStructuralSaving}
           />

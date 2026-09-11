@@ -32,6 +32,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
+import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import {
@@ -519,32 +520,50 @@ export function SmartAddButtons({
   );
 }
 
+/**
+ * The "add a lift" control. Closed, it is one dashed row with a peek of the
+ * drawings waiting inside. Open, it is a searchable picker: every lift we have
+ * drawn as a picture tile first, then the rest as plain names, then free text
+ * for anything else. Tiles come from getLiftArtwork, so each new drawing in
+ * lift-artwork.js joins the grid without touching this file.
+ */
 export function AddLiftButton({
   parsedData,
   onAddLift,
   chips,
+  excludeLiftTypes,
   label = "Add another lift type",
   disabled = false,
 }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
 
-  const mergedChips = useMemo(() => {
-    const seen = new Set();
-    return (chips ?? []).filter(({ name }) => {
-      if (seen.has(name)) return false;
-      seen.add(name);
-      return true;
-    });
-  }, [chips]);
+  // Split once into drawn and undrawn, keeping the caller's order within each.
+  // Lifts already in the session are left out: picking one would only add a
+  // set to the block that is already on screen.
+  const { drawnChips, plainChips } = useMemo(() => {
+    const seen = new Set(excludeLiftTypes ?? []);
+    const drawn = [];
+    const plain = [];
+    for (const chip of chips ?? []) {
+      if (seen.has(chip.name)) continue;
+      seen.add(chip.name);
+      (getLiftArtwork(chip.name) ? drawn : plain).push(chip);
+    }
+    return { drawnChips: drawn, plainChips: plain };
+  }, [chips, excludeLiftTypes]);
+
+  function close() {
+    setShowInput(false);
+    setLiftType("");
+  }
 
   function submit(lt) {
     if (disabled) return;
     const raw = (lt ?? liftType).trim();
     if (!raw) return;
     const clean = raw.replace(/\S+/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
-    setShowInput(false);
-    setLiftType("");
+    close();
     onAddLift(clean);
   }
 
@@ -552,65 +571,106 @@ export function AddLiftButton({
     return (
       <Button
         variant="outline"
-        className="w-full gap-2"
+        className="h-auto w-full justify-start gap-3 border-dashed px-4 py-2.5"
         disabled={disabled}
         onClick={() => setShowInput(true)}
       >
-        <ClipboardPlus className="h-4 w-4" />
-        {label}
+        <span className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-full">
+          <Plus className="h-4 w-4" />
+        </span>
+        <span className="font-medium">{label}</span>
+        {drawnChips.length > 0 && (
+          <span className="ml-auto flex items-center gap-1" aria-hidden="true">
+            {/* Two on phones, where a third would push the label off the row. */}
+            {drawnChips.slice(0, 3).map(({ name }, i) => (
+              <LiftArtwork
+                key={name}
+                liftType={name}
+                size="sm"
+                animate={false}
+                className={`opacity-80 ${i === 2 ? "max-sm:hidden" : ""}`}
+              />
+            ))}
+          </span>
+        )}
       </Button>
     );
   }
 
+  const typed = liftType.trim();
+
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-3 rounded-lg border p-4">
-      <Command className="rounded-lg border bg-background">
+    <div className="bg-card mx-auto w-full max-w-2xl space-y-3 rounded-xl border p-3 shadow-sm">
+      <Command
+        className="bg-background rounded-lg border"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") close();
+        }}
+      >
         <CommandInput
-          placeholder="Lift type (e.g. Back Squat)"
+          placeholder="Search, or type a new lift"
           value={liftType}
           disabled={disabled}
           onValueChange={setLiftType}
         />
-        <CommandList className="max-h-56">
-          <CommandEmpty>
-            {liftType.trim()
-              ? `No match. Add "${liftType.trim()}" below.`
-              : "No lift found."}
-          </CommandEmpty>
-          {liftType.trim() ? (
+        <CommandList className="max-h-[min(28rem,60vh)]">
+          <CommandEmpty>No lift found.</CommandEmpty>
+          {typed ? (
             <CommandGroup heading="Add new">
               <CommandItem
-                value={`create-${liftType.trim()}`}
+                value={`create-${typed}`}
                 disabled={disabled}
                 onSelect={() => submit(liftType)}
               >
                 <ClipboardPlus className="h-4 w-4" />
-                {`Add "${liftType.trim()}"`}
+                {`Add "${typed}"`}
               </CommandItem>
             </CommandGroup>
           ) : null}
-          <CommandGroup heading="Lifts">
-            <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
-              {mergedChips.map(({ name }) => (
-                <CommandItem
-                  key={name}
-                  value={name}
-                  disabled={disabled}
-                  onSelect={() => submit(name)}
-                  className="min-w-0"
-                >
-                  <span className="truncate">{name}</span>
-                </CommandItem>
-              ))}
-            </div>
-          </CommandGroup>
+          {drawnChips.length > 0 && (
+            <CommandGroup heading="Lifts">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
+                {drawnChips.map(({ name }) => (
+                  <CommandItem
+                    key={name}
+                    value={name}
+                    disabled={disabled}
+                    onSelect={() => submit(name)}
+                    className="data-[selected=true]:border-border min-w-0 flex-col gap-1.5 rounded-lg border border-transparent px-2 py-2.5"
+                  >
+                    <LiftArtwork liftType={name} size="tile" animate={false} />
+                    <span className="w-full truncate text-center text-xs font-medium">
+                      {name}
+                    </span>
+                  </CommandItem>
+                ))}
+              </div>
+            </CommandGroup>
+          )}
+          {plainChips.length > 0 && (
+            <CommandGroup heading={drawnChips.length > 0 ? "More lifts" : "Lifts"}>
+              <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+                {plainChips.map(({ name }) => (
+                  <CommandItem
+                    key={name}
+                    value={name}
+                    disabled={disabled}
+                    onSelect={() => submit(name)}
+                    className="min-w-0"
+                  >
+                    <span className="truncate">{name}</span>
+                  </CommandItem>
+                ))}
+              </div>
+            </CommandGroup>
+          )}
         </CommandList>
       </Command>
       <div className="flex gap-2">
-        <Button size="sm" onClick={() => submit()} disabled={disabled || !liftType.trim()}>
+        <Button size="sm" onClick={() => submit()} disabled={disabled || !typed}>
           Add
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => { setShowInput(false); setLiftType(""); }}>
+        <Button size="sm" variant="ghost" onClick={close}>
           Cancel
         </Button>
       </div>

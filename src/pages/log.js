@@ -46,7 +46,7 @@ import { DeleteSessionControls } from "@/components/log/delete-session-controls"
 import { EmptySessionState } from "@/components/log/empty-session-state";
 import { LogDateNav } from "@/components/log/log-date-nav";
 
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { DRAWN_LIFT_TYPES, getLiftArtwork } from "@/components/lift-artwork";
 const BIG_FOUR = BIG_FOUR_LIFT_META.map(
   ({ liftType, progressGuidePath }) => ({
     name: liftType,
@@ -411,7 +411,17 @@ export default function LogSessionPage({
     const frequentExtras = Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
       .map(([name]) => ({ name, icon: null }));
-    return [...BIG_FOUR, ...DEFAULT_ADD_LIFT_CHIPS, ...frequentExtras].filter(
+    // Every drawn lift is on offer, so each new drawing reaches the picker.
+    const drawnLifts = DRAWN_LIFT_TYPES.map((name) => ({
+      name,
+      icon: getLiftArtwork(name),
+    }));
+    return [
+      ...BIG_FOUR,
+      ...DEFAULT_ADD_LIFT_CHIPS,
+      ...drawnLifts,
+      ...frequentExtras,
+    ].filter(
       ({ name }) => {
         if (seen.has(name)) return false;
         seen.add(name);
@@ -419,6 +429,11 @@ export default function LogSessionPage({
       },
     );
   }, [parsedData]);
+
+  const sessionLiftTypes = useMemo(
+    () => Object.keys(sessionLiftsWithPending),
+    [sessionLiftsWithPending],
+  );
 
   const handleAddLift = useCallback(
     (liftType) => {
@@ -722,6 +737,7 @@ export default function LogSessionPage({
                       parsedData={parsedData}
                       onAddLift={handleAddLift}
                       chips={addLiftChips}
+                      excludeLiftTypes={sessionLiftTypes}
                       disabled={isAddBlocked}
                     />
                   )}

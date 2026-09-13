@@ -43,8 +43,7 @@ export function LiftStage({ liftType, direction = 1 }) {
   const color = getColor(liftType);
   const artSrc = getLiftArtwork(liftType);
 
-  const rankIndex = liftTypes?.findIndex((l) => l.liftType === liftType) ?? -1;
-  const entry = rankIndex >= 0 ? liftTypes[rankIndex] : null;
+  const entry = liftTypes?.find((l) => l.liftType === liftType) ?? null;
   const sinceLabel = formatMonthYear(entry?.oldestDate);
 
   // Same rule as the old header link: only point out when there is an
@@ -124,22 +123,6 @@ export function LiftStage({ liftType, direction = 1 }) {
         }`}
       >
         <div className="relative z-10 flex min-w-0 flex-1 flex-col gap-4">
-          <motion.div
-            className="text-muted-foreground flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase"
-            initial={{ opacity: 0, x: 24 * dir }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ ...SPRING, delay: 0.05 }}
-          >
-            <span
-              aria-hidden="true"
-              className="size-2 rounded-[2px]"
-              style={{ backgroundColor: "var(--stage)" }}
-            />
-            {rankIndex >= 0 && liftTypes.length > 1
-              ? `Lift ${rankIndex + 1} of ${liftTypes.length}`
-              : "Your lift"}
-          </motion.div>
-
           {/* Each word rises out of its own mask, so the name assembles itself. */}
           <h2 className="text-4xl leading-[0.95] font-bold tracking-tight sm:text-5xl">
             {words.map((word, i) => (

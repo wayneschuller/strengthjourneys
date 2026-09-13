@@ -121,7 +121,7 @@ export function LiftThumb({ liftType, color, isSelected = false, className }) {
     <span
       aria-hidden="true"
       className={cn(
-        "relative flex h-6 w-10 shrink-0 items-center justify-center",
+        "relative flex h-10 w-[4.2rem] shrink-0 items-center justify-center",
         className,
       )}
     >
@@ -134,8 +134,8 @@ export function LiftThumb({ liftType, color, isSelected = false, className }) {
           // Lift artwork is always unoptimized; see lift-artwork.js.
           unoptimized
           className={cn(
-            "h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-125",
-            isSelected && "scale-125",
+            "h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-110",
+            isSelected && "scale-110",
           )}
         />
       ) : (

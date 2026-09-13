@@ -159,7 +159,7 @@ function LiftExplorerMain({ relatedArticles }) {
       {effectiveLiftType ? (
         <section className="mt-4 flex flex-col gap-6 xl:flex-row">
           {/* Left: narrow lift list */}
-          <div className="shrink-0 xl:w-1/5">
+          <div className="shrink-0 xl:w-80 2xl:w-96">
             <TopLiftsCard
               selectedLiftType={effectiveLiftType}
               onSelectLift={handleSelectLift}

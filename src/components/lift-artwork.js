@@ -81,6 +81,7 @@ const LIFT_ARTWORK = {
   "Hip Thrust": "/lifts/default/hip-thrust.png", // female
   "Barbell Row": "/lifts/default/barbell-row.png", // male
   "Rack Pull": "/lifts/default/rack-pull.png", // male
+  "Close Grip Bench Press": "/lifts/default/close-grip-bench-press.png", // female
 };
 
 /** Every lift we have a drawing for, in the order they were drawn. */
@@ -98,6 +99,7 @@ const LIFT_ART_SYNONYMS = {
   Squat: "Back Squat",
   "Overhead Press": "Strict Press",
   Press: "Strict Press",
+  "Close-Grip Bench Press": "Close Grip Bench Press",
 };
 
 /**

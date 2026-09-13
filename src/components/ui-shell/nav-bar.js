@@ -46,10 +46,6 @@ import {
 } from "@/components/ui/navigation-menu";
 
 import {
-  Crown,
-  Shield,
-  Skull,
-  Luggage,
   Calculator,
   BarChart,
   Anvil,
@@ -64,7 +60,8 @@ import {
   ClipboardPlus,
   Mountain,
 } from "lucide-react";
-import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { LiftIcon } from "@/components/lift-icon";
+import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
 import { GorillaIcon } from "@/components/gorilla-icon";
 
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
@@ -513,14 +510,7 @@ function GitHubIcon({ className }) {
 // Internal dropdown menu for the four main barbell lift insight pages.
 function BigFourBarbellInsightsMenu() {
   const pathname = usePathname();
-  const lifts = bigFourLiftInsightData;
-
-  const bigFourIcons = {
-    "Back Squat": <Crown className="h-5 w-5" />,
-    "Bench Press": <Shield className="h-5 w-5" />,
-    Deadlift: <Skull className="h-5 w-5" />,
-    "Strict Press": <Luggage className="h-5 w-5" />,
-  };
+  const lifts = BIG_FOUR_LIFTS;
 
   const ListItem = React.forwardRef(
     ({ className, title, children, ...props }, ref) => {
@@ -537,7 +527,7 @@ function BigFourBarbellInsightsMenu() {
               {...props}
             >
               <div className="flex flex-row items-center gap-2 align-middle">
-                {bigFourIcons[title]} {/* Icon based on lift title */}
+                <LiftIcon liftType={title} className="h-5 w-5" />
                 <div className="text-sm leading-none font-medium">{title}</div>
               </div>
               <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">

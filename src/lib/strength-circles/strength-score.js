@@ -2,6 +2,7 @@ import {
   LiftingStandardsKG,
   interpolateStandardKG,
 } from "@/lib/lifting-standards-kg";
+import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
 
 export const KILGORE_LEVELS = [
   "physicallyActive",
@@ -23,13 +24,13 @@ export const LIFT_TYPE_TO_PERCENTILE_KEY = Object.fromEntries(
   Object.entries(STRENGTH_CIRCLES_LIFT_TYPES).map(([key, name]) => [name, key]),
 );
 
-// Maps lift types to their dedicated calculator page URLs.
-export const LIFT_TYPE_TO_CALCULATOR_URL = {
-  "Back Squat": "/calculator/squat-1rm-calculator",
-  "Bench Press": "/calculator/bench-press-1rm-calculator",
-  "Deadlift": "/calculator/deadlift-1rm-calculator",
-  "Strict Press": "/calculator/strict-press-1rm-calculator",
-};
+// Maps lift types to their dedicated calculator page URLs, from the registry.
+export const LIFT_TYPE_TO_CALCULATOR_URL = Object.fromEntries(
+  BIG_FOUR_LIFTS.filter((lift) => lift.calculatorUrl).map((lift) => [
+    lift.liftType,
+    lift.calculatorUrl,
+  ]),
+);
 
 // Sensible default E1RM values (in kg) for anonymous/demo renders.
 // Based on calculator defaults (5@225lb ≈ 253lb E1RM) scaled per lift.

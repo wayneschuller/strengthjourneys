@@ -7,12 +7,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { Crown, House, Luggage, Menu, Shield, Skull } from "lucide-react";
+import { House, Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ThemeChooser } from "@/components/ui-shell/theme-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { getLiftIcon } from "@/components/lift-icon";
+import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 import { getRepeatImportHref } from "@/lib/import/import-sources";
@@ -69,14 +70,7 @@ export function MobileNav() {
     setIsStarryNight((currentTheme || "light").startsWith("starry-night"));
   }, [theme, resolvedTheme]);
 
-  const lifts = bigFourLiftInsightData;
-
-  const bigFourIcons = {
-    "Back Squat": Crown,
-    "Bench Press": Shield,
-    Deadlift: Skull,
-    "Strict Press": Luggage,
-  };
+  const lifts = BIG_FOUR_LIFTS;
 
   // Internal nav link row: icon + label, highlights the active route.
   const NavLink = ({ href, title, IconComponent }) => (
@@ -159,7 +153,7 @@ export function MobileNav() {
                   key={lift.slug}
                   href={"/progress-guide/" + lift.slug}
                   title={`${lift.liftType} Insights`}
-                  IconComponent={bigFourIcons[lift.liftType]}
+                  IconComponent={getLiftIcon(lift.liftType)}
                 />
               ))}
             </div>

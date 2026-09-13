@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { estimateE1RM, estimateLiftE1RM } from "@/lib/estimate-e1rm";
 import {
   BIG_FOUR_LIFT_TYPES as CANONICAL_BIG_FOUR_LIFT_TYPES,
-} from "@/lib/big-four-lifts";
+} from "@/lib/lift-registry";
 
 // =============================================================================
 // UNIT TYPE SYSTEM — HOW IT WORKS

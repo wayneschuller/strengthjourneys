@@ -6,6 +6,7 @@
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { registerHooks } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -28,6 +29,16 @@ registerHooks({
     };
   },
   load(url, context, nextLoad) {
+    // The lift registry imports its JSON files the way the Next bundlers
+    // allow, with no import attribute, which bare Node refuses before a hook
+    // could step in. Serve them here as modules exporting the parsed object.
+    if (url.startsWith(pathToFileURL(sourceRoot).href) && url.endsWith(".json")) {
+      return {
+        shortCircuit: true,
+        format: "module",
+        source: `export default ${readFileSync(fileURLToPath(url), "utf8")};`,
+      };
+    }
     const loaded = nextLoad(url, context);
     if (url.startsWith(pathToFileURL(sourceRoot).href) && url.endsWith(".js")) {
       return { ...loaded, format: "module" };

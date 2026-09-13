@@ -1,0 +1,21 @@
+{
+  "liftType": "Romanian Deadlift",
+  "slug": "romanian-deadlift",
+  "artwork": {
+    "src": "/lifts/default/romanian-deadlift.png",
+    "figure": "male"
+  },
+  "coaching": {
+    "summary": "Start standing with the bar at your hips, push your hips back so it slides down your legs until your hamstrings stretch, then stand back up.",
+    "cues": [
+      "Push the hips back and keep a soft bend in the knees.",
+      "Let the bar trace the thighs and stay close to the legs the whole way down.",
+      "Stop when the hamstrings are loaded, then drive the hips through to stand tall."
+    ],
+    "videoUrl": "https://www.youtube.com/watch?v=amLSSb8cXok",
+    "standardsRef": {
+      "liftType": "Deadlift",
+      "ratio": 0.7
+    }
+  }
+}

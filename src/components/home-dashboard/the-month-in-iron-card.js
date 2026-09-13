@@ -37,7 +37,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftArtwork } from "@/components/lift-artwork";
-import { getBigFourBodyBenefit } from "@/lib/big-four-body-benefits";
+import { getBigFourBodyBenefit } from "@/lib/lift-registry";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";

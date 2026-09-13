@@ -1,0 +1,21 @@
+{
+  "liftType": "Barbell Row",
+  "slug": "barbell-row",
+  "artwork": {
+    "src": "/lifts/default/barbell-row.png",
+    "figure": "male"
+  },
+  "coaching": {
+    "summary": "Hold the bar at arm's length, lean forward from the hips with a flat back, then pull the bar up to your stomach and lower it again.",
+    "cues": [
+      "Set the back tight before the first rep and hold the torso angle steady.",
+      "Pull the bar into the lower chest or upper stomach without jerking the hips.",
+      "Lower the bar under control and re-brace before the next rep."
+    ],
+    "videoUrl": "https://www.youtube.com/watch?v=qbES7k4HDf8",
+    "standardsRef": {
+      "liftType": "Bench Press",
+      "ratio": 0.8
+    }
+  }
+}

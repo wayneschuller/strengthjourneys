@@ -1,0 +1,11 @@
+{
+  "liftType": "Close Grip Bench Press",
+  "slug": "close-grip-bench-press",
+  "synonyms": [
+    "Close-Grip Bench Press"
+  ],
+  "artwork": {
+    "src": "/lifts/default/close-grip-bench-press.png",
+    "figure": "female"
+  }
+}

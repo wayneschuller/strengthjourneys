@@ -1,14 +1,12 @@
 
 import Link from "next/link";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { BIG_FOUR_PROGRESS_GUIDE_PATHS } from "@/lib/big-four-lifts";
-
-export const bigFourURLs = BIG_FOUR_PROGRESS_GUIDE_PATHS;
+import { getLiftGuidePath } from "@/lib/lift-registry";
 
 /**
  * Returns the best detail-page URL for any lift type.
- * Big four lifts get their dedicated progress guide; everything else
- * goes to the lift explorer with the lift pre-selected.
+ * Every lift has a progress guide: curated lifts at their registry slug,
+ * anything else a lifter logs at its slugified name.
  *
  * @param {string} liftType - e.g. "Back Squat", "Front Squat"
  * @param {string} [hash] - Optional hash fragment (e.g. "#lift-prs", "#tonnage-chart")
@@ -17,9 +15,8 @@ export const bigFourURLs = BIG_FOUR_PROGRESS_GUIDE_PATHS;
  */
 export function getLiftDetailUrl(liftType, hash = "", query = {}) {
   if (!liftType) return null;
-  const base =
-    bigFourURLs[liftType] ||
-    `/lift-explorer?liftType=${encodeURIComponent(liftType)}`;
+  const base = getLiftGuidePath(liftType);
+  if (!base) return null;
   const params = new URLSearchParams(
     base.includes("?") ? base.slice(base.indexOf("?") + 1) : "",
   );
@@ -35,8 +32,8 @@ export function getLiftDetailUrl(liftType, hash = "", query = {}) {
 }
 
 /**
- * Renders a small colored square followed by the lift type name. For the four
- * main barbell lifts the entire element is wrapped in a link to its insight page.
+ * Renders a small colored square followed by the lift type name, linked to
+ * that lift's progress guide.
  *
  * @param {Object} props
  * @param {string} props.liftType - The name of the lift (e.g. "Back Squat").

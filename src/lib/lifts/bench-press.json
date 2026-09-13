@@ -1,0 +1,282 @@
+{
+  "liftType": "Bench Press",
+  "slug": "bench-press",
+  "bigFour": true,
+  "shortName": "Bench",
+  "icon": "Shield",
+  "homepageDescription": "A horizontal press from the chest while lying on a bench.",
+  "bodyBenefit": "Chest, shoulders and triceps pressing as one unit. The most recognised strength test in the world, and the shortest path to upper body pushing power you can feel outside the gym.",
+  "calculatorUrl": "/calculator/bench-press-1rm-calculator",
+  "artwork": {
+    "src": "/lifts/default/bench-press.svg",
+    "figure": "male"
+  },
+  "coaching": {
+    "summary": "Lie on a flat bench, unrack the bar over your chest at arm's length, lower it to touch your chest, then press it back up.",
+    "cues": [
+      "Set your shoulder blades first, then keep the upper back pinned tight.",
+      "Plant your feet and stay tight from the handoff to lockout.",
+      "Touch the bar low on the chest and press back toward the shoulders."
+    ],
+    "videoUrl": "https://www.youtube.com/embed/t3f2L7NRRUY",
+    "videoTitle": "Gym Shorts (How To): Bench Press - Barbell Logic"
+  },
+  "guide": {
+    "hubDescription": "The lift everyone asks about first.",
+    "seoTitle": "Bench Press Guide: Videos, PR Tracking & E1RM Progress Charts",
+    "pageTitle": "Bench Press Complete Guide & Progress Tracker",
+    "pageDescription": "Curated bench press technique videos, expert coaching resources, and for logged-in lifters: your personal E1RM chart over time, rep-range PRs, tonnage tracking, strength percentile rank, and a 19-tier progression system. Free, no app download.",
+    "pageKeywords": "bench press guide, bench press technique videos, bench press progress tracker, bench press PR tracker, bench press E1RM chart, barbell bench press coaching, bench press tonnage, bench press percentile",
+    "ogImageURL": "https://www.strengthjourneys.xyz/strength_journeys_bench_insights.png",
+    "quoteSectionTitle": "Why the bench press became the classic upper-body test",
+    "liftQuote": "The bench press, since the 1950s, has become the most widely recognized resistance exercise movement in the world, the one exercise most representative in the public mind of barbell training...",
+    "liftQuoteAuthor": "Mark Rippetoe",
+    "videos": [
+      "https://www.youtube.com/embed/rxD321l2svE",
+      "https://www.youtube.com/embed/t3f2L7NRRUY",
+      "https://www.youtube.com/embed/A0NBCkpYatQ"
+    ],
+    "introduction": {
+      "title": "How Strong Should My Bench Press Be?",
+      "paragraphs": [
+        "Answer: At least 225lb. But let's be more helpful than that.",
+        "The barbell bench press is the world's most popular strength exercise, and for good reason — it's the most effective way to build upper body pressing strength and muscle mass. How much you should be able to bench depends on your body weight, training experience, and goals.",
+        [
+          "If you are new to bench pressing, start with just the barbell (",
+          {
+            "text": "20kg/45lb",
+            "bold": true
+          },
+          ") and focus on a controlled descent to your chest with a firm press back to lockout. Use ",
+          {
+            "text": "three sets of 5 reps",
+            "bold": true
+          },
+          " and add a small amount of weight each session for as long as you can."
+        ],
+        [
+          "As a general guideline, a beginner should be able to bench press their body weight. An intermediate strength milestone is a bench press of ",
+          {
+            "text": "1.25 times your body weight",
+            "bold": true
+          },
+          ". An advanced lifter should be able to bench ",
+          {
+            "text": "1.5 times their body weight",
+            "bold": true
+          },
+          " or more."
+        ],
+        "Logged-in users can look below for their Bench Press history chart, which is visually mapped against both bodyweight multiples and the strength level standards for their bodyweight, age, and sex."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Bench Press Articles",
+      "links": [
+        {
+          "text": "How-To Bench Press: Technique, Benefits, and Muscles Worked",
+          "href": "https://www.barbellmedicine.com/blog/how-to-bench-press/",
+          "author": "Claire Zai, Barbell Medicine"
+        },
+        {
+          "text": "Struggling With the Bench Press",
+          "href": "https://www.jimwendler.com/blogs/jimwendler-com/101072966-struggling-with-the-bench-press",
+          "author": "Jeff Nippard"
+        },
+        {
+          "text": "Training for the NFL Combine bench press test",
+          "href": "https://www.nfl.com/news/training-for-the-nfl-combine-bench-press-test-0ap3000000637311",
+          "author": "NFL",
+          "note": "Normally we encourage 5 reps or less for strength. But we make this one exception — the NFL combine bench press test is a significant marker of athleticism."
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "Is benching 225 lbs good?",
+        "answer": "Yes — 225 lbs (two plates per side) is a classic gym milestone that most recreational lifters aspire to. For a 185 lb male lifter, benching 225 lbs is roughly 1.2× bodyweight, which puts you in the intermediate range. For a lighter lifter or a woman, 225 lbs is an advanced or elite achievement. It's one of the most commonly cited bench press goals in gyms across the US."
+      },
+      {
+        "question": "What is a good bench press for my bodyweight?",
+        "answer": "A general guide for male lifters: beginner is around 0.75× bodyweight (roughly 135 lbs at 185 lb bodyweight), intermediate is 1× bodyweight (185 lbs), advanced is 1.25–1.5× bodyweight (230–275 lbs), and elite is 1.75× or more (325+ lbs). Women's standards are proportionally similar relative to bodyweight. Use the strength standards slider above to see exact benchmarks for your specific age, sex, and bodyweight."
+      },
+      {
+        "question": "If I can bench 135 lbs for 12 reps, what is my max?",
+        "answer": [
+          "Using the Brzycki formula, 135 lbs for 12 reps estimates a 1RM of around 180 lbs. The Epley formula gives a similar result of about 189 lbs. Different formulas give slightly different results, especially at higher rep counts — sets of 3–6 reps tend to produce the most accurate 1RM estimates. Use the ",
+          {
+            "text": "bench press 1RM calculator",
+            "href": "/calculator/bench-press-1rm-calculator?weight=135&reps=12&calcIsMetric=false"
+          },
+          " linked from this page to see all 7 formulas side by side."
+        ]
+      },
+      {
+        "question": "If I can bench 135 lbs for 15 reps, what is my max?",
+        "answer": [
+          "At 135 lbs for 15 reps, the Brzycki formula estimates your 1RM at around 196 lbs, while Epley gives approximately 202 lbs. High rep sets (above 10) introduce more fatigue, which can make 1RM estimates less precise. For a more accurate estimate, try a heavier set in the 3–6 rep range and plug those numbers into the ",
+          {
+            "text": "bench press 1RM calculator",
+            "href": "/calculator/bench-press-1rm-calculator?weight=135&reps=15&calcIsMetric=false"
+          },
+          "."
+        ]
+      },
+      {
+        "question": "How many reps of 225 lbs does it take to bench 315 lbs?",
+        "answer": "Working backward from a 315 lb 1RM using the Brzycki formula: you would need to perform 225 lbs for approximately 16–17 reps to estimate a 315 lb max. The NFL Combine uses 225 lb reps as a test of upper-body endurance — top performers in the combine typically post 30+ reps. In practical training, if 225 is moving fast and feeling light for 10+ reps, a 275–295 lb max is within reach."
+      },
+      {
+        "question": "What percentage of people can bench press 225 lbs?",
+        "answer": "A 225 lb bench press puts you ahead of the majority of gym-goers. Studies and gym surveys suggest only around 20–30% of regular male gym members can bench press 225 lbs for a single rep. Among the general population including non-lifters, the percentage is much smaller. For women, 225 lbs represents an elite-level feat achieved by a very small percentage of dedicated strength athletes."
+      },
+      {
+        "question": "What bench press weight should a beginner aim for?",
+        "answer": "New male lifters typically start benching with just the bar (45 lbs) and work up progressively. A realistic beginner goal is 135 lbs (one plate per side) within the first 3–6 months of consistent training. Reaching 185 lbs (bodyweight bench) in the first year of training is an excellent milestone. Women commonly target 65–95 lbs as a first-year goal. Technique and consistency matter far more than rushing the weight."
+      },
+      {
+        "question": "Is benching your bodyweight impressive?",
+        "answer": "A bodyweight bench press is a solid intermediate achievement for male lifters — above average but not exceptional among regular gym-goers who train seriously. For women, benching bodyweight is a strong advanced milestone that most lifters never reach. If you can bench your bodyweight for multiple clean reps, you're in genuinely good shape relative to the broader population."
+      }
+    ]
+  },
+  "strengthLevels": {
+    "navLabel": "Bench Press",
+    "hubDescription": "The lift everyone asks about first.",
+    "pageTitle": "Bench Press Strength Levels",
+    "seoTitle": "Bench Press Strength Standards by Bodyweight, Age, and Sex",
+    "description": "Check bench press strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite benchmarks, then compare your numbers to a bench press 1RM calculator and deeper progress tracking.",
+    "keywords": "bench press strength standards by bodyweight, bench standards, bench press standards male female, good bench press for bodyweight, bench by bodyweight",
+    "intro": "Use these bench press strength standards to see what counts as beginner, intermediate, advanced, and elite for your bodyweight, sex, and age. The slider updates instantly as you change your athlete settings.",
+    "supportingCopy": "Bench standards answer a different question than a 1RM calculator. The calculator estimates your max from a work set. Standards tell you what that estimated max means relative to other lifters at your size.",
+    "relatedArticlesCategory": "Bench Press",
+    "faqItems": [
+      {
+        "question": "What is a good bench press for my bodyweight?",
+        "answer": "A good bench press depends heavily on bodyweight, sex, and age. For many male lifters, a bodyweight bench is a solid intermediate milestone, while 1.25 to 1.5 times bodyweight moves into advanced territory. For many female lifters, a bodyweight bench is already a high-level achievement. Use the personalised standards on this page instead of generic gym folklore."
+      },
+      {
+        "question": "Is benching 225 pounds good?",
+        "answer": "Yes. A 225 pound bench press is a meaningful milestone for most lifters. Whether it lands in intermediate, advanced, or elite territory depends on your size and sex, which is why bodyweight-adjusted standards are more useful than a single number taken in isolation."
+      },
+      {
+        "question": "Should I use standards or a bench press 1RM calculator?",
+        "answer": "Use both. A 1RM calculator estimates your bench max from a recent set. Strength standards then help you interpret whether that max is beginner, intermediate, advanced, or elite for your profile."
+      }
+    ],
+    "interpretation": {
+      "title": "What Counts As A Good Bench Press For Your Bodyweight?",
+      "body": [
+        "A good bench press is not a single number. The same bench can be beginner for one lifter, advanced for another, and elite for a lighter lifter with years of training behind them.",
+        "That is why these bench press strength standards adjust for bodyweight, sex, and age. They answer the actual search intent behind bench standards queries: not just how much can I bench, but whether that number is strong for someone built like me."
+      ],
+      "milestones": [
+        "Bodyweight benching is a common intermediate benchmark for many men.",
+        "For many women, a bodyweight bench is already a high-level result.",
+        "If 225 is your big question, the answer depends heavily on your size and training age."
+      ],
+      "closer": "Use the personalised standards above instead of generic gym folklore. They give you a better answer than any one-size-fits-all chart.",
+      "exampleTable": {
+        "caption": "Bench press standards for males aged 20–29",
+        "rows": [
+          {
+            "bwKg": 68,
+            "bwLb": 150,
+            "active": [
+              50,
+              110
+            ],
+            "beginner": [
+              70,
+              155
+            ],
+            "intermediate": [
+              90,
+              200
+            ],
+            "advanced": [
+              110,
+              245
+            ],
+            "elite": [
+              130,
+              285
+            ]
+          },
+          {
+            "bwKg": 79,
+            "bwLb": 175,
+            "active": [
+              50,
+              110
+            ],
+            "beginner": [
+              70,
+              155
+            ],
+            "intermediate": [
+              90,
+              200
+            ],
+            "advanced": [
+              110,
+              245
+            ],
+            "elite": [
+              150,
+              330
+            ]
+          },
+          {
+            "bwKg": 91,
+            "bwLb": 200,
+            "active": [
+              52,
+              115
+            ],
+            "beginner": [
+              73,
+              160
+            ],
+            "intermediate": [
+              93,
+              205
+            ],
+            "advanced": [
+              114,
+              250
+            ],
+            "elite": [
+              161,
+              355
+            ]
+          },
+          {
+            "bwKg": 102,
+            "bwLb": 225,
+            "active": [
+              55,
+              120
+            ],
+            "beginner": [
+              77,
+              170
+            ],
+            "intermediate": [
+              99,
+              220
+            ],
+            "advanced": [
+              121,
+              265
+            ],
+            "elite": [
+              170,
+              375
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

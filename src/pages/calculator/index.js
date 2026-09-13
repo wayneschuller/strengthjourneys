@@ -77,7 +77,7 @@ import {
   LIFT_TYPE_TO_CALCULATOR_URL,
 } from "@/lib/strength-circles/strength-score";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
-import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
+import { getStrengthLevelsPath } from "@/lib/lift-registry";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
@@ -1139,7 +1139,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   const liftStandard = bigFourName ? standards?.[bigFourName] : null;
   const liftRating = liftStandard?.elite ? getStrengthRatingForE1RM(e1rmWeight, liftStandard) : null;
   const liftRatingEmoji = liftRating ? (STRENGTH_LEVEL_EMOJI[liftRating] ?? "") : null;
-  const strengthStandardsUrl = bigFourName ? STRENGTH_STANDARDS_LINKS[bigFourName] : null;
+  const strengthStandardsUrl = bigFourName ? getStrengthLevelsPath(bigFourName) : null;
   const standardsComparisonCopy = forceLift && liftRating
     ? `${liftRating} ${forceLift.toLowerCase()} strength for your age, sex, and bodyweight`
     : null;
@@ -1903,7 +1903,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           <h2 className="text-center text-base font-semibold">
             <Link
               prefetch={false}
-              href={featuredBigFourName ? (STRENGTH_STANDARDS_LINKS[featuredBigFourName] ?? "/strength-levels") : "/strength-levels"}
+              href={featuredBigFourName ? (getStrengthLevelsPath(featuredBigFourName) ?? "/strength-levels") : "/strength-levels"}
               className="transition-opacity hover:opacity-70"
             >
               {featuredBigFourName ? `${forceLift} Strength Standards` : "Strength Levels"}

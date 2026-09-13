@@ -1,0 +1,21 @@
+{
+  "liftType": "Power Snatch",
+  "slug": "power-snatch",
+  "artwork": {
+    "src": "/lifts/default/power-snatch.png",
+    "figure": "male"
+  },
+  "coaching": {
+    "summary": "In one fast pull, take the bar from the floor straight overhead on a wide grip, catch it on locked arms in a half squat, then stand up.",
+    "cues": [
+      "Stay over the bar off the floor and keep the bar close as it passes the knees.",
+      "Finish tall through the hips before you pull under.",
+      "Punch fast into a stable overhead catch and stand under control."
+    ],
+    "videoUrl": "https://www.youtube.com/watch?v=7Jn6uNdmbc0",
+    "standardsRef": {
+      "liftType": "Strict Press",
+      "ratio": 0.85
+    }
+  }
+}

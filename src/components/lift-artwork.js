@@ -52,9 +52,10 @@
  * Vercel CPU on flat indexed PNGs, and it quietly skips SVG, so a missing flag
  * only shows up once a lift has a PNG.
  *
- * ADDING A LIFT: drop the file in public/lifts/default/ and add one line to
- * LIFT_ARTWORK. That is all: the log's add-lift picker reads DRAWN_LIFT_TYPES,
- * so a new drawing shows up there as a tile with no other change. A SECOND SET:
+ * ADDING A LIFT: drop the file in public/lifts/default/ and give the lift an
+ * artwork block in its JSON file in src/lib/lifts/ (see lib/lift-registry.js).
+ * That is all: the log's add-lift picker, the Lift Explorer and the lift's
+ * progress guide all read the registry, so a new drawing shows up everywhere. A SECOND SET:
  * public/lifts/ is laid out to hold one, but no code knows about sets yet.
  * Teach this file when a second set exists.
  */
@@ -63,55 +64,25 @@ import Image from "next/image";
 import { motion } from "motion/react";
 
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { DRAWN_LIFT_TYPES, getCuratedLift } from "@/lib/lift-registry";
 
 const ASPECT_RATIO = 5 / 3;
 const IDEAL_WIDTH = 1000;
 const IDEAL_HEIGHT = 600;
 
-const LIFT_ARTWORK = {
-  "Back Squat": "/lifts/default/back-squat.svg", // male
-  "Bench Press": "/lifts/default/bench-press.svg", // male
-  Deadlift: "/lifts/default/deadlift.svg", // female
-  "Strict Press": "/lifts/default/strict-press.svg", // male
-  "Power Snatch": "/lifts/default/power-snatch.png", // male
-  "Power Clean": "/lifts/default/power-clean.png", // male
-  "Front Squat": "/lifts/default/front-squat.png", // female
-  "Overhead Squat": "/lifts/default/overhead-squat.png", // female
-  "Romanian Deadlift": "/lifts/default/romanian-deadlift.png", // male
-  "Hip Thrust": "/lifts/default/hip-thrust.png", // female
-  "Barbell Row": "/lifts/default/barbell-row.png", // male
-  "Rack Pull": "/lifts/default/rack-pull.png", // male
-  "Close Grip Bench Press": "/lifts/default/close-grip-bench-press.png", // female
-  "Barbell Curl": "/lifts/default/barbell-curl.png", // male
-};
-
-/** Every lift we have a drawing for, in the order they were drawn. */
-export const DRAWN_LIFT_TYPES = Object.keys(LIFT_ARTWORK);
-
-/**
- * Other names for a lift we have already drawn. Synonyms only: an overhead
- * press IS a strict press. Never point one lift at a different lift's drawing,
- * however alike they look, since the diagram exists to show where the bar sits.
- * Front Squat pointed here at Back Squat for seven months, showing a bar across
- * the upper back for a lift racked at the front. An undrawn lift should render
- * nothing, which is what returning null already does.
- */
-const LIFT_ART_SYNONYMS = {
-  Squat: "Back Squat",
-  "Overhead Press": "Strict Press",
-  Press: "Strict Press",
-  "Close-Grip Bench Press": "Close Grip Bench Press",
-};
+/** Every lift we have a drawing for, re-exported for the log's pickers. */
+export { DRAWN_LIFT_TYPES };
 
 /**
  * Path to the artwork for a lift, or null when we have not drawn it yet.
+ * Follows the registry's synonyms, so "Squat" finds the back squat.
  *
  * @param {string} liftType - e.g. "Back Squat".
  * @returns {string|null}
  */
 export function getLiftArtwork(liftType) {
   if (!liftType) return null;
-  return LIFT_ARTWORK[LIFT_ART_SYNONYMS[liftType] ?? liftType] ?? null;
+  return getCuratedLift(liftType)?.artwork?.src ?? null;
 }
 
 /**

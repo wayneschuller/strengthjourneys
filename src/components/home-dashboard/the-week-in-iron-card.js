@@ -16,7 +16,7 @@ import {
   Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
+import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,7 @@ const BIG_FOUR_STARTERS = [
 // canonical one-liners already exist for the homepage, so the starter tiles
 // borrow them rather than inventing a second description of the same lift.
 const BIG_FOUR_DESCRIPTIONS = Object.fromEntries(
-  BIG_FOUR_LIFT_META.map(({ liftType, homepageDescription }) => [
+  BIG_FOUR_LIFTS.map(({ liftType, homepageDescription }) => [
     liftType,
     homepageDescription,
   ]),

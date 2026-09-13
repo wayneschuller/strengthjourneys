@@ -28,7 +28,7 @@ import { InspirationCard } from "@/components/log/inspiration-card";
 import { AddLiftButton } from "@/components/log/add-controls";
 import { LogSessionSkeleton } from "@/components/log/session-summary";
 import { getLiftAnchorId } from "@/components/log/utils";
-import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
+import { BIG_FOUR_LIFTS, COACHED_LIFTS } from "@/lib/lift-registry";
 import {
   getLiftHistoryBeforeDate,
   getNextSessionDate,
@@ -37,7 +37,6 @@ import {
   getSessionDates,
   getUsedSessionUrls,
 } from "@/lib/log-session-selectors";
-import { DEFAULT_ADD_LIFT_CHIPS } from "@/components/log/coached-lifts";
 import { useLogSheetSync } from "@/components/log/use-log-sheet-sync";
 import { LiftBlock } from "@/components/log/lift-block";
 import { SessionFooterActions } from "@/components/log/session-footer-actions";
@@ -46,11 +45,16 @@ import { LogDateNav } from "@/components/log/log-date-nav";
 import { PreviewLogCta } from "@/components/log/preview-log-cta";
 
 import { DRAWN_LIFT_TYPES, getLiftArtwork } from "@/components/lift-artwork";
-const BIG_FOUR = BIG_FOUR_LIFT_META.map(({ liftType, progressGuidePath }) => ({
+const BIG_FOUR = BIG_FOUR_LIFTS.map(({ liftType, slug }) => ({
   name: liftType,
   icon: getLiftArtwork(liftType),
-  slug: progressGuidePath.replace(/^\//, ""),
+  slug: `progress-guide/${slug}`,
 }));
+
+// Coached lifts beyond the big four follow them into the add-lift chips.
+const DEFAULT_ADD_LIFT_CHIPS = COACHED_LIFTS.filter(({ bigFour }) => !bigFour).map(
+  ({ liftType }) => ({ name: liftType, icon: null }),
+);
 
 const LOG_PAGE_TITLE = "Workout Log and Session Tracker | Strength Journeys";
 const LOG_PAGE_DESCRIPTION =

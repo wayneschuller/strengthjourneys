@@ -53,9 +53,8 @@ import {
 } from "@/lib/date-utils";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftArtwork } from "@/components/lift-artwork";
-import { STRENGTH_STANDARDS_LINKS } from "@/lib/strength-standards-pages";
+import { BIG_FOUR_LIFTS, getStrengthLevelsPath } from "@/lib/lift-registry";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
-import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
@@ -647,7 +646,7 @@ function ImportedDataOverview({ parsedData, label }) {
 
               const svgPath = getLiftArtwork(lift.name);
               const liftUrl = getLiftDetailUrl(lift.name);
-              const strengthLevelUrl = STRENGTH_STANDARDS_LINKS[lift.name];
+              const strengthLevelUrl = getStrengthLevelsPath(lift.name);
 
               return (
                 <div
@@ -1323,7 +1322,7 @@ export function ImportWorkflowSection({
                           liftCounts[e.liftType] =
                             (liftCounts[e.liftType] || 0) + 1;
                         }
-                        const bigFourMatch = bigFourLiftInsightData
+                        const bigFourMatch = BIG_FOUR_LIFTS
                           .map((b) => ({
                             ...b,
                             count: liftCounts[b.liftType] || 0,

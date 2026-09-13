@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { PageContainer } from "@/components/page-header";
+import {
+  BIG_FOUR_LIFTS,
+  getLiftGuidePath,
+  getStrengthLevelsPath,
+} from "@/lib/lift-registry";
 
 const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },
@@ -31,21 +36,19 @@ const FORMULA_CALCULATORS = [
 ];
 
 const STRENGTH_STANDARDS_LINKS = [
-  { href: "/strength-levels/squat", label: "Squat Strength Levels" },
-  { href: "/strength-levels/bench-press", label: "Bench Press Strength Levels" },
-  { href: "/strength-levels/deadlift", label: "Deadlift Strength Levels" },
-  { href: "/strength-levels/strict-press", label: "Strict Press Strength Levels" },
+  ...BIG_FOUR_LIFTS.map((lift) => ({
+    href: getStrengthLevelsPath(lift.liftType),
+    label: `${lift.strengthLevels.navLabel} Strength Levels`,
+  })),
   { href: "/1000lb-club-calculator", label: "1000lb Club" },
   { href: "/200-300-400-500-strength-club-calculator", label: "200/300/400/500 Club" },
   { href: "/plate-milestones", label: "Plate Milestones" },
 ];
 
-const PROGRESS_GUIDES = [
-  { href: "/progress-guide/squat", label: "Squat Progress Guide" },
-  { href: "/progress-guide/bench-press", label: "Bench Press Progress Guide" },
-  { href: "/progress-guide/deadlift", label: "Deadlift Progress Guide" },
-  { href: "/progress-guide/strict-press", label: "Strict Press Progress Guide" },
-];
+const PROGRESS_GUIDES = BIG_FOUR_LIFTS.map((lift) => ({
+  href: getLiftGuidePath(lift.liftType),
+  label: `${lift.strengthLevels.navLabel} Progress Guide`,
+}));
 
 const RESOURCES = [
   { href: "/articles", label: "Strength Articles" },

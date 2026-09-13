@@ -1,0 +1,23 @@
+{
+  "liftType": "Overhead Squat",
+  "slug": "overhead-squat",
+  "artwork": {
+    "src": "/lifts/default/overhead-squat.png",
+    "figure": "female"
+  },
+  "coaching": {
+    "summary": "Take the bar from a rack onto your back, press it overhead on a wide grip, then squat until your hips sink below your knees and stand back up, arms locked throughout.",
+    "cues": [
+      "Take a wide grip, lock the elbows, and press up into the bar before you descend.",
+      "Keep the bar stacked over mid-foot and sit straight down between the hips.",
+      "Keep pushing up into the bar and stand without letting it drift forward."
+    ],
+    "videoUrl": "https://www.youtube.com/watch?v=pn8mqlG0nkE",
+    "videoTitle": "The Overhead Squat - CrossFit",
+    "standardsRef": {
+      "liftType": "Back Squat",
+      "ratio": 0.5,
+      "note": "Mobility caps this well below the back squat for most people starting out."
+    }
+  }
+}

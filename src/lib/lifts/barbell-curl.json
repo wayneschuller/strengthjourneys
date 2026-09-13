@@ -1,0 +1,8 @@
+{
+  "liftType": "Barbell Curl",
+  "slug": "barbell-curl",
+  "artwork": {
+    "src": "/lifts/default/barbell-curl.png",
+    "figure": "male"
+  }
+}

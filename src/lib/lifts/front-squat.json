@@ -1,0 +1,21 @@
+{
+  "liftType": "Front Squat",
+  "slug": "front-squat",
+  "artwork": {
+    "src": "/lifts/default/front-squat.png",
+    "figure": "female"
+  },
+  "coaching": {
+    "summary": "Take the bar from a rack onto the front of your shoulders with elbows pointing forward, squat until your hips sink below your knees, then stand back up.",
+    "cues": [
+      "Keep the elbows high so the bar stays stacked on the shoulders.",
+      "Brace hard and sit straight down between the hips instead of folding forward.",
+      "Drive up with the chest tall and keep the rack position all the way through the rep."
+    ],
+    "videoUrl": "https://www.youtube.com/watch?v=feGKhZ7unUg",
+    "standardsRef": {
+      "liftType": "Back Squat",
+      "ratio": 0.85
+    }
+  }
+}

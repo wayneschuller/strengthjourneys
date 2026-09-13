@@ -3,7 +3,7 @@
  *
  * Editorial note: every link here points at our own pages, not straight out to
  * Starting Strength or Barbell Logic. The third-party coaching links already
- * live on the progress guides (see `big-four-insight-data.js`), so a reader who
+ * live on the progress guides (see `src/lib/lifts/`), so a reader who
  * wants Rippetoe still reaches him — one click later, from a page that can bring
  * them back. Sending a freshly signed-in user off-site before they have linked
  * anything is the one thing this surface must not do.

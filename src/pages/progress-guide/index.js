@@ -13,14 +13,14 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { LiftArtwork } from "@/components/lift-artwork";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
 
 const CANONICAL_URL = "https://www.strengthjourneys.xyz/progress-guide";
 
-const LIFT_CARDS = bigFourLiftInsightData.map((lift) => ({
+const LIFT_CARDS = BIG_FOUR_LIFTS.map((lift) => ({
   liftType: lift.liftType,
   slug: lift.slug,
-  tagline: lift.hubDescription,
+  tagline: lift.guide.hubDescription,
 }));
 
 export default function ProgressGuideHub() {

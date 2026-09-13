@@ -3,7 +3,7 @@
  */
 
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { COACHED_LIFTS } from "@/components/log/coached-lifts";
+import { getCuratedLift } from "@/lib/lift-registry";
 
 const FIRST_TIME_WARMUP_SUBLABELS = [
   "start your engine",
@@ -63,13 +63,15 @@ export function getJourneyTechniqueAssist({
   priorLiftDates = [],
   sessionDate,
 }) {
-  const match = COACHED_LIFTS.find((item) => item.liftType === liftType);
+  const lift = getCuratedLift(liftType);
+  const match = lift?.coaching;
   if (!match) return null;
 
   const defaultCues = match.cues ?? [];
   const videoAssist = match.videoUrl
     ? {
-        slug: match.slug ?? null,
+        // Every coached lift has a progress guide, not only the big four.
+        slug: `progress-guide/${lift.slug}`,
         videoUrl: match.videoUrl,
         prompt: `Need a quick ${liftType} form check?`,
       }
@@ -176,9 +178,7 @@ export function getFirstTimeTargetWeight({
   let physicallyActiveWeight = standards?.[liftType]?.physicallyActive;
 
   if (!physicallyActiveWeight || physicallyActiveWeight <= 0) {
-    const ref = COACHED_LIFTS.find(
-      (lift) => lift.liftType === liftType,
-    )?.standardsRef;
+    const ref = getCuratedLift(liftType)?.coaching?.standardsRef;
     if (ref) {
       const base = standards?.[ref.liftType]?.physicallyActive;
       if (base > 0) physicallyActiveWeight = base * ref.ratio;

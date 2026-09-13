@@ -8,7 +8,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
   BIG_FOUR_LIFT_TYPES,
   BIG_FOUR_PROGRESS_GUIDE_PATHS,
-} from "@/lib/big-four-lifts";
+} from "@/lib/lift-registry";
 import { devLog, logTiming } from "@/lib/processing-utils";
 
 export const BIG_FOUR_LIFTS = BIG_FOUR_LIFT_TYPES;

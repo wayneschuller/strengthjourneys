@@ -1,0 +1,279 @@
+{
+  "liftType": "Strict Press",
+  "slug": "strict-press",
+  "bigFour": true,
+  "icon": "Luggage",
+  "synonyms": [
+    "Overhead Press",
+    "Press"
+  ],
+  "homepageDescription": "A standing overhead press with no leg drive.",
+  "bodyBenefit": "Shoulders and midline holding a bar overhead with nothing but honest strength. It moves the least weight and buys the most: shoulder health, a solid trunk, and real overhead capability.",
+  "calculatorUrl": "/calculator/strict-press-1rm-calculator",
+  "artwork": {
+    "src": "/lifts/default/strict-press.svg",
+    "figure": "male"
+  },
+  "coaching": {
+    "summary": "Standing, take the bar from a rack onto the front of your shoulders and press it straight overhead to locked arms, with no help from your legs.",
+    "cues": [
+      "Squeeze glutes and abs so the ribs stay down before the press starts.",
+      "Stack wrists over elbows and begin with forearms close to vertical.",
+      "Move your head back to clear the bar, then punch through to lockout."
+    ],
+    "videoUrl": "https://www.youtube.com/embed/AhGW3XFG3M8",
+    "videoTitle": "Gym Shorts (How To): The Press - Barbell Logic"
+  },
+  "guide": {
+    "hubDescription": "The slowest to climb and the most rewarding.",
+    "seoTitle": "Strict Press Guide: Videos, PR Tracking & E1RM Progress Charts",
+    "pageTitle": "Strict Press Complete Guide & Progress Tracker",
+    "pageDescription": "Curated strict press tutorial videos, programming resources, and for logged-in lifters: your OHP E1RM progression chart, rep PRs, tonnage history, strength percentile rank, and a 19-tier commitment tracker. Free, no app download.",
+    "pageKeywords": "strict press guide, overhead press guide, OHP technique videos, strict press progress tracker, OHP PR tracker, strict press E1RM chart, overhead press coaching, OHP tonnage, OHP percentile",
+    "ogImageURL": "https://www.strengthjourneys.xyz/strength_journeys_strict_press_insights.png",
+    "quoteSectionTitle": "Why the strict press remains the purest overhead test",
+    "liftQuote": "The strict press is a whole-body, multi-joint exercise that beautifully recapitulates a fundamental human movement pattern: lifting a heavy object overhead, as high as possible.",
+    "liftQuoteAuthor": "Jonathon M. Sullivan & Andy Baker",
+    "videos": [
+      "https://www.youtube.com/embed/8dacy5hjaE8",
+      "https://www.youtube.com/embed/AhGW3XFG3M8",
+      "https://www.youtube.com/embed/5yWaNOvgFCM"
+    ],
+    "introduction": {
+      "title": "How Strong Should My Strict Press Be?",
+      "paragraphs": [
+        "Travelling with your partner can be exciting, but when their luggage is too heavy for the flight, it's easy to get frustrated. Instead of complaining, remember that everyone packs differently to feel comfortable. Offering to help manage the weight shows support and keeps the trip enjoyable. Plus, you're more than strong and athletic enough to handle lifting the heavy suitcase into the overhead locker with ease, impressing not only your partner but also the cabin crew and fellow passengers.",
+        "But seriously — the barbell strict press (also called the overhead press or OHP) is the hardest of the big four lifts to progress, and the one where you'll be moving the least weight. Don't let that discourage you — a strong press is one of the most impressive markers of real upper body strength.",
+        [
+          "Start with just the barbell (",
+          {
+            "text": "20kg/45lb",
+            "bold": true
+          },
+          ") and focus on a strict lockout overhead with no leg drive. Use ",
+          {
+            "text": "three sets of 5 reps",
+            "bold": true
+          },
+          " and add weight each session. Progress will be slower than your other lifts — adding 1kg/2.5lb per session is realistic."
+        ],
+        [
+          "As a general guideline, a beginner should be able to strict press around ",
+          {
+            "text": "0.5 times their body weight.",
+            "bold": true
+          },
+          " An ",
+          {
+            "text": "intermediate milestone is 0.75 times your body weight",
+            "bold": true
+          },
+          ". Pressing your own body weight overhead is an advanced achievement that most recreational lifters never reach."
+        ],
+        "Logged-in users can look below for their Strict Press history chart, which is visually mapped against both bodyweight multiples and the strength level standards for their bodyweight, age, and sex."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Strict Press Articles",
+      "links": [
+        {
+          "text": "Why Everyone Should Press Overhead",
+          "href": "https://www.progressiverehabandstrength.com/articles/press",
+          "author": "Dr. Elizabeth Zeutschel",
+          "note": "This is a good article with examples, especially for women."
+        },
+        {
+          "text": "The Press",
+          "href": "https://startingstrength.com/article/the_press",
+          "author": "Mark Rippetoe"
+        },
+        {
+          "text": "Overhead Press Progression and Training Variables",
+          "href": "https://barbell-logic.com/overhead-press-progression-and-training-variables/",
+          "author": "Barbell Logic"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What is a good overhead press for my bodyweight?",
+        "answer": "For male lifters, pressing 0.5× bodyweight is a beginner milestone, 0.65× is intermediate, 0.85× is advanced, and pressing your full bodyweight overhead is elite. A 185 lb male pressing 95 lbs (0.5×), 120 lbs (0.65×), 155 lbs (0.85×), or 185 lbs (1×) illustrates these tiers. For women, pressing 0.35–0.5× bodyweight is a solid intermediate standard. The strict press is the hardest of the Big Four to progress on, so patience is key."
+      },
+      {
+        "question": "Is pressing your bodyweight good?",
+        "answer": "Yes — a strict press equal to your bodyweight is an elite achievement for male lifters and exceptional for female lifters. Most dedicated strength athletes who train the press consistently for several years still fall short of this mark. A bodyweight press requires not just raw upper body strength but excellent shoulder health, stability, and technique. It is a genuine long-term goal worth chasing."
+      },
+      {
+        "question": "Is a 135 lb overhead press good?",
+        "answer": "A 135 lb strict press (one plate per side) is an advanced milestone for male lifters. For a 185 lb man, pressing 135 lbs represents 0.73× bodyweight — between intermediate and advanced. For many recreational lifters, pressing 135 strictly overhead with no leg drive is a meaningful multi-year goal. Among women, a 135 lb press is elite-level strength."
+      },
+      {
+        "question": "Why is my overhead press so much weaker than my bench press?",
+        "answer": "This is completely normal. The strict press is mechanically harder than the bench press — you lose the stability of the bench, the leg drive, and the lat involvement. Most lifters press 55–65% of their bench press in a strict overhead movement. If your bench is 225 lbs, a strict press of 125–145 lbs is a typical and healthy ratio. Large gaps beyond this can indicate shoulder mobility or technique issues worth addressing."
+      },
+      {
+        "question": "What is the difference between a strict press and a push press?",
+        "answer": "A strict press (also called an overhead press or OHP) uses no leg drive — the bar is pressed from shoulder height to lockout using only upper body and core. A push press uses a small dip-and-drive with the legs to help initiate the movement, allowing 10–30% more weight to be moved. The strict press is the purer strength test; the push press is more of a power movement. This page tracks the strict press."
+      },
+      {
+        "question": "What overhead press weight should a beginner aim for?",
+        "answer": "New lifters should start with just the bar (45 lbs) and dial in the movement pattern before adding weight. A realistic first-year goal for a male beginner is reaching 95 lbs (a 25 lb plate per side) for a clean set of 5 reps. Women commonly target 45–65 lbs as a first milestone. The press progresses more slowly than the squat or deadlift, so adding 2.5 lbs per session early on and 2.5 lbs per week later is a normal and sustainable pace."
+      },
+      {
+        "question": "What is the average overhead press for a man?",
+        "answer": "Among men who train with barbells, the average strict press tends to fall in the 95–135 lb range. Untrained men from the general population often struggle to press the bar (45 lbs) overhead with correct form due to limited shoulder mobility. Dedicated lifters who program the press consistently for a few years typically reach 135–165 lbs. The strict press is widely considered the most technically demanding and slowest-progressing of the four main barbell lifts."
+      },
+      {
+        "question": "How does the strict press help my bench press and other lifts?",
+        "answer": "The strict press builds the deltoids, upper chest, triceps, and upper back — all of which contribute to bench press strength. It also develops core stability under a vertical load, which carries over to overhead stability in Olympic lifts and improved shoulder health generally. Many coaches program the strict press alongside the bench press rather than instead of it, as the two movements complement each other. A stronger press typically correlates with a healthier and more resilient shoulder girdle."
+      }
+    ]
+  },
+  "strengthLevels": {
+    "navLabel": "Strict Press",
+    "hubDescription": "The slowest to climb and the most rewarding.",
+    "pageTitle": "Strict Press Strength Levels",
+    "seoTitle": "Strict Press Strength Standards by Bodyweight, Age, and Sex",
+    "description": "Check strict press strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite benchmarks, then compare your numbers to a strict press 1RM calculator and deeper progress tracking.",
+    "keywords": "strict press standards, strict press strength standards by bodyweight, overhead press standards by bodyweight, military press standards, ohp standards",
+    "intro": "Use these strict press standards to benchmark your press against lifters of similar size. If you call it an overhead press, OHP, or even a military press, this is the same general strength-level question.",
+    "supportingCopy": "The press moves more slowly than squat or deadlift, so standards help keep expectations realistic. A strict press that looks modest in absolute pounds can still be genuinely advanced once bodyweight is considered.",
+    "relatedArticlesCategory": "Strict Press",
+    "faqItems": [
+      {
+        "question": "What is a good strict press for my bodyweight?",
+        "answer": "For many male lifters, pressing around half bodyweight is an early milestone, while pressing bodyweight is elite. For many female lifters, lower absolute numbers still represent very strong relative pressing. Use the personalised standards here rather than guessing from gym myths."
+      },
+      {
+        "question": "Is a 135 pound strict press good?",
+        "answer": "Yes. A strict 135 pound press is a serious benchmark for most lifters. Depending on your size and sex, it may fall around advanced or even elite territory. That is exactly the kind of question these standards are meant to answer."
+      },
+      {
+        "question": "Is strict press the same thing as overhead press or military press?",
+        "answer": "Usually, yes. Most lifters use strict press, overhead press, OHP, and military press to mean the same general standing barbell press benchmark. Technique details can vary a little, but if you want strength levels for that movement, this page is the right place to start."
+      },
+      {
+        "question": "What is the difference between push press and strict press?",
+        "answer": "A push press uses a knee dip and leg drive to help move the bar overhead. A strict press should be done with stiff legs and no knee flexion, so the press is driven by the upper body instead of getting momentum from the lower body."
+      },
+      {
+        "question": "Why is my strict press category lower than my bench press category?",
+        "answer": "That is normal. The strict press is usually the hardest of the big four barbell lifts to progress on, and the strength standards reflect that. A lower pressing number can still be very respectable."
+      }
+    ],
+    "interpretation": {
+      "title": "What Counts As A Good Strict Press For Your Bodyweight?",
+      "body": [
+        "The overhead press climbs more slowly than the other big barbell lifts, so many lifters underestimate what counts as genuinely strong pressing.",
+        "That is why strict press and overhead press standards by bodyweight matter. A press that looks modest in absolute pounds can still be advanced once bodyweight, sex, and age are factored in."
+      ],
+      "milestones": [
+        "Around half bodyweight is an early milestone for many male lifters.",
+        "A bodyweight strict press is an elite benchmark for almost everyone.",
+        "If you are comparing your press to your bench, expect the category to be lower and still respectable."
+      ],
+      "closer": "These standards are built to give your press the right context instead of making it compete with lifts that naturally move more weight.",
+      "exampleTable": {
+        "caption": "Strict press standards for males aged 20–29",
+        "rows": [
+          {
+            "bwKg": 68,
+            "bwLb": 150,
+            "active": [
+              28,
+              60
+            ],
+            "beginner": [
+              39,
+              85
+            ],
+            "intermediate": [
+              51,
+              110
+            ],
+            "advanced": [
+              62,
+              135
+            ],
+            "elite": [
+              82,
+              180
+            ]
+          },
+          {
+            "bwKg": 79,
+            "bwLb": 175,
+            "active": [
+              31,
+              70
+            ],
+            "beginner": [
+              43,
+              95
+            ],
+            "intermediate": [
+              55,
+              120
+            ],
+            "advanced": [
+              68,
+              150
+            ],
+            "elite": [
+              89,
+              195
+            ]
+          },
+          {
+            "bwKg": 91,
+            "bwLb": 200,
+            "active": [
+              35,
+              75
+            ],
+            "beginner": [
+              49,
+              110
+            ],
+            "intermediate": [
+              63,
+              140
+            ],
+            "advanced": [
+              78,
+              170
+            ],
+            "elite": [
+              102,
+              225
+            ]
+          },
+          {
+            "bwKg": 102,
+            "bwLb": 225,
+            "active": [
+              36,
+              80
+            ],
+            "beginner": [
+              50,
+              110
+            ],
+            "intermediate": [
+              65,
+              145
+            ],
+            "advanced": [
+              80,
+              175
+            ],
+            "elite": [
+              105,
+              230
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

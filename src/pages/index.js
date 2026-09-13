@@ -74,7 +74,7 @@ const GettingStartedCard = dynamic(
     ),
   },
 );
-import { BIG_FOUR_LIFT_META } from "@/lib/big-four-lifts";
+import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
@@ -329,9 +329,9 @@ const moreTools = [
   },
 ];
 
-const mainBarbellLifts = BIG_FOUR_LIFT_META.map(
-  ({ liftType, progressGuidePath, homepageDescription }) => ({
-    slug: progressGuidePath.replace(/^\//, ""),
+const mainBarbellLifts = BIG_FOUR_LIFTS.map(
+  ({ liftType, slug, homepageDescription }) => ({
+    slug: `progress-guide/${slug}`,
     liftType,
     liftDescription: homepageDescription,
   }),

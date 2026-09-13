@@ -13,7 +13,6 @@
     "start": "next start",
     "lint": "eslint src/",
     "validate:hevy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-hevy-importer.mjs",
-    "validate:lifts": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-lifts.mjs",
     "validate:imports": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-hevy-importer.mjs",
     "postbuild": "next-sitemap"
   },

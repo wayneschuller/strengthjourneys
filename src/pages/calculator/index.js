@@ -77,7 +77,7 @@ import {
   LIFT_TYPE_TO_CALCULATOR_URL,
 } from "@/lib/strength-circles/strength-score";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
-import { getStrengthLevelsPath } from "@/lib/lift-registry";
+import { getStrengthLevelsPath } from "@/lib/lifts/registry";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";

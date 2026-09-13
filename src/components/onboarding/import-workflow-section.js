@@ -53,7 +53,7 @@ import {
 } from "@/lib/date-utils";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftArtwork } from "@/components/lift-artwork";
-import { BIG_FOUR_LIFTS, getStrengthLevelsPath } from "@/lib/lift-registry";
+import { BIG_FOUR_LIFTS, getStrengthLevelsPath } from "@/lib/lifts/registry";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";

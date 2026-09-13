@@ -2,7 +2,7 @@ import {
   LiftingStandardsKG,
   interpolateStandardKG,
 } from "@/lib/lifting-standards-kg";
-import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
+import { BIG_FOUR_LIFTS } from "@/lib/lifts/registry";
 
 export const KILGORE_LEVELS = [
   "physicallyActive",

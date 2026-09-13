@@ -146,13 +146,104 @@
         "Around 2 times bodyweight usually pushes into advanced territory for many men."
       ],
       "exampleTable": {
-        "sex": "male",
-        "age": 25,
-        "bodyweightsKg": [
-          68,
-          79,
-          91,
-          102
+        "caption": "Squat standards for males aged 20–29",
+        "rows": [
+          {
+            "bwKg": 68,
+            "bwLb": 150,
+            "active": [
+              46,
+              100
+            ],
+            "beginner": [
+              78,
+              170
+            ],
+            "intermediate": [
+              104,
+              230
+            ],
+            "advanced": [
+              143,
+              315
+            ],
+            "elite": [
+              189,
+              415
+            ]
+          },
+          {
+            "bwKg": 79,
+            "bwLb": 175,
+            "active": [
+              51,
+              110
+            ],
+            "beginner": [
+              87,
+              190
+            ],
+            "intermediate": [
+              116,
+              255
+            ],
+            "advanced": [
+              160,
+              355
+            ],
+            "elite": [
+              210,
+              465
+            ]
+          },
+          {
+            "bwKg": 91,
+            "bwLb": 200,
+            "active": [
+              58,
+              130
+            ],
+            "beginner": [
+              98,
+              215
+            ],
+            "intermediate": [
+              130,
+              285
+            ],
+            "advanced": [
+              179,
+              395
+            ],
+            "elite": [
+              236,
+              520
+            ]
+          },
+          {
+            "bwKg": 102,
+            "bwLb": 225,
+            "active": [
+              57,
+              125
+            ],
+            "beginner": [
+              98,
+              215
+            ],
+            "intermediate": [
+              131,
+              290
+            ],
+            "advanced": [
+              180,
+              395
+            ],
+            "elite": [
+              232,
+              510
+            ]
+          }
         ]
       },
       "closer": "If your question is 'is my squat good?' the right answer is not a single number. It is where your squat lands inside the standards for someone with your build."

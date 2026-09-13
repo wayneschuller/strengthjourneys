@@ -157,13 +157,104 @@
         "If you are comparing your press to your bench, expect the category to be lower and still respectable."
       ],
       "exampleTable": {
-        "sex": "male",
-        "age": 25,
-        "bodyweightsKg": [
-          68,
-          79,
-          91,
-          102
+        "caption": "Strict press standards for males aged 20–29",
+        "rows": [
+          {
+            "bwKg": 68,
+            "bwLb": 150,
+            "active": [
+              28,
+              60
+            ],
+            "beginner": [
+              39,
+              85
+            ],
+            "intermediate": [
+              51,
+              110
+            ],
+            "advanced": [
+              62,
+              135
+            ],
+            "elite": [
+              82,
+              180
+            ]
+          },
+          {
+            "bwKg": 79,
+            "bwLb": 175,
+            "active": [
+              31,
+              70
+            ],
+            "beginner": [
+              43,
+              95
+            ],
+            "intermediate": [
+              55,
+              120
+            ],
+            "advanced": [
+              68,
+              150
+            ],
+            "elite": [
+              89,
+              195
+            ]
+          },
+          {
+            "bwKg": 91,
+            "bwLb": 200,
+            "active": [
+              35,
+              75
+            ],
+            "beginner": [
+              49,
+              110
+            ],
+            "intermediate": [
+              63,
+              140
+            ],
+            "advanced": [
+              78,
+              170
+            ],
+            "elite": [
+              102,
+              225
+            ]
+          },
+          {
+            "bwKg": 102,
+            "bwLb": 225,
+            "active": [
+              36,
+              80
+            ],
+            "beginner": [
+              50,
+              110
+            ],
+            "intermediate": [
+              65,
+              145
+            ],
+            "advanced": [
+              80,
+              175
+            ],
+            "elite": [
+              105,
+              230
+            ]
+          }
         ]
       },
       "closer": "These standards are built to give your press the right context instead of making it compete with lifts that naturally move more weight."

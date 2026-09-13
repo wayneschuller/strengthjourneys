@@ -53,7 +53,7 @@
  * only shows up once a lift has a PNG.
  *
  * ADDING A LIFT: drop the file in public/lifts/default/ and give the lift an
- * artwork block in its JSON file in src/lib/lifts/ (see lib/lift-registry.js).
+ * artwork block in its JSON file in src/lib/lifts/ (see lib/lifts/registry.js).
  * That is all: the log's add-lift picker, the Lift Explorer and the lift's
  * progress guide all read the registry, so a new drawing shows up everywhere. A SECOND SET:
  * public/lifts/ is laid out to hold one, but no code knows about sets yet.
@@ -64,7 +64,7 @@ import Image from "next/image";
 import { motion } from "motion/react";
 
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { DRAWN_LIFT_TYPES, getCuratedLift } from "@/lib/lift-registry";
+import { DRAWN_LIFT_TYPES, getCuratedLift } from "@/lib/lifts/registry";
 
 const ASPECT_RATIO = 5 / 3;
 const IDEAL_WIDTH = 1000;

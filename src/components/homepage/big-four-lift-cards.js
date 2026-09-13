@@ -13,7 +13,7 @@ import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getLiftArtwork } from "@/components/lift-artwork";
-import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
+import { BIG_FOUR_LIFTS } from "@/lib/lifts/registry";
 import {
   getAverageLiftSessionTonnageFromPrecomputed,
   getLiftVolumeMultiplier,

@@ -61,7 +61,7 @@ import {
   Mountain,
 } from "lucide-react";
 import { LiftIcon } from "@/components/lift-icon";
-import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
+import { BIG_FOUR_LIFTS } from "@/lib/lifts/registry";
 import { GorillaIcon } from "@/components/gorilla-icon";
 
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";

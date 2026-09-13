@@ -3,7 +3,7 @@
  */
 
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { getCuratedLift, getLiftLogVideo } from "@/lib/lift-registry";
+import { getCuratedLift, getLiftLogVideo } from "@/lib/lifts/registry";
 
 const FIRST_TIME_WARMUP_SUBLABELS = [
   "start your engine",

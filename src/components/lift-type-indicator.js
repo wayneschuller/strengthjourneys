@@ -1,7 +1,7 @@
 
 import Link from "next/link";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { getLiftGuidePath } from "@/lib/lift-registry";
+import { getLiftGuidePath } from "@/lib/lifts/registry";
 
 /**
  * Returns the best detail-page URL for any lift type.

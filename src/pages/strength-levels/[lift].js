@@ -11,7 +11,7 @@ import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-setting
 import { RelatedArticles } from "@/components/article-cards";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { QuickLinkCard } from "@/components/quick-link-card";
-import { InlineMarkdown } from "@/components/inline-markdown";
+import { InlineMarkdown, inlineMarkdownToText } from "@/components/inline-markdown";
 import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
 import {
   PageContainer,
@@ -39,8 +39,6 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { inlineMarkdownToText } from "@/lib/inline-markdown";
-import { LiftingStandardsKG } from "@/lib/lifting-standards-kg";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { fetchRelatedArticles } from "@/lib/sanity-io";
 import {
@@ -48,7 +46,7 @@ import {
   STRENGTH_STANDARDS_PAGES,
   getStrengthStandardsPageBySlug,
   getStrengthStandardsUrl,
-} from "@/lib/lift-registry";
+} from "@/lib/lifts/registry";
 
 
 export async function getStaticPaths() {
@@ -66,7 +64,7 @@ export async function getStaticProps({ params }) {
 
   return {
     props: {
-      page: withExampleTable(page),
+      page,
       relatedArticles,
     },
     revalidate: 60 * 60,
@@ -496,58 +494,4 @@ function StrengthLevelsDataCta({ page }) {
       </div>
     </div>
   );
-}
-
-/**
- * Fills in the interpretation's example table from the Kilgore standards. The
- * lift file only names the slice to print (sex, age band, bodyweights), so the
- * static table can never drift from the numbers the sliders use. Runs at build
- * inside getStaticProps, which keeps the standards data out of this bundle.
- */
-function withExampleTable(page) {
-  const spec = page.interpretation?.exampleTable;
-  if (!spec) return page;
-
-  const toLb = (kg) => Math.round((kg * 2.20462) / 5) * 5;
-  const level = (kg) => [kg, toLb(kg)];
-  const rows = spec.bodyweightsKg.map((bodyWeight) => {
-    const row = LiftingStandardsKG.find(
-      (entry) =>
-        entry.liftType === page.liftType &&
-        entry.gender === spec.sex &&
-        entry.age === spec.age &&
-        entry.bodyWeight === bodyWeight,
-    );
-    if (!row) {
-      throw new Error(
-        `No ${spec.sex} age ${spec.age} ${page.liftType} standard at ${bodyWeight} kg`,
-      );
-    }
-    return {
-      bwKg: bodyWeight,
-      bwLb: toLb(bodyWeight),
-      active: level(row.physicallyActive),
-      beginner: level(row.beginner),
-      intermediate: level(row.intermediate),
-      advanced: level(row.advanced),
-      elite: level(row.elite),
-    };
-  });
-
-  // The standards data stores each age band by its midpoint: 17 is 15-19.
-  const decade = Math.floor(spec.age / 10) * 10;
-  const ageBand = spec.age < 20 ? "15–19" : `${decade}–${decade + 9}`;
-  const name =
-    page.commonName.charAt(0) + page.commonName.slice(1).toLowerCase();
-
-  return {
-    ...page,
-    interpretation: {
-      ...page.interpretation,
-      exampleTable: {
-        caption: `${name} standards for ${spec.sex}s aged ${ageBand}`,
-        rows,
-      },
-    },
-  };
 }

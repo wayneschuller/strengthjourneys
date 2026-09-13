@@ -137,13 +137,104 @@
         "Around 2.5 times bodyweight can move into advanced or elite territory for many men."
       ],
       "exampleTable": {
-        "sex": "male",
-        "age": 25,
-        "bodyweightsKg": [
-          68,
-          79,
-          91,
-          102
+        "caption": "Deadlift standards for males aged 20–29",
+        "rows": [
+          {
+            "bwKg": 68,
+            "bwLb": 150,
+            "active": [
+              64,
+              140
+            ],
+            "beginner": [
+              112,
+              245
+            ],
+            "intermediate": [
+              139,
+              305
+            ],
+            "advanced": [
+              186,
+              410
+            ],
+            "elite": [
+              207,
+              455
+            ]
+          },
+          {
+            "bwKg": 79,
+            "bwLb": 175,
+            "active": [
+              76,
+              170
+            ],
+            "beginner": [
+              131,
+              290
+            ],
+            "intermediate": [
+              164,
+              360
+            ],
+            "advanced": [
+              219,
+              485
+            ],
+            "elite": [
+              243,
+              535
+            ]
+          },
+          {
+            "bwKg": 91,
+            "bwLb": 200,
+            "active": [
+              83,
+              185
+            ],
+            "beginner": [
+              144,
+              315
+            ],
+            "intermediate": [
+              180,
+              395
+            ],
+            "advanced": [
+              240,
+              530
+            ],
+            "elite": [
+              266,
+              585
+            ]
+          },
+          {
+            "bwKg": 102,
+            "bwLb": 225,
+            "active": [
+              84,
+              185
+            ],
+            "beginner": [
+              146,
+              320
+            ],
+            "intermediate": [
+              182,
+              400
+            ],
+            "advanced": [
+              243,
+              535
+            ],
+            "elite": [
+              270,
+              595
+            ]
+          }
         ]
       },
       "closer": "Use the standards on this page to answer the question people actually mean when they search for deadlift standards: not just 'what is impressive,' but 'what is impressive for me?'"

@@ -26,12 +26,10 @@ npm run dev            # Turbopack dev server; the user usually has one running
 npm run dev:webpack    # fallback when Turbopack itself seems to be the problem
 npx eslint <paths>     # lint the files you touched
 npm run validate:hevy  # importer regression checks against fixtures/imports/
-npm run validate:lifts # lift registry files against src/lib/lift-schema.js
 ```
 
 There is **no test framework configured**. Validation is lint, plus
-`validate:hevy` whenever you touch import parsing, and `validate:lifts`
-whenever you touch `src/lib/lifts/`.
+`validate:hevy` whenever you touch import parsing.
 
 Do not run `npm run build` unless the user asks. It disrupts the user's local
 `npm run dev` flow. It runs `next-sitemap` as a postbuild step.

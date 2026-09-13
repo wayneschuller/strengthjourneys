@@ -1,14 +1,58 @@
 /**
  * The lift registry: everything we have curated about a lift, one JSON file
- * per lift in src/lib/lifts/. Nothing about a curated lift should live
+ * per lift in this directory. Nothing about a curated lift should live
  * anywhere else. Pages, the nav, the log and the importers all read it here.
  *
- * THE FILE FORMAT is defined field by field in src/lib/lift-schema.js, which
- * is the place to read what a field means. Run `npm run validate:lifts` after
- * any edit: unknown keys fail, so the format only grows on purpose. Rich copy
- * uses the two-mark inline markdown in lib/inline-markdown.js, and numbers
- * that exist elsewhere (the strength standards example tables) are computed
- * from their source, never typed into a lift file.
+ * THE JSON FORMAT. Keys sit in this order, top to bottom. Only liftType and
+ * slug are required; a lift simply lacks whatever has not been written yet.
+ * Add a new key to this list, in its category, before a page reads it.
+ *
+ *  Identity
+ *   liftType        Canonical name, exactly as lifters log it.
+ *   slug            URL segment for /progress-guide/ and /strength-levels/.
+ *                   Changing it breaks live URLs.
+ *   commonName      What people call it, when that differs: Back Squat is
+ *                   "Squat". Defaults to liftType.
+ *   shortName       Compact label for tight navs, e.g. "Bench".
+ *   synonyms        Other names for the SAME lift, never a lookalike. Front
+ *                   Squat once pointed at Back Squat's drawing for months.
+ *   bigFour         true for squat, bench, deadlift and press.
+ *   icon            Lucide icon name, registered in components/lift-icon.js.
+ *
+ *  Short copy
+ *   tagline               One line under the name on hubs and dashboard cards.
+ *   homepageDescription   Big four: one line for someone new to the lift.
+ *   bodyBenefit           Big four: what the lift gives the body, as an
+ *                         invitation. Never a count of time away.
+ *
+ *  Links, media and coaching
+ *   calculatorUrl   Its 1RM calculator page, when one exists.
+ *   artwork         { src, figure }. Drawing rules: components/lift-artwork.js.
+ *   videos          [{ url, title, channel }]. The guide shows them all; the
+ *                   FIRST is the log's form check, so lead with the best
+ *                   beginner intro.
+ *   coaching        { summary, cues: three of them, standardsRef? }.
+ *                   standardsRef { liftType, ratio, note? } is a rough ratio
+ *                   to a big four lift for first-time target weights on the
+ *                   log. Not a published standard.
+ *
+ *  Page blocks: each page reads only its own block. Both start with the same
+ *  four page fields: seoTitle (<title>), pageTitle (H1), description (meta),
+ *  keywords.
+ *   guide           /progress-guide/[slug], and indexed only once it exists.
+ *                   Page fields, ogImage, introduction { title, paragraphs },
+ *                   quote { sectionTitle, text, author },
+ *                   resources { title, links: [{ title, url, author, note? }] },
+ *                   faqItems: [{ question, answer }].
+ *   strengthLevels  /strength-levels/[slug], big four only. Page fields,
+ *                   intro, supportingCopy, relatedArticlesCategory (Sanity),
+ *                   interpretation { title, body, milestones, exampleTable,
+ *                   closer }, faqItems. exampleTable { caption, rows } is
+ *                   typed by hand and tuned for search: one row per
+ *                   bodyweight, each level a [kg, lb] pair.
+ *
+ * Paragraphs and FAQ answers may use **bold** and [text](/path), rendered by
+ * components/inline-markdown.js. Every other string renders as written.
  *
  * ADDING A LIFT: write its JSON file and add one import below. Having artwork
  * is the signal we believe in a lift: it gets a tile in the Lift Explorer, a

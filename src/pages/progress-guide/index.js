@@ -13,7 +13,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { LiftArtwork } from "@/components/lift-artwork";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
+import { BIG_FOUR_LIFTS } from "@/lib/lifts/registry";
 
 const CANONICAL_URL = "https://www.strengthjourneys.xyz/progress-guide";
 

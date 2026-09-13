@@ -139,13 +139,104 @@
         "If 225 is your big question, the answer depends heavily on your size and training age."
       ],
       "exampleTable": {
-        "sex": "male",
-        "age": 25,
-        "bodyweightsKg": [
-          68,
-          79,
-          91,
-          102
+        "caption": "Bench press standards for males aged 20–29",
+        "rows": [
+          {
+            "bwKg": 68,
+            "bwLb": 150,
+            "active": [
+              50,
+              110
+            ],
+            "beginner": [
+              70,
+              155
+            ],
+            "intermediate": [
+              90,
+              200
+            ],
+            "advanced": [
+              110,
+              245
+            ],
+            "elite": [
+              130,
+              285
+            ]
+          },
+          {
+            "bwKg": 79,
+            "bwLb": 175,
+            "active": [
+              50,
+              110
+            ],
+            "beginner": [
+              70,
+              155
+            ],
+            "intermediate": [
+              90,
+              200
+            ],
+            "advanced": [
+              110,
+              245
+            ],
+            "elite": [
+              150,
+              330
+            ]
+          },
+          {
+            "bwKg": 91,
+            "bwLb": 200,
+            "active": [
+              52,
+              115
+            ],
+            "beginner": [
+              73,
+              160
+            ],
+            "intermediate": [
+              93,
+              205
+            ],
+            "advanced": [
+              114,
+              250
+            ],
+            "elite": [
+              161,
+              355
+            ]
+          },
+          {
+            "bwKg": 102,
+            "bwLb": 225,
+            "active": [
+              55,
+              120
+            ],
+            "beginner": [
+              77,
+              170
+            ],
+            "intermediate": [
+              99,
+              220
+            ],
+            "advanced": [
+              121,
+              265
+            ],
+            "elite": [
+              170,
+              375
+            ]
+          }
         ]
       },
       "closer": "Use the personalised standards above instead of generic gym folklore. They give you a better answer than any one-size-fits-all chart."

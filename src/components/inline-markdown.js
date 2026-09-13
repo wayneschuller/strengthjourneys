@@ -1,14 +1,14 @@
 /**
- * Renders registry copy written in the inline format from
- * lib/inline-markdown.js: **bold** and [links](/path). Site paths use Next
- * links; anything absolute opens in a new tab.
+ * Renders lift registry copy written with two inline marks, **bold** and
+ * [link text](/path), and nothing else, so a stray asterisk in copy stays an
+ * asterisk and authors never need to escape. Site paths use Next links;
+ * anything absolute opens in a new tab.
  */
 
 import { Fragment } from "react";
 import Link from "next/link";
 
-import { parseInlineMarkdown } from "@/lib/inline-markdown";
-
+const TOKEN = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)\s]+)\)/g;
 const LINK_CLASS =
   "text-blue-600 underline visited:text-purple-600 hover:text-blue-800";
 
@@ -35,4 +35,31 @@ export function InlineMarkdown({ text }) {
       </Link>
     );
   });
+}
+
+/** The copy with its marks removed, for meta tags and JSON-LD. */
+export function inlineMarkdownToText(source) {
+  return parseInlineMarkdown(source)
+    .map((part) => part.text)
+    .join("");
+}
+
+/** Split copy into text, bold and link parts. */
+function parseInlineMarkdown(source) {
+  const input = String(source ?? "");
+  const parts = [];
+  let last = 0;
+  for (const match of input.matchAll(TOKEN)) {
+    if (match.index > last) {
+      parts.push({ type: "text", text: input.slice(last, match.index) });
+    }
+    if (match[1] !== undefined) {
+      parts.push({ type: "bold", text: match[1] });
+    } else {
+      parts.push({ type: "link", text: match[2], href: match[3] });
+    }
+    last = match.index + match[0].length;
+  }
+  if (last < input.length) parts.push({ type: "text", text: input.slice(last) });
+  return parts;
 }

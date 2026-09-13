@@ -21,8 +21,7 @@ import { NextSeo } from "next-seo";
 import { motion } from "motion/react";
 import { ChevronLeft, ExternalLink, Layers, Plus } from "lucide-react";
 
-import { InlineMarkdown } from "@/components/inline-markdown";
-import { inlineMarkdownToText } from "@/lib/inline-markdown";
+import { InlineMarkdown, inlineMarkdownToText } from "@/components/inline-markdown";
 import {
   useAthleteBio,
   getTopLiftStats,
@@ -40,7 +39,7 @@ import {
   getStrengthLevelsPath,
   isLiftGuideIndexable,
   slugifyLiftType,
-} from "@/lib/lift-registry";
+} from "@/lib/lifts/registry";
 import { StandardsSlider } from "@/components/standards-slider";
 import {
   Card,

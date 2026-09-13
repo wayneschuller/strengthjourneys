@@ -263,7 +263,7 @@ function LiftTile({ lift, stats, hasLoaded, color, index }) {
     >
       <Link
         href={getLiftGuidePath(lift.liftType)}
-        className="group bg-card focus-visible:ring-ring relative flex h-full flex-col overflow-hidden rounded-xl border shadow-sm transition-[transform,box-shadow] duration-300 outline-none hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2"
+        className="group bg-card focus-visible:ring-ring relative flex h-full flex-col overflow-hidden rounded-xl border shadow-sm outline-none focus-visible:ring-2"
         style={{ "--lift": color }}
       >
         {/* A pool of the lift's colour under the figures, brightening on hover. */}
@@ -277,7 +277,7 @@ function LiftTile({ lift, stats, hasLoaded, color, index }) {
         />
         <span
           aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-1 origin-left scale-x-50 transition-transform duration-500 ease-out group-hover:scale-x-100"
+          className="absolute inset-x-0 top-0 h-1"
           style={{ backgroundColor: "var(--lift)" }}
         />
         <div className="relative flex flex-1 items-end justify-center px-3 pt-4 pb-1">
@@ -289,7 +289,7 @@ function LiftTile({ lift, stats, hasLoaded, color, index }) {
             // Lift artwork is always served straight from public/; see the
             // rendering note at the top of components/lift-artwork.js.
             unoptimized
-            className="h-16 w-auto max-w-full object-contain transition-transform duration-500 ease-out group-hover:scale-105 sm:h-20"
+            className="h-16 w-auto max-w-full object-contain transition-transform duration-300 ease-out group-hover:scale-110 sm:h-20"
           />
         </div>
         <div className="bg-card/70 relative flex flex-col gap-0.5 border-t px-3 py-2 backdrop-blur-sm">

@@ -6,6 +6,7 @@
 
 const IMPORT_SOURCES = [
   { id: "hevy", name: "Hevy" },
+  { id: "fitbod", name: "Fitbod" },
   { id: "strong", name: "Strong" },
   { id: "stronglifts", name: "StrongLifts" },
   { id: "wodify", name: "Wodify" },

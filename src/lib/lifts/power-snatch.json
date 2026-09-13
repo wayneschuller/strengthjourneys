@@ -25,6 +25,9 @@
     "pageTitle": "Power Snatch Guide & Progress Tracker",
     "pageDescription": "Learn the power snatch from the floor to a locked-out overhead catch: plain-English technique cues, a coaching video, answers to common questions, and free power snatch progress tracking with rep PRs and E1RM charts.",
     "pageKeywords": "power snatch, how to power snatch, power snatch technique, power snatch vs snatch, power snatch grip width, power snatch progress tracker",
+    "quoteSectionTitle": "Why the Olympic lifts earn their place",
+    "liftQuote": "First and foremost is the development of leg and hip extension power, which is alone more than enough reason for the lifts’ inclusion in training.",
+    "liftQuoteAuthor": "Greg Everett, Integrating the Olympic Lifts with CrossFit",
     "introduction": {
       "title": "What the Power Snatch Builds",
       "paragraphs": [
@@ -63,6 +66,11 @@
           "text": "The Burgener Warm-up",
           "href": "https://library.crossfit.com/free/pdf/53_06_Burgener_Warmup.pdf",
           "author": "Mike Burgener with Tony Budding, CrossFit Journal"
+        },
+        {
+          "text": "Integrating the Olympic Lifts with CrossFit",
+          "href": "https://www.catalystathletics.com/article/34/Integrating-the-Olympic-Lifts-with-CrossFit/",
+          "author": "Greg Everett, Catalyst Athletics"
         },
         {
           "text": "Power Snatch: Olympic Weightlifting Exercise Library",

@@ -51,35 +51,9 @@ public/robots.txt
 # 50.38.0, so postbuild generation owns them again. Do not pin VERCEL_CLI_VERSION
 # below that version.
 
-# AI coding assistant skills directories
-/.agent/
+# Local agent notes and Claude Code settings
 /.agents/
 /.claude/
-/.cline/
-/.codex/
-/.commandcode/
-/.continue/
-/.crush/
-/.cursor/
-/.factory/
-/.gemini/
-/.github/
-/.goose/
-/.kilocode/
-/.kiro/
-/.mcpjam/
-/.neovate/
-/.opencode/
-/.openhands/
-/.pi/
-/.qoder/
-/.qwen/
-/.roo/
-/.trae/
-/.windsurf/
-/.zencoder/
-/skills/
-/skills-lock.json
 
 # Claude Code project docs
 CLAUDE.md

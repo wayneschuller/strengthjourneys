@@ -239,11 +239,11 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
   // anonymous visitor sees it working, and the layout never jumps on load.
   const showAnalysis = lift.bigFour || hasLiftData;
 
-  // The editorial guide carries its own hand-picked videos. A lift without one
-  // still has the single tutorial chosen for the log.
-  const videos =
-    guide?.videos ??
-    [toYouTubeEmbedUrl(coaching?.videoUrl)].filter(Boolean);
+  // Every tutorial the registry holds for this lift. The log shows one of
+  // them per session; the guide shows the lot.
+  const videos = (lift.videos ?? [])
+    .map((video) => ({ ...video, embedUrl: toYouTubeEmbedUrl(video.url) }))
+    .filter((video) => video.embedUrl);
 
   const sections = [
     strengthLevelsPath && {
@@ -885,38 +885,51 @@ function LiftQuoteCard({ title, quote, author }) {
 }
 
 /**
- * Card displaying one or more embedded YouTube video guides for a specific lift type.
+ * Every tutorial video for a lift, each embedded with its title and channel.
+ * A lone video gets a wide player; several share a grid, which is what lets a
+ * lift carry any number of them without the card changing shape.
+ *
  * @param {Object} props
  * @param {string} props.liftType - The lift type name, used in the card heading.
- * @param {string[]} props.videos - Array of YouTube embed URLs to render as iframes.
+ * @param {Array<{embedUrl: string, title?: string, channel?: string}>} props.videos
  */
 function VideoCard({ liftType, videos }) {
+  const isSingle = videos.length === 1;
+
   return (
     <Card>
       <CardHeader>
         <h2 className="text-2xl leading-none font-semibold tracking-tight">
-          {liftType} {videos.length === 1 ? "Video Guide" : "Video Guides"}
+          {liftType} {isSingle ? "Video Guide" : "Video Guides"}
         </h2>
       </CardHeader>
       <CardContent>
-        <div className="flex h-fit flex-col gap-8 lg:flex-row">
-          {videos.map((videoUrl, index) => (
-            <div
-              key={videoUrl}
-              className={
-                videos.length === 1
-                  ? "aspect-video w-full max-w-3xl"
-                  : "aspect-video max-h-80 flex-1"
-              }
-            >
-              <iframe
-                src={videoUrl}
-                title={`${liftType} video guide ${index + 1}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="h-full w-full"
-              ></iframe>
-            </div>
+        <div
+          className={
+            isSingle ? "max-w-3xl" : "grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+          }
+        >
+          {videos.map((video, index) => (
+            <figure key={video.embedUrl} className="flex flex-col gap-2">
+              <div className="aspect-video w-full overflow-hidden rounded-md">
+                <iframe
+                  src={video.embedUrl}
+                  title={video.title ?? `${liftType} video guide ${index + 1}`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading="lazy"
+                  className="h-full w-full"
+                ></iframe>
+              </div>
+              {video.title && (
+                <figcaption className="text-muted-foreground text-sm">
+                  <span className="text-foreground font-medium">
+                    {video.title}
+                  </span>
+                  {video.channel ? ` · ${video.channel}` : ""}
+                </figcaption>
+              )}
+            </figure>
           ))}
         </div>
       </CardContent>

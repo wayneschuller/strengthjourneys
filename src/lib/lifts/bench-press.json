@@ -11,15 +11,30 @@
     "src": "/lifts/default/bench-press.svg",
     "figure": "male"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=rxD321l2svE",
+      "title": "Learning to Bench Press | The Starting Strength Method",
+      "channel": "Starting Strength"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=t3f2L7NRRUY",
+      "title": "Gym Shorts (How To): Bench Press",
+      "channel": "Barbell Logic"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=A0NBCkpYatQ",
+      "title": "Bench Press for Maximum Muscle Growth | Targeting The Muscle",
+      "channel": "Renaissance Periodization"
+    }
+  ],
   "coaching": {
     "summary": "Lie on a flat bench, unrack the bar over your chest at arm's length, lower it to touch your chest, then press it back up.",
     "cues": [
       "Set your shoulder blades first, then keep the upper back pinned tight.",
       "Plant your feet and stay tight from the handoff to lockout.",
       "Touch the bar low on the chest and press back toward the shoulders."
-    ],
-    "videoUrl": "https://www.youtube.com/embed/t3f2L7NRRUY",
-    "videoTitle": "Gym Shorts (How To): Bench Press - Barbell Logic"
+    ]
   },
   "guide": {
     "hubDescription": "The lift everyone asks about first.",
@@ -31,11 +46,6 @@
     "quoteSectionTitle": "Why the bench press became the classic upper-body test",
     "liftQuote": "The bench press, since the 1950s, has become the most widely recognized resistance exercise movement in the world, the one exercise most representative in the public mind of barbell training...",
     "liftQuoteAuthor": "Mark Rippetoe",
-    "videos": [
-      "https://www.youtube.com/embed/rxD321l2svE",
-      "https://www.youtube.com/embed/t3f2L7NRRUY",
-      "https://www.youtube.com/embed/A0NBCkpYatQ"
-    ],
     "introduction": {
       "title": "How Strong Should My Bench Press Be?",
       "paragraphs": [

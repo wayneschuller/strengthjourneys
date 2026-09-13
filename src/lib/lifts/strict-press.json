@@ -14,15 +14,30 @@
     "src": "/lifts/default/strict-press.svg",
     "figure": "male"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=8dacy5hjaE8",
+      "title": "Learning to Press | The Starting Strength Method",
+      "channel": "Starting Strength"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=AhGW3XFG3M8",
+      "title": "Gym Shorts (How To): The Press",
+      "channel": "Barbell Logic"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=5yWaNOvgFCM",
+      "title": "The Shoulder Press",
+      "channel": "CrossFit"
+    }
+  ],
   "coaching": {
     "summary": "Standing, take the bar from a rack onto the front of your shoulders and press it straight overhead to locked arms, with no help from your legs.",
     "cues": [
       "Squeeze glutes and abs so the ribs stay down before the press starts.",
       "Stack wrists over elbows and begin with forearms close to vertical.",
       "Move your head back to clear the bar, then punch through to lockout."
-    ],
-    "videoUrl": "https://www.youtube.com/embed/AhGW3XFG3M8",
-    "videoTitle": "Gym Shorts (How To): The Press - Barbell Logic"
+    ]
   },
   "guide": {
     "hubDescription": "The slowest to climb and the most rewarding.",
@@ -34,11 +49,6 @@
     "quoteSectionTitle": "Why the strict press remains the purest overhead test",
     "liftQuote": "The strict press is a whole-body, multi-joint exercise that beautifully recapitulates a fundamental human movement pattern: lifting a heavy object overhead, as high as possible.",
     "liftQuoteAuthor": "Jonathon M. Sullivan & Andy Baker",
-    "videos": [
-      "https://www.youtube.com/embed/8dacy5hjaE8",
-      "https://www.youtube.com/embed/AhGW3XFG3M8",
-      "https://www.youtube.com/embed/5yWaNOvgFCM"
-    ],
     "introduction": {
       "title": "How Strong Should My Strict Press Be?",
       "paragraphs": [

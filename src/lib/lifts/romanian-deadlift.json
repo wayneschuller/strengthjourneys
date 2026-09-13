@@ -5,6 +5,18 @@
     "src": "/lifts/default/romanian-deadlift.png",
     "figure": "male"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=amLSSb8cXok",
+      "title": "The Romanian Deadlift (RDL): Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=k6cUaJasD5U",
+      "title": "How to do the RDL (Romanian Deadlift) with Mark Rippetoe",
+      "channel": "Starting Strength"
+    }
+  ],
   "coaching": {
     "summary": "Start standing with the bar at your hips, push your hips back so it slides down your legs until your hamstrings stretch, then stand back up.",
     "cues": [
@@ -12,8 +24,6 @@
       "Let the bar trace the thighs and stay close to the legs the whole way down.",
       "Stop when the hamstrings are loaded, then drive the hips through to stand tall."
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=amLSSb8cXok",
-    "videoTitle": "The Romanian Deadlift (RDL): Gym Shorts (How To) - Barbell Logic",
     "standardsRef": {
       "liftType": "Deadlift",
       "ratio": 0.7
@@ -47,11 +57,6 @@
     "resources": {
       "title": "Third Party Romanian Deadlift Articles",
       "links": [
-        {
-          "text": "How to do the RDL",
-          "href": "https://startingstrength.com/training/from-the-archives-how-to-do-the-rdl",
-          "author": "Mark Rippetoe"
-        },
         {
           "text": "Deadlifts, RDLs, and the Fake Risk/Reward Ratio",
           "href": "https://startingstrength.com/training/deadlifts-rdls-and-the-fake-risk-reward-ratio",

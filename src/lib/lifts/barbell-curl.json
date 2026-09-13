@@ -5,15 +5,25 @@
     "src": "/lifts/default/barbell-curl.png",
     "figure": "male"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=RK47T0F276I",
+      "title": "Gym Shorts (How To): The Barbell Curl",
+      "channel": "Barbell Logic"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=bAWLx7PPK10",
+      "title": "The Barbell Curl with Mark Rippetoe",
+      "channel": "Starting Strength"
+    }
+  ],
   "coaching": {
     "summary": "Stand tall holding a barbell at arm's length with your palms facing forward, curl it up to your shoulders by bending only at the elbows, then lower it under control.",
     "cues": [
       "Take a shoulder width underhand grip and stand tall with your elbows at your sides.",
       "Curl the bar up without swinging, keeping the elbows close to your body.",
       "Lower slowly all the way to straight arms before starting the next rep."
-    ],
-    "videoUrl": "https://www.youtube.com/watch?v=RK47T0F276I",
-    "videoTitle": "Gym Shorts (How To): The Barbell Curl - Barbell Logic"
+    ]
   },
   "guide": {
     "hubDescription": "Strong arms, one strict rep at a time.",
@@ -46,11 +56,6 @@
         {
           "text": "The Barbell Curl in Strength Training",
           "href": "https://startingstrength.com/training/the-barbell-curl-in-strength-training",
-          "author": "Mark Rippetoe"
-        },
-        {
-          "text": "The Barbell Curl",
-          "href": "https://startingstrength.com/training/the-barbell-curl",
           "author": "Mark Rippetoe"
         },
         {

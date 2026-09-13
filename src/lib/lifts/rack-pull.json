@@ -5,6 +5,13 @@
     "src": "/lifts/default/rack-pull.png",
     "figure": "male"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=0nJs6Cnfv3M",
+      "title": "Gym Shorts (How To): The Rack Pull",
+      "channel": "Barbell Logic"
+    }
+  ],
   "coaching": {
     "summary": "Rest the bar on rack pins or blocks around knee height, grip it, and stand up tall, like the top half of a deadlift.",
     "cues": [
@@ -12,8 +19,6 @@
       "Keep the bar glued to the thighs and lock out by driving the hips through.",
       "Finish tall without leaning back or turning it into a backbend."
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=0nJs6Cnfv3M",
-    "videoTitle": "Gym Shorts (How To): The Rack Pull - Barbell Logic",
     "standardsRef": {
       "liftType": "Deadlift",
       "ratio": 1.1

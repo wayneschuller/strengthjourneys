@@ -14,15 +14,30 @@
     "src": "/lifts/default/back-squat.svg",
     "figure": "male"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=C_VtOYc6j5c",
+      "title": "The Air Squat: CrossFit Foundational Movement",
+      "channel": "CrossFit"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=jyopTyOjXb0",
+      "title": "Gym Shorts (How To): The Squat",
+      "channel": "Barbell Logic"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=nhoikoUEI8U",
+      "title": "Learning to Squat | The Starting Strength Method",
+      "channel": "Starting Strength"
+    }
+  ],
   "coaching": {
     "summary": "Take the bar from a rack onto your upper back, squat until your hips sink below your knees, then stand back up.",
     "cues": [
       "Root your whole foot and brace hard before every rep.",
       "Sit between your hips while the bar stays balanced over mid-foot.",
       "Drive straight up out of the hole and finish tall."
-    ],
-    "videoUrl": "https://www.youtube.com/embed/jyopTyOjXb0",
-    "videoTitle": "Gym Shorts (How To): The Squat - Barbell Logic"
+    ]
   },
   "guide": {
     "hubDescription": "The king of lower-body strength.",
@@ -34,11 +49,6 @@
     "quoteSectionTitle": "Why the back squat became the King of Lifts",
     "liftQuote": "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
     "liftQuoteAuthor": "Mark Rippetoe, Starting Strength",
-    "videos": [
-      "https://www.youtube.com/embed/C_VtOYc6j5c",
-      "https://www.youtube.com/embed/jyopTyOjXb0",
-      "https://www.youtube.com/embed/nhoikoUEI8U"
-    ],
     "introduction": {
       "title": "How Strong Should My Back Squat Be?",
       "paragraphs": [

@@ -3,7 +3,7 @@
  */
 
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { getCuratedLift } from "@/lib/lift-registry";
+import { getCuratedLift, pickLiftVideo } from "@/lib/lift-registry";
 
 const FIRST_TIME_WARMUP_SUBLABELS = [
   "start your engine",
@@ -68,11 +68,15 @@ export function getJourneyTechniqueAssist({
   if (!match) return null;
 
   const defaultCues = match.cues ?? [];
-  const videoAssist = match.videoUrl
+  // A lift can carry several tutorials; show one per session so returning
+  // lifters meet a different coach now and then.
+  const video = pickLiftVideo(liftType, sessionDate);
+  const videoAssist = video
     ? {
         // Every coached lift has a progress guide, not only the big four.
         slug: `progress-guide/${lift.slug}`,
-        videoUrl: match.videoUrl,
+        videoUrl: video.url,
+        videoTitle: video.title,
         prompt: `Need a quick ${liftType} form check?`,
       }
     : null;

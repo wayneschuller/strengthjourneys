@@ -10,15 +10,30 @@
     "src": "/lifts/default/deadlift.svg",
     "figure": "female"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=AweC3UaM14o",
+      "title": "Deadlift",
+      "channel": "Renaissance Periodization"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=p2OPUi4xGrM",
+      "title": "Learning to Deadlift | The Starting Strength Method",
+      "channel": "Starting Strength"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=3oMjoOm5O18",
+      "title": "Gym Shorts (How To): The Deadlift",
+      "channel": "Barbell Logic"
+    }
+  ],
   "coaching": {
     "summary": "Grip the bar on the floor just outside your legs, stand up tall with it, then lower it back to the floor.",
     "cues": [
       "Start with the bar over mid-foot and bring your shins in only after you hinge down.",
       "Brace, squeeze the bar, and pull the slack out before the floor breaks.",
       "Keep the bar close up the legs and finish tall without leaning back."
-    ],
-    "videoUrl": "https://www.youtube.com/embed/3oMjoOm5O18",
-    "videoTitle": "Gym Shorts (How To): The Deadlift - Barbell Logic"
+    ]
   },
   "guide": {
     "hubDescription": "The heaviest bar you will ever move.",
@@ -30,11 +45,6 @@
     "quoteSectionTitle": "Why the deadlift still defines raw strength",
     "liftQuote": "There is no reason to be alive if you can't do deadlift!",
     "liftQuoteAuthor": "Jón Páll Sigmarsson",
-    "videos": [
-      "https://www.youtube.com/embed/AweC3UaM14o",
-      "https://www.youtube.com/embed/p2OPUi4xGrM",
-      "https://www.youtube.com/embed/3oMjoOm5O18"
-    ],
     "introduction": {
       "title": "How Strong Should My Deadlift Be?",
       "paragraphs": [

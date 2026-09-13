@@ -5,6 +5,18 @@
     "src": "/lifts/default/power-snatch.png",
     "figure": "male"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=7Jn6uNdmbc0",
+      "title": "The Power Snatch: Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=_52htpg8pTE",
+      "title": "Finishing the Snatch | On the Platform",
+      "channel": "Starting Strength"
+    }
+  ],
   "coaching": {
     "summary": "In one fast pull, take the bar from the floor straight overhead on a wide grip, catch it on locked arms in a half squat, then stand up.",
     "cues": [
@@ -12,8 +24,6 @@
       "Finish tall through the hips before you pull under.",
       "Punch fast into a stable overhead catch and stand under control."
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=7Jn6uNdmbc0",
-    "videoTitle": "The Power Snatch: Gym Shorts (How To) - Barbell Logic",
     "standardsRef": {
       "liftType": "Strict Press",
       "ratio": 0.85
@@ -47,11 +57,6 @@
     "resources": {
       "title": "Third Party Power Snatch Articles",
       "links": [
-        {
-          "text": "Finishing the Snatch",
-          "href": "https://startingstrength.com/training/finishing-the-snatch",
-          "author": "Mark Rippetoe"
-        },
         {
           "text": "A Stronger Finish",
           "href": "https://startingstrength.com/article/a_stronger_finish",

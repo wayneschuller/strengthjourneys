@@ -8,6 +8,13 @@
     "src": "/lifts/default/close-grip-bench-press.png",
     "figure": "female"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=hWEpF7lFR9Q",
+      "title": "Close Grip Bench Press: Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    }
+  ],
   "coaching": {
     "summary": "Lie on a flat bench, grip the bar with your hands about shoulder width apart, lower it to your lower chest with your elbows close to your sides, then press it back up.",
     "cues": [
@@ -15,8 +22,6 @@
       "Set your shoulder blades and plant your feet exactly as you would for a regular bench press.",
       "Lower the bar to the bottom of the chest with elbows tucked, then press back up toward the shoulders."
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=hWEpF7lFR9Q",
-    "videoTitle": "Close Grip Bench Press: Gym Shorts (How To) - Barbell Logic",
     "standardsRef": {
       "liftType": "Bench Press",
       "ratio": 0.85,

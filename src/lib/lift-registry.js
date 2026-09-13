@@ -19,12 +19,14 @@
  *  - calculatorUrl         Its 1RM calculator page, when one exists.
  *  - artwork               The drawing and the figure's sex. Drawing rules
  *                          live in components/lift-artwork.js.
- *  - coaching              Plain-English summary, three cues, one tutorial
- *                          video (and its title), and standardsRef: a rough
- *                          ratio to a big four lift used for first-time
+ *  - videos                Tutorial videos, each { url, title, channel }, any
+ *                          number of them. The guide shows them all; the log
+ *                          shows one per session, picked by pickLiftVideo.
+ *  - coaching              Plain-English summary, three cues, and standardsRef:
+ *                          a rough ratio to a big four lift used for first-time
  *                          target weights on the log. Not a published standard.
  *  - guide                 Editorial progress guide copy: SEO titles, intro,
- *                          quote, videos, resources, FAQ.
+ *                          quote, resources, FAQ.
  *  - strengthLevels        Copy for /strength-levels/[slug], including the
  *                          "what counts as good" interpretation and example
  *                          table. Big four only.
@@ -37,7 +39,7 @@
  *
  * JSON rather than JS so the files stay pure content that scripts and
  * next-sitemap.config.js can read too. Rationale that would have been a code
- * comment goes in a field instead (videoTitle, standardsRef.note).
+ * comment goes in a field instead (a video's title, standardsRef.note).
  */
 
 import backSquat from "@/lib/lifts/back-squat.json";
@@ -131,6 +133,27 @@ export function slugifyLiftType(liftType) {
 export function getLiftGuidePath(liftType) {
   const slug = getLiftSlug(liftType);
   return slug ? `/progress-guide/${slug}` : null;
+}
+
+/**
+ * One of a lift's videos for a given session, or null when it has none. The
+ * choice hashes the lift and the seed (the log passes the session date), so it
+ * holds still while a lifter is in a session and varies from day to day.
+ *
+ * @param {string} liftType
+ * @param {string} [seed] - e.g. a YYYY-MM-DD session date.
+ */
+export function pickLiftVideo(liftType, seed = "") {
+  const lift = getCuratedLift(liftType);
+  const videos = lift?.videos ?? [];
+  if (videos.length === 0) return null;
+  // djb2, the same small string hash the log's rotating copy uses.
+  let hash = 5381;
+  const key = `${lift.liftType}:${seed}`;
+  for (let i = 0; i < key.length; i += 1) {
+    hash = ((hash << 5) + hash + key.charCodeAt(i)) | 0;
+  }
+  return videos[Math.abs(hash) % videos.length];
 }
 
 /**

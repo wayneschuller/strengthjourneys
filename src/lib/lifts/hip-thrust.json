@@ -5,6 +5,13 @@
     "src": "/lifts/default/hip-thrust.png",
     "figure": "female"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=pF17m_CXfL0",
+      "title": "Hip Thrust Tutorial - Proper Form and Technique",
+      "channel": "Runna"
+    }
+  ],
   "coaching": {
     "summary": "Sit on the floor with your upper back against a bench and the bar across your hips, then drive your hips up until shoulders, hips and knees line up.",
     "cues": [
@@ -12,8 +19,6 @@
       "Tuck the chin and keep the ribs down so the hips do the work, not the lower back.",
       "Drive through the heels to full lockout with shins vertical, then lower under control."
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=pF17m_CXfL0",
-    "videoTitle": "Hip Thrust Tutorial - Proper Form and Technique - Runna",
     "standardsRef": {
       "liftType": "Back Squat",
       "ratio": 1,

@@ -5,6 +5,13 @@
     "src": "/lifts/default/power-clean.png",
     "figure": "male"
   },
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=mLoPwZx90SI",
+      "title": "The Power Clean - Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    }
+  ],
   "coaching": {
     "summary": "In one fast pull, take the bar from the floor onto the front of your shoulders, catch it with elbows up in a half squat, then stand up.",
     "cues": [
@@ -12,8 +19,6 @@
       "Finish the pull with violent leg and hip extension before the elbows turn over.",
       "Catch high on the shoulders with fast elbows and a solid front rack."
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=mLoPwZx90SI",
-    "videoTitle": "The Power Clean - Gym Shorts (How To) - Barbell Logic",
     "standardsRef": {
       "liftType": "Deadlift",
       "ratio": 0.6

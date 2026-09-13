@@ -938,10 +938,25 @@ function resolveWorkflowCopy(copy, { sourceAppName, sheetName }) {
   );
 }
 
+/**
+ * The drag-and-drop import card, in preview, create or merge mode depending on
+ * whether the visitor is signed in and has a sheet.
+ *
+ * @param {Object} props
+ * @param {string} [props.title] - Heading; defaults to the rotating workflow copy.
+ * @param {string} [props.description] - Lead copy; defaults to the workflow copy.
+ * @param {string} [props.sourceAppName] - App name for import guide pages.
+ * @param {string} [props.className] - Outer classes. The default suits a
+ *   standalone import page; embedded uses pass their own.
+ * @param {React.ReactNode} [props.children] - Extra actions (a sign-in button,
+ *   say) shown between the description and the drop target.
+ */
 export function ImportWorkflowSection({
   title = null,
   description = null,
   sourceAppName = null,
+  className = "mx-auto mb-12 max-w-5xl",
+  children = null,
 }) {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -1203,7 +1218,7 @@ export function ImportWorkflowSection({
     const isPartialOverlap = importAnalysis?.status === "partial_overlap";
 
     return (
-      <section className="mx-auto mb-12 max-w-5xl">
+      <section className={className}>
         <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8 text-center">
@@ -1420,13 +1435,14 @@ export function ImportWorkflowSection({
   }
 
   return (
-    <section className="mx-auto mb-12 max-w-5xl">
+    <section className={className}>
       <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
       {displayDescription && (
         <p className="text-muted-foreground mb-4 max-w-3xl text-sm leading-6">
           {displayDescription}
         </p>
       )}
+      {children && <div className="mb-4">{children}</div>}
       <Card
         className={`border-dashed transition-colors ${dragOver ? "border-primary bg-primary/5" : ""}`}
         onDrop={onDrop}

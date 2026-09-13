@@ -65,6 +65,7 @@ import { StrengthPotentialBarChart } from "@/components/visualizer/strength-pote
 import { RelatedArticles } from "@/components/article-cards";
 import { Button } from "@/components/ui/button";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
+import { LiftGuideNoHistory } from "@/components/lift-explorer/lift-guide-no-history";
 import {
   SectionReveal,
 } from "@/components/big-four/section-reveal";
@@ -279,11 +280,11 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
       strengthLevelsPath={strengthLevelsPath}
     />
   ) : (
-    <>
-      <SectionReveal id="progress-history">
-        <LiftJourneyCard liftType={liftType} />
-      </SectionReveal>
-    </>
+    // No history for this lift: a log prompt for a lifter with a sheet, the
+    // sign-in and import request for everyone else.
+    <SectionReveal id="progress-history">
+      <LiftGuideNoHistory liftType={liftType} />
+    </SectionReveal>
   );
 
   const hasEditorial =

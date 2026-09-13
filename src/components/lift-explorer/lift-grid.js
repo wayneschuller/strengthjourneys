@@ -42,7 +42,7 @@ import {
   DRAWN_LIFTS,
   getCuratedLift,
   getLiftGuidePath,
-} from "@/lib/lifts/registry";
+} from "@/lib/lifts/lift-registry";
 
 const SORT_MODES = [
   { value: "sets", label: "Top", title: "Most trained" },

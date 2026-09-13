@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeChooser } from "@/components/ui-shell/theme-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getLiftIcon } from "@/components/lift-icon";
-import { BIG_FOUR_LIFTS } from "@/lib/lifts/registry";
+import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 import { getRepeatImportHref } from "@/lib/import/import-sources";

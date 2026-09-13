@@ -44,7 +44,7 @@ import {
   STRENGTH_STANDARDS_HUB_URL,
   STRENGTH_STANDARDS_PAGES,
   getStrengthStandardsUrl,
-} from "@/lib/lifts/registry";
+} from "@/lib/lifts/lift-registry";
 
 const FAQ_ITEMS = [
   {

@@ -6,7 +6,7 @@ import {
   BIG_FOUR_LIFTS,
   getLiftGuidePath,
   getStrengthLevelsPath,
-} from "@/lib/lifts/registry";
+} from "@/lib/lifts/lift-registry";
 
 const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },

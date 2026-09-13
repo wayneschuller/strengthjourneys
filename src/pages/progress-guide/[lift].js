@@ -39,7 +39,7 @@ import {
   getStrengthLevelsPath,
   isLiftGuideIndexable,
   slugifyLiftType,
-} from "@/lib/lifts/registry";
+} from "@/lib/lifts/lift-registry";
 import { StandardsSlider } from "@/components/standards-slider";
 import {
   Card,

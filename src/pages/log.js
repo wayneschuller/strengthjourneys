@@ -28,7 +28,7 @@ import { InspirationCard } from "@/components/log/inspiration-card";
 import { AddLiftButton } from "@/components/log/add-controls";
 import { LogSessionSkeleton } from "@/components/log/session-summary";
 import { getLiftAnchorId } from "@/components/log/utils";
-import { BIG_FOUR_LIFTS, COACHED_LIFTS } from "@/lib/lifts/registry";
+import { BIG_FOUR_LIFTS, COACHED_LIFTS } from "@/lib/lifts/lift-registry";
 import {
   getLiftHistoryBeforeDate,
   getNextSessionDate,

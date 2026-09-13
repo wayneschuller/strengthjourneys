@@ -7,7 +7,7 @@
 import { createElement } from "react";
 import { Crown, Luggage, Shield, Skull } from "lucide-react";
 
-import { getCuratedLift } from "@/lib/lifts/registry";
+import { getCuratedLift } from "@/lib/lifts/lift-registry";
 
 const ICONS = { Crown, Luggage, Shield, Skull };
 

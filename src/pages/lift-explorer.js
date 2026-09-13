@@ -23,7 +23,7 @@ import {
   PageHeaderDescription,
   PageHeaderRight,
 } from "@/components/page-header";
-import { getLiftGuidePath } from "@/lib/lifts/registry";
+import { getLiftGuidePath } from "@/lib/lifts/lift-registry";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
 export async function getStaticProps() {

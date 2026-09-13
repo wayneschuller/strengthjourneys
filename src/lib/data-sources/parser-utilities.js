@@ -3,7 +3,7 @@
 import {
   BIG_FOUR_LIFT_TYPES,
   BIG_FOUR_LIFT_TYPE_SET,
-} from "@/lib/lifts/registry";
+} from "@/lib/lifts/lift-registry";
 
 export const STANDARD_BIG_FOUR_LIFT_TYPES = BIG_FOUR_LIFT_TYPES;
 

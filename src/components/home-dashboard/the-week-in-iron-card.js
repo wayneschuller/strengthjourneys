@@ -16,7 +16,7 @@ import {
   Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { BIG_FOUR_LIFTS } from "@/lib/lifts/registry";
+import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";

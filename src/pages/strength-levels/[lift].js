@@ -46,7 +46,7 @@ import {
   STRENGTH_STANDARDS_PAGES,
   getStrengthStandardsPageBySlug,
   getStrengthStandardsUrl,
-} from "@/lib/lifts/registry";
+} from "@/lib/lifts/lift-registry";
 
 
 export async function getStaticPaths() {

@@ -127,7 +127,7 @@ export function LiftLogCta({ liftType }) {
     <section className="overflow-hidden rounded-lg border bg-card shadow-sm">
       <div className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5">
         <div className="min-w-0 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock3 className="h-3.5 w-3.5" />
             <span>{copy.eyebrow}</span>
           </div>

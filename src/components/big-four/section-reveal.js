@@ -59,36 +59,23 @@ export function SectionReveal({
 }
 
 /**
- * Small labelled rule that introduces a group of cards.
- *
- * The page used to be an undifferentiated column of cards with no hierarchy
- * above card level. These eyebrows give the eye a resting point and make the
- * in-page anchor nav feel like it lands somewhere deliberate.
+ * A plain heading that introduces a group of cards, so the long stack has a
+ * resting point and the in-page anchor nav lands somewhere deliberate. Just
+ * the words: Wayne found all-caps kickers and rule lines unhelpful (2026-09-14).
  *
  * @param {Object} props
- * @param {string} props.eyebrow - Short uppercase kicker (e.g. "Your data").
- * @param {string} [props.title] - Optional larger heading under the kicker.
- * @param {string} [props.color] - Lift colour used to tint the leading rule.
+ * @param {string} props.title - The heading text; nothing renders without it.
  */
-export function SectionEyebrow({ eyebrow, title, color, className }) {
+export function SectionHeading({ title, className }) {
+  if (!title) return null;
   return (
-    <div className={cn("flex flex-col gap-1.5 pt-2", className)}>
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className="h-px w-8 rounded-full"
-          style={{ backgroundColor: color ?? "currentColor" }}
-        />
-        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {eyebrow}
-        </span>
-        <span aria-hidden="true" className="h-px flex-1 bg-border" />
-      </div>
-      {title && (
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">
-          {title}
-        </h2>
+    <h2
+      className={cn(
+        "text-foreground pt-2 text-lg font-semibold tracking-tight",
+        className,
       )}
-    </div>
+    >
+      {title}
+    </h2>
   );
 }

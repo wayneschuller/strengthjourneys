@@ -66,7 +66,7 @@ import { RelatedArticles } from "@/components/article-cards";
 import { Button } from "@/components/ui/button";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
 import {
-  SectionEyebrow,
+  SectionHeading,
   SectionReveal,
 } from "@/components/big-four/section-reveal";
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
@@ -81,7 +81,10 @@ const MAX_UNCURATED_SLUG_LENGTH = 80;
 
 export async function getStaticPaths() {
   return {
-    paths: CURATED_LIFTS.map((lift) => ({ params: { lift: lift.slug } })),
+    // A lift file without a usable slug gets no page instead of a failed build.
+    paths: CURATED_LIFTS.filter((lift) => text(lift.slug)).map((lift) => ({
+      params: { lift: lift.slug },
+    })),
     // Uncurated lifts render on first request and stay cached until the next
     // deploy. They are noindex and never prerendered, so never in the sitemap.
     fallback: "blocking",
@@ -102,7 +105,9 @@ export async function getStaticProps({ params }) {
     return { props: { lift: null, slug, relatedArticles: [] } };
   }
 
-  const relatedArticles = await fetchRelatedArticles(lift.liftType);
+  const relatedArticles = text(lift.liftType)
+    ? await fetchRelatedArticles(lift.liftType)
+    : [];
 
   return {
     props: { lift, slug: lift.slug, relatedArticles },
@@ -126,17 +131,17 @@ export default function LiftProgressGuide({ lift, slug, relatedArticles }) {
  * breaks server rendering, the static metadata tags still ship.
  */
 function CuratedLiftGuide({ lift, relatedArticles }) {
-  const { liftType, guide, coaching } = lift;
-  const canonicalURL = `${SITE_URL}/progress-guide/${lift.slug}`;
+  const page = readGuideLift(lift);
+  const { liftType, coaching, faqItems } = page;
+  const canonicalURL = `${SITE_URL}/progress-guide/${page.slug}`;
   const isIndexable = isLiftGuideIndexable(lift);
 
   const seoTitle =
-    guide?.seoTitle ?? `${liftType} Technique and Progress Tracker`;
+    page.seoTitle ?? `${liftType} Technique and Progress Tracker`;
   const description =
-    guide?.description ??
+    page.description ??
     `${coaching?.summary ? `${coaching.summary} ` : ""}Technique cues, a tutorial video, and free ${liftType} progress tracking with E1RM charts, rep PRs and tonnage.`;
-  const ogImageURL =
-    `${SITE_URL}${guide?.ogImage ?? "/strength_journeys_analyzer_og.png"}`;
+  const ogImageURL = `${SITE_URL}${page.ogImage ?? "/strength_journeys_analyzer_og.png"}`;
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -164,11 +169,11 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
           },
         ],
       },
-      ...(guide?.faqItems?.length
+      ...(faqItems.length
         ? [
             {
               "@type": "FAQPage",
-              mainEntity: guide.faqItems.map(({ question, answer }) => ({
+              mainEntity: faqItems.map(({ question, answer }) => ({
                 "@type": "Question",
                 name: question,
                 acceptedAnswer: {
@@ -199,7 +204,7 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
           title: seoTitle,
           description,
           type: "website",
-          images: [{ url: ogImageURL, alt: guide?.pageTitle ?? seoTitle }],
+          images: [{ url: ogImageURL, alt: page.pageTitle ?? seoTitle }],
           site_name: "Strength Journeys",
         }}
         twitter={{
@@ -208,12 +213,12 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
           cardType: "summary_large_image",
         }}
         additionalMetaTags={
-          guide?.keywords
-            ? [{ name: "keywords", content: guide.keywords }]
+          page.keywords
+            ? [{ name: "keywords", content: page.keywords }]
             : []
         }
       />
-      <CuratedLiftGuideMain lift={lift} relatedArticles={relatedArticles} />
+      <CuratedLiftGuideMain page={page} relatedArticles={relatedArticles} />
     </>
   );
 }
@@ -223,12 +228,13 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
  * same blocks so they cannot drift apart, and every block scroll-reveals so a
  * long page reads as chapters rather than one flat column of cards.
  */
-function CuratedLiftGuideMain({ lift, relatedArticles }) {
+function CuratedLiftGuideMain({ page, relatedArticles }) {
   const { hasUserData, liftTypes } = useUserLiftingData();
   const { getColor } = useLiftColors();
-  const { liftType, guide, coaching } = lift;
+  const { liftType, coaching, videos, introduction, resources, quote, faqItems } =
+    page;
   const liftColor = getColor(liftType);
-  const navLiftLabel = lift.shortName ?? liftType;
+  const navLiftLabel = page.shortName ?? liftType;
   const strengthLevelsPath = getStrengthLevelsPath(liftType);
   const artSrc = getLiftArtwork(liftType);
   const HeaderIcon = getLiftIcon(liftType) ?? Layers;
@@ -238,13 +244,7 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
   );
   // The big four always show their analysis: demo data covers all four, so an
   // anonymous visitor sees it working, and the layout never jumps on load.
-  const showAnalysis = lift.bigFour || hasLiftData;
-
-  // Every tutorial the registry holds for this lift. The log shows one of
-  // them per session; the guide shows the lot.
-  const videos = (lift.videos ?? [])
-    .map((video) => ({ ...video, embedUrl: toYouTubeEmbedUrl(video.url) }))
-    .filter((video) => video.embedUrl);
+  const showAnalysis = page.bigFour || hasLiftData;
 
   const sections = [
     strengthLevelsPath && {
@@ -253,7 +253,7 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
     },
     showAnalysis && { href: "#progress-history", label: `${navLiftLabel} Progress` },
     showAnalysis &&
-      lift.bigFour && {
+      page.bigFour && {
         href: "#strength-circles",
         label: `${navLiftLabel} Percentiles`,
       },
@@ -265,7 +265,7 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
     coaching && { href: "#technique", label: "Technique" },
     videos.length > 0 && { href: "#video-guides", label: "Videos" },
     showAnalysis && { href: "#lift-prs", label: "Rep PRs" },
-    guide?.faqItems?.length > 0 && { href: "#lift-faq", label: "FAQ" },
+    faqItems.length > 0 && { href: "#lift-faq", label: "FAQ" },
     relatedArticles?.length > 0 && {
       href: "#related-articles",
       label: "Related Articles",
@@ -275,9 +275,7 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
   const analysisSections = showAnalysis ? (
     <LiftAnalysisSections
       liftType={liftType}
-      liftColor={liftColor}
-      isBigFour={Boolean(lift.bigFour)}
-      eyebrow={hasUserData ? "Your data" : "See it in action"}
+      isBigFour={page.bigFour}
       title={
         hasUserData
           ? `My ${liftType} analysis`
@@ -286,11 +284,7 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
     />
   ) : (
     <>
-      <SectionEyebrow
-        eyebrow="Your data"
-        title={`Start tracking your ${liftType}`}
-        color={liftColor}
-      />
+      <SectionHeading title={`Start tracking your ${liftType}`} />
       <SectionReveal id="progress-history">
         <LiftJourneyCard liftType={liftType} />
       </SectionReveal>
@@ -298,18 +292,16 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
   );
 
   const hasEditorial =
-    coaching || videos.length > 0 || guide?.introduction || guide?.quote;
+    coaching || videos.length > 0 || introduction || resources || quote;
 
   const editorialSections = hasEditorial ? (
     <>
-      <SectionEyebrow
-        eyebrow="Learn the lift"
+      <SectionHeading
         title={
-          guide
+          page.hasGuide
             ? `${liftType} coaching, technique and reading`
             : `How to ${liftType}`
         }
-        color={liftColor}
       />
       {coaching && (
         <SectionReveal id="technique">
@@ -321,20 +313,27 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
           <VideoCard liftType={liftType} videos={videos} />
         </SectionReveal>
       )}
-      {(guide?.introduction || guide?.resources) && (
+      {(introduction || resources) && (
         <SectionReveal className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <IntroductionCard introduction={guide.introduction} />
-          </div>
-          <ResourcesCard resources={guide.resources} />
+          {introduction && (
+            <div className={resources ? "lg:col-span-2" : "lg:col-span-3"}>
+              <IntroductionCard introduction={introduction} />
+            </div>
+          )}
+          {resources && (
+            <ResourcesCard
+              resources={resources}
+              className={introduction ? undefined : "lg:col-span-3"}
+            />
+          )}
         </SectionReveal>
       )}
-      {guide?.quote && (
+      {quote && (
         <SectionReveal>
           <LiftQuoteCard
-            title={guide.quote.sectionTitle}
-            quote={guide.quote.text}
-            author={guide.quote.author}
+            title={quote.sectionTitle}
+            quote={quote.text}
+            author={quote.author}
           />
         </SectionReveal>
       )}
@@ -348,11 +347,11 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
       <BackToLiftExplorer />
       <PageHeader>
         <PageHeaderHeading icon={HeaderIcon}>
-          {guide?.pageTitle ?? `${liftType} Guide & Progress Tracker`}
+          {page.pageTitle ?? `${liftType} Guide & Progress Tracker`}
         </PageHeaderHeading>
         <PageHeaderDescription>
           <p>
-            {guide?.description ??
+            {page.description ??
               coaching?.summary ??
               `Every ${liftType} set you log, charted: your progress, your records, and how often you train it.`}
           </p>
@@ -374,9 +373,9 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
                 </Link>
               </Button>
             )}
-            {lift.calculatorUrl && (
+            {page.calculatorUrl && (
               <Button asChild variant="outline" size="lg" className="h-11">
-                <Link href={lift.calculatorUrl} prefetch={false}>
+                <Link href={page.calculatorUrl} prefetch={false}>
                   {liftType} 1RM Calculator →
                 </Link>
               </Button>
@@ -437,16 +436,12 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
           </>
         )}
 
-        {guide?.faqItems?.length > 0 && (
+        {faqItems.length > 0 && (
           <>
-            <SectionEyebrow
-              eyebrow="Common questions"
-              title={`${liftType} FAQ`}
-              color={liftColor}
-            />
+            <SectionHeading title={`${liftType} FAQ`} />
             <SectionReveal as="section" id="lift-faq">
               <div className="grid gap-4 md:grid-cols-2">
-                {guide.faqItems.map(({ question, answer }) => (
+                {faqItems.map(({ question, answer }) => (
                   <article
                     key={question}
                     className="bg-card hover:bg-accent/30 rounded-lg border p-4 shadow-sm transition-colors"
@@ -476,7 +471,6 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
  */
 function UncuratedLiftGuide({ slug }) {
   const { liftTypes, parsedData, isLoading } = useUserLiftingData();
-  const { getColor } = useLiftColors();
 
   // liftTypes arrives sorted by set count, so if two spellings share a slug
   // ("Pull-up" and "Pull Up") the one trained most wins.
@@ -523,9 +517,7 @@ function UncuratedLiftGuide({ slug }) {
           <div className="flex flex-col gap-6 pt-6">
             <LiftAnalysisSections
               liftType={liftType}
-              liftColor={getColor(liftType)}
               isBigFour={false}
-              eyebrow="Your data"
               title={`My ${liftType} analysis`}
             />
           </div>
@@ -561,10 +553,10 @@ function UncuratedLiftGuide({ slug }) {
  * The lifter's numbers for one lift. Strength circles need standards, so they
  * appear for the big four only.
  */
-function LiftAnalysisSections({ liftType, liftColor, isBigFour, eyebrow, title }) {
+function LiftAnalysisSections({ liftType, isBigFour, title }) {
   return (
     <>
-      <SectionEyebrow eyebrow={eyebrow} title={title} color={liftColor} />
+      <SectionHeading title={title} />
       {/* Even halves: the journey card is dense enough to hold its own against
           the session list, and the log CTA reads as the natural next step under
           the sessions it would add to. */}
@@ -666,11 +658,11 @@ function TechniqueCard({ liftType, coaching }) {
           </CardDescription>
         )}
       </CardHeader>
-      {coaching.cues?.length > 0 && (
+      {coaching.cues.length > 0 && (
         <CardContent>
           <ol className="flex flex-col gap-3">
             {coaching.cues.map((cue, index) => (
-              <li key={cue} className="flex gap-3">
+              <li key={index} className="flex gap-3">
                 <span className="bg-muted flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums">
                   {index + 1}
                 </span>
@@ -713,12 +705,16 @@ function IntroductionCard({ introduction }) {
   if (!introduction) return null;
   return (
     <Card>
-      <CardHeader>
-        <h2 className="text-2xl leading-none font-semibold tracking-tight">
-          {introduction.title}
-        </h2>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      {introduction.title && (
+        <CardHeader>
+          <h2 className="text-2xl leading-none font-semibold tracking-tight">
+            {introduction.title}
+          </h2>
+        </CardHeader>
+      )}
+      <CardContent
+        className={introduction.title ? "flex flex-col gap-4" : "flex flex-col gap-4 pt-6"}
+      >
         {introduction.paragraphs.map((para, i) => (
           <p key={i}>
             <InlineMarkdown text={para} />
@@ -736,12 +732,14 @@ function ResourcesCard({ resources, className }) {
   if (!resources) return null;
   return (
     <Card className={className}>
-      <CardHeader>
-        <h2 className="text-2xl leading-none font-semibold tracking-tight">
-          {resources.title}
-        </h2>
-      </CardHeader>
-      <CardContent>
+      {resources.title && (
+        <CardHeader>
+          <h2 className="text-2xl leading-none font-semibold tracking-tight">
+            {resources.title}
+          </h2>
+        </CardHeader>
+      )}
+      <CardContent className={resources.title ? undefined : "pt-6"}>
         <ul className="space-y-3">
           {resources.links.map((link, i) => (
             <li key={i}>
@@ -754,10 +752,12 @@ function ResourcesCard({ resources, className }) {
                 {link.title}
                 <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
               </a>
-              <span className="text-muted-foreground text-sm">
-                {" "}
-                — {link.author}
-              </span>
+              {link.author && (
+                <span className="text-muted-foreground text-sm">
+                  {" "}
+                  — {link.author}
+                </span>
+              )}
               {link.note && (
                 <span className="text-muted-foreground text-sm">
                   {" "}
@@ -859,16 +859,18 @@ function LiftQuoteCard({ title, quote, author }) {
       <CardContent className="py-8">
         <blockquote className="space-y-4">
           {title && (
-            <div className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
+            <div className="text-muted-foreground text-sm font-semibold">
               {title}
             </div>
           )}
           <p className="text-foreground text-xl leading-relaxed italic md:text-2xl">
             &ldquo;{quote}&rdquo;
           </p>
-          <footer className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
-            {author}
-          </footer>
+          {author && (
+            <footer className="text-muted-foreground text-sm font-medium">
+              {author}
+            </footer>
+          )}
         </blockquote>
       </CardContent>
     </Card>
@@ -901,7 +903,7 @@ function VideoCard({ liftType, videos }) {
           }
         >
           {videos.map((video, index) => (
-            <figure key={video.embedUrl} className="flex flex-col gap-2">
+            <figure key={`${index}-${video.embedUrl}`} className="flex flex-col gap-2">
               <div className="aspect-video w-full overflow-hidden rounded-md">
                 <iframe
                   src={video.embedUrl}
@@ -928,6 +930,93 @@ function VideoCard({ liftType, videos }) {
   );
 }
 
+/**
+ * The registry lift reduced to what this page can safely render. Lift files
+ * are curated by hand, so a missing block, a misspelt key or a wrong type
+ * should cost only the section it feeds, never the page. Every text field
+ * comes back as real text or null, and every list holds only complete entries:
+ * a video needs a YouTube link, a resource a title and URL, a FAQ item both
+ * halves. Sections then render on what survives.
+ */
+function readGuideLift(lift) {
+  const guide = asObject(lift.guide);
+  const coaching = asObject(lift.coaching);
+  const introduction = asObject(guide.introduction);
+  const resources = asObject(guide.resources);
+  const quote = asObject(guide.quote);
+
+  const summary = text(coaching.summary);
+  const cues = asList(coaching.cues).map(text).filter(Boolean);
+  const paragraphs = asList(introduction.paragraphs).map(text).filter(Boolean);
+  const links = asList(resources.links)
+    .map(asObject)
+    .map((link) => ({
+      title: text(link.title),
+      url: text(link.url),
+      author: text(link.author),
+      note: text(link.note),
+    }))
+    .filter((link) => link.title && link.url);
+  const ogImage = text(guide.ogImage);
+
+  return {
+    liftType: text(lift.liftType) ?? titleFromSlug(lift.slug),
+    slug: lift.slug,
+    bigFour: lift.bigFour === true,
+    hasGuide: Boolean(lift.guide),
+    shortName: text(lift.shortName),
+    calculatorUrl: text(lift.calculatorUrl),
+    seoTitle: text(guide.seoTitle),
+    pageTitle: text(guide.pageTitle),
+    description: text(guide.description),
+    keywords: text(guide.keywords),
+    ogImage: ogImage?.startsWith("/") ? ogImage : null,
+    coaching: summary || cues.length > 0 ? { summary, cues } : null,
+    // Every tutorial for the lift. The log shows one per session; the guide
+    // shows the lot.
+    videos: asList(lift.videos)
+      .map(asObject)
+      .map((video) => ({
+        title: text(video.title),
+        channel: text(video.channel),
+        embedUrl: toYouTubeEmbedUrl(text(video.url)),
+      }))
+      .filter((video) => video.embedUrl),
+    introduction:
+      paragraphs.length > 0
+        ? { title: text(introduction.title), paragraphs }
+        : null,
+    resources:
+      links.length > 0 ? { title: text(resources.title), links } : null,
+    quote: text(quote.text)
+      ? {
+          sectionTitle: text(quote.sectionTitle),
+          text: text(quote.text),
+          author: text(quote.author),
+        }
+      : null,
+    faqItems: asList(guide.faqItems)
+      .map(asObject)
+      .map((item) => ({ question: text(item.question), answer: text(item.answer) }))
+      .filter((item) => item.question && item.answer),
+  };
+}
+
+/** A non-empty string, or null. */
+function text(value) {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+/** An array with its empty slots dropped, or an empty array. */
+function asList(value) {
+  return Array.isArray(value) ? value.filter((item) => item != null) : [];
+}
+
+/** A plain object, or an empty one to read nothing from. */
+function asObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
 /** Coaching videos are stored as watch links; iframes need the embed form. */
 function toYouTubeEmbedUrl(url) {
   const id = url ? extractYouTubeVideoId(url) : null;
@@ -936,7 +1025,7 @@ function toYouTubeEmbedUrl(url) {
 
 /** "pause-bench-press" -> "Pause Bench Press", until the real name loads. */
 function titleFromSlug(slug) {
-  return slug
+  return String(slug ?? "")
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");

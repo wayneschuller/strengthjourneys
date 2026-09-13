@@ -116,7 +116,10 @@ const BY_SLUG = new Map();
 for (const lift of CURATED_LIFTS) {
   BY_NAME.set(lift.liftType, lift);
   BY_SLUG.set(lift.slug, lift);
-  for (const synonym of lift.synonyms ?? []) BY_NAME.set(synonym, lift);
+  // A malformed synonyms value is ignored rather than breaking every page.
+  for (const synonym of Array.isArray(lift.synonyms) ? lift.synonyms : []) {
+    BY_NAME.set(synonym, lift);
+  }
 }
 
 /**
@@ -233,7 +236,11 @@ export function getStrengthLevelsPath(liftType) {
   return lift?.strengthLevels ? getStrengthStandardsUrl(lift.slug) : null;
 }
 
-/** Resolve optional fields whose default is another field, once, at load. */
+/**
+ * Resolve optional fields whose default is another field, once, at load. Null,
+ * never undefined, so a lift file missing both names still serialises as page
+ * props instead of failing the page.
+ */
 function withDefaults(lift) {
-  return { ...lift, commonName: lift.commonName ?? lift.liftType };
+  return { ...lift, commonName: lift.commonName ?? lift.liftType ?? null };
 }

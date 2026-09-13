@@ -46,7 +46,9 @@ export function inlineMarkdownToText(source) {
 
 /** Split copy into text, bold and link parts. */
 function parseInlineMarkdown(source) {
-  const input = String(source ?? "");
+  // Anything but a string (a missing answer, an old segment array) renders
+  // nothing rather than "[object Object]".
+  const input = typeof source === "string" ? source : "";
   const parts = [];
   let last = 0;
   for (const match of input.matchAll(TOKEN)) {

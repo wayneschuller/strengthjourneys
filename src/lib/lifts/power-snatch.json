@@ -1,6 +1,7 @@
 {
   "liftType": "Power Snatch",
   "slug": "power-snatch",
+  "tagline": "The fastest lift in the gym.",
   "artwork": {
     "src": "/lifts/default/power-snatch.png",
     "figure": "male"
@@ -30,61 +31,55 @@
     }
   },
   "guide": {
-    "hubDescription": "The fastest lift in the gym.",
     "seoTitle": "Power Snatch Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Power Snatch Guide & Progress Tracker",
-    "pageDescription": "Learn the power snatch from the floor to a locked-out overhead catch: plain-English technique cues, a coaching video, answers to common questions, and free power snatch progress tracking with rep PRs and E1RM charts.",
-    "pageKeywords": "power snatch, how to power snatch, power snatch technique, power snatch vs snatch, power snatch grip width, power snatch progress tracker",
-    "quoteSectionTitle": "Why the Olympic lifts earn their place",
-    "liftQuote": "First and foremost is the development of leg and hip extension power, which is alone more than enough reason for the lifts’ inclusion in training.",
-    "liftQuoteAuthor": "Greg Everett, Integrating the Olympic Lifts with CrossFit",
+    "description": "Learn the power snatch from the floor to a locked-out overhead catch: plain-English technique cues, a coaching video, answers to common questions, and free power snatch progress tracking with rep PRs and E1RM charts.",
+    "keywords": "power snatch, how to power snatch, power snatch technique, power snatch vs snatch, power snatch grip width, power snatch progress tracker",
     "introduction": {
       "title": "What the Power Snatch Builds",
       "paragraphs": [
         "The power snatch takes a barbell from the floor to arm's length overhead in one unbroken movement, caught in a partial squat with the thighs above parallel. It is the snatch without the deep squat under the bar, which makes it one of the best ways to train speed, timing and explosive hip extension.",
         "Because the bar travels further than in any other lift, the loads are light compared with a deadlift or even a strict press. That is the point. The power snatch rewards precision and aggression rather than grinding strength, and it carries over to jumping, sprinting and every lift that needs a fast finish through the hips.",
-        [
-          "Start with an empty bar or a light technique bar and build the positions first: a solid overhead lockout, a confident receiving stance, and a pull that stays close to the body. ",
-          {
-            "text": "Sets of 1 to 3 reps",
-            "bold": true
-          },
-          " keep every rep fast and crisp, and adding weight in small steps keeps the technique sharp."
-        ],
+        "Start with an empty bar or a light technique bar and build the positions first: a solid overhead lockout, a confident receiving stance, and a pull that stays close to the body. **Sets of 1 to 3 reps** keep every rep fast and crisp, and adding weight in small steps keeps the technique sharp.",
         "Log your power snatch sessions and this page charts your best singles, doubles and triples over time, so you can watch your speed strength climb alongside your slower lifts."
       ]
+    },
+    "quote": {
+      "sectionTitle": "Why the Olympic lifts earn their place",
+      "text": "First and foremost is the development of leg and hip extension power, which is alone more than enough reason for the lifts’ inclusion in training.",
+      "author": "Greg Everett, Integrating the Olympic Lifts with CrossFit"
     },
     "resources": {
       "title": "Third Party Power Snatch Articles",
       "links": [
         {
-          "text": "A Stronger Finish",
-          "href": "https://startingstrength.com/article/a_stronger_finish",
+          "title": "A Stronger Finish",
+          "url": "https://startingstrength.com/article/a_stronger_finish",
           "author": "Bill Starr"
         },
         {
-          "text": "Learning How to Do Full Snatches",
-          "href": "https://library.crossfit.com/free/pdf/CFJ_Starr_Snatches.pdf",
+          "title": "Learning How to Do Full Snatches",
+          "url": "https://library.crossfit.com/free/pdf/CFJ_Starr_Snatches.pdf",
           "author": "Bill Starr, CrossFit Journal"
         },
         {
-          "text": "The Burgener Warm-up",
-          "href": "https://library.crossfit.com/free/pdf/53_06_Burgener_Warmup.pdf",
+          "title": "The Burgener Warm-up",
+          "url": "https://library.crossfit.com/free/pdf/53_06_Burgener_Warmup.pdf",
           "author": "Mike Burgener with Tony Budding, CrossFit Journal"
         },
         {
-          "text": "Integrating the Olympic Lifts with CrossFit",
-          "href": "https://www.catalystathletics.com/article/34/Integrating-the-Olympic-Lifts-with-CrossFit/",
+          "title": "Integrating the Olympic Lifts with CrossFit",
+          "url": "https://www.catalystathletics.com/article/34/Integrating-the-Olympic-Lifts-with-CrossFit/",
           "author": "Greg Everett, Catalyst Athletics"
         },
         {
-          "text": "Power Snatch: Olympic Weightlifting Exercise Library",
-          "href": "https://www.catalystathletics.com/exercise/61/Power-Snatch/",
+          "title": "Power Snatch: Olympic Weightlifting Exercise Library",
+          "url": "https://www.catalystathletics.com/exercise/61/Power-Snatch/",
           "author": "Catalyst Athletics"
         },
         {
-          "text": "The Power Snatch: Uses & Cautions",
-          "href": "https://www.catalystathletics.com/article/126/The-Power-Snatch-Uses-Cautions/",
+          "title": "The Power Snatch: Uses & Cautions",
+          "url": "https://www.catalystathletics.com/article/126/The-Power-Snatch-Uses-Cautions/",
           "author": "Greg Everett, Catalyst Athletics"
         }
       ]
@@ -104,14 +99,7 @@
       },
       {
         "question": "Should I learn the power snatch or the power clean first?",
-        "answer": [
-          "Most coaches teach the ",
-          {
-            "text": "power clean",
-            "href": "/progress-guide/power-clean"
-          },
-          " first. Catching the bar on the shoulders is more forgiving than catching it overhead, and the heavier loads build pulling strength quickly. The snatch then adds a wider grip, a longer pull and the need for solid overhead mobility."
-        ]
+        "answer": "Most coaches teach the [power clean](/progress-guide/power-clean) first. Catching the bar on the shoulders is more forgiving than catching it overhead, and the heavier loads build pulling strength quickly. The snatch then adds a wider grip, a longer pull and the need for solid overhead mobility."
       },
       {
         "question": "Why does the bar swing away from me in the power snatch?",

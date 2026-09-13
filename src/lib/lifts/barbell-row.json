@@ -1,6 +1,7 @@
 {
   "liftType": "Barbell Row",
   "slug": "barbell-row",
+  "tagline": "A strong back for every other lift.",
   "artwork": {
     "src": "/lifts/default/barbell-row.png",
     "figure": "male"
@@ -25,46 +26,40 @@
     }
   },
   "guide": {
-    "hubDescription": "A strong back for every other lift.",
     "seoTitle": "Barbell Row Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Barbell Row Guide & Progress Tracker",
-    "pageDescription": "Learn the barbell row: torso angle, grip and bar path in plain English, a coaching video, answers to common questions, and free barbell row progress tracking with rep PRs and tonnage.",
-    "pageKeywords": "barbell row, bent over row, how to barbell row, barbell row form, pendlay row vs barbell row, good barbell row weight, barbell row progress tracker",
-    "quoteSectionTitle": "Why every program needs a row",
-    "liftQuote": "The barbell row should find its way into every barbell-based training program at some point.",
-    "liftQuoteAuthor": "Barbell Logic, The Barbell Row: A Complete Guide",
+    "description": "Learn the barbell row: torso angle, grip and bar path in plain English, a coaching video, answers to common questions, and free barbell row progress tracking with rep PRs and tonnage.",
+    "keywords": "barbell row, bent over row, how to barbell row, barbell row form, pendlay row vs barbell row, good barbell row weight, barbell row progress tracker",
     "introduction": {
       "title": "What the Barbell Row Builds",
       "paragraphs": [
         "The barbell row has you hinge forward with a flat back and pull the bar from arm's length to your lower chest or upper stomach. It builds the lats, upper back and rear shoulders, and it strengthens the same back position you hold in every deadlift.",
         "A strong row balances the pressing in a typical program. It supports healthy shoulders, gives your bench press a stable base to push from, and helps you keep the bar close on heavy pulls.",
-        [
-          "Hold your torso angle steady and let your arms and back do the work. ",
-          {
-            "text": "Sets of 5 to 10 reps",
-            "bold": true
-          },
-          " suit most goals, and a little body movement on the heaviest sets is fine as long as the bar path stays smooth."
-        ],
+        "Hold your torso angle steady and let your arms and back do the work. **Sets of 5 to 10 reps** suit most goals, and a little body movement on the heaviest sets is fine as long as the bar path stays smooth.",
         "Log your rows and this page tracks your rep PRs, tonnage and progress, so you can watch your pulling keep pace with your pressing."
       ]
+    },
+    "quote": {
+      "sectionTitle": "Why every program needs a row",
+      "text": "The barbell row should find its way into every barbell-based training program at some point.",
+      "author": "Barbell Logic, The Barbell Row: A Complete Guide"
     },
     "resources": {
       "title": "Third Party Barbell Row Articles",
       "links": [
         {
-          "text": "The Barbell Row: A Clarification",
-          "href": "https://startingstrength.com/training/the-barbell-row-a-clarification",
+          "title": "The Barbell Row: A Clarification",
+          "url": "https://startingstrength.com/training/the-barbell-row-a-clarification",
           "author": "Michael Jones"
         },
         {
-          "text": "The Barbell Row: A Complete Guide",
-          "href": "https://barbell-logic.com/how-to-barbell-row/",
+          "title": "The Barbell Row: A Complete Guide",
+          "url": "https://barbell-logic.com/how-to-barbell-row/",
           "author": "Barbell Logic"
         },
         {
-          "text": "How to Barbell Row: The Definitive Guide",
-          "href": "https://stronglifts.com/barbell-row/",
+          "title": "How to Barbell Row: The Definitive Guide",
+          "url": "https://stronglifts.com/barbell-row/",
           "author": "StrongLifts"
         }
       ]
@@ -72,14 +67,7 @@
     "faqItems": [
       {
         "question": "What is a good barbell row weight?",
-        "answer": [
-          "As a rough rule of thumb, a strong barbell row often lands around 80 percent of your bench press for a clean set. Rowing your own bodyweight for reps is a satisfying milestone. Keep an eye on your ",
-          {
-            "text": "bench press",
-            "href": "/progress-guide/bench-press"
-          },
-          " to see how the two grow together."
-        ]
+        "answer": "As a rough rule of thumb, a strong barbell row often lands around 80 percent of your bench press for a clean set. Rowing your own bodyweight for reps is a satisfying milestone. Keep an eye on your [bench press](/progress-guide/bench-press) to see how the two grow together."
       },
       {
         "question": "What is the difference between a barbell row and a Pendlay row?",

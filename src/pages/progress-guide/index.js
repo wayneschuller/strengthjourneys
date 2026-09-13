@@ -20,7 +20,7 @@ const CANONICAL_URL = "https://www.strengthjourneys.xyz/progress-guide";
 const LIFT_CARDS = BIG_FOUR_LIFTS.map((lift) => ({
   liftType: lift.liftType,
   slug: lift.slug,
-  tagline: lift.guide.hubDescription,
+  tagline: lift.tagline,
 }));
 
 export default function ProgressGuideHub() {

@@ -21,6 +21,8 @@ import { NextSeo } from "next-seo";
 import { motion } from "motion/react";
 import { ChevronLeft, ExternalLink, Layers, Plus } from "lucide-react";
 
+import { InlineMarkdown } from "@/components/inline-markdown";
+import { inlineMarkdownToText } from "@/lib/inline-markdown";
 import {
   useAthleteBio,
   getTopLiftStats,
@@ -132,10 +134,10 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
   const seoTitle =
     guide?.seoTitle ?? `${liftType} Technique and Progress Tracker`;
   const description =
-    guide?.pageDescription ??
+    guide?.description ??
     `${coaching?.summary ? `${coaching.summary} ` : ""}Technique cues, a tutorial video, and free ${liftType} progress tracking with E1RM charts, rep PRs and tonnage.`;
   const ogImageURL =
-    guide?.ogImageURL ?? `${SITE_URL}/strength_journeys_analyzer_og.png`;
+    `${SITE_URL}${guide?.ogImage ?? "/strength_journeys_analyzer_og.png"}`;
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -172,7 +174,7 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
                 name: question,
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: flattenAnswer(answer),
+                  text: inlineMarkdownToText(answer),
                 },
               })),
             },
@@ -207,8 +209,8 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
           cardType: "summary_large_image",
         }}
         additionalMetaTags={
-          guide?.pageKeywords
-            ? [{ name: "keywords", content: guide.pageKeywords }]
+          guide?.keywords
+            ? [{ name: "keywords", content: guide.keywords }]
             : []
         }
       />
@@ -297,7 +299,7 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
   );
 
   const hasEditorial =
-    coaching || videos.length > 0 || guide?.introduction || guide?.liftQuote;
+    coaching || videos.length > 0 || guide?.introduction || guide?.quote;
 
   const editorialSections = hasEditorial ? (
     <>
@@ -328,12 +330,12 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
           <ResourcesCard resources={guide.resources} />
         </SectionReveal>
       )}
-      {guide?.liftQuote && (
+      {guide?.quote && (
         <SectionReveal>
           <LiftQuoteCard
-            title={guide.quoteSectionTitle}
-            quote={guide.liftQuote}
-            author={guide.liftQuoteAuthor}
+            title={guide.quote.sectionTitle}
+            quote={guide.quote.text}
+            author={guide.quote.author}
           />
         </SectionReveal>
       )}
@@ -351,7 +353,7 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
         </PageHeaderHeading>
         <PageHeaderDescription>
           <p>
-            {guide?.pageDescription ??
+            {guide?.description ??
               coaching?.summary ??
               `Every ${liftType} set you log, charted: your progress, your records, and how often you train it.`}
           </p>
@@ -452,7 +454,7 @@ function CuratedLiftGuideMain({ lift, relatedArticles }) {
                   >
                     <h3 className="text-base font-semibold">{question}</h3>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {renderAnswer(answer)}
+                      <InlineMarkdown text={answer} />
                     </p>
                   </article>
                 ))}
@@ -706,7 +708,7 @@ function MyLiftTypePRsCard({ liftType }) {
 }
 
 /**
- * Renders introduction content with paragraphs that can contain bold segments.
+ * Renders the guide introduction; paragraphs are inline markdown.
  */
 function IntroductionCard({ introduction }) {
   if (!introduction) return null;
@@ -720,17 +722,7 @@ function IntroductionCard({ introduction }) {
       <CardContent className="flex flex-col gap-4">
         {introduction.paragraphs.map((para, i) => (
           <p key={i}>
-            {typeof para === "string"
-              ? para
-              : para.map((seg, j) =>
-                  typeof seg === "string" ? (
-                    seg
-                  ) : seg.bold ? (
-                    <strong key={j}>{seg.text}</strong>
-                  ) : (
-                    seg.text
-                  ),
-                )}
+            <InlineMarkdown text={para} />
           </p>
         ))}
       </CardContent>
@@ -755,12 +747,12 @@ function ResourcesCard({ resources, className }) {
           {resources.links.map((link, i) => (
             <li key={i}>
               <a
-                href={link.href}
+                href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
-                {link.text}
+                {link.title}
                 <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
               </a>
               <span className="text-muted-foreground text-sm">
@@ -935,31 +927,6 @@ function VideoCard({ liftType, videos }) {
       </CardContent>
     </Card>
   );
-}
-
-function renderAnswer(answer) {
-  if (typeof answer === "string") return answer;
-  return answer.map((seg, i) =>
-    typeof seg === "string" ? (
-      seg
-    ) : (
-      <Link
-        key={i}
-        href={seg.href}
-        prefetch={false}
-        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-      >
-        {seg.text}
-      </Link>
-    ),
-  );
-}
-
-function flattenAnswer(answer) {
-  if (typeof answer === "string") return answer;
-  return answer
-    .map((seg) => (typeof seg === "string" ? seg : seg.text))
-    .join("");
 }
 
 /** Coaching videos are stored as watch links; iframes need the embed form. */

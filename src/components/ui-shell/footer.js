@@ -38,7 +38,7 @@ const FORMULA_CALCULATORS = [
 const STRENGTH_STANDARDS_LINKS = [
   ...BIG_FOUR_LIFTS.map((lift) => ({
     href: getStrengthLevelsPath(lift.liftType),
-    label: `${lift.strengthLevels.navLabel} Strength Levels`,
+    label: `${lift.commonName} Strength Levels`,
   })),
   { href: "/1000lb-club-calculator", label: "1000lb Club" },
   { href: "/200-300-400-500-strength-club-calculator", label: "200/300/400/500 Club" },
@@ -47,7 +47,7 @@ const STRENGTH_STANDARDS_LINKS = [
 
 const PROGRESS_GUIDES = BIG_FOUR_LIFTS.map((lift) => ({
   href: getLiftGuidePath(lift.liftType),
-  label: `${lift.strengthLevels.navLabel} Progress Guide`,
+  label: `${lift.commonName} Progress Guide`,
 }));
 
 const RESOURCES = [

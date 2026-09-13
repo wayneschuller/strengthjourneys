@@ -1,6 +1,7 @@
 {
   "liftType": "Overhead Squat",
   "slug": "overhead-squat",
+  "tagline": "Strength, mobility and balance under one bar.",
   "artwork": {
     "src": "/lifts/default/overhead-squat.png",
     "figure": "female"
@@ -26,56 +27,50 @@
     }
   },
   "guide": {
-    "hubDescription": "Strength, mobility and balance under one bar.",
     "seoTitle": "Overhead Squat Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Overhead Squat Guide & Progress Tracker",
-    "pageDescription": "Learn the overhead squat with the bar locked out above your head: plain-English technique cues, a coaching video, mobility tips, answers to common questions, and free overhead squat progress tracking.",
-    "pageKeywords": "overhead squat, how to overhead squat, overhead squat technique, overhead squat mobility, overhead squat grip width, overhead squat progress tracker",
-    "quoteSectionTitle": "The heart of the snatch",
-    "liftQuote": "The overhead squat is the ultimate core exercise, the heart of the snatch, and peerless in developing effective athletic movement.",
-    "liftQuoteAuthor": "Greg Glassman, The Overhead Squat, CrossFit Journal",
+    "description": "Learn the overhead squat with the bar locked out above your head: plain-English technique cues, a coaching video, mobility tips, answers to common questions, and free overhead squat progress tracking.",
+    "keywords": "overhead squat, how to overhead squat, overhead squat technique, overhead squat mobility, overhead squat grip width, overhead squat progress tracker",
     "introduction": {
       "title": "Why the Overhead Squat Is Worth Learning",
       "paragraphs": [
         "The overhead squat holds a barbell at arm's length above your head on a wide grip while you squat to full depth and stand back up. It tests everything at once: shoulder stability, upper back strength, hip and ankle mobility, and the balance to keep the bar over the middle of your foot.",
         "It is also the receiving position of the snatch, so weightlifters use it to build confidence under the bar. For everyone else it is a brilliant teacher. Any weak link in your squat shows up the moment the bar is overhead, and strengthening it improves every other squat you do.",
-        [
-          "Begin with a PVC pipe or an empty bar. ",
-          {
-            "text": "Press up into the bar, lock your elbows, and sit straight down between your hips",
-            "bold": true
-          },
-          ". Add weight when every rep looks like your first one."
-        ],
+        "Begin with a PVC pipe or an empty bar. **Press up into the bar, lock your elbows, and sit straight down between your hips**. Add weight when every rep looks like your first one.",
         "Log your overhead squats and this page tracks your progress, rep PRs and training history alongside the rest of your squatting."
       ]
+    },
+    "quote": {
+      "sectionTitle": "The heart of the snatch",
+      "text": "The overhead squat is the ultimate core exercise, the heart of the snatch, and peerless in developing effective athletic movement.",
+      "author": "Greg Glassman, The Overhead Squat, CrossFit Journal"
     },
     "resources": {
       "title": "Third Party Overhead Squat Articles",
       "links": [
         {
-          "text": "The Overhead Squat",
-          "href": "https://library.crossfit.com/free/pdf/36_05_Overhead_Squat.pdf",
+          "title": "The Overhead Squat",
+          "url": "https://library.crossfit.com/free/pdf/36_05_Overhead_Squat.pdf",
           "author": "Greg Glassman, CrossFit Journal"
         },
         {
-          "text": "Stability Now!",
-          "href": "https://library.crossfit.com/free/pdf/CFJ_2015_03_Stabilize_Starr.pdf",
+          "title": "Stability Now!",
+          "url": "https://library.crossfit.com/free/pdf/CFJ_2015_03_Stabilize_Starr.pdf",
           "author": "Bill Starr, CrossFit Journal"
         },
         {
-          "text": "The Overhead Squat: Instruction, Benefits & Technique",
-          "href": "https://www.crossfit.com/essentials/the-overhead-squat",
+          "title": "The Overhead Squat: Instruction, Benefits & Technique",
+          "url": "https://www.crossfit.com/essentials/the-overhead-squat",
           "author": "CrossFit"
         },
         {
-          "text": "The Lifting Shoulder",
-          "href": "https://library.crossfit.com/free/pdf/37_05_lifting_shoulder.pdf",
+          "title": "The Lifting Shoulder",
+          "url": "https://library.crossfit.com/free/pdf/37_05_lifting_shoulder.pdf",
           "author": "Greg Glassman, CrossFit Journal"
         },
         {
-          "text": "Flexibility for the Overhead Squat",
-          "href": "https://www.catalystathletics.com/article/1682/Flexibility-for-the-Overhead-Squat/",
+          "title": "Flexibility for the Overhead Squat",
+          "url": "https://www.catalystathletics.com/article/1682/Flexibility-for-the-Overhead-Squat/",
           "author": "Greg Everett, Catalyst Athletics"
         }
       ]
@@ -91,14 +86,7 @@
       },
       {
         "question": "How much should I overhead squat?",
-        "answer": [
-          "Mobility sets the pace for most people starting out, so the overhead squat usually sits well below the back squat at first, often around half of it. With practice, many lifters close that gap considerably. Track it against your ",
-          {
-            "text": "back squat",
-            "href": "/progress-guide/squat"
-          },
-          " to watch it happen."
-        ]
+        "answer": "Mobility sets the pace for most people starting out, so the overhead squat usually sits well below the back squat at first, often around half of it. With practice, many lifters close that gap considerably. Track it against your [back squat](/progress-guide/squat) to watch it happen."
       },
       {
         "question": "Is the overhead squat good for beginners?",
@@ -110,14 +98,7 @@
       },
       {
         "question": "What is the difference between an overhead squat and a snatch?",
-        "answer": [
-          "The overhead squat starts with the bar already overhead and is a slow, controlled strength movement. The snatch pulls the bar from the floor and meets that same bottom position at speed. The ",
-          {
-            "text": "power snatch guide",
-            "href": "/progress-guide/power-snatch"
-          },
-          " covers the faster version."
-        ]
+        "answer": "The overhead squat starts with the bar already overhead and is a slow, controlled strength movement. The snatch pulls the bar from the floor and meets that same bottom position at speed. The [power snatch guide](/progress-guide/power-snatch) covers the faster version."
       }
     ]
   }

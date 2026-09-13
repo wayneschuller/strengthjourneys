@@ -4,6 +4,7 @@
   "synonyms": [
     "Close-Grip Bench Press"
   ],
+  "tagline": "The bench press, built for triceps.",
   "artwork": {
     "src": "/lifts/default/close-grip-bench-press.png",
     "figure": "female"
@@ -29,51 +30,45 @@
     }
   },
   "guide": {
-    "hubDescription": "The bench press, built for triceps.",
     "seoTitle": "Close Grip Bench Press Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Close Grip Bench Press Guide & Progress Tracker",
-    "pageDescription": "Learn the close grip bench press: grip width, elbow position and bar path in plain English, a coaching video, answers to common questions, and free close grip bench progress tracking.",
-    "pageKeywords": "close grip bench press, how to close grip bench, close grip bench grip width, close grip bench vs bench press, close grip bench triceps, close grip bench progress tracker",
-    "quoteSectionTitle": "Why a closer grip",
-    "liftQuote": "I much prefer to use a closer grip so that the deltoids and triceps handle the bulk of the effort.",
-    "liftQuoteAuthor": "Bill Starr, The Role of the Bench Press in Strength Training, CrossFit Journal",
+    "description": "Learn the close grip bench press: grip width, elbow position and bar path in plain English, a coaching video, answers to common questions, and free close grip bench progress tracking.",
+    "keywords": "close grip bench press, how to close grip bench, close grip bench grip width, close grip bench vs bench press, close grip bench triceps, close grip bench progress tracker",
     "introduction": {
       "title": "Why Lifters Add the Close Grip Bench Press",
       "paragraphs": [
         "The close grip bench press is a regular bench press with your hands moved in to about shoulder width. The narrower grip increases the range of motion and shifts more of the work onto the triceps and front shoulders, while almost everything else about the bench stays the same.",
         "That makes it one of the most popular assistance lifts for pressing. Stronger triceps help lock out a heavy bench press and a strict press, and many lifters find the closer grip easier on their shoulders.",
-        [
-          "Keep your grip ",
-          {
-            "text": "about shoulder width",
-            "bold": true
-          },
-          ". Going much narrower strains the wrists without adding much triceps work. Sets of 5 to 10 reps are a great fit, since the lift rewards clean, controlled volume."
-        ],
+        "Keep your grip **about shoulder width**. Going much narrower strains the wrists without adding much triceps work. Sets of 5 to 10 reps are a great fit, since the lift rewards clean, controlled volume.",
         "Log your close grip bench sessions and this page tracks your rep PRs, tonnage and progress, ready to compare with your regular bench press."
       ]
+    },
+    "quote": {
+      "sectionTitle": "Why a closer grip",
+      "text": "I much prefer to use a closer grip so that the deltoids and triceps handle the bulk of the effort.",
+      "author": "Bill Starr, The Role of the Bench Press in Strength Training, CrossFit Journal"
     },
     "resources": {
       "title": "Third Party Close Grip Bench Press Articles",
       "links": [
         {
-          "text": "The Close-Grip Bench",
-          "href": "https://startingstrength.com/training/the-close-grip-bench",
+          "title": "The Close-Grip Bench",
+          "url": "https://startingstrength.com/training/the-close-grip-bench",
           "author": "Mark Rippetoe"
         },
         {
-          "text": "The Role of the Bench Press in Strength Training",
-          "href": "https://library.crossfit.com/free/pdf/CFJ_Bench_Starr.pdf",
+          "title": "The Role of the Bench Press in Strength Training",
+          "url": "https://library.crossfit.com/free/pdf/CFJ_Bench_Starr.pdf",
           "author": "Bill Starr, CrossFit Journal"
         },
         {
-          "text": "Close-Grip Bench Press for Chest Hypertrophy: How to Use It",
-          "href": "https://www.barbellmedicine.com/blog/close-grip-bench-press-chest-hypertrophy/",
+          "title": "Close-Grip Bench Press for Chest Hypertrophy: How to Use It",
+          "url": "https://www.barbellmedicine.com/blog/close-grip-bench-press-chest-hypertrophy/",
           "author": "Barbell Medicine"
         },
         {
-          "text": "Gym Shorts: Learn How to Close Grip Bench Press, Quickly",
-          "href": "https://barbell-logic.com/gym-shorts-close-grip-bench-press/",
+          "title": "Gym Shorts: Learn How to Close Grip Bench Press, Quickly",
+          "url": "https://barbell-logic.com/gym-shorts-close-grip-bench-press/",
           "author": "Barbell Logic"
         }
       ]
@@ -85,14 +80,7 @@
       },
       {
         "question": "How much should I close grip bench compared to my bench press?",
-        "answer": [
-          "Most lifters close grip bench a little less than their regular bench, often around 85 to 90 percent of it. A bigger gap usually points to the triceps as the muscle with the most room to grow, which is exactly what this lift trains. Compare your numbers with the ",
-          {
-            "text": "bench press guide",
-            "href": "/progress-guide/bench-press"
-          },
-          "."
-        ]
+        "answer": "Most lifters close grip bench a little less than their regular bench, often around 85 to 90 percent of it. A bigger gap usually points to the triceps as the muscle with the most room to grow, which is exactly what this lift trains. Compare your numbers with the [bench press guide](/progress-guide/bench-press)."
       },
       {
         "question": "What muscles does the close grip bench press work?",

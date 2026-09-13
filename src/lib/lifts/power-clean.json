@@ -1,6 +1,7 @@
 {
   "liftType": "Power Clean",
   "slug": "power-clean",
+  "tagline": "Floor to shoulders in one explosive pull.",
   "artwork": {
     "src": "/lifts/default/power-clean.png",
     "figure": "male"
@@ -25,56 +26,50 @@
     }
   },
   "guide": {
-    "hubDescription": "Floor to shoulders in one explosive pull.",
     "seoTitle": "Power Clean Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Power Clean Guide & Progress Tracker",
-    "pageDescription": "Learn the power clean from the floor to a solid front rack: plain-English technique cues, a coaching video, answers to common questions, and free power clean progress tracking with rep PRs and E1RM charts.",
-    "pageKeywords": "power clean, how to power clean, power clean technique, power clean vs clean, good power clean weight, power clean hook grip, power clean progress tracker",
-    "quoteSectionTitle": "Why coaches have always loved the power clean",
-    "liftQuote": "The power clean is the perfect lift for any athlete wanting to gain strength, and it has the added benefit of enhancing athletic attributes such as foot speed, co-ordination, timing and balance.",
-    "liftQuoteAuthor": "Bill Starr, The Holy Trinity of Strength Training, CrossFit Journal",
+    "description": "Learn the power clean from the floor to a solid front rack: plain-English technique cues, a coaching video, answers to common questions, and free power clean progress tracking with rep PRs and E1RM charts.",
+    "keywords": "power clean, how to power clean, power clean technique, power clean vs clean, good power clean weight, power clean hook grip, power clean progress tracker",
     "introduction": {
       "title": "Why Lifters Love the Power Clean",
       "paragraphs": [
         "The power clean pulls a barbell from the floor and catches it on the front of the shoulders in a partial squat, all in one fast movement. It teaches your body to produce force quickly, which is why it has been a staple of strength programs for football players, throwers and everyday barbell lifters for decades.",
         "It pairs naturally with the deadlift and the squat. The deadlift builds the strength to break the bar from the floor, and the power clean turns that strength into speed. Receiving a heavy clean also builds a strong upper back and a well braced trunk.",
-        [
-          "Keep the reps low so every one stays explosive. ",
-          {
-            "text": "Sets of 2 to 3 reps",
-            "bold": true
-          },
-          " are a good default, and many programs finish with a few heavier singles once the technique is reliable."
-        ],
+        "Keep the reps low so every one stays explosive. **Sets of 2 to 3 reps** are a good default, and many programs finish with a few heavier singles once the technique is reliable.",
         "Log your power cleans and this page tracks your best singles, doubles and triples, your tonnage and your estimated max over the years."
       ]
+    },
+    "quote": {
+      "sectionTitle": "Why coaches have always loved the power clean",
+      "text": "The power clean is the perfect lift for any athlete wanting to gain strength, and it has the added benefit of enhancing athletic attributes such as foot speed, co-ordination, timing and balance.",
+      "author": "Bill Starr, The Holy Trinity of Strength Training, CrossFit Journal"
     },
     "resources": {
       "title": "Third Party Power Clean Articles",
       "links": [
         {
-          "text": "The Power Clean",
-          "href": "https://startingstrength.com/article/the-power-clean",
+          "title": "The Power Clean",
+          "url": "https://startingstrength.com/article/the-power-clean",
           "author": "Mark Rippetoe"
         },
         {
-          "text": "The Holy Trinity of Strength Training",
-          "href": "https://library.crossfit.com/free/pdf/CFJ_Starr_HolyTrinity.pdf",
+          "title": "The Holy Trinity of Strength Training",
+          "url": "https://library.crossfit.com/free/pdf/CFJ_Starr_HolyTrinity.pdf",
           "author": "Bill Starr, CrossFit Journal"
         },
         {
-          "text": "Integrating the Olympic Lifts with CrossFit",
-          "href": "https://www.catalystathletics.com/article/34/Integrating-the-Olympic-Lifts-with-CrossFit/",
+          "title": "Integrating the Olympic Lifts with CrossFit",
+          "url": "https://www.catalystathletics.com/article/34/Integrating-the-Olympic-Lifts-with-CrossFit/",
           "author": "Greg Everett, Catalyst Athletics"
         },
         {
-          "text": "Common Power Clean Mistakes and How to Fix Them",
-          "href": "https://barbell-logic.com/common-power-clean-mistakes/",
+          "title": "Common Power Clean Mistakes and How to Fix Them",
+          "url": "https://barbell-logic.com/common-power-clean-mistakes/",
           "author": "Barbell Logic"
         },
         {
-          "text": "Power Clean: Olympic Weightlifting Exercise Library",
-          "href": "https://www.catalystathletics.com/exercise/67/Power-Clean/",
+          "title": "Power Clean: Olympic Weightlifting Exercise Library",
+          "url": "https://www.catalystathletics.com/exercise/67/Power-Clean/",
           "author": "Catalyst Athletics"
         }
       ]
@@ -86,14 +81,7 @@
       },
       {
         "question": "What is a good power clean weight?",
-        "answer": [
-          "A 135 lb power clean, one plate on each side, is a satisfying early milestone for many lifters, and 225 lb, two plates on each side, is a strong result that takes consistent training to reach. As a rough rule of thumb, a solid power clean often lands around 60 percent of a lifter's ",
-          {
-            "text": "deadlift",
-            "href": "/progress-guide/deadlift"
-          },
-          "."
-        ]
+        "answer": "A 135 lb power clean, one plate on each side, is a satisfying early milestone for many lifters, and 225 lb, two plates on each side, is a strong result that takes consistent training to reach. As a rough rule of thumb, a solid power clean often lands around 60 percent of a lifter's [deadlift](/progress-guide/deadlift)."
       },
       {
         "question": "Should I use a hook grip for the power clean?",

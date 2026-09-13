@@ -1,6 +1,7 @@
 {
   "liftType": "Barbell Curl",
   "slug": "barbell-curl",
+  "tagline": "Strong arms, one strict rep at a time.",
   "artwork": {
     "src": "/lifts/default/barbell-curl.png",
     "figure": "male"
@@ -26,46 +27,40 @@
     ]
   },
   "guide": {
-    "hubDescription": "Strong arms, one strict rep at a time.",
     "seoTitle": "Barbell Curl Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Barbell Curl Guide & Progress Tracker",
-    "pageDescription": "Learn the barbell curl: grip, elbow position and strict form in plain English, a coaching video, answers to common questions, and free barbell curl progress tracking with rep PRs and tonnage.",
-    "pageKeywords": "barbell curl, how to barbell curl, barbell curl form, barbell curl vs dumbbell curl, ez bar curl, good barbell curl weight, barbell curl progress tracker",
-    "quoteSectionTitle": "Where every lifter starts",
-    "liftQuote": "Everyone who ever set out to improve his physique and get stronger started out by working his arms.",
-    "liftQuoteAuthor": "Bill Starr, The Arms Race and Olympic Lifting, CrossFit Journal",
+    "description": "Learn the barbell curl: grip, elbow position and strict form in plain English, a coaching video, answers to common questions, and free barbell curl progress tracking with rep PRs and tonnage.",
+    "keywords": "barbell curl, how to barbell curl, barbell curl form, barbell curl vs dumbbell curl, ez bar curl, good barbell curl weight, barbell curl progress tracker",
     "introduction": {
       "title": "Why the Barbell Curl Belongs in Your Program",
       "paragraphs": [
         "The barbell curl is the classic arm builder. Standing tall with the bar at arm's length, you bend at the elbows to bring it up to your shoulders, then lower it with control. It trains the biceps and forearms directly, and holding your body still under a heavy bar asks a surprising amount of your trunk and grip.",
         "Strong arms do more than look good. Your biceps and forearms support your grip on heavy pulls, steady the bar in rows and chin-ups, and help keep your elbows healthy through years of pressing.",
-        [
-          "Keep the reps strict and ",
-          {
-            "text": "lower the bar slowly every time",
-            "bold": true
-          },
-          ". A little body movement on the last rep of a hard set is fine, but most of your reps should be clean. Sets of 8 to 12 reps are a great default."
-        ],
+        "Keep the reps strict and **lower the bar slowly every time**. A little body movement on the last rep of a hard set is fine, but most of your reps should be clean. Sets of 8 to 12 reps are a great default.",
         "Log your barbell curls and this page tracks your rep PRs, tonnage and progress, so the small weekly jumps add up where you can see them."
       ]
+    },
+    "quote": {
+      "sectionTitle": "Where every lifter starts",
+      "text": "Everyone who ever set out to improve his physique and get stronger started out by working his arms.",
+      "author": "Bill Starr, The Arms Race and Olympic Lifting, CrossFit Journal"
     },
     "resources": {
       "title": "Third Party Barbell Curl Articles",
       "links": [
         {
-          "text": "The Barbell Curl in Strength Training",
-          "href": "https://startingstrength.com/training/the-barbell-curl-in-strength-training",
+          "title": "The Barbell Curl in Strength Training",
+          "url": "https://startingstrength.com/training/the-barbell-curl-in-strength-training",
           "author": "Mark Rippetoe"
         },
         {
-          "text": "The Arms Race and Olympic Lifting",
-          "href": "https://library.crossfit.com/free/pdf/CFJ_2014_05_Arms_Starr3.pdf",
+          "title": "The Arms Race and Olympic Lifting",
+          "url": "https://library.crossfit.com/free/pdf/CFJ_2014_05_Arms_Starr3.pdf",
           "author": "Bill Starr, CrossFit Journal"
         },
         {
-          "text": "Gym Shorts: Learn How to Barbell Curl, Quickly",
-          "href": "https://barbell-logic.com/gym-shorts-the-barbell-curl/",
+          "title": "Gym Shorts: Learn How to Barbell Curl, Quickly",
+          "url": "https://barbell-logic.com/gym-shorts-the-barbell-curl/",
           "author": "Barbell Logic"
         }
       ]

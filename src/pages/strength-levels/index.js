@@ -252,7 +252,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                       <div className="min-w-0">
                         <CardTitle className="text-xl">{page.pageTitle}</CardTitle>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          {page.hubDescription}
+                          {page.tagline}
                         </p>
                       </div>
                       <div className="shrink-0">
@@ -273,7 +273,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                         >
                           <ArrowUpRight className="h-4 w-4" />
-                          {page.navLabel} Standards
+                          {page.commonName} Standards
                         </Link>
                         <Link
                           prefetch={false}
@@ -281,7 +281,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                           className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                         >
                           <Calculator className="h-4 w-4" />
-                          {page.navLabel} 1RM Calculator
+                          {page.commonName} 1RM Calculator
                         </Link>
                         <Link
                           prefetch={false}
@@ -289,7 +289,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                           className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                         >
                           <BookOpen className="h-4 w-4" />
-                          {page.navLabel} Guide
+                          {page.commonName} Guide
                         </Link>
                       </div>
                     </CardContent>

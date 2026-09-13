@@ -1,12 +1,14 @@
 {
   "liftType": "Back Squat",
   "slug": "squat",
-  "bigFour": true,
+  "commonName": "Squat",
   "shortName": "Squat",
-  "icon": "Crown",
   "synonyms": [
     "Squat"
   ],
+  "bigFour": true,
+  "icon": "Crown",
+  "tagline": "The king of lower-body strength.",
   "homepageDescription": "A barbell squat to full depth, resting across the upper back.",
   "bodyBenefit": "Legs, hips and back under one bar. Nothing else asks so much of the whole body at once, which is why it drives bone density, balance and the engine every other lift runs on.",
   "calculatorUrl": "/calculator/squat-1rm-calculator",
@@ -40,67 +42,51 @@
     ]
   },
   "guide": {
-    "hubDescription": "The king of lower-body strength.",
     "seoTitle": "Back Squat Guide: Videos, PR Tracking & E1RM Progress Charts",
     "pageTitle": "Back Squat Complete Guide & Progress Tracker",
-    "pageDescription": "Hand-picked squat tutorial videos, programming resources from elite coaches, and for logged-in lifters: your squat E1RM progression chart, rep PRs, tonnage history, strength percentile rank, and a 19-tier commitment tracker. Free, no app download.",
-    "pageKeywords": "back squat guide, squat technique videos, squat progress tracker, squat PR tracker, squat E1RM chart, barbell squat coaching, squat tonnage, squat percentile",
-    "ogImageURL": "https://www.strengthjourneys.xyz/strength_journeys_back_squat_insights.png",
-    "quoteSectionTitle": "Why the back squat became the King of Lifts",
-    "liftQuote": "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
-    "liftQuoteAuthor": "Mark Rippetoe, Starting Strength",
+    "description": "Hand-picked squat tutorial videos, programming resources from elite coaches, and for logged-in lifters: your squat E1RM progression chart, rep PRs, tonnage history, strength percentile rank, and a 19-tier commitment tracker. Free, no app download.",
+    "keywords": "back squat guide, squat technique videos, squat progress tracker, squat PR tracker, squat E1RM chart, barbell squat coaching, squat tonnage, squat percentile",
+    "ogImage": "/strength_journeys_back_squat_insights.png",
     "introduction": {
       "title": "How Strong Should My Back Squat Be?",
       "paragraphs": [
         "The barbell squat is one of the most effective exercises for building strength and muscle mass. The amount of weight you should be able to squat depends on your body weight, fitness level, and experience with the exercise.",
         "Suppose you have mastered the air squat (for a set of 10-20) and can squat the barbell with decent form. Now, progressively add small amounts of weight until you get strong. Stick with three sets of 5 reps for as long as you can.",
-        [
-          "As a general guideline, ",
-          {
-            "text": "a beginner should be able to squat their body weight",
-            "bold": true
-          },
-          ". An ",
-          {
-            "text": "intermediate strength milestone will be a squat 1.5 times",
-            "bold": true
-          },
-          " their body weight. An ",
-          {
-            "text": "advanced lifter should be able to squat 1.75 to 2 times their body weight",
-            "bold": true
-          },
-          "."
-        ],
+        "As a general guideline, **a beginner should be able to squat their body weight**. An **intermediate strength milestone will be a squat 1.5 times** their body weight. An **advanced lifter should be able to squat 1.75 to 2 times their body weight**.",
         "Logged-in users can look below for their Back Squat history chart, which is visually mapped against both bodyweight multiples and the strength level standards for their bodyweight, age, and sex."
       ]
+    },
+    "quote": {
+      "sectionTitle": "Why the back squat became the King of Lifts",
+      "text": "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
+      "author": "Mark Rippetoe, Starting Strength"
     },
     "resources": {
       "title": "Third Party Back Squat Articles",
       "links": [
         {
-          "text": "The Squat: Hips are the Key",
-          "href": "https://startingstrength.com/training/the-squat-hips-are-the-key",
+          "title": "The Squat: Hips are the Key",
+          "url": "https://startingstrength.com/training/the-squat-hips-are-the-key",
           "author": "Mark Rippetoe"
         },
         {
-          "text": "Squat Clinic",
-          "href": "https://library.crossfit.com/free/pdf/CFJ_SquatClinic_Dec02.pdf",
+          "title": "Squat Clinic",
+          "url": "https://library.crossfit.com/free/pdf/CFJ_SquatClinic_Dec02.pdf",
           "author": "CrossFit Journal"
         },
         {
-          "text": "The Holy Trinity of Strength Training",
-          "href": "https://library.crossfit.com/free/pdf/CFJ_Starr_HolyTrinity.pdf",
+          "title": "The Holy Trinity of Strength Training",
+          "url": "https://library.crossfit.com/free/pdf/CFJ_Starr_HolyTrinity.pdf",
           "author": "Bill Starr, CrossFit Journal"
         },
         {
-          "text": "The Fastest Way To Blow Up Your Squat, Naturally",
-          "href": "https://jeffnippard.com/blogs/news/the-fastest-way-to-blow-up-your-squat-naturally",
+          "title": "The Fastest Way To Blow Up Your Squat, Naturally",
+          "url": "https://jeffnippard.com/blogs/news/the-fastest-way-to-blow-up-your-squat-naturally",
           "author": "Jeff Nippard"
         },
         {
-          "text": "How to Squat: The Definitive Guide",
-          "href": "https://www.strongerbyscience.com/how-to-squat/",
+          "title": "How to Squat: The Definitive Guide",
+          "url": "https://www.strongerbyscience.com/how-to-squat/",
           "author": "Greg Nuckols"
         }
       ]
@@ -136,27 +122,41 @@
       },
       {
         "question": "How do I calculate my squat one rep max from reps?",
-        "answer": [
-          "Use a 1RM formula like Brzycki or Epley on any working set of 1–10 reps. For example, if you squat 225 lbs for 5 reps, the Brzycki formula estimates your 1RM at around 253 lbs. The ",
-          {
-            "text": "squat 1RM calculator",
-            "href": "/calculator/squat-1rm-calculator?weight=225&reps=5&calcIsMetric=false"
-          },
-          " linked on this page runs all 7 major formulas side by side so you can see the full range. Sets of 3–6 reps tend to give the most accurate estimates."
-        ]
+        "answer": "Use a 1RM formula like Brzycki or Epley on any working set of 1–10 reps. For example, if you squat 225 lbs for 5 reps, the Brzycki formula estimates your 1RM at around 253 lbs. The [squat 1RM calculator](/calculator/squat-1rm-calculator?weight=225&reps=5&calcIsMetric=false) linked on this page runs all 7 major formulas side by side so you can see the full range. Sets of 3–6 reps tend to give the most accurate estimates."
       }
     ]
   },
   "strengthLevels": {
-    "navLabel": "Squat",
-    "hubDescription": "The king of lower-body strength.",
-    "pageTitle": "Squat Strength Levels",
     "seoTitle": "Squat Strength Standards by Bodyweight, Age, and Sex",
+    "pageTitle": "Squat Strength Levels",
     "description": "Check squat strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite benchmarks, then compare your numbers to a squat 1RM calculator and deeper progress tracking.",
     "keywords": "squat strength standards by bodyweight, squat standards, good squat for bodyweight, squat standards male female, back squat standards",
     "intro": "Use these squat strength standards to benchmark your back squat against lifters of similar size. The standards below adapt to your athlete profile instead of assuming a one-size-fits-all number.",
     "supportingCopy": "Squat standards are useful for setting realistic goals. They tell you whether your current max is physically active, beginner, intermediate, advanced, or elite, and help you decide what milestone should come next.",
     "relatedArticlesCategory": "Back Squat",
+    "interpretation": {
+      "title": "What Counts As A Good Squat For Your Bodyweight?",
+      "body": [
+        "A good squat depends on context. Absolute load matters, but bodyweight, sex, and age change what that load actually means.",
+        "That is why squat strength standards by bodyweight are more useful than one viral benchmark. A 225 squat might be an early milestone for one person, a strong intermediate result for another, and still a stepping stone for a heavier, more experienced lifter."
+      ],
+      "milestones": [
+        "Around bodyweight is an early milestone for many lifters.",
+        "Around 1.5 times bodyweight is often where a squat starts to look properly strong.",
+        "Around 2 times bodyweight usually pushes into advanced territory for many men."
+      ],
+      "exampleTable": {
+        "sex": "male",
+        "age": 25,
+        "bodyweightsKg": [
+          68,
+          79,
+          91,
+          102
+        ]
+      },
+      "closer": "If your question is 'is my squat good?' the right answer is not a single number. It is where your squat lands inside the standards for someone with your build."
+    },
     "faqItems": [
       {
         "question": "What is a good squat for my bodyweight?",
@@ -170,120 +170,6 @@
         "question": "Why use squat standards instead of only chasing bodyweight multiples?",
         "answer": "Bodyweight multiples are useful shorthand, but standards add more context. They factor in age and sex as well as bodyweight, so the category you land in is more informative than a single ratio alone."
       }
-    ],
-    "interpretation": {
-      "title": "What Counts As A Good Squat For Your Bodyweight?",
-      "body": [
-        "A good squat depends on context. Absolute load matters, but bodyweight, sex, and age change what that load actually means.",
-        "That is why squat strength standards by bodyweight are more useful than one viral benchmark. A 225 squat might be an early milestone for one person, a strong intermediate result for another, and still a stepping stone for a heavier, more experienced lifter."
-      ],
-      "milestones": [
-        "Around bodyweight is an early milestone for many lifters.",
-        "Around 1.5 times bodyweight is often where a squat starts to look properly strong.",
-        "Around 2 times bodyweight usually pushes into advanced territory for many men."
-      ],
-      "closer": "If your question is 'is my squat good?' the right answer is not a single number. It is where your squat lands inside the standards for someone with your build.",
-      "exampleTable": {
-        "caption": "Squat standards for males aged 20–29",
-        "rows": [
-          {
-            "bwKg": 68,
-            "bwLb": 150,
-            "active": [
-              46,
-              100
-            ],
-            "beginner": [
-              78,
-              170
-            ],
-            "intermediate": [
-              104,
-              230
-            ],
-            "advanced": [
-              143,
-              315
-            ],
-            "elite": [
-              189,
-              415
-            ]
-          },
-          {
-            "bwKg": 79,
-            "bwLb": 175,
-            "active": [
-              51,
-              110
-            ],
-            "beginner": [
-              87,
-              190
-            ],
-            "intermediate": [
-              116,
-              255
-            ],
-            "advanced": [
-              160,
-              355
-            ],
-            "elite": [
-              210,
-              465
-            ]
-          },
-          {
-            "bwKg": 91,
-            "bwLb": 200,
-            "active": [
-              58,
-              130
-            ],
-            "beginner": [
-              98,
-              215
-            ],
-            "intermediate": [
-              130,
-              285
-            ],
-            "advanced": [
-              179,
-              395
-            ],
-            "elite": [
-              236,
-              520
-            ]
-          },
-          {
-            "bwKg": 102,
-            "bwLb": 225,
-            "active": [
-              57,
-              125
-            ],
-            "beginner": [
-              98,
-              215
-            ],
-            "intermediate": [
-              131,
-              290
-            ],
-            "advanced": [
-              180,
-              395
-            ],
-            "elite": [
-              232,
-              510
-            ]
-          }
-        ]
-      }
-    }
+    ]
   }
 }

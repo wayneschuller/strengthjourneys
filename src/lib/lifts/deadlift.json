@@ -3,6 +3,7 @@
   "slug": "deadlift",
   "bigFour": true,
   "icon": "Skull",
+  "tagline": "The heaviest bar you will ever move.",
   "homepageDescription": "Lifting a barbell from the floor to a standing lockout.",
   "bodyBenefit": "Grip, back and hips learning to pick up something heavy and put it down well. That is the most useful thing strength does, and this is the lift that teaches it.",
   "calculatorUrl": "/calculator/deadlift-1rm-calculator",
@@ -36,64 +37,47 @@
     ]
   },
   "guide": {
-    "hubDescription": "The heaviest bar you will ever move.",
     "seoTitle": "Deadlift Guide: Videos, PR Tracking & E1RM Progress Charts",
     "pageTitle": "Deadlift Complete Guide & Progress Tracker",
-    "pageDescription": "Curated deadlift technique videos, expert coaching resources, and for logged-in lifters: your deadlift E1RM chart over time, rep-range PRs, tonnage tracking, strength percentile rank, and a 19-tier progression system. Free, no app download.",
-    "pageKeywords": "deadlift guide, deadlift technique videos, deadlift progress tracker, deadlift PR tracker, deadlift E1RM chart, barbell deadlift coaching, deadlift tonnage, deadlift percentile",
-    "ogImageURL": "https://www.strengthjourneys.xyz/strength_journeys_deadlift_insights.png",
-    "quoteSectionTitle": "Why the deadlift still defines raw strength",
-    "liftQuote": "There is no reason to be alive if you can't do deadlift!",
-    "liftQuoteAuthor": "Jón Páll Sigmarsson",
+    "description": "Curated deadlift technique videos, expert coaching resources, and for logged-in lifters: your deadlift E1RM chart over time, rep-range PRs, tonnage tracking, strength percentile rank, and a 19-tier progression system. Free, no app download.",
+    "keywords": "deadlift guide, deadlift technique videos, deadlift progress tracker, deadlift PR tracker, deadlift E1RM chart, barbell deadlift coaching, deadlift tonnage, deadlift percentile",
+    "ogImage": "/strength_journeys_deadlift_insights.png",
     "introduction": {
       "title": "How Strong Should My Deadlift Be?",
       "paragraphs": [
-        [
-          "First, learn to deadlift with good form using the tutorial videos below. Once you can deadlift your body weight with good form, ",
-          {
-            "text": "deadlifting 1.5x your body weight is a key basic strength level for most lifters.",
-            "bold": true
-          }
-        ],
-        [
-          "A ",
-          {
-            "text": "double bodyweight deadlift",
-            "bold": true
-          },
-          " would be a significant marker that you are significantly above the general population and ",
-          {
-            "text": "can consider yourself strong",
-            "bold": true
-          },
-          "."
-        ],
+        "First, learn to deadlift with good form using the tutorial videos below. Once you can deadlift your body weight with good form, **deadlifting 1.5x your body weight is a key basic strength level for most lifters.**",
+        "A **double bodyweight deadlift** would be a significant marker that you are significantly above the general population and **can consider yourself strong**.",
         "A classic life-goal milestone for strength enthusiasts is a 500lb (227kg) deadlift.",
         "The strength levels slider above gives an overview of deadlift strength levels, calculated for your specific age, sex, and body weight.",
         "Deadlifting rewards lifters who eat big and are not scared of being a higher body weight."
       ]
     },
+    "quote": {
+      "sectionTitle": "Why the deadlift still defines raw strength",
+      "text": "There is no reason to be alive if you can't do deadlift!",
+      "author": "Jón Páll Sigmarsson"
+    },
     "resources": {
       "title": "Third Party Deadlift Articles",
       "links": [
         {
-          "text": "The Deadlift: Pushing the Floor",
-          "href": "https://startingstrength.com/training/the-deadlift-pushing-the-floor",
+          "title": "The Deadlift: Pushing the Floor",
+          "url": "https://startingstrength.com/training/the-deadlift-pushing-the-floor",
           "author": "Mark Rippetoe"
         },
         {
-          "text": "The Deadlift",
-          "href": "https://library.crossfit.com/free/pdf/12_03_Deadlift.pdf",
+          "title": "The Deadlift",
+          "url": "https://library.crossfit.com/free/pdf/12_03_Deadlift.pdf",
           "author": "Greg Glassman, CrossFit Journal"
         },
         {
-          "text": "A New, Rather Long Analysis of the Deadlift",
-          "href": "https://library.crossfit.com/free/pdf/51-2006_AnalysisofDeadlift.pdf",
+          "title": "A New, Rather Long Analysis of the Deadlift",
+          "url": "https://library.crossfit.com/free/pdf/51-2006_AnalysisofDeadlift.pdf",
           "author": "Mark Rippetoe, CrossFit Journal"
         },
         {
-          "text": "Squeeze the Slack Out of the Bar Before You Deadlift",
-          "href": "https://barbell-logic.com/squeeze-the-slack-out-of-the-bar-before-you-deadlift/",
+          "title": "Squeeze the Slack Out of the Bar Before You Deadlift",
+          "url": "https://barbell-logic.com/squeeze-the-slack-out-of-the-bar-before-you-deadlift/",
           "author": "Barbell Logic"
         }
       ]
@@ -117,14 +101,7 @@
       },
       {
         "question": "Is a 500 lb deadlift impressive?",
-        "answer": [
-          "Absolutely — a 500 lb deadlift is elite-level strength by any measure. At 500 lbs, even a 220 lb lifter is pulling 2.27× bodyweight, which lands firmly in advanced-to-elite territory. A 500 lb pull is rare in the general gym population and represents years of dedicated, focused training. It is a meaningful milestone toward the ",
-          {
-            "text": "1000lb Club",
-            "href": "/1000lb-club-calculator"
-          },
-          " total alongside squat and bench press."
-        ]
+        "answer": "Absolutely — a 500 lb deadlift is elite-level strength by any measure. At 500 lbs, even a 220 lb lifter is pulling 2.27× bodyweight, which lands firmly in advanced-to-elite territory. A 500 lb pull is rare in the general gym population and represents years of dedicated, focused training. It is a meaningful milestone toward the [1000lb Club](/1000lb-club-calculator) total alongside squat and bench press."
       },
       {
         "question": "What deadlift weight should a beginner aim for?",
@@ -136,27 +113,41 @@
       },
       {
         "question": "How do I calculate my deadlift one rep max from reps?",
-        "answer": [
-          "Use a 1RM estimation formula on any working set of 1–8 reps. For example, pulling 315 lbs for 5 reps estimates a 1RM of roughly 354 lbs using the Brzycki formula. The ",
-          {
-            "text": "deadlift 1RM calculator",
-            "href": "/calculator/deadlift-1rm-calculator?weight=315&reps=5&calcIsMetric=false"
-          },
-          " linked from this page runs all 7 major formulas simultaneously. For the most accurate deadlift estimate, use a set in the 2–5 rep range — higher rep sets are less reliable for 1RM prediction on the deadlift."
-        ]
+        "answer": "Use a 1RM estimation formula on any working set of 1–8 reps. For example, pulling 315 lbs for 5 reps estimates a 1RM of roughly 354 lbs using the Brzycki formula. The [deadlift 1RM calculator](/calculator/deadlift-1rm-calculator?weight=315&reps=5&calcIsMetric=false) linked from this page runs all 7 major formulas simultaneously. For the most accurate deadlift estimate, use a set in the 2–5 rep range — higher rep sets are less reliable for 1RM prediction on the deadlift."
       }
     ]
   },
   "strengthLevels": {
-    "navLabel": "Deadlift",
-    "hubDescription": "The heaviest bar you will ever move.",
-    "pageTitle": "Deadlift Strength Levels",
     "seoTitle": "Deadlift Strength Standards by Bodyweight, Age, and Sex",
+    "pageTitle": "Deadlift Strength Levels",
     "description": "Check deadlift strength standards by bodyweight, age, and sex. See beginner, intermediate, advanced, and elite benchmarks, then compare your numbers to a deadlift 1RM calculator and deeper progress tracking.",
     "keywords": "deadlift strength standards by bodyweight, deadlift standards by bodyweight male female, deadlift standards, good deadlift for bodyweight",
     "intro": "Use these deadlift strength standards to benchmark your pull against lifters with a similar profile. The standards update as you adjust age, sex, bodyweight, and units.",
     "supportingCopy": "Deadlift standards are especially useful because raw numbers can be misleading. A big deadlift means something very different for a 68 kg lifter than it does for a 120 kg lifter.",
     "relatedArticlesCategory": "Deadlift",
+    "interpretation": {
+      "title": "What Counts As A Good Deadlift For Your Bodyweight?",
+      "body": [
+        "A good deadlift changes fast with bodyweight. Raw numbers make impressive screenshots, but they are a poor way to judge how strong a deadlift really is.",
+        "That is why deadlift standards by bodyweight are so useful. A 315 deadlift can be a huge milestone, but whether it reads as beginner, intermediate, or advanced depends on who is pulling it."
+      ],
+      "milestones": [
+        "Around 1.5 times bodyweight is a meaningful deadlift milestone for many lifters.",
+        "Around 2 times bodyweight is where many deadlifts start to look strong.",
+        "Around 2.5 times bodyweight can move into advanced or elite territory for many men."
+      ],
+      "exampleTable": {
+        "sex": "male",
+        "age": 25,
+        "bodyweightsKg": [
+          68,
+          79,
+          91,
+          102
+        ]
+      },
+      "closer": "Use the standards on this page to answer the question people actually mean when they search for deadlift standards: not just 'what is impressive,' but 'what is impressive for me?'"
+    },
     "faqItems": [
       {
         "question": "What is a good deadlift for my bodyweight?",
@@ -170,120 +161,6 @@
         "question": "Do I need to test a true max to use deadlift standards?",
         "answer": "No. You can estimate your deadlift 1RM from a recent heavy set, then compare that estimate against the standards on this page. That is usually a smarter approach than maxing out constantly."
       }
-    ],
-    "interpretation": {
-      "title": "What Counts As A Good Deadlift For Your Bodyweight?",
-      "body": [
-        "A good deadlift changes fast with bodyweight. Raw numbers make impressive screenshots, but they are a poor way to judge how strong a deadlift really is.",
-        "That is why deadlift standards by bodyweight are so useful. A 315 deadlift can be a huge milestone, but whether it reads as beginner, intermediate, or advanced depends on who is pulling it."
-      ],
-      "milestones": [
-        "Around 1.5 times bodyweight is a meaningful deadlift milestone for many lifters.",
-        "Around 2 times bodyweight is where many deadlifts start to look strong.",
-        "Around 2.5 times bodyweight can move into advanced or elite territory for many men."
-      ],
-      "closer": "Use the standards on this page to answer the question people actually mean when they search for deadlift standards: not just 'what is impressive,' but 'what is impressive for me?'",
-      "exampleTable": {
-        "caption": "Deadlift standards for males aged 20–29",
-        "rows": [
-          {
-            "bwKg": 68,
-            "bwLb": 150,
-            "active": [
-              64,
-              140
-            ],
-            "beginner": [
-              112,
-              245
-            ],
-            "intermediate": [
-              139,
-              305
-            ],
-            "advanced": [
-              186,
-              410
-            ],
-            "elite": [
-              207,
-              455
-            ]
-          },
-          {
-            "bwKg": 79,
-            "bwLb": 175,
-            "active": [
-              76,
-              170
-            ],
-            "beginner": [
-              131,
-              290
-            ],
-            "intermediate": [
-              164,
-              360
-            ],
-            "advanced": [
-              219,
-              485
-            ],
-            "elite": [
-              243,
-              535
-            ]
-          },
-          {
-            "bwKg": 91,
-            "bwLb": 200,
-            "active": [
-              83,
-              185
-            ],
-            "beginner": [
-              144,
-              315
-            ],
-            "intermediate": [
-              180,
-              395
-            ],
-            "advanced": [
-              240,
-              530
-            ],
-            "elite": [
-              266,
-              585
-            ]
-          },
-          {
-            "bwKg": 102,
-            "bwLb": 225,
-            "active": [
-              84,
-              185
-            ],
-            "beginner": [
-              146,
-              320
-            ],
-            "intermediate": [
-              182,
-              400
-            ],
-            "advanced": [
-              243,
-              535
-            ],
-            "elite": [
-              270,
-              595
-            ]
-          }
-        ]
-      }
-    }
+    ]
   }
 }

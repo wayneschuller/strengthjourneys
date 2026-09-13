@@ -3,34 +3,12 @@
  * per lift in src/lib/lifts/. Nothing about a curated lift should live
  * anywhere else. Pages, the nav, the log and the importers all read it here.
  *
- * WHAT A LIFT FILE HOLDS (every block is optional except the first two)
- *  - liftType, slug        Canonical name, and its /progress-guide/ URL slug.
- *  - bigFour               The four lifts with strength standards.
- *  - shortName, icon       Compact label for tight navs, and the lucide icon
- *                          name (see components/lift-icon.js).
- *  - synonyms              Other names for the SAME lift, never a lookalike.
- *                          Front Squat pointed at Back Squat's drawing for
- *                          seven months, showing a bar on the upper back for
- *                          a lift racked at the front.
- *  - homepageDescription   One-liner for someone who has never seen the lift.
- *  - bodyBenefit           Big four only: what the lift gives the body, in the
- *                          invitation voice the dashboard uses when a lifter
- *                          has nothing to compare. Never a count of time away.
- *  - calculatorUrl         Its 1RM calculator page, when one exists.
- *  - artwork               The drawing and the figure's sex. Drawing rules
- *                          live in components/lift-artwork.js.
- *  - videos                Tutorial videos, each { url, title, channel }, any
- *                          number of them. The guide shows them all. The FIRST
- *                          is the log's form check, so keep the best beginner
- *                          intro at the top.
- *  - coaching              Plain-English summary, three cues, and standardsRef:
- *                          a rough ratio to a big four lift used for first-time
- *                          target weights on the log. Not a published standard.
- *  - guide                 Editorial progress guide copy: SEO titles, intro,
- *                          quote, resources, FAQ.
- *  - strengthLevels        Copy for /strength-levels/[slug], including the
- *                          "what counts as good" interpretation and example
- *                          table. Big four only.
+ * THE FILE FORMAT is defined field by field in src/lib/lift-schema.js, which
+ * is the place to read what a field means. Run `npm run validate:lifts` after
+ * any edit: unknown keys fail, so the format only grows on purpose. Rich copy
+ * uses the two-mark inline markdown in lib/inline-markdown.js, and numbers
+ * that exist elsewhere (the strength standards example tables) are computed
+ * from their source, never typed into a lift file.
  *
  * ADDING A LIFT: write its JSON file and add one import below. Having artwork
  * is the signal we believe in a lift: it gets a tile in the Lift Explorer, a
@@ -76,7 +54,7 @@ export const CURATED_LIFTS = [
   rackPull,
   closeGripBenchPress,
   barbellCurl,
-];
+].map(withDefaults);
 
 export const BIG_FOUR_LIFTS = CURATED_LIFTS.filter((lift) => lift.bigFour);
 export const BIG_FOUR_LIFT_TYPES = BIG_FOUR_LIFTS.map((lift) => lift.liftType);
@@ -164,14 +142,14 @@ export const BIG_FOUR_PROGRESS_GUIDE_PATHS = Object.fromEntries(
 );
 
 /**
- * A big four lift as an invitation: the guide's hub description as tagline, so
- * the dashboard and the guides describe each lift the same way, and what the
- * lift gives the body. Null outside the big four.
+ * A big four lift as an invitation: its tagline, so the dashboard and the hub
+ * pages describe each lift the same way, and what the lift gives the body.
+ * Null outside the big four.
  */
 export function getBigFourBodyBenefit(liftType) {
   const lift = getCuratedLift(liftType);
   if (!lift?.bigFour || !lift.bodyBenefit) return null;
-  return { tagline: lift.guide?.hubDescription ?? null, benefit: lift.bodyBenefit };
+  return { tagline: lift.tagline ?? null, benefit: lift.bodyBenefit };
 }
 
 // ── Strength levels ─────────────────────────────────────────────────────────
@@ -182,14 +160,16 @@ export const STRENGTH_STANDARDS_HUB_URL = `${SITE_URL}/strength-levels`;
 const STRENGTH_LEVELS_ORDER = ["Bench Press", "Back Squat", "Deadlift", "Strict Press"];
 
 /**
- * Flat page records for /strength-levels/[lift], in the shape those pages
- * have always read.
+ * Flat page records for /strength-levels/[lift]: the lift's strengthLevels
+ * block plus the identity and links those pages need.
  */
 export const STRENGTH_STANDARDS_PAGES = STRENGTH_LEVELS_ORDER.map(getCuratedLift)
   .filter((lift) => lift?.strengthLevels)
   .map((lift) => ({
     slug: lift.slug,
     liftType: lift.liftType,
+    commonName: lift.commonName,
+    tagline: lift.tagline,
     ...lift.strengthLevels,
     calculatorUrl: lift.calculatorUrl,
     insightUrl: `/progress-guide/${lift.slug}`,
@@ -207,4 +187,9 @@ export function getStrengthStandardsUrl(slug) {
 export function getStrengthLevelsPath(liftType) {
   const lift = getCuratedLift(liftType);
   return lift?.strengthLevels ? getStrengthStandardsUrl(lift.slug) : null;
+}
+
+/** Resolve optional fields whose default is another field, once, at load. */
+function withDefaults(lift) {
+  return { ...lift, commonName: lift.commonName ?? lift.liftType };
 }

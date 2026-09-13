@@ -1,6 +1,7 @@
 {
   "liftType": "Front Squat",
   "slug": "front-squat",
+  "tagline": "Upright, quad driven, and honest.",
   "artwork": {
     "src": "/lifts/default/front-squat.png",
     "figure": "female"
@@ -25,46 +26,40 @@
     }
   },
   "guide": {
-    "hubDescription": "Upright, quad driven, and honest.",
     "seoTitle": "Front Squat Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Front Squat Guide & Progress Tracker",
-    "pageDescription": "Learn the front squat with the bar racked on your shoulders: plain-English technique cues, a coaching video, front rack grip options, answers to common questions, and free front squat progress tracking.",
-    "pageKeywords": "front squat, how to front squat, front squat technique, front squat vs back squat, front squat grip, front rack mobility, front squat progress tracker",
-    "quoteSectionTitle": "The front squat is won in the front rack",
-    "liftQuote": "Poor flexibility in the front rack is one of the most frequent complaints in the gym, and without good positioning an athlete’s ability to properly perform the front squat, clean, overhead press and jerk can be significantly affected.",
-    "liftQuoteAuthor": "Zachary Long, Rack It Right, CrossFit Journal",
+    "description": "Learn the front squat with the bar racked on your shoulders: plain-English technique cues, a coaching video, front rack grip options, answers to common questions, and free front squat progress tracking.",
+    "keywords": "front squat, how to front squat, front squat technique, front squat vs back squat, front squat grip, front rack mobility, front squat progress tracker",
     "introduction": {
       "title": "What Makes the Front Squat Different",
       "paragraphs": [
         "The front squat puts the bar across the front of your shoulders instead of your upper back. That one change keeps your torso far more upright, loads the quads harder, and asks your upper back and trunk to hold a strong position all the way down and back up.",
         "Most lifters front squat less than they back squat, often around 80 to 85 percent of it once the front rack feels comfortable. The lighter load is kind to the lower back while still building serious leg strength, which is why the front squat is a favourite of athletes, weightlifters and anyone who wants a more upright squat.",
-        [
-          "Start light and own the rack position: ",
-          {
-            "text": "elbows high, bar resting on the shoulders, fingers relaxed",
-            "bold": true
-          },
-          ". If your wrists are tight, the crossed-arm grip or lifting straps looped around the bar are both good ways to get started."
-        ],
+        "Start light and own the rack position: **elbows high, bar resting on the shoulders, fingers relaxed**. If your wrists are tight, the crossed-arm grip or lifting straps looped around the bar are both good ways to get started.",
         "Log your front squats and this page charts your progress, rep PRs and training frequency, ready to compare with your back squat history."
       ]
+    },
+    "quote": {
+      "sectionTitle": "The front squat is won in the front rack",
+      "text": "Poor flexibility in the front rack is one of the most frequent complaints in the gym, and without good positioning an athlete’s ability to properly perform the front squat, clean, overhead press and jerk can be significantly affected.",
+      "author": "Zachary Long, Rack It Right, CrossFit Journal"
     },
     "resources": {
       "title": "Third Party Front Squat Articles",
       "links": [
         {
-          "text": "Rack It Right",
-          "href": "https://library.crossfit.com/free/pdf/CFJ_2016_09_Rack_Long5.pdf",
+          "title": "Rack It Right",
+          "url": "https://library.crossfit.com/free/pdf/CFJ_2016_09_Rack_Long5.pdf",
           "author": "Zachary Long, CrossFit Journal"
         },
         {
-          "text": "How to Front Squat + Grip Mobility (California Grip, Straps)",
-          "href": "https://barbell-logic.com/how-to-front-squat/",
+          "title": "How to Front Squat + Grip Mobility (California Grip, Straps)",
+          "url": "https://barbell-logic.com/how-to-front-squat/",
           "author": "Barbell Logic"
         },
         {
-          "text": "Front Squat: Olympic Weightlifting Exercise Library",
-          "href": "https://www.catalystathletics.com/exercise/78/Front-Squat/",
+          "title": "Front Squat: Olympic Weightlifting Exercise Library",
+          "url": "https://www.catalystathletics.com/exercise/78/Front-Squat/",
           "author": "Catalyst Athletics"
         }
       ]
@@ -72,14 +67,7 @@
     "faqItems": [
       {
         "question": "How much should I front squat compared to my back squat?",
-        "answer": [
-          "A common range is 80 to 85 percent of your back squat once your front rack is solid. If yours is well below that, the limit is usually upper back strength or rack position rather than leg strength, and it tends to climb quickly with practice. Compare your numbers with the ",
-          {
-            "text": "back squat guide",
-            "href": "/progress-guide/squat"
-          },
-          "."
-        ]
+        "answer": "A common range is 80 to 85 percent of your back squat once your front rack is solid. If yours is well below that, the limit is usually upper back strength or rack position rather than leg strength, and it tends to climb quickly with practice. Compare your numbers with the [back squat guide](/progress-guide/squat)."
       },
       {
         "question": "Is the front squat better than the back squat?",
@@ -87,14 +75,7 @@
       },
       {
         "question": "What grip should I use for the front squat?",
-        "answer": [
-          "The clean grip, with your fingers under the bar and elbows high, is the classic choice and carries over directly to the ",
-          {
-            "text": "power clean",
-            "href": "/progress-guide/power-clean"
-          },
-          ". The crossed-arm grip suits lifters with tight wrists, and straps looped around the bar are a good middle ground while mobility improves."
-        ]
+        "answer": "The clean grip, with your fingers under the bar and elbows high, is the classic choice and carries over directly to the [power clean](/progress-guide/power-clean). The crossed-arm grip suits lifters with tight wrists, and straps looped around the bar are a good middle ground while mobility improves."
       },
       {
         "question": "Why do my elbows drop in the front squat?",

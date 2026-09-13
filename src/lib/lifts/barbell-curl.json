@@ -4,5 +4,74 @@
   "artwork": {
     "src": "/lifts/default/barbell-curl.png",
     "figure": "male"
+  },
+  "coaching": {
+    "summary": "Stand tall holding a barbell at arm's length with your palms facing forward, curl it up to your shoulders by bending only at the elbows, then lower it under control.",
+    "cues": [
+      "Take a shoulder width underhand grip and stand tall with your elbows at your sides.",
+      "Curl the bar up without swinging, keeping the elbows close to your body.",
+      "Lower slowly all the way to straight arms before starting the next rep."
+    ],
+    "videoUrl": "https://www.youtube.com/watch?v=RK47T0F276I",
+    "videoTitle": "Gym Shorts (How To): The Barbell Curl - Barbell Logic"
+  },
+  "guide": {
+    "hubDescription": "Strong arms, one strict rep at a time.",
+    "seoTitle": "Barbell Curl Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Barbell Curl Guide & Progress Tracker",
+    "pageDescription": "Learn the barbell curl: grip, elbow position and strict form in plain English, a coaching video, answers to common questions, and free barbell curl progress tracking with rep PRs and tonnage.",
+    "pageKeywords": "barbell curl, how to barbell curl, barbell curl form, barbell curl vs dumbbell curl, ez bar curl, good barbell curl weight, barbell curl progress tracker",
+    "introduction": {
+      "title": "Why the Barbell Curl Belongs in Your Program",
+      "paragraphs": [
+        "The barbell curl is the classic arm builder. Standing tall with the bar at arm's length, you bend at the elbows to bring it up to your shoulders, then lower it with control. It trains the biceps and forearms directly, and holding your body still under a heavy bar asks a surprising amount of your trunk and grip.",
+        "Strong arms do more than look good. Your biceps and forearms support your grip on heavy pulls, steady the bar in rows and chin-ups, and help keep your elbows healthy through years of pressing.",
+        [
+          "Keep the reps strict and ",
+          {
+            "text": "lower the bar slowly every time",
+            "bold": true
+          },
+          ". A little body movement on the last rep of a hard set is fine, but most of your reps should be clean. Sets of 8 to 12 reps are a great default."
+        ],
+        "Log your barbell curls and this page tracks your rep PRs, tonnage and progress, so the small weekly jumps add up where you can see them."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Barbell Curl Articles",
+      "links": [
+        {
+          "text": "Gym Shorts: Learn How to Barbell Curl, Quickly",
+          "href": "https://barbell-logic.com/gym-shorts-the-barbell-curl/",
+          "author": "Barbell Logic"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What is a good barbell curl weight?",
+        "answer": "Arm strength varies a lot between people, so progress against your own history matters most. Many lifters start with an empty 45 lb bar or a lighter fixed barbell, and a strict 95 lb curl for a few reps is a strong result that takes steady training to reach."
+      },
+      {
+        "question": "Is the barbell curl better than the dumbbell curl?",
+        "answer": "The barbell loads both arms together and allows small, steady jumps in weight, which makes progress easy to track. Dumbbells let each arm work on its own and let the wrists rotate freely. Both build the biceps well, and many programs use both."
+      },
+      {
+        "question": "Should I use a straight bar or an EZ bar for curls?",
+        "answer": "A straight bar is the classic choice. If it bothers your wrists or elbows, an EZ curl bar angles the grip slightly and feels more comfortable for many lifters. Whichever you choose, log it consistently so your numbers stay comparable."
+      },
+      {
+        "question": "Why do I swing when I curl?",
+        "answer": "Swinging usually means the weight is a little heavy for strict reps. Brace your trunk, keep your elbows pinned to your sides, and choose a load you can lower slowly. Your biceps get more of the work and your progress stays easy to read."
+      },
+      {
+        "question": "What grip width should I use for barbell curls?",
+        "answer": "About shoulder width suits most people and keeps the wrists comfortable. Small changes in width are fine, so settle on the grip that feels best on your wrists and elbows and keep it the same from session to session."
+      },
+      {
+        "question": "How often should I train barbell curls?",
+        "answer": "Two or three sets once or twice a week is plenty for most lifters, usually at the end of an upper body or pulling session."
+      }
+    ]
   }
 }

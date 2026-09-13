@@ -19,5 +19,76 @@
       "ratio": 1,
       "note": "Most lifters thrust more than they squat, so 1.0 starts on the light side."
     }
+  },
+  "guide": {
+    "hubDescription": "The lift made for glutes.",
+    "seoTitle": "Hip Thrust Guide: Barbell Technique, Video & Progress Tracking",
+    "pageTitle": "Hip Thrust Guide & Progress Tracker",
+    "pageDescription": "Learn the barbell hip thrust: bench height, bar position and lockout cues in plain English, a coaching video, answers to common questions, and free hip thrust progress tracking with rep PRs and tonnage.",
+    "pageKeywords": "hip thrust, barbell hip thrust, how to hip thrust, hip thrust technique, hip thrust vs glute bridge, good hip thrust weight, hip thrust progress tracker",
+    "introduction": {
+      "title": "Why the Hip Thrust Works So Well",
+      "paragraphs": [
+        "The hip thrust rests your upper back on a bench with a barbell across your hips, then drives the hips up until your shoulders, hips and knees form a straight line. The glutes work hardest right at the top, where the hip is fully extended, which is exactly the point where squats and deadlifts get easiest.",
+        "That makes the hip thrust a perfect partner for the big lifts. It builds glute strength and size with very little stress on the lower back, and most lifters can load it heavily within a few months.",
+        [
+          "Set the bench just under your shoulder blades, pad the bar in the crease of your hips, and ",
+          {
+            "text": "pause for a moment at the top of every rep",
+            "bold": true
+          },
+          ". Sets of 8 to 12 reps are a great default, and heavier sets of 5 work well once your lockout is solid."
+        ],
+        "Log your hip thrusts and this page charts your rep PRs, tonnage and progress, so you can watch the numbers climb as quickly as they tend to."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Hip Thrust Articles",
+      "links": [
+        {
+          "text": "How to Hip Thrust",
+          "href": "https://bretcontreras.com/how-to-hip-thrust/",
+          "author": "Bret Contreras"
+        },
+        {
+          "text": "10 Steps to the Perfect Hip Thrust",
+          "href": "https://bretcontreras.com/10-steps-to-the-perfect-hip-thrust/",
+          "author": "Bret Contreras"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "How much should I hip thrust?",
+        "answer": [
+          "Most lifters thrust more than they squat once the movement feels comfortable, often by a good margin. Thrusting your bodyweight on the bar is a common first milestone, and many lifters build well beyond it. Compare your numbers with your ",
+          {
+            "text": "back squat",
+            "href": "/progress-guide/squat"
+          },
+          "."
+        ]
+      },
+      {
+        "question": "What is the difference between a hip thrust and a glute bridge?",
+        "answer": "A glute bridge is done with your upper back on the floor, which shortens the range of motion. The hip thrust raises your upper back onto a bench, so your hips travel further and usually handle more load."
+      },
+      {
+        "question": "How high should the bench be for hip thrusts?",
+        "answer": "A bench around 12 to 16 inches tall suits most people. Your upper back should rest just below the shoulder blades, and at the top of each rep your torso should be roughly parallel to the floor."
+      },
+      {
+        "question": "Where should my feet be for a hip thrust?",
+        "answer": "Place them so your shins are vertical at the top of the rep, about hip width apart with the toes turned slightly out. Drive through your heels and keep your knees tracking over your toes."
+      },
+      {
+        "question": "Why do I feel hip thrusts in my lower back?",
+        "answer": "Usually the ribs flare and the lower back arches at the top. Tuck your chin, keep your ribs down, and finish each rep by squeezing the glutes rather than lifting the hips higher. A short pause at the top makes the difference easy to feel."
+      },
+      {
+        "question": "Do I need a pad for barbell hip thrusts?",
+        "answer": "A bar pad or folded mat makes heavier sets far more comfortable on the hips. It changes nothing about the movement, so use one as soon as the weight starts to press."
+      }
+    ]
   }
 }

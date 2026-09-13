@@ -13,9 +13,88 @@
       "Stop when the hamstrings are loaded, then drive the hips through to stand tall."
     ],
     "videoUrl": "https://www.youtube.com/watch?v=amLSSb8cXok",
+    "videoTitle": "The Romanian Deadlift (RDL): Gym Shorts (How To) - Barbell Logic",
     "standardsRef": {
       "liftType": "Deadlift",
       "ratio": 0.7
     }
+  },
+  "guide": {
+    "hubDescription": "The hinge that builds hamstrings.",
+    "seoTitle": "Romanian Deadlift Guide: RDL Technique, Video & Progress Tracking",
+    "pageTitle": "Romanian Deadlift Guide & Progress Tracker",
+    "pageDescription": "Learn the Romanian deadlift (RDL): plain-English hinge technique cues, a coaching video, answers to common questions about depth and weight, and free RDL progress tracking with rep PRs and tonnage.",
+    "pageKeywords": "romanian deadlift, rdl, how to romanian deadlift, rdl technique, romanian deadlift vs deadlift, rdl vs stiff leg deadlift, romanian deadlift progress tracker",
+    "introduction": {
+      "title": "What the Romanian Deadlift Does",
+      "paragraphs": [
+        "The Romanian deadlift starts standing, with the bar at your hips. You push your hips back, let the bar slide down your thighs with a soft bend in the knees, and stand back up once your hamstrings are fully stretched. It is the purest way to train the hip hinge, and it builds the hamstrings, glutes and upper back that every heavy pull depends on.",
+        "Because the bar stays off the floor between reps, the muscles work through the whole set. That makes the RDL a favourite for building muscle, and it grooves the position that keeps a conventional deadlift strong: hips back, back flat, bar close.",
+        [
+          "Most lifters use ",
+          {
+            "text": "sets of 6 to 10 reps",
+            "bold": true
+          },
+          " with a weight that allows a slow, controlled lowering. End the descent when your hamstrings are loaded rather than chasing the floor, and use straps once the weight outgrows your grip."
+        ],
+        "Log your RDLs and this page charts your rep PRs, tonnage and progress, ready to compare with your deadlift history."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Romanian Deadlift Articles",
+      "links": [
+        {
+          "text": "The Field Guide to Romanian Deadlift (RDL) Form",
+          "href": "https://barbell-logic.com/romanian-deadlift-field-guide/",
+          "author": "Barbell Logic"
+        },
+        {
+          "text": "How to Do Romanian Deadlifts (RDL)",
+          "href": "https://barbell-logic.com/how-to-do-romanian-deadlifts/",
+          "author": "Barbell Logic"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What is the difference between a Romanian deadlift and a deadlift?",
+        "answer": [
+          "A conventional deadlift starts from the floor with the hips lower and resets each rep. A Romanian deadlift starts standing, lowers only as far as your hamstrings allow, and keeps the knees nearly fixed so the hips do almost all the work. The ",
+          {
+            "text": "deadlift guide",
+            "href": "/progress-guide/deadlift"
+          },
+          " covers the full lift."
+        ]
+      },
+      {
+        "question": "How low should I go on a Romanian deadlift?",
+        "answer": "Go as low as you can while your back stays flat and your knees keep their soft bend. For many lifters that is just below the knees, for others it is mid-shin. The stretch in your hamstrings is the signal, not the floor."
+      },
+      {
+        "question": "How much should I Romanian deadlift?",
+        "answer": [
+          "Many lifters' best RDL lands around 70 percent of their conventional deadlift, with working sets of 6 to 10 reps sitting a little lower. Compare it with your ",
+          {
+            "text": "deadlift",
+            "href": "/progress-guide/deadlift"
+          },
+          " as both grow."
+        ]
+      },
+      {
+        "question": "Is a Romanian deadlift the same as a stiff-leg deadlift?",
+        "answer": "They are close cousins. A stiff-leg deadlift usually starts each rep from the floor with straighter legs. The Romanian deadlift starts from the top, keeps a soft knee and pushes the hips further back. Both train the hamstrings well."
+      },
+      {
+        "question": "Where should I feel the Romanian deadlift?",
+        "answer": "Mostly in the hamstrings, with the glutes working hard to stand you up and the upper back holding the bar close. If you feel it mainly in your lower back, lighten the load, push the hips further back, and end the descent a little higher."
+      },
+      {
+        "question": "Should I use straps for Romanian deadlifts?",
+        "answer": "Straps are a good idea once your grip limits the weight. The RDL is there to load the hips and hamstrings, and your deadlifts and other pulls will keep building your grip."
+      }
+    ]
   }
 }

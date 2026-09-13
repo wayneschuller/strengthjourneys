@@ -13,9 +13,81 @@
       "Catch high on the shoulders with fast elbows and a solid front rack."
     ],
     "videoUrl": "https://www.youtube.com/watch?v=mLoPwZx90SI",
+    "videoTitle": "The Power Clean - Gym Shorts (How To) - Barbell Logic",
     "standardsRef": {
       "liftType": "Deadlift",
       "ratio": 0.6
     }
+  },
+  "guide": {
+    "hubDescription": "Floor to shoulders in one explosive pull.",
+    "seoTitle": "Power Clean Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Power Clean Guide & Progress Tracker",
+    "pageDescription": "Learn the power clean from the floor to a solid front rack: plain-English technique cues, a coaching video, answers to common questions, and free power clean progress tracking with rep PRs and E1RM charts.",
+    "pageKeywords": "power clean, how to power clean, power clean technique, power clean vs clean, good power clean weight, power clean hook grip, power clean progress tracker",
+    "introduction": {
+      "title": "Why Lifters Love the Power Clean",
+      "paragraphs": [
+        "The power clean pulls a barbell from the floor and catches it on the front of the shoulders in a partial squat, all in one fast movement. It teaches your body to produce force quickly, which is why it has been a staple of strength programs for football players, throwers and everyday barbell lifters for decades.",
+        "It pairs naturally with the deadlift and the squat. The deadlift builds the strength to break the bar from the floor, and the power clean turns that strength into speed. Receiving a heavy clean also builds a strong upper back and a well braced trunk.",
+        [
+          "Keep the reps low so every one stays explosive. ",
+          {
+            "text": "Sets of 2 to 3 reps",
+            "bold": true
+          },
+          " are a good default, and many programs finish with a few heavier singles once the technique is reliable."
+        ],
+        "Log your power cleans and this page tracks your best singles, doubles and triples, your tonnage and your estimated max over the years."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Power Clean Articles",
+      "links": [
+        {
+          "text": "Common Power Clean Mistakes and How to Fix Them",
+          "href": "https://barbell-logic.com/common-power-clean-mistakes/",
+          "author": "Barbell Logic"
+        },
+        {
+          "text": "Power Clean: Olympic Weightlifting Exercise Library",
+          "href": "https://www.catalystathletics.com/exercise/67/Power-Clean/",
+          "author": "Catalyst Athletics"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What is the difference between a power clean and a clean?",
+        "answer": "In a power clean you receive the bar with your thighs above parallel. In a full clean you drop into a deep front squat to catch it. The full clean usually allows more weight, while the power clean asks for a faster, more aggressive finish to the pull."
+      },
+      {
+        "question": "What is a good power clean weight?",
+        "answer": [
+          "A 135 lb power clean, one plate on each side, is a satisfying early milestone for many lifters, and 225 lb, two plates on each side, is a strong result that takes consistent training to reach. As a rough rule of thumb, a solid power clean often lands around 60 percent of a lifter's ",
+          {
+            "text": "deadlift",
+            "href": "/progress-guide/deadlift"
+          },
+          "."
+        ]
+      },
+      {
+        "question": "Should I use a hook grip for the power clean?",
+        "answer": "A hook grip, with the thumb trapped under the first two fingers, keeps the bar secure without squeezing hard, which lets the arms stay relaxed during the pull. It feels strange at first and becomes comfortable within a few sessions. Let the hook go as the elbows come around into the rack."
+      },
+      {
+        "question": "Why do my wrists hurt in the power clean front rack?",
+        "answer": "The bar should rest on the shoulders, not in the hands. Let your grip loosen so the bar rolls onto your fingertips, drive the elbows up and forward, and build wrist and lat flexibility over time. A slightly wider grip helps many lifters too."
+      },
+      {
+        "question": "How low should I catch a power clean?",
+        "answer": "Receive it in a partial squat with your feet landing at about squat width. If heavier cleans keep pulling you below parallel, that usually means the pull finished late, or that you are ready to learn the full clean."
+      },
+      {
+        "question": "How often can I train power cleans?",
+        "answer": "Two or three times a week works well for most lifters. The loads are lighter than a deadlift and the reps are low, so the power clean recovers quickly and rewards frequent practice."
+      }
+    ]
   }
 }

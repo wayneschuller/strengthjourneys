@@ -19,5 +19,83 @@
       "ratio": 0.5,
       "note": "Mobility caps this well below the back squat for most people starting out."
     }
+  },
+  "guide": {
+    "hubDescription": "Strength, mobility and balance under one bar.",
+    "seoTitle": "Overhead Squat Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Overhead Squat Guide & Progress Tracker",
+    "pageDescription": "Learn the overhead squat with the bar locked out above your head: plain-English technique cues, a coaching video, mobility tips, answers to common questions, and free overhead squat progress tracking.",
+    "pageKeywords": "overhead squat, how to overhead squat, overhead squat technique, overhead squat mobility, overhead squat grip width, overhead squat progress tracker",
+    "introduction": {
+      "title": "Why the Overhead Squat Is Worth Learning",
+      "paragraphs": [
+        "The overhead squat holds a barbell at arm's length above your head on a wide grip while you squat to full depth and stand back up. It tests everything at once: shoulder stability, upper back strength, hip and ankle mobility, and the balance to keep the bar over the middle of your foot.",
+        "It is also the receiving position of the snatch, so weightlifters use it to build confidence under the bar. For everyone else it is a brilliant teacher. Any weak link in your squat shows up the moment the bar is overhead, and strengthening it improves every other squat you do.",
+        [
+          "Begin with a PVC pipe or an empty bar. ",
+          {
+            "text": "Press up into the bar, lock your elbows, and sit straight down between your hips",
+            "bold": true
+          },
+          ". Add weight when every rep looks like your first one."
+        ],
+        "Log your overhead squats and this page tracks your progress, rep PRs and training history alongside the rest of your squatting."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Overhead Squat Articles",
+      "links": [
+        {
+          "text": "The Overhead Squat: Instruction, Benefits & Technique",
+          "href": "https://www.crossfit.com/essentials/the-overhead-squat",
+          "author": "CrossFit"
+        },
+        {
+          "text": "Flexibility for the Overhead Squat",
+          "href": "https://www.catalystathletics.com/article/1682/Flexibility-for-the-Overhead-Squat/",
+          "author": "Greg Everett, Catalyst Athletics"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "How wide should my grip be for the overhead squat?",
+        "answer": "Use a snatch grip, wide enough that the bar sits in the crease of your hips when you stand with straight arms. The wider grip lowers the bar and makes the overhead position more stable for most lifters."
+      },
+      {
+        "question": "Why does the bar fall forward in my overhead squat?",
+        "answer": "The bar drifts forward when the torso leans or the shoulders relax. Keep pushing up into the bar the whole time, keep it stacked over the middle of your foot, and sit straight down. Tight ankles and hips often cause the lean, so mobility work pays off quickly."
+      },
+      {
+        "question": "How much should I overhead squat?",
+        "answer": [
+          "Mobility sets the pace for most people starting out, so the overhead squat usually sits well below the back squat at first, often around half of it. With practice, many lifters close that gap considerably. Track it against your ",
+          {
+            "text": "back squat",
+            "href": "/progress-guide/squat"
+          },
+          " to watch it happen."
+        ]
+      },
+      {
+        "question": "Is the overhead squat good for beginners?",
+        "answer": "It is a great skill to practise with a PVC pipe or empty bar from day one, because it teaches strong squat positions. Heavier loading can wait until your back squat and strict press feel solid and your mobility allows full depth."
+      },
+      {
+        "question": "What mobility do I need for the overhead squat?",
+        "answer": "Good shoulder flexion to hold your arms overhead, upper back extension to stay tall, and enough hip and ankle mobility to squat upright. Squatting with a PVC pipe and holding the bottom position for a few breaths is a simple way to build all three."
+      },
+      {
+        "question": "What is the difference between an overhead squat and a snatch?",
+        "answer": [
+          "The overhead squat starts with the bar already overhead and is a slow, controlled strength movement. The snatch pulls the bar from the floor and meets that same bottom position at speed. The ",
+          {
+            "text": "power snatch guide",
+            "href": "/progress-guide/power-snatch"
+          },
+          " covers the faster version."
+        ]
+      }
+    ]
   }
 }

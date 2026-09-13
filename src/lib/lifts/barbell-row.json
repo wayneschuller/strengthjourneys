@@ -13,9 +13,81 @@
       "Lower the bar under control and re-brace before the next rep."
     ],
     "videoUrl": "https://www.youtube.com/watch?v=qbES7k4HDf8",
+    "videoTitle": "Gym Shorts (How To): The Barbell Row - Barbell Logic",
     "standardsRef": {
       "liftType": "Bench Press",
       "ratio": 0.8
     }
+  },
+  "guide": {
+    "hubDescription": "A strong back for every other lift.",
+    "seoTitle": "Barbell Row Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Barbell Row Guide & Progress Tracker",
+    "pageDescription": "Learn the barbell row: torso angle, grip and bar path in plain English, a coaching video, answers to common questions, and free barbell row progress tracking with rep PRs and tonnage.",
+    "pageKeywords": "barbell row, bent over row, how to barbell row, barbell row form, pendlay row vs barbell row, good barbell row weight, barbell row progress tracker",
+    "introduction": {
+      "title": "What the Barbell Row Builds",
+      "paragraphs": [
+        "The barbell row has you hinge forward with a flat back and pull the bar from arm's length to your lower chest or upper stomach. It builds the lats, upper back and rear shoulders, and it strengthens the same back position you hold in every deadlift.",
+        "A strong row balances the pressing in a typical program. It supports healthy shoulders, gives your bench press a stable base to push from, and helps you keep the bar close on heavy pulls.",
+        [
+          "Hold your torso angle steady and let your arms and back do the work. ",
+          {
+            "text": "Sets of 5 to 10 reps",
+            "bold": true
+          },
+          " suit most goals, and a little body movement on the heaviest sets is fine as long as the bar path stays smooth."
+        ],
+        "Log your rows and this page tracks your rep PRs, tonnage and progress, so you can watch your pulling keep pace with your pressing."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Barbell Row Articles",
+      "links": [
+        {
+          "text": "The Barbell Row: A Complete Guide",
+          "href": "https://barbell-logic.com/how-to-barbell-row/",
+          "author": "Barbell Logic"
+        },
+        {
+          "text": "How to Barbell Row: The Definitive Guide",
+          "href": "https://stronglifts.com/barbell-row/",
+          "author": "StrongLifts"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What is a good barbell row weight?",
+        "answer": [
+          "As a rough rule of thumb, a strong barbell row often lands around 80 percent of your bench press for a clean set. Rowing your own bodyweight for reps is a satisfying milestone. Keep an eye on your ",
+          {
+            "text": "bench press",
+            "href": "/progress-guide/bench-press"
+          },
+          " to see how the two grow together."
+        ]
+      },
+      {
+        "question": "What is the difference between a barbell row and a Pendlay row?",
+        "answer": "A Pendlay row returns the bar to the floor every rep with the torso close to parallel, so each rep starts from a dead stop. A standard barbell row keeps the bar hanging between reps, usually with the torso a little more upright."
+      },
+      {
+        "question": "Should I use an overhand or underhand grip for barbell rows?",
+        "answer": "Both work. An overhand grip emphasises the upper back, while an underhand grip brings in more biceps and usually lets you lift a little more. Choose one as your main row and log it consistently so your progress is easy to compare."
+      },
+      {
+        "question": "Where should the bar touch when I row?",
+        "answer": "Aim for your lower chest or upper stomach, depending on your arm length and torso angle. The bar should travel in a fairly straight line up from the middle of your foot."
+      },
+      {
+        "question": "How do I keep my lower back strong while rowing?",
+        "answer": "Brace before the first rep, keep your back flat, and hold the same torso angle through the set. If your hips start swinging to move the weight, take a little off and keep the reps controlled."
+      },
+      {
+        "question": "How often should I train barbell rows?",
+        "answer": "Once or twice a week works well for most lifters, often on the same days as bench press or overhead pressing."
+      }
+    ]
   }
 }

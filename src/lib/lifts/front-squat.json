@@ -13,9 +13,88 @@
       "Drive up with the chest tall and keep the rack position all the way through the rep."
     ],
     "videoUrl": "https://www.youtube.com/watch?v=feGKhZ7unUg",
+    "videoTitle": "Gym Shorts (How To): The Front Squat - Barbell Logic",
     "standardsRef": {
       "liftType": "Back Squat",
       "ratio": 0.85
     }
+  },
+  "guide": {
+    "hubDescription": "Upright, quad driven, and honest.",
+    "seoTitle": "Front Squat Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Front Squat Guide & Progress Tracker",
+    "pageDescription": "Learn the front squat with the bar racked on your shoulders: plain-English technique cues, a coaching video, front rack grip options, answers to common questions, and free front squat progress tracking.",
+    "pageKeywords": "front squat, how to front squat, front squat technique, front squat vs back squat, front squat grip, front rack mobility, front squat progress tracker",
+    "introduction": {
+      "title": "What Makes the Front Squat Different",
+      "paragraphs": [
+        "The front squat puts the bar across the front of your shoulders instead of your upper back. That one change keeps your torso far more upright, loads the quads harder, and asks your upper back and trunk to hold a strong position all the way down and back up.",
+        "Most lifters front squat less than they back squat, often around 80 to 85 percent of it once the front rack feels comfortable. The lighter load is kind to the lower back while still building serious leg strength, which is why the front squat is a favourite of athletes, weightlifters and anyone who wants a more upright squat.",
+        [
+          "Start light and own the rack position: ",
+          {
+            "text": "elbows high, bar resting on the shoulders, fingers relaxed",
+            "bold": true
+          },
+          ". If your wrists are tight, the crossed-arm grip or lifting straps looped around the bar are both good ways to get started."
+        ],
+        "Log your front squats and this page charts your progress, rep PRs and training frequency, ready to compare with your back squat history."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Front Squat Articles",
+      "links": [
+        {
+          "text": "How to Front Squat + Grip Mobility (California Grip, Straps)",
+          "href": "https://barbell-logic.com/how-to-front-squat/",
+          "author": "Barbell Logic"
+        },
+        {
+          "text": "Front Squat: Olympic Weightlifting Exercise Library",
+          "href": "https://www.catalystathletics.com/exercise/78/Front-Squat/",
+          "author": "Catalyst Athletics"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "How much should I front squat compared to my back squat?",
+        "answer": [
+          "A common range is 80 to 85 percent of your back squat once your front rack is solid. If yours is well below that, the limit is usually upper back strength or rack position rather than leg strength, and it tends to climb quickly with practice. Compare your numbers with the ",
+          {
+            "text": "back squat guide",
+            "href": "/progress-guide/squat"
+          },
+          "."
+        ]
+      },
+      {
+        "question": "Is the front squat better than the back squat?",
+        "answer": "Neither is better, because they do different jobs. The back squat lets you move the most weight and trains the whole posterior chain. The front squat keeps you upright, emphasises the quads and upper back, and is gentler on the lower back. Many strong programs use both."
+      },
+      {
+        "question": "What grip should I use for the front squat?",
+        "answer": [
+          "The clean grip, with your fingers under the bar and elbows high, is the classic choice and carries over directly to the ",
+          {
+            "text": "power clean",
+            "href": "/progress-guide/power-clean"
+          },
+          ". The crossed-arm grip suits lifters with tight wrists, and straps looped around the bar are a good middle ground while mobility improves."
+        ]
+      },
+      {
+        "question": "Why do my elbows drop in the front squat?",
+        "answer": "When the elbows drop, the bar rolls forward and pulls your chest down. Drive the elbows up as you leave the bottom, before the hips rise, keep the upper back tight, and choose a weight you can hold in position for every rep."
+      },
+      {
+        "question": "How deep should I front squat?",
+        "answer": "Aim for your hips to sink below the top of your knees, just like a back squat. The upright torso makes depth feel natural for most lifters, and full depth builds the most strength."
+      },
+      {
+        "question": "How many reps should I do on the front squat?",
+        "answer": "Sets of 3 to 5 reps work well for strength. Longer sets are harder to keep clean because the upper back tires before the legs do, so add sets rather than reps when you want more volume."
+      }
+    ]
   }
 }

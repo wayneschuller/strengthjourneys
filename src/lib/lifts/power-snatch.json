@@ -13,9 +13,81 @@
       "Punch fast into a stable overhead catch and stand under control."
     ],
     "videoUrl": "https://www.youtube.com/watch?v=7Jn6uNdmbc0",
+    "videoTitle": "The Power Snatch: Gym Shorts (How To) - Barbell Logic",
     "standardsRef": {
       "liftType": "Strict Press",
       "ratio": 0.85
     }
+  },
+  "guide": {
+    "hubDescription": "The fastest lift in the gym.",
+    "seoTitle": "Power Snatch Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Power Snatch Guide & Progress Tracker",
+    "pageDescription": "Learn the power snatch from the floor to a locked-out overhead catch: plain-English technique cues, a coaching video, answers to common questions, and free power snatch progress tracking with rep PRs and E1RM charts.",
+    "pageKeywords": "power snatch, how to power snatch, power snatch technique, power snatch vs snatch, power snatch grip width, power snatch progress tracker",
+    "introduction": {
+      "title": "What the Power Snatch Builds",
+      "paragraphs": [
+        "The power snatch takes a barbell from the floor to arm's length overhead in one unbroken movement, caught in a partial squat with the thighs above parallel. It is the snatch without the deep squat under the bar, which makes it one of the best ways to train speed, timing and explosive hip extension.",
+        "Because the bar travels further than in any other lift, the loads are light compared with a deadlift or even a strict press. That is the point. The power snatch rewards precision and aggression rather than grinding strength, and it carries over to jumping, sprinting and every lift that needs a fast finish through the hips.",
+        [
+          "Start with an empty bar or a light technique bar and build the positions first: a solid overhead lockout, a confident receiving stance, and a pull that stays close to the body. ",
+          {
+            "text": "Sets of 1 to 3 reps",
+            "bold": true
+          },
+          " keep every rep fast and crisp, and adding weight in small steps keeps the technique sharp."
+        ],
+        "Log your power snatch sessions and this page charts your best singles, doubles and triples over time, so you can watch your speed strength climb alongside your slower lifts."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Power Snatch Articles",
+      "links": [
+        {
+          "text": "Power Snatch: Olympic Weightlifting Exercise Library",
+          "href": "https://www.catalystathletics.com/exercise/61/Power-Snatch/",
+          "author": "Catalyst Athletics"
+        },
+        {
+          "text": "The Power Snatch: Uses & Cautions",
+          "href": "https://www.catalystathletics.com/article/126/The-Power-Snatch-Uses-Cautions/",
+          "author": "Greg Everett, Catalyst Athletics"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What is the difference between a power snatch and a snatch?",
+        "answer": "Both lifts move the bar from the floor to overhead in one motion. In a power snatch you catch the bar with your thighs above parallel, while a full snatch drops into a deep overhead squat. Most lifters can full snatch more weight, because the deeper catch gives them more time and distance to get under the bar."
+      },
+      {
+        "question": "How wide should my grip be for the power snatch?",
+        "answer": "Wide enough that the bar sits in the crease of your hips when you stand tall with straight arms. For most lifters that puts the hands well outside the shoulders, and taller lifters often grip close to the collars. A grip that is too narrow makes the bar hit your thighs and travel further overhead."
+      },
+      {
+        "question": "What is a good power snatch weight?",
+        "answer": "It depends heavily on technique and experience, so progress against your own history matters most. For many lifters, a crisp 95 lb power snatch is a satisfying first milestone and 135 lb, a 45 lb plate on each side, is a big one. Experienced weightlifters often power snatch around 80 to 90 percent of their full snatch."
+      },
+      {
+        "question": "Should I learn the power snatch or the power clean first?",
+        "answer": [
+          "Most coaches teach the ",
+          {
+            "text": "power clean",
+            "href": "/progress-guide/power-clean"
+          },
+          " first. Catching the bar on the shoulders is more forgiving than catching it overhead, and the heavier loads build pulling strength quickly. The snatch then adds a wider grip, a longer pull and the need for solid overhead mobility."
+        ]
+      },
+      {
+        "question": "Why does the bar swing away from me in the power snatch?",
+        "answer": "Usually the hips drive into the bar and bump it forward, or the arms pull early and the bar drifts. Keep the bar close from the floor to the hips, finish tall through the legs and hips, then pull yourself under the bar rather than pulling the bar up."
+      },
+      {
+        "question": "How often should I train the power snatch?",
+        "answer": "Two or three short sessions a week work well for most lifters. Keep the reps low, end each set while every rep is still fast, and treat it as skill practice as much as strength work."
+      }
+    ]
   }
 }

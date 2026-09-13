@@ -13,9 +13,81 @@
       "Finish tall without leaning back or turning it into a backbend."
     ],
     "videoUrl": "https://www.youtube.com/watch?v=0nJs6Cnfv3M",
+    "videoTitle": "Gym Shorts (How To): The Rack Pull - Barbell Logic",
     "standardsRef": {
       "liftType": "Deadlift",
       "ratio": 1.1
     }
+  },
+  "guide": {
+    "hubDescription": "The top half of the deadlift, overloaded.",
+    "seoTitle": "Rack Pull Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Rack Pull Guide & Progress Tracker",
+    "pageDescription": "Learn the rack pull: pin height, setup and lockout cues in plain English, a coaching video, answers to common questions, and free rack pull progress tracking with rep PRs and tonnage.",
+    "pageKeywords": "rack pull, how to rack pull, rack pull height, rack pull vs deadlift, rack pull benefits, block pull, rack pull progress tracker",
+    "introduction": {
+      "title": "What the Rack Pull Is For",
+      "paragraphs": [
+        "A rack pull is a deadlift that starts from pins or blocks instead of the floor, usually with the bar just below the knees. The shorter range of motion lets you handle more weight than your deadlift, which builds the upper back, traps and hip extensors that lock out a heavy pull.",
+        "It also gets you comfortable with heavy weight in your hands. Many lifters use rack pulls alongside the deadlift, and some use them to keep pulling heavy through a stretch when a full range deadlift does not suit them.",
+        [
+          "Set the pins so the bar starts ",
+          {
+            "text": "a few inches below your knees",
+            "bold": true
+          },
+          ", keep your shins close to vertical, and finish tall without leaning back. Sets of 3 to 5 reps tend to carry over well, and pulls from very high pins carry over less."
+        ],
+        "Log your rack pulls and this page charts your rep PRs and tonnage, ready to compare with your deadlift, so you can see how the two move together."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Rack Pull Articles",
+      "links": [
+        {
+          "text": "The Field Guide to Proper Rack Pull Form",
+          "href": "https://barbell-logic.com/the-rack-pull-field-guide/",
+          "author": "Barbell Logic"
+        },
+        {
+          "text": "The Great Rack Pull Myth",
+          "href": "https://www.jimwendler.com/blogs/jimwendler-com/101075462-the-great-rack-pull-myth",
+          "author": "Jim Wendler"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "How high should the pins be for rack pulls?",
+        "answer": "Just below the knee is the most common height, because it keeps your body position close to the middle of a real deadlift. Pulls from above the knee let you lift far more weight but look much less like the deadlift you want to improve."
+      },
+      {
+        "question": "Do rack pulls improve your deadlift?",
+        "answer": [
+          "They can, especially for lifters who find the top of the lift hardest. They work best as a supplement to regular deadlifting, with the pull from the floor staying the main event. Track both, and see the ",
+          {
+            "text": "deadlift guide",
+            "href": "/progress-guide/deadlift"
+          },
+          " for the full lift."
+        ]
+      },
+      {
+        "question": "How much more can I rack pull than deadlift?",
+        "answer": "From just below the knee, many lifters rack pull around 10 percent more than their deadlift, and higher pins allow more. The size of the gap is useful information: a large one often means the floor portion of your deadlift has room to grow."
+      },
+      {
+        "question": "Should I use straps for rack pulls?",
+        "answer": "Straps are a sensible choice for heavy rack pulls. The goal is to load your back and hips with more than you can deadlift, and that weight will often outrun your grip."
+      },
+      {
+        "question": "Are rack pulls easier on the back than deadlifts?",
+        "answer": "The shorter range means less distance under load on each rep, but the weights are heavier. Keep your back flat and the reps controlled, and give heavy rack pulls the same care as a heavy deadlift."
+      },
+      {
+        "question": "How often should I do rack pulls?",
+        "answer": "Once a week is plenty for most lifters, usually on a pulling day alongside or in place of lighter deadlifts."
+      }
+    ]
   }
 }

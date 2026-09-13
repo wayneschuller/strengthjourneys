@@ -132,9 +132,8 @@ function StartingPointOption({ title, description, children }) {
  * @param {Object} props
  * @param {Array<Object>} [props.starterArticles=[]] - Featured Sanity articles passed down
  *   from the home page's getStaticProps, forwarded to the reading rail.
- * @param {Array<Object>} props.lifts - Big Four lift config, same shape the landing page row uses.
  */
-export function HomeWelcome({ starterArticles = [], lifts }) {
+export function HomeWelcome({ starterArticles = [] }) {
   const { data: session } = useSession();
   const firstName = session?.user?.name?.trim()?.split(/\s+/)[0] || null;
 
@@ -255,7 +254,6 @@ export function HomeWelcome({ starterArticles = [], lifts }) {
             Or start by learning the lifts
           </p>
           <BigFourLiftCards
-            lifts={lifts}
             animated={false}
             enhancedStats={false}
             gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2"

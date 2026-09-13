@@ -74,7 +74,6 @@ const GettingStartedCard = dynamic(
     ),
   },
 );
-import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/homepage/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
@@ -329,14 +328,6 @@ const moreTools = [
   },
 ];
 
-const mainBarbellLifts = BIG_FOUR_LIFTS.map(
-  ({ liftType, slug, homepageDescription }) => ({
-    slug: `progress-guide/${slug}`,
-    liftType,
-    liftDescription: homepageDescription,
-  }),
-);
-
 /**
  * Home page and landing page for Strength Journeys. Shows the hero section or user dashboard,
  * the Big Four barbell lift cards, a grid of feature tool cards, testimonials, and a getting-started card.
@@ -537,7 +528,6 @@ export default function Home({ starterArticles = [] }) {
                 ) : surface === "welcome" ? (
                   <HomeWelcome
                     starterArticles={starterArticles}
-                    lifts={mainBarbellLifts}
                   />
                 ) : (
                   <HeroSection />
@@ -561,7 +551,6 @@ export default function Home({ starterArticles = [] }) {
             {showBigFourSubtitle && <BigFourSubtitle className="mb-4" />}
 
             <BigFourLiftCards
-              lifts={mainBarbellLifts}
               animated={bigFourAnimated}
               enhancedStats={showEnhancedBigFourStats}
             />

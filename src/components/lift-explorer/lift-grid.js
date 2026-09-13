@@ -2,8 +2,10 @@
  * The Lift Explorer directory: every lift, in three tiers, each linking to its
  * /progress-guide/ page.
  *
- *  1. The big four, as large artwork tiles. They are the lifts with standards,
- *     the full editorial guide, and their own icons, and they always lead.
+ *  1. The big four, as the same card row the home dashboard shows, badges and
+ *     strength bar included. They are the lifts with standards and the full
+ *     editorial guide, so they always lead, in their fixed order under every
+ *     lens; search still narrows them.
  *  2. Every other lift we have drawn, as smaller tiles. A drawing is our
  *     commitment to a lift, so these show whether or not the lifter has logged
  *     them yet, which also makes them a menu of lifts worth trying.
@@ -24,7 +26,10 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
-import { LiftIcon } from "@/components/lift-icon";
+import {
+  BIG_FOUR_CARD_LIFTS,
+  BigFourLiftCards,
+} from "@/components/homepage/big-four-lift-cards";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
@@ -38,7 +43,6 @@ import {
   getCuratedLift,
   getLiftGuidePath,
 } from "@/lib/lift-registry";
-import { cn } from "@/lib/utils";
 
 const SORT_MODES = [
   { value: "sets", label: "Top", title: "Most trained" },
@@ -98,15 +102,13 @@ export function LiftGrid() {
 
   const normalizedQuery = query.trim().toLowerCase();
 
-  const bigFour = useMemo(
-    () =>
-      sortTiles(
-        filterByQuery(BIG_FOUR_LIFTS, normalizedQuery),
-        statsByLiftType,
-        sortMode,
-      ),
-    [normalizedQuery, sortMode, statsByLiftType],
-  );
+  // The big four keep the dashboard's fixed order under every lens.
+  const bigFour = useMemo(() => {
+    const matching = new Set(
+      filterByQuery(BIG_FOUR_LIFTS, normalizedQuery).map((lift) => lift.liftType),
+    );
+    return BIG_FOUR_CARD_LIFTS.filter((card) => matching.has(card.liftType));
+  }, [normalizedQuery]);
 
   const drawn = useMemo(
     () =>
@@ -181,19 +183,7 @@ export function LiftGrid() {
 
       {bigFour.length > 0 && (
         <LiftTier title="The Big Four">
-          <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {bigFour.map((lift, index) => (
-              <LiftTile
-                key={lift.liftType}
-                lift={lift}
-                stats={statsByLiftType.get(lift.liftType)}
-                hasLoaded={hasLoaded}
-                color={getColor(lift.liftType)}
-                index={index}
-                size="large"
-              />
-            ))}
-          </ul>
+          <BigFourLiftCards lifts={bigFour} />
         </LiftTier>
       )}
 
@@ -207,8 +197,7 @@ export function LiftGrid() {
                 stats={statsByLiftType.get(lift.liftType)}
                 hasLoaded={hasLoaded}
                 color={getColor(lift.liftType)}
-                index={index + bigFour.length}
-                size="small"
+                index={index}
               />
             ))}
           </ul>
@@ -256,12 +245,10 @@ function LiftTier({ title, children }) {
 }
 
 /**
- * One artwork tile. Large tiles are the big four; small ones the other drawn
- * lifts. `layout` lets tiles glide into place when the sort lens changes.
+ * One artwork tile for a drawn lift beyond the big four. `layout` lets tiles
+ * glide into place when the sort lens changes.
  */
-function LiftTile({ lift, stats, hasLoaded, color, index, size }) {
-  const isLarge = size === "large";
-
+function LiftTile({ lift, stats, hasLoaded, color, index }) {
   return (
     <motion.li
       layout
@@ -293,12 +280,7 @@ function LiftTile({ lift, stats, hasLoaded, color, index, size }) {
           className="absolute inset-x-0 top-0 h-1 origin-left scale-x-50 transition-transform duration-500 ease-out group-hover:scale-x-100"
           style={{ backgroundColor: "var(--lift)" }}
         />
-        <div
-          className={cn(
-            "relative flex flex-1 items-end justify-center",
-            isLarge ? "px-4 pt-6 pb-2" : "px-3 pt-4 pb-1",
-          )}
-        >
+        <div className="relative flex flex-1 items-end justify-center px-3 pt-4 pb-1">
           <Image
             src={lift.artwork.src}
             alt={`${lift.liftType} diagram`}
@@ -307,33 +289,14 @@ function LiftTile({ lift, stats, hasLoaded, color, index, size }) {
             // Lift artwork is always served straight from public/; see the
             // rendering note at the top of components/lift-artwork.js.
             unoptimized
-            className={cn(
-              "w-auto max-w-full object-contain transition-transform duration-500 ease-out group-hover:scale-105",
-              isLarge ? "h-24 sm:h-32 lg:h-36" : "h-16 sm:h-20",
-            )}
+            className="h-16 w-auto max-w-full object-contain transition-transform duration-500 ease-out group-hover:scale-105 sm:h-20"
           />
         </div>
-        <div
-          className={cn(
-            "bg-card/70 relative flex flex-col border-t backdrop-blur-sm",
-            isLarge ? "gap-1 px-4 py-3" : "gap-0.5 px-3 py-2",
-          )}
-        >
-          <span
-            className={cn(
-              "flex items-center gap-2 leading-tight",
-              isLarge ? "text-base font-semibold sm:text-lg" : "text-sm font-medium",
-            )}
-          >
-            {isLarge && (
-              <LiftIcon
-                liftType={lift.liftType}
-                className="text-muted-foreground size-4 shrink-0"
-              />
-            )}
-            <span className="min-w-0 truncate">{lift.liftType}</span>
+        <div className="bg-card/70 relative flex flex-col gap-0.5 border-t px-3 py-2 backdrop-blur-sm">
+          <span className="min-w-0 truncate text-sm leading-tight font-medium">
+            {lift.liftType}
           </span>
-          <TileStats stats={stats} hasLoaded={hasLoaded} isLarge={isLarge} />
+          <TileStats stats={stats} hasLoaded={hasLoaded} />
         </div>
       </Link>
     </motion.li>
@@ -341,11 +304,8 @@ function LiftTile({ lift, stats, hasLoaded, color, index, size }) {
 }
 
 /** Sets and last trained, or a gentle note for a lift not yet logged. */
-function TileStats({ stats, hasLoaded, isLarge }) {
-  const className = cn(
-    "text-muted-foreground tabular-nums",
-    isLarge ? "text-sm" : "text-xs",
-  );
+function TileStats({ stats, hasLoaded }) {
+  const className = "text-muted-foreground text-xs tabular-nums";
 
   // Hold the line's height while data arrives so tiles do not jump.
   if (!hasLoaded) return <span className={className}>&nbsp;</span>;

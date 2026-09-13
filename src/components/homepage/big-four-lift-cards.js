@@ -13,6 +13,7 @@ import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getLiftArtwork } from "@/components/lift-artwork";
+import { BIG_FOUR_LIFTS } from "@/lib/lift-registry";
 import {
   getAverageLiftSessionTonnageFromPrecomputed,
   getLiftVolumeMultiplier,
@@ -33,8 +34,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 /**
+ * The big four as card configs, straight from the lift registry. Exported so a
+ * caller that narrows the row (the Lift Explorer's search) filters this list
+ * rather than rebuilding it.
+ */
+export const BIG_FOUR_CARD_LIFTS = BIG_FOUR_LIFTS.map(
+  ({ liftType, slug, homepageDescription }) => ({
+    slug: `progress-guide/${slug}`,
+    liftType,
+    liftDescription: homepageDescription,
+  }),
+);
+
+/**
  * Renders a grid of cards for the "big four" barbell lifts (Back Squat, Bench Press,
- * Deadlift, Strict Press). Each card links to its dedicated lift insights page and has
+ * Deadlift, Strict Press). The same row serves the home dashboard, the signed-in
+ * welcome, and the Lift Explorer. Each card links to its progress guide and has
  * two display modes:
  *
  * - **Guest / no-sheet mode**: shows the lift description and SVG diagram.
@@ -44,9 +59,8 @@ import { Badge } from "@/components/ui/badge";
  *   badges for recent PRs, training frequency, volume, and lift preference.
  *
  * @param {Object} props
- * @param {Array<{liftType: string, slug: string, liftDescription: string}>} props.lifts - Array of
- *   lift config objects. Each must have liftType (display name), slug (URL path), and
- *   liftDescription (short description shown in guest mode).
+ * @param {Array<{liftType: string, slug: string, liftDescription: string}>} [props.lifts] - Lift
+ *   configs to render. Defaults to all four from the registry; pass a subset to narrow the row.
  * @param {boolean} [props.animated=true] - When true, stats and badges stagger in with a short
  *   delay per card after auth and data load. Set to false to skip the animation (e.g. when
  *   embedded elsewhere).
@@ -58,7 +72,7 @@ import { Badge } from "@/components/ui/badge";
  *   the four lifts can sit in the hero slot beside the activation CTAs.
  */
 export function BigFourLiftCards({
-  lifts,
+  lifts = BIG_FOUR_CARD_LIFTS,
   animated = true,
   enhancedStats = true,
   gridClassName = "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4",

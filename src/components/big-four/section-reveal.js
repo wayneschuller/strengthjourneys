@@ -57,25 +57,3 @@ export function SectionReveal({
     </MotionTag>
   );
 }
-
-/**
- * A plain heading that introduces a group of cards, so the long stack has a
- * resting point and the in-page anchor nav lands somewhere deliberate. Just
- * the words: Wayne found all-caps kickers and rule lines unhelpful (2026-09-14).
- *
- * @param {Object} props
- * @param {string} props.title - The heading text; nothing renders without it.
- */
-export function SectionHeading({ title, className }) {
-  if (!title) return null;
-  return (
-    <h2
-      className={cn(
-        "text-foreground pt-2 text-lg font-semibold tracking-tight",
-        className,
-      )}
-    >
-      {title}
-    </h2>
-  );
-}

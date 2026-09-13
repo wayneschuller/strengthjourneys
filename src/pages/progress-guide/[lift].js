@@ -66,7 +66,6 @@ import { RelatedArticles } from "@/components/article-cards";
 import { Button } from "@/components/ui/button";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
 import {
-  SectionHeading,
   SectionReveal,
 } from "@/components/big-four/section-reveal";
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
@@ -247,11 +246,12 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
   const showAnalysis = page.bigFour || hasLiftData;
 
   const sections = [
-    strengthLevelsPath && {
-      href: "#strength-standards",
-      label: `${navLiftLabel} Standards`,
-    },
     showAnalysis && { href: "#progress-history", label: `${navLiftLabel} Progress` },
+    showAnalysis &&
+      strengthLevelsPath && {
+        href: "#strength-standards",
+        label: `${navLiftLabel} Standards`,
+      },
     showAnalysis &&
       page.bigFour && {
         href: "#strength-circles",
@@ -276,15 +276,10 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
     <LiftAnalysisSections
       liftType={liftType}
       isBigFour={page.bigFour}
-      title={
-        hasUserData
-          ? `My ${liftType} analysis`
-          : `What ${liftType} tracking looks like`
-      }
+      strengthLevelsPath={strengthLevelsPath}
     />
   ) : (
     <>
-      <SectionHeading title={`Start tracking your ${liftType}`} />
       <SectionReveal id="progress-history">
         <LiftJourneyCard liftType={liftType} />
       </SectionReveal>
@@ -296,13 +291,6 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
 
   const editorialSections = hasEditorial ? (
     <>
-      <SectionHeading
-        title={
-          page.hasGuide
-            ? `${liftType} coaching, technique and reading`
-            : `How to ${liftType}`
-        }
-      />
       {coaching && (
         <SectionReveal id="technique">
           <TechniqueCard liftType={liftType} coaching={coaching} />
@@ -415,15 +403,6 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
       <LiftSectionNav liftType={liftType} sections={sections} />
 
       <div className="flex flex-col gap-6 pt-6">
-        {strengthLevelsPath && (
-          <SectionReveal id="strength-standards">
-            <StrengthLevelsCard
-              liftType={liftType}
-              strengthLevelsPath={strengthLevelsPath}
-            />
-          </SectionReveal>
-        )}
-
         {lifterFirst ? (
           <>
             {analysisSections}
@@ -438,7 +417,6 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
 
         {faqItems.length > 0 && (
           <>
-            <SectionHeading title={`${liftType} FAQ`} />
             <SectionReveal as="section" id="lift-faq">
               <div className="grid gap-4 md:grid-cols-2">
                 {faqItems.map(({ question, answer }) => (
@@ -515,11 +493,7 @@ function UncuratedLiftGuide({ slug }) {
 
         {liftType ? (
           <div className="flex flex-col gap-6 pt-6">
-            <LiftAnalysisSections
-              liftType={liftType}
-              isBigFour={false}
-              title={`My ${liftType} analysis`}
-            />
+            <LiftAnalysisSections liftType={liftType} isBigFour={false} />
           </div>
         ) : (
           <Card className="mt-6">
@@ -553,10 +527,9 @@ function UncuratedLiftGuide({ slug }) {
  * The lifter's numbers for one lift. Strength circles need standards, so they
  * appear for the big four only.
  */
-function LiftAnalysisSections({ liftType, isBigFour, title }) {
+function LiftAnalysisSections({ liftType, isBigFour, strengthLevelsPath }) {
   return (
     <>
-      <SectionHeading title={title} />
       {/* Even halves: the journey card is dense enough to hold its own against
           the session list, and the log CTA reads as the natural next step under
           the sessions it would add to. */}
@@ -580,6 +553,14 @@ function LiftAnalysisSections({ liftType, isBigFour, title }) {
       <SectionReveal id="tonnage-chart">
         <TonnageChart liftType={liftType} />
       </SectionReveal>
+      {strengthLevelsPath && (
+        <SectionReveal id="strength-standards">
+          <StrengthLevelsCard
+            liftType={liftType}
+            strengthLevelsPath={strengthLevelsPath}
+          />
+        </SectionReveal>
+      )}
       {isBigFour && (
         <SectionReveal id="strength-circles">
           <SingleLiftStrengthCirclesSection liftType={liftType} />
@@ -963,7 +944,6 @@ function readGuideLift(lift) {
     liftType: text(lift.liftType) ?? titleFromSlug(lift.slug),
     slug: lift.slug,
     bigFour: lift.bigFour === true,
-    hasGuide: Boolean(lift.guide),
     shortName: text(lift.shortName),
     calculatorUrl: text(lift.calculatorUrl),
     seoTitle: text(guide.seoTitle),

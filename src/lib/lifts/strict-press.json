@@ -77,15 +77,30 @@
       "title": "Third Party Strict Press Articles",
       "links": [
         {
+          "text": "The Press",
+          "href": "https://startingstrength.com/article/the_press",
+          "author": "Mark Rippetoe"
+        },
+        {
+          "text": "The Press",
+          "href": "https://library.crossfit.com/free/pdf/45_06_press.pdf",
+          "author": "Mark Rippetoe, CrossFit Journal"
+        },
+        {
+          "text": "The Forgotten Lift",
+          "href": "https://library.crossfit.com/free/pdf/CFJ_Press_Star2.pdf",
+          "author": "Bill Starr, CrossFit Journal"
+        },
+        {
+          "text": "The Holy Trinity of Strength Training",
+          "href": "https://library.crossfit.com/free/pdf/CFJ_Starr_HolyTrinity.pdf",
+          "author": "Bill Starr, CrossFit Journal"
+        },
+        {
           "text": "Why Everyone Should Press Overhead",
           "href": "https://www.progressiverehabandstrength.com/articles/press",
           "author": "Dr. Elizabeth Zeutschel",
           "note": "This is a good article with examples, especially for women."
-        },
-        {
-          "text": "The Press",
-          "href": "https://startingstrength.com/article/the_press",
-          "author": "Mark Rippetoe"
         },
         {
           "text": "Overhead Press Progression and Training Variables",

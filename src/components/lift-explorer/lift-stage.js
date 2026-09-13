@@ -22,8 +22,9 @@ import {
   useReducedMotion,
   useTransform,
 } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, BookOpen } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { getLiftArtwork } from "@/components/lift-artwork";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -117,8 +118,32 @@ export function LiftStage({ liftType, direction = 1 }) {
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       />
 
+      {/* The big four have an editorial progress guide. It sits in the corner
+          as a button so it never competes with the name and counts. */}
+      {hasGuidePage && (
+        <motion.div
+          className="absolute top-3 right-3 z-20 sm:top-4 sm:right-4"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...SPRING, delay: 0.35 }}
+        >
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="bg-background/70 backdrop-blur-sm"
+          >
+            <Link href={guideUrl} aria-label={`${liftType} progress guide`}>
+              <BookOpen />
+              <span className="hidden sm:inline">Progress guide</span>
+              <ArrowUpRight className="opacity-60" />
+            </Link>
+          </Button>
+        </motion.div>
+      )}
+
       <div
-        className={`relative flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-center ${
+        className={`relative flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-stretch ${
           artSrc ? "md:min-h-64" : "md:min-h-44"
         }`}
       >
@@ -166,26 +191,14 @@ export function LiftStage({ liftType, direction = 1 }) {
               )}
             </div>
           )}
-
-          {hasGuidePage && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.3 }}
-            >
-              <Link
-                href={guideUrl}
-                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline"
-              >
-                Full {liftType} guide
-                <ArrowUpRight className="size-4" />
-              </Link>
-            </motion.div>
-          )}
         </div>
 
         {artSrc && (
-          <div className="relative flex shrink-0 items-end justify-center md:w-[46%] md:justify-end">
+          <div
+            className={`relative flex shrink-0 items-end justify-center md:w-[46%] md:justify-end ${
+              hasGuidePage ? "pt-6 md:pt-8" : ""
+            }`}
+          >
             {/* Floor shadow grounds the figures on the stage. */}
             <motion.span
               aria-hidden="true"

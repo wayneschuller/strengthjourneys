@@ -263,15 +263,20 @@ export function VisualizerMini({ liftType }) {
         </div>
         {width > 1280 && (
           <div className="mr-4 flex flex-col gap-2">
-            <div className="flex items-center gap-1">
-              <Checkbox
-                id="show-standards"
-                value={showStandards}
-                checked={showStandards}
-                onCheckedChange={(show) => setShowStandards(show)}
-              />
-              <Label htmlFor="show-standards">Show Strength Standards</Label>
-            </div>
+            {/* Only lifts with published standards (the big four) can draw
+                them, so the option is hidden rather than offered and inert.
+                The stored preference is left alone for the lifts that do. */}
+            {strengthRanges && (
+              <div className="flex items-center gap-1">
+                <Checkbox
+                  id="show-standards"
+                  value={showStandards}
+                  checked={showStandards}
+                  onCheckedChange={(show) => setShowStandards(show)}
+                />
+                <Label htmlFor="show-standards">Show Strength Standards</Label>
+              </div>
+            )}
             <div className="flex items-center gap-1">
               <Checkbox
                 id="show-bodyweight-multiples"

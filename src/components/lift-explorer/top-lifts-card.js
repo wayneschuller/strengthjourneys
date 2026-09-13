@@ -9,6 +9,7 @@
  */
 import { useMemo, useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { motion } from "motion/react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -27,7 +28,10 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
-import { LiftPickerList } from "@/components/lift-explorer/lift-picker-list";
+import {
+  LiftPickerList,
+  LiftThumb,
+} from "@/components/lift-explorer/lift-picker-list";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getCompactAgeFromYmd, formatDateToYmdLocal } from "@/lib/date-utils";
@@ -177,7 +181,12 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
         <div className="hidden md:block">
           {/* Expanded, a long lifting history runs to hundreds of movements, so
               it scrolls inside the card rather than down the whole page. */}
-          <div className={cn(isListExpanded && "max-h-[70vh] overflow-y-auto")}>
+          {/* layoutScroll lets the sliding selection account for this box's
+              own scroll offset once the expanded list scrolls. */}
+          <motion.div
+            layoutScroll
+            className={cn(isListExpanded && "max-h-[70vh] overflow-y-auto")}
+          >
             <LiftPickerList
               stats={visibleStats}
               selectedLiftType={selectedLiftType}
@@ -193,7 +202,7 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
                 />
               </div>
             )}
-          </div>
+          </motion.div>
           {(hiddenCount > 0 || isListExpanded) && (
             <button
               type="button"
@@ -225,10 +234,10 @@ function LiftChip({ item, isSelected, onSelectLift }) {
         isSelected ? "bg-muted font-medium" : "hover:bg-muted/50",
       )}
     >
-      <span
-        aria-hidden="true"
-        className="size-2 rounded-[2px]"
-        style={{ background: item.color }}
+      <LiftThumb
+        liftType={item.liftType}
+        color={item.color}
+        className="h-5 w-8"
       />
       {item.liftType}
       {item.age && (
@@ -286,9 +295,10 @@ function LiftSearchCombobox({
                     }}
                     className="cursor-pointer items-start"
                   >
-                    <span
-                      className="mt-1 size-2.5 shrink-0 rounded-[2px]"
-                      style={{ background: item.color }}
+                    <LiftThumb
+                      liftType={item.liftType}
+                      color={item.color}
+                      className="mt-0.5 h-7 w-12"
                     />
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="truncate font-medium">{item.liftType}</span>

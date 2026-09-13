@@ -16,14 +16,14 @@
   },
   "videos": [
     {
-      "url": "https://www.youtube.com/watch?v=C_VtOYc6j5c",
-      "title": "The Air Squat: CrossFit Foundational Movement",
-      "channel": "CrossFit"
-    },
-    {
       "url": "https://www.youtube.com/watch?v=jyopTyOjXb0",
       "title": "Gym Shorts (How To): The Squat",
       "channel": "Barbell Logic"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=C_VtOYc6j5c",
+      "title": "The Air Squat: CrossFit Foundational Movement",
+      "channel": "CrossFit"
     },
     {
       "url": "https://www.youtube.com/watch?v=nhoikoUEI8U",

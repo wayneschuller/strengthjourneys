@@ -3,7 +3,7 @@
  */
 
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { getCuratedLift, pickLiftVideo } from "@/lib/lift-registry";
+import { getCuratedLift, getLiftLogVideo } from "@/lib/lift-registry";
 
 const FIRST_TIME_WARMUP_SUBLABELS = [
   "start your engine",
@@ -68,9 +68,9 @@ export function getJourneyTechniqueAssist({
   if (!match) return null;
 
   const defaultCues = match.cues ?? [];
-  // A lift can carry several tutorials; show one per session so returning
-  // lifters meet a different coach now and then.
-  const video = pickLiftVideo(liftType, sessionDate);
+  // A lift can carry several tutorials; the log offers only the first, the
+  // one curated as the best introduction. The guide page shows the rest.
+  const video = getLiftLogVideo(liftType);
   const videoAssist = video
     ? {
         // Every coached lift has a progress guide, not only the big four.

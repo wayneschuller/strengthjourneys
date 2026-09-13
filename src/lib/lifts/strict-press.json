@@ -16,14 +16,14 @@
   },
   "videos": [
     {
-      "url": "https://www.youtube.com/watch?v=8dacy5hjaE8",
-      "title": "Learning to Press | The Starting Strength Method",
-      "channel": "Starting Strength"
-    },
-    {
       "url": "https://www.youtube.com/watch?v=AhGW3XFG3M8",
       "title": "Gym Shorts (How To): The Press",
       "channel": "Barbell Logic"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=8dacy5hjaE8",
+      "title": "Learning to Press | The Starting Strength Method",
+      "channel": "Starting Strength"
     },
     {
       "url": "https://www.youtube.com/watch?v=5yWaNOvgFCM",

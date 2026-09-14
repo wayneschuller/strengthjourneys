@@ -12,17 +12,17 @@ If you are only buying one barbell, **buy a good one**. This will look better wh
 
 ## My default recommendation
 
-Start with a **general purpose bar** unless you are sure your training is almost all [**squat**](https://www.strengthjourneys.xyz/progress-guide/squat)**,** [**bench**](https://www.strengthjourneys.xyz/progress-guide/bench-press)**, and** [**deadlift**](https://www.strengthjourneys.xyz/progress-guide/deadlift).
+Start with a **general purpose bar** unless you are sure your training is almost all **[squat](https://www.strengthjourneys.xyz/progress-guide/squat), [bench](https://www.strengthjourneys.xyz/progress-guide/bench-press), and [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift)**.
 
-- General purpose: [**Rogue Ohio Bar**](https://www.roguefitness.com/rogue-ohio-bar-2-0) (a great default for mixed training).
-- Powerlifting focus: [**Texas Power Bar**](https://texaspowerbars.com/products/the-original-texas-power-bar) (or a comparable power bar), or the [**Rogue 20KG Ohio Power Bar - Stainless Steel**](https://www.roguefitness.com/rogue-20-kg-ohio-power-bar-stainless-steel).
+- General purpose: **[Rogue Ohio Bar](https://www.roguefitness.com/rogue-ohio-bar-2-0)** (a great default for mixed training).
+- Powerlifting focus: **[Texas Power Bar](https://texaspowerbars.com/products/the-original-texas-power-bar)** (or a comparable power bar), or the **[Rogue 20KG Ohio Power Bar - Stainless Steel](https://www.roguefitness.com/rogue-20-kg-ohio-power-bar-stainless-steel)**.
 
 ## Men: 20kg (45lb), women: 15kg
 
 The bar is not just "a bar". The weight and diameter change how it feels.
 
 - Most men should start with a standard **20kg (45lb)** bar.
-- Most women should start with a standard **15kg Olympic bar** (for example, the [**Rogue Bella Bar**](https://www.roguefitness.com/rogue-bella-bar-2-0)).
+- Most women should start with a standard **15kg Olympic bar** (for example, the **[Rogue Bella Bar](https://www.roguefitness.com/rogue-bella-bar-2-0)**).
 
 A 15kg bar is usually a smaller diameter, which can be more comfortable for smaller hands and can make learning the lifts easier. It is not a "beginner bar" in a bad way, it is simply a different standard.
 

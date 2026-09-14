@@ -40,7 +40,7 @@ These are observational studies, so they show a strong link rather than proof. T
 You do not need much to get meaningful benefits:
 
 - **2–3 strength sessions per week**
-- **Basic compound movements such as** [**squats**](https://www.strengthjourneys.xyz/progress-guide/squat)**,** [**deadlifts**](https://www.strengthjourneys.xyz/progress-guide/deadlift)**,** [**bench press**](https://www.strengthjourneys.xyz/progress-guide/bench-press)**, and** [**strict press**](https://www.strengthjourneys.xyz/progress-guide/strict-press) that hit all major muscle groups
+- **Basic compound movements such as [squats](https://www.strengthjourneys.xyz/progress-guide/squat), [deadlifts](https://www.strengthjourneys.xyz/progress-guide/deadlift), [bench press](https://www.strengthjourneys.xyz/progress-guide/bench-press), and [strict press](https://www.strengthjourneys.xyz/progress-guide/strict-press)** that hit all major muscle groups
 - **Consistency over months**, not perfection in any single workout. The [home dashboard](https://www.strengthjourneys.xyz/) shows your long-term consistency patterns, so you can watch the months stack up.
 
 Not much. The Mayo Clinic’s guide to [diabetes prevention](https://www.mayoclinic.org/diseases-conditions/type-2-diabetes/in-depth/diabetes-prevention/art-20047639) recommends strength training for all major muscle groups at least twice a week, alongside aerobic activity. The [CDC’s adult physical activity guidelines](https://www.cdc.gov/physical-activity-basics/guidelines/adults.html) echo this: muscle-strengthening activity on 2 or more days per week, working all major muscle groups. For adults who already have diabetes, the ADA recommends 2 to 3 resistance sessions a week on nonconsecutive days.

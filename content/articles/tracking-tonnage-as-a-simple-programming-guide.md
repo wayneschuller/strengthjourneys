@@ -140,7 +140,7 @@ This is the whole reason I’ve built **Strength Journeys** around tonnage.
 
 ![Back squat session tonnage chart with a 30-day average line on the Strength Journeys progress guide](/articles/tracking-tonnage-as-a-simple-programming-guide/image-1.webp)
 
-- There’s an [**overall tonnage metrics page**](https://www.strengthjourneys.xyz/tonnage) to see the big picture.
+- There’s an **[overall tonnage metrics page](https://www.strengthjourneys.xyz/tonnage)** to see the big picture.
 
 ![](/articles/tracking-tonnage-as-a-simple-programming-guide/image-2.webp)
 

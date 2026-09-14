@@ -24,10 +24,10 @@ Yes, we already have a [1000lb calculator on Strength Journeys](https://www.stre
 
 This goal is an approachable yet challenging benchmark for the "big four" lifts:
 
-- [**200-pound Overhead Press:**](https://www.strengthjourneys.xyz/progress-guide/strict-press) A mark of significant upper body strength.
-- [**300-pound Bench Press:**](https://www.strengthjourneys.xyz/progress-guide/bench-press) For many, this is a coveted upper body strength goal. 
-- [**400-pound Squat:**](https://www.strengthjourneys.xyz/progress-guide/squat) Possibly the easiest of the four magic numbers to reach.
-- [**500-pound Deadlift:**](https://www.strengthjourneys.xyz/progress-guide/deadlift) A number that separates intermediate lifters from advanced ones.
+- **[200-pound Overhead Press:](https://www.strengthjourneys.xyz/progress-guide/strict-press)** A mark of significant upper body strength.
+- **[300-pound Bench Press:](https://www.strengthjourneys.xyz/progress-guide/bench-press)** For many, this is a coveted upper body strength goal. 
+- **[400-pound Squat:](https://www.strengthjourneys.xyz/progress-guide/squat)** Possibly the easiest of the four magic numbers to reach.
+- **[500-pound Deadlift:](https://www.strengthjourneys.xyz/progress-guide/deadlift)** A number that separates intermediate lifters from advanced ones.
 
 Hitting these numbers across each of the big four exercises is a testament to balanced strength and disciplined training.
 
@@ -43,8 +43,8 @@ The 200-kilogram deadlift and squat are iconic numbers in strength training. For
 
 These milestones represent strength relative to bodyweight and are key for lifters who want to balance strength gains with agility.
 
-- [**Bodyweight Bench Press:**](https://www.strengthjourneys.xyz/progress-guide/bench-press) Bench pressing your own bodyweight is a great starting goal for those focusing on overall athletic strength.
-- [**1.5x Bodyweight Squat:**](https://www.strengthjourneys.xyz/progress-guide/squat) This goal shows both lower body strength and stability and is often a prelude to hitting the 2x bodyweight squat.
+- **[Bodyweight Bench Press:](https://www.strengthjourneys.xyz/progress-guide/bench-press)** Bench pressing your own bodyweight is a great starting goal for those focusing on overall athletic strength.
+- **[1.5x Bodyweight Squat:](https://www.strengthjourneys.xyz/progress-guide/squat)** This goal shows both lower body strength and stability and is often a prelude to hitting the 2x bodyweight squat.
 
 ## 6. **Two, Three and Four Plates Club**
 

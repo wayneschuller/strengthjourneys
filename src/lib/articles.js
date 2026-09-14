@@ -213,7 +213,9 @@ function rehypeArticleElements({ articleTitle, fileName }) {
           "font-medium",
           "text-pretty",
           "md:text-2xl",
-          "[&>p+p]:mt-4",
+          // Not an arbitrary [&>p+p] variant: a ">" inside the class attribute
+          // is valid HTML but leaks into naive text extraction by crawlers.
+          "space-y-4",
         ];
       }
     });

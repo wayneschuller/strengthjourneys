@@ -16,7 +16,6 @@ Music has the power to lift us mentally, especially when we're going for a perso
 
 ## Variety for Long-Term Success
 
-\
 Over the years, lifting can become monotonous if we stick to the same routines, and this extends to music. Adding variety to your playlist can keep your workouts fresh and mentally engaging. Switching up the music and matching it to your mood can make lifting more sustainable over the long term, helping you stay motivated and consistent.
 
 ## The Impact of Bad Gym Music

@@ -15,7 +15,7 @@ coverFocus: "44% 69%"
 
 Most lifters ask “How strong am I?” when they really mean one of three different things. Do you want to know how you compare to other people? Do you want to know whether your squat or bench is beginner, intermediate, advanced, or elite? Or do you just want to know what your current rep max probably means in one-rep-max terms?
 
-Start with [**How Strong Am I?**](https://strengthjourneys.xyz/how-strong-am-i) if you want the fastest overall answer. It compares your squat, bench press, and deadlift against different strength universes and gives you a much clearer read than gym gossip ever will.
+Start with **[How Strong Am I?](https://strengthjourneys.xyz/how-strong-am-i)** if you want the fastest overall answer. It compares your squat, bench press, and deadlift against different strength universes and gives you a much clearer read than gym gossip ever will.
 
 ## There Are Three Different Strength Questions
 
@@ -31,10 +31,10 @@ Those are related questions. They are not the same question. This is why people 
 
 If you want a useful read on your strength, start with the big barbell lifts. They cover a lot of ground quickly and they are still the clearest benchmark for most lifters.
 
-- Open the [**Squat progress guide**](https://strengthjourneys.xyz/progress-guide/squat) if you want help understanding what a good squat looks like and what milestones usually come next.
-- Open the [**Bench Press progress guide**](https://strengthjourneys.xyz/progress-guide/bench-press) if bench is the lift you care about most, which statistically you probably do.
-- Open the [**Deadlift progress guide**](https://strengthjourneys.xyz/progress-guide/deadlift) if you want a clearer sense of pulling standards, common milestones, and what counts as strong for your profile.
-- Open the [**Strict Press progress guide**](https://strengthjourneys.xyz/progress-guide/strict-press) if you want the humbling version of this whole process.
+- Open the **[Squat progress guide](https://strengthjourneys.xyz/progress-guide/squat)** if you want help understanding what a good squat looks like and what milestones usually come next.
+- Open the **[Bench Press progress guide](https://strengthjourneys.xyz/progress-guide/bench-press)** if bench is the lift you care about most, which statistically you probably do.
+- Open the **[Deadlift progress guide](https://strengthjourneys.xyz/progress-guide/deadlift)** if you want a clearer sense of pulling standards, common milestones, and what counts as strong for your profile.
+- Open the **[Strict Press progress guide](https://strengthjourneys.xyz/progress-guide/strict-press)** if you want the humbling version of this whole process.
 
 ## Which Strength Journeys Tool Should You Use?
 
@@ -53,4 +53,4 @@ You do not need to chase random numbers from strangers online. You do not need t
 
 ## Start Here
 
-If you want the clearest first answer, open [**How Strong Am I?**](https://strengthjourneys.xyz/how-strong-am-i). If you already know the lift you want to judge, go straight to [Strength Levels](https://strengthjourneys.xyz/strength-levels). Then get back under the bar and give yourself a better problem to have.
+If you want the clearest first answer, open **[How Strong Am I?](https://strengthjourneys.xyz/how-strong-am-i)**. If you already know the lift you want to judge, go straight to [Strength Levels](https://strengthjourneys.xyz/strength-levels). Then get back under the bar and give yourself a better problem to have.

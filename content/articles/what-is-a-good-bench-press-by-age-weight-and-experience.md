@@ -13,7 +13,7 @@ coverFocus: "37% 41%"
 
 Most people have no idea if their bench press is actually “good.” Is 80kg strong? What about 100kg? The answer depends on your age, bodyweight, and training experience.
 
-[**Go to the Bench Press Strength Levels page**](https://strengthjourneys.xyz/strength-levels/bench-press) if you want quick benchmarks by bodyweight and experience before you start second-guessing yourself.
+**[Go to the Bench Press Strength Levels page](https://strengthjourneys.xyz/strength-levels/bench-press)** if you want quick benchmarks by bodyweight and experience before you start second-guessing yourself.
 
 ## What Does “Good” Bench Press Even Mean?
 
@@ -32,7 +32,7 @@ If you just want the quick scan, bodyweight-based standards are a decent place t
 
 These are rough benchmarks, not commandments carved into stone tablets behind the dumbbell rack. Frame, limb length, injury history, training style, and plain old consistency all matter.
 
-If your best work is a heavy set of reps rather than a true max, use the [**Bench Press 1RM Calculator**](https://strengthjourneys.xyz/calculator/bench-press-1rm-calculator) to estimate your top-end strength from a recent set.
+If your best work is a heavy set of reps rather than a true max, use the **[Bench Press 1RM Calculator](https://strengthjourneys.xyz/calculator/bench-press-1rm-calculator)** to estimate your top-end strength from a recent set.
 
 ## What Is a Good Bench Press for Your Age?
 
@@ -64,13 +64,13 @@ The 1000lb Club is the combined total of your squat, bench press, and deadlift. 
 
 A strong bench is great. Total-body strength is what really counts. The lifter with a decent bench, a real squat, and an honest deadlift will usually have the more meaningful base.
 
-Use the [**1000lb Club Calculator**](https://strengthjourneys.xyz/1000lb-club-calculator) to add up your squat, bench, and deadlift and see whether your bench strength is part of a serious total.
+Use the **[1000lb Club Calculator](https://strengthjourneys.xyz/1000lb-club-calculator)** to add up your squat, bench, and deadlift and see whether your bench strength is part of a serious total.
 
 ## The Only Real Way to Know If Your Bench Is Good
 
 Generic standards only get you so far. What actually matters is your numbers, your bodyweight, your age, your training history, and whether your bench is moving in the right direction.
 
-Use [**How Strong Am I**](https://strengthjourneys.xyz/how-strong-am-i) to enter your lifts and get a clearer read on your current level, instead of relying on vague gym folklore.
+Use **[How Strong Am I](https://strengthjourneys.xyz/how-strong-am-i)** to enter your lifts and get a clearer read on your current level, instead of relying on vague gym folklore.
 
 ## Where You Are, and Where You’re Going
 

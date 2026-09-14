@@ -42,7 +42,6 @@ Here’s how you can make the most of the visualizer:
 
 **1. Select Your Lifts**: Choose which lifts you want to focus on by using the side-panel lift chooser. This allows you to compare performance across different exercises.
 
-\
 **2. Adjust Time Range**: Use the time range selector to narrow or expand the chart’s date range. Want to see how your squat has improved in the last six months? Or maybe you’re curious about your all-time performance? The time range feature gives you flexibility.
 
 **3. Customize Display Options**: Toggle between showing all sets or just your best weekly lifts. You can also choose to show or hide the actual weight values for each set on the chart.

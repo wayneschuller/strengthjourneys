@@ -13,7 +13,6 @@ An American standard men's barbell is 45lb. In metric these barbells are normall
 
 Women's barbells are normally 15kg, such as the Rogue Fitness Bella barbell.
 
-You can use the [Strength Journeys Warm Up Sets Calculator](https://www.strengthjourneys.xyz/warm-up-sets-calculator) to see what plates you need to hit a goal weight that includes the barbell.\
-
+You can use the [Strength Journeys Warm Up Sets Calculator](https://www.strengthjourneys.xyz/warm-up-sets-calculator) to see what plates you need to hit a goal weight that includes the barbell.
 
 ![](/articles/how-much-does-a-standard-barbell-weigh/image-1.webp)

@@ -15,7 +15,7 @@ The quotes below come from CrossFit Journal primary sources. They are worth read
 
 > We have empirically observed that nearly all of our athletes demonstrate improvement in all of the following ten physical skills: cardiovascular/respiratory endurance, stamina, strength, flexibility, power, speed, agility, balance, accuracy, and coordination. We define fitness as increased work capacity across broad time and modal domains.
 
-*— Greg Glassman, "*[*What Is Fitness?*](https://games.crossfit.com/article/what-fitness)*" CrossFit Journal, October 2002*
+*— Greg Glassman, "[What Is Fitness?](https://games.crossfit.com/article/what-fitness)" CrossFit Journal, October 2002*
 
 The fitness industry in 2002 could not define fitness. It could sell gym memberships, protein shakes, and magazine subscriptions. It could not tell you what you were actually trying to achieve, or how to measure whether you had achieved it.
 
@@ -25,7 +25,7 @@ Glassman's definition is deceptively simple. It does not say "looking good." It 
 
 > Eat meat and vegetables, nuts and seeds, some fruit, little starch, and no sugar. Keep intake to levels that will support exercise but not body fat. Practice and train major lifts: [Deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), clean, [squat](https://www.strengthjourneys.xyz/progress-guide/squat), [presses](https://www.strengthjourneys.xyz/progress-guide/strict-press), C&J, and snatch. Similarly master the basics of gymnastics: pull-ups, dips, rope climb, push-ups, sit-ups, presses to handstand, pirouettes, flips, splits, and holds. Bike, run, swim, row, etc., hard and fast. Five or six days per week mix these elements in as many combinations and patterns as can be derived. Routine is the enemy. Keep workouts short and intense. Regularly learn and play new sports.
 
-*— Greg Glassman, "*[*World-Class Fitness in 100 Words*](https://library.crossfit.com/free/pdf/CFJ_English_Level1_TrainingGuide.pdf)*," CrossFit Journal*
+*— Greg Glassman, "[World-Class Fitness in 100 Words](https://library.crossfit.com/free/pdf/CFJ_English_Level1_TrainingGuide.pdf)," CrossFit Journal*
 
 This is the entire prescription. Nutrition, strength, gymnastics, conditioning, and sport. One paragraph. No periodisation models, no block structures, no PhD-level programming theory required.
 
@@ -41,7 +41,7 @@ He was also careful to say that intensity is always relative to the individual's
 
 > The needs of Olympic athletes and our grandparents differ by degree, not kind. Increased muscle mass and bone density, strength, balance, coordination, agility, and endurance are as important to the elderly as to athletes.
 
-*— Greg Glassman, "*[*What Is Fitness?*](https://games.crossfit.com/article/what-fitness)*" CrossFit Journal, October 2002*
+*— Greg Glassman, "[What Is Fitness?](https://games.crossfit.com/article/what-fitness)" CrossFit Journal, October 2002*
 
 This is the scalability argument, and it is more radical than it sounds. Most fitness systems have a beginner version and an advanced version, and the two look nothing alike. Glassman said they should look identical, at different loads and complexities.
 
@@ -51,7 +51,7 @@ Your grandmother and a competitive weightlifter both need to hip hinge, brace th
 
 > Routine is the enemy.
 
-*— Greg Glassman, "*[*World-Class Fitness in 100 Words*](https://library.crossfit.com/free/pdf/CFJ_English_Level1_TrainingGuide.pdf)*," CrossFit Journal*
+*— Greg Glassman, "[World-Class Fitness in 100 Words](https://library.crossfit.com/free/pdf/CFJ_English_Level1_TrainingGuide.pdf)," CrossFit Journal*
 
 Three words. No elaboration required.
 

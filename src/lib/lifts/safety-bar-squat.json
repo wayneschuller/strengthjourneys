@@ -1,0 +1,10 @@
+{
+  "liftType": "Safety Bar Squat",
+  "synonyms": [
+    "SSB Squat"
+  ],
+  "parentLift": {
+    "liftType": "Back Squat",
+    "tonnageRatio": 1
+  }
+}

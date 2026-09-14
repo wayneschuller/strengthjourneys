@@ -1,6 +1,10 @@
 {
   "liftType": "Front Squat",
   "slug": "front-squat",
+  "parentLift": {
+    "liftType": "Back Squat",
+    "tonnageRatio": 1
+  },
   "tagline": "Upright, quad driven, and honest.",
   "artwork": {
     "src": "/lifts/default/front-squat.png",

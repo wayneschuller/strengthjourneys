@@ -4,6 +4,10 @@
   "synonyms": [
     "Close-Grip Bench Press"
   ],
+  "parentLift": {
+    "liftType": "Bench Press",
+    "tonnageRatio": 1
+  },
   "tagline": "The bench press, built for triceps.",
   "artwork": {
     "src": "/lifts/default/close-grip-bench-press.png",

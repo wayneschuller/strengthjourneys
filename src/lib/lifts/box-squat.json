@@ -1,0 +1,7 @@
+{
+  "liftType": "Box Squat",
+  "parentLift": {
+    "liftType": "Back Squat",
+    "tonnageRatio": 1
+  }
+}

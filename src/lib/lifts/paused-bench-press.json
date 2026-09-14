@@ -1,0 +1,12 @@
+{
+  "liftType": "Paused Bench Press",
+  "synonyms": [
+    "Pause Bench Press",
+    "Paused Bench",
+    "Pause Bench"
+  ],
+  "parentLift": {
+    "liftType": "Bench Press",
+    "tonnageRatio": 1
+  }
+}

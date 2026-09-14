@@ -1,6 +1,11 @@
 {
   "liftType": "Rack Pull",
   "slug": "rack-pull",
+  "parentLift": {
+    "liftType": "Deadlift",
+    "tonnageRatio": 0.5,
+    "note": "A partial pull from the pins, so it counts as half a deadlift."
+  },
   "tagline": "The top half of the deadlift, overloaded.",
   "artwork": {
     "src": "/lifts/default/rack-pull.png",

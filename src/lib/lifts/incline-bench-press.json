@@ -1,0 +1,10 @@
+{
+  "liftType": "Incline Bench Press",
+  "synonyms": [
+    "Incline Bench"
+  ],
+  "parentLift": {
+    "liftType": "Bench Press",
+    "tonnageRatio": 1
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "liftType": "Deficit Deadlift",
+  "parentLift": {
+    "liftType": "Deadlift",
+    "tonnageRatio": 1
+  }
+}

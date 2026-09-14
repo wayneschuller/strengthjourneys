@@ -1,6 +1,10 @@
 {
   "liftType": "Romanian Deadlift",
   "slug": "romanian-deadlift",
+  "parentLift": {
+    "liftType": "Deadlift",
+    "tonnageRatio": 1
+  },
   "tagline": "The hinge that builds hamstrings.",
   "artwork": {
     "src": "/lifts/default/romanian-deadlift.png",

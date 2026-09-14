@@ -13,12 +13,13 @@ const SITE_URL = "https://www.strengthjourneys.xyz";
 // Every curated lift in src/lib/lifts/ gets a /progress-guide/ page, but one
 // without a guide block is noindex, so it stays out of the sitemap too. This
 // mirrors isLiftGuideIndexable in src/lib/lifts/lift-registry.js; keep them in step.
+// Variation link files have no slug and no page, so they are skipped.
 const LIFTS_DIR = path.join(__dirname, "src/lib/lifts");
 const UNINDEXED_LIFT_GUIDES = fs
   .readdirSync(LIFTS_DIR)
   .filter((file) => file.endsWith(".json"))
   .map((file) => JSON.parse(fs.readFileSync(path.join(LIFTS_DIR, file), "utf8")))
-  .filter((lift) => !lift.guide)
+  .filter((lift) => lift.slug && !lift.guide)
   .map((lift) => `/progress-guide/${lift.slug}`);
 
 module.exports = {

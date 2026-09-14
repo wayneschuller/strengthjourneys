@@ -1,0 +1,8 @@
+{
+  "liftType": "Push Press",
+  "parentLift": {
+    "liftType": "Strict Press",
+    "tonnageRatio": 0.75,
+    "note": "Leg drive moves more weight than a strict press, so it counts at three quarters."
+  }
+}

@@ -37,7 +37,10 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftArtwork } from "@/components/lift-artwork";
-import { getBigFourBodyBenefit } from "@/lib/lifts/lift-registry";
+import {
+  getBigFourBodyBenefit,
+  getBigFourParentLift,
+} from "@/lib/lifts/lift-registry";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";
@@ -1263,11 +1266,13 @@ function getMaxMonthOffsetFromData(parsedData) {
 
 function computeMonthlyBattleStats(parsedData, boundaries) {
   const nativeUnit = parsedData.find((e) => !e.isGoal)?.unitType ?? "lb";
+  // Each row also tallies the variations that fed it, so the card can say
+  // what is inside a number that no longer matches the lift's own page.
   const initBigFourByLift = () =>
     Object.fromEntries(
       BIG_FOUR_LIFT_TYPES.map((liftType) => [
         liftType,
-        { current: 0, last: 0, lastSameDay: 0 },
+        { current: 0, last: 0, lastSameDay: 0, variations: {} },
       ]),
     );
 
@@ -1293,27 +1298,30 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
       date >= boundaries.currentMonthStart && date <= boundaries.todayStr;
     const inLast =
       date >= boundaries.prevMonthStart && date <= boundaries.prevMonthEnd;
+    const share = getBigFourShare(liftType);
+    const bigFourTonnage = share ? tonnage * share.tonnageRatio : 0;
+    const row = share ? bigFourByLift[share.liftType] : null;
 
     if (inCurrent) {
       currentTonnage += tonnage;
       currentDates.add(date);
-      if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
-        currentBigFour += tonnage;
-        bigFourByLift[liftType].current += tonnage;
+      if (row) {
+        currentBigFour += bigFourTonnage;
+        addRowTonnage(row, share, liftType, "current", bigFourTonnage);
       }
     } else if (inLast) {
       lastTonnage += tonnage;
       lastDates.add(date);
-      if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
-        lastBigFour += tonnage;
-        bigFourByLift[liftType].last += tonnage;
+      if (row) {
+        lastBigFour += bigFourTonnage;
+        addRowTonnage(row, share, liftType, "last", bigFourTonnage);
       }
       if (date <= boundaries.prevMonthSameDayStr) {
         lastTonnageSameDay += tonnage;
         lastDatesSameDay.add(date);
-        if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
-          lastBigFourSameDay += tonnage;
-          bigFourByLift[liftType].lastSameDay += tonnage;
+        if (row) {
+          lastBigFourSameDay += bigFourTonnage;
+          row.lastSameDay += bigFourTonnage;
         }
       }
     }
@@ -1339,6 +1347,28 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
     progressRatio: boundaries.dayOfMonth / boundaries.daysInPrevMonth,
     nativeUnit,
   };
+}
+
+// A set counts toward a Big Four row when it is the lift itself or a
+// variation linked to it in the registry. A variation adds only its share of
+// the tonnage, so a rack pull adds half: more weight, less distance.
+function getBigFourShare(liftType) {
+  if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
+    return { liftType, tonnageRatio: 1, isVariation: false };
+  }
+  const parent = getBigFourParentLift(liftType);
+  return parent ? { ...parent, isVariation: true } : null;
+}
+
+function addRowTonnage(row, share, liftType, monthKey, amount) {
+  row[monthKey] += amount;
+  if (!share.isVariation) return;
+  row.variations[liftType] ??= {
+    current: 0,
+    last: 0,
+    tonnageRatio: share.tonnageRatio,
+  };
+  row.variations[liftType][monthKey] += amount;
 }
 
 // ─── Strength level stats (per Big Four lift, best category hit) ───────────
@@ -1656,6 +1686,32 @@ function formatTonnageFigure(value) {
   return `${Math.round(value)}`;
 }
 
+// Variations that fed a row in one month, biggest first, as
+// "1.1k kg Front Squat and 900 kg Rack Pull at 50%". Null when none did.
+function describeVariations(variations, monthKey, unit) {
+  const parts = getRowVariations(variations, monthKey).map(([name, tally]) => {
+    const share =
+      tally.tonnageRatio < 1
+        ? ` at ${Math.round(tally.tonnageRatio * 100)}%`
+        : "";
+    return `${formatTonnageFigure(tally[monthKey])} ${unit} ${name}${share}`;
+  });
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+}
+
+function getVariationNames(variations, monthKey) {
+  const names = getRowVariations(variations, monthKey).map(([name]) => name);
+  return names.length > 0 ? names.join(", ") : null;
+}
+
+function getRowVariations(variations, monthKey) {
+  return Object.entries(variations ?? {})
+    .filter(([, tally]) => tally[monthKey] > 0)
+    .sort(([, a], [, b]) => b[monthKey] - a[monthKey]);
+}
+
 function formatLiftTypeLabel(liftType) {
   return liftType
     .split("-")
@@ -1783,6 +1839,16 @@ function buildMonthCardPromptSummary({
       current: null,
       last: null,
     };
+    // Without this the review could tell a lifter who front squatted all
+    // month that they skipped squats.
+    const includedNow = describeVariations(tonnage.variations, "current", unit);
+    const includedBefore = describeVariations(tonnage.variations, "last", unit);
+    const variationsText = [
+      includedNow && ` (current includes ${includedNow})`,
+      includedBefore && ` (previous includes ${includedBefore})`,
+    ]
+      .filter(Boolean)
+      .join("");
     const currentStrength = formatPromptStrengthLevel(strength.current);
     const lastStrength = formatPromptStrengthLevel(strength.last);
     const strengthStatus = strengthSetupRequired
@@ -1795,7 +1861,7 @@ function buildMonthCardPromptSummary({
           ? "regressed"
           : "matched_or_better";
 
-    return `${liftType}: tonnage current ${formatTonnage(currentTonnage, unit)}, previous ${formatTonnage(lastTonnage, unit)}, status ${tonnagePassed ? "green" : "behind"}${liftPaceStatus !== "no-data" ? `/${liftPaceStatus}` : ""}; strength current ${currentStrength}, previous ${lastStrength}, status ${strengthStatus}`;
+    return `${liftType}: tonnage current ${formatTonnage(currentTonnage, unit)}, previous ${formatTonnage(lastTonnage, unit)}${variationsText}, status ${tonnagePassed ? "green" : "behind"}${liftPaceStatus !== "no-data" ? `/${liftPaceStatus}` : ""}; strength current ${currentStrength}, previous ${lastStrength}, status ${strengthStatus}`;
   });
 
   lines.push("big_four_rows:");
@@ -2377,7 +2443,23 @@ function BigFourCriteriaTable({
           liftPaceStatus,
           isCurrentMonthView,
         });
-        const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType);
+        const lastVariations = describeVariations(
+          tonnage.variations,
+          "last",
+          unit,
+        );
+        const currentVariations = describeVariations(
+          tonnage.variations,
+          "current",
+          unit,
+        );
+        const currentVariationNames = getVariationNames(
+          tonnage.variations,
+          "current",
+        );
+        const tonnageLastTooltip = lastVariations
+          ? `${getTonnageLastColumnTooltip(liftType)} Includes ${lastVariations}.`
+          : getTonnageLastColumnTooltip(liftType);
         const liftInsightHref = getLiftDetailUrl(liftType);
 
         return (
@@ -2600,6 +2682,11 @@ function BigFourCriteriaTable({
                               : "▼ Behind pace"}
                         </div>
                       )}
+                    {rowHighlighted && currentVariationNames && (
+                      <div className="text-muted-foreground text-[10px]">
+                        Includes {currentVariationNames}
+                      </div>
+                    )}
                     {rowHighlighted && !tonnageBaseline && (
                       <div className="bg-muted/40 mt-1 h-1 w-full overflow-hidden rounded-full">
                         <motion.div
@@ -2622,6 +2709,7 @@ function BigFourCriteriaTable({
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
                     {tonnageStatusTooltip}
+                    {currentVariations && ` Includes ${currentVariations}.`}
                   </p>
                 </TooltipContent>
               </Tooltip>

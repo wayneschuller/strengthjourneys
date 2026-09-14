@@ -4,7 +4,8 @@
  * anywhere else. Pages, the nav, the log and the importers all read it here.
  *
  * THE JSON FORMAT. Keys sit in this order, top to bottom. Only liftType and
- * slug are required; a lift simply lacks whatever has not been written yet.
+ * slug are required for a curated lift; a lift simply lacks whatever has not
+ * been written yet.
  * Add a new key to this list, in its category, before a page reads it.
  *
  *  Identity
@@ -18,6 +19,11 @@
  *                   Squat once pointed at Back Squat's drawing for months.
  *   bigFour         true for squat, bench, deadlift and press.
  *   icon            Lucide icon name, registered in components/lift-icon.js.
+ *   parentLift      { liftType, tonnageRatio, note? }. The big four lift a
+ *                   variation counts toward on the Month in Iron card, and
+ *                   the share of its tonnage that counts: 1 for a full lift,
+ *                   less when the variation moves more weight for less work
+ *                   (a rack pull is 0.5). Unrelated to standardsRef.
  *
  *  Short copy
  *   tagline               One line under the name on hubs and dashboard cards.
@@ -60,6 +66,12 @@
  * stays out of search until the lift has a guide block, because a page that
  * is only a drawing and three cues is the thin kind Google demotes.
  *
+ * VARIATION LINKS: a file with liftType, synonyms and parentLift but no slug
+ * is not a curated lift. It lets a big four row count a variation we have not
+ * drawn (Push Press, Pause Squat), and nothing else reads it: no page, no
+ * tile, no artwork lookup. Import it into VARIATION_LINKS, never
+ * CURATED_LIFTS. Give it a slug and artwork later to promote it.
+ *
  * JSON rather than JS so the files stay pure content that scripts and
  * next-sitemap.config.js can read too. Rationale that would have been a code
  * comment goes in a field instead (a video's title, standardsRef.note).
@@ -79,6 +91,14 @@ import barbellRow from "@/lib/lifts/barbell-row.json";
 import rackPull from "@/lib/lifts/rack-pull.json";
 import closeGripBenchPress from "@/lib/lifts/close-grip-bench-press.json";
 import barbellCurl from "@/lib/lifts/barbell-curl.json";
+import pushPress from "@/lib/lifts/push-press.json";
+import pauseSquat from "@/lib/lifts/pause-squat.json";
+import boxSquat from "@/lib/lifts/box-squat.json";
+import safetyBarSquat from "@/lib/lifts/safety-bar-squat.json";
+import pausedBenchPress from "@/lib/lifts/paused-bench-press.json";
+import inclineBenchPress from "@/lib/lifts/incline-bench-press.json";
+import sumoDeadlift from "@/lib/lifts/sumo-deadlift.json";
+import deficitDeadlift from "@/lib/lifts/deficit-deadlift.json";
 
 export const SITE_URL = "https://www.strengthjourneys.xyz";
 
@@ -120,6 +140,49 @@ for (const lift of CURATED_LIFTS) {
   for (const synonym of Array.isArray(lift.synonyms) ? lift.synonyms : []) {
     BY_NAME.set(synonym, lift);
   }
+}
+
+/** Uncurated variations that only feed a big four row. See VARIATION LINKS. */
+const VARIATION_LINKS = [
+  pushPress,
+  pauseSquat,
+  boxSquat,
+  safetyBarSquat,
+  pausedBenchPress,
+  inclineBenchPress,
+  sumoDeadlift,
+  deficitDeadlift,
+];
+
+const PARENT_BY_NAME = new Map();
+for (const lift of [...CURATED_LIFTS, ...VARIATION_LINKS]) {
+  const parent = readParentLift(lift);
+  if (!parent) continue;
+  const synonyms = Array.isArray(lift.synonyms) ? lift.synonyms : [];
+  for (const name of [lift.liftType, ...synonyms]) {
+    PARENT_BY_NAME.set(name, parent);
+  }
+}
+
+/**
+ * The big four lift a variation counts toward, with the share of its tonnage
+ * that counts, following synonyms. Null for the big four themselves and for
+ * anything unlinked.
+ * @param {string} liftType
+ * @returns {{liftType: string, tonnageRatio: number}|null}
+ */
+export function getBigFourParentLift(liftType) {
+  return (liftType && PARENT_BY_NAME.get(liftType)) || null;
+}
+
+// A parent outside the big four, or a ratio outside (0, 1], is dropped so a
+// typo in a JSON file can never quietly inflate a row.
+function readParentLift(lift) {
+  const parent = lift?.parentLift;
+  if (!BIG_FOUR_LIFT_TYPE_SET.has(parent?.liftType)) return null;
+  const tonnageRatio = Number(parent.tonnageRatio ?? 1);
+  if (!(tonnageRatio > 0 && tonnageRatio <= 1)) return null;
+  return { liftType: parent.liftType, tonnageRatio };
 }
 
 /**

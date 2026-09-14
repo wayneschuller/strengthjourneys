@@ -309,45 +309,59 @@ export function DataSheetStatus({
   );
 }
 
-// While the sheet read is out the fill creeps towards READ_CEILING and never reaches it, so a
-// slow read keeps moving without claiming to be done. Once the count lands the fill runs the
-// rest of the way, briskly when the creep already covered most of it. The cards never wait on
-// any of this: they render as soon as their data is parsed.
-const READ_CEILING = 0.85;
-const READ_EASE_MS = 1500;
-const FULL_FILL_MS = 1200;
-const FINISH_MIN_MS = 400;
+// A sheet read waits on the Google Sheets API for two seconds or more, then parses in about
+// 200ms, so this pill exists to fill the API wait. The dashboard remembers each sheet's last row
+// count on the device, and the odometer rolls towards it while the read is out. The count is
+// only a stand-in, and that is fine: the real one takes over the moment it lands. The fill
+// creeps towards READ_CEILING and never reaches it, so a slow read keeps moving without claiming
+// to be done. With nothing remembered (a first read, a new device) the fill creeps with no
+// number. The cards never wait on any of this: they render as soon as their data is parsed.
+const READ_CEILING = 0.9;
+const READ_EASE_MS = 1200;
+// About as long as the parse, so the pill settles as the cards arrive.
+const FINISH_MS = 300;
+// A count that arrives with nothing rolled yet (an imported preview, or a read SWR already
+// held) rolls the whole way instead, or it would only flicker.
+const FULL_ROLL_MS = 1200;
 
 /**
  * Compact progress pill for the initial data load. It starts the moment the dashboard mounts,
- * creeping while the sheet is read, then rolls the real count once the read returns. Sized to
- * sit in the dashboard header slot beside the greeting, so it never occupies a row of its own.
- * Supports sheet rows and imported preview entries so one visual treatment works without
- * implying every source is Google Sheets.
+ * rolling towards the remembered row count while the sheet is read, then settles on the real
+ * count. Sized to sit in the dashboard header slot beside the greeting, so it never occupies a
+ * row of its own. Supports sheet rows and imported preview entries so one visual treatment
+ * works without implying every source is Google Sheets.
  *
  * @param {Object} props
  * @param {"sheet"|"preview"} [props.mode] - Source type powering the load indicator.
  * @param {number|null} props.count - Total rows/entries to process; null while the read is out.
+ * @param {number|null} [props.expectedCount] - Remembered count to roll towards during the read.
  * @param {boolean} props.isProgressDone - Whether the animation has finished.
  * @param {function(boolean)} props.setIsProgressDone - Callback to mark progress complete.
  */
 export function RowProcessingIndicator({
   mode = "sheet",
   count,
+  expectedCount = null,
   isProgressDone,
   setIsProgressDone,
 }) {
   const isPreviewMode = mode === "preview";
   const isCountKnown = count !== null && count !== undefined;
+  const hasExpectedCount = Number.isFinite(expectedCount) && expectedCount > 0;
+  // What "/ total" shows: the real count once it is known, the remembered one until then.
+  const displayTotal = isCountKnown ? count : hasExpectedCount ? expectedCount : null;
   const countLabel = isPreviewMode ? "entries" : "rows";
   const loadingLabel = isPreviewMode
     ? "Preparing imported preview"
     : "Reading your workout data";
   const completedLabel = isPreviewMode ? "Preview ready" : "Processed";
 
-  // Share of the pill filled, 0 to 1. The count rides on it once it is known.
+  // Share of the pill filled (0 to 1), and the number on the odometer. Fractional on purpose:
+  // the wheels roll between whole numbers.
   const [fraction, setFraction] = useState(0);
+  const [shownCount, setShownCount] = useState(0);
   const fractionRef = useRef(0);
+  const shownCountRef = useRef(0);
   const previousCountRef = useRef(null);
 
   useEffect(() => {
@@ -355,35 +369,47 @@ export function RowProcessingIndicator({
     previousCountRef.current = isCountKnown ? count : null;
     setIsProgressDone(false);
 
+    const show = (nextFraction, nextCount) => {
+      fractionRef.current = nextFraction;
+      shownCountRef.current = nextCount;
+      setFraction(nextFraction);
+      setShownCount(nextCount);
+    };
+
     if (isCountKnown && count <= 0) {
-      fractionRef.current = 1;
-      setFraction(1);
+      show(1, 0);
       setIsProgressDone(true);
       return;
     }
 
-    // A count landing straight after the read carries on from wherever the creep got to.
+    // A count landing straight after the read carries on from wherever the roll got to.
     // Anything else (a fresh read after a finished one, or a different count) starts over.
-    const from = cameFromRead ? fractionRef.current : 0;
-    const finishMs = Math.max(FINISH_MIN_MS, FULL_FILL_MS * (1 - from));
+    const fromFraction = cameFromRead ? fractionRef.current : 0;
+    const fromCount = cameFromRead ? shownCountRef.current : 0;
+    const finishMs = fromFraction > 0 ? FINISH_MS : FULL_ROLL_MS;
+    const readTarget = hasExpectedCount ? expectedCount : 0;
     const start = performance.now();
     let frameId;
 
     const tick = (now) => {
       const elapsedMs = now - start;
-      let next;
+      let nextFraction;
+      let nextCount;
       let isSettled;
       if (isCountKnown) {
         const progress = Math.min(1, elapsedMs / finishMs);
-        next = from + (1 - from) * (1 - (1 - progress) ** 3);
+        const eased = 1 - (1 - progress) ** 3;
+        nextFraction = fromFraction + (1 - fromFraction) * eased;
+        nextCount = fromCount + (count - fromCount) * eased;
         isSettled = progress >= 1;
       } else {
-        next = from + (READ_CEILING - from) * (1 - Math.exp(-elapsedMs / READ_EASE_MS));
-        isSettled = READ_CEILING - next < 0.002;
+        const creep = 1 - Math.exp(-elapsedMs / READ_EASE_MS);
+        nextFraction = fromFraction + (READ_CEILING - fromFraction) * creep;
+        nextCount = readTarget * nextFraction;
+        isSettled = READ_CEILING - nextFraction < 0.002;
       }
 
-      fractionRef.current = next;
-      setFraction(next);
+      show(nextFraction, nextCount);
 
       if (isSettled) {
         if (isCountKnown) setIsProgressDone(true);
@@ -397,24 +423,23 @@ export function RowProcessingIndicator({
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [count, isCountKnown, setIsProgressDone]);
+  }, [count, isCountKnown, expectedCount, hasExpectedCount, setIsProgressDone]);
 
-  // Fractional on purpose: the odometer wheels roll between whole numbers.
-  const animatedCount = isCountKnown ? count * fraction : 0;
   const percent = Math.min(100, Math.round(fraction * 100));
+  const hasTotal = displayTotal !== null;
 
   return (
     <div
       className={`relative flex items-center gap-2 overflow-hidden rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-xs whitespace-nowrap ${
-        isCountKnown ? "" : "min-w-40"
+        hasTotal ? "" : "min-w-40"
       }`}
       role="progressbar"
       aria-valuemin={0}
-      aria-valuemax={isCountKnown ? count : undefined}
-      aria-valuenow={isCountKnown ? Math.floor(animatedCount) : undefined}
+      aria-valuemax={hasTotal ? displayTotal : undefined}
+      aria-valuenow={hasTotal ? Math.floor(shownCount) : undefined}
       aria-label={
-        isCountKnown
-          ? `${loadingLabel}: ${Math.floor(animatedCount).toLocaleString()} of ${count.toLocaleString()} ${countLabel}`
+        hasTotal
+          ? `${loadingLabel}: ${Math.floor(shownCount).toLocaleString()} of ${displayTotal.toLocaleString()} ${countLabel}`
           : loadingLabel
       }
     >
@@ -436,15 +461,15 @@ export function RowProcessingIndicator({
             aria-hidden
           />
         )}
-        {isCountKnown ? (
+        {hasTotal ? (
           <>
             <span className="text-muted-foreground hidden sm:inline">
               {isProgressDone ? completedLabel : loadingLabel}:
             </span>
             <span className="flex items-center gap-1 tabular-nums">
-              <OdometerCount value={animatedCount} layoutValue={count} />
+              <OdometerCount value={shownCount} layoutValue={displayTotal} />
               <span className="text-muted-foreground">
-                / {count.toLocaleString()} {countLabel}
+                / {displayTotal.toLocaleString()} {countLabel}
               </span>
             </span>
           </>

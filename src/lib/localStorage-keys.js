@@ -140,6 +140,9 @@ export const LOCAL_STORAGE_KEYS = {
   HOME_DASHBOARD_FIRST_VIEW_TRACKED: "SJ_homeDashboardFirstViewTracked",
   HOME_DASHBOARD_LAST_TRACKED_STAGE: "SJ_homeDashboardLastTrackedStage",
   HOME_DASHBOARD_IMPORT_NUDGE_DISMISSED: "SJ_homeDashboardImportNudgeDismissed",
+  // Last row count per linked sheet (use getSheetScopedStorageKey). A number only, so the home
+  // dashboard's load pill has something to roll towards while the next sheet read is out.
+  HOME_DASHBOARD_LAST_ROW_COUNT: "SJ_homeDashboardLastRowCount",
   // Cached copy of the authenticated user's KV-backed recurring-import profile.
   // Contains workflow freshness only, never filenames or lifting data.
   IMPORT_PROFILE: "SJ_importProfile",

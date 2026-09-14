@@ -116,6 +116,42 @@ export function HomeDashboard() {
         : null,
     [parsedData],
   );
+  // Each sheet's last row count, remembered on this device so the header's odometer has a
+  // number to roll towards during the next read. Read once per sheet: the fresh count saved
+  // below must not restart a roll that is already under way.
+  const sheetSsid = sheetInfo?.ssid ?? null;
+  const expectedRowCount = useMemo(() => {
+    if (typeof window === "undefined" || !sheetSsid) return null;
+    try {
+      const stored = Number(
+        window.localStorage.getItem(
+          getSheetScopedStorageKey(
+            LOCAL_STORAGE_KEYS.HOME_DASHBOARD_LAST_ROW_COUNT,
+            sheetSsid,
+          ),
+        ),
+      );
+      return stored > 0 ? stored : null;
+    } catch {
+      return null;
+    }
+  }, [sheetSsid]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isImportedData || !sheetSsid || rawRows === null) return;
+    try {
+      window.localStorage.setItem(
+        getSheetScopedStorageKey(
+          LOCAL_STORAGE_KEYS.HOME_DASHBOARD_LAST_ROW_COUNT,
+          sheetSsid,
+        ),
+        String(rawRows),
+      );
+    } catch {
+      // Storage can be full or blocked. The pill then creeps without a number, which is fine.
+    }
+  }, [isImportedData, sheetSsid, rawRows]);
   // `dashboardStage` drives onboarding vs mature behavior. Keep all stage
   // branching anchored here so child cards receive one consistent signal.
   const { dashboardStage, starterSheetState, sessionCount, dataMaturityStage } =
@@ -228,6 +264,7 @@ export function HomeDashboard() {
                 <RowProcessingIndicator
                   mode={isImportedData ? "preview" : "sheet"}
                   count={isImportedData ? previewEntryCount : rawRows}
+                  expectedCount={isImportedData ? null : expectedRowCount}
                   isProgressDone={isProgressDone}
                   setIsProgressDone={setIsProgressDone}
                 />

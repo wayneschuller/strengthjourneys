@@ -9,7 +9,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import { sanityIOClient } from "@/lib/sanity-io.js";
+import { FEATURED_CATEGORY_TITLE, fetchRelatedArticles } from "@/lib/articles";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useMemo } from "react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -364,33 +364,14 @@ const structuredData = {
 };
 
 /**
- * Fetches the featured articles used by the signed-in-no-sheet reading rail.
- *
- * Wrapped so a Sanity outage degrades the rail to its evergreen tile instead of
- * failing the whole home page build. The JSON round-trip strips any undefined
- * fields Sanity may omit, which Next refuses to serialize.
+ * The two newest featured articles, for the signed-in-no-sheet reading rail.
+ * Articles ship with the deploy, so the page needs no revalidation.
  */
 export async function getStaticProps() {
-  let starterArticles = [];
-
-  try {
-    const articles = await sanityIOClient.fetch(`
-      *[_type == "post" && publishedAt < now() && "Featured Articles" in categories[]->title] | order(publishedAt desc)[0...2] {
-        title,
-        "slug": slug.current,
-        publishedAt,
-        mainImage,
-        description,
-      }
-    `);
-    starterArticles = JSON.parse(JSON.stringify(articles || []));
-  } catch (error) {
-    console.error("Home page featured article fetch failed:", error?.message);
-  }
+  const featuredArticles = await fetchRelatedArticles(FEATURED_CATEGORY_TITLE);
 
   return {
-    props: { starterArticles },
-    revalidate: 60 * 60, // Revalidate hourly, matching /articles
+    props: { starterArticles: featuredArticles.slice(0, 2) },
   };
 }
 

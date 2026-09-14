@@ -10,7 +10,7 @@ import { GorillaIcon } from "@/components/gorilla-icon";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { RelatedArticles } from "@/components/article-cards";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import {
   PageContainer,
   PageHeader,
@@ -116,7 +116,6 @@ export async function getStaticProps() {
 
   return {
     props: { relatedArticles },
-    revalidate: 60 * 60,
   };
 }
 

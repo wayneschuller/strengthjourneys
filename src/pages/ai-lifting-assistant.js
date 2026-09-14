@@ -97,7 +97,7 @@ import {
 import { processConsistency } from "@/lib/consistency";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "AI Lifting Assistant";
@@ -107,7 +107,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

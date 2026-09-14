@@ -14,7 +14,7 @@ import {
 } from "@/components/page-header";
 import { Bus } from "lucide-react";
 
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { RelatedArticles } from "@/components/article-cards";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 
@@ -26,7 +26,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

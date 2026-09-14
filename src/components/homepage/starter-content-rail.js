@@ -16,7 +16,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, BicepsFlexed, Newspaper } from "lucide-react";
-import { urlFor } from "@/lib/sanity-io.js";
 import { Card, CardContent } from "@/components/ui/card";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 
@@ -78,31 +77,19 @@ function RailCard({ href, eyebrow, title, description, thumbnail, icon: Icon, on
 
 /**
  * Row of starting-out reading for signed-in lifters without a linked sheet.
- * Shows up to two featured Sanity articles alongside an evergreen strength
- * standards tile, then a quiet link into the full library.
+ * Shows up to two featured articles alongside an evergreen strength standards
+ * tile, then a quiet link into the full library.
  *
- * Degrades to the evergreen tile alone when the Sanity fetch returned nothing,
- * so a CMS outage cannot leave a heading with an empty row under it.
+ * Degrades to the evergreen tile alone when no featured articles are passed,
+ * so the heading never sits over an empty row.
  *
  * @param {Object} props
- * @param {Array<{slug: string, title: string, description?: string, publishedAt?: string, mainImage?: Object}>} [props.articles=[]]
+ * @param {Array<{slug: string, title: string, description?: string, publishedAt?: string, cover?: string}>} [props.articles=[]]
  *   Featured articles from the home page's getStaticProps.
  */
 export function StarterContentRail({ articles = [] }) {
   const articleTiles = (articles || []).slice(0, 2).map((article) => {
-    let thumbnail = null;
-    if (article?.mainImage) {
-      try {
-        thumbnail = urlFor(article.mainImage)
-          .width(160)
-          .height(160)
-          .fit("crop")
-          .quality(75)
-          .url();
-      } catch {
-        thumbnail = null; // A malformed image ref should not take out the rail
-      }
-    }
+    const thumbnail = article?.cover || null;
 
     return (
       <RailCard

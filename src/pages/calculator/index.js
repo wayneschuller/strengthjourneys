@@ -76,7 +76,7 @@ import {
   LIFT_TYPE_TO_PERCENTILE_KEY,
   LIFT_TYPE_TO_CALCULATOR_URL,
 } from "@/lib/strength-circles/strength-score";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { getStrengthLevelsPath } from "@/lib/lifts/lift-registry";
 
 export async function getStaticProps() {
@@ -87,7 +87,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

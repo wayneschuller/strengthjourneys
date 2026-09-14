@@ -1,9 +1,8 @@
 /*
- * Article cards for the Sanity article library and for "related articles"
- * blocks on tool pages. The library leads with photo-forward tiles, so every
- * card here draws its cover from the article's own Sanity main image (cropped
- * around its hotspot) with the LQIP blur as a placeholder when the query
- * supplies one.
+ * Article cards for the article library and for "related articles" blocks on
+ * tool pages. The library leads with photo-forward tiles, so every card draws
+ * the article's cover from public/ (see src/lib/articles.js), cropped to fit
+ * with its optional coverFocus point kept in frame.
  */
 import Link from "next/link";
 import Image from "next/image";
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { urlFor } from "@/lib/sanity-io.js";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -44,8 +42,8 @@ function formatArticleDate(publishedAt) {
  * tile and the rest fill in around it.
  *
  * @param {Object} props
- * @param {Array<Object>} props.articles - Sanity articles with slug, title,
- *   publishedAt, description, mainImage and optional lqip.
+ * @param {Array<Object>} props.articles - Article summaries with slug, title,
+ *   publishedAt, description, cover and optional coverFocus/coverAlt.
  */
 export function FeaturedArticles({ articles }) {
   if (!articles?.length) return null;
@@ -79,7 +77,7 @@ export function FeaturedArticles({ articles }) {
  * Responsive grid of article summary cards.
  *
  * @param {Object} props
- * @param {Array<Object>} props.articles - Sanity articles.
+ * @param {Array<Object>} props.articles - Article summaries from src/lib/articles.js.
  */
 export function ArticleGrid({ articles, titleAs }) {
   if (!articles?.length) return null;
@@ -100,8 +98,8 @@ export function ArticleGrid({ articles, titleAs }) {
  * clamped description so cards in a row keep a tidy rhythm.
  *
  * @param {Object} props
- * @param {Object} props.article - Sanity article object with slug, title, publishedAt,
- *   description, mainImage.
+ * @param {Object} props.article - Article summary with slug, title, publishedAt,
+ *   description, cover and optional coverFocus/coverAlt.
  * @param {string} [props.titleAs="h2"] - Heading element for the title. Use a
  *   lower level where the cards sit under another page's own h2 sections, so
  *   they don't muddy that page's heading outline.
@@ -117,8 +115,6 @@ export function ArticleSummaryCard({ article, titleAs: TitleTag = "h2" }) {
         <div className="bg-muted relative aspect-[16/9] overflow-hidden">
           <ArticleCoverImage
             article={article}
-            width={800}
-            height={450}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"
           />
         </div>
@@ -209,7 +205,7 @@ export function buildArticlePageHref(page) {
  * Grid of related articles with links. Used on lift pages to show related content.
  *
  * @param {Object} props
- * @param {Array<{slug: string, title: string, publishedAt: string, mainImage: Object}>} props.articles - Array of Sanity article objects.
+ * @param {Array<{slug: string, title: string, publishedAt: string, cover: string}>} props.articles - Article summaries.
  */
 export function RelatedArticles({ articles }) {
   if (!articles || articles.length === 0) return null;
@@ -239,11 +235,7 @@ export function RelatedArticles({ articles }) {
                     {formatArticleDate(article.publishedAt)}
                   </div>
                 </span>
-                <ArticleImage
-                  sanityImage={article.mainImage}
-                  articleTitle={article.title}
-                  className="w-28"
-                />
+                <ArticleImage article={article} className="w-28" />
               </Link>
             </div>
           ))}
@@ -270,8 +262,6 @@ function FeaturedArticleTile({ article, isLead = false }) {
       >
         <ArticleCoverImage
           article={article}
-          width={isLead ? 1400 : 700}
-          height={isLead ? 1000 : 500}
           sizes={
             isLead
               ? "(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 66vw"
@@ -324,33 +314,24 @@ function FeaturedArticleTile({ article, isLead = false }) {
   );
 }
 
-// Fill-mode cover image cropped by Sanity around the editor's hotspot. Alt text
-// stays descriptive so the covers keep their image-search relevance.
-function ArticleCoverImage({ article, width, height, sizes, priority = false }) {
-  if (!article.mainImage) return null;
-
-  const imageUrl = urlFor(article.mainImage)
-    .width(width)
-    .height(height)
-    .fit("crop")
-    .quality(80)
-    .url();
-
-  if (!imageUrl) return null;
+// Fill-mode cover image cropped to its box, keeping the article's coverFocus
+// point in frame. Alt text stays descriptive so the covers keep their
+// image-search relevance.
+function ArticleCoverImage({ article, sizes, priority = false }) {
+  if (!article.cover) return null;
 
   return (
     <Image
-      src={imageUrl}
+      src={article.cover}
       alt={
-        article.mainImage.alt?.trim() ||
+        article.coverAlt ||
         (article.title ? `${article.title} article image` : "Article image")
       }
       fill
       sizes={sizes}
       priority={priority}
-      placeholder={article.lqip ? "blur" : "empty"}
-      blurDataURL={article.lqip ?? undefined}
       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+      style={article.coverFocus ? { objectPosition: article.coverFocus } : undefined}
     />
   );
 }
@@ -381,17 +362,8 @@ function ArticleReveal({ index, className, children }) {
 }
 
 // Small cropped square thumbnail used by the compact RelatedArticles rows.
-const ArticleImage = ({ sanityImage, articleTitle, className }) => {
-  if (!sanityImage) return null;
-
-  const imageUrl = urlFor(sanityImage)
-    .width(600)
-    .height(600)
-    .fit("crop")
-    .quality(80)
-    .url();
-
-  if (!imageUrl) return null;
+const ArticleImage = ({ article, className }) => {
+  if (!article.cover) return null;
 
   return (
     <div
@@ -402,12 +374,16 @@ const ArticleImage = ({ sanityImage, articleTitle, className }) => {
       )}
     >
       <Image
-        src={imageUrl}
-        alt={articleTitle ? `${articleTitle} article image` : "Article image"}
+        src={article.cover}
+        alt={
+          article.coverAlt ||
+          (article.title ? `${article.title} article image` : "Article image")
+        }
         width={600}
         height={600}
         sizes="(max-width: 768px) 100vw, 150px"
         className="h-full w-full object-cover"
+        style={article.coverFocus ? { objectPosition: article.coverFocus } : undefined}
       />
     </div>
   );

@@ -31,7 +31,7 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { RelatedArticles } from "@/components/article-cards";
 
 const ITEMS_PER_PAGE = 10;

@@ -5,7 +5,7 @@
 import Head from "next/head";
 import { LibraryBig } from "lucide-react";
 
-import { sanityIOClient } from "@/lib/sanity-io.js";
+import { getPublishedArticles } from "@/lib/articles";
 import {
   ArticleGrid,
   ArticlePagination,
@@ -25,36 +25,14 @@ const description =
 const siteBaseUrl = "https://www.strengthjourneys.xyz";
 const REGULAR_ARTICLES_PAGE_SIZE = 12;
 
-function splitArticlesByFeaturedCategory(articles) {
-  const regularArticles = articles?.filter(
-    (article) =>
-      !article.categories?.some(
-        (category) => category.title === "Featured Articles",
-      ),
-  ) ?? [];
-
-  return { regularArticles };
-}
-
-async function fetchArticlesForArchive() {
-  return sanityIOClient.fetch(`
-    *[_type == "post" && publishedAt < now()] | order(publishedAt desc) {
-      title,
-      "slug": slug.current,
-      publishedAt,
-      categories[]-> {
-        title
-      },
-      mainImage,
-      "lqip": mainImage.asset->metadata.lqip,
-      description,
-    }
-  `);
+// Featured articles only appear on /articles, so the archive pages carry on
+// through the regular list.
+function getRegularArticles() {
+  return getPublishedArticles().filter((article) => !article.featured);
 }
 
 export async function getStaticPaths() {
-  const articles = await fetchArticlesForArchive();
-  const { regularArticles } = splitArticlesByFeaturedCategory(articles);
+  const regularArticles = getRegularArticles();
   const totalPages = Math.ceil(regularArticles.length / REGULAR_ARTICLES_PAGE_SIZE);
 
   return {
@@ -72,8 +50,7 @@ export async function getStaticProps({ params }) {
     return { notFound: true };
   }
 
-  const articles = await fetchArticlesForArchive();
-  const { regularArticles } = splitArticlesByFeaturedCategory(articles);
+  const regularArticles = getRegularArticles();
   const totalPages = Math.ceil(regularArticles.length / REGULAR_ARTICLES_PAGE_SIZE);
 
   if (page > totalPages) {
@@ -93,7 +70,6 @@ export async function getStaticProps({ params }) {
       pageArticles,
       startIndex,
     },
-    revalidate: 60 * 60,
   };
 }
 

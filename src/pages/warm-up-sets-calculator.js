@@ -44,7 +44,7 @@ import { generateSessionSets, formatPlateBreakdown } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { buildShareUrl } from "@/lib/share-url";
 
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Warm Ups";
@@ -54,7 +54,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles: relatedArticles || [],
     },
-    revalidate: 60 * 60,
   };
 }
 

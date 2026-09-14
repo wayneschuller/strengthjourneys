@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { NextSeo } from "next-seo";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { E1RMCalculatorMain } from "@/pages/calculator/index";
 
 // ── PAGE CONFIG ──────────────────────────────────────────────────────────────
@@ -851,7 +851,6 @@ export async function getStaticProps({ params }) {
   const relatedArticles = await fetchRelatedArticles("One Rep Max Calculator");
   return {
     props: { relatedArticles, pageConfig: config, slug: params.slug },
-    revalidate: 60 * 60,
   };
 }
 

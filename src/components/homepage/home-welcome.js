@@ -130,7 +130,7 @@ function StartingPointOption({ title, description, children }) {
  * rail underneath.
  *
  * @param {Object} props
- * @param {Array<Object>} [props.starterArticles=[]] - Featured Sanity articles passed down
+ * @param {Array<Object>} [props.starterArticles=[]] - Featured articles passed down
  *   from the home page's getStaticProps, forwarded to the reading rail.
  */
 export function HomeWelcome({ starterArticles = [] }) {

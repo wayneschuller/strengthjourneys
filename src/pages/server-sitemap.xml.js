@@ -1,48 +1,35 @@
 /*
- * Dynamic sitemap for Sanity article URLs.
+ * Article sitemap, listing each published article with its updatedAt as lastmod.
  *
- * Articles are published in the sibling Sanity studio without a code deploy, so
- * their URLs are served from this SSR route instead of the build-time sitemap.
- * next-sitemap still owns every static route (see next-sitemap.config.js) and
- * excludes article slugs so the two sitemaps never list the same URL.
+ * Articles now live in content/articles/ and change only with a deploy, but the
+ * route stays at /server-sitemap.xml because Search Console already has that URL
+ * registered. next-sitemap owns every static route (see next-sitemap.config.js)
+ * and excludes article slugs so the two sitemaps never list the same URL. The
+ * markdown files reach this function through outputFileTracingIncludes in
+ * next.config.js.
  */
 import { getServerSideSitemapLegacy } from "next-sitemap";
 
-import { sanityIOClient } from "@/lib/sanity-io";
+import { getPublishedArticles } from "@/lib/articles";
 
 const SITE_URL = "https://www.strengthjourneys.xyz";
-
-const ARTICLE_SITEMAP_QUERY = `
-  *[
-    _type == "post" &&
-    defined(slug.current) &&
-    publishedAt < now() &&
-    defined(body)
-  ] | order(_updatedAt desc) {
-    "slug": slug.current,
-    _updatedAt
-  }
-`;
 
 export async function getServerSideProps(ctx) {
   let fields = [];
 
   try {
-    const articles = await sanityIOClient.fetch(ARTICLE_SITEMAP_QUERY);
-
-    fields = (articles ?? []).map((article) => ({
-      loc: `${SITE_URL}/articles/${article.slug}`,
-      lastmod: article._updatedAt,
-      changefreq: "weekly",
-      priority: 0.7,
-    }));
+    fields = getPublishedArticles()
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+      .map((article) => ({
+        loc: `${SITE_URL}/articles/${article.slug}`,
+        lastmod: article.updatedAt,
+        changefreq: "weekly",
+        priority: 0.7,
+      }));
   } catch (error) {
     // Serve an empty sitemap rather than a 500 - Google reports a failed fetch
     // against the whole submitted sitemap, which is worse than a quiet gap.
-    console.error(
-      "server-sitemap: failed to fetch article URLs from Sanity",
-      error,
-    );
+    console.error("server-sitemap: failed to read article content", error);
   }
 
   ctx.res.setHeader(

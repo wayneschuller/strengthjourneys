@@ -39,7 +39,7 @@ import { StandardsSlider } from "@/components/standards-slider";
 import { LiftArtwork } from "@/components/lift-artwork";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { fetchRelatedArticles } from "@/lib/sanity-io";
+import { fetchRelatedArticles } from "@/lib/articles";
 import {
   STRENGTH_STANDARDS_HUB_URL,
   STRENGTH_STANDARDS_PAGES,
@@ -115,7 +115,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

@@ -62,7 +62,7 @@ import {
   ReferenceLine,
 } from "recharts";
 
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
@@ -183,7 +183,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

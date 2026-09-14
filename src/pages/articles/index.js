@@ -1,12 +1,12 @@
 /*
  * Article library landing page (/articles). Featured articles lead as a photo
  * bento, then the newest regular articles fill page 1; older regular articles
- * continue at /articles/page/N.
+ * continue at /articles/page/N. Content comes from content/articles/ at build.
  */
 import Head from "next/head";
 import { LibraryBig } from "lucide-react";
 
-import { sanityIOClient } from "@/lib/sanity-io.js";
+import { getPublishedArticles } from "@/lib/articles";
 import {
   ArticleGrid,
   ArticlePagination,
@@ -25,41 +25,10 @@ const description = `Browse our collection of strength, lifting and fitness arti
 const canonicalUrl = "https://www.strengthjourneys.xyz/articles";
 const REGULAR_ARTICLES_PAGE_SIZE = 12;
 
-function splitArticlesByFeaturedCategory(articles) {
-  const featuredArticles = articles?.filter((article) =>
-    article.categories?.some(
-      (category) => category.title === "Featured Articles",
-    ),
-  ) ?? [];
-
-  const regularArticles = articles?.filter(
-    (article) =>
-      !article.categories?.some(
-        (category) => category.title === "Featured Articles",
-      ),
-  ) ?? [];
-
-  return { featuredArticles, regularArticles };
-}
-
 export async function getStaticProps() {
-  const articles = await sanityIOClient.fetch(`
-    *[_type == "post" && publishedAt < now()] | order(publishedAt desc) {
-      title,
-      "slug": slug.current,
-      publishedAt,
-      categories[]-> {
-        title
-      },
-      mainImage,
-      "lqip": mainImage.asset->metadata.lqip,
-      description,
-    }
-  `);
-
-  const { featuredArticles, regularArticles } = splitArticlesByFeaturedCategory(
-    articles,
-  );
+  const articles = getPublishedArticles();
+  const featuredArticles = articles.filter((article) => article.featured);
+  const regularArticles = articles.filter((article) => !article.featured);
   const firstRegularArticlesPage = regularArticles.slice(0, REGULAR_ARTICLES_PAGE_SIZE);
   const totalPages = Math.max(
     Math.ceil(regularArticles.length / REGULAR_ARTICLES_PAGE_SIZE),
@@ -72,7 +41,6 @@ export async function getStaticProps() {
       regularArticles: firstRegularArticlesPage,
       totalPages,
     },
-    revalidate: 60 * 60, // Revalidate every hour
   };
 }
 

@@ -15,7 +15,7 @@ import {
 } from "@/components/page-header";
 import { LineChart } from "lucide-react";
 
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { RelatedArticles } from "@/components/article-cards";
 
 export async function getStaticProps() {
@@ -26,7 +26,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

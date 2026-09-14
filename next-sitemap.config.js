@@ -1,9 +1,9 @@
 /*
  * Build-time sitemap for the static routes only.
  *
- * Sanity article slugs are served from the dynamic /server-sitemap.xml route
- * (src/pages/server-sitemap.xml.js) so newly published articles appear without
- * a deploy. They are excluded here to avoid listing the same URL twice.
+ * Article URLs are served from the /server-sitemap.xml route
+ * (src/pages/server-sitemap.xml.js), which carries each article's updatedAt as
+ * lastmod. They are excluded here to avoid listing the same URL twice.
  */
 const fs = require("fs");
 const path = require("path");
@@ -36,7 +36,7 @@ module.exports = {
   // changefreq/priority. Google ignores changefreq and priority outright, and a
   // lastmod that is identical across all routes and resets on each deploy is a
   // freshness claim we cannot back up — the kind Google learns to discount. The
-  // article sitemap carries real per-post _updatedAt values, so emitting only
+  // article sitemap carries real per-article updatedAt values, so emitting only
   // <loc> here keeps the one lastmod signal we do have worth trusting.
   autoLastmod: false,
   transform: async (config, path) => ({ loc: path, alternateRefs: [] }),

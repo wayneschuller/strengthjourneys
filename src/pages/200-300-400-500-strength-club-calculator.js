@@ -48,7 +48,7 @@ import {
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { calculatePlateBreakdown } from "@/lib/warmups";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
@@ -218,7 +218,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

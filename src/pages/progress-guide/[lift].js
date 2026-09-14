@@ -30,7 +30,7 @@ import {
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { extractYouTubeVideoId } from "@/lib/video-thumbnails";
 import {
   CURATED_LIFTS,
@@ -110,7 +110,6 @@ export async function getStaticProps({ params }) {
 
   return {
     props: { lift, slug: lift.slug, relatedArticles },
-    revalidate: 60 * 60,
   };
 }
 
@@ -118,7 +117,7 @@ export async function getStaticProps({ params }) {
  * @param {Object} props
  * @param {Object|null} props.lift - The registry entry, or null for an uncurated lift.
  * @param {string} props.slug - The URL slug.
- * @param {Array} props.relatedArticles - Sanity articles tagged with this lift.
+ * @param {Array} props.relatedArticles - Articles tagged with this lift.
  */
 export default function LiftProgressGuide({ lift, slug, relatedArticles }) {
   if (!lift) return <UncuratedLiftGuide slug={slug} />;

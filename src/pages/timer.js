@@ -30,7 +30,7 @@ import { TimerDigits } from "@/components/timer-digits";
 import { TimerPingHistory } from "@/components/timer-ping-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatAlarmLabel, formatTime, useTimer } from "@/hooks/use-timer";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { cn } from "@/lib/utils";
 
 const PAGE_TITLE = "Gym Timer | Strength Journeys";
@@ -43,7 +43,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

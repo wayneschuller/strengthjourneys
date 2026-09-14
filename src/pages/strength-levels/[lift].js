@@ -40,7 +40,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { fetchRelatedArticles } from "@/lib/sanity-io";
+import { fetchRelatedArticles } from "@/lib/articles";
 import {
   STRENGTH_STANDARDS_HUB_URL,
   STRENGTH_STANDARDS_PAGES,
@@ -67,7 +67,6 @@ export async function getStaticProps({ params }) {
       page,
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

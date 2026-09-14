@@ -51,7 +51,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
@@ -67,7 +67,7 @@ import {
 
 export async function getStaticProps() {
   const relatedArticles = await fetchRelatedArticles("How Strong Am I?");
-  return { props: { relatedArticles }, revalidate: 60 * 60 };
+  return { props: { relatedArticles } };
 }
 
 const LIFTS = [

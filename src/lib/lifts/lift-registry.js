@@ -50,7 +50,7 @@
  *                   resources { title, links: [{ title, url, author, note? }] },
  *                   faqItems: [{ question, answer }].
  *   strengthLevels  /strength-levels/[slug], big four only. Page fields,
- *                   intro, supportingCopy, relatedArticlesCategory (Sanity),
+ *                   intro, supportingCopy, relatedArticlesCategory (article category),
  *                   interpretation { title, body, milestones, exampleTable,
  *                   closer }, faqItems. exampleTable { caption, rows } is
  *                   typed by hand and tuned for search: one row per

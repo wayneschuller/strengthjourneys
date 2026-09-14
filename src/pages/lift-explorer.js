@@ -24,7 +24,7 @@ import {
   PageHeaderRight,
 } from "@/components/page-header";
 import { getLiftGuidePath } from "@/lib/lifts/lift-registry";
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles } from "@/lib/articles";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Personal Record Analyzer";
@@ -34,7 +34,6 @@ export async function getStaticProps() {
     props: {
       relatedArticles,
     },
-    revalidate: 60 * 60,
   };
 }
 

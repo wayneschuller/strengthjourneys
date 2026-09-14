@@ -388,15 +388,10 @@ export function LiftJourneyCard({
           style={{ backgroundColor: liftColor }}
         />
 
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-                Athlete journey
-              </span>
-              {isDemoMode && <DemoModeBadge size="sm" />}
-            </div>
-            <h2 className="mt-1 text-2xl leading-none font-semibold tracking-tight">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {isDemoMode && <DemoModeBadge size="sm" />}
+            <h2 className="text-2xl leading-none font-semibold tracking-tight">
               My {liftType} Journey
             </h2>
           </div>

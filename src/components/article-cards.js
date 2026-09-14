@@ -81,14 +81,14 @@ export function FeaturedArticles({ articles }) {
  * @param {Object} props
  * @param {Array<Object>} props.articles - Sanity articles.
  */
-export function ArticleGrid({ articles }) {
+export function ArticleGrid({ articles, titleAs }) {
   if (!articles?.length) return null;
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {articles.map((article, index) => (
         <ArticleReveal key={article.slug} index={index}>
-          <ArticleSummaryCard article={article} />
+          <ArticleSummaryCard article={article} titleAs={titleAs} />
         </ArticleReveal>
       ))}
     </div>
@@ -102,8 +102,11 @@ export function ArticleGrid({ articles }) {
  * @param {Object} props
  * @param {Object} props.article - Sanity article object with slug, title, publishedAt,
  *   description, mainImage.
+ * @param {string} [props.titleAs="h2"] - Heading element for the title. Use a
+ *   lower level where the cards sit under another page's own h2 sections, so
+ *   they don't muddy that page's heading outline.
  */
-export function ArticleSummaryCard({ article }) {
+export function ArticleSummaryCard({ article, titleAs: TitleTag = "h2" }) {
   return (
     <Link
       href={`/articles/${article.slug}`}
@@ -126,9 +129,9 @@ export function ArticleSummaryCard({ article }) {
           >
             {formatArticleDate(article.publishedAt)}
           </time>
-          <h2 className="text-lg leading-snug font-semibold text-balance">
+          <TitleTag className="text-lg leading-snug font-semibold text-balance">
             {article.title}
-          </h2>
+          </TitleTag>
           {article.description && (
             <p className="text-muted-foreground line-clamp-3 text-sm text-pretty">
               {article.description}
@@ -321,8 +324,8 @@ function FeaturedArticleTile({ article, isLead = false }) {
   );
 }
 
-// Fill-mode cover image cropped by Sanity around the editor's hotspot. The
-// title sits right beside it inside the same link, so the image is decorative.
+// Fill-mode cover image cropped by Sanity around the editor's hotspot. Alt text
+// stays descriptive so the covers keep their image-search relevance.
 function ArticleCoverImage({ article, width, height, sizes, priority = false }) {
   if (!article.mainImage) return null;
 
@@ -338,7 +341,10 @@ function ArticleCoverImage({ article, width, height, sizes, priority = false }) 
   return (
     <Image
       src={imageUrl}
-      alt=""
+      alt={
+        article.mainImage.alt?.trim() ||
+        (article.title ? `${article.title} article image` : "Article image")
+      }
       fill
       sizes={sizes}
       priority={priority}
@@ -349,16 +355,18 @@ function ArticleCoverImage({ article, width, height, sizes, priority = false }) 
   );
 }
 
-// Staggered spring entrance, matching the progress guide hub. Skipped entirely
-// for readers who prefer reduced motion.
+// Staggered spring entrance, skipped for readers who prefer reduced motion.
+// Deliberately a slide with no fade: an opacity-0 start would ship the library's
+// main content hidden in the server HTML and hold back the LCP image until
+// hydration, which costs SEO for a purely decorative flourish.
 function ArticleReveal({ index, className, children }) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
     <motion.div
       className={cn("h-full", className)}
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={prefersReducedMotion ? false : { y: 16 }}
+      whileInView={{ y: 0 }}
       viewport={{ once: true, margin: "0px 0px -8% 0px" }}
       transition={{
         type: "spring",

@@ -11,6 +11,10 @@
     "tonnageRatio": 1
   },
   "tagline": "The bench press with a dead stop on the chest.",
+  "artwork": {
+    "src": "/lifts/default/pause-bench-press.png",
+    "figure": "male"
+  },
   "videos": [
     {
       "url": "https://www.youtube.com/watch?v=K4BIkKGKy9k",

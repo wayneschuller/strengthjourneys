@@ -6,6 +6,10 @@
     "tonnageRatio": 1
   },
   "tagline": "A wide stance pull with the hips close to the bar.",
+  "artwork": {
+    "src": "/lifts/default/sumo-deadlift.png",
+    "figure": "male"
+  },
   "videos": [
     {
       "url": "https://www.youtube.com/watch?v=WOmsMOXjlU4",

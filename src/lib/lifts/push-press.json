@@ -7,6 +7,10 @@
     "note": "Leg drive moves more weight than a strict press, so it counts at three quarters."
   },
   "tagline": "Dip, drive with the legs, and send it overhead.",
+  "artwork": {
+    "src": "/lifts/default/push-press.png",
+    "figure": "male"
+  },
   "videos": [
     {
       "url": "https://www.youtube.com/watch?v=iaBVSJm78ko",

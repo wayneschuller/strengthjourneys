@@ -4,7 +4,7 @@
  *
  * The card is about the set itself: the day, the note you wrote, the clip you
  * filmed, and the way back to that session. Underneath sits a small sparkline
- * of every day's best at that rep count, with the record marked. It replaced a
+ * of your best at that rep count over time, with the record marked. It replaced a
  * separate singles/triples/fives chart that only ever covered three rep ranges
  * and stacked them on one axis where they tangled; one line per card covers
  * every rep range and keeps each one legible.
@@ -54,8 +54,7 @@ const RANK_MEDALS = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
 
 const RECENT_RECORD_DAYS = 30;
 
-// Below this the date line already tells the story; "standing 6 weeks" is not
-// a boast worth making.
+// Below this the date line already says it; "6 weeks ago" adds nothing.
 const STANDING_SINCE_MIN_DAYS = 60;
 
 // Rows merged in by an old import carry a machine-written note. It is not a
@@ -98,7 +97,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
   const { width: observedWidth = 0 } = useResizeObserver({ ref: containerRef });
   const width = observedWidth || attachedWidth;
 
-  // Read the clock once on mount so "standing 5 years" stays pure across renders.
+  // Read the clock once on mount so "5 years ago" stays pure across renders.
   const [todayYmd] = useState(() => formatDateToYmdLocal(new Date()));
   const [openRepOverride, setOpenRepOverride] = useState(null);
   const [scopeOverride, setScopeOverride] = useState(null);
@@ -267,6 +266,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                 prefersReducedMotion={prefersReducedMotion}
                 isLayoutAnimated={isLayoutAnimated}
                 hideNotes={compact}
+                listColumnCount={compact ? 1 : columnCount}
               />
             ))}
           </div>
@@ -297,6 +297,7 @@ function RepRangeCard({
   prefersReducedMotion,
   isLayoutAnimated,
   hideNotes,
+  listColumnCount,
 }) {
   const record = repRange[0];
   const poster = useVideoPoster(record?.URL);
@@ -325,7 +326,12 @@ function RepRangeCard({
   // button, so its own handler runs and this bows out rather than toggling
   // twice. A click that ends a text selection is not a click either.
   const handleOpenSurfaceClick = (event) => {
-    if (event.target.closest?.("a, button, input, textarea, [role='button']")) {
+    // The sparkline is for hovering and tapping, not for shutting the card.
+    if (
+      event.target.closest?.(
+        "a, button, input, textarea, [role='button'], [data-sparkline]",
+      )
+    ) {
       return;
     }
     if (window.getSelection?.()?.toString()) return;
@@ -480,8 +486,11 @@ function RepRangeCard({
           <RepSparkline
             points={dailyBests}
             recordDate={record.date}
+            repCount={repCount}
+            unit={unit}
             color={hasPoster ? "#ffffff" : liftColor}
             onPoster={hasPoster}
+            onClick={onToggle}
             className={isHero ? "h-14" : "h-10"}
           />
 
@@ -546,12 +555,19 @@ function RepRangeCard({
             <RepSparkline
               points={dailyBests}
               recordDate={record.date}
+              repCount={repCount}
+              unit={unit}
               color={liftColor}
-              className="h-20"
+              className="h-24"
             />
 
+            {/* Ranked lists read down, so the columns fill top to bottom
+                before moving across, rather than row by row. */}
             {olderRecords.length > 0 && (
-              <ul className="divide-border/70 divide-y border-t pt-1">
+              <ul
+                className="gap-x-8 border-t pt-1"
+                style={{ columnCount: listColumnCount }}
+              >
                 {olderRecords.map((lift, index) => (
                   <RecordRow
                     key={`${lift.date}-${lift.weight}-${index}`}
@@ -674,7 +690,7 @@ function RecordRow({
   const medal = RANK_MEDALS[rank - 1];
 
   return (
-    <li className="flex items-start gap-3 py-3">
+    <li className="border-border/70 flex break-inside-avoid items-start gap-3 border-b py-3">
       <span className="text-muted-foreground w-8 shrink-0 pt-0.5 text-sm font-medium tabular-nums">
         {medal ?? `#${rank}`}
       </span>
@@ -734,15 +750,27 @@ function RecordRow({
 }
 
 /**
- * Every day's best at one rep count, drawn against real time so a long layoff
- * reads as a long flat stretch rather than being squeezed out. The record gets
- * a dot so the eye can find the day the headline number came from.
+ * Best set over time at one rep count, drawn against real time so a long
+ * layoff reads as a long flat stretch rather than being squeezed out. Longer
+ * histories are grouped into weeks or months, keeping the heaviest set of each,
+ * so the light days between heavy ones stop sawing the line down to the floor.
+ * The record gets a dot so the eye can find where the headline number lives.
  *
- * Decorative on the closed card, where the whole surface is already the button
- * that opens the full list of sets, so it carries no hover layer of its own.
+ * Hovering or touching shows the set behind a point. On the closed card a click
+ * on the chart still opens the card, so the chart never steals the card's job.
  */
-function RepSparkline({ points, recordDate, color, onPoster = false, className }) {
+function RepSparkline({
+  points,
+  recordDate,
+  repCount,
+  unit,
+  color,
+  onPoster = false,
+  onClick,
+  className,
+}) {
   const gradientId = `rep-spark-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const [hoverIndex, setHoverIndex] = useState(null);
   const geometry = useMemo(
     () => getSparklineGeometry(points, recordDate),
     [points, recordDate],
@@ -751,9 +779,31 @@ function RepSparkline({ points, recordDate, color, onPoster = false, className }
   // One day at a rep count is a dot, not a trend. The card already says so.
   if (!geometry) return null;
 
+  const { coords, buckets, granularity, recordIndex } = geometry;
+  const hovered = hoverIndex === null ? null : coords[hoverIndex];
+
+  const handlePointer = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (!rect.width) return;
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    setHoverIndex(findNearestIndex(coords, x));
+  };
+
   return (
-    <div aria-hidden="true" className={cn("relative w-full", className)}>
+    <div
+      data-sparkline=""
+      className={cn(
+        "pointer-events-auto relative w-full touch-pan-y",
+        onClick ? "cursor-pointer" : "cursor-crosshair",
+        className,
+      )}
+      onPointerMove={handlePointer}
+      onPointerDown={handlePointer}
+      onPointerLeave={() => setHoverIndex(null)}
+      onClick={onClick}
+    >
       <svg
+        aria-hidden="true"
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         className="absolute inset-0 h-full w-full overflow-visible"
@@ -775,18 +825,92 @@ function RepSparkline({ points, recordDate, color, onPoster = false, className }
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      {/* An HTML dot, because a circle inside a stretched viewBox turns oval. */}
-      <span
-        className={cn(
-          "absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2",
-          onPoster ? "ring-black/50" : "ring-card",
-        )}
-        style={{
-          left: `${geometry.record.x}%`,
-          top: `${geometry.record.y}%`,
-          backgroundColor: color,
-        }}
-      />
+      {hovered && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 w-px -translate-x-1/2"
+          style={{
+            left: `${hovered.x}%`,
+            backgroundColor: color,
+            opacity: 0.45,
+          }}
+        />
+      )}
+      {/* HTML dots, because a circle inside a stretched viewBox turns oval. */}
+      {[recordIndex, hoverIndex]
+        .filter(
+          (index, position) =>
+            index !== null && (position === 0 || index !== recordIndex),
+        )
+        .map((index) => (
+          <span
+            key={index === recordIndex ? "record" : "hover"}
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full ring-2",
+              index === recordIndex ? "size-2" : "size-2.5",
+              onPoster ? "ring-black/50" : "ring-card",
+            )}
+            style={{
+              left: `${coords[index].x}%`,
+              top: `${coords[index].y}%`,
+              backgroundColor: color,
+            }}
+          />
+        ))}
+      {hovered && (
+        <SparklineTooltip
+          bucket={buckets[hoverIndex]}
+          x={hovered.x}
+          granularity={granularity}
+          repCount={repCount}
+          unit={unit}
+          isRecord={hoverIndex === recordIndex}
+        />
+      )}
+    </div>
+  );
+}
+
+// What sits behind one point: the period, the set, the day it happened, and
+// how many sessions it was picked from once the line is grouped.
+function SparklineTooltip({
+  bucket,
+  x,
+  granularity,
+  repCount,
+  unit,
+  isRecord,
+}) {
+  // Turned inward near either edge, because the card clips anything that
+  // spills past its side.
+  const transform =
+    x < 22 ? "none" : x > 78 ? "translateX(-100%)" : "translateX(-50%)";
+
+  return (
+    <div
+      role="tooltip"
+      className="bg-popover text-popover-foreground pointer-events-none absolute bottom-full z-30 mb-2 w-max max-w-[16rem] space-y-0.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-lg"
+      style={{ left: `${x}%`, transform }}
+    >
+      <div className="text-muted-foreground">
+        {formatBucketLabel(bucket, granularity)}
+      </div>
+      <div className="text-sm font-semibold">
+        {repCount}@{bucket.value}
+        {unit}
+        {isRecord && <span className="ml-1.5 font-medium">· Your record</span>}
+      </div>
+      {granularity !== "day" && (
+        <div className="text-muted-foreground">
+          {getReadableDateString(bucket.date, true)}
+        </div>
+      )}
+      {bucket.sessionCount > 1 && (
+        <div className="text-muted-foreground">
+          Heaviest of {bucket.sessionCount} sessions
+        </div>
+      )}
     </div>
   );
 }
@@ -880,41 +1004,170 @@ function getDailyBestsByReps(parsedData, liftType, isMetric, fromYmd) {
   );
 }
 
-// Points as percentages of the box, with a little headroom so the record dot
-// is never cropped by the top or bottom edge.
+/**
+ * Groups daily bests into days, weeks or months by how much time they cover,
+ * then lays them out as percentages of the box with a little headroom so the
+ * dots are never cropped by the top or bottom edge.
+ */
 function getSparklineGeometry(points, recordDate) {
   if (!points || points.length < 2) return null;
 
-  const times = points.map(({ date }) => parseYmdUtc(date)?.getTime());
-  if (times.some((t) => !Number.isFinite(t))) return null;
-  const firstTime = times[0];
-  const timeSpan = times[times.length - 1] - firstTime || 1;
+  const firstTime = parseYmdUtc(points[0].date).getTime();
+  const lastTime = parseYmdUtc(points[points.length - 1].date).getTime();
+  if (!Number.isFinite(firstTime) || !Number.isFinite(lastTime)) return null;
+
+  const spanDays = (lastTime - firstTime) / 86400000;
+  const granularity =
+    spanDays <= SPARKLINE_DAILY_MAX_DAYS
+      ? "day"
+      : spanDays <= SPARKLINE_WEEKLY_MAX_DAYS
+        ? "week"
+        : "month";
+
+  // Points arrive in date order, so buckets come out in date order too.
+  const buckets = [];
+  const bucketsByKey = new Map();
+  for (const point of points) {
+    const key = getBucketKey(point.date, granularity);
+    const bucket = bucketsByKey.get(key);
+    if (!bucket) {
+      const created = {
+        key,
+        date: point.date,
+        value: point.value,
+        sessionCount: 1,
+      };
+      bucketsByKey.set(key, created);
+      buckets.push(created);
+      continue;
+    }
+    bucket.sessionCount += 1;
+    // A tie goes to the record's own day so the dot lands where the record is.
+    if (
+      point.value > bucket.value ||
+      (point.value === bucket.value && point.date === recordDate)
+    ) {
+      bucket.value = point.value;
+      bucket.date = point.date;
+    }
+  }
+  if (buckets.length < 2) return null;
+
+  const times = buckets.map(({ date }) => parseYmdUtc(date).getTime());
+  const timeSpan = times[times.length - 1] - times[0] || 1;
 
   let min = Infinity;
   let max = -Infinity;
-  for (const { value } of points) {
+  for (const { value } of buckets) {
     if (value < min) min = value;
     if (value > max) max = value;
   }
   const valueSpan = max - min;
 
-  const coords = points.map(({ value }, index) => ({
-    x: ((times[index] - firstTime) / timeSpan) * 100,
+  const coords = buckets.map(({ value }, index) => ({
+    x: ((times[index] - times[0]) / timeSpan) * 100,
     y: valueSpan === 0 ? 50 : 88 - ((value - min) / valueSpan) * 76,
   }));
 
-  const linePath = coords
-    .map(({ x, y }, index) => `${index ? "L" : "M"}${x.toFixed(2)} ${y.toFixed(2)}`)
-    .join(" ");
+  const linePath = getMonotonePath(coords);
   const areaPath = `${linePath} L100 100 L0 100 Z`;
 
-  // The record is the heaviest day, and on a tie the one on the record's date.
-  let recordIndex = points.findIndex((point) => point.date === recordDate);
-  if (recordIndex === -1 || points[recordIndex].value !== max) {
-    recordIndex = points.findIndex((point) => point.value === max);
+  let recordIndex = buckets.findIndex(({ date }) => date === recordDate);
+  if (recordIndex === -1 || buckets[recordIndex].value !== max) {
+    recordIndex = buckets.findIndex(({ value }) => value === max);
   }
 
-  return { linePath, areaPath, record: coords[recordIndex] };
+  return { coords, buckets, granularity, recordIndex, linePath, areaPath };
+}
+
+// Up to four months, every session is worth seeing. Up to two years, a week is
+// the unit a programme thinks in. Past that, months keep a decade readable.
+const SPARKLINE_DAILY_MAX_DAYS = 120;
+const SPARKLINE_WEEKLY_MAX_DAYS = 730;
+
+function getBucketKey(ymd, granularity) {
+  if (granularity === "day") return ymd;
+  if (granularity === "month") return ymd.slice(0, 7);
+  // Weeks start on Monday, the way most programmes count them.
+  const date = parseYmdUtc(ymd);
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+  return date.toISOString().slice(0, 10);
+}
+
+function formatBucketLabel(bucket, granularity) {
+  if (granularity === "day") return getReadableDateString(bucket.date, true);
+  if (granularity === "week") {
+    return `Week of ${getReadableDateString(bucket.key)}`;
+  }
+  return parseYmdUtc(`${bucket.key}-01`).toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+// Monotone cubic (Fritsch-Carlson): smooth, but it never bulges past the
+// points it joins, so the curve cannot draw a PR that was never lifted.
+function getMonotonePath(coords) {
+  const n = coords.length;
+  const f = (v) => v.toFixed(2);
+  if (n < 3) {
+    return coords
+      .map(({ x, y }, index) => `${index ? "L" : "M"}${f(x)} ${f(y)}`)
+      .join(" ");
+  }
+
+  const slopes = [];
+  for (let i = 0; i < n - 1; i++) {
+    const dx = coords[i + 1].x - coords[i].x;
+    slopes.push(dx ? (coords[i + 1].y - coords[i].y) / dx : 0);
+  }
+
+  const tangents = [slopes[0]];
+  for (let i = 1; i < n - 1; i++) {
+    tangents.push(
+      slopes[i - 1] * slopes[i] <= 0 ? 0 : (slopes[i - 1] + slopes[i]) / 2,
+    );
+  }
+  tangents.push(slopes[n - 2]);
+
+  for (let i = 0; i < n - 1; i++) {
+    if (slopes[i] === 0) {
+      tangents[i] = 0;
+      tangents[i + 1] = 0;
+      continue;
+    }
+    const a = tangents[i] / slopes[i];
+    const b = tangents[i + 1] / slopes[i];
+    const h = a * a + b * b;
+    if (h > 9) {
+      const t = 3 / Math.sqrt(h);
+      tangents[i] = t * a * slopes[i];
+      tangents[i + 1] = t * b * slopes[i];
+    }
+  }
+
+  let path = `M${f(coords[0].x)} ${f(coords[0].y)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p = coords[i];
+    const q = coords[i + 1];
+    const third = (q.x - p.x) / 3;
+    path += ` C${f(p.x + third)} ${f(p.y + tangents[i] * third)} ${f(q.x - third)} ${f(q.y - tangents[i + 1] * third)} ${f(q.x)} ${f(q.y)}`;
+  }
+  return path;
+}
+
+// Coords are in time order, so the nearest point to the pointer is a binary
+// search away rather than a scan of a decade of months.
+function findNearestIndex(coords, x) {
+  let lo = 0;
+  let hi = coords.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (coords[mid].x < x) lo = mid;
+    else hi = mid;
+  }
+  return x - coords[lo].x <= coords[hi].x - x ? lo : hi;
 }
 
 // "2026-09-14" and -1 gives "2025-09-14". Lexical compare only, so a Feb 29
@@ -929,19 +1182,18 @@ function isRecordRecent(dateStr, todayYmd) {
   return days !== null && days >= 0 && days <= RECENT_RECORD_DAYS;
 }
 
-// "standing 5 years" turns a date into a challenge, which is the one thing a
-// rep-range cross-section can say that none of the charts above it can.
+// "5 years ago" beside the date, so nobody has to do the subtraction.
 function formatStandingFor(dateStr, todayYmd) {
   const days = daysBetweenYmd(dateStr, todayYmd);
   if (days === null || days < STANDING_SINCE_MIN_DAYS) return null;
 
   const years = Math.floor(days / 365);
   if (years >= 1) {
-    return `standing ${years} year${years > 1 ? "s" : ""}`;
+    return `${years} year${years > 1 ? "s" : ""} ago`;
   }
 
   const months = Math.round(days / 30);
-  return `standing ${months} months`;
+  return `${months} months ago`;
 }
 
 function daysBetweenYmd(dateStr, todayYmd) {

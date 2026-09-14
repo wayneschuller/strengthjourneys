@@ -9,6 +9,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
 import { FileUp, RefreshCw, Loader2 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { CountUp, COUNT_UP_EASE, formatCountUpInteger } from "@/components/count-up";
 
 function formatSyncTime(timestamp) {
   if (!timestamp) return null;
@@ -311,22 +312,25 @@ export function DataSheetStatus({
 
 // A sheet read waits on the Google Sheets API for two seconds or more, then parses in about
 // 200ms, so this pill exists to fill the API wait. The dashboard remembers each sheet's last row
-// count on the device, and the odometer rolls towards it while the read is out. The count is
-// only a stand-in, and that is fine: the real one takes over the moment it lands. The fill
-// creeps towards READ_CEILING and never reaches it, so a slow read keeps moving without claiming
-// to be done. With nothing remembered (a first read, a new device) the fill creeps with no
+// count on the device, and the pill counts towards it while the read is out. The count is only
+// a stand-in, and that is fine: the real one takes over the moment it lands. Fill and count
+// share CountUp's ease and head for READ_CEILING, so a slow read settles short of done rather
+// than claiming it. With nothing remembered (a first read, a new device) the fill runs with no
 // number. The cards never wait on any of this: they render as soon as their data is parsed.
+//
+// Both move through motion values rather than per-frame React state, so the pill stays smooth
+// while the dashboard cards mount beside it.
 const READ_CEILING = 0.9;
-const READ_EASE_MS = 1200;
-// About as long as the parse, so the pill settles as the cards arrive.
-const FINISH_MS = 300;
-// A count that arrives with nothing rolled yet (an imported preview, or a read SWR already
-// held) rolls the whole way instead, or it would only flicker.
-const FULL_ROLL_MS = 1200;
+const READ_SECONDS = 4;
+// About as long as the parse, so the pill lands as the cards arrive.
+const FINISH_SECONDS = 0.3;
+// A count ready at mount (an imported preview, or a read SWR already held) had no wait to fill,
+// so it counts up at the usual pace instead of flickering past.
+const FULL_COUNT_SECONDS = 1.2;
 
 /**
  * Compact progress pill for the initial data load. It starts the moment the dashboard mounts,
- * rolling towards the remembered row count while the sheet is read, then settles on the real
+ * counting towards the remembered row count while the sheet is read, then lands on the real
  * count. Sized to sit in the dashboard header slot beside the greeting, so it never occupies a
  * row of its own. Supports sheet rows and imported preview entries so one visual treatment
  * works without implying every source is Google Sheets.
@@ -334,8 +338,8 @@ const FULL_ROLL_MS = 1200;
  * @param {Object} props
  * @param {"sheet"|"preview"} [props.mode] - Source type powering the load indicator.
  * @param {number|null} props.count - Total rows/entries to process; null while the read is out.
- * @param {number|null} [props.expectedCount] - Remembered count to roll towards during the read.
- * @param {boolean} props.isProgressDone - Whether the animation has finished.
+ * @param {number|null} [props.expectedCount] - Remembered count to count towards during the read.
+ * @param {boolean} props.isProgressDone - Whether the count has landed.
  * @param {function(boolean)} props.setIsProgressDone - Callback to mark progress complete.
  */
 export function RowProcessingIndicator({
@@ -345,88 +349,35 @@ export function RowProcessingIndicator({
   isProgressDone,
   setIsProgressDone,
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const isPreviewMode = mode === "preview";
   const isCountKnown = count !== null && count !== undefined;
   const hasExpectedCount = Number.isFinite(expectedCount) && expectedCount > 0;
   // What "/ total" shows: the real count once it is known, the remembered one until then.
   const displayTotal = isCountKnown ? count : hasExpectedCount ? expectedCount : null;
+  const hasTotal = displayTotal !== null;
   const countLabel = isPreviewMode ? "entries" : "rows";
+  // One label from start to finish. Swapping in a shorter word at the end narrowed the pill
+  // under its own fill.
   const loadingLabel = isPreviewMode
     ? "Preparing imported preview"
     : "Reading your workout data";
-  const completedLabel = isPreviewMode ? "Preview ready" : "Processed";
 
-  // Share of the pill filled (0 to 1), and the number on the odometer. Fractional on purpose:
-  // the wheels roll between whole numbers.
-  const [fraction, setFraction] = useState(0);
-  const [shownCount, setShownCount] = useState(0);
-  const fractionRef = useRef(0);
-  const shownCountRef = useRef(0);
-  const previousCountRef = useRef(null);
+  // Mounting before the count was known means a read was waited through, so the finish only
+  // has to catch up the last stretch.
+  const [waitedForRead] = useState(!isCountKnown);
+  const finishSeconds = waitedForRead ? FINISH_SECONDS : FULL_COUNT_SECONDS;
 
   useEffect(() => {
-    const cameFromRead = previousCountRef.current === null;
-    previousCountRef.current = isCountKnown ? count : null;
-    setIsProgressDone(false);
+    if (!isCountKnown) return;
+    const delayMs = count > 0 && !prefersReducedMotion ? finishSeconds * 1000 : 0;
+    const timer = setTimeout(() => setIsProgressDone(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [count, isCountKnown, finishSeconds, prefersReducedMotion, setIsProgressDone]);
 
-    const show = (nextFraction, nextCount) => {
-      fractionRef.current = nextFraction;
-      shownCountRef.current = nextCount;
-      setFraction(nextFraction);
-      setShownCount(nextCount);
-    };
-
-    if (isCountKnown && count <= 0) {
-      show(1, 0);
-      setIsProgressDone(true);
-      return;
-    }
-
-    // A count landing straight after the read carries on from wherever the roll got to.
-    // Anything else (a fresh read after a finished one, or a different count) starts over.
-    const fromFraction = cameFromRead ? fractionRef.current : 0;
-    const fromCount = cameFromRead ? shownCountRef.current : 0;
-    const finishMs = fromFraction > 0 ? FINISH_MS : FULL_ROLL_MS;
-    const readTarget = hasExpectedCount ? expectedCount : 0;
-    const start = performance.now();
-    let frameId;
-
-    const tick = (now) => {
-      const elapsedMs = now - start;
-      let nextFraction;
-      let nextCount;
-      let isSettled;
-      if (isCountKnown) {
-        const progress = Math.min(1, elapsedMs / finishMs);
-        const eased = 1 - (1 - progress) ** 3;
-        nextFraction = fromFraction + (1 - fromFraction) * eased;
-        nextCount = fromCount + (count - fromCount) * eased;
-        isSettled = progress >= 1;
-      } else {
-        const creep = 1 - Math.exp(-elapsedMs / READ_EASE_MS);
-        nextFraction = fromFraction + (READ_CEILING - fromFraction) * creep;
-        nextCount = readTarget * nextFraction;
-        isSettled = READ_CEILING - nextFraction < 0.002;
-      }
-
-      show(nextFraction, nextCount);
-
-      if (isSettled) {
-        if (isCountKnown) setIsProgressDone(true);
-        return;
-      }
-      frameId = requestAnimationFrame(tick);
-    };
-
-    frameId = requestAnimationFrame(tick);
-
-    return () => {
-      if (frameId) cancelAnimationFrame(frameId);
-    };
-  }, [count, isCountKnown, expectedCount, hasExpectedCount, setIsProgressDone]);
-
-  const percent = Math.min(100, Math.round(fraction * 100));
-  const hasTotal = displayTotal !== null;
+  const fillPercent = isCountKnown ? 100 : READ_CEILING * 100;
+  const phaseSeconds = isCountKnown ? finishSeconds : READ_SECONDS;
+  const countTarget = isCountKnown ? count : Math.round((expectedCount ?? 0) * READ_CEILING);
 
   return (
     <div
@@ -434,21 +385,20 @@ export function RowProcessingIndicator({
         hasTotal ? "" : "min-w-40"
       }`}
       role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={hasTotal ? displayTotal : undefined}
-      aria-valuenow={hasTotal ? Math.floor(shownCount) : undefined}
       aria-label={
         hasTotal
-          ? `${loadingLabel}: ${Math.floor(shownCount).toLocaleString()} of ${displayTotal.toLocaleString()} ${countLabel}`
+          ? `${loadingLabel}: ${displayTotal.toLocaleString()} ${countLabel}`
           : loadingLabel
       }
     >
       {/* The fill sweeps behind the text instead of sitting above it as its own bar, so the
           pill stays the same height as the synced-sheet line it hands over to. */}
-      <span
+      <motion.span
         aria-hidden
         className="bg-primary/15 absolute inset-y-0 left-0"
-        style={{ width: `${percent}%` }}
+        initial={{ width: "0%" }}
+        animate={{ width: `${fillPercent}%` }}
+        transition={{ duration: prefersReducedMotion ? 0 : phaseSeconds, ease: COUNT_UP_EASE }}
       />
       <span className="relative flex items-center gap-2">
         {isPreviewMode ? (
@@ -463,11 +413,20 @@ export function RowProcessingIndicator({
         )}
         {hasTotal ? (
           <>
-            <span className="text-muted-foreground hidden sm:inline">
-              {isProgressDone ? completedLabel : loadingLabel}:
-            </span>
+            <span className="text-muted-foreground hidden sm:inline">{loadingLabel}:</span>
             <span className="flex items-center gap-1 tabular-nums">
-              <OdometerCount value={shownCount} layoutValue={displayTotal} />
+              {/* Room for the whole total up front, so the pill does not widen as digits arrive. */}
+              <span
+                className="inline-block text-right"
+                style={{ minWidth: `${displayTotal.toLocaleString().length}ch` }}
+              >
+                <CountUp
+                  value={countTarget}
+                  format={formatCountUpInteger}
+                  duration={phaseSeconds}
+                  start
+                />
+              </span>
               <span className="text-muted-foreground">
                 / {displayTotal.toLocaleString()} {countLabel}
               </span>

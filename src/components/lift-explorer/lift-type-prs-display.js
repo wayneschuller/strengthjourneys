@@ -482,6 +482,7 @@ function RepRangeCard({
             color={hasPoster ? "#ffffff" : liftColor}
             onPoster={hasPoster}
             onClick={onToggle}
+            subtle
             className={isHero ? "h-14" : "h-10"}
           />
 
@@ -750,6 +751,10 @@ function RecordRow({
  *
  * Hovering or touching shows the set behind a point. On the closed card a click
  * on the chart still opens the card, so the chart never steals the card's job.
+ *
+ * `subtle` is for the closed cards: a grid of nine full-strength lines in the
+ * same colour as the numbers pulled the eye off the numbers. There the line is
+ * thin and faded with no fill, and only the record dot keeps full colour.
  */
 function RepSparkline({
   points,
@@ -760,6 +765,7 @@ function RepSparkline({
   color,
   onPoster = false,
   onClick,
+  subtle = false,
   className,
 }) {
   const gradientId = `rep-spark-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
@@ -769,7 +775,8 @@ function RepSparkline({
     [points, recordDate],
   );
 
-  // One day at a rep count is a dot, not a trend. The card already says so.
+  // One day at a rep count is a dot, not a trend, and a line that never moves
+  // says nothing either. The card already carries the number.
   if (!geometry) return null;
 
   const { coords, buckets, recordIndex } = geometry;
@@ -807,12 +814,13 @@ function RepSparkline({
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <path d={geometry.areaPath} fill={`url(#${gradientId})`} />
+        {!subtle && <path d={geometry.areaPath} fill={`url(#${gradientId})`} />}
         <path
           d={geometry.linePath}
           fill="none"
           stroke={color}
-          strokeWidth={2}
+          strokeOpacity={subtle ? 0.45 : 1}
+          strokeWidth={subtle ? 1.5 : 2}
           strokeLinejoin="round"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
@@ -1037,11 +1045,17 @@ function getSparklineGeometry(points, recordDate) {
     if (value < min) min = value;
     if (value > max) max = value;
   }
-  const valueSpan = max - min;
+  if (max === min) return null;
+
+  // Every chart spans at least 15% of its heaviest point, measured down from
+  // the top. Scaling each card to its own min and max made a 2.5kg dip fall as
+  // far as a 30kg one, so small wiggles read as cliffs.
+  const scaleSpan = Math.max(max - min, max * 0.15);
+  const scaleMin = max - scaleSpan;
 
   const coords = buckets.map(({ value }, index) => ({
     x: ((times[index] - times[0]) / timeSpan) * 100,
-    y: valueSpan === 0 ? 50 : 88 - ((value - min) / valueSpan) * 76,
+    y: 88 - ((value - scaleMin) / scaleSpan) * 76,
   }));
 
   const linePath = getMonotonePath(coords);

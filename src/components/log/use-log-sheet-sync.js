@@ -897,6 +897,22 @@ export function useLogSheetSync({
           ? (prevSet.notes ?? "")
           : getAutoTimestampNotes();
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      // An appended set leaves Lift Type blank, so the sheet gives it the
+      // block's own label, which can be a synonym ("OHP", "Paused Bench").
+      // Carry that label so this set's verified edits, deletes and the next
+      // add match the sheet before the refresh lands.
+      const blockAnchor = parsedData.reduce(
+        (latest, e) =>
+          e.date === sessionDate &&
+          e.liftType === liftType &&
+          !e.isGoal &&
+          e.rowIndex &&
+          (!latest || e.rowIndex > latest.rowIndex)
+            ? e
+            : latest,
+        null,
+      );
+      const rawLiftType = blockAnchor?.rawLiftType ?? liftType;
 
       setPendingSetsSync((prev) => ({
         ...prev,
@@ -905,6 +921,7 @@ export function useLogSheetSync({
           {
             date: sessionDate,
             liftType,
+            rawLiftType,
             reps,
             weight,
             unitType,
@@ -917,7 +934,7 @@ export function useLogSheetSync({
             _tempId: tempId,
             _serverSnapshot: buildSheetSnapshotFromFields(
               { reps, weight, unitType, notes, url: "" },
-              { date: sessionDate, liftType },
+              { date: sessionDate, liftType, rawLiftType },
             ),
           },
         ],

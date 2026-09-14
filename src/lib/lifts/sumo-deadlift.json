@@ -4,5 +4,25 @@
   "parentLift": {
     "liftType": "Deadlift",
     "tonnageRatio": 1
+  },
+  "tagline": "A wide stance pull with the hips close to the bar.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=WOmsMOXjlU4",
+      "title": "Gym Shorts (How To): Sumo Deadlift",
+      "channel": "Barbell Logic"
+    }
+  ],
+  "coaching": {
+    "summary": "Take a wide stance with toes turned out, grip the bar inside your knees, then push the floor apart and stand up tall.",
+    "cues": [
+      "Stand wide with the toes out and the shins close to the bar.",
+      "Push the knees out over the toes and pull the slack out before the bar moves.",
+      "Drive the floor apart and keep the bar close all the way to lockout."
+    ],
+    "standardsRef": {
+      "liftType": "Deadlift",
+      "ratio": 0.9
+    }
   }
 }

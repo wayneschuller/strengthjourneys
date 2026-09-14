@@ -4,5 +4,25 @@
   "parentLift": {
     "liftType": "Deadlift",
     "tonnageRatio": 1
+  },
+  "tagline": "A longer pull for a stronger start off the floor.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=3KQP-CNKr9U",
+      "title": "Deficit Deadlift: Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    }
+  ],
+  "coaching": {
+    "summary": "Stand on a low platform so the bar starts a little further away, then deadlift it to lockout.",
+    "cues": [
+      "Stand on a stable platform about one to two inches high.",
+      "Sink the hips just enough to reach the bar with a flat back.",
+      "Push the floor away and keep the bar close as it leaves the floor."
+    ],
+    "standardsRef": {
+      "liftType": "Deadlift",
+      "ratio": 0.85
+    }
   }
 }

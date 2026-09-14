@@ -8,5 +8,26 @@
   "parentLift": {
     "liftType": "Back Squat",
     "tonnageRatio": 1
+  },
+  "tagline": "A still bottom and a strong drive out of the hole.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=nknf16JJTZo",
+      "title": "The Paused Squat: Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    }
+  ],
+  "coaching": {
+    "summary": "Squat to your normal depth, hold still at the bottom for a count of two while staying tight, then drive back up.",
+    "cues": [
+      "Stay braced through the whole pause so the bottom position stays tight.",
+      "Hold the bottom still, without bouncing or drifting forward.",
+      "Drive out of the pause with the hips and chest rising together."
+    ],
+    "standardsRef": {
+      "liftType": "Back Squat",
+      "ratio": 0.8,
+      "note": "The pause takes away the bounce, so most lifters use a little less than their squat."
+    }
   }
 }

@@ -9,5 +9,25 @@
   "parentLift": {
     "liftType": "Bench Press",
     "tonnageRatio": 1
+  },
+  "tagline": "The bench press with a dead stop on the chest.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=K4BIkKGKy9k",
+      "title": "Paused Bench Press: Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    }
+  ],
+  "coaching": {
+    "summary": "Lower the bar to your chest, hold it still for a moment while staying tight, then press it back up.",
+    "cues": [
+      "Lower under control to the same touch point as your regular bench.",
+      "Let the bar settle motionless on the chest without sinking or bouncing.",
+      "Keep the shoulder blades pinned through the pause, then press hard."
+    ],
+    "standardsRef": {
+      "liftType": "Bench Press",
+      "ratio": 0.9
+    }
   }
 }

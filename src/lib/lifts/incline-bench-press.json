@@ -7,5 +7,25 @@
   "parentLift": {
     "liftType": "Bench Press",
     "tonnageRatio": 1
+  },
+  "tagline": "Halfway between the bench and the press.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=5k_enq6vXGM",
+      "title": "Incline Bench Press: Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    }
+  ],
+  "coaching": {
+    "summary": "Lie on a bench set to a moderate incline, lower the bar to your upper chest, then press it back up over your shoulders.",
+    "cues": [
+      "Set the bench to a moderate incline, around 30 to 45 degrees.",
+      "Lower the bar to the upper chest, just below the collarbones.",
+      "Keep the shoulder blades back and press to lockout over the shoulders."
+    ],
+    "standardsRef": {
+      "liftType": "Bench Press",
+      "ratio": 0.8
+    }
   }
 }

@@ -1,6 +1,11 @@
 {
   "liftType": "Overhead Squat",
   "slug": "overhead-squat",
+  "parentLift": {
+    "liftType": "Back Squat",
+    "tonnageRatio": 1,
+    "note": "Lighter than a back squat but every bit as demanding, so it counts in full."
+  },
   "tagline": "Strength, mobility and balance under one bar.",
   "artwork": {
     "src": "/lifts/default/overhead-squat.png",

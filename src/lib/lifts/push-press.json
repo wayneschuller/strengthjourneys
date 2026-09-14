@@ -5,5 +5,31 @@
     "liftType": "Strict Press",
     "tonnageRatio": 0.75,
     "note": "Leg drive moves more weight than a strict press, so it counts at three quarters."
+  },
+  "tagline": "Dip, drive with the legs, and send it overhead.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=iaBVSJm78ko",
+      "title": "The Push Press",
+      "channel": "CrossFit"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=yCvb3ZBPM9s",
+      "title": "Push Press: Gym Shorts (How To)",
+      "channel": "Barbell Logic"
+    }
+  ],
+  "coaching": {
+    "summary": "With the bar resting on the front of your shoulders, dip a few inches at the knees, drive up hard with the legs, and press the bar overhead to lockout.",
+    "cues": [
+      "Dip straight down a few inches with the torso upright and heels planted.",
+      "Reverse the dip fast so the legs launch the bar off the shoulders.",
+      "Press through to lockout with the bar over the middle of the foot."
+    ],
+    "standardsRef": {
+      "liftType": "Strict Press",
+      "ratio": 1.2,
+      "note": "Leg drive lets most lifters push press about a fifth more than they press."
+    }
   }
 }

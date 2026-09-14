@@ -7,5 +7,25 @@
   "parentLift": {
     "liftType": "Back Squat",
     "tonnageRatio": 1
+  },
+  "tagline": "Squat heavy while the bar looks after your shoulders.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=CMn1Z9pzZAk",
+      "title": "Safety Squat Bar Squat (SSB Squat): How To (Gym Shorts)",
+      "channel": "Barbell Logic"
+    }
+  ],
+  "coaching": {
+    "summary": "Hold the handles of a safety squat bar with the pad across your upper back, squat to depth, then stand back up.",
+    "cues": [
+      "Pull the handles down to keep the upper back tight under the pad.",
+      "Brace hard and keep the chest up, because the bar leans you forward.",
+      "Sit between the hips to full depth and drive straight up."
+    ],
+    "standardsRef": {
+      "liftType": "Back Squat",
+      "ratio": 0.9
+    }
   }
 }

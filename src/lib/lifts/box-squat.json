@@ -4,5 +4,25 @@
   "parentLift": {
     "liftType": "Back Squat",
     "tonnageRatio": 1
+  },
+  "tagline": "Sit back to the box, then drive up with the hips.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=1SgHKc5tImQ",
+      "title": "Gym Shorts (How To): The Box Squat",
+      "channel": "Barbell Logic"
+    }
+  ],
+  "coaching": {
+    "summary": "Squat back and down onto a box set at or just below parallel, sit briefly while staying tight, then drive up off the box.",
+    "cues": [
+      "Set the box so the hips land at or just below parallel.",
+      "Touch down under control and stay tight instead of rocking back.",
+      "Drive the hips up and keep the chest over the bar as you stand."
+    ],
+    "standardsRef": {
+      "liftType": "Back Squat",
+      "ratio": 0.85
+    }
   }
 }

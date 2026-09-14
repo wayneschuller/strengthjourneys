@@ -1,5 +1,6 @@
 {
   "liftType": "Push Press",
+  "slug": "push-press",
   "parentLift": {
     "liftType": "Strict Press",
     "tonnageRatio": 0.75,

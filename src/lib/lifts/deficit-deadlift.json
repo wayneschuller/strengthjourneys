@@ -1,5 +1,6 @@
 {
   "liftType": "Deficit Deadlift",
+  "slug": "deficit-deadlift",
   "parentLift": {
     "liftType": "Deadlift",
     "tonnageRatio": 1

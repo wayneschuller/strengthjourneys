@@ -1,5 +1,6 @@
 {
   "liftType": "Sumo Deadlift",
+  "slug": "sumo-deadlift",
   "parentLift": {
     "liftType": "Deadlift",
     "tonnageRatio": 1

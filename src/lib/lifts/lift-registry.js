@@ -4,8 +4,7 @@
  * anywhere else. Pages, the nav, the log and the importers all read it here.
  *
  * THE JSON FORMAT. Keys sit in this order, top to bottom. Only liftType and
- * slug are required for a curated lift; a lift simply lacks whatever has not
- * been written yet.
+ * slug are required; a lift simply lacks whatever has not been written yet.
  * Add a new key to this list, in its category, before a page reads it.
  *
  *  Identity
@@ -64,13 +63,10 @@
  * is the signal we believe in a lift: it gets a tile in the Lift Explorer, a
  * tile in the log's add-lift picker, and a /progress-guide/ page. The page
  * stays out of search until the lift has a guide block, because a page that
- * is only a drawing and three cues is the thin kind Google demotes.
- *
- * VARIATION LINKS: a file with liftType, synonyms and parentLift but no slug
- * is not a curated lift. It lets a big four row count a variation we have not
- * drawn (Push Press, Pause Squat), and nothing else reads it: no page, no
- * tile, no artwork lookup. Import it into VARIATION_LINKS, never
- * CURATED_LIFTS. Give it a slug and artwork later to promote it.
+ * is only a drawing and three cues is the thin kind Google demotes. A lift
+ * with no artwork yet (Push Press) still has a registry file when something
+ * needs a fact about it, such as its parentLift, and it stays out of the tile
+ * grids and pickers until it is drawn.
  *
  * JSON rather than JS so the files stay pure content that scripts and
  * next-sitemap.config.js can read too. Rationale that would have been a code
@@ -102,7 +98,10 @@ import deficitDeadlift from "@/lib/lifts/deficit-deadlift.json";
 
 export const SITE_URL = "https://www.strengthjourneys.xyz";
 
-/** Every curated lift: the big four first, then the rest in drawing order. */
+/**
+ * Every curated lift: the big four first, then the rest in drawing order,
+ * then the lifts not drawn yet.
+ */
 export const CURATED_LIFTS = [
   backSquat,
   benchPress,
@@ -118,6 +117,14 @@ export const CURATED_LIFTS = [
   rackPull,
   closeGripBenchPress,
   barbellCurl,
+  pushPress,
+  pauseSquat,
+  boxSquat,
+  safetyBarSquat,
+  pausedBenchPress,
+  inclineBenchPress,
+  sumoDeadlift,
+  deficitDeadlift,
 ].map(withDefaults);
 
 export const BIG_FOUR_LIFTS = CURATED_LIFTS.filter((lift) => lift.bigFour);
@@ -142,20 +149,8 @@ for (const lift of CURATED_LIFTS) {
   }
 }
 
-/** Uncurated variations that only feed a big four row. See VARIATION LINKS. */
-const VARIATION_LINKS = [
-  pushPress,
-  pauseSquat,
-  boxSquat,
-  safetyBarSquat,
-  pausedBenchPress,
-  inclineBenchPress,
-  sumoDeadlift,
-  deficitDeadlift,
-];
-
 const PARENT_BY_NAME = new Map();
-for (const lift of [...CURATED_LIFTS, ...VARIATION_LINKS]) {
+for (const lift of CURATED_LIFTS) {
   const parent = readParentLift(lift);
   if (!parent) continue;
   const synonyms = Array.isArray(lift.synonyms) ? lift.synonyms : [];

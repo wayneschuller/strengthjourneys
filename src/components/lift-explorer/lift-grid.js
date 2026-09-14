@@ -90,7 +90,9 @@ export function LiftGrid() {
         barPercent:
           topSets > 0 ? Math.max((entry.totalSets / topSets) * 100, 2) : 0,
       };
-      if (curated) {
+      // Only a drawn lift has a tile to light up. A registry lift not drawn
+      // yet (Push Press) stays in the text list with everything else.
+      if (curated?.artwork) {
         if (!byName.has(curated.liftType)) byName.set(curated.liftType, stats);
       } else {
         uncurated.push(stats);

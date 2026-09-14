@@ -49,6 +49,7 @@ import { postImportHistory } from "@/lib/import-history-client";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { getCuratedLiftBySlug, getLiftSlug } from "@/lib/lifts/lift-registry";
 import {
   isToday,
   parseISO,
@@ -92,6 +93,7 @@ export function Layout({ children }) {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const { toast } = useToast();
+  const missingDemoLiftName = useMissingDemoLiftName();
   const feedbackLabels =
     router.pathname === "/log"
       ? {
@@ -232,7 +234,14 @@ export function Layout({ children }) {
     const timeoutId = setTimeout(() => {
       if (demoShown.current) return;
       demoShown.current = true;
-      const nudgeMessage = getRandomDemoModeNudgeMessage();
+      // On a guide the demo data does not cover, speak to that lift rather
+      // than to sample data the visitor cannot see.
+      const nudgeMessage = missingDemoLiftName
+        ? {
+            title: `Your ${missingDemoLiftName} Progress`,
+            description: `Sign in to see your own ${missingDemoLiftName} history here.`,
+          }
+        : getRandomDemoModeNudgeMessage();
       toast({
         title: nudgeMessage.title,
         description: nudgeMessage.description,
@@ -246,7 +255,14 @@ export function Layout({ children }) {
     }, getRandomDemoModeNudgeDelayMs());
 
     return () => clearTimeout(timeoutId);
-  }, [authStatus, isDemoMode, router.asPath, router.pathname, toast]);
+  }, [
+    authStatus,
+    isDemoMode,
+    missingDemoLiftName,
+    router.asPath,
+    router.pathname,
+    toast,
+  ]);
 
   return (
     <div className="bg-background relative min-h-screen w-full overflow-x-hidden">
@@ -444,10 +460,35 @@ const DEMO_MODE_NUDGE_MESSAGES = [
   },
 ];
 
+/**
+ * The lift name when the visitor is on a progress guide for a lift the loaded
+ * data has no sets of, otherwise null. Demo data covers only some lifts, so on
+ * those guides the page shows no sample numbers and "you are viewing demo
+ * data" would be untrue. Decided only once data has loaded, so a guide the
+ * demo does cover never flashes the wrong message.
+ */
+function useMissingDemoLiftName() {
+  const router = useRouter();
+  const { parsedData } = useUserLiftingData();
+  const slug = router.query.lift;
+
+  return useMemo(() => {
+    if (router.pathname !== "/progress-guide/[lift]") return null;
+    if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
+    if (typeof slug !== "string") return null;
+    const hasLift = parsedData.some(
+      (entry) => !entry.isGoal && getLiftSlug(entry.liftType) === slug,
+    );
+    if (hasLift) return null;
+    return getCuratedLiftBySlug(slug)?.liftType ?? "this lift";
+  }, [router.pathname, parsedData, slug]);
+}
+
 // Internal banner shown on data pages when the user is unauthenticated or has no sheet connected.
 function DataAccessBanner({ pathname, currentPath }) {
   const { status: authStatus } = useSession();
   const { sheetInfo, isDemoMode } = useUserLiftingData();
+  const missingDemoLiftName = useMissingDemoLiftName();
 
   const isDataPage = PERSONALIZED_DATA_CTA_PATHS.includes(pathname);
   const showSignInCta = isDataPage && authStatus === "unauthenticated";
@@ -461,10 +502,14 @@ function DataAccessBanner({ pathname, currentPath }) {
       <AppBannerContent density="comfortable">
         <AppBannerMessage>
           {showSignInCta
-            ? "You are viewing demo data. Want to see your own lifts, trends, and PRs here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode."
-            : isDemoMode
-              ? "Demo mode is on. Connect your data to replace the sample view with your own lifting history here."
-              : "Connect your data to replace the sample view with your own lifting history here."}
+            ? missingDemoLiftName
+              ? `Want to see your own ${missingDemoLiftName} progress here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode.`
+              : "You are viewing demo data. Want to see your own lifts, trends, and PRs here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode."
+            : missingDemoLiftName
+              ? `Connect your data to see your own ${missingDemoLiftName} progress here.`
+              : isDemoMode
+                ? "Demo mode is on. Connect your data to replace the sample view with your own lifting history here."
+                : "Connect your data to replace the sample view with your own lifting history here."}
         </AppBannerMessage>
         {showSignInCta ? (
           <AppBannerActions>

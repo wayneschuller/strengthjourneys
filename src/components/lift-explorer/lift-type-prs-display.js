@@ -862,8 +862,9 @@ function RepSparkline({
   );
 }
 
-// What sits behind one point: the period, the set, the day it happened, and
-// how many days it was picked from once the line is grouped.
+// What sits behind one point: the heaviest set of that day, week or month, and
+// the day it was lifted. The heading says "Heaviest in" so nobody has to guess
+// whether a grouped point is volume, an average or an estimate.
 function SparklineTooltip({
   bucket,
   x,
@@ -884,7 +885,9 @@ function SparklineTooltip({
       style={{ left: `${x}%`, transform }}
     >
       <div className="text-muted-foreground">
-        {formatBucketLabel(bucket, granularity)}
+        {granularity === "day"
+          ? formatBucketLabel(bucket, granularity)
+          : `Heaviest in ${formatBucketLabel(bucket, granularity)}`}
       </div>
       <div className="text-sm font-semibold">
         {repCount}@{bucket.value}
@@ -896,25 +899,8 @@ function SparklineTooltip({
           {getReadableDateString(bucket.date, true)}
         </div>
       )}
-      {/* Once the line is grouped, a point stands for a week or a month, so
-          say how many days of this rep count it was picked from. "Heaviest of
-          4 sessions" alone left the reader guessing which sessions. */}
-      {granularity !== "day" && bucket.sessionCount > 1 && (
-        <div className="text-muted-foreground">
-          Best of {bucket.sessionCount} days with {describeRepSets(repCount)}{" "}
-          that {granularity}
-        </div>
-      )}
     </div>
   );
-}
-
-// "singles", "triples", "sets of 5": how lifters name a rep count out loud.
-function describeRepSets(repCount) {
-  if (repCount === 1) return "singles";
-  if (repCount === 2) return "doubles";
-  if (repCount === 3) return "triples";
-  return `sets of ${repCount}`;
 }
 
 function ScopeButton({ isActive, onClick, children }) {
@@ -1033,17 +1019,11 @@ function getSparklineGeometry(points, recordDate) {
     const key = getBucketKey(point.date, granularity);
     const bucket = bucketsByKey.get(key);
     if (!bucket) {
-      const created = {
-        key,
-        date: point.date,
-        value: point.value,
-        sessionCount: 1,
-      };
+      const created = { key, date: point.date, value: point.value };
       bucketsByKey.set(key, created);
       buckets.push(created);
       continue;
     }
-    bucket.sessionCount += 1;
     // A tie goes to the record's own day so the dot lands where the record is.
     if (
       point.value > bucket.value ||
@@ -1099,7 +1079,7 @@ function getBucketKey(ymd, granularity) {
 function formatBucketLabel(bucket, granularity) {
   if (granularity === "day") return getReadableDateString(bucket.date, true);
   if (granularity === "week") {
-    return `Week of ${getReadableDateString(bucket.key)}`;
+    return `the week of ${getReadableDateString(bucket.key)}`;
   }
   return parseYmdUtc(`${bucket.key}-01`).toLocaleString("en-US", {
     month: "long",

@@ -198,7 +198,9 @@ export function HomeDashboard() {
   ]);
 
   return (
-    <div>
+    // A flex column below lg only, so the inspiration strip can drop beneath the headline cards
+    // with `order`. At lg and up it stays plain block flow, margins and all.
+    <div className="flex flex-col lg:block">
       {hasUserData && (
         <div className="relative mb-4 2xl:mb-6 text-xl">
           {/* 2xl: welcome left + status right in one row; below that they stack.
@@ -250,8 +252,13 @@ export function HomeDashboard() {
       {/* The first week is intentionally quieter: skip the inspiration row until
           the user has enough real data for those cards to feel earned. */}
       {hasUserData && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
-        // Below lg the loading panel stands alone, so the strip's skeleton waits for the data.
-        <div className={hasDataLoaded ? undefined : "hidden lg:block"}>
+        // Below lg the strip sits after The Long Game, so the headline cards lead on a phone; mt-6
+        // matches the card grid's gap. While loading it waits there too, behind the loading panel.
+        <div
+          className={
+            hasDataLoaded ? "order-last mt-6 lg:order-none lg:mt-0" : "hidden lg:block"
+          }
+        >
           <HomeInspirationCards
             isProgressDone={hasDataLoaded}
             dashboardStage={dashboardStage}
@@ -271,7 +278,8 @@ export function HomeDashboard() {
       )}
       {hasUserData && hasDataLoaded && (
         <>
-          <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+          {/* No top margin below lg: the header's mb-4 already spaces it, and flex margins do not collapse. */}
+          <section className="grid grid-cols-1 gap-6 lg:mt-4 lg:grid-cols-2 xl:grid-cols-3">
             {/* Three headline cards intentionally begin with "The" and widen chronology:
                 The Week in Iron -> The Month in Iron -> The Long Game.
                 Together they make the app experience feel badass and motivating, like chapters in an ongoing strength story. */}

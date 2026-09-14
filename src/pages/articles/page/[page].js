@@ -1,16 +1,22 @@
+/*
+ * Article library archive pages (/articles/page/N, N >= 2). Carries on the
+ * regular article list from /articles; featured articles only appear there.
+ */
 import Head from "next/head";
-import Link from "next/link";
 import { LibraryBig } from "lucide-react";
 
 import { sanityIOClient } from "@/lib/sanity-io.js";
-import { ArticleSummaryCard } from "@/components/article-cards";
+import {
+  ArticleGrid,
+  ArticlePagination,
+  buildArticlePageHref,
+} from "@/components/article-cards";
 import {
   PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 
 const siteName = "Strength Journeys";
 const pageTitleBase = "Strength and Lifting Articles Library";
@@ -30,10 +36,6 @@ function splitArticlesByFeaturedCategory(articles) {
   return { regularArticles };
 }
 
-function buildPaginationHref(page) {
-  return page === 1 ? "/articles" : `/articles/page/${page}`;
-}
-
 async function fetchArticlesForArchive() {
   return sanityIOClient.fetch(`
     *[_type == "post" && publishedAt < now()] | order(publishedAt desc) {
@@ -44,6 +46,7 @@ async function fetchArticlesForArchive() {
         title
       },
       mainImage,
+      "lqip": mainImage.asset->metadata.lqip,
       description,
     }
   `);
@@ -101,10 +104,10 @@ export default function ArticleArchivePage({
   startIndex,
 }) {
   const pageTitle = `${pageTitleBase} - Page ${page} | ${siteName}`;
-  const canonicalHref = buildPaginationHref(page);
+  const canonicalHref = buildArticlePageHref(page);
   const canonicalUrl = `${siteBaseUrl}${canonicalHref}`;
-  const prevHref = page > 1 ? buildPaginationHref(page - 1) : null;
-  const nextHref = page < totalPages ? buildPaginationHref(page + 1) : null;
+  const prevHref = page > 1 ? buildArticlePageHref(page - 1) : null;
+  const nextHref = page < totalPages ? buildArticlePageHref(page + 1) : null;
 
   return (
     <PageContainer>
@@ -163,42 +166,14 @@ export default function ArticleArchivePage({
       <PageHeader>
         <PageHeaderHeading icon={LibraryBig}>{pageTitleBase}</PageHeaderHeading>
         <PageHeaderDescription>
-          Archive page {page} of {totalPages}. Older strength, lifting, and fitness articles.
+          More strength, lifting, and fitness articles from the library, page{" "}
+          {page} of {totalPages}.
         </PageHeaderDescription>
       </PageHeader>
 
-      <section>
-        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">Archive Page {page}</h2>
-          <Link href="/articles" className="text-sm text-blue-600 hover:underline">
-            Back to main article library
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {pageArticles.map((article) => (
-            <ArticleSummaryCard key={article.slug} article={article} />
-          ))}
-        </div>
-
-        <nav
-          aria-label="Article archive pagination"
-          className="mt-8 flex flex-wrap items-center justify-center gap-3"
-        >
-          {prevHref && (
-            <Button asChild variant="outline">
-              <Link href={prevHref}>Previous Page</Link>
-            </Button>
-          )}
-          <span className="text-muted-foreground text-sm">
-            Page {page} of {totalPages}
-          </span>
-          {nextHref && (
-            <Button asChild variant="outline">
-              <Link href={nextHref}>Next Page</Link>
-            </Button>
-          )}
-        </nav>
+      <section aria-label={`Articles, page ${page}`} className="pb-12">
+        <ArticleGrid articles={pageArticles} />
+        <ArticlePagination page={page} totalPages={totalPages} />
       </section>
     </PageContainer>
   );

@@ -1,16 +1,23 @@
-// File: pages/articles/index.js
+/*
+ * Article library landing page (/articles). Featured articles lead as a photo
+ * bento, then the newest regular articles fill page 1; older regular articles
+ * continue at /articles/page/N.
+ */
 import Head from "next/head";
-import Link from "next/link";
+import { LibraryBig } from "lucide-react";
+
 import { sanityIOClient } from "@/lib/sanity-io.js";
-import { ArticleSummaryCard } from "@/components/article-cards";
+import {
+  ArticleGrid,
+  ArticlePagination,
+  FeaturedArticles,
+} from "@/components/article-cards";
 import {
   PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
-import { LibraryBig } from "lucide-react";
 
 const pageTitle = "Strength and Lifting Articles Library";
 const siteName = "Strength Journeys";
@@ -45,6 +52,7 @@ export async function getStaticProps() {
         title
       },
       mainImage,
+      "lqip": mainImage.asset->metadata.lqip,
       description,
     }
   `);
@@ -53,14 +61,16 @@ export async function getStaticProps() {
     articles,
   );
   const firstRegularArticlesPage = regularArticles.slice(0, REGULAR_ARTICLES_PAGE_SIZE);
-  const hasNextRegularPage = regularArticles.length > REGULAR_ARTICLES_PAGE_SIZE;
+  const totalPages = Math.max(
+    Math.ceil(regularArticles.length / REGULAR_ARTICLES_PAGE_SIZE),
+    1,
+  );
 
   return {
     props: {
       featuredArticles,
       regularArticles: firstRegularArticlesPage,
-      hasNextRegularPage,
-      nextRegularPageHref: hasNextRegularPage ? "/articles/page/2" : null,
+      totalPages,
     },
     revalidate: 60 * 60, // Revalidate every hour
   };
@@ -69,8 +79,7 @@ export async function getStaticProps() {
 export default function ArticleListingPage({
   featuredArticles,
   regularArticles,
-  hasNextRegularPage,
-  nextRegularPageHref,
+  totalPages,
 }) {
   const fullTitle = `${pageTitle} | ${siteName}`;
 
@@ -81,11 +90,8 @@ export default function ArticleListingPage({
         <meta name="description" content={description} />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={canonicalUrl} />
-        {hasNextRegularPage && (
-          <link
-            rel="next"
-            href={`https://www.strengthjourneys.xyz${nextRegularPageHref}`}
-          />
+        {totalPages > 1 && (
+          <link rel="next" href={`${canonicalUrl}/page/2`} />
         )}
         <meta property="og:title" content={fullTitle} />
         <meta property="og:description" content={description} />
@@ -137,45 +143,18 @@ export default function ArticleListingPage({
         </PageHeaderDescription>
       </PageHeader>
 
-      {featuredArticles.length > 0 && (
-        <section className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold tracking-tight">
-              Editor’s Picks: Featured Articles
-            </h2>
-            <p className="text-muted-foreground">
-              Our top-curated insights to inspire your strength journey.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {featuredArticles.map((article) => (
-              <ArticleSummaryCard key={article.slug} article={article} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold tracking-tight">Explore All Articles</h2>
-          <p className="text-muted-foreground">
-            Dive into our full library of strength, lifting, and fitness topics.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {regularArticles.map((article) => (
-            <ArticleSummaryCard key={article.slug} article={article} />
-          ))}
-        </div>
-
-        {hasNextRegularPage && nextRegularPageHref && (
-          <div className="mt-6 flex justify-center">
-            <Button asChild variant="outline">
-              <Link href={nextRegularPageHref}>Browse Older Articles (Page 2)</Link>
-            </Button>
-          </div>
+      <div className="pb-12">
+        {featuredArticles.length > 0 && (
+          <section aria-label="Featured articles" className="mb-12">
+            <FeaturedArticles articles={featuredArticles} />
+          </section>
         )}
-      </section>
+
+        <section aria-label="Latest articles">
+          <ArticleGrid articles={regularArticles} />
+          <ArticlePagination page={1} totalPages={totalPages} />
+        </section>
+      </div>
     </PageContainer>
   );
 }

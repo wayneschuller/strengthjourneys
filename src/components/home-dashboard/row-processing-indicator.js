@@ -382,7 +382,9 @@ export function RowProcessingIndicator({
       : 0;
 
   if (count === null || count === undefined) {
-    return <Skeleton className="h-5 w-56 rounded-full" />;
+    // Below lg the dashboard's loading panel already says the sheet is being read, so a grey
+    // pill up here would only repeat it. The slot keeps its height either way.
+    return <Skeleton className="hidden h-5 w-56 rounded-full lg:block" />;
   }
 
   return (

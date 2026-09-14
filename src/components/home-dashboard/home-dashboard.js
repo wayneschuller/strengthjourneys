@@ -7,6 +7,7 @@ import {
   DataSheetStatus,
   RowProcessingIndicator,
 } from "@/components/home-dashboard/row-processing-indicator";
+import { DashboardLoadingPanel } from "@/components/home-dashboard/dashboard-loading-panel";
 import { TheWeekInIronCard } from "@/components/home-dashboard/the-week-in-iron-card";
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
@@ -101,7 +102,10 @@ export function HomeDashboard() {
   const { sheetInfo, parsedData, rawRows, dataSyncedAt, isValidating, mutate, hasUserData, isImportedData } =
     useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
-  const hasDataLoaded = hasUserData && isProgressDone;
+  // The cards wait on the data, not on the header's row count animation. That animation used to
+  // gate them too, holding parsed data back for 1.2s; now it rolls on while the cards arrive.
+  const hasDataLoaded =
+    hasUserData && Array.isArray(parsedData) && (isImportedData || rawRows !== null);
   const previewEntryCount = useMemo(
     () =>
       Array.isArray(parsedData)
@@ -246,13 +250,25 @@ export function HomeDashboard() {
       {/* The first week is intentionally quieter: skip the inspiration row until
           the user has enough real data for those cards to feel earned. */}
       {hasUserData && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
-        <HomeInspirationCards
-          isProgressDone={hasDataLoaded}
-          dashboardStage={dashboardStage}
-          sessionCount={sessionCount}
-        />
+        // Below lg the loading panel stands alone, so the strip's skeleton waits for the data.
+        <div className={hasDataLoaded ? undefined : "hidden lg:block"}>
+          <HomeInspirationCards
+            isProgressDone={hasDataLoaded}
+            dashboardStage={dashboardStage}
+            sessionCount={sessionCount}
+          />
+        </div>
       )}
-      {hasUserData && !hasDataLoaded && <HomeDashboardCardsSkeleton />}
+      {hasUserData && !hasDataLoaded && (
+        <>
+          <DashboardLoadingPanel
+            className="lg:hidden"
+            mode={isImportedData ? "preview" : "sheet"}
+            sheetFilename={sheetInfo?.filename}
+          />
+          <HomeDashboardCardsSkeleton />
+        </>
+      )}
       {hasUserData && hasDataLoaded && (
         <>
           <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -282,8 +298,8 @@ export function HomeDashboard() {
 }
 
 // One entry per headline card: The Week in Iron, The Month in Iron, The Long Game. At three
-// columns the grid stretches them level, so these shapes only show themselves once the cards
-// stack - which is exactly where a wrong guess costs the most scroll.
+// columns the grid stretches them level, so these shapes only show themselves at two columns,
+// where The Long Game wraps. Below lg the dashboard shows DashboardLoadingPanel instead.
 const HOME_CARD_SKELETON_SHAPES = [
   {
     minHeight: "min-h-[42rem]",
@@ -316,7 +332,7 @@ const HOME_CARD_SKELETON_SHAPES = [
 
 function HomeDashboardCardsSkeleton() {
   return (
-    <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+    <section className="mt-4 hidden gap-6 lg:grid lg:grid-cols-2 xl:grid-cols-3">
       {HOME_CARD_SKELETON_SHAPES.map((shape, index) => (
         // Built from the same Card primitives as the real cards, so the swap only changes the
         // contents: radius, border, shadow and theme treatment all carry over untouched.

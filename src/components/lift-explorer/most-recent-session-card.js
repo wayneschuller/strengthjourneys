@@ -237,7 +237,7 @@ export function MostRecentSessionCard({
     const svgPath = getLiftArtwork(liftType);
     return (
       <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
-        <Card className="mt-4 rounded-xl border">
+        <Card className="rounded-xl border">
           <CardHeader className="pb-1.5">
             <div className="flex items-start justify-between gap-4">
               <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
@@ -342,7 +342,7 @@ export function MostRecentSessionCard({
 
   if (!sessionDate || !analyzedSessionLifts) {
     return (
-      <Card className="mt-4 rounded-xl border">
+      <Card className="rounded-xl border">
         <CardHeader className="pb-2">
           <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
             {isDemoMode && <DemoModeBadge size="sm" />}
@@ -363,7 +363,7 @@ export function MostRecentSessionCard({
   const liftEntries = Object.entries(analyzedSessionLifts);
   if (liftEntries.length === 0) {
     return (
-      <Card className="mt-4 rounded-xl border">
+      <Card className="rounded-xl border">
         <CardHeader className="pb-2">
           <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
             {isDemoMode && <DemoModeBadge size="sm" />}
@@ -383,7 +383,7 @@ export function MostRecentSessionCard({
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
-      <Card className="mt-4 rounded-xl border">
+      <Card className="rounded-xl border">
         <CardHeader className="pb-2">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
             <div className="min-w-0 flex-1">
@@ -466,7 +466,7 @@ export function MostRecentSessionCard({
 // Skeleton placeholder shown while MostRecentSessionCard waits for data to be ready.
 function MostRecentSessionCardSkeleton() {
   return (
-    <Card className="mt-4 rounded-xl border">
+    <Card className="rounded-xl border">
       <CardHeader className="px-4 py-2 pb-1.5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">

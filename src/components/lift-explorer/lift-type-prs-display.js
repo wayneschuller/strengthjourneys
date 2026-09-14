@@ -265,7 +265,6 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                 isMetric={isMetric}
                 prefersReducedMotion={prefersReducedMotion}
                 isLayoutAnimated={isLayoutAnimated}
-                hideNotes={compact}
                 listColumnCount={compact ? 1 : columnCount}
               />
             ))}
@@ -296,7 +295,6 @@ function RepRangeCard({
   isMetric,
   prefersReducedMotion,
   isLayoutAnimated,
-  hideNotes,
   listColumnCount,
 }) {
   const record = repRange[0];
@@ -471,16 +469,8 @@ function RepRangeCard({
                 </span>
               )}
             </div>
-            {!hideNotes && note && (
-              <p
-                className={cn(
-                  "line-clamp-2 text-sm text-pretty italic",
-                  hasPoster ? "text-white/80" : "text-muted-foreground",
-                )}
-              >
-                {note}
-              </p>
-            )}
+            {/* No note on the closed card: it is a glance at the number and
+                its trend. What you wrote that day waits inside the card. */}
           </div>
 
           <RepSparkline

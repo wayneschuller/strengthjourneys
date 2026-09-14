@@ -769,7 +769,7 @@ function RepSparkline({
   // One day at a rep count is a dot, not a trend. The card already says so.
   if (!geometry) return null;
 
-  const { coords, buckets, granularity, recordIndex } = geometry;
+  const { coords, buckets, recordIndex } = geometry;
   const hovered = hoverIndex === null ? null : coords[hoverIndex];
 
   const handlePointer = (event) => {
@@ -852,7 +852,6 @@ function RepSparkline({
         <SparklineTooltip
           bucket={buckets[hoverIndex]}
           x={hovered.x}
-          granularity={granularity}
           repCount={repCount}
           unit={unit}
           isRecord={hoverIndex === recordIndex}
@@ -862,17 +861,10 @@ function RepSparkline({
   );
 }
 
-// What sits behind one point: the heaviest set of that day, week or month, and
-// the day it was lifted. The heading says "Heaviest in" so nobody has to guess
-// whether a grouped point is volume, an average or an estimate.
-function SparklineTooltip({
-  bucket,
-  x,
-  granularity,
-  repCount,
-  unit,
-  isRecord,
-}) {
+// What sits behind one point: the set and the day it was lifted. That it is the
+// heaviest of its week or month is left implicit; a heading saying so only
+// cluttered it.
+function SparklineTooltip({ bucket, x, repCount, unit, isRecord }) {
   // Turned inward near either edge, because the card clips anything that
   // spills past its side.
   const transform =
@@ -884,21 +876,14 @@ function SparklineTooltip({
       className="bg-popover text-popover-foreground pointer-events-none absolute bottom-full z-30 mb-2 w-max max-w-[16rem] space-y-0.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-lg"
       style={{ left: `${x}%`, transform }}
     >
-      <div className="text-muted-foreground">
-        {granularity === "day"
-          ? formatBucketLabel(bucket, granularity)
-          : `Heaviest in ${formatBucketLabel(bucket, granularity)}`}
-      </div>
       <div className="text-sm font-semibold">
         {repCount}@{bucket.value}
         {unit}
         {isRecord && <span className="ml-1.5 font-medium">· Your record</span>}
       </div>
-      {granularity !== "day" && (
-        <div className="text-muted-foreground">
-          {getReadableDateString(bucket.date, true)}
-        </div>
-      )}
+      <div className="text-muted-foreground">
+        {getReadableDateString(bucket.date, true)}
+      </div>
     </div>
   );
 }
@@ -1074,18 +1059,6 @@ function getBucketKey(ymd, granularity) {
   const date = parseYmdUtc(ymd);
   date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
   return date.toISOString().slice(0, 10);
-}
-
-function formatBucketLabel(bucket, granularity) {
-  if (granularity === "day") return getReadableDateString(bucket.date, true);
-  if (granularity === "week") {
-    return `the week of ${getReadableDateString(bucket.key)}`;
-  }
-  return parseYmdUtc(`${bucket.key}-01`).toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }
 
 // Monotone cubic (Fritsch-Carlson): smooth, but it never bulges past the

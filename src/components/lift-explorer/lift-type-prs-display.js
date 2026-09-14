@@ -3,11 +3,12 @@
  * reps, three, and so on down the ladder.
  *
  * The card is about the set itself: the day, the note you wrote, the clip you
- * filmed, and the way back to that session. Underneath sits a small sparkline
- * of your best at that rep count over time, with the record marked. It replaced a
+ * filmed, and the way back to that session. Opening a card shows a sparkline of
+ * your best at that rep count over time, with the record marked. It replaced a
  * separate singles/triples/fives chart that only ever covered three rep ranges
- * and stacked them on one axis where they tangled; one line per card covers
- * every rep range and keeps each one legible.
+ * and stacked them on one axis where they tangled; one line per rep range keeps
+ * each one legible. The chart lives only in the opened card: on the closed grid
+ * it was noise, and inside it is the reward for looking closer.
  *
  * One card per rep range, all on one page, no tabs — a second view of ten
  * records mostly repeats the first. Opening a record grows it to full width in
@@ -469,22 +470,9 @@ function RepRangeCard({
                 </span>
               )}
             </div>
-            {/* No note on the closed card: it is a glance at the number and
-                its trend. What you wrote that day waits inside the card. */}
+            {/* No note and no chart on the closed card: it is a glance at the
+                number. What you wrote and how you got there wait inside. */}
           </div>
-
-          <RepSparkline
-            points={dailyBests}
-            recordDate={record.date}
-            repCount={repCount}
-            unit={unit}
-            scope={scope}
-            color={hasPoster ? "#ffffff" : liftColor}
-            onPoster={hasPoster}
-            onClick={onToggle}
-            subtle
-            className={isHero ? "h-14" : "h-10"}
-          />
 
           <span
             className={cn(
@@ -749,12 +737,8 @@ function RecordRow({
  * so the light days between heavy ones stop sawing the line down to the floor.
  * The record gets a dot so the eye can find where the headline number lives.
  *
- * Hovering or touching shows the set behind a point. On the closed card a click
- * on the chart still opens the card, so the chart never steals the card's job.
- *
- * `subtle` is for the closed cards: a grid of nine full-strength lines in the
- * same colour as the numbers pulled the eye off the numbers. There the line is
- * thin and faded with no fill, and only the record dot keeps full colour.
+ * Hovering or touching shows the set behind a point. Drawn only inside an
+ * opened card.
  */
 function RepSparkline({
   points,
@@ -763,9 +747,6 @@ function RepSparkline({
   unit,
   scope,
   color,
-  onPoster = false,
-  onClick,
-  subtle = false,
   className,
 }) {
   const gradientId = `rep-spark-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
@@ -792,15 +773,10 @@ function RepSparkline({
   return (
     <div
       data-sparkline=""
-      className={cn(
-        "pointer-events-auto relative w-full touch-pan-y",
-        onClick ? "cursor-pointer" : "cursor-crosshair",
-        className,
-      )}
+      className={cn("relative w-full cursor-crosshair touch-pan-y", className)}
       onPointerMove={handlePointer}
       onPointerDown={handlePointer}
       onPointerLeave={() => setHoverIndex(null)}
-      onClick={onClick}
     >
       <svg
         aria-hidden="true"
@@ -814,13 +790,12 @@ function RepSparkline({
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
-        {!subtle && <path d={geometry.areaPath} fill={`url(#${gradientId})`} />}
+        <path d={geometry.areaPath} fill={`url(#${gradientId})`} />
         <path
           d={geometry.linePath}
           fill="none"
           stroke={color}
-          strokeOpacity={subtle ? 0.45 : 1}
-          strokeWidth={subtle ? 1.5 : 2}
+          strokeWidth={2}
           strokeLinejoin="round"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
@@ -848,9 +823,8 @@ function RepSparkline({
             key={index === recordIndex ? "record" : "hover"}
             aria-hidden="true"
             className={cn(
-              "pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full ring-2",
+              "ring-card pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full ring-2",
               index === recordIndex ? "size-2" : "size-2.5",
-              onPoster ? "ring-black/50" : "ring-card",
             )}
             style={{
               left: `${coords[index].x}%`,

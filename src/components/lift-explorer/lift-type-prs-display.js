@@ -478,6 +478,7 @@ function RepRangeCard({
             recordDate={record.date}
             repCount={repCount}
             unit={unit}
+            scope={scope}
             color={hasPoster ? "#ffffff" : liftColor}
             onPoster={hasPoster}
             onClick={onToggle}
@@ -547,6 +548,7 @@ function RepRangeCard({
               recordDate={record.date}
               repCount={repCount}
               unit={unit}
+              scope={scope}
               color={liftColor}
               className="h-24"
             />
@@ -754,6 +756,7 @@ function RepSparkline({
   recordDate,
   repCount,
   unit,
+  scope,
   color,
   onPoster = false,
   onClick,
@@ -854,6 +857,7 @@ function RepSparkline({
           x={hovered.x}
           repCount={repCount}
           unit={unit}
+          scope={scope}
           isRecord={hoverIndex === recordIndex}
         />
       )}
@@ -864,7 +868,11 @@ function RepSparkline({
 // What sits behind one point: the set and the day it was lifted. That it is the
 // heaviest of its week or month is left implicit; a heading saying so only
 // cluttered it.
-function SparklineTooltip({ bucket, x, repCount, unit, isRecord }) {
+function SparklineTooltip({ bucket, x, repCount, unit, scope, isRecord }) {
+  // Under the 12 months toggle the marked point is only this year's best, so
+  // it must not claim to be the lifetime PR.
+  const prLabel = `${scope === "yearly" ? "12-month " : ""}${repCount}RM PR`;
+
   // Turned inward near either edge, because the card clips anything that
   // spills past its side.
   const transform =
@@ -879,7 +887,7 @@ function SparklineTooltip({ bucket, x, repCount, unit, isRecord }) {
       <div className="text-sm font-semibold">
         {repCount}@{bucket.value}
         {unit}
-        {isRecord && <span className="ml-1.5 font-medium">· Your record</span>}
+        {isRecord && <span className="ml-1.5 font-medium">· {prLabel}</span>}
       </div>
       <div className="text-muted-foreground">
         {getReadableDateString(bucket.date, true)}

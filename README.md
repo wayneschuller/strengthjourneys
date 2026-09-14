@@ -82,7 +82,7 @@ The server does keep a small operational record per account (sign-in timestamps,
 - [Shiki](https://shiki.style/) for code syntax highlighting in AI responses
 
 **Content & SEO:**
-- [Sanity](https://www.sanity.io/) CMS for articles
+- Markdown articles in `content/articles/`, rendered to HTML at build time
 - [next-seo](https://github.com/garmeeh/next-seo) and [next-sitemap](https://github.com/iamvishnusankar/next-sitemap) for SEO
 
 See [package.json](https://github.com/wayneschuller/strengthjourneys/blob/main/package.json) for the full list of dependencies.
@@ -106,7 +106,7 @@ This repo has grown into a multi-tool lifting app (home dashboard, visualizer, s
 - `src/pages/api/sheet/read.js` — authenticated Google Sheets + Drive metadata proxy
 - `src/pages/api/sheet/` — the rest of the sheet surface: linking, provisioning, and the operation-oriented write routes
 - `src/pages/api/auth/[...nextauth].js` — NextAuth Google OAuth setup + token refresh
-- `src/lib/sanity-io.js` — Sanity CMS fetch helpers for article pages and related content
+- `src/lib/articles.js` — markdown article store: frontmatter, build-time HTML and related-article helpers
 
 ### Core data flow (at a glance)
 

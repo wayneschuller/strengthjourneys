@@ -9,7 +9,7 @@ and is deployed on Vercel.
 Longer workflows live in `docs/agents/` and are only worth reading when the task
 calls for them:
 
-- `docs/agents/sanity.md` when browsing, writing, or editing Sanity articles
+- `docs/agents/articles.md` when writing, editing, or publishing articles
 - `docs/agents/kv-funnel-review.md` when reviewing KV user metadata, onboarding
   funnels, returning users, or acquisition quality
 - `docs/agents/themes.md` when adding or changing a theme, theme background, or
@@ -43,8 +43,9 @@ Two sitemaps, both generated - never commit sitemap files to git:
 
 - `/sitemap.xml` + `/sitemap-0.xml` - static routes, written into `public/` by
   `next-sitemap` at postbuild time from `next-sitemap.config.js`
-- `/server-sitemap.xml` - Sanity article slugs, served on request by
-  `src/pages/server-sitemap.xml.js` so new articles appear without a deploy
+- `/server-sitemap.xml` - article URLs with their `updatedAt` from
+  `content/articles/`, served by `src/pages/server-sitemap.xml.js` (kept at this
+  URL because Search Console already has it registered)
 
 Both are listed in the generated `robots.txt` and should both be submitted in
 Google Search Console.
@@ -108,6 +109,9 @@ authenticated users.
   so the main answer stream closes promptly.
 - **`next.config.js`** carries a long list of SEO redirects, each with a dated
   comment explaining why it exists.
+- **Articles** are markdown files in `content/articles/`, rendered to HTML at
+  build time by `src/lib/articles.js`. Writing and publishing live in
+  `docs/agents/articles.md`.
 - **`next-sitemap.config.js`** deliberately emits `<loc>` only, because a
   blanket `lastmod` that resets every deploy is a freshness claim we cannot
   back up.
@@ -312,3 +316,13 @@ thinking out loud with a good friend who happens to know how to code.
 ---
 
 End of AGENTS.md
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

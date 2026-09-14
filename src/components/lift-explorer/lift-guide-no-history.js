@@ -86,28 +86,35 @@ export function LiftGuideNoHistory({ liftType }) {
         isAuthenticated ? SIGNED_IN_NO_SHEET_DESCRIPTION : copy.description,
       )}
       className="bg-card rounded-lg border p-5 shadow-sm md:p-6"
-    >
-      {isAuthenticated ? (
-        <Button
-          className="gap-2"
-          onClick={() => openSheetSetupDialog("bootstrap")}
-        >
-          <Image
-            src={GOOGLE_SHEETS_ICON_URL}
-            alt=""
-            width={16}
-            height={16}
-            className="h-4 w-4"
-            aria-hidden
-          />
-          Connect Google Sheet
-        </Button>
-      ) : (
-        <GoogleSignInButton cta="lift_guide_no_history" iconSize={16}>
-          Sign in with Google
-        </GoogleSignInButton>
-      )}
-    </ImportWorkflowSection>
+      // Sits beside the import button: bring old history, or start fresh here.
+      secondaryAction={
+        isAuthenticated ? (
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => openSheetSetupDialog("bootstrap")}
+          >
+            <Image
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              width={16}
+              height={16}
+              className="h-4 w-4"
+              aria-hidden
+            />
+            Connect Google Sheet
+          </Button>
+        ) : (
+          <GoogleSignInButton
+            variant="outline"
+            cta="lift_guide_no_history"
+            iconSize={16}
+          >
+            Start logging here
+          </GoogleSignInButton>
+        )
+      }
+    />
   );
 }
 

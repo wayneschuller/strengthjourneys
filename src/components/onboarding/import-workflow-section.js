@@ -948,15 +948,16 @@ function resolveWorkflowCopy(copy, { sourceAppName, sheetName }) {
  * @param {string} [props.sourceAppName] - App name for import guide pages.
  * @param {string} [props.className] - Outer classes. The default suits a
  *   standalone import page; embedded uses pass their own.
- * @param {React.ReactNode} [props.children] - Extra actions (a sign-in button,
- *   say) shown between the description and the drop target.
+ * @param {React.ReactNode} [props.secondaryAction] - An alternative to
+ *   importing (a sign-in button, say), shown beside the import button with an
+ *   "or" between them.
  */
 export function ImportWorkflowSection({
   title = null,
   description = null,
   sourceAppName = null,
   className = "mx-auto mb-12 max-w-5xl",
-  children = null,
+  secondaryAction = null,
 }) {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -1442,7 +1443,6 @@ export function ImportWorkflowSection({
           {displayDescription}
         </p>
       )}
-      {children && <div className="mb-4">{children}</div>}
       <Card
         className={`border-dashed transition-colors ${dragOver ? "border-primary bg-primary/5" : ""}`}
         onDrop={onDrop}
@@ -1476,9 +1476,17 @@ export function ImportWorkflowSection({
                   <span>Instant preview</span>
                 </p>
               )}
-              <Button onClick={() => fileInputRef.current?.click()}>
-                <FileUp className="mr-2 h-4 w-4" /> {workflowCopy.button}
-              </Button>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Button onClick={() => fileInputRef.current?.click()}>
+                  <FileUp className="mr-2 h-4 w-4" /> {workflowCopy.button}
+                </Button>
+                {secondaryAction && (
+                  <>
+                    <span className="text-muted-foreground text-sm">or</span>
+                    {secondaryAction}
+                  </>
+                )}
+              </div>
               <input
                 ref={fileInputRef}
                 type="file"

@@ -5,7 +5,6 @@
  * over from one to the other never shifts the dashboard underneath.
  */
 import { useState, useEffect, useRef } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
 import { FileUp, RefreshCw, Loader2 } from "lucide-react";
@@ -310,14 +309,25 @@ export function DataSheetStatus({
   );
 }
 
+// While the sheet read is out the fill creeps towards READ_CEILING and never reaches it, so a
+// slow read keeps moving without claiming to be done. Once the count lands the fill runs the
+// rest of the way, briskly when the creep already covered most of it. The cards never wait on
+// any of this: they render as soon as their data is parsed.
+const READ_CEILING = 0.85;
+const READ_EASE_MS = 1500;
+const FULL_FILL_MS = 1200;
+const FINISH_MIN_MS = 400;
+
 /**
- * Compact progress pill for the initial data load. Sized to sit in the dashboard header slot
- * beside the greeting, so it never occupies a row of its own. Supports sheet rows and imported
- * preview entries so one visual treatment works without implying every source is Google Sheets.
+ * Compact progress pill for the initial data load. It starts the moment the dashboard mounts,
+ * creeping while the sheet is read, then rolls the real count once the read returns. Sized to
+ * sit in the dashboard header slot beside the greeting, so it never occupies a row of its own.
+ * Supports sheet rows and imported preview entries so one visual treatment works without
+ * implying every source is Google Sheets.
  *
  * @param {Object} props
  * @param {"sheet"|"preview"} [props.mode] - Source type powering the load indicator.
- * @param {number|null} props.count - Total rows/entries to process.
+ * @param {number|null} props.count - Total rows/entries to process; null while the read is out.
  * @param {boolean} props.isProgressDone - Whether the animation has finished.
  * @param {function(boolean)} props.setIsProgressDone - Callback to mark progress complete.
  */
@@ -327,45 +337,58 @@ export function RowProcessingIndicator({
   isProgressDone,
   setIsProgressDone,
 }) {
-  const [animatedCount, setAnimatedCount] = useState(0);
   const isPreviewMode = mode === "preview";
+  const isCountKnown = count !== null && count !== undefined;
   const countLabel = isPreviewMode ? "entries" : "rows";
   const loadingLabel = isPreviewMode
     ? "Preparing imported preview"
     : "Reading your workout data";
   const completedLabel = isPreviewMode ? "Preview ready" : "Processed";
 
+  // Share of the pill filled, 0 to 1. The count rides on it once it is known.
+  const [fraction, setFraction] = useState(0);
+  const fractionRef = useRef(0);
+  const previousCountRef = useRef(null);
+
   useEffect(() => {
-    // Reset whenever the incoming count changes
-    setAnimatedCount(0);
+    const cameFromRead = previousCountRef.current === null;
+    previousCountRef.current = isCountKnown ? count : null;
     setIsProgressDone(false);
 
-    if (count === null || count === undefined) {
-      setIsProgressDone(false);
-      return;
-    }
-
-    if (count <= 0) {
+    if (isCountKnown && count <= 0) {
+      fractionRef.current = 1;
+      setFraction(1);
       setIsProgressDone(true);
       return;
     }
 
-    const durationMs = 1200; // total animation duration
+    // A count landing straight after the read carries on from wherever the creep got to.
+    // Anything else (a fresh read after a finished one, or a different count) starts over.
+    const from = cameFromRead ? fractionRef.current : 0;
+    const finishMs = Math.max(FINISH_MIN_MS, FULL_FILL_MS * (1 - from));
     const start = performance.now();
     let frameId;
 
     const tick = (now) => {
-      const elapsed = now - start;
-      const progress = Math.min(1, elapsed / durationMs);
-      // Fractional on purpose: the odometer wheels roll between whole numbers.
-      const nextCount = count * progress;
-      setAnimatedCount(nextCount);
-
-      if (progress >= 1) {
-        setIsProgressDone(true);
-        return;
+      const elapsedMs = now - start;
+      let next;
+      let isSettled;
+      if (isCountKnown) {
+        const progress = Math.min(1, elapsedMs / finishMs);
+        next = from + (1 - from) * (1 - (1 - progress) ** 3);
+        isSettled = progress >= 1;
+      } else {
+        next = from + (READ_CEILING - from) * (1 - Math.exp(-elapsedMs / READ_EASE_MS));
+        isSettled = READ_CEILING - next < 0.002;
       }
 
+      fractionRef.current = next;
+      setFraction(next);
+
+      if (isSettled) {
+        if (isCountKnown) setIsProgressDone(true);
+        return;
+      }
       frameId = requestAnimationFrame(tick);
     };
 
@@ -374,27 +397,26 @@ export function RowProcessingIndicator({
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [count, setIsProgressDone]);
+  }, [count, isCountKnown, setIsProgressDone]);
 
-  const percent =
-    count && count > 0
-      ? Math.min(100, Math.round((animatedCount / count) * 100))
-      : 0;
-
-  if (count === null || count === undefined) {
-    // Below lg the dashboard's loading panel already says the sheet is being read, so a grey
-    // pill up here would only repeat it. The slot keeps its height either way.
-    return <Skeleton className="hidden h-5 w-56 rounded-full lg:block" />;
-  }
+  // Fractional on purpose: the odometer wheels roll between whole numbers.
+  const animatedCount = isCountKnown ? count * fraction : 0;
+  const percent = Math.min(100, Math.round(fraction * 100));
 
   return (
     <div
-      className="relative flex items-center gap-2 overflow-hidden rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-xs whitespace-nowrap"
+      className={`relative flex items-center gap-2 overflow-hidden rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-xs whitespace-nowrap ${
+        isCountKnown ? "" : "min-w-40"
+      }`}
       role="progressbar"
       aria-valuemin={0}
-      aria-valuemax={count}
-      aria-valuenow={Math.floor(animatedCount)}
-      aria-label={`${loadingLabel}: ${Math.floor(animatedCount).toLocaleString()} of ${count.toLocaleString()} ${countLabel}`}
+      aria-valuemax={isCountKnown ? count : undefined}
+      aria-valuenow={isCountKnown ? Math.floor(animatedCount) : undefined}
+      aria-label={
+        isCountKnown
+          ? `${loadingLabel}: ${Math.floor(animatedCount).toLocaleString()} of ${count.toLocaleString()} ${countLabel}`
+          : loadingLabel
+      }
     >
       {/* The fill sweeps behind the text instead of sitting above it as its own bar, so the
           pill stays the same height as the synced-sheet line it hands over to. */}
@@ -414,15 +436,22 @@ export function RowProcessingIndicator({
             aria-hidden
           />
         )}
-        <span className="text-muted-foreground hidden sm:inline">
-          {isProgressDone ? completedLabel : loadingLabel}:
-        </span>
-        <span className="flex items-center gap-1 tabular-nums">
-          <OdometerCount value={animatedCount} layoutValue={count} />
-          <span className="text-muted-foreground">
-            / {count.toLocaleString()} {countLabel}
-          </span>
-        </span>
+        {isCountKnown ? (
+          <>
+            <span className="text-muted-foreground hidden sm:inline">
+              {isProgressDone ? completedLabel : loadingLabel}:
+            </span>
+            <span className="flex items-center gap-1 tabular-nums">
+              <OdometerCount value={animatedCount} layoutValue={count} />
+              <span className="text-muted-foreground">
+                / {count.toLocaleString()} {countLabel}
+              </span>
+            </span>
+          </>
+        ) : (
+          // Below lg the loading panel under the header already says this in words.
+          <span className="text-muted-foreground hidden lg:inline">{loadingLabel}</span>
+        )}
         <motion.span
           className={`shrink-0 ${isProgressDone ? "text-green-500" : "text-amber-400"}`}
           animate={

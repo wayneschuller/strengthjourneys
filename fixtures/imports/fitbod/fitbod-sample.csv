@@ -1,0 +1,9 @@
+Date,Exercise,Reps,Weight(kg),Duration(s),Distance(m),Incline,Resistance,isWarmup,Note,multiplier
+2025-08-25 08:15:00,Bench Press (Barbell),5,45,,,,,true,,1
+2025-08-25 08:20:00,Bench Press (Barbell),5,100,,,,,false,Felt strong,1
+2025-08-25 08:25:00,Bench Press (Barbell),5,100,,,,,false,,1
+2025-08-25 08:40:00,Pull-up,8,0,,,,,false,,1
+2025-08-25 08:55:00,Treadmill Run,,,1800,5000,2,,false,,1
+2025-08-25 09:00:00,Back Squat,,140,,,,,false,,1
+2026-02-31 08:00:00,Deadlift,3,140,,,,,false,,1
+2025-08-26 07:30:00,Deadlift,3,140,,,,,false,,1

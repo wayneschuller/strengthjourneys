@@ -8,6 +8,7 @@
 
 import { parseStrengthJourneysData } from "@/lib/data-sources/strength-journeys-parser";
 import { parseBtwbData } from "@/lib/data-sources/btwb-parser";
+import { isFitbodExport, parseFitbodData } from "@/lib/data-sources/fitbod-parser";
 import { parseHevyData } from "@/lib/data-sources/hevy-parser";
 import { parseStrongData } from "@/lib/data-sources/strong-parser";
 import {
@@ -83,6 +84,14 @@ const FORMAT_SIGNATURES = [
       );
     },
     parse: parseHevyData,
+  },
+  {
+    id: "fitbod",
+    // Not featured in any /import app guide or picker UI — silent
+    // pass-through support for anyone who drops a Fitbod export in.
+    name: "Fitbod",
+    detect: isFitbodExport,
+    parse: parseFitbodData,
   },
   {
     id: "stronglifts",

@@ -873,7 +873,7 @@ function RepSparkline({
 }
 
 // What sits behind one point: the period, the set, the day it happened, and
-// how many sessions it was picked from once the line is grouped.
+// how many days it was picked from once the line is grouped.
 function SparklineTooltip({
   bucket,
   x,
@@ -906,13 +906,25 @@ function SparklineTooltip({
           {getReadableDateString(bucket.date, true)}
         </div>
       )}
-      {bucket.sessionCount > 1 && (
+      {/* Once the line is grouped, a point stands for a week or a month, so
+          say how many days of this rep count it was picked from. "Heaviest of
+          4 sessions" alone left the reader guessing which sessions. */}
+      {granularity !== "day" && bucket.sessionCount > 1 && (
         <div className="text-muted-foreground">
-          Heaviest of {bucket.sessionCount} sessions
+          Best of {bucket.sessionCount} days with {describeRepSets(repCount)}{" "}
+          that {granularity}
         </div>
       )}
     </div>
   );
+}
+
+// "singles", "triples", "sets of 5": how lifters name a rep count out loud.
+function describeRepSets(repCount) {
+  if (repCount === 1) return "singles";
+  if (repCount === 2) return "doubles";
+  if (repCount === 3) return "triples";
+  return `sets of ${repCount}`;
 }
 
 function ScopeButton({ isActive, onClick, children }) {

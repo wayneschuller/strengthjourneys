@@ -3,6 +3,7 @@
 import {
   BIG_FOUR_LIFT_TYPES,
   BIG_FOUR_LIFT_TYPE_SET,
+  CURATED_LIFTS,
 } from "@/lib/lifts/lift-registry";
 
 export const STANDARD_BIG_FOUR_LIFT_TYPES = BIG_FOUR_LIFT_TYPES;
@@ -137,11 +138,25 @@ export function isValidLiftWeight(liftType, weight) {
   return numericWeight === 0 && isBodyweightLoadLiftName(liftType);
 }
 
+// Every curated lift's name and synonyms, keyed the same way as the aliases
+// above, so "Paused Bench" and "close-grip bench press" arrive under the
+// registry's name and every page, chart and card sees one lift. The registry
+// owns these; add a spelling there, not here.
+const REGISTRY_LIFT_TYPE_ALIASES = new Map();
+for (const lift of CURATED_LIFTS) {
+  const synonyms = Array.isArray(lift.synonyms) ? lift.synonyms : [];
+  for (const name of [lift.liftType, ...synonyms]) {
+    const key = normalizeLiftTypeLookupKey(name);
+    if (key) REGISTRY_LIFT_TYPE_ALIASES.set(key, lift.liftType);
+  }
+}
+
 // Allow variations of common lift names and capitalization but harmonize for output.
 export function normalizeLiftTypeNames(liftType) {
   const key = normalizeLiftTypeLookupKey(liftType);
   return (
     BIG_FOUR_LIFT_TYPE_ALIASES[key] ||
+    REGISTRY_LIFT_TYPE_ALIASES.get(key) ||
     normalizeBodyweightLoadLiftType(liftType) ||
     liftType
   ); // Defaults to original if no match

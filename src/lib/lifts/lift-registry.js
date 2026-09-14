@@ -91,7 +91,7 @@ import pushPress from "@/lib/lifts/push-press.json";
 import pauseSquat from "@/lib/lifts/pause-squat.json";
 import boxSquat from "@/lib/lifts/box-squat.json";
 import safetyBarSquat from "@/lib/lifts/safety-bar-squat.json";
-import pausedBenchPress from "@/lib/lifts/paused-bench-press.json";
+import pauseBenchPress from "@/lib/lifts/pause-bench-press.json";
 import inclineBenchPress from "@/lib/lifts/incline-bench-press.json";
 import sumoDeadlift from "@/lib/lifts/sumo-deadlift.json";
 import deficitDeadlift from "@/lib/lifts/deficit-deadlift.json";
@@ -121,7 +121,7 @@ export const CURATED_LIFTS = [
   pauseSquat,
   boxSquat,
   safetyBarSquat,
-  pausedBenchPress,
+  pauseBenchPress,
   inclineBenchPress,
   sumoDeadlift,
   deficitDeadlift,

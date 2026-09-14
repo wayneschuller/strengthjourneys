@@ -2,12 +2,12 @@
  * The rep-range trophy cabinet for one lift: your best set at one rep, two
  * reps, three, and so on down the ladder.
  *
- * Deliberately not a chart. Every chart view of this data already exists above
- * it on the guide page — e1RM over time, singles/triples/fives over time, and
- * achieved-versus-potential by rep range. What none of those show is the set
- * itself: the day, the note you wrote, the clip you filmed, and the way back
- * to that session. Read down the column of weights and the strength curve is
- * there anyway, without drawing it a fourth time.
+ * The card is about the set itself: the day, the note you wrote, the clip you
+ * filmed, and the way back to that session. Underneath sits a small sparkline
+ * of every day's best at that rep count, with the record marked. It replaced a
+ * separate singles/triples/fives chart that only ever covered three rep ranges
+ * and stacked them on one axis where they tangled; one line per card covers
+ * every rep range and keeps each one legible.
  *
  * One card per rep range, all on one page, no tabs — a second view of ten
  * records mostly repeats the first. Opening a record grows it to full width in
@@ -18,7 +18,7 @@
  * is the whole reason to bother filming a set.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -75,6 +75,7 @@ const COMPACT_REP_COUNTS = [1, 3, 5, 10];
  */
 export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
   const {
+    parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     isDemoMode,
@@ -153,6 +154,19 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
       )
       .slice(0, 10);
   }, [topLiftsByReps, compact]);
+
+  // The PR table only keeps the top handful per rep range, so the sparklines
+  // read the full log. One pass for all ten rep counts, not one per card.
+  const dailyBestsByReps = useMemo(
+    () =>
+      getDailyBestsByReps(
+        parsedData,
+        liftType,
+        isMetric ?? false,
+        scope === "yearly" ? shiftYmdByYears(todayYmd, -1) : null,
+      ),
+    [parsedData, liftType, isMetric, scope, todayYmd],
+  );
 
   const hasYearlyData = Boolean(
     topLiftsByTypeAndRepsLast12Months?.[liftType]?.some(
@@ -236,6 +250,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                 key={`${liftType}-${scope}-${repCount}`}
                 repRange={repRange}
                 repCount={repCount}
+                dailyBests={dailyBestsByReps[repCount]}
                 liftType={liftType}
                 liftColor={liftColor}
                 isOpen={effectiveOpenRep === repCount}
@@ -266,6 +281,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
 function RepRangeCard({
   repRange,
   repCount,
+  dailyBests,
   liftType,
   liftColor,
   isOpen,
@@ -461,6 +477,14 @@ function RepRangeCard({
             )}
           </div>
 
+          <RepSparkline
+            points={dailyBests}
+            recordDate={record.date}
+            color={hasPoster ? "#ffffff" : liftColor}
+            onPoster={hasPoster}
+            className={isHero ? "h-14" : "h-10"}
+          />
+
           <span
             className={cn(
               "text-xs",
@@ -517,6 +541,13 @@ function RepRangeCard({
               standingFor={standingFor}
               strengthBadge={strengthBadge}
               note={note}
+            />
+
+            <RepSparkline
+              points={dailyBests}
+              recordDate={record.date}
+              color={liftColor}
+              className="h-20"
             />
 
             {olderRecords.length > 0 && (
@@ -702,6 +733,64 @@ function RecordRow({
   );
 }
 
+/**
+ * Every day's best at one rep count, drawn against real time so a long layoff
+ * reads as a long flat stretch rather than being squeezed out. The record gets
+ * a dot so the eye can find the day the headline number came from.
+ *
+ * Decorative on the closed card, where the whole surface is already the button
+ * that opens the full list of sets, so it carries no hover layer of its own.
+ */
+function RepSparkline({ points, recordDate, color, onPoster = false, className }) {
+  const gradientId = `rep-spark-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const geometry = useMemo(
+    () => getSparklineGeometry(points, recordDate),
+    [points, recordDate],
+  );
+
+  // One day at a rep count is a dot, not a trend. The card already says so.
+  if (!geometry) return null;
+
+  return (
+    <div aria-hidden="true" className={cn("relative w-full", className)}>
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="absolute inset-0 h-full w-full overflow-visible"
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <path d={geometry.areaPath} fill={`url(#${gradientId})`} />
+        <path
+          d={geometry.linePath}
+          fill="none"
+          stroke={color}
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+      {/* An HTML dot, because a circle inside a stretched viewBox turns oval. */}
+      <span
+        className={cn(
+          "absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2",
+          onPoster ? "ring-black/50" : "ring-card",
+        )}
+        style={{
+          left: `${geometry.record.x}%`,
+          top: `${geometry.record.y}%`,
+          backgroundColor: color,
+        }}
+      />
+    </div>
+  );
+}
+
 function ScopeButton({ isActive, onClick, children }) {
   return (
     <button
@@ -762,6 +851,77 @@ function useVideoPoster(url) {
         : null;
 
   return { src, onError: () => setFailedSrc(src) };
+}
+
+/**
+ * Heaviest set per day at each rep count from 1 to 10, in the display unit so a
+ * log that mixes kg and lb sessions draws one continuous line.
+ *
+ * @returns {Array<Array<{date: string, value: number}>>} indexed by rep count
+ */
+function getDailyBestsByReps(parsedData, liftType, isMetric, fromYmd) {
+  const byReps = Array.from({ length: 11 }, () => new Map());
+  if (!Array.isArray(parsedData)) return byReps.map(() => []);
+
+  for (const entry of parsedData) {
+    if (entry.liftType !== liftType || entry.isGoal) continue;
+    if (!(entry.reps >= 1 && entry.reps <= 10)) continue;
+    if (fromYmd && entry.date < fromYmd) continue;
+
+    const value = Number(getDisplayWeight(entry, isMetric).value);
+    if (!Number.isFinite(value)) continue;
+    const days = byReps[entry.reps];
+    if (!(days.get(entry.date) >= value)) days.set(entry.date, value);
+  }
+
+  // parsedData is chronological, so first-seen order is already date order.
+  return byReps.map((days) =>
+    Array.from(days, ([date, value]) => ({ date, value })),
+  );
+}
+
+// Points as percentages of the box, with a little headroom so the record dot
+// is never cropped by the top or bottom edge.
+function getSparklineGeometry(points, recordDate) {
+  if (!points || points.length < 2) return null;
+
+  const times = points.map(({ date }) => parseYmdUtc(date)?.getTime());
+  if (times.some((t) => !Number.isFinite(t))) return null;
+  const firstTime = times[0];
+  const timeSpan = times[times.length - 1] - firstTime || 1;
+
+  let min = Infinity;
+  let max = -Infinity;
+  for (const { value } of points) {
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
+  const valueSpan = max - min;
+
+  const coords = points.map(({ value }, index) => ({
+    x: ((times[index] - firstTime) / timeSpan) * 100,
+    y: valueSpan === 0 ? 50 : 88 - ((value - min) / valueSpan) * 76,
+  }));
+
+  const linePath = coords
+    .map(({ x, y }, index) => `${index ? "L" : "M"}${x.toFixed(2)} ${y.toFixed(2)}`)
+    .join(" ");
+  const areaPath = `${linePath} L100 100 L0 100 Z`;
+
+  // The record is the heaviest day, and on a tie the one on the record's date.
+  let recordIndex = points.findIndex((point) => point.date === recordDate);
+  if (recordIndex === -1 || points[recordIndex].value !== max) {
+    recordIndex = points.findIndex((point) => point.value === max);
+  }
+
+  return { linePath, areaPath, record: coords[recordIndex] };
+}
+
+// "2026-09-14" and -1 gives "2025-09-14". Lexical compare only, so a Feb 29
+// that lands on a non-leap year is harmless.
+function shiftYmdByYears(ymd, years) {
+  if (!ymd) return null;
+  return `${Number(ymd.slice(0, 4)) + years}${ymd.slice(4)}`;
 }
 
 function isRecordRecent(dateStr, todayYmd) {

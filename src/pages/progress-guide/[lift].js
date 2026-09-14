@@ -59,7 +59,6 @@ import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
 import { LiftTypeRepPRsDisplay } from "@/components/lift-explorer/lift-type-prs-display";
 import { MostRecentSessionCard } from "@/components/lift-explorer/most-recent-session-card";
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
-import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
 import { RelatedArticles } from "@/components/article-cards";
@@ -569,9 +568,6 @@ function LiftAnalysisSections({ liftType, isBigFour, strengthLevelsPath }) {
       )}
       <SectionReveal id="strength-potential">
         <StrengthPotentialBarChart liftType={liftType} />
-      </SectionReveal>
-      <SectionReveal>
-        <VisualizerReps liftType={liftType} />
       </SectionReveal>
       <SectionReveal id="lift-prs">
         <MyLiftTypePRsCard liftType={liftType} />

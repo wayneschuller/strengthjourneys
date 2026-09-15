@@ -8,7 +8,6 @@
  */
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { registerHooks } from "node:module";
 import path from "node:path";
@@ -122,12 +121,25 @@ for (const [raw, expected] of Object.entries(expectedNames)) {
   assert.equal(normalizeLiftTypeNames(raw), expected, raw);
 }
 
-const strongRows = decodeCSV(
-  await readFile(
-    path.join(sourceRoot, "lib", "data-sources", "fixtures", "strong", "strong-sample.csv"),
-    "utf8",
-  ),
-);
+// Synthetic rows in the publicly described Strong export shape, not a real
+// export. Barbell lifts should reach the big four and registry variations;
+// dumbbell, Smith machine, trap bar and assisted variants must stay their own.
+const STRONG_SAMPLE_CSV = `Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2026-09-01 07:00:00,Lower A,1h 5m,Squat (Barbell),1,100,5,0,0,,,
+2026-09-01 07:00:00,Lower A,1h 5m,Squat (Smith Machine),1,140,5,0,0,,,
+2026-09-01 07:00:00,Lower A,1h 5m,Front Squat (Barbell),1,80,3,0,0,,,
+2026-09-01 07:00:00,Lower A,1h 5m,Romanian Deadlift (Barbell),1,100,8,0,0,,,
+2026-09-01 07:00:00,Lower A,1h 5m,Romanian Deadlift (Dumbbell),1,30,10,0,0,,,
+2026-09-01 07:00:00,Lower A,1h 5m,Deadlift (Trap Bar),1,180,3,0,0,,,
+2026-09-03 07:00:00,Upper A,58m,Bench Press (Barbell),1,80,5,0,0,,,
+2026-09-03 07:00:00,Upper A,58m,Bench Press (Dumbbell),1,30,10,0,0,,,
+2026-09-03 07:00:00,Upper A,58m,Overhead Press (Barbell),1,50,5,0,0,,,
+2026-09-03 07:00:00,Upper A,58m,Shoulder Press (Dumbbell),1,20,10,0,0,,,
+2026-09-03 07:00:00,Upper A,58m,Bent Over Row (Barbell),1,60,8,0,0,,,
+2026-09-03 07:00:00,Upper A,58m,Pull Up (Assisted),1,20,8,0,0,,,
+`;
+
+const strongRows = decodeCSV(STRONG_SAMPLE_CSV);
 assert.equal(detectFormat(strongRows[0])?.id, "strong");
 
 const strong = parseStrongData(strongRows);

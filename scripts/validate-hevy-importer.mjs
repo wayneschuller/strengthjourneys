@@ -1,11 +1,11 @@
 /**
  * Lightweight Hevy importer regression checks.
- * The repository has no test runner, so this script exercises public-shaped
- * fixtures directly while preserving the application's normal `@/` imports.
+ * The repository has no test runner, so this script exercises synthetic
+ * Hevy-shaped rows kept inline below, while preserving the application's
+ * normal `@/` imports.
  */
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { registerHooks } from "node:module";
 import path from "node:path";
@@ -57,18 +57,37 @@ const { deduplicateImportedEntries } =
 const { buildNextImportProfile } =
   await import("../src/lib/import/import-profile.js");
 
-async function readFixture(name) {
-  const fixturePath = path.join(sourceRoot, "lib", "data-sources", "fixtures", "hevy", name);
-  return decodeCSV(await readFile(fixturePath, "utf8"));
-}
+// Synthetic rows in the publicly described Hevy export shape, not real
+// exports. The kg sample covers metric load, repeated identical sets,
+// equipment qualifiers, bodyweight load, duration-only work, several workouts
+// in one day and an impossible date. The lb sample covers imperial load and
+// the weight_lbs/distance_miles headers.
+const HEVY_KG_CSV = `title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_kg,reps,distance_km,duration_seconds,rpe
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",Heavy five,Bench Press (Barbell),,Smooth,0,normal,100,5,,,8
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",Heavy five,Bench Press (Barbell),,Smooth,1,normal,100,5,,,8
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Bench Press (Dumbbell),,,0,normal,30,8,,,7.5
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Pull Up (Bodyweight),,,0,normal,,8,,,,
+Conditioning,"25 Aug 2025, 18:00","25 Aug 2025, 18:30",,Plank,,,0,normal,,,0,60,
+Lower PM,"25 Aug 2025, 19:05","25 Aug 2025, 20:00",,Deadlift (Trap Bar),,,0,normal,140,3,,,9
+Bad row,"31 Feb 2025, 12:00","31 Feb 2025, 12:30",,Squat (Barbell),,,0,normal,100,5,,,,
+`;
+
+const HEVY_LB_CSV = `title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_lbs,reps,distance_miles,duration_seconds,rpe
+Upper A,"28 Mar 2025, 17:29","28 Mar 2025, 18:45",,Bench Press (Barbell),,Go heavy,0,warmup,45,10,,,6
+Upper A,"28 Mar 2025, 17:29","28 Mar 2025, 18:45",,Bench Press (Barbell),,,1,normal,185,8,,,8
+Upper A,"28 Mar 2025, 17:29","28 Mar 2025, 18:45",,Bench Press (Dumbbell),,,0,normal,65,10,,,8
+`;
+
+const kgRows = decodeCSV(HEVY_KG_CSV);
+const lbRows = decodeCSV(HEVY_LB_CSV);
 
 const importedAt = new Date(2026, 7, 14, 12, 0, 0);
-const kg = parseHevyData(await readFixture("hevy-kg.csv"), { importedAt });
-const lb = parseHevyData(await readFixture("hevy-lb.csv"), { importedAt });
+const kg = parseHevyData(kgRows, { importedAt });
+const lb = parseHevyData(lbRows, { importedAt });
 
-assert.equal(detectFormat((await readFixture("hevy-kg.csv"))[0])?.name, "Hevy");
-assert.equal(detectFormat((await readFixture("hevy-kg.csv"))[0])?.id, "hevy");
-assert.equal(detectFormat((await readFixture("hevy-lb.csv"))[0])?.name, "Hevy");
+assert.equal(detectFormat(kgRows[0])?.name, "Hevy");
+assert.equal(detectFormat(kgRows[0])?.id, "hevy");
+assert.equal(detectFormat(lbRows[0])?.name, "Hevy");
 assert.equal(
   detectFormat([
     "\uFEFF TITLE ",

@@ -282,8 +282,9 @@ push to fix it.
 Agents operating in this repo should:
 
 - Prefer minimal, surgical edits
-- Never create a new top-level folder without asking the user first. Put new
-  files beside the code they serve
+- Never add project infrastructure, such as a top-level folder or an npm
+  script, without the user's permission. Propose it and say why, then wait for
+  a yes. Put new files beside the code they serve
 - Preserve visual design consistency
 - Avoid architectural rewrites unless explicitly requested
 - Park future follow-up tasks and todos in `.agents/follow-up-audit-items.md`

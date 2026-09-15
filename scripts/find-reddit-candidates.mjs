@@ -23,9 +23,10 @@
  *   node scripts/find-reddit-candidates.mjs --json
  */
 
+// The target audience comes first, so a crosspost is reported under it.
 const DEFAULT_SUBS = [
-  "Stronglifts5x5",
   "strength_training",
+  "Stronglifts5x5",
   "Deadlifts",
   "StartingStrength",
 ];
@@ -44,10 +45,14 @@ const LIFTS = [
 /**
  * "185 BW", "BW 64 kgs", "at 187 lbs bodyweight", "72kg BW".
  * Two directions because writers put the marker on either side of the number.
+ * A number directly before the marker is tried first: reading forward from
+ * "bw" catches whatever comes next, as in "190lbs bw. Road to 400lbs". A
+ * number after a slash is a unit conversion of the load, as in
+ * "157.5kg/346.5lbs Bw 105.8kg", so it is not read as the bodyweight.
  */
 const BODYWEIGHT_PATTERNS = [
+  /(?<![\d./])(\d{2,3}(?:\.\d)?)\s*(kg|kgs|lbs?|#)?\s*\b(?:bw|body\s?weight)\b/i,
   /\b(?:bw|body\s?weight)\b[^\d]{0,14}(\d{2,3}(?:\.\d)?)\s*(kg|kgs|lbs?|#)?/i,
-  /(\d{2,3}(?:\.\d)?)\s*(kg|kgs|lbs?|#)?\s*\b(?:bw|body\s?weight)\b/i,
 ];
 
 /**
@@ -65,7 +70,7 @@ const SET_PATTERNS = [
  * PR posts are usually singles, so this is read as one rep and flagged assumed
  * so the output never implies the poster said so.
  */
-const BARE_LOAD_RE = /(\d{2,4}(?:\.\d)?)\s*(kg|kgs|lbs?|#)\b/i;
+const BARE_LOAD_RE = /(\d{2,4}(?:\.\d)?)\s*(kg|kgs|lbs?|#)\b/gi;
 
 const QUESTION_RE =
   /\?|\bam i\b|\bis (?:this|that|it)\b|\bhow (?:strong|much|many|good)\b|\bgood\b|\bweak\b|\bimpressive\b|\bwhat'?s your\b|\bdo you (?:guys )?think\b|\bworth\b/i;
@@ -74,6 +79,20 @@ const QUESTION_RE =
 // advice from a linked account is how an account gets reported.
 const SKIP_RE =
   /\bform\s*check\b|\btendinitis\b|\bherniat|\binjur|\bpain\b|\bphysio\b|\bsurgery\b|\btear\b/i;
+
+// Only the title, since a lift log often invites form critiques in passing.
+const FORM_TITLE_RE = /\bform\b/i;
+
+// Sets on these cannot be placed against big four standards. Only consulted
+// when no big four lift is named, so a bench session with pull-ups still counts.
+const ACCESSORY_RE =
+  /\b(?:dumbbells?|db|curls?|pull[\s-]?ups?|chin[\s-]?ups?|dips?|lat\s*pull(?:down)?s?|leg\s*press|machine|cable|kettlebells?|kb)\b/i;
+
+// Variants whose names contain a big four lift but which have no standards of
+// their own. They are stripped before lift detection, so "RDL" or "trap bar
+// deadlift" alone is an accessory while "deadlift 500, RDL 300" is a deadlift.
+const VARIANT_RE =
+  /\b(?:rdls?|(?:romanian|stiff[\s-]?leg(?:ged)?|trap[\s-]?bar|hex[\s-]?bar)(?:\s*dead\s*lifts?)?|(?:front|hack|goblet|split|bulgarian)\s*squats?|(?:incline|decline)\s*bench(?:\s*press)?)\b/gi;
 
 const NAMED_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
@@ -100,7 +119,7 @@ export function findBodyWeight(text) {
   return null;
 }
 
-export function findSet(text) {
+export function findSet(text, bodyWeight = null) {
   for (const re of SET_PATTERNS) {
     const m = text.match(re);
     if (!m) continue;
@@ -113,9 +132,10 @@ export function findSet(text) {
     }
   }
 
-  const bare = text.match(BARE_LOAD_RE);
-  if (bare) {
+  // The stated bodyweight also looks like a bare load, as in "196lb body weight 315lb".
+  for (const bare of text.matchAll(BARE_LOAD_RE)) {
     const weight = Number(bare[1]);
+    if (weight === bodyWeight?.value) continue;
     if (weight >= 20 && weight <= 1000) {
       return { weight, reps: 1, unit: normaliseUnit(bare[2], weight), assumedReps: true };
     }
@@ -136,11 +156,14 @@ export function detectLift(text) {
 
 export function scorePost(post) {
   const text = `${post.title}\n${post.selftext ?? ""}`;
-  if (SKIP_RE.test(text)) return null;
+  if (SKIP_RE.test(text) || FORM_TITLE_RE.test(post.title)) return null;
+
+  const withoutVariants = text.replace(VARIANT_RE, " ");
+  const lift = detectLift(withoutVariants);
+  if (!lift && (withoutVariants !== text || ACCESSORY_RE.test(text))) return null;
 
   const bodyWeight = findBodyWeight(text);
-  const set = findSet(text);
-  const lift = detectLift(text);
+  const set = findSet(text, bodyWeight);
   const isQuestion = QUESTION_RE.test(post.title);
 
   // A stated bodyweight is the scarce signal, so it alone is enough to keep a
@@ -207,6 +230,7 @@ export function parseFeed(xml, sub) {
     posts.push({
       sub,
       id: (readTag(entry, "id") ?? "").replace(/^t3_/, ""),
+      author: (readTag(entry, "name") ?? "").replace(/^\/u\//, ""),
       title: decodeEntities(decodeEntities(readTag(entry, "title") ?? "")).trim(),
       selftext,
       ageHours: (Date.now() - posted) / 3_600_000,
@@ -259,6 +283,33 @@ async function fetchSub(sub, limit) {
   return [...new Map(results.map((p) => [p.id, p])).values()];
 }
 
+/**
+ * Fold crossposts into one candidate. The same author reporting the same set
+ * and bodyweight in another subreddit is one post shared twice, so the first
+ * subreddit fetched keeps it and the others are listed. Repeats within one
+ * subreddit are separate sessions and stay.
+ */
+export function mergeCrossposts(candidates) {
+  const merged = [];
+  const firstByKey = new Map();
+  for (const candidate of candidates) {
+    const post = { ...candidate, alsoIn: [] };
+    const { set, bodyWeight } = candidate;
+    const key =
+      set || bodyWeight
+        ? [candidate.author, set && `${set.weight}x${set.reps}`, bodyWeight?.value].join("|")
+        : null;
+    const first = key ? firstByKey.get(key) : null;
+    if (first && first.sub !== candidate.sub) {
+      if (!first.alsoIn.includes(candidate.sub)) first.alsoIn.push(candidate.sub);
+      continue;
+    }
+    if (key && !first) firstByKey.set(key, post);
+    merged.push(post);
+  }
+  return merged;
+}
+
 async function main() {
   const { subs, limit, json } = parseArgs(process.argv.slice(2));
   const candidates = [];
@@ -272,17 +323,21 @@ async function main() {
     }
   }
 
-  candidates.sort((a, b) => b.score - a.score || a.ageHours - b.ageHours);
+  const merged = mergeCrossposts(candidates);
+  merged.sort((a, b) => b.score - a.score || a.ageHours - b.ageHours);
 
   if (json) {
-    console.log(JSON.stringify(candidates, null, 2));
+    console.log(JSON.stringify(merged, null, 2));
     return;
   }
 
-  console.log(`\n${candidates.length} candidates\n`);
-  for (const c of candidates.slice(0, 25)) {
+  console.log(`\n${merged.length} candidates\n`);
+  for (const c of merged.slice(0, 25)) {
     const bw = c.bodyWeight ? `bw ${c.bodyWeight.value}${c.bodyWeight.unit}` : "no bodyweight";
-    console.log(`[${String(c.score).padStart(2)}] r/${c.sub}  ${Math.round(c.ageHours)}h  (${bw})`);
+    const also = c.alsoIn.length ? `  also r/${c.alsoIn.join(", r/")}` : "";
+    console.log(
+      `[${String(c.score).padStart(2)}] r/${c.sub}  ${Math.round(c.ageHours)}h  (${bw})${also}`,
+    );
     console.log(`     ${c.title}`);
     console.log(`     ${c.why.join(", ")}`);
     console.log(`     ${c.url}\n`);

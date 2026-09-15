@@ -34,7 +34,8 @@ const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";
 // of this note, sent from Wayne's own Gmail, drew replies where the branded one
 // drew none. Any address on the verified sending domain works, and replies go
 // to `replyTo`, so this mailbox never needs to exist.
-const USER_NOTE_FROM_EMAIL = "Wayne Schuller <wayne@updates.strengthjourneys.xyz>";
+const USER_NOTE_FROM_EMAIL =
+  "Wayne Schuller <wayne@updates.strengthjourneys.xyz>";
 // The note lands the morning after the day the lifter signed in, US time, so
 // "yesterday" in the note is true. The old rule was "24 to 72 hours later" at
 // whatever minute that fell on, which put over a third of notes in an inbox

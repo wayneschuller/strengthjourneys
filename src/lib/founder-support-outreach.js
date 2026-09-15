@@ -29,12 +29,12 @@ import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 import { mergeUserRecord, readUserRecord } from "@/lib/user-kv-keys";
 
 const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";
-// The note lands the morning after the lifter's first session, US time. The
-// old rule was "24 to 72 hours later" at whatever minute that fell on, which put
-// over a third of notes in an inbox overnight, under the morning pile. Most
-// lifters are in the US, so a Central morning is a sensible morning for nearly
-// all of them, and the gap keeps it from reading like a sign-in receipt.
-const MIN_GAP_HOURS = 12;
+// The note lands the morning after the day the lifter signed in, US time, so
+// "yesterday" in the note is true. The old rule was "24 to 72 hours later" at
+// whatever minute that fell on, which put over a third of notes in an inbox
+// overnight, under the morning pile. Most lifters are in the US, so a Central
+// morning is a sensible morning for nearly all of them. Even a sign-in just
+// before midnight has a night in between, so it never reads like a receipt.
 const SEND_TIME_ZONE = "America/Chicago";
 const SEND_WINDOW_START_MINUTES = 8 * 60 + 30;
 const SEND_WINDOW_MINUTES = 120;
@@ -142,26 +142,20 @@ function getZonedInstant({ year, month, day }, minutesIntoDay, timeZone) {
 }
 
 /**
- * The first send-window slot at least `MIN_GAP_HOURS` after `now`. Each lifter
- * gets a fixed minute inside the window from a hash of their address, so notes
- * do not all leave on the same tick and a retry lands on the same slot.
+ * The send-window slot on the calendar day after `now`, in `SEND_TIME_ZONE`.
+ * Each lifter gets a fixed minute inside the window from a hash of their
+ * address, so notes do not all leave on the same tick and a retry lands on the
+ * same slot.
  */
 function getScheduledAt(email, now = new Date()) {
-  const earliest = new Date(now.getTime() + MIN_GAP_HOURS * 60 * 60 * 1000);
   const minutesIntoDay =
     SEND_WINDOW_START_MINUTES + (hashEmail(email) % SEND_WINDOW_MINUTES);
-  const date = getZonedParts(earliest, SEND_TIME_ZONE);
-
-  const sameDay = getZonedInstant(date, minutesIntoDay, SEND_TIME_ZONE);
-  const scheduled =
-    sameDay >= earliest
-      ? sameDay
-      : getZonedInstant(
-          { ...date, day: date.day + 1 },
-          minutesIntoDay,
-          SEND_TIME_ZONE,
-        );
-  return scheduled.toISOString();
+  const today = getZonedParts(now, SEND_TIME_ZONE);
+  return getZonedInstant(
+    { ...today, day: today.day + 1 },
+    minutesIntoDay,
+    SEND_TIME_ZONE,
+  ).toISOString();
 }
 
 function isWhitespace(character) {
@@ -391,7 +385,7 @@ function buildUserEmail(user) {
     text: [
       getGreeting(user),
       "",
-      "Thanks for signing into Strength Journeys the other day.",
+      "Thanks for signing into Strength Journeys yesterday.",
       "",
       "I'm Wayne, the person building it. I'm a garage gym lifter who started in CrossFit, and these days I mainly train the big four, hopefully for the rest of my life.",
       "",

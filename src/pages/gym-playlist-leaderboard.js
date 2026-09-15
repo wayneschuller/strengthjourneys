@@ -42,7 +42,6 @@ const ITEMS_PER_PAGE = 10;
 // ---------------------------------------------------------------------------------------------------
 export async function getStaticProps() {
   const relatedArticles = await fetchRelatedArticles("Gym Music");
-  devLog(`gym-playlist-leaderboard relatedArticles:`, relatedArticles);
 
   if (process.env.NEXT_PUBLIC_USE_DEMO_PLAYLISTS === "true") {
     console.log("NEXT_PUBLIC_USE_DEMO_PLAYLISTS=true: using demo playlist data");

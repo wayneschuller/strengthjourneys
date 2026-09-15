@@ -14,7 +14,7 @@ import { ArrowLeft, LibraryBig } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ArticleFeedback } from "@/components/feedback";
-import { ArticleGrid } from "@/components/article-cards";
+import { ArticleGrid, formatArticleDate } from "@/components/article-cards";
 import {
   TopArticleShareButton,
   ArticleShareFooterCta,
@@ -27,14 +27,6 @@ const SITE_NAME = "Strength Journeys";
 const SITE_URL = "https://www.strengthjourneys.xyz";
 const RELATED_ARTICLE_COUNT = 3;
 const WORDS_PER_MINUTE = 230;
-
-// UTC so the statically rendered date and the hydrated one always agree.
-const ARTICLE_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "long",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 // The typography plugin ships its own grey palette. Pointing its variables at
 // the theme tokens keeps article text correct in every theme pack, light or
@@ -56,26 +48,16 @@ const PROSE_THEME_STYLE = {
 
 export default function ArticlePost({ article, relatedArticles }) {
   const canonicalUrl = `${SITE_URL}/articles/${article.slug}`;
-  const publishDate = new Date(article.publishedAt).toISOString();
-  const formattedDate = ARTICLE_DATE_FORMATTER.format(new Date(article.publishedAt));
   const readingMinutes = Math.max(
     1,
-    Math.round((article.wordCount ?? 0) / WORDS_PER_MINUTE),
+    Math.round(article.wordCount / WORDS_PER_MINUTE),
   );
 
   const ogImageUrl = `${SITE_URL}${article.cover}`;
-  const description =
-    article.description ??
-    article.title ??
-    "Strength and lifting article from Strength Journeys";
+  const description = article.description ?? article.title;
   const pageTitle = `${article.title} | ${SITE_NAME}`;
   const ogImageAlt = article.coverAlt ?? article.title;
-  const coverImageAlt =
-    article.coverAlt ??
-    (article.title ? `${article.title} banner image` : "Article banner image");
-  const modifiedDate = article.updatedAt
-    ? new Date(article.updatedAt).toISOString()
-    : null;
+  const coverImageAlt = article.coverAlt ?? `${article.title} banner image`;
 
   return (
     <div className="px-4 pb-16 sm:px-6">
@@ -93,10 +75,8 @@ export default function ArticlePost({ article, relatedArticles }) {
         <meta property="og:image" content={ogImageUrl} />
         <meta property="og:image:alt" content={ogImageAlt} />
         <meta property="og:description" content={description} />
-        <meta property="article:published_time" content={publishDate} />
-        {modifiedDate && (
-          <meta property="article:modified_time" content={modifiedDate} />
-        )}
+        <meta property="article:published_time" content={article.publishedAt} />
+        <meta property="article:modified_time" content={article.updatedAt} />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -113,8 +93,8 @@ export default function ArticlePost({ article, relatedArticles }) {
             "@type": "Article",
             headline: article.title,
             description,
-            datePublished: publishDate,
-            ...(modifiedDate && { dateModified: modifiedDate }),
+            datePublished: article.publishedAt,
+            dateModified: article.updatedAt,
             url: canonicalUrl,
             mainEntityOfPage: canonicalUrl,
             image: ogImageUrl,
@@ -162,7 +142,9 @@ export default function ArticlePost({ article, relatedArticles }) {
 
           <div className="mt-6 flex items-center justify-between gap-4 border-y py-3">
             <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
-              <time dateTime={publishDate}>{formattedDate}</time>
+              <time dateTime={article.publishedAt}>
+                {formatArticleDate(article.publishedAt)}
+              </time>
               <span aria-hidden="true">·</span>
               <span>{readingMinutes} min read</span>
             </p>
@@ -263,10 +245,6 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
   const article = getArticleBySlug(params.slug);
-
-  if (!article) {
-    return { notFound: true };
-  }
 
   return {
     props: {

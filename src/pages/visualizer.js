@@ -15,12 +15,12 @@ import {
 } from "@/components/page-header";
 import { LineChart } from "lucide-react";
 
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { RelatedArticles } from "@/components/article-cards";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Visualizer";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {
@@ -32,7 +32,7 @@ export async function getStaticProps() {
 /**
  * Strength Visualizer page. Renders SEO metadata and delegates rendering to VisualizerMain.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to the Strength Visualizer topic, fetched via ISR.
+ * @param {Array} props.relatedArticles - Articles related to the Strength Visualizer topic.
  */
 export default function Visualizer({ relatedArticles }) {
   // OG Meta Tags
@@ -86,7 +86,7 @@ export default function Visualizer({ relatedArticles }) {
  * Inner client component for the Strength Visualizer page. Renders an E1RM chart alongside a session
  * analysis card so users can explore their complete strength history across all lifts.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {Array} props.relatedArticles - Articles to display in the related articles section.
  */
 function VisualizerMain({ relatedArticles }) {
   const { isLoading } = useUserLiftingData();

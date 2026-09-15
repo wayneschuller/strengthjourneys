@@ -24,11 +24,11 @@ import {
   PageHeaderRight,
 } from "@/components/page-header";
 import { getLiftGuidePath } from "@/lib/lifts/lift-registry";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Personal Record Analyzer";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {
@@ -40,7 +40,7 @@ export async function getStaticProps() {
 /**
  * Lift Explorer page. Renders SEO metadata and delegates rendering to the main client component.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to the PR Analyzer topic, fetched via ISR.
+ * @param {Array} props.relatedArticles - Articles related to the PR Analyzer topic.
  */
 export default function LiftExplorer({ relatedArticles }) {
   // OG Meta Tags
@@ -93,7 +93,7 @@ export default function LiftExplorer({ relatedArticles }) {
 /**
  * Inner client component for the Lift Explorer page.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {Array} props.relatedArticles - Articles to display in the related articles section.
  */
 function LiftExplorerMain({ relatedArticles }) {
   const router = useRouter();

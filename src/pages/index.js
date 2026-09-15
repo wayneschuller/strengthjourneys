@@ -9,7 +9,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import { FEATURED_CATEGORY_TITLE, fetchRelatedArticles } from "@/lib/articles";
+import { getFeaturedArticles } from "@/lib/articles";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useMemo } from "react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -368,10 +368,8 @@ const structuredData = {
  * Articles ship with the deploy, so the page needs no revalidation.
  */
 export async function getStaticProps() {
-  const featuredArticles = await fetchRelatedArticles(FEATURED_CATEGORY_TITLE);
-
   return {
-    props: { starterArticles: featuredArticles.slice(0, 2) },
+    props: { starterArticles: getFeaturedArticles().slice(0, 2) },
   };
 }
 

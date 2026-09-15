@@ -39,7 +39,7 @@ import { StandardsSlider } from "@/components/standards-slider";
 import { LiftArtwork } from "@/components/lift-artwork";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import {
   STRENGTH_STANDARDS_HUB_URL,
   STRENGTH_STANDARDS_PAGES,
@@ -109,7 +109,7 @@ const FAQ_ITEMS = [
 ];
 
 export async function getStaticProps() {
-  const relatedArticles = await fetchRelatedArticles("Strength Calculator");
+  const relatedArticles = getRelatedArticles("Strength Calculator");
 
   return {
     props: {

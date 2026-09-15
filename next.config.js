@@ -36,8 +36,6 @@ const nextConfig = {
     ],
   },
 
-  // These two articles were manually jsxed before we had sanity.io 202409
-  // We could delete these in a few months once Google indexing has caught up
   async redirects() {
     return [
       // 2026-09-15: Articles joined the main sitemap. This URL was their own

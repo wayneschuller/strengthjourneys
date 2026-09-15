@@ -97,11 +97,11 @@ import {
 import { processConsistency } from "@/lib/consistency";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "AI Lifting Assistant";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {
@@ -113,7 +113,7 @@ export async function getStaticProps() {
 /**
  * AI Lifting Assistant page. Renders SEO metadata and delegates rendering to AILiftingAssistantMain.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to the AI Lifting Assistant topic, fetched via ISR.
+ * @param {Array} props.relatedArticles - Articles related to the AI Lifting Assistant topic.
  */
 export default function AILiftingAssistantPage({ relatedArticles }) {
   // OG Meta Tags
@@ -167,7 +167,7 @@ export default function AILiftingAssistantPage({ relatedArticles }) {
  * Inner client component for the AI Lifting Assistant page. Assembles the user profile and lifting data
  * context strings and renders the chat card alongside bio and lifting data configuration panels.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {Array} props.relatedArticles - Articles to display in the related articles section.
  */
 function AILiftingAssistantMain({ relatedArticles }) {
   const {

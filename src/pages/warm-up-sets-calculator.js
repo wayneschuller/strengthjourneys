@@ -1,5 +1,5 @@
 /**
- * Warm-up sets calculator page. Uses the Pages Router ISR shell and keeps the
+ * Warm-up sets calculator page. A static Pages Router page that keeps the
  * calculator state shareable while preserving explicit local bar preferences.
  */
 
@@ -44,11 +44,11 @@ import { generateSessionSets, formatPlateBreakdown } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { buildShareUrl } from "@/lib/share-url";
 
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Warm Ups";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {
@@ -60,7 +60,7 @@ export async function getStaticProps() {
 /**
  * Barbell Warm Up Sets Calculator page. Renders SEO metadata and delegates rendering to WarmUpSetsCalculatorMain.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to the Warm Ups topic, fetched via ISR.
+ * @param {Array} props.relatedArticles - Articles related to the Warm Ups topic.
  */
 export default function WarmUpSetsCalculator({ relatedArticles }) {
   const title =
@@ -114,7 +114,7 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
  * Inner client component for the Warm Up Sets Calculator page. Provides target weight/reps sliders,
  * bar type and plate preference options, and renders progressive warmup sets with plate diagrams.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {Array} props.relatedArticles - Articles to display in the related articles section.
  */
 function WarmUpSetsCalculatorMain({ relatedArticles }) {
   const router = useRouter();

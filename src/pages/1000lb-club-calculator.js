@@ -62,7 +62,7 @@ import {
   ReferenceLine,
 } from "recharts";
 
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
@@ -177,7 +177,7 @@ const WHATS_NEXT_FEATURES = [
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "1000lb Club";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {
@@ -189,7 +189,7 @@ export async function getStaticProps() {
 /**
  * 1000lb Club Calculator page. Renders SEO metadata and delegates rendering to ThousandPoundClubCalculatorMain.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to the 1000lb Club topic, fetched via ISR.
+ * @param {Array} props.relatedArticles - Articles related to the 1000lb Club topic.
  */
 export default function ThousandPoundClubCalculator({ relatedArticles }) {
   // OG Meta Tags
@@ -367,7 +367,7 @@ function SliderWithMarkers({ value, prVal, r90Val, onValueChange, onValueCommit,
  * Inner client component for the 1000lb Club Calculator page. Provides squat/bench/deadlift sliders,
  * a donut progress chart, a confetti celebration when 1000lb is reached, and a shareable result.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {Array} props.relatedArticles - Articles to display in the related articles section.
  */
 function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const router = useRouter();

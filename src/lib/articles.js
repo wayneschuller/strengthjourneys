@@ -28,7 +28,6 @@ const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const COVER_PATTERN = /^\/.+\.(jpe?g|png)$/i;
 const OWN_SITE_PATTERN = /^https?:\/\/(www\.)?strengthjourneys\.xyz(\/|$)/i;
-export const FEATURED_CATEGORY_TITLE = "Featured Articles";
 
 const FRONTMATTER_FIELDS = new Set([
   "title",
@@ -99,17 +98,22 @@ export function getArticleBySlug(slug) {
 }
 
 /**
- * Articles tagged with a category, newest first. Kept async and named as it
- * was under Sanity so the tool pages' getStaticProps read the same.
+ * Articles tagged with a category, newest first, for a page's related-articles
+ * block.
  *
- * @param {string} category - Category title, or "Featured Articles".
+ * @param {string} category - A title from ARTICLE_CATEGORIES.
  */
-export async function fetchRelatedArticles(category) {
+export function getRelatedArticles(category) {
   return getPublishedArticles().filter((article) =>
-    category === FEATURED_CATEGORY_TITLE
-      ? article.featured
-      : article.categories.includes(category),
+    article.categories.includes(category),
   );
+}
+
+/**
+ * Featured articles, newest first.
+ */
+export function getFeaturedArticles() {
+  return getPublishedArticles().filter((article) => article.featured);
 }
 
 const ARTICLE_LIBRARY_PAGE_SIZE = 12;

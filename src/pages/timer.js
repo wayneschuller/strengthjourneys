@@ -30,14 +30,14 @@ import { TimerDigits } from "@/components/timer-digits";
 import { TimerPingHistory } from "@/components/timer-ping-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatAlarmLabel, formatTime, useTimer } from "@/hooks/use-timer";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { cn } from "@/lib/utils";
 
 const PAGE_TITLE = "Gym Timer | Strength Journeys";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Gym Timer";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {
@@ -50,7 +50,7 @@ export async function getStaticProps() {
  * Lifting Set Timer page. Renders SEO metadata and a full-screen countdown/stopwatch timer
  * suitable for use at the gym on phones or large displays.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to the Gym Timer topic, fetched via ISR.
+ * @param {Array} props.relatedArticles - Articles related to the Gym Timer topic.
  */
 export default function Timer({ relatedArticles }) {
   // OG Meta Tags

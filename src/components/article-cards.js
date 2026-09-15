@@ -33,7 +33,7 @@ const articleDateFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
-function formatArticleDate(publishedAt) {
+export function formatArticleDate(publishedAt) {
   return articleDateFormatter.format(new Date(publishedAt));
 }
 
@@ -202,7 +202,7 @@ export function buildArticlePageHref(page) {
 }
 
 /**
- * Grid of related articles with links. Used on lift pages to show related content.
+ * Row of related articles with links, shown on tool and lift guide pages.
  *
  * @param {Object} props
  * @param {Array<{slug: string, title: string, publishedAt: string, cover: string}>} props.articles - Article summaries.
@@ -319,15 +319,10 @@ function FeaturedArticleTile({ article, isLead = false }) {
 // point in frame. Alt text stays descriptive so the covers keep their
 // image-search relevance.
 function ArticleCoverImage({ article, sizes, priority = false }) {
-  if (!article.cover) return null;
-
   return (
     <Image
       src={article.cover}
-      alt={
-        article.coverAlt ||
-        (article.title ? `${article.title} article image` : "Article image")
-      }
+      alt={article.coverAlt || `${article.title} article image`}
       fill
       sizes={sizes}
       priority={priority}
@@ -364,8 +359,6 @@ function ArticleReveal({ index, className, children }) {
 
 // Small cropped square thumbnail used by the compact RelatedArticles rows.
 const ArticleImage = ({ article, className }) => {
-  if (!article.cover) return null;
-
   return (
     <div
       className={cn(
@@ -376,10 +369,7 @@ const ArticleImage = ({ article, className }) => {
     >
       <Image
         src={article.cover}
-        alt={
-          article.coverAlt ||
-          (article.title ? `${article.title} article image` : "Article image")
-        }
+        alt={article.coverAlt || `${article.title} article image`}
         width={600}
         height={600}
         sizes="(max-width: 768px) 100vw, 150px"

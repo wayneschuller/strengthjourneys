@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { NextSeo } from "next-seo";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { E1RMCalculatorMain } from "@/pages/calculator/index";
 
 // ── PAGE CONFIG ──────────────────────────────────────────────────────────────
@@ -848,7 +848,7 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
   const config = PAGE_CONFIG[params.slug];
-  const relatedArticles = await fetchRelatedArticles("One Rep Max Calculator");
+  const relatedArticles = getRelatedArticles("One Rep Max Calculator");
   return {
     props: { relatedArticles, pageConfig: config, slug: params.slug },
   };

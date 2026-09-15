@@ -40,7 +40,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import {
   STRENGTH_STANDARDS_HUB_URL,
   STRENGTH_STANDARDS_PAGES,
@@ -60,7 +60,7 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
   const page = getStrengthStandardsPageBySlug(params.lift);
-  const relatedArticles = await fetchRelatedArticles(page.relatedArticlesCategory);
+  const relatedArticles = getRelatedArticles(page.relatedArticlesCategory);
 
   return {
     props: {

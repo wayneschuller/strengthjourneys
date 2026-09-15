@@ -10,7 +10,7 @@ import { GorillaIcon } from "@/components/gorilla-icon";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { RelatedArticles } from "@/components/article-cards";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import {
   PageContainer,
   PageHeader,
@@ -112,7 +112,7 @@ const FAQ_ITEMS = [
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: { relatedArticles },

@@ -30,7 +30,7 @@ import {
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { extractYouTubeVideoId } from "@/lib/video-thumbnails";
 import {
   CURATED_LIFTS,
@@ -107,16 +107,11 @@ export async function getStaticProps({ params }) {
   // Articles are tagged with the Big Four only, so a variant or accessory lift
   // borrows the articles of its parent lift, then of the lift its strength
   // standards are measured against.
-  let relatedArticles = [];
-  for (const liftType of [
-    lift.liftType,
-    lift.parentLift?.liftType,
-    lift.coaching?.standardsRef?.liftType,
-  ]) {
-    if (!text(liftType)) continue;
-    relatedArticles = await fetchRelatedArticles(liftType);
-    if (relatedArticles.length > 0) break;
-  }
+  const relatedArticles =
+    [lift.liftType, lift.parentLift?.liftType, lift.coaching?.standardsRef?.liftType]
+      .filter((liftType) => text(liftType))
+      .map((liftType) => getRelatedArticles(liftType))
+      .find((articles) => articles.length > 0) ?? [];
 
   return {
     props: { lift, slug: lift.slug, relatedArticles },

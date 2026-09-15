@@ -48,7 +48,7 @@ import {
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { calculatePlateBreakdown } from "@/lib/warmups";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
@@ -212,7 +212,7 @@ const WHATS_NEXT_FEATURES = [
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "200/300/400/500 Strength Club";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {

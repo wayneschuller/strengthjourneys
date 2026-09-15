@@ -65,7 +65,7 @@ import {
 
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { calculatePlateBreakdown } from "@/lib/warmups";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
@@ -517,7 +517,7 @@ function buildStatusSentence({ milestone, stats, isMetric }) {
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Milestones";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {

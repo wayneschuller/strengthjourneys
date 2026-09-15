@@ -76,12 +76,12 @@ import {
   LIFT_TYPE_TO_PERCENTILE_KEY,
   LIFT_TYPE_TO_CALCULATOR_URL,
 } from "@/lib/strength-circles/strength-score";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { getStrengthLevelsPath } from "@/lib/lifts/lift-registry";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {
@@ -93,7 +93,7 @@ export async function getStaticProps() {
 /**
  * One Rep Max Calculator page. Renders SEO metadata and delegates rendering to E1RMCalculatorMain.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to the One Rep Max Calculator topic, fetched via ISR.
+ * @param {Array} props.relatedArticles - Articles related to the One Rep Max Calculator topic.
  */
 const CALCULATOR_FAQ = [
   {
@@ -276,7 +276,7 @@ export default function E1RMCalculator({ relatedArticles }) {
  *   so the user lands on the main calculator with their inputs intact and the new formula selected.
  *
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {Array} props.relatedArticles - Articles to display in the related articles section.
  * @param {string} [props.defaultFormula="Brzycki"] - Fallback formula for normal pages when no URL
  *   query or localStorage value exists. Ignored when forceFormula is set.
  * @param {string|null} [props.forceFormula=null] - When set, this formula is always shown regardless

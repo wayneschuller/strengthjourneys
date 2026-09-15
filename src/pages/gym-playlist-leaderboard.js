@@ -31,7 +31,7 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { RelatedArticles } from "@/components/article-cards";
 
 const ITEMS_PER_PAGE = 10;
@@ -41,7 +41,7 @@ const ITEMS_PER_PAGE = 10;
 // Doesn't run on dev but on Vercel it will access the kv store directly to pre-cache page at build
 // ---------------------------------------------------------------------------------------------------
 export async function getStaticProps() {
-  const relatedArticles = await fetchRelatedArticles("Gym Music");
+  const relatedArticles = getRelatedArticles("Gym Music");
 
   if (process.env.NEXT_PUBLIC_USE_DEMO_PLAYLISTS === "true") {
     console.log("NEXT_PUBLIC_USE_DEMO_PLAYLISTS=true: using demo playlist data");

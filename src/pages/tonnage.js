@@ -14,13 +14,13 @@ import {
 } from "@/components/page-header";
 import { Bus } from "lucide-react";
 
-import { fetchRelatedArticles } from "@/lib/articles";
+import { getRelatedArticles } from "@/lib/articles";
 import { RelatedArticles } from "@/components/article-cards";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Tonnage Metrics";
-  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+  const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
     props: {
@@ -32,7 +32,7 @@ export async function getStaticProps() {
 /**
  * Tonnage Metrics page. Renders SEO metadata and delegates rendering to TonnageVisualizerMain.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to the Tonnage Metrics topic, fetched via ISR.
+ * @param {Array} props.relatedArticles - Articles related to the Tonnage Metrics topic.
  */
 export default function TonnageVisualizer({ relatedArticles }) {
   // OG Meta Tags
@@ -86,7 +86,7 @@ export default function TonnageVisualizer({ relatedArticles }) {
  * Inner client component for the Tonnage Metrics page. Renders a tonnage chart alongside a session
  * analysis card, letting users explore their total volume lifted over time.
  * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {Array} props.relatedArticles - Articles to display in the related articles section.
  */
 function TonnageVisualizerMain({ relatedArticles }) {
   const { isLoading } = useUserLiftingData();

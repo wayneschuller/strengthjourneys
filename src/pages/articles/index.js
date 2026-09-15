@@ -6,7 +6,7 @@
 import Head from "next/head";
 import { LibraryBig } from "lucide-react";
 
-import { getPublishedArticles } from "@/lib/articles";
+import { getArticleLibraryPage } from "@/lib/articles";
 import {
   ArticleGrid,
   ArticlePagination,
@@ -23,24 +23,12 @@ const pageTitle = "Strength and Lifting Articles Library";
 const siteName = "Strength Journeys";
 const description = `Browse our collection of strength, lifting and fitness articles on various topics. Updated regularly with the latest insights and information.`;
 const canonicalUrl = "https://www.strengthjourneys.xyz/articles";
-const REGULAR_ARTICLES_PAGE_SIZE = 12;
 
 export async function getStaticProps() {
-  const articles = getPublishedArticles();
-  const featuredArticles = articles.filter((article) => article.featured);
-  const regularArticles = articles.filter((article) => !article.featured);
-  const firstRegularArticlesPage = regularArticles.slice(0, REGULAR_ARTICLES_PAGE_SIZE);
-  const totalPages = Math.max(
-    Math.ceil(regularArticles.length / REGULAR_ARTICLES_PAGE_SIZE),
-    1,
-  );
+  const { featuredArticles, articles, totalPages } = getArticleLibraryPage(1);
 
   return {
-    props: {
-      featuredArticles,
-      regularArticles: firstRegularArticlesPage,
-      totalPages,
-    },
+    props: { featuredArticles, regularArticles: articles, totalPages },
   };
 }
 

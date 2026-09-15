@@ -112,6 +112,36 @@ export async function fetchRelatedArticles(category) {
   );
 }
 
+const ARTICLE_LIBRARY_PAGE_SIZE = 12;
+
+/**
+ * One page of the article library, shared by /articles and /articles/page/N.
+ * Featured articles lead page 1 only, so the numbered pages run through the
+ * regular articles alone.
+ *
+ * @param {number} page - 1-based page number.
+ * @returns {{featuredArticles: Object[], articles: Object[], startIndex: number, totalPages: number}}
+ */
+export function getArticleLibraryPage(page) {
+  const allArticles = getPublishedArticles();
+  const regularArticles = allArticles.filter((article) => !article.featured);
+  const startIndex = (page - 1) * ARTICLE_LIBRARY_PAGE_SIZE;
+
+  return {
+    featuredArticles:
+      page === 1 ? allArticles.filter((article) => article.featured) : [],
+    articles: regularArticles.slice(
+      startIndex,
+      startIndex + ARTICLE_LIBRARY_PAGE_SIZE,
+    ),
+    startIndex,
+    totalPages: Math.max(
+      1,
+      Math.ceil(regularArticles.length / ARTICLE_LIBRARY_PAGE_SIZE),
+    ),
+  };
+}
+
 function loadAllArticles() {
   if (cachedArticles && process.env.NODE_ENV === "production") {
     return cachedArticles;

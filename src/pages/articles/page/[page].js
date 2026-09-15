@@ -5,7 +5,7 @@
 import Head from "next/head";
 import { LibraryBig } from "lucide-react";
 
-import { getPublishedArticles } from "@/lib/articles";
+import { getArticleLibraryPage } from "@/lib/articles";
 import {
   ArticleGrid,
   ArticlePagination,
@@ -23,53 +23,25 @@ const pageTitleBase = "Strength and Lifting Articles Library";
 const description =
   "Browse older strength, lifting and fitness articles from the Strength Journeys archive.";
 const siteBaseUrl = "https://www.strengthjourneys.xyz";
-const REGULAR_ARTICLES_PAGE_SIZE = 12;
-
-// Featured articles only appear on /articles, so the archive pages carry on
-// through the regular list.
-function getRegularArticles() {
-  return getPublishedArticles().filter((article) => !article.featured);
-}
 
 export async function getStaticPaths() {
-  const regularArticles = getRegularArticles();
-  const totalPages = Math.ceil(regularArticles.length / REGULAR_ARTICLES_PAGE_SIZE);
+  const { totalPages } = getArticleLibraryPage(1);
 
   return {
-    paths: Array.from({ length: Math.max(totalPages - 1, 0) }, (_, index) => ({
+    paths: Array.from({ length: totalPages - 1 }, (_, index) => ({
       params: { page: String(index + 2) },
     })),
+    // Only real page numbers are built; anything else is a 404.
     fallback: false,
   };
 }
 
 export async function getStaticProps({ params }) {
-  const page = Number.parseInt(params.page, 10);
-
-  if (!Number.isInteger(page) || page < 2) {
-    return { notFound: true };
-  }
-
-  const regularArticles = getRegularArticles();
-  const totalPages = Math.ceil(regularArticles.length / REGULAR_ARTICLES_PAGE_SIZE);
-
-  if (page > totalPages) {
-    return { notFound: true };
-  }
-
-  const startIndex = (page - 1) * REGULAR_ARTICLES_PAGE_SIZE;
-  const pageArticles = regularArticles.slice(
-    startIndex,
-    startIndex + REGULAR_ARTICLES_PAGE_SIZE,
-  );
+  const page = Number(params.page);
+  const { articles, startIndex, totalPages } = getArticleLibraryPage(page);
 
   return {
-    props: {
-      page,
-      totalPages,
-      pageArticles,
-      startIndex,
-    },
+    props: { page, totalPages, pageArticles: articles, startIndex },
   };
 }
 

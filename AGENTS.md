@@ -39,17 +39,10 @@ Node `>=24` is required. Formatting is Prettier with
 
 ### Sitemaps
 
-Two sitemaps, both generated - never commit sitemap files to git:
-
-- `/sitemap.xml` + `/sitemap-0.xml` - static routes, written into `public/` by
-  `next-sitemap` at postbuild time from `next-sitemap.config.js`
-- `/server-sitemap.xml` - article URLs with their `updatedAt` from
-  `content/articles/`, written into `public/` at postbuild time by
-  `scripts/write-article-sitemap.mjs` (the name is kept because Search Console
-  already has that URL registered)
-
-Both are listed in the generated `robots.txt` and should both be submitted in
-Google Search Console.
+`/sitemap.xml` (an index) and `/sitemap-0.xml` are written into `public/` with
+`robots.txt` by `next-sitemap` at postbuild time from `next-sitemap.config.js`.
+Never commit them to git. Every indexable route is listed, and article pages
+carry their `updatedAt` from `content/articles/` as `lastmod`.
 
 ---
 
@@ -113,9 +106,9 @@ authenticated users.
 - **Articles** are markdown files in `content/articles/`, rendered to HTML at
   build time by `src/lib/articles.js`. Writing and publishing live in
   `docs/agents/articles.md`.
-- **`next-sitemap.config.js`** deliberately emits `<loc>` only, because a
-  blanket `lastmod` that resets every deploy is a freshness claim we cannot
-  back up.
+- **`next-sitemap.config.js`** gives only articles a `lastmod`, their real
+  `updatedAt`, because a blanket `lastmod` that resets every deploy is a
+  freshness claim we cannot back up.
 
 ---
 

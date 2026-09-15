@@ -7,8 +7,8 @@
  * the browser.
  *
  * Server-only: import this from getStaticProps or getStaticPaths, never from a
- * component. scripts/write-article-sitemap.mjs also imports it in plain Node
- * after the build, so its own imports stay on node_modules (no @/ alias). The
+ * component. next-sitemap.config.js also imports it in plain Node after the
+ * build, so its own imports stay on node_modules (no @/ alias). The
  * writing guide, including the frontmatter fields and image conventions, is
  * docs/agents/articles.md.
  */

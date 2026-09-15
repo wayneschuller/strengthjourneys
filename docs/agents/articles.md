@@ -45,7 +45,7 @@ coverAlt: "A lifter locking out a heavy bench press"
 | `title` | yes | H1, page title, cards, JSON-LD headline |
 | `description` | recommended | Meta description, standfirst under the H1, card text. Keep it under ~200 characters |
 | `publishedAt` | yes | Publish date shown on the article and its cards. Set it when you publish |
-| `updatedAt` | no | `dateModified` in JSON-LD and `lastmod` in `/server-sitemap.xml`. Defaults to `publishedAt` |
+| `updatedAt` | no | `dateModified` in JSON-LD and `lastmod` in the sitemap. Defaults to `publishedAt` |
 | `featured` | no | `true` puts it in the photo bento on `/articles` and makes it eligible for the homepage reading rail (newest two) |
 | `categories` | no | Exact titles drive the related-article blocks on tool pages (see below) |
 | `cover` | yes | Path under `public/`. Also used as `og:image`, so it must be a JPEG or PNG |

@@ -1,9 +1,10 @@
 /*
- * Build-time sitemap for the static routes only.
+ * Build-time sitemap for every route, written into public/ at postbuild along
+ * with robots.txt.
  *
- * Article URLs go in /server-sitemap.xml, which scripts/write-article-sitemap.mjs
- * writes straight after this step with each article's updatedAt as lastmod.
- * They are excluded here to avoid listing the same URL twice.
+ * Only article pages carry a lastmod: their real updatedAt, read from
+ * content/articles/ through src/lib/articles.js, which keeps its imports on
+ * node_modules so it loads here in plain Node.
  */
 const fs = require("fs");
 const path = require("path");
@@ -17,29 +18,41 @@ const LIFTS_DIR = path.join(__dirname, "src/lib/lifts");
 const UNINDEXED_LIFT_GUIDES = fs
   .readdirSync(LIFTS_DIR)
   .filter((file) => file.endsWith(".json"))
-  .map((file) => JSON.parse(fs.readFileSync(path.join(LIFTS_DIR, file), "utf8")))
+  .map((file) =>
+    JSON.parse(fs.readFileSync(path.join(LIFTS_DIR, file), "utf8")),
+  )
   .filter((lift) => !lift.guide)
   .map((lift) => `/progress-guide/${lift.slug}`);
+
+// Article routes mapped to their updatedAt, loaded once as a shared promise
+// because next-sitemap transforms many routes at the same time.
+let articleLastmodsPromise = null;
+function getArticleLastmods() {
+  articleLastmodsPromise ??= import("./src/lib/articles.js").then(
+    ({ getPublishedArticles }) =>
+      new Map(
+        getPublishedArticles().map((article) => [
+          `/articles/${article.slug}`,
+          article.updatedAt,
+        ]),
+      ),
+  );
+  return articleLastmodsPromise;
+}
 
 module.exports = {
   siteUrl: SITE_URL,
   generateRobotsTxt: true,
-  // Article slugs live in the article sitemap; the listing and its pagination
-  // are ordinary static routes and stay here.
-  exclude: [
-    "/articles/*",
-    "!/articles/page/*",
-    ...UNINDEXED_LIFT_GUIDES,
-  ],
+  exclude: UNINDEXED_LIFT_GUIDES,
   // next-sitemap's defaults stamp every URL with the build time and a blanket
   // changefreq/priority. Google ignores changefreq and priority outright, and a
   // lastmod that is identical across all routes and resets on each deploy is a
-  // freshness claim we cannot back up — the kind Google learns to discount. The
-  // article sitemap carries real per-article updatedAt values, so emitting only
-  // <loc> here keeps the one lastmod signal we do have worth trusting.
+  // freshness claim we cannot back up — the kind Google learns to discount.
+  // Articles carry their real updatedAt instead and every other route emits
+  // only <loc>, which keeps the one lastmod signal we do have worth trusting.
   autoLastmod: false,
-  transform: async (config, path) => ({ loc: path, alternateRefs: [] }),
-  robotsTxtOptions: {
-    additionalSitemaps: [`${SITE_URL}/server-sitemap.xml`],
+  transform: async (config, route) => {
+    const lastmod = (await getArticleLastmods()).get(route);
+    return { loc: route, ...(lastmod && { lastmod }), alternateRefs: [] };
   },
 };

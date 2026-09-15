@@ -5,8 +5,8 @@ markdown files in the repo, rendered to HTML at build time by
 `src/lib/articles.js`. Wayne writes them with Claude, so this is the whole
 editorial system: there is no CMS.
 
-They moved here from Sanity in September 2026. The Sanity dataset (project
-`czypnl5j`) is left untouched as a backup. Do not read from or write to it.
+They moved here from Sanity in September 2026, and their Sanity content was
+deleted on 15 September 2026, so these markdown files are the only copy.
 
 ---
 

@@ -137,3 +137,8 @@ Strength Journeys unites and extends features from earlier projects by the same 
 
 - [onerepmaxcalculator.xyz](https://www.onerepmaxcalculator.xyz/) — standalone one rep max calculator (predecessor to the current calculator page)
 - [powerlifting_strength_tracker_js](https://wayneschuller.github.io/powerlifting_strength_tracker_js/e1rm.html) — the original E1RM visualization prototype built with vanilla JS and Chart.js, which evolved into the Strength Journeys visualizer
+
+## Licensing
+
+- **Code** is licensed under the [GNU General Public License v3](LICENSE).
+- **Article text** in `content/articles/` is licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Images, quotations from other authors and the Strength Journeys name and logo are not covered. See [content/LICENSE.md](content/LICENSE.md) for how to credit an article and the full exclusions.

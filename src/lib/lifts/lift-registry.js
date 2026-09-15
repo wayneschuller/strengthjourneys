@@ -16,6 +16,8 @@
  *   shortName       Compact label for tight navs, e.g. "Bench".
  *   synonyms        Other names for the SAME lift, never a lookalike. Front
  *                   Squat once pointed at Back Squat's drawing for months.
+ *                   Importers already drop a "(Barbell)" or leading
+ *                   "Barbell " qualifier, so never list those spellings.
  *   bigFour         true for squat, bench, deadlift and press.
  *   icon            Lucide icon name, registered in components/lift-icon.js.
  *   parentLift      { liftType, tonnageRatio, note? }. The big four lift a

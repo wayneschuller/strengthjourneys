@@ -153,13 +153,37 @@ for (const lift of CURATED_LIFTS) {
 
 // Allow variations of common lift names and capitalization but harmonize for output.
 export function normalizeLiftTypeNames(liftType) {
+  const known = matchKnownLiftType(liftType);
+  if (known) return known;
+
+  const bare = stripBarbellQualifier(liftType);
+  if (bare && bare !== String(liftType ?? "").trim()) {
+    return matchKnownLiftType(bare) || liftType;
+  }
+  return liftType; // Defaults to original if no match
+}
+
+function matchKnownLiftType(liftType) {
   const key = normalizeLiftTypeLookupKey(liftType);
   return (
     BIG_FOUR_LIFT_TYPE_ALIASES[key] ||
     REGISTRY_LIFT_TYPE_ALIASES.get(key) ||
     normalizeBodyweightLoadLiftType(liftType) ||
-    liftType
-  ); // Defaults to original if no match
+    null
+  );
+}
+
+// Gym apps name the plain barbell lift by its equipment: Hevy and Strong write
+// "Squat (Barbell)", others write "Barbell Squat". Only the barbell qualifier
+// is dropped, and only as a second try once the full name has missed, so
+// "Barbell Row" keeps its registry name and "Bench Press (Dumbbell)" or
+// "Squat (Smith Machine)" stay lifts of their own instead of joining the big four.
+function stripBarbellQualifier(liftType) {
+  return String(liftType ?? "")
+    .replace(/\s*\(\s*barbell\s*\)\s*/gi, " ")
+    .replace(/^\s*barbell\s+/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function normalizeBigFourLiftType(liftType) {

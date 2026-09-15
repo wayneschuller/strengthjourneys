@@ -70,9 +70,10 @@ function findHeaderIndex(headers, candidates) {
   );
 }
 
+// Bracketed equipment stays, as in the Strong parser, so a dumbbell or machine
+// variant never joins the big four. The shared normalizer drops "(Barbell)".
 function normalizeStrongliftsLiftType(rawLiftType) {
   const cleaned = String(rawLiftType || "")
-    .replace(/\s*\([^)]*\)\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   if (!cleaned) return null;

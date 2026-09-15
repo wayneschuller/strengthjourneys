@@ -1,6 +1,9 @@
 {
   "liftType": "Romanian Deadlift",
   "slug": "romanian-deadlift",
+  "synonyms": [
+    "RDL"
+  ],
   "parentLift": {
     "liftType": "Deadlift",
     "tonnageRatio": 1

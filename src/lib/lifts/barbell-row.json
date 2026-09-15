@@ -1,6 +1,9 @@
 {
   "liftType": "Barbell Row",
   "slug": "barbell-row",
+  "synonyms": [
+    "Bent Over Row"
+  ],
   "tagline": "A strong back for every other lift.",
   "artwork": {
     "src": "/lifts/default/barbell-row.png",

@@ -116,16 +116,8 @@ function normalizeHevyLiftType(rawLiftType) {
     .trim();
   if (!cleaned) return null;
 
-  const explicitBarbellAliases = {
-    "bench press (barbell)": "Bench Press",
-    "deadlift (barbell)": "Deadlift",
-    "overhead press (barbell)": "Strict Press",
-    "military press (barbell)": "Strict Press",
-    "squat (barbell)": "Back Squat",
-  };
-  const explicitAlias = explicitBarbellAliases[cleaned.toLowerCase()];
-  if (explicitAlias) return explicitAlias;
-
+  // The shared normalizer drops Hevy's "(Barbell)" qualifier and keeps every
+  // other equipment qualifier, so "Bench Press (Dumbbell)" stays its own lift.
   return normalizeLiftTypeNames(cleaned);
 }
 

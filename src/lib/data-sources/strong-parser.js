@@ -41,9 +41,12 @@ function normalizeStrongDate(dateTimeString) {
   return `${match[1]}-${match[2]}-${match[3]}`;
 }
 
+// Strong names equipment in brackets: "Squat (Barbell)", "Bench Press
+// (Dumbbell)". The brackets stay, because deleting them filed dumbbell and
+// Smith machine sets under the big four. The shared normalizer drops only the
+// barbell qualifier.
 function normalizeStrongLiftType(rawLiftType) {
   const cleaned = String(rawLiftType || "")
-    .replace(/\s*\([^)]*\)\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   if (!cleaned) return null;

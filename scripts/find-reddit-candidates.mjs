@@ -9,21 +9,18 @@
  * it should stay that way: automated commenting breaks Reddit's rules and would
  * cost the account.
  *
- * Reddit now returns 403 to unauthenticated clients on the public .json
- * endpoints, so this reads through the OAuth API instead. One-time setup:
+ * Reads the public RSS feeds, which need no credentials. The .json endpoints
+ * return 403 to unauthenticated clients, and new Data API apps now need Reddit's
+ * approval, which is granted for moderation use cases rather than this one.
  *
- *   1. https://www.reddit.com/prefs/apps -> "create another app..."
- *   2. Choose "script", any name, redirect URI http://localhost:8080
- *   3. Put the id (under the app name) and the secret in .env as:
- *        REDDIT_CLIENT_ID=...
- *        REDDIT_CLIENT_SECRET=...
- *
- * Free, and allows 100 requests per minute, far more than this needs.
+ * The feeds allow roughly one request a minute, so a full run over the default
+ * subreddits takes several minutes. They also carry no comment counts, so thread
+ * traffic is not part of the score.
  *
  * Usage:
- *   node --env-file=.env scripts/find-reddit-candidates.mjs
- *   node --env-file=.env scripts/find-reddit-candidates.mjs --subs Stronglifts5x5,Deadlifts
- *   node --env-file=.env scripts/find-reddit-candidates.mjs --json
+ *   node scripts/find-reddit-candidates.mjs
+ *   node scripts/find-reddit-candidates.mjs --subs Stronglifts5x5,Deadlifts
+ *   node scripts/find-reddit-candidates.mjs --json
  */
 
 const DEFAULT_SUBS = [
@@ -45,7 +42,7 @@ const LIFTS = [
 ];
 
 /**
- * "185 BW", "BW 64 kgs", "at 187 lbs bodyweight", "@180lbs", "72kg BW".
+ * "185 BW", "BW 64 kgs", "at 187 lbs bodyweight", "72kg BW".
  * Two directions because writers put the marker on either side of the number.
  */
 const BODYWEIGHT_PATTERNS = [
@@ -77,6 +74,8 @@ const QUESTION_RE =
 // advice from a linked account is how an account gets reported.
 const SKIP_RE =
   /\bform\s*check\b|\btendinitis\b|\bherniat|\binjur|\bpain\b|\bphysio\b|\bsurgery\b|\btear\b/i;
+
+const NAMED_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
 function parseArgs(argv) {
   const args = { subs: DEFAULT_SUBS, limit: 60, json: false };
@@ -165,11 +164,7 @@ export function scorePost(post) {
     why.push("question");
   }
   if (lift) score += 1;
-  // A reply lands near the top of a quiet thread and is buried in a busy one.
-  if (post.num_comments <= 25) {
-    score += 2;
-    why.push("low traffic");
-  }
+  // A reply lands near the top of a young thread and is buried in an old one.
   if (post.ageHours <= 48) {
     score += 1;
     why.push("fresh");
@@ -178,66 +173,87 @@ export function scorePost(post) {
   return { ...post, score, why, bodyWeight, set, lift };
 }
 
-/**
- * Exchange the script app's credentials for a read-only token. Reddit's
- * client_credentials grant needs no user login and no scopes for public data.
- */
-async function getAccessToken() {
-  const id = process.env.REDDIT_CLIENT_ID;
-  const secret = process.env.REDDIT_CLIENT_SECRET;
-  if (!id || !secret) {
-    throw new Error(
-      "REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET are not set. See the setup notes\n" +
-        "at the top of this file, then run with: node --env-file=.env scripts/find-reddit-candidates.mjs",
-    );
-  }
-
-  const res = await fetch("https://www.reddit.com/api/v1/access_token", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": USER_AGENT,
-    },
-    body: "grant_type=client_credentials",
+function decodeEntities(text) {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
+    if (entity[0] !== "#") return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
+    const hex = entity[1].toLowerCase() === "x";
+    return String.fromCodePoint(parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10));
   });
-
-  if (!res.ok) {
-    throw new Error(
-      `Token request failed with ${res.status}. Check the id and secret, and that the app type is "script".`,
-    );
-  }
-  const { access_token: token } = await res.json();
-  return token;
 }
 
-async function fetchSub(sub, limit, token) {
+function readTag(xml, tag) {
+  const m = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`));
+  return m ? m[1] : null;
+}
+
+/**
+ * Turn a subreddit Atom feed into posts. Reddit escapes the entry HTML inside
+ * the XML and then escapes text again inside that HTML, hence two decodes. A
+ * self post's body sits between the SC_OFF and SC_ON comments; link and image
+ * posts have none, so their selftext is empty.
+ */
+export function parseFeed(xml, sub) {
+  const posts = [];
+  for (const [, entry] of xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
+    const html = decodeEntities(readTag(entry, "content") ?? "");
+    const body = html.match(/<!-- SC_OFF -->([\s\S]*?)<!-- SC_ON -->/)?.[1] ?? "";
+    const selftext = decodeEntities(
+      body
+        .replace(/<\/(?:p|li|h\d|blockquote|pre)>|<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]+>/g, ""),
+    ).trim();
+    const posted = Date.parse(readTag(entry, "published") ?? readTag(entry, "updated"));
+
+    posts.push({
+      sub,
+      id: (readTag(entry, "id") ?? "").replace(/^t3_/, ""),
+      title: decodeEntities(decodeEntities(readTag(entry, "title") ?? "")).trim(),
+      selftext,
+      ageHours: (Date.now() - posted) / 3_600_000,
+      url: entry.match(/<link href="([^"]+)"/)?.[1] ?? "",
+    });
+  }
+  return posts;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let nextRequestAt = 0;
+
+/**
+ * Fetch while honouring Reddit's rate-limit headers. The anonymous budget is
+ * about one request per window, so the wait comes from x-ratelimit-reset rather
+ * than a fixed delay, and a 429 waits out the window and tries again.
+ */
+async function politeFetch(url) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const wait = nextRequestAt - Date.now();
+    if (wait > 0) {
+      console.error(`  waiting ${Math.ceil(wait / 1000)}s for Reddit's rate limit`);
+      await sleep(wait);
+    }
+
+    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+    const remaining = Number(res.headers.get("x-ratelimit-remaining") ?? 0);
+    const resetSeconds = Number(res.headers.get("x-ratelimit-reset") ?? 60);
+    if (res.status === 429 || remaining < 1) {
+      nextRequestAt = Date.now() + (resetSeconds + 1) * 1000;
+    }
+    if (res.status !== 429) return res;
+  }
+  return null;
+}
+
+async function fetchSub(sub, limit) {
   const results = [];
   for (const listing of ["hot", "new"]) {
-    const url = `https://oauth.reddit.com/r/${sub}/${listing}?limit=${limit}&raw_json=1`;
-    const res = await fetch(url, {
-      headers: { Authorization: `bearer ${token}`, "User-Agent": USER_AGENT },
-    });
-    if (!res.ok) {
-      console.error(`  ! r/${sub}/${listing} returned ${res.status}`);
+    const url = `https://www.reddit.com/r/${sub}/${listing}/.rss?limit=${limit}`;
+    const res = await politeFetch(url);
+    if (!res?.ok) {
+      console.error(`  ! r/${sub}/${listing} returned ${res?.status ?? "429 three times"}`);
       continue;
     }
-    const json = await res.json();
-    for (const child of json.data.children) {
-      const d = child.data;
-      if (d.stickied) continue;
-      results.push({
-        sub,
-        id: d.id,
-        title: d.title,
-        selftext: d.selftext,
-        num_comments: d.num_comments,
-        score_reddit: d.score,
-        ageHours: Math.round(Date.now() / 1000 - d.created_utc) / 3600,
-        url: `https://www.reddit.com${d.permalink}`,
-      });
-    }
-    await new Promise((r) => setTimeout(r, 1200)); // stay well under Reddit's rate limit
+    results.push(...parseFeed(await res.text(), sub));
   }
   // hot and new overlap heavily.
   return [...new Map(results.map((p) => [p.id, p])).values()];
@@ -245,19 +261,18 @@ async function fetchSub(sub, limit, token) {
 
 async function main() {
   const { subs, limit, json } = parseArgs(process.argv.slice(2));
-  const token = await getAccessToken();
   const candidates = [];
 
   for (const sub of subs) {
-    if (!json) console.error(`Fetching r/${sub}...`);
-    const posts = await fetchSub(sub, limit, token);
+    console.error(`Fetching r/${sub}...`);
+    const posts = await fetchSub(sub, limit);
     for (const post of posts) {
       const scored = scorePost(post);
       if (scored) candidates.push(scored);
     }
   }
 
-  candidates.sort((a, b) => b.score - a.score || a.num_comments - b.num_comments);
+  candidates.sort((a, b) => b.score - a.score || a.ageHours - b.ageHours);
 
   if (json) {
     console.log(JSON.stringify(candidates, null, 2));
@@ -267,9 +282,7 @@ async function main() {
   console.log(`\n${candidates.length} candidates\n`);
   for (const c of candidates.slice(0, 25)) {
     const bw = c.bodyWeight ? `bw ${c.bodyWeight.value}${c.bodyWeight.unit}` : "no bodyweight";
-    console.log(
-      `[${String(c.score).padStart(2)}] r/${c.sub}  ${Math.round(c.ageHours)}h  ${c.num_comments} comments  (${bw})`,
-    );
+    console.log(`[${String(c.score).padStart(2)}] r/${c.sub}  ${Math.round(c.ageHours)}h  (${bw})`);
     console.log(`     ${c.title}`);
     console.log(`     ${c.why.join(", ")}`);
     console.log(`     ${c.url}\n`);

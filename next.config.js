@@ -69,7 +69,7 @@ const nextConfig = {
         destination: "/lift-explorer",
         permanent: true,
       },
-      // 2026-08-17: Article renamed in Sanity when the PR analyzer became the home dashboard.
+      // 2026-08-17: Article renamed when the PR analyzer became the home dashboard.
       {
         source:
           "/articles/getting-the-most-out-of-the-strength-journeys-pr-analyzer",
@@ -77,14 +77,14 @@ const nextConfig = {
           "/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard",
         permanent: true,
       },
-      // 2024-09-01: Preserve traffic from the old manually-authored article slug after Sanity migration.
+      // 2024-09-01: Preserve traffic from the old manually-authored article slug after the CMS move.
       {
         source: "/articles/own-your-lifting-data",
         destination:
           "/articles/the-power-of-owning-your-lifting-data-with-google-sheets",
         permanent: true,
       },
-      // 2024-09-01: Preserve traffic from the old manually-authored article slug after Sanity migration.
+      // 2024-09-01: Preserve traffic from the old manually-authored article slug after the CMS move.
       {
         source: "/articles/henry-rollins-the-iron-and-the-soul",
         destination: "/articles/the-iron-and-the-soul-author-henry-rollins",

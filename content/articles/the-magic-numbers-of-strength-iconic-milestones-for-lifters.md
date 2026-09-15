@@ -4,11 +4,15 @@ description: "In the strength training world, certain numbers represent mileston
 publishedAt: "2026-01-16T10:15:00.000Z"
 updatedAt: "2026-09-14T06:10:25.000Z"
 categories:
-  - "Strength Calculator"
+  - "Strength Milestones"
   - "1000lb Club"
-  - "Warm Ups"
-  - "Bench Press"
   - "200/300/400/500 Strength Club"
+  - "How Strong Am I?"
+  - "Strength Calculator"
+  - "Back Squat"
+  - "Bench Press"
+  - "Deadlift"
+  - "Strict Press"
 cover: "/articles/the-magic-numbers-of-strength-iconic-milestones-for-lifters/cover.jpg"
 ---
 

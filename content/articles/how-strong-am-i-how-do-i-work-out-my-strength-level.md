@@ -5,10 +5,15 @@ publishedAt: "2026-03-25T12:00:00.000Z"
 updatedAt: "2026-04-01T10:04:30.000Z"
 featured: true
 categories:
+  - "How Strong Am I?"
   - "Strength Calculator"
   - "One Rep Max Calculator"
+  - "200/300/400/500 Strength Club"
   - "AI Lifting Assistant"
-  - "How Strong Am I?"
+  - "Back Squat"
+  - "Bench Press"
+  - "Deadlift"
+  - "Strict Press"
 cover: "/articles/how-strong-am-i-how-do-i-work-out-my-strength-level/cover.jpg"
 coverFocus: "44% 69%"
 ---

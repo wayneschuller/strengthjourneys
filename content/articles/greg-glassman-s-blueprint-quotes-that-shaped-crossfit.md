@@ -3,6 +3,9 @@ title: "Greg Glassman’s Blueprint: Quotes that Shaped CrossFit"
 description: "Greg Glassman published \"What Is Fitness?\" in the CrossFit Journal in October 2002. CrossFit had fewer than a dozen affiliated gyms. Within a decade, there were thousands. The ideas in that document did most of the work..."
 publishedAt: "2026-02-27T23:01:05.124Z"
 updatedAt: "2026-09-14T06:10:25.000Z"
+categories:
+  - "Gym Timer"
+  - "Gym Music"
 cover: "/articles/greg-glassman-s-blueprint-quotes-that-shaped-crossfit/cover.jpg"
 coverFocus: "51% 24%"
 ---

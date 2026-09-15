@@ -45,7 +45,7 @@ const FRONTMATTER_FIELDS = new Set([
 // Every category an article may carry. Tool pages ask for one of these by exact
 // title (the table in docs/agents/articles.md says which page shows which), and
 // the article page ranks its "more articles" row by shared categories, which is
-// all Home Dashboard does. A category outside this list fails the build, so a
+// all Home Dashboard and Health do. A category outside this list fails the build, so a
 // typo cannot quietly hide an article from the page it was written for.
 const ARTICLE_CATEGORIES = new Set([
   "How Strong Am I?",
@@ -62,6 +62,7 @@ const ARTICLE_CATEGORIES = new Set([
   "AI Lifting Assistant",
   "Gym Music",
   "Home Dashboard",
+  "Health",
   "Back Squat",
   "Bench Press",
   "Deadlift",

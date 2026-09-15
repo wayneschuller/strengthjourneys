@@ -4,7 +4,7 @@ description: "It's 45lb/20kg but click to read anyway."
 publishedAt: "2026-02-01T06:37:00.000Z"
 updatedAt: "2026-02-14T07:06:41.000Z"
 categories:
-  - "Gym Music"
+  - "Strength Milestones"
   - "Warm Ups"
 cover: "/articles/how-much-does-a-standard-barbell-weigh/cover.jpg"
 ---

@@ -5,6 +5,7 @@ publishedAt: "2026-01-13T09:00:00.000Z"
 updatedAt: "2026-03-01T21:33:18.000Z"
 categories:
   - "One Rep Max Calculator"
+  - "Strength Calculator"
 cover: "/articles/what-is-an-e1rm-estimated-one-rep-max/cover.jpg"
 ---
 

@@ -4,8 +4,9 @@ description: "Barbells are not just another piece of gym equipment. They are the
 publishedAt: "2026-02-26T08:00:00.000Z"
 updatedAt: "2026-09-14T06:10:25.000Z"
 categories:
+  - "Back Squat"
   - "Bench Press"
-  - "200/300/400/500 Strength Club"
+  - "Strict Press"
 cover: "/articles/what-are-barbells-good-for/cover.jpg"
 coverFocus: "58% 55%"
 ---

@@ -117,11 +117,14 @@ Tool pages show articles whose `categories` include the category they ask for:
 | `Gym Timer` | `/timer` |
 | `AI Lifting Assistant` | `/ai-lifting-assistant` |
 | `Gym Music` | `/gym-playlist-leaderboard` |
-| Lift names (`Back Squat`, `Bench Press`, `Deadlift`, `Strict Press`) | `/progress-guide/<lift>` |
+| Lift names (`Back Squat`, `Bench Press`, `Deadlift`, `Strict Press`) | `/progress-guide/<lift>`, and variant guides through their parent or standards lift |
 
 `/strength-levels/<lift>` pages use `relatedArticlesCategory` from their page
 config. The article page's own "more articles" row ranks by shared categories,
-which is all `Home Dashboard` does.
+which is all `Home Dashboard` and `Health` do.
+
+Each related-articles block shows the newest four articles in its category, so
+aim for four per category and tag a new article where it genuinely helps a page.
 
 The known categories are `ARTICLE_CATEGORIES` in `src/lib/articles.js`, and any
 other category fails the build. Add a new one there first.

@@ -5,7 +5,11 @@ publishedAt: "2025-09-05T06:58:00.000Z"
 updatedAt: "2026-02-14T03:01:09.000Z"
 featured: true
 categories:
+  - "Home Dashboard"
+  - "Personal Record Analyzer"
   - "Strength Visualizer"
+  - "Tonnage Metrics"
+  - "AI Lifting Assistant"
 cover: "/articles/the-power-of-owning-your-lifting-data-with-google-sheets/cover.jpg"
 ---
 

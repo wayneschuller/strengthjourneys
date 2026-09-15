@@ -4,14 +4,9 @@ description: "The research on this has been building for years. At this point it
 publishedAt: "2026-02-23T11:13:00.000Z"
 updatedAt: "2026-03-10T04:05:30.000Z"
 categories:
-  - "Strength Calculator"
+  - "Health"
   - "Back Squat"
-  - "1000lb Club"
-  - "Gym Timer"
-  - "Warm Ups"
   - "Deadlift"
-  - "200/300/400/500 Strength Club"
-  - "How Strong Am I?"
 cover: "/articles/strength-training-helps-you-live-longer/cover.jpg"
 ---
 

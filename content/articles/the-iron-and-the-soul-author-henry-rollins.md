@@ -4,6 +4,8 @@ description: "In this powerful essay, Henry Rollins reflects on his journey of s
 publishedAt: "2024-04-04T17:00:00.000Z"
 updatedAt: "2024-09-26T10:29:23.000Z"
 featured: true
+categories:
+  - "Gym Music"
 cover: "/articles/the-iron-and-the-soul-author-henry-rollins/cover.jpg"
 coverFocus: "66% 52%"
 ---

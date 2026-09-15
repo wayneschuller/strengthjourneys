@@ -5,9 +5,7 @@ publishedAt: "2024-09-12T22:16:30.407Z"
 updatedAt: "2024-09-15T04:26:22.000Z"
 categories:
   - "Gym Music"
-  - "Personal Record Analyzer"
-  - "Strength Visualizer"
-  - "AI Lifting Assistant"
+  - "Gym Timer"
 cover: "/articles/why-it-s-good-to-be-a-barbell-weirdo/cover.jpg"
 coverFocus: "30% 58%"
 ---

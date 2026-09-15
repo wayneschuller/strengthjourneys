@@ -5,6 +5,7 @@ publishedAt: "2024-09-01T11:31:29.565Z"
 updatedAt: "2024-09-26T10:17:13.000Z"
 categories:
   - "Gym Music"
+  - "Gym Timer"
 cover: "/articles/why-gym-music-matters/cover.jpg"
 ---
 

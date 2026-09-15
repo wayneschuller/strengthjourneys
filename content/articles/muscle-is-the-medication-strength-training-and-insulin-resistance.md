@@ -4,9 +4,7 @@ description: "Strength training improves insulin resistance by turning muscle in
 publishedAt: "2026-09-14T09:00:00.000Z"
 updatedAt: "2026-09-14T10:04:39.000Z"
 categories:
-  - "1000lb Club"
-  - "Tonnage Metrics"
-  - "Strict Press"
+  - "Health"
 cover: "/articles/muscle-is-the-medication-strength-training-and-insulin-resistance/cover.jpg"
 coverFocus: "50% 37%"
 ---

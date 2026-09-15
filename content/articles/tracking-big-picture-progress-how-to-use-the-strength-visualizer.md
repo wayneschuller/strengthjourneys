@@ -5,7 +5,9 @@ publishedAt: "2024-09-26T10:06:33.467Z"
 updatedAt: "2026-03-10T04:05:53.000Z"
 categories:
   - "Strength Visualizer"
-  - "How Strong Am I?"
+  - "Personal Record Analyzer"
+  - "Tonnage Metrics"
+  - "Home Dashboard"
 cover: "/articles/tracking-big-picture-progress-how-to-use-the-strength-visualizer/cover.jpg"
 coverFocus: "52% 71%"
 ---

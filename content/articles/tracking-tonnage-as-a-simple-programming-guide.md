@@ -6,7 +6,9 @@ updatedAt: "2026-09-14T10:04:39.000Z"
 featured: true
 categories:
   - "Tonnage Metrics"
+  - "Strength Visualizer"
   - "Deadlift"
+  - "Home Dashboard"
 cover: "/articles/tracking-tonnage-as-a-simple-programming-guide/cover.jpg"
 ---
 

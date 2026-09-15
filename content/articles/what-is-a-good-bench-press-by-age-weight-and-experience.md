@@ -6,7 +6,10 @@ updatedAt: "2026-04-01T09:49:56.000Z"
 categories:
   - "Bench Press"
   - "How Strong Am I?"
+  - "Strength Calculator"
   - "1000lb Club"
+  - "200/300/400/500 Strength Club"
+  - "Strength Milestones"
 cover: "/articles/what-is-a-good-bench-press-by-age-weight-and-experience/cover.jpg"
 coverFocus: "37% 41%"
 ---

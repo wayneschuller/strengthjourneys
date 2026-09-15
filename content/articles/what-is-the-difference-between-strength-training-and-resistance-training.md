@@ -4,7 +4,7 @@ description: "Strength vs. Resistance Training: Discover why barbells are your b
 publishedAt: "2024-09-30T06:04:52.660Z"
 updatedAt: "2026-03-10T04:06:01.000Z"
 categories:
-  - "Strength Calculator"
+  - "Health"
 cover: "/articles/what-is-the-difference-between-strength-training-and-resistance-training/cover.jpg"
 coverFocus: "51% 52%"
 ---

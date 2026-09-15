@@ -209,7 +209,8 @@ export function buildArticlePageHref(page) {
  */
 export function RelatedArticles({ articles }) {
   if (!articles || articles.length === 0) return null;
-  const limitedArticles = articles.slice(0, 5);
+  // Four fill one row on a wide screen.
+  const limitedArticles = articles.slice(0, 4);
 
   return (
     <Card className="mt-8">

@@ -6,6 +6,9 @@ updatedAt: "2024-09-26T10:13:51.000Z"
 featured: true
 categories:
   - "One Rep Max Calculator"
+  - "1000lb Club"
+  - "Personal Record Analyzer"
+  - "Warm Ups"
 cover: "/articles/how-often-should-i-test-my-one-rep-max/cover.jpg"
 ---
 

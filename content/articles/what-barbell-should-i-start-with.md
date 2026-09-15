@@ -3,6 +3,8 @@ title: "What Barbell Should I Start With?"
 description: "Buy once cry once with our guide on buying a barbell."
 publishedAt: "2026-02-04T10:36:00.000Z"
 updatedAt: "2026-09-14T06:10:25.000Z"
+categories:
+  - "Strength Milestones"
 cover: "/articles/what-barbell-should-i-start-with/cover.jpg"
 ---
 

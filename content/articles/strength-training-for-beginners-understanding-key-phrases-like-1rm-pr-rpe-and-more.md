@@ -4,11 +4,11 @@ description: "All the key lifting phrases that beginners and new lifters should 
 publishedAt: "2024-09-16T02:31:17.890Z"
 updatedAt: "2026-03-10T04:05:23.000Z"
 categories:
-  - "Gym Timer"
-  - "Strength Visualizer"
-  - "Back Squat"
-  - "200/300/400/500 Strength Club"
   - "How Strong Am I?"
+  - "200/300/400/500 Strength Club"
+  - "Warm Ups"
+  - "Gym Timer"
+  - "Strict Press"
 cover: "/articles/strength-training-for-beginners-understanding-key-phrases-like-1rm-pr-rpe-and-more/cover.jpg"
 coverFocus: "50% 37%"
 ---

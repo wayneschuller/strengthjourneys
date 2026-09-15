@@ -5,6 +5,10 @@ publishedAt: "2026-06-11T21:35:00.000Z"
 updatedAt: "2026-06-11T22:13:14.000Z"
 categories:
   - "Home Dashboard"
+  - "Personal Record Analyzer"
+  - "Strength Visualizer"
+  - "Tonnage Metrics"
+  - "AI Lifting Assistant"
 cover: "/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard/cover.jpg"
 ---
 

@@ -5,6 +5,8 @@ publishedAt: "2026-02-14T18:31:00.000Z"
 updatedAt: "2026-03-04T21:15:55.000Z"
 categories:
   - "One Rep Max Calculator"
+  - "1000lb Club"
+  - "Warm Ups"
 cover: "/articles/how-do-i-calculate-my-e1rm-estimated-one-rep-max/cover.jpg"
 coverFocus: "83% 36%"
 ---

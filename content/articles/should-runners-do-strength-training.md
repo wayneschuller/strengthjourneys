@@ -4,9 +4,7 @@ description: "Why runners need to do strength training."
 publishedAt: "2026-01-02T09:50:00.000Z"
 updatedAt: "2026-09-14T06:10:25.000Z"
 categories:
-  - "Strength Calculator"
-  - "Tonnage Metrics"
-  - "Strict Press"
+  - "Health"
 cover: "/articles/should-runners-do-strength-training/cover.jpg"
 coverFocus: "52% 31%"
 ---

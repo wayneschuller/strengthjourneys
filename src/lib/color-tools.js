@@ -1,7 +1,7 @@
 /** @format */
 // color-tools.js
 // Wayne Schuller, wayne@schuller.id.au
-// Licenced under https://www.gnu.org/licenses/gpl-3.0.html
+// Licenced under https://www.gnu.org/licenses/agpl-3.0.html
 
 /**
  * Brighten a hex color by scaling each RGB channel by `factor` (clamped to 255).

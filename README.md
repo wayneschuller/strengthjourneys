@@ -140,5 +140,5 @@ Strength Journeys unites and extends features from earlier projects by the same 
 
 ## Licensing
 
-- **Code** is licensed under the [GNU General Public License v3](LICENSE).
+- **Code** is licensed under the [GNU Affero General Public License v3](LICENSE) or later. If you run a modified version as a website or service, you must offer its source code to the people using it.
 - **Article text** in `content/articles/` is licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Images, quotations from other authors and the Strength Journeys name and logo are not covered. See [content/LICENSE.md](content/LICENSE.md) for how to credit an article and the full exclusions.

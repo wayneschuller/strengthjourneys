@@ -2,6 +2,7 @@
   "name": "strength-journeys",
   "version": "3.5.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "engines": {
     "node": ">=24"
   },

@@ -6,7 +6,8 @@ International License (CC BY-SA 4.0):
 https://creativecommons.org/licenses/by-sa/4.0/
 
 This is separate from the code in this repository, which is licensed under the
-GNU General Public License v3. See `LICENSE` at the repository root.
+GNU Affero General Public License v3 or later. See `LICENSE` at the repository
+root.
 
 ## Sharing and adapting
 

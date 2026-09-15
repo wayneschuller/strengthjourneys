@@ -58,13 +58,7 @@ const { buildNextImportProfile } =
   await import("../src/lib/import/import-profile.js");
 
 async function readFixture(name) {
-  const fixturePath = path.join(
-    repositoryRoot,
-    "fixtures",
-    "imports",
-    "hevy",
-    name,
-  );
+  const fixturePath = path.join(sourceRoot, "lib", "data-sources", "fixtures", "hevy", name);
   return decodeCSV(await readFile(fixturePath, "utf8"));
 }
 

@@ -124,7 +124,7 @@ for (const [raw, expected] of Object.entries(expectedNames)) {
 
 const strongRows = decodeCSV(
   await readFile(
-    path.join(repositoryRoot, "fixtures", "imports", "strong", "strong-sample.csv"),
+    path.join(sourceRoot, "lib", "data-sources", "fixtures", "strong", "strong-sample.csv"),
     "utf8",
   ),
 );

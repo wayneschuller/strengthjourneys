@@ -25,7 +25,7 @@ calls for them:
 npm run dev            # Turbopack dev server; the user usually has one running
 npm run dev:webpack    # fallback when Turbopack itself seems to be the problem
 npx eslint <paths>     # lint the files you touched
-npm run validate:imports  # importer and lift-name checks against fixtures/imports/
+npm run validate:imports  # importer and lift-name checks against src/lib/data-sources/fixtures/
 ```
 
 There is **no test framework configured**. Validation is lint, plus
@@ -282,6 +282,9 @@ push to fix it.
 Agents operating in this repo should:
 
 - Prefer minimal, surgical edits
+- Never create a new top-level folder without asking the user first. Put new
+  files beside the code they serve; importer fixtures, for example, live in
+  `src/lib/data-sources/fixtures/`
 - Preserve visual design consistency
 - Avoid architectural rewrites unless explicitly requested
 - Park future follow-up tasks and todos in `.agents/follow-up-audit-items.md`

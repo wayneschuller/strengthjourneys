@@ -121,7 +121,7 @@ This repo has grown into a multi-tool lifting app (home dashboard, visualizer, s
 - Build a new tool page (or improve an existing one): start in `src/pages/<tool>.js`, then add/adjust feature components under `src/components/<feature>/`
 - Improve parser tolerance for real-world spreadsheets (header variations, blank-row patterns, date/weight formats): `src/lib/data-sources/strength-journeys-parser.js` and the shared `parser-utilities.js`
 - UI polish and usability improvements (layout spacing, card composition, mobile tweaks, theme details): `src/components/`, `src/components/ui/`, `src/styles/globals.css`
-- Add import support for another lifting app: add a parser under `src/lib/data-sources/` (copy the shape of `hevy-parser.js`), then register its detection in `import-dispatcher.js`. There is a regression script for this — `npm run validate:hevy`, run against fixtures in `fixtures/imports/`
+- Add import support for another lifting app: add a parser under `src/lib/data-sources/` (copy the shape of `hevy-parser.js`), then register its detection in `import-dispatcher.js`. There is a regression script for this — `npm run validate:imports`, run against fixtures in `src/lib/data-sources/fixtures/`
 
 > `src/lib/parse-data.js` and `src/lib/parse-turnkey-importer.js` are thin re-exports kept for older import sites. New work should reach for `src/lib/data-sources/` directly.
 

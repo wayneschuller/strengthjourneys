@@ -44,6 +44,7 @@ next-env.d.ts
 # 20240911 next-sitemap
 public/sitemap*.xml
 public/robots.txt
+public/server-sitemap.xml
 #
 # 2026-03-27 to 2026-08-17 these were tracked in git instead of generated, because
 # the Vercel adapter in Next.js 16.2 stopped serving files written to public/ after

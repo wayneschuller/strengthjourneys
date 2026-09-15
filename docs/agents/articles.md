@@ -44,7 +44,7 @@ coverAlt: "A lifter locking out a heavy bench press"
 | --- | --- | --- |
 | `title` | yes | H1, page title, cards, JSON-LD headline |
 | `description` | recommended | Meta description, standfirst under the H1, card text. Keep it under ~200 characters |
-| `publishedAt` | yes | Publish date. The article goes live with the first deploy after this time |
+| `publishedAt` | yes | Publish date shown on the article and its cards. Set it when you publish |
 | `updatedAt` | no | `dateModified` in JSON-LD and `lastmod` in `/server-sitemap.xml`. Defaults to `publishedAt` |
 | `featured` | no | `true` puts it in the photo bento on `/articles` and makes it eligible for the homepage reading rail (newest two) |
 | `categories` | no | Exact titles drive the related-article blocks on tool pages (see below) |
@@ -53,7 +53,8 @@ coverAlt: "A lifter locking out a heavy bench press"
 | `coverAlt` | no | Alt text for the cover. Defaults to a title-based alt |
 
 Quote date strings. The build fails, naming the file, if `title`,
-`publishedAt` or `cover` is missing or a referenced image does not exist.
+`publishedAt` or `cover` is missing, a referenced image does not exist, a field
+is not one of those above, or a category is not a known one.
 
 Dates and SEO: bump `updatedAt` for a substantive content change, not a typo.
 Do not move an existing article's `publishedAt` unless Wayne asks.
@@ -119,11 +120,17 @@ Tool pages show articles whose `categories` include the category they ask for:
 | Lift names (`Back Squat`, `Bench Press`, `Deadlift`, `Strict Press`) | `/progress-guide/<lift>` |
 
 `/strength-levels/<lift>` pages use `relatedArticlesCategory` from their page
-config. The article page's own "more articles" row ranks by shared categories.
+config. The article page's own "more articles" row ranks by shared categories,
+which is all `Home Dashboard` does.
+
+The known categories are `ARTICLE_CATEGORIES` in `src/lib/articles.js`, and any
+other category fails the build. Add a new one there first.
 
 ## Drafts and publishing
 
-Drafts and idea stubs sit in `content/articles/drafts/` and are never read by
+Every file directly in `content/articles/` is live from the deploy that carries
+it; there is no scheduling, so publish an article only when you mean to deploy
+it. Drafts and idea stubs sit in `content/articles/drafts/` and are never read by
 the build, so they need no `publishedAt`, `cover` or `updatedAt`. Leave the
 empty idea stubs alone; Wayne keeps them as placeholders.
 
@@ -132,8 +139,8 @@ To publish a draft:
 1. Move it to `content/articles/<slug>.md`
 2. Put its images in `public/articles/<slug>/` (a draft's own images, if any,
    sit in `content/articles/drafts/<slug>/`)
-3. Fill in `publishedAt`, `cover` and `description`
+3. Fill in `publishedAt` (today), `cover` and `description`
 4. Add the article to the Articles list in `public/llms.txt`
-5. Commit and push. It goes live with the deploy
+5. Commit and push. It goes live with the next deploy
 
 Preview with the dev server: edits show on a page refresh.

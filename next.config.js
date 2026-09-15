@@ -20,13 +20,6 @@ const nextConfig = {
     },
   },
 
-  // /server-sitemap.xml renders per request and reads the article markdown from
-  // disk through a computed path the file tracer cannot follow, so ship the
-  // files with that function explicitly. Every other article page is static.
-  outputFileTracingIncludes: {
-    "/server-sitemap.xml": ["./content/articles/*.md"],
-  },
-
   // Added by WS 20240901
   images: {
     remotePatterns: [

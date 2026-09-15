@@ -15,7 +15,7 @@
     "lint": "eslint src/",
     "validate:hevy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-hevy-importer.mjs",
     "validate:imports": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-hevy-importer.mjs",
-    "postbuild": "next-sitemap"
+    "postbuild": "next-sitemap && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/write-article-sitemap.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.34",

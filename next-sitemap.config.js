@@ -1,9 +1,9 @@
 /*
  * Build-time sitemap for the static routes only.
  *
- * Article URLs are served from the /server-sitemap.xml route
- * (src/pages/server-sitemap.xml.js), which carries each article's updatedAt as
- * lastmod. They are excluded here to avoid listing the same URL twice.
+ * Article URLs go in /server-sitemap.xml, which scripts/write-article-sitemap.mjs
+ * writes straight after this step with each article's updatedAt as lastmod.
+ * They are excluded here to avoid listing the same URL twice.
  */
 const fs = require("fs");
 const path = require("path");
@@ -24,12 +24,11 @@ const UNINDEXED_LIFT_GUIDES = fs
 module.exports = {
   siteUrl: SITE_URL,
   generateRobotsTxt: true,
-  // Article slugs live in the dynamic sitemap; the listing and its pagination
+  // Article slugs live in the article sitemap; the listing and its pagination
   // are ordinary static routes and stay here.
   exclude: [
     "/articles/*",
     "!/articles/page/*",
-    "/server-sitemap.xml",
     ...UNINDEXED_LIFT_GUIDES,
   ],
   // next-sitemap's defaults stamp every URL with the build time and a blanket

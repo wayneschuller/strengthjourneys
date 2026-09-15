@@ -1,12 +1,16 @@
 /*
- * Article content store. Each article is a markdown file in content/articles/
- * (the filename is the slug) with YAML frontmatter, and is rendered to HTML at
- * build time, so no markdown, CMS or renderer code ships to the browser.
+ * Article content store. Every markdown file in content/articles/ is a
+ * published article (the filename is the slug) with YAML frontmatter. Drafts
+ * wait in content/articles/drafts/, which is never read: publishing is moving
+ * the file up a folder, and it goes live with the deploy that carries it.
+ * Bodies render to HTML at build time, so no markdown or renderer code ships to
+ * the browser.
  *
- * Server-only: import this from getStaticProps, getStaticPaths or
- * getServerSideProps, never from a component. Drafts live in
- * content/articles/drafts/ and are never read. The writing guide, including
- * the frontmatter fields and image conventions, is docs/agents/articles.md.
+ * Server-only: import this from getStaticProps or getStaticPaths, never from a
+ * component. scripts/write-article-sitemap.mjs also imports it in plain Node
+ * after the build, so its own imports stay on node_modules (no @/ alias). The
+ * writing guide, including the frontmatter fields and image conventions, is
+ * docs/agents/articles.md.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,48 +24,82 @@ import rehypeStringify from "rehype-stringify";
 
 const ARTICLES_DIR = path.join(process.cwd(), "content", "articles");
 const PUBLIC_DIR = path.join(process.cwd(), "public");
+const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const COVER_PATTERN = /^\/.+\.(jpe?g|png)$/i;
 const OWN_SITE_PATTERN = /^https?:\/\/(www\.)?strengthjourneys\.xyz(\/|$)/i;
 export const FEATURED_CATEGORY_TITLE = "Featured Articles";
 
-// Parsed once per production build, where dozens of pages ask for related
-// articles. Dev re-reads every time so an edited file shows on refresh.
+const FRONTMATTER_FIELDS = new Set([
+  "title",
+  "description",
+  "publishedAt",
+  "updatedAt",
+  "featured",
+  "categories",
+  "cover",
+  "coverFocus",
+  "coverAlt",
+]);
+
+// Every category an article may carry. Tool pages ask for one of these by exact
+// title (the table in docs/agents/articles.md says which page shows which), and
+// the article page ranks its "more articles" row by shared categories, which is
+// all Home Dashboard does. A category outside this list fails the build, so a
+// typo cannot quietly hide an article from the page it was written for.
+const ARTICLE_CATEGORIES = new Set([
+  "How Strong Am I?",
+  "Strength Calculator",
+  "One Rep Max Calculator",
+  "1000lb Club",
+  "200/300/400/500 Strength Club",
+  "Strength Milestones",
+  "Strength Visualizer",
+  "Tonnage Metrics",
+  "Personal Record Analyzer",
+  "Warm Ups",
+  "Gym Timer",
+  "AI Lifting Assistant",
+  "Gym Music",
+  "Home Dashboard",
+  "Back Squat",
+  "Bench Press",
+  "Deadlift",
+  "Strict Press",
+]);
+
+// Parsed once per production build process, where dozens of pages ask for
+// related articles. Dev re-reads every time so an edited file shows on refresh.
 let cachedArticles = null;
 
 /**
- * Published articles, newest first, as JSON-safe summaries (no body).
- * An article is published once its publishedAt has passed at build time.
+ * Every article, newest first, as JSON-safe summaries (no body).
  */
 export function getPublishedArticles() {
-  const now = Date.now();
-  return loadAllArticles()
-    .filter((article) => Date.parse(article.publishedAt) <= now)
-    .map(toSummary);
+  return loadAllArticles().map(toSummary);
 }
 
 /**
- * One published article with its body rendered to HTML, or null.
+ * One article with its body rendered to HTML, or null.
  *
  * @param {string} slug
  * @returns {Object|null} Summary fields plus html and wordCount.
  */
 export function getArticleBySlug(slug) {
-  const summary = getPublishedArticles().find((article) => article.slug === slug);
-  if (!summary) return null;
-
   const article = loadAllArticles().find((entry) => entry.slug === slug);
-  assertPublicFileExists(summary.cover, article.fileName, "cover");
+  if (!article) return null;
+
   const { html, wordCount } = renderArticleMarkdown(article.body, {
-    articleTitle: summary.title,
+    articleTitle: article.title,
     fileName: article.fileName,
   });
 
-  return { ...summary, html, wordCount };
+  return { ...toSummary(article), html, wordCount };
 }
 
 /**
- * Published articles tagged with a category, newest first. Kept async and
- * named as it was under Sanity so the tool pages' getStaticProps read the same.
+ * Articles tagged with a category, newest first. Kept async and named as it
+ * was under Sanity so the tool pages' getStaticProps read the same.
  *
  * @param {string} category - Category title, or "Featured Articles".
  */
@@ -82,34 +120,64 @@ function loadAllArticles() {
     .readdirSync(ARTICLES_DIR, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
     .map((entry) => parseArticleFile(entry.name))
-    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+    // Slug breaks date ties so the order never depends on the filesystem.
+    .sort(
+      (a, b) =>
+        Date.parse(b.publishedAt) - Date.parse(a.publishedAt) ||
+        a.slug.localeCompare(b.slug),
+    );
 
   cachedArticles = articles;
   return articles;
 }
 
 // Frontmatter mistakes fail the build with the file name, rather than shipping
-// an article with a missing date or a broken card.
+// an article with a missing date, a broken card or a silently ignored field.
 function parseArticleFile(fileName) {
   const raw = fs.readFileSync(path.join(ARTICLES_DIR, fileName), "utf8");
-  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/.exec(raw);
-  if (!match) {
-    throw new Error(`content/articles/${fileName}: missing --- frontmatter block`);
-  }
-
-  const data = yaml.load(match[1]) ?? {};
-  const slug = fileName.replace(/\.md$/, "");
   const fail = (problem) => {
     throw new Error(`content/articles/${fileName}: ${problem}`);
   };
 
-  if (!SLUG_PATTERN.test(slug)) fail("file name must be a lowercase-hyphenated slug");
-  if (typeof data.title !== "string" || !data.title.trim()) fail("title is required");
-  if (data.categories !== undefined && !Array.isArray(data.categories)) {
-    fail("categories must be a list");
+  const match = FRONTMATTER_PATTERN.exec(raw);
+  if (!match) fail("missing --- frontmatter block");
+
+  const slug = fileName.replace(/\.md$/, "");
+  if (!SLUG_PATTERN.test(slug))
+    fail("file name must be a lowercase-hyphenated slug");
+
+  const data = yaml.load(match[1]) ?? {};
+  const unknownFields = Object.keys(data).filter(
+    (key) => !FRONTMATTER_FIELDS.has(key),
+  );
+  if (unknownFields.length > 0) {
+    fail(`unknown frontmatter field ${unknownFields.join(", ")}`);
   }
-  if (typeof data.cover !== "string" || !data.cover.startsWith("/")) {
-    fail("cover is required, as a path under public/, e.g. /articles/<slug>/cover.jpg");
+
+  const title = readText(data, "title", fail);
+  if (!title) fail("title is required");
+
+  const cover = readText(data, "cover", fail);
+  if (!cover || !COVER_PATTERN.test(cover)) {
+    fail(
+      "cover is required, as a JPEG or PNG under public/, e.g. /articles/<slug>/cover.jpg",
+    );
+  }
+  assertPublicFileExists(cover, fileName, "cover");
+
+  if (data.featured !== undefined && typeof data.featured !== "boolean") {
+    fail("featured must be true or false");
+  }
+
+  const categories = data.categories ?? [];
+  if (!Array.isArray(categories)) fail("categories must be a list");
+  const unknownCategories = categories.filter(
+    (title) => !ARTICLE_CATEGORIES.has(title),
+  );
+  if (unknownCategories.length > 0) {
+    fail(
+      `unknown category ${unknownCategories.join(", ")} (add new ones to ARTICLE_CATEGORIES in src/lib/articles.js)`,
+    );
   }
 
   const publishedAt = toIsoDate(data.publishedAt, "publishedAt", fail);
@@ -117,17 +185,27 @@ function parseArticleFile(fileName) {
   return {
     fileName,
     slug,
-    title: data.title.trim(),
-    description: typeof data.description === "string" ? data.description.trim() : null,
+    title,
+    description: readText(data, "description", fail),
     publishedAt,
-    updatedAt: data.updatedAt ? toIsoDate(data.updatedAt, "updatedAt", fail) : publishedAt,
+    updatedAt: data.updatedAt
+      ? toIsoDate(data.updatedAt, "updatedAt", fail)
+      : publishedAt,
     featured: data.featured === true,
-    categories: (data.categories ?? []).map(String),
-    cover: data.cover,
-    coverAlt: typeof data.coverAlt === "string" ? data.coverAlt.trim() : null,
-    coverFocus: typeof data.coverFocus === "string" ? data.coverFocus.trim() : null,
+    categories,
+    cover,
+    coverAlt: readText(data, "coverAlt", fail),
+    coverFocus: readText(data, "coverFocus", fail),
     body: match[2],
   };
+}
+
+// An optional text field, trimmed, with blank treated as absent.
+function readText(data, field, fail) {
+  const value = data[field];
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") fail(`${field} must be text`);
+  return value.trim() || null;
 }
 
 // YAML turns an unquoted date into a Date, while a quoted one stays a string;
@@ -194,7 +272,10 @@ function rehypeArticleElements({ articleTitle, fileName }) {
 
       if (node.tagName === "a" && !node.properties.dataFigureLink) {
         decorateLink(node);
-        node.properties.className = ["decoration-primary/40", "hover:decoration-primary"];
+        node.properties.className = [
+          "decoration-primary/40",
+          "hover:decoration-primary",
+        ];
         return;
       }
 
@@ -247,10 +328,14 @@ function buildFigure(paragraph, { articleTitle, fileName }) {
   const alt = String(image.properties.alt ?? "").trim();
 
   if (!src.startsWith("/")) {
-    throw new Error(`content/articles/${fileName}: image ${src} must be a local path under public/`);
+    throw new Error(
+      `content/articles/${fileName}: image ${src} must be a local path under public/`,
+    );
   }
   assertPublicFileExists(src, fileName, "image");
-  const { width, height } = imageSize(fs.readFileSync(path.join(PUBLIC_DIR, src)));
+  const { width, height } = imageSize(
+    fs.readFileSync(path.join(PUBLIC_DIR, src)),
+  );
 
   const img = {
     type: "element",

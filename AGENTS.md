@@ -44,8 +44,9 @@ Two sitemaps, both generated - never commit sitemap files to git:
 - `/sitemap.xml` + `/sitemap-0.xml` - static routes, written into `public/` by
   `next-sitemap` at postbuild time from `next-sitemap.config.js`
 - `/server-sitemap.xml` - article URLs with their `updatedAt` from
-  `content/articles/`, served by `src/pages/server-sitemap.xml.js` (kept at this
-  URL because Search Console already has it registered)
+  `content/articles/`, written into `public/` at postbuild time by
+  `scripts/write-article-sitemap.mjs` (the name is kept because Search Console
+  already has that URL registered)
 
 Both are listed in the generated `robots.txt` and should both be submitted in
 Google Search Console.

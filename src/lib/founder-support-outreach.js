@@ -29,8 +29,15 @@ import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 import { mergeUserRecord, readUserRecord } from "@/lib/user-kv-keys";
 
 const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";
-const MIN_DELAY_HOURS = 24;
-const DELAY_WINDOW_HOURS = 49;
+// The note lands the morning after the lifter's first session, US time. The
+// old rule was "24 to 72 hours later" at whatever minute that fell on, which put
+// over a third of notes in an inbox overnight, under the morning pile. Most
+// lifters are in the US, so a Central morning is a sensible morning for nearly
+// all of them, and the gap keeps it from reading like a sign-in receipt.
+const MIN_GAP_HOURS = 12;
+const SEND_TIME_ZONE = "America/Chicago";
+const SEND_WINDOW_START_MINUTES = 8 * 60 + 30;
+const SEND_WINDOW_MINUTES = 120;
 const SUPPORT_LOCK_SECONDS = 30;
 // How close to the "signed in without the Drive scope" notification a recovery
 // has to be before the follow-up is not worth a second email. Most recoveries
@@ -81,19 +88,80 @@ function appendFounderEmailHistory(record, entry) {
   return [...history, entry].slice(-FOUNDER_EMAIL_HISTORY_LIMIT);
 }
 
-function getDelayMs(email) {
+function hashEmail(email) {
   let hash = 0;
   for (const character of normalizeEmail(email)) {
     hash = (hash * 31 + character.codePointAt(0)) >>> 0;
   }
-
-  const hours = MIN_DELAY_HOURS + (hash % DELAY_WINDOW_HOURS);
-  const minutes = (hash >>> 8) % 60;
-  return (hours * 60 + minutes) * 60 * 1000;
+  return hash;
 }
 
+// The wall-clock date and time in `timeZone` at `date`, as numbers.
+function getZonedParts(date, timeZone) {
+  const parts = {};
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  });
+  for (const { type, value } of formatter.formatToParts(date)) {
+    parts[type] = Number(value);
+  }
+  return parts;
+}
+
+// Minutes `timeZone` is ahead of UTC at `date` (negative for the Americas).
+function getOffsetMinutes(date, timeZone) {
+  const wall = getZonedParts(date, timeZone);
+  const wallAsUtc = Date.UTC(
+    wall.year,
+    wall.month - 1,
+    wall.day,
+    wall.hour,
+    wall.minute,
+  );
+  const instant = Math.floor(date.getTime() / 60000) * 60000;
+  return Math.round((wallAsUtc - instant) / 60000);
+}
+
+// The instant a wall clock in `timeZone` reads `minutesIntoDay` on the given
+// date. Day overflow is fine: Date.UTC rolls day 32 into the next month.
+function getZonedInstant({ year, month, day }, minutesIntoDay, timeZone) {
+  const wallAsUtc = Date.UTC(year, month - 1, day, 0, minutesIntoDay);
+  const firstGuess =
+    wallAsUtc - getOffsetMinutes(new Date(wallAsUtc), timeZone) * 60000;
+  // Read the offset again at the answer, so a date on the far side of a
+  // daylight saving switch uses that side's offset.
+  return new Date(
+    wallAsUtc - getOffsetMinutes(new Date(firstGuess), timeZone) * 60000,
+  );
+}
+
+/**
+ * The first send-window slot at least `MIN_GAP_HOURS` after `now`. Each lifter
+ * gets a fixed minute inside the window from a hash of their address, so notes
+ * do not all leave on the same tick and a retry lands on the same slot.
+ */
 function getScheduledAt(email, now = new Date()) {
-  return new Date(now.getTime() + getDelayMs(email)).toISOString();
+  const earliest = new Date(now.getTime() + MIN_GAP_HOURS * 60 * 60 * 1000);
+  const minutesIntoDay =
+    SEND_WINDOW_START_MINUTES + (hashEmail(email) % SEND_WINDOW_MINUTES);
+  const date = getZonedParts(earliest, SEND_TIME_ZONE);
+
+  const sameDay = getZonedInstant(date, minutesIntoDay, SEND_TIME_ZONE);
+  const scheduled =
+    sameDay >= earliest
+      ? sameDay
+      : getZonedInstant(
+          { ...date, day: date.day + 1 },
+          minutesIntoDay,
+          SEND_TIME_ZONE,
+        );
+  return scheduled.toISOString();
 }
 
 function isWhitespace(character) {
@@ -286,7 +354,7 @@ function buildUserEmailHtml(text) {
 }
 
 /**
- * The one note a new lifter receives, roughly a day or two after signing in.
+ * The one note a new lifter receives, the morning after signing in.
  *
  * Everyone who receives it is new: outreach eligibility requires an empty KV
  * record at first sign-in. It does not branch on how setup went, because the
@@ -354,8 +422,8 @@ const FOUNDER_TIME_ZONE = "Australia/Melbourne";
 /**
  * Absolute and readable.
  *
- * Deliberately not relative ("2 hours ago"). The "stalled" notification is
- * composed now and handed to Resend for delivery 24 to 72 hours later, so any
+ * Deliberately not relative ("2 hours ago"). The note to the lifter is composed
+ * now and handed to Resend for delivery up to a day and a half later, so any
  * phrase measured against composition time would be wrong by the time it is
  * read. A gap between two timestamps that are both in the message is safe,
  * which is what `formatGap` is for.

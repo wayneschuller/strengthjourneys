@@ -29,6 +29,12 @@ import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 import { mergeUserRecord, readUserRecord } from "@/lib/user-kv-keys";
 
 const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";
+// The note to the lifter is a question from a person, so it comes from one. A
+// brand name in the inbox reads as an app notification, and the manual version
+// of this note, sent from Wayne's own Gmail, drew replies where the branded one
+// drew none. Any address on the verified sending domain works, and replies go
+// to `replyTo`, so this mailbox never needs to exist.
+const USER_NOTE_FROM_EMAIL = "Wayne Schuller <wayne@updates.strengthjourneys.xyz>";
 // The note lands the morning after the day the lifter signed in, US time, so
 // "yesterday" in the note is true. The old rule was "24 to 72 hours later" at
 // whatever minute that fell on, which put over a third of notes in an inbox
@@ -667,7 +673,7 @@ async function scheduleUserNote({ context, user, scheduledAt }) {
     context.resend,
     {
       bcc: context.founderEmail,
-      from: FROM_EMAIL,
+      from: USER_NOTE_FROM_EMAIL,
       to: context.userEmail,
       replyTo: context.founderEmail,
       subject: message.subject,

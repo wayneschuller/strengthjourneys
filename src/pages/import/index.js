@@ -46,9 +46,9 @@ import {
   Download,
   ExternalLink,
   ArrowRight,
-  TrendingUp,
   Trophy,
-  BarChart3,
+  Gauge,
+  Target,
   Shield,
   GitMerge,
   FileSpreadsheet,
@@ -323,30 +323,25 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
 function BenefitsRow() {
   const benefits = [
     {
-      icon: TrendingUp,
-      title: "Strength Over Time",
-      desc: "See how every lift has progressed across months and years",
+      icon: Gauge,
+      title: "See Where You Rank",
+      desc: "Your squat, bench, and deadlift scored against the general population for your age, sex, and bodyweight",
     },
     {
-      icon: Trophy,
-      title: "Personal Records",
-      desc: "Every PR detected automatically, by lift, reps, and date",
-    },
-    {
-      icon: BarChart3,
-      title: "Training Trends",
-      desc: "Weekly volume, tonnage, consistency grades, and more",
+      icon: Target,
+      title: "Your 1000lb Club Total",
+      desc: "Your three lift total, how far you are from the club, and which lift to add to next",
     },
     {
       icon: GitMerge,
-      title: "One Sheet You Own",
-      desc: "Merge each app export into a permanent Google Sheet in your Drive",
+      title: "Every App, One Sheet, Free",
+      desc: "Merge exports from every supported app into one Google Sheet you own, with duplicates skipped",
     },
   ];
 
   return (
     <section className="mx-auto mb-8 max-w-5xl">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         {benefits.map((b) => (
           <div
             key={b.title}

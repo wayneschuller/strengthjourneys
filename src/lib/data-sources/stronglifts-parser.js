@@ -33,8 +33,10 @@ function parseInteger(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-// Accept both the MM/DD/YY legacy date and the yyyy/MM/dd current date.
-function normalizeStrongliftsDate(dateString) {
+// Accept the MM/DD/YY legacy date, the same legacy shape written DD/MM/YYYY
+// outside the US, and the yyyy/MM/dd current date. The caller settles the
+// day/month order for the whole file first, see detectDayFirstDates.
+function normalizeStrongliftsDate(dateString, dayFirst = false) {
   const raw = String(dateString || "").trim();
   if (!raw) return null;
 
@@ -43,8 +45,18 @@ function normalizeStrongliftsDate(dateString) {
 
   const yearFirst = match[1].length === 4;
   let year = Number.parseInt(yearFirst ? match[1] : match[3], 10);
-  const month = Number.parseInt(yearFirst ? match[2] : match[1], 10);
-  const day = Number.parseInt(yearFirst ? match[3] : match[2], 10);
+  let month;
+  let day;
+  if (yearFirst) {
+    month = Number.parseInt(match[2], 10);
+    day = Number.parseInt(match[3], 10);
+  } else if (dayFirst) {
+    day = Number.parseInt(match[1], 10);
+    month = Number.parseInt(match[2], 10);
+  } else {
+    month = Number.parseInt(match[1], 10);
+    day = Number.parseInt(match[2], 10);
+  }
 
   if (!month || !day || !year) return null;
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
@@ -54,6 +66,28 @@ function normalizeStrongliftsDate(dateString) {
   }
 
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+// A legacy export carries no locale, so the day/month order has to come from
+// the column itself. A component above 12 can only be a day, which settles the
+// whole file. Read as US order otherwise, which is what the legacy format
+// documents, and also when a column contradicts itself.
+function detectDayFirstDates(data, dateColumnIndex) {
+  if (dateColumnIndex < 0) return false;
+
+  let firstAboveTwelve = false;
+  let secondAboveTwelve = false;
+
+  for (let i = 1; i < data.length; i++) {
+    const raw = String(data[i]?.[dateColumnIndex] || "").trim();
+    const match = raw.match(/^(\d{1,4})[/-](\d{1,2})[/-](\d{1,4})$/);
+    if (!match || match[1].length === 4) continue;
+
+    if (Number.parseInt(match[1], 10) > 12) firstAboveTwelve = true;
+    if (Number.parseInt(match[2], 10) > 12) secondAboveTwelve = true;
+  }
+
+  return firstAboveTwelve && !secondAboveTwelve;
 }
 
 function normalizeHeader(header) {
@@ -162,7 +196,9 @@ export function isStrongliftsExport(headers) {
     normalized.includes("date") &&
     normalized.some(
       (header) =>
-        header === "body weight (kg)" || header === "body weight (lb)",
+        header === "body weight" ||
+        header === "body weight (kg)" ||
+        header === "body weight (lb)",
     ) &&
     normalized.some((header) => /^exercise\s+\d+$/.test(header)) &&
     normalized.some((header) => /^set\s+\d+$/.test(header));
@@ -185,13 +221,14 @@ function parseCurrentStrongliftsData(data, headers) {
   const exerciseColumnIndex = findHeaderIndex(headers, ["Exercise"]);
   const notesColumnIndex = findHeaderIndex(headers, ["Note", "Notes"]);
   const setBlocks = buildCurrentSetBlocks(headers);
+  const dayFirst = detectDayFirstDates(data, dateColumnIndex);
   const parsedData = [];
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row || row.length === 0) continue;
 
-    const date = normalizeStrongliftsDate(row[dateColumnIndex]);
+    const date = normalizeStrongliftsDate(row[dateColumnIndex], dayFirst);
     const rawExerciseName = String(row[exerciseColumnIndex] || "").trim();
     const liftType = normalizeStrongliftsLiftType(rawExerciseName);
     if (!date || !liftType) continue;
@@ -239,13 +276,14 @@ function parseLegacyStrongliftsData(data, headers) {
   const dateColumnIndex = findHeaderIndex(headers, ["Date"]);
   const noteColumnIndex = findHeaderIndex(headers, ["Note", "Notes"]);
   const blocks = buildExerciseBlocks(headers);
+  const dayFirst = detectDayFirstDates(data, dateColumnIndex);
   const parsedData = [];
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row || row.length === 0) continue;
 
-    const date = normalizeStrongliftsDate(row[dateColumnIndex]);
+    const date = normalizeStrongliftsDate(row[dateColumnIndex], dayFirst);
     if (!date) continue;
 
     const workoutNote =

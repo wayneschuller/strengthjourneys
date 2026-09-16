@@ -8,6 +8,10 @@
 
 import { parseStrengthJourneysData } from "@/lib/data-sources/strength-journeys-parser";
 import { parseBtwbData } from "@/lib/data-sources/btwb-parser";
+import {
+  isFitbodExport,
+  parseFitbodData,
+} from "@/lib/data-sources/fitbod-parser";
 import { parseHevyData } from "@/lib/data-sources/hevy-parser";
 import { parseStrongData } from "@/lib/data-sources/strong-parser";
 import {
@@ -83,6 +87,17 @@ const FORMAT_SIGNATURES = [
       );
     },
     parse: parseHevyData,
+  },
+  {
+    id: "fitbod",
+    // A silent format: left out of the import app guides, the import source
+    // list and the unrecognized-format message below, so nothing in the app
+    // names it. It only activates when someone drops a Fitbod export in.
+    // Ordered ahead of StrongLifts, whose current layout also accepts a bare
+    // date and exercise pair.
+    name: "Fitbod",
+    detect: isFitbodExport,
+    parse: parseFitbodData,
   },
   {
     id: "stronglifts",

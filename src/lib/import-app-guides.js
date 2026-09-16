@@ -183,7 +183,7 @@ export const IMPORT_APP_PAGES = [
     heroTitle: "Rescue Your Wodify Lifting History",
     hookLine: "That old Wodify export isn't dead weight",
     heroDescription:
-      "Choose your Wodify export—even years-old files work. Your data isn't lost.",
+      "Choose your Wodify export. Even years-old files work. Your data isn't lost.",
     cardDescription:
       "Gym switched platforms? Your old Wodify data still has stories to tell.",
     whyItMatters:

@@ -68,8 +68,17 @@ const BIG_FOUR = [
 // Default placeholder weights per unit
 const DEFAULT_PLACEHOLDER = { kg: "100", lb: "225" };
 
-const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - i);
+// Read per call rather than once per module load, so a tab left open across New
+// Year, and a server process that has been up since last year, both offer the
+// right years.
+function currentYear() {
+  return new Date().getFullYear();
+}
+
+function recentYears() {
+  const latest = currentYear();
+  return Array.from({ length: 10 }, (_, i) => latest - i);
+}
 
 let _entryIdCounter = 0;
 function nextEntryId() {
@@ -81,7 +90,7 @@ function makeEntry(overrides = {}) {
     id: nextEntryId(),
     weight: "",
     reps: "1",
-    year: CURRENT_YEAR - 2,
+    year: currentYear() - 2,
     month: "",
     day: "",
     ...overrides,
@@ -163,7 +172,7 @@ function LiftEntryRow({ entry, onChange, onRemove, canRemove, unit }) {
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
-            {YEARS.map((y) => (
+            {recentYears().map((y) => (
               <SelectItem key={y} value={String(y)}>
                 {y}
               </SelectItem>
@@ -284,30 +293,29 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
         )}
       </button>
 
-      {expanded && (
-        <CardContent
-          id={contentId}
-          className="border-border border-t pt-3 pb-3"
-        >
-          <p className="text-muted-foreground mb-2 text-xs">
-            Weight in {unit}. Reps defaults to 1. Remember the year but not the
-            date? That still counts.
-          </p>
-          {entries.map((entry, idx) => (
-            <LiftEntryRow
-              key={entry.id}
-              entry={entry}
-              onChange={(updated) => updateEntry(idx, updated)}
-              onRemove={() => removeEntry(idx)}
-              canRemove={entries.length > 1}
-              unit={unit}
-            />
-          ))}
-          <Button variant="ghost" size="sm" className="mt-1" onClick={addEntry}>
-            <Plus className="mr-1 h-4 w-4" /> Add another memory
-          </Button>
-        </CardContent>
-      )}
+      <CardContent
+        id={contentId}
+        hidden={!expanded}
+        className="border-border border-t pt-3 pb-3"
+      >
+        <p className="text-muted-foreground mb-2 text-xs">
+          Weight in {unit}. Reps defaults to 1. Remember the year but not the
+          date? That still counts.
+        </p>
+        {entries.map((entry, idx) => (
+          <LiftEntryRow
+            key={entry.id}
+            entry={entry}
+            onChange={(updated) => updateEntry(idx, updated)}
+            onRemove={() => removeEntry(idx)}
+            canRemove={entries.length > 1}
+            unit={unit}
+          />
+        ))}
+        <Button variant="ghost" size="sm" className="mt-1" onClick={addEntry}>
+          <Plus className="mr-1 h-4 w-4" /> Add another memory
+        </Button>
+      </CardContent>
     </Card>
   );
 }
@@ -322,7 +330,7 @@ function BenefitsRow() {
     {
       icon: Trophy,
       title: "Personal Records",
-      desc: "Every PR detected automatically - by lift, reps, and date",
+      desc: "Every PR detected automatically, by lift, reps, and date",
     },
     {
       icon: BarChart3,
@@ -463,6 +471,37 @@ function downloadCsv(csvString, filename) {
   URL.revokeObjectURL(url);
 }
 
+const SEO_TITLE = "Import Your Lifting History - See Your Strength Instantly";
+const SEO_CANONICAL = "https://www.strengthjourneys.xyz/import";
+const SEO_DESCRIPTION =
+  "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own.";
+
+// The loading gate and the page itself both need this, and keeping two copies
+// let them drift over which formats they named.
+function ImportPageSeo() {
+  return (
+    <NextSeo
+      title={SEO_TITLE}
+      description={SEO_DESCRIPTION}
+      canonical={SEO_CANONICAL}
+      openGraph={{
+        url: SEO_CANONICAL,
+        title: SEO_TITLE,
+        description: SEO_DESCRIPTION,
+        type: "website",
+        site_name: "Strength Journeys",
+      }}
+      additionalMetaTags={[
+        {
+          name: "keywords",
+          content:
+            "import Hevy data, import Strong CSV, import StrongLifts 5x5 CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
+        },
+      ]}
+    />
+  );
+}
+
 export default function ImportPage() {
   const { status: authStatus } = useSession();
   const {
@@ -480,6 +519,10 @@ export default function ImportPage() {
   const [saving, setSaving] = useState(false);
 
   const unit = isMetric ? "kg" : "lb";
+  // Sheet details are kept in localStorage so a returning lifter loads without a
+  // flash, and localStorage outlives the session. Anything naming someone's own
+  // file has to ask the session, not the cache.
+  const isAuthenticated = authStatus === "authenticated";
 
   // Lift entries state: { [liftName]: [{ id, weight, reps, year, month, day }] }
   const [liftEntries, setLiftEntries] = useState(() =>
@@ -578,19 +621,7 @@ export default function ImportPage() {
   if (authStatus === "loading" || isReturningUserLoading) {
     return (
       <>
-        <NextSeo
-          title="Import Your Lifting History - See Your Strength Instantly"
-          description="Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own."
-          canonical="https://www.strengthjourneys.xyz/import"
-          openGraph={{
-            url: "https://www.strengthjourneys.xyz/import",
-            title: "Import Your Lifting History - See Your Strength Instantly",
-            description:
-              "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own.",
-            type: "website",
-            site_name: "Strength Journeys",
-          }}
-        />
+        <ImportPageSeo />
         <PageContainer className="py-16 text-center">
           <Loader2 className="text-muted-foreground mx-auto h-8 w-8 animate-spin" />
         </PageContainer>
@@ -600,28 +631,9 @@ export default function ImportPage() {
 
   return (
     <>
-      <NextSeo
-        title="Import Your Lifting History - See Your Strength Instantly"
-        description="Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own."
-        canonical="https://www.strengthjourneys.xyz/import"
-        openGraph={{
-          url: "https://www.strengthjourneys.xyz/import",
-          title: "Import Your Lifting History - See Your Strength Instantly",
-          description:
-            "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own.",
-          type: "website",
-          site_name: "Strength Journeys",
-        }}
-        additionalMetaTags={[
-          {
-            name: "keywords",
-            content:
-              "import Hevy data, import Strong CSV, import StrongLifts 5x5 CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
-          },
-        ]}
-      />
+      <ImportPageSeo />
       <PageContainer>
-        <PageHeader>
+        <PageHeader className="mx-auto w-full max-w-5xl px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0">
           <PageHeaderHeading icon={Upload}>
             {hasUserData || importProfile?.lastSourceId
               ? "Bring Your Training Timeline Up to Date"
@@ -653,7 +665,7 @@ export default function ImportPage() {
           </PageHeaderDescription>
         </PageHeader>
 
-        {sheetInfo?.url && !isImportedData && (
+        {isAuthenticated && sheetInfo?.url && !isImportedData && (
           <div className="border-primary/20 bg-primary/[0.03] mx-auto mb-8 flex max-w-5xl flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border px-4 py-3 text-sm">
             <FileSpreadsheet
               className="h-[22px] w-[22px] shrink-0 text-green-600"
@@ -721,7 +733,7 @@ export default function ImportPage() {
             <p className="text-muted-foreground text-sm">
               That high-school bench. The squat you hit in your mate&apos;s
               garage. The deadlift you still bring up unprompted. If it mattered
-              to you, it belongs in your timeline—even if you only remember the
+              to you, it belongs in your timeline, even if you only remember the
               year.
             </p>
 
@@ -761,7 +773,7 @@ export default function ImportPage() {
         )}
 
         {/* Export Section */}
-        {hasUserData && !isImportedData && (
+        {isAuthenticated && hasUserData && !isImportedData && (
           <section className="mx-auto mb-16 max-w-5xl">
             <div className="mb-4">
               <h2 className="text-lg font-semibold">
@@ -769,7 +781,7 @@ export default function ImportPage() {
               </h2>
               <p className="text-muted-foreground mt-1 max-w-3xl text-sm">
                 Your lifting history lives in a readable Google Sheet in your
-                own Google Drive—not inside a Strength Journeys database.
+                own Google Drive, not inside a Strength Journeys database.
               </p>
             </div>
 

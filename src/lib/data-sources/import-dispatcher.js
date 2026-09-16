@@ -12,6 +12,10 @@ import {
   isFitbodExport,
   parseFitbodData,
 } from "@/lib/data-sources/fitbod-parser";
+import {
+  isFitNotesExport,
+  parseFitNotesData,
+} from "@/lib/data-sources/fitnotes-parser";
 import { parseHevyData } from "@/lib/data-sources/hevy-parser";
 import { parseStrongData } from "@/lib/data-sources/strong-parser";
 import {
@@ -169,6 +173,15 @@ const FORMAT_SIGNATURES = [
     detect: (headers) =>
       headers.includes("user_name") && headers.includes("workout_id"),
     parse: parseTurnKeyData,
+  },
+  {
+    id: "fitnotes",
+    // One flat row per set, with the lifter's unit stated in the weight
+    // header. Ordered ahead of the Strength Journeys signature below, which
+    // would otherwise claim any date/exercise/reps/weight table.
+    name: "FitNotes",
+    detect: isFitNotesExport,
+    parse: parseFitNotesData,
   },
   {
     id: "strength-journeys",

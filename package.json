@@ -13,7 +13,6 @@
     "build:analyze": "next experimental-analyze",
     "start": "next start",
     "lint": "eslint src/",
-    "validate:hevy": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-hevy-importer.mjs",
     "validate:imports": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-hevy-importer.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-lift-names.mjs",
     "postbuild": "NODE_OPTIONS=\"$NODE_OPTIONS --disable-warning=MODULE_TYPELESS_PACKAGE_JSON\" next-sitemap"
   },

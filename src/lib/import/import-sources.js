@@ -8,6 +8,8 @@ const IMPORT_SOURCES = [
   { id: "hevy", name: "Hevy" },
   { id: "strong", name: "Strong" },
   { id: "stronglifts", name: "StrongLifts" },
+  { id: "fitbod", name: "Fitbod" },
+  { id: "fitnotes", name: "FitNotes" },
   { id: "wodify", name: "Wodify" },
   { id: "btwb", name: "BTWB" },
   { id: "turnkey", name: "TurnKey" },

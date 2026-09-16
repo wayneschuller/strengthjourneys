@@ -94,11 +94,11 @@ const FORMAT_SIGNATURES = [
   },
   {
     id: "fitbod",
-    // A silent format: left out of the import app guides, the import source
-    // list and the unrecognized-format message below, so nothing in the app
-    // names it. It only activates when someone drops a Fitbod export in.
-    // Ordered ahead of StrongLifts, whose current layout also accepts a bare
-    // date and exercise pair.
+    // A quiet format: it holds a durable id in the import source list, but
+    // has no app guide and no mention in the unrecognized-format message
+    // below, so nothing in the app offers it. It activates when someone drops
+    // a Fitbod export in. Ordered ahead of StrongLifts, whose current layout
+    // also accepts a bare date and exercise pair.
     name: "Fitbod",
     detect: isFitbodExport,
     parse: parseFitbodData,

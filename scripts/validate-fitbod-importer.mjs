@@ -129,9 +129,9 @@ const deadlifts = parsed.filter((entry) => entry.liftType === "Deadlift");
 assert.equal(deadlifts.length, 1);
 assert.equal(deadlifts[0].date, "2025-08-26");
 
-// Fitbod is left out of the import source list on purpose, so that the picker
-// and the app guides never name it. The durable id has to survive that
-// absence, because the KV import profile keys its per-source history on it.
+// The KV import profile keys a lifter's per-source history on this id, so it
+// has to resolve the same way whether or not Fitbod is offered anywhere in
+// the app.
 const source = getImportSource({ formatId: "fitbod", formatName: "Fitbod" });
 assert.equal(source.id, "fitbod");
 assert.equal(source.name, "Fitbod");

@@ -53,7 +53,10 @@ import {
 } from "@/lib/date-utils";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { getLiftArtwork } from "@/components/lift-artwork";
-import { BIG_FOUR_LIFTS, getStrengthLevelsPath } from "@/lib/lifts/lift-registry";
+import {
+  BIG_FOUR_LIFTS,
+  getStrengthLevelsPath,
+} from "@/lib/lifts/lift-registry";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
@@ -954,6 +957,9 @@ function resolveWorkflowCopy(copy, { sourceAppName, sheetName }) {
  */
 export function ImportWorkflowSection({
   title = null,
+  // /import already says this in its own page heading, so it asks for the
+  // section heading to be left off rather than repeating itself.
+  hideTitle = false,
   description = null,
   sourceAppName = null,
   className = "mx-auto mb-12 max-w-5xl",
@@ -1220,7 +1226,9 @@ export function ImportWorkflowSection({
 
     return (
       <section className={className}>
-        <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
+        {!hideTitle && (
+          <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
+        )}
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8 text-center">
             {merging ? (
@@ -1338,11 +1346,10 @@ export function ImportWorkflowSection({
                           liftCounts[e.liftType] =
                             (liftCounts[e.liftType] || 0) + 1;
                         }
-                        const bigFourMatch = BIG_FOUR_LIFTS
-                          .map((b) => ({
-                            ...b,
-                            count: liftCounts[b.liftType] || 0,
-                          }))
+                        const bigFourMatch = BIG_FOUR_LIFTS.map((b) => ({
+                          ...b,
+                          count: liftCounts[b.liftType] || 0,
+                        }))
                           .filter((b) => b.count > 0)
                           .sort((a, b) => b.count - a.count)[0];
 
@@ -1437,7 +1444,9 @@ export function ImportWorkflowSection({
 
   return (
     <section className={className}>
-      <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
+      {!hideTitle && (
+        <h2 className="mb-4 text-lg font-semibold">{displayTitle}</h2>
+      )}
       {displayDescription && (
         <p className="text-muted-foreground mb-4 max-w-3xl text-sm leading-6">
           {displayDescription}

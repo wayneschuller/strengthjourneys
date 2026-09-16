@@ -325,7 +325,7 @@ function BenefitsRow() {
     {
       icon: Gauge,
       title: "See Where You Rank",
-      desc: "Your squat, bench, and deadlift scored against the general population for your age, sex, and bodyweight",
+      desc: "Squat, bench, and deadlift scored against the general population for your age and bodyweight",
     },
     {
       icon: Target,
@@ -684,7 +684,7 @@ export default function ImportPage() {
         {!hasUserData && !isImportedData && <BenefitsRow />}
 
         {/* File Import Section - always visible, no auth required */}
-        <ImportWorkflowSection />
+        <ImportWorkflowSection hideTitle />
 
         {/* Privacy reassurance */}
         <p className="text-muted-foreground mx-auto -mt-8 mb-12 max-w-5xl text-center text-xs">

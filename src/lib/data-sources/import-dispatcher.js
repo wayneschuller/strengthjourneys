@@ -246,7 +246,7 @@ export async function parseImportedFile(file) {
 
   if (!format) {
     throw new Error(
-      "Unrecognized file format. Supported formats: Hevy export, Strong export, StrongLifts 5x5 export, Wodify export, BTWB export, Strength Journeys CSV export, TurnKey export. " +
+      "Unrecognized file format. Supported formats: Hevy export, Strong export, StrongLifts 5x5 export, Wodify export, BTWB export, Strength Journeys CSV export, TurnKey export, FitNotes export. " +
         "Make sure your file has column headers in the first row.",
     );
   }

@@ -469,7 +469,7 @@ function downloadCsv(csvString, filename) {
 const SEO_TITLE = "Import Your Lifting History - See Your Strength Instantly";
 const SEO_CANONICAL = "https://www.strengthjourneys.xyz/import";
 const SEO_DESCRIPTION =
-  "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own.";
+  "Import workout data from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB, TurnKey, FitNotes, or any spreadsheet. Preview instantly, then merge everything into one Google Sheet you own.";
 
 // The loading gate and the page itself both need this, and keeping two copies
 // let them drift over which formats they named.
@@ -490,7 +490,7 @@ function ImportPageSeo() {
         {
           name: "keywords",
           content:
-            "import Hevy data, import Strong CSV, import StrongLifts 5x5 CSV, import Wodify export, import BTWB CSV, workout data to Google Sheets, strength dashboard",
+            "import Hevy data, import Strong CSV, import StrongLifts 5x5 CSV, import Wodify export, import BTWB CSV, import FitNotes CSV, workout data to Google Sheets, strength dashboard",
         },
       ]}
     />
@@ -644,16 +644,16 @@ export default function ImportPage() {
               <>
                 Last time you used {importProfile.lastSourceName}. Choose a
                 newer export from there, or upload Hevy, Strong, StrongLifts
-                5x5, Wodify, BTWB, TurnKey, or another supported spreadsheet at
-                any time.
+                5x5, Wodify, BTWB, TurnKey, FitNotes, or another supported
+                spreadsheet at any time.
               </>
             ) : (
               <>
                 Choose a file from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB,
-                TurnKey, or any spreadsheet and see your full strength dashboard
-                instantly. Use Strength Journeys as the migration layer for your
-                lifting life: preview first, then merge every export into one
-                Google Sheet you own.
+                TurnKey, FitNotes, or any spreadsheet and see your full strength
+                dashboard instantly. Use Strength Journeys as the migration
+                layer for your lifting life: preview first, then merge every
+                export into one Google Sheet you own.
               </>
             )}
             {authStatus !== "authenticated" && " No account required."}

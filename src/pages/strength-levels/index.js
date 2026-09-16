@@ -193,6 +193,12 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
           description,
           type: "website",
           site_name: "Strength Journeys",
+          images: [
+            {
+              url: "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_og.png",
+              alt: "Strength levels for the big four lifts",
+            },
+          ],
         }}
         additionalMetaTags={[
           {

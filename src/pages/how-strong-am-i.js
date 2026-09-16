@@ -217,6 +217,12 @@ export default function HowStrongAmIPage({ relatedArticles }) {
           title: TITLE,
           description: DESCRIPTION,
           type: "website",
+          images: [
+            {
+              url: "https://www.strengthjourneys.xyz/strength_journeys_how_strong_am_i_og.png",
+              alt: "How Strong Am I strength percentile calculator",
+            },
+          ],
         }}
         additionalMetaTags={[
           {

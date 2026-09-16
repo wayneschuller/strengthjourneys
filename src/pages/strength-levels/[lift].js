@@ -137,6 +137,12 @@ export default function StrengthStandardsLiftPage({ page, relatedArticles }) {
           description: page.description,
           type: "website",
           site_name: "Strength Journeys",
+          images: [
+            {
+              url: `https://www.strengthjourneys.xyz/strength_journeys_${page.slug.replaceAll("-", "_")}_strength_levels_og.png`,
+              alt: page.pageTitle,
+            },
+          ],
         }}
         additionalMetaTags={[
           {

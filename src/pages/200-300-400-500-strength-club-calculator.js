@@ -298,6 +298,12 @@ export default function StrengthClubCalculator({ relatedArticles }) {
           description: description,
           type: "website",
           site_name: "Strength Journeys",
+          images: [
+            {
+              url: "https://www.strengthjourneys.xyz/strength_journeys_200_300_400_500_club_og.png",
+              alt: "200/300/400/500 Strength Club calculator",
+            },
+          ],
         }}
         twitter={{
           handle: "@wayneschuller",

@@ -79,6 +79,12 @@ export default function ProgressGuideHub() {
           description,
           type: "website",
           site_name: "Strength Journeys",
+          images: [
+            {
+              url: "https://www.strengthjourneys.xyz/strength_journeys_progress_guide_og.png",
+              alt: "Lift insights and progress tracking for the big four lifts",
+            },
+          ],
         }}
         additionalMetaTags={[{ name: "keywords", content: keywords }]}
       />

@@ -598,6 +598,12 @@ export default function PlateMilestonesPage({ relatedArticles }) {
           description,
           type: "website",
           site_name: "Strength Journeys",
+          images: [
+            {
+              url: "https://www.strengthjourneys.xyz/strength_journeys_plate_milestones_og.png",
+              alt: "Plate Milestones calculator",
+            },
+          ],
         }}
         twitter={{
           handle: "@wayneschuller",

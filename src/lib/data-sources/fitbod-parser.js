@@ -135,6 +135,14 @@ export function isFitbodExport(headers) {
   );
 }
 
+// Fitbod stores kilograms even for a lifter working in pounds, so a 45 lb bar
+// arrives as 20.41168092460379. Keep two decimals: enough for a half-kilo
+// plate, and short of repeating a conversion artefact back at the lifter. A
+// genuinely metric export rounds to itself.
+function roundImportedWeight(weight) {
+  return typeof weight === "number" ? Math.round(weight * 100) / 100 : weight;
+}
+
 // Parse Fitbod workout CSV exports.
 export function parseFitbodData(data, { importedAt = new Date() } = {}) {
   const startTime = performance.now();
@@ -217,7 +225,7 @@ export function parseFitbodData(data, { importedAt = new Date() } = {}) {
       liftType,
       rawLiftType: String(row[exerciseColumnIndex] || "").trim() || undefined,
       reps,
-      weight,
+      weight: roundImportedWeight(weight),
       unitType: "kg",
       notes: buildNotes(
         time,

@@ -31,11 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Upload,
   Plus,
   Trash2,
@@ -364,47 +359,39 @@ function BenefitsRow() {
 function ImportSeoLinksSection() {
   return (
     <section className="mx-auto mb-12 max-w-5xl">
-      <Collapsible defaultOpen className="rounded-xl border">
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="group hover:bg-muted/30 flex w-full items-center gap-4 rounded-xl px-4 py-4 text-left transition-colors sm:px-5"
-          >
-            <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
-              <Download className="text-muted-foreground h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="font-semibold">
-                Export from Hevy, Strong, Wodify &amp; More
-              </h2>
-              <p className="text-muted-foreground mt-0.5 text-sm">
-                Two-minute guides for Hevy, Strong, StrongLifts 5x5, Wodify, and
-                BTWB.
-              </p>
-            </div>
-            <ChevronDown className="text-muted-foreground h-5 w-5 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="border-border grid gap-3 border-t p-4 sm:grid-cols-2 sm:p-5">
-            {IMPORT_APP_PAGES.map((page) => (
-              <Link
-                key={page.slug}
-                href={`/import/${page.slug}`}
-                className="hover:border-primary/40 hover:bg-muted/30 group flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors"
-              >
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold">{page.appName}</h3>
-                  <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
-                    {page.cardDescription}
-                  </p>
-                </div>
-                <ArrowRight className="text-muted-foreground group-hover:text-foreground h-4 w-4 shrink-0 transition-colors" />
-              </Link>
-            ))}
+      <div className="rounded-xl border">
+        <div className="flex w-full items-center gap-4 px-4 py-4 sm:px-5">
+          <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+            <Download className="text-muted-foreground h-5 w-5" />
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold">
+              Export from Hevy, Strong, Wodify &amp; More
+            </h2>
+            <p className="text-muted-foreground mt-0.5 text-sm">
+              Two-minute guides for Hevy, Strong, StrongLifts 5x5, Wodify, and
+              BTWB.
+            </p>
+          </div>
+        </div>
+        <div className="border-border grid gap-3 border-t p-4 sm:grid-cols-2 sm:p-5">
+          {IMPORT_APP_PAGES.map((page) => (
+            <Link
+              key={page.slug}
+              href={`/import/${page.slug}`}
+              className="hover:border-primary/40 hover:bg-muted/30 group flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors"
+            >
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold">{page.appName}</h3>
+                <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
+                  {page.cardDescription}
+                </p>
+              </div>
+              <ArrowRight className="text-muted-foreground group-hover:text-foreground h-4 w-4 shrink-0 transition-colors" />
+            </Link>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

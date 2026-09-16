@@ -599,17 +599,13 @@ export default function ImportPage() {
     }
   }, [validEntries, sheetInfo, mutate, toast]);
 
-  // Loading gate - prevent flash for returning users
-  if (authStatus === "loading" || isReturningUserLoading) {
-    return (
-      <>
-        <ImportPageSeo />
-        <PageContainer className="py-16 text-center">
-          <Loader2 className="text-muted-foreground mx-auto h-8 w-8 animate-spin" />
-        </PageContainer>
-      </>
-    );
-  }
+  // The whole page renders on the server, since almost none of it depends on
+  // who is signed in. The session and stored sheet are unknown until after
+  // mount, so the first render is the first-visit page. isReturningUserLoading
+  // flips before paint for someone with a stored sheet, so the first-visit
+  // heading and benefits row never flash for them.
+  const showReturningCopy =
+    hasUserData || importProfile?.lastSourceId || isReturningUserLoading;
 
   return (
     <>
@@ -617,12 +613,12 @@ export default function ImportPage() {
       <PageContainer>
         <PageHeader className="mx-auto w-full max-w-5xl px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0">
           <PageHeaderHeading icon={Upload}>
-            {hasUserData || importProfile?.lastSourceId
+            {showReturningCopy
               ? "Bring Your Training Timeline Up to Date"
               : "Your Lifting Data is Trapped. Let's Fix That."}
           </PageHeaderHeading>
           <PageHeaderDescription>
-            {hasUserData ? (
+            {hasUserData || isReturningUserLoading ? (
               <>
                 Choose a newer workout export and preview the changes before
                 merging them into the Google Sheet you already own.
@@ -643,7 +639,9 @@ export default function ImportPage() {
                 export into one Google Sheet you own.
               </>
             )}
-            {authStatus !== "authenticated" && " No account required."}
+            {authStatus !== "authenticated" &&
+              !isReturningUserLoading &&
+              " No account required."}
           </PageHeaderDescription>
         </PageHeader>
 
@@ -668,7 +666,7 @@ export default function ImportPage() {
         )}
 
         {/* Value proposition - show what they'll get before asking for a file */}
-        {!hasUserData && !isImportedData && <BenefitsRow />}
+        {!showReturningCopy && !isImportedData && <BenefitsRow />}
 
         {/* File Import Section - always visible, no auth required */}
         <ImportWorkflowSection hideTitle />

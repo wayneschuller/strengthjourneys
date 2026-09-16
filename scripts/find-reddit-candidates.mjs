@@ -39,7 +39,10 @@ const LIFTS = [
   ["Bench Press", /\bbench(?:\s*press)?\b/i],
   ["Back Squat", /\b(?:back\s*)?squat\b/i],
   ["Deadlift", /\b(?:dead\s*lift|deadlift|dl)\b/i],
-  ["Strict Press", /\b(?:strict\s*press|overhead\s*press|ohp|military\s*press)\b/i],
+  [
+    "Strict Press",
+    /\b(?:strict\s*press|overhead\s*press|ohp|military\s*press|shoulder\s*press)\b/i,
+  ],
 ];
 
 /**
@@ -133,11 +136,23 @@ export function findSet(text, bodyWeight = null) {
   }
 
   // The stated bodyweight also looks like a bare load, as in "196lb body weight 315lb".
+  // Only the first load that matches it is skipped, and only when the units
+  // agree, so "100 kg BW, benched 100 kg" still reports the bench. An unlabelled
+  // bodyweight, as in "185 BW", has no unit to compare and falls back to value.
+  let skippedBodyWeight = false;
   for (const bare of text.matchAll(BARE_LOAD_RE)) {
     const weight = Number(bare[1]);
-    if (weight === bodyWeight?.value) continue;
+    const unit = normaliseUnit(bare[2], weight);
+    const isBodyWeight =
+      bodyWeight != null &&
+      weight === bodyWeight.value &&
+      (bodyWeight.unit === "?" || unit === bodyWeight.unit);
+    if (isBodyWeight && !skippedBodyWeight) {
+      skippedBodyWeight = true;
+      continue;
+    }
     if (weight >= 20 && weight <= 1000) {
-      return { weight, reps: 1, unit: normaliseUnit(bare[2], weight), assumedReps: true };
+      return { weight, reps: 1, unit, assumedReps: true };
     }
   }
   return null;

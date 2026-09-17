@@ -8,7 +8,7 @@
  * ever formats and echoes back display values.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { RotateCcw, Sparkles, Upload } from "lucide-react";
@@ -78,6 +78,8 @@ export function HowStrongStoryPanel({
     bodyWeight,
     setBodyWeight,
     isMetric,
+    bioDataIsDefault,
+    bioDataIsInitialized,
   } = useAthleteBio();
   const prefersReducedMotion = useReducedMotion();
 
@@ -85,6 +87,24 @@ export function HowStrongStoryPanel({
   // someone we know nothing about, so without a log to read from each lift waits
   // until its own slider has been set before it earns a rating.
   const [movedLifts, setMovedLifts] = useState({});
+  const [touchedBio, setTouchedBio] = useState({ age: false, bodyWeight: false });
+  const [allowBioHint, setAllowBioHint] = useState(false);
+  const bioHintDecidedRef = useRef(false);
+
+  // Decide once bio has hydrated: a saved profile should never pulse, but
+  // changing age later must not also silence bodyweight.
+  useEffect(() => {
+    if (bioHintDecidedRef.current || !bioDataIsInitialized) return;
+    bioHintDecidedRef.current = true;
+    setAllowBioHint(bioDataIsDefault);
+  }, [bioDataIsDefault, bioDataIsInitialized]);
+
+  // Anonymous example-athlete visit: breathe the handles until each one is used.
+  // A log, a saved bio, or reduced motion all mean they do not need the hint.
+  const invitePlay = !usingUserData && !prefersReducedMotion;
+  const hintAge = invitePlay && allowBioHint && !touchedBio.age;
+  const hintBodyWeight = invitePlay && allowBioHint && !touchedBio.bodyWeight;
+  const hintBench = invitePlay && !movedLifts.bench;
 
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
@@ -173,12 +193,17 @@ export function HowStrongStoryPanel({
               </div>
               <Slider
                 id="story-age-slider"
-                className="mt-2"
+                className={cn("mt-2", hintAge && "slider-thumb-hint")}
                 min={13}
                 max={100}
                 step={1}
                 value={[age]}
-                onValueChange={([value]) => setAge(value)}
+                onValueChange={([value]) => {
+                  setTouchedBio((previous) =>
+                    previous.age ? previous : { ...previous, age: true },
+                  );
+                  setAge(value);
+                }}
                 aria-label="Age"
               />
             </div>
@@ -219,12 +244,22 @@ export function HowStrongStoryPanel({
               </div>
               <Slider
                 id="story-bodyweight-slider"
-                className="mt-2"
+                className={cn(
+                  "mt-2",
+                  hintBodyWeight && "slider-thumb-hint slider-thumb-hint-delay-1",
+                )}
                 min={isMetric ? 40 : 90}
                 max={isMetric ? 180 : 400}
                 step={1}
                 value={[bodyWeight]}
-                onValueChange={([value]) => setBodyWeight(value)}
+                onValueChange={([value]) => {
+                  setTouchedBio((previous) =>
+                    previous.bodyWeight
+                      ? previous
+                      : { ...previous, bodyWeight: true },
+                  );
+                  setBodyWeight(value);
+                }}
                 aria-label="Bodyweight"
               />
             </div>
@@ -326,6 +361,11 @@ export function HowStrongStoryPanel({
                     <div className="relative mt-2 pb-5">
                       <Slider
                         value={[liftWeights[key]]}
+                        className={
+                          key === "bench" && hintBench
+                            ? "slider-thumb-hint slider-thumb-hint-delay-2"
+                            : undefined
+                        }
                         onValueChange={([value]) => {
                           // Snap to a PR or 90-day marker when within one step
                           if (

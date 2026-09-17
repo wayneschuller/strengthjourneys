@@ -82,10 +82,9 @@ export function HowStrongStoryPanel({
   const prefersReducedMotion = useReducedMotion();
 
   // Calling a stranger's example numbers "Beginner" on arrival is a verdict on
-  // someone we know nothing about, so without a log to read from we wait until
-  // they have set a lift themselves before rating it.
-  const [hasMovedLiftSlider, setHasMovedLiftSlider] = useState(false);
-  const showRatings = usingUserData || hasMovedLiftSlider;
+  // someone we know nothing about, so without a log to read from each lift waits
+  // until its own slider has been set before it earns a rating.
+  const [movedLifts, setMovedLifts] = useState({});
 
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
@@ -257,18 +256,20 @@ export function HowStrongStoryPanel({
                 r90Weight !== prWeight;
 
               const liftResult = results?.lifts?.[key];
+              const showRating = usingUserData || movedLifts[key];
               const rating =
-                showRatings && liftResult?.standard
+                showRating && liftResult?.standard
                   ? getStrengthRatingForE1RM(
                       toKg(liftWeights[key], isMetric),
                       liftResult.standard,
                     )
                   : null;
               const strengthLevelsPath = getStrengthLevelsPath(label);
-              const liftPercentile = liftResult?.percentiles?.[activeUniverse];
 
               const commitLift = (value) => {
-                setHasMovedLiftSlider(true);
+                setMovedLifts((previous) =>
+                  previous[key] ? previous : { ...previous, [key]: true },
+                );
                 onLiftChange(key, normalizeLiftWeight(value, isMetric));
               };
 
@@ -358,20 +359,13 @@ export function HowStrongStoryPanel({
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      {rating && (
-                        <RatingBadge
-                          rating={rating}
-                          href={strengthLevelsPath}
-                          liftLabel={label}
-                        />
-                      )}
-                      {liftPercentile != null && (
-                        <span className="text-xs text-muted-foreground">
-                          {ordinal(liftPercentile)} percentile
-                        </span>
-                      )}
-                    </div>
+                    {rating && (
+                      <RatingBadge
+                        rating={rating}
+                        href={strengthLevelsPath}
+                        liftLabel={label}
+                      />
+                    )}
                   </div>
                 </motion.div>
               );

@@ -210,6 +210,7 @@ export function HowStrongStoryPanel({
                   max={100}
                   step={1}
                   value={[age]}
+                  tooltip={age}
                   onValueChange={([value]) => {
                     setTouchedBio((previous) =>
                       previous.age ? previous : { ...previous, age: true },
@@ -256,6 +257,7 @@ export function HowStrongStoryPanel({
                 max={isMetric ? 180 : 400}
                 step={1}
                 value={[bodyWeight]}
+                tooltip={`${bodyWeight} ${unit}`}
                 onValueChange={([value]) => {
                   setTouchedBio((previous) =>
                     previous.bodyWeight
@@ -366,6 +368,7 @@ export function HowStrongStoryPanel({
                     <div className="relative mt-2 pb-5">
                       <Slider
                         value={[liftWeights[key]]}
+                        tooltip={`${liftWeights[key]} ${unit}`}
                         className={
                           key === "bench" && hintBench
                             ? "slider-thumb-hint slider-thumb-hint-delay-2"

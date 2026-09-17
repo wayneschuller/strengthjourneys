@@ -253,6 +253,7 @@ function HowStrongAmIPageMain() {
   const hasExplicitQueryRef = useRef(false);
   const queryHydratedRef = useRef(false);
   const previousBioSignatureRef = useRef(null);
+  const [hasArrivalLiftQuery, setHasArrivalLiftQuery] = useState(false);
 
   // URL values are stored in the displayed unit so shared links remain readable.
   // Explicit URL values take precedence over logged-in auto-population.
@@ -271,6 +272,7 @@ function HowStrongAmIPageMain() {
 
     if (Object.keys(queryWeights).length > 0) {
       hasExplicitQueryRef.current = true;
+      setHasArrivalLiftQuery(true);
       setLiftWeightsKg((previous) => ({ ...previous, ...queryWeights }));
     }
 
@@ -721,6 +723,8 @@ function HowStrongAmIPageMain() {
                 onResetTo90d={handleResetTo90d}
                 onUnitChange={handleUnitSwitch}
                 usingUserData={usingUserData}
+                queryHydrated={queryHydrated}
+                hasArrivalLiftQuery={hasArrivalLiftQuery}
                 prWeights={prWeightsDisplay}
                 recent90d={recent90dDisplay}
                 results={results}

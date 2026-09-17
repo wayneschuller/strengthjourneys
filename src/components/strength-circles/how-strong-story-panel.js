@@ -62,6 +62,8 @@ export function HowStrongStoryPanel({
   onResetTo90d,
   onUnitChange,
   usingUserData,
+  queryHydrated = false,
+  hasArrivalLiftQuery = false,
   prWeights,
   recent90d,
   results,
@@ -100,9 +102,15 @@ export function HowStrongStoryPanel({
     setAllowBioHint(bioDataIsDefault);
   }, [bioDataIsDefault, bioDataIsInitialized]);
 
-  // No log: invite play. Bio thumbs only join in if this browser has never
-  // set a profile; bench still breathes because the lifts are still an example.
-  const invitePlay = !usingUserData && !prefersReducedMotion;
+  // No log, no arrival URL, no saved bio: invite play. Wait until the URL has
+  // been read so a shared link cannot flash a pulse then snatch it away.
+  // Bio thumbs stay still when this browser already has a profile, or when the
+  // URL already supplied lift numbers — both count as engagement.
+  const invitePlay =
+    queryHydrated &&
+    !usingUserData &&
+    !hasArrivalLiftQuery &&
+    !prefersReducedMotion;
   const hintAge = invitePlay && allowBioHint && !touchedBio.age;
   const hintBodyWeight = invitePlay && allowBioHint && !touchedBio.bodyWeight;
   const hintBench = invitePlay && !movedLifts.bench;

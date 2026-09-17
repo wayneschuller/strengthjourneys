@@ -1,27 +1,26 @@
 /**
  * First-person story panel for How Strong Am I.
- * Bio and lifts read as editable sentences so visitors customize a narrative
- * instead of filling a settings form. Bench leads; squat and deadlift follow.
+ * The sentences are the readout and the sliders are the input: drag anything and
+ * the prose plus the rings move together. Deliberately no typed number fields —
+ * every other tool here is slider-and-toggle because that is what works on a
+ * phone. Bench leads; squat and deadlift follow.
  * Weights arrive already converted to the displayed unit, so this file only
  * ever formats and echoes back display values.
  */
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeftRight, RotateCcw, Sparkles, Upload } from "lucide-react";
+import { RotateCcw, Sparkles, Upload } from "lucide-react";
 
 import { LiftArtwork } from "@/components/lift-artwork";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
+import { UnitChooser } from "@/components/unit-type-chooser";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import {
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,
@@ -51,11 +50,6 @@ const STORY_LIFTS = [
   },
 ];
 
-// Shared chip look for every editable value in the story, so a visitor can see
-// at a glance which words are theirs to change.
-const BLANK_CLASSES =
-  "mx-0.5 rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-foreground ring-1 ring-inset ring-primary/25 transition-colors hover:bg-primary/20 hover:ring-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
-
 const STORY_LINK_CLASSES =
   "font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline";
 
@@ -82,7 +76,6 @@ export function HowStrongStoryPanel({
     bodyWeight,
     setBodyWeight,
     isMetric,
-    bioDataIsDefault,
   } = useAthleteBio();
   const prefersReducedMotion = useReducedMotion();
 
@@ -113,16 +106,9 @@ export function HowStrongStoryPanel({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="border-b bg-muted/30 pb-4">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <CardTitle className="text-lg">My strength story</CardTitle>
-            <CardDescription className="mt-1">
-              {bioDataIsDefault
-                ? "Example numbers for now. Change any of them to make the rings yours."
-                : "Change any highlighted number and the rings react instantly."}
-            </CardDescription>
-          </div>
+      <CardHeader className="pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="text-lg">My strength story</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             {hasMovedFromPR && (
               <Button
@@ -157,43 +143,86 @@ export function HowStrongStoryPanel({
       </CardHeader>
 
       <CardContent className="flex flex-col gap-7 pt-6">
-        <p className="text-lg leading-relaxed sm:text-xl">
-          I am a
-          <StoryNumberBlank
-            value={age}
-            onChange={(value) => setAge(Math.round(value))}
-            ariaLabel="Age"
-            min={13}
-            max={90}
-            step={1}
-            widthCh={3}
-          />
-          year-old
-          <SexBlank sex={sex} onChange={setSex} />
-          athlete weighing
-          <span className="whitespace-nowrap">
-            <StoryNumberBlank
-              value={bodyWeight}
-              onChange={(value) => setBodyWeight(Math.round(value))}
-              ariaLabel="Bodyweight"
-              min={isMetric ? 30 : 66}
-              max={isMetric ? 250 : 550}
-              step={1}
-              widthCh={4}
-            />
-            <button
-              type="button"
-              onClick={() => onUnitChange(!isMetric)}
-              className={cn(BLANK_CLASSES, "inline-flex items-center gap-1")}
-              aria-label={`Switch to ${isMetric ? "pounds" : "kilograms"}`}
-              title={`Switch to ${isMetric ? "pounds" : "kilograms"}`}
-            >
+        <div className="flex flex-col gap-3">
+          <p className="text-lg leading-relaxed sm:text-xl">
+            I am a <StoryValue>{age}</StoryValue> year-old{" "}
+            <StoryValue>{sex}</StoryValue> weighing{" "}
+            <StoryValue className="whitespace-nowrap">
+              {bodyWeight}
               {unit}
-              <ArrowLeftRight className="h-3 w-3 text-muted-foreground" />
-            </button>
+            </StoryValue>
             .
-          </span>
-        </p>
+          </p>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
+            <div className="flex-1">
+              <div className="flex h-9 items-center">
+                <Label
+                  htmlFor="story-age-slider"
+                  className="text-xs font-normal text-muted-foreground"
+                >
+                  Age
+                </Label>
+              </div>
+              <Slider
+                id="story-age-slider"
+                className="mt-2"
+                min={13}
+                max={100}
+                step={1}
+                value={[age]}
+                onValueChange={([value]) => setAge(value)}
+                aria-label="Age"
+              />
+            </div>
+
+            <div className="shrink-0">
+              <div className="flex h-9 items-center">
+                <Label className="text-xs font-normal text-muted-foreground">
+                  Sex
+                </Label>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-sm font-semibold text-muted-foreground">
+                  M
+                </span>
+                <Switch
+                  aria-label="Sex"
+                  checked={sex === "female"}
+                  onCheckedChange={(checked) =>
+                    setSex(checked ? "female" : "male")
+                  }
+                  className="data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500"
+                />
+                <span className="text-sm font-semibold text-muted-foreground">
+                  F
+                </span>
+              </div>
+            </div>
+
+            <div className="flex-1">
+              <div className="flex h-9 items-center justify-between gap-2">
+                <Label
+                  htmlFor="story-bodyweight-slider"
+                  className="text-xs font-normal text-muted-foreground"
+                >
+                  Bodyweight
+                </Label>
+                <UnitChooser isMetric={isMetric} onSwitchChange={onUnitChange} />
+              </div>
+              <Slider
+                id="story-bodyweight-slider"
+                className="mt-2"
+                min={isMetric ? 40 : 90}
+                max={isMetric ? 180 : 400}
+                step={1}
+                value={[bodyWeight]}
+                onValueChange={([value]) => setBodyWeight(value)}
+                aria-label="Bodyweight"
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="flex flex-col gap-4">
           {STORY_LIFTS.map(({ key, label, linkText, href }, index) => {
@@ -253,7 +282,7 @@ export function HowStrongStoryPanel({
                     href={href}
                     tabIndex={-1}
                     aria-hidden
-                    className="flex w-28 shrink-0 justify-center sm:w-32"
+                    className="flex w-24 shrink-0 justify-center sm:w-28"
                   >
                     <LiftArtwork
                       liftType={label}
@@ -273,19 +302,12 @@ export function HowStrongStoryPanel({
                       >
                         {linkText}
                       </Link>{" "}
-                      is
-                      <span className="whitespace-nowrap">
-                        <StoryNumberBlank
-                          value={liftWeights[key]}
-                          onChange={commitLift}
-                          ariaLabel={`${label} one rep max`}
-                          min={min}
-                          max={max}
-                          step={step}
-                          widthCh={isMetric ? 5 : 4}
-                        />
-                        <span className="text-muted-foreground">{unit}</span>.
-                      </span>
+                      is{" "}
+                      <StoryValue className="whitespace-nowrap">
+                        {liftWeights[key]}
+                        {unit}
+                      </StoryValue>
+                      .
                     </p>
 
                     <div className="relative mt-2 pb-5">
@@ -347,7 +369,7 @@ export function HowStrongStoryPanel({
 
         {results?.hasAllThree && results.total && (
           <>
-            <div className="flex items-end justify-between gap-4 rounded-xl border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-4 py-3">
+            <div className="flex items-end justify-between gap-4 rounded-xl border px-4 py-3">
               <div>
                 <p className="text-sm text-muted-foreground">
                   Squat + bench + deadlift
@@ -381,7 +403,7 @@ export function HowStrongStoryPanel({
         {historySlot}
 
         {showImportTeaser && !historySlot && (
-          <div className="rounded-xl border bg-muted/30 p-4">
+          <div className="rounded-xl border p-4">
             <p className="text-base font-semibold">Make this real</p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               These numbers are a guess until your training log fills them.
@@ -411,51 +433,12 @@ export function HowStrongStoryPanel({
   );
 }
 
-function StoryNumberBlank({
-  value,
-  onChange,
-  ariaLabel,
-  min,
-  max,
-  step = 1,
-  widthCh = 4,
-}) {
+/** A value inside the prose. Bold and nothing else — the control below it is the affordance. */
+function StoryValue({ children, className }) {
   return (
-    <input
-      type="number"
-      inputMode="decimal"
-      value={value}
-      min={min}
-      max={max}
-      step={step}
-      aria-label={ariaLabel}
-      onChange={(event) => {
-        const raw = event.target.value;
-        if (raw === "") return;
-        const parsed = Number(raw);
-        if (Number.isNaN(parsed)) return;
-        onChange(parsed);
-      }}
-      className={cn(
-        BLANK_CLASSES,
-        "inline-block appearance-none border-0 text-center tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-      )}
-      style={{ width: `calc(${widthCh}ch + 1.25rem)` }}
-    />
-  );
-}
-
-function SexBlank({ sex, onChange }) {
-  return (
-    <select
-      value={sex}
-      aria-label="Sex"
-      onChange={(event) => onChange(event.target.value)}
-      className={cn(BLANK_CLASSES, "cursor-pointer appearance-none border-0")}
-    >
-      <option value="male">male</option>
-      <option value="female">female</option>
-    </select>
+    <strong className={cn("font-bold tabular-nums", className)}>
+      {children}
+    </strong>
   );
 }
 

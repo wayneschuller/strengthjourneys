@@ -660,14 +660,14 @@ function HowStrongAmIPageMain() {
 
   return (
     <PageContainer>
-      <PageHeader>
+      <PageHeader className="pb-0 md:pb-8">
         <PageHeaderHeading icon={CircleDashed}>How Strong Am I?</PageHeaderHeading>
         <PageHeaderDescription>
           Strength Percentile Calculator — see how you rank across four groups,
           from the general population to competitive powerlifters.
         </PageHeaderDescription>
-        <PageHeaderRight>
-          <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
+        <PageHeaderRight className="hidden md:flex">
+          <div className="flex flex-col gap-2 text-muted-foreground xl:flex-row">
             <Link
               prefetch={false}
               href="/strength-levels"
@@ -692,8 +692,8 @@ function HowStrongAmIPageMain() {
         </PageHeaderRight>
       </PageHeader>
 
-      <Card className="mt-4">
-        <CardContent className="pt-5">
+      <Card className="mt-0 md:mt-4">
+        <CardContent className="px-3 pt-0 pb-4 sm:p-6 sm:pt-5">
           <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
             <div className="flex w-full max-w-md flex-col items-center gap-4 lg:order-1 lg:flex-1 lg:max-w-none">
               <div className="w-full max-w-xl xl:max-w-2xl">

@@ -3,7 +3,8 @@
  * The sentences are the readout and the sliders are the input: drag anything and
  * the prose plus the rings move together. Deliberately no typed number fields —
  * every other tool here is slider-and-toggle because that is what works on a
- * phone. Bench leads; squat and deadlift follow.
+ * phone. Bench leads; squat and deadlift follow. Lives on the same surface as
+ * the rings — no nested card — so the two columns read as one instrument.
  * Weights arrive already converted to the displayed unit, so this file only
  * ever formats and echoes back display values.
  */
@@ -18,7 +19,6 @@ import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -143,15 +143,14 @@ export function HowStrongStoryPanel({
     hasMovedFromPR || hasMovedFrom90d || usingUserData;
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader
+    <div className="flex flex-col gap-4 sm:gap-7">
+      <div
         className={cn(
-          "px-4 py-3 sm:p-6 sm:pb-4",
+          "flex flex-wrap items-center justify-between gap-2",
           !showStoryHeader && "hidden sm:flex",
         )}
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-lg">My strength story</CardTitle>
+          <h2 className="text-lg font-semibold">My strength story</h2>
           <div className="flex flex-wrap items-center gap-2">
             {hasMovedFromPR && (
               <Button
@@ -182,11 +181,9 @@ export function HowStrongStoryPanel({
               </Badge>
             )}
           </div>
-        </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex flex-col gap-4 px-4 pt-4 pb-4 sm:gap-7 sm:p-6 sm:pt-6">
-        <div className="flex flex-col gap-2 sm:gap-3">
+      <div className="flex flex-col gap-2 sm:gap-3">
           <p className="text-lg leading-snug sm:text-xl sm:leading-relaxed">
             I am a <StoryValue>{age}</StoryValue> year-old{" "}
             <StoryValue>{sex}</StoryValue> weighing{" "}
@@ -500,8 +497,7 @@ export function HowStrongStoryPanel({
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 

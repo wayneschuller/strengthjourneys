@@ -270,6 +270,10 @@ export function StrengthCirclesChart({
     percentiles,
     revealProgressively,
   );
+  // The specialisation line is noise until Barbell Lifters (the third ring)
+  // is actually on the board.
+  const showSpecialisationLine =
+    showTrustLine && unlockedUniverses.has(RING_CONFIG[2].universe);
 
   return (
     <div className="flex flex-col">
@@ -307,7 +311,7 @@ export function StrengthCirclesChart({
         />
       )}
 
-      {showTrustLine && (
+      {showSpecialisationLine && (
         <p className="mt-2 text-center text-[11px] text-muted-foreground">
           As the groups become more specialised, the comparison becomes tougher.
         </p>

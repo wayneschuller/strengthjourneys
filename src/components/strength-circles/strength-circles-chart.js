@@ -58,9 +58,9 @@ const RING_CONFIG = [
 const VIEWBOX_SIZE = 360;
 const CENTER = VIEWBOX_SIZE / 2; // 180
 
-// Halfway through the outer group is the unlock. Exactly 50 counts: the
-// milestone is "half of these people", not 51.
-const UNLOCK_PERCENTILE = 50;
+// Two-thirds of the group outside this ring. 66 not 67 because the model
+// rounds to integers and "beat two thirds" should count on the number we show.
+const UNLOCK_PERCENTILE = 66;
 
 function getUnlockedUniverses(percentiles, revealProgressively) {
   if (!revealProgressively) {

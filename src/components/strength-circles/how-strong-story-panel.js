@@ -8,6 +8,7 @@
  * ever formats and echoes back display values.
  */
 
+import { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { RotateCcw, Sparkles, Upload } from "lucide-react";
@@ -26,6 +27,7 @@ import {
   STRENGTH_LEVEL_EMOJI,
   useAthleteBio,
 } from "@/hooks/use-athlete-biodata";
+import { getStrengthLevelsPath } from "@/lib/lifts/lift-registry";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +80,12 @@ export function HowStrongStoryPanel({
     isMetric,
   } = useAthleteBio();
   const prefersReducedMotion = useReducedMotion();
+
+  // Calling a stranger's example numbers "Beginner" on arrival is a verdict on
+  // someone we know nothing about, so without a log to read from we wait until
+  // they have set a lift themselves before rating it.
+  const [hasMovedLiftSlider, setHasMovedLiftSlider] = useState(false);
+  const showRatings = usingUserData || hasMovedLiftSlider;
 
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
@@ -249,16 +257,20 @@ export function HowStrongStoryPanel({
                 r90Weight !== prWeight;
 
               const liftResult = results?.lifts?.[key];
-              const rating = liftResult?.standard
-                ? getStrengthRatingForE1RM(
-                    toKg(liftWeights[key], isMetric),
-                    liftResult.standard,
-                  )
-                : null;
+              const rating =
+                showRatings && liftResult?.standard
+                  ? getStrengthRatingForE1RM(
+                      toKg(liftWeights[key], isMetric),
+                      liftResult.standard,
+                    )
+                  : null;
+              const strengthLevelsPath = getStrengthLevelsPath(label);
               const liftPercentile = liftResult?.percentiles?.[activeUniverse];
 
-              const commitLift = (value) =>
+              const commitLift = (value) => {
+                setHasMovedLiftSlider(true);
                 onLiftChange(key, normalizeLiftWeight(value, isMetric));
+              };
 
               return (
                 <motion.div
@@ -348,12 +360,11 @@ export function HowStrongStoryPanel({
 
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       {rating && (
-                        <Badge
-                          variant={getRatingBadgeVariant(rating)}
-                          className="text-xs"
-                        >
-                          {STRENGTH_LEVEL_EMOJI[rating]} {rating}
-                        </Badge>
+                        <RatingBadge
+                          rating={rating}
+                          href={strengthLevelsPath}
+                          liftLabel={label}
+                        />
                       )}
                       {liftPercentile != null && (
                         <span className="text-xs text-muted-foreground">
@@ -430,6 +441,28 @@ export function HowStrongStoryPanel({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/** Strength level for one lift, linking to that lift's own standards page. */
+function RatingBadge({ rating, href, liftLabel }) {
+  const badge = (
+    <Badge variant={getRatingBadgeVariant(rating)} className="text-xs">
+      {STRENGTH_LEVEL_EMOJI[rating]} {rating}
+    </Badge>
+  );
+
+  if (!href) return badge;
+
+  return (
+    <Link
+      prefetch={false}
+      href={href}
+      title={`See all ${liftLabel} strength levels`}
+      className="rounded-full transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      {badge}
+    </Link>
   );
 }
 

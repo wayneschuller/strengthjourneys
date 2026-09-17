@@ -5,11 +5,17 @@
  * Rings are pure SVG; center label is an HTML overlay (enables text wrapping +
  * proper font rendering). Animated via motion/react. Geometry fills the viewBox
  * without clipping: outer radius + half stroke (+ active boost) stays inside.
+ *
+ * First-visit tutorial: when revealProgressively is on, only General Population
+ * is filled. Each inner ring stays a ghost track until the ring outside it
+ * reaches UNLOCK_PERCENTILE, so the specialised groups arrive as a reward
+ * rather than a finished diagram.
  */
 
 import { motion, AnimatePresence } from "motion/react";
 
 import { CountUp, formatCountUpInteger } from "@/components/count-up";
+import { cn } from "@/lib/utils";
 
 // Ring definitions — outer → inner.
 // strokeWidth increases slightly inward so inner rings don't feel secondary.
@@ -52,6 +58,24 @@ const RING_CONFIG = [
 const VIEWBOX_SIZE = 360;
 const CENTER = VIEWBOX_SIZE / 2; // 180
 
+// Halfway through the outer group is the unlock. Exactly 50 counts: the
+// milestone is "half of these people", not 51.
+const UNLOCK_PERCENTILE = 50;
+
+function getUnlockedUniverses(percentiles, revealProgressively) {
+  if (!revealProgressively) {
+    return new Set(RING_CONFIG.map((ring) => ring.universe));
+  }
+
+  const unlocked = new Set([RING_CONFIG[0].universe]);
+  for (let i = 0; i < RING_CONFIG.length - 1; i++) {
+    const previous = percentiles?.[RING_CONFIG[i].universe];
+    if (previous == null || previous < UNLOCK_PERCENTILE) break;
+    unlocked.add(RING_CONFIG[i + 1].universe);
+  }
+  return unlocked;
+}
+
 // Outer edge when active ≈ 162 + (21+3)/2 = 174 — a few units of viewBox padding.
 // Inner clear radius ≈ 84 − 12 = 72 → room for the CountUp center label.
 
@@ -62,10 +86,11 @@ function percentileToOffset(percentile, radius) {
 
 // ─── Single ring ──────────────────────────────────────────────────────────────
 
-function Ring({ config, percentile, isActive, onClick, onHoverChange }) {
+function Ring({ config, percentile, isActive, unlocked, onClick, onHoverChange }) {
   const { radius, strokeWidth, color } = config;
   const circumference = 2 * Math.PI * radius;
-  const offset = percentileToOffset(percentile, radius);
+  const fillPercentile = unlocked ? percentile : 0;
+  const offset = percentileToOffset(fillPercentile, radius);
 
   return (
     <g
@@ -74,15 +99,20 @@ function Ring({ config, percentile, isActive, onClick, onHoverChange }) {
       onMouseLeave={() => onHoverChange(null)}
       style={{ cursor: "pointer" }}
       role="button"
-      aria-label={`${config.universe}: ${percentile ?? 0}th percentile`}
+      aria-label={
+        unlocked
+          ? `${config.universe}: ${percentile ?? 0}th percentile`
+          : `${config.universe}: locked. Stronger than ${percentile ?? 0}% — beat ${UNLOCK_PERCENTILE}% of the group outside this ring to reveal it.`
+      }
     >
-      {/* Background track — always full circle, base stroke width */}
+      {/* Background track — always full circle. Locked tracks stay visible so
+          the chart still reads as four rings, just unearned. */}
       <circle
         cx={CENTER}
         cy={CENTER}
         r={radius}
         fill="none"
-        style={{ stroke: "var(--muted-foreground)", opacity: 0.15 }}
+        style={{ stroke: "var(--muted-foreground)", opacity: unlocked ? 0.15 : 0.08 }}
         strokeWidth={strokeWidth}
       />
 
@@ -98,12 +128,12 @@ function Ring({ config, percentile, isActive, onClick, onHoverChange }) {
           strokeDasharray={circumference}
           animate={{
             strokeDashoffset: offset,
-            opacity:     isActive ? 1    : 0.45,
+            opacity:     !unlocked ? 0 : isActive ? 1 : 0.45,
             strokeWidth: isActive ? strokeWidth + 3 : strokeWidth,
           }}
           initial={{
             strokeDashoffset: circumference,
-            opacity:     isActive ? 1    : 0.45,
+            opacity:     !unlocked ? 0 : isActive ? 1 : 0.45,
             strokeWidth: isActive ? strokeWidth + 3 : strokeWidth,
           }}
           transition={{
@@ -177,6 +207,7 @@ function CenterLabel({ activeUniverse, percentiles }) {
 function Legend({
   percentiles,
   activeUniverse,
+  unlockedUniverses,
   onUniverseChange,
   onUniverseHoverChange,
 }) {
@@ -185,6 +216,7 @@ function Legend({
       {RING_CONFIG.map((config) => {
         const percentile = percentiles?.[config.universe];
         const isActive   = config.universe === activeUniverse;
+        const unlocked   = unlockedUniverses.has(config.universe);
 
         return (
           <button
@@ -192,11 +224,13 @@ function Legend({
             onClick={() => onUniverseChange(config.universe)}
             onMouseEnter={() => onUniverseHoverChange(config.universe)}
             onMouseLeave={() => onUniverseHoverChange(null)}
-            className={`flex items-center justify-between rounded-md px-3 py-1.5 text-sm transition-all ${
+            className={cn(
+              "flex items-center justify-between rounded-md px-3 py-1.5 text-sm transition-all",
               isActive
                 ? "bg-muted font-semibold"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            }`}
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+              !unlocked && "opacity-45",
+            )}
           >
             <div className="flex items-center gap-2">
               <span
@@ -206,7 +240,7 @@ function Legend({
               <span>{config.universe}</span>
             </div>
             <span className="tabular-nums">
-              {percentile !== null && percentile !== undefined
+              {percentile != null && (unlocked || isActive)
                 ? `${percentile}th`
                 : "—"}
             </span>
@@ -226,10 +260,16 @@ export function StrengthCirclesChart({
   onUniverseHoverChange = () => {},
   showLegend = true,
   showTrustLine = true,
+  revealProgressively = false,
 }) {
+  const unlockedUniverses = getUnlockedUniverses(
+    percentiles,
+    revealProgressively,
+  );
+
   return (
     <div className="flex flex-col">
-      {/* Rings SVG + HTML center overlay */}
+      {/* Rings SVG + HTML overlay */}
       <div className="relative">
         <svg
           viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}
@@ -243,6 +283,7 @@ export function StrengthCirclesChart({
               config={config}
               percentile={percentiles?.[config.universe] ?? 0}
               isActive={config.universe === activeUniverse}
+              unlocked={unlockedUniverses.has(config.universe)}
               onClick={() => onUniverseChange(config.universe)}
               onHoverChange={onUniverseHoverChange}
             />
@@ -252,11 +293,11 @@ export function StrengthCirclesChart({
         <CenterLabel activeUniverse={activeUniverse} percentiles={percentiles} />
       </div>
 
-      {/* Legend — tight mt-1 so it feels attached to the chart */}
       {showLegend && (
         <Legend
           percentiles={percentiles}
           activeUniverse={activeUniverse}
+          unlockedUniverses={unlockedUniverses}
           onUniverseChange={onUniverseChange}
           onUniverseHoverChange={onUniverseHoverChange}
         />

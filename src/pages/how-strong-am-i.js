@@ -702,6 +702,11 @@ function HowStrongAmIPageMain() {
                   activeUniverse={activeUniverse}
                   onUniverseChange={handleUniverseChange}
                   onUniverseHoverChange={setHoveredUniverse}
+                  revealProgressively={
+                    !usingUserData &&
+                    !hasArrivalLiftQuery &&
+                    !isReturningUserLoading
+                  }
                 />
               </div>
               <Button

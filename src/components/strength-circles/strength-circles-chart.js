@@ -9,7 +9,9 @@
  * First-visit tutorial: when revealProgressively is on, only General Population
  * is filled. Each inner ring stays a ghost track until the ring outside it
  * reaches UNLOCK_PERCENTILE, so the specialised groups arrive as a reward
- * rather than a finished diagram.
+ * rather than a finished diagram. Locked legend rows stay on large screens as a
+ * muted preview; below `lg` they hide so the story sliders sit closer to the
+ * rings on a phone.
  */
 
 import { motion, AnimatePresence } from "motion/react";
@@ -225,11 +227,13 @@ function Legend({
             onMouseEnter={() => onUniverseHoverChange(config.universe)}
             onMouseLeave={() => onUniverseHoverChange(null)}
             className={cn(
-              "flex items-center justify-between rounded-md px-3 py-1.5 text-sm transition-all",
+              "items-center justify-between rounded-md px-3 py-1.5 text-sm transition-all",
+              // Stacked layout below lg: drop locked rows so the sliders are
+              // not a full legend below the fold.
+              unlocked ? "flex" : "hidden opacity-45 lg:flex",
               isActive
                 ? "bg-muted font-semibold"
                 : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-              !unlocked && "opacity-45",
             )}
           >
             <div className="flex items-center gap-2">

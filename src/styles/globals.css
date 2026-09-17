@@ -119,6 +119,37 @@
 }
 
 /*
+ * First-visit "this is a handle" hint on How Strong Am I.
+ *
+ * A scale animation would fight Radix, which positions the thumb with
+ * transform. A ring does not. Slow and staggered so three thumbs breathing
+ * in lockstep do not look like a loading spinner. Reduced-motion is flattened
+ * by the global rule below.
+ */
+@keyframes slider-thumb-hint-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  45%,
+  55% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--primary) 32%, transparent);
+  }
+}
+
+.slider-thumb-hint [role="slider"] {
+  animation: slider-thumb-hint-ring 2.6s ease-in-out infinite;
+}
+
+.slider-thumb-hint-delay-1 [role="slider"] {
+  animation-delay: 0.45s;
+}
+
+.slider-thumb-hint-delay-2 [role="slider"] {
+  animation-delay: 0.9s;
+}
+
+/*
  * Year recap "there is more than one card" nudge.
  *
  * The recap carousel is the whole page, and a first-time viewer can read the

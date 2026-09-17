@@ -144,6 +144,10 @@ export function HowStrongStoryPanel({
   // Same number the rings show: mean of the three lifts, not the SBD-total
   // percentile, so this card cannot disagree with the centre label.
   const displayPercentile = chartPercentiles?.[activeUniverse];
+  // 1000lb club is a pounds milestone even when the page is showing kg.
+  const thousandClubLabel = getThousandClubLabel(
+    Math.round(isMetric ? total * 2.2046 : total),
+  );
   const showStoryHeader =
     hasMovedFromPR || hasMovedFrom90d || usingUserData;
 
@@ -455,6 +459,17 @@ export function HowStrongStoryPanel({
                   </p>
                 </div>
               </div>
+              {thousandClubLabel && (
+                <p className="mt-2 text-sm">
+                  <Link
+                    prefetch={false}
+                    href="/1000lb-club-calculator"
+                    className={STORY_LINK_CLASSES}
+                  >
+                    {thousandClubLabel}
+                  </Link>
+                </p>
+              )}
               {onCopyResult && (
                 <Button
                   variant="outline"
@@ -635,6 +650,12 @@ function normalizeLiftWeight(weight, isMetric) {
 
 function toKg(weight, isMetric) {
   return isMetric ? weight : weight / 2.2046;
+}
+
+function getThousandClubLabel(totalLb) {
+  if (totalLb >= 1000) return "In the 1000lb club";
+  if (totalLb >= 900) return "You are approaching the 1000lb club!";
+  return null;
 }
 
 function ordinal(n) {

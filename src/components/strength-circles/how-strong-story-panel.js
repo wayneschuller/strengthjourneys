@@ -12,10 +12,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import { RotateCcw, Sparkles, Upload } from "lucide-react";
+import { Copy, RotateCcw, Sparkles, Upload } from "lucide-react";
 
 import { LiftArtwork } from "@/components/lift-artwork";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
+import { getUniverseOfLabel } from "@/components/strength-circles/strength-circles-chart";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,8 @@ export function HowStrongStoryPanel({
   recent90d,
   results,
   activeUniverse,
+  chartPercentiles,
+  onCopyResult,
   firstName,
   showImportTeaser,
   historySlot,
@@ -138,7 +141,9 @@ export function HowStrongStoryPanel({
 
   const total =
     liftWeights.squat + liftWeights.bench + liftWeights.deadlift;
-  const totalPercentile = results?.total?.percentiles?.[activeUniverse];
+  // Same number the rings show: mean of the three lifts, not the SBD-total
+  // percentile, so this card cannot disagree with the centre label.
+  const displayPercentile = chartPercentiles?.[activeUniverse];
   const showStoryHeader =
     hasMovedFromPR || hasMovedFrom90d || usingUserData;
 
@@ -422,32 +427,51 @@ export function HowStrongStoryPanel({
 
         {results?.hasAllThree && results.total && (
           <>
-            <div className="flex items-end justify-between gap-4 rounded-xl border px-4 py-3">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Squat + bench + deadlift
-                </p>
-                <p className="text-2xl font-bold tabular-nums">
-                  {Math.round(total)}
-                  <span className="ml-1 text-base font-normal text-muted-foreground">
-                    {unit}
-                  </span>
-                </p>
+            <div className="rounded-xl border px-4 py-3">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Squat + bench + deadlift
+                  </p>
+                  <p className="text-2xl font-bold tabular-nums">
+                    {Math.round(total)}
+                    <span className="ml-1 text-base font-normal text-muted-foreground">
+                      {unit}
+                    </span>
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Stronger than
+                  </p>
+                  <p className="text-3xl font-extrabold tabular-nums leading-none">
+                    {displayPercentile ?? "—"}
+                    {displayPercentile != null && (
+                      <span className="text-xl font-bold">%</span>
+                    )}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {getUniverseOfLabel(activeUniverse)}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-3xl font-extrabold tabular-nums">
-                  {ordinal(totalPercentile)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  among {activeUniverse.toLowerCase()}
-                </p>
-              </div>
+              {onCopyResult && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onCopyResult}
+                  className="mt-3 w-full gap-2 lg:hidden"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy result
+                </Button>
+              )}
             </div>
 
             <PercentileConclusion
-              percentile={totalPercentile}
+              percentile={displayPercentile}
               universe={activeUniverse}
-              allPercentiles={results.total.percentiles}
+              allPercentiles={chartPercentiles}
               firstName={firstName}
             />
           </>

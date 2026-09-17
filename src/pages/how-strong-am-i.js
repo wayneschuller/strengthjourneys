@@ -713,7 +713,7 @@ function HowStrongAmIPageMain() {
                 variant="outline"
                 size="sm"
                 onClick={handleShare}
-                className="gap-2"
+                className="hidden gap-2 lg:inline-flex"
               >
                 <Copy className="h-3.5 w-3.5" />
                 Copy result
@@ -734,6 +734,8 @@ function HowStrongAmIPageMain() {
                 recent90d={recent90dDisplay}
                 results={results}
                 activeUniverse={activeUniverse}
+                chartPercentiles={chartPercentiles}
+                onCopyResult={handleShare}
                 firstName={session?.user?.name?.split(" ")[0]}
                 showImportTeaser={
                   authStatus === "unauthenticated" && !isReturningUserLoading

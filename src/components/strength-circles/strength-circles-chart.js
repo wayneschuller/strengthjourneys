@@ -55,6 +55,13 @@ const RING_CONFIG = [
   },
 ];
 
+export function getUniverseOfLabel(universe) {
+  return (
+    RING_CONFIG.find((ring) => ring.universe === universe)?.ofLabel ??
+    `of ${universe}`
+  );
+}
+
 const VIEWBOX_SIZE = 360;
 const CENTER = VIEWBOX_SIZE / 2; // 180
 

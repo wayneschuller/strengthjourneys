@@ -596,7 +596,10 @@ function PercentileConclusion({ percentile, universe, allPercentiles, firstName 
     detail = `Stronger than ${percentile}% of ${u}. Very few people reach this level \u2014 years of serious, consistent training got ${name.toLowerCase() === "you" ? "you" : firstName} here.`;
   } else if (percentile >= 85) {
     headline = "Seriously strong.";
-    detail = `${name}'${name.endsWith("s") ? "" : "s"} stronger than ${percentile}% of ${u}. Well past the point where people notice \u2014 this is dedicated-lifter strength.`;
+    const whoIs = firstName
+      ? `${firstName}'${firstName.endsWith("s") ? "" : "s"}`
+      : "You're";
+    detail = `${whoIs} stronger than ${percentile}% of ${u}. Well past the point where people notice \u2014 this is dedicated-lifter strength.`;
   } else if (percentile >= 70) {
     headline = "Above average, clearly trained.";
     detail = `Stronger than ${percentile}% of ${u}. ${namePos} training is paying off \u2014 most people who lift don\u2019t reach this range.`;

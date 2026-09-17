@@ -251,12 +251,17 @@ function HowStrongAmIPageMain() {
   const [selectedUniverse, setSelectedUniverse] = useState("General Population");
   const [hoveredUniverse, setHoveredUniverse] = useState(null);
   const hasExplicitQueryRef = useRef(false);
+  const queryHydratedRef = useRef(false);
   const previousBioSignatureRef = useRef(null);
 
   // URL values are stored in the displayed unit so shared links remain readable.
   // Explicit URL values take precedence over logged-in auto-population.
+  // Hydrate once only: the canonical weights live in kg, so re-reading the URL
+  // after a unit switch would re-read 225lb as 225kg instead of converting it.
   useEffect(() => {
     if (!router.isReady || !bioDataIsInitialized) return;
+    if (queryHydratedRef.current) return;
+    queryHydratedRef.current = true;
 
     const queryWeights = {};
     for (const lift of LIFTS) {
@@ -699,7 +704,7 @@ function HowStrongAmIPageMain() {
               </Button>
             </div>
 
-            <div className="w-full max-w-md shrink-0 lg:order-2 lg:max-w-md xl:max-w-lg">
+            <div className="w-full shrink-0 lg:order-2 lg:max-w-lg xl:max-w-xl">
               <HowStrongStoryPanel
                 liftWeights={liftWeights}
                 onLiftChange={handleLiftChange}

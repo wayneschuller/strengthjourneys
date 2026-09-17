@@ -2,23 +2,31 @@
  * First-person story panel for How Strong Am I.
  * Bio and lifts read as editable sentences so visitors customize a narrative
  * instead of filling a settings form. Bench leads; squat and deadlift follow.
- * Sliders under each lift keep the rings playful.
+ * Weights arrive already converted to the displayed unit, so this file only
+ * ever formats and echoes back display values.
  */
 
 import Link from "next/link";
-import { Upload, Sparkles, RotateCcw } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { ArrowLeftRight, RotateCcw, Sparkles, Upload } from "lucide-react";
 
+import { LiftArtwork } from "@/components/lift-artwork";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import {
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,
   useAthleteBio,
 } from "@/hooks/use-athlete-biodata";
-import { getLiftArtwork } from "@/components/lift-artwork";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { cn } from "@/lib/utils";
 
@@ -26,99 +34,30 @@ const STORY_LIFTS = [
   {
     key: "bench",
     label: "Bench Press",
-    before: "My",
     linkText: "bench press",
-    after: "is",
-    svg: getLiftArtwork("Bench Press"),
     href: "/calculator/bench-press-1rm-calculator",
   },
   {
     key: "squat",
     label: "Back Squat",
-    before: "My",
     linkText: "squat",
-    after: "is",
-    svg: getLiftArtwork("Back Squat"),
     href: "/calculator/squat-1rm-calculator",
   },
   {
     key: "deadlift",
     label: "Deadlift",
-    before: "My",
     linkText: "deadlift",
-    after: "is",
-    svg: getLiftArtwork("Deadlift"),
     href: "/calculator/deadlift-1rm-calculator",
   },
 ];
 
-function normalizeLiftWeight(weight, isMetric) {
-  const min = isMetric ? 20 : 44;
-  const max = isMetric ? 300 : 660;
-  const step = isMetric ? 2.5 : 5;
-  const rounded = Math.round(weight / step) * step;
-  return Math.min(Math.max(rounded, min), max);
-}
+// Shared chip look for every editable value in the story, so a visitor can see
+// at a glance which words are theirs to change.
+const BLANK_CLASSES =
+  "mx-0.5 rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-foreground ring-1 ring-inset ring-primary/25 transition-colors hover:bg-primary/20 hover:ring-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
-function toKg(weight, isMetric) {
-  return isMetric ? weight : weight / 2.2046;
-}
-
-function ordinal(n) {
-  if (n == null) return "—";
-  const suffixes = ["th", "st", "nd", "rd"];
-  const value = n % 100;
-  return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
-}
-
-function StoryNumberBlank({
-  value,
-  onChange,
-  ariaLabel,
-  min,
-  max,
-  step = 1,
-  widthCh = 4,
-  className,
-}) {
-  return (
-    <input
-      type="number"
-      inputMode="decimal"
-      value={value}
-      min={min}
-      max={max}
-      step={step}
-      aria-label={ariaLabel}
-      onChange={(event) => {
-        const raw = event.target.value;
-        if (raw === "") return;
-        const parsed = Number(raw);
-        if (Number.isNaN(parsed)) return;
-        onChange(parsed);
-      }}
-      className={cn(
-        "mx-0.5 inline-block appearance-none border-0 border-b-2 border-primary/50 bg-transparent px-0.5 py-0 text-center font-bold tabular-nums text-foreground [appearance:textfield] focus:border-primary focus:outline-none focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-        className,
-      )}
-      style={{ width: `${widthCh}ch` }}
-    />
-  );
-}
-
-function SexBlank({ sex, onChange }) {
-  return (
-    <select
-      value={sex}
-      aria-label="Sex"
-      onChange={(event) => onChange(event.target.value)}
-      className="mx-0.5 cursor-pointer appearance-none border-0 border-b-2 border-primary/50 bg-transparent px-0.5 py-0 font-bold text-foreground focus:border-primary focus:outline-none focus:ring-0"
-    >
-      <option value="male">male</option>
-      <option value="female">female</option>
-    </select>
-  );
-}
+const STORY_LINK_CLASSES =
+  "font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline";
 
 export function HowStrongStoryPanel({
   liftWeights,
@@ -145,6 +84,7 @@ export function HowStrongStoryPanel({
     isMetric,
     bioDataIsDefault,
   } = useAthleteBio();
+  const prefersReducedMotion = useReducedMotion();
 
   const unit = isMetric ? "kg" : "lb";
   const min = isMetric ? 20 : 44;
@@ -167,26 +107,28 @@ export function HowStrongStoryPanel({
         recent90d[key] != null && liftWeights[key] !== recent90d[key],
     );
 
+  const total =
+    liftWeights.squat + liftWeights.bench + liftWeights.deadlift;
+  const totalPercentile = results?.total?.percentiles?.[activeUniverse];
+
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-6 pt-5">
+    <Card className="overflow-hidden">
+      <CardHeader className="border-b bg-muted/30 pb-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Your story
-            </p>
-            {bioDataIsDefault && (
-              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                Example athlete — change this to make the rank yours.
-              </p>
-            )}
+            <CardTitle className="text-lg">My strength story</CardTitle>
+            <CardDescription className="mt-1">
+              {bioDataIsDefault
+                ? "Example numbers for now. Change any of them to make the rings yours."
+                : "Change any highlighted number and the rings react instantly."}
+            </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {hasMovedFromPR && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+                className="h-7 gap-1 px-2 text-xs text-muted-foreground"
                 onClick={onReset}
               >
                 <RotateCcw className="h-3 w-3" />
@@ -197,7 +139,7 @@ export function HowStrongStoryPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+                className="h-7 gap-1 px-2 text-xs text-muted-foreground"
                 onClick={onResetTo90d}
               >
                 <RotateCcw className="h-3 w-3" />
@@ -205,16 +147,17 @@ export function HowStrongStoryPanel({
               </Button>
             )}
             {usingUserData && !hasMovedFromPR && !hasMovedFrom90d && (
-              <Badge variant="outline" className="gap-1 text-xs font-normal">
+              <Badge variant="outline" className="gap-1 font-normal">
                 <Sparkles className="h-3 w-3" />
                 From your log
               </Badge>
             )}
           </div>
         </div>
+      </CardHeader>
 
-        {/* Bio sentence */}
-        <p className="text-lg leading-relaxed text-foreground sm:text-xl">
+      <CardContent className="flex flex-col gap-7 pt-6">
+        <p className="text-lg leading-relaxed sm:text-xl">
           I am a
           <StoryNumberBlank
             value={age}
@@ -224,183 +167,210 @@ export function HowStrongStoryPanel({
             max={90}
             step={1}
             widthCh={3}
-            className="text-lg sm:text-xl"
           />
           year-old
           <SexBlank sex={sex} onChange={setSex} />
           athlete weighing
-          <StoryNumberBlank
-            value={bodyWeight}
-            onChange={(value) => setBodyWeight(Math.round(value))}
-            ariaLabel="Bodyweight"
-            min={isMetric ? 30 : 66}
-            max={isMetric ? 250 : 550}
-            step={1}
-            widthCh={4}
-            className="text-lg sm:text-xl"
-          />
-          <span className="ml-1 inline-flex items-baseline gap-1 align-baseline">
+          <span className="whitespace-nowrap">
+            <StoryNumberBlank
+              value={bodyWeight}
+              onChange={(value) => setBodyWeight(Math.round(value))}
+              ariaLabel="Bodyweight"
+              min={isMetric ? 30 : 66}
+              max={isMetric ? 250 : 550}
+              step={1}
+              widthCh={4}
+            />
             <button
               type="button"
               onClick={() => onUnitChange(!isMetric)}
-              className="border-0 border-b-2 border-primary/50 bg-transparent px-0.5 font-bold tabular-nums text-foreground hover:border-primary"
-              aria-label={`Switch units (currently ${unit})`}
+              className={cn(BLANK_CLASSES, "inline-flex items-center gap-1")}
+              aria-label={`Switch to ${isMetric ? "pounds" : "kilograms"}`}
+              title={`Switch to ${isMetric ? "pounds" : "kilograms"}`}
             >
               {unit}
+              <ArrowLeftRight className="h-3 w-3 text-muted-foreground" />
             </button>
+            .
           </span>
-          .
         </p>
 
-        {/* Lift sentences — bench first */}
-        <div className="flex flex-col gap-5">
-          {STORY_LIFTS.map(({ key, label, before, linkText, after, svg, href }) => {
-            const prWeight = prWeights?.[key];
-            const r90Weight = recent90d?.[key];
-            const prPercent =
-              prWeight != null ? ((prWeight - min) / (max - min)) * 100 : null;
-            const r90Percent =
-              r90Weight != null
-                ? ((r90Weight - min) / (max - min)) * 100
+        <div className="flex flex-col gap-4">
+          {STORY_LIFTS.map(({ key, label, linkText, href }, index) => {
+              const prWeight = prWeights?.[key];
+              const r90Weight = recent90d?.[key];
+              const prPercent =
+                prWeight != null
+                  ? ((prWeight - min) / (max - min)) * 100
+                  : null;
+              const r90Percent =
+                r90Weight != null
+                  ? ((r90Weight - min) / (max - min)) * 100
+                  : null;
+              const showPrMarker =
+                usingUserData &&
+                prPercent != null &&
+                prPercent >= 0 &&
+                prPercent <= 100;
+              const showR90Marker =
+                usingUserData &&
+                r90Percent != null &&
+                r90Percent >= 0 &&
+                r90Percent <= 100 &&
+                r90Weight !== prWeight;
+
+              const liftResult = results?.lifts?.[key];
+              const rating = liftResult?.standard
+                ? getStrengthRatingForE1RM(
+                    toKg(liftWeights[key], isMetric),
+                    liftResult.standard,
+                  )
                 : null;
-            const showPrMarker =
-              usingUserData &&
-              prPercent != null &&
-              prPercent >= 0 &&
-              prPercent <= 100;
-            const showR90Marker =
-              usingUserData &&
-              r90Percent != null &&
-              r90Percent >= 0 &&
-              r90Percent <= 100 &&
-              r90Weight !== prWeight;
+              const liftPercentile = liftResult?.percentiles?.[activeUniverse];
 
-            const liftResult = results?.lifts?.[key];
-            const rating = liftResult?.standard
-              ? getStrengthRatingForE1RM(
-                  toKg(liftWeights[key], isMetric),
-                  liftResult.standard,
-                )
-              : null;
+              const commitLift = (value) =>
+                onLiftChange(key, normalizeLiftWeight(value, isMetric));
 
-            const commitLift = (value) => {
-              onLiftChange(key, normalizeLiftWeight(value, isMetric));
-            };
-
-            return (
-              <div key={key} className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="flex flex-wrap items-center gap-1.5 text-base leading-snug sm:text-lg">
-                    <img
-                      src={svg}
-                      alt=""
-                      className="h-8 w-8 object-contain dark:invert"
-                      aria-hidden
+              return (
+                <motion.div
+                  key={key}
+                  className="group flex items-center gap-3 sm:gap-4"
+                  initial={
+                    prefersReducedMotion ? undefined : { opacity: 0, x: -16 }
+                  }
+                  animate={
+                    prefersReducedMotion ? undefined : { opacity: 1, x: 0 }
+                  }
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 22,
+                    delay: 0.08 + index * 0.08,
+                  }}
+                >
+                  <Link
+                    prefetch={false}
+                    href={href}
+                    tabIndex={-1}
+                    aria-hidden
+                    className="flex w-28 shrink-0 justify-center sm:w-32"
+                  >
+                    <LiftArtwork
+                      liftType={label}
+                      size="md"
+                      animate={false}
+                      className="transition-transform duration-200 group-hover:scale-105"
                     />
-                    <span>
-                      {before}{" "}
+                  </Link>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base leading-relaxed sm:text-lg">
+                      My{" "}
                       <Link
                         prefetch={false}
                         href={href}
-                        className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                        className={STORY_LINK_CLASSES}
                       >
                         {linkText}
                       </Link>{" "}
-                      {after}{" "}
-                      <StoryNumberBlank
-                        value={liftWeights[key]}
-                        onChange={commitLift}
-                        ariaLabel={`${label} 1RM`}
+                      is
+                      <span className="whitespace-nowrap">
+                        <StoryNumberBlank
+                          value={liftWeights[key]}
+                          onChange={commitLift}
+                          ariaLabel={`${label} one rep max`}
+                          min={min}
+                          max={max}
+                          step={step}
+                          widthCh={isMetric ? 5 : 4}
+                        />
+                        <span className="text-muted-foreground">{unit}</span>.
+                      </span>
+                    </p>
+
+                    <div className="relative mt-2 pb-5">
+                      <Slider
+                        value={[liftWeights[key]]}
+                        onValueChange={([value]) => {
+                          // Snap to a PR or 90-day marker when within one step
+                          if (
+                            prWeight != null &&
+                            Math.abs(value - prWeight) <= step
+                          ) {
+                            commitLift(prWeight);
+                          } else if (
+                            r90Weight != null &&
+                            Math.abs(value - r90Weight) <= step
+                          ) {
+                            commitLift(r90Weight);
+                          } else {
+                            commitLift(value);
+                          }
+                        }}
                         min={min}
                         max={max}
                         step={step}
-                        widthCh={isMetric ? 5 : 4}
-                        className="text-base sm:text-lg"
+                        aria-label={`${label} one rep max slider`}
                       />
-                      <span className="ml-0.5 font-bold tabular-nums">
-                        {unit}
-                      </span>
-                      .
-                    </span>
-                  </p>
-                  {rating && (
-                    <Badge
-                      variant={getRatingBadgeVariant(rating)}
-                      className="text-xs"
-                    >
-                      {STRENGTH_LEVEL_EMOJI[rating]} {rating}
-                    </Badge>
-                  )}
-                </div>
-                <div className="relative pb-5">
-                  <Slider
-                    value={[liftWeights[key]]}
-                    onValueChange={([value]) => {
-                      if (
-                        prWeight != null &&
-                        Math.abs(value - prWeight) <= step
-                      ) {
-                        commitLift(prWeight);
-                      } else if (
-                        r90Weight != null &&
-                        Math.abs(value - r90Weight) <= step
-                      ) {
-                        commitLift(r90Weight);
-                      } else {
-                        commitLift(value);
-                      }
-                    }}
-                    min={min}
-                    max={max}
-                    step={step}
-                    aria-label={`${label} 1RM slider`}
-                  />
-                  {showPrMarker && (
-                    <div
-                      className="pointer-events-none absolute bottom-0 flex flex-col items-center"
-                      style={{
-                        left: `${prPercent}%`,
-                        transform: "translateX(-50%)",
-                      }}
-                    >
-                      <div className="h-3 w-px bg-primary/40" />
-                      <span className="text-[9px] font-medium leading-none text-primary/60">
-                        PR
-                      </span>
+                      {showPrMarker && (
+                        <SliderMarker percent={prPercent} label="PR" />
+                      )}
+                      {showR90Marker && (
+                        <SliderMarker
+                          percent={r90Percent}
+                          label="90d"
+                          tone="amber"
+                        />
+                      )}
                     </div>
-                  )}
-                  {showR90Marker && (
-                    <div
-                      className="pointer-events-none absolute bottom-0 flex flex-col items-center"
-                      style={{
-                        left: `${r90Percent}%`,
-                        transform: "translateX(-50%)",
-                      }}
-                    >
-                      <div className="h-3 w-px bg-amber-500/40" />
-                      <span className="text-[9px] font-medium leading-none text-amber-600/60">
-                        90d
-                      </span>
+
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      {rating && (
+                        <Badge
+                          variant={getRatingBadgeVariant(rating)}
+                          className="text-xs"
+                        >
+                          {STRENGTH_LEVEL_EMOJI[rating]} {rating}
+                        </Badge>
+                      )}
+                      {liftPercentile != null && (
+                        <span className="text-xs text-muted-foreground">
+                          {ordinal(liftPercentile)} percentile
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-            );
+                  </div>
+                </motion.div>
+              );
           })}
         </div>
 
         {results?.hasAllThree && results.total && (
           <>
-            <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-              <span className="text-muted-foreground">
-                Squat + bench + deadlift
-              </span>
-              <span className="font-bold tabular-nums">
-                {ordinal(results.total.percentiles?.[activeUniverse])}
-              </span>
+            <div className="flex items-end justify-between gap-4 rounded-xl border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-4 py-3">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Squat + bench + deadlift
+                </p>
+                <p className="text-2xl font-bold tabular-nums">
+                  {Math.round(total)}
+                  <span className="ml-1 text-base font-normal text-muted-foreground">
+                    {unit}
+                  </span>
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-extrabold tabular-nums">
+                  {ordinal(totalPercentile)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  among {activeUniverse.toLowerCase()}
+                </p>
+              </div>
             </div>
+
             <PercentileConclusion
-              percentile={results.total.percentiles?.[activeUniverse]}
+              percentile={totalPercentile}
               universe={activeUniverse}
               allPercentiles={results.total.percentiles}
               firstName={firstName}
@@ -411,14 +381,14 @@ export function HowStrongStoryPanel({
         {historySlot}
 
         {showImportTeaser && !historySlot && (
-          <div className="rounded-lg border border-dashed p-3">
-            <p className="mb-1 text-sm font-medium">Make this real</p>
-            <p className="mb-3 text-sm text-muted-foreground">
-              These numbers are a guess until your log fills them. Import a
-              Hevy, Strong, or spreadsheet export to auto-fill PRs and see how
-              your percentile moved.
+          <div className="rounded-xl border bg-muted/30 p-4">
+            <p className="text-base font-semibold">Make this real</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              These numbers are a guess until your training log fills them.
+              Import a Hevy, Strong, or spreadsheet export to auto-fill your
+              real PRs and watch how your percentile has moved.
             </p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button asChild size="sm" className="gap-2">
                 <Link href="/import" prefetch={false}>
                   <Upload className="h-3.5 w-3.5" />
@@ -426,19 +396,90 @@ export function HowStrongStoryPanel({
                 </Link>
               </Button>
               <GoogleSignInButton
-                className="flex items-center gap-2"
                 cta="how_strong_am_i"
                 iconSize={16}
                 size="sm"
                 variant="outline"
               >
-                Sign In With Google
+                Sign in with Google
               </GoogleSignInButton>
             </div>
           </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function StoryNumberBlank({
+  value,
+  onChange,
+  ariaLabel,
+  min,
+  max,
+  step = 1,
+  widthCh = 4,
+}) {
+  return (
+    <input
+      type="number"
+      inputMode="decimal"
+      value={value}
+      min={min}
+      max={max}
+      step={step}
+      aria-label={ariaLabel}
+      onChange={(event) => {
+        const raw = event.target.value;
+        if (raw === "") return;
+        const parsed = Number(raw);
+        if (Number.isNaN(parsed)) return;
+        onChange(parsed);
+      }}
+      className={cn(
+        BLANK_CLASSES,
+        "inline-block appearance-none border-0 text-center tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+      )}
+      style={{ width: `calc(${widthCh}ch + 1.25rem)` }}
+    />
+  );
+}
+
+function SexBlank({ sex, onChange }) {
+  return (
+    <select
+      value={sex}
+      aria-label="Sex"
+      onChange={(event) => onChange(event.target.value)}
+      className={cn(BLANK_CLASSES, "cursor-pointer appearance-none border-0")}
+    >
+      <option value="male">male</option>
+      <option value="female">female</option>
+    </select>
+  );
+}
+
+function SliderMarker({ percent, label, tone = "primary" }) {
+  return (
+    <div
+      className="pointer-events-none absolute bottom-0 flex flex-col items-center"
+      style={{ left: `${percent}%`, transform: "translateX(-50%)" }}
+    >
+      <div
+        className={cn(
+          "h-3 w-px",
+          tone === "amber" ? "bg-amber-500/40" : "bg-primary/40",
+        )}
+      />
+      <span
+        className={cn(
+          "text-[9px] font-medium leading-none",
+          tone === "amber" ? "text-amber-600/60" : "text-primary/60",
+        )}
+      >
+        {label}
+      </span>
+    </div>
   );
 }
 
@@ -493,12 +534,31 @@ function PercentileConclusion({ percentile, universe, allPercentiles, firstName 
   }
 
   return (
-    <div className="rounded-lg bg-muted/40 px-3 py-2.5">
-      <p className="text-sm font-semibold">{headline}</p>
-      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+    <div className="rounded-xl border bg-card px-4 py-3 shadow-sm">
+      <p className="text-base font-semibold">{headline}</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
         {detail}
         {extras.length > 0 && ` ${extras.join(", ")}.`}
       </p>
     </div>
   );
+}
+
+function normalizeLiftWeight(weight, isMetric) {
+  const min = isMetric ? 20 : 44;
+  const max = isMetric ? 300 : 660;
+  const step = isMetric ? 2.5 : 5;
+  const rounded = Math.round(weight / step) * step;
+  return Math.min(Math.max(rounded, min), max);
+}
+
+function toKg(weight, isMetric) {
+  return isMetric ? weight : weight / 2.2046;
+}
+
+function ordinal(n) {
+  if (n == null) return "—";
+  const suffixes = ["th", "st", "nd", "rd"];
+  const value = n % 100;
+  return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }

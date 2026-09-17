@@ -255,6 +255,13 @@ Stay in your own lane:
 - If you do find yourself needing a file another agent is clearly editing, say
   so rather than working around them
 
+### Vercel Deployment Cleanup
+
+Never delete the current `stable` or `main` deployment on Vercel, regardless of
+age or cleanup cutoff. Before deleting deployments, identify and protect both
+the latest deployment on each branch and the deployments currently linked to
+their branch aliases or the public site domains.
+
 ### Deploy Shortcut
 
 When the user says "deploy", they mean:

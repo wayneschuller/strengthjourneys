@@ -297,70 +297,64 @@ function HowStrongAmIPageMain() {
     }
   }, [age, bioDataIsDefault, bioDataIsInitialized, bodyWeight, sex]);
 
-  // Track whether we've auto-populated from user data
-  const [usingUserData, setUsingUserData] = useState(false);
-  const hasAutoPopulatedRef = useRef(false);
-  const prWeightsKgRef = useRef(null);
-
-  // Auto-populate sliders from user's actual best E1RMs (skip demo data)
-  useEffect(() => {
-    if (
-      hasExplicitQueryRef.current ||
-      hasAutoPopulatedRef.current ||
-      !topLiftsByTypeAndReps ||
-      isDemoMode
-    ) return;
-
-    const squat = findBestE1RM("Back Squat", topLiftsByTypeAndReps, "Brzycki");
-    const bench = findBestE1RM("Bench Press", topLiftsByTypeAndReps, "Brzycki");
-    const deadlift = findBestE1RM("Deadlift", topLiftsByTypeAndReps, "Brzycki");
-
-    // Only auto-populate if we found at least one lift
-    if (!squat.bestE1RMWeight && !bench.bestE1RMWeight && !deadlift.bestE1RMWeight) return;
-
-    hasAutoPopulatedRef.current = true;
+  // All-time best E1RM per lift from the log, in kg. Deliberately independent of
+  // whether we auto-populate the sliders: a shared or previously-synced URL
+  // supplies the slider values, but it must not cost a logged-in lifter their PR
+  // markers, their 90-day markers, or the reset buttons that get back to them.
+  const prWeightsKg = useMemo(() => {
+    if (!topLiftsByTypeAndReps || isDemoMode) return null;
 
     const toKgFromUnit = (weight, unitType) =>
       unitType === "kg" ? weight : weight / 2.2046;
 
-    const weights = {
-      squat: squat.bestE1RMWeight
-        ? toKgFromUnit(squat.bestE1RMWeight, squat.unitType)
-        : toKg(225, false),
-      bench: bench.bestE1RMWeight
-        ? toKgFromUnit(bench.bestE1RMWeight, bench.unitType)
-        : toKg(155, false),
-      deadlift: deadlift.bestE1RMWeight
-        ? toKgFromUnit(deadlift.bestE1RMWeight, deadlift.unitType)
-        : toKg(265, false),
-    };
+    const best = {};
+    for (const { key, label } of LIFTS) {
+      const found = findBestE1RM(label, topLiftsByTypeAndReps, "Brzycki");
+      best[key] = found.bestE1RMWeight
+        ? toKgFromUnit(found.bestE1RMWeight, found.unitType)
+        : null;
+    }
 
-    // Remember original PR positions for marker labels
-    prWeightsKgRef.current = {
-      squat: squat.bestE1RMWeight ? toKgFromUnit(squat.bestE1RMWeight, squat.unitType) : null,
-      bench: bench.bestE1RMWeight ? toKgFromUnit(bench.bestE1RMWeight, bench.unitType) : null,
-      deadlift: deadlift.bestE1RMWeight ? toKgFromUnit(deadlift.bestE1RMWeight, deadlift.unitType) : null,
-    };
-
-    setLiftWeightsKg(weights);
-    setUsingUserData(true);
+    return LIFTS.some(({ key }) => best[key] != null) ? best : null;
   }, [topLiftsByTypeAndReps, isDemoMode]);
+
+  // True once the log has given us real PRs to compare against, which is what
+  // every "from your log" affordance on this page keys off.
+  const usingUserData = prWeightsKg !== null;
+
+  // Auto-populate the sliders from those PRs, unless the URL already said otherwise
+  const hasAutoPopulatedRef = useRef(false);
+  useEffect(() => {
+    if (hasExplicitQueryRef.current || hasAutoPopulatedRef.current || !prWeightsKg)
+      return;
+
+    hasAutoPopulatedRef.current = true;
+    setLiftWeightsKg((previous) => ({
+      squat: prWeightsKg.squat ?? previous.squat,
+      bench: prWeightsKg.bench ?? previous.bench,
+      deadlift: prWeightsKg.deadlift ?? previous.deadlift,
+    }));
+  }, [prWeightsKg]);
 
   // PR weights in display units for slider markers
   const prWeightsDisplay = useMemo(() => {
-    const raw = prWeightsKgRef.current;
-    if (!raw) return null;
-    return {
-      squat: raw.squat != null ? normalizeLiftWeight(convertWeight(raw.squat, true, isMetric), isMetric) : null,
-      bench: raw.bench != null ? normalizeLiftWeight(convertWeight(raw.bench, true, isMetric), isMetric) : null,
-      deadlift: raw.deadlift != null ? normalizeLiftWeight(convertWeight(raw.deadlift, true, isMetric), isMetric) : null,
-    };
-  }, [isMetric, usingUserData]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!prWeightsKg) return null;
+    const display = {};
+    for (const { key } of LIFTS) {
+      display[key] =
+        prWeightsKg[key] != null
+          ? normalizeLiftWeight(
+              convertWeight(prWeightsKg[key], true, isMetric),
+              isMetric,
+            )
+          : null;
+    }
+    return display;
+  }, [isMetric, prWeightsKg]);
 
-  // Recent 90-day best E1RM per lift — raw kg (for reset) and display units (for markers)
-  const recent90dKgRef = useRef(null);
-  const recent90dDisplay = useMemo(() => {
-    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+  // Recent 90-day best E1RM per lift, in kg, for the second slider marker
+  const recent90dKg = useMemo(() => {
+    if (!prWeightsKg || !parsedData?.length || isDemoMode) return null;
 
     const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
     const cutoffDate = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
@@ -376,28 +370,41 @@ function HowStrongAmIPageMain() {
       if (e1rm > bestKg[k]) bestKg[k] = e1rm;
     }
 
-    const pr = prWeightsKgRef.current;
-    if (!pr) return null;
-
-    // Store raw kg for reset handler
-    recent90dKgRef.current = {
+    return {
       squat: bestKg.squat > 0 ? bestKg.squat : null,
       bench: bestKg.bench > 0 ? bestKg.bench : null,
       deadlift: bestKg.deadlift > 0 ? bestKg.deadlift : null,
     };
+  }, [prWeightsKg, parsedData, isDemoMode]);
+
+  // Only worth a marker when a recent best sits somewhere other than the PR
+  const recent90dDisplay = useMemo(() => {
+    if (!recent90dKg || !prWeightsKg) return null;
 
     const result = {};
     let hasDistinct = false;
-    for (const k of ["squat", "bench", "deadlift"]) {
-      if (bestKg[k] <= 0) { result[k] = null; continue; }
-      const displayVal = normalizeLiftWeight(convertWeight(bestKg[k], true, isMetric), isMetric);
-      const prDisplay = pr[k] != null ? normalizeLiftWeight(convertWeight(pr[k], true, isMetric), isMetric) : null;
+    for (const { key } of LIFTS) {
+      if (recent90dKg[key] == null) {
+        result[key] = null;
+        continue;
+      }
+      const displayVal = normalizeLiftWeight(
+        convertWeight(recent90dKg[key], true, isMetric),
+        isMetric,
+      );
+      const prDisplay =
+        prWeightsKg[key] != null
+          ? normalizeLiftWeight(
+              convertWeight(prWeightsKg[key], true, isMetric),
+              isMetric,
+            )
+          : null;
       if (displayVal !== prDisplay) hasDistinct = true;
-      result[k] = displayVal;
+      result[key] = displayVal;
     }
 
     return hasDistinct ? result : null;
-  }, [usingUserData, parsedData, isDemoMode, isMetric]);
+  }, [isMetric, prWeightsKg, recent90dKg]);
 
   // Compute enriched user story data (career span, last-year comparison)
   const userStoryData = useMemo(() => {
@@ -465,20 +472,22 @@ function HowStrongAmIPageMain() {
   };
 
   const handleResetToPRs = () => {
-    if (prWeightsKgRef.current) {
-      setHasInteracted(true);
-      setLiftWeightsKg({ ...prWeightsKgRef.current });
-    }
+    if (!prWeightsKg) return;
+    setHasInteracted(true);
+    setLiftWeightsKg((prev) => ({
+      squat: prWeightsKg.squat ?? prev.squat,
+      bench: prWeightsKg.bench ?? prev.bench,
+      deadlift: prWeightsKg.deadlift ?? prev.deadlift,
+    }));
   };
 
   const handleResetTo90d = () => {
-    const r90 = recent90dKgRef.current;
-    if (!r90) return;
+    if (!recent90dKg) return;
     setHasInteracted(true);
     setLiftWeightsKg((prev) => ({
-      squat: r90.squat ?? prev.squat,
-      bench: r90.bench ?? prev.bench,
-      deadlift: r90.deadlift ?? prev.deadlift,
+      squat: recent90dKg.squat ?? prev.squat,
+      bench: recent90dKg.bench ?? prev.bench,
+      deadlift: recent90dKg.deadlift ?? prev.deadlift,
     }));
   };
 

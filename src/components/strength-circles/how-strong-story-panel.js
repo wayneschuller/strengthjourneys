@@ -194,20 +194,18 @@ export function HowStrongStoryPanel({
             .
           </p>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-6">
-            <div className="flex items-end gap-3 sm:contents">
-              <div className="min-w-0 flex-1">
-                <div className="hidden h-9 items-center sm:flex">
-                  <Label
-                    htmlFor="story-age-slider"
-                    className="text-xs font-normal text-muted-foreground"
-                  >
-                    Age
-                  </Label>
-                </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex items-center gap-3 sm:contents">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <Label
+                  htmlFor="story-age-slider"
+                  className="w-12 shrink-0 text-xs font-normal text-muted-foreground"
+                >
+                  Age
+                </Label>
                 <Slider
                   id="story-age-slider"
-                  className={cn("sm:mt-2", hintAge && "slider-thumb-hint")}
+                  className={cn("min-w-0 flex-1", hintAge && "slider-thumb-hint")}
                   min={13}
                   max={100}
                   step={1}
@@ -222,70 +220,53 @@ export function HowStrongStoryPanel({
                 />
               </div>
 
-              <div className="shrink-0">
-                <div className="hidden h-9 items-center sm:flex">
-                  <Label className="text-xs font-normal text-muted-foreground">
-                    Sex
-                  </Label>
-                </div>
-                <div className="flex items-center gap-1.5 sm:mt-2 sm:gap-2">
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    M
-                  </span>
-                  <Switch
-                    aria-label="Sex"
-                    checked={sex === "female"}
-                    onCheckedChange={(checked) =>
-                      setSex(checked ? "female" : "male")
-                    }
-                    className="data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500"
-                  />
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    F
-                  </span>
-                </div>
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                <span className="text-sm font-semibold text-muted-foreground">
+                  M
+                </span>
+                <Switch
+                  aria-label="Sex"
+                  checked={sex === "female"}
+                  onCheckedChange={(checked) =>
+                    setSex(checked ? "female" : "male")
+                  }
+                  className="data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500"
+                />
+                <span className="text-sm font-semibold text-muted-foreground">
+                  F
+                </span>
               </div>
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="hidden h-9 items-center justify-between gap-2 sm:flex">
-                <Label
-                  htmlFor="story-bodyweight-slider"
-                  className="text-xs font-normal text-muted-foreground"
-                >
-                  Bodyweight
-                </Label>
-                <UnitChooser isMetric={isMetric} onSwitchChange={onUnitChange} />
-              </div>
-              <div className="flex items-center gap-2">
-                <Slider
-                  id="story-bodyweight-slider"
-                  className={cn(
-                    "min-w-0 flex-1 sm:mt-2",
-                    hintBodyWeight &&
-                      "slider-thumb-hint slider-thumb-hint-delay-1",
-                  )}
-                  min={isMetric ? 40 : 90}
-                  max={isMetric ? 180 : 400}
-                  step={1}
-                  value={[bodyWeight]}
-                  onValueChange={([value]) => {
-                    setTouchedBio((previous) =>
-                      previous.bodyWeight
-                        ? previous
-                        : { ...previous, bodyWeight: true },
-                    );
-                    setBodyWeight(value);
-                  }}
-                  aria-label="Bodyweight"
-                />
-                <div className="sm:hidden">
-                  <UnitChooser
-                    isMetric={isMetric}
-                    onSwitchChange={onUnitChange}
-                  />
-                </div>
-              </div>
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <Label
+                htmlFor="story-bodyweight-slider"
+                className="w-12 shrink-0 text-xs font-normal text-muted-foreground"
+              >
+                Weight
+              </Label>
+              <Slider
+                id="story-bodyweight-slider"
+                className={cn(
+                  "min-w-0 flex-1",
+                  hintBodyWeight &&
+                    "slider-thumb-hint slider-thumb-hint-delay-1",
+                )}
+                min={isMetric ? 40 : 90}
+                max={isMetric ? 180 : 400}
+                step={1}
+                value={[bodyWeight]}
+                onValueChange={([value]) => {
+                  setTouchedBio((previous) =>
+                    previous.bodyWeight
+                      ? previous
+                      : { ...previous, bodyWeight: true },
+                  );
+                  setBodyWeight(value);
+                }}
+                aria-label="Bodyweight"
+              />
+              <UnitChooser isMetric={isMetric} onSwitchChange={onUnitChange} />
             </div>
           </div>
         </div>

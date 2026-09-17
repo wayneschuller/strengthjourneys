@@ -65,6 +65,7 @@ export function HowStrongStoryPanel({
   usingUserData,
   queryHydrated = false,
   hasArrivalLiftQuery = false,
+  arrivalLifts = {},
   prWeights,
   recent90d,
   results,
@@ -90,7 +91,7 @@ export function HowStrongStoryPanel({
 
   // Calling a stranger's example numbers "Beginner" on arrival is a verdict on
   // someone we know nothing about, so without a log to read from each lift waits
-  // until its own slider has been set before it earns a rating.
+  // until its own slider has been set — or until a shared URL already named it.
   const [movedLifts, setMovedLifts] = useState({});
   const [touchedBio, setTouchedBio] = useState({ age: false, bodyWeight: false });
   const [allowBioHint, setAllowBioHint] = useState(false);
@@ -307,7 +308,8 @@ export function HowStrongStoryPanel({
                 r90Weight !== prWeight;
 
               const liftResult = results?.lifts?.[key];
-              const showRating = usingUserData || movedLifts[key];
+              const showRating =
+                usingUserData || movedLifts[key] || arrivalLifts[key];
               const rating =
                 showRating && liftResult?.standard
                   ? getStrengthRatingForE1RM(

@@ -139,10 +139,17 @@ export function HowStrongStoryPanel({
   const total =
     liftWeights.squat + liftWeights.bench + liftWeights.deadlift;
   const totalPercentile = results?.total?.percentiles?.[activeUniverse];
+  const showStoryHeader =
+    hasMovedFromPR || hasMovedFrom90d || usingUserData;
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="pb-4">
+      <CardHeader
+        className={cn(
+          "px-4 py-3 sm:p-6 sm:pb-4",
+          !showStoryHeader && "hidden sm:flex",
+        )}
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-lg">My strength story</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
@@ -178,9 +185,9 @@ export function HowStrongStoryPanel({
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-7 pt-6">
-        <div className="flex flex-col gap-3">
-          <p className="text-lg leading-relaxed sm:text-xl">
+      <CardContent className="flex flex-col gap-4 px-4 pt-4 pb-4 sm:gap-7 sm:p-6 sm:pt-6">
+        <div className="flex flex-col gap-2 sm:gap-3">
+          <p className="text-lg leading-snug sm:text-xl sm:leading-relaxed">
             I am a <StoryValue>{age}</StoryValue> year-old{" "}
             <StoryValue>{sex}</StoryValue> weighing{" "}
             <StoryValue className="whitespace-nowrap">
@@ -190,59 +197,61 @@ export function HowStrongStoryPanel({
             .
           </p>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
-            <div className="flex-1">
-              <div className="flex h-9 items-center">
-                <Label
-                  htmlFor="story-age-slider"
-                  className="text-xs font-normal text-muted-foreground"
-                >
-                  Age
-                </Label>
-              </div>
-              <Slider
-                id="story-age-slider"
-                className={cn("mt-2", hintAge && "slider-thumb-hint")}
-                min={13}
-                max={100}
-                step={1}
-                value={[age]}
-                onValueChange={([value]) => {
-                  setTouchedBio((previous) =>
-                    previous.age ? previous : { ...previous, age: true },
-                  );
-                  setAge(value);
-                }}
-                aria-label="Age"
-              />
-            </div>
-
-            <div className="shrink-0">
-              <div className="flex h-9 items-center">
-                <Label className="text-xs font-normal text-muted-foreground">
-                  Sex
-                </Label>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-sm font-semibold text-muted-foreground">
-                  M
-                </span>
-                <Switch
-                  aria-label="Sex"
-                  checked={sex === "female"}
-                  onCheckedChange={(checked) =>
-                    setSex(checked ? "female" : "male")
-                  }
-                  className="data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500"
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-6">
+            <div className="flex items-end gap-3 sm:contents">
+              <div className="min-w-0 flex-1">
+                <div className="hidden h-9 items-center sm:flex">
+                  <Label
+                    htmlFor="story-age-slider"
+                    className="text-xs font-normal text-muted-foreground"
+                  >
+                    Age
+                  </Label>
+                </div>
+                <Slider
+                  id="story-age-slider"
+                  className={cn("sm:mt-2", hintAge && "slider-thumb-hint")}
+                  min={13}
+                  max={100}
+                  step={1}
+                  value={[age]}
+                  onValueChange={([value]) => {
+                    setTouchedBio((previous) =>
+                      previous.age ? previous : { ...previous, age: true },
+                    );
+                    setAge(value);
+                  }}
+                  aria-label="Age"
                 />
-                <span className="text-sm font-semibold text-muted-foreground">
-                  F
-                </span>
+              </div>
+
+              <div className="shrink-0">
+                <div className="hidden h-9 items-center sm:flex">
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    Sex
+                  </Label>
+                </div>
+                <div className="flex items-center gap-1.5 sm:mt-2 sm:gap-2">
+                  <span className="text-sm font-semibold text-muted-foreground">
+                    M
+                  </span>
+                  <Switch
+                    aria-label="Sex"
+                    checked={sex === "female"}
+                    onCheckedChange={(checked) =>
+                      setSex(checked ? "female" : "male")
+                    }
+                    className="data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500"
+                  />
+                  <span className="text-sm font-semibold text-muted-foreground">
+                    F
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="flex-1">
-              <div className="flex h-9 items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="hidden h-9 items-center justify-between gap-2 sm:flex">
                 <Label
                   htmlFor="story-bodyweight-slider"
                   className="text-xs font-normal text-muted-foreground"
@@ -251,31 +260,40 @@ export function HowStrongStoryPanel({
                 </Label>
                 <UnitChooser isMetric={isMetric} onSwitchChange={onUnitChange} />
               </div>
-              <Slider
-                id="story-bodyweight-slider"
-                className={cn(
-                  "mt-2",
-                  hintBodyWeight && "slider-thumb-hint slider-thumb-hint-delay-1",
-                )}
-                min={isMetric ? 40 : 90}
-                max={isMetric ? 180 : 400}
-                step={1}
-                value={[bodyWeight]}
-                onValueChange={([value]) => {
-                  setTouchedBio((previous) =>
-                    previous.bodyWeight
-                      ? previous
-                      : { ...previous, bodyWeight: true },
-                  );
-                  setBodyWeight(value);
-                }}
-                aria-label="Bodyweight"
-              />
+              <div className="flex items-center gap-2">
+                <Slider
+                  id="story-bodyweight-slider"
+                  className={cn(
+                    "min-w-0 flex-1 sm:mt-2",
+                    hintBodyWeight &&
+                      "slider-thumb-hint slider-thumb-hint-delay-1",
+                  )}
+                  min={isMetric ? 40 : 90}
+                  max={isMetric ? 180 : 400}
+                  step={1}
+                  value={[bodyWeight]}
+                  onValueChange={([value]) => {
+                    setTouchedBio((previous) =>
+                      previous.bodyWeight
+                        ? previous
+                        : { ...previous, bodyWeight: true },
+                    );
+                    setBodyWeight(value);
+                  }}
+                  aria-label="Bodyweight"
+                />
+                <div className="sm:hidden">
+                  <UnitChooser
+                    isMetric={isMetric}
+                    onSwitchChange={onUnitChange}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
           {STORY_LIFTS.map(({ key, label, linkText, href }, index) => {
               const prWeight = prWeights?.[key];
               const r90Weight = recent90d?.[key];

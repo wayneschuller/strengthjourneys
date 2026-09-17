@@ -694,7 +694,7 @@ function HowStrongAmIPageMain() {
 
       <Card className="mt-0 md:mt-4">
         <CardContent className="px-3 pt-0 pb-4 sm:p-6 sm:pt-5">
-          <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
+          <div className="flex flex-col items-center gap-3 lg:flex-row lg:items-start lg:gap-10">
             <div className="flex w-full max-w-md flex-col items-center gap-4 lg:order-1 lg:flex-1 lg:max-w-none">
               <div className="w-full max-w-xl xl:max-w-2xl">
                 <StrengthCirclesChart

@@ -707,12 +707,12 @@ function HowStrongAmIPageMain() {
           </div>
 
           <div className="mt-5 flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
-            <div className="flex w-full max-w-sm flex-col items-center gap-4 lg:order-1 lg:flex-1 lg:max-w-none">
-              <div className="w-full max-w-lg xl:max-w-xl">
+            <div className="flex w-full max-w-md flex-col items-center gap-4 lg:order-1 lg:flex-1 lg:max-w-none">
+              <div className="w-full max-w-xl xl:max-w-2xl">
                 <StrengthCirclesChart
                   percentiles={chartPercentiles}
                   activeUniverse={activeUniverse}
-                onUniverseChange={handleUniverseChange}
+                  onUniverseChange={handleUniverseChange}
                   onUniverseHoverChange={setHoveredUniverse}
                 />
               </div>

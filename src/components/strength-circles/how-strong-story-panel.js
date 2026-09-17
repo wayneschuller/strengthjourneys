@@ -8,7 +8,7 @@
  * ever formats and echoes back display values.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { RotateCcw, Sparkles, Upload } from "lucide-react";
@@ -78,6 +78,8 @@ export function HowStrongStoryPanel({
     bodyWeight,
     setBodyWeight,
     isMetric,
+    bioDataIsDefault,
+    bioDataIsInitialized,
   } = useAthleteBio();
   const prefersReducedMotion = useReducedMotion();
 
@@ -86,11 +88,23 @@ export function HowStrongStoryPanel({
   // until its own slider has been set before it earns a rating.
   const [movedLifts, setMovedLifts] = useState({});
   const [touchedBio, setTouchedBio] = useState({ age: false, bodyWeight: false });
+  const [allowBioHint, setAllowBioHint] = useState(false);
+  const bioHintDecidedRef = useRef(false);
 
-  // No log: age, bodyweight, and bench all breathe until that handle is grabbed.
+  // Decide once bio has hydrated from localStorage. A saved profile means they
+  // already know those sliders exist; changing age later must not also silence
+  // bodyweight.
+  useEffect(() => {
+    if (bioHintDecidedRef.current || !bioDataIsInitialized) return;
+    bioHintDecidedRef.current = true;
+    setAllowBioHint(bioDataIsDefault);
+  }, [bioDataIsDefault, bioDataIsInitialized]);
+
+  // No log: invite play. Bio thumbs only join in if this browser has never
+  // set a profile; bench still breathes because the lifts are still an example.
   const invitePlay = !usingUserData && !prefersReducedMotion;
-  const hintAge = invitePlay && !touchedBio.age;
-  const hintBodyWeight = invitePlay && !touchedBio.bodyWeight;
+  const hintAge = invitePlay && allowBioHint && !touchedBio.age;
+  const hintBodyWeight = invitePlay && allowBioHint && !touchedBio.bodyWeight;
   const hintBench = invitePlay && !movedLifts.bench;
 
   const unit = isMetric ? "kg" : "lb";

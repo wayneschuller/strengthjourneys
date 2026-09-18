@@ -92,6 +92,11 @@ export function SingleLiftStrengthCirclesSection({
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
   const showTimelinePanel = showTimeline && hasUserData;
 
+  // Progressive reveal: only show the outer ring (General Population) until
+  // thresholds are crossed, mirroring the how-strong-am-i page behavior.
+  // When using real user data from their log, show all rings immediately.
+  const revealProgressively = !hasUserData || isDemoMode;
+
   const bestE1rmKg = useMemo(() => {
     if (e1rmKgOverride > 0) return e1rmKgOverride;
     if (!hasUserData || isDemoMode || !parsedData?.length || !liftType) {
@@ -303,6 +308,7 @@ export function SingleLiftStrengthCirclesSection({
           onUniverseHoverChange={setHoveredUniverse}
           showLegend={false}
           showTrustLine={false}
+          revealProgressively={revealProgressively}
         />
       </div>
     );
@@ -332,6 +338,7 @@ export function SingleLiftStrengthCirclesSection({
             onUniverseHoverChange={setHoveredUniverse}
             showLegend={true}
             showTrustLine={true}
+            revealProgressively={revealProgressively}
           />
         </div>
         {showTimelinePanel && (

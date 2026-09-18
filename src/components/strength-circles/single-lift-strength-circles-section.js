@@ -92,11 +92,10 @@ export function SingleLiftStrengthCirclesSection({
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
   const showTimelinePanel = showTimeline && hasUserData;
 
-  // Progressive reveal: only show the outer ring (General Population) until
-  // thresholds are crossed (66th percentile), mirroring the how-strong-am-i page.
-  // Apply the progressive unlock in demo mode and for first-time visitors.
-  // Only lifters with real training data from their log see all rings immediately.
-  const revealProgressively = !hasUserData || isDemoMode;
+  // Progressive reveal: always show only the outer ring (General Population) until
+  // thresholds are crossed (66th percentile). This creates better focus for all users.
+  // Users can hover or click any group to see their result, even if locked.
+  const revealProgressively = true;
 
   const bestE1rmKg = useMemo(() => {
     if (e1rmKgOverride > 0) return e1rmKgOverride;

@@ -155,8 +155,8 @@ function Ring({ config, percentile, isActive, unlocked, onClick, onHoverChange }
 }
 
 // ─── Center label (HTML overlay) ─────────────────────────────────────────────
-// Absolutely positioned over the SVG so text wraps naturally and inherits page font.
-// A fixed 40% width lets long group names wrap inside the inner ring's clear area.
+// Absolutely positioned over the SVG so text inherits the page font. The
+// Powerlifting Culture label uses deliberate lines inside the narrow center.
 
 function CenterLabel({ activeUniverse, percentiles }) {
   const config = RING_CONFIG.find((r) => r.universe === activeUniverse);
@@ -194,7 +194,15 @@ function CenterLabel({ activeUniverse, percentiles }) {
                 className="mt-1 w-full text-balance text-xs font-semibold leading-snug sm:text-[13px]"
                 style={{ color: config?.color }}
               >
-                {config?.ofLabel ?? activeUniverse}
+                {activeUniverse === "Powerlifting Culture" ? (
+                  <>
+                    <span className="block">of</span>
+                    <span className="block">Powerlifting</span>
+                    <span className="block">Culture</span>
+                  </>
+                ) : (
+                  config?.ofLabel ?? activeUniverse
+                )}
               </span>
             </>
           ) : (

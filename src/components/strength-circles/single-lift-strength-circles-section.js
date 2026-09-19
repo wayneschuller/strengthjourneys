@@ -92,6 +92,11 @@ export function SingleLiftStrengthCirclesSection({
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
   const showTimelinePanel = showTimeline && hasUserData;
 
+  // Progressive reveal: always show only the outer ring (General Population) until
+  // thresholds are crossed (66th percentile). This creates better focus for all users.
+  // Users can hover or click any group to see their result, even if locked.
+  const revealProgressively = true;
+
   const bestE1rmKg = useMemo(() => {
     if (e1rmKgOverride > 0) return e1rmKgOverride;
     if (!hasUserData || isDemoMode || !parsedData?.length || !liftType) {
@@ -303,6 +308,7 @@ export function SingleLiftStrengthCirclesSection({
           onUniverseHoverChange={setHoveredUniverse}
           showLegend={false}
           showTrustLine={false}
+          revealProgressively={revealProgressively}
         />
       </div>
     );
@@ -332,6 +338,7 @@ export function SingleLiftStrengthCirclesSection({
             onUniverseHoverChange={setHoveredUniverse}
             showLegend={true}
             showTrustLine={true}
+            revealProgressively={revealProgressively}
           />
         </div>
         {showTimelinePanel && (

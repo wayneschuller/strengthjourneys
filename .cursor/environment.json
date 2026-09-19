@@ -1,0 +1,11 @@
+{
+  "name": "Strength Journeys",
+  "install": "export NVM_DIR=\"$HOME/.nvm\"; . \"$NVM_DIR/nvm.sh\"; nvm install 24 && nvm alias default 24 && export PATH=\"$NVM_DIR/versions/node/$(nvm version default)/bin:$PATH\" && node -v && npm ci",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "export NVM_DIR=\"$HOME/.nvm\"; . \"$NVM_DIR/nvm.sh\"; export PATH=\"$NVM_DIR/versions/node/$(nvm version default)/bin:$PATH\" && npm run dev"
+    }
+  ],
+  "ports": [3000]
+}

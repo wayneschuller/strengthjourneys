@@ -394,6 +394,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     false,
     null,
     (value) => Number.isFinite(value) && value >= 0 && value <= 700,
+    "squat",
   );
   const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_BENCH,
@@ -401,6 +402,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     false,
     null,
     (value) => Number.isFinite(value) && value >= 0 && value <= 700,
+    "bench",
   );
   const [deadlift, setDeadlift, , , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT,
@@ -408,6 +410,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     false,
     null,
     (value) => Number.isFinite(value) && value >= 0 && value <= 700,
+    "deadlift",
   );
   const [hasInteracted, setHasInteracted] = useState(false);
   const hasExplicitQueryRef = useRef(false);
@@ -439,7 +442,6 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   useEffect(() => {
     if (
-      hasExplicitQueryRef.current ||
       hasAutoPopulatedRef.current ||
       !topLiftsByTypeAndReps ||
       isDemoMode
@@ -478,9 +480,13 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       deadlift: buildE1RMSource(dl),
     });
 
-    if (prSquat != null) setSquat(prSquat);
-    if (prBench != null) setBench(prBench);
-    if (prDeadlift != null) setDeadlift(prDeadlift);
+    // Incoming squat/bench/deadlift params already chose PR vs 90-day (or a
+    // mix). Keep those numbers; still load markers so Reset to PRs/90d work.
+    if (!hasExplicitQueryRef.current) {
+      if (prSquat != null) setSquat(prSquat);
+      if (prBench != null) setBench(prBench);
+      if (prDeadlift != null) setDeadlift(prDeadlift);
+    }
     setUsingUserData(true);
   }, [
     topLiftsByTypeAndReps,

@@ -465,8 +465,8 @@ export function HowStrongStoryPanel({
                 <p className="mt-2 text-sm">
                   <Link
                     prefetch={false}
-                    href="/1000lb-club-calculator"
-                    className={STORY_LINK_CLASSES}
+                    href={getThousandClubHref(liftWeights, isMetric)}
+                    className={cn(STORY_LINK_CLASSES, "underline")}
                   >
                     {thousandClubLabel}
                   </Link>
@@ -661,6 +661,23 @@ function getThousandClubLabel(totalLb) {
   if (totalLb >= 1000) return "In the 1000lb club";
   if (totalLb >= 900) return "You are approaching the 1000lb club!";
   return null;
+}
+
+// The club calculator is pound-native and auto-fills all-time PRs unless the
+// URL already names the lifts. Always pass the current sliders so a 90-day
+// total (or a mixed PR/90d set) survives the hop instead of snapping to PRs.
+function getThousandClubHref(liftWeights, isMetric) {
+  const toClubPounds = (weight) => {
+    const lb = isMetric ? weight * 2.2046 : weight;
+    return String(Math.min(700, Math.max(0, Math.round(lb / 5) * 5)));
+  };
+
+  const params = new URLSearchParams({
+    squat: toClubPounds(liftWeights.squat),
+    bench: toClubPounds(liftWeights.bench),
+    deadlift: toClubPounds(liftWeights.deadlift),
+  });
+  return `/1000lb-club-calculator?${params}`;
 }
 
 function ordinal(n) {

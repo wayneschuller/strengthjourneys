@@ -35,6 +35,7 @@ import {
   e1rmMarkerLines,
   formatWeightTick,
   getDateTickProps,
+  getResponsiveLabelCount,
   paddedDateDomain,
   renderYearDividers,
   selectTopPoints,
@@ -63,11 +64,6 @@ import { CartesianGrid, Area, AreaChart, XAxis, YAxis, Tooltip } from "recharts"
 import { getYearLabels, processVisualizerData } from "@/components/visualizer/visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
-
-// How many high points to mark inside the selected range. Each one has to clear
-// the separation rule below, so this is a ceiling rather than a guarantee — a
-// short range with few sessions will simply mark fewer.
-const TOP_SESSION_COUNT = 5;
 
 /**
  * E1RM over time chart for a single lift. Shows estimated 1RM progression with optional formula
@@ -172,6 +168,14 @@ export function VisualizerMini({ liftType }) {
   const yearLabels = getYearLabels(chartData);
   const dateTickProps = getDateTickProps(chartData);
 
+  // Two-line rep/weight annotations need a little more room than tonnage's
+  // single values. Wide progress guides can tell more of the story, while the
+  // selector's separation rule still rejects labels that would bunch together.
+  const topPointCount = getResponsiveLabelCount(width, {
+    max: 10,
+    labelWidth: 150,
+  });
+
   // The best sessions inside the selected time range, ranked, so the chart always
   // highlights the high points of whatever window you are looking at. See
   // selectTopPoints for how the picks stay spread instead of clustering on one
@@ -179,9 +183,9 @@ export function VisualizerMini({ liftType }) {
   const topPoints = useMemo(
     () =>
       selectTopPoints(chartData, (point) => point[liftType], {
-        count: TOP_SESSION_COUNT,
+        count: topPointCount,
       }),
-    [chartData, liftType],
+    [chartData, liftType, topPointCount],
   );
 
   const strengthRanges = standards?.[liftType] || null;

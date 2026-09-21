@@ -59,6 +59,7 @@ import {
   chartCursorProps,
   formatWeightTick,
   getDateTickProps,
+  getResponsiveLabelCount,
   paddedDateDomain,
   renderYearDividers,
   selectTopPoints,
@@ -157,14 +158,25 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   const dateTickProps = getDateTickProps(chartData);
 
+  // Tonnage annotations are one line, so they can use a slightly denser budget
+  // than E1RM labels while keeping the same collision-avoiding point selector.
+  const topPointCount = getResponsiveLabelCount(width, {
+    max: 12,
+    labelWidth: 125,
+  });
+
   // Per-lift chart only (progress-guide pages): the best sessions in range,
   // ranked, so the chart always highlights its own high points instead of
   // leaving them buried in the noise. See selectTopPoints for how the picks
   // stay spread rather than clustering on one peak week.
   const topPoints = useMemo(
     () =>
-      liftType ? selectTopPoints(chartData, (point) => point.tonnage) : [],
-    [chartData, liftType],
+      liftType
+        ? selectTopPoints(chartData, (point) => point.tonnage, {
+            count: topPointCount,
+          })
+        : [],
+    [chartData, liftType, topPointCount],
   );
 
   // Standalone all-lifts page only: which sessions get a value label when

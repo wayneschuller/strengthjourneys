@@ -300,6 +300,32 @@ export function selectTopPoints(data, getValue, { count = 5 } = {}) {
 }
 
 /**
+ * Turns the available viewport width into a conservative annotation budget.
+ * Recharts does not expose plot dimensions until render time, but the window
+ * width is a close enough proxy for these full-width cards. Reserving a fixed
+ * amount per label lets wide charts tell more of the progression story without
+ * making narrower layouts inherit a crowded desktop label count.
+ *
+ * @param {number} width - Current viewport width.
+ * @param {Object} [options]
+ * @param {number} [options.min] - Smallest useful label count.
+ * @param {number} [options.max] - Hard ceiling on very wide screens.
+ * @param {number} [options.labelWidth] - Approximate horizontal room each
+ *   annotation needs, including breathing space around it.
+ * @returns {number}
+ */
+export function getResponsiveLabelCount(
+  width,
+  { min = 3, max = 10, labelWidth = 150 } = {},
+) {
+  if (!Number.isFinite(width) || width <= 0) return min;
+
+  // Account for the card edge, chart margins, and (on desktop) the y axis.
+  const usableWidth = Math.max(0, width - 120);
+  return Math.max(min, Math.min(max, Math.floor(usableWidth / labelWidth)));
+}
+
+/**
  * Renders the ranked markers from selectTopPoints. The winner gets a filled pin
  * with a breathing halo; the rest get smaller open rings, so the hierarchy is
  * readable at a glance. ReferenceDot sits at a zIndex above the series, so

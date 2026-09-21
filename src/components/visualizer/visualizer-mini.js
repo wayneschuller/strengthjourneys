@@ -75,7 +75,16 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
 export function VisualizerMini({ liftType }) {
   const { parsedData, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
+  const [pinnedPoint, setPinnedPoint] = useState(null);
   useEffect(() => { setIsMounted(true); }, []);
+  useEffect(() => {
+    if (!pinnedPoint) return;
+    const dismissOnEscape = (event) => {
+      if (event.key === "Escape") setPinnedPoint(null);
+    };
+    window.addEventListener("keydown", dismissOnEscape);
+    return () => window.removeEventListener("keydown", dismissOnEscape);
+  }, [pinnedPoint]);
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
 
@@ -302,6 +311,7 @@ export function VisualizerMini({ liftType }) {
         {isLoading || !parsedData || !isMounted ? (
           <Skeleton className="h-[400px] w-full" />
         ) : chartData && (
+          <div className="relative">
             <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 accessibilityLayer
@@ -352,6 +362,7 @@ export function VisualizerMini({ liftType }) {
                   // allowDataOverflow
                 />
                 <Tooltip
+                  active={pinnedPoint ? false : undefined}
                   content={(props) => (
                     <SingleLiftTooltipContent
                       {...props}
@@ -406,6 +417,11 @@ export function VisualizerMini({ liftType }) {
                   topPoints={topPoints}
                   color={liftColor}
                   getLines={e1rmMarkerLines(liftType)}
+                  onPointClick={(selected) =>
+                    setPinnedPoint((current) =>
+                      current?.point === selected.point ? null : selected,
+                    )
+                  }
                 />
 
                 {/* Strength standards: color-coded lines for all reached levels + one next target. */}
@@ -476,6 +492,33 @@ export function VisualizerMini({ liftType }) {
                 }
               </AreaChart>
             </ChartContainer>
+            {pinnedPoint && (
+              <div className="absolute right-3 top-3 z-20">
+                <button
+                  type="button"
+                  className="absolute right-1 top-1 z-10 rounded px-1 text-muted-foreground hover:text-foreground"
+                  aria-label="Close pinned chart details"
+                  onClick={() => setPinnedPoint(null)}
+                >
+                  ×
+                </button>
+                <SingleLiftTooltipContent
+                  active
+                  payload={[
+                    {
+                      payload: pinnedPoint.point,
+                      color: liftColor,
+                      value: pinnedPoint.value,
+                    },
+                  ]}
+                  liftType={liftType}
+                  parsedData={parsedData}
+                  liftColor={liftColor}
+                  isMetric={isMetric}
+                />
+              </div>
+            )}
+          </div>
         )}
       </CardContent>
       <CardFooter>

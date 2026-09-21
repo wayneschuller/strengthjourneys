@@ -314,7 +314,10 @@ export function VisualizerMini({ liftType }) {
         {isLoading || !parsedData || !isMounted ? (
           <Skeleton className="h-[400px] w-full" />
         ) : chartData && (
-            <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
+            <ChartContainer
+              config={chartConfig}
+              className="h-[400px] !aspect-auto [&_.recharts-wrapper]:outline-none"
+            >
               <AreaChart
                 accessibilityLayer
                 data={chartData}
@@ -373,6 +376,7 @@ export function VisualizerMini({ liftType }) {
                       parsedData={parsedData}
                       liftColor={liftColor}
                       isMetric={isMetric}
+                      showClickHint
                     />
                   )}
                   formatter={(value, name, props) =>

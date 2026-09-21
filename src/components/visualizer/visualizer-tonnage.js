@@ -310,7 +310,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
         {isLoading || !parsedData || !isMounted || !chartData ? (
           <Skeleton className="h-[400px] w-full" />
         ) : liftType ? (
-          <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
+          <ChartContainer
+            config={chartConfig}
+            className="h-[400px] !aspect-auto [&_.recharts-wrapper]:outline-none"
+          >
               <AreaChart
                 data={chartData}
                 margin={{ left: 5, right: 20 }}
@@ -777,6 +780,9 @@ const TonnageTooltipContent = ({
           ))}
         </div>
       )}
+      <p className="mt-1 border-t border-border/50 pt-1 text-[11px] text-muted-foreground">
+        Click to see full session details
+      </p>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   ArrowDown,
   ArrowUp,
+  ChevronDown,
   ChevronRight,
   ClipboardPlus,
   PenLine,
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/collapsible";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
 import { DRAWN_LIFT_TYPES, LiftArtwork } from "@/components/lift-artwork";
+import { logFatActionClass } from "@/components/log/session-footer-actions";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getDaysBetweenYmd, getReadableDateString } from "@/lib/date-utils";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -74,13 +76,13 @@ export function LiftSuggestions({
   const dateLabel = getReadableDateString(lastDate);
 
   return (
-    <p className="pb-1 text-xs italic text-muted-foreground">
+    <p className="text-muted-foreground pb-1 text-xs italic">
       Last{" "}
       {onNavigateToDate ? (
         <button
           type="button"
           onClick={() => onNavigateToDate(lastDate)}
-          className="font-medium not-italic underline decoration-dotted underline-offset-2 hover:text-foreground"
+          className="hover:text-foreground font-medium not-italic underline decoration-dotted underline-offset-2"
         >
           {dateLabel}
         </button>
@@ -96,7 +98,8 @@ export function LiftTechniqueAssist({
   techniqueAssist,
   hasBigFourIcon = false,
 }) {
-  if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist) return null;
+  if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist)
+    return null;
 
   return (
     <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-34" : ""}`}>
@@ -104,17 +107,20 @@ export function LiftTechniqueAssist({
         <div className="space-y-2">
           {/* What the lift is, for someone who only has the artwork to go on */}
           {techniqueAssist.summary && (
-            <p className="pb-1 text-sm text-foreground/80">
+            <p className="text-foreground/80 pb-1 text-sm">
               {techniqueAssist.summary}
             </p>
           )}
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
+          <p className="text-muted-foreground/70 text-[10px] font-semibold tracking-[0.22em] uppercase">
             Form cues
           </p>
           <ul className="space-y-1.5">
             {techniqueAssist.cues.map((cue) => (
-              <li key={cue} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
+              <li
+                key={cue}
+                className="text-muted-foreground flex items-start gap-2 text-sm"
+              >
+                <span className="bg-primary/60 mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
                 <span>{cue}</span>
               </li>
             ))}
@@ -134,25 +140,25 @@ function LiftCoachCopy({ inSessionCoaching, alignClass = "" }) {
   if (!inSessionCoaching) return null;
 
   return (
-    <div className={`border-b border-border/40 px-4 py-3 ${alignClass}`}>
+    <div className={`border-border/40 border-b px-4 py-3 ${alignClass}`}>
       <div className="space-y-1.5">
         {inSessionCoaching.eyebrow && (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
+          <p className="text-muted-foreground/70 text-[10px] font-semibold tracking-[0.22em] uppercase">
             {inSessionCoaching.eyebrow}
           </p>
         )}
         {inSessionCoaching.title && (
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-foreground text-sm font-semibold">
             {inSessionCoaching.title}
           </p>
         )}
         {inSessionCoaching.body && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {inSessionCoaching.body}
           </p>
         )}
         {inSessionCoaching.effortCue && (
-          <p className="text-xs italic text-muted-foreground/75">
+          <p className="text-muted-foreground/75 text-xs italic">
             {inSessionCoaching.effortCue}
           </p>
         )}
@@ -171,33 +177,33 @@ function LiftCoachVideoAssist({ videoAssist }) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-background/75">
+      <div className="border-border/60 bg-background/75 overflow-hidden rounded-xl border">
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-accent/30"
+            className="hover:bg-accent/30 flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors"
           >
             <div className="min-w-0">
-              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <PlayCircle className="h-4 w-4 text-muted-foreground" />
+              <p className="text-foreground flex items-center gap-2 text-sm font-medium">
+                <PlayCircle className="text-muted-foreground h-4 w-4" />
                 {videoAssist.prompt}
               </p>
             </div>
             <ChevronRight
-              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+              className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform ${
                 isOpen ? "rotate-90" : ""
               }`}
             />
           </button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="border-t border-border/50 px-3 py-3">
+        <CollapsibleContent className="border-border/50 border-t px-3 py-3">
           <a
             href={activeVideoHref}
             target="_blank"
             rel="noreferrer"
-            className="group block overflow-hidden rounded-xl border border-border/60 bg-card transition-colors hover:border-primary/40 hover:bg-accent/20"
+            className="group border-border/60 bg-card hover:border-primary/40 hover:bg-accent/20 block overflow-hidden rounded-xl border transition-colors"
           >
-            <div className="relative aspect-video overflow-hidden bg-muted">
+            <div className="bg-muted relative aspect-video overflow-hidden">
               {activeThumbnailSrc ? (
                 <Image
                   src={activeThumbnailSrc}
@@ -225,7 +231,7 @@ function LiftCoachVideoAssist({ videoAssist }) {
             <div className="mt-3">
               <Link
                 href={`/${videoAssist.slug}`}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-medium"
               >
                 Open the full lift guide
                 <ChevronRight className="h-3.5 w-3.5" />
@@ -312,7 +318,10 @@ function SmartAddButtonGrid({
         className={`grid grid-cols-2 overflow-hidden rounded-b-xl ${desktopGridClass}`}
       >
         {visibleButtons.map((s, i) => {
-          const { Icon, className: iconClassName } = getSuggestionIcon(s, lastRealSet);
+          const { Icon, className: iconClassName } = getSuggestionIcon(
+            s,
+            lastRealSet,
+          );
           const totalButtonCount = visibleButtons.length + 1;
 
           return (
@@ -321,7 +330,9 @@ function SmartAddButtonGrid({
               type="button"
               disabled={disabled}
               className={`${suggestionButtonClass} ${buttonBorderClass(i, totalButtonCount)} ${buttonRadiusClass(i, totalButtonCount)} ${
-                disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
+                disabled
+                  ? "cursor-not-allowed opacity-50"
+                  : "hover:bg-accent/50"
               } ${
                 s.variant === "primary"
                   ? "bg-accent/20 text-foreground"
@@ -329,7 +340,13 @@ function SmartAddButtonGrid({
                     ? "text-foreground"
                     : "text-muted-foreground"
               }`}
-              onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
+              onClick={() =>
+                onAddSet({
+                  reps: s.reps,
+                  weight: s.weight,
+                  unitType: s.unitType,
+                })
+              }
             >
               <span
                 className={`flex min-w-0 items-center justify-center gap-1.5 self-end ${
@@ -343,11 +360,11 @@ function SmartAddButtonGrid({
                 <Icon className={`h-3.5 w-3.5 ${iconClassName}`} />
                 <span className="min-w-0 break-words">{s.label}</span>
               </span>
-              <span className="self-start text-[10px] font-normal uppercase tracking-wider text-muted-foreground/70">
+              <span className="text-muted-foreground/70 self-start text-[10px] font-normal tracking-wider uppercase">
                 {s.sublabel}
               </span>
               <span
-                className={`self-start text-[10px] font-normal uppercase tracking-wide ${
+                className={`self-start text-[10px] font-normal tracking-wide uppercase ${
                   s.rankingMessage
                     ? s.rankingScope === "lifetime"
                       ? "text-amber-500"
@@ -369,19 +386,19 @@ function SmartAddButtonGrid({
           onClick={onStartCustomSet}
         >
           <span className="flex min-w-0 items-center justify-center gap-1.5 self-end">
-            <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+            <PenLine className="text-muted-foreground h-3.5 w-3.5" />
             <span className="min-w-0 break-words">Custom set</span>
           </span>
-          <span className="self-start text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          <span className="text-muted-foreground/70 self-start text-[10px] tracking-wider uppercase">
             any reps or weight
           </span>
-          <span className="invisible self-start text-[10px] uppercase tracking-wide">
+          <span className="invisible self-start text-[10px] tracking-wide uppercase">
             No ranking
           </span>
         </button>
       </div>
       {showHint && disabled && (
-        <p className="pb-2 pt-1 text-center text-[11px] italic text-muted-foreground/60">
+        <p className="text-muted-foreground/60 pt-1 pb-2 text-center text-[11px] italic">
           Row positions are updating. Add controls will re-enable in a moment.
         </p>
       )}
@@ -406,7 +423,7 @@ function PastSessionSmartAddButtons({
 
   return (
     <div
-      className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/20"
+      className="border-border bg-muted/20 mt-2 overflow-hidden rounded-b-xl border-t"
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
       onFocusCapture={() => setIsExpanded(true)}
@@ -419,8 +436,10 @@ function PastSessionSmartAddButtons({
       <button
         type="button"
         disabled={disabled}
-        className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-xs text-muted-foreground transition-colors ${
-          disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/30 hover:text-foreground"
+        className={`text-muted-foreground flex w-full items-center justify-between px-4 py-2.5 text-left text-xs transition-colors ${
+          disabled
+            ? "cursor-not-allowed opacity-50"
+            : "hover:bg-accent/30 hover:text-foreground"
         }`}
         onClick={() => setIsExpanded((prev) => !prev)}
         aria-expanded={isExpanded}
@@ -429,7 +448,7 @@ function PastSessionSmartAddButtons({
           <Plus className="h-3.5 w-3.5" />
           {`Add another ${liftType} set`}
         </span>
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
+        <span className="text-muted-foreground/70 flex items-center gap-1 text-[10px]">
           <motion.span
             animate={{ rotate: isExpanded ? 90 : 0 }}
             transition={transition}
@@ -446,7 +465,7 @@ function PastSessionSmartAddButtons({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={transition}
-            className="overflow-hidden border-t border-border/40 bg-muted/30"
+            className="border-border/40 bg-muted/30 overflow-hidden border-t"
           >
             <SmartAddButtonGrid
               buttons={buttons}
@@ -477,12 +496,14 @@ export function SmartAddButtons({
 }) {
   if (!inSessionCoachState?.buttons?.length) {
     return (
-      <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
+      <div className="border-border bg-muted/30 mt-2 overflow-hidden rounded-b-xl border-t">
         <button
           type="button"
           disabled={disabled}
-          className={`flex w-full items-center justify-center gap-2 py-3.5 text-sm text-muted-foreground transition-colors ${
-            disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50 hover:text-foreground"
+          className={`text-muted-foreground flex w-full items-center justify-center gap-2 py-3.5 text-sm transition-colors ${
+            disabled
+              ? "cursor-not-allowed opacity-50"
+              : "hover:bg-accent/50 hover:text-foreground"
           }`}
           onClick={() => onAddSet(lastRealSet)}
         >
@@ -511,7 +532,7 @@ export function SmartAddButtons({
   }
 
   return (
-    <div className="mt-2 overflow-hidden rounded-b-xl border-t border-border bg-muted/30">
+    <div className="border-border bg-muted/30 mt-2 overflow-hidden rounded-b-xl border-t">
       <LiftCoachCopy
         inSessionCoaching={inSessionCoachState.inSessionCoaching}
         alignClass={hasBigFourIcon ? "md:pl-34" : ""}
@@ -552,6 +573,10 @@ function getLastLiftedLabel(lastDate, sessionDate, isToday) {
  * Tiles lead with what has been trained lately and say when each was last
  * done. `readOnly` shows the same gallery to preview visitors with nothing to
  * tap, headed by `readOnlyCta` so the reason is plain.
+ *
+ * `startCollapsed` is for a session old enough that adding a lift is the
+ * exception. The artwork stays one tap away behind a single button, and
+ * opens only when asked.
  */
 export function AddLiftButton({
   onAddLift,
@@ -563,9 +588,12 @@ export function AddLiftButton({
   disabled = false,
   readOnly = false,
   readOnlyCta = null,
+  startCollapsed = false,
 }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const searchId = useId();
   const otherButtonRef = useRef(null);
   const { getColor } = useLiftColors();
@@ -645,12 +673,8 @@ export function AddLiftButton({
   }`;
   const TileElement = readOnly ? "div" : "button";
 
-  return (
-    <section aria-labelledby={`${searchId}-heading`} className="w-full space-y-3">
-      <h2 id={`${searchId}-heading`} className="text-base font-semibold">
-        {label ?? (readOnly ? "Lifts you can log" : "Log another lift type")}
-      </h2>
-      {readOnly && readOnlyCta}
+  const gallery = (
+    <>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
         {drawnLifts.map(({ name, color, lastLiftedLabel }) => (
           <TileElement
@@ -806,6 +830,71 @@ export function AddLiftButton({
           Add controls will re-enable once the current update finishes.
         </p>
       )}
+    </>
+  );
+
+  if (startCollapsed) {
+    const triggerLabel =
+      label ?? (readOnly ? "Lifts you can log" : "Add a lift");
+
+    return (
+      <>
+        <Button
+          type="button"
+          variant="outline"
+          aria-expanded={galleryOpen}
+          className={`${logFatActionClass} sm:col-start-1 sm:row-start-1`}
+          onClick={() => {
+            if (galleryOpen) close();
+            setGalleryOpen((open) => !open);
+          }}
+        >
+          {!readOnly && <Plus />}
+          {triggerLabel}
+          <ChevronDown
+            className={`transition-transform ${galleryOpen ? "rotate-180" : ""} ${
+              prefersReducedMotion ? "" : "duration-200"
+            }`}
+          />
+        </Button>
+        <AnimatePresence initial={false}>
+          {galleryOpen && (
+            <motion.div
+              key="add-lift-gallery"
+              initial={prefersReducedMotion ? false : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={
+                prefersReducedMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, height: 0 }
+              }
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.2,
+                ease: "easeOut",
+              }}
+              className="overflow-hidden sm:col-span-full"
+            >
+              <div className="space-y-3 pt-1">
+                {readOnly && readOnlyCta}
+                {gallery}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  return (
+    <section
+      aria-labelledby={`${searchId}-heading`}
+      className="w-full space-y-3"
+    >
+      <h2 id={`${searchId}-heading`} className="text-base font-semibold">
+        {label ?? (readOnly ? "Lifts you can log" : "Log another lift type")}
+      </h2>
+      {readOnly && readOnlyCta}
+      {gallery}
     </section>
   );
 }

@@ -21,6 +21,7 @@ import {
   buildAiAssistantPromptLink,
   buildLogSessionReviewPrompt,
 } from "@/lib/ai-review-prompts";
+import { getDaysBetweenYmd } from "@/lib/date-utils";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -52,9 +53,9 @@ const BIG_FOUR = BIG_FOUR_LIFTS.map(({ liftType, slug }) => ({
 }));
 
 // Coached lifts beyond the big four follow them into the add-lift chips.
-const DEFAULT_ADD_LIFT_CHIPS = COACHED_LIFTS.filter(({ bigFour }) => !bigFour).map(
-  ({ liftType }) => ({ name: liftType, icon: null }),
-);
+const DEFAULT_ADD_LIFT_CHIPS = COACHED_LIFTS.filter(
+  ({ bigFour }) => !bigFour,
+).map(({ liftType }) => ({ name: liftType, icon: null }));
 
 const LOG_PAGE_TITLE = "Workout Log and Session Tracker | Strength Journeys";
 const LOG_PAGE_DESCRIPTION =
@@ -351,6 +352,9 @@ export default function LogSessionPage({
     );
   }, [isMetric, perLiftTonnageStats, sessionDate, sessionLiftsWithPending]);
   const isToday = sessionDate === todayIso;
+  // A week-old session is history. The artwork gallery stays behind one
+  // button, since that day is rarely where a new lift gets added.
+  const collapseAddLiftGallery = getDaysBetweenYmd(sessionDate, todayIso) > 7;
   const effectiveSsid = sheetInfo?.ssid ?? persistedSheetInfo?.ssid ?? null;
   const { dashboardStage, sessionCount } = useMemo(
     () =>
@@ -596,6 +600,44 @@ export default function LogSessionPage({
     <PreviewLogCta isDemoMode={isDemoMode} isImportedData={isImportedData} />
   );
 
+  const addLiftControl = previewMode ? (
+    <AddLiftButton
+      key={sessionDate}
+      readOnly
+      readOnlyCta={previewLogCta}
+      chips={addLiftChips}
+      sessionDate={sessionDate}
+      isToday={isToday}
+      startCollapsed={collapseAddLiftGallery}
+    />
+  ) : (
+    <AddLiftButton
+      key={sessionDate}
+      onAddLift={handleAddLift}
+      chips={addLiftChips}
+      excludeLiftTypes={sessionLiftTypes}
+      sessionDate={sessionDate}
+      isToday={isToday}
+      disabled={isAddBlocked}
+      startCollapsed={collapseAddLiftGallery}
+    />
+  );
+
+  const sessionFooter = (
+    <SessionFooterActions
+      aiReviewLink={aiSessionReviewLink}
+      isToday={isToday}
+      isStructuralSaving={isExistingRowWriteBlocked}
+      onCancel={() => setShowDeleteConfirm(false)}
+      onConfirm={handleDeleteSession}
+      onRequestConfirm={() => setShowDeleteConfirm(true)}
+      previewMode={previewMode}
+      sessionDate={sessionDate}
+      showConfirm={showDeleteConfirm}
+      embedded={collapseAddLiftGallery}
+    />
+  );
+
   return (
     <>
       <NextSeo
@@ -745,36 +787,23 @@ export default function LogSessionPage({
                     )}
                   </AnimatePresence>
 
-                  {previewMode ? (
-                    <AddLiftButton
-                      readOnly
-                      readOnlyCta={previewLogCta}
-                      chips={addLiftChips}
-                      sessionDate={sessionDate}
-                      isToday={isToday}
-                    />
+                  {collapseAddLiftGallery ? (
+                    <div
+                      className={
+                        aiSessionReviewLink
+                          ? "grid grid-cols-1 gap-3 sm:grid-cols-3"
+                          : "grid grid-cols-1 gap-3 sm:grid-cols-2"
+                      }
+                    >
+                      {addLiftControl}
+                      {sessionFooter}
+                    </div>
                   ) : (
-                    <AddLiftButton
-                      onAddLift={handleAddLift}
-                      chips={addLiftChips}
-                      excludeLiftTypes={sessionLiftTypes}
-                      sessionDate={sessionDate}
-                      isToday={isToday}
-                      disabled={isAddBlocked}
-                    />
+                    <>
+                      {addLiftControl}
+                      {sessionFooter}
+                    </>
                   )}
-
-                  <SessionFooterActions
-                    aiReviewLink={aiSessionReviewLink}
-                    isToday={isToday}
-                    isStructuralSaving={isExistingRowWriteBlocked}
-                    onCancel={() => setShowDeleteConfirm(false)}
-                    onConfirm={handleDeleteSession}
-                    onRequestConfirm={() => setShowDeleteConfirm(true)}
-                    previewMode={previewMode}
-                    sessionDate={sessionDate}
-                    showConfirm={showDeleteConfirm}
-                  />
                 </div>
               )}
 

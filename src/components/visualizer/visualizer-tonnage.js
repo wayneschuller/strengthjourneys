@@ -132,6 +132,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     if (!chartData || chartData.length === 0) {
       return {
         roundedMax: 1000,
+        domainMax: 1040,
         tickInterval: 200,
         ticks: [0, 200, 400, 600, 800, 1000],
       };
@@ -147,7 +148,12 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       ticks.push(tick);
     }
 
-    return { roundedMax, tickInterval, ticks };
+    // Keep the top tick round, but extend the actual scale slightly beyond it.
+    // TopPointMarkers lifts its text above the point, so ending the domain at
+    // the tick can clip a near-ceiling label against the SVG boundary.
+    const domainMax = roundedMax + tickInterval * 0.2;
+
+    return { roundedMax, domainMax, tickInterval, ticks };
   }, [chartData]);
 
   // Scale debounce with dataset size so small datasets feel instant while large datasets
@@ -298,7 +304,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 <YAxis
                   {...CHART_AXIS_PROPS}
                   tickFormatter={(value) => formatWeightTick(value, displayUnit)}
-                  domain={[0, yAxisConfig.roundedMax]}
+                  domain={[0, yAxisConfig.domainMax]}
                   ticks={yAxisConfig.ticks}
                   hide={width < 1280}
                 />
@@ -397,7 +403,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               <YAxis
                 {...CHART_AXIS_PROPS}
                 tickFormatter={(value) => formatWeightTick(value, displayUnit)}
-                domain={[0, yAxisConfig.roundedMax]}
+                domain={[0, yAxisConfig.domainMax]}
                 ticks={yAxisConfig.ticks}
                 hide={width < 1280}
               />

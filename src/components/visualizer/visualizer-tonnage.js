@@ -84,16 +84,7 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
 export function TonnageChart({ setHighlightDate, liftType }) {
   const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
-  const [pinnedPoint, setPinnedPoint] = useState(null);
   useEffect(() => { setIsMounted(true); }, []);
-  useEffect(() => {
-    if (!pinnedPoint) return;
-    const dismissOnEscape = (event) => {
-      if (event.key === "Escape") setPinnedPoint(null);
-    };
-    window.addEventListener("keydown", dismissOnEscape);
-    return () => window.removeEventListener("keydown", dismissOnEscape);
-  }, [pinnedPoint]);
   const { getColor } = useLiftColors();
   const { isMetric } = useAthleteBio();
   const liftColor = liftType ? getColor(liftType) : null;
@@ -296,7 +287,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
         {isLoading || !parsedData || !isMounted || !chartData ? (
           <Skeleton className="h-[400px] w-full" />
         ) : liftType ? (
-          <div className="relative">
           <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 data={chartData}
@@ -320,7 +310,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 />
 
                 <Tooltip
-                  active={pinnedPoint ? false : undefined}
                   position={{ y: 180 }}
                   cursor={chartCursorProps(liftColor)}
                   content={(props) => (
@@ -392,42 +381,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     getLines={({ value }) => [
                       `${Math.round(value)}${displayUnit}`,
                     ]}
-                    onPointClick={(selected) =>
-                      setPinnedPoint((current) =>
-                        current?.point === selected.point ? null : selected,
-                      )
-                    }
                   />
                 )}
               </AreaChart>
             </ChartContainer>
-            {pinnedPoint && (
-              <div className="absolute right-3 top-3 z-20">
-                <button
-                  type="button"
-                  className="absolute right-1 top-1 z-10 rounded px-1 text-muted-foreground hover:text-foreground"
-                  aria-label="Close pinned chart details"
-                  onClick={() => setPinnedPoint(null)}
-                >
-                  ×
-                </button>
-                <TonnageTooltipContent
-                  payload={[
-                    {
-                      payload: pinnedPoint.point,
-                      color: liftColor,
-                      value: pinnedPoint.value,
-                    },
-                  ]}
-                  liftType={liftType}
-                  parsedData={parsedData}
-                  liftColor={liftColor}
-                  setHighlightDate={setHighlightDate}
-                  isMetric={isMetric}
-                />
-              </div>
-            )}
-          </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
             <AreaChart

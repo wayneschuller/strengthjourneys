@@ -352,8 +352,6 @@ export function getResponsiveLabelCount(
  *   but once several series share a plot, same-coloured labels can't be
  *   traced back to their line. Pass the series' own colour there so a label
  *   matches its marker the same way the line and legend already do.
- * @param {function} [props.onPointClick] - Called with the selected ranked
- *   point. When supplied, markers and labels expose button-like interaction.
  */
 export function TopPointMarkers({
   topPoints,
@@ -361,7 +359,6 @@ export function TopPointMarkers({
   getLines,
   labelOffset = 0,
   labelColor,
-  onPointClick,
 }) {
   if (!topPoints?.length) return null;
 
@@ -380,11 +377,6 @@ export function TopPointMarkers({
       {topPoints.map(({ point, value, rank }) => {
         const isWinner = rank === 0;
         const lines = getLines({ point, value, rank, isWinner });
-        const selectedPoint = { point, value, rank };
-        const handleClick = (event) => {
-          event?.stopPropagation?.();
-          onPointClick?.(selectedPoint);
-        };
         return (
           <ReferenceDot
             key={`top-${rank}`}
@@ -397,52 +389,30 @@ export function TopPointMarkers({
             fill={isWinner ? color : "var(--background)"}
             stroke={isWinner ? "var(--foreground)" : color}
             strokeWidth={isWinner ? 1.5 : 2}
-            onClick={onPointClick ? handleClick : undefined}
-            style={onPointClick ? { cursor: "pointer" } : undefined}
             label={{
               content: ({ viewBox }) => (
-                <g
-                  role={onPointClick ? "button" : undefined}
-                  tabIndex={onPointClick ? 0 : undefined}
-                  aria-label={
-                    onPointClick ? `Show details for ${lines.join(", ")}` : undefined
+                <ChartInlineLabel
+                  x={viewBox.x + viewBox.width / 2}
+                  // Stacked labels grow downward from the first line, so lift the
+                  // whole block to keep the last line clear of the marker.
+                  y={
+                    viewBox.y -
+                    (isWinner ? 12 : 10) -
+                    (lines.length - 1) * LABEL_LINE_HEIGHT -
+                    labelOffset
                   }
-                  onClick={onPointClick ? handleClick : undefined}
-                  onKeyDown={
-                    onPointClick
-                      ? (event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            handleClick(event);
-                          }
-                        }
-                      : undefined
+                  textAnchor="middle"
+                  // Foreground rather than the series colour, which is too dark
+                  // to read against the dark themes. Runners-up drop to muted to
+                  // keep the winner dominant. labelColor overrides both when the
+                  // caller needs labels traceable back to their series.
+                  color={
+                    labelColor ??
+                    (isWinner ? "var(--foreground)" : "var(--muted-foreground)")
                   }
-                  style={onPointClick ? { cursor: "pointer" } : undefined}
-                >
-                  <ChartInlineLabel
-                    x={viewBox.x + viewBox.width / 2}
-                    // Stacked labels grow downward from the first line, so lift the
-                    // whole block to keep the last line clear of the marker.
-                    y={
-                      viewBox.y -
-                      (isWinner ? 12 : 10) -
-                      (lines.length - 1) * LABEL_LINE_HEIGHT -
-                      labelOffset
-                    }
-                    textAnchor="middle"
-                    // Foreground rather than the series colour, which is too dark
-                    // to read against the dark themes. Runners-up drop to muted to
-                    // keep the winner dominant. labelColor overrides both when the
-                    // caller needs labels traceable back to their series.
-                    color={
-                      labelColor ??
-                      (isWinner ? "var(--foreground)" : "var(--muted-foreground)")
-                    }
-                    fontWeight={isWinner ? 700 : 600}
-                    lines={lines}
-                  />
-                </g>
+                  fontWeight={isWinner ? 700 : 600}
+                  lines={lines}
+                />
               ),
             }}
           />

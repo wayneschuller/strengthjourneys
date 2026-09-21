@@ -2,7 +2,8 @@
  * Single-lift E1RM visualizer used inside lift-specific detail pages.
  * Shares chart processing with the full visualizer so estimates stay aligned.
  */
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -73,6 +74,8 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
  * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
  */
 export function VisualizerMini({ liftType }) {
+  const router = useRouter();
+  const highlightedDateRef = useRef(null);
   const { parsedData, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
@@ -201,11 +204,20 @@ export function VisualizerMini({ liftType }) {
   // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = { [liftType]: { label: liftType } };
 
-  const handleMouseMove = (event) => {
-    if (event && event.activePayload) {
-      const activeIndex = event.activeTooltipIndex;
-      // devLog(event);
-      // setHighlightDate(event.activeLabel);
+  const handleChartHighlight = (event) => {
+    const point =
+      event?.activePayload?.[0]?.payload ??
+      chartData?.[event?.activeTooltipIndex];
+    highlightedDateRef.current = point?.date ?? null;
+  };
+
+  const handleChartClick = (event) => {
+    handleChartHighlight(event);
+    if (highlightedDateRef.current) {
+      router.push({
+        pathname: "/log",
+        query: { date: highlightedDateRef.current },
+      });
     }
   };
 
@@ -307,7 +319,9 @@ export function VisualizerMini({ liftType }) {
                 accessibilityLayer
                 data={chartData}
                 margin={{ left: 5, right: 20 }}
-                // onMouseMove={handleMouseMove}
+                onMouseMove={handleChartHighlight}
+                onClick={handleChartClick}
+                style={{ cursor: "pointer" }}
               >
                 <CartesianGrid {...CHART_GRID_PROPS} />
                 {/* Strength standard background bands — rendered first so they sit behind

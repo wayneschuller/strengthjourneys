@@ -3,7 +3,8 @@
  * average trend line. Shares its visual language with the E1RM charts via
  * chart-visuals so the two charts on a lift page read as a matched pair.
  */
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -82,6 +83,8 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
  *   shows total tonnage across all lifts.
  */
 export function TonnageChart({ setHighlightDate, liftType }) {
+  const router = useRouter();
+  const highlightedDateRef = useRef(null);
   const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
@@ -206,6 +209,23 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     setHiddenSeries((prev) => ({ ...prev, [dataKey]: !prev[dataKey] }));
   };
 
+  const handleChartHighlight = (event) => {
+    const point =
+      event?.activePayload?.[0]?.payload ??
+      chartData?.[event?.activeTooltipIndex];
+    highlightedDateRef.current = point?.date ?? null;
+  };
+
+  const handleChartClick = (event) => {
+    handleChartHighlight(event);
+    if (highlightedDateRef.current) {
+      router.push({
+        pathname: "/log",
+        query: { date: highlightedDateRef.current },
+      });
+    }
+  };
+
   // Matches the rolling average line's dotted round-capped stroke on the chart.
   const DashedLineIcon = ({ opacity = 1 }) => (
     <svg width="12" height="12" viewBox="0 0 12 12" style={{ opacity }}>
@@ -247,7 +267,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
             type="button"
             className="flex items-center gap-1.5 text-sm transition-opacity"
             style={{ opacity: isHidden ? 0.35 : 1 }}
-            onClick={() => toggleSeries(key)}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleSeries(key);
+            }}
           >
             {cfg.icon ? (
               <cfg.icon opacity={isHidden ? 0.35 : 1} />
@@ -291,6 +314,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               <AreaChart
                 data={chartData}
                 margin={{ left: 5, right: 20 }}
+                onMouseMove={handleChartHighlight}
+                onClick={handleChartClick}
+                style={{ cursor: "pointer" }}
               >
                 <CartesianGrid {...CHART_GRID_PROPS} />
                 <XAxis
@@ -390,6 +416,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
             <AreaChart
               data={chartData}
               margin={{ left: 5, right: 20 }}
+              onMouseMove={handleChartHighlight}
+              onClick={handleChartClick}
+              style={{ cursor: "pointer" }}
             >
               <CartesianGrid {...CHART_GRID_PROPS} />
               <XAxis

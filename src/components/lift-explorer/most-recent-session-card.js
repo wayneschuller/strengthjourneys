@@ -264,6 +264,12 @@ export function MostRecentSessionCard({
                 contentRef={cardRef}
                 copyText={recentSessionCopyText}
               />
+              <span
+                className="text-muted-foreground absolute top-6 right-6 hidden text-xs font-medium tracking-wide italic"
+                data-copy-only
+              >
+                strengthjourneys.xyz
+              </span>
             </div>
           </CardHeader>
           <CardContent>

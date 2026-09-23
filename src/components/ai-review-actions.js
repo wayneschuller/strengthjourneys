@@ -227,6 +227,14 @@ async function captureCardAsPng(node) {
         element.hasAttribute("data-copy-exclude") ||
         element.id === "ignoreCopy" ||
         element.dataset.shareIgnore === "true",
+      onclone: (_clonedDocument, clonedNode) => {
+        // Capture-only signatures can occupy space vacated by excluded actions
+        // without adding branding or layout noise to the live card.
+        clonedNode.style.position = "relative";
+        clonedNode.querySelectorAll("[data-copy-only]").forEach((element) => {
+          element.style.display = "block";
+        });
+      },
       scale: Math.min(window.devicePixelRatio || 1, 2),
       useCORS: true,
       width: Math.ceil(rect.width),

@@ -373,56 +373,60 @@ export function TheLongGameCard({
             : undefined
         }
       >
-        <CardHeader
-          data-share-section="header"
-          className="flex items-start justify-between gap-3"
-        >
-          <div className="min-w-0 flex-1">
-            <CardTitle>
-              <span data-share-title="true">
-                {isFirstWeekIntroState ? "The Long Game Starts Here" : cardTitle}
-              </span>
-            </CardTitle>
-            {isFirstWeekIntroState ? (
-              <CardDescription>
-                {/* getDashboardStage guarantees no_sessions implies starter_sample,
+        <CardHeader data-share-section="header" className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <CardTitle>
+                <span data-share-title="true">
+                  {isFirstWeekIntroState
+                    ? "The Long Game Starts Here"
+                    : cardTitle}
+                </span>
+              </CardTitle>
+              {isFirstWeekIntroState ? (
+                <CardDescription>
+                  {/* getDashboardStage guarantees no_sessions implies starter_sample,
                     so the zero-session copy has to live inside this branch — as its
                     own case further down it was unreachable. */}
-                <span data-share-description="true">
-                  {sessionCount === 0
-                    ? "Your heatmap lights up the moment you log your first session."
-                    : "Every training day adds another square to your map."}
-                </span>
-              </CardDescription>
-            ) : (
-              intervals && (
-                <CardDescription>
                   <span data-share-description="true">
-                    {/* Only first_month and up reach here; the two intro stages are
-                        handled by the branch above. */}
-                    {dataMaturityStage !== "mature" && "Your journey has begun. "}
-                    {dashboardStage === "first_month"
-                      ? "A close-up of your first months of training."
-                      : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
-                          intervals[intervals.length - 1].endDate,
-                        ).getFullYear()}.`}
+                    {sessionCount === 0
+                      ? "Your heatmap lights up the moment you log your first session."
+                      : "Every training day adds another square to your map."}
                   </span>
                 </CardDescription>
-              )
+              ) : (
+                intervals && (
+                  <CardDescription>
+                    <span data-share-description="true">
+                      {/* Only first_month and up reach here; the two intro stages are
+                        handled by the branch above. */}
+                      {dataMaturityStage !== "mature" &&
+                        "Your journey has begun. "}
+                      {dashboardStage === "first_month"
+                        ? "A close-up of your first months of training."
+                        : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
+                            intervals[intervals.length - 1].endDate,
+                          ).getFullYear()}.`}
+                    </span>
+                  </CardDescription>
+                )
+              )}
+            </div>
+            {canShareHeatmaps && (
+              <div className="flex shrink-0 items-center gap-2">
+                <AiReviewActions
+                  aiReviewLink={longGameAiReviewLink}
+                  contentRef={shareRef}
+                  onCopyImage={handleCopyFullHeatmapImage}
+                  copyText={buildCardCopyText({
+                    title: cardTitle,
+                    subtitle: "Long-term training consistency and history",
+                    lines: longGameCopyLines,
+                  })}
+                />
+              </div>
             )}
           </div>
-          {canShareHeatmaps && (
-            <AiReviewActions
-              aiReviewLink={longGameAiReviewLink}
-              contentRef={shareRef}
-              onCopyImage={handleCopyFullHeatmapImage}
-              copyText={buildCardCopyText({
-                title: cardTitle,
-                subtitle: "Long-term training consistency and history",
-                lines: longGameCopyLines,
-              })}
-            />
-          )}
         </CardHeader>
         <CardContent className="flex-1">
           {isFirstWeekIntroState && (

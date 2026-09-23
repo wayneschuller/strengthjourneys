@@ -25,7 +25,6 @@ import {
   getConsecutiveWorkoutGroups,
   SessionExerciseBlock,
 } from "@/components/home-dashboard/session-exercise-block";
-import { getLiftArtwork } from "@/components/lift-artwork";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { AiReviewActions } from "@/components/ai-review-actions";
 import {
@@ -251,7 +250,6 @@ export function MostRecentSessionCard({
 
   if (showMultipleSessions) {
     const titlePrefix = `Recent ${liftType} sessions`;
-    const svgPath = getLiftArtwork(liftType);
     return (
       <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
         <Card ref={cardRef} className="rounded-xl border">
@@ -269,67 +267,56 @@ export function MostRecentSessionCard({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-              {svgPath && (
-                <div className="flex shrink-0 items-center justify-center sm:w-14 md:w-16">
-                  <img
-                    src={svgPath}
-                    alt={`${liftType} diagram`}
-                    className="h-12 w-12 object-contain sm:h-14 sm:w-14 md:h-16 md:w-16"
-                  />
-                </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              {visibleRecentSessions.map(
+                ({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
+                  const liftEntries = Object.entries(analyzedSessionLifts);
+                  if (liftEntries.length === 0) return null;
+                  return (
+                    <motion.div
+                      key={sessionDate}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        delay: sessionIndex * 0.04,
+                        duration: 0.2,
+                      }}
+                      className="rounded-lg"
+                    >
+                      {liftEntries.map(([lt, workouts]) => (
+                        <SessionExerciseBlock
+                          key={lt}
+                          variant="compact"
+                          liftType={lt}
+                          workouts={workouts}
+                          e1rmFormula={e1rmFormula}
+                          hideSvg
+                          hasBioData={hasBioData}
+                          standards={standards}
+                          sessionDate={sessionDate}
+                          age={age}
+                          bodyWeight={bodyWeight}
+                          sex={sex}
+                          isMetric={isMetric}
+                          label={getReadableDateString(sessionDate, true)}
+                          labelHref={`/log?date=${sessionDate}`}
+                        />
+                      ))}
+                    </motion.div>
+                  );
+                },
               )}
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                {visibleRecentSessions.map(
-                  ({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
-                    const liftEntries = Object.entries(analyzedSessionLifts);
-                    if (liftEntries.length === 0) return null;
-                    return (
-                      <motion.div
-                        key={sessionDate}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          delay: sessionIndex * 0.04,
-                          duration: 0.2,
-                        }}
-                        className="rounded-lg"
-                      >
-                        {liftEntries.map(([lt, workouts]) => (
-                          <SessionExerciseBlock
-                            key={lt}
-                            variant="compact"
-                            liftType={lt}
-                            workouts={workouts}
-                            e1rmFormula={e1rmFormula}
-                            hideSvg
-                            hasBioData={hasBioData}
-                            standards={standards}
-                            sessionDate={sessionDate}
-                            age={age}
-                            bodyWeight={bodyWeight}
-                            sex={sex}
-                            isMetric={isMetric}
-                            label={getReadableDateString(sessionDate, true)}
-                            labelHref={`/log?date=${sessionDate}`}
-                          />
-                        ))}
-                      </motion.div>
-                    );
-                  },
-                )}
-                {visibleCount < recentSessions.length && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground mt-1 self-start"
-                    onClick={() => setVisibleCount((c) => c + 1)}
-                  >
-                    <Plus className="mr-1 h-3.5 w-3.5" />
-                    Show one more session
-                  </Button>
-                )}
-              </div>
+              {visibleCount < recentSessions.length && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground mt-1 self-start"
+                  onClick={() => setVisibleCount((c) => c + 1)}
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Show one more session
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

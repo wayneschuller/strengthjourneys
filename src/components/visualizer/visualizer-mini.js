@@ -75,6 +75,11 @@ import {
 } from "@/components/visualizer/visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { AiReviewActions } from "@/components/ai-review-actions";
+import {
+  buildAiAssistantPromptLink,
+  buildLiftChartReviewPrompt,
+} from "@/lib/ai-review-prompts";
 
 /**
  * E1RM over time chart for a single lift. Shows estimated 1RM progression with optional formula
@@ -86,6 +91,7 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
 export function VisualizerMini({ liftType }) {
   const router = useRouter();
   const highlightedDateRef = useRef(null);
+  const cardRef = useRef(null);
   const { parsedData, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -292,8 +298,26 @@ export function VisualizerMini({ liftType }) {
     highestVisibleStandard * 1.15,
   );
 
+  const chartSummaryLines = useMemo(
+    () =>
+      buildMiniChartSummary({ chartData, liftType, e1rmFormula, topPoints }),
+    [chartData, e1rmFormula, liftType, topPoints],
+  );
+  const aiReviewLink = useMemo(() => {
+    if (chartData.length === 0) return null;
+    return buildAiAssistantPromptLink(
+      buildLiftChartReviewPrompt({
+        liftType,
+        formula: e1rmFormula,
+        startDate: chartData[0].date,
+        endDate: chartData[chartData.length - 1].date,
+        summaryLines: chartSummaryLines,
+      }),
+    );
+  }, [chartData, chartSummaryLines, e1rmFormula, liftType]);
+
   return (
-    <Card className="">
+    <Card ref={cardRef} className="">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle className="flex flex-wrap items-center gap-2">
@@ -338,6 +362,11 @@ export function VisualizerMini({ liftType }) {
           timeRange={timeRange}
           setTimeRange={setTimeRange}
           liftType={liftType}
+        />
+        <AiReviewActions
+          aiReviewLink={aiReviewLink}
+          contentRef={cardRef}
+          showText={false}
         />
       </CardHeader>
 
@@ -558,4 +587,47 @@ export function VisualizerMini({ liftType }) {
       </CardFooter>
     </Card>
   );
+}
+
+function buildMiniChartSummary({
+  chartData,
+  liftType,
+  e1rmFormula,
+  topPoints,
+}) {
+  if (!chartData?.length) return [];
+
+  const valueFor = (point) => point?.[liftType];
+  const first = chartData[0];
+  const latest = chartData[chartData.length - 1];
+  const peak = chartData.reduce((best, point) =>
+    valueFor(point) > valueFor(best) ? point : best,
+  );
+  const firstValue = valueFor(first);
+  const latestValue = valueFor(latest);
+  const change = firstValue
+    ? `${latestValue - firstValue >= 0 ? "+" : ""}${latestValue - firstValue}${first.displayUnit || ""} (${(((latestValue - firstValue) / firstValue) * 100).toFixed(1)}%)`
+    : "n/a";
+  const pointText = (point) => {
+    const value = valueFor(point);
+    const reps = point[`${liftType}_reps`];
+    const weight = point[`${liftType}_weight`];
+    const unit = point.displayUnit || "";
+    const sourceSet =
+      reps && weight != null ? ` from ${reps}@${weight}${unit}` : "";
+    return `${point.date}: ${value}${unit}${sourceSet}`;
+  };
+
+  return [
+    `lift=${liftType}`,
+    `formula=${e1rmFormula}`,
+    `points=${chartData.length}`,
+    `date_range=${first.date}..${latest.date}`,
+    `first_point=${pointText(first)}`,
+    `latest_point=${pointText(latest)}`,
+    `peak_point=${pointText(peak)}`,
+    `change_first_to_latest=${change}`,
+    "selected_high_points:",
+    ...topPoints.map(({ point }) => pointText(point)),
+  ];
 }

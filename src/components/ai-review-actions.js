@@ -34,6 +34,7 @@ export function AiReviewActions({
   copyText,
   contentRef,
   className,
+  showText = true,
 }) {
   const { toast } = useToast();
   const rootRef = useRef(null);
@@ -155,21 +156,23 @@ export function AiReviewActions({
             <span>AI review</span>
           </Link>
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1.5 px-2 whitespace-nowrap"
-          tabIndex={isOpen ? 0 : -1}
-          onClick={handleCopyText}
-        >
-          {copyState === "text" ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-          <span>{copyState === "text" ? "Text copied" : "Copy text"}</span>
-        </Button>
+        {showText && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 whitespace-nowrap"
+            tabIndex={isOpen ? 0 : -1}
+            onClick={handleCopyText}
+          >
+            {copyState === "text" ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            <span>{copyState === "text" ? "Text copied" : "Copy text"}</span>
+          </Button>
+        )}
         <Button
           type="button"
           variant="ghost"

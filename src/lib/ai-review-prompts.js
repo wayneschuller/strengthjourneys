@@ -93,6 +93,20 @@ export function buildLogSessionReviewPrompt({
   return `Review my lifting session${dateText}. Use the visible log data below as the source of truth for this session review; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}${visibleTonnageText}`;
 }
 
+export function buildLiftChartReviewPrompt({
+  liftType,
+  formula,
+  startDate,
+  endDate,
+  summaryLines,
+}) {
+  const visibleSummaryText =
+    Array.isArray(summaryLines) && summaryLines.length > 0
+      ? `\n\nChart data summary:\n${summaryLines.join("\n")}`
+      : "";
+  return `Review my ${liftType} estimated one-rep-max progress chart from ${startDate} to ${endDate}. The chart uses the ${formula} formula and shows the best estimated 1RM per logged session date. Use the summary below as the source of truth; distinguish measured progress from gaps or sparse data.${visibleSummaryText}`;
+}
+
 export function buildAiAssistantPromptLink(prompt, options = {}) {
   const promptKey = buildPromptKey(prompt, options);
   const query = new URLSearchParams({ aiPromptKey: promptKey });

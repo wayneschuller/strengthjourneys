@@ -23,7 +23,10 @@ import { Badge } from "@/components/ui/badge";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
-import { AiReviewActions } from "@/components/ai-review-actions";
+import {
+  AiReviewActions,
+  buildCardCopyText,
+} from "@/components/ai-review-actions";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
@@ -569,6 +572,18 @@ export function TheWeekInIronCard({
   const viewNextWeek = () => {
     setWeekOffset((prev) => Math.max(0, prev - 1));
   };
+  const weekCopyLines = useMemo(
+    () =>
+      buildWeekCardPromptSummary({
+        stats,
+        boundaries,
+        unit,
+        weeklySessionRows,
+        avgTonnage,
+        streakStats,
+      }),
+    [avgTonnage, boundaries, stats, streakStats, unit, weeklySessionRows],
+  );
   const aiReviewLink = useMemo(
     () =>
       buildAiAssistantPromptLink(
@@ -576,17 +591,10 @@ export function TheWeekInIronCard({
           startDate: boundaries.mondayStr,
           endDate: boundaries.effectiveEnd,
           isCurrentWeek: boundaries.isCurrentWeek,
-          summaryLines: buildWeekCardPromptSummary({
-            stats,
-            boundaries,
-            unit,
-            weeklySessionRows,
-            avgTonnage,
-            streakStats,
-          }),
+          summaryLines: weekCopyLines,
         }),
       ),
-    [avgTonnage, boundaries, stats, streakStats, unit, weeklySessionRows],
+    [boundaries, weekCopyLines],
   );
 
   const hasLoggedSessions = useMemo(
@@ -630,6 +638,11 @@ export function TheWeekInIronCard({
               <AiReviewActions
                 aiReviewLink={aiReviewLink}
                 contentRef={cardRef}
+                copyText={buildCardCopyText({
+                  title,
+                  subtitle,
+                  lines: weekCopyLines,
+                })}
               />
               <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
                 <Tooltip>

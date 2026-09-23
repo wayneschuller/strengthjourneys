@@ -185,6 +185,11 @@ export function MostRecentSessionCard({
     () => recentSessions.slice(0, visibleCount),
     [recentSessions, visibleCount],
   );
+  const recentSessionCopyText = useMemo(
+    () =>
+      buildRecentSessionsCopyText(liftType, visibleRecentSessions, isMetric),
+    [isMetric, liftType, visibleRecentSessions],
+  );
   const aiReviewLink = useMemo(() => {
     if (!liftType || visibleRecentSessions.length === 0) return null;
     const newestSession = visibleRecentSessions[0];
@@ -259,6 +264,7 @@ export function MostRecentSessionCard({
               <AiReviewActions
                 aiReviewLink={aiReviewLink}
                 contentRef={cardRef}
+                copyText={recentSessionCopyText}
               />
             </div>
           </CardHeader>
@@ -507,6 +513,17 @@ function buildRecentSessionPromptSummaries(sessions, isMetric) {
     .filter(Boolean);
 }
 
+function buildRecentSessionsCopyText(liftType, sessions, isMetric) {
+  const sessionLines = sessions.map(({ sessionDate, analyzedSessionLifts }) => {
+    const setText = Object.values(analyzedSessionLifts || {})
+      .flatMap((workouts) => formatWorkoutsForPrompt(workouts, isMetric))
+      .join("; ");
+    return `${getReadableDateString(sessionDate, true)}: ${setText}`;
+  });
+
+  return [`Recent ${liftType} sessions`, "", ...sessionLines].join("\n");
+}
+
 function formatWorkoutsForPrompt(workouts = [], isMetric) {
   return getConsecutiveWorkoutGroups(workouts).map((group) => {
     const firstWorkout = workouts[group[0]];
@@ -521,19 +538,34 @@ function formatWorkoutsForPrompt(workouts = [], isMetric) {
         : `${firstWorkout.reps}@${weightValue}${weightUnit}`;
     const markers = [];
 
-    if (group.some((index) => workouts[index]?.lifetimeRanking !== -1)) {
-      markers.push("lifetime PR");
+    const lifetimeRanking = getBestRanking(group, workouts, "lifetimeRanking");
+    if (lifetimeRanking != null) {
+      markers.push(
+        `lifetime PR rank #${lifetimeRanking + 1} for ${firstWorkout.reps} reps`,
+      );
     }
-    if (
-      group.some(
-        (index) =>
-          workouts[index]?.yearlyRanking != null &&
-          workouts[index]?.yearlyRanking !== -1,
-      )
-    ) {
-      markers.push("12-month PR");
+    const yearlyRanking = getBestRanking(group, workouts, "yearlyRanking");
+    if (yearlyRanking != null) {
+      markers.push(
+        `12-month PR rank #${yearlyRanking + 1} for ${firstWorkout.reps} reps`,
+      );
     }
+
+    group.forEach((index, groupIndex) => {
+      const note = workouts[index]?.notes?.trim();
+      if (!note) return;
+      markers.push(
+        count > 1 ? `set ${groupIndex + 1} note: ${note}` : `note: ${note}`,
+      );
+    });
 
     return markers.length ? `${setText} (${markers.join(", ")})` : setText;
   });
+}
+
+function getBestRanking(group, workouts, rankingKey) {
+  const rankings = group
+    .map((index) => workouts[index]?.[rankingKey])
+    .filter((ranking) => Number.isInteger(ranking) && ranking >= 0);
+  return rankings.length > 0 ? Math.min(...rankings) : null;
 }

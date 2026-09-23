@@ -2,8 +2,8 @@
  * Compact AI-review and copy actions shared by data-rich cards.
  *
  * The closed robot stays quiet in dense card headers. Hover, focus, click, or
- * tap reveals the full actions, while both copy paths read from the rendered
- * card so exports cannot drift from the data the lifter can actually see.
+ * tap reveals the full actions. Consumers deliberately author the rich text
+ * payload; only the image path reads from the rendered card.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -17,7 +17,24 @@ import { cn } from "@/lib/utils";
 
 const COPY_RESET_DELAY_MS = 2500;
 
-export function AiReviewActions({ aiReviewLink, contentRef, className }) {
+export function buildCardCopyText({ title, subtitle, lines = [] }) {
+  const formattedLines = lines.map((line) => {
+    if (line.endsWith(":")) return humanizeCopyLabel(line.slice(0, -1)) + ":";
+    const separatorIndex = line.indexOf("=");
+    if (separatorIndex === -1) return line;
+    return `${humanizeCopyLabel(line.slice(0, separatorIndex))}: ${line.slice(separatorIndex + 1)}`;
+  });
+
+  const headingLines = [title, subtitle].filter(Boolean);
+  return [...headingLines, "", ...formattedLines].join("\n");
+}
+
+export function AiReviewActions({
+  aiReviewLink,
+  copyText,
+  contentRef,
+  className,
+}) {
   const { toast } = useToast();
   const rootRef = useRef(null);
   const resetTimerRef = useRef(null);
@@ -52,9 +69,8 @@ export function AiReviewActions({ aiReviewLink, contentRef, className }) {
 
   const handleCopyText = async () => {
     try {
-      const text = getVisibleCardText(contentRef?.current);
-      if (!text) throw new Error("No card text available");
-      await navigator.clipboard.writeText(text);
+      if (!copyText?.trim()) throw new Error("No card text available");
+      await navigator.clipboard.writeText(copyText);
       showCopySuccess("text");
     } catch {
       toast({ variant: "destructive", title: "Could not copy the text" });
@@ -177,38 +193,6 @@ export function AiReviewActions({ aiReviewLink, contentRef, className }) {
   );
 }
 
-function getVisibleCardText(node) {
-  if (!node || typeof document === "undefined") return "";
-
-  const clone = node.cloneNode(true);
-  clone
-    .querySelectorAll(
-      "[data-copy-exclude], button, script, style, [aria-hidden='true']",
-    )
-    .forEach((element) => element.remove());
-  // PR trophies and similar compact markers carry their meaning in aria-labels.
-  // Turn those otherwise invisible labels into bracketed text in the export.
-  clone.querySelectorAll("[aria-label]").forEach((element) => {
-    if (!element.innerText?.trim()) {
-      element.replaceWith(
-        document.createTextNode(` [${element.getAttribute("aria-label")}]`),
-      );
-    }
-  });
-  clone.setAttribute("aria-hidden", "true");
-  clone.style.cssText =
-    "position:fixed;left:-100000px;top:0;width:" +
-    `${Math.max(node.getBoundingClientRect().width, 320)}px;`;
-  document.body.appendChild(clone);
-  const text = clone.innerText
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join("\n");
-  clone.remove();
-  return text;
-}
-
 async function captureCardAsPng(node) {
   const html2canvas = (await import("html2canvas-pro")).default;
   const canvas = await html2canvas(node, {
@@ -233,4 +217,9 @@ function downloadBlob(blob, filename) {
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function humanizeCopyLabel(label) {
+  const words = label.replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

@@ -13,7 +13,10 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
-import { AiReviewActions } from "@/components/ai-review-actions";
+import {
+  AiReviewActions,
+  buildCardCopyText,
+} from "@/components/ai-review-actions";
 import {
   Card,
   CardContent,
@@ -334,24 +337,17 @@ export function TheMonthInIronCard({
   const viewNextMonth = () => {
     setMonthOffset((prev) => Math.max(0, prev - 1));
   };
-  const aiReviewLink = useMemo(
+  const monthCopyLines = useMemo(
     () =>
-      buildAiAssistantPromptLink(
-        buildMonthlyReviewPrompt({
-          startDate: boundaries.currentMonthStart,
-          endDate: boundaries.todayStr,
-          isCurrentMonth: boundaries.isCurrentMonthView,
-          summaryLines: buildMonthCardPromptSummary({
-            stats,
-            strengthLevelStats,
-            strengthSetupRequired,
-            boundaries,
-            unit,
-            checksSummary,
-            verdictHeadline,
-          }),
-        }),
-      ),
+      buildMonthCardPromptSummary({
+        stats,
+        strengthLevelStats,
+        strengthSetupRequired,
+        boundaries,
+        unit,
+        checksSummary,
+        verdictHeadline,
+      }),
     [
       boundaries,
       checksSummary,
@@ -361,6 +357,18 @@ export function TheMonthInIronCard({
       unit,
       verdictHeadline,
     ],
+  );
+  const aiReviewLink = useMemo(
+    () =>
+      buildAiAssistantPromptLink(
+        buildMonthlyReviewPrompt({
+          startDate: boundaries.currentMonthStart,
+          endDate: boundaries.todayStr,
+          isCurrentMonth: boundaries.isCurrentMonthView,
+          summaryLines: monthCopyLines,
+        }),
+      ),
+    [boundaries, monthCopyLines],
   );
 
   if (dataMaturityStage !== "mature") {
@@ -388,7 +396,15 @@ export function TheMonthInIronCard({
             <CardDescription>{motivationalPhrase}</CardDescription>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <AiReviewActions aiReviewLink={aiReviewLink} contentRef={cardRef} />
+            <AiReviewActions
+              aiReviewLink={aiReviewLink}
+              contentRef={cardRef}
+              copyText={buildCardCopyText({
+                title: monthCardTitle,
+                subtitle: motivationalPhrase,
+                lines: monthCopyLines,
+              })}
+            />
             <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
               <TooltipProvider>
                 <Tooltip>

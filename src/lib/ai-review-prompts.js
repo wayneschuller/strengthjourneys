@@ -107,6 +107,14 @@ export function buildLiftChartReviewPrompt({
   return `Review my ${liftType} estimated one-rep-max progress chart from ${startDate} to ${endDate}. The chart uses the ${formula} formula and shows the best estimated 1RM per logged session date. Use the summary below as the source of truth; distinguish measured progress from gaps or sparse data.${visibleSummaryText}`;
 }
 
+export function buildLongGameReviewPrompt({ summaryLines }) {
+  const visibleSummaryText =
+    Array.isArray(summaryLines) && summaryLines.length > 0
+      ? `\n\nLong Game summary:\n${summaryLines.join("\n")}`
+      : "";
+  return `Review my long-term training consistency and lifting history. Use the Long Game summary below as the source of truth. Look for sustainable consistency, meaningful breaks, streaks, and patterns worth discussing; do not infer exact daily training details beyond the summary.${visibleSummaryText}`;
+}
+
 export function buildAiAssistantPromptLink(prompt, options = {}) {
   const promptKey = buildPromptKey(prompt, options);
   const query = new URLSearchParams({ aiPromptKey: promptKey });

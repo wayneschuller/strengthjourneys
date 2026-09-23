@@ -12,6 +12,10 @@ import {
   gaTrackHomeImportNudge,
 } from "@/lib/analytics";
 import { MiniFeedbackWidget } from "@/components/feedback";
+import {
+  AiReviewActions,
+  buildCardCopyText,
+} from "@/components/ai-review-actions";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
@@ -53,6 +57,12 @@ import { getTrainingSpanDays } from "@/lib/home-dashboard/dashboard-stage";
 import { getNextLongGameMilestone } from "@/lib/home-dashboard/long-game-milestones";
 import { MonthlyTrainingPatternGrid } from "@/components/home-dashboard/long-game/monthly-training-pattern-grid";
 import { WeeklyTrainingPatternGrid } from "@/components/home-dashboard/long-game/weekly-training-pattern-grid";
+import { processConsistency } from "@/lib/consistency";
+import { getGradeAndColor } from "@/lib/consistency-grades";
+import {
+  buildAiAssistantPromptLink,
+  buildLongGameReviewPrompt,
+} from "@/lib/ai-review-prompts";
 
 const LONG_GAME_YEAR_LABEL_WIDTH = 48;
 
@@ -168,6 +178,23 @@ export function TheLongGameCard({
     showMonthlyToggle,
     showStreaksToggle,
   ]);
+  const longGameCopyLines = useMemo(
+    () =>
+      buildLongGameCopyLines({
+        parsedData,
+        intervals,
+        effectiveViewMode,
+        consistency: parsedData ? processConsistency(parsedData) : null,
+        streakLeaderboard,
+      }),
+    [effectiveViewMode, intervals, parsedData, streakLeaderboard],
+  );
+  const longGameAiReviewLink = useMemo(() => {
+    if (!longGameCopyLines.length) return null;
+    return buildAiAssistantPromptLink(
+      buildLongGameReviewPrompt({ summaryLines: longGameCopyLines }),
+    );
+  }, [longGameCopyLines]);
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -633,7 +660,16 @@ export function TheLongGameCard({
                 />
               )}
               {canShareHeatmaps && (
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between gap-3">
+                  <AiReviewActions
+                    aiReviewLink={longGameAiReviewLink}
+                    contentRef={shareRef}
+                    copyText={buildCardCopyText({
+                      title: cardTitle,
+                      subtitle: "Long-term training consistency and history",
+                      lines: longGameCopyLines,
+                    })}
+                  />
                   <ShareCopyButton
                     label="Copy image"
                     tooltip="Share heatmaps to clipboard"
@@ -670,4 +706,75 @@ export function TheLongGameCard({
       )}
     </div>
   );
+}
+
+function buildLongGameCopyLines({
+  parsedData,
+  intervals,
+  effectiveViewMode,
+  consistency,
+  streakLeaderboard,
+}) {
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return [];
+
+  const trainingDates = [
+    ...new Set(
+      parsedData.filter((entry) => !entry?.isGoal).map((entry) => entry.date),
+    ),
+  ];
+  const startDate = trainingDates[0];
+  const endDate = trainingDates[trainingDates.length - 1];
+  const lines = [
+    `history_range=${startDate}..${endDate}`,
+    `training_days=${trainingDates.length}`,
+    `heatmap_view=${effectiveViewMode}`,
+    `calendar_years=${intervals?.length ?? 0}`,
+  ];
+
+  if (consistency?.length) {
+    lines.push("consistency_windows:");
+    lines.push(
+      ...consistency.map((window) => {
+        const grade = getGradeAndColor(window.percentage)?.grade || "n/a";
+        return `${window.label}: grade ${grade}, ${window.percentage}% (${window.actualWorkouts}/${window.targetWorkouts} sessions, ${window.sessionsPerWeek}/week; target ${window.targetSessionsPerWeek}/week)${window.rollingNote ? `; ${window.rollingNote}` : ""}`;
+      }),
+    );
+  }
+
+  if (Array.isArray(streakLeaderboard)) {
+    lines.push(`qualifying_streaks=${streakLeaderboard.length}`);
+    const longestStreak = streakLeaderboard.reduce(
+      (longest, streak) =>
+        !longest || streak.weeks > longest.weeks ? streak : longest,
+      null,
+    );
+    if (longestStreak) {
+      lines.push(
+        `longest_streak=${longestStreak.weeks} weeks (${longestStreak.startWeek}..${longestStreak.endWeek})`,
+      );
+    }
+    const activeStreak = streakLeaderboard.find((streak) => streak.isActive);
+    if (activeStreak) {
+      lines.push(
+        `active_streak=${activeStreak.weeks} weeks (${activeStreak.startWeek}..${activeStreak.endWeek})`,
+      );
+    }
+    if (streakLeaderboard.length > 0) {
+      lines.push("recent_streaks:");
+      lines.push(
+        ...streakLeaderboard
+          .slice(-3)
+          .reverse()
+          .map(
+            (streak) =>
+              `${streak.startWeek}..${streak.endWeek}: ${streak.weeks} weeks, ${streak.weekCounts.join(",")} sessions per week${streak.tonnage ? `, tonnage ${Math.round(streak.tonnage)}` : ""}`,
+          ),
+      );
+    }
+  }
+
+  lines.push(
+    "heatmap_semantics=Daily shows distinct training days; Weekly shows sessions per calendar week capped at 3+; Monthly shows active training weeks and their session breakdown.",
+  );
+  return lines;
 }

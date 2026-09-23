@@ -200,7 +200,10 @@ async function captureCardAsPng(node) {
   const html2canvas = (await import("html2canvas-pro")).default;
   const canvas = await html2canvas(node, {
     backgroundColor: window.getComputedStyle(node).backgroundColor,
-    ignoreElements: (element) => element.hasAttribute("data-copy-exclude"),
+    ignoreElements: (element) =>
+      element.hasAttribute("data-copy-exclude") ||
+      element.id === "ignoreCopy" ||
+      element.dataset.shareIgnore === "true",
     scale: Math.min(window.devicePixelRatio || 1, 2),
     useCORS: true,
   });

@@ -411,7 +411,10 @@ export function TheMonthInIronCard({
             >
               strengthjourneys.xyz
             </span>
-            <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
+            <div
+              className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5"
+              data-copy-exclude
+            >
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -519,6 +522,7 @@ export function TheMonthInIronCard({
             {showCoffeeNudge && (
               <motion.div
                 key={boundaries?.currentMonthStart}
+                data-copy-exclude
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.7 }}
@@ -543,7 +547,7 @@ export function TheMonthInIronCard({
           there is no verdict to rate, only an offer to come back. The widget
           belongs to the comparison, so it appears with it. */}
       {stats && hasComparisonMonth && dashboardStage === "established" && (
-        <CardFooter className="pt-0">
+        <CardFooter className="pt-0" data-copy-exclude>
           <MiniFeedbackWidget
             contextId="this_month_in_iron_card"
             page="/lift-explorer"
@@ -2187,7 +2191,7 @@ function BigFourCriteriaTable({
 
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end" data-copy-exclude>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

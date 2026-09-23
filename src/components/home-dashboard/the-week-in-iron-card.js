@@ -650,7 +650,10 @@ export function TheWeekInIronCard({
               >
                 strengthjourneys.xyz
               </span>
-              <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
+              <div
+                className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5"
+                data-copy-exclude
+              >
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -1317,7 +1320,7 @@ function StartLiftPrompt({
       : BIG_FOUR_STARTERS;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-copy-exclude>
       {showIntro && (
         <div className="space-y-1">
           <p className="text-foreground text-sm font-semibold">

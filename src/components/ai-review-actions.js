@@ -4,6 +4,11 @@
  * The closed robot stays quiet in dense card headers. Hover, focus, click, or
  * tap reveals the full actions. Consumers deliberately author the rich text
  * payload; only the image path reads from the rendered card.
+ *
+ * Copy-image output is a share artifact, not a literal screenshot. Keep the
+ * card's rich, meaningful content, add subtle strengthjourneys.xyz branding,
+ * and mark navigation, legends, feedback, support prompts, and other controls
+ * with `data-copy-exclude` so interactive UI never leaks into the image.
  */
 
 import { useEffect, useRef, useState } from "react";

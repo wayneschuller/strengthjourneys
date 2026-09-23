@@ -16,9 +16,7 @@ import {
   AiReviewActions,
   buildCardCopyText,
 } from "@/components/ai-review-actions";
-import { ShareCopyButton } from "@/components/share-copy-button";
 import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
-import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   LOCAL_STORAGE_KEYS,
@@ -99,8 +97,6 @@ export function TheLongGameCard({
   const [sharingYear, setSharingYear] = useState(null);
   const [sharedYear, setSharedYear] = useState(null);
   const trackedImportNudgeKeyRef = useRef(null);
-  const { isSuccess: isShareSuccess, triggerSuccess: triggerShareSuccess } =
-    useTransientSuccess();
   // SSR default = first stage-1 title; randomised client-side once intervals load
   const [cardTitle, setCardTitle] = useState(
     getTrainingHistoryTitleOptions(1)[0],
@@ -297,9 +293,10 @@ export function TheLongGameCard({
         `[heatmap-copy][full] handleShare total: ${Math.round(performance.now() - startTime)}ms`,
       );
       logTiming("html2canvas", performance.now() - startTime);
-      triggerShareSuccess();
+      return true;
     } catch (err) {
       console.error("Error in copying heatmap: ", err);
+      return false;
     } finally {
       setIsSharing(false);
     }
@@ -376,38 +373,55 @@ export function TheLongGameCard({
             : undefined
         }
       >
-        <CardHeader data-share-section="header">
-          <CardTitle>
-            <span data-share-title="true">
-              {isFirstWeekIntroState ? "The Long Game Starts Here" : cardTitle}
-            </span>
-          </CardTitle>
-          {isFirstWeekIntroState ? (
-            <CardDescription>
-              {/* getDashboardStage guarantees no_sessions implies starter_sample,
-                  so the zero-session copy has to live inside this branch — as its
-                  own case further down it was unreachable. */}
-              <span data-share-description="true">
-                {sessionCount === 0
-                  ? "Your heatmap lights up the moment you log your first session."
-                  : "Every training day adds another square to your map."}
+        <CardHeader
+          data-share-section="header"
+          className="flex items-start justify-between gap-3"
+        >
+          <div className="min-w-0 flex-1">
+            <CardTitle>
+              <span data-share-title="true">
+                {isFirstWeekIntroState ? "The Long Game Starts Here" : cardTitle}
               </span>
-            </CardDescription>
-          ) : (
-            intervals && (
+            </CardTitle>
+            {isFirstWeekIntroState ? (
               <CardDescription>
+                {/* getDashboardStage guarantees no_sessions implies starter_sample,
+                    so the zero-session copy has to live inside this branch — as its
+                    own case further down it was unreachable. */}
                 <span data-share-description="true">
-                  {/* Only first_month and up reach here; the two intro stages are
-                      handled by the branch above. */}
-                  {dataMaturityStage !== "mature" && "Your journey has begun. "}
-                  {dashboardStage === "first_month"
-                    ? "A close-up of your first months of training."
-                    : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
-                        intervals[intervals.length - 1].endDate,
-                      ).getFullYear()}.`}
+                  {sessionCount === 0
+                    ? "Your heatmap lights up the moment you log your first session."
+                    : "Every training day adds another square to your map."}
                 </span>
               </CardDescription>
-            )
+            ) : (
+              intervals && (
+                <CardDescription>
+                  <span data-share-description="true">
+                    {/* Only first_month and up reach here; the two intro stages are
+                        handled by the branch above. */}
+                    {dataMaturityStage !== "mature" && "Your journey has begun. "}
+                    {dashboardStage === "first_month"
+                      ? "A close-up of your first months of training."
+                      : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
+                          intervals[intervals.length - 1].endDate,
+                        ).getFullYear()}.`}
+                  </span>
+                </CardDescription>
+              )
+            )}
+          </div>
+          {canShareHeatmaps && (
+            <AiReviewActions
+              aiReviewLink={longGameAiReviewLink}
+              contentRef={shareRef}
+              onCopyImage={handleCopyFullHeatmapImage}
+              copyText={buildCardCopyText({
+                title: cardTitle,
+                subtitle: "Long-term training consistency and history",
+                lines: longGameCopyLines,
+              })}
+            />
           )}
         </CardHeader>
         <CardContent className="flex-1">
@@ -658,28 +672,6 @@ export function TheLongGameCard({
                   dashboardStage={dashboardStage}
                   sessionCount={sessionCount}
                 />
-              )}
-              {canShareHeatmaps && (
-                <div className="flex items-center justify-between gap-3">
-                  <AiReviewActions
-                    aiReviewLink={longGameAiReviewLink}
-                    contentRef={shareRef}
-                    copyText={buildCardCopyText({
-                      title: cardTitle,
-                      subtitle: "Long-term training consistency and history",
-                      lines: longGameCopyLines,
-                    })}
-                  />
-                  <ShareCopyButton
-                    label="Copy image"
-                    tooltip="Share heatmaps to clipboard"
-                    onClick={handleCopyFullHeatmapImage}
-                    isLoading={isSharing}
-                    isSuccess={isShareSuccess}
-                    disabled={isSharing}
-                    className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
-                  />
-                </div>
               )}
               {dashboardStage === "established" && (
                 <MiniFeedbackWidget

@@ -33,6 +33,7 @@ export function AiReviewActions({
   aiReviewLink,
   copyText,
   contentRef,
+  onCopyImage,
   className,
   showText = true,
 }) {
@@ -82,6 +83,12 @@ export function AiReviewActions({
     if (!contentRef?.current || isCopyingImage) return;
     setIsCopyingImage(true);
     try {
+      if (onCopyImage) {
+        const copied = await onCopyImage();
+        if (copied === false) throw new Error("Image copy failed");
+        showCopySuccess("image");
+        return;
+      }
       const blobPromise = captureCardAsPng(contentRef.current);
       if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
         try {

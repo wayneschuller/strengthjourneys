@@ -41,11 +41,11 @@ const GOOGLE_PERMISSIONS_URL = "https://myaccount.google.com/permissions";
 const POINTS = [
   {
     Icon: FileText,
-    text: "We only access the one spreadsheet we create for your lifts.",
+    text: "We only access the lifting spreadsheet you create or choose for Strength Journeys.",
   },
   {
     Icon: EyeOff,
-    text: "We cannot access anything else in your Drive.",
+    text: "We do not browse your other Google Drive files.",
   },
   {
     Icon: ShieldCheck,
@@ -67,9 +67,9 @@ const POINTS = [
   {
     Icon: Sparkles,
     text: (
-      <strong className="font-semibold text-foreground">
-        We will create a Google Sheet you own, where you can merge all your
-        lifting data from other fitness apps and keep it forever.
+      <strong className="text-foreground font-semibold">
+        Merge your lifting exports from multiple fitness apps into one Google
+        Sheet you own.
       </strong>
     ),
   },
@@ -116,8 +116,8 @@ export function SignInEducationDialog({
         <DialogHeader>
           <DialogTitle>Signing in with Google</DialogTitle>
           <DialogDescription className="pt-1">
-            When you sign in with Google, it will ask to &ldquo;view and manage
-            Google Drive files&rdquo;. For Strength Journeys, that means:
+            Google will ask to &ldquo;view and manage Google Drive files&rdquo;.
+            For Strength Journeys, that means:
           </DialogDescription>
         </DialogHeader>
 
@@ -133,6 +133,11 @@ export function SignInEducationDialog({
           ))}
         </ul>
 
+        <p className="text-muted-foreground text-xs leading-snug">
+          You can keep using preview and import mode without signing in. Sign in
+          when you want a persistent lifting history in your own Google Sheet.
+        </p>
+
         <DialogFooter className="mt-2">
           <Button
             onClick={handleContinue}
@@ -140,7 +145,7 @@ export function SignInEducationDialog({
             size="lg"
           >
             <GoogleLogo size={16} />
-            Sign in with Google and save your lifts
+            Continue with Google
           </Button>
         </DialogFooter>
       </DialogContent>

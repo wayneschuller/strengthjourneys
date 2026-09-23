@@ -107,6 +107,23 @@ export function buildLiftChartReviewPrompt({
   return `Review my ${liftType} estimated one-rep-max progress chart from ${startDate} to ${endDate}. The chart uses the ${formula} formula and shows the best estimated 1RM per logged session date. Use the summary below as the source of truth; distinguish measured progress from gaps or sparse data.${visibleSummaryText}`;
 }
 
+export function buildTonnageChartReviewPrompt({
+  liftType,
+  startDate,
+  endDate,
+  summaryLines,
+}) {
+  const chartName = liftType
+    ? `${liftType} session tonnage`
+    : "total session tonnage";
+  const visibleSummaryText =
+    Array.isArray(summaryLines) && summaryLines.length > 0
+      ? `\n\nChart data summary:\n${summaryLines.join("\n")}`
+      : "";
+
+  return `Review my ${chartName} chart from ${startDate} to ${endDate}. It shows weight multiplied by reps for each logged session plus a 30-day rolling average. Use the summary below as the source of truth; discuss workload patterns and consistency without treating tonnage changes alone as proof of strength gain or loss.${visibleSummaryText}`;
+}
+
 export function buildLongGameReviewPrompt({ summaryLines }) {
   const visibleSummaryText =
     Array.isArray(summaryLines) && summaryLines.length > 0

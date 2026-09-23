@@ -33,10 +33,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import {
-  ChartContainer,
-  ChartLegend,
-} from "@/components/ui/chart";
+import { ChartContainer, ChartLegend } from "@/components/ui/chart";
 
 import {
   CartesianGrid,
@@ -70,6 +67,11 @@ import {
 import { getYearLabels } from "@/components/visualizer/visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { AiReviewActions } from "@/components/ai-review-actions";
+import {
+  buildAiAssistantPromptLink,
+  buildTonnageChartReviewPrompt,
+} from "@/lib/ai-review-prompts";
 
 /**
  * Chart showing session tonnage (weight × reps) over time with a rolling average trend line.
@@ -84,16 +86,23 @@ import { DemoModeBadge } from "@/components/demo-mode-badge";
  */
 export function TonnageChart({ setHighlightDate, liftType }) {
   const router = useRouter();
+  const cardRef = useRef(null);
   const highlightedDateRef = useRef(null);
   const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => { setIsMounted(true); }, []);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const { getColor } = useLiftColors();
   const { isMetric } = useAthleteBio();
   const liftColor = liftType ? getColor(liftType) : null;
-  const [storedTimeRange, setTimeRange] = useLocalStorage(LOCAL_STORAGE_KEYS.TIME_RANGE, "MAX", {
-    initializeWithValue: false,
-  });
+  const [storedTimeRange, setTimeRange] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.TIME_RANGE,
+    "MAX",
+    {
+      initializeWithValue: false,
+    },
+  );
   // Snap up to the nearest period that has data for this lift, without
   // overwriting the user's global preference.
   const timeRange = useMemo(
@@ -161,7 +170,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   // Scale debounce with dataset size so small datasets feel instant while large datasets
   // avoid cascading TheLatestSessionCard re-renders during fast mouse scrubbing.
-  const tooltipDebounceMs = Math.min(50, Math.floor((chartData?.length ?? 0) / 12));
+  const tooltipDebounceMs = Math.min(
+    50,
+    Math.floor((chartData?.length ?? 0) / 12),
+  );
 
   const displayUnit = isMetric ? "kg" : "lb";
 
@@ -288,9 +300,24 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   );
 
   const yearLabels = getYearLabels(chartData);
+  const tonnageSummaryLines = useMemo(
+    () => buildTonnageChartSummary(chartData, displayUnit),
+    [chartData, displayUnit],
+  );
+  const aiReviewLink = useMemo(() => {
+    if (!chartData?.length) return null;
+    return buildAiAssistantPromptLink(
+      buildTonnageChartReviewPrompt({
+        liftType,
+        startDate: chartData[0].date,
+        endDate: chartData[chartData.length - 1].date,
+        summaryLines: tonnageSummaryLines,
+      }),
+    );
+  }, [chartData, liftType, tonnageSummaryLines]);
 
   return (
-    <Card>
+    <Card ref={cardRef}>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle className="flex flex-wrap items-center gap-2">
@@ -301,121 +328,128 @@ export function TonnageChart({ setHighlightDate, liftType }) {
             {getTimeRangeDescription(rangeFirstDate, parsedData)}
           </CardDescription>
         </div>
-        <div className="grid grid-cols-1 space-x-1">
-          <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
+        <div className="grid grid-cols-1 space-x-1" data-copy-exclude>
+          <TimeRangeSelect
+            timeRange={timeRange}
+            setTimeRange={setTimeRange}
+            liftType={liftType}
+          />
         </div>
       </CardHeader>
 
-      <CardContent className="pl-0 pr-2">
+      <CardContent className="pr-2 pl-0">
         {isLoading || !parsedData || !isMounted || !chartData ? (
           <Skeleton className="h-[400px] w-full" />
         ) : liftType ? (
           <ChartContainer
             config={chartConfig}
-            className="h-[400px] !aspect-auto [&_.recharts-wrapper]:outline-none"
+            className="!aspect-auto h-[400px] [&_.recharts-wrapper]:outline-none"
           >
-              <AreaChart
-                data={chartData}
-                margin={{ left: 5, right: 20 }}
-                onMouseMove={handleChartHighlight}
-                onClick={handleChartClick}
-                style={{ cursor: "pointer" }}
-              >
-                <CartesianGrid {...CHART_GRID_PROPS} />
-                <XAxis
-                  {...CHART_AXIS_PROPS}
-                  dataKey="rechartsDate"
-                  type="number"
-                  scale="time"
-                  domain={paddedDateDomain()}
-                  {...dateTickProps.axisProps}
-                />
-                <YAxis
-                  {...CHART_AXIS_PROPS}
-                  tickFormatter={(value) => formatWeightTick(value, displayUnit)}
-                  domain={[0, yAxisConfig.domainMax]}
-                  ticks={yAxisConfig.ticks}
-                  hide={width < 1280}
-                />
+            <AreaChart
+              data={chartData}
+              margin={{ left: 5, right: 20 }}
+              onMouseMove={handleChartHighlight}
+              onClick={handleChartClick}
+              style={{ cursor: "pointer" }}
+            >
+              <CartesianGrid {...CHART_GRID_PROPS} />
+              <XAxis
+                {...CHART_AXIS_PROPS}
+                dataKey="rechartsDate"
+                type="number"
+                scale="time"
+                domain={paddedDateDomain()}
+                {...dateTickProps.axisProps}
+              />
+              <YAxis
+                {...CHART_AXIS_PROPS}
+                tickFormatter={(value) => formatWeightTick(value, displayUnit)}
+                domain={[0, yAxisConfig.domainMax]}
+                ticks={yAxisConfig.ticks}
+                hide={width < 1280}
+              />
 
-                <Tooltip
-                  position={{ y: 180 }}
-                  cursor={chartCursorProps(liftColor)}
-                  content={(props) => (
-                    <TonnageTooltipContent
-                      {...props}
-                      liftType={liftType}
-                      parsedData={parsedData}
-                      liftColor={liftColor}
-                      setHighlightDate={setHighlightDate}
-                      debounceMs={tooltipDebounceMs}
-                      isMetric={isMetric}
-                    />
-                  )}
-                />
-
-                <defs>
-                  <ChartAreaGradient id="fill" color={liftColor} />
-                  <ChartGlowFilter id="tonnageGlow" />
-                </defs>
-                <ChartLegend content={renderLegend} />
-                {!hiddenSeries.tonnage && (
-                  <Area
-                    key={liftType}
-                    type="monotone"
-                    dataKey="tonnage"
-                    stroke={liftColor}
-                    strokeWidth={2}
-                    fill={`url(#fill)`}
-                    fillOpacity={1}
-                    filter="url(#tonnageGlow)" // soft halo around the line
-                    dot={
-                      ["3M", "6M"].includes(timeRange)
-                        ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
-                        : false
-                    }
-                    activeDot={chartActiveDotProps(liftColor)}
-                    animationDuration={900}
-                    animationEasing="ease-out"
-                    connectNulls
+              <Tooltip
+                position={{ y: 180 }}
+                cursor={chartCursorProps(liftColor)}
+                content={(props) => (
+                  <TonnageTooltipContent
+                    {...props}
+                    liftType={liftType}
+                    parsedData={parsedData}
+                    liftColor={liftColor}
+                    setHighlightDate={setHighlightDate}
+                    debounceMs={tooltipDebounceMs}
+                    isMetric={isMetric}
                   />
                 )}
-                {!hiddenSeries.rollingAverageTonnage && (
-                  <Line
-                    type="monotone"
-                    dataKey="rollingAverageTonnage"
-                    stroke={liftColor}
-                    strokeWidth={2}
-                    strokeOpacity={0.85}
-                    strokeDasharray="1 5"
-                    strokeLinecap="round"
-                    dot={false}
-                    connectNulls
-                    tooltipType="none"
-                    // Recharts animates a line by rewriting strokeDasharray, which
-                    // mangles a fine dotted pattern like this one — it only ever
-                    // drew the first few weeks. The area's grow-in carries the
-                    // entrance; this line just appears with it.
-                    isAnimationActive={false}
-                  />
-                )}
+              />
 
-                {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
+              <defs>
+                <ChartAreaGradient id="fill" color={liftColor} />
+                <ChartGlowFilter id="tonnageGlow" />
+              </defs>
+              <ChartLegend content={renderLegend} />
+              {!hiddenSeries.tonnage && (
+                <Area
+                  key={liftType}
+                  type="monotone"
+                  dataKey="tonnage"
+                  stroke={liftColor}
+                  strokeWidth={2}
+                  fill={`url(#fill)`}
+                  fillOpacity={1}
+                  filter="url(#tonnageGlow)" // soft halo around the line
+                  dot={
+                    ["3M", "6M"].includes(timeRange)
+                      ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
+                      : false
+                  }
+                  activeDot={chartActiveDotProps(liftColor)}
+                  animationDuration={900}
+                  animationEasing="ease-out"
+                  connectNulls
+                />
+              )}
+              {!hiddenSeries.rollingAverageTonnage && (
+                <Line
+                  type="monotone"
+                  dataKey="rollingAverageTonnage"
+                  stroke={liftColor}
+                  strokeWidth={2}
+                  strokeOpacity={0.85}
+                  strokeDasharray="1 5"
+                  strokeLinecap="round"
+                  dot={false}
+                  connectNulls
+                  tooltipType="none"
+                  // Recharts animates a line by rewriting strokeDasharray, which
+                  // mangles a fine dotted pattern like this one — it only ever
+                  // drew the first few weeks. The area's grow-in carries the
+                  // entrance; this line just appears with it.
+                  isAnimationActive={false}
+                />
+              )}
 
-                {/* The best sessions in range, ranked — see selectTopPoints. */}
-                {!hiddenSeries.tonnage && (
-                  <TopPointMarkers
-                    topPoints={topPoints}
-                    color={liftColor}
-                    getLines={({ value }) => [
-                      `${Math.round(value)}${displayUnit}`,
-                    ]}
-                  />
-                )}
-              </AreaChart>
-            </ChartContainer>
+              {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
+
+              {/* The best sessions in range, ranked — see selectTopPoints. */}
+              {!hiddenSeries.tonnage && (
+                <TopPointMarkers
+                  topPoints={topPoints}
+                  color={liftColor}
+                  getLines={({ value }) => [
+                    `${Math.round(value)}${displayUnit}`,
+                  ]}
+                />
+              )}
+            </AreaChart>
+          </ChartContainer>
         ) : (
-          <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
+          <ChartContainer
+            config={chartConfig}
+            className="!aspect-auto h-[400px]"
+          >
             <AreaChart
               data={chartData}
               margin={{ left: 5, right: 20 }}
@@ -524,20 +558,25 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       </CardContent>
 
       <CardFooter>
-        <div className="flex w-full items-center justify-between">
-          <MiniFeedbackWidget
-            prompt="Useful chart?"
-            contextId={feedbackContextId}
-            page={liftType ? "/visualizer" : "/tonnage"}
-            analyticsExtra={{
-              context: liftType ? "lift_tonnage_chart" : "tonnage_chart",
-              lift_type: liftType || "all_lifts",
-            }}
-          />
+        <div className="relative flex w-full flex-col items-center justify-between gap-3 md:flex-row">
+          <div className="order-1" data-copy-exclude>
+            <MiniFeedbackWidget
+              prompt="Useful chart?"
+              contextId={feedbackContextId}
+              page={liftType ? "/visualizer" : "/tonnage"}
+              analyticsExtra={{
+                context: liftType ? "lift_tonnage_chart" : "tonnage_chart",
+                lift_type: liftType || "all_lifts",
+              }}
+            />
+          </div>
           {/* Only the standalone all-lifts page needs this: the per-lift charts
               always show their ranked peaks instead (see topPoints above). */}
           {!liftType && (
-            <div className="flex items-center space-x-2">
+            <div
+              className="order-3 flex items-center space-x-2"
+              data-copy-exclude
+            >
               <Label className="font-light" htmlFor="show-values">
                 Show Values
               </Label>
@@ -549,10 +588,41 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               />
             </div>
           )}
+          <div className="order-2 md:absolute md:left-1/2 md:-translate-x-1/2">
+            <AiReviewActions
+              aiReviewLink={aiReviewLink}
+              contentRef={cardRef}
+              showText={false}
+            />
+            <span
+              className="text-muted-foreground hidden text-xs font-medium tracking-wide italic"
+              data-copy-only
+            >
+              strengthjourneys.xyz
+            </span>
+          </div>
         </div>
       </CardFooter>
     </Card>
   );
+}
+
+function buildTonnageChartSummary(chartData, displayUnit) {
+  if (!chartData?.length) return [];
+
+  const first = chartData[0];
+  const latest = chartData[chartData.length - 1];
+  const peak = chartData.reduce((best, point) =>
+    point.tonnage > best.tonnage ? point : best,
+  );
+
+  return [
+    `logged_sessions=${chartData.length}`,
+    `first_session=${first.date}: ${Math.round(first.tonnage)}${displayUnit}`,
+    `latest_session=${latest.date}: ${Math.round(latest.tonnage)}${displayUnit}`,
+    `peak_session=${peak.date}: ${Math.round(peak.tonnage)}${displayUnit}`,
+    `latest_30_day_average=${Math.round(latest.rollingAverageTonnage)}${displayUnit}`,
+  ];
 }
 
 /**
@@ -659,7 +729,7 @@ const TonnageTooltipMinimal = ({
   const unitType = isMetric ? "kg" : "lb";
 
   return (
-    <div className="rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="border-border/50 bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <p>{`${tonnage.toFixed(0)}${unitType}`}</p>
     </div>
@@ -689,7 +759,6 @@ function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
 
   return liftsByType;
 }
-
 
 // Recharts tooltip for the tonnage chart; renders per-session details and
 // drives the session card highlight via setHighlightDate.
@@ -727,7 +796,7 @@ const TonnageTooltipContent = ({
       : null;
 
   return (
-    <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="border-border/50 bg-background grid max-w-[17rem] min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
         <div
@@ -768,7 +837,7 @@ const TonnageTooltipContent = ({
           {Object.entries(sessionLiftsByType).map(([liftTypeName, lifts]) => (
             <div key={liftTypeName} className="mb-2 text-xs last:mb-0">
               {!liftType && <LiftTypeIndicator liftType={liftTypeName} />}
-              <div className={liftType ? "" : "ml-6 mt-1"}>
+              <div className={liftType ? "" : "mt-1 ml-6"}>
                 <SessionRow
                   date={dateStr}
                   lifts={lifts}
@@ -780,7 +849,7 @@ const TonnageTooltipContent = ({
           ))}
         </div>
       )}
-      <p className="mt-1 border-t border-border/50 pt-1 text-[11px] text-muted-foreground">
+      <p className="border-border/50 text-muted-foreground mt-1 border-t pt-1 text-[11px]">
         Click to see full session details
       </p>
     </div>

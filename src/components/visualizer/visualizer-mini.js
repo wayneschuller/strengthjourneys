@@ -329,7 +329,7 @@ export function VisualizerMini({ liftType }) {
           </CardDescription>
         </div>
         {width > 1280 && (
-          <div className="mr-4 flex flex-col gap-2">
+          <div className="mr-4 flex flex-col gap-2" data-copy-exclude>
             {/* Only lifts with published standards (the big four) can draw
                 them, so the option is hidden rather than offered and inert.
                 The stored preference is left alone for the lifts that do. */}
@@ -358,11 +358,13 @@ export function VisualizerMini({ liftType }) {
             </div>
           </div>
         )}
-        <TimeRangeSelect
-          timeRange={timeRange}
-          setTimeRange={setTimeRange}
-          liftType={liftType}
-        />
+        <div data-copy-exclude>
+          <TimeRangeSelect
+            timeRange={timeRange}
+            setTimeRange={setTimeRange}
+            liftType={liftType}
+          />
+        </div>
       </CardHeader>
 
       <CardContent className="pr-2 pl-0">
@@ -561,7 +563,7 @@ export function VisualizerMini({ liftType }) {
       </CardContent>
       <CardFooter>
         <div className="relative flex w-full flex-col items-center justify-between gap-3 md:flex-row">
-          <div className="order-1">
+          <div className="order-1" data-copy-exclude>
             <MiniFeedbackWidget
               prompt="Useful chart?"
               contextId={feedbackContextId}
@@ -572,7 +574,7 @@ export function VisualizerMini({ liftType }) {
               }}
             />
           </div>
-          <div className="order-3">
+          <div className="order-3" data-copy-exclude>
             <E1RMFormulaSelect
               e1rmFormula={e1rmFormula}
               setE1rmFormula={setE1rmFormula}
@@ -584,6 +586,12 @@ export function VisualizerMini({ liftType }) {
               contentRef={cardRef}
               showText={false}
             />
+            <span
+              className="text-muted-foreground hidden text-xs font-medium tracking-wide italic"
+              data-copy-only
+            >
+              strengthjourneys.xyz
+            </span>
           </div>
         </div>
       </CardFooter>

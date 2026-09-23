@@ -311,6 +311,7 @@ export function MostRecentSessionCard({
                   variant="ghost"
                   size="sm"
                   className="text-muted-foreground mt-1 self-start"
+                  data-copy-exclude
                   onClick={() => setVisibleCount((c) => c + 1)}
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" />

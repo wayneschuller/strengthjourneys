@@ -205,22 +205,45 @@ export function AiReviewActions({
 
 async function captureCardAsPng(node) {
   const html2canvas = (await import("html2canvas-pro")).default;
-  const canvas = await html2canvas(node, {
-    backgroundColor: window.getComputedStyle(node).backgroundColor,
-    ignoreElements: (element) =>
-      element.hasAttribute("data-copy-exclude") ||
-      element.id === "ignoreCopy" ||
-      element.dataset.shareIgnore === "true",
-    scale: Math.min(window.devicePixelRatio || 1, 2),
-    useCORS: true,
-  });
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) =>
-        blob ? resolve(blob) : reject(new Error("PNG capture failed")),
-      "image/png",
-    );
-  });
+  const rect = node.getBoundingClientRect();
+  const originalStyle = {
+    width: node.style.width,
+    maxWidth: node.style.maxWidth,
+    flex: node.style.flex,
+  };
+
+  // Cards are often flex: 1 children of a dashboard grid. Once html2canvas
+  // clones one outside that grid, the clone can expand to the viewport width,
+  // changing responsive wrapping and producing a very different image from
+  // the card the user is looking at.
+  node.style.width = `${Math.ceil(rect.width)}px`;
+  node.style.maxWidth = `${Math.ceil(rect.width)}px`;
+  node.style.flex = "none";
+
+  try {
+    const canvas = await html2canvas(node, {
+      backgroundColor: window.getComputedStyle(node).backgroundColor,
+      ignoreElements: (element) =>
+        element.hasAttribute("data-copy-exclude") ||
+        element.id === "ignoreCopy" ||
+        element.dataset.shareIgnore === "true",
+      scale: Math.min(window.devicePixelRatio || 1, 2),
+      useCORS: true,
+      width: Math.ceil(rect.width),
+      height: Math.ceil(rect.height),
+    });
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) =>
+          blob ? resolve(blob) : reject(new Error("PNG capture failed")),
+        "image/png",
+      );
+    });
+  } finally {
+    node.style.width = originalStyle.width;
+    node.style.maxWidth = originalStyle.maxWidth;
+    node.style.flex = originalStyle.flex;
+  }
 }
 
 function downloadBlob(blob, filename) {

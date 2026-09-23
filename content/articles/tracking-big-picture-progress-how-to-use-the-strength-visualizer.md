@@ -2,7 +2,7 @@
 title: "Tracking Big Picture Progress: How to Use the Strength Visualizer"
 description: "The Strength Visualizer provides a clear, long-term view of your lifting progress, helping you track estimated 1-rep maxes, spot trends, and predict future performance for competitions."
 publishedAt: "2024-09-26T10:06:33.467Z"
-updatedAt: "2026-03-10T04:05:53.000Z"
+updatedAt: "2026-09-22T21:40:00.000Z"
 categories:
   - "Strength Visualizer"
   - "Personal Record Analyzer"
@@ -24,16 +24,15 @@ At its core, the [Strength Visualizer](https://www.strengthjourneys.xyz/visualiz
 
 The visualizer supports:
 
-- **Multiple lifts:** Choose specific lift types like squat, deadlift, or bench press. 
-- **Custom time ranges**: View progress over the past 3 months, 6 months, 1 year, or all time. 
-- **Data filtering**: Opt to display weekly bests or all your data. This helps smooth your data especially if each week you do a light version of a lift.
+- **Multiple lifts:** Choose specific lift types like squat, deadlift, or bench press.
+- **Custom time ranges**: View progress over the past 3 months, 6 months, 1 year, or all time.
 
 ### Why Use the [Visualizer](https://www.strengthjourneys.xyz/visualizer)?
 
 The visualizer offers several key advantages to lifters:
 
-- **View Your Entire Strength Journey at a Glance**: The Strength Visualizer lets you see your complete history for a specific lift type, even if you have 10 years' worth of data. This means you can see your long-term strength progression in one clear snapshot, providing unparalleled insight into how your lifting journey has evolved. 
-- **Predict Your Future Strength**: By analyzing your trajectory of progress, you can estimate your potential strength for an upcoming meet or powerlifting competition. This makes the visualizer a powerful tool for planning and setting goals, helping you stay on track for those big events. 
+- **View Your Entire Strength Journey at a Glance**: The Strength Visualizer lets you see your complete history for a specific lift type, even if you have 10 years' worth of data. This means you can see your long-term strength progression in one clear snapshot, providing unparalleled insight into how your lifting journey has evolved.
+- **Predict Your Future Strength**: By analyzing your trajectory of progress, you can estimate your potential strength for an upcoming meet or powerlifting competition. This makes the visualizer a powerful tool for planning and setting goals, helping you stay on track for those big events.
 - **Identify Plateaus**: Spot any periods where your progress stalls, giving you the insight to make necessary adjustments in your training program.
 - **Understand Training Effectiveness**: By visualizing trends in your e1RM, you can determine which phases of training were the most effective for strength gains.
 - **Set Realistic Goals**: The visualizer helps you set data-driven goals by providing a clear understanding of your current strength level and how it has evolved.
@@ -46,7 +45,7 @@ Here’s how you can make the most of the visualizer:
 
 **2. Adjust Time Range**: Use the time range selector to narrow or expand the chart’s date range. Want to see how your squat has improved in the last six months? Or maybe you’re curious about your all-time performance? The time range feature gives you flexibility.
 
-**3. Customize Display Options**: Toggle between showing all sets or just your best weekly lifts. You can also choose to show or hide the actual weight values for each set on the chart.
+**3. Customize Display Options**: Choose to show or hide the weight values on the chart.
 
 **4. Interactive Data**: The chart is fully interactive, allowing you to hover over specific points to see detailed information for each set, such as the weight lifted and the corresponding e1RM. This lets you identify your best performances. As you mouse hover over a date the entire session will appear in the card to the right. For lift entries with a URL (such as a youtube link to your lift video), you can also click points on the data to open the lift video in a new tab.
 

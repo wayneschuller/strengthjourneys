@@ -19,7 +19,6 @@ import {
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { ReferenceLine, ReferenceArea, ReferenceDot } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -60,9 +59,20 @@ import {
 
 import { ChartContainer } from "@/components/ui/chart";
 
-import { CartesianGrid, Area, AreaChart, XAxis, YAxis, Tooltip } from "recharts";
+import {
+  CartesianGrid,
+  Area,
+  AreaChart,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 
-import { getYearLabels, processVisualizerData } from "@/components/visualizer/visualizer-processing";
+import {
+  getYearLabels,
+  processVisualizerData,
+  shapeMiniE1rmSeries,
+} from "@/components/visualizer/visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
@@ -78,11 +88,14 @@ export function VisualizerMini({ liftType }) {
   const highlightedDateRef = useRef(null);
   const { parsedData, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => { setIsMounted(true); }, []);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
 
-  const { isMetric, bodyWeight, standards, bodyWeightIsDefault } = useAthleteBio();
+  const { isMetric, bodyWeight, standards, bodyWeightIsDefault } =
+    useAthleteBio();
 
   // devLog(parsedData);
 
@@ -101,17 +114,13 @@ export function VisualizerMini({ liftType }) {
     [parsedData, liftType, storedTimeRange],
   );
 
-  const [showAllData, setShowAllData] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHOW_ALL_DATA,
-    true,
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.FORMULA,
+    "Brzycki",
     {
       initializeWithValue: false,
     },
-  ); // Show weekly bests or all data
-
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
-    initializeWithValue: false,
-  });
+  );
 
   const [showStandards, setShowStandards] = useLocalStorage(
     LOCAL_STORAGE_KEYS.VIS_MINI_SHOW_STANDARDS,
@@ -137,18 +146,13 @@ export function VisualizerMini({ liftType }) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")}`;
 
-  const {
-    dataset: chartData,
-    weightMax,
-    weightMin,
-  } = useMemo(
+  const { dataset: sessionSeries, weightMax } = useMemo(
     () =>
       processVisualizerData(
         parsedData,
         e1rmFormula,
         [liftType],
         rangeFirstDate,
-        showAllData,
         isMetric,
         bodyWeight,
         bodyWeightIsDefault,
@@ -158,11 +162,18 @@ export function VisualizerMini({ liftType }) {
       e1rmFormula,
       liftType,
       rangeFirstDate,
-      showAllData,
       isMetric,
       bodyWeight,
       bodyWeightIsDefault,
     ],
+  );
+
+  // Five years of points on screen is the cutoff, measured from the series
+  // itself. All time with a year of data stays detailed. All time with a
+  // decade does not.
+  const chartData = useMemo(
+    () => shapeMiniE1rmSeries(sessionSeries, liftType),
+    [sessionSeries, liftType],
   );
 
   // if (authStatus !== "authenticated") return; // Don't show at all for anon mode
@@ -234,10 +245,10 @@ export function VisualizerMini({ liftType }) {
   // Semantic color progression: cool (easy) → warm (elite). Works across all themes.
   const strengthStandardColors = {
     physicallyActive: "#3b82f6", // blue-500
-    beginner: "#22c55e",        // green-500
-    intermediate: "#f59e0b",    // amber-500
-    advanced: "#f97316",        // orange-500
-    elite: "#ef4444",           // red-500
+    beginner: "#22c55e", // green-500
+    intermediate: "#f59e0b", // amber-500
+    advanced: "#f97316", // orange-500
+    elite: "#ef4444", // red-500
   };
   const strengthStandardLabels = {
     physicallyActive: "Physically Active",
@@ -249,21 +260,37 @@ export function VisualizerMini({ liftType }) {
 
   // Show all standards the user has reached + exactly one next target.
   // No point showing Elite to a beginner — keep the chart focused and motivating.
-  const orderedStandardKeys = ["physicallyActive", "beginner", "intermediate", "advanced", "elite"];
+  const orderedStandardKeys = [
+    "physicallyActive",
+    "beginner",
+    "intermediate",
+    "advanced",
+    "elite",
+  ];
   const orderedStandards = strengthRanges
-    ? orderedStandardKeys.map((key) => ({ key, val: strengthRanges[key] })).filter((s) => s.val != null)
+    ? orderedStandardKeys
+        .map((key) => ({ key, val: strengthRanges[key] }))
+        .filter((s) => s.val != null)
     : [];
-  const nextStandardIndex = orderedStandards.findIndex((s) => weightMax < s.val);
-  const visibleStandardCount = nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex + 1;
+  const nextStandardIndex = orderedStandards.findIndex(
+    (s) => weightMax < s.val,
+  );
+  const visibleStandardCount =
+    nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex + 1;
   const visibleStandards = orderedStandards.slice(0, visibleStandardCount);
   // Bands: one per zone the user has passed through (not including the next target's zone)
-  const visibleBandCount = nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex;
+  const visibleBandCount =
+    nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex;
 
   // Ensure the chart ceiling covers the highest visible standard (with padding)
-  const highestVisibleStandard = visibleStandards.length > 0
-    ? visibleStandards[visibleStandards.length - 1].val
-    : 0;
-  const effectiveMax = Math.max(roundedMaxWeightValue, highestVisibleStandard * 1.15);
+  const highestVisibleStandard =
+    visibleStandards.length > 0
+      ? visibleStandards[visibleStandards.length - 1].val
+      : 0;
+  const effectiveMax = Math.max(
+    roundedMaxWeightValue,
+    highestVisibleStandard * 1.15,
+  );
 
   return (
     <Card className="">
@@ -307,16 +334,21 @@ export function VisualizerMini({ liftType }) {
             </div>
           </div>
         )}
-        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} liftType={liftType} />
+        <TimeRangeSelect
+          timeRange={timeRange}
+          setTimeRange={setTimeRange}
+          liftType={liftType}
+        />
       </CardHeader>
 
-      <CardContent className="pl-0 pr-2">
+      <CardContent className="pr-2 pl-0">
         {isLoading || !parsedData || !isMounted ? (
           <Skeleton className="h-[400px] w-full" />
-        ) : chartData && (
+        ) : (
+          chartData && (
             <ChartContainer
               config={chartConfig}
-              className="h-[400px] !aspect-auto [&_.recharts-wrapper]:outline-none"
+              className="!aspect-auto h-[400px] [&_.recharts-wrapper]:outline-none"
             >
               <AreaChart
                 accessibilityLayer
@@ -330,10 +362,14 @@ export function VisualizerMini({ liftType }) {
                 {/* Strength standard background bands — rendered first so they sit behind
                     the chart data. Only zones the user has passed through are shown;
                     the next unreached standard gets a line but no band beyond it. */}
-                {strengthRanges && showStandards && width > 768 &&
+                {strengthRanges &&
+                  showStandards &&
+                  width > 768 &&
                   Array.from({ length: visibleBandCount }, (_, i) => ({
                     y1: visibleStandards[i].val,
-                    y2: visibleStandards[i + 1]?.val ?? Math.max(100, roundedMaxWeightValue),
+                    y2:
+                      visibleStandards[i + 1]?.val ??
+                      Math.max(100, roundedMaxWeightValue),
                     key: visibleStandards[i].key,
                   })).map(({ y1, y2, key }) => (
                     <ReferenceArea
@@ -344,8 +380,7 @@ export function VisualizerMini({ liftType }) {
                       fillOpacity={1}
                       stroke="none"
                     />
-                  ))
-                }
+                  ))}
                 <XAxis
                   {...CHART_AXIS_PROPS}
                   dataKey="rechartsDate"
@@ -427,7 +462,9 @@ export function VisualizerMini({ liftType }) {
                 />
 
                 {/* Strength standards: color-coded lines for all reached levels + one next target. */}
-                {strengthRanges && showStandards && width > 768 &&
+                {strengthRanges &&
+                  showStandards &&
+                  width > 768 &&
                   visibleStandards.map(({ key, val }) => {
                     const unitType = isMetric ? "kg" : "lb";
                     const color = strengthStandardColors[key];
@@ -456,13 +493,15 @@ export function VisualizerMini({ liftType }) {
                         }}
                       />
                     );
-                  })
-                }
+                  })}
                 {/* Bodyweight multiples: use liftColor so lines feel tied to the chart area. */}
-                {showBodyweightMultiples && bodyWeight > 0 && width >= 1280 &&
+                {showBodyweightMultiples &&
+                  bodyWeight > 0 &&
+                  width >= 1280 &&
                   [0.5, 1.0, 1.5, 2.0, 2.5, 3.0].map((multiple) => {
                     const weightValue = Math.round(multiple * bodyWeight);
-                    if (weightValue > roundedMaxWeightValue || weightValue <= 0) return null;
+                    if (weightValue > roundedMaxWeightValue || weightValue <= 0)
+                      return null;
                     return (
                       <ReferenceLine
                         key={`bw-${multiple}`}
@@ -490,15 +529,15 @@ export function VisualizerMini({ liftType }) {
                         }}
                       />
                     );
-                  })
-                }
+                  })}
               </AreaChart>
             </ChartContainer>
+          )
         )}
       </CardContent>
       <CardFooter>
-        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 md:items-center">
-          <div className="justify-self-start">
+        <div className="flex w-full flex-col items-center justify-between gap-3 md:flex-row">
+          <div>
             <MiniFeedbackWidget
               prompt="Useful chart?"
               contextId={feedbackContextId}
@@ -509,21 +548,7 @@ export function VisualizerMini({ liftType }) {
               }}
             />
           </div>
-          <div className="flex items-center space-x-1 md:justify-self-center">
-            <Label className="font-light" htmlFor="all-data">
-              Weekly Bests
-            </Label>
-            <Switch
-              id="all-data"
-              value={showAllData}
-              checked={showAllData}
-              onCheckedChange={(show) => setShowAllData(show)}
-            />
-            <Label className="font-light" htmlFor="all-data">
-              All Data
-            </Label>
-          </div>
-          <div className="md:justify-self-end">
+          <div>
             <E1RMFormulaSelect
               e1rmFormula={e1rmFormula}
               setE1rmFormula={setE1rmFormula}

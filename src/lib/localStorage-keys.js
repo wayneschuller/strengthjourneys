@@ -114,7 +114,6 @@ export const LOCAL_STORAGE_KEYS = {
   // Visualizer
   TIME_RANGE: "SJ_timeRange",
   SHOW_LABEL_VALUES: "SJ_showLabelValues",
-  SHOW_ALL_DATA: "SJ_showAllData",
   VIS_MINI_SHOW_STANDARDS: "SJ_VisMiniShowStandards",
   VIS_MINI_SHOW_BODYWEIGHT_MULTIPLES: "SJ_VisMiniShowBodyweightMultiples",
   TONNAGE_AGGREGATION_TYPE: "SJ_tonnageAggregationType",

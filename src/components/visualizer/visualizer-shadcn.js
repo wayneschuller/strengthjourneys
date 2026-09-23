@@ -11,7 +11,10 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { LOCAL_STORAGE_KEYS, getSelectedLiftsKey } from "@/lib/localStorage-keys";
+import {
+  LOCAL_STORAGE_KEYS,
+  getSelectedLiftsKey,
+} from "@/lib/localStorage-keys";
 import { BIG_FOUR_LIFT_TYPES, devLog } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -80,12 +83,22 @@ import {
   selectTopPoints,
 } from "@/components/visualizer/chart-visuals";
 
-import { processVisualizerData, getYearLabels } from "@/components/visualizer/visualizer-processing";
+import {
+  processVisualizerData,
+  getYearLabels,
+} from "@/components/visualizer/visualizer-processing";
 
 // Wraps MultiLiftTooltipContent and syncs the hovered date to TheLatestSessionCard via setHighlightDate.
 // recharts v3 doesn't reliably populate activePayload in onMouseMove for numeric/time XAxis,
 // but it always calls Tooltip content when a data point is active.
-function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, setHighlightDate, debounceMs = 0 }) {
+function SyncedMultiLiftTooltip({
+  active,
+  payload,
+  label,
+  selectedLiftTypes,
+  setHighlightDate,
+  debounceMs = 0,
+}) {
   const date = active && payload?.length > 0 ? payload[0]?.payload?.date : null;
 
   useEffect(() => {
@@ -94,12 +107,19 @@ function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, set
     return () => clearTimeout(timer);
   }, [date, setHighlightDate, debounceMs]);
 
-  return <MultiLiftTooltipContent active={active} payload={payload} label={label} selectedLiftTypes={selectedLiftTypes} />;
+  return (
+    <MultiLiftTooltipContent
+      active={active}
+      payload={payload}
+      label={label}
+      selectedLiftTypes={selectedLiftTypes}
+    />
+  );
 }
 
 /**
  * Main strength visualizer card showing estimated one-rep maxes over time for one or more lifts
- * as a multi-series area chart. Includes lift selection, time range, weekly/all-data toggle,
+ * as a multi-series area chart. Includes lift selection, time range,
  * value labels, and E1RM formula controls.
  *
  * @param {Object} props
@@ -112,25 +132,31 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const { getColor } = useLiftColors();
   const { isMetric, bodyWeight, bodyWeightIsDefault } = useAthleteBio();
 
-  const [selectedLiftTypes, setSelectedLiftTypes] = useState(BIG_FOUR_LIFT_TYPES);
+  const [selectedLiftTypes, setSelectedLiftTypes] =
+    useState(BIG_FOUR_LIFT_TYPES);
 
   // Hydrate from localStorage when liftTypes is available
   useEffect(() => {
     if (authStatus === "loading" || !liftTypes?.length) return;
 
-    const localStorageKey = getSelectedLiftsKey(isDemoMode, VISUALIZER_STORAGE_PREFIX);
+    const localStorageKey = getSelectedLiftsKey(
+      isDemoMode,
+      VISUALIZER_STORAGE_PREFIX,
+    );
     let stored = null;
     try {
-      const raw = typeof window !== "undefined" && localStorage.getItem(localStorageKey);
+      const raw =
+        typeof window !== "undefined" && localStorage.getItem(localStorageKey);
       stored = raw ? JSON.parse(raw) : null;
     } catch {
       stored = null;
     }
 
     const liftTypeSet = new Set(liftTypes.map((l) => l.liftType));
-    let resolved = Array.isArray(stored) && stored.length
-      ? stored.filter((lt) => liftTypeSet.has(lt))
-      : null;
+    let resolved =
+      Array.isArray(stored) && stored.length
+        ? stored.filter((lt) => liftTypeSet.has(lt))
+        : null;
 
     if (!resolved?.length) {
       resolved = BIG_FOUR_LIFT_TYPES.filter((lt) => liftTypeSet.has(lt));
@@ -163,11 +189,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
     false,
     { initializeWithValue: false },
   );
-  const [showAllData, setShowAllData] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHOW_ALL_DATA,
-    true,
-    { initializeWithValue: false },
-  ); // Show weekly bests or all data
   const [e1rmFormula, setE1rmFormula] = useLocalStorage(
     LOCAL_STORAGE_KEYS.FORMULA,
     "Brzycki",
@@ -190,7 +211,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
         e1rmFormula,
         selectedLiftTypes,
         rangeFirstDate,
-        showAllData,
         isMetric,
         bodyWeight,
         bodyWeightIsDefault,
@@ -200,7 +220,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
       e1rmFormula,
       selectedLiftTypes,
       rangeFirstDate,
-      showAllData,
       isMetric,
       bodyWeight,
       bodyWeightIsDefault,
@@ -248,7 +267,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // avoid cascading TheLatestSessionCard re-renders during fast mouse scrubbing.
   // Formula: ~10ms at 120 pts, ~25ms at 300 pts, capped at 50ms at 600+ pts.
   const tooltipDebounceMs = Math.min(50, Math.floor(chartData.length / 12));
-  devLog(`VisualizerShadcn: ${chartData.length} chart data points, debounceMs=${tooltipDebounceMs}`);
+  devLog(
+    `VisualizerShadcn: ${chartData.length} chart data points, debounceMs=${tooltipDebounceMs}`,
+  );
 
   // Dynamic tick spacing based on the data range so lighter lifts get
   // a readable Y-axis instead of 50kg jumps that compress everything.
@@ -293,8 +314,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
         </div>
       </CardHeader>
 
-      <CardContent className="pl-0 pr-2">
-        <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
+      <CardContent className="pr-2 pl-0">
+        <ChartContainer config={chartConfig} className="!aspect-auto h-[400px]">
           <AreaChart
             accessibilityLayer
             data={chartData}
@@ -433,20 +454,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
               checked={showLabelValues}
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
-          </div>
-          <div className="flex items-center space-x-1">
-            <Label className="font-light" htmlFor="all-data">
-              Weekly Bests
-            </Label>
-            <Switch
-              id="all-data"
-              value={showAllData}
-              checked={showAllData}
-              onCheckedChange={(show) => setShowAllData(show)}
-            />
-            <Label className="font-light" htmlFor="all-data">
-              All Data
-            </Label>
           </div>
           <div>
             <E1RMFormulaSelect

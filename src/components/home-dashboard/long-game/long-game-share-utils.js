@@ -146,7 +146,7 @@ function drawTextNodeToContext(ctx, node, cardRect, fallback = {}) {
   if (!text) return;
 
   ctx.fillStyle = fallback.color || style.color || "#111827";
-  ctx.font = `${style.fontWeight || fallback.fontWeight || 400} ${style.fontSize || fallback.fontSize || "12px"} ${style.fontFamily || fallback.fontFamily || "sans-serif"}`;
+  ctx.font = `${style.fontStyle || fallback.fontStyle || "normal"} ${style.fontWeight || fallback.fontWeight || 400} ${style.fontSize || fallback.fontSize || "12px"} ${style.fontFamily || fallback.fontFamily || "sans-serif"}`;
   ctx.textBaseline = "top";
   ctx.fillText(
     text,

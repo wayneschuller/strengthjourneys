@@ -405,6 +405,12 @@ export function TheMonthInIronCard({
                 lines: monthCopyLines,
               })}
             />
+            <span
+              className="text-muted-foreground hidden text-xs font-medium tracking-wide italic"
+              data-copy-only
+            >
+              strengthjourneys.xyz
+            </span>
             <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
               <TooltipProvider>
                 <Tooltip>

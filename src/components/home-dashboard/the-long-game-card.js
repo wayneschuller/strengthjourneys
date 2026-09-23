@@ -638,21 +638,15 @@ export function TheLongGameCard({
                     canStart={ringsRevealed}
                   />
                 )}
-              {/* Footer with app branding - only visible during image capture */}
+              {/* Capture-only signature keeps shared dashboard images branded
+                  without competing with the training history itself. */}
               {isSharing && (
                 <div
                   className="mt-6 flex items-center justify-center border-t pt-4"
                   data-share-section="branding"
                 >
-                  <p className="text-muted-foreground text-sm">
-                    Created with{" "}
-                    <span className="text-foreground font-semibold">
-                      Strength Journeys
-                    </span>
-                    {" • "}
-                    <span className="text-muted-foreground">
-                      strengthjourneys.xyz
-                    </span>
+                  <p className="text-muted-foreground text-xs font-medium tracking-wide italic">
+                    strengthjourneys.xyz
                   </p>
                 </div>
               )}

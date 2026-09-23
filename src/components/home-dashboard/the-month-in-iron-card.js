@@ -8,11 +8,12 @@ import { motion, useInView } from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
 import { addDays, format } from "date-fns";
-import { Bot, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { AiReviewActions } from "@/components/ai-review-actions";
 import {
   Card,
   CardContent,
@@ -48,7 +49,6 @@ import { gaTrackCoffeeNudgeClick } from "@/lib/analytics";
 import {
   buildAiAssistantPromptLink,
   buildMonthlyReviewPrompt,
-  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 
 // ─── Main component ────────────────────────────────────────────────────────
@@ -388,20 +388,7 @@ export function TheMonthInIronCard({
             <CardDescription>{motivationalPhrase}</CardDescription>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 px-2.5"
-            >
-              <Link
-                href={aiReviewLink.href}
-                onClick={() => stashAiAssistantPrompt(aiReviewLink)}
-              >
-                <Bot className="h-4 w-4" />
-                <span className="hidden sm:inline">AI review</span>
-              </Link>
-            </Button>
+            <AiReviewActions aiReviewLink={aiReviewLink} contentRef={cardRef} />
             <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
               <TooltipProvider>
                 <Tooltip>

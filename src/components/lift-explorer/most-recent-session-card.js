@@ -1,6 +1,4 @@
-
-import { useState, useMemo } from "react";
-import Link from "next/link";
+import { useMemo, useRef, useState } from "react";
 import { useReadLocalStorage } from "usehooks-ts";
 import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Bot, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -29,10 +27,10 @@ import {
 } from "@/components/home-dashboard/session-exercise-block";
 import { getLiftArtwork } from "@/components/lift-artwork";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { AiReviewActions } from "@/components/ai-review-actions";
 import {
   buildAiAssistantPromptLink,
   buildLiftRecentSessionsReviewPrompt,
-  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 
 const RECENT_SESSIONS_COUNT = 3;
@@ -65,10 +63,15 @@ export function MostRecentSessionCard({
 }) {
   const [internalHighlightDate, setInternalHighlightDate] = useState(null);
   const [visibleCount, setVisibleCount] = useState(defaultVisibleCount);
+  const cardRef = useRef(null);
 
   const isControlled = setHighlightDateProp != null;
-  const highlightDate = isControlled ? highlightDateProp : internalHighlightDate;
-  const setHighlightDate = isControlled ? setHighlightDateProp : setInternalHighlightDate;
+  const highlightDate = isControlled
+    ? highlightDateProp
+    : internalHighlightDate;
+  const setHighlightDate = isControlled
+    ? setHighlightDateProp
+    : setInternalHighlightDate;
 
   const {
     parsedData,
@@ -85,94 +88,99 @@ export function MostRecentSessionCard({
   const hasBioData =
     age && bodyWeight && standards && Object.keys(standards).length > 0;
 
-  const { recentSessions, singleSession, isFirstDate, isLastDate, datesForNav } =
-    useMemo(() => {
-      if (!parsedData?.length)
-        return {
-          recentSessions: [],
-          singleSession: null,
-          isFirstDate: true,
-          isLastDate: true,
-          datesForNav: [],
-        };
-
-      let sessionDate = null;
-      let datesForNav = [];
-
-      if (liftType) {
-        datesForNav = getSessionDatesContainingLiftType(parsedData, liftType);
-        const recentDates = datesForNav.slice().reverse();
-        const recentSessions = recentDates
-          .map((date) => {
-            const allAnalyzed = getAnalyzedSessionLifts(
-              date,
-              parsedData,
-              topLiftsByTypeAndReps,
-              topLiftsByTypeAndRepsLast12Months,
-            );
-            const analyzedSessionLifts = allAnalyzed[liftType]
-              ? { [liftType]: allAnalyzed[liftType] }
-              : {};
-            return { sessionDate: date, analyzedSessionLifts };
-          })
-          .filter((s) => Object.keys(s.analyzedSessionLifts).length > 0);
-
-        return {
-          recentSessions,
-          singleSession: null,
-          isFirstDate: true,
-          isLastDate: true,
-          datesForNav,
-        };
-      }
-
-      if (highlightDate) {
-        sessionDate = highlightDate;
-      } else {
-        for (let i = parsedData.length - 1; i >= 0; i--) {
-          if (!parsedData[i].isGoal) {
-            sessionDate = parsedData[i].date;
-            break;
-          }
-        }
-      }
-
-      const isFirstDate =
-        parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
-      const isLastDate =
-        parsedData?.length > 0 &&
-        sessionDate === parsedData[parsedData.length - 1]?.date;
-
-      if (!sessionDate)
-        return {
-          recentSessions: [],
-          singleSession: null,
-          isFirstDate: true,
-          isLastDate: true,
-          datesForNav: [],
-        };
-
-      const allAnalyzed = getAnalyzedSessionLifts(
-        sessionDate,
-        parsedData,
-        topLiftsByTypeAndReps,
-        topLiftsByTypeAndRepsLast12Months,
-      );
-
+  const {
+    recentSessions,
+    singleSession,
+    isFirstDate,
+    isLastDate,
+    datesForNav,
+  } = useMemo(() => {
+    if (!parsedData?.length)
       return {
         recentSessions: [],
-        singleSession: { sessionDate, analyzedSessionLifts: allAnalyzed },
-        isFirstDate,
-        isLastDate,
+        singleSession: null,
+        isFirstDate: true,
+        isLastDate: true,
+        datesForNav: [],
+      };
+
+    let sessionDate = null;
+    let datesForNav = [];
+
+    if (liftType) {
+      datesForNav = getSessionDatesContainingLiftType(parsedData, liftType);
+      const recentDates = datesForNav.slice().reverse();
+      const recentSessions = recentDates
+        .map((date) => {
+          const allAnalyzed = getAnalyzedSessionLifts(
+            date,
+            parsedData,
+            topLiftsByTypeAndReps,
+            topLiftsByTypeAndRepsLast12Months,
+          );
+          const analyzedSessionLifts = allAnalyzed[liftType]
+            ? { [liftType]: allAnalyzed[liftType] }
+            : {};
+          return { sessionDate: date, analyzedSessionLifts };
+        })
+        .filter((s) => Object.keys(s.analyzedSessionLifts).length > 0);
+
+      return {
+        recentSessions,
+        singleSession: null,
+        isFirstDate: true,
+        isLastDate: true,
         datesForNav,
       };
-    }, [
+    }
+
+    if (highlightDate) {
+      sessionDate = highlightDate;
+    } else {
+      for (let i = parsedData.length - 1; i >= 0; i--) {
+        if (!parsedData[i].isGoal) {
+          sessionDate = parsedData[i].date;
+          break;
+        }
+      }
+    }
+
+    const isFirstDate =
+      parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
+    const isLastDate =
+      parsedData?.length > 0 &&
+      sessionDate === parsedData[parsedData.length - 1]?.date;
+
+    if (!sessionDate)
+      return {
+        recentSessions: [],
+        singleSession: null,
+        isFirstDate: true,
+        isLastDate: true,
+        datesForNav: [],
+      };
+
+    const allAnalyzed = getAnalyzedSessionLifts(
+      sessionDate,
       parsedData,
       topLiftsByTypeAndReps,
       topLiftsByTypeAndRepsLast12Months,
-      highlightDate,
-      liftType,
-    ]);
+    );
+
+    return {
+      recentSessions: [],
+      singleSession: { sessionDate, analyzedSessionLifts: allAnalyzed },
+      isFirstDate,
+      isLastDate,
+      datesForNav,
+    };
+  }, [
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    highlightDate,
+    liftType,
+  ]);
   const visibleRecentSessions = useMemo(
     () => recentSessions.slice(0, visibleCount),
     [recentSessions, visibleCount],
@@ -206,7 +214,9 @@ export function MostRecentSessionCard({
     const sessionDate = singleSession?.sessionDate;
     if (!sessionDate) return;
     if (parsedData) {
-      const currentIndex = parsedData.findIndex((entry) => entry.date === sessionDate);
+      const currentIndex = parsedData.findIndex(
+        (entry) => entry.date === sessionDate,
+      );
       for (let i = currentIndex - 1; i >= 0; i--) {
         if (parsedData[i].date !== sessionDate) {
           setHighlightDate(parsedData[i].date);
@@ -220,7 +230,9 @@ export function MostRecentSessionCard({
     const sessionDate = singleSession?.sessionDate;
     if (!sessionDate) return;
     if (parsedData) {
-      const currentIndex = parsedData.findIndex((entry) => entry.date === sessionDate);
+      const currentIndex = parsedData.findIndex(
+        (entry) => entry.date === sessionDate,
+      );
       for (let i = currentIndex + 1; i < parsedData.length; i++) {
         if (parsedData[i].date !== sessionDate) {
           setHighlightDate(parsedData[i].date);
@@ -237,29 +249,17 @@ export function MostRecentSessionCard({
     const svgPath = getLiftArtwork(liftType);
     return (
       <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
-        <Card className="rounded-xl border">
+        <Card ref={cardRef} className="rounded-xl border">
           <CardHeader className="pb-1.5">
             <div className="flex items-start justify-between gap-4">
               <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
                 {isDemoMode && <DemoModeBadge size="sm" />}
                 {titlePrefix}
               </CardTitle>
-              {aiReviewLink && (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0 gap-1.5 px-2.5"
-                >
-                  <Link
-                    href={aiReviewLink.href}
-                    onClick={() => stashAiAssistantPrompt(aiReviewLink)}
-                  >
-                    <Bot className="h-4 w-4" />
-                    <span className="hidden sm:inline">AI review</span>
-                  </Link>
-                </Button>
-              )}
+              <AiReviewActions
+                aiReviewLink={aiReviewLink}
+                contentRef={cardRef}
+              />
             </div>
           </CardHeader>
           <CardContent>
@@ -273,48 +273,53 @@ export function MostRecentSessionCard({
                   />
                 </div>
               )}
-              <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-                {visibleRecentSessions.map(({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
-                  const liftEntries = Object.entries(analyzedSessionLifts);
-                  if (liftEntries.length === 0) return null;
-                  return (
-                    <motion.div
-                      key={sessionDate}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: sessionIndex * 0.04, duration: 0.2 }}
-                      className="rounded-lg"
-                    >
-                      {liftEntries.map(([lt, workouts]) => (
-                        <SessionExerciseBlock
-                          key={lt}
-                          variant="compact"
-                          liftType={lt}
-                          workouts={workouts}
-                          e1rmFormula={e1rmFormula}
-                          hideSvg
-                          hasBioData={hasBioData}
-                          standards={standards}
-                          sessionDate={sessionDate}
-                          age={age}
-                          bodyWeight={bodyWeight}
-                          sex={sex}
-                          isMetric={isMetric}
-                          label={getReadableDateString(sessionDate, true)}
-                          labelHref={`/log?date=${sessionDate}`}
-                        />
-                      ))}
-                    </motion.div>
-                  );
-                })}
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                {visibleRecentSessions.map(
+                  ({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
+                    const liftEntries = Object.entries(analyzedSessionLifts);
+                    if (liftEntries.length === 0) return null;
+                    return (
+                      <motion.div
+                        key={sessionDate}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          delay: sessionIndex * 0.04,
+                          duration: 0.2,
+                        }}
+                        className="rounded-lg"
+                      >
+                        {liftEntries.map(([lt, workouts]) => (
+                          <SessionExerciseBlock
+                            key={lt}
+                            variant="compact"
+                            liftType={lt}
+                            workouts={workouts}
+                            e1rmFormula={e1rmFormula}
+                            hideSvg
+                            hasBioData={hasBioData}
+                            standards={standards}
+                            sessionDate={sessionDate}
+                            age={age}
+                            bodyWeight={bodyWeight}
+                            sex={sex}
+                            isMetric={isMetric}
+                            label={getReadableDateString(sessionDate, true)}
+                            labelHref={`/log?date=${sessionDate}`}
+                          />
+                        ))}
+                      </motion.div>
+                    );
+                  },
+                )}
                 {visibleCount < recentSessions.length && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-1 self-start text-muted-foreground"
+                    className="text-muted-foreground mt-1 self-start"
                     onClick={() => setVisibleCount((c) => c + 1)}
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    <Plus className="mr-1 h-3.5 w-3.5" />
                     Show one more session
                   </Button>
                 )}
@@ -331,14 +336,13 @@ export function MostRecentSessionCard({
   const isWithinLastMonth =
     sessionDate &&
     differenceInDays(new Date(), new Date(sessionDate + "T00:00:00")) <= 30;
-  const titlePrefix =
-    sessionDate
-      ? isLastDate
-        ? "Most recent session"
-        : isWithinLastMonth
-          ? "Recent session"
-          : "Session"
-      : "Most recent session";
+  const titlePrefix = sessionDate
+    ? isLastDate
+      ? "Most recent session"
+      : isWithinLastMonth
+        ? "Recent session"
+        : "Session"
+    : "Most recent session";
 
   if (!sessionDate || !analyzedSessionLifts) {
     return (
@@ -350,7 +354,7 @@ export function MostRecentSessionCard({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="bg-muted/30 text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
             {liftType
               ? `No ${liftType} sessions logged yet.`
               : "No sessions logged yet."}
@@ -371,7 +375,7 @@ export function MostRecentSessionCard({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="bg-muted/30 text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
             {liftType
               ? `No ${liftType} workouts for the most recent date.`
               : "No workouts available for the most recent date."}
@@ -393,7 +397,7 @@ export function MostRecentSessionCard({
               </CardTitle>
             </div>
             <div className="flex shrink-0 items-center gap-2 md:gap-6">
-              <div className="flex items-center gap-0.5 md:gap-3 rounded-lg border bg-muted/30 p-0.5 md:px-1.5">
+              <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5 md:gap-3 md:px-1.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -438,8 +442,10 @@ export function MostRecentSessionCard({
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.06, duration: 0.25 }}
-                className="w-full min-w-0 xl:min-w-[200px] xl:basis-[200px] xl:[flex-grow:var(--session-grow)]"
-                style={{ "--session-grow": Math.max(1, Math.ceil(workouts.length / 3)) }}
+                className="w-full min-w-0 xl:min-w-[200px] xl:[flex-grow:var(--session-grow)] xl:basis-[200px]"
+                style={{
+                  "--session-grow": Math.max(1, Math.ceil(workouts.length / 3)),
+                }}
               >
                 <SessionExerciseBlock
                   variant="compact"
@@ -479,7 +485,7 @@ function MostRecentSessionCardSkeleton() {
       </CardHeader>
       <CardContent className="px-4 pt-1 pb-3">
         <div className="flex flex-col gap-2 xl:flex-row xl:flex-wrap xl:items-stretch">
-          <div className="min-w-[160px] flex-1 rounded-lg border bg-muted/30 px-3 py-2">
+          <div className="bg-muted/30 min-w-[160px] flex-1 rounded-lg border px-3 py-2">
             <Skeleton className="mb-2 h-4 w-32" />
             <Skeleton className="h-3 w-40" />
           </div>

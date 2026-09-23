@@ -3,7 +3,7 @@
  * Keep the empty-state CTA tailored to the user's setup state so the logging
  * pitch stays clear before the full logging workflow is available.
  */
-import { Children, useMemo, useState } from "react";
+import { Children, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -13,7 +13,6 @@ import {
   Plus,
   TrendingUp,
   TrendingDown,
-  Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
@@ -24,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { AiReviewActions } from "@/components/ai-review-actions";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
@@ -55,7 +55,6 @@ import {
 import {
   buildAiAssistantPromptLink,
   buildWeeklyReviewPrompt,
-  stashAiAssistantPrompt,
 } from "@/lib/ai-review-prompts";
 
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
@@ -456,7 +455,9 @@ function buildWeekCardPromptSummary({
 
   if (stats.liftTypes.length > 0) {
     const liftMix = stats.liftTypes
-      .map((liftType) => `${liftType}:${stats.liftTypeSets[liftType] ?? 0} sets`)
+      .map(
+        (liftType) => `${liftType}:${stats.liftTypeSets[liftType] ?? 0} sets`,
+      )
       .join("; ");
     lines.push(`lift_mix=${liftMix}`);
   }
@@ -492,6 +493,7 @@ export function TheWeekInIronCard({
   dataMaturityStage = "mature",
   sessionCount = 0,
 }) {
+  const cardRef = useRef(null);
   const { status: authStatus } = useSession();
   const {
     isDemoMode,
@@ -500,8 +502,7 @@ export function TheWeekInIronCard({
     parsedData,
     sessionTonnageLookup,
     streakLeaderboard,
-  } =
-    useUserLiftingData();
+  } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
   const [weekOffset, setWeekOffset] = useState(0);
@@ -615,7 +616,7 @@ export function TheWeekInIronCard({
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
-      <Card className="flex h-full flex-1 flex-col">
+      <Card ref={cardRef} className="flex h-full flex-1 flex-col">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -626,20 +627,10 @@ export function TheWeekInIronCard({
               <CardDescription>{subtitle}</CardDescription>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 px-2.5"
-              >
-                <Link
-                  href={aiReviewLink.href}
-                  onClick={() => stashAiAssistantPrompt(aiReviewLink)}
-                >
-                  <Bot className="h-4 w-4" />
-                  <span className="hidden sm:inline">AI review</span>
-                </Link>
-              </Button>
+              <AiReviewActions
+                aiReviewLink={aiReviewLink}
+                contentRef={cardRef}
+              />
               <div className="bg-muted/30 flex items-center gap-0.5 rounded-lg border p-0.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -706,10 +697,7 @@ export function TheWeekInIronCard({
                   <WeekSection
                     stepLabel="B"
                     title="Looking ahead"
-                    streakCallout={getStreakCallout(
-                      streakStats,
-                      true,
-                    )}
+                    streakCallout={getStreakCallout(streakStats, true)}
                     streakCelebration={streakCelebration}
                     description={getNextStepCopy(
                       stats,
@@ -718,13 +706,14 @@ export function TheWeekInIronCard({
                       weeklySessionRows,
                     )}
                   >
-                    {stats.sessions.current >= 3 && stats.tonnage.current > 0 && (
-                      <WeekTonnageComparison
-                        weekTonnage={stats.tonnage.current}
-                        avgTonnage={avgTonnage}
-                        unit={unit}
-                      />
-                    )}
+                    {stats.sessions.current >= 3 &&
+                      stats.tonnage.current > 0 && (
+                        <WeekTonnageComparison
+                          weekTonnage={stats.tonnage.current}
+                          avgTonnage={avgTonnage}
+                          unit={unit}
+                        />
+                      )}
                     <StartLiftPrompt
                       showIntro={false}
                       showStarterButtons={stats.sessions.current < 3}
@@ -740,20 +729,18 @@ export function TheWeekInIronCard({
                   <WeekSection
                     stepLabel="B"
                     title="Week in review"
-                    streakCallout={getStreakCallout(
-                      streakStats,
-                      false,
-                    )}
+                    streakCallout={getStreakCallout(streakStats, false)}
                     streakCelebration={streakCelebration}
                     description={getWeekReviewCopy(stats, boundaries)}
                   >
-                    {stats.sessions.current >= 3 && stats.tonnage.current > 0 && (
-                      <WeekTonnageComparison
-                        weekTonnage={stats.tonnage.current}
-                        avgTonnage={avgTonnage}
-                        unit={unit}
-                      />
-                    )}
+                    {stats.sessions.current >= 3 &&
+                      stats.tonnage.current > 0 && (
+                        <WeekTonnageComparison
+                          weekTonnage={stats.tonnage.current}
+                          avgTonnage={avgTonnage}
+                          unit={unit}
+                        />
+                      )}
                   </WeekSection>
                 </>
               )}
@@ -956,7 +943,9 @@ function EarlyWeekCard({
           />
         )}
         <div className="mt-5 w-full">
-          <StartLiftPrompt showLiftCoaching={dashboardStage === "starter_sample"} />
+          <StartLiftPrompt
+            showLiftCoaching={dashboardStage === "starter_sample"}
+          />
         </div>
       </CardContent>
     </Card>
@@ -1098,7 +1087,9 @@ function getWeekReviewCopy(stats, boundaries) {
 }
 
 function WeekTonnageComparison({ weekTonnage, avgTonnage, unit }) {
-  const delta = avgTonnage ? getTonnageDelta(weekTonnage, avgTonnage.avg) : null;
+  const delta = avgTonnage
+    ? getTonnageDelta(weekTonnage, avgTonnage.avg)
+    : null;
   const isUp = delta !== null ? delta >= 0 : null;
   const pct = delta !== null ? Math.abs(Math.round(delta)) : null;
 
@@ -1150,25 +1141,23 @@ function getStreakCelebration({
   if (!Array.isArray(streakLeaderboard) || streakLeaderboard.length === 0) {
     return null;
   }
-  if (!hasTwelveMonthsOfTrainingData(allSessionDates, boundaries.effectiveEnd)) {
+  if (
+    !hasTwelveMonthsOfTrainingData(allSessionDates, boundaries.effectiveEnd)
+  ) {
     return null;
   }
   if (!streakStats || streakStats.currentStreak <= 0) {
     return null;
   }
 
-  const sessionsNeeded = Math.max(
-    0,
-    3 - (streakStats.sessionsThisWeek ?? 0),
-  );
+  const sessionsNeeded = Math.max(0, 3 - (streakStats.sessionsThisWeek ?? 0));
   if (sessionsNeeded > 0) {
     return null;
   }
 
   const viewedWeek = getWeekKeyFromDateStr(boundaries.effectiveEnd);
   const viewedStreak = streakLeaderboard.find(
-    (streak) =>
-      streak.startWeek <= viewedWeek && streak.endWeek >= viewedWeek,
+    (streak) => streak.startWeek <= viewedWeek && streak.endWeek >= viewedWeek,
   );
   if (!viewedStreak) {
     return null;
@@ -1223,10 +1212,7 @@ function getStreakCallout(streakStats, isCurrentWeek) {
     return null;
   }
 
-  const sessionsNeeded = Math.max(
-    0,
-    3 - (streakStats.sessionsThisWeek ?? 0),
-  );
+  const sessionsNeeded = Math.max(0, 3 - (streakStats.sessionsThisWeek ?? 0));
   const weekLabel = `week${streakStats.currentStreak === 1 ? "" : "s"}`;
 
   if (!isCurrentWeek) {

@@ -363,11 +363,6 @@ export function VisualizerMini({ liftType }) {
           setTimeRange={setTimeRange}
           liftType={liftType}
         />
-        <AiReviewActions
-          aiReviewLink={aiReviewLink}
-          contentRef={cardRef}
-          showText={false}
-        />
       </CardHeader>
 
       <CardContent className="pr-2 pl-0">
@@ -565,8 +560,8 @@ export function VisualizerMini({ liftType }) {
         )}
       </CardContent>
       <CardFooter>
-        <div className="flex w-full flex-col items-center justify-between gap-3 md:flex-row">
-          <div>
+        <div className="relative flex w-full flex-col items-center justify-between gap-3 md:flex-row">
+          <div className="order-1">
             <MiniFeedbackWidget
               prompt="Useful chart?"
               contextId={feedbackContextId}
@@ -577,10 +572,17 @@ export function VisualizerMini({ liftType }) {
               }}
             />
           </div>
-          <div>
+          <div className="order-3">
             <E1RMFormulaSelect
               e1rmFormula={e1rmFormula}
               setE1rmFormula={setE1rmFormula}
+            />
+          </div>
+          <div className="order-2 md:absolute md:left-1/2 md:-translate-x-1/2">
+            <AiReviewActions
+              aiReviewLink={aiReviewLink}
+              contentRef={cardRef}
+              showText={false}
             />
           </div>
         </div>

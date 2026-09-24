@@ -224,14 +224,81 @@ function isPlausibleFirstName(candidate) {
   return true;
 }
 
+// Account labels and mailboxes can pass the character check while still making
+// a greeting feel automated or disrespectful.
+const NON_PERSON_NAMES = new Set([
+  "account",
+  "admin",
+  "contact",
+  "customer",
+  "email",
+  "first",
+  "firstname",
+  "google",
+  "hello",
+  "info",
+  "mail",
+  "name",
+  "owner",
+  "support",
+  "team",
+  "test",
+  "unknown",
+  "user",
+]);
+
+function isLikelyPersonName(candidate) {
+  return (
+    isPlausibleFirstName(candidate) &&
+    !NON_PERSON_NAMES.has(candidate.toLowerCase())
+  );
+}
+
+function getEmailFirstName(email) {
+  if (typeof email !== "string") return null;
+
+  // Only use an address when it visibly separates a first name from another
+  // name. A single Gmail handle is too easy to misread as a given name.
+  const localPart = email.trim().split("@")[0]?.split("+")[0] || "";
+  const parts = localPart.split(/[._-]/);
+  if (
+    parts.length < 2 ||
+    !/^[a-z]{2,40}$/i.test(parts[0]) ||
+    !/^[a-z]{2,}[a-z0-9]*$/i.test(parts[1])
+  ) {
+    return null;
+  }
+
+  const candidate =
+    parts[0][0].toUpperCase() + parts[0].slice(1).toLowerCase();
+  return isLikelyPersonName(candidate) ? candidate : null;
+}
+
 function getFirstName(user) {
   const explicitFirstName =
-    typeof user?.firstName === "string" ? user.firstName.trim() : "";
+    typeof user?.firstName === "string" ? getFirstWord(user.firstName) : "";
   const nameFirstWord =
     typeof user?.name === "string" ? getFirstWord(user.name) : "";
-  const candidate = explicitFirstName || nameFirstWord;
+  const emailFirstName = getEmailFirstName(user?.email);
+  const emailHandle =
+    typeof user?.email === "string"
+      ? user.email.trim().split("@")[0]?.split("+")[0] || ""
+      : "";
 
-  return isPlausibleFirstName(candidate) ? candidate : null;
+  for (const candidate of [explicitFirstName, nameFirstWord]) {
+    if (!isLikelyPersonName(candidate)) continue;
+    // Google sometimes supplies the whole email handle as the profile name.
+    // A separated address gives us a better clue in that specific case.
+    if (
+      emailFirstName &&
+      candidate.toLowerCase() === emailHandle.replace(/[._-]/g, "").toLowerCase()
+    ) {
+      return emailFirstName;
+    }
+    return candidate;
+  }
+
+  return emailFirstName;
 }
 
 function getGreeting(user) {

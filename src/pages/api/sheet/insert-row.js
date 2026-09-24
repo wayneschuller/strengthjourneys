@@ -19,9 +19,14 @@
  * non-structural updates.
  */
 
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import { readRawRow, verifyRowSnapshot } from "@/lib/sheet-row-ops";
 import { getServerSession } from "next-auth/next";
+
+import {
+  readFirstSheetId,
+  readRawRow,
+  verifyRowSnapshot,
+} from "@/lib/sheet-row-ops";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 // ─── Design principle: the sheet is a first-class artefact ──────────────────
 //
@@ -91,12 +96,15 @@ export default async function handler(req, res) {
   const { ssid, rows, insertAfterRowIndex, newSession, before } = req.body;
 
   if (!ssid || !Array.isArray(rows) || rows.length === 0) {
-    return res.status(400).json({ error: "Missing required fields: ssid, rows" });
+    return res
+      .status(400)
+      .json({ error: "Missing required fields: ssid, rows" });
   }
 
   // insertAfterRowIndex is 1-based. Default: 1 (insert after the header row).
   // 0-based startIndex for Sheets API = insertAfterRowIndex.
-  const insertAfter = typeof insertAfterRowIndex === "number" ? insertAfterRowIndex : 1;
+  const insertAfter =
+    typeof insertAfterRowIndex === "number" ? insertAfterRowIndex : 1;
   const startIndex0 = insertAfter;
 
   const headers = {
@@ -105,6 +113,9 @@ export default async function handler(req, res) {
   };
 
   try {
+    // Unqualified A1 reads target the first tab, so every grid mutation must
+    // resolve that same tab's current ID rather than assuming it is still 0.
+    const targetSheetId = await readFirstSheetId({ ssid, headers });
     let verification = { ok: true, actual: null };
     if (insertAfter === 1) {
       const firstDataRow = await readRawRow({ ssid, rowIndex: 2, headers });
@@ -136,7 +147,10 @@ export default async function handler(req, res) {
     }
 
     if (!verification.ok) {
-      console.warn("[sheet/insert-row] verification failed:", verification.message);
+      console.warn(
+        "[sheet/insert-row] verification failed:",
+        verification.message,
+      );
       return res.status(409).json({
         error: verification.message,
         code: "PRECONDITION_FAILED",
@@ -160,7 +174,7 @@ export default async function handler(req, res) {
       {
         insertDimension: {
           range: {
-            sheetId: 0,
+            sheetId: targetSheetId,
             dimension: "ROWS",
             startIndex: startIndex0,
             endIndex: startIndex0 + rows.length,
@@ -171,7 +185,7 @@ export default async function handler(req, res) {
       {
         updateBorders: {
           range: {
-            sheetId: 0,
+            sheetId: targetSheetId,
             startRowIndex: startIndex0,
             endRowIndex: startIndex0 + rows.length,
             startColumnIndex: 0,
@@ -183,7 +197,7 @@ export default async function handler(req, res) {
       {
         repeatCell: {
           range: {
-            sheetId: 0,
+            sheetId: targetSheetId,
             startRowIndex: startIndex0,
             endRowIndex: startIndex0 + rows.length,
             startColumnIndex: 4,
@@ -195,7 +209,8 @@ export default async function handler(req, res) {
               horizontalAlignment: "LEFT",
             },
           },
-          fields: "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
+          fields:
+            "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
         },
       },
     ];
@@ -204,7 +219,7 @@ export default async function handler(req, res) {
       batchRequests.push({
         updateBorders: {
           range: {
-            sheetId: 0,
+            sheetId: targetSheetId,
             startRowIndex: startIndex0,
             endRowIndex: startIndex0 + 1,
             startColumnIndex: 0,
@@ -221,7 +236,7 @@ export default async function handler(req, res) {
     batchRequests.push({
       updateCells: {
         start: {
-          sheetId: 0,
+          sheetId: targetSheetId,
           rowIndex: startIndex0,
           columnIndex: 0,
         },
@@ -257,7 +272,9 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("[sheet/insert-row] unexpected error:", err);
-    return res.status(500).json({ error: err.message || "Internal server error" });
+    return res
+      .status(500)
+      .json({ error: err.message || "Internal server error" });
   }
 }
 

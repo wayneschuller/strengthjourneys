@@ -782,7 +782,8 @@ export function useLogSheetSync({
 
   const insertPendingSet = useCallback(
     async (liftType, tempId) => {
-      if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) return;
+      if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current)
+        return;
       const pendingSet = (pendingSetsRef.current[liftType] ?? []).find(
         (set) => set._tempId === tempId,
       );
@@ -1199,17 +1200,23 @@ export function useLogSheetSync({
     }
     markStructuralSaving();
 
-    const sessionRows = parsedData
-      .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
-      .map((e) => e.rowIndex);
+    const sessionRows = parsedData.filter(
+      (entry) => entry.date === sessionDate && !entry.isGoal && entry.rowIndex,
+    );
 
     if (!sessionRows.length) {
       markStructuralError();
       return { deleted: false, nextDate: null };
     }
 
-    const minRow = Math.min(...sessionRows);
-    const maxRow = Math.max(...sessionRows);
+    const firstSessionRow = sessionRows.reduce((first, row) =>
+      !first || row.rowIndex < first.rowIndex ? row : first,
+    );
+    const lastSessionRow = sessionRows.reduce((last, row) =>
+      !last || row.rowIndex > last.rowIndex ? row : last,
+    );
+    const minRow = firstSessionRow.rowIndex;
+    const maxRow = lastSessionRow.rowIndex;
 
     const otherRows = parsedData
       .filter((e) => e.date !== sessionDate && !e.isGoal && e.rowIndex)
@@ -1232,7 +1239,10 @@ export function useLogSheetSync({
           ssid: sheetInfo.ssid,
           startRowIndex: minRow,
           endRowIndex: endRow,
+          lastDataRowIndex: maxRow,
           expectedDate: sessionDate,
+          firstBefore: buildSheetSnapshotFromSetLike(firstSessionRow),
+          lastBefore: buildSheetSnapshotFromSetLike(lastSessionRow),
         }),
       });
       timings.push({
@@ -1242,6 +1252,16 @@ export function useLogSheetSync({
       const data = await res.json();
       if (!res.ok) {
         if (data.warning) console.warn("[sheet/delete]", data.warning);
+        if (data?.code === "PRECONDITION_FAILED") {
+          toast({
+            title: "Delete blocked to protect the sheet",
+            description:
+              "The session rows changed before deletion. The log has been refreshed; please try again.",
+            variant: "destructive",
+            duration: 8000,
+          });
+          await mutate();
+        }
         throw new Error(data.error || "Delete failed");
       }
       await mutate();
@@ -1267,6 +1287,7 @@ export function useLogSheetSync({
     sessionDates,
     todayIso,
     mutate,
+    toast,
   ]);
 
   return {

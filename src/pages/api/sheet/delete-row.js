@@ -18,9 +18,15 @@
  * protection, not a transactional guarantee.
  */
 
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
-import { readLogicalRow, readRawRow, verifyRowSnapshot } from "@/lib/sheet-row-ops";
+
+import {
+  readFirstSheetId,
+  readLogicalRow,
+  readRawRow,
+  verifyRowSnapshot,
+} from "@/lib/sheet-row-ops";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -36,7 +42,9 @@ export default async function handler(req, res) {
   const { ssid, rowIndex, before } = req.body;
 
   if (!ssid || !rowIndex || typeof rowIndex !== "number" || !before) {
-    return res.status(400).json({ error: "Missing required fields: ssid, rowIndex, before" });
+    return res
+      .status(400)
+      .json({ error: "Missing required fields: ssid, rowIndex, before" });
   }
 
   const headers = {
@@ -45,6 +53,7 @@ export default async function handler(req, res) {
   };
 
   try {
+    const targetSheetId = await readFirstSheetId({ ssid, headers });
     const verification = await verifyRowSnapshot({
       ssid,
       rowIndex,
@@ -53,7 +62,10 @@ export default async function handler(req, res) {
     });
 
     if (!verification.ok) {
-      console.warn("[sheet/delete-row] verification failed:", verification.message);
+      console.warn(
+        "[sheet/delete-row] verification failed:",
+        verification.message,
+      );
       return res.status(409).json({
         error: verification.message,
         code: "PRECONDITION_FAILED",
@@ -77,7 +89,8 @@ export default async function handler(req, res) {
         rowIndex: rowIndex + 1,
         headers,
       });
-      const staysInSameSession = nextLogicalRow.date === verification.actual.date;
+      const staysInSameSession =
+        nextLogicalRow.date === verification.actual.date;
       const needsDatePromotion =
         staysInSameSession &&
         Boolean(verification.actual.rawDate) &&
@@ -115,7 +128,10 @@ export default async function handler(req, res) {
       if (!promoteResponse.ok) {
         const body = await promoteResponse.json().catch(() => ({}));
         const message = body?.error?.message || "Failed to promote anchor data";
-        console.error("[sheet/delete-row] promote failed:", message, { rowIndex, promoteTo });
+        console.error("[sheet/delete-row] promote failed:", message, {
+          rowIndex,
+          promoteTo,
+        });
         return res.status(promoteResponse.status).json({ error: message });
       }
     }
@@ -130,7 +146,7 @@ export default async function handler(req, res) {
             {
               deleteDimension: {
                 range: {
-                  sheetId: 0,
+                  sheetId: targetSheetId,
                   dimension: "ROWS",
                   startIndex: rowIndex - 1,
                   endIndex: rowIndex,
@@ -145,13 +161,17 @@ export default async function handler(req, res) {
     if (!deleteResponse.ok) {
       const body = await deleteResponse.json().catch(() => ({}));
       const message = body?.error?.message || "Failed to delete row";
-      console.error("[sheet/delete-row] deleteDimension failed:", message, { rowIndex });
+      console.error("[sheet/delete-row] deleteDimension failed:", message, {
+        rowIndex,
+      });
       return res.status(deleteResponse.status).json({ error: message });
     }
 
     return res.status(200).json({ deleted: true, rowIndex, promoteTo });
   } catch (error) {
     console.error("[sheet/delete-row] unexpected error:", error);
-    return res.status(500).json({ error: error.message || "Internal server error" });
+    return res
+      .status(500)
+      .json({ error: error.message || "Internal server error" });
   }
 }

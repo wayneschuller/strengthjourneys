@@ -29,6 +29,27 @@ export const EDITABLE_COLUMN_CONFIG = {
   url: { letter: "F", startColumnIndex: 5 },
 };
 
+export async function readFirstSheetId({ ssid, headers }) {
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}?fields=sheets(properties(sheetId))`,
+    { headers },
+  );
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const message = body?.error?.message || "Failed to read sheet metadata";
+    throw new Error(message);
+  }
+
+  const payload = await response.json();
+  const sheetId = payload?.sheets?.[0]?.properties?.sheetId;
+  if (!Number.isInteger(sheetId)) {
+    throw new Error("Spreadsheet has no writable first tab");
+  }
+
+  return sheetId;
+}
+
 export function buildEditableSnapshot({
   date,
   liftType,
@@ -60,7 +81,8 @@ export async function readLogicalRow({ ssid, rowIndex, headers }) {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    const message = body?.error?.message || "Failed to read row for verification";
+    const message =
+      body?.error?.message || "Failed to read row for verification";
     throw new Error(message);
   }
 
@@ -151,12 +173,16 @@ export async function verifyRowSnapshot({
   const diffs = diffEditableSnapshot(actual, before);
   const actualAnchorType = getAnchorTypeFromLogicalRow(actual);
 
-  if (!diffs.length && (!expectedAnchorType || expectedAnchorType === actualAnchorType)) {
+  if (
+    !diffs.length &&
+    (!expectedAnchorType || expectedAnchorType === actualAnchorType)
+  ) {
     return { ok: true, actual, actualAnchorType };
   }
 
   const mismatchLines = diffs.map(
-    (diff) => `${diff.key}: expected "${diff.expected}" but found "${diff.actual}"`,
+    (diff) =>
+      `${diff.key}: expected "${diff.expected}" but found "${diff.actual}"`,
   );
   if (expectedAnchorType && expectedAnchorType !== actualAnchorType) {
     mismatchLines.push(
@@ -173,31 +199,35 @@ export async function verifyRowSnapshot({
 }
 
 export async function forceNotesPlainText({ ssid, rowIndex, headers }) {
-  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      requests: [
-        {
-          repeatCell: {
-            range: {
-              sheetId: 0,
-              startRowIndex: rowIndex - 1,
-              endRowIndex: rowIndex,
-              startColumnIndex: 4,
-              endColumnIndex: 5,
-            },
-            cell: {
-              userEnteredFormat: {
-                numberFormat: { type: "TEXT" },
-                horizontalAlignment: "LEFT",
+  const sheetId = await readFirstSheetId({ ssid, headers });
+  await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        requests: [
+          {
+            repeatCell: {
+              range: {
+                sheetId,
+                startRowIndex: rowIndex - 1,
+                endRowIndex: rowIndex,
+                startColumnIndex: 4,
+                endColumnIndex: 5,
               },
+              cell: {
+                userEnteredFormat: {
+                  numberFormat: { type: "TEXT" },
+                  horizontalAlignment: "LEFT",
+                },
+              },
+              fields:
+                "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
             },
-            fields:
-              "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
           },
-        },
-      ],
-    }),
-  });
+        ],
+      }),
+    },
+  );
 }

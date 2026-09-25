@@ -214,7 +214,7 @@ function dropShortDipRuns(points, liftType) {
 
     let j = i;
     while (
-      j < points.length - 1 &&
+      j < points.length &&
       points[j][liftType] < leftValue * ONE_OFF_DIP_RATIO
     ) {
       j++;

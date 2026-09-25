@@ -24,13 +24,7 @@ import {
   AI_CHAT_AUTH_WARN_AT_REMAINING,
   parseAiChatQuotaFromHeaders,
 } from "@/lib/ai/chat-quota";
-import {
-  devLog,
-  getAnalyzedSessionLifts,
-  getAverageLiftSessionTonnageFromPrecomputed,
-  getAverageSessionTonnageFromPrecomputed,
-  getSessionTonnagePercentileRangeFromPrecomputed,
-} from "@/lib/processing-utils";
+import { devLog } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 import { AiReplyFeedback } from "@/components/feedback/ai-reply-feedback";
 import { ModelSwitcher } from "@/components/ai-assistant/model-switcher";
@@ -39,7 +33,7 @@ import {
   canUseChatModel,
   findChatModel,
 } from "@/lib/ai/chat-model-catalog";
-import { MAX_CHAT_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
+import { buildLiftingContext } from "@/lib/ai/lifting-context";
 
 import {
   Conversation,
@@ -88,7 +82,7 @@ import {
 } from "@/components/page-header";
 
 import { Button } from "@/components/ui/button";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Bot, CopyIcon, RefreshCcwIcon, CheckIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -100,7 +94,6 @@ import {
   ChatQuotaLimitNotice,
   ChatQuotaMeter,
 } from "@/components/ai-assistant/chat-quota-meter";
-import { processConsistency } from "@/lib/consistency";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 
 import { getRelatedArticles } from "@/lib/articles";
@@ -215,10 +208,6 @@ function AILiftingAssistantMain({ relatedArticles }) {
     isDemoMode,
     liftTypes,
     topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-    topTonnageByType,
-    topTonnageByTypeLast12Months,
-    sessionTonnageLookup,
   } = useUserLiftingData();
 
   const [shareBioDetails, setShareBioDetails] = useLocalStorage(
@@ -255,172 +244,37 @@ function AILiftingAssistantMain({ relatedArticles }) {
     topLiftsByTypeAndReps,
   ]);
 
+  const e1rmFormula =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+      initializeWithValue: false,
+    }) ?? "Brzycki";
+
   const userProvidedProfileData = useMemo(() => {
     if (isDemoMode) return "";
-    const metadataSections = [];
-    const recentSessionDate = getMostRecentSessionDate(parsedData);
-    const prioritizedLifts = getPrioritizedLiftTypes({
-      liftTypes,
+    return buildLiftingContext({
       parsedData,
-      topLiftsByTypeAndReps,
-      limit: 6,
+      liftTypes,
+      options: userLiftingMetadata,
+      bio: shareBioDetails
+        ? { age, sex, bodyWeight, heightCm: height }
+        : null,
+      isMetric,
+      standards,
+      e1rmFormula,
+      today: format(new Date(), "yyyy-MM-dd"),
     });
-    const sharedSections = getSharedMetadataSections({
-      shareBioDetails,
-      userLiftingMetadata,
-    });
-
-    if (sharedSections.length > 0) {
-      metadataSections.push(
-        createMetadataSection("data_context", [
-          `shared_sections=${sharedSections.join(",")}`,
-          recentSessionDate ? `latest_session=${recentSessionDate}` : null,
-          `selected_lifts=${prioritizedLifts.join(",") || "none"}`,
-          "missing_sections=not_shared_or_unavailable",
-        ]),
-      );
-    }
-
-    if (shareBioDetails) {
-      const profileLines = [
-        `age=${age}`,
-        `sex=${sex}`,
-        `bodyweight=${bodyWeight}${isMetric ? "kg" : "lb"}`,
-        `height_cm=${height}`,
-        `preferred_unit=${isMetric ? "kg" : "lb"}`,
-      ];
-
-      const standardsLines = Object.entries(standards)
-        .slice(0, 4)
-        .map(([lift, levels]) => {
-          const compactLevels = Object.entries(levels)
-            .map(([level, weightValue]) => `${level}=${weightValue}kg`)
-            .join(" ");
-          return `${lift}: ${compactLevels}`;
-        });
-
-      metadataSections.push(createMetadataSection("profile", profileLines));
-      metadataSections.push(createMetadataSection("standards", standardsLines));
-    }
-
-    if (userLiftingMetadata.records && prioritizedLifts.length > 0) {
-      const recordLines = prioritizedLifts
-        .map((liftType) =>
-          buildRecordsLine(
-            liftType,
-            topLiftsByTypeAndReps,
-            topLiftsByTypeAndRepsLast12Months,
-          ),
-        )
-        .filter(Boolean);
-
-      if (recordLines.length > 0) {
-        metadataSections.push(createMetadataSection("records", recordLines));
-      }
-    }
-
-    if (
-      userLiftingMetadata.trainingLoad &&
-      prioritizedLifts.length > 0 &&
-      sessionTonnageLookup
-    ) {
-      const trainingLoadLines = buildTrainingLoadLines({
-        prioritizedLifts,
-        recentSessionDate,
-        topTonnageByType,
-        topTonnageByTypeLast12Months,
-        sessionTonnageLookup,
-      });
-
-      if (trainingLoadLines.length > 0) {
-        metadataSections.push(
-          createMetadataSection("training_load", trainingLoadLines),
-        );
-      }
-    }
-
-    if (userLiftingMetadata.frequency && prioritizedLifts.length > 0) {
-      const frequencyLines = liftTypes
-        .filter(({ liftType }) => prioritizedLifts.includes(liftType))
-        .map(
-          ({ liftType, totalSets, totalReps, newestDate, oldestDate }) =>
-            `${liftType}: sets=${totalSets} reps=${totalReps} span=${oldestDate}..${newestDate}`,
-        );
-
-      if (frequencyLines.length > 0) {
-        metadataSections.push(
-          createMetadataSection("frequency", frequencyLines),
-        );
-      }
-    }
-
-    if (userLiftingMetadata.consistency && parsedData) {
-      const consistency = processConsistency(parsedData) ?? [];
-      const consistencyLines = consistency.map(formatConsistencyLine);
-
-      if (consistencyLines.length > 0) {
-        metadataSections.push(
-          createMetadataSection("consistency", consistencyLines),
-        );
-      }
-    }
-
-    if (
-      userLiftingMetadata.sessionData &&
-      recentSessionDate &&
-      topLiftsByTypeAndReps &&
-      topLiftsByTypeAndRepsLast12Months
-    ) {
-      const analyzedSessionLifts = getAnalyzedSessionLifts(
-        recentSessionDate,
-        parsedData,
-        topLiftsByTypeAndReps,
-        topLiftsByTypeAndRepsLast12Months,
-      );
-
-      const {
-        recentBlockLines,
-        latestDetailLines,
-      } = buildRecentSessionWindowSections({
-        parsedData,
-        recentSessionDate,
-        analyzedSessionLifts,
-      });
-
-      if (recentBlockLines.length > 0) {
-        metadataSections.push(
-          createMetadataSection(
-            "recent_sessions",
-            recentBlockLines,
-            recentBlockLines.length,
-          ),
-        );
-      }
-
-      if (latestDetailLines.length > 0) {
-        metadataSections.push(
-          createMetadataSection("latest_session_detail", latestDetailLines),
-        );
-      }
-    }
-
-    return combineMetadataSections(metadataSections);
   }, [
     age,
     bodyWeight,
+    e1rmFormula,
     height,
     isDemoMode,
     isMetric,
     liftTypes,
     parsedData,
-    sessionTonnageLookup,
     sex,
     shareBioDetails,
     standards,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-    topTonnageByType,
-    topTonnageByTypeLast12Months,
     userLiftingMetadata,
   ]);
 
@@ -615,24 +469,6 @@ function hasAllSharedTrainingData(userLiftingMetadata) {
       userLiftingMetadata?.consistency &&
       userLiftingMetadata?.sessionData,
   );
-}
-
-function getSharedMetadataSections({ shareBioDetails, userLiftingMetadata }) {
-  const sections = [];
-
-  if (shareBioDetails) {
-    sections.push("profile", "standards");
-  }
-
-  if (userLiftingMetadata?.records) sections.push("records");
-  if (userLiftingMetadata?.trainingLoad) sections.push("training_load");
-  if (userLiftingMetadata?.frequency) sections.push("frequency");
-  if (userLiftingMetadata?.consistency) sections.push("consistency");
-  if (userLiftingMetadata?.sessionData) {
-    sections.push("recent_sessions", "latest_session_detail");
-  }
-
-  return sections;
 }
 
 function getRotatedPrompts(prompts, dateKey, count) {
@@ -1462,63 +1298,6 @@ function FlickeringGridDemo() {
   );
 }
 
-function createMetadataSection(title, lines, maxLines = 8) {
-  const filteredLines = (lines ?? []).filter(Boolean).slice(0, maxLines);
-  if (filteredLines.length === 0) return "";
-  return [`[${title}]`, ...filteredLines].join("\n");
-}
-
-function formatConsistencyLine({
-  label,
-  actualWorkouts,
-  targetWorkouts,
-  periodDays,
-  gradedDays,
-  isPartiallyTracked,
-  percentage,
-}) {
-  const parts = [
-    `sessions=${actualWorkouts}`,
-    `target=${targetWorkouts}`,
-    `period_days=${periodDays}`,
-  ];
-
-  // The oldest window reaches back past the start of the log and is graded only over
-  // the tracked part, so say so — otherwise the target looks unrelated to the period.
-  if (isPartiallyTracked) parts.push(`graded_days=${gradedDays}`);
-
-  parts.push(`score=${percentage}%`);
-
-  return `${label}: ${parts.join(" | ")}`;
-}
-
-function combineMetadataSections(sections, maxChars = MAX_CHAT_METADATA_CHARS) {
-  const filteredSections = (sections ?? []).filter(Boolean);
-  const prioritizedSections = [];
-  const deferredSections = [];
-
-  filteredSections.forEach((section) => {
-    if (section.startsWith("[standards]")) {
-      deferredSections.push(section);
-      return;
-    }
-    prioritizedSections.push(section);
-  });
-
-  const orderedSections = [...prioritizedSections, ...deferredSections];
-  const includedSections = [];
-  let currentLength = 0;
-
-  orderedSections.forEach((section) => {
-    const separatorLength = includedSections.length > 0 ? 2 : 0;
-    if (currentLength + separatorLength + section.length > maxChars) return;
-    includedSections.push(section);
-    currentLength += separatorLength + section.length;
-  });
-
-  return includedSections.join("\n\n");
-}
-
 function getMostRecentSessionDate(parsedData) {
   for (let i = (parsedData?.length ?? 0) - 1; i >= 0; i -= 1) {
     if (!parsedData[i].isGoal) {
@@ -1566,285 +1345,6 @@ function getPrioritizedLiftTypes({
   });
 
   return prioritized.slice(0, limit);
-}
-
-function formatLiftRecord(metricName, lift) {
-  if (!lift) return null;
-  return `${metricName}=${lift.weight}${lift.unitType}@${lift.date}`;
-}
-
-function buildRecordsLine(
-  liftType,
-  topLiftsByTypeAndReps,
-  topLiftsByTypeAndRepsLast12Months,
-) {
-  const allTime = topLiftsByTypeAndReps?.[liftType];
-  const lastYear = topLiftsByTypeAndRepsLast12Months?.[liftType];
-
-  if (!allTime && !lastYear) return null;
-
-  const parts = [
-    formatLiftRecord("single_all", allTime?.[0]?.[0]),
-    formatLiftRecord("single_12m", lastYear?.[0]?.[0]),
-    formatLiftRecord("3rm_all", allTime?.[2]?.[0]),
-    formatLiftRecord("3rm_12m", lastYear?.[2]?.[0]),
-    formatLiftRecord("5rm_all", allTime?.[4]?.[0]),
-    formatLiftRecord("5rm_12m", lastYear?.[4]?.[0]),
-  ].filter(Boolean);
-
-  if (parts.length === 0) return null;
-
-  return `${liftType}: ${parts.join(" | ")}`;
-}
-
-function formatRoundedStat(value, unitType) {
-  if (!Number.isFinite(value) || value <= 0) return null;
-  return `${Math.round(value)}${unitType}`;
-}
-
-function buildTrainingLoadLines({
-  prioritizedLifts,
-  recentSessionDate,
-  topTonnageByType,
-  topTonnageByTypeLast12Months,
-  sessionTonnageLookup,
-}) {
-  const lines = [];
-  const {
-    sessionTonnageByDate,
-    sessionTonnageByDateAndLift,
-    allSessionDates,
-    lastDateByLiftType,
-  } = sessionTonnageLookup;
-
-  const recentTotals = sessionTonnageByDate?.[recentSessionDate] ?? {};
-  const recentUnitEntries = Object.entries(recentTotals).slice(0, 2);
-
-  recentUnitEntries.forEach(([unitType, tonnage]) => {
-    const average = getAverageSessionTonnageFromPrecomputed(
-      sessionTonnageByDate,
-      allSessionDates,
-      recentSessionDate,
-      unitType,
-    );
-    const percentileRange = getSessionTonnagePercentileRangeFromPrecomputed(
-      sessionTonnageByDate,
-      allSessionDates,
-      recentSessionDate,
-      unitType,
-    );
-
-    const summaryParts = [
-      `recent_session=${formatRoundedStat(tonnage, unitType)}@${recentSessionDate}`,
-      average.average > 0
-        ? `avg_12m=${formatRoundedStat(average.average, unitType)}`
-        : null,
-      percentileRange.sessionCount > 0
-        ? `typical_12m=${formatRoundedStat(percentileRange.low, unitType)}-${formatRoundedStat(percentileRange.high, unitType)}`
-        : null,
-    ].filter(Boolean);
-
-    if (summaryParts.length > 0) {
-      lines.push(`all_lifts_${unitType}: ${summaryParts.join(" | ")}`);
-    }
-  });
-
-  prioritizedLifts.forEach((liftType) => {
-    const topAll = topTonnageByType?.[liftType]?.[0];
-    const topYear = topTonnageByTypeLast12Months?.[liftType]?.[0];
-    const recentLiftUnits =
-      sessionTonnageByDateAndLift?.[recentSessionDate]?.[liftType] ?? {};
-    const unitType =
-      topYear?.unitType || topAll?.unitType || Object.keys(recentLiftUnits)[0];
-
-    const average =
-      unitType && recentSessionDate
-        ? getAverageLiftSessionTonnageFromPrecomputed(
-            sessionTonnageByDateAndLift,
-            allSessionDates,
-            recentSessionDate,
-            liftType,
-            unitType,
-          )
-        : { average: 0 };
-
-    const recentLiftTonnage = unitType ? recentLiftUnits[unitType] : null;
-    const daysSinceLastTrained = getDaysBetweenDates(
-      lastDateByLiftType?.[liftType],
-      recentSessionDate,
-    );
-
-    const parts = [
-      topAll
-        ? `top_all=${formatRoundedStat(topAll.tonnage, topAll.unitType)}@${topAll.date}`
-        : null,
-      topYear
-        ? `top_12m=${formatRoundedStat(topYear.tonnage, topYear.unitType)}@${topYear.date}`
-        : null,
-      recentLiftTonnage
-        ? `recent_session=${formatRoundedStat(recentLiftTonnage, unitType)}`
-        : null,
-      average.average > 0
-        ? `avg_12m=${formatRoundedStat(average.average, unitType)}`
-        : null,
-      daysSinceLastTrained !== null
-        ? `days_since_trained=${daysSinceLastTrained}`
-        : null,
-    ].filter(Boolean);
-
-    if (parts.length > 0) {
-      lines.push(`${liftType}: ${parts.join(" | ")}`);
-    }
-  });
-
-  return lines.slice(0, 8);
-}
-
-// The last 20 sessions, counted rather than dated, so the summary stays the
-// same size whether someone trains daily or weekly: three sessions a week
-// covers about six weeks, one a week covers about five months.
-const RECENT_SESSION_COUNT = 20;
-// A safety net for sessions with many lifts: session lines stop at this many
-// characters, newest first, so this section never crowds the others out of
-// the overall cap.
-const RECENT_SESSION_LINES_MAX_CHARS = 4500;
-
-function buildRecentSessionWindowSections({
-  parsedData,
-  recentSessionDate,
-  analyzedSessionLifts,
-}) {
-  const recentDates = getRecentSessionDates(
-    parsedData,
-    recentSessionDate,
-    RECENT_SESSION_COUNT,
-  );
-
-  const sessionLines = [];
-  let sessionChars = 0;
-  for (const date of recentDates) {
-    const line = summarizeSessionForPrompt(parsedData, date);
-    if (!line) continue;
-    if (sessionChars + line.length + 1 > RECENT_SESSION_LINES_MAX_CHARS) break;
-    sessionLines.push(line);
-    sessionChars += line.length + 1;
-  }
-
-  const oldestShown = sessionLines.at(-1)?.slice(0, 10);
-  const recentBlockLines = [
-    `sessions_shown=${sessionLines.length}`,
-    oldestShown ? `span=${oldestShown}..${recentSessionDate}` : null,
-    ...sessionLines,
-  ].filter(Boolean);
-
-  const latestDetailLines = buildLatestSessionDetailLines(
-    recentSessionDate,
-    analyzedSessionLifts,
-  );
-
-  return { recentBlockLines, latestDetailLines };
-}
-
-/** The newest `count` session dates up to and including recentSessionDate. */
-function getRecentSessionDates(parsedData, recentSessionDate, count) {
-  if (!parsedData || !recentSessionDate) return [];
-
-  const dateSet = new Set();
-  for (let i = parsedData.length - 1; i >= 0 && dateSet.size < count; i -= 1) {
-    const entry = parsedData[i];
-    if (entry.isGoal || !entry.date || entry.date > recentSessionDate) continue;
-    dateSet.add(entry.date);
-  }
-
-  return Array.from(dateSet).sort((a, b) => b.localeCompare(a));
-}
-
-function summarizeSessionForPrompt(parsedData, sessionDate) {
-  const entries = (parsedData ?? []).filter(
-    (entry) => entry.date === sessionDate && !entry.isGoal,
-  );
-
-  if (entries.length === 0) return null;
-
-  const byLift = {};
-  entries.forEach((entry) => {
-    if (!byLift[entry.liftType]) {
-      byLift[entry.liftType] = [];
-    }
-    byLift[entry.liftType].push(entry);
-  });
-
-  const liftSummaries = Object.entries(byLift)
-    .slice(0, 4)
-    .map(([liftType, lifts]) => {
-      const totalReps = lifts.reduce(
-        (sum, lift) => sum + (Number(lift.reps) || 0),
-        0,
-      );
-      const tonnageByUnit = lifts.reduce((totals, lift) => {
-        const unitType = lift.unitType || "unit";
-        const reps = Number(lift.reps) || 0;
-        const weight = Number(lift.weight) || 0;
-        totals[unitType] = (totals[unitType] || 0) + reps * weight;
-        return totals;
-      }, {});
-      const tonnageSummary = Object.entries(tonnageByUnit)
-        .map(([unitType, tonnage]) => formatRoundedStat(tonnage, unitType))
-        .filter(Boolean)
-        .join("+");
-      const topSet = lifts.reduce((best, current) => {
-        if (!best) return current;
-        if ((current.weight ?? 0) > (best.weight ?? 0)) return current;
-        if ((current.weight ?? 0) === (best.weight ?? 0)) {
-          return (current.reps ?? 0) > (best.reps ?? 0) ? current : best;
-        }
-        return best;
-      }, null);
-
-      if (!topSet) return null;
-
-      return `${liftType} sets=${lifts.length} reps=${totalReps} tonnage=${tonnageSummary || "n/a"} top=${topSet.weight}${topSet.unitType}x${topSet.reps}`;
-    })
-    .filter(Boolean)
-    .join("; ");
-
-  if (!liftSummaries) return null;
-
-  return `${sessionDate}: ${liftSummaries}`;
-}
-
-function buildLatestSessionDetailLines(sessionDate, analyzedLifts) {
-  if (!analyzedLifts || Object.keys(analyzedLifts).length === 0) return [];
-
-  const lines = [`date=${sessionDate}`];
-
-  Object.entries(analyzedLifts)
-    .slice(0, 4)
-    .forEach(([liftType, lifts]) => {
-      // Up to 12 sets per lift: the old cap of 4 cut off the top set when
-      // warm-ups came first, so the coach saw 127.5kg x 2 but not the PR.
-      const setSummary = lifts
-        .slice(0, 12)
-        .map((lift) => {
-          const tags = [];
-          if (lift.lifetimeSignificanceAnnotation) tags.push("lifetime_pr");
-          if (lift.yearlySignificanceAnnotation) tags.push("year_pr");
-          const tagSuffix = tags.length > 0 ? ` [${tags.join(",")}]` : "";
-          return `${lift.reps}x${lift.weight}${lift.unitType}${tagSuffix}`;
-        })
-        .join("; ");
-
-      lines.push(`${liftType}: ${setSummary}`);
-    });
-
-  return lines;
-}
-
-function getDaysBetweenDates(olderDate, newerDate) {
-  if (!olderDate || !newerDate) return null;
-  const diffMs = new Date(newerDate) - new Date(olderDate);
-  if (!Number.isFinite(diffMs)) return null;
-  return Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 // -----------------------------------------------------------------------------------------------------

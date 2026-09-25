@@ -243,34 +243,35 @@ export function LiftingDataCard({
           keyName: "sessionData",
           label: "Recent sessions",
           detail:
-            "Your last 20 sessions with each lift's top set, plus every set of your latest session",
+            "Every set of your last 20 sessions, with personal bests marked",
         })}
         {renderTrainingOption({
           id: "records-checkbox",
           keyName: "records",
           label: "Personal records",
           detail:
-            "Best single, 3RM and 5RM for your main lifts, all time and last 12 months",
+            "Best sets and estimated one-rep max trends for your main lifts, month by month",
         })}
         {renderTrainingOption({
           id: "training-load-checkbox",
           keyName: "trainingLoad",
           label: "Training load",
           detail:
-            "Your latest session's tonnage beside your 12-month average and biggest sessions, and days since each lift",
+            "Session tonnage beside your 12-month average and biggest sessions",
         })}
         {renderTrainingOption({
           id: "frequency-checkbox",
           keyName: "frequency",
           label: "Lift frequency",
-          detail: "Total sets and reps for each lift, and when you started it",
+          detail:
+            "When you last trained each lift, how often lately, and when you started",
         })}
         {renderTrainingOption({
           id: "consistency-checkbox",
           keyName: "consistency",
           label: "Consistency",
           detail:
-            "Your sessions against about three a week, over periods from one week to your whole history",
+            "Sessions per week lately, and against about three a week over longer periods",
         })}
       </>
     );

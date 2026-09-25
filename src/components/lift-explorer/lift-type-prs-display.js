@@ -1168,8 +1168,8 @@ function isRecordJustNow(dateStr, todayYmd) {
 
 function formatRecordDate(dateStr, todayYmd) {
   const days = daysBetweenYmd(dateStr, todayYmd);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
+  if (days === 0) return "Today!";
+  if (days === 1) return "Yesterday!";
   return getReadableDateString(dateStr, true);
 }
 

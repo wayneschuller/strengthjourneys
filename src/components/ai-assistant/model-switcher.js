@@ -8,11 +8,11 @@
  * catalog and the lifter's access. Offerings come from
  * lib/ai/chat-model-catalog.js, filtered to the models the server can run.
  *
- * Signed-in-only models stay visible to signed-out lifters as a sign-in nudge.
- * Picking one remembers it and starts Google sign-in, so it is ready when they
- * come back.
+ * Signed-in-only models stay visible to signed-out lifters as a sign-in nudge,
+ * faded with a lock, above a Google sign-in row at the bottom: the same
+ * pattern as the theme chooser (components/ui-shell/theme-chooser.js).
  */
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, LockIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +29,7 @@ import {
   canUseChatModel,
   findChatModel,
 } from "@/lib/ai/chat-model-catalog";
+import { cn } from "@/lib/utils";
 
 /**
  * @param {Object} props
@@ -52,6 +53,9 @@ export function ModelSwitcher({
     (model) => !availableIds || availableIds.includes(model.id),
   );
   const providers = [...new Set(offered.map((model) => model.provider))];
+  const hasLockedModels = offered.some(
+    (model) => !canUseChatModel(model, isSignedIn),
+  );
 
   return (
     <DropdownMenu>
@@ -82,43 +86,55 @@ export function ModelSwitcher({
             </DropdownMenuLabel>
             {offered
               .filter((model) => model.provider === provider)
-              .map((model) =>
-                canUseChatModel(model, isSignedIn) ? (
+              .map((model) => {
+                const isLocked = !canUseChatModel(model, isSignedIn);
+                return (
                   <DropdownMenuItem
                     key={model.id}
+                    disabled={isLocked}
                     onSelect={() => onSelect(model.id)}
-                    className="cursor-pointer items-start gap-2.5"
+                    className={cn(
+                      "cursor-pointer items-start gap-2.5",
+                      isLocked && "cursor-default opacity-50",
+                    )}
                   >
                     <ProviderLogo provider={model.provider} className="mt-0.5 size-4 shrink-0" />
                     <ModelText model={model} />
-                    {model.id === selectedId && <CheckIcon className="mt-0.5 size-4 shrink-0" />}
+                    {isLocked ? (
+                      <LockIcon className="mt-1 size-3 shrink-0" />
+                    ) : (
+                      model.id === selectedId && <CheckIcon className="mt-0.5 size-4 shrink-0" />
+                    )}
                   </DropdownMenuItem>
-                ) : (
-                  <GoogleSignInMenuItem
-                    key={model.id}
-                    cta="ai_model_switcher"
-                    callbackUrl="/ai-lifting-assistant"
-                    onSelect={() => onSelect(model.id)}
-                    className="items-start gap-2.5"
-                  >
-                    <ModelText model={model} note="Sign in to use" />
-                  </GoogleSignInMenuItem>
-                ),
-              )}
+                );
+              })}
           </DropdownMenuGroup>
         ))}
+        {hasLockedModels && (
+          <>
+            <DropdownMenuSeparator />
+            <GoogleSignInMenuItem
+              cta="ai_model_switcher"
+              callbackUrl="/ai-lifting-assistant"
+            >
+              <span>
+                <span className="font-medium">Sign in with Google</span>
+                <span className="text-muted-foreground block text-xs">
+                  Unlock every model
+                </span>
+              </span>
+            </GoogleSignInMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-function ModelText({ model, note }) {
+function ModelText({ model }) {
   return (
     <span className="min-w-0 flex-1">
-      <span className="flex items-baseline justify-between gap-2">
-        <span className="text-sm font-medium">{model.label}</span>
-        {note && <span className="text-primary shrink-0 text-xs">{note}</span>}
-      </span>
+      <span className="block text-sm font-medium">{model.label}</span>
       <span className="text-muted-foreground block text-xs">{model.blurb}</span>
     </span>
   );

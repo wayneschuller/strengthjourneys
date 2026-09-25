@@ -29,9 +29,12 @@ export const EDITABLE_COLUMN_CONFIG = {
   url: { letter: "F", startColumnIndex: 5 },
 };
 
+// A1 ranges without a tab name ("A2:F10") read the first *visible* tab, so
+// grid mutations must target that same tab. Asking for `hidden` rides along in
+// the same metadata request, so matching Google's rule costs nothing extra.
 export async function readFirstSheetId({ ssid, headers }) {
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}?fields=sheets(properties(sheetId))`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}?fields=sheets(properties(sheetId,hidden))`,
     { headers },
   );
 
@@ -42,7 +45,10 @@ export async function readFirstSheetId({ ssid, headers }) {
   }
 
   const payload = await response.json();
-  const sheetId = payload?.sheets?.[0]?.properties?.sheetId;
+  const firstVisibleSheet = payload?.sheets?.find(
+    (sheet) => !sheet?.properties?.hidden,
+  );
+  const sheetId = firstVisibleSheet?.properties?.sheetId;
   if (!Number.isInteger(sheetId)) {
     throw new Error("Spreadsheet has no writable first tab");
   }

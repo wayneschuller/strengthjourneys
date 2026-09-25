@@ -71,29 +71,39 @@ export default async function handler(req, res) {
 
   try {
     const targetSheetId = await readFirstSheetId({ ssid, headers });
-    const verificationRange = `A2:F${endRowIndex + 1}`;
-    const readRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${verificationRange}?majorDimension=ROWS`,
-      { headers },
-    );
-    if (!readRes.ok) {
-      const body = await readRes.json().catch(() => ({}));
-      const message = body?.error?.message || "Failed to verify session rows";
-      return res.status(readRes.status).json({ error: message });
+    // Read from the session's own first row, plus the row after it for the
+    // boundary check. That row must carry the date, and normally the lift
+    // name too, so nothing above it is needed. Only when the lift name is
+    // inherited from the session above does the read reach back to row 2.
+    const readEndRow = endRowIndex + 1;
+    let windowStartRow = startRowIndex;
+    let rows = await readRowWindow({
+      ssid,
+      headers,
+      fromRow: windowStartRow,
+      toRow: readEndRow,
+    });
+    if (!rows[0]?.[1] && startRowIndex > 2) {
+      windowStartRow = 2;
+      rows = await readRowWindow({
+        ssid,
+        headers,
+        fromRow: windowStartRow,
+        toRow: readEndRow,
+      });
     }
 
-    const readData = await readRes.json();
-    const rows = readData.values ?? [];
     const logicalRows = buildLogicalRows(rows);
-    const firstActual = logicalRows[startRowIndex - 2] ?? emptyLogicalRow();
-    const lastActual = logicalRows[lastDataRowIndex - 2] ?? emptyLogicalRow();
+    const rowAt = (rowIndex) => logicalRows[rowIndex - windowStartRow];
+    const firstActual = rowAt(startRowIndex) ?? emptyLogicalRow();
+    const lastActual = rowAt(lastDataRowIndex) ?? emptyLogicalRow();
     const firstDiffs = diffEditableSnapshot(firstActual, firstBefore);
     const lastDiffs = diffEditableSnapshot(lastActual, lastBefore);
     const explicitDates = logicalRows
-      .slice(startRowIndex - 2, endRowIndex - 1)
+      .slice(startRowIndex - windowStartRow, endRowIndex - windowStartRow + 1)
       .map((row) => row.rawDate)
       .filter(Boolean);
-    const nextRow = logicalRows[endRowIndex - 1] ?? null;
+    const nextRow = rowAt(endRowIndex + 1) ?? null;
     const rangeHasForeignDate = explicitDates.some(
       (date) => date !== expectedDate,
     );
@@ -163,9 +173,27 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("[sheet/delete] unexpected error:", err);
     return res
-      .status(500)
+      .status(err.status || 500)
       .json({ error: err.message || "Internal server error" });
   }
+}
+
+async function readRowWindow({ ssid, headers, fromRow, toRow }) {
+  const range = `A${fromRow}:F${toRow}`;
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?majorDimension=ROWS`,
+    { headers },
+  );
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const error = new Error(
+      body?.error?.message || "Failed to verify session rows",
+    );
+    error.status = response.status;
+    throw error;
+  }
+  const payload = await response.json();
+  return payload.values ?? [];
 }
 
 function buildLogicalRows(rows) {

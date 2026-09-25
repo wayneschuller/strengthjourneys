@@ -121,6 +121,8 @@ export const LOCAL_STORAGE_KEYS = {
   // AI assistant
   USER_LIFTING_METADATA: "userLiftingMetadata-selected-options",
   SHARE_BIO_DETAILS_AI: "SJ_ShareBioDetailsAI",
+  // Catalog ID from lib/ai/chat-model-catalog.js; the server re-validates it.
+  AI_CHAT_MODEL: "SJ_AIChatModel",
 
   // Session analysis – creative ratings cache (per date, auth only)
   SESSION_RATING_CACHE: "sj-session-rating-cache",

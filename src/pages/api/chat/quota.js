@@ -1,7 +1,7 @@
 /**
  * Read-only quota snapshot for the AI lifting assistant chat UI, plus the
- * current coach setup (prompt edition and models) for the page's AI details
- * panel. The page already calls this on load, so the details cost no extra
+ * current coach setup (prompt edition and models) for the page's model
+ * switcher and AI details panel. The page already calls this on load, so the details cost no extra
  * request.
  */
 
@@ -11,7 +11,11 @@ import {
   appendAiChatQuotaHeaders,
   resolveAiChatQuota,
 } from "@/lib/ai/chat-quota";
-import { getChatModel, getSuggestionModel } from "@/lib/ai/models";
+import {
+  getAvailableChatModelIds,
+  getChatModel,
+  getSuggestionModel,
+} from "@/lib/ai/models";
 import { getActivePromptEdition } from "@/lib/ai/prompt-editions";
 
 export default async function handler(req, res) {
@@ -42,13 +46,12 @@ export default async function handler(req, res) {
  */
 async function getCoachDetails() {
   const edition = await getActivePromptEdition();
-  const chatModel = getChatModel();
-  const suggestionModel = getSuggestionModel();
   return {
     edition: edition?.id ?? null,
-    model: chatModel?.modelId ?? null,
-    // The SDK names providers like "xai.responses"; the family is enough here.
-    provider: chatModel?.provider?.split(".")[0] ?? null,
-    suggestionModel: suggestionModel?.modelId ?? null,
+    // What a lifter gets when their pick is unavailable or they have none.
+    defaultModel: getChatModel()?.model.modelId ?? null,
+    // The switcher only offers models whose provider key is configured.
+    availableModels: getAvailableChatModelIds(),
+    suggestionModel: getSuggestionModel()?.modelId ?? null,
   };
 }

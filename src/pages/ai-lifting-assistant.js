@@ -34,6 +34,8 @@ import {
 import { RelatedArticles } from "@/components/article-cards";
 import { AiReplyFeedback } from "@/components/feedback/ai-reply-feedback";
 import { CoachDetails } from "@/components/ai-assistant/coach-details";
+import { ModelSwitcher } from "@/components/ai-assistant/model-switcher";
+import { DEFAULT_CHAT_MODEL_ID } from "@/lib/ai/chat-model-catalog";
 
 import {
   Conversation,
@@ -651,23 +653,6 @@ function uniqueMessages(messages) {
   return [...new Set(messages.filter(Boolean))];
 }
 
-function XAILogo({ className }) {
-  return (
-    <svg
-      viewBox="0 0 841.89 595.28"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <polygon points="557.09,211.99 565.4,538.36 631.96,538.36 640.28,93.18" />
-      <polygon points="640.28,56.91 538.72,56.91 379.35,284.53 430.13,357.05" />
-      <polygon points="201.61,538.36 303.17,538.36 353.96,465.84 303.17,393.31" />
-      <polygon points="201.61,211.99 430.13,538.36 531.69,538.36 303.17,211.99" />
-    </svg>
-  );
-}
-
 /**
  * Icon button that copies the provided text to the clipboard and shows a checkmark tick for 2 seconds
  * as visual confirmation of the copy action.
@@ -867,6 +852,18 @@ function AILiftingAssistantCard({
   // along with the quota snapshot fetched on load.
   const [coach, setCoach] = useState(null);
 
+  // The lifter's pick from the header model switcher. A remembered pick the
+  // server no longer offers quietly becomes the server's default.
+  const [storedModelId, setStoredModelId] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.AI_CHAT_MODEL,
+    DEFAULT_CHAT_MODEL_ID,
+    { initializeWithValue: false },
+  );
+  const selectedModelId =
+    !coach || coach.availableModels?.includes(storedModelId)
+      ? storedModelId
+      : (coach.defaultModel ?? storedModelId);
+
   const isChatBlocked = Boolean(chatQuota?.blocked);
   const isChatUnavailable = !isChatQuotaReady || isChatBlocked;
   const isAnonymousQuotaBlocked =
@@ -891,8 +888,9 @@ function AILiftingAssistantCard({
   const chatRequestBody = useMemo(
     () => ({
       userProvidedMetadata: userProvidedProfileData,
+      model: selectedModelId,
     }),
-    [userProvidedProfileData],
+    [userProvidedProfileData, selectedModelId],
   );
 
   // Follow-up suggestions are fetched separately once an answer finishes, so a
@@ -1162,8 +1160,14 @@ function AILiftingAssistantCard({
     URL.revokeObjectURL(url);
   };
 
+  const modelSwitcherProps = {
+    selectedId: selectedModelId,
+    onSelect: setStoredModelId,
+    availableIds: coach?.availableModels ?? null,
+  };
   const coachDetailsProps = {
     coach,
+    selectedModelId,
     latestReply: messages.findLast((m) => m.role === "assistant")?.metadata,
     quota: chatQuota,
     sharedContextChars: userProvidedProfileData?.length ?? 0,
@@ -1178,25 +1182,19 @@ function AILiftingAssistantCard({
               Your Personal Lifting AI Assistant
             </CardTitle>
             {personalizationControls}
-            <CoachDetails
-              className="ml-auto hidden shrink-0 pr-4 md:inline-flex"
-              {...coachDetailsProps}
-            >
-              <XAILogo className="size-5" />
-              <span className="text-sm font-medium">Powered by xAI Grok</span>
-            </CoachDetails>
+            <div className="ml-auto hidden shrink-0 items-center gap-3 pr-4 md:flex">
+              <ModelSwitcher {...modelSwitcherProps} />
+              <CoachDetails {...coachDetailsProps} />
+            </div>
           </div>
           <CardDescription className="text-muted-foreground text-balance">
             Discussions are streamed to your device and not stored on our
             servers.
           </CardDescription>
-          <CoachDetails
-            className="mt-1.5 flex self-start md:hidden"
-            {...coachDetailsProps}
-          >
-            <XAILogo className="size-4" />
-            <span className="text-xs font-medium">Powered by xAI Grok</span>
-          </CoachDetails>
+          <div className="mt-1.5 flex items-center gap-3 md:hidden">
+            <ModelSwitcher size="sm" {...modelSwitcherProps} />
+            <CoachDetails {...coachDetailsProps} />
+          </div>
         </div>
         {messages.length > 0 && (
           <div className="mr-4 flex items-start gap-2">

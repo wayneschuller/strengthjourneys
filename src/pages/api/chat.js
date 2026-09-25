@@ -59,10 +59,13 @@ export default async function handler(req, res) {
   const {
     messages: userMessages,
     userProvidedMetadata,
+    requestedModel,
   } = validation;
 
-  const AI_model = getChatModel();
-  if (!AI_model) {
+  // The lifter's pick from the model switcher; getChatModel only honours
+  // catalog models and otherwise falls back to the default.
+  const chatModel = getChatModel(requestedModel);
+  if (!chatModel) {
     return res.status(500).json({ error: "No AI API key is set" });
   }
 
@@ -123,6 +126,7 @@ export default async function handler(req, res) {
     });
   }
 
+  const AI_model = chatModel.model;
   const convertedUserMessages = await convertToModelMessages(userMessages);
 
   devLog(`AI model: ${AI_model.modelId}`);
@@ -131,6 +135,7 @@ export default async function handler(req, res) {
     model: AI_model,
     instructions: systemMessages,
     messages: convertedUserMessages,
+    providerOptions: chatModel.providerOptions,
   });
 
   const stream = createUIMessageStream({
@@ -181,7 +186,7 @@ export default async function handler(req, res) {
 }
 
 function validateChatRequest(body) {
-  const { messages, userProvidedMetadata } = body || {};
+  const { messages, userProvidedMetadata, model } = body || {};
 
   if (!Array.isArray(messages) || messages.length === 0) {
     devLog("WARNING: No messages received from client");
@@ -245,6 +250,7 @@ function validateChatRequest(body) {
   return {
     messages: sanitizedMessages,
     userProvidedMetadata: userProvidedMetadata || "",
+    requestedModel: typeof model === "string" ? model : undefined,
   };
 }
 

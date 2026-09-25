@@ -1,6 +1,6 @@
 /**
- * The "Powered by" line in the AI assistant header, extended with the coach's
- * prompt edition and a details panel for the curious.
+ * The coach's prompt edition in the AI assistant header, beside the model
+ * switcher, opening a details panel for the curious.
  *
  * The panel lists everything about the AI setup a lifter might wonder about:
  * models, prompt edition, what the latest reply used, whether their lifting
@@ -12,33 +12,34 @@
  * touch, the tap's synthetic hover would open it and the click would close it.
  */
 import { useEffect, useRef, useState } from "react";
+import { InfoIcon } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { PROVIDER_NAMES, findChatModel } from "@/lib/ai/chat-model-catalog";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const PROVIDER_NAMES = { xai: "xAI", openai: "OpenAI" };
 const HOVER_CLOSE_DELAY_MS = 150;
 const REPO_URL = "https://github.com/wayneschuller/strengthjourneys";
 
 /**
  * @param {Object} props
- * @param {{ edition: string|null, model: string|null, provider: string|null, suggestionModel: string|null }|null} props.coach
+ * @param {{ edition: string|null, suggestionModel: string|null }|null} props.coach From /api/chat/quota.
+ * @param {string} props.selectedModelId The catalog ID chosen in the model switcher.
  * @param {{ edition?: string|null, model?: string }|null} [props.latestReply] Metadata of the latest assistant reply.
  * @param {{ used: number, limit: number }|null} [props.quota]
  * @param {number} [props.sharedContextChars] Length of the lifting summary sent with each message.
  * @param {string} [props.className]
- * @param {React.ReactNode} props.children The existing "Powered by" logo and text.
  */
 export function CoachDetails({
   coach,
+  selectedModelId,
   latestReply,
   quota,
   sharedContextChars = 0,
   className = "",
-  children,
 }) {
   const [open, setOpen] = useState(false);
   const closeTimerRef = useRef(null);
@@ -59,9 +60,17 @@ export function CoachDetails({
     },
   };
 
-  const providerName = PROVIDER_NAMES[coach?.provider] || coach?.provider;
+  const selectedModel = findChatModel(selectedModelId);
   const rows = [
-    ["Coach model", coach?.model ? `${coach.model}${providerName ? ` by ${providerName}` : ""}` : null],
+    [
+      "Coach model",
+      selectedModel ? (
+        <>
+          {selectedModel.label} by {PROVIDER_NAMES[selectedModel.provider]}{" "}
+          <span className="text-muted-foreground font-mono">({selectedModel.id})</span>
+        </>
+      ) : null,
+    ],
     [
       "Coach edition",
       coach?.edition ? (
@@ -93,15 +102,11 @@ export function CoachDetails({
         <button
           type="button"
           aria-label="AI coach details"
-          className={`text-muted-foreground hover:text-foreground cursor-help items-center gap-1.5 rounded-sm transition-colors ${className}`}
+          className={`text-muted-foreground hover:text-foreground inline-flex cursor-help items-center gap-1 rounded-sm text-xs transition-colors ${className}`}
           {...hoverHandlers}
         >
-          {children}
-          {coach?.edition && (
-            <span className="text-xs opacity-80">
-              · {formatEditionShort(coach.edition)} edition
-            </span>
-          )}
+          <InfoIcon className="size-3.5" />
+          {coach?.edition ? `${formatEditionShort(coach.edition)} edition` : "About"}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0 text-xs" {...hoverHandlers}>

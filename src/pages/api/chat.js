@@ -63,8 +63,10 @@ export default async function handler(req, res) {
   } = validation;
 
   // The lifter's pick from the model switcher; getChatModel only honours
-  // catalog models and otherwise falls back to the default.
-  const chatModel = getChatModel(requestedModel);
+  // catalog models this lifter may use and otherwise falls back to the default.
+  const chatModel = getChatModel(requestedModel, {
+    isSignedIn: Boolean(session?.user),
+  });
   if (!chatModel) {
     return res.status(500).json({ error: "No AI API key is set" });
   }

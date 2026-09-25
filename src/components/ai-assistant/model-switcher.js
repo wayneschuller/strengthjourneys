@@ -1,27 +1,32 @@
 /**
- * Model switcher for the AI assistant header, built on the AI Elements
- * ModelSelector (a command palette in a dialog).
+ * Model switcher for the AI assistant header: a dropdown menu listing the
+ * catalog models by provider.
  *
  * It sits where "Powered by xAI Grok" used to, so the model name is always
  * visible and one click away from changing. The choice is remembered per
  * browser and sent with each message; the server re-checks it against the
- * catalog. Offerings come from lib/ai/chat-model-catalog.js, filtered to the
- * models the server says it can run.
+ * catalog and the lifter's access. Offerings come from
+ * lib/ai/chat-model-catalog.js, filtered to the models the server can run.
+ *
+ * Signed-in-only models stay visible to signed-out lifters as a sign-in nudge.
+ * Picking one remembers it and starts Google sign-in, so it is ready when they
+ * come back.
  */
-import { useState } from "react";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import {
-  ModelSelector,
-  ModelSelectorContent,
-  ModelSelectorGroup,
-  ModelSelectorItem,
-  ModelSelectorList,
-  ModelSelectorName,
-  ModelSelectorTrigger,
-} from "@/components/ai-elements/model-selector";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { GoogleSignInMenuItem } from "@/components/onboarding/google-sign-in";
 import {
   CHAT_MODELS,
   PROVIDER_NAMES,
+  canUseChatModel,
   findChatModel,
 } from "@/lib/ai/chat-model-catalog";
 
@@ -29,6 +34,7 @@ import {
  * @param {Object} props
  * @param {string} props.selectedId The catalog ID in use.
  * @param {(id: string) => void} props.onSelect
+ * @param {boolean} props.isSignedIn
  * @param {string[]|null} [props.availableIds] From the server; null while loading, which offers the whole catalog.
  * @param {"sm"|"md"} [props.size]
  * @param {string} [props.className]
@@ -36,11 +42,11 @@ import {
 export function ModelSwitcher({
   selectedId,
   onSelect,
+  isSignedIn,
   availableIds = null,
   size = "md",
   className = "",
 }) {
-  const [open, setOpen] = useState(false);
   const selected = findChatModel(selectedId);
   const offered = CHAT_MODELS.filter(
     (model) => !availableIds || availableIds.includes(model.id),
@@ -48,8 +54,8 @@ export function ModelSwitcher({
   const providers = [...new Set(offered.map((model) => model.provider))];
 
   return (
-    <ModelSelector open={open} onOpenChange={setOpen}>
-      <ModelSelectorTrigger asChild>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <button
           type="button"
           aria-label="Choose the AI model"
@@ -66,36 +72,55 @@ export function ModelSwitcher({
           </span>
           <ChevronDownIcon className="size-3.5 opacity-70" />
         </button>
-      </ModelSelectorTrigger>
-      <ModelSelectorContent title="Choose the AI model" className="sm:max-w-md">
-        <ModelSelectorList>
-          {providers.map((provider) => (
-            <ModelSelectorGroup key={provider} heading={PROVIDER_NAMES[provider]}>
-              {offered
-                .filter((model) => model.provider === provider)
-                .map((model) => (
-                  <ModelSelectorItem
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72">
+        {providers.map((provider, index) => (
+          <DropdownMenuGroup key={provider}>
+            {index > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
+              {PROVIDER_NAMES[provider]}
+            </DropdownMenuLabel>
+            {offered
+              .filter((model) => model.provider === provider)
+              .map((model) =>
+                canUseChatModel(model, isSignedIn) ? (
+                  <DropdownMenuItem
                     key={model.id}
-                    value={`${model.label} ${model.id}`}
-                    onSelect={() => {
-                      onSelect(model.id);
-                      setOpen(false);
-                    }}
-                    className="gap-3 py-2"
+                    onSelect={() => onSelect(model.id)}
+                    className="cursor-pointer items-start gap-2.5"
                   >
-                    <ProviderLogo provider={model.provider} className="size-4 shrink-0" />
-                    <ModelSelectorName>
-                      <span className="block text-sm font-medium">{model.label}</span>
-                      <span className="text-muted-foreground block text-xs">{model.blurb}</span>
-                    </ModelSelectorName>
-                    {model.id === selectedId && <CheckIcon className="size-4 shrink-0" />}
-                  </ModelSelectorItem>
-                ))}
-            </ModelSelectorGroup>
-          ))}
-        </ModelSelectorList>
-      </ModelSelectorContent>
-    </ModelSelector>
+                    <ProviderLogo provider={model.provider} className="mt-0.5 size-4 shrink-0" />
+                    <ModelText model={model} />
+                    {model.id === selectedId && <CheckIcon className="mt-0.5 size-4 shrink-0" />}
+                  </DropdownMenuItem>
+                ) : (
+                  <GoogleSignInMenuItem
+                    key={model.id}
+                    cta="ai_model_switcher"
+                    callbackUrl="/ai-lifting-assistant"
+                    onSelect={() => onSelect(model.id)}
+                    className="items-start gap-2.5"
+                  >
+                    <ModelText model={model} note="Sign in to use" />
+                  </GoogleSignInMenuItem>
+                ),
+              )}
+          </DropdownMenuGroup>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function ModelText({ model, note }) {
+  return (
+    <span className="min-w-0 flex-1">
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="text-sm font-medium">{model.label}</span>
+        {note && <span className="text-primary shrink-0 text-xs">{note}</span>}
+      </span>
+      <span className="text-muted-foreground block text-xs">{model.blurb}</span>
+    </span>
   );
 }
 

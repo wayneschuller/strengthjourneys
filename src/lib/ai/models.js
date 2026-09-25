@@ -5,7 +5,9 @@
  * The chat route, the suggestions call, and the coach details shown in the UI
  * all ask here, so what the page says and what actually answers cannot drift.
  * Lifters pick a chat model from lib/ai/chat-model-catalog.js; anything not in
- * that catalog, or whose provider has no key configured, gets the default.
+ * that catalog, locked for this lifter, or whose provider has no key
+ * configured, gets the default. This is the enforcement point for model
+ * access: the page's lock icons are only a hint.
  */
 
 import { openai } from "@ai-sdk/openai";
@@ -13,6 +15,7 @@ import { xai } from "@ai-sdk/xai";
 import {
   CHAT_MODELS,
   DEFAULT_CHAT_MODEL_ID,
+  canUseChatModel,
   findChatModel,
 } from "@/lib/ai/chat-model-catalog";
 
@@ -37,10 +40,13 @@ export function getAvailableChatModelIds() {
  * is slow, so they are told not to.
  *
  * @param {string} [requestedId] A catalog ID chosen by the lifter.
+ * @param {{ isSignedIn?: boolean }} [requester] Who is asking, from the session.
  * @returns {{ model: import("ai").LanguageModel, providerOptions?: object } | null}
  */
-export function getChatModel(requestedId) {
-  const available = getAvailableChatModelIds();
+export function getChatModel(requestedId, { isSignedIn = false } = {}) {
+  const available = getAvailableChatModelIds().filter((id) =>
+    canUseChatModel(findChatModel(id), isSignedIn),
+  );
   const id = available.includes(requestedId)
     ? requestedId
     : available.includes(DEFAULT_CHAT_MODEL_ID)

@@ -35,7 +35,11 @@ import { RelatedArticles } from "@/components/article-cards";
 import { AiReplyFeedback } from "@/components/feedback/ai-reply-feedback";
 import { CoachDetails } from "@/components/ai-assistant/coach-details";
 import { ModelSwitcher } from "@/components/ai-assistant/model-switcher";
-import { DEFAULT_CHAT_MODEL_ID } from "@/lib/ai/chat-model-catalog";
+import {
+  DEFAULT_CHAT_MODEL_ID,
+  canUseChatModel,
+  findChatModel,
+} from "@/lib/ai/chat-model-catalog";
 
 import {
   Conversation,
@@ -859,10 +863,16 @@ function AILiftingAssistantCard({
     DEFAULT_CHAT_MODEL_ID,
     { initializeWithValue: false },
   );
+  // A signed-out lifter who picked a signed-in model gets the default until
+  // they sign in; the server would fall back the same way.
+  const isSignedIn = authStatus === "authenticated";
+  const storedModel = findChatModel(storedModelId);
   const selectedModelId =
-    !coach || coach.availableModels?.includes(storedModelId)
+    storedModel &&
+    canUseChatModel(storedModel, isSignedIn) &&
+    (!coach || coach.availableModels?.includes(storedModelId))
       ? storedModelId
-      : (coach.defaultModel ?? storedModelId);
+      : (coach?.defaultModel ?? DEFAULT_CHAT_MODEL_ID);
 
   const isChatBlocked = Boolean(chatQuota?.blocked);
   const isChatUnavailable = !isChatQuotaReady || isChatBlocked;
@@ -1163,6 +1173,7 @@ function AILiftingAssistantCard({
   const modelSwitcherProps = {
     selectedId: selectedModelId,
     onSelect: setStoredModelId,
+    isSignedIn,
     availableIds: coach?.availableModels ?? null,
   };
   const coachDetailsProps = {

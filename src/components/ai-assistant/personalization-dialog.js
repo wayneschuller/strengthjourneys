@@ -1,8 +1,11 @@
 /**
  * On-demand personalization controls for the AI assistant. The compact trigger
  * keeps chat primary while the dialog preserves transparent sharing choices.
+ *
+ * The dialog can show the exact summary text the coach receives, so nothing
+ * about what is shared is left to a lifter's imagination.
  */
-import { Check, SlidersHorizontal } from "lucide-react";
+import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +18,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
-export function PersonalizationDialog({ children, enabled }) {
+/**
+ * @param {Object} props
+ * @param {React.ReactNode} props.children The profile and training sections.
+ * @param {boolean} props.enabled Whether anything personal is shared.
+ * @param {string} [props.summary] The exact text sent with each message.
+ */
+export function PersonalizationDialog({ children, enabled, summary = "" }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -30,14 +44,31 @@ export function PersonalizationDialog({ children, enabled }) {
         <DialogHeader>
           <DialogTitle>Personalize your assistant</DialogTitle>
           <DialogDescription>
-            Choose which personal context can be included with your assistant
-            messages.
+            Choose what the coach knows about you. Everything switched on here
+            is sent with each message, so answers can use your real numbers.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-2 md:grid-cols-2 md:gap-8">{children}</div>
+        {summary && (
+          <Collapsible className="border-t pt-4">
+            <CollapsibleTrigger className="text-muted-foreground hover:text-foreground group flex items-center gap-2 text-sm font-medium">
+              See exactly what the coach receives
+              <ChevronDown
+                className="size-4 transition-transform group-data-[state=open]:rotate-180"
+                aria-hidden="true"
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <pre className="bg-muted max-h-64 overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap [overflow-wrap:anywhere]">
+                {summary}
+              </pre>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
         <div className="text-muted-foreground border-t pt-4 text-xs">
-          Selected profile details and training summaries are sent with your
-          assistant messages. Your raw lifting history is not sent or stored.
+          These summaries are worked out in your browser and sent to the AI
+          model you chose, along with your message. Your full lifting log stays
+          on your device, and chats are not stored on our servers.
         </div>
         <DialogFooter>
           <DialogClose asChild>

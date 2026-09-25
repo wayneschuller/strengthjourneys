@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { ChevronDown } from "lucide-react";
 
 import {
   Card,
@@ -14,11 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { cn } from "@/lib/utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -98,8 +92,7 @@ export function LiftingDataCard({
               Use my training history
             </Label>
             <p className="text-muted-foreground mt-1 text-sm">
-              Records, training load, frequency, consistency and recent
-              sessions
+              Summaries worked out in your browser from your lifting log
             </p>
           </div>
           <Switch
@@ -163,20 +156,9 @@ export function LiftingDataCard({
       {hasUserData && (!embedded || isTrainingEnabled) && (
         <div className={cn(!hasPersonalData && "pointer-events-none opacity-50")}>
           {embedded ? (
-            <Collapsible className="md:border-l md:pl-8">
-              <CollapsibleTrigger className="text-muted-foreground hover:text-foreground group flex items-center gap-2 text-sm font-medium">
-                Customize training data
-                <ChevronDown
-                  className="size-4 transition-transform group-data-[state=open]:rotate-180"
-                  aria-hidden="true"
-                />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4">
-                <div className="space-y-2">
-                  {renderTrainingOptions()}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+            <div className="space-y-3 md:border-l md:pl-8">
+              {renderTrainingOptions()}
+            </div>
           ) : (
             <>
               <div className="text-muted-foreground mb-2">
@@ -227,24 +209,27 @@ export function LiftingDataCard({
     </>
   );
 
-  function renderTrainingOption({ id, keyName, label }) {
+  function renderTrainingOption({ id, keyName, label, detail }) {
     return (
-      <div className="group flex items-center gap-2">
+      <div className="group flex items-start gap-2">
         <Checkbox
           id={id}
           checked={selectedOptions[keyName]}
           onCheckedChange={() => handleOptionChange(keyName)}
           disabled={!hasPersonalData}
-          className="group-hover:border-blue-500"
+          className="mt-0.5 group-hover:border-blue-500"
         />
         <Label
           htmlFor={id}
           className={cn(
-            "cursor-pointer hover:underline",
+            "flex cursor-pointer flex-col items-start gap-0.5",
             !selectedOptions[keyName] && "text-muted-foreground/50",
           )}
         >
-          {label}
+          <span className="group-hover:underline">{label}</span>
+          <span className="text-muted-foreground text-xs font-normal">
+            {detail}
+          </span>
         </Label>
       </div>
     );
@@ -254,29 +239,38 @@ export function LiftingDataCard({
     return (
       <>
         {renderTrainingOption({
-          id: "records-checkbox",
-          keyName: "records",
-          label: "Personal records, lifetime and yearly",
+          id: "session-data-checkbox",
+          keyName: "sessionData",
+          label: "Recent sessions",
+          detail:
+            "Your last 20 sessions with each lift's top set, plus every set of your latest session",
         })}
         {renderTrainingOption({
-          id: "frequency-checkbox",
-          keyName: "frequency",
-          label: "Lift frequency and timeline metadata",
+          id: "records-checkbox",
+          keyName: "records",
+          label: "Personal records",
+          detail:
+            "Best single, 3RM and 5RM for your main lifts, all time and last 12 months",
         })}
         {renderTrainingOption({
           id: "training-load-checkbox",
           keyName: "trainingLoad",
-          label: "Training load and tonnage trends",
+          label: "Training load",
+          detail:
+            "Your latest session's tonnage beside your 12-month average and biggest sessions, and days since each lift",
+        })}
+        {renderTrainingOption({
+          id: "frequency-checkbox",
+          keyName: "frequency",
+          label: "Lift frequency",
+          detail: "Total sets and reps for each lift, and when you started it",
         })}
         {renderTrainingOption({
           id: "consistency-checkbox",
           keyName: "consistency",
-          label: "Consistency ratings",
-        })}
-        {renderTrainingOption({
-          id: "session-data-checkbox",
-          keyName: "sessionData",
-          label: "Detailed data from recent sessions",
+          label: "Consistency",
+          detail:
+            "Your sessions against about three a week, over periods from one week to your whole history",
         })}
       </>
     );

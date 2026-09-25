@@ -28,6 +28,7 @@ import {
   recordPromptVote,
 } from "@/lib/ai/prompt-editions";
 import { devLog } from "@/lib/processing-utils";
+import { MAX_CHAT_METADATA_CHARS as MAX_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
 
 const DAILY_LIMITS = { vote: 100, share: 10 };
 const RATE_LIMIT_TTL_SECONDS = 60 * 60 * 48;
@@ -36,7 +37,6 @@ const SENTIMENTS = new Set(["up", "down"]);
 const MODEL_PATTERN = /^[a-z0-9][a-z0-9.\-]{0,59}$/i;
 const MAX_SHARED_MESSAGES = 20;
 const MAX_SHARED_CHARS = 30000;
-const MAX_METADATA_CHARS = 4500;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

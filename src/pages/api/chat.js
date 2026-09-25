@@ -22,6 +22,7 @@ import { getActivePromptEdition } from "@/lib/ai/prompt-editions";
 import { getChatModel } from "@/lib/ai/models";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { MAX_CHAT_METADATA_CHARS as MAX_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
 
 const SYSTEM_PROMPT =
   "You are a strength coach answering questions only about barbell exercises with an emphasis on getting strong. " +
@@ -33,7 +34,6 @@ const SYSTEM_PROMPT =
 const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 3000;
 const MAX_TOTAL_MESSAGE_CHARS = 12000;
-const MAX_METADATA_CHARS = 4500;
 const ALLOWED_CLIENT_ROLES = new Set(["user", "assistant"]);
 
 export default async function handler(req, res) {

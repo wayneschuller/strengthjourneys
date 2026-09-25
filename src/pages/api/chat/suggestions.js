@@ -13,10 +13,10 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { resolveAiChatQuota } from "@/lib/ai/chat-quota";
 import { isAllowedOrigin } from "@/lib/ai/chat-origin";
 import { generateSuggestedQuestions } from "@/lib/ai/chat-suggestions";
+import { MAX_CHAT_METADATA_CHARS as MAX_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
 
 const MAX_USER_MESSAGE_CHARS = 3000;
 const MAX_ASSISTANT_TEXT_CHARS = 12000;
-const MAX_METADATA_CHARS = 4500;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

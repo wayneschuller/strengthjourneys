@@ -39,6 +39,7 @@ import {
   canUseChatModel,
   findChatModel,
 } from "@/lib/ai/chat-model-catalog";
+import { MAX_CHAT_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
 
 import {
   Conversation,
@@ -388,7 +389,11 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
       if (recentBlockLines.length > 0) {
         metadataSections.push(
-          createMetadataSection("recent_sessions", recentBlockLines),
+          createMetadataSection(
+            "recent_sessions",
+            recentBlockLines,
+            recentBlockLines.length,
+          ),
         );
       }
 
@@ -435,6 +440,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         personalizationControls={
           <PersonalizationDialog
             enabled={!isDemoMode && (shareBioDetails || hasSharedTrainingData)}
+            summary={userProvidedProfileData}
           >
             <BioDetailsCard
               age={age}
@@ -1456,8 +1462,8 @@ function FlickeringGridDemo() {
   );
 }
 
-function createMetadataSection(title, lines) {
-  const filteredLines = (lines ?? []).filter(Boolean).slice(0, 8);
+function createMetadataSection(title, lines, maxLines = 8) {
+  const filteredLines = (lines ?? []).filter(Boolean).slice(0, maxLines);
   if (filteredLines.length === 0) return "";
   return [`[${title}]`, ...filteredLines].join("\n");
 }
@@ -1486,7 +1492,7 @@ function formatConsistencyLine({
   return `${label}: ${parts.join(" | ")}`;
 }
 
-function combineMetadataSections(sections, maxChars = 4500) {
+function combineMetadataSections(sections, maxChars = MAX_CHAT_METADATA_CHARS) {
   const filteredSections = (sections ?? []).filter(Boolean);
   const prioritizedSections = [];
   const deferredSections = [];
@@ -1694,20 +1700,41 @@ function buildTrainingLoadLines({
   return lines.slice(0, 8);
 }
 
+// The last 20 sessions, counted rather than dated, so the summary stays the
+// same size whether someone trains daily or weekly: three sessions a week
+// covers about six weeks, one a week covers about five months.
+const RECENT_SESSION_COUNT = 20;
+// A safety net for sessions with many lifts: session lines stop at this many
+// characters, newest first, so this section never crowds the others out of
+// the overall cap.
+const RECENT_SESSION_LINES_MAX_CHARS = 4500;
+
 function buildRecentSessionWindowSections({
   parsedData,
   recentSessionDate,
   analyzedSessionLifts,
 }) {
-  const recentWindowDates = getRecentWindowDates(parsedData, recentSessionDate, 28);
+  const recentDates = getRecentSessionDates(
+    parsedData,
+    recentSessionDate,
+    RECENT_SESSION_COUNT,
+  );
 
+  const sessionLines = [];
+  let sessionChars = 0;
+  for (const date of recentDates) {
+    const line = summarizeSessionForPrompt(parsedData, date);
+    if (!line) continue;
+    if (sessionChars + line.length + 1 > RECENT_SESSION_LINES_MAX_CHARS) break;
+    sessionLines.push(line);
+    sessionChars += line.length + 1;
+  }
+
+  const oldestShown = sessionLines.at(-1)?.slice(0, 10);
   const recentBlockLines = [
-    "window=last_28_days",
-    `session_count=${recentWindowDates.length}`,
-    `latest_session=${recentSessionDate}`,
-    ...recentWindowDates.slice(0, 5).map((date) =>
-      summarizeSessionForPrompt(parsedData, date),
-    ),
+    `sessions_shown=${sessionLines.length}`,
+    oldestShown ? `span=${oldestShown}..${recentSessionDate}` : null,
+    ...sessionLines,
   ].filter(Boolean);
 
   const latestDetailLines = buildLatestSessionDetailLines(
@@ -1718,23 +1745,16 @@ function buildRecentSessionWindowSections({
   return { recentBlockLines, latestDetailLines };
 }
 
-function getRecentWindowDates(parsedData, recentSessionDate, windowDays = 28) {
+/** The newest `count` session dates up to and including recentSessionDate. */
+function getRecentSessionDates(parsedData, recentSessionDate, count) {
   if (!parsedData || !recentSessionDate) return [];
 
-  // Use UTC date math — new Date("YYYY-MM-DD") is UTC midnight, so setDate
-  // (local) would shift the cutoff by a day in USA/EU timezones.
-  const cutoffDate = new Date(recentSessionDate);
-  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - (windowDays - 1));
-
   const dateSet = new Set();
-
-  parsedData.forEach((entry) => {
-    if (entry.isGoal || !entry.date) return;
-    const entryDate = new Date(entry.date);
-    if (entryDate >= cutoffDate && entry.date <= recentSessionDate) {
-      dateSet.add(entry.date);
-    }
-  });
+  for (let i = parsedData.length - 1; i >= 0 && dateSet.size < count; i -= 1) {
+    const entry = parsedData[i];
+    if (entry.isGoal || !entry.date || entry.date > recentSessionDate) continue;
+    dateSet.add(entry.date);
+  }
 
   return Array.from(dateSet).sort((a, b) => b.localeCompare(a));
 }
@@ -1801,8 +1821,10 @@ function buildLatestSessionDetailLines(sessionDate, analyzedLifts) {
   Object.entries(analyzedLifts)
     .slice(0, 4)
     .forEach(([liftType, lifts]) => {
+      // Up to 12 sets per lift: the old cap of 4 cut off the top set when
+      // warm-ups came first, so the coach saw 127.5kg x 2 but not the PR.
       const setSummary = lifts
-        .slice(0, 4)
+        .slice(0, 12)
         .map((lift) => {
           const tags = [];
           if (lift.lifetimeSignificanceAnnotation) tags.push("lifetime_pr");

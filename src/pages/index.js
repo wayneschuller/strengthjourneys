@@ -542,7 +542,7 @@ export default function Home({ starterArticles = [] }) {
         <h2 className="mt-8 text-xl font-semibold">
           📊 Your Training
         </h2>
-        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
           {insightTools.map((card, index) => (
             <FeatureCard key={card.href} index={index} {...card} />
           ))}
@@ -554,7 +554,7 @@ export default function Home({ starterArticles = [] }) {
         <h2 className="text-xl font-semibold">
           🧮 Calculators & Standards
         </h2>
-        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {calculatorTools.map((card, index) => (
             <FeatureCard key={card.href} index={index + insightTools.length} {...card} />
           ))}
@@ -566,7 +566,7 @@ export default function Home({ starterArticles = [] }) {
         <h2 className="text-xl font-semibold">
           🏆 Strength Journey Milestones
         </h2>
-        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {milestoneTools.map((card, index) => (
             <FeatureCard key={card.href} index={index + insightTools.length + calculatorTools.length} {...card} />
           ))}
@@ -618,7 +618,7 @@ function FeatureCard({
   const chartColorVar = `--chart-${(index % 5) + 1}`;
 
   return (
-    <Card className="group ring-ring relative shadow-lg ring-0 hover:ring-1">
+    <Card className="group ring-ring relative h-full shadow-lg ring-0 transition-shadow hover:shadow-xl hover:ring-1">
       {badgeLabel && (
         <Badge
           variant="outline"
@@ -627,13 +627,26 @@ function FeatureCard({
           {badgeLabel}
         </Badge>
       )}
-      <Link href={href}>
-        <CardHeader className="min-h-28">
-          <CardTitle className="">{title}</CardTitle>
-          <CardDescription className="h-[2rem]">{description}</CardDescription>
+      {/* Phones get a compact row with the icon on the left, so eleven tools
+          do not each cost a full screen of scrolling. From sm up the card is a
+          column and the icon is pinned to the bottom, so icons line up across a
+          row whatever length the descriptions wrap to. */}
+      <Link
+        href={href}
+        className="flex h-full items-center gap-4 p-4 sm:flex-col sm:items-stretch sm:gap-0 sm:p-0"
+      >
+        <div
+          className="shrink-0 sm:hidden"
+          style={{ color: `var(${chartColorVar})` }}
+        >
+          <IconComponent size={36} strokeWidth={1.5} />
+        </div>
+        <CardHeader className="p-0 sm:p-6 sm:pb-2">
+          <CardTitle className="text-lg sm:text-2xl">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent
-          className="flex justify-center transition-transform group-hover:scale-110"
+          className="mt-auto hidden justify-center pt-4 transition-transform group-hover:scale-110 sm:flex"
           style={{ color: `var(${chartColorVar})` }}
         >
           <motion.div

@@ -283,7 +283,7 @@ export function GettingStartedCard() {
         <div className="from-chart-2/15 absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-gradient-to-tr to-transparent blur-3xl" />
       </div>
       <CardHeader className="relative">
-        <div className="bg-background/85 text-muted-foreground mb-3 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium tracking-wide uppercase shadow-sm">
+        <div className="bg-background/85 text-muted-foreground mb-3 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium shadow-sm">
           <img
             src={GOOGLE_SHEETS_ICON_URL}
             alt=""
@@ -296,7 +296,7 @@ export function GettingStartedCard() {
           Track the lifts that got you here. See what&apos;s next.
         </CardTitle>
         <CardDescription className="max-w-2xl text-base leading-relaxed">
-          Sign in once and Strength Journeys sets up your lifting log — then
+          Sign in once and Strength Journeys sets up your lifting log, then
           turns every session into PR history, e1RM trends, tonnage charts, and
           a full training dashboard.
         </CardDescription>
@@ -307,7 +307,7 @@ export function GettingStartedCard() {
             {[
               {
                 icon: "🏋️",
-                text: "Built for serious lifting history — not generic workout logging.",
+                text: "Built for serious lifting history, not generic workout logging.",
               },
               {
                 icon: "📊",
@@ -315,7 +315,7 @@ export function GettingStartedCard() {
               },
               {
                 icon: "🔒",
-                text: "Your data lives in your own Google Sheet — nothing stored on our servers.",
+                text: "Your data lives in your own Google Sheet, not on our servers.",
               },
             ].map(({ icon, text }) => (
               <div
@@ -339,13 +339,12 @@ export function GettingStartedCard() {
                   Start tracking your lifts
                 </GoogleSignInButton>
                 <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
-                  Free forever. No app to install. Your data lives in your own
-                  Google Sheet —{" "}
+                  Free forever. No app to install.{" "}
                   <Link
                     href="/privacy-policy.html"
                     className="hover:text-foreground underline"
                   >
-                    your data stays in your own sheet
+                    Your data lives in your own Google Sheet
                   </Link>
                   .
                 </p>

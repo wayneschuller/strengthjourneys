@@ -39,9 +39,12 @@ export function HeroSection() {
       </div>
       <div className="grid grid-cols-1 items-center gap-8 xl:grid-cols-2 xl:gap-12">
         <div>
-          <p className="text-muted-foreground text-center text-sm font-semibold tracking-wide uppercase lg:text-left">
-            Free barbell lifting log &amp; analysis
-          </p>
+          <div className="flex justify-center lg:justify-start">
+            <p className="bg-background/85 text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium shadow-sm">
+              <span className="bg-chart-2 h-1.5 w-1.5 rounded-full" aria-hidden />
+              Free barbell lifting log &amp; analysis
+            </p>
+          </div>
           <h1 className="mt-3 mb-4 text-center text-3xl leading-tight font-extrabold tracking-tight text-balance md:mb-5 lg:text-left lg:text-4xl xl:text-5xl">
             Every barbell set you&rsquo;ve ever lifted, in one place you&rsquo;ll
             never lose.
@@ -227,7 +230,16 @@ export default function ProductShowcase() {
     : { opacity: 0, scale: 0.95 };
 
   return (
-    <div className="flex flex-col items-center gap-3 md:py-4">
+    <div className="relative isolate flex flex-col items-center gap-3 md:py-4">
+      {/* A soft colour wash behind the frame lifts the screenshots off the page,
+          the same glow the getting started card uses further down. */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 overflow-visible"
+        aria-hidden
+      >
+        <div className="from-chart-1/20 absolute -top-10 -left-10 h-64 w-64 rounded-full bg-gradient-to-br to-transparent blur-3xl" />
+        <div className="from-chart-2/20 absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-gradient-to-tl to-transparent blur-3xl" />
+      </div>
       <Link
         href={slide.href}
         onClick={() => handleSlideClick(slide.href)}

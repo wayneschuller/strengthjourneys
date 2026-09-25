@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
@@ -91,6 +92,10 @@ import {
 export function VisualizerMini({ liftType }) {
   const router = useRouter();
   const highlightedDateRef = useRef(null);
+  // A tap on a touchscreen is also a click, so opening the session there
+  // would take the lifter away the moment they tap a point to read it. Touch
+  // keeps the tooltip; mouse users can click through to the log.
+  const canOpenSessions = !useHasCoarsePointer();
   const cardRef = useRef(null);
   const { parsedData, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
@@ -381,8 +386,8 @@ export function VisualizerMini({ liftType }) {
                 data={chartData}
                 margin={{ left: 5, right: 20 }}
                 onMouseMove={handleChartHighlight}
-                onClick={handleChartClick}
-                style={{ cursor: "pointer" }}
+                onClick={canOpenSessions ? handleChartClick : undefined}
+                style={canOpenSessions ? { cursor: "pointer" } : undefined}
               >
                 <CartesianGrid {...CHART_GRID_PROPS} />
                 {/* Strength standard background bands — rendered first so they sit behind
@@ -437,7 +442,7 @@ export function VisualizerMini({ liftType }) {
                       parsedData={parsedData}
                       liftColor={liftColor}
                       isMetric={isMetric}
-                      showClickHint
+                      showClickHint={canOpenSessions}
                     />
                   )}
                   formatter={(value, name, props) =>

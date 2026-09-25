@@ -14,6 +14,7 @@ import { getReadableDateString } from "@/lib/date-utils";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -88,6 +89,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const router = useRouter();
   const cardRef = useRef(null);
   const highlightedDateRef = useRef(null);
+  // A tap on a touchscreen is also a click, so opening the session there
+  // would take the lifter away the moment they tap a point to read it. Touch
+  // keeps the tooltip; mouse users can click through to the log.
+  const canOpenSessions = !useHasCoarsePointer();
   const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -349,8 +354,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               data={chartData}
               margin={{ left: 5, right: 20 }}
               onMouseMove={handleChartHighlight}
-              onClick={handleChartClick}
-              style={{ cursor: "pointer" }}
+              onClick={canOpenSessions ? handleChartClick : undefined}
+              style={canOpenSessions ? { cursor: "pointer" } : undefined}
             >
               <CartesianGrid {...CHART_GRID_PROPS} />
               <XAxis
@@ -375,6 +380,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 content={(props) => (
                   <TonnageTooltipContent
                     {...props}
+                    showClickHint={canOpenSessions}
                     liftType={liftType}
                     parsedData={parsedData}
                     liftColor={liftColor}
@@ -454,8 +460,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               data={chartData}
               margin={{ left: 5, right: 20 }}
               onMouseMove={handleChartHighlight}
-              onClick={handleChartClick}
-              style={{ cursor: "pointer" }}
+              onClick={canOpenSessions ? handleChartClick : undefined}
+              style={canOpenSessions ? { cursor: "pointer" } : undefined}
             >
               <CartesianGrid {...CHART_GRID_PROPS} />
               <XAxis
@@ -771,6 +777,7 @@ const TonnageTooltipContent = ({
   setHighlightDate,
   debounceMs = 0,
   isMetric = false,
+  showClickHint = false,
 }) => {
   const dateStr = payload?.[0]?.payload?.date || null;
 
@@ -849,9 +856,11 @@ const TonnageTooltipContent = ({
           ))}
         </div>
       )}
-      <p className="border-border/50 text-muted-foreground mt-1 border-t pt-1 text-[11px]">
-        Click to see full session details
-      </p>
+      {showClickHint && (
+        <p className="border-border/50 text-muted-foreground mt-1 border-t pt-1 text-[11px]">
+          Click to see full session details
+        </p>
+      )}
     </div>
   );
 };

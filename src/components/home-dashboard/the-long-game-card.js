@@ -174,16 +174,22 @@ export function TheLongGameCard({
     showMonthlyToggle,
     showStreaksToggle,
   ]);
+  // One consistency pass per dataset, shared by the grade rings and the AI
+  // and copy summaries, so switching heatmap views never recomputes it.
+  const consistency = useMemo(
+    () => (parsedData ? processConsistency(parsedData) : null),
+    [parsedData],
+  );
   const longGameCopyLines = useMemo(
     () =>
       buildLongGameCopyLines({
         parsedData,
         intervals,
         effectiveViewMode,
-        consistency: parsedData ? processConsistency(parsedData) : null,
+        consistency,
         streakLeaderboard,
       }),
-    [effectiveViewMode, intervals, parsedData, streakLeaderboard],
+    [consistency, effectiveViewMode, intervals, parsedData, streakLeaderboard],
   );
   const longGameAiReviewLink = useMemo(() => {
     if (!longGameCopyLines.length) return null;
@@ -457,7 +463,7 @@ export function TheLongGameCard({
                       />
                       <div className="min-w-0 flex-1">
                         <ConsistencyGradesRow
-                          parsedData={parsedData}
+                          consistency={consistency}
                           isVisible={!!intervals}
                           isCaptureMode={isSharing}
                           onRevealComplete={handleRingsRevealed}
@@ -467,7 +473,7 @@ export function TheLongGameCard({
                   ) : (
                     <div className="flex justify-center">
                       <ConsistencyGradesRow
-                        parsedData={parsedData}
+                        consistency={consistency}
                         isVisible={!!intervals}
                         isCaptureMode={isSharing}
                         onRevealComplete={handleRingsRevealed}

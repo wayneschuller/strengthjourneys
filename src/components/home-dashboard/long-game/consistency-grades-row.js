@@ -16,8 +16,6 @@ import { useEffect, useId, useMemo, useRef } from "react";
 
 import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 
-import { processConsistency } from "@/lib/consistency";
-
 import {
   REST_GRADE,
   getConsistencyRingPalette,
@@ -473,17 +471,19 @@ function trimTrailingDots(items) {
 // data to fill. Trims trailing dot-grade periods before rendering, and spring-animates the rings
 // in from above once the card's interval data is ready and the rings are on screen.
 export function ConsistencyGradesRow({
-  parsedData,
+  consistency: rawConsistency,
   isVisible = false,
   isCaptureMode = false,
   onRevealComplete,
 }) {
   const hasCoarsePointer = useHasCoarsePointer();
 
-  const consistency = useMemo(() => {
-    const raw = processConsistency(parsedData);
-    return raw ? trimTrailingDots(raw) : null;
-  }, [parsedData]);
+  // The card owns processConsistency so the rings and its AI summary share
+  // one pass; this row only trims what it cannot draw.
+  const consistency = useMemo(
+    () => (rawConsistency ? trimTrailingDots(rawConsistency) : null),
+    [rawConsistency],
+  );
 
   const isEmpty = !consistency || consistency.length === 0;
 

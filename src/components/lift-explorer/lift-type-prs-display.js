@@ -462,7 +462,7 @@ function RepRangeCard({
                 hasPoster ? "text-white/85" : "text-muted-foreground",
               )}
             >
-              {formatRecordDate(record.date, todayYmd)}
+              {getReadableDateString(record.date, true, { todayYmd })}
               {standingFor && (
                 <span className={hasPoster ? "text-white/70" : ""}>
                   {" · "}
@@ -645,7 +645,7 @@ function RecordHero({
             href={`/log?date=${record.date}`}
             className="hover:text-foreground transition-colors hover:underline"
           >
-            {formatRecordDate(record.date, todayYmd)}
+            {getReadableDateString(record.date, true, { todayYmd })}
           </Link>
           {standingFor && ` · ${standingFor}`}
         </div>
@@ -744,7 +744,7 @@ function RecordRow({
           )}
           style={isJustNow ? { color: liftColor } : undefined}
         >
-          {formatRecordDate(lift.date, todayYmd)}
+          {getReadableDateString(lift.date, true, { todayYmd })}
         </div>
         {note && (
           <p className="text-muted-foreground mt-1 line-clamp-2 text-sm text-pretty italic">
@@ -1164,13 +1164,6 @@ function isRecordRecent(dateStr, todayYmd) {
 function isRecordJustNow(dateStr, todayYmd) {
   const days = daysBetweenYmd(dateStr, todayYmd);
   return days === 0 || days === 1;
-}
-
-function formatRecordDate(dateStr, todayYmd) {
-  const days = daysBetweenYmd(dateStr, todayYmd);
-  if (days === 0) return "Today!";
-  if (days === 1) return "Yesterday!";
-  return getReadableDateString(dateStr, true);
 }
 
 // "5 years ago" beside the date, so nobody has to do the subtraction.

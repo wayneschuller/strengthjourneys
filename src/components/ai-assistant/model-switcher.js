@@ -113,13 +113,9 @@ export function ModelSwitcher({
         {hasLockedModels && (
           <>
             <DropdownMenuSeparator />
-            {/* Straight to Google: the Drive primer dialog would mount inside
-                this menu and close with it. The primer also measured as noise
-                on the Drive decline rate (18.8% before, 16.0% after). */}
             <GoogleSignInMenuItem
               cta="ai_model_switcher"
               callbackUrl="/ai-lifting-assistant"
-              skipEducation
             >
               <span>
                 <span className="font-medium">Sign in with Google</span>

@@ -190,6 +190,11 @@ export function GoogleSignInButton({
 
 /**
  * Dropdown-menu variant for avatar and settings menus.
+ *
+ * It always goes straight to Google, never through the Drive primer dialog.
+ * The dialog would mount inside the menu's content, and Radix unmounts that
+ * content as soon as the menu closes on select, so first-time lifters saw the
+ * primer flash open and vanish, with nothing left to click.
  */
 export function GoogleSignInMenuItem({
   cta,
@@ -198,34 +203,23 @@ export function GoogleSignInMenuItem({
   iconSize = 16,
   className,
   onSelect,
-  skipEducation = false,
   ...props
 }) {
-  const { trigger, dialogOpen, setDialogOpen, shouldEducate } =
-    useMaybeEducateSignIn({ cta, callbackUrl, skipEducation });
+  const directSignIn = useDirectSignIn({ cta, callbackUrl });
 
   return (
-    <>
-      <DropdownMenuItem
-        className={cn("cursor-pointer", className)}
-        onSelect={(event) => {
-          onSelect?.(event);
-          if (event.defaultPrevented) return;
-          trigger();
-        }}
-        {...props}
-      >
-        <GoogleLogo size={iconSize} />
-        {children}
-      </DropdownMenuItem>
-      <EducationDialogMount
-        shouldEducate={shouldEducate}
-        dialogOpen={dialogOpen}
-        setDialogOpen={setDialogOpen}
-        cta={cta}
-        callbackUrl={callbackUrl}
-      />
-    </>
+    <DropdownMenuItem
+      className={cn("cursor-pointer", className)}
+      onSelect={(event) => {
+        onSelect?.(event);
+        if (event.defaultPrevented) return;
+        directSignIn();
+      }}
+      {...props}
+    >
+      <GoogleLogo size={iconSize} />
+      {children}
+    </DropdownMenuItem>
   );
 }
 

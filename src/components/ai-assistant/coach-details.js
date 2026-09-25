@@ -1,5 +1,5 @@
 /**
- * The "About this coach" section at the foot of the model switcher dropdown.
+ * The "About this AI lifting coach" section at the foot of the model switcher dropdown.
  *
  * It lists what a curious lifter might wonder about the AI setup: the prompt
  * edition, what the latest reply used, the follow-up model, whether their
@@ -27,7 +27,7 @@ export function CoachDetailsSummary({
 }) {
   const rows = [
     [
-      "Coach edition",
+      "Prompt version",
       coach?.edition ? (
         <>
           {formatEditionDate(coach.edition)}{" "}
@@ -53,7 +53,7 @@ export function CoachDetailsSummary({
 
   return (
     <div className="px-2 py-1.5 text-xs">
-      <p className="mb-1.5 font-medium">About this coach</p>
+      <p className="mb-1.5 font-medium">About this AI lifting coach</p>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
         {rows.map(([label, value]) => (
           <div key={label} className="contents">

@@ -70,7 +70,7 @@ export function ModelSwitcher({
           type="button"
           aria-label="Choose the AI model"
           className={cn(
-            "text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-sm transition-colors",
+            "text-foreground inline-flex items-center gap-1.5 rounded-sm transition-opacity hover:opacity-80",
             className,
           )}
         >

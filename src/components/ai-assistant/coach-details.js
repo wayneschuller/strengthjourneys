@@ -38,7 +38,7 @@ export function CoachDetailsSummary({
     [
       "Latest reply",
       latestReply?.model
-        ? `${findChatModel(latestReply.model)?.label ?? latestReply.model}${latestReply.edition ? `, ${formatEditionShort(latestReply.edition)} edition` : ""}`
+        ? `${findChatModel(latestReply.model)?.label ?? latestReply.model}${latestReply.edition ? `, ${formatEditionShort(latestReply.edition)} prompt` : ""}`
         : null,
     ],
     ["Follow-up ideas", coach?.suggestionModel],
@@ -63,8 +63,8 @@ export function CoachDetailsSummary({
         ))}
       </dl>
       <p className="text-muted-foreground mt-2">
-        Each edition is a version of our coaching instructions, refined over
-        time with your thumbs up and down. Chats stream to your device and are
+        Each prompt version is a revision of our coaching instructions,
+        refined over time with your thumbs up and down. Chats stream to your device and are
         not stored on our servers. Strength Journeys is{" "}
         <a
           href={REPO_URL}

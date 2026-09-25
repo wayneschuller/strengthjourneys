@@ -12,8 +12,8 @@
  * faded with a lock, above a Google sign-in row at the bottom: the same
  * pattern as the theme chooser (components/ui-shell/theme-chooser.js).
  *
- * The menu ends with an "About this coach" section (coach-details.js) for the
- * curious: prompt edition, what the latest reply used, and so on.
+ * The menu ends with an "About this AI lifting coach" section (coach-details.js)
+ * for the curious: prompt version, what the latest reply used, and so on.
  */
 import { CheckIcon, ChevronDownIcon, LockIcon } from "lucide-react";
 import {

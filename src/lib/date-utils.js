@@ -137,8 +137,8 @@ const READABLE_MONTH_NAMES = [
  * so every locale renders the same calendar day the user logged. Do NOT mix
  * in local getters here — see the timezone model at the top of this file.
  *
- * Pass `todayYmd` to celebrate fresh dates: today and yesterday come back as
- * "Today!" and "Yesterday!". Opt-in because most callers embed the date in a
+ * Pass `todayYmd` to name fresh dates: today and yesterday come back as
+ * "Today" and "Yesterday". Opt-in because most callers embed the date in a
  * sentence ("Last Apr 16", "spans Jan 3 to Apr 16") where that would jar. The
  * caller supplies today rather than this reading the clock, so a component can
  * pin it once and keep server and client renders in agreement.
@@ -154,8 +154,8 @@ export function getReadableDateString(
 ) {
   if (todayYmd) {
     const days = getDaysBetweenYmd(ISOdate, todayYmd);
-    if (days === 0) return "Today!";
-    if (days === 1) return "Yesterday!";
+    if (days === 0) return "Today";
+    if (days === 1) return "Yesterday";
   }
 
   const date = parseYmdUtc(ISOdate);

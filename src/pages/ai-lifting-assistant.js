@@ -657,6 +657,22 @@ function uniqueMessages(messages) {
 }
 
 /**
+ * One line appended to a copied reply, so a pasted answer says where it came
+ * from and exactly what wrote it: the model and prompt version from the
+ * reply's metadata. Older saved replies without metadata get the site alone.
+ * @param {{ edition?: string|null, model?: string }|undefined} metadata
+ */
+function formatReplyAttribution(metadata) {
+  const site =
+    "From the Strength Journeys AI lifting coach, https://www.strengthjourneys.xyz/ai-lifting-assistant";
+  if (!metadata?.model) return site;
+  const model = findChatModel(metadata.model)?.label ?? metadata.model;
+  return metadata.edition
+    ? `${site} (${model}, prompt version ${metadata.edition})`
+    : `${site} (${model})`;
+}
+
+/**
  * Icon button that copies the provided text to the clipboard and shows a checkmark tick for 2 seconds
  * as visual confirmation of the copy action.
  * @param {Object} props
@@ -1346,7 +1362,9 @@ function AILiftingAssistantCard({
                                 >
                                   <RefreshCcwIcon className="size-3" />
                                 </MessageAction>
-                                <CopyButton text={textContent} />
+                                <CopyButton
+                                  text={`${textContent}\n\n${formatReplyAttribution(message.metadata)}`}
+                                />
                               </AiReplyFeedback>
                             )}
                         </Message>

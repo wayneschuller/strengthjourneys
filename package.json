@@ -17,9 +17,9 @@
     "postbuild": "NODE_OPTIONS=\"$NODE_OPTIONS --disable-warning=MODULE_TYPELESS_PACKAGE_JSON\" next-sitemap"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.34",
-    "@ai-sdk/react": "^4.0.59",
-    "@ai-sdk/xai": "^4.0.31",
+    "@ai-sdk/openai": "^4.0.77",
+    "@ai-sdk/react": "^4.0.119",
+    "@ai-sdk/xai": "^5.0.10",
     "@braintree/sanitize-url": "^7.1.1",
     "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/geist-sans": "^5.2.5",
@@ -60,7 +60,7 @@
     "@upstash/redis": "^1.38.2",
     "@vercel/analytics": "^2.0.1",
     "@xyflow/react": "^12.11.2",
-    "ai": "^7.0.56",
+    "ai": "^7.0.116",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

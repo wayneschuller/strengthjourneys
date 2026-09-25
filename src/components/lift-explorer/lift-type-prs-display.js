@@ -462,7 +462,7 @@ function RepRangeCard({
                 hasPoster ? "text-white/85" : "text-muted-foreground",
               )}
             >
-              {getReadableDateString(record.date, true)}
+              {formatRecordDate(record.date, todayYmd)}
               {standingFor && (
                 <span className={hasPoster ? "text-white/70" : ""}>
                   {" · "}
@@ -527,6 +527,7 @@ function RepRangeCard({
               videoSource={videoSource}
               isMetric={isMetric}
               isRecent={isRecent}
+              todayYmd={todayYmd}
               standingFor={standingFor}
               strengthBadge={strengthBadge}
               note={note}
@@ -557,6 +558,7 @@ function RepRangeCard({
                     repCount={repCount}
                     liftType={liftType}
                     todayYmd={todayYmd}
+                    liftColor={liftColor}
                     bio={bio}
                     standards={standards}
                     e1rmFormula={e1rmFormula}
@@ -581,6 +583,7 @@ function RecordHero({
   videoSource,
   isMetric,
   isRecent,
+  todayYmd,
   standingFor,
   strengthBadge,
   note,
@@ -642,7 +645,7 @@ function RecordHero({
             href={`/log?date=${record.date}`}
             className="hover:text-foreground transition-colors hover:underline"
           >
-            {getReadableDateString(record.date, true)}
+            {formatRecordDate(record.date, todayYmd)}
           </Link>
           {standingFor && ` · ${standingFor}`}
         </div>
@@ -660,18 +663,35 @@ function RecordRow({
   repCount,
   liftType,
   todayYmd,
+  liftColor,
   bio,
   standards,
   e1rmFormula,
   isMetric,
 }) {
+  const isRecent = isRecordRecent(lift.date, todayYmd);
+  const isJustNow = isRecordJustNow(lift.date, todayYmd);
   const videoSource = useMemo(() => getVideoSourceMeta(lift.URL), [lift.URL]);
   const { value, unit } = getDisplayWeight(lift, isMetric ?? false);
   const note = getDisplayNote(lift.notes);
   const medal = RANK_MEDALS[rank - 1];
 
   return (
-    <li className="border-border/70 flex break-inside-avoid items-start gap-3 border-b py-3">
+    // A set from the last month gets a wash of the lift colour so the fresh
+    // ones stand out from the ones that have been standing a while.
+    <li
+      className={cn(
+        "border-border/70 flex break-inside-avoid items-start gap-3 border-b py-3",
+        isRecent && "-mx-2 rounded-md px-2",
+      )}
+      style={
+        isRecent
+          ? {
+              backgroundColor: `color-mix(in srgb, ${liftColor} ${isJustNow ? 14 : 7}%, transparent)`,
+            }
+          : undefined
+      }
+    >
       <span className="text-muted-foreground w-8 shrink-0 pt-0.5 text-sm font-medium tabular-nums">
         {medal ?? `#${rank}`}
       </span>
@@ -684,7 +704,7 @@ function RecordRow({
             {repCount}@{value}
             {unit}
           </Link>
-          {isRecordRecent(lift.date, todayYmd) && (
+          {isRecent && (
             <Badge variant="secondary" className="text-xs">
               ⚡ Recent
             </Badge>
@@ -717,8 +737,14 @@ function RecordRow({
               edge of a very wide row. */}
           <VideoLinkButton url={lift.URL} source={videoSource} />
         </div>
-        <div className="text-muted-foreground text-sm">
-          {getReadableDateString(lift.date, true)}
+        <div
+          className={cn(
+            "text-sm",
+            isJustNow ? "font-semibold" : "text-muted-foreground",
+          )}
+          style={isJustNow ? { color: liftColor } : undefined}
+        >
+          {formatRecordDate(lift.date, todayYmd)}
         </div>
         {note && (
           <p className="text-muted-foreground mt-1 line-clamp-2 text-sm text-pretty italic">
@@ -1131,6 +1157,20 @@ function shiftYmdByYears(ymd, years) {
 function isRecordRecent(dateStr, todayYmd) {
   const days = daysBetweenYmd(dateStr, todayYmd);
   return days !== null && days >= 0 && days <= RECENT_RECORD_DAYS;
+}
+
+// Today or yesterday: close enough that the lifter still feels it, so the date
+// says so in words rather than making them check the calendar.
+function isRecordJustNow(dateStr, todayYmd) {
+  const days = daysBetweenYmd(dateStr, todayYmd);
+  return days === 0 || days === 1;
+}
+
+function formatRecordDate(dateStr, todayYmd) {
+  const days = daysBetweenYmd(dateStr, todayYmd);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return getReadableDateString(dateStr, true);
 }
 
 // "5 years ago" beside the date, so nobody has to do the subtraction.

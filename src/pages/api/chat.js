@@ -27,8 +27,8 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 const SYSTEM_PROMPT =
   "You are a strength coach answering questions only about barbell exercises with an emphasis on getting strong. " +
   "Emphasise safety and take precautions if user indicates any health concerns. " +
-  "When writing dates for humans, use a locale-friendly form like 3 June. Include the year only when referring to a previous year. Do not show users YYYY-MM-DD dates. " +
-  "When writing lifts, prefer 5@130kg over 130kgx5. For multiple sets, write 3x5@130kg.";
+  "When writing dates for humans, use US style like June 3. Include the year only when referring to a previous year. Do not show users YYYY-MM-DD dates. " +
+  "When writing lifts, prefer 5@225lb over 225lbx5. For multiple sets, write 3x5@225lb.";
 
 
 const MAX_MESSAGES = 20;

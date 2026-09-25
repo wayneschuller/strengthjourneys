@@ -18,12 +18,12 @@ import {
   AI_REVIEW_PROMPTS,
   clearAiAssistantPrompt,
   readAiAssistantPrompt,
-} from "@/lib/ai-review-prompts";
+} from "@/lib/ai/review-prompts";
 import {
   AI_CHAT_ANON_WARN_AT_REMAINING,
   AI_CHAT_AUTH_WARN_AT_REMAINING,
   parseAiChatQuotaFromHeaders,
-} from "@/lib/ai-chat-quota";
+} from "@/lib/ai/chat-quota";
 import {
   devLog,
   getAnalyzedSessionLifts,

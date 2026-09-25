@@ -78,7 +78,7 @@ import { AiReviewActions } from "@/components/ai-review-actions";
 import {
   buildAiAssistantPromptLink,
   buildLiftChartReviewPrompt,
-} from "@/lib/ai-review-prompts";
+} from "@/lib/ai/review-prompts";
 
 /**
  * E1RM over time chart for a single lift. Shows estimated 1RM progression with optional formula

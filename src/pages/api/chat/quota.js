@@ -7,7 +7,7 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import {
   appendAiChatQuotaHeaders,
   resolveAiChatQuota,
-} from "@/lib/ai-chat-quota";
+} from "@/lib/ai/chat-quota";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {

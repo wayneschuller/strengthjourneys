@@ -70,7 +70,7 @@ import { AiReviewActions } from "@/components/ai-review-actions";
 import {
   buildAiAssistantPromptLink,
   buildTonnageChartReviewPrompt,
-} from "@/lib/ai-review-prompts";
+} from "@/lib/ai/review-prompts";
 
 /**
  * Chart showing session tonnage (weight × reps) over time with a rolling average trend line.

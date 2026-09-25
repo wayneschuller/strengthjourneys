@@ -30,7 +30,7 @@ import { AiReviewActions } from "@/components/ai-review-actions";
 import {
   buildAiAssistantPromptLink,
   buildLiftRecentSessionsReviewPrompt,
-} from "@/lib/ai-review-prompts";
+} from "@/lib/ai/review-prompts";
 
 const RECENT_SESSIONS_COUNT = 3;
 

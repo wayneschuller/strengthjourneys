@@ -52,7 +52,7 @@ import { gaTrackCoffeeNudgeClick } from "@/lib/analytics";
 import {
   buildAiAssistantPromptLink,
   buildMonthlyReviewPrompt,
-} from "@/lib/ai-review-prompts";
+} from "@/lib/ai/review-prompts";
 
 // ─── Main component ────────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@ Wayne's laptop. The repo only holds the code that reads them.
 
 ## How it fits together
 
-- `src/lib/ai-prompt-editions.js` owns the KV keys and the rules.
+- `src/lib/ai/prompt-editions.js` owns the KV keys and the rules.
 - `src/pages/api/chat.js` reads the active edition (cached 60 seconds per warm
   instance) and tags every reply with `{ edition, model }` message metadata.
   If no edition is active it falls back to `EXTENDED_AI_PROMPT`, then to the

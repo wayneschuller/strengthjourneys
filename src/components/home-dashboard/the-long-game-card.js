@@ -60,7 +60,7 @@ import { getGradeAndColor } from "@/lib/consistency-grades";
 import {
   buildAiAssistantPromptLink,
   buildLongGameReviewPrompt,
-} from "@/lib/ai-review-prompts";
+} from "@/lib/ai/review-prompts";
 
 const LONG_GAME_YEAR_LABEL_WIDTH = 48;
 

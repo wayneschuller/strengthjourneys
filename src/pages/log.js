@@ -20,7 +20,7 @@ import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import {
   buildAiAssistantPromptLink,
   buildLogSessionReviewPrompt,
-} from "@/lib/ai-review-prompts";
+} from "@/lib/ai/review-prompts";
 import { getDaysBetweenYmd } from "@/lib/date-utils";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";

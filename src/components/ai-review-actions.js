@@ -17,7 +17,7 @@ import { Bot, Check, Copy, ImageIcon, LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { stashAiAssistantPrompt } from "@/lib/ai-review-prompts";
+import { stashAiAssistantPrompt } from "@/lib/ai/review-prompts";
 import { cn } from "@/lib/utils";
 
 const COPY_RESET_DELAY_MS = 2500;

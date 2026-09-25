@@ -18,9 +18,9 @@ import { devLog } from "@/lib/processing-utils";
 import {
   appendAiChatQuotaHeaders,
   resolveAiChatQuota,
-} from "@/lib/ai-chat-quota";
-import { isAllowedOrigin } from "@/lib/ai-chat-origin";
-import { getActivePromptEdition } from "@/lib/ai-prompt-editions";
+} from "@/lib/ai/chat-quota";
+import { isAllowedOrigin } from "@/lib/ai/chat-origin";
+import { getActivePromptEdition } from "@/lib/ai/prompt-editions";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
@@ -93,7 +93,7 @@ export default async function handler(req, res) {
   }
 
   // The coach prompt is proprietary, so it lives in KV as a versioned edition
-  // (see ai-prompt-editions.js). EXTENDED_AI_PROMPT is the pre-edition home of
+  // (see lib/ai/prompt-editions.js). EXTENDED_AI_PROMPT is the pre-edition home of
   // the same text, kept as a fallback until editions have proven themselves in
   // production; SYSTEM_PROMPT is the open-source baseline.
   const edition = await getActivePromptEdition();

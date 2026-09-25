@@ -16,17 +16,17 @@
 import { Resend } from "resend";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import { isAllowedOrigin } from "@/lib/ai-chat-origin";
+import { isAllowedOrigin } from "@/lib/ai/chat-origin";
 import {
   getForwardedIp,
   getUtcDateKey,
   hashRateLimitIdentity,
   incrementUsage,
-} from "@/lib/ai-chat-quota";
+} from "@/lib/ai/chat-quota";
 import {
   promptEditionExists,
   recordPromptVote,
-} from "@/lib/ai-prompt-editions";
+} from "@/lib/ai/prompt-editions";
 import { devLog } from "@/lib/processing-utils";
 
 const DAILY_LIMITS = { vote: 100, share: 10 };

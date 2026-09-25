@@ -58,7 +58,7 @@ import {
 import {
   buildAiAssistantPromptLink,
   buildWeeklyReviewPrompt,
-} from "@/lib/ai-review-prompts";
+} from "@/lib/ai/review-prompts";
 
 // ─── Day labels (Mon–Sun) ──────────────────────────────────────────────────
 

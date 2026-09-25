@@ -11,7 +11,7 @@ import Link from "next/link";
 import { Bot, LayoutDashboard, Loader2, Trash2, X } from "lucide-react";
 
 import { getLongReadableDateString } from "@/lib/date-utils";
-import { stashAiAssistantPrompt } from "@/lib/ai-review-prompts";
+import { stashAiAssistantPrompt } from "@/lib/ai/review-prompts";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

@@ -1,5 +1,5 @@
 /**
- * Maintenance for the AI coach's prompt editions (src/lib/ai-prompt-editions.js).
+ * Maintenance for the AI coach's prompt editions (src/lib/ai/prompt-editions.js).
  *
  * Writes go through this script, not ad hoc KV calls, because it keeps the
  * rules: editions are append-only, IDs come from the date, and every change is
@@ -60,7 +60,7 @@ const {
   createPromptEdition,
   listPromptEditions,
   readPromptEdition,
-} = await import("../src/lib/ai-prompt-editions.js");
+} = await import("../src/lib/ai/prompt-editions.js");
 
 const [command, ...args] = process.argv.slice(2);
 

@@ -14,6 +14,8 @@ calls for them:
   funnels, returning users, or acquisition quality
 - `docs/agents/themes.md` when adding or changing a theme, theme background, or
   `dark:` behaviour
+- `docs/agents/ai-prompts.md` when changing, comparing, or rolling back the AI
+  coach's system prompt, or reading its thumbs feedback
 
 ---
 
@@ -102,6 +104,8 @@ authenticated users.
   `promptDeveloper(...)` in `src/pages/api/auth/[...nextauth].js`.
 - **AI assistant:** `api/chat/suggestions.js` is split out from `api/chat.js`
   so the main answer stream closes promptly.
+  The coach prompt is proprietary and lives in KV as dated editions, never in
+  git; see `docs/agents/ai-prompts.md`.
 - **`next.config.js`** carries a long list of SEO redirects, each with a dated
   comment explaining why it exists.
 - **Articles** are markdown files in `content/articles/`, rendered to HTML at

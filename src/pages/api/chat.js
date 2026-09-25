@@ -20,6 +20,7 @@ import {
   resolveAiChatQuota,
 } from "@/lib/ai-chat-quota";
 import { isAllowedOrigin } from "@/lib/ai-chat-origin";
+import { getActivePromptEdition } from "@/lib/ai-prompt-editions";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
@@ -91,27 +92,17 @@ export default async function handler(req, res) {
     });
   }
 
-  let systemMessages = [{ role: "system", content: SYSTEM_PROMPT }];
+  // The coach prompt is proprietary, so it lives in KV as a versioned edition
+  // (see ai-prompt-editions.js). EXTENDED_AI_PROMPT is the pre-edition home of
+  // the same text, kept as a fallback until editions have proven themselves in
+  // production; SYSTEM_PROMPT is the open-source baseline.
+  const edition = await getActivePromptEdition();
+  const promptText = edition?.text || process.env.EXTENDED_AI_PROMPT || SYSTEM_PROMPT;
+  devLog(
+    `Coach prompt: ${edition ? `edition ${edition.id}` : process.env.EXTENDED_AI_PROMPT ? "EXTENDED_AI_PROMPT" : "baseline"} (${promptText.length} chars)`,
+  );
 
-  const envAIPrompt = process.env.EXTENDED_AI_PROMPT;
-  if (envAIPrompt) {
-    let decodedPrompt = envAIPrompt;
-
-    devLog(`Using EXTENDED_AI_PROMPT...`);
-
-    systemMessages = [
-      {
-        role: "system",
-        content: decodedPrompt,
-      },
-    ];
-
-    const charCount = decodedPrompt.length;
-    const wordCount = decodedPrompt.trim().split(/\s+/).length;
-    devLog(
-      `Extended prompt detected: Characters: ${charCount}, Words: ${wordCount}`,
-    );
-  }
+  const systemMessages = [{ role: "system", content: promptText }];
 
   systemMessages.push({
     role: "system",
@@ -162,6 +153,13 @@ export default async function handler(req, res) {
         sendSources: true,
         // The UI never renders reasoning parts, so don't pay to ship them.
         sendReasoning: false,
+        // Each reply carries what produced it, so the UI can label it and a
+        // thumbs vote can be counted against the right edition and model.
+        // A null edition means a fallback prompt answered, which is not voted on.
+        messageMetadata: ({ part }) =>
+          part.type === "start"
+            ? { edition: edition?.id ?? null, model: AI_model.modelId }
+            : undefined,
       });
       const reader = uiStream.getReader();
 

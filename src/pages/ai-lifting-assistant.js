@@ -32,7 +32,7 @@ import {
   getSessionTonnagePercentileRangeFromPrecomputed,
 } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
-import { MiniFeedbackWidget } from "@/components/feedback";
+import { AiReplyFeedback } from "@/components/feedback/ai-reply-feedback";
 
 import {
   Conversation,
@@ -44,7 +44,6 @@ import {
   Message,
   MessageContent,
   MessageResponse,
-  MessageActions,
   MessageAction,
 } from "@/components/ai-elements/message";
 import {
@@ -1303,7 +1302,11 @@ function AILiftingAssistantCard({
                           {message.role === "assistant" &&
                             isLastMessage &&
                             textContent && (
-                              <MessageActions>
+                              <AiReplyFeedback
+                                message={message}
+                                messages={messages}
+                                userProvidedMetadata={userProvidedProfileData}
+                              >
                                 <MessageAction
                                   onClick={() => {
                                     if (!isChatUnavailable) {
@@ -1317,7 +1320,7 @@ function AILiftingAssistantCard({
                                   <RefreshCcwIcon className="size-3" />
                                 </MessageAction>
                                 <CopyButton text={textContent} />
-                              </MessageActions>
+                              </AiReplyFeedback>
                             )}
                         </Message>
                         {message.role === "assistant" &&
@@ -1387,12 +1390,6 @@ function AILiftingAssistantCard({
               />
             </PromptInputFooter>
           </PromptInput>
-          <MiniFeedbackWidget
-            prompt="Useful assistant?"
-            contextId="ai_lifting_assistant_card"
-            page="/ai-lifting-assistant"
-            analyticsExtra={{ context: "ai_lifting_assistant_card" }}
-          />
         </div>
       </CardFooter>
     </Card>

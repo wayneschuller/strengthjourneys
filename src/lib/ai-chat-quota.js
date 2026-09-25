@@ -85,7 +85,7 @@ async function readUsage(kvKey) {
   return typeof existing === "number" ? existing : Number(existing) || 0;
 }
 
-async function incrementUsage(kvKey, ttlSeconds) {
+export async function incrementUsage(kvKey, ttlSeconds) {
   const used = await kv.incr(kvKey);
   if (used === 1) {
     await kv.expire(kvKey, ttlSeconds);
@@ -93,7 +93,7 @@ async function incrementUsage(kvKey, ttlSeconds) {
   return used;
 }
 
-function getForwardedIp(req) {
+export function getForwardedIp(req) {
   const forwardedFor =
     req.headers["x-vercel-forwarded-for"] || req.headers["x-forwarded-for"];
   const firstForwardedIp = Array.isArray(forwardedFor)
@@ -103,7 +103,7 @@ function getForwardedIp(req) {
   return firstForwardedIp?.trim() || req.socket?.remoteAddress || "unknown";
 }
 
-function hashRateLimitIdentity(value) {
+export function hashRateLimitIdentity(value) {
   const salt =
     process.env.AI_RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET || "";
   return createHash("sha256")

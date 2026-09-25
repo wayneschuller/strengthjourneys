@@ -1,5 +1,6 @@
 /**
- * Thumbs feedback and a quiet edition label for one AI assistant reply.
+ * Thumbs feedback for one AI assistant reply. The edition itself is shown in
+ * the page header's coach details (components/ai-assistant/coach-details.js).
  *
  * The reply's metadata names the prompt edition and model that produced it
  * (set by /api/chat), so a vote is counted against exactly what the lifter saw.
@@ -20,7 +21,6 @@ import {
   writeStoredSentiment,
 } from "@/components/feedback/feedback-tracking";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MAX_SHARED_MESSAGES = 20;
 
 /**
@@ -100,9 +100,6 @@ export function AiReplyFeedback({ message, messages, userProvidedMetadata, child
         >
           <ThumbsDown className={vote === "down" ? "size-3 fill-current" : "size-3"} />
         </MessageAction>
-        <span className="text-muted-foreground/70 ml-1 text-xs" title={`Coach edition ${edition}, ${model}`}>
-          {formatEditionLabel(edition)} edition
-        </span>
       </MessageActions>
       {vote && shareState !== "sent" && (
         <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
@@ -143,10 +140,4 @@ function toVote(storedSentiment) {
   if (storedSentiment === "positive") return "up";
   if (storedSentiment === "negative") return "down";
   return null;
-}
-
-// "2026-09-26b" reads as "Sep 26b". Parsed by hand so no time zone can shift the day.
-function formatEditionLabel(edition) {
-  const [, month, dayAndSuffix] = edition.split("-");
-  return `${MONTHS[Number(month) - 1]} ${dayAndSuffix.replace(/^0/, "")}`;
 }

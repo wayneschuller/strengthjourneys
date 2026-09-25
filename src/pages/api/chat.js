@@ -6,8 +6,6 @@
  * call so it cannot be bypassed from the client.
  */
 
-import { openai } from "@ai-sdk/openai";
-import { xai } from "@ai-sdk/xai";
 import {
   createUIMessageStream,
   createUIMessageStreamResponse,
@@ -21,6 +19,7 @@ import {
 } from "@/lib/ai/chat-quota";
 import { isAllowedOrigin } from "@/lib/ai/chat-origin";
 import { getActivePromptEdition } from "@/lib/ai/prompt-editions";
+import { getChatModel } from "@/lib/ai/models";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
@@ -62,9 +61,8 @@ export default async function handler(req, res) {
     userProvidedMetadata,
   } = validation;
 
-  const useXai = !!process.env.XAI_API_KEY;
-
-  if (!useXai && !process.env.OPENAI_API_KEY) {
+  const AI_model = getChatModel();
+  if (!AI_model) {
     return res.status(500).json({ error: "No AI API key is set" });
   }
 
@@ -123,17 +121,6 @@ export default async function handler(req, res) {
       role: "system",
       content: `The user's name is: ${firstName}. `,
     });
-  }
-
-  // grok-4.20-non-reasoning generates at roughly 2.3x the throughput of
-  // grok-4.5 and starts ~1.8s sooner, which on a measured turn is the
-  // difference between a 17s answer and a 6s one. It rejects reasoningEffort
-  // outright, so no xAI provider options are sent.
-  let AI_model;
-  if (useXai) {
-    AI_model = xai.responses("grok-4.20-non-reasoning");
-  } else {
-    AI_model = openai("gpt-4.1");
   }
 
   const convertedUserMessages = await convertToModelMessages(userMessages);

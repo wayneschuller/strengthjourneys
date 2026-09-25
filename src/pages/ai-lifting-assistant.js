@@ -33,6 +33,7 @@ import {
 } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 import { AiReplyFeedback } from "@/components/feedback/ai-reply-feedback";
+import { CoachDetails } from "@/components/ai-assistant/coach-details";
 
 import {
   Conversation,
@@ -846,6 +847,7 @@ function AILiftingAssistantCard({
         const data = await response.json();
         if (!cancelled) {
           applyQuotaSnapshot(data);
+          setCoach(data.coach ?? null);
         }
       } catch (error) {
         devLog("Failed to load AI chat quota", error);
@@ -860,6 +862,10 @@ function AILiftingAssistantCard({
       cancelled = true;
     };
   }, [authStatus, applyQuotaSnapshot]);
+
+  // What the coach runs right now, for the header's details panel. It rides
+  // along with the quota snapshot fetched on load.
+  const [coach, setCoach] = useState(null);
 
   const isChatBlocked = Boolean(chatQuota?.blocked);
   const isChatUnavailable = !isChatQuotaReady || isChatBlocked;
@@ -1156,6 +1162,13 @@ function AILiftingAssistantCard({
     URL.revokeObjectURL(url);
   };
 
+  const coachDetailsProps = {
+    coach,
+    latestReply: messages.findLast((m) => m.role === "assistant")?.metadata,
+    quota: chatQuota,
+    sharedContextChars: userProvidedProfileData?.length ?? 0,
+  };
+
   return (
     <Card className="bg-background text-foreground max-h-full">
       <CardHeader className="flex flex-1 flex-col md:flex-row">
@@ -1165,19 +1178,25 @@ function AILiftingAssistantCard({
               Your Personal Lifting AI Assistant
             </CardTitle>
             {personalizationControls}
-            <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-1.5 pr-4 md:flex">
+            <CoachDetails
+              className="ml-auto hidden shrink-0 pr-4 md:inline-flex"
+              {...coachDetailsProps}
+            >
               <XAILogo className="size-5" />
               <span className="text-sm font-medium">Powered by xAI Grok</span>
-            </div>
+            </CoachDetails>
           </div>
           <CardDescription className="text-muted-foreground text-balance">
             Discussions are streamed to your device and not stored on our
             servers.
           </CardDescription>
-          <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 md:hidden">
+          <CoachDetails
+            className="mt-1.5 flex self-start md:hidden"
+            {...coachDetailsProps}
+          >
             <XAILogo className="size-4" />
             <span className="text-xs font-medium">Powered by xAI Grok</span>
-          </div>
+          </CoachDetails>
         </div>
         {messages.length > 0 && (
           <div className="mr-4 flex items-start gap-2">

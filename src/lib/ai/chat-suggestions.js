@@ -7,9 +7,8 @@
  * coaching.
  */
 
-import { openai } from "@ai-sdk/openai";
-import { xai } from "@ai-sdk/xai";
 import { generateText } from "ai";
+import { getSuggestionModel } from "@/lib/ai/models";
 import { devLog } from "@/lib/processing-utils";
 
 export const MAX_SUGGESTION_INPUT_CHARS = 5000;
@@ -30,16 +29,6 @@ const SUGGESTION_INSTRUCTIONS = [
   "Prefer concrete next-step questions tied to the latest answer.",
   "Do not include medical diagnosis prompts.",
 ].join(" ");
-
-/**
- * Picks the cheapest capable model. Suggestions never need chain-of-thought,
- * so we deliberately avoid the reasoning model used for the main answer.
- */
-function getSuggestionModel() {
-  if (process.env.XAI_API_KEY) return xai("grok-4.20-non-reasoning");
-  if (process.env.OPENAI_API_KEY) return openai("gpt-4.1-mini");
-  return null;
-}
 
 export async function generateSuggestedQuestions({
   latestUserMessage,

@@ -32,6 +32,7 @@ import {
   CardAction,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 /**
  * The big four as card configs, straight from the lift registry. Exported so a
@@ -279,7 +280,14 @@ export function BigFourLiftCards({
               <Link href={`/${lift.slug}`} prefetch={false}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start gap-3">
-                    <CardTitle className="min-w-0 flex-1 text-xl leading-tight sm:text-2xl lg:min-h-[3.8rem]">
+                    {/* The two-line reserve only matters beside the stacked
+                        stats badges; without them it strands the description. */}
+                    <CardTitle
+                      className={cn(
+                        "min-w-0 flex-1 text-xl leading-tight sm:text-2xl",
+                        isStatsMode && "lg:min-h-[3.8rem]",
+                      )}
+                    >
                       {lift.liftType}
                     </CardTitle>
                     {isStatsMode && badges.length > 0 && (

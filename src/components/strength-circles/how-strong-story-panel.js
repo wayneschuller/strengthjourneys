@@ -667,16 +667,49 @@ function getThousandClubLabel(totalLb) {
 // URL already names the lifts. Always pass the current sliders so a 90-day
 // total (or a mixed PR/90d set) survives the hop instead of snapping to PRs.
 function getThousandClubHref(liftWeights, isMetric) {
-  const toClubPounds = (weight) => {
-    const lb = isMetric ? weight * 2.2046 : weight;
-    return String(Math.min(700, Math.max(0, Math.round(lb / 5) * 5)));
-  };
+  const keys = ["squat", "bench", "deadlift"];
+  const exactLb = Object.fromEntries(
+    keys.map((key) => [
+      key,
+      isMetric ? liftWeights[key] * 2.2046 : liftWeights[key],
+    ]),
+  );
+  const clubLb = Object.fromEntries(
+    keys.map((key) => [
+      key,
+      Math.min(700, Math.max(0, Math.round(exactLb[key] / 5) * 5)),
+    ]),
+  );
 
-  const params = new URLSearchParams({
-    squat: toClubPounds(liftWeights.squat),
-    bench: toClubPounds(liftWeights.bench),
-    deadlift: toClubPounds(liftWeights.deadlift),
-  });
+  // The calculator's sliders move in 5 lb steps, so rounding three lifts can
+  // drift the total by up to 7.5 lb and land on the other side of 1000 from
+  // the label that sent the lifter here. Nudge the lift that rounding moved
+  // furthest until both pages agree about the club.
+  const inClub =
+    Math.round(keys.reduce((sum, key) => sum + exactLb[key], 0)) >= 1000;
+  const clubTotal = () => keys.reduce((sum, key) => sum + clubLb[key], 0);
+  const drift = (key) => clubLb[key] - exactLb[key];
+  while (inClub ? clubTotal() < 1000 : clubTotal() >= 1000) {
+    const step = inClub ? 5 : -5;
+    const candidates = keys.filter((key) =>
+      inClub ? clubLb[key] + step <= 700 : clubLb[key] + step >= 0,
+    );
+    if (candidates.length === 0) break;
+    const key = candidates.reduce((best, candidate) =>
+      inClub
+        ? drift(candidate) < drift(best)
+          ? candidate
+          : best
+        : drift(candidate) > drift(best)
+          ? candidate
+          : best,
+    );
+    clubLb[key] += step;
+  }
+
+  const params = new URLSearchParams(
+    Object.fromEntries(keys.map((key) => [key, String(clubLb[key])])),
+  );
   return `/1000lb-club-calculator?${params}`;
 }
 

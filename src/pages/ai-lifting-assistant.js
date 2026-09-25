@@ -33,7 +33,6 @@ import {
 } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 import { AiReplyFeedback } from "@/components/feedback/ai-reply-feedback";
-import { CoachDetails } from "@/components/ai-assistant/coach-details";
 import { ModelSwitcher } from "@/components/ai-assistant/model-switcher";
 import {
   DEFAULT_CHAT_MODEL_ID,
@@ -1175,13 +1174,12 @@ function AILiftingAssistantCard({
     onSelect: setStoredModelId,
     isSignedIn,
     availableIds: coach?.availableModels ?? null,
-  };
-  const coachDetailsProps = {
-    coach,
-    selectedModelId,
-    latestReply: messages.findLast((m) => m.role === "assistant")?.metadata,
-    quota: chatQuota,
-    sharedContextChars: userProvidedProfileData?.length ?? 0,
+    details: {
+      coach,
+      latestReply: messages.findLast((m) => m.role === "assistant")?.metadata,
+      quota: chatQuota,
+      sharedContextChars: userProvidedProfileData?.length ?? 0,
+    },
   };
 
   return (
@@ -1193,19 +1191,20 @@ function AILiftingAssistantCard({
               Your Personal Lifting AI Assistant
             </CardTitle>
             {personalizationControls}
-            <div className="ml-auto hidden shrink-0 items-center gap-3 pr-4 md:flex">
-              <ModelSwitcher {...modelSwitcherProps} />
-              <CoachDetails {...coachDetailsProps} />
-            </div>
+            <ModelSwitcher
+              className="ml-auto hidden shrink-0 pr-4 md:inline-flex"
+              {...modelSwitcherProps}
+            />
           </div>
           <CardDescription className="text-muted-foreground text-balance">
             Discussions are streamed to your device and not stored on our
             servers.
           </CardDescription>
-          <div className="mt-1.5 flex items-center gap-3 md:hidden">
-            <ModelSwitcher size="sm" {...modelSwitcherProps} />
-            <CoachDetails {...coachDetailsProps} />
-          </div>
+          <ModelSwitcher
+            size="sm"
+            className="mt-1.5 self-start md:hidden"
+            {...modelSwitcherProps}
+          />
         </div>
         {messages.length > 0 && (
           <div className="mr-4 flex items-start gap-2">

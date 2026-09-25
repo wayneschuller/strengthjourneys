@@ -11,6 +11,9 @@
  * Signed-in-only models stay visible to signed-out lifters as a sign-in nudge,
  * faded with a lock, above a Google sign-in row at the bottom: the same
  * pattern as the theme chooser (components/ui-shell/theme-chooser.js).
+ *
+ * The menu ends with an "About this coach" section (coach-details.js) for the
+ * curious: prompt edition, what the latest reply used, and so on.
  */
 import { CheckIcon, ChevronDownIcon, LockIcon } from "lucide-react";
 import {
@@ -23,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { GoogleSignInMenuItem } from "@/components/onboarding/google-sign-in";
+import { CoachDetailsSummary } from "@/components/ai-assistant/coach-details";
 import {
   CHAT_MODELS,
   PROVIDER_NAMES,
@@ -37,6 +41,7 @@ import { cn } from "@/lib/utils";
  * @param {(id: string) => void} props.onSelect
  * @param {boolean} props.isSignedIn
  * @param {string[]|null} [props.availableIds] From the server; null while loading, which offers the whole catalog.
+ * @param {Object} props.details Props for CoachDetailsSummary.
  * @param {"sm"|"md"} [props.size]
  * @param {string} [props.className]
  */
@@ -45,6 +50,7 @@ export function ModelSwitcher({
   onSelect,
   isSignedIn,
   availableIds = null,
+  details,
   size = "md",
   className = "",
 }) {
@@ -63,7 +69,10 @@ export function ModelSwitcher({
         <button
           type="button"
           aria-label="Choose the AI model"
-          className={`text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-sm transition-colors ${className}`}
+          className={cn(
+            "text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-sm transition-colors",
+            className,
+          )}
         >
           {selected && (
             <ProviderLogo
@@ -77,7 +86,7 @@ export function ModelSwitcher({
           <ChevronDownIcon className="size-3.5 opacity-70" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
+      <DropdownMenuContent align="end" className="w-80">
         {providers.map((provider, index) => (
           <DropdownMenuGroup key={provider}>
             {index > 0 && <DropdownMenuSeparator />}
@@ -126,6 +135,8 @@ export function ModelSwitcher({
             </GoogleSignInMenuItem>
           </>
         )}
+        <DropdownMenuSeparator />
+        <CoachDetailsSummary {...details} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

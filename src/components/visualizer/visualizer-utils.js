@@ -163,8 +163,6 @@ function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
  * @param {Array} props.parsedData - Full parsed lifting dataset used to look up session sets.
  * @param {string} [props.liftColor] - Hex color for the lift's color swatch; falls back to the lift color from context.
  * @param {boolean} [props.isMetric] - When true, displays weights in kg; otherwise lb.
- * @param {boolean} [props.showClickHint] - Explains the chart's click-through
- *   behavior when the tooltip is used inside an interactive progress chart.
  */
 export const SingleLiftTooltipContent = ({
   active,
@@ -174,7 +172,6 @@ export const SingleLiftTooltipContent = ({
   parsedData,
   liftColor,
   isMetric,
-  showClickHint = false,
 }) => {
   const { getColor } = useLiftColors();
   if (!active || !payload?.length) return null;
@@ -218,11 +215,6 @@ export const SingleLiftTooltipContent = ({
             showDate={false}
           />
         </div>
-      )}
-      {showClickHint && (
-        <p className="mt-1 border-t border-border/50 pt-1 text-[11px] text-muted-foreground">
-          Click to see full session details
-        </p>
       )}
     </div>
   );

@@ -3,11 +3,9 @@
  * Shares chart processing with the full visualizer so estimates stay aligned.
  */
 import { useMemo, useRef, useState, useEffect } from "react";
-import { useRouter } from "next/router";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
@@ -90,12 +88,6 @@ import {
  * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
  */
 export function VisualizerMini({ liftType }) {
-  const router = useRouter();
-  const highlightedDateRef = useRef(null);
-  // A tap on a touchscreen is also a click, so opening the session there
-  // would take the lifter away the moment they tap a point to read it. Touch
-  // keeps the tooltip; mouse users can click through to the log.
-  const canOpenSessions = !useHasCoarsePointer();
   const cardRef = useRef(null);
   const { parsedData, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
@@ -225,23 +217,6 @@ export function VisualizerMini({ liftType }) {
 
   // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = { [liftType]: { label: liftType } };
-
-  const handleChartHighlight = (event) => {
-    const point =
-      event?.activePayload?.[0]?.payload ??
-      chartData?.[event?.activeTooltipIndex];
-    highlightedDateRef.current = point?.date ?? null;
-  };
-
-  const handleChartClick = (event) => {
-    handleChartHighlight(event);
-    if (highlightedDateRef.current) {
-      router.push({
-        pathname: "/log",
-        query: { date: highlightedDateRef.current },
-      });
-    }
-  };
 
   // Dynamic tick spacing based on the data range so lighter lifts get
   // a readable Y-axis instead of 50kg jumps that compress everything.
@@ -385,9 +360,6 @@ export function VisualizerMini({ liftType }) {
                 accessibilityLayer
                 data={chartData}
                 margin={{ left: 5, right: 20 }}
-                onMouseMove={handleChartHighlight}
-                onClick={canOpenSessions ? handleChartClick : undefined}
-                style={canOpenSessions ? { cursor: "pointer" } : undefined}
               >
                 <CartesianGrid {...CHART_GRID_PROPS} />
                 {/* Strength standard background bands — rendered first so they sit behind
@@ -442,7 +414,6 @@ export function VisualizerMini({ liftType }) {
                       parsedData={parsedData}
                       liftColor={liftColor}
                       isMetric={isMetric}
-                      showClickHint={canOpenSessions}
                     />
                   )}
                   formatter={(value, name, props) =>

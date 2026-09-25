@@ -3,7 +3,7 @@
  *
  * The reply's metadata names the prompt edition and model that produced it
  * (set by /api/chat), so a vote is counted against exactly what the lifter saw.
- * After voting, the lifter may choose to send the chat to Wayne; nothing about
+ * After voting, the lifter may choose to share the chat with us; nothing about
  * the conversation leaves the device unless they press that button.
  *
  * It wraps the reply's existing actions (retry, copy) so everything sits on one
@@ -107,9 +107,9 @@ export function AiReplyFeedback({ message, messages, userProvidedMetadata, child
       {vote && shareState !== "sent" && (
         <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
           <span>
-            Thanks! Want Wayne to see this chat? It sends the conversation and
-            your lifting summary
-            {authStatus === "authenticated" ? ", plus your email so he can reply." : "."}
+            Thanks! Want to share this chat with us? It sends the conversation
+            and your lifting summary
+            {authStatus === "authenticated" ? ", plus your email so we can reply." : "."}
           </span>
           <Button
             variant="outline"
@@ -118,13 +118,13 @@ export function AiReplyFeedback({ message, messages, userProvidedMetadata, child
             onClick={handleShare}
             disabled={shareState === "sending"}
           >
-            {shareState === "sending" ? "Sending..." : "Send to Wayne"}
+            {shareState === "sending" ? "Sending..." : "Share chat"}
           </Button>
           {shareState === "failed" && <span>That didn&apos;t send. Try again?</span>}
         </div>
       )}
       {shareState === "sent" && (
-        <p className="text-muted-foreground text-xs">Sent to Wayne. Thank you for helping the coach improve!</p>
+        <p className="text-muted-foreground text-xs">Shared. Thank you for helping the coach improve!</p>
       )}
     </div>
   );

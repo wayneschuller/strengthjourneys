@@ -106,6 +106,13 @@ authenticated users.
   so the main answer stream closes promptly.
   The coach prompt is proprietary and lives in KV as dated editions, never in
   git; see `docs/agents/ai-prompts.md`.
+- **Proprietary material lives outside this repo** in
+  `~/hacking/strengthjourneys-private/` on the maintainer's machine, which is
+  not a git repo and never deployed. It holds `prompts/editions/` (the daily
+  backup of the AI coach prompt editions) and `3rd party fitness app exports/`
+  (real exports from other apps, used to test importers; read its README).
+  Read from it freely, but never copy its contents into this repo or into
+  commit messages, since this repo is public.
 - **`next.config.js`** carries a long list of SEO redirects, each with a dated
   comment explaining why it exists.
 - **Articles** are markdown files in `content/articles/`, rendered to HTML at

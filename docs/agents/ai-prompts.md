@@ -13,7 +13,7 @@ Wayne's laptop. The repo only holds the code that reads them.
   open-source `SYSTEM_PROMPT`; those replies carry `edition: null`.
 - `src/components/feedback/ai-reply-feedback.js` shows thumbs and a quiet
   "Sep 26 edition" label on the latest reply. After a vote the lifter can
-  choose to send the chat to Wayne.
+  choose to share the chat, which is emailed to Wayne.
 - `src/pages/api/chat/feedback.js` counts votes in KV (numbers only) and emails
   shared chats (never stored).
 

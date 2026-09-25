@@ -6,7 +6,10 @@
 
 import { getServerSession } from "next-auth/next";
 
-import { diffEditableSnapshot, readFirstSheetId } from "@/lib/sheet-row-ops";
+import {
+  diffEditableSnapshot,
+  startFirstSheetIdLookup,
+} from "@/lib/sheet-row-ops";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 // DELETE /api/sheet/delete
@@ -70,7 +73,8 @@ export default async function handler(req, res) {
   };
 
   try {
-    const targetSheetId = await readFirstSheetId({ ssid, headers });
+    // Runs alongside the session read; awaited just before the delete.
+    const sheetIdLookup = startFirstSheetIdLookup({ ssid, headers });
     // Read from the session's own first row, plus the row after it for the
     // boundary check. That row must carry the date, and normally the lift
     // name too, so nothing above it is needed. Only when the lift name is
@@ -132,6 +136,8 @@ export default async function handler(req, res) {
         actual: { first: firstActual, last: lastActual },
       });
     }
+
+    const targetSheetId = await sheetIdLookup;
 
     // Sheets API deleteRange uses 0-based startRowIndex (inclusive) and endRowIndex (exclusive)
     const deleteRes = await fetch(

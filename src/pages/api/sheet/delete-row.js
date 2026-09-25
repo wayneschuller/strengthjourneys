@@ -21,9 +21,9 @@
 import { getServerSession } from "next-auth/next";
 
 import {
-  readFirstSheetId,
   readLogicalRow,
   readRawRow,
+  startFirstSheetIdLookup,
   verifyRowSnapshot,
 } from "@/lib/sheet-row-ops";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
@@ -53,7 +53,8 @@ export default async function handler(req, res) {
   };
 
   try {
-    const targetSheetId = await readFirstSheetId({ ssid, headers });
+    // Runs alongside verification; awaited just before the row is deleted.
+    const sheetIdLookup = startFirstSheetIdLookup({ ssid, headers });
     const verification = await verifyRowSnapshot({
       ssid,
       rowIndex,
@@ -72,6 +73,10 @@ export default async function handler(req, res) {
         actual: verification.actual,
       });
     }
+
+    // Resolve the tab before promotion writes anything, so a failed lookup
+    // cannot leave anchor cells promoted onto a row that never gets deleted.
+    const targetSheetId = await sheetIdLookup;
 
     let promoteTo = null;
     const nextRawRow = await readRawRow({

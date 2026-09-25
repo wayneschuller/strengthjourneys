@@ -21,6 +21,7 @@ import { getServerSession } from "next-auth/next";
 import {
   EDITABLE_COLUMN_CONFIG,
   forceNotesPlainText,
+  startFirstSheetIdLookup,
   verifyRowSnapshot,
 } from "@/lib/sheet-row-ops";
 
@@ -52,6 +53,13 @@ export default async function handler(req, res) {
   };
 
   try {
+    // Notes get plain-text formatting after the write, which needs the tab
+    // ID. Start that lookup now so it overlaps verification and the write.
+    const needsNotesFormat =
+      field === "notes" && value != null && String(value).length > 0;
+    const sheetIdLookup = needsNotesFormat
+      ? startFirstSheetIdLookup({ ssid, headers })
+      : null;
     const verification = await verifyRowSnapshot({
       ssid,
       rowIndex,
@@ -89,8 +97,8 @@ export default async function handler(req, res) {
       return res.status(writeResponse.status).json({ error: message });
     }
 
-    if (field === "notes" && value != null && String(value).length > 0) {
-      await forceNotesPlainText({ ssid, rowIndex, headers });
+    if (needsNotesFormat) {
+      await forceNotesPlainText({ ssid, rowIndex, headers, sheetIdLookup });
     }
 
     return res.status(200).json({ updated: true, rowIndex, field });

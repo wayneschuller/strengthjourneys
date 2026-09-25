@@ -32,6 +32,20 @@ export const EDITABLE_COLUMN_CONFIG = {
 // A1 ranges without a tab name ("A2:F10") read the first *visible* tab, so
 // grid mutations must target that same tab. Asking for `hidden` rides along in
 // the same metadata request, so matching Google's rule costs nothing extra.
+/**
+ * Starts the first-tab lookup without awaiting it, so a route can run it
+ * alongside its verification reads and await it only before a grid mutation.
+ * The lookup must still happen per request: a cached ID goes stale the moment
+ * a lifter reorders or hides tabs, which is the bug it exists to prevent.
+ * The attached no-op catch keeps an early return from leaving an unhandled
+ * rejection; awaiting the returned promise still throws.
+ */
+export function startFirstSheetIdLookup({ ssid, headers }) {
+  const lookup = readFirstSheetId({ ssid, headers });
+  lookup.catch(() => {});
+  return lookup;
+}
+
 export async function readFirstSheetId({ ssid, headers }) {
   const response = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${ssid}?fields=sheets(properties(sheetId,hidden))`,
@@ -204,8 +218,21 @@ export async function verifyRowSnapshot({
   };
 }
 
-export async function forceNotesPlainText({ ssid, rowIndex, headers }) {
-  const sheetId = await readFirstSheetId({ ssid, headers });
+// Formatting is best-effort: the value write has already landed, so a failed
+// tab lookup must not turn a saved edit into an error for the lifter.
+export async function forceNotesPlainText({
+  ssid,
+  rowIndex,
+  headers,
+  sheetIdLookup,
+}) {
+  let sheetId;
+  try {
+    sheetId = await (sheetIdLookup ?? readFirstSheetId({ ssid, headers }));
+  } catch (error) {
+    console.warn("[sheet] notes plain-text format skipped:", error.message);
+    return;
+  }
   await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
     {

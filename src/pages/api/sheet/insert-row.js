@@ -22,8 +22,8 @@
 import { getServerSession } from "next-auth/next";
 
 import {
-  readFirstSheetId,
   readRawRow,
+  startFirstSheetIdLookup,
   verifyRowSnapshot,
 } from "@/lib/sheet-row-ops";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
@@ -113,9 +113,10 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Unqualified A1 reads target the first tab, so every grid mutation must
-    // resolve that same tab's current ID rather than assuming it is still 0.
-    const targetSheetId = await readFirstSheetId({ ssid, headers });
+    // Unqualified A1 reads target the first visible tab, so every grid
+    // mutation must resolve that same tab's current ID rather than assuming
+    // it is still 0. The lookup runs alongside verification.
+    const sheetIdLookup = startFirstSheetIdLookup({ ssid, headers });
     let verification = { ok: true, actual: null };
     if (insertAfter === 1) {
       const firstDataRow = await readRawRow({ ssid, rowIndex: 2, headers });
@@ -170,6 +171,7 @@ export default async function handler(req, res) {
     // We prefer false, then explicitly clear the top border on all inserted
     // rows, and stamp a new session border back onto the first inserted row
     // only when `newSession` is true.
+    const targetSheetId = await sheetIdLookup;
     const batchRequests = [
       {
         insertDimension: {

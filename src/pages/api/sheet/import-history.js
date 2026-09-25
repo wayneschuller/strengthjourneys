@@ -321,7 +321,7 @@ export default async function handler(req, res) {
     // When inserting at the very bottom, Google Sheets requires
     // inheritFromBefore:true for insertDimension.
     const metadataRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}?fields=sheets(properties(sheetId,title,gridProperties(rowCount)))`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}?fields=sheets(properties(sheetId,title,hidden,gridProperties(rowCount)))`,
       { headers },
     );
     if (!metadataRes.ok) {
@@ -334,8 +334,10 @@ export default async function handler(req, res) {
       return res.status(failure.httpStatus).json(failure.payload);
     }
     const metadataPayload = await metadataRes.json().catch(() => ({}));
+    // The unqualified A:F read below targets the first *visible* tab, so the
+    // grid writes must resolve that same tab.
     const firstSheet = Array.isArray(metadataPayload?.sheets)
-      ? metadataPayload.sheets[0]
+      ? metadataPayload.sheets.find((sheet) => !sheet?.properties?.hidden)
       : null;
     const targetSheetId = firstSheet?.properties?.sheetId ?? 0;
     const targetGridRowCount =

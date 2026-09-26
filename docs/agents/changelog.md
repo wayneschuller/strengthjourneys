@@ -5,8 +5,11 @@ Read this when writing or publishing a "What's new" entry, or when changing the
 markdown in the repo, rendered at build time by `src/lib/changelog.js` through
 the same renderer as articles.
 
-It moved here from Canny in September 2026, and the ten Canny entries (March
-to September 2026) came across with their images. Strength Journeys no longer
+It moved here from Canny in September 2026, and all 49 Canny entries (July
+2024 to September 2026) came across with their images. Canny's public page
+and RSS feed showed only the newest ten; the rest came from its paged
+`/api/changelog/getEntries` endpoint, and the raw export is kept in
+`strengthjourneys-private/canny-changelog-export-2026-09-26.json`. Strength Journeys no longer
 uses Canny for anything: the changelog is here and feature requests come in
 through our own card (see below). Do not add Canny links back.
 
@@ -102,7 +105,7 @@ The Canny migration came out around 65 KB per image this way.
 - **Pagination** was considered and deliberately left out: people read a
   changelog from the top, and pages would break entry anchors. Revisit
   (perhaps a page per year) only past roughly 50 entries; the page data was
-  45 KB at ten.
+  45 KB at ten and 132 KB at fifty, once the full Canny history came across.
 - **SEO.** `/changelog` is indexed, and `next-sitemap.config.js` gives it the
   newest entry's date as `lastmod`.
 

@@ -151,7 +151,7 @@ function EntryDateTile({ date }) {
       <span className="pt-1 text-3xl leading-none font-black tracking-tight tabular-nums md:text-4xl">
         {day.getUTCDate()}
       </span>
-      <span className="text-muted-foreground pt-1 pb-1.5 text-xs font-medium tabular-nums">
+      <span className="text-foreground/70 pt-1 pb-1.5 text-sm leading-none font-bold tabular-nums md:text-lg">
         {day.getUTCFullYear()}
       </span>
     </time>

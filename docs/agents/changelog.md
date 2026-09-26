@@ -9,9 +9,11 @@ It moved here from Canny in September 2026, and all 49 Canny entries (July
 2024 to September 2026) came across with their images. Canny's public page
 and RSS feed showed only the newest ten; the rest came from its paged
 `/api/changelog/getEntries` endpoint, and the raw export is kept in
-`strengthjourneys-private/canny-changelog-export-2026-09-26.json`. Strength Journeys no longer
-uses Canny for anything: the changelog is here and feature requests come in
-through our own card (see below). Do not add Canny links back.
+`strengthjourneys-private/canny-changelog-export-2026-09-26.json`. The Canny
+workspace was deleted on 27 September 2026, so strengthjourneys.canny.io and its
+API no longer exist and that export is the only copy of the source data. The
+changelog is here and feature requests come in through our own card (see
+below). Do not add Canny links back.
 
 ---
 

@@ -128,7 +128,7 @@ authenticated users.
   `/changelog` (newest three open, older ones folded). The nav's "What's new"
   dot compares the newest file's date, baked in by `next.config.js`, with
   localStorage. Feature requests come through our own card on that page, not
-  Canny, which the site no longer uses. See `docs/agents/changelog.md`.
+  Canny, whose workspace was deleted in September 2026. See `docs/agents/changelog.md`.
 - **`next-sitemap.config.js`** gives only articles (their real `updatedAt`)
   and `/changelog` (its newest entry's date) a `lastmod`, because a blanket
   `lastmod` that resets every deploy is a freshness claim we cannot back up.

@@ -127,7 +127,7 @@ export function buildLiftingContext({
       ),
     hasTraining && options.consistency &&
       step("Consistency", () =>
-        buildConsistencySection({ tail, parsedData, ctx }),
+        buildConsistencySection({ tail, parsedData, mainLifts, ctx }),
       ),
     hasTraining && options.trainingLoad &&
       step("Training load", () =>
@@ -260,8 +260,27 @@ function buildLiftsSection({ mainLifts, lifts, options, ctx }) {
   return section("main lifts", blocks);
 }
 
-function buildConsistencySection({ tail, parsedData, ctx }) {
+function buildConsistencySection({ tail, parsedData, mainLifts, ctx }) {
   const lines = [];
+
+  // "Review my month" is the most common ask, and models miscount sessions
+  // from a list of dates, so count this calendar month outright.
+  const monthStart = `${ctx.today.slice(0, 7)}-01`;
+  const monthDates = new Set();
+  const monthDatesByLift = new Map();
+  for (let i = tail.length - 1; i >= 0 && tail[i].date >= monthStart; i -= 1) {
+    const { date, liftType } = tail[i];
+    monthDates.add(date);
+    const dates = monthDatesByLift.get(liftType) ?? new Set();
+    dates.add(date);
+    monthDatesByLift.set(liftType, dates);
+  }
+  const perLift = mainLifts
+    .map((liftType) => `${liftType} ${monthDatesByLift.get(liftType)?.size ?? 0}`)
+    .join(", ");
+  lines.push(
+    `This calendar month so far (${formatShortDate(monthStart)} to ${formatShortDate(ctx.today)}): ${monthDates.size} ${monthDates.size === 1 ? "session" : "sessions"}. Sessions with each main lift: ${perLift}.`,
+  );
 
   const weekly = countSessionsByWeek(tail, ctx.today, WEEKS_OF_SESSION_COUNTS);
   if (weekly.length > 0) {

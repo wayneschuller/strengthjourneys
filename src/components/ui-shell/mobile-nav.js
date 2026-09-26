@@ -103,11 +103,9 @@ export function MobileNav() {
             className="px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 lg:hidden"
             aria-expanded={open}
           >
-            <span className="relative sm:mr-2">
+            {/* The What's New dot rides on its own bar icon, not here. */}
+            <span className="sm:mr-2">
               <Menu className="h-7 w-7" />
-              {changelogDot && (
-                <WhatsNewDot floating ping={changelogDot === "ping"} />
-              )}
             </span>
             <span className="hidden tracking-tight sm:inline">Menu</span>
             <span className="sr-only">Toggle Menu</span>
@@ -137,6 +135,27 @@ export function MobileNav() {
           </SheetHeader>
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-6">
             <div className="flex flex-col gap-4 text-lg font-medium tracking-tight">
+              {/* First in the list, so it is never below the fold on a phone. */}
+              <SheetClose asChild>
+                <Link
+                  prefetch={false}
+                  href="/changelog"
+                  className={cn(
+                    "hover:text-foreground/80 flex flex-row items-center gap-3 transition-colors",
+                    pathname === "/changelog"
+                      ? "text-foreground"
+                      : "text-foreground/60",
+                  )}
+                >
+                  <Sparkles size={24} strokeWidth={1} />
+                  <span className="relative">
+                    What&apos;s New
+                    {changelogDot && (
+                      <WhatsNewDot corner ping={changelogDot === "ping"} />
+                    )}
+                  </span>
+                </Link>
+              </SheetClose>
               {featurePages
                 .filter((item) => !item.authRequired || hasUserData)
                 .map((item) => {
@@ -166,26 +185,6 @@ export function MobileNav() {
                   IconComponent={getLiftIcon(lift.liftType)}
                 />
               ))}
-              <SheetClose asChild>
-                <Link
-                  prefetch={false}
-                  href="/changelog"
-                  className={cn(
-                    "hover:text-foreground/80 flex flex-row items-center gap-3 transition-colors",
-                    pathname === "/changelog"
-                      ? "text-foreground"
-                      : "text-foreground/60",
-                  )}
-                >
-                  <Sparkles size={24} strokeWidth={1} />
-                  <span className="relative">
-                    What&apos;s New
-                    {changelogDot && (
-                      <WhatsNewDot corner ping={changelogDot === "ping"} />
-                    )}
-                  </span>
-                </Link>
-              </SheetClose>
             </div>
           </div>
           <div className="border-border flex shrink-0 items-center justify-between border-t pt-4 pr-6">
@@ -228,6 +227,26 @@ export function MobileNav() {
           )}
         />
       </Link>
+      {/* What's New gets its own icon in the bar until the desktop nav takes
+          over, carrying the dot when there is an entry this browser has not
+          seen. */}
+      <Button
+        asChild
+        variant="ghost"
+        className={cn(
+          "hover:text-foreground h-9 px-2 hover:bg-transparent lg:hidden",
+          pathname === "/changelog" ? "text-foreground" : "text-muted-foreground",
+        )}
+      >
+        <Link href="/changelog" aria-label="What's new" prefetch={false}>
+          <span className="relative">
+            <Sparkles className="h-5 w-5" />
+            {changelogDot && (
+              <WhatsNewDot floating ping={changelogDot === "ping"} />
+            )}
+          </span>
+        </Link>
+      </Button>
     </>
   );
 }

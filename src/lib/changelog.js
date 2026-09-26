@@ -27,7 +27,7 @@ const FRONTMATTER_FIELDS = new Set(["title"]);
 /**
  * Every changelog entry, newest first, with its body rendered to HTML.
  *
- * @returns {{slug: string, date: string, title: string, html: string}[]}
+ * @returns {{slug: string, date: string, title: string, sections: string[], html: string}[]}
  */
 export function getChangelogEntries() {
   return fs
@@ -69,5 +69,22 @@ function parseEntryFile(fileName) {
     sourcePath,
   });
 
-  return { slug, date: nameMatch[1], title, html };
+  return {
+    slug,
+    date: nameMatch[1],
+    title,
+    sections: readSectionHeadings(match[2]),
+    html,
+  };
+}
+
+// The entry's ### headings as plain text, which a collapsed entry shows as its
+// one-line summary. Links and emphasis are stripped to their words.
+function readSectionHeadings(markdown) {
+  return [...markdown.matchAll(/^###\s+(.+)$/gm)].map(([, heading]) =>
+    heading
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/[*_`]/g, "")
+      .trim(),
+  );
 }

@@ -318,13 +318,15 @@ function WhatsNewLink() {
       prefetch={false}
       href="/changelog"
       className={cn(
-        "hover:text-foreground/80 items-center gap-1.5 transition-colors",
+        "hover:text-foreground/80 items-center transition-colors",
         pathname === "/changelog" ? "text-foreground" : "text-foreground/60",
         "hidden min-[1800px]:inline-flex",
       )}
     >
-      What&apos;s New
-      {hasUnseen && <WhatsNewDot />}
+      <span className="relative">
+        What&apos;s New
+        {hasUnseen && <WhatsNewDot corner />}
+      </span>
     </Link>
   );
 }

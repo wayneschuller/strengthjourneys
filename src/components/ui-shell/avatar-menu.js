@@ -190,8 +190,10 @@ export function AvatarDropdown() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/changelog")}>
               <Sparkles className="mr-2 h-4 w-4" />
-              What&apos;s New
-              {hasUnseenChangelog && <WhatsNewDot className="ml-auto" />}
+              <span className="relative">
+                What&apos;s New
+                {hasUnseenChangelog && <WhatsNewDot corner />}
+              </span>
             </DropdownMenuItem>
             {/* Non-production tools for QA/reset workflows.
                     These are available in development-like envs (including

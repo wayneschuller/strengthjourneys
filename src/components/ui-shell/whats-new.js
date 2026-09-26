@@ -4,7 +4,7 @@
  * the newest one this browser has seen, so the check costs no request.
  */
 import { useEffect } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import { useIsClient, useLocalStorage } from "usehooks-ts";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
@@ -12,28 +12,19 @@ import { cn } from "@/lib/utils";
 const LATEST_ENTRY_DATE = process.env.NEXT_PUBLIC_CHANGELOG_LATEST ?? "";
 
 /**
- * True when a changelog entry has shipped since this browser last opened
- * /changelog. A first-time visitor is marked up to date instead, so the dot
- * means "new since you were here" rather than flagging the whole history.
+ * True when this browser has not opened /changelog since the newest entry
+ * shipped. No stored date counts as unseen, so new visitors and lifters who
+ * predate the dot both get it until they visit the page once.
  */
 export function useHasUnseenChangelog() {
-  const [seenDate, setSeenDate] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.CHANGELOG_SEEN,
-    LATEST_ENTRY_DATE,
-    { initializeWithValue: false },
-  );
+  // Null until storage has been read, and when nothing is stored.
+  const seenDate = useReadStoredSeenDate();
+  // Server render and the first client render cannot see storage, so the dot
+  // waits for the client rather than flashing on for lifters who are up to date.
+  const isClient = useIsClient();
 
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(LOCAL_STORAGE_KEYS.CHANGELOG_SEEN) === null) {
-        setSeenDate(LATEST_ENTRY_DATE);
-      }
-    } catch {
-      // Storage blocked: the dot just stays off.
-    }
-  }, [setSeenDate]);
-
-  return Boolean(LATEST_ENTRY_DATE) && String(seenDate ?? "") < LATEST_ENTRY_DATE;
+  if (!isClient || !LATEST_ENTRY_DATE) return false;
+  return typeof seenDate !== "string" || seenDate < LATEST_ENTRY_DATE;
 }
 
 /**
@@ -43,7 +34,7 @@ export function useHasUnseenChangelog() {
 export function useMarkChangelogSeen() {
   const [, setSeenDate] = useLocalStorage(
     LOCAL_STORAGE_KEYS.CHANGELOG_SEEN,
-    LATEST_ENTRY_DATE,
+    null,
     { initializeWithValue: false },
   );
 
@@ -56,19 +47,35 @@ export function useMarkChangelogSeen() {
   }, [setSeenDate]);
 }
 
+function useReadStoredSeenDate() {
+  const [seenDate] = useLocalStorage(LOCAL_STORAGE_KEYS.CHANGELOG_SEEN, null, {
+    initializeWithValue: false,
+  });
+  return seenDate;
+}
+
 /**
- * Small red dot. Pass `floating` to pin it to the corner of a relative parent,
- * such as the avatar or the mobile menu button.
+ * Pinging red dot. `corner` pins it to the top-right of a relative label, so
+ * it reads as belonging to "What's New"; `floating` pins it to the corner of a
+ * relative icon, such as the avatar or the mobile menu button.
  */
-export function WhatsNewDot({ floating = false, className }) {
+export function WhatsNewDot({ corner = false, floating = false, className }) {
   return (
     <span
       className={cn(
-        "inline-block size-2 shrink-0 rounded-full bg-red-500",
-        floating && "ring-background absolute -top-0.5 -right-0.5 ring-2",
+        "relative inline-flex size-2 shrink-0",
+        corner && "absolute -top-1 -right-2.5",
+        floating && "absolute -top-0.5 -right-0.5",
         className,
       )}
     >
+      <span className="absolute inline-flex size-full rounded-full bg-red-500 opacity-75 motion-safe:animate-ping" />
+      <span
+        className={cn(
+          "relative inline-flex size-2 rounded-full bg-red-500",
+          floating && "ring-background ring-2",
+        )}
+      />
       <span className="sr-only">New updates</span>
     </span>
   );

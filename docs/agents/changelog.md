@@ -112,11 +112,18 @@ The Canny migration came out around 65 KB per image this way.
   exposes it as `NEXT_PUBLIC_CHANGELOG_LATEST`, so the check needs no request.
 - The browser keeps the newest date it has seen in localStorage under
   `LOCAL_STORAGE_KEYS.CHANGELOG_SEEN` (`SJ_changelogSeen`). The dot shows
-  while that is older than the build's newest date.
-- A first-time visitor (no key yet) is quietly marked up to date, so the dot
-  only ever means "new since you were here", never "here is all of history".
+  while that is older than the build's newest date, **or when there is no key
+  at all**. Wayne's call (Sep 26 2026): a browser that has never opened
+  `/changelog` has something to see, whether it is brand new or a lifter from
+  before the dot existed. Only opening `/changelog` writes the key.
+- The dot waits until the client has read storage (`useIsClient`), so it never
+  flashes on during the server render for lifters who are up to date.
 - Opening `/changelog` marks everything seen, and every dot on the page clears
   at once.
+- It is a red dot with a ping (`motion-safe`, so reduced-motion users get a
+  still dot). On a text label it sits on the top-right corner of the words
+  "What's New" (`corner`), so it clearly belongs to the changelog; on an icon
+  it sits on the icon's corner (`floating`).
 - It appears on the desktop "What's New" link (only visible from 1800px wide),
   on the mobile Menu button and its "What's New" item, and on the signed-in
   avatar and its "What's New" menu item. Signed-out desktop visitors narrower

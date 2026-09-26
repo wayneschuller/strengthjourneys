@@ -176,8 +176,10 @@ export function MobileNav() {
                   )}
                 >
                   <Sparkles size={24} strokeWidth={1} />
-                  What&apos;s New
-                  {hasUnseenChangelog && <WhatsNewDot />}
+                  <span className="relative">
+                    What&apos;s New
+                    {hasUnseenChangelog && <WhatsNewDot corner />}
+                  </span>
                 </Link>
               </SheetClose>
             </div>

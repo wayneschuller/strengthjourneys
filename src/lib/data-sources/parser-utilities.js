@@ -350,6 +350,16 @@ export function convertWeightAndUnitType(weightString) {
   return repairWeightText(text);
 }
 
+// Apps that follow the phone's number format write "117,5" for 117.5
+// (JEFIT and Alpha Progression do). A comma before one or two final digits is
+// read as the decimal point; any other text comes back trimmed and untouched.
+const DECIMAL_COMMA = /^(-?\d+),(\d{1,2})$/;
+
+export function normalizeDecimalComma(value) {
+  const text = String(value ?? "").trim();
+  return DECIMAL_COMMA.test(text) ? text.replace(",", ".") : text;
+}
+
 // Unit spellings seen in the wild. A null repair is a normal spelling; a
 // string is logged, because it is a guess.
 const WEIGHT_UNITS = {

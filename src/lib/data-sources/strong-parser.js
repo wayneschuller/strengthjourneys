@@ -2,6 +2,7 @@ import { recordTiming } from "@/lib/processing-utils";
 import {
   isValidLiftWeight,
   normalizeLiftTypeNames,
+  normalizeDecimalComma,
 } from "@/lib/data-sources/parser-utilities";
 
 function getColumnIndex(headers, candidates) {
@@ -24,7 +25,7 @@ function findHeaderByPrefix(headers, prefixes) {
 }
 
 function parseNumber(value) {
-  const parsed = Number.parseFloat(String(value ?? "").trim());
+  const parsed = Number.parseFloat(normalizeDecimalComma(value));
   return Number.isFinite(parsed) ? parsed : null;
 }
 

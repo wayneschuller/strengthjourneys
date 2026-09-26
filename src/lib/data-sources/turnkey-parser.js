@@ -1,6 +1,7 @@
 import { devLog, recordTiming } from "@/lib/processing-utils";
 import {
   isValidLiftWeight,
+  normalizeDecimalComma,
   normalizeLiftTypeNames,
 } from "@/lib/data-sources/parser-utilities";
 
@@ -47,16 +48,18 @@ export function parseTurnKeyData(data) {
     }
 
     let lifted_reps = parseInt(row[assigned_reps_COL], 10);
-    let lifted_weight = parseFloat(row[assigned_weight_COL]);
+    let lifted_weight = parseFloat(
+      normalizeDecimalComma(row[assigned_weight_COL]),
+    );
 
     // Override if there is an actual_reps and actual_weight
     // This happens when the person lifts different to what was assigned by their coach
     if (
       isFinite(parseInt(row[actual_reps_COL]), 10) &&
-      isFinite(parseFloat(row[actual_weight_COL]))
+      isFinite(parseFloat(normalizeDecimalComma(row[actual_weight_COL])))
     ) {
       lifted_reps = parseInt(row[actual_reps_COL], 10);
-      lifted_weight = parseFloat(row[actual_weight_COL]);
+      lifted_weight = parseFloat(normalizeDecimalComma(row[actual_weight_COL]));
     }
 
     let unitType = row[units_COL]; // Record the units type global for later. (we assume it won't change in the data)

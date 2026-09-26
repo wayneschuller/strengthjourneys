@@ -206,4 +206,16 @@ assert.equal(switchedSheetImport.profile.lastSheetId, "sheet-b");
 assert.equal(switchedSheetImport.profile.latestImportedWorkoutDate, "2025-01-10");
 assert.deepEqual(Object.keys(switchedSheetImport.profile.sources), ["wodify"]);
 
+// An app that follows the phone's number format writes "117,5". Number()
+// reads that as NaN, which used to drop the set.
+const decimalCommaEntries = parseHevyData(
+  decodeCSV(`title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_kg,reps,distance_km,duration_seconds,rpe
+Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Bench Press (Barbell),,,0,normal,"117,5",5,,,8
+`),
+);
+assert.deepEqual(
+  decimalCommaEntries.map((entry) => [entry.weight, entry.unitType]),
+  [[117.5, "kg"]],
+);
+
 console.log("Importer and recurring-profile validation passed.");

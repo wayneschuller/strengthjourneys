@@ -2,6 +2,7 @@ import { normalizeDateInput } from "@/lib/date-utils";
 import { recordTiming } from "@/lib/processing-utils";
 import {
   isValidLiftWeight,
+  normalizeDecimalComma,
   normalizeLiftTypeNames,
 } from "@/lib/data-sources/parser-utilities";
 
@@ -40,7 +41,7 @@ function parseInteger(value) {
 }
 
 function parseNumber(value) {
-  const parsed = Number.parseFloat(String(value ?? "").trim());
+  const parsed = Number.parseFloat(normalizeDecimalComma(value));
   return Number.isFinite(parsed) ? parsed : null;
 }
 

@@ -15,6 +15,7 @@ import {
   isBodyweightLoadLiftName,
   isValidLiftWeight,
   normalizeLiftTypeNames,
+  normalizeDecimalComma,
 } from "@/lib/data-sources/parser-utilities";
 import { buildVisibleImportProvenance } from "@/lib/import/provenance";
 
@@ -31,7 +32,7 @@ function getColumnIndex(headers, ...names) {
 }
 
 function parseNumber(value) {
-  const raw = String(value ?? "").trim();
+  const raw = normalizeDecimalComma(value);
   if (!raw) return null;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;

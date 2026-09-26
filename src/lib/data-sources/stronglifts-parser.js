@@ -6,6 +6,7 @@ import { recordTiming } from "@/lib/processing-utils";
 import {
   isValidLiftWeight,
   normalizeLiftTypeNames,
+  normalizeDecimalComma,
 } from "@/lib/data-sources/parser-utilities";
 
 // Legacy exports use a "wide" row per workout. Header shape from a 2018 export:
@@ -24,7 +25,7 @@ import {
 // `Set 1 (Reps)` with `Set 1 (KG)`. Both layouts are pivoted into LiftEntry rows.
 
 function parseNumber(value) {
-  const parsed = Number.parseFloat(String(value ?? "").trim());
+  const parsed = Number.parseFloat(normalizeDecimalComma(value));
   return Number.isFinite(parsed) ? parsed : null;
 }
 

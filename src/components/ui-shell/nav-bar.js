@@ -68,7 +68,7 @@ import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 import {
-  useHasUnseenChangelog,
+  useChangelogDot,
   WhatsNewDot,
 } from "@/components/ui-shell/whats-new";
 
@@ -311,7 +311,7 @@ export function DesktopNav() {
 // has shipped since this browser last opened /changelog.
 function WhatsNewLink() {
   const pathname = usePathname();
-  const hasUnseen = useHasUnseenChangelog();
+  const changelogDot = useChangelogDot();
 
   return (
     <Link
@@ -325,7 +325,9 @@ function WhatsNewLink() {
     >
       <span className="relative">
         What&apos;s New
-        {hasUnseen && <WhatsNewDot corner />}
+        {changelogDot && (
+          <WhatsNewDot corner ping={changelogDot === "ping"} />
+        )}
       </span>
     </Link>
   );

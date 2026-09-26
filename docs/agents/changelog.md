@@ -111,17 +111,27 @@ The Canny migration came out around 65 KB per image this way.
 - `next.config.js` reads the newest file name in `content/changelog/` and
   exposes it as `NEXT_PUBLIC_CHANGELOG_LATEST`, so the check needs no request.
 - The browser keeps the newest date it has seen in localStorage under
-  `LOCAL_STORAGE_KEYS.CHANGELOG_SEEN` (`SJ_changelogSeen`). The dot shows
+  `LOCAL_STORAGE_KEYS.CHANGELOG_SEEN` (`SJ_changelogSeen`). The dot is due
   while that is older than the build's newest date, **or when there is no key
-  at all**. Wayne's call (Sep 26 2026): a browser that has never opened
-  `/changelog` has something to see, whether it is brand new or a lifter from
-  before the dot existed. Only opening `/changelog` writes the key.
+  at all**: a browser that has never opened `/changelog` has something to see.
+  Only opening `/changelog` writes the key.
+- When it appears depends on who is looking (Wayne's call, Sep 26 2026):
+  - stored date older than the newest entry: pinging dot straight away
+  - no key, signed in: a returning lifter from before the dot, so pinging dot
+    straight away
+  - no key, signed out: most likely a first visit, so first-time visitors get
+    time to take in the landing. No dot for 10 seconds, then a still dot, then
+    the ping 10 seconds after that. The timers restart on a full page load.
+  - no key while the session is still loading: nothing until it is known
+  `useChangelogDot()` returns `null`, `"still"` or `"ping"`; the delays are
+  `FIRST_VISIT_SHOW_DELAY_MS` and `FIRST_VISIT_PING_DELAY_MS` in
+  `whats-new.js`.
 - The dot waits until the client has read storage (`useIsClient`), so it never
   flashes on during the server render for lifters who are up to date.
 - Opening `/changelog` marks everything seen, and every dot on the page clears
   at once.
-- It is a red dot with a ping (`motion-safe`, so reduced-motion users get a
-  still dot). On a text label it sits on the top-right corner of the words
+- It is a red dot, pinging unless `ping={false}` (`motion-safe`, so
+  reduced-motion users always get a still dot). On a text label it sits on the top-right corner of the words
   "What's New" (`corner`), so it clearly belongs to the changelog; on an icon
   it sits on the icon's corner (`floating`).
 - It appears on the desktop "What's New" link (only visible from 1800px wide),

@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
-  useHasUnseenChangelog,
+  useChangelogDot,
   WhatsNewDot,
 } from "@/components/ui-shell/whats-new";
 
@@ -49,7 +49,7 @@ export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
   const { sheetInfo } = useUserLiftingData();
-  const hasUnseenChangelog = useHasUnseenChangelog();
+  const changelogDot = useChangelogDot();
 
   const runKvReset = useCallback(async (mode) => {
     setIsResettingKv(true);
@@ -100,7 +100,9 @@ export function AvatarDropdown() {
                       {session.user.name?.[0] || "?"}
                     </AvatarFallback>
                   </Avatar>
-                  {hasUnseenChangelog && <WhatsNewDot floating />}
+                  {changelogDot && (
+                    <WhatsNewDot floating ping={changelogDot === "ping"} />
+                  )}
                 </span>
               </DropdownMenuTrigger>
             </TooltipTrigger>
@@ -192,7 +194,9 @@ export function AvatarDropdown() {
               <Sparkles className="mr-2 h-4 w-4" />
               <span className="relative">
                 What&apos;s New
-                {hasUnseenChangelog && <WhatsNewDot corner />}
+                {changelogDot && (
+                  <WhatsNewDot corner ping={changelogDot === "ping"} />
+                )}
               </span>
             </DropdownMenuItem>
             {/* Non-production tools for QA/reset workflows.

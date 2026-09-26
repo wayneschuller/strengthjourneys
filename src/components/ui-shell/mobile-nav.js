@@ -12,7 +12,7 @@ import { House, Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeChooser } from "@/components/ui-shell/theme-chooser";
 import {
-  useHasUnseenChangelog,
+  useChangelogDot,
   WhatsNewDot,
 } from "@/components/ui-shell/whats-new";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -75,7 +75,7 @@ export function MobileNav() {
   }, [theme, resolvedTheme]);
 
   const lifts = BIG_FOUR_LIFTS;
-  const hasUnseenChangelog = useHasUnseenChangelog();
+  const changelogDot = useChangelogDot();
 
   // Internal nav link row: icon + label, highlights the active route.
   const NavLink = ({ href, title, IconComponent }) => (
@@ -105,7 +105,9 @@ export function MobileNav() {
           >
             <span className="relative sm:mr-2">
               <Menu className="h-7 w-7" />
-              {hasUnseenChangelog && <WhatsNewDot floating />}
+              {changelogDot && (
+                <WhatsNewDot floating ping={changelogDot === "ping"} />
+              )}
             </span>
             <span className="hidden tracking-tight sm:inline">Menu</span>
             <span className="sr-only">Toggle Menu</span>
@@ -178,7 +180,9 @@ export function MobileNav() {
                   <Sparkles size={24} strokeWidth={1} />
                   <span className="relative">
                     What&apos;s New
-                    {hasUnseenChangelog && <WhatsNewDot corner />}
+                    {changelogDot && (
+                      <WhatsNewDot corner ping={changelogDot === "ping"} />
+                    )}
                   </span>
                 </Link>
               </SheetClose>

@@ -37,6 +37,21 @@ const ROLLING_NOTE_MIN_PERIOD_DAYS = 30;
 // scale, so these windows swap the sums for the long view.
 const LONG_VIEW_MIN_PERIOD_DAYS = 400;
 
+/**
+ * In a newest-first date list, how many dates come before the first one that
+ * matches isPast (the list is sorted, so the matches form a suffix).
+ */
+function countDatesBefore(datesDesc, isPast) {
+  let low = 0;
+  let high = datesDesc.length;
+  while (low < high) {
+    const mid = (low + high) >> 1;
+    if (isPast(datesDesc[mid])) high = mid;
+    else low = mid + 1;
+  }
+  return low;
+}
+
 function subtractDays(dateStr, days) {
   const date = parseISO(dateStr);
   return format(subDays(date, days), "yyyy-MM-dd");
@@ -343,32 +358,32 @@ export function processConsistency(parsedData) {
     startDate: subtractDays(today, period.days - 1),
   }));
 
-  const periodDates = relevantPeriods.reduce((acc, period) => {
-    acc[period.label] = new Set();
-    return acc;
-  }, {});
-
   const oldestStartDate =
     periodStartDates[periodStartDates.length - 1].startDate;
 
+  // Distinct session dates, newest first. Every window ends today, so each
+  // count below is a binary search on this one list instead of a Set per
+  // window filled row by row.
+  const sessionDatesDesc = [];
   for (let i = parsedData.length - 1; i >= 0; i -= 1) {
     const entryDate = parsedData[i].date;
     // Data is date-ascending, so the first entry older than the widest window
     // means every remaining entry is too old to count anywhere.
     if (entryDate < oldestStartDate) break;
     if (parsedData[i].isGoal) continue;
-
-    for (let j = periodStartDates.length - 1; j >= 0; j -= 1) {
-      if (entryDate < periodStartDates[j].startDate) break;
-      periodDates[periodStartDates[j].label].add(entryDate);
-    }
+    // A session's sets sit together, so only its first set needs recording.
+    if (entryDate === sessionDatesDesc[sessionDatesDesc.length - 1]) continue;
+    sessionDatesDesc.push(entryDate);
   }
+  const countFrom = (startDate) =>
+    countDatesBefore(sessionDatesDesc, (date) => date < startDate);
+  const countAfter = (date) =>
+    countDatesBefore(sessionDatesDesc, (candidate) => candidate <= date);
 
   const dayPhraseOffset = hashPhraseSeed(today);
 
   return relevantPeriods.map((period, periodIndex) => {
-    const sessionDates = periodDates[period.label];
-    const actualWorkouts = sessionDates.size;
+    const actualWorkouts = countFrom(periodStartDates[periodIndex].startDate);
 
     // The widest window always reaches further back than the logged history. Grading
     // it against the full span would cap it at a grade nobody could ever earn — the
@@ -391,10 +406,7 @@ export function processConsistency(parsedData) {
       windowStartDate,
       ROLLING_HORIZON_DAYS - 1,
     );
-    let expiringSessions = 0;
-    for (const date of sessionDates) {
-      if (date <= expiryCutoffDate) expiringSessions += 1;
-    }
+    const expiringSessions = actualWorkouts - countAfter(expiryCutoffDate);
 
     // Stepped by the ring's position so no two rings in the row land on the same
     // wording, and offset by the date so the row reads fresh tomorrow. Shared by the
@@ -403,11 +415,7 @@ export function processConsistency(parsedData) {
 
     let graceDayWarning = false;
     if (period.label === "Week" && actualWorkouts >= targetWorkouts) {
-      const strictStartDate = subtractDays(today, 6);
-      let strictCount = 0;
-      for (const date of periodDates[period.label]) {
-        if (date >= strictStartDate) strictCount += 1;
-      }
+      const strictCount = countFrom(subtractDays(today, 6));
       graceDayWarning = strictCount < targetWorkouts;
     }
 

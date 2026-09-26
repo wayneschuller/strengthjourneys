@@ -9,12 +9,20 @@
  *
  * Pure function of the lifter's data and choices, so it runs in the browser
  * and the page can show the exact text in the Personalize dialog.
+ *
+ * Speed: nothing here walks the whole log. Records come from the pipeline's
+ * PR tables (topLiftsByTypeAndReps), tonnage from its session lookup, and
+ * first/last dates from liftTypes; only the recent tail (the last 12 months,
+ * or the last 20 sessions if those reach further back) is scanned, once.
+ * Step timings go to the console in the same grouped format as the main
+ * processing pipeline.
  */
 
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { getStrengthRatingForE1RM } from "@/hooks/use-athlete-biodata";
+import { getStrengthRatingForE1RM } from "@/lib/lifting-standards-kg";
 import { processConsistency } from "@/lib/consistency";
 import { MAX_CHAT_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
+import { logTimingGroup } from "@/lib/processing-utils";
 
 // The last 20 sessions, counted rather than dated, so the summary stays the
 // same size whether someone trains daily or weekly: three sessions a week
@@ -37,7 +45,10 @@ const MONTHS = [
 /**
  * @param {Object} args
  * @param {import("@/lib/data-sources/import-dispatcher").ParsedData} args.parsedData Sorted by date, oldest first.
- * @param {{ liftType: string }[]} [args.liftTypes] Lift names, most frequent first.
+ * @param {{ liftType: string, oldestDate: string, newestDate: string }[]} [args.liftTypes] From calculateLiftTypes, most frequent first.
+ * @param {Object} [args.topLiftsByTypeAndReps] Pipeline PR table, all time.
+ * @param {Object} [args.topLiftsByTypeAndRepsLast12Months] Pipeline PR table, last 12 months.
+ * @param {Object} [args.sessionTonnageLookup] Pipeline per-session tonnage lookup.
  * @param {{ records?: boolean, trainingLoad?: boolean, frequency?: boolean, consistency?: boolean, sessionData?: boolean }} args.options
  * @param {{ age: number, sex: string, bodyWeight: number, heightCm: number } | null} args.bio Null when the profile is not shared.
  * @param {boolean} args.isMetric The lifter's preferred unit; every weight is shown in it.
@@ -49,6 +60,9 @@ const MONTHS = [
 export function buildLiftingContext({
   parsedData,
   liftTypes = [],
+  topLiftsByTypeAndReps,
+  topLiftsByTypeAndRepsLast12Months,
+  sessionTonnageLookup,
   options = {},
   bio = null,
   isMetric,
@@ -56,31 +70,50 @@ export function buildLiftingContext({
   e1rmFormula = "Brzycki",
   today,
 }) {
+  const timings = [];
+  const step = (name, run) => {
+    const startTime = performance.now();
+    const result = run();
+    timings.push({ name, ms: performance.now() - startTime });
+    return result;
+  };
+
   const unit = isMetric ? "kg" : "lb";
-  const entries = (parsedData ?? []).filter(
-    (entry) => !entry.isGoal && entry.date && entry.liftType && entry.reps > 0,
-  );
-  const hasTraining =
-    entries.length > 0 &&
-    (options.records ||
-      options.trainingLoad ||
-      options.frequency ||
-      options.consistency ||
-      options.sessionData);
-
-  if (!bio && !hasTraining) return "";
-
   const ctx = {
     unit,
     today,
     e1rmFormula,
     toUnit: (entry) => convertWeight(entry.weight, entry.unitType, unit),
   };
-  const latestDate = entries.at(-1)?.date ?? null;
-  const lifts = hasTraining ? summarizeLifts(entries, ctx) : {};
-  const mainLifts = hasTraining
-    ? pickMainLifts({ entries, lifts, liftTypes, latestDate })
+
+  const wantsTraining =
+    options.records ||
+    options.trainingLoad ||
+    options.frequency ||
+    options.consistency ||
+    options.sessionData;
+  const tail = wantsTraining
+    ? step("Recent tail", () => getRecentTail(parsedData, today))
     : [];
+  const hasTraining = tail.length > 0;
+  if (!bio && !hasTraining) return "";
+
+  const latestDate = tail.at(-1)?.date ?? null;
+  const mainLifts = hasTraining
+    ? pickMainLifts({ tail, liftTypes, latestDate })
+    : [];
+  const lifts = hasTraining
+    ? step("Lift summaries", () =>
+        summarizeLifts({
+          tail,
+          mainLifts,
+          liftTypes,
+          topAll: topLiftsByTypeAndReps,
+          top12m: topLiftsByTypeAndRepsLast12Months,
+          ctx,
+        }),
+      )
+    : {};
 
   const sections = [
     buildAboutSection({ ctx, options, bio, latestDate, hasTraining }),
@@ -89,17 +122,59 @@ export function buildLiftingContext({
       buildStandingSection({ mainLifts, lifts, standards, ctx }),
     hasTraining &&
       (options.records || options.frequency) &&
-      buildLiftsSection({ mainLifts, lifts, options, ctx }),
+      step("Main lifts", () =>
+        buildLiftsSection({ mainLifts, lifts, options, ctx }),
+      ),
     hasTraining && options.consistency &&
-      buildConsistencySection({ entries, parsedData, ctx }),
+      step("Consistency", () =>
+        buildConsistencySection({ tail, parsedData, ctx }),
+      ),
     hasTraining && options.trainingLoad &&
-      buildTrainingLoadSection({ entries, mainLifts, ctx }),
+      step("Training load", () =>
+        buildTrainingLoadSection({ sessionTonnageLookup, mainLifts, ctx }),
+      ),
     hasTraining && options.sessionData &&
-      buildRecentSessionsSection({ entries, lifts, mainLifts, ctx }),
+      step("Recent sessions", () =>
+        buildRecentSessionsSection({ tail, lifts, mainLifts, ctx }),
+      ),
     bio && buildStandardsSection({ mainLifts, standards, unit }),
   ];
 
-  return combineSections(sections, MAX_CHAT_METADATA_CHARS);
+  const text = combineSections(sections, MAX_CHAT_METADATA_CHARS);
+  // Only once there is training data: before the log loads, builds are empty
+  // and would just be noise in the console.
+  if (hasTraining) logTimingGroup("\u{1F916} AI Coach Context", timings, {
+    summary: `${text.length} chars, ${tail.length} recent sets`,
+  });
+  return text;
+}
+
+/**
+ * Valid sets from the recent end of the log, oldest first: the last 12
+ * months, extended back to cover the last 20 sessions for lifters who train
+ * rarely. Walks backwards from the newest row and stops as soon as both are
+ * covered, so a long history costs nothing extra.
+ */
+function getRecentTail(parsedData, today) {
+  if (!parsedData?.length) return [];
+  const cutoff12m = shiftDate(today, -365);
+  const tail = [];
+  let sessionCount = 0;
+  let previousDate = null;
+
+  for (let i = parsedData.length - 1; i >= 0; i -= 1) {
+    const entry = parsedData[i];
+    if (!entry.date) continue;
+    if (entry.date !== previousDate) {
+      if (entry.date < cutoff12m && sessionCount >= RECENT_SESSION_COUNT) break;
+      previousDate = entry.date;
+      sessionCount += 1;
+    }
+    if (entry.isGoal || !entry.liftType || !(entry.reps > 0)) continue;
+    tail.push(entry);
+  }
+
+  return tail.reverse();
 }
 
 // -----------------------------------------------------------------------------
@@ -119,7 +194,7 @@ function buildAboutSection({ ctx, options, bio, latestDate, hasTraining }) {
   return section("about this data", [
     `Today is ${ctx.today} (${WEEKDAYS[parseDate(ctx.today).getUTCDay()]}), the lifter's local date.`,
     latestDate &&
-      `Latest logged session: ${formatDate(latestDate, ctx.today)}.`,
+      `Latest logged session: ${latestDate}, ${daysAgo(latestDate, ctx.today)}.`,
     `All weights are in ${ctx.unit}. Sets are written weight×reps: 160×1 is one rep at 160${ctx.unit}. Repeated identical sets show a count: 100×5 (3 sets).`,
     `"Best N-rep set" is the heaviest set of exactly N reps ever logged, not a tested max, so a best 5-rep set can be heavier than a best 3-rep set when heavy triples were never done.`,
     `e1RM is an estimated one-rep max from a single set (${ctx.e1rmFormula} formula); comparing e1RMs is the fairest way to compare sets with different reps.`,
@@ -139,7 +214,7 @@ function buildStandingSection({ mainLifts, lifts, standards, ctx }) {
     .map((liftType) => {
       const standard = standards?.[liftType];
       const best12m = lifts[liftType]?.bestE1RM12m;
-      if (!standard || !best12m) return null;
+      if (!standard || !(best12m?.e1rm > 0)) return null;
       const rating = getStrengthRatingForE1RM(best12m.e1rm, standard);
       return `${liftType}: ${rating} (best e1RM in the last 12 months ${best12m.e1rm}${ctx.unit}, from ${formatSet(best12m.set)} on ${formatDate(best12m.set.date, ctx.today)}).`;
     })
@@ -161,11 +236,21 @@ function buildLiftsSection({ mainLifts, lifts, options, ctx }) {
     }
 
     if (options.records) {
+      const bestAll = formatBestSets(lift.bestByRepsAll, lift.bestE1RMAll, ctx);
+      const best12m = formatBestSets(lift.bestByReps12m, lift.bestE1RM12m, ctx);
+      // Under a year of history makes all-time and 12-month bests the same;
+      // say so once rather than twice.
       lines.push(
-        `  Best sets all time: ${formatBestSets(lift.bestByRepsAll, lift.bestE1RMAll, ctx)}.`,
-        `  Best sets in the last 12 months: ${formatBestSets(lift.bestByReps12m, lift.bestE1RM12m, ctx)}.`,
-        `  Best e1RM: all time ${formatE1RMPoint(lift.bestE1RMAll, ctx)}; last 12 months ${formatE1RMPoint(lift.bestE1RM12m, ctx)}; last 6 weeks ${formatE1RMPoint(lift.bestE1RM6w, ctx)}; the 6 weeks before ${formatE1RMPoint(lift.bestE1RMPrev6w, ctx)}.`,
-        `  Best e1RM by month, oldest to newest: ${formatMonthlyE1RM(lift.monthlyE1RM, ctx)}.`,
+        bestAll === best12m
+          ? `  Best sets, all time and last 12 months alike: ${bestAll}.`
+          : `  Best sets all time: ${bestAll}.\n  Best sets in the last 12 months: ${best12m}.`,
+      );
+      const e1rmAll = formatE1RMPoint(lift.bestE1RMAll, ctx);
+      const e1rm12m = formatE1RMPoint(lift.bestE1RM12m, ctx);
+      // No e1RM story for a lift only ever done at bodyweight.
+      if (lift.bestE1RMAll?.e1rm > 0) lines.push(
+        `  Best e1RM: ${e1rmAll === e1rm12m ? `all time and last 12 months ${e1rmAll}` : `all time ${e1rmAll}; last 12 months ${e1rm12m}`}; last 6 weeks ${formatE1RMPoint(lift.bestE1RM6w, ctx)}; the 6 weeks before ${formatE1RMPoint(lift.bestE1RMPrev6w, ctx)}.`,
+        `  Best e1RM by month, oldest to newest: ${formatMonthlyE1RM(lift.monthlyE1RM, lift.firstDate, ctx)}.`,
       );
     }
 
@@ -175,10 +260,10 @@ function buildLiftsSection({ mainLifts, lifts, options, ctx }) {
   return section("main lifts", blocks);
 }
 
-function buildConsistencySection({ entries, parsedData, ctx }) {
+function buildConsistencySection({ tail, parsedData, ctx }) {
   const lines = [];
 
-  const weekly = countSessionsByWeek(entries, ctx.today, WEEKS_OF_SESSION_COUNTS);
+  const weekly = countSessionsByWeek(tail, ctx.today, WEEKS_OF_SESSION_COUNTS);
   if (weekly.length > 0) {
     lines.push(
       `Sessions per week, weeks starting Monday, newest first: ${weekly
@@ -214,50 +299,62 @@ function buildConsistencySection({ entries, parsedData, ctx }) {
   );
 }
 
-function buildTrainingLoadSection({ entries, mainLifts, ctx }) {
+/** Reads the pipeline's session tonnage lookup; walks only the last year of session dates. */
+function buildTrainingLoadSection({ sessionTonnageLookup, mainLifts, ctx }) {
+  const {
+    allSessionDates = [],
+    sessionTonnageByDate = {},
+    sessionTonnageByDateAndLift = {},
+  } = sessionTonnageLookup ?? {};
   const cutoff12m = shiftDate(ctx.today, -365);
-  const sessionTotals = new Map();
-  const liftSessionTotals = new Map();
+  // Tonnage is stored per unit; fold any other unit into the preferred one.
+  const inUnit = (byUnit) =>
+    Object.entries(byUnit ?? {}).reduce(
+      (sum, [unitType, tonnage]) =>
+        sum + convertWeight(tonnage, unitType, ctx.unit),
+      0,
+    );
 
-  entries.forEach((entry) => {
-    if (entry.date < cutoff12m) return;
-    const tonnage = ctx.toUnit(entry) * entry.reps;
-    sessionTotals.set(entry.date, (sessionTotals.get(entry.date) ?? 0) + tonnage);
-    if (!mainLifts.includes(entry.liftType)) return;
-    const byDate = liftSessionTotals.get(entry.liftType) ?? new Map();
-    byDate.set(entry.date, (byDate.get(entry.date) ?? 0) + tonnage);
-    liftSessionTotals.set(entry.liftType, byDate);
-  });
+  const sessionTotals = [];
+  const liftTotals = new Map(mainLifts.map((liftType) => [liftType, []]));
+  for (let i = allSessionDates.length - 1; i >= 0; i -= 1) {
+    const date = allSessionDates[i];
+    if (date < cutoff12m) break;
+    sessionTotals.push([date, inUnit(sessionTonnageByDate[date])]);
+    const byLift = sessionTonnageByDateAndLift[date] ?? {};
+    liftTotals.forEach((totals, liftType) => {
+      if (byLift[liftType]) totals.push([date, inUnit(byLift[liftType])]);
+    });
+  }
 
-  if (sessionTotals.size === 0) return "";
+  if (sessionTotals.length === 0) return "";
 
-  const lines = [];
-  const totals = [...sessionTotals.values()].sort((a, b) => a - b);
-  const [latestDate, latestTotal] = [...sessionTotals.entries()].at(-1);
-  lines.push(
-    `Whole sessions, all lifts: latest ${round(latestTotal)}${ctx.unit} on ${formatDate(latestDate, ctx.today)}; 12-month average ${round(average(totals))}${ctx.unit} per session; typical range ${round(percentile(totals, 0.25))}-${round(percentile(totals, 0.75))}${ctx.unit} (middle half of sessions).`,
-  );
+  // Newest first, as walked.
+  const [latestDate, latestTotal] = sessionTotals[0];
+  const sorted = sessionTotals.map(([, total]) => total).sort((a, b) => a - b);
+  const lines = [
+    `Whole sessions, all lifts: latest ${round(latestTotal)}${ctx.unit} on ${formatDate(latestDate, ctx.today)}; 12-month average ${round(average(sorted))}${ctx.unit} per session; typical range ${round(percentile(sorted, 0.25))}-${round(percentile(sorted, 0.75))}${ctx.unit} (middle half of sessions).`,
+  ];
 
-  mainLifts.forEach((liftType) => {
-    const byDate = liftSessionTotals.get(liftType);
-    if (!byDate || byDate.size === 0) return;
-    const values = [...byDate.values()];
-    const [lastDate, lastTotal] = [...byDate.entries()].at(-1);
-    const [bestDate, bestTotal] = [...byDate.entries()].reduce((best, current) =>
+  liftTotals.forEach((totals, liftType) => {
+    // Bodyweight lifts logged at 0 have no tonnage worth reporting.
+    if (!totals.some(([, total]) => total > 0)) return;
+    const [lastDate, lastTotal] = totals[0];
+    const [bestDate, bestTotal] = totals.reduce((best, current) =>
       current[1] > best[1] ? current : best,
     );
     lines.push(
-      `${liftType} only: latest ${round(lastTotal)}${ctx.unit} on ${formatDate(lastDate, ctx.today)}; 12-month average ${round(average(values))}${ctx.unit} per session with this lift; biggest ${round(bestTotal)}${ctx.unit} on ${formatDate(bestDate, ctx.today)}.`,
+      `${liftType} only: latest ${round(lastTotal)}${ctx.unit} on ${formatDate(lastDate, ctx.today)}; 12-month average ${round(average(totals.map(([, total]) => total)))}${ctx.unit} per session with this lift; biggest ${round(bestTotal)}${ctx.unit} on ${formatDate(bestDate, ctx.today)}.`,
     );
   });
 
   return section("training load (tonnage), last 12 months", lines);
 }
 
-function buildRecentSessionsSection({ entries, lifts, mainLifts, ctx }) {
+function buildRecentSessionsSection({ tail, lifts, mainLifts, ctx }) {
   const byDate = new Map();
-  for (let i = entries.length - 1; i >= 0; i -= 1) {
-    const entry = entries[i];
+  for (let i = tail.length - 1; i >= 0; i -= 1) {
+    const entry = tail[i];
     if (!byDate.has(entry.date)) {
       if (byDate.size >= RECENT_SESSION_COUNT) break;
       byDate.set(entry.date, []);
@@ -298,86 +395,102 @@ function buildStandardsSection({ mainLifts, standards, unit }) {
 }
 
 // -----------------------------------------------------------------------------
-// Per-lift summaries, from one pass over the log
+// Per-lift summaries: records from the PR tables, trends from the recent tail
 // -----------------------------------------------------------------------------
 
-function summarizeLifts(entries, ctx) {
-  const cutoff12m = shiftDate(ctx.today, -365);
+function summarizeLifts({ tail, mainLifts, liftTypes, topAll, top12m, ctx }) {
   const cutoff6w = shiftDate(ctx.today, -42);
   const cutoff12w = shiftDate(ctx.today, -84);
   const firstMonth = shiftMonth(ctx.today.slice(0, 7), -11);
+  const liftInfo = new Map(liftTypes.map((info) => [info.liftType, info]));
   const lifts = {};
 
-  entries.forEach((entry) => {
-    const lift = (lifts[entry.liftType] ??= {
-      firstDate: entry.date,
-      lastDate: entry.date,
-      sessionDates: new Set(),
-      bestByRepsAll: {},
-      bestByReps12m: {},
+  mainLifts.forEach((liftType) => {
+    const bestByRepsAll = readBestSets(topAll?.[liftType], ctx);
+    const bestByReps12m = readBestSets(top12m?.[liftType], ctx);
+    lifts[liftType] = {
+      firstDate: liftInfo.get(liftType)?.oldestDate ?? null,
+      lastDate: liftInfo.get(liftType)?.newestDate ?? null,
+      bestByRepsAll,
+      bestByReps12m,
+      bestE1RMAll: bestE1RMOf(bestByRepsAll, ctx),
+      bestE1RM12m: bestE1RMOf(bestByReps12m, ctx),
       monthlyE1RM: {},
-      bestE1RMAll: null,
-      bestE1RM12m: null,
       bestE1RM6w: null,
       bestE1RMPrev6w: null,
-    });
+      sessionDates6w: new Set(),
+      sessionDatesPrev6w: new Set(),
+    };
+  });
 
+  tail.forEach((entry) => {
+    const lift = lifts[entry.liftType];
+    if (!lift || entry.date < firstMonth) return;
     const weight = ctx.toUnit(entry);
     const set = { weight, reps: entry.reps, date: entry.date };
     const e1rm = estimateE1RM(entry.reps, weight, ctx.e1rmFormula);
 
-    lift.lastDate = entry.date;
-    lift.sessionDates.add(entry.date);
-    keepHeaviest(lift.bestByRepsAll, set);
-    lift.bestE1RMAll = keepBestE1RM(lift.bestE1RMAll, set, e1rm);
-
-    if (entry.date >= cutoff12m) {
-      keepHeaviest(lift.bestByReps12m, set);
-      lift.bestE1RM12m = keepBestE1RM(lift.bestE1RM12m, set, e1rm);
-    }
+    const month = entry.date.slice(0, 7);
+    lift.monthlyE1RM[month] = keepBestE1RM(lift.monthlyE1RM[month], set, e1rm);
     if (entry.date >= cutoff6w) {
       lift.bestE1RM6w = keepBestE1RM(lift.bestE1RM6w, set, e1rm);
+      lift.sessionDates6w.add(entry.date);
     } else if (entry.date >= cutoff12w) {
       lift.bestE1RMPrev6w = keepBestE1RM(lift.bestE1RMPrev6w, set, e1rm);
-    }
-
-    const month = entry.date.slice(0, 7);
-    if (month >= firstMonth) {
-      lift.monthlyE1RM[month] = keepBestE1RM(lift.monthlyE1RM[month], set, e1rm);
+      lift.sessionDatesPrev6w.add(entry.date);
     }
   });
 
   Object.values(lifts).forEach((lift) => {
-    const dates = [...lift.sessionDates];
-    lift.sessions6w = dates.filter((date) => date >= cutoff6w).length;
-    lift.sessionsPrev6w = dates.filter(
-      (date) => date >= cutoff12w && date < cutoff6w,
-    ).length;
+    lift.sessions6w = lift.sessionDates6w.size;
+    lift.sessionsPrev6w = lift.sessionDatesPrev6w.size;
   });
 
   return lifts;
 }
 
+/** Best set for 1 to 10 reps, from a PR table row (index 0 is 1 rep, best first). */
+function readBestSets(repArrays, ctx) {
+  const bestByReps = {};
+  (repArrays ?? []).forEach((ranked, index) => {
+    const best = ranked?.[0];
+    if (!best) return;
+    bestByReps[index + 1] = {
+      weight: ctx.toUnit(best),
+      reps: index + 1,
+      date: best.date,
+    };
+  });
+  return bestByReps;
+}
+
+function bestE1RMOf(bestByReps, ctx) {
+  return Object.values(bestByReps).reduce(
+    (best, set) =>
+      keepBestE1RM(best, set, estimateE1RM(set.reps, set.weight, ctx.e1rmFormula)),
+    null,
+  );
+}
+
 /** Lifts from the latest session first, then the big four, then the most logged. */
-function pickMainLifts({ entries, lifts, liftTypes, latestDate }) {
+function pickMainLifts({ tail, liftTypes, latestDate }) {
+  const known = new Set(liftTypes.map(({ liftType }) => liftType));
   const picked = [];
   const add = (liftType) => {
-    if (!liftType || picked.includes(liftType) || !lifts[liftType]) return;
+    if (!liftType || picked.includes(liftType)) return;
+    if (known.size > 0 && !known.has(liftType)) return;
     picked.push(liftType);
   };
 
-  entries
-    .filter((entry) => entry.date === latestDate)
-    .forEach((entry) => add(entry.liftType));
-  BIG_FOUR.forEach(add);
+  let latestStart = tail.length;
+  while (latestStart > 0 && tail[latestStart - 1].date === latestDate) {
+    latestStart -= 1;
+  }
+  tail.slice(latestStart).forEach((entry) => add(entry.liftType));
+  BIG_FOUR.forEach((liftType) => known.has(liftType) && add(liftType));
   liftTypes.forEach(({ liftType }) => add(liftType));
 
   return picked.slice(0, MAIN_LIFT_LIMIT);
-}
-
-function keepHeaviest(bestByReps, set) {
-  const current = bestByReps[set.reps];
-  if (!current || set.weight > current.weight) bestByReps[set.reps] = set;
 }
 
 function keepBestE1RM(current, set, e1rm) {
@@ -415,14 +528,14 @@ function formatSessionBlock(date, sessionEntries, lifts, mainLifts, ctx) {
     sessionTonnage += tonnage;
     const summary = [
       `${sets.length} ${sets.length === 1 ? "set" : "sets"}`,
-      `${round(tonnage)}${ctx.unit}`,
-    ];
+      tonnage > 0 && `${round(tonnage)}${ctx.unit}`,
+    ].filter(Boolean);
     let highlights = "";
     if (mainLifts.includes(liftType)) {
       const bestE1RM = Math.max(
         ...sets.map((set) => estimateE1RM(set.reps, set.weight, ctx.e1rmFormula)),
       );
-      summary.push(`best e1RM ${bestE1RM}${ctx.unit}`);
+      if (bestE1RM > 0) summary.push(`best e1RM ${bestE1RM}${ctx.unit}`);
       highlights = describeHighlights(liftType, liftEntries, lifts, ctx);
     }
 
@@ -443,8 +556,13 @@ function describeHighlights(liftType, liftEntries, lifts, ctx) {
   if (!lift) return "";
   const notes = [];
 
+  // Warm-ups can hold odd rep-count bests (an empty bar for 9); skip anything
+  // well below the lift's working weights.
+  const floor = (lift.bestE1RM12m?.e1rm ?? 0) * WORKING_SET_FLOOR;
+
   liftEntries.forEach((entry) => {
     const weight = ctx.toUnit(entry);
+    if (estimateE1RM(entry.reps, weight, ctx.e1rmFormula) < floor) return;
     const allTime = lift.bestByRepsAll[entry.reps];
     const year = lift.bestByReps12m[entry.reps];
     const label = entry.reps === 1 ? "single" : `${entry.reps}-rep set`;
@@ -471,7 +589,7 @@ function collapseSets(sets) {
   });
   return groups
     .map(({ weight, reps, count }) =>
-      `${formatNumber(weight)}×${reps}${count > 1 ? ` (${count} sets)` : ""}`,
+      `${formatWeight(weight)}×${reps}${count > 1 ? ` (${count} sets)` : ""}`,
     )
     .join(", ");
 }
@@ -480,12 +598,12 @@ function collapseSets(sets) {
 // Weekly counts
 // -----------------------------------------------------------------------------
 
-function countSessionsByWeek(entries, today, weeks) {
+function countSessionsByWeek(tail, today, weeks) {
   const currentWeekStart = startOfWeek(today);
   const oldestWeekStart = shiftDate(currentWeekStart, -7 * (weeks - 1));
   const counts = new Map();
 
-  new Set(entries.map((entry) => entry.date)).forEach((date) => {
+  new Set(tail.map((entry) => entry.date)).forEach((date) => {
     if (date < oldestWeekStart || date > today) return;
     const weekStart = startOfWeek(date);
     counts.set(weekStart, (counts.get(weekStart) ?? 0) + 1);
@@ -525,7 +643,12 @@ function combineSections(sections, maxChars) {
 }
 
 function formatSet(set) {
-  return `${formatNumber(set.weight)}×${set.reps}`;
+  return `${formatWeight(set.weight)}×${set.reps}`;
+}
+
+/** Bodyweight lifts are logged at 0 extra load. */
+function formatWeight(weight) {
+  return weight > 0 ? formatNumber(weight) : "bodyweight";
 }
 
 // A best N-rep set this far below the period's best e1RM is a warm-up (an
@@ -552,9 +675,12 @@ function formatE1RMPoint(point, ctx) {
   return `${point.e1rm}${ctx.unit} from ${formatSet(point.set)} on ${formatDate(point.set.date, ctx.today)}`;
 }
 
-function formatMonthlyE1RM(monthlyE1RM, ctx) {
+/** The last 12 months, starting no earlier than the month the lift was first logged. */
+function formatMonthlyE1RM(monthlyE1RM, firstDate, ctx) {
+  const yearAgo = shiftMonth(ctx.today.slice(0, 7), -11);
+  const firstMonth = firstDate?.slice(0, 7);
   const months = listMonths(
-    shiftMonth(ctx.today.slice(0, 7), -11),
+    firstMonth && firstMonth > yearAgo ? firstMonth : yearAgo,
     ctx.today.slice(0, 7),
   );
   return months
@@ -571,8 +697,12 @@ function formatDate(date, today) {
   const days = Math.round((parseDate(today) - parseDate(date)) / DAY_MS);
   if (days < 0 || days > 60) return date;
   const weekday = WEEKDAYS[parseDate(date).getUTCDay()];
-  const ago = days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`;
-  return `${date} (${weekday}, ${ago})`;
+  return `${date} (${weekday}, ${daysAgo(date, today)})`;
+}
+
+function daysAgo(date, today) {
+  const days = Math.round((parseDate(today) - parseDate(date)) / DAY_MS);
+  return days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`;
 }
 
 function formatShortDate(date) {

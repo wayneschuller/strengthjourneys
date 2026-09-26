@@ -14,6 +14,7 @@ import {
 import { useRouter } from "next/router";
 import { differenceInCalendarYears } from "date-fns";
 import {
+  getStrengthRatingForE1RM,
   interpolateStandardKG,
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
@@ -32,19 +33,9 @@ export const STRENGTH_LEVEL_EMOJI = {
   Elite: "👑",
 };
 
-/**
- * Returns strength rating (Physically Active, Beginner, Intermediate, Advanced, Elite)
- * for a given e1RM based on standards. Shared by session analysis, lift PRs, etc.
- */
-export function getStrengthRatingForE1RM(oneRepMax, standard) {
-  if (!standard) return null;
-  const { beginner, intermediate, advanced, elite } = standard;
-  if (oneRepMax < beginner) return "Physically Active";
-  if (oneRepMax < intermediate) return "Beginner";
-  if (oneRepMax < advanced) return "Intermediate";
-  if (oneRepMax < elite) return "Advanced";
-  return "Elite";
-}
+// Lives in lib so non-React code (the AI coach summary) can use it too;
+// re-exported here for the existing imports.
+export { getStrengthRatingForE1RM };
 
 /**
  * Returns standards interpolated for the athlete's age at the time of a lift.

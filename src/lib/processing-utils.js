@@ -131,19 +131,38 @@ export function flushTimings(label = "\u{1F3CB}\uFE0F Processing Pipeline") {
     if (match) { rows = parseInt(match[1], 10); break; }
   }
 
-  // Table-like grouped output with color-coded timings and a total
-  const nameWidth = Math.max(..._perfTimings.map((t) => t.name.length));
-  const totalMs = _perfTimings.reduce((sum, t) => sum + t.ms, 0);
+  logTimingGroup(label, _perfTimings, { rows });
+  _perfTimings.length = 0;
+}
 
+/**
+ * Prints named step timings as one collapsed console group with a total,
+ * colour-coded like the processing pipeline. flushTimings uses it for the
+ * pipeline; features with their own steps (the AI coach summary) call it
+ * directly so their timings never mix into the pipeline's accumulator.
+ *
+ * @param {string} label Group heading.
+ * @param {{ name: string, ms: number, extra?: string }[]} timings
+ * @param {{ rows?: number, summary?: string }} [options] rows scales the colours; summary follows the total.
+ */
+export function logTimingGroup(label, timings, { rows = 0, summary } = {}) {
+  if (timings.length === 0) return;
+
+  const steps = timings.map((t) => ({ ...t, ms: Math.round(t.ms) }));
+  const nameWidth = Math.max(...steps.map((t) => t.name.length));
+  const totalMs = steps.reduce((sum, t) => sum + t.ms, 0);
   const totalColor = timingColor(totalMs, rows);
+  const summaryText = summary ? `  (${summary})` : "";
+
   console.groupCollapsed(
-    `%c${label}%c  %c${totalMs}ms`,
+    `%c${label}%c  %c${totalMs}ms%c${summaryText}`,
     "color:#22c55e;font-weight:bold",
     "color:inherit;font-weight:normal",
     `color:${totalColor};font-weight:bold`,
+    "color:inherit;font-weight:normal",
   );
 
-  _perfTimings.forEach((t) => {
+  steps.forEach((t) => {
     const color = timingColor(t.ms, rows);
     const extra = t.extra ? `  (${t.extra})` : "";
     const padded = t.name.padEnd(nameWidth);
@@ -166,7 +185,6 @@ export function flushTimings(label = "\u{1F3CB}\uFE0F Processing Pipeline") {
   );
 
   console.groupEnd();
-  _perfTimings.length = 0;
 }
 
 export const coreLiftTypes = [

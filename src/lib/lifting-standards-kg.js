@@ -709,3 +709,17 @@ const findNearestPoints = (value, sortedArray) => {
 
   return { lower: null, upper: null };
 };
+
+/**
+ * Returns strength rating (Physically Active, Beginner, Intermediate, Advanced, Elite)
+ * for a given e1RM based on standards. Shared by session analysis, lift PRs, etc.
+ */
+export function getStrengthRatingForE1RM(oneRepMax, standard) {
+  if (!standard) return null;
+  const { beginner, intermediate, advanced, elite } = standard;
+  if (oneRepMax < beginner) return "Physically Active";
+  if (oneRepMax < intermediate) return "Beginner";
+  if (oneRepMax < advanced) return "Intermediate";
+  if (oneRepMax < elite) return "Advanced";
+  return "Elite";
+}

@@ -4,9 +4,11 @@ Read this when writing or publishing a "What's new" entry. The changelog is
 markdown in the repo, shown in full at `/changelog` and rendered at build time
 by `src/lib/changelog.js` through the same renderer as articles.
 
-It moved here from Canny in September 2026. The ten Canny entries (March to
-September 2026) were copied across with their images; the Canny feature
-requests board is still in use and linked from the page.
+It moved here from Canny in September 2026, and the ten Canny entries (March
+to September 2026) came across with their images. Strength Journeys no longer
+uses Canny at all: feature requests come in through the card at the bottom of
+`/changelog` (`src/components/feedback/feature-request-card.js`), which emails
+them through `/api/feedback` flagged as a feature request.
 
 ---
 

@@ -6,20 +6,16 @@
  * Opening the page clears the nav's "What's new" dot.
  */
 import Head from "next/head";
-import Link from "next/link";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import {
-  formatArticleDate,
-  PROSE_THEME_STYLE,
-} from "@/components/article-cards";
+import { formatArticleDate, PROSE_THEME_STYLE } from "@/components/article-cards";
+import { FeatureRequestCard } from "@/components/feedback";
 import { useMarkChangelogSeen } from "@/components/ui-shell/whats-new";
 
 import { getChangelogEntries } from "@/lib/changelog";
@@ -30,7 +26,12 @@ const OG_IMAGE_URL = "https://www.strengthjourneys.xyz/202409-og-image.png";
 const PAGE_TITLE = "What's New in Strength Journeys";
 const DESCRIPTION =
   "New features and improvements in Strength Journeys, the free barbell strength tracker built on your own Google Sheet.";
-const FEATURE_REQUESTS_URL = "https://strengthjourneys.canny.io/feature-requests";
+
+// UTC, like formatArticleDate, so the static render and hydration agree.
+const monthFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  timeZone: "UTC",
+});
 
 export async function getStaticProps() {
   return { props: { entries: getChangelogEntries() } };
@@ -71,14 +72,9 @@ export default function ChangelogPage({ entries }) {
             id={entry.slug}
             className="bg-card scroll-mt-24 overflow-hidden rounded-2xl border shadow-sm"
           >
-            <header className="bg-muted/50 border-b px-5 py-6 md:px-10 md:py-8">
-              <time
-                dateTime={entry.date}
-                className="bg-background text-muted-foreground inline-flex rounded-full border px-3 py-1 text-sm font-medium"
-              >
-                {formatArticleDate(entry.date)}
-              </time>
-              <h2 className="mt-4 text-3xl leading-tight font-bold tracking-tight text-balance md:text-4xl">
+            <header className="bg-muted/50 flex items-center gap-4 border-b px-5 py-6 md:gap-6 md:px-10 md:py-8">
+              <EntryDateTile date={entry.date} />
+              <h2 className="min-w-0 text-2xl leading-tight font-bold tracking-tight text-balance md:text-4xl">
                 <a href={`#${entry.slug}`} className="hover:underline">
                   {entry.title}
                 </a>
@@ -94,19 +90,32 @@ export default function ChangelogPage({ entries }) {
           </article>
         ))}
 
-        <div className="bg-muted/50 flex flex-col items-start gap-4 rounded-2xl border p-6 md:flex-row md:items-center md:justify-between">
-          <p className="text-pretty">
-            Got an idea for what comes next? Feature requests shape these
-            updates.
-          </p>
-          <Button asChild variant="outline" className="shrink-0 rounded-full">
-            <Link href={FEATURE_REQUESTS_URL} target="_blank" rel="noopener noreferrer">
-              Request a feature
-              <ArrowUpRight className="size-4" />
-            </Link>
-          </Button>
-        </div>
+        <FeatureRequestCard id="feature-request" page="/changelog" />
       </div>
     </PageContainer>
+  );
+}
+
+// Calendar-style date block that leads each entry, so the date is the first
+// thing the eye lands on when scanning down the page.
+function EntryDateTile({ date }) {
+  const day = new Date(date);
+
+  return (
+    <time
+      dateTime={date}
+      aria-label={formatArticleDate(date)}
+      className="bg-background flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-xl border shadow-sm md:w-20"
+    >
+      <span className="bg-primary text-primary-foreground w-full py-0.5 text-center text-xs font-semibold md:text-sm">
+        {monthFormatter.format(day)}
+      </span>
+      <span className="pt-1 text-3xl leading-none font-black tracking-tight tabular-nums md:text-4xl">
+        {day.getUTCDate()}
+      </span>
+      <span className="text-muted-foreground pt-1 pb-1.5 text-xs font-medium tabular-nums">
+        {day.getUTCFullYear()}
+      </span>
+    </time>
   );
 }

@@ -3,3 +3,4 @@ export { FeedbackWidget } from "@/components/feedback/floating-feedback-widget";
 export { ImporterFeedbackCard } from "@/components/feedback/importer-feedback-card";
 export { MiniFeedbackWidget } from "@/components/feedback/mini-feedback-widget";
 export { ThumbsSentimentControl } from "@/components/feedback/thumbs-sentiment-control";
+export { FeatureRequestCard } from "@/components/feedback/feature-request-card";

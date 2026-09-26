@@ -102,8 +102,16 @@ export default async function handler(req, res) {
 
   const hasProfanity = containsProfanity(message);
   const subjectPrefix = hasProfanity ? "[PROFANITY] [Feedback]" : "[Feedback]";
-  const sentimentLabel = sentiment === "positive" ? "thumbs up" : "thumbs down";
-  const sentimentEmoji = sentiment === "positive" ? "👍" : "👎";
+  // "request" comes from the feature request card on /changelog, which asks
+  // for an idea rather than a verdict, so it gets its own label.
+  const sentimentLabel =
+    sentiment === "request"
+      ? "feature request"
+      : sentiment === "positive"
+        ? "thumbs up"
+        : "thumbs down";
+  const sentimentEmoji =
+    sentiment === "request" ? "💡" : sentiment === "positive" ? "👍" : "👎";
   const pagePath = typeof page === "string" && page.startsWith("/") ? page : "/";
   const triggerLabelValue = typeof triggerLabel === "string" && triggerLabel.trim().length > 0
     ? triggerLabel.trim()

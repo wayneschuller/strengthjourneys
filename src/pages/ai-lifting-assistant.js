@@ -9,6 +9,7 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
+import { defaultRemarkPlugins } from "streamdown";
 import {
   BIG_FOUR_REMARK_PLUGINS,
   linkifyBigFourMarkdown,
@@ -114,6 +115,13 @@ export async function getStaticProps() {
  * @param {Object} props
  * @param {Array} props.relatedArticles - Articles related to the AI Lifting Assistant topic.
  */
+// Passing remarkPlugins to Streamdown replaces its defaults, so GFM (tables,
+// strikethrough) has to be kept explicitly alongside the Big Four links.
+const ASSISTANT_REMARK_PLUGINS = [
+  ...Object.values(defaultRemarkPlugins),
+  ...BIG_FOUR_REMARK_PLUGINS,
+];
+
 export default function AILiftingAssistantPage({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL = "https://www.strengthjourneys.xyz/ai-lifting-assistant";
@@ -1188,7 +1196,7 @@ function AILiftingAssistantCard({
                                     key={`${message.id}-${i}`}
                                     remarkPlugins={
                                       message.role === "assistant"
-                                        ? BIG_FOUR_REMARK_PLUGINS
+                                        ? ASSISTANT_REMARK_PLUGINS
                                         : undefined
                                     }
                                   >
@@ -1199,7 +1207,7 @@ function AILiftingAssistantCard({
                               <MessageResponse
                                 remarkPlugins={
                                   message.role === "assistant"
-                                    ? BIG_FOUR_REMARK_PLUGINS
+                                    ? ASSISTANT_REMARK_PLUGINS
                                     : undefined
                                 }
                               >

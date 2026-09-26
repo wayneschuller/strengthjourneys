@@ -109,8 +109,11 @@ authenticated users.
 - **Proprietary material lives outside this repo** in
   `~/hacking/strengthjourneys-private/` on the maintainer's machine, which is
   not a git repo and never deployed. It holds `prompts/editions/` (the daily
-  backup of the AI coach prompt editions) and `3rd party fitness app exports/`
-  (real exports from other apps, used to test importers; read its README).
+  backup of the AI coach prompt editions), `3rd party fitness app exports/`
+  (real exports from other apps, used to test importers; read its README) and
+  `strength-journeys-sheets/` (real logs in our own sheet format, including the
+  maintainer's 12-year sheet, for stress and regression testing the analysis
+  code; read its README).
   Read from it freely, but never copy its contents into this repo or into
   commit messages, since this repo is public.
 - **`next.config.js`** carries a long list of SEO redirects, each with a dated

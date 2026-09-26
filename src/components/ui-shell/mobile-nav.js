@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { House, Menu, Sparkles } from "lucide-react";
+import { House, Megaphone, Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ThemeChooser } from "@/components/ui-shell/theme-chooser";
@@ -147,7 +147,7 @@ export function MobileNav() {
                       : "text-foreground/60",
                   )}
                 >
-                  <Sparkles size={24} strokeWidth={1} />
+                  <Megaphone size={24} strokeWidth={1} />
                   <span className="relative">
                     What&apos;s New
                     {changelogDot && (
@@ -240,7 +240,7 @@ export function MobileNav() {
       >
         <Link href="/changelog" aria-label="What's new" prefetch={false}>
           <span className="relative">
-            <Sparkles className="h-5 w-5" />
+            <Megaphone className="h-5 w-5" />
             {changelogDot && (
               <WhatsNewDot floating ping={changelogDot === "ping"} />
             )}

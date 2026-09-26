@@ -10,7 +10,7 @@
  */
 import Head from "next/head";
 import { useEffect } from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, Megaphone } from "lucide-react";
 
 import {
   PageContainer,
@@ -74,7 +74,7 @@ export default function ChangelogPage({ entries }) {
       </Head>
 
       <PageHeader>
-        <PageHeaderHeading icon={Sparkles}>{PAGE_TITLE}</PageHeaderHeading>
+        <PageHeaderHeading icon={Megaphone}>{PAGE_TITLE}</PageHeaderHeading>
         <PageHeaderDescription>
           What has landed lately, newest first.
         </PageHeaderDescription>

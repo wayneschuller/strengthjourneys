@@ -138,7 +138,7 @@ The Canny migration came out around 65 KB per image this way.
   "What's New" (`corner`), so it clearly belongs to the changelog; on an icon
   it sits on the icon's corner (`floating`).
 - It appears on the desktop "What's New" link (only visible from 1800px wide),
-  on the Sparkles icon beside the home link in the mobile bar (below lg), on
+  on the Megaphone icon beside the home link in the mobile bar (below lg), on
   the "What's New" item that leads the mobile menu, and on the signed-in avatar
   and its "What's New" menu item. The Menu button itself carries no dot, so the
   bar never shows two. Signed-out desktop visitors between lg and 1800px have

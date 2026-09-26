@@ -5,8 +5,8 @@ import {
   Coffee,
   Eraser,
   LogOut,
+  Megaphone,
   MessageSquarePlus,
-  Sparkles,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -191,7 +191,7 @@ export function AvatarDropdown() {
               Import / Export
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/changelog")}>
-              <Sparkles className="mr-2 h-4 w-4" />
+              <Megaphone className="mr-2 h-4 w-4" />
               <span className="relative">
                 What&apos;s New
                 {changelogDot && (

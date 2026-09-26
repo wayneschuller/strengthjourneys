@@ -33,9 +33,9 @@ If you trained somewhere else first, use [Import Data](https://www.strengthjourn
 For established users, the row of compact cards gives you a fast read before you scroll into deeper tools.
 
 - Journey Length shows how long your log has been running, plus total reps and sets.
-- Classic Lift pulls out a memorable Big Four lift from your history, with bodyweight and strength-standard context when your athlete bio is set.
+- Classic Lift pulls out a memorable Big Four lift from your history, with bodyweight and [strength-standard](https://www.strengthjourneys.xyz/strength-levels) context when your athlete bio is set.
 - Session Momentum compares your last 90 days with the previous 90-day block.
-- Lifetime Tonnage totals how much weight you have moved and the average tonnage per session.
+- [Lifetime Tonnage](https://www.strengthjourneys.xyz/tonnage) totals how much weight you have moved and the average tonnage per session.
 - Weekly Consistency shows your current streak, your best streak, and whether this week is still alive.
 
 [![Strength Journeys Home Dashboard quick-read cards for journey length, classic lift, session momentum, lifetime tonnage, and weekly consistency.](/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard/image-1.webp "The quick-read cards give signed-in users a compact summary of their lifting history before they scroll into deeper dashboard views.")](https://www.strengthjourneys.xyz/)
@@ -44,7 +44,7 @@ For established users, the row of compact cards gives you a fast read before you
 
 The Week in Iron is the immediate coaching card. It summarizes the current week, lists training days, shows the top sets that matter, highlights PRs, and points out what you have not trained yet.
 
-This is the card to check when you want to know whether the week is on track. It can tell you the week is already locked in, or that your tonnage is lagging behind your usual pace. Either way, it gives you something concrete to do next.
+This is the card to check when you want to know whether the week is on track. It can tell you the week is already locked in, or that your [tonnage](https://www.strengthjourneys.xyz/articles/tracking-tonnage-as-a-simple-programming-guide) is lagging behind your usual pace. Either way, it gives you something concrete to do next.
 
 [![The Week in Iron card showing weekly training days, top sets, PR marker, weekly tonnage, and a log lift button.](/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard/image-2.webp "The Week in Iron is the short-term coaching view: what happened, what is missing, and what to do before the week ends.")](https://www.strengthjourneys.xyz/)
 
@@ -66,7 +66,7 @@ This is where the dashboard earns its keep for long-time lifters. A decade of se
 
 ## The Big Four cards sit underneath
 
-The dashboard does not end with the three headline cards. Underneath, Strength Journeys keeps the Big Four barbell lifts close: squat, bench press, deadlift, and strict press. For users with enough history, those cards become personalized with stronger stats and links into deeper lift-specific views.
+The dashboard does not end with the three headline cards. Underneath, Strength Journeys keeps the Big Four barbell lifts close: [squat](https://www.strengthjourneys.xyz/progress-guide/squat), [bench press](https://www.strengthjourneys.xyz/progress-guide/bench-press), [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), and [strict press](https://www.strengthjourneys.xyz/progress-guide/strict-press). For users with enough history, those cards become personalized with stronger stats and links into deeper lift-specific views.
 
 When you want the full lift-by-lift breakdown, open [Lift Explorer](https://www.strengthjourneys.xyz/lift-explorer) for PRs across rep ranges, lift history, frequency, and long-range progress.
 
@@ -83,4 +83,4 @@ Once that is done, log new sessions with [Log & Session Browser](https://www.str
 - Use The Month in Iron to spot neglected lifts before a whole training block drifts.
 - Treat the long-term card as evidence. If you have been showing up for months or years, let the dashboard remind you.
 
-Strength Journeys is built around a simple belief: your lifting history is worth owning. The Home Dashboard is where that history starts talking back.
+Strength Journeys is built around a simple belief: your lifting history is [worth owning](https://www.strengthjourneys.xyz/articles/the-power-of-owning-your-lifting-data-with-google-sheets). The Home Dashboard is where that history starts talking back.

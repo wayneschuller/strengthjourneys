@@ -43,7 +43,7 @@ Because tonnage answers the question that templates often dodge:
 Here’s a dead-simple heuristic that works for real life:
 
 1. **Train the big four lifts at least once a week**\
-  (squat, bench, deadlift, overhead press — combine days however you like).
+  ([squat](https://www.strengthjourneys.xyz/progress-guide/squat), [bench](https://www.strengthjourneys.xyz/progress-guide/bench-press), [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), [overhead press](https://www.strengthjourneys.xyz/progress-guide/strict-press) — combine days however you like).
 2. **Track your weekly tonnage for those lifts.**
 3. **Slowly increase it over time.**
 
@@ -53,13 +53,13 @@ No need to obsess over whether you’re doing 3x5, 5x5, 6x4, or “wave-loading 
 
 ### Tonnage is your “north star”
 
-For most lifters—especially when you’re living in that classic hypertrophy/strength-building range (roughly **3–10 reps**)—tonnage is a ridiculously useful guide.
+For most lifters—especially when you’re living in that classic [hypertrophy](https://www.strengthjourneys.xyz/articles/strength-training-for-beginners-understanding-key-phrases-like-1rm-pr-rpe-and-more)/strength-building range (roughly **3–10 reps**)—tonnage is a ridiculously useful guide.
 
 Why?
 
 Because your week-to-week progress often won’t look like PRs.
 
-You might not hit lifetime bests for months. Sometimes years. And that’s normal.
+You might not hit [lifetime bests](https://www.strengthjourneys.xyz/lift-explorer) for months. Sometimes years. And that’s normal.
 
 But you *can* keep winning by stacking up consistent training stress:
 
@@ -111,7 +111,7 @@ That’s normal and useful *for that specific goal.*
 
 But it’s also worth saying out loud:
 
-**Testing 1RMs carries higher injury risk** than building strength through repeated submaximal work.
+**[Testing 1RMs](https://www.strengthjourneys.xyz/articles/how-often-should-i-test-my-one-rep-max) carries higher injury risk** than building strength through repeated submaximal work.
 
 For many lifters, the safer long-term path looks like:
 
@@ -131,7 +131,7 @@ You just need to keep showing up and **moving tonnage**.
 
 You might never post the lift on Instagram.\
 But your joints will thank you.\
-Your future self will thank you.\
+[Your future self](https://www.strengthjourneys.xyz/articles/strength-training-helps-you-live-longer) will thank you.\
 And your strength will quietly keep building.
 
 ### If you can track it, you can grow it

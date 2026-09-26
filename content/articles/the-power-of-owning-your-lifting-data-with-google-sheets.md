@@ -17,7 +17,7 @@ As lifters, we invest countless hours in the gym, pushing our limits and strivin
 
 ## 1. Lifting For Life
 
-Remember this: Lifting is a lifelong journey. When we start lifting, imagining where we will be in 5, 10, or even 20 years of exercise isn’t easy. Lifting begins as just a hobby and then grows into a lifelong passion. In the second half of life, lifting becomes a key to thriving. Each rep, set, and PR tells a story of dedication and growth. We shouldn’t let go of that story.
+Remember this: Lifting is a lifelong journey. When we start lifting, imagining where we will be in 5, 10, or even 20 years of exercise isn’t easy. Lifting begins as just a hobby and then grows into a lifelong passion. In the second half of life, lifting becomes a [key to thriving](https://www.strengthjourneys.xyz/articles/strength-training-helps-you-live-longer). Each rep, set, and PR tells a story of dedication and growth. We shouldn’t let go of that story.
 
 ## 2. Beyond Fitness Apps and Data Silos
 
@@ -25,7 +25,7 @@ While fitness apps and services are convenient, it’s essential to be aware of 
 
 If you have a preferred fitness app, that is great! We recommend dual recording into both your preferred app and also your system. Over the years, most lifters will likely change fitness apps occasionally. By maintaining your own records, you retain control over your data in the long term.
 
-(Note: we are working on importers to help read data from popular fitness apps into a more general CSV format)
+(Note: we are working on [importers](https://www.strengthjourneys.xyz/import) to help read data from popular fitness apps into a more general CSV format)
 
 ## 3. Google Sheets: Your Personal Gym Log
 
@@ -37,8 +37,8 @@ Click [here to open our sample data template](https://docs.google.com/spreadshee
 
 ## 4. Celebrate Your Progress
 
-While obsessing over numbers isn’t necessary, having a record of your journey can be incredibly motivating. It’s easy to forget how far you’ve come, but with your lifting log, you can look back and be thankful for past achievements. A complete history of your lifting data helps you celebrate consistency as well as memorable barbell moments.
+While obsessing over numbers isn’t necessary, having a record of your journey can be incredibly motivating. It’s easy to forget how far you’ve come, but with your lifting log, you can look back and be thankful for past achievements. A complete history of your lifting data helps you [celebrate consistency](https://www.strengthjourneys.xyz/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard) as well as memorable barbell moments.
 
 ## Conclusion
 
-Owning your lifting data isn’t just about numbers—it’s about taking control of your fitness narrative. Using Google Sheets, you create a lasting record of your strength journey. The [Strength Journeys](https://www.strengthjourneys.xyz/) web app instantly lets you analyze and track this progress over time.
+Owning your lifting data isn’t just about numbers—it’s about taking control of your fitness narrative. Using Google Sheets, you create a lasting record of your strength journey. The [Strength Journeys](https://www.strengthjourneys.xyz/) web app instantly lets you analyze and [track this progress over time](https://www.strengthjourneys.xyz/visualizer).

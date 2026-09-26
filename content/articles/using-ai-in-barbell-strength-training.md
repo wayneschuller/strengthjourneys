@@ -9,7 +9,7 @@ categories:
 cover: "/articles/using-ai-in-barbell-strength-training/cover.jpg"
 ---
 
-Artificial Intelligence (AI) has rapidly become a part of our daily lives, and the strength and fitness world is still figuring out the best applications of AI in this space. Significant technological progress is ahead in answering basic strength and fitness inquiries, with ongoing potential to provide deep insights and encouragement and even act as virtual training companions. Many lifters are self-taught or self-research using online resources. By integrating AI into barbell strength training, there will be "**gains**" to be made.
+Artificial Intelligence (AI) has rapidly become a part of our daily lives, and the strength and fitness world is still figuring out the best applications of AI in this space. Significant technological progress is ahead in answering basic strength and fitness inquiries, with ongoing potential to provide deep insights and encouragement and even act as virtual training companions. Many lifters are self-taught or self-research using online resources. By integrating AI into [barbell strength training](https://www.strengthjourneys.xyz/articles/what-are-barbells-good-for), there will be "**gains**" to be made.
 
 ## Using AI for General Lifting Information
 
@@ -34,7 +34,7 @@ The quality of the AI is a huge question. The [Strength Journeys AI Assistant](h
 
 ## Using AI for Personal Analysis - Talk to Your Lifting Data
 
-One of the most exciting aspects of integrating AI into strength training is its ability to provide personalized analysis based on your individual performance data. In Strength Journeys you can opt in to temporarily sharing your Google Sheets lifting history—such as your personal records, frequency of training, and progress over time—and our AI chatbot can generate insights.
+One of the most exciting aspects of integrating AI into strength training is its ability to provide personalized analysis based on your individual performance data. In Strength Journeys you can opt in to temporarily sharing your [Google Sheets lifting history](https://www.strengthjourneys.xyz/articles/the-power-of-owning-your-lifting-data-with-google-sheets)—such as your [personal records](https://www.strengthjourneys.xyz/lift-explorer), frequency of training, and progress over time—and our AI chatbot can generate insights.
 
 Imagine quickly assessing how much stronger you've become since your last training cycle or pinpoint patterns in your performance. The AI can analyze the data and provide feedback on where you're excelling and where improvements can be made, giving you the tools to adjust your training for even better results.
 
@@ -42,13 +42,13 @@ It is easy to feel discouraged or mentally drained during a long-term strength j
 
 ## Using AI for Motivation
 
-Sometimes, motivation can be as crucial as technique. Everyone hits those inevitable plateaus or days when they feel less enthusiastic about lifting. AI chatbots could help reignite motivation.
+Sometimes, motivation can be as crucial as technique. Everyone hits those inevitable [plateaus](https://www.strengthjourneys.xyz/articles/tracking-tonnage-as-a-simple-programming-guide) or days when they feel less enthusiastic about lifting. AI chatbots could help reignite motivation.
 
 Simply by sharing how you're feeling, you can receive tailored encouragement, reminders about the benefits of consistent training, or tips for overcoming mental hurdles. Additionally, AI can help you break larger goals into smaller, more manageable steps, which is a key part of staying motivated and disciplined in your training.
 
 ## Using AI as a Lifting Buddy
 
-During your actual lifting sessions, AI chatbots can become an interactive training partner. Before your session starts, you can input your program and top-set goals, and the chatbot can suggest a warm-up routine, help you pace your sets, and provide recommendations on rest periods between lifts. Throughout the session, it can remind you of your objectives and even give real-time advice based on your progress.
+During your actual lifting sessions, AI chatbots can become an interactive training partner. Before your session starts, you can input your program and top-set goals, and the chatbot can suggest a [warm-up routine](https://www.strengthjourneys.xyz/warm-up-sets-calculator), help you pace your sets, and provide recommendations on [rest periods](https://www.strengthjourneys.xyz/timer) between lifts. Throughout the session, it can remind you of your objectives and even give real-time advice based on your progress.
 
 You can also consult the AI for general advice on scaling your workout as you go, ensuring that each session is productive.
 

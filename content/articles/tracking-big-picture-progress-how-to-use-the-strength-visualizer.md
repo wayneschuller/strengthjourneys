@@ -12,7 +12,7 @@ cover: "/articles/tracking-big-picture-progress-how-to-use-the-strength-visualiz
 coverFocus: "52% 71%"
 ---
 
-In your strength journey, tracking progress over time is key to understanding how far you've come. The [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer) offers a unique way to assess your long-term performance by estimating your 1-rep max (e1RM) across different rep ranges and visualizing your strength improvements. This tool is designed to give you a clear, big-picture view of your progress, helping you identify trends and make informed decisions about your training.
+In your strength journey, tracking progress over time is key to understanding how far you've come. The [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer) offers a unique way to assess your long-term performance by estimating your [1-rep max (e1RM)](https://www.strengthjourneys.xyz/articles/what-is-an-e1rm-estimated-one-rep-max) across different rep ranges and visualizing your strength improvements. This tool is designed to give you a clear, big-picture view of your progress, helping you identify trends and make informed decisions about your training.
 
 ### What is the Strength Visualizer?
 
@@ -20,11 +20,11 @@ The [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer) is a char
 
 ### How it Works
 
-At its core, the [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer) uses your workout data to estimate your one-rep max (e1RM) using formulas like Brzycki, which is customizable in the app. By taking into account the reps and weight lifted during each workout, the visualizer calculates your potential max strength for each lift type. This is displayed in a chart, showing you how your e1RM changes across different sessions.
+At its core, the [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer) uses your workout data to estimate your one-rep max (e1RM) using formulas like [Brzycki](https://www.strengthjourneys.xyz/calculator/brzycki-formula-1rm-calculator), which is customizable in the app. By taking into account the reps and weight lifted during each workout, the visualizer calculates your potential max strength for each lift type. This is displayed in a chart, showing you how your e1RM changes across different sessions.
 
 The visualizer supports:
 
-- **Multiple lifts:** Choose specific lift types like squat, deadlift, or bench press.
+- **Multiple lifts:** Choose specific lift types like [squat](https://www.strengthjourneys.xyz/progress-guide/squat), [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), or [bench press](https://www.strengthjourneys.xyz/progress-guide/bench-press).
 - **Custom time ranges**: View progress over the past 3 months, 6 months, 1 year, or all time.
 
 ### Why Use the [Visualizer](https://www.strengthjourneys.xyz/visualizer)?
@@ -32,10 +32,10 @@ The visualizer supports:
 The visualizer offers several key advantages to lifters:
 
 - **View Your Entire Strength Journey at a Glance**: The Strength Visualizer lets you see your complete history for a specific lift type, even if you have 10 years' worth of data. This means you can see your long-term strength progression in one clear snapshot, providing unparalleled insight into how your lifting journey has evolved.
-- **Predict Your Future Strength**: By analyzing your trajectory of progress, you can estimate your potential strength for an upcoming meet or powerlifting competition. This makes the visualizer a powerful tool for planning and setting goals, helping you stay on track for those big events.
-- **Identify Plateaus**: Spot any periods where your progress stalls, giving you the insight to make necessary adjustments in your training program.
+- **Predict Your Future Strength**: By analyzing your trajectory of progress, you can estimate your potential strength for an upcoming meet or [powerlifting competition](https://www.strengthjourneys.xyz/articles/how-often-should-i-test-my-one-rep-max). This makes the visualizer a powerful tool for planning and setting goals, helping you stay on track for those big events.
+- **Identify Plateaus**: Spot any periods where your progress stalls, giving you the insight to make necessary [adjustments](https://www.strengthjourneys.xyz/articles/tracking-tonnage-as-a-simple-programming-guide) in your training program.
 - **Understand Training Effectiveness**: By visualizing trends in your e1RM, you can determine which phases of training were the most effective for strength gains.
-- **Set Realistic Goals**: The visualizer helps you set data-driven goals by providing a clear understanding of your current strength level and how it has evolved.
+- **Set Realistic Goals**: The visualizer helps you set data-driven goals by providing a clear understanding of your current [strength level](https://www.strengthjourneys.xyz/strength-levels) and how it has evolved.
 
 ### Using the [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer)
 

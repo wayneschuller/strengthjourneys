@@ -15,9 +15,9 @@ Barbells are one of the most effective tools in strength training, and one of th
 
 ## Precise Load Progression
 
-The barbell's killer feature is **titration**: you can increase the load in small, exact increments. Add 2.5kg this week, 2.5kg next week. With **fractional plates** you can go even smaller (as little as 0.25kg, roughly 0.5lb, at a time). That matters more than it sounds. As you get stronger, progress slows, and the ability to make tiny jumps is what keeps you moving forward without hitting a wall.
+The barbell's killer feature is **titration**: you can increase the load in small, exact increments. Add 2.5kg this week, 2.5kg next week. With **fractional plates** you can go even smaller (as little as 0.25kg, roughly 0.5lb, at a time). That matters more than it sounds. As you get stronger, [progress slows](https://www.strengthjourneys.xyz/articles/tracking-tonnage-as-a-simple-programming-guide), and the ability to make tiny jumps is what keeps you moving forward without hitting a wall.
 
-Dumbbells jump in fixed increments, usually 2.5kg or 5kg at a time. That's fine for isolation work, but when you're squatting or pressing, those jumps are too big to manage safely and without tears. The barbell lets you stay on a smooth upward curve at whatever pace suits your fragile physical and/or emotional frame.
+[Dumbbells](https://www.strengthjourneys.xyz/articles/what-is-the-difference-between-strength-training-and-resistance-training) jump in fixed increments, usually 2.5kg or 5kg at a time. That's fine for isolation work, but when you're squatting or pressing, those jumps are too big to manage safely and without tears. The barbell lets you stay on a smooth upward curve at whatever pace suits your fragile physical and/or emotional frame.
 
 ## Full-Body Functional Movements
 
@@ -27,6 +27,6 @@ This transfers to real-world strength. Picking something heavy off the floor, ca
 
 ## They Just Feel Badass
 
-There's no getting around it: loading plates onto a barbell, stepping up to the bar, and lifting something heavy feels genuinely great. There's a satisfying physicality to it that machines and dumbbells don't quite match. The weight is real, the feedback is immediate, and the experience is its own reward.
+There's no getting around it: loading plates onto a [barbell](https://www.strengthjourneys.xyz/articles/what-barbell-should-i-start-with), stepping up to the bar, and lifting something heavy feels genuinely great. There's a satisfying physicality to it that machines and dumbbells don't quite match. The weight is real, the feedback is immediate, and the experience is its own reward.
 
-That feeling matters. Training you enjoy is training you'll keep doing.
+That feeling matters. Training you enjoy is training [you'll keep doing](https://www.strengthjourneys.xyz/articles/strength-training-helps-you-live-longer).

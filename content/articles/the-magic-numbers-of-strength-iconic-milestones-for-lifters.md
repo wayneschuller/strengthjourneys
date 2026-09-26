@@ -26,7 +26,7 @@ Yes, we already have a [1000lb calculator on Strength Journeys](https://www.stre
 
 ## 2. **The 200/300/400/500 Standards**
 
-This goal is an approachable yet challenging benchmark for the "big four" lifts:
+This goal is an approachable yet challenging [benchmark](https://www.strengthjourneys.xyz/200-300-400-500-strength-club-calculator) for the "big four" lifts:
 
 - **[200-pound Overhead Press:](https://www.strengthjourneys.xyz/progress-guide/strict-press)** A mark of significant upper body strength.
 - **[300-pound Bench Press:](https://www.strengthjourneys.xyz/progress-guide/bench-press)** For many, this is a coveted upper body strength goal. 
@@ -37,11 +37,11 @@ Hitting these numbers across each of the big four exercises is a testament to ba
 
 ## 3. **100kg Bench Press**
 
-A 100-kilogram (~225-pound) bench press represents a well-rounded upper body strength level that is achievable by dedicated lifters worldwide. This mark often becomes an early goal for lifters - having two blue plates or steel 45s on each side feels right.
+A [100-kilogram (~225-pound) bench press](https://www.strengthjourneys.xyz/articles/what-is-a-good-bench-press-by-age-weight-and-experience) represents a well-rounded upper body strength level that is achievable by dedicated lifters worldwide. This mark often becomes an early goal for lifters - having two blue plates or steel 45s on each side feels right.
 
 ## 4. **200kg Deadlift and Squat**
 
-The 200-kilogram deadlift and squat are iconic numbers in strength training. For many intermediate lifters, a 200kg deadlift is a goal that requires dedication, solid form, and programming consistency. A 200kg squat requires impressive lower body strength, stability, and confidence under heavy loads.
+The 200-kilogram deadlift and squat are iconic numbers in strength training. For many intermediate lifters, a [200kg deadlift](https://www.strengthjourneys.xyz/strength-levels/deadlift) is a goal that requires dedication, solid form, and programming consistency. A [200kg squat](https://www.strengthjourneys.xyz/strength-levels/squat) requires impressive lower body strength, stability, and confidence under heavy loads.
 
 ## 5. **Bodyweight Bench and 1.5x Bodyweight Squat**
 
@@ -52,8 +52,8 @@ These milestones represent strength relative to bodyweight and are key for lifte
 
 ## 6. **Two, Three and Four Plates Club**
 
-In many gyms, barbells are loaded with plates that weigh 45 pounds each. A single plate on each side of the barbell is 135 pounds, two plates total 225 pounds, and three plates hit 315 pounds. Four plates add up to a bigger number. These are often informal yet universally acknowledged milestones for beginners and intermediate lifters. Joining the "two plates" club on the bench press or strict press is a significant step, while the "three plates" club is often an aspirational target for squat.
+In many gyms, barbells are loaded with plates that weigh 45 pounds each. A single plate on each side of the [barbell](https://www.strengthjourneys.xyz/articles/how-much-does-a-standard-barbell-weigh) is 135 pounds, two plates total 225 pounds, and three plates hit 315 pounds. Four plates add up to a bigger number. These are often informal yet universally acknowledged [milestones](https://www.strengthjourneys.xyz/plate-milestones) for beginners and intermediate lifters. Joining the "two plates" club on the bench press or strict press is a significant step, while the "three plates" club is often an aspirational target for squat.
 
 ## Conclusion
 
-Reaching these numbers takes time, dedication, and intelligent programming. These milestones not only track physical progress but also symbolize personal achievements in the strength journey. Whether you’re eyeing the 1000lb club, a 200kg deadlift, or simply aiming to lift twice your bodyweight, each goal reflects resilience and a commitment to becoming stronger every day.
+Reaching these numbers takes time, dedication, and intelligent programming. These milestones not only [track physical progress](https://www.strengthjourneys.xyz/visualizer) but also symbolize personal achievements in the strength journey. Whether you’re eyeing the 1000lb club, a 200kg deadlift, or simply aiming to lift twice your bodyweight, each goal reflects resilience and a commitment to becoming stronger every day.

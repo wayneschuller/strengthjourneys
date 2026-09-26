@@ -10,13 +10,13 @@ categories:
 cover: "/articles/strength-training-helps-you-live-longer/cover.jpg"
 ---
 
-Picking up heavy things and putting them down again turns out to be good for your health. The science on this has been building for years. Here are three studies worth reading that make the case.
+Picking up [heavy things](https://www.strengthjourneys.xyz/articles/what-are-barbells-good-for) and putting them down again turns out to be good for your health. The science on this has been building for years. Here are three studies worth reading that make the case.
 
 ## Study 1: [Resistance Training and Mortality Risk: A Systematic Review and Meta-Analysis](https://pubmed.ncbi.nlm.nih.gov/35599175/)
 
 Published in the American Journal of Preventive Medicine (2022), this meta-analysis pulled together 10 studies covering millions of person-years of follow-up. The headline finding: any amount of resistance training reduced the risk of all-cause mortality by 15%, cardiovascular disease mortality by 19%, and cancer mortality by 14%.
 
-"Any amount" is doing a lot of work in that sentence. You do not need to become a competitive powerlifter. You just need to show up.
+"Any amount" is doing a lot of work in that sentence. You do not need to become a competitive powerlifter. You just need to [show up](https://www.strengthjourneys.xyz/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard).
 
 ## Study 2: [Weight Training and Risk of All-Cause, Cardiovascular Disease and Cancer Mortality Among Older Adults](https://pmc.ncbi.nlm.nih.gov/articles/PMC11147802/)
 
@@ -28,10 +28,10 @@ The dose-response finding is worth noting: more time in the gym beyond the minim
 
 This review of the dose-response literature points to around **60 minutes per week** as the sweet spot for mortality benefits. Two 30-minute sessions. Three sessions of 20 minutes. Less than one episode of a prestige TV drama.
 
-The relationship follows a U-curve: too little, modest benefit; around 60 minutes, maximum benefit; beyond that, diminishing returns. When combined with aerobic exercise, the mortality reduction reaches up to 40%. Cardio and lifting are not competing choices. They are complements, and anyone who has told you otherwise is trying to sell you something.
+The relationship follows a U-curve: too little, modest benefit; around 60 minutes, maximum benefit; beyond that, diminishing returns. When combined with [aerobic exercise](https://www.strengthjourneys.xyz/articles/should-runners-do-strength-training), the mortality reduction reaches up to 40%. [Cardio and lifting](https://www.strengthjourneys.xyz/articles/muscle-is-the-medication-strength-training-and-insulin-resistance) are not competing choices. They are complements, and anyone who has told you otherwise is trying to sell you something.
 
 ## The Bottom Line
 
-You already knew exercise was good for you. Now you know that the barbell variety specifically is associated with meaningful reductions in the risk of dying from the main things people die from.
+You already knew exercise was good for you. Now you know that [the barbell variety](https://www.strengthjourneys.xyz/articles/what-is-the-difference-between-strength-training-and-resistance-training) specifically is associated with meaningful reductions in the risk of dying from the main things people die from.
 
-Start. The bar does not need to be heavy. It just needs to be picked up.
+Start. [The bar](https://www.strengthjourneys.xyz/articles/what-barbell-should-i-start-with) does not need to be heavy. It just needs to be picked up.

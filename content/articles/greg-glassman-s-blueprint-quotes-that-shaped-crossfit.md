@@ -26,7 +26,7 @@ Glassman's definition is deceptively simple. It does not say "looking good." It 
 
 ## The 100 Words
 
-> Eat meat and vegetables, nuts and seeds, some fruit, little starch, and no sugar. Keep intake to levels that will support exercise but not body fat. Practice and train major lifts: [Deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), clean, [squat](https://www.strengthjourneys.xyz/progress-guide/squat), [presses](https://www.strengthjourneys.xyz/progress-guide/strict-press), C&J, and snatch. Similarly master the basics of gymnastics: pull-ups, dips, rope climb, push-ups, sit-ups, presses to handstand, pirouettes, flips, splits, and holds. Bike, run, swim, row, etc., hard and fast. Five or six days per week mix these elements in as many combinations and patterns as can be derived. Routine is the enemy. Keep workouts short and intense. Regularly learn and play new sports.
+> Eat meat and vegetables, nuts and seeds, some fruit, little starch, and no sugar. Keep intake to levels that will support exercise but not body fat. Practice and train major lifts: [Deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), [clean](https://www.strengthjourneys.xyz/progress-guide/power-clean), [squat](https://www.strengthjourneys.xyz/progress-guide/squat), [presses](https://www.strengthjourneys.xyz/progress-guide/strict-press), C&J, and [snatch](https://www.strengthjourneys.xyz/progress-guide/power-snatch). Similarly master the basics of gymnastics: pull-ups, dips, rope climb, push-ups, sit-ups, presses to handstand, pirouettes, flips, splits, and holds. Bike, run, swim, row, etc., hard and fast. Five or six days per week mix these elements in as many combinations and patterns as can be derived. Routine is the enemy. Keep workouts short and intense. Regularly learn and play new sports.
 
 *— Greg Glassman, "[World-Class Fitness in 100 Words](https://library.crossfit.com/free/pdf/CFJ_English_Level1_TrainingGuide.pdf)," CrossFit Journal*
 
@@ -48,7 +48,7 @@ He was also careful to say that intensity is always relative to the individual's
 
 This is the scalability argument, and it is more radical than it sounds. Most fitness systems have a beginner version and an advanced version, and the two look nothing alike. Glassman said they should look identical, at different loads and complexities.
 
-Your grandmother and a competitive weightlifter both need to hip hinge, brace the spine, and express power from the ground up. One does it with 15 kg. The other does it with 200 kg. Same movement. Same need. Degree, not kind.
+[Your grandmother](https://www.strengthjourneys.xyz/articles/strength-training-helps-you-live-longer) and a competitive weightlifter both need to hip hinge, brace the spine, and express power from the ground up. One does it with 15 kg. The other does it with 200 kg. Same movement. Same need. Degree, not kind.
 
 ## Routine Is the Enemy
 
@@ -58,7 +58,7 @@ Your grandmother and a competitive weightlifter both need to hip hinge, brace th
 
 Three words. No elaboration required.
 
-The instinct in strength training is to systematise everything: find the programme, run it for 12 weeks, repeat. There is value in that. But Glassman was pointing at something real. The body adapts to predictable stimuli. Novel demands — a different movement, a new time domain, a sport you have never played — produce adaptation that no spreadsheet can fully anticipate. The athlete who has trained everything is ready for anything. Probably even the unexpected back pain from doing the thing they haven't touched in six months, but let's not dwell on that.
+The instinct in strength training is to systematise everything: [find the programme](https://www.strengthjourneys.xyz/articles/tracking-tonnage-as-a-simple-programming-guide), run it for 12 weeks, repeat. There is value in that. But Glassman was pointing at something real. The body adapts to predictable stimuli. Novel demands — a different movement, a new time domain, a sport you have never played — produce adaptation that no spreadsheet can fully anticipate. The athlete who has trained everything is ready for anything. Probably even the unexpected back pain from doing the thing they haven't touched in six months, but let's not dwell on that.
 
 ## Sport-Specific Training Is Mostly a Racket
 
@@ -70,6 +70,6 @@ He was not entirely right. Elite sport does require specific adaptation. But he 
 
 ## The Whole Model in One Sentence
 
-Glassman was not building a fitness brand. He was building a falsifiable theory: define fitness precisely, measure work capacity, apply varied high-intensity functional movement, and track the output. If the output improves, the theory holds.
+Glassman was not building a fitness brand. He was building a falsifiable theory: define fitness precisely, measure work capacity, apply varied high-intensity functional movement, and [track the output](https://www.strengthjourneys.xyz/tonnage). If the output improves, the theory holds.
 
 The gyms exploded. The theory held.

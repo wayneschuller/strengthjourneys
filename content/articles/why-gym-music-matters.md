@@ -9,19 +9,19 @@ categories:
 cover: "/articles/why-gym-music-matters/cover.jpg"
 ---
 
-When it comes to lifting, the mind and body work as a unit. While physical strength and technique are crucial, the mental aspect of lifting is just as important. Music plays a significant role in boosting our mental state, which directly impacts our performance in the gym.
+When it comes to lifting, the mind and body work as a unit. While physical strength and technique are crucial, the [mental aspect of lifting](https://www.strengthjourneys.xyz/articles/the-iron-and-the-soul-author-henry-rollins) is just as important. Music plays a significant role in boosting our mental state, which directly impacts our performance in the gym.
 
 ## The Mental Boost of Music
 
-Music has the power to lift us mentally, especially when we're going for a personal record (PR) or tackling a heavy top set. The right song can provide that extra adrenaline rush, helping us push through tough reps. It’s not just about distraction—it’s about channeling energy and focus into the lift.
+Music has the power to lift us mentally, especially when we're going for a [personal record (PR)](https://www.strengthjourneys.xyz/articles/strength-training-for-beginners-understanding-key-phrases-like-1rm-pr-rpe-and-more) or tackling a heavy top set. The right song can provide that extra adrenaline rush, helping us push through tough reps. It’s not just about distraction—it’s about channeling energy and focus into the lift.
 
 ## Variety for Long-Term Success
 
-Over the years, lifting can become monotonous if we stick to the same routines, and this extends to music. Adding variety to your playlist can keep your workouts fresh and mentally engaging. Switching up the music and matching it to your mood can make lifting more sustainable over the long term, helping you stay motivated and consistent.
+Over the years, lifting can become monotonous if we stick to the [same routines](https://www.strengthjourneys.xyz/articles/greg-glassman-s-blueprint-quotes-that-shaped-crossfit), and this extends to music. Adding variety to your playlist can keep your workouts fresh and mentally engaging. Switching up the music and matching it to your mood can make lifting more sustainable over the long term, helping you stay motivated and consistent.
 
 ## The Impact of Bad Gym Music
 
-On the flip side, bad gym music can be discouraging and even demotivating. This is where garage gym owners have a massive advantage—they control the playlist. Whether it's heavy metal for a deadlift session or something more upbeat for high-rep work, having the right music is a game-changer.
+On the flip side, bad gym music can be discouraging and even demotivating. This is where [garage gym](https://www.strengthjourneys.xyz/articles/what-barbell-should-i-start-with) owners have a massive advantage—they control the playlist. Whether it's heavy metal for a [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift) session or something more upbeat for high-rep work, having the right music is a game-changer.
 
 ## How To Find the Best Gym Music
 

@@ -15,15 +15,15 @@ coverFocus: "50% 37%"
 
 ### 1RM or ORM (One Rep Max)
 
-Your 1RM stands for your "One Rep Max" — the maximum amount of weight you can lift for one complete repetition of an exercise with good form. Knowing your 1RM is vital because it helps you understand your current strength level, and your program may be designed around percentages of your 1RM. The most critical 1RM is your high school bench press.
+Your 1RM stands for your "One Rep Max" — the maximum amount of weight you can lift for one complete repetition of an exercise with good form. Knowing your 1RM is vital because it helps you understand your current [strength level](https://www.strengthjourneys.xyz/strength-levels), and your program may be designed around percentages of your 1RM. The most critical 1RM is your [high school bench press](https://www.strengthjourneys.xyz/articles/what-is-a-good-bench-press-by-age-weight-and-experience).
 
 ### E1RM (Estimated One Rep Max)
 
-An E1RM, or Estimated One Rep Max, refers to the projected maximum amount of weight you could lift for one complete repetition based on a multiple repetition set. Unlike an actual 1RM test, which requires lifting at maximum effort, the E1RM can be estimated using a [One Rep Max Calculator.](https://www.strengthjourneys.xyz/calculator) 
+An E1RM, or [Estimated One Rep Max](https://www.strengthjourneys.xyz/articles/what-is-an-e1rm-estimated-one-rep-max), refers to the projected maximum amount of weight you could lift for one complete repetition based on a multiple repetition set. Unlike an actual 1RM test, which requires lifting at maximum effort, the E1RM can be estimated using a [One Rep Max Calculator.](https://www.strengthjourneys.xyz/calculator) 
 
 ### PR (Personal Record)
 
-A PR, or Personal Record, is your best-ever performance in a specific lift or workout. It could be the heaviest weight you've ever lifted in the last 12-18 months or the most reps you've ever completed at a certain weight. Tracking your PRs is a great way to monitor progress over time. It shows you when you're getting stronger and gives you something to aim for in each workout. Although, you can lose your soul chasing PRs.
+A PR, or Personal Record, is your best-ever performance in a specific lift or workout. It could be the heaviest weight you've ever lifted in the last 12-18 months or the most reps you've ever completed at a certain weight. [Tracking your PRs](https://www.strengthjourneys.xyz/lift-explorer) is a great way to monitor progress over time. It shows you when you're getting stronger and gives you something to aim for in each workout. Although, you can lose your soul chasing PRs.
 
 ### RPE (Rate of Perceived Exertion)
 
@@ -57,11 +57,11 @@ Hypertrophy refers to the growth of muscle size. It's typically achieved by lift
 
 ### Volume (or Tonnage)
 
-Volume is the total amount of work done in a workout, calculated as sets × reps × weight. Tonnage is another metric to track overall long term progress.
+Volume is the [total amount of work](https://www.strengthjourneys.xyz/tonnage) done in a workout, calculated as sets × reps × weight. [Tonnage](https://www.strengthjourneys.xyz/articles/tracking-tonnage-as-a-simple-programming-guide) is another metric to track overall long term progress.
 
 ### Progressive Overload
 
-This is a crucial principle of strength training. Progressive overload means gradually increasing the weight, reps, or sets to continually challenge your body to get stronger. If your body does not respond to mere verbal rebukes, try progressive overload.
+This is a crucial principle of strength training. Progressive overload means [gradually increasing the weight](https://www.strengthjourneys.xyz/articles/what-are-barbells-good-for), reps, or sets to continually challenge your body to get stronger. If your body does not respond to mere verbal rebukes, try progressive overload.
 
 ### Deload
 
@@ -74,11 +74,11 @@ Occasionally, you will fail a lift. Learning to use safety bars and fail safely 
 
 ### Accessory Exercises
 
-These are movements used to support your main lifts. Close-grip bench presses, rack pulls, and barbell curls in the squat rack are popular accessory exercises.
+These are movements used to support your main lifts. [Close-grip bench presses](https://www.strengthjourneys.xyz/progress-guide/close-grip-bench-press), [rack pulls](https://www.strengthjourneys.xyz/progress-guide/rack-pull), and [barbell curls](https://www.strengthjourneys.xyz/progress-guide/barbell-curl) in the squat rack are popular accessory exercises.
 
 ### Warm-Up Sets
 
-These are lighter sets performed before your working sets to help you prepare your muscles and joints for heavy lifting, reducing injury risk. For many lifters, this is the time to have a good cry before getting down to business.
+These are [lighter sets](https://www.strengthjourneys.xyz/warm-up-sets-calculator) performed before your working sets to help you prepare your muscles and joints for heavy lifting, reducing injury risk. For many lifters, this is the time to have a good cry before getting down to business.
 
 ### Working Sets
 
@@ -86,7 +86,7 @@ These are the sets where you're lifting your target weight for the desired numbe
 
 ### Super Set
 
-A super set involves performing two exercises back-to-back with minimal rest in between. It's a time-efficient way to increase workout intensity and volume. However, it's generally considered best practice to avoid these and simply doomscroll your phone between sets.
+A super set involves performing two exercises back-to-back with minimal rest in between. It's a time-efficient way to increase workout intensity and volume. However, it's generally considered best practice to avoid these and simply [doomscroll your phone](https://www.strengthjourneys.xyz/articles/using-ai-in-barbell-strength-training) between sets.
 
 ### Circuit Training
 
@@ -102,7 +102,7 @@ DOMS is the muscle soreness new lifters might feel a day or two after a workout.
 
 ### Spotter
 
-A spotter is a person who assists you during a lift to ensure safety and to help if you struggle to complete a rep, typically in exercises like the bench press or squat. 
+A spotter is a person who assists you during a lift to ensure safety and to help if you struggle to complete a rep, typically in exercises like the [bench press](https://www.strengthjourneys.xyz/progress-guide/bench-press) or [squat](https://www.strengthjourneys.xyz/progress-guide/squat). 
 
 ### Periodization
 
@@ -114,11 +114,11 @@ In powerlifting, max effort refers to lifting the heaviest weight you can in a s
 
 ### Peaking
 
-Peaking is the process of training specifically to hit your highest possible strength level for a competition or specific test day (like testing your 1RM).
+Peaking is the process of training specifically to hit your highest possible strength level for a competition or specific test day (like [testing your 1RM](https://www.strengthjourneys.xyz/articles/how-often-should-i-test-my-one-rep-max)).
 
 ### AMRAP (As Many Reps As Possible)
 
-AMRAP is a workout format where you perform an exercise for as many reps as you can within a given time or until failure. It's also sometimes used in CrossFit.
+AMRAP is a workout format where you perform an exercise for as many reps as you can within a given time or until failure. It's also sometimes used in [CrossFit](https://www.strengthjourneys.xyz/articles/greg-glassman-s-blueprint-quotes-that-shaped-crossfit).
 
 ### Lockout
 
@@ -126,7 +126,7 @@ The lockout is the final portion of a lift, where you fully extend your joints (
 
 ### Eccentric
 
-The eccentric phase of a lift is when the muscle lengthens under tension, such as lowering the bar in a squat or deadlift. Eccentric training can help build strength and prevent injury. It is considered by many to be where the magic happens.
+The eccentric phase of a lift is when the muscle lengthens under tension, such as lowering the bar in a squat or [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift). Eccentric training can help build strength and prevent injury. It is considered by many to be where the magic happens.
 
 ### Concentric
 

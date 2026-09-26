@@ -23,7 +23,7 @@ Start with a **general purpose bar** unless you are sure your training is almost
 
 The bar is not just "a bar". The weight and diameter change how it feels.
 
-- Most men should start with a standard **20kg (45lb)** bar.
+- Most men should start with a standard **[20kg (45lb)](https://www.strengthjourneys.xyz/articles/how-much-does-a-standard-barbell-weigh)** bar.
 - Most women should start with a standard **15kg Olympic bar** (for example, the **[Rogue Bella Bar](https://www.roguefitness.com/rogue-bella-bar-2-0)**).
 
 A 15kg bar is usually a smaller diameter, which can be more comfortable for smaller hands and can make learning the lifts easier. It is not a "beginner bar" in a bad way, it is simply a different standard.
@@ -34,9 +34,9 @@ Both can be high quality. They just feel different.
 
 ### General purpose bars
 
-- Good for the **big four** ([back squat](https://www.strengthjourneys.xyz/progress-guide/squat), [bench press](https://www.strengthjourneys.xyz/progress-guide/bench-press), [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), [strict press](https://www.strengthjourneys.xyz/progress-guide/strict-press)) under 400lb load, plus Olympic lift variations like the **power snatch** and **clean**.
+- Good for the **big four** ([back squat](https://www.strengthjourneys.xyz/progress-guide/squat), [bench press](https://www.strengthjourneys.xyz/progress-guide/bench-press), [deadlift](https://www.strengthjourneys.xyz/progress-guide/deadlift), [strict press](https://www.strengthjourneys.xyz/progress-guide/strict-press)) under 400lb load, plus Olympic lift variations like the **[power snatch](https://www.strengthjourneys.xyz/progress-guide/power-snatch)** and **[clean](https://www.strengthjourneys.xyz/progress-guide/power-clean)**.
 - Knurling is usually moderate, so it will not shred your hands or your shirt.
-- Often has a bit more whip (flex) and a more forgiving feel for **higher-rep**, CrossFit-style workouts where you are cycling reps and moving fast (even jogging between stations).
+- Often has a bit more whip (flex) and a more forgiving feel for **higher-rep**, [CrossFit](https://www.strengthjourneys.xyz/articles/greg-glassman-s-blueprint-quotes-that-shaped-crossfit)-style workouts where you are cycling reps and moving fast (even jogging between stations).
 
 ### Power bars (technical)
 
@@ -46,7 +46,7 @@ Both can be high quality. They just feel different.
 - A **center knurl** helps the bar stay planted on your back in squats.
 - Sleeves are usually **bushing based** (not bearing based), which gives a smoother, more controlled spin that suits squat and bench.
 
-If you are chasing strength milestones and your training is mostly the big three, a power bar is hard to beat.
+If you are chasing [strength milestones](https://www.strengthjourneys.xyz/articles/the-magic-numbers-of-strength-iconic-milestones-for-lifters) and your training is mostly the big three, a power bar is hard to beat.
 
 ## What makes a barbell worth buying
 

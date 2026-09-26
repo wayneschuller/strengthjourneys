@@ -27,7 +27,7 @@ You do not have to wait for better insulin sensitivity before you train. The tra
 
 ## Years of Lifting Stack the Odds
 
-The long-term numbers are just as good. In an [18-year study of 32,002 men](https://pmc.ncbi.nlm.nih.gov/articles/PMC3822244/), at least 150 minutes of weight training a week was linked to a 34% lower risk of type 2 diabetes. Men who did at least 150 minutes of both weight training and aerobic exercise had a 59% lower risk.
+The long-term numbers are just as good. In an [18-year study of 32,002 men](https://pmc.ncbi.nlm.nih.gov/articles/PMC3822244/), at least 150 minutes of [weight training](https://www.strengthjourneys.xyz/articles/strength-training-helps-you-live-longer) a week was linked to a 34% lower risk of type 2 diabetes. Men who did at least 150 minutes of both weight training and aerobic exercise had a 59% lower risk.
 
 A [2026 study in JAMA Network Open](https://pmc.ncbi.nlm.nih.gov/articles/PMC13288573/) followed 143,715 health professionals for 19 years. Any resistance training was linked to lower risk, and people who kept up at least 30 minutes a week through midlife had a 42% lower risk than those who consistently did little.
 
@@ -53,7 +53,7 @@ Cardio improves insulin sensitivity too — the ADA recommends both in its [posi
 
 Cardio burns glucose. Strength training builds the infrastructure to handle it.
 
-You do not have to choose. But if you are only doing one, pick the intervention that permanently remodels your metabolic capacity.
+[You do not have to choose.](https://www.strengthjourneys.xyz/articles/should-runners-do-strength-training) But if you are only doing one, pick the intervention that permanently remodels your metabolic capacity.
 
 **Muscle is the medication.** The prescription is free. 
 

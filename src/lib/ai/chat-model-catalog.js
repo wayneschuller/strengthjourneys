@@ -15,8 +15,12 @@
  *
  * GPT-6 Luna is the default: on a "Review my training this month" run with
  * real data it was fastest (4.4s median full answer, vs 7.5s Grok 4.20 and
- * 7.9s GPT-5.6 Luna), steadiest between runs, and cheapest. The menu lists
- * providers in catalog order, so OpenAI comes first.
+ * 7.9s GPT-5.6 Luna), steadiest between runs, and cheapest. The switcher
+ * marks the default as "Recommended", so changing it here moves the badge.
+ * The menu lists providers in catalog order, so OpenAI comes first.
+ *
+ * Blurbs describe how a model answers, never how recent it is: "newest"
+ * goes stale the day another model ships.
  *
  * `access` gates a model: "everyone", or "signed-in", which doubles as a
  * sign-in nudge in the switcher. The server enforces it (lib/ai/models.js);
@@ -34,7 +38,7 @@ export const CHAT_MODELS = [
     id: "gpt-6-luna",
     label: "GPT-6 Luna",
     provider: "openai",
-    blurb: "OpenAI's newest, with short and precise answers",
+    blurb: "The quickest full answers, short and precise",
     access: "everyone",
   },
   {

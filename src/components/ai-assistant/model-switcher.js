@@ -8,6 +8,9 @@
  * catalog and the lifter's access. Offerings come from
  * lib/ai/chat-model-catalog.js, filtered to the models the server can run.
  *
+ * The default model carries a "Recommended" badge, so the preferred pick is
+ * clear without a blurb that dates.
+ *
  * Signed-in-only models stay visible to signed-out lifters as a sign-in nudge,
  * faded with a lock, above a Google sign-in row at the bottom: the same
  * pattern as the theme chooser (components/ui-shell/theme-chooser.js).
@@ -29,6 +32,7 @@ import { GoogleSignInMenuItem } from "@/components/onboarding/google-sign-in";
 import { CoachDetailsSummary } from "@/components/ai-assistant/coach-details";
 import {
   CHAT_MODELS,
+  DEFAULT_CHAT_MODEL_ID,
   PROVIDER_NAMES,
   canUseChatModel,
   findChatModel,
@@ -145,7 +149,14 @@ export function ModelSwitcher({
 function ModelText({ model }) {
   return (
     <span className="min-w-0 flex-1">
-      <span className="block text-sm font-medium">{model.label}</span>
+      <span className="flex items-center gap-1.5 text-sm font-medium">
+        {model.label}
+        {model.id === DEFAULT_CHAT_MODEL_ID && (
+          <span className="bg-primary/10 text-primary rounded-full px-1.5 py-px text-[10px] leading-4 font-medium">
+            Recommended
+          </span>
+        )}
+      </span>
       <span className="text-muted-foreground block text-xs">{model.blurb}</span>
     </span>
   );

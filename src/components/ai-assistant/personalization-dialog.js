@@ -3,8 +3,10 @@
  * keeps chat primary while the dialog preserves transparent sharing choices.
  *
  * The dialog can show the exact summary text the coach receives, so nothing
- * about what is shared is left to a lifter's imagination.
+ * about what is shared is left to a lifter's imagination. It is built only
+ * while that preview is open, and rebuilt as the choices above change.
  */
+import { useMemo, useState } from "react";
 import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,9 +30,16 @@ import {
  * @param {Object} props
  * @param {React.ReactNode} props.children The profile and training sections.
  * @param {boolean} props.enabled Whether anything personal is shared.
- * @param {string} [props.summary] The exact text sent with each message.
+ * @param {() => string} [props.buildSummary] Builds the exact text sent with each message.
  */
-export function PersonalizationDialog({ children, enabled, summary = "" }) {
+export function PersonalizationDialog({ children, enabled, buildSummary }) {
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // buildSummary changes identity only when the lifter's choices change.
+  const summary = useMemo(
+    () => (isPreviewOpen && buildSummary ? buildSummary() : ""),
+    [isPreviewOpen, buildSummary],
+  );
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -49,8 +58,12 @@ export function PersonalizationDialog({ children, enabled, summary = "" }) {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-2 md:grid-cols-2 md:gap-8">{children}</div>
-        {summary && (
-          <Collapsible className="border-t pt-4">
+        {enabled && buildSummary && (
+          <Collapsible
+            open={isPreviewOpen}
+            onOpenChange={setIsPreviewOpen}
+            className="border-t pt-4"
+          >
             <CollapsibleTrigger className="text-muted-foreground hover:text-foreground group flex items-center gap-2 text-sm font-medium">
               See exactly what the coach receives
               <ChevronDown

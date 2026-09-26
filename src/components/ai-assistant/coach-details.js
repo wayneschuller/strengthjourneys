@@ -17,13 +17,15 @@ const REPO_URL = "https://github.com/wayneschuller/strengthjourneys";
  * @param {{ edition: string|null, suggestionModel: string|null }|null} props.coach From /api/chat/quota.
  * @param {{ edition?: string|null, model?: string }|null} [props.latestReply] Metadata of the latest assistant reply.
  * @param {{ used: number, limit: number }|null} [props.quota]
- * @param {number} [props.sharedContextChars] Length of the lifting summary sent with each message.
+ * @param {number} [props.sharedContextChars] Length of the lifting summary sent with the latest message.
+ * @param {boolean} [props.isSharing] Whether any lifting data is switched on, for before the first message.
  */
 export function CoachDetailsSummary({
   coach,
   latestReply,
   quota,
   sharedContextChars = 0,
+  isSharing = false,
 }) {
   const rows = [
     [
@@ -46,7 +48,9 @@ export function CoachDetailsSummary({
       "Your lifting data",
       sharedContextChars > 0
         ? `Summary shared (${sharedContextChars.toLocaleString("en-US")} characters)`
-        : "Not shared",
+        : isSharing
+          ? "Shared with your first message"
+          : "Not shared",
     ],
     ["Messages today", quota ? `${quota.used} of ${quota.limit}` : null],
   ].filter(([, value]) => value);

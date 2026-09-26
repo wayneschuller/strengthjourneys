@@ -251,7 +251,10 @@ function AILiftingAssistantMain({ relatedArticles }) {
       initializeWithValue: false,
     }) ?? "Brzycki";
 
-  const userProvidedProfileData = useMemo(() => {
+  // Built on demand (when a message is sent, or the preview is opened), never
+  // on page load: nothing needs the text until then, and the lifter's
+  // settings keep changing while the page settles.
+  const buildCoachContext = useCallback(() => {
     if (isDemoMode) return "";
     return buildLiftingContext({
       parsedData,
@@ -302,7 +305,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         personalizationControls={
           <PersonalizationDialog
             enabled={!isDemoMode && (shareBioDetails || hasSharedTrainingData)}
-            summary={userProvidedProfileData}
+            buildSummary={buildCoachContext}
           >
             <BioDetailsCard
               age={age}
@@ -327,7 +330,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
           </PersonalizationDialog>
         }
         suggestionContext={suggestionContext}
-        userProvidedProfileData={userProvidedProfileData}
+        buildCoachContext={buildCoachContext}
       />
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
@@ -557,6 +560,9 @@ function CopyButton({ text, ...props }) {
   );
 }
 
+// The lifting summary sent with the latest message, saved beside the chat.
+const CHAT_CONTEXT_STORAGE_KEY = "chat:/ai:context";
+
 /**
  * Chat card that drives the AI lifting assistant conversation. Handles message streaming via the
  * Vercel AI SDK, persists the session to sessionStorage, and supports download and reset actions.
@@ -566,8 +572,9 @@ function CopyButton({ text, ...props }) {
  * @param {boolean} props.hasSharedTrainingData - Whether the user has opted to share any lifting metadata.
  * @param {React.ReactNode} props.personalizationControls - Compact dialog trigger rendered in the chat header.
  * @param {Object} props.suggestionContext - Small prompt-personalisation context derived from opted-in local data.
- * @param {string} props.userProvidedProfileData - Serialised string of user bio and lifting
- *   metadata to inject into the AI system prompt via the request body on each message send.
+ * @param {() => string} props.buildCoachContext - Builds the opted-in lifting summary. Called
+ *   only when a message is sent; the text sent is kept so suggestions and shared feedback use
+ *   exactly what the coach saw.
  */
 function AILiftingAssistantCard({
   hasSharedBioData,
@@ -575,7 +582,7 @@ function AILiftingAssistantCard({
   hasSharedTrainingData,
   personalizationControls,
   suggestionContext,
-  userProvidedProfileData,
+  buildCoachContext,
 }) {
   const router = useRouter();
   const { status: authStatus } = useSession();
@@ -760,13 +767,18 @@ function AILiftingAssistantCard({
         loadChatQuota({ allowRollback: true });
       },
     });
-  const chatRequestBody = useMemo(
-    () => ({
-      userProvidedMetadata: userProvidedProfileData,
-      model: selectedModelId,
-    }),
-    [userProvidedProfileData, selectedModelId],
-  );
+  // The lifting summary sent with the latest message, built at send time.
+  // Kept (and saved with the chat) so suggestions and shared feedback use
+  // exactly what the coach saw.
+  const [sentContext, setSentContext] = useState("");
+  const buildChatRequestBody = useCallback(() => {
+    const context = buildCoachContext();
+    setSentContext(context);
+    try {
+      sessionStorage.setItem(CHAT_CONTEXT_STORAGE_KEY, context);
+    } catch {}
+    return { userProvidedMetadata: context, model: selectedModelId };
+  }, [buildCoachContext, selectedModelId]);
 
   // Follow-up suggestions are fetched separately once an answer finishes, so a
   // slow suggestion model can never hold the main chat stream open.
@@ -803,10 +815,10 @@ function AILiftingAssistantCard({
 
     reserveQuotaLocally();
     sendMessage(typeof message === "string" ? { text: message } : message, {
-      body: chatRequestBody,
+      body: buildChatRequestBody(),
     });
   }, [
-    chatRequestBody,
+    buildChatRequestBody,
     isChatUnavailable,
     reserveQuotaLocally,
     sendMessage,
@@ -843,8 +855,10 @@ function AILiftingAssistantCard({
       try {
         sessionStorage.removeItem("chat:/ai");
         sessionStorage.removeItem("chat:/ai:suggestions");
+        sessionStorage.removeItem(CHAT_CONTEXT_STORAGE_KEY);
       } catch {}
       setMessages([]);
+      setSentContext("");
       setSuggestionsByMessageId({});
     }
     pendingAiPromptRef.current = nextPrompt;
@@ -864,6 +878,7 @@ function AILiftingAssistantCard({
     try {
       const raw = sessionStorage.getItem("chat:/ai");
       if (raw) setMessages(JSON.parse(raw));
+      setSentContext(sessionStorage.getItem(CHAT_CONTEXT_STORAGE_KEY) ?? "");
       const rawSuggestions = sessionStorage.getItem("chat:/ai:suggestions");
       if (rawSuggestions) {
         setSuggestionsByMessageId(JSON.parse(rawSuggestions));
@@ -926,7 +941,7 @@ function AILiftingAssistantCard({
           body: JSON.stringify({
             latestUserMessage: latestUserText,
             assistantText,
-            userProvidedMetadata: userProvidedProfileData,
+            userProvidedMetadata: sentContext,
           }),
         });
         if (!response.ok) return;
@@ -942,7 +957,7 @@ function AILiftingAssistantCard({
         devLog("Failed to load AI follow-up suggestions", error);
       }
     })();
-  }, [messages, status, suggestionsByMessageId, userProvidedProfileData]);
+  }, [messages, status, suggestionsByMessageId, sentContext]);
 
   useEffect(() => {
     const pendingPrompt = pendingAiPromptRef.current;
@@ -971,8 +986,10 @@ function AILiftingAssistantCard({
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("chat:/ai");
       sessionStorage.removeItem("chat:/ai:suggestions");
+      sessionStorage.removeItem(CHAT_CONTEXT_STORAGE_KEY);
     }
     setMessages([]);
+    setSentContext("");
     setSuggestionsByMessageId({});
     clearPromptQueryParams();
   };
@@ -1044,7 +1061,8 @@ function AILiftingAssistantCard({
       coach,
       latestReply: messages.findLast((m) => m.role === "assistant")?.metadata,
       quota: chatQuota,
-      sharedContextChars: userProvidedProfileData?.length ?? 0,
+      sharedContextChars: sentContext.length,
+      isSharing: hasSharedBioData || hasSharedTrainingData,
     },
   };
 
@@ -1198,13 +1216,13 @@ function AILiftingAssistantCard({
                               <AiReplyFeedback
                                 message={message}
                                 messages={messages}
-                                userProvidedMetadata={userProvidedProfileData}
+                                userProvidedMetadata={sentContext}
                               >
                                 <MessageAction
                                   onClick={() => {
                                     if (!isChatUnavailable) {
                                       reserveQuotaLocally();
-                                      regenerate({ body: chatRequestBody });
+                                      regenerate({ body: buildChatRequestBody() });
                                     }
                                   }}
                                   label="Retry"

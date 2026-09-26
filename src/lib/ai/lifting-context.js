@@ -472,21 +472,44 @@ function bestE1RMOf(bestByReps, ctx) {
   );
 }
 
-/** Lifts from the latest session first, then the big four, then the most logged. */
+/**
+ * The lifts to summarise, from the 12 weeks up to the latest session (so a
+ * lapsed lifter is judged on their last block, not an empty recent past):
+ * big four lifts trained in that window first, then other lifts by how many
+ * sessions they appeared in, ties to the most recently trained. Then any big
+ * four ever logged, then the most logged lifts. One accessory-heavy session
+ * can no longer push the main lifts out.
+ */
 function pickMainLifts({ tail, liftTypes, latestDate }) {
   const known = new Set(liftTypes.map(({ liftType }) => liftType));
+  const windowStart = latestDate ? shiftDate(latestDate, -83) : null;
+  const sessionsByLift = new Map();
+  const lastDateByLift = new Map();
+
+  for (let i = tail.length - 1; i >= 0; i -= 1) {
+    const { date, liftType } = tail[i];
+    if (date < windowStart) break;
+    const dates = sessionsByLift.get(liftType) ?? new Set();
+    dates.add(date);
+    sessionsByLift.set(liftType, dates);
+    if (!lastDateByLift.has(liftType)) lastDateByLift.set(liftType, date);
+  }
+
+  const isBigFour = (liftType) => (BIG_FOUR.includes(liftType) ? 1 : 0);
+  const ranked = [...sessionsByLift.keys()].sort(
+    (a, b) =>
+      isBigFour(b) - isBigFour(a) ||
+      sessionsByLift.get(b).size - sessionsByLift.get(a).size ||
+      lastDateByLift.get(b).localeCompare(lastDateByLift.get(a)),
+  );
+
   const picked = [];
   const add = (liftType) => {
     if (!liftType || picked.includes(liftType)) return;
     if (known.size > 0 && !known.has(liftType)) return;
     picked.push(liftType);
   };
-
-  let latestStart = tail.length;
-  while (latestStart > 0 && tail[latestStart - 1].date === latestDate) {
-    latestStart -= 1;
-  }
-  tail.slice(latestStart).forEach((entry) => add(entry.liftType));
+  ranked.forEach(add);
   BIG_FOUR.forEach((liftType) => known.has(liftType) && add(liftType));
   liftTypes.forEach(({ liftType }) => add(liftType));
 

@@ -23,6 +23,8 @@ import {
   normalizeColumnName,
   convertStringToInt,
   convertWeightAndUnitType,
+  createParseRepairLog,
+  isDistanceOrTimeText,
 } from "@/lib/data-sources/parser-utilities";
 
 /**
@@ -43,6 +45,7 @@ export function parseStrengthJourneysData(data) {
       : undefined;
 
   const normalizedColumnNames = columnNames.map(normalizeColumnName);
+  const repairLog = createParseRepairLog("Strength Journeys");
 
   // Find indices for all columns
   let dateColumnIndex = normalizedColumnNames.indexOf("Date");
@@ -134,12 +137,35 @@ export function parseStrengthJourneysData(data) {
       obj.rawLiftType = previousRawLiftType;
     }
 
-    // Process required fields
+    // Process required fields. Cardio and timed work ("5km", "10 minute")
+    // share some sheets with lifts; leave those rows out rather than read a
+    // distance as a load.
+    if (isDistanceOrTimeText(row[repsCol])) {
+      repairLog.add(
+        "reps are a distance or time, row skipped",
+        i + 1,
+        row[repsCol],
+      );
+      continue;
+    }
     obj.reps = convertStringToInt(row[repsCol]);
     if (row[weightCol]) obj.rawWeight = row[weightCol]; // Store raw before normalization
-    const { value, unitType, _explicitUnit } = convertWeightAndUnitType(
-      row[weightCol],
-    );
+    const { value, unitType, _explicitUnit, repairs, skip } =
+      convertWeightAndUnitType(row[weightCol]);
+    if (skip) {
+      repairLog.add(`${skip}, row skipped`, i + 1, row[weightCol]);
+      continue;
+    }
+    if (repairs) {
+      for (const repair of repairs) {
+        repairLog.add(
+          repair,
+          i + 1,
+          row[weightCol],
+          `${value}${_explicitUnit ? unitType : ""}`,
+        );
+      }
+    }
     obj.weight = value;
     obj.unitType = unitType;
     if (_explicitUnit !== null) obj._explicitUnit = _explicitUnit; // true=explicit, null=ambiguous
@@ -173,20 +199,30 @@ export function parseStrengthJourneysData(data) {
   // almost certainly intended. On a tie (or all-lb majority), we default to "lb".
   let explicitKg = 0;
   let explicitLb = 0;
+  const unitless = [];
   objectsArray.forEach((obj) => {
     if (obj._explicitUnit) {
       if (obj.unitType === "kg") explicitKg++;
       else explicitLb++;
+    } else {
+      unitless.push(obj);
     }
     delete obj._explicitUnit; // Clean up temp field
   });
-  // If majority of explicit entries are kg, treat ambiguous entries as kg too (tie → lb)
-  const smartDefault = explicitKg > explicitLb ? "kg" : "lb";
-  if (smartDefault === "kg" && explicitKg > 0) {
-    objectsArray.forEach((obj) => {
-      if (!obj.unitType) obj.unitType = smartDefault;
-    });
+  // If majority of explicit entries are kg, treat ambiguous entries as kg too (tie → lb).
+  // Unitless rows arrive as "lb", so test the list, not a missing unitType.
+  if (explicitKg > explicitLb) {
+    for (const obj of unitless) {
+      obj.unitType = "kg";
+      repairLog.add(
+        "no unit, read as kg like most of the sheet",
+        obj.rowIndex,
+        obj.rawWeight,
+      );
+    }
   }
+
+  repairLog.flush();
 
   // FIXME: if there are no entries we could throw an error to prompt them to sheet docs article?
 

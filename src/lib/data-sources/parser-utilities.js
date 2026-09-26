@@ -320,33 +320,192 @@ export function convertStringToInt(repsString) {
   return isNaN(num) ? undefined : num;
 }
 
-// Used to convert strings like "226lb" to {225, "lb"}
-// Handles Google Sheets API format where weights come as strings
-// Returns _explicitUnit: true if unit was explicitly stated, null if ambiguous (no suffix)
+// Reads a weight cell like "100", "100kg" or "225 lb" into
+// { value, unitType, _explicitUnit }. _explicitUnit is true when the cell
+// named a unit and null when it did not, so a parser can pick a default.
+//
+// Almost every cell matches PLAIN_WEIGHT, so the common case costs one regex.
+// Anything else goes through repairWeightText(), which fixes the typos real
+// sheets hold and reports each fix in `repairs`, or sets `skip` when the cell
+// is a distance or time rather than a load (cardio and body measurements share
+// the sheet with lifts). The caller logs both with createParseRepairLog().
+const PLAIN_WEIGHT = /^(\d+(?:\.\d+)?)\s*(kg|lbs?)?$/i;
+
 export function convertWeightAndUnitType(weightString) {
   // Google Sheets API returns empty string for empty cells
   if (weightString == null || weightString === "") {
     return { value: undefined, unitType: undefined, _explicitUnit: null };
   }
 
-  // Trim whitespace
-  weightString = String(weightString).trim();
+  const text = String(weightString).trim();
+  const plain = PLAIN_WEIGHT.exec(text);
+  if (plain) {
+    const unit = plain[2]?.toLowerCase();
+    return {
+      value: parseFloat(plain[1]),
+      unitType: unit === "kg" ? "kg" : "lb", // parser applies the sheet's default
+      _explicitUnit: unit ? true : null,
+    };
+  }
+  return repairWeightText(text);
+}
 
-  // Try to parse the number part
-  const num = parseFloat(weightString);
-  if (isNaN(num)) {
-    return { value: undefined, unitType: undefined, _explicitUnit: null };
+// Unit spellings seen in the wild. A null repair is a normal spelling; a
+// string is logged, because it is a guess.
+const WEIGHT_UNITS = {
+  kg: ["kg", null],
+  kgs: ["kg", null],
+  kilo: ["kg", null],
+  kilos: ["kg", null],
+  kilogram: ["kg", null],
+  kilograms: ["kg", null],
+  g: ["kg", 'unit "g" read as kg'],
+  k: ["kg", 'unit "k" read as kg'],
+  gk: ["kg", 'unit "gk" read as kg'],
+  kgg: ["kg", 'unit "kgg" read as kg'],
+  lb: ["lb", null],
+  lbs: ["lb", null],
+  pound: ["lb", null],
+  pounds: ["lb", null],
+  "#": ["lb", null],
+  ib: ["lb", 'unit "ib" read as lb'],
+  ibs: ["lb", 'unit "ibs" read as lb'],
+};
+
+// Distance and time units: the row is cardio or a measurement, not a lift.
+const NON_WEIGHT_UNIT =
+  /^(?:mm|cm|m|km|mi|miles?|meters?|metres?|yds?|s|secs?|seconds?|mins?|minutes?|h|hrs?|hours?|cals?|kcal)$/i;
+
+// Keys that slip into a number by accident: the backtick sits beside the 1.
+const STRAY_CHARACTER = /[`'´~]/;
+
+const WEIGHT_WITH_EXTRAS =
+  /^(\d+(?:[.,]\d+)?)(\s*-\s*\d+(?:[.,]\d+)?)?\s*([a-z#]*)\.?$/i;
+
+function repairWeightText(original) {
+  const repairs = [];
+  let text = original;
+
+  if (STRAY_CHARACTER.test(text)) {
+    text = text.replace(/[`'´~]/g, "").trim();
+    repairs.push("stray character removed");
   }
 
-  // Simple string check for unit
-  const lower = weightString.toLowerCase();
-  const hasKg = lower.includes("kg");
-  const hasLb = lower.includes("lb");
-  const hasExplicitUnit = hasKg || hasLb;
+  const match = WEIGHT_WITH_EXTRAS.exec(text);
+  if (!match) {
+    if (/\d:\d\d/.test(text)) {
+      return {
+        value: undefined,
+        unitType: undefined,
+        _explicitUnit: null,
+        skip: "time, not a weight",
+      };
+    }
+    // Last resort, as the parser has always done: the leading number, with
+    // a unit if one appears anywhere ("100kg belt").
+    const value = parseFloat(text);
+    if (isNaN(value)) {
+      return {
+        value: undefined,
+        unitType: undefined,
+        _explicitUnit: null,
+        skip: "unreadable weight",
+      };
+    }
+    const lower = text.toLowerCase();
+    const unitType = lower.includes("kg")
+      ? "kg"
+      : lower.includes("lb")
+        ? "lb"
+        : null;
+    repairs.push("read the leading number");
+    return {
+      value,
+      unitType: unitType || "lb",
+      _explicitUnit: unitType ? true : null,
+      repairs,
+    };
+  }
+
+  let [, numberText, range, unitText] = match;
+
+  // A comma before one or two digits is a decimal comma, a typo for some
+  // lifters and the normal way to write it in much of Europe. Before three
+  // digits it separates thousands.
+  if (numberText.includes(",")) {
+    const [whole, fraction] = numberText.split(",");
+    if (fraction.length === 3) {
+      numberText = whole + fraction;
+      repairs.push("thousands comma");
+    } else {
+      numberText = `${whole}.${fraction}`;
+      repairs.push("decimal comma");
+    }
+  }
+  if (range) repairs.push("range, kept the lower weight");
+
+  const unitKey = unitText.toLowerCase();
+  let unitType = null;
+  if (unitKey) {
+    if (NON_WEIGHT_UNIT.test(unitKey)) {
+      return {
+        value: undefined,
+        unitType: undefined,
+        _explicitUnit: null,
+        skip: `"${unitText}" is a distance or time, not a weight`,
+      };
+    }
+    const known = WEIGHT_UNITS[unitKey];
+    if (!known) {
+      return {
+        value: undefined,
+        unitType: undefined,
+        _explicitUnit: null,
+        skip: `unknown unit "${unitText}"`,
+      };
+    }
+    unitType = known[0];
+    if (known[1]) repairs.push(known[1]);
+  }
 
   return {
-    value: num,
-    unitType: hasKg ? "kg" : "lb", // default to "lb" if ambiguous; two-pass will fix
-    _explicitUnit: hasExplicitUnit ? true : null,
+    value: parseFloat(numberText),
+    unitType: unitType || "lb", // parser applies the sheet's default
+    _explicitUnit: unitType ? true : null,
+    repairs,
+  };
+}
+
+// A reps cell holding "5km" or "20 min" is cardio logged in the reps column.
+export function isDistanceOrTimeText(text) {
+  const unit = /^\d+(?:[.,]\d+)?\s*([a-z]+)$/i.exec(String(text).trim())?.[1];
+  return (
+    Boolean(unit && NON_WEIGHT_UNIT.test(unit)) || /\d:\d\d/.test(String(text))
+  );
+}
+
+// Collects every guess a parse makes and prints one console line per kind,
+// with a count and a few examples, so a sheet full of decimal commas costs
+// one line rather than thousands.
+export function createParseRepairLog(source, { examples = 3 } = {}) {
+  const kinds = new Map();
+  return {
+    add(kind, rowNumber, raw, outcome) {
+      let entry = kinds.get(kind);
+      if (!entry) kinds.set(kind, (entry = { count: 0, examples: [] }));
+      entry.count++;
+      if (entry.examples.length < examples) {
+        entry.examples.push(
+          `row ${rowNumber} "${raw}"${outcome ? ` → ${outcome}` : ""}`,
+        );
+      }
+    },
+    flush() {
+      for (const [kind, { count, examples: shown }] of kinds) {
+        console.info(
+          `${source} (parser): ${kind}: ${count} row${count === 1 ? "" : "s"}, e.g. ${shown.join("; ")}`,
+        );
+      }
+    },
   };
 }

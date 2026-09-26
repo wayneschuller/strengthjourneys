@@ -12,11 +12,11 @@
  * Matching is deliberately conservative. Names come from the registry's
  * liftType and synonyms, but a single-word name only matches when it is an
  * acronym (RDL), because "Press" or "Row" alone is usually part of something
- * else. The Big Four keep hand-tuned patterns: "Bench" and "Press" alone only
- * match as a label or in a lifting phrase, since "bench" is usually the
- * furniture, and "squat" is skipped when it names a rack or a variation we
- * have no guide for. Under-linking is much cheaper than
- * sending a reader to the wrong guide.
+ * else. The Big Four keep hand-tuned patterns: any "bench" links to the bench
+ * press (Wayne's call, Sep 2026: in a lifting chat it nearly always means the
+ * lift), "Press" alone only as a label or in a lifting phrase, and "squat" is
+ * skipped when it names a rack or a variation we have no guide for.
+ * Under-linking is much cheaper than sending a reader to the wrong guide.
  *
  * Every lift's mentions claim their text even after its one link is used, so
  * a second "front squat" never has its "squat" linked to the back squat.
@@ -42,7 +42,7 @@ const BIG_FOUR_PATTERNS = {
     "gi",
   ),
   "Bench Press": new RegExp(
-    `${NOT_THE_BARBELL_LIFT}(?<!\\bdecline[\\s-])\\bbench press(?:es)?\\b`,
+    `${NOT_THE_BARBELL_LIFT}(?<!\\bdecline[\\s-])\\bbench(?:[\\s-]press(?:es)?|es)?\\b`,
     "gi",
   ),
   Deadlift: new RegExp(
@@ -55,24 +55,18 @@ const BIG_FOUR_PATTERNS = {
   ),
 };
 
-// Bare "Bench" and "Press" usually mean furniture or part of another lift, so
-// they only count where the name is clearly the lift: a label at the start of
-// a line ("Bench: 136 for one"), the whole of a bold or table-cell label, or a
-// phrase no piece of equipment is in ("your bench", "bench PR"). The whole-node
-// labels are only tried when the walker says the text is a whole label.
+// Bare "Press" is usually part of another lift or an instruction ("press the
+// bar up"), so it only counts where the name is clearly the lift: a label at
+// the start of a line ("Press: 91 for one"), the whole of a bold or table-cell
+// label, or "your press". The whole-node labels are only tried when the
+// walker says the text is a whole label.
 const LABEL_PATTERNS = {
-  "Bench Press": [
-    /(?<![^\n])Bench(?=\s*:)/g,
-    /(?<=\b(?:[Yy]our|[Mm]y|[Oo]n) )bench\b(?!\s+(?:is|was|that|pad|height))/g,
-    /\bbench(?=\s+(?:PRs?|1RMs?|e1RMs?|max(?:es)?|numbers?|sessions?|days?|volume|singles?|doubles?|triples?|work|strength|progress|standards?)\b)/gi,
-  ],
   "Strict Press": [
     /(?<![^\n])Press(?=\s*:)/g,
     /(?<=\b(?:[Yy]our|[Mm]y) )press\b(?!\s+(?:the|it|down|up|through|on))/g,
   ],
 };
 const WHOLE_LABEL_PATTERNS = {
-  "Bench Press": [/^\s*Bench(?=\s*:?\s*$)/gi],
   "Strict Press": [/^\s*Press(?=\s*:?\s*$)/gi],
 };
 // Parents whose single text child is a label: **Bench:**, a table cell.
@@ -329,7 +323,10 @@ export function linkifyLiftGuideMarkdown(markdown, { liftTypes } = {}) {
       stillRemaining,
       isWholeLabel,
     )) {
-      const found = source.indexOf(match.text, cursor);
+      // Escapes only lengthen the source, so a match never sits earlier in
+      // it than in the value; searching from there skips plain earlier
+      // mentions this lift's pattern did not match ("dumbbell bench").
+      const found = source.indexOf(match.text, Math.max(cursor, match.start));
       if (found === -1) continue;
 
       edits.push({

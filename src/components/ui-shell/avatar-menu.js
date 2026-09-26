@@ -6,6 +6,7 @@ import {
   Eraser,
   LogOut,
   MessageSquarePlus,
+  Sparkles,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -32,6 +33,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import {
+  useHasUnseenChangelog,
+  WhatsNewDot,
+} from "@/components/ui-shell/whats-new";
 
 /**
  * User avatar button in the nav bar. Shows a Google sign-in button when unauthenticated,
@@ -44,6 +49,7 @@ export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
   const { sheetInfo } = useUserLiftingData();
+  const hasUnseenChangelog = useHasUnseenChangelog();
 
   const runKvReset = useCallback(async (mode) => {
     setIsResettingKv(true);
@@ -85,14 +91,17 @@ export function AvatarDropdown() {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild aria-label="User menu">
-                <Avatar className="ring-muted-foreground ml-2 h-8 w-8 hover:ring-2">
-                  {session.user.image && (
-                    <AvatarImage src={session.user.image} />
-                  )}
-                  <AvatarFallback>
-                    {session.user.name?.[0] || "?"}
-                  </AvatarFallback>
-                </Avatar>
+                <span className="relative ml-2 inline-flex">
+                  <Avatar className="ring-muted-foreground h-8 w-8 hover:ring-2">
+                    {session.user.image && (
+                      <AvatarImage src={session.user.image} />
+                    )}
+                    <AvatarFallback>
+                      {session.user.name?.[0] || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  {hasUnseenChangelog && <WhatsNewDot floating />}
+                </span>
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent>
@@ -178,6 +187,11 @@ export function AvatarDropdown() {
             <DropdownMenuItem onClick={() => router.push("/import")}>
               <Upload className="mr-2 h-4 w-4" />
               Import / Export
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/changelog")}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              What&apos;s New
+              {hasUnseenChangelog && <WhatsNewDot className="ml-auto" />}
             </DropdownMenuItem>
             {/* Non-production tools for QA/reset workflows.
                     These are available in development-like envs (including

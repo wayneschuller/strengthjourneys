@@ -118,11 +118,7 @@ export function Footer() {
           </FooterSection>
 
           <FooterSection title="Project">
-            <FooterLink
-              href="https://strengthjourneys.canny.io/changelog"
-              label="What's new"
-              external
-            />
+            <FooterLink href="/changelog" label="What's new" />
             <FooterLink
               href="https://strengthjourneys.canny.io/feature-requests"
               label="Feature requests"

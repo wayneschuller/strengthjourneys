@@ -5,7 +5,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
-import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -67,77 +67,10 @@ import { GorillaIcon } from "@/components/gorilla-icon";
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
-
-const CANNY_APP_ID = "65ae4d4c921071bb0aae99c3";
-
-let cannyLoadPromise = null;
-
-function ensureCannyChangelog() {
-  if (typeof window === "undefined") {
-    return Promise.resolve(false);
-  }
-
-  if (window.__cannyInitialized) {
-    return Promise.resolve(true);
-  }
-
-  if (cannyLoadPromise) {
-    return cannyLoadPromise;
-  }
-
-  cannyLoadPromise = new Promise((resolve, reject) => {
-    const initCannyChangelog = () => {
-      if (window.__cannyInitialized) {
-        resolve(true);
-        return;
-      }
-
-      window.Canny("initChangelog", {
-        appID: CANNY_APP_ID,
-        position: "bottom",
-        align: "left",
-        theme: "dark",
-        omitNonEssentialCookies: true,
-      });
-      window.__cannyInitialized = true;
-      resolve(true);
-    };
-
-    const existingScript = document.getElementById("canny-jssdk");
-    if (existingScript) {
-      if (typeof window.Canny === "function") {
-        initCannyChangelog();
-        return;
-      }
-
-      existingScript.addEventListener("load", initCannyChangelog, {
-        once: true,
-      });
-      existingScript.addEventListener(
-        "error",
-        () => {
-          cannyLoadPromise = null;
-          reject(new Error("Failed to load Canny SDK"));
-        },
-        { once: true },
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = "canny-jssdk";
-    script.src = "https://canny.io/sdk.js";
-    script.async = true;
-    script.onload = initCannyChangelog;
-    script.onerror = () => {
-      cannyLoadPromise = null;
-      reject(new Error("Failed to load Canny SDK"));
-    };
-    document.body.appendChild(script);
-  });
-
-  return cannyLoadPromise;
-}
+import {
+  useHasUnseenChangelog,
+  WhatsNewDot,
+} from "@/components/ui-shell/whats-new";
 
 /**
  * Top-level navigation bar. Composes the desktop logo/nav links, mobile nav,
@@ -368,54 +301,31 @@ export function DesktopNav() {
         >
           Articles
         </Link>
-        <WhatsNewButton />
+        <WhatsNewLink />
       </nav>
     </div>
   );
 }
 
-function WhatsNewButton() {
-  const buttonRef = useRef(null);
-  const [isReady, setIsReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const loadCanny = useCallback(async () => {
-    if (isReady || isLoading) return;
-
-    setIsLoading(true);
-    try {
-      await ensureCannyChangelog();
-      setIsReady(true);
-    } catch (error) {
-      console.error("[canny] changelog load failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isReady, isLoading]);
-
-  const handleClick = useCallback(async () => {
-    if (isReady) return;
-
-    await loadCanny();
-    buttonRef.current?.click();
-  }, [isReady, loadCanny]);
+// Last link in, first to wait for room. Its dot shows when a changelog entry
+// has shipped since this browser last opened /changelog.
+function WhatsNewLink() {
+  const pathname = usePathname();
+  const hasUnseen = useHasUnseenChangelog();
 
   return (
-    <button
-      ref={buttonRef}
-      type="button"
-      data-canny-changelog
-      onMouseEnter={loadCanny}
-      onFocus={loadCanny}
-      onClick={handleClick}
+    <Link
+      prefetch={false}
+      href="/changelog"
       className={cn(
-        "text-muted-foreground hover:text-foreground/80",
-        "hidden min-[1800px]:block", // Last link in, first to wait
+        "hover:text-foreground/80 items-center gap-1.5 transition-colors",
+        pathname === "/changelog" ? "text-foreground" : "text-foreground/60",
+        "hidden min-[1800px]:inline-flex",
       )}
-      aria-busy={isLoading}
     >
       What&apos;s New
-    </button>
+      {hasUnseen && <WhatsNewDot />}
+    </Link>
   );
 }
 

@@ -4,7 +4,10 @@
  * continue at /articles/page/N. Content comes from content/articles/ at build.
  */
 import Head from "next/head";
-import { LibraryBig } from "lucide-react";
+import Link from "next/link";
+import { LibraryBig, Sparkles } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 import { getArticleLibraryPage } from "@/lib/articles";
 import {
@@ -110,6 +113,17 @@ export default function ArticleListingPage({
           <ArticleGrid articles={regularArticles} />
           <ArticlePagination page={1} totalPages={totalPages} />
         </section>
+
+        {/* Release notes live on their own page so they never crowd the
+            library, but readers here are the ones most likely to want them. */}
+        <div className="mt-12 flex justify-center">
+          <Button asChild variant="outline" className="rounded-full">
+            <Link href="/changelog">
+              <Sparkles className="size-4" />
+              See what&apos;s new in Strength Journeys
+            </Link>
+          </Button>
+        </div>
       </div>
     </PageContainer>
   );

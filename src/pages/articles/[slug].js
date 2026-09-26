@@ -14,7 +14,11 @@ import { ArrowLeft, LibraryBig } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ArticleFeedback } from "@/components/feedback";
-import { ArticleGrid, formatArticleDate } from "@/components/article-cards";
+import {
+  ArticleGrid,
+  formatArticleDate,
+  PROSE_THEME_STYLE,
+} from "@/components/article-cards";
 import {
   TopArticleShareButton,
   ArticleShareFooterCta,
@@ -27,24 +31,6 @@ const SITE_NAME = "Strength Journeys";
 const SITE_URL = "https://www.strengthjourneys.xyz";
 const RELATED_ARTICLE_COUNT = 3;
 const WORDS_PER_MINUTE = 230;
-
-// The typography plugin ships its own grey palette. Pointing its variables at
-// the theme tokens keeps article text correct in every theme pack, light or
-// dark, without a `prose-invert` toggle.
-const PROSE_THEME_STYLE = {
-  "--tw-prose-body": "var(--foreground)",
-  "--tw-prose-headings": "var(--foreground)",
-  "--tw-prose-lead": "var(--muted-foreground)",
-  "--tw-prose-links": "var(--foreground)",
-  "--tw-prose-bold": "var(--foreground)",
-  "--tw-prose-counters": "var(--muted-foreground)",
-  "--tw-prose-bullets": "var(--muted-foreground)",
-  "--tw-prose-hr": "var(--border)",
-  "--tw-prose-quotes": "var(--foreground)",
-  "--tw-prose-quote-borders": "var(--border)",
-  "--tw-prose-captions": "var(--muted-foreground)",
-  "--tw-prose-code": "var(--foreground)",
-};
 
 export default function ArticlePost({ article, relatedArticles }) {
   const canonicalUrl = `${SITE_URL}/articles/${article.slug}`;

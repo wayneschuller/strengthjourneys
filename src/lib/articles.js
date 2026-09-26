@@ -91,7 +91,7 @@ export function getArticleBySlug(slug) {
 
   const { html, wordCount } = renderArticleMarkdown(article.body, {
     articleTitle: article.title,
-    fileName: article.fileName,
+    sourcePath: `content/articles/${article.fileName}`,
   });
 
   return { ...toSummary(article), html, wordCount };
@@ -198,7 +198,7 @@ function parseArticleFile(fileName) {
       "cover is required, as a JPEG or PNG under public/, e.g. /articles/<slug>/cover.jpg",
     );
   }
-  assertPublicFileExists(cover, fileName, "cover");
+  assertPublicFileExists(cover, `content/articles/${fileName}`, "cover");
 
   if (data.featured !== undefined && typeof data.featured !== "boolean") {
     fail("featured must be true or false");
@@ -257,21 +257,30 @@ function toSummary({ body, fileName, ...summary }) {
   return summary;
 }
 
-function assertPublicFileExists(publicPath, fileName, label) {
+function assertPublicFileExists(publicPath, sourcePath, label) {
   if (!fs.existsSync(path.join(PUBLIC_DIR, publicPath))) {
     throw new Error(
-      `content/articles/${fileName}: ${label} ${publicPath} not found under public/`,
+      `${sourcePath}: ${label} ${publicPath} not found under public/`,
     );
   }
 }
 
-function renderArticleMarkdown(markdown, { articleTitle, fileName }) {
+/**
+ * Markdown to the site's article HTML. Changelog entries render through here
+ * too (src/lib/changelog.js), so both read alike and share the image checks.
+ *
+ * @param {string} markdown
+ * @param {{articleTitle: string, sourcePath: string}} options - sourcePath is
+ *   the repo-relative file, named in any build error.
+ * @returns {{html: string, wordCount: number}}
+ */
+export function renderArticleMarkdown(markdown, { articleTitle, sourcePath }) {
   const file = unified()
     .use(remarkParse)
     .use(remarkGfm)
     // Raw HTML in the markdown is dropped: articles are plain markdown only.
     .use(remarkRehype)
-    .use(rehypeArticleElements, { articleTitle, fileName })
+    .use(rehypeArticleElements, { articleTitle, sourcePath })
     .use(rehypeStringify)
     .processSync(markdown);
 
@@ -288,7 +297,7 @@ function renderArticleMarkdown(markdown, { articleTitle, fileName }) {
  * The Tailwind classes here are picked up by the class scanner like any other
  * source file.
  */
-function rehypeArticleElements({ articleTitle, fileName }) {
+function rehypeArticleElements({ articleTitle, sourcePath }) {
   return (tree, file) => {
     let wordCount = 0;
 
@@ -300,7 +309,7 @@ function rehypeArticleElements({ articleTitle, fileName }) {
       if (node.type !== "element") return;
 
       if (node.tagName === "p" && parent) {
-        const figure = buildFigure(node, { articleTitle, fileName });
+        const figure = buildFigure(node, { articleTitle, sourcePath });
         if (figure) parent.children[index] = figure;
         return;
       }
@@ -340,7 +349,7 @@ function rehypeArticleElements({ articleTitle, fileName }) {
   };
 }
 
-function buildFigure(paragraph, { articleTitle, fileName }) {
+function buildFigure(paragraph, { articleTitle, sourcePath }) {
   const content = paragraph.children.filter(
     (child) => !(child.type === "text" && !child.value.trim()),
   );
@@ -364,10 +373,10 @@ function buildFigure(paragraph, { articleTitle, fileName }) {
 
   if (!src.startsWith("/")) {
     throw new Error(
-      `content/articles/${fileName}: image ${src} must be a local path under public/`,
+      `${sourcePath}: image ${src} must be a local path under public/`,
     );
   }
-  assertPublicFileExists(src, fileName, "image");
+  assertPublicFileExists(src, sourcePath, "image");
   const { width, height } = imageSize(
     fs.readFileSync(path.join(PUBLIC_DIR, src)),
   );

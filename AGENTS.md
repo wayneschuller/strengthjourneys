@@ -10,6 +10,8 @@ Longer workflows live in `docs/agents/` and are only worth reading when the task
 calls for them:
 
 - `docs/agents/articles.md` when writing, editing, or publishing articles
+- `docs/agents/changelog.md` when writing or publishing a "What's new"
+  changelog entry
 - `docs/agents/kv-funnel-review.md` when reviewing KV user metadata, onboarding
   funnels, returning users, or acquisition quality
 - `docs/agents/themes.md` when adding or changing a theme, theme background, or
@@ -121,6 +123,10 @@ authenticated users.
 - **Articles** are markdown files in `content/articles/`, rendered to HTML at
   build time by `src/lib/articles.js`. Writing and publishing live in
   `docs/agents/articles.md`.
+- **Changelog** entries are markdown files in `content/changelog/`, shown at
+  `/changelog`. The nav's "What's new" dot compares the newest file's date,
+  baked in by `next.config.js`, with localStorage. See
+  `docs/agents/changelog.md`.
 - **`next-sitemap.config.js`** gives only articles a `lastmod`, their real
   `updatedAt`, because a blanket `lastmod` that resets every deploy is a
   freshness claim we cannot back up.

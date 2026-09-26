@@ -130,6 +130,10 @@ export const LOCAL_STORAGE_KEYS = {
   // Analyzer
   HEATMAP_VIEW_MODE: "SJ_heatmapViewMode",
 
+  // Changelog: date of the newest entry this browser has seen, which the
+  // "What's new" dot compares against the newest one shipped.
+  CHANGELOG_SEEN: "SJ_changelogSeen",
+
   // Gym timer
   // Repeating ping interval in seconds; 0 means the clock runs silently. The
   // clock always counts forward, so these are nudges along the way rather than

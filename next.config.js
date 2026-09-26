@@ -1,7 +1,26 @@
+const fs = require("fs");
+const path = require("path");
+
+// Date of the newest changelog entry, read from the file names in
+// content/changelog/ (2026-09-14.md). The nav compares it with what the browser
+// has seen to show the "What's new" dot, with no request to find out. Dev reads
+// it once at startup, so restart to see the dot for a brand new entry.
+const CHANGELOG_LATEST =
+  fs
+    .readdirSync(path.join(__dirname, "content/changelog"))
+    .map((file) => /^(\d{4}-\d{2}-\d{2}).*\.md$/.exec(file)?.[1])
+    .filter(Boolean)
+    .sort()
+    .at(-1) ?? "";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["geist"],
+
+  env: {
+    NEXT_PUBLIC_CHANGELOG_LATEST: CHANGELOG_LATEST,
+  },
 
   // Vercel's Hobby plan bills edge requests, and this site is nowhere near its
   // bandwidth ceiling while sitting at 70% of the request one. Turbopack's default

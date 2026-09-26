@@ -4,12 +4,15 @@
  *
  * Only article pages carry a lastmod: their real updatedAt, read from
  * content/articles/ through src/lib/articles.js, which keeps its imports on
- * node_modules so it loads here in plain Node.
+ * node_modules so it loads here in plain Node. /changelog carries the date of
+ * its newest entry, which next.config.js already reads from the file names.
  */
 const fs = require("fs");
 const path = require("path");
 
 const SITE_URL = "https://www.strengthjourneys.xyz";
+const CHANGELOG_LATEST = require("./next.config.js").env
+  .NEXT_PUBLIC_CHANGELOG_LATEST;
 
 // Every curated lift in src/lib/lifts/ gets a /progress-guide/ page, but one
 // without a guide block is noindex, so it stays out of the sitemap too. This
@@ -35,7 +38,7 @@ function getArticleLastmods() {
           `/articles/${article.slug}`,
           article.updatedAt,
         ]),
-      ),
+      ).set("/changelog", CHANGELOG_LATEST || undefined),
   );
   return articleLastmodsPromise;
 }

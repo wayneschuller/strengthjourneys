@@ -7,10 +7,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { House, Menu } from "lucide-react";
+import { House, Menu, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ThemeChooser } from "@/components/ui-shell/theme-chooser";
+import {
+  useHasUnseenChangelog,
+  WhatsNewDot,
+} from "@/components/ui-shell/whats-new";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getLiftIcon } from "@/components/lift-icon";
 import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
@@ -71,6 +75,7 @@ export function MobileNav() {
   }, [theme, resolvedTheme]);
 
   const lifts = BIG_FOUR_LIFTS;
+  const hasUnseenChangelog = useHasUnseenChangelog();
 
   // Internal nav link row: icon + label, highlights the active route.
   const NavLink = ({ href, title, IconComponent }) => (
@@ -98,7 +103,10 @@ export function MobileNav() {
             className="px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 lg:hidden"
             aria-expanded={open}
           >
-            <Menu className="h-7 w-7 sm:mr-2" />
+            <span className="relative sm:mr-2">
+              <Menu className="h-7 w-7" />
+              {hasUnseenChangelog && <WhatsNewDot floating />}
+            </span>
             <span className="hidden tracking-tight sm:inline">Menu</span>
             <span className="sr-only">Toggle Menu</span>
           </Button>
@@ -156,6 +164,22 @@ export function MobileNav() {
                   IconComponent={getLiftIcon(lift.liftType)}
                 />
               ))}
+              <SheetClose asChild>
+                <Link
+                  prefetch={false}
+                  href="/changelog"
+                  className={cn(
+                    "hover:text-foreground/80 flex flex-row items-center gap-3 transition-colors",
+                    pathname === "/changelog"
+                      ? "text-foreground"
+                      : "text-foreground/60",
+                  )}
+                >
+                  <Sparkles size={24} strokeWidth={1} />
+                  What&apos;s New
+                  {hasUnseenChangelog && <WhatsNewDot />}
+                </Link>
+              </SheetClose>
             </div>
           </div>
           <div className="border-border flex shrink-0 items-center justify-between border-t pt-4 pr-6">

@@ -24,6 +24,24 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+// The typography plugin ships its own grey palette. Pointing its variables at
+// the theme tokens keeps article and changelog text correct in every theme pack, light or
+// dark, without a `prose-invert` toggle.
+export const PROSE_THEME_STYLE = {
+  "--tw-prose-body": "var(--foreground)",
+  "--tw-prose-headings": "var(--foreground)",
+  "--tw-prose-lead": "var(--muted-foreground)",
+  "--tw-prose-links": "var(--foreground)",
+  "--tw-prose-bold": "var(--foreground)",
+  "--tw-prose-counters": "var(--muted-foreground)",
+  "--tw-prose-bullets": "var(--muted-foreground)",
+  "--tw-prose-hr": "var(--border)",
+  "--tw-prose-quotes": "var(--foreground)",
+  "--tw-prose-quote-borders": "var(--border)",
+  "--tw-prose-captions": "var(--muted-foreground)",
+  "--tw-prose-code": "var(--foreground)",
+};
+
 // UTC so the statically rendered date and the hydrated one always agree,
 // whatever timezone the build server or the reader happens to be in.
 const articleDateFormatter = new Intl.DateTimeFormat("en-US", {

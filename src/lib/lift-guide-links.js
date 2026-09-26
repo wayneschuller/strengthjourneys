@@ -12,9 +12,10 @@
  * Matching is deliberately conservative. Names come from the registry's
  * liftType and synonyms, but a single-word name only matches when it is an
  * acronym (RDL), because "Press" or "Row" alone is usually part of something
- * else. The Big Four keep hand-tuned patterns: "Bench" alone is not matched
- * because it is usually the furniture, "squat" is skipped when it names a rack
- * or a variation we have no guide for. Under-linking is much cheaper than
+ * else. The Big Four keep hand-tuned patterns: "Bench" and "Press" alone only
+ * match as a label or in a lifting phrase, since "bench" is usually the
+ * furniture, and "squat" is skipped when it names a rack or a variation we
+ * have no guide for. Under-linking is much cheaper than
  * sending a reader to the wrong guide.
  *
  * Every lift's mentions claim their text even after its one link is used, so
@@ -54,6 +55,29 @@ const BIG_FOUR_PATTERNS = {
   ),
 };
 
+// Bare "Bench" and "Press" usually mean furniture or part of another lift, so
+// they only count where the name is clearly the lift: a label at the start of
+// a line ("Bench: 136 for one"), the whole of a bold or table-cell label, or a
+// phrase no piece of equipment is in ("your bench", "bench PR"). The whole-node
+// labels are only tried when the walker says the text is a whole label.
+const LABEL_PATTERNS = {
+  "Bench Press": [
+    /(?<![^\n])Bench(?=\s*:)/g,
+    /(?<=\b(?:[Yy]our|[Mm]y|[Oo]n) )bench\b(?!\s+(?:is|was|that|pad|height))/g,
+    /\bbench(?=\s+(?:PRs?|1RMs?|e1RMs?|max(?:es)?|numbers?|sessions?|days?|volume|singles?|doubles?|triples?|work|strength|progress|standards?)\b)/gi,
+  ],
+  "Strict Press": [
+    /(?<![^\n])Press(?=\s*:)/g,
+    /(?<=\b(?:[Yy]our|[Mm]y) )press\b(?!\s+(?:the|it|down|up|through|on))/g,
+  ],
+};
+const WHOLE_LABEL_PATTERNS = {
+  "Bench Press": [/^\s*Bench(?=\s*:?\s*$)/gi],
+  "Strict Press": [/^\s*Press(?=\s*:?\s*$)/gi],
+};
+// Parents whose single text child is a label: **Bench:**, a table cell.
+const LABEL_PARENT_TYPES = new Set(["strong", "emphasis", "tableCell"]);
+
 function escapeRegExp(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -68,7 +92,10 @@ function buildPatterns(names) {
   const acronyms = [];
 
   for (const name of names) {
-    const words = String(name).trim().split(/[\s-]+/).filter(Boolean);
+    const words = String(name)
+      .trim()
+      .split(/[\s-]+/)
+      .filter(Boolean);
     if (words.length > 1) {
       phrases.push(words.map(escapeRegExp).join("[\\s-]+"));
     } else if (/^[A-Z]{2,5}$/.test(words[0] ?? "")) {
@@ -78,9 +105,7 @@ function buildPatterns(names) {
 
   const patterns = [];
   if (phrases.length > 0) {
-    patterns.push(
-      new RegExp(`\\b(?:${phrases.join("|")})(?:es|s)?\\b`, "gi"),
-    );
+    patterns.push(new RegExp(`\\b(?:${phrases.join("|")})(?:es|s)?\\b`, "gi"));
   }
   if (acronyms.length > 0) {
     patterns.push(new RegExp(`\\b(?:${acronyms.join("|")})s?\\b`, "g"));
@@ -91,11 +116,15 @@ function buildPatterns(names) {
 const CURATED_LINKS = CURATED_LIFTS.filter((lift) => lift.slug).map((lift) => ({
   href: `/progress-guide/${lift.slug}`,
   patterns: BIG_FOUR_PATTERNS[lift.liftType]
-    ? [BIG_FOUR_PATTERNS[lift.liftType]]
+    ? [
+        BIG_FOUR_PATTERNS[lift.liftType],
+        ...(LABEL_PATTERNS[lift.liftType] ?? []),
+      ]
     : buildPatterns([
         lift.liftType,
         ...(Array.isArray(lift.synonyms) ? lift.synonyms : []),
       ]),
+  wholeLabelPatterns: WHOLE_LABEL_PATTERNS[lift.liftType] ?? [],
 }));
 
 /**
@@ -129,11 +158,15 @@ const SKIPPED_NODE_TYPES = new Set([
   "imageReference",
 ]);
 
-function findEarliestMatch(value, from, links) {
+function findEarliestMatch(value, from, links, isWholeLabel) {
   let best = null;
 
   for (const link of links) {
-    for (const pattern of link.patterns) {
+    const patterns =
+      isWholeLabel && link.wholeLabelPatterns?.length
+        ? [...link.patterns, ...link.wholeLabelPatterns]
+        : link.patterns;
+    for (const pattern of patterns) {
       pattern.lastIndex = from;
       const match = pattern.exec(value);
       if (!match) continue;
@@ -158,12 +191,12 @@ function findEarliestMatch(value, from, links) {
  * lift already linked are still claimed, so they are never read as a shorter
  * name inside them.
  */
-function collectMatches(value, links, remaining) {
+function collectMatches(value, links, remaining, isWholeLabel = false) {
   const matches = [];
   let cursor = 0;
 
   while (cursor < value.length && remaining.size > 0) {
-    const hit = findEarliestMatch(value, cursor, links);
+    const hit = findEarliestMatch(value, cursor, links, isWholeLabel);
     if (!hit) break;
 
     const end = hit.index + hit.text.length;
@@ -178,8 +211,8 @@ function collectMatches(value, links, remaining) {
 }
 
 /** Rewrites a text node into text/link/text nodes. Used by the remark plugin. */
-function linkifyTextNode(node, links, remaining) {
-  const matches = collectMatches(node.value, links, remaining);
+function linkifyTextNode(node, links, remaining, isWholeLabel) {
+  const matches = collectMatches(node.value, links, remaining, isWholeLabel);
   if (matches.length === 0) return null;
 
   const replacement = [];
@@ -235,7 +268,9 @@ function walk(node, links, remaining, linkify = linkifyTextNode) {
       continue;
     }
 
-    const replacement = linkify(child, links, remaining);
+    const isWholeLabel =
+      node.children.length === 1 && LABEL_PARENT_TYPES.has(node.type);
+    const replacement = linkify(child, links, remaining, isWholeLabel);
     if (replacement) {
       node.children.splice(index, 1, ...replacement);
       index += replacement.length - 1;
@@ -274,7 +309,7 @@ export function linkifyLiftGuideMarkdown(markdown, { liftTypes } = {}) {
 
   const edits = [];
 
-  walk(tree, links, remaining, (node, _links, stillRemaining) => {
+  walk(tree, links, remaining, (node, _links, stillRemaining, isWholeLabel) => {
     const start = node.position?.start?.offset;
     const end = node.position?.end?.offset;
     if (typeof start !== "number" || typeof end !== "number") return null;
@@ -288,7 +323,12 @@ export function linkifyLiftGuideMarkdown(markdown, { liftTypes } = {}) {
     const source = markdown.slice(start, end);
     let cursor = 0;
 
-    for (const match of collectMatches(node.value, links, stillRemaining)) {
+    for (const match of collectMatches(
+      node.value,
+      links,
+      stillRemaining,
+      isWholeLabel,
+    )) {
       const found = source.indexOf(match.text, cursor);
       if (found === -1) continue;
 

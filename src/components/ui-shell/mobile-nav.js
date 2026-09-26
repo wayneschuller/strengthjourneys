@@ -227,14 +227,15 @@ export function MobileNav() {
           )}
         />
       </Link>
-      {/* What's New gets its own icon in the bar until the desktop nav takes
-          over, carrying the dot when there is an entry this browser has not
-          seen. */}
+      {/* What's New follows the home link in the bar until the desktop nav
+          takes over, carrying the dot when there is an entry this browser has
+          not seen: a megaphone beside the house icon, then the words once the
+          wordmark has room. */}
       <Button
         asChild
         variant="ghost"
         className={cn(
-          "hover:text-foreground h-9 px-2 hover:bg-transparent lg:hidden",
+          "hover:text-foreground h-9 px-2 hover:bg-transparent sm:hidden",
           pathname === "/changelog" ? "text-foreground" : "text-muted-foreground",
         )}
       >
@@ -247,6 +248,21 @@ export function MobileNav() {
           </span>
         </Link>
       </Button>
+      <Link
+        href="/changelog"
+        prefetch={false}
+        className={cn(
+          "hover:text-foreground/80 ml-4 hidden shrink-0 items-center text-base tracking-tight transition-colors sm:inline-flex lg:hidden",
+          pathname === "/changelog" ? "text-foreground" : "text-foreground/60",
+        )}
+      >
+        <span className="relative">
+          What&apos;s New
+          {changelogDot && (
+            <WhatsNewDot corner ping={changelogDot === "ping"} />
+          )}
+        </span>
+      </Link>
     </>
   );
 }

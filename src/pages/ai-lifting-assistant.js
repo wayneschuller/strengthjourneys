@@ -573,8 +573,8 @@ const CHAT_CONTEXT_STORAGE_KEY = "chat:/ai:context";
  * @param {React.ReactNode} props.personalizationControls - Compact dialog trigger rendered in the chat header.
  * @param {Object} props.suggestionContext - Small prompt-personalisation context derived from opted-in local data.
  * @param {() => string} props.buildCoachContext - Builds the opted-in lifting summary. Called
- *   only when a message is sent; the text sent is kept so suggestions and shared feedback use
- *   exactly what the coach saw.
+ *   only when a message is sent; the text sent is kept so shared feedback shows exactly what
+ *   the coach saw.
  */
 function AILiftingAssistantCard({
   hasSharedBioData,
@@ -768,8 +768,8 @@ function AILiftingAssistantCard({
       },
     });
   // The lifting summary sent with the latest message, built at send time.
-  // Kept (and saved with the chat) so suggestions and shared feedback use
-  // exactly what the coach saw.
+  // Kept (and saved with the chat) so shared feedback shows exactly what the
+  // coach saw.
   const [sentContext, setSentContext] = useState("");
   const buildChatRequestBody = useCallback(() => {
     const context = buildCoachContext();
@@ -941,7 +941,6 @@ function AILiftingAssistantCard({
           body: JSON.stringify({
             latestUserMessage: latestUserText,
             assistantText,
-            userProvidedMetadata: sentContext,
           }),
         });
         if (!response.ok) return;
@@ -957,7 +956,7 @@ function AILiftingAssistantCard({
         devLog("Failed to load AI follow-up suggestions", error);
       }
     })();
-  }, [messages, status, suggestionsByMessageId, sentContext]);
+  }, [messages, status, suggestionsByMessageId]);
 
   useEffect(() => {
     const pendingPrompt = pendingAiPromptRef.current;

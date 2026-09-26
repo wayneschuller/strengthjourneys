@@ -13,7 +13,6 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { resolveAiChatQuota } from "@/lib/ai/chat-quota";
 import { isAllowedOrigin } from "@/lib/ai/chat-origin";
 import { generateSuggestedQuestions } from "@/lib/ai/chat-suggestions";
-import { MAX_CHAT_METADATA_CHARS as MAX_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
 
 const MAX_USER_MESSAGE_CHARS = 3000;
 const MAX_ASSISTANT_TEXT_CHARS = 12000;
@@ -31,8 +30,7 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const { latestUserMessage, assistantText, userProvidedMetadata } =
-    req.body || {};
+  const { latestUserMessage, assistantText } = req.body || {};
 
   if (
     typeof latestUserMessage !== "string" ||
@@ -42,16 +40,8 @@ export default async function handler(req, res) {
   }
 
   if (
-    userProvidedMetadata != null &&
-    typeof userProvidedMetadata !== "string"
-  ) {
-    return res.status(400).json({ error: "Invalid chat metadata" });
-  }
-
-  if (
     latestUserMessage.length > MAX_USER_MESSAGE_CHARS ||
-    assistantText.length > MAX_ASSISTANT_TEXT_CHARS ||
-    (userProvidedMetadata?.length ?? 0) > MAX_METADATA_CHARS
+    assistantText.length > MAX_ASSISTANT_TEXT_CHARS
   ) {
     return res.status(413).json({ error: "Suggestion request is too large" });
   }
@@ -77,7 +67,6 @@ export default async function handler(req, res) {
   const questions = await generateSuggestedQuestions({
     latestUserMessage,
     assistantText,
-    userProvidedMetadata,
   });
 
   return res.status(200).json({ questions });

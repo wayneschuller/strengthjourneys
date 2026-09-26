@@ -52,6 +52,6 @@ async function getCoachDetails() {
     defaultModel: getChatModel()?.model.modelId ?? null,
     // The switcher only offers models whose provider key is configured.
     availableModels: getAvailableChatModelIds(),
-    suggestionModel: getSuggestionModel()?.modelId ?? null,
+    suggestionModel: getSuggestionModel()?.model.modelId ?? null,
   };
 }

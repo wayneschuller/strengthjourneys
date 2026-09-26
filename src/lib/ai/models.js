@@ -64,12 +64,22 @@ export function getChatModel(requestedId, { isSignedIn = false } = {}) {
 }
 
 /**
- * The model that writes follow-up question suggestions. Suggestions are a few
- * lines of JSON and never need chain-of-thought, so this is the cheapest
- * capable non-reasoning model.
+ * The model that writes follow-up question suggestions, with its provider
+ * options. Suggestions are three short questions in JSON, built from the
+ * latest question and answer only. Timed on Sep 26 2026 against Grok 4.20,
+ * GPT-4.1 mini and nano: all took 1.3-2s, but GPT-6 Luna and Grok kept the
+ * questions tied to the answer (mini and nano drifted generic), and Luna is
+ * the cheaper by far.
+ *
+ * @returns {{ model: import("ai").LanguageModel, providerOptions?: object } | null}
  */
 export function getSuggestionModel() {
-  if (process.env.XAI_API_KEY) return xai("grok-4.20-non-reasoning");
-  if (process.env.OPENAI_API_KEY) return openai("gpt-4.1-mini");
+  if (process.env.OPENAI_API_KEY) {
+    return {
+      model: openai("gpt-6-luna"),
+      providerOptions: { openai: { reasoningEffort: "none" } },
+    };
+  }
+  if (process.env.XAI_API_KEY) return { model: xai("grok-4.20-non-reasoning") };
   return null;
 }

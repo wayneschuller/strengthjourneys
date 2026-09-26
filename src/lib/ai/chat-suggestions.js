@@ -4,7 +4,8 @@
  * This runs as its own request after the main answer has finished streaming,
  * so a slow suggestion call can never hold the chat stream open. It uses a
  * cheap non-reasoning model because the task is a few lines of JSON, not
- * coaching.
+ * coaching, and it sees only the latest question and answer: the answer
+ * already carries the lifter's numbers, so the lifting summary is not sent.
  */
 
 import { generateText } from "ai";
@@ -33,22 +34,18 @@ const SUGGESTION_INSTRUCTIONS = [
 export async function generateSuggestedQuestions({
   latestUserMessage,
   assistantText,
-  userProvidedMetadata,
 }) {
   if (!latestUserMessage?.trim() || !assistantText?.trim()) return [];
 
-  const model = getSuggestionModel();
-  if (!model) return [];
+  const suggestionModel = getSuggestionModel();
+  if (!suggestionModel) return [];
 
   try {
     const result = await generateText({
-      model,
+      model: suggestionModel.model,
+      providerOptions: suggestionModel.providerOptions,
       instructions: SUGGESTION_INSTRUCTIONS,
-      prompt: buildSuggestionPrompt({
-        latestUserMessage,
-        assistantText,
-        userProvidedMetadata,
-      }),
+      prompt: buildSuggestionPrompt({ latestUserMessage, assistantText }),
       maxOutputTokens: SUGGESTION_MAX_OUTPUT_TOKENS,
     });
 
@@ -59,11 +56,7 @@ export async function generateSuggestedQuestions({
   }
 }
 
-function buildSuggestionPrompt({
-  latestUserMessage,
-  assistantText,
-  userProvidedMetadata,
-}) {
+function buildSuggestionPrompt({ latestUserMessage, assistantText }) {
   return truncateText(
     [
       "Latest user message:",
@@ -71,10 +64,6 @@ function buildSuggestionPrompt({
       "",
       "Latest assistant answer:",
       assistantText,
-      "",
-      "Optional lifting context summary:",
-      extractMetadataSection(userProvidedMetadata || "", "data_context") ||
-        "No lifting context summary shared.",
     ].join("\n"),
     MAX_SUGGESTION_INPUT_CHARS,
   );
@@ -105,20 +94,6 @@ export function parseSuggestedQuestions(text) {
   } catch {
     return [];
   }
-}
-
-function extractMetadataSection(metadata, sectionName) {
-  const sectionStart = `[${sectionName}]`;
-  const startIndex = metadata.indexOf(sectionStart);
-  if (startIndex === -1) return "";
-
-  const nextSectionIndex = metadata.indexOf(
-    "\n[",
-    startIndex + sectionStart.length,
-  );
-  return metadata
-    .slice(startIndex, nextSectionIndex === -1 ? undefined : nextSectionIndex)
-    .trim();
 }
 
 function truncateText(text, maxChars) {

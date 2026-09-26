@@ -11,9 +11,9 @@ import { useSession } from "next-auth/react";
 import { useChat } from "@ai-sdk/react";
 import { defaultRemarkPlugins } from "streamdown";
 import {
-  BIG_FOUR_REMARK_PLUGINS,
-  linkifyBigFourMarkdown,
-} from "@/lib/big-four-links";
+  remarkLiftGuideLinks,
+  linkifyLiftGuideMarkdown,
+} from "@/lib/lift-guide-links";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   AI_REVIEW_PROMPTS,
@@ -115,13 +115,6 @@ export async function getStaticProps() {
  * @param {Object} props
  * @param {Array} props.relatedArticles - Articles related to the AI Lifting Assistant topic.
  */
-// Passing remarkPlugins to Streamdown replaces its defaults, so GFM (tables,
-// strikethrough) has to be kept explicitly alongside the Big Four links.
-const ASSISTANT_REMARK_PLUGINS = [
-  ...Object.values(defaultRemarkPlugins),
-  ...BIG_FOUR_REMARK_PLUGINS,
-];
-
 export default function AILiftingAssistantPage({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL = "https://www.strengthjourneys.xyz/ai-lifting-assistant";
@@ -310,6 +303,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         hasSharedBioData={!isDemoMode && shareBioDetails}
         hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
         hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
+        loggedLiftTypes={isDemoMode ? undefined : liftTypes}
         personalizationControls={
           <PersonalizationDialog
             enabled={!isDemoMode && (shareBioDetails || hasSharedTrainingData)}
@@ -584,6 +578,12 @@ const CHAT_CONTEXT_STORAGE_KEY = "chat:/ai:context";
  *   only when a message is sent; the text sent is kept so shared feedback shows exactly what
  *   the coach saw.
  */
+// The coach's answers read in their own face (Source Serif 4, loaded in
+// _app.js) in every theme, a size up from the interface, with lining tabular
+// figures so weights line up in tables.
+const COACH_ANSWER_CLASS =
+  "font-coach text-base leading-relaxed lining-nums tabular-nums";
+
 function AILiftingAssistantCard({
   hasSharedBioData,
   hasSharedFullTrainingData,
@@ -591,8 +591,18 @@ function AILiftingAssistantCard({
   personalizationControls,
   suggestionContext,
   buildCoachContext,
+  loggedLiftTypes,
 }) {
   const router = useRouter();
+  // Passing remarkPlugins to Streamdown replaces its defaults, so GFM (tables,
+  // strikethrough) has to be kept explicitly alongside the lift guide links.
+  const assistantRemarkPlugins = useMemo(
+    () => [
+      ...Object.values(defaultRemarkPlugins),
+      [remarkLiftGuideLinks, { liftTypes: loggedLiftTypes }],
+    ],
+    [loggedLiftTypes],
+  );
   const { status: authStatus } = useSession();
   const [chatQuota, setChatQuota] = useState(null);
   const [isChatQuotaReady, setIsChatQuotaReady] = useState(false);
@@ -1038,7 +1048,9 @@ function AILiftingAssistantCard({
       // Match what the reader saw: the renderer adds these links, so the
       // export would otherwise be missing them.
       if (m.role === "assistant") {
-        content = linkifyBigFourMarkdown(content);
+        content = linkifyLiftGuideMarkdown(content, {
+          liftTypes: loggedLiftTypes,
+        });
       }
 
       return `${m.role.toUpperCase()}:\n${content}`;
@@ -1187,7 +1199,13 @@ function AILiftingAssistantCard({
                           </Sources>
                         )}
                         <Message from={message.role}>
-                          <MessageContent>
+                          <MessageContent
+                            className={
+                              message.role === "assistant"
+                                ? COACH_ANSWER_CLASS
+                                : undefined
+                            }
+                          >
                             {parts.length > 0 ? (
                               parts
                                 .filter((part) => part.type === "text")
@@ -1196,7 +1214,7 @@ function AILiftingAssistantCard({
                                     key={`${message.id}-${i}`}
                                     remarkPlugins={
                                       message.role === "assistant"
-                                        ? ASSISTANT_REMARK_PLUGINS
+                                        ? assistantRemarkPlugins
                                         : undefined
                                     }
                                   >
@@ -1207,7 +1225,7 @@ function AILiftingAssistantCard({
                               <MessageResponse
                                 remarkPlugins={
                                   message.role === "assistant"
-                                    ? ASSISTANT_REMARK_PLUGINS
+                                    ? assistantRemarkPlugins
                                     : undefined
                                 }
                               >

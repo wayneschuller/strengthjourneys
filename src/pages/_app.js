@@ -35,6 +35,8 @@ import "@fontsource/libre-baskerville/index.css"; // Used in: starry-night, star
 import "@fontsource/libre-baskerville/500.css"; // font-medium
 import "@fontsource/libre-baskerville/600.css"; // font-semibold
 import "@fontsource/libre-baskerville/700.css"; // font-bold — without these, bold text fell back to browser-faked bold
+import "@fontsource-variable/source-serif-4/opsz.css"; // font-coach: AI coach answers in every theme
+import "@fontsource-variable/source-serif-4/opsz-italic.css";
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;

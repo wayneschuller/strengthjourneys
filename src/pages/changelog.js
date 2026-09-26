@@ -62,35 +62,39 @@ export default function ChangelogPage({ entries }) {
         </PageHeaderDescription>
       </PageHeader>
 
-      <div className="mx-auto max-w-3xl pb-16">
+      <div className="mx-auto max-w-3xl space-y-10 pb-16 md:space-y-14">
+        {/* Each entry is its own card so a long run of screenshots never
+            blurs into the next release. */}
         {entries.map((entry) => (
           <article
             key={entry.slug}
             id={entry.slug}
-            className="scroll-mt-24 border-t pt-10 pb-6 first:border-t-0 first:pt-2"
+            className="bg-card scroll-mt-24 overflow-hidden rounded-2xl border shadow-sm"
           >
-            <time
-              dateTime={entry.date}
-              className="text-muted-foreground text-sm"
-            >
-              {formatArticleDate(entry.date)}
-            </time>
-            <h2 className="mt-2 text-3xl leading-tight font-bold tracking-tight text-balance md:text-4xl">
-              <a href={`#${entry.slug}`} className="hover:underline">
-                {entry.title}
-              </a>
-            </h2>
+            <header className="bg-muted/50 border-b px-5 py-6 md:px-10 md:py-8">
+              <time
+                dateTime={entry.date}
+                className="bg-background text-muted-foreground inline-flex rounded-full border px-3 py-1 text-sm font-medium"
+              >
+                {formatArticleDate(entry.date)}
+              </time>
+              <h2 className="mt-4 text-3xl leading-tight font-bold tracking-tight text-balance md:text-4xl">
+                <a href={`#${entry.slug}`} className="hover:underline">
+                  {entry.title}
+                </a>
+              </h2>
+            </header>
             {/* Built from the repo's own markdown at build time; raw HTML in the
                 source is dropped by the renderer, so this is not user input. */}
             <div
-              className="prose prose-lg prose-headings:tracking-tight prose-headings:text-balance prose-h3:mt-10 prose-h3:text-2xl prose-h3:font-bold prose-a:decoration-2 prose-a:underline-offset-4 prose-a:transition-colors prose-li:marker:text-muted-foreground mt-6 max-w-none"
+              className="prose prose-lg prose-headings:tracking-tight prose-headings:text-balance prose-h3:mt-10 prose-h3:text-2xl prose-h3:font-bold prose-a:decoration-2 prose-a:underline-offset-4 prose-a:transition-colors prose-li:marker:text-muted-foreground max-w-none px-5 py-6 md:px-10 md:py-8 md:[&_figure]:mx-0"
               style={PROSE_THEME_STYLE}
               dangerouslySetInnerHTML={{ __html: entry.html }}
             />
           </article>
         ))}
 
-        <div className="bg-muted/50 mt-10 flex flex-col items-start gap-4 rounded-2xl border p-6 md:flex-row md:items-center md:justify-between">
+        <div className="bg-muted/50 flex flex-col items-start gap-4 rounded-2xl border p-6 md:flex-row md:items-center md:justify-between">
           <p className="text-pretty">
             Got an idea for what comes next? Feature requests shape these
             updates.

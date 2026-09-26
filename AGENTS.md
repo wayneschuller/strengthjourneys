@@ -11,7 +11,8 @@ calls for them:
 
 - `docs/agents/articles.md` when writing, editing, or publishing articles
 - `docs/agents/changelog.md` when writing or publishing a "What's new"
-  changelog entry
+  changelog entry, or changing `/changelog`, its nav dot, or the feature
+  request card
 - `docs/agents/kv-funnel-review.md` when reviewing KV user metadata, onboarding
   funnels, returning users, or acquisition quality
 - `docs/agents/themes.md` when adding or changing a theme, theme background, or
@@ -124,12 +125,13 @@ authenticated users.
   build time by `src/lib/articles.js`. Writing and publishing live in
   `docs/agents/articles.md`.
 - **Changelog** entries are markdown files in `content/changelog/`, shown at
-  `/changelog`. The nav's "What's new" dot compares the newest file's date,
-  baked in by `next.config.js`, with localStorage. See
-  `docs/agents/changelog.md`.
-- **`next-sitemap.config.js`** gives only articles a `lastmod`, their real
-  `updatedAt`, because a blanket `lastmod` that resets every deploy is a
-  freshness claim we cannot back up.
+  `/changelog` (newest three open, older ones folded). The nav's "What's new"
+  dot compares the newest file's date, baked in by `next.config.js`, with
+  localStorage. Feature requests come through our own card on that page, not
+  Canny, which the site no longer uses. See `docs/agents/changelog.md`.
+- **`next-sitemap.config.js`** gives only articles (their real `updatedAt`)
+  and `/changelog` (its newest entry's date) a `lastmod`, because a blanket
+  `lastmod` that resets every deploy is a freshness claim we cannot back up.
 
 ---
 

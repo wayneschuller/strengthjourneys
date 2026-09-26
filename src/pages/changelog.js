@@ -1,9 +1,12 @@
 /*
- * What's new (/changelog): every changelog entry in full, newest first, from
- * the markdown files in content/changelog/ rendered at build by
- * src/lib/changelog.js. One page rather than a page per entry, so there is no
- * thin duplicate content; an entry is shared by its anchor, /changelog#2026-09-14.
- * Opening the page clears the nav's "What's new" dot.
+ * What's new (/changelog): every changelog entry, newest first, from the
+ * markdown files in content/changelog/ rendered at build by
+ * src/lib/changelog.js. The newest few show in full and older ones fold to
+ * their date, title and section headings. One page rather than a page per
+ * entry, so there is no thin duplicate content; an entry is shared by its
+ * anchor, /changelog#2026-09-14, which opens it if folded. Opening the page
+ * clears the nav's "What's new" dot, and it ends with the feature request
+ * card. The full picture is in docs/agents/changelog.md.
  */
 import Head from "next/head";
 import { useEffect } from "react";

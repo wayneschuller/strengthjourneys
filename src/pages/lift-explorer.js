@@ -16,6 +16,8 @@ import { Layers } from "lucide-react";
 
 import { RelatedArticles } from "@/components/articles/article-cards";
 import { LiftGrid } from "@/components/lift-explorer/lift-grid";
+import { StartLiftingLogCard } from "@/components/onboarding/instructions-cards";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   PageContainer,
   PageHeader,
@@ -97,6 +99,7 @@ export default function LiftExplorer({ relatedArticles }) {
  */
 function LiftExplorerMain({ relatedArticles }) {
   const router = useRouter();
+  const { dataSource } = useUserLiftingData();
 
   // Forward an old ?liftType= link to that lift's guide, carrying the rest of
   // the query (PR deep links use prScope and prReps) and the hash along.
@@ -132,7 +135,11 @@ function LiftExplorerMain({ relatedArticles }) {
           </div>
         </PageHeaderRight>
       </PageHeader>
-      <LiftGrid />
+      {dataSource === "none" ? (
+        <StartLiftingLogCard payoff="Every lift you train" />
+      ) : (
+        <LiftGrid />
+      )}
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

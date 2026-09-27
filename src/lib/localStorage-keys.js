@@ -69,7 +69,9 @@ export const LOCAL_STORAGE_KEYS = {
 
   // Google Sheet / data source
   SHEET_INFO: "SJ_sheetInfo",
-  SIGNED_IN_DEMO_MODE: "SJ_signedInDemoMode",
+  // The lifter closed sheet setup without a sheet, so it stops opening itself.
+  // The stored name is from when closing setup also switched on demo data.
+  SHEET_SETUP_DISMISSED: "SJ_signedInDemoMode",
   // Marks a browser that has completed (or attempted) a Google sign-in before.
   // Read at module load to suppress the sign-in education dialog for returners.
   SIGNED_IN_BEFORE: "SJ_signedInBefore",

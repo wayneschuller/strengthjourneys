@@ -15,6 +15,7 @@ import { deduplicateImportedEntries } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import/import-history-client";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { useLocalStorage } from "usehooks-ts";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/sheet/open-sheet-setup";
 import {
   PENDING_SHEET_ACTIONS,
@@ -307,9 +308,6 @@ export function SheetSetupDialog() {
     isLoading,
     selectSheet,
     clearSheet,
-    isDemoMode,
-    enterSignedInDemoMode,
-    exitSignedInDemoMode,
     apiError,
     importFile,
     clearImportedData,
@@ -322,6 +320,13 @@ export function SheetSetupDialog() {
   const { toast } = useToast();
 
   const [open, setOpen] = useState(false);
+  // Once a signed-in lifter closes setup without a sheet (or disconnects one),
+  // setup waits to be asked instead of opening itself on every visit.
+  const [isSetupDismissed, setIsSetupDismissed] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.SHEET_SETUP_DISMISSED,
+    false,
+    { initializeWithValue: false },
+  );
   const [onboardingState, setOnboardingState] = useState("idle");
   const [provisionError, setProvisionError] = useState(null);
   const [openPicker, setOpenPicker] = useState(null);
@@ -701,7 +706,6 @@ export function SheetSetupDialog() {
         if (isImportedData) {
           clearImportedData();
         }
-        exitSignedInDemoMode();
         if (
           shouldShowSyncToastOnAutoLink(payload) &&
           typeof window !== "undefined"
@@ -745,7 +749,6 @@ export function SheetSetupDialog() {
       }
     },
     [
-      exitSignedInDemoMode,
       hadLocalSheetBefore,
       reportOnboardingEvent,
       resetUiState,
@@ -1072,7 +1075,6 @@ export function SheetSetupDialog() {
           modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
         };
 
-        exitSignedInDemoMode();
         selectSheet(linkPayload.ssid, nextSheetInfo);
         clearImportedData();
         mutate();
@@ -1118,7 +1120,6 @@ export function SheetSetupDialog() {
     },
     [
       clearImportedData,
-      exitSignedInDemoMode,
       handleActionFailure,
       hadLocalSheetBefore,
       importedFileName,
@@ -1224,7 +1225,6 @@ export function SheetSetupDialog() {
           modifiedTime: linkPayload.modifiedTime ?? null,
           modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
         };
-        exitSignedInDemoMode();
         selectSheet(linkPayload.ssid, nextSheetInfo);
         clearImportedData();
         mutate();
@@ -1272,7 +1272,6 @@ export function SheetSetupDialog() {
     [
       importFile,
       clearImportedData,
-      exitSignedInDemoMode,
       selectSheet,
       mutate,
       toast,
@@ -1304,7 +1303,7 @@ export function SheetSetupDialog() {
         payload,
       );
       clearSheet();
-      enterSignedInDemoMode();
+      setIsSetupDismissed(true);
       setHadLocalSheetBefore(false);
       setOnboardingState("choose_sheet");
       setSheetDiscoveryStatusMessage(
@@ -1318,7 +1317,7 @@ export function SheetSetupDialog() {
     } finally {
       setIsDisconnectingCurrentSheet(false);
     }
-  }, [clearSheet, enterSignedInDemoMode]);
+  }, [clearSheet, setIsSetupDismissed]);
 
   const closeDialog = useCallback(() => {
     const shouldReportAbort =
@@ -1342,20 +1341,20 @@ export function SheetSetupDialog() {
     setOpen(false);
     dialogInitialSsidRef.current = sheetInfo?.ssid || null;
     if (authStatus === "authenticated" && !sheetInfo?.ssid) {
-      enterSignedInDemoMode();
+      setIsSetupDismissed(true);
     }
     resetUiState();
     launchedFromUserRef.current = false;
     provisioningStartedRef.current = Boolean(sheetInfo?.ssid);
   }, [
     authStatus,
-    enterSignedInDemoMode,
     flowIntent,
     hadLocalSheetBefore,
     onboardingState,
     provisionError,
     reportOnboardingEvent,
     resetUiState,
+    setIsSetupDismissed,
     sheetInfo?.ssid,
   ]);
 
@@ -1372,6 +1371,7 @@ export function SheetSetupDialog() {
   }, [closeDialog, router]);
 
   useEffect(() => {
+    if (authStatus === "unauthenticated") setIsSetupDismissed(false);
     if (authStatus !== "authenticated") {
       setOpen(false);
       launchedFromUserRef.current = false;
@@ -1380,7 +1380,7 @@ export function SheetSetupDialog() {
       flowStartedAtRef.current = null;
       resetUiState();
     }
-  }, [authStatus, resetUiState]);
+  }, [authStatus, resetUiState, setIsSetupDismissed]);
 
   useEffect(() => {
     if (!open || !sheetInfo?.ssid) return;
@@ -1399,7 +1399,7 @@ export function SheetSetupDialog() {
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     if (sheetInfo?.ssid) return;
-    if (isDemoMode) return;
+    if (isSetupDismissed) return;
     if (readPendingSheetAction()?.type) return;
     if (isImportedData) return; // Suppress auto-open when user has imported data — banner handles it
     if (provisioningStartedRef.current) return;
@@ -1409,8 +1409,8 @@ export function SheetSetupDialog() {
     void resolveSheetFlow({ intent: "bootstrap", hadLocalBefore: false });
   }, [
     authStatus,
-    isDemoMode,
     isImportedData,
+    isSetupDismissed,
     resolveSheetFlow,
     sheetInfo?.ssid,
   ]);

@@ -11,6 +11,7 @@ import {
   BarChart3,
   Calendar,
   Check,
+  FileUp,
   Flame,
   FolderOpen,
   Table2,
@@ -18,6 +19,7 @@ import {
 import { motion, useReducedMotion, useAnimationControls } from "motion/react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 import SampleImage from "../../../public/sample_google_sheet_fuzzy_border.png";
 import {
@@ -530,11 +532,9 @@ export const SignInInvite = () => {
  * can see their real recap instead of demo data.
  */
 export function ConnectSheetRecapCard() {
-  const { status: authStatus } = useSession();
-  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
 
-  if (authStatus !== "authenticated" || sheetInfo?.ssid) return null;
-  if (isReturningUserLoading) return null;
+  if (dataSource !== "none") return null;
 
   return (
     <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">
@@ -549,9 +549,8 @@ export function ConnectSheetRecapCard() {
           See your year in review
         </CardTitle>
         <CardDescription className="text-sm leading-relaxed">
-          Demo mode is on. Choose a data source and we&apos;ll either create
-          your lifting log automatically or help you import existing data for a
-          personalized recap.
+          Start your lifting log, or import your history from another app, and
+          your recap builds itself from your own sessions.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6 pt-2 pb-8">
@@ -574,6 +573,66 @@ export function ConnectSheetRecapCard() {
           Your recap will show sessions, tonnage, PRs, most-trained lifts, and
           seasonal patterns — all from your own data.
         </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Stands in for a data page's charts when a signed-in lifter has no log yet.
+ * Starting a log runs the usual sheet setup, which also asks again for Drive
+ * access if it was declined; importing previews another app's history.
+ *
+ * @param {Object} props
+ * @param {string} props.payoff - What this page shows once there are lifts, e.g. "Your tonnage chart".
+ */
+export function StartLiftingLogCard({ payoff }) {
+  const router = useRouter();
+  const { dataSource } = useUserLiftingData();
+
+  if (dataSource !== "none") return null;
+
+  return (
+    <Card className="mx-auto w-full max-w-2xl">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-xl">Start your lifting log</CardTitle>
+        <CardDescription className="text-base leading-relaxed">
+          {payoff} fills in from your own sessions. Log your first set, or
+          bring your history over from another app.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="flex flex-col gap-1.5">
+          <Button
+            className="flex items-center gap-2"
+            onClick={() => openSheetSetupDialog("bootstrap")}
+          >
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-4 w-4 shrink-0"
+              aria-hidden
+            />
+            Start my lifting log
+          </Button>
+          <p className="text-muted-foreground text-xs">
+            A free Google Sheet in your own Drive.
+          </p>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Button variant="outline" asChild>
+            <Link
+              href={{ pathname: "/import", query: { returnTo: router.asPath } }}
+              className="flex items-center gap-2"
+            >
+              <FileUp className="h-4 w-4" />
+              Import from another app
+            </Link>
+          </Button>
+          <p className="text-muted-foreground text-xs">
+            Preview first, save when you&apos;re ready.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

@@ -375,13 +375,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
-  const { status: authStatus } = useSession();
   const {
     topLiftsByTypeAndReps,
     parsedData,
     isDemoMode,
-    isImportedData,
-    sheetInfo,
+    dataSource,
+    hasLinkedSheet,
   } = useUserLiftingData();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
     initializeWithValue: false,
@@ -1128,13 +1127,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           data={totalTimeline}
           target={TARGET_TOTAL}
           showSavePrompt={
-            isImportedData &&
-            (authStatus === "unauthenticated" ||
-              (authStatus === "authenticated" && !sheetInfo?.ssid))
+            dataSource === "import" && !hasLinkedSheet
           }
         />
-      ) : authStatus === "unauthenticated" ||
-        (authStatus === "authenticated" && !sheetInfo?.ssid) ? (
+      ) : dataSource === "demo" || dataSource === "none" ? (
         <TotalTimelineCtaCard />
       ) : null}
 

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 
 import {
   Card,
@@ -32,13 +31,11 @@ export function LiftingDataCard({
   setSelectedOptions,
   embedded = false,
 }) {
-  const { parsedData, isLoading, sheetInfo, hasUserData, isImportedData } =
+  const { parsedData, isLoading, hasUserData, dataSource } =
     useUserLiftingData();
-  const { status: authStatus } = useSession();
 
-  const isUnauthenticated = authStatus === "unauthenticated" && !isImportedData;
-  const isAuthenticated = authStatus === "authenticated";
-  const hasSheet = isAuthenticated && !!sheetInfo?.ssid;
+  const isUnauthenticated = dataSource === "demo";
+  const needsLiftingLog = dataSource === "none";
   const hasPersonalData =
     hasUserData && parsedData && parsedData.length > 0;
   const isTrainingEnabled = Boolean(
@@ -111,7 +108,7 @@ export function LiftingDataCard({
           "No lifting data found"}
         {!hasUserData && isUnauthenticated &&
           "Sign in to share your lifting data with the AI"}
-        {!hasUserData && isAuthenticated && !hasSheet &&
+        {!hasUserData && needsLiftingLog &&
           "Set up your Google Sheet to get started"}
       </CardDescription>
       {/* State 1: Unauthenticated (and no CSV import) - prompt to sign in */}
@@ -128,7 +125,7 @@ export function LiftingDataCard({
       )}
 
       {/* State 2: Authenticated but no sheet connected */}
-      {!hasUserData && isAuthenticated && !hasSheet && (
+      {!hasUserData && needsLiftingLog && (
         <div className="flex flex-col items-start gap-3">
           <p className="text-muted-foreground max-w-sm text-pretty text-sm">
             Set up your Google Sheet to share your personal lifting data with
@@ -291,7 +288,7 @@ export function LiftingDataCard({
           {!hasPersonalData && hasUserData && !isLoading &&
             "No lifting data found"}
           {!hasUserData && isUnauthenticated && "Sign in to share your lifting data with the AI"}
-          {!hasUserData && isAuthenticated && !hasSheet &&
+          {!hasUserData && needsLiftingLog &&
             "Set up your Google Sheet to get started"}
         </CardDescription>
       </CardHeader>

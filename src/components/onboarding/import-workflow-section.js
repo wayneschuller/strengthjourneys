@@ -970,6 +970,7 @@ export function ImportWorkflowSection({
   const { toast } = useToast();
   const {
     sheetInfo,
+    hasLinkedSheet,
     mutate,
     isLoading,
     parsedData,
@@ -990,7 +991,7 @@ export function ImportWorkflowSection({
   const [merging, setMerging] = useState(false);
 
   const isAuthenticated = authStatus === "authenticated" && !!session;
-  const canMerge = !!sheetInfo?.ssid;
+  const canMerge = hasLinkedSheet;
   const mergeMode = isAuthenticated && canMerge;
   const createMode = isAuthenticated && !canMerge;
   const isSheetComparisonPending =
@@ -1209,7 +1210,7 @@ export function ImportWorkflowSection({
   if (isImportedData) {
     const entryCount =
       parsedData?.filter((entry) => !entry.isGoal)?.length || 0;
-    const showCreateSheet = isAuthenticated && !sheetInfo?.ssid;
+    const showCreateSheet = isAuthenticated && !hasLinkedSheet;
     const showMerge = isAuthenticated && !showCreateSheet && canMerge;
     const importAnalysis = showMerge
       ? analyzeImportedEntries(parsedData || [], sheetParsedData)

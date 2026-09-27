@@ -12,7 +12,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { NextSeo } from "next-seo";
-import { useSession } from "next-auth/react";
 import { RelatedArticles } from "@/components/articles/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -769,8 +768,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   const { toast } = useToast();
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
-  const { status: authStatus } = useSession();
-  const { topLiftsByTypeAndReps, parsedData, isDemoMode, sheetInfo } =
+  const { topLiftsByTypeAndReps, parsedData, isDemoMode, dataSource } =
     useUserLiftingData();
   const { isMetric } = useAthleteBio();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
@@ -1693,8 +1691,7 @@ function PlateMilestonesMain({ relatedArticles }) {
           isMetric={isMetric}
         />
       ) : (
-        (authStatus === "unauthenticated" ||
-          (authStatus === "authenticated" && !sheetInfo?.ssid)) && (
+        (dataSource === "demo" || dataSource === "none") && (
           <PlateImportCtaCard />
         )
       )}

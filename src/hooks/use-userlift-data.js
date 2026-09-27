@@ -76,6 +76,22 @@ if (typeof window !== "undefined") {
   }
 }
 
+/**
+ * The single rule for where the app's data comes from. See dataSource in the provider.
+ * @returns {"loading"|"demo"|"import"|"sheet"|"none"}
+ */
+export function getDataSource({
+  authStatus,
+  hasSheet,
+  isImportedData,
+  isReturningUserLoading,
+}) {
+  if (isImportedData) return "import";
+  if (authStatus === "loading" || isReturningUserLoading) return "loading";
+  if (authStatus === "unauthenticated") return "demo";
+  return hasSheet ? "sheet" : "none";
+}
+
 // ---------------------------------------------------------------------------
 // Returning-user detection: synchronous localStorage snapshot at module load.
 // Used to suppress the onboarding hero flash while auth + useLocalStorage
@@ -149,7 +165,14 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context fetchFailed {boolean} - True after retries are exhausted (used by Layout for error toast).
  * @context apiError {{status, statusText, message}|null} - Structured error from the last failed fetch.
  * @context parseError {string|null} - Error message if sheet data failed to parse (sheet is auto-cleared).
- * @context isDemoMode {boolean} - True when demo data is active, either signed out or explicitly disconnected while signed in.
+ * @context dataSource {"loading"|"demo"|"import"|"sheet"|"none"} - Where the data on screen comes
+ *   from. Prefer switching on this over combining authStatus, sheetInfo and the flags below.
+ * @context isDemoMode {boolean} - dataSource === "demo": signed out, showing sample data.
+ * @context hasUserData {boolean} - dataSource is "sheet" or "import".
+ * @context isReadOnly {boolean} - dataSource is anything but "sheet".
+ * @context hasLinkedSheet {boolean} - Signed in with a sheet linked, even while an import is
+ *   previewed on top of it. Import surfaces use it to offer merge vs create.
+ * @context sheetParsedData {Array|null} - The linked sheet's rows, kept loaded under an import.
  * @context rawRows {number|null} - Row count from the last successful sheet fetch.
  * @context hasCachedSheetData {boolean} - True if SWR holds valid sheet values (even if stale).
  * @context dataSyncedAt {number|null} - Timestamp (Date.now()) of the last successful data load.
@@ -313,28 +336,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     null,
     { initializeWithValue: false },
   );
-  const [signedInDemoMode, setSignedInDemoMode] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SIGNED_IN_DEMO_MODE,
-    false,
-    { initializeWithValue: false },
-  );
-  // Imported CSV data overrides demo mode — the user has real data loaded.
-  const isDemoMode =
-    !importedParsedData &&
-    (authStatus === "unauthenticated" ||
-      (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode));
-
-  // True when real user data is available from any source (gsheet or CSV import).
-  // Use this for layout decisions (e.g. show personal charts first vs editorial first)
-  // instead of checking authStatus directly.
-  const hasUserData =
-    isImportedData ||
-    (authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode);
-
-  // True when the current data source doesn't support writes (CSV, demo, or no data).
-  // Use this to hide write-only UI (log buttons, sheet setup, etc.).
-  const isReadOnly = !hasUserData || isImportedData;
-
   // True while we have localStorage evidence of a linked sheet but auth and/or
   // useLocalStorage haven't hydrated yet. Consumers use this to avoid flashing
   // onboarding UI for returning users during the initial load.
@@ -360,11 +361,37 @@ export const UserLiftingDataProvider = ({ children }) => {
     !(authStatus === "authenticated" && !!sheetInfo?.ssid) &&
     authStatus !== "unauthenticated";
 
+  // Where the data on screen comes from. This is the one answer to "demo,
+  // import, sheet or nothing yet?", so components switch on it rather than
+  // combining authStatus, sheetInfo and the flags below themselves.
+  //   loading - auth is resolving, or a returning lifter's sheet is hydrating
+  //   demo    - signed out with no import: sample data
+  //   import  - an imported file is being previewed (signed in or out)
+  //   sheet   - signed in with a linked Google Sheet
+  //   none    - signed in with no sheet and no import: nudge them to start a log
+  const dataSource = getDataSource({
+    authStatus,
+    hasSheet: !!sheetInfo?.ssid,
+    isImportedData,
+    isReturningUserLoading,
+  });
+
+  // Shorthands derived from dataSource, kept so they can never disagree.
+  const isDemoMode = dataSource === "demo";
+  // Real data from a sheet or an imported file. Use this for layout decisions
+  // (e.g. personal charts first vs editorial first).
+  const hasUserData = dataSource === "sheet" || dataSource === "import";
+  // Only a linked sheet can be written to. Use this to hide write-only UI.
+  const isReadOnly = dataSource !== "sheet";
+  // The second axis: whether a sheet is linked, whatever is on screen. During
+  // an import preview dataSource is "import" but the linked sheet keeps
+  // loading in sheetParsedData, so the import can be merged into it.
+  const hasLinkedSheet = authStatus === "authenticated" && !!sheetInfo?.ssid;
+
   const selectSheet = useCallback(
     (ssid, metadata = {}) => {
       gaTrackSheetLinked();
       rdtTrackSheetLinked(); // Reddit Ads: the activation conversion campaigns optimise against
-      setSignedInDemoMode(false);
       setSheetInfo({
         ssid,
         url: metadata.url ?? null,
@@ -373,7 +400,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         modifiedByMeTime: metadata.modifiedByMeTime ?? null,
       });
     },
-    [setSheetInfo, setSignedInDemoMode],
+    [setSheetInfo],
   );
 
   // Every path that removes a sheet routes through here — user disconnect, the setup dialog's
@@ -383,14 +410,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     setSheetClearedInSession(true);
     setSheetInfo(null);
   }, [setSheetInfo]);
-  const enterSignedInDemoMode = useCallback(
-    () => setSignedInDemoMode(true),
-    [setSignedInDemoMode],
-  );
-  const exitSignedInDemoMode = useCallback(
-    () => setSignedInDemoMode(false),
-    [setSignedInDemoMode],
-  );
 
   // Keep fetching the linked sheet even during imported preview mode.
   // The imported file still powers the visible UI, but import analysis and
@@ -399,12 +418,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     authStatus === "authenticated" &&
     !!session?.accessToken &&
     !!sheetInfo?.ssid;
-
-  useEffect(() => {
-    if (authStatus === "unauthenticated" && signedInDemoMode) {
-      setSignedInDemoMode(false);
-    }
-  }, [authStatus, signedInDemoMode, setSignedInDemoMode]);
 
   // -----------------------------------------------------------------------------------------------
   // Call gsheets API via our backend api route using useSWR
@@ -718,8 +731,8 @@ export const UserLiftingDataProvider = ({ children }) => {
         sheetInfo,
         selectSheet,
         clearSheet,
-        enterSignedInDemoMode,
-        exitSignedInDemoMode,
+        dataSource,
+        hasLinkedSheet,
         importFile,
         clearImportedData,
         sheetParsedData: parsedData,
@@ -733,8 +746,8 @@ export const UserLiftingDataProvider = ({ children }) => {
 /**
  * Parses raw gsheet values into parsedData. Fires analytics on success/failure.
  * On parse error: returns parseError string (caller handles clearing sheet).
- * Uses demo data when unauthenticated or when the user explicitly disconnected their sheet while staying signed in.
- * When authenticated without usable sheet data and without explicit demo fallback, returns empty data so UI can nudge sheet connection.
+ * Uses demo data only when unauthenticated.
+ * When authenticated without usable sheet data, returns empty data so UI can nudge the lifter to start a log.
  * Returns { parsedData, isDemoMode, parseError }.
  */
 function getParsedDataWithFallback({ authStatus, data, isDemoMode }) {

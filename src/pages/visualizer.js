@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useEffect, useState, useContext } from "react";
 import { NextSeo } from "next-seo";
 import { useSession, signIn } from "next-auth/react";
+import { StartLiftingLogCard } from "@/components/onboarding/instructions-cards";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
@@ -89,7 +90,7 @@ export default function Visualizer({ relatedArticles }) {
  * @param {Array} props.relatedArticles - Articles to display in the related articles section.
  */
 function VisualizerMain({ relatedArticles }) {
-  const { isLoading } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
   const [highlightDate, setHighlightDate] = useState(null);
 
   return (
@@ -103,17 +104,21 @@ function VisualizerMain({ relatedArticles }) {
           strength journey.
         </PageHeaderDescription>
       </PageHeader>
-      <section className="flex flex-col gap-5 md:flex-row">
-        <div className="w-full lg:w-2/3 xl:w-3/4">
-          <VisualizerShadcn setHighlightDate={setHighlightDate} />
-        </div>
-        <div className="w-full lg:w-1/3 xl:w-1/4">
-          <TheLatestSessionCard
-            highlightDate={highlightDate}
-            setHighlightDate={setHighlightDate}
-          />
-        </div>
-      </section>
+      {dataSource === "none" ? (
+        <StartLiftingLogCard payoff="Your strength chart" />
+      ) : (
+        <section className="flex flex-col gap-5 md:flex-row">
+          <div className="w-full lg:w-2/3 xl:w-3/4">
+            <VisualizerShadcn setHighlightDate={setHighlightDate} />
+          </div>
+          <div className="w-full lg:w-1/3 xl:w-1/4">
+            <TheLatestSessionCard
+              highlightDate={highlightDate}
+              setHighlightDate={setHighlightDate}
+            />
+          </div>
+        </section>
+      )}
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

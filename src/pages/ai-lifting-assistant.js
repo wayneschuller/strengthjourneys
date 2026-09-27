@@ -207,6 +207,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     parsedData,
     isLoading,
     isDemoMode,
+    hasUserData,
     liftTypes,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
@@ -303,7 +304,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         hasSharedBioData={!isDemoMode && shareBioDetails}
         hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
         hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
-        hasLiftingLog={!isDemoMode}
+        hasLiftingLog={hasUserData}
         loggedLiftTypes={isDemoMode ? undefined : liftTypes}
         personalizationControls={
           <PersonalizationDialog

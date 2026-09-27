@@ -414,6 +414,7 @@ const PERSONALIZED_DATA_CTA_PATHS = [
   "/progress-guide/[lift]",
   "/strength-year-in-review",
 ];
+const START_LOG_CARD_PATHS = ["/visualizer", "/lift-explorer", "/tonnage"];
 const DEMO_MODE_NUDGE_DELAY_MIN_MS = 20000;
 const DEMO_MODE_NUDGE_DELAY_MAX_MS = 30000;
 const DEMO_MODE_NUDGE_TOAST_DURATION_MS = 12000;
@@ -486,14 +487,16 @@ function useMissingDemoLiftName() {
 
 // Internal banner shown on data pages when the user is unauthenticated or has no sheet connected.
 function DataAccessBanner({ pathname, currentPath }) {
-  const { status: authStatus } = useSession();
-  const { sheetInfo, isDemoMode } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
   const missingDemoLiftName = useMissingDemoLiftName();
 
   const isDataPage = PERSONALIZED_DATA_CTA_PATHS.includes(pathname);
-  const showSignInCta = isDataPage && authStatus === "unauthenticated";
+  const showSignInCta = isDataPage && dataSource === "demo";
+  // Pages with a start-your-log card in place of their charts say it there.
   const showSetupSheetCta =
-    isDataPage && authStatus === "authenticated" && !sheetInfo?.ssid;
+    isDataPage &&
+    dataSource === "none" &&
+    !START_LOG_CARD_PATHS.includes(pathname);
 
   if (!showSignInCta && !showSetupSheetCta) return null;
 
@@ -505,11 +508,7 @@ function DataAccessBanner({ pathname, currentPath }) {
             ? missingDemoLiftName
               ? `Want to see your own ${missingDemoLiftName} progress here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode.`
               : "You are viewing demo data. Want to see your own lifts, trends, and PRs here? Sign in with Google or import a data export from popular lifting apps instantly in preview mode."
-            : missingDemoLiftName
-              ? `Connect your data to see your own ${missingDemoLiftName} progress here.`
-              : isDemoMode
-                ? "Demo mode is on. Connect your data to replace the sample view with your own lifting history here."
-                : "Connect your data to replace the sample view with your own lifting history here."}
+            : "Start your lifting log, or import your history from another app, and this page fills in with your own lifts."}
         </AppBannerMessage>
         {showSignInCta ? (
           <AppBannerActions>
@@ -704,6 +703,7 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
   const router = useRouter();
   const { status: authStatus } = useSession();
   const {
+    hasLinkedSheet,
     sheetInfo,
     parsedData,
     sheetParsedData,
@@ -715,7 +715,7 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
   const [working, setWorking] = useState(false);
 
   const isAuthenticated = authStatus === "authenticated";
-  const hasSsid = !!sheetInfo?.ssid;
+  const hasSsid = hasLinkedSheet;
   const importAnalysis = useMemo(() => {
     if (!hasSsid) return null;
     return analyzeImportedEntries(parsedData || [], sheetParsedData);

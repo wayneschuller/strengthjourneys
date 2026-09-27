@@ -383,6 +383,7 @@ export default function Home({ starterArticles = [] }) {
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
   const {
+    dataSource,
     hasUserData,
     isImportedData,
     parsedData,
@@ -427,9 +428,9 @@ export default function Home({ starterArticles = [] }) {
   //   dashboard - real data, from a linked sheet or an imported file
   const surface = useMemo(() => {
     if (hasUserData) return "dashboard";
-    if (authStatus === "authenticated" && !sheetInfo?.ssid) return "welcome";
+    if (dataSource === "none") return "welcome";
     return "hero";
-  }, [authStatus, hasUserData, sheetInfo?.ssid]);
+  }, [dataSource, hasUserData]);
 
   const showWelcome = surface === "welcome";
 

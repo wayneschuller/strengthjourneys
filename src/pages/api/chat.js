@@ -59,6 +59,7 @@ export default async function handler(req, res) {
   const {
     messages: userMessages,
     userProvidedMetadata,
+    hasLiftingLog,
     requestedModel,
   } = validation;
 
@@ -116,6 +117,14 @@ export default async function handler(req, res) {
     systemMessages.push({
       role: "system",
       content: buildUserLiftingContextPrompt(userProvidedMetadata),
+    });
+  } else {
+    systemMessages.push({
+      role: "system",
+      content: buildNoPersonalizationPrompt({
+        hasLiftingLog,
+        isSignedIn: Boolean(session?.user),
+      }),
     });
   }
 
@@ -188,7 +197,7 @@ export default async function handler(req, res) {
 }
 
 function validateChatRequest(body) {
-  const { messages, userProvidedMetadata, model } = body || {};
+  const { messages, userProvidedMetadata, hasLiftingLog, model } = body || {};
 
   if (!Array.isArray(messages) || messages.length === 0) {
     devLog("WARNING: No messages received from client");
@@ -252,6 +261,7 @@ function validateChatRequest(body) {
   return {
     messages: sanitizedMessages,
     userProvidedMetadata: userProvidedMetadata || "",
+    hasLiftingLog: hasLiftingLog === true,
     requestedModel: typeof model === "string" ? model : undefined,
   };
 }
@@ -285,6 +295,31 @@ function buildTemporalContextPrompt() {
     `Today's date is ${utcDate} UTC.`,
     "Use this date when reasoning about training recency, missed sessions, deloads, layoffs, and gaps between logged session dates.",
     "If the user's lifting data includes dated sessions, compare those dates against today before commenting on momentum or recent fatigue.",
+  ].join(" ");
+}
+
+// Nothing personal was shared, so a question like "how strong am I?" can only
+// be answered generically. The coach tells the lifter how to share their
+// numbers, and the route depends on whether their own log is loaded: sharing
+// switches in the Personalize dialog send nothing while demo data is showing.
+function buildNoPersonalizationPrompt({ hasLiftingLog, isSignedIn }) {
+  let howToShare;
+  if (hasLiftingLog) {
+    howToShare =
+      "they can tap the Personalize button at the top of this chat and switch on their profile and lifting data";
+  } else if (isSignedIn) {
+    howToShare =
+      "they can connect their lifting log (Google Sheet) to Strength Journeys, then tap the Personalize button at the top of this chat to share it";
+  } else {
+    howToShare =
+      "they can sign in with Google and connect their lifting log, then tap the Personalize button at the top of this chat to share it";
+  }
+
+  return [
+    "The lifter has not shared any profile or lifting data in this chat.",
+    `If their question needs their own numbers (their strength level, progress, PRs, bodyweight, age, or training history), answer as well as you can, and mention briefly and warmly that ${howToShare}, so you can answer from their real numbers.`,
+    "They can also type their numbers into the chat instead.",
+    "Mention this at most once per conversation, and not at all for general questions that do not need their data.",
   ].join(" ");
 }
 

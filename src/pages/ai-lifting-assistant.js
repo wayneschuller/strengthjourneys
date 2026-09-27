@@ -303,6 +303,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         hasSharedBioData={!isDemoMode && shareBioDetails}
         hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
         hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
+        hasLiftingLog={!isDemoMode}
         loggedLiftTypes={isDemoMode ? undefined : liftTypes}
         personalizationControls={
           <PersonalizationDialog
@@ -572,6 +573,8 @@ const CHAT_CONTEXT_STORAGE_KEY = "chat:/ai:context";
  * @param {boolean} props.hasSharedBioData - Whether the user has opted to share bio details.
  * @param {boolean} props.hasSharedFullTrainingData - Whether the user has opted to share every lifting metadata section.
  * @param {boolean} props.hasSharedTrainingData - Whether the user has opted to share any lifting metadata.
+ * @param {boolean} props.hasLiftingLog - Whether the lifter's own log is loaded (not demo data), so
+ *   the coach knows whether to point them at Personalize or at connecting a log.
  * @param {React.ReactNode} props.personalizationControls - Compact dialog trigger rendered in the chat header.
  * @param {Object} props.suggestionContext - Small prompt-personalisation context derived from opted-in local data.
  * @param {() => string} props.buildCoachContext - Builds the opted-in lifting summary. Called
@@ -588,6 +591,7 @@ function AILiftingAssistantCard({
   hasSharedBioData,
   hasSharedFullTrainingData,
   hasSharedTrainingData,
+  hasLiftingLog,
   personalizationControls,
   suggestionContext,
   buildCoachContext,
@@ -795,8 +799,12 @@ function AILiftingAssistantCard({
     try {
       sessionStorage.setItem(CHAT_CONTEXT_STORAGE_KEY, context);
     } catch {}
-    return { userProvidedMetadata: context, model: selectedModelId };
-  }, [buildCoachContext, selectedModelId]);
+    return {
+      userProvidedMetadata: context,
+      hasLiftingLog: Boolean(hasLiftingLog),
+      model: selectedModelId,
+    };
+  }, [buildCoachContext, hasLiftingLog, selectedModelId]);
 
   // Follow-up suggestions are fetched separately once an answer finishes, so a
   // slow suggestion model can never hold the main chat stream open.

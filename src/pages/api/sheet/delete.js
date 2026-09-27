@@ -9,7 +9,7 @@ import { getServerSession } from "next-auth/next";
 import {
   diffEditableSnapshot,
   startFirstSheetIdLookup,
-} from "@/lib/sheet-row-ops";
+} from "@/lib/sheet/sheet-row-ops";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 // DELETE /api/sheet/delete

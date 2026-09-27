@@ -28,10 +28,10 @@ import {
   buildCardCopyText,
 } from "@/components/ai-review-actions";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/sheet/pending-sheet-action";
 import {
   Card,
   CardContent,

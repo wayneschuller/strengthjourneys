@@ -9,7 +9,7 @@
 import { motion } from "motion/react";
 import { FileUp } from "lucide-react";
 
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 
 /**
  * Centred loading state for the dashboard below lg: what we are reading, and which sheet it

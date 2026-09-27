@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { DrivePickerContainer } from "@/components/onboarding/drive-picker-container";
-import { handleOpenFilePicker } from "@/lib/handle-open-picker";
+import { handleOpenFilePicker } from "@/lib/sheet/handle-open-picker";
 import { SESSION_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
@@ -24,7 +24,7 @@ import {
   GoogleSignInButton,
   GoogleSignInInlineButton,
 } from "@/components/onboarding/google-sign-in";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 
 import {
   Card,

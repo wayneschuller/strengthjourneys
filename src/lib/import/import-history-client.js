@@ -3,7 +3,7 @@
  * Compresses large JSON payloads with gzip when the browser supports it, while
  * falling back to plain JSON for older environments.
  */
-import { gaTrackImportProcess } from "@/lib/analytics";
+import { gaTrackImportProcess } from "@/lib/analytics/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
 async function gzipJsonString(jsonString) {

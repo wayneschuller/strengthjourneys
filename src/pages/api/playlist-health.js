@@ -6,9 +6,9 @@ import {
   isLeaderboardAdminEmail,
   moderateThumbnail,
   thumbnailStatusFromVerdict,
-} from "@/lib/playlist-security";
-import { checkPlaylistLink } from "@/lib/playlist-link-health";
-import { notifyPlaylistModeration } from "@/lib/playlist-moderation-mail";
+} from "@/lib/playlists/playlist-security";
+import { checkPlaylistLink } from "@/lib/playlists/playlist-link-health";
+import { notifyPlaylistModeration } from "@/lib/playlists/playlist-moderation-mail";
 
 /*
  * Scheduled health sweep: re-checks playlist links and re-moderates every cover image.

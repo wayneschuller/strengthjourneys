@@ -2,7 +2,7 @@ import { kv } from "@/lib/kv";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { parseStoredPlaylist } from "@/components/playlist-leaderboard/playlist-utils";
-import { getRequestClientIp, isValidPlaylistId, isLeaderboardAdminEmail, getVoteWeightInfo } from "@/lib/playlist-security";
+import { getRequestClientIp, isValidPlaylistId, isLeaderboardAdminEmail, getVoteWeightInfo } from "@/lib/playlists/playlist-security";
 
 const VOTE_THROTTLE_SECONDS = 10 * 60;
 

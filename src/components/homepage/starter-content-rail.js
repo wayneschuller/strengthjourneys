@@ -17,7 +17,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, BicepsFlexed, Newspaper } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics/analytics";
 
 const articleDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",

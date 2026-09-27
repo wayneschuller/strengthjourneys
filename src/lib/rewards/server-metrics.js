@@ -1,5 +1,5 @@
 import { readUserRecord } from "@/lib/user-kv-keys";
-import { parseData } from "@/lib/data-sources/import-dispatcher";
+import { parseData } from "@/lib/import/import-dispatcher";
 import { getTrainingRewardMetrics } from "@/lib/rewards/progression";
 
 /*

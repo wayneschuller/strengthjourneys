@@ -44,7 +44,7 @@ const MONTHS = [
 
 /**
  * @param {Object} args
- * @param {import("@/lib/data-sources/import-dispatcher").ParsedData} args.parsedData Sorted by date, oldest first.
+ * @param {import("@/lib/import/import-dispatcher").ParsedData} args.parsedData Sorted by date, oldest first.
  * @param {{ liftType: string, oldestDate: string, newestDate: string }[]} [args.liftTypes] From calculateLiftTypes, most frequent first.
  * @param {Object} [args.topLiftsByTypeAndReps] Pipeline PR table, all time.
  * @param {Object} [args.topLiftsByTypeAndRepsLast12Months] Pipeline PR table, last 12 months.

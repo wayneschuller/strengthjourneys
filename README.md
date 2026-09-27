@@ -100,8 +100,8 @@ This repo has grown into a multi-tool lifting app (home dashboard, visualizer, s
 - `src/components/ai-elements/` — the ai-elements chat pieces the AI assistant uses (add more from the upstream registry when needed)
 - `src/components/ui/` — shadcn/Radix-based primitives
 - `src/hooks/use-userlift-data.js` — central Google Sheets fetch/parse/cache context (SWR + demo mode + derived metrics)
-- `src/lib/data-sources/import-dispatcher.js` — the single parsing entry point: `parseData()` for Google Sheets rows, `parseImportedFile()` for drag-and-drop CSV/XLSX
-- `src/lib/data-sources/` — one parser per supported export format, plus shared decode/normalize helpers
+- `src/lib/import/import-dispatcher.js` — the single parsing entry point: `parseData()` for Google Sheets rows, `parseImportedFile()` for drag-and-drop CSV/XLSX
+- `src/lib/import/` — file decoding, dedupe, import profiles and provenance; `src/lib/import/parsers/` holds one parser per supported export format plus shared normalize helpers
 - `src/lib/processing-utils.js` — shared processing/aggregation helpers (PRs, tonnage, timing logs, unit conversion)
 - `src/pages/api/sheet/read.js` — authenticated Google Sheets + Drive metadata proxy
 - `src/pages/api/sheet/` — the rest of the sheet surface: linking, provisioning, and the operation-oriented write routes
@@ -119,9 +119,9 @@ This repo has grown into a multi-tool lifting app (home dashboard, visualizer, s
 ### Common contributor entry points
 
 - Build a new tool page (or improve an existing one): start in `src/pages/<tool>.js`, then add/adjust feature components under `src/components/<feature>/`
-- Improve parser tolerance for real-world spreadsheets (header variations, blank-row patterns, date/weight formats): `src/lib/data-sources/strength-journeys-parser.js` and the shared `parser-utilities.js`
+- Improve parser tolerance for real-world spreadsheets (header variations, blank-row patterns, date/weight formats): `src/lib/import/parsers/strength-journeys-parser.js` and the shared `parser-utilities.js`
 - UI polish and usability improvements (layout spacing, card composition, mobile tweaks, theme details): `src/components/`, `src/components/ui/`, `src/styles/globals.css`
-- Add import support for another lifting app: add a parser under `src/lib/data-sources/` (copy the shape of `hevy-parser.js`), then register its detection in `import-dispatcher.js`. There is a regression script for this — `npm run validate:imports`, which checks synthetic sample rows kept inside the scripts in `scripts/`
+- Add import support for another lifting app: add a parser under `src/lib/import/parsers/` (copy the shape of `hevy-parser.js`), then register its detection in `import-dispatcher.js`. There is a regression script for this — `npm run validate:imports`, which checks synthetic sample rows kept inside the scripts in `scripts/`
 
 ## Branch strategy
 

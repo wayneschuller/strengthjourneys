@@ -3,7 +3,7 @@ import {
   isValidLiftWeight,
   normalizeDecimalComma,
   normalizeLiftTypeNames,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 
 // Parse Turnkey data format
 //

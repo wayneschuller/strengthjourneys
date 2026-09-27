@@ -29,7 +29,7 @@ import {
   getImportAppPageBySlug,
   getImportAppUrl,
   IMPORT_APP_PAGES,
-} from "@/lib/import-app-guides";
+} from "@/lib/import/import-app-guides";
 
 export async function getStaticPaths() {
   return {

@@ -55,11 +55,11 @@ registerHooks({
   },
 });
 
-const { decodeCSV } = await import("../src/lib/data-sources/decode-csv.js");
+const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseFitbodData } =
-  await import("../src/lib/data-sources/fitbod-parser.js");
+  await import("../src/lib/import/parsers/fitbod-parser.js");
 const { detectFormat } =
-  await import("../src/lib/data-sources/import-dispatcher.js");
+  await import("../src/lib/import/import-dispatcher.js");
 const { getImportSource } = await import("../src/lib/import/import-sources.js");
 
 // Synthetic rows in the column shape corroborated by community Fitbod

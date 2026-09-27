@@ -15,12 +15,12 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
-import { pageView, captureUtmFromUrl } from "@/lib/analytics";
+import { pageView, captureUtmFromUrl } from "@/lib/analytics/analytics";
 import {
   REDDIT_PIXEL_ID,
   isRedditPixelEnabled,
   rdtTrackPageVisit,
-} from "@/lib/reddit-pixel";
+} from "@/lib/analytics/reddit-pixel";
 import { TimerProvider } from "@/hooks/use-timer";
 import { UserLiftingDataProvider } from "@/hooks/use-userlift-data";
 import { LiftColorsProvider } from "@/hooks/use-lift-colors";
@@ -119,7 +119,7 @@ export default function App({ Component, pageProps, session }) {
       </Script>
       {/* Reddit Ads pixel. Reddit's own base snippet, verbatim apart from the
           pixel ID, so it keeps working if they change what pixel.js expects.
-          Skipped entirely in development. See lib/reddit-pixel.js. */}
+          Skipped entirely in development. See lib/analytics/reddit-pixel.js. */}
       {isRedditPixelEnabled() && (
         <Script id="reddit-pixel" strategy="afterInteractive">
           {`

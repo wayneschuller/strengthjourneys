@@ -42,7 +42,7 @@ import {
   analyzeImportedEntries,
   deduplicateImportedEntries,
 } from "@/lib/import/dedupe";
-import { postImportHistory } from "@/lib/import-history-client";
+import { postImportHistory } from "@/lib/import/import-history-client";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
@@ -59,9 +59,9 @@ import {
 } from "@/lib/lifts/lift-registry";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/sheet/pending-sheet-action";
 import { DailyTrainingHeatmap } from "@/components/home-dashboard/long-game/daily-training-heatmap";
 import { ThousandDonut } from "@/components/thousand-club-donut";
 import { useScrollToLatestYear } from "@/hooks/use-scroll-to-latest-year";

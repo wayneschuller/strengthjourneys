@@ -7,7 +7,7 @@ import {
   normalizeOnboardingFlowEmail,
   ONBOARDING_EVENT_THROTTLE_SECONDS,
   ONBOARDING_FLOW_TOKEN_TTL_SECONDS,
-} from "@/lib/onboarding-flow-events";
+} from "@/lib/analytics/onboarding-flow-events";
 
 const ALLOWED_EVENTS = new Set([
   "onboarding-success",

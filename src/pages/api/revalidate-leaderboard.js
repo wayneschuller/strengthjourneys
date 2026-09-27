@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
+import { isLeaderboardAdminEmail } from "@/lib/playlists/playlist-security";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

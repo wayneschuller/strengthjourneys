@@ -48,9 +48,9 @@ import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BigFourLiftCards } from "@/components/homepage/big-four-lift-cards";
 import { StarterContentRail } from "@/components/homepage/starter-content-rail";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics/analytics";
 
 /*
  * Entrance choreography. The page arrives in reading order — who you are, what we are asking,

@@ -1,4 +1,4 @@
-import { gaTrackFeedbackSentiment } from "@/lib/analytics";
+import { gaTrackFeedbackSentiment } from "@/lib/analytics/analytics";
 
 export function readStoredSentiment(storageKey) {
   if (!storageKey) return null;

@@ -49,13 +49,13 @@ registerHooks({
 });
 
 const { normalizeLiftTypeNames } =
-  await import("../src/lib/data-sources/parser-utilities.js");
+  await import("../src/lib/import/parsers/parser-utilities.js");
 const { CURATED_LIFTS } = await import("../src/lib/lifts/lift-registry.js");
-const { decodeCSV } = await import("../src/lib/data-sources/decode-csv.js");
+const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { detectFormat } =
-  await import("../src/lib/data-sources/import-dispatcher.js");
+  await import("../src/lib/import/import-dispatcher.js");
 const { parseStrongData } =
-  await import("../src/lib/data-sources/strong-parser.js");
+  await import("../src/lib/import/parsers/strong-parser.js");
 
 // Every registry name and synonym must come back as its own lift, and no
 // spelling may belong to two lifts.

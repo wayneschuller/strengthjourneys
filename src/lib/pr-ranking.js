@@ -7,7 +7,7 @@ import {
   getDisplayWeight,
   getCelebrationEmoji,
 } from "@/lib/processing-utils";
-import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
+import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
 
 const TOP_THREE_RANK_CUTOFF = 3;
 

@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
 import {
   DropdownMenu,

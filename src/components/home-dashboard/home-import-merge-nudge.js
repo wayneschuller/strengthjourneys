@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/app-banner";
 import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { gaTrackHomeImportNudge } from "@/lib/analytics";
+import { gaTrackHomeImportNudge } from "@/lib/analytics/analytics";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import {
   formatWorkoutFreshnessDate,

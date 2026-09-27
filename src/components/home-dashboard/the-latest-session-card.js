@@ -23,7 +23,7 @@ import {
   LOCAL_STORAGE_KEYS,
   getSheetScopedStorageKey,
 } from "@/lib/localStorage-keys";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";

@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
 import { FileUp, RefreshCw, Loader2 } from "lucide-react";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { CountUp, COUNT_UP_EASE, formatCountUpInteger } from "@/components/count-up";
 
 function formatSyncTime(timestamp) {

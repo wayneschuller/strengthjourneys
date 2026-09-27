@@ -5,8 +5,8 @@
  * output that may differ in unit/default formatting details.
  */
 
-import { normalizeLiftTypeNames } from "@/lib/data-sources/import-dispatcher";
-import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
+import { normalizeLiftTypeNames } from "@/lib/import/import-dispatcher";
+import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
 import { getImportedSourceIdentity } from "@/lib/import/provenance";
 
 function normalizeComparableEntry(entry) {

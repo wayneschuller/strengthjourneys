@@ -50,9 +50,9 @@ registerHooks({
   },
 });
 
-const { decodeCSV } = await import("../src/lib/data-sources/decode-csv.js");
+const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseStrengthJourneysData } =
-  await import("../src/lib/data-sources/strength-journeys-parser.js");
+  await import("../src/lib/import/parsers/strength-journeys-parser.js");
 
 // Synthetic rows in the sheet's sparse shape, not a real sheet. They carry
 // the typos real logs hold: a decimal comma, a stray backtick beside the 1,

@@ -47,11 +47,11 @@ registerHooks({
   },
 });
 
-const { decodeCSV } = await import("../src/lib/data-sources/decode-csv.js");
+const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseHevyData } =
-  await import("../src/lib/data-sources/hevy-parser.js");
+  await import("../src/lib/import/parsers/hevy-parser.js");
 const { detectFormat } =
-  await import("../src/lib/data-sources/import-dispatcher.js");
+  await import("../src/lib/import/import-dispatcher.js");
 const { deduplicateImportedEntries } =
   await import("../src/lib/import/dedupe.js");
 const { buildNextImportProfile } =

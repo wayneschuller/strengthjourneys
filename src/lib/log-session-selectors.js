@@ -5,7 +5,7 @@
  */
 
 import { getAverageLiftSessionTonnageFromPrecomputed } from "@/lib/processing-utils";
-import { hasMatchingRealSetForPendingSet } from "@/lib/sheet-row-identity";
+import { hasMatchingRealSetForPendingSet } from "@/lib/sheet/sheet-row-identity";
 import { getDaysBetweenYmd } from "@/lib/date-utils";
 
 // A set counts half as much every 60 days, so the add-lift gallery follows a

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
-import { gaTrackSignInClick } from "@/lib/analytics";
+import { gaTrackSignInClick } from "@/lib/analytics/analytics";
 import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 

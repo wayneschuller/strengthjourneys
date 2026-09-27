@@ -42,12 +42,12 @@ import {
 import { AlertTriangle, FileUp, Loader2, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { analyzeImportedEntries } from "@/lib/import/dedupe";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
-import { postImportHistory } from "@/lib/import-history-client";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
+import { postImportHistory } from "@/lib/import/import-history-client";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/sheet/pending-sheet-action";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getCuratedLiftBySlug, getLiftSlug } from "@/lib/lifts/lift-registry";
 import {

@@ -38,8 +38,8 @@ import { Button } from "@/components/ui/button";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 import { getRelatedArticles } from "@/lib/articles";
 import {
   STRENGTH_STANDARDS_HUB_URL,

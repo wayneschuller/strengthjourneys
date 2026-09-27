@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import { getVoteWeightInfo } from "@/lib/playlist-security";
+import { getVoteWeightInfo } from "@/lib/playlists/playlist-security";
 import { MAX_VOTE_WEIGHT } from "@/lib/rewards/vote-weight";
 
 /*

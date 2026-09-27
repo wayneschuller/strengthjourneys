@@ -1,6 +1,6 @@
 /** @format */
 
-import { gaTrackSheetConnectClick } from "@/lib/analytics";
+import { gaTrackSheetConnectClick } from "@/lib/analytics/analytics";
 
 /**
  * Opens the Google Drive picker and tracks the click for analytics.

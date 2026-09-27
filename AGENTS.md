@@ -64,14 +64,14 @@ emails use Resend on best-effort server-side paths.
 Key data flow:
 
 1. `src/pages/api/sheet/read.js` fetches linked sheet values + Drive metadata
-2. `src/lib/data-sources/import-dispatcher.js` is the single parsing entry point: `parseData()` normalizes sheet rows into canonical lift objects, `parseImportedFile()` detects and parses file imports
+2. `src/lib/import/import-dispatcher.js` is the single parsing entry point: `parseData()` normalizes sheet rows into canonical lift objects, `parseImportedFile()` detects and parses file imports
 3. `src/lib/processing-utils.js` computes historical PRs, tonnage, and derived lift summaries
 4. `src/hooks/use-userlift-data.js` is the central app data provider
 
 Important supporting flows:
 
 1. `src/pages/api/sheet/resolve.js` decides bootstrap/recovery/switch-sheet flow
-2. `src/lib/sheet-flow.js` contains the shared sheet-linking/provisioning logic
+2. `src/lib/sheet/sheet-flow.js` contains the shared sheet-linking/provisioning logic
 3. `src/pages/api/sheet/import-history.js` handles authenticated import merges into the linked sheet
 4. `src/components/onboarding/import-workflow-section.js` and `src/components/onboarding/sheet-setup-dialog.js` are the main import entry points
 
@@ -87,7 +87,7 @@ authenticated users.
   `UserLiftingDataProvider` context owns fetching, parsing, demo mode,
   imported-file mode, and every shared derived metric. **Consume derived data
   from this context — do not recompute PRs or tonnage in a component.**
-- **Import pipeline:** `data-sources/import-dispatcher.js` is the single entry
+- **Import pipeline:** `import/import-dispatcher.js` is the single entry
   point, with two functions — `parseData(rows)` for Google Sheets (Strength
   Journeys format only, read/write) and `parseImportedFile(file)` for
   drag-and-drop CSV/XLSX (any format, view-only).

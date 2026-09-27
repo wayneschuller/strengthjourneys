@@ -22,7 +22,7 @@
 //          (same shape as sheetInfo in localStorage)
 
 import { devLog } from "@/lib/processing-utils";
-import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
+import { classifySheetFlowError } from "@/lib/sheet/sheet-flow-errors";
 import {
   buildImportedSheetName,
   buildSheetName,
@@ -41,7 +41,7 @@ import {
   respondLinkExisting,
   validateAndFetchSelectedSheet,
   SAMPLE_TEMPLATE_SSID,
-} from "@/lib/sheet-flow";
+} from "@/lib/sheet/sheet-flow";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

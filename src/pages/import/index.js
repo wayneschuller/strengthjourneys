@@ -48,9 +48,9 @@ import {
   GitMerge,
   FileSpreadsheet,
 } from "lucide-react";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { postImportHistory } from "@/lib/import-history-client";
-import { IMPORT_APP_PAGES } from "@/lib/import-app-guides";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { postImportHistory } from "@/lib/import/import-history-client";
+import { IMPORT_APP_PAGES } from "@/lib/import/import-app-guides";
 
 import { getLiftArtwork } from "@/components/lift-artwork";
 const BIG_FOUR = [

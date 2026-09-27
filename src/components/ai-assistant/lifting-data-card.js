@@ -16,8 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { cn } from "@/lib/utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 
 /**
  * Card that manages which lifting data categories are shared with the AI assistant.

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useToast } from "@/hooks/use-toast";
-import { gaTrackShareCopy } from "@/lib/analytics";
+import { gaTrackShareCopy } from "@/lib/analytics/analytics";
 
 const SHARE_NUDGES = [
   "Found this useful? Share it with someone who lifts.",

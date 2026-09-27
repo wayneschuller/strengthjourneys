@@ -34,7 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { devLog } from "@/lib/processing-utils";
-import { gaTrackCalcShareCopy } from "@/lib/analytics";
+import { gaTrackCalcShareCopy } from "@/lib/analytics/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
 import { getLiftArtwork } from "@/components/lift-artwork";

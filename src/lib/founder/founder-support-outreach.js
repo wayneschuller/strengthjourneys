@@ -19,13 +19,13 @@
  *
  * The founder gets `[SJ]` notifications immediately, as things happen, plus a
  * bcc of the note itself when it lands. See `DEFAULT_DISABLED_EVENTS` in
- * "@/lib/founder-notifications" for the legacy per-step emails this superseded.
+ * "@/lib/founder/founder-notifications" for the legacy per-step emails this superseded.
  */
 
 import { Resend } from "resend";
 
 import { kv } from "@/lib/kv";
-import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
+import { isLeaderboardAdminEmail } from "@/lib/playlists/playlist-security";
 import { mergeUserRecord, readUserRecord } from "@/lib/user-kv-keys";
 
 const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";

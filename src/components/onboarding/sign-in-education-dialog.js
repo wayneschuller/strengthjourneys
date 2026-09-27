@@ -33,7 +33,7 @@ import {
   gaTrackSignInPrimerShown,
   gaTrackSignInPrimerDismissed,
   gaTrackSignInPrimerContinued,
-} from "@/lib/analytics";
+} from "@/lib/analytics/analytics";
 import { markReturningLifter } from "@/lib/sign-in-dialog-gate";
 
 const GOOGLE_PERMISSIONS_URL = "https://myaccount.google.com/permissions";

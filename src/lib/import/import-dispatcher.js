@@ -6,32 +6,32 @@
 //
 // All parsers take string[][] (rows with header) and return ParsedData[].
 
-import { parseStrengthJourneysData } from "@/lib/data-sources/strength-journeys-parser";
-import { parseBtwbData } from "@/lib/data-sources/btwb-parser";
+import { parseStrengthJourneysData } from "@/lib/import/parsers/strength-journeys-parser";
+import { parseBtwbData } from "@/lib/import/parsers/btwb-parser";
 import {
   isFitbodExport,
   parseFitbodData,
-} from "@/lib/data-sources/fitbod-parser";
+} from "@/lib/import/parsers/fitbod-parser";
 import {
   isFitNotesExport,
   parseFitNotesData,
-} from "@/lib/data-sources/fitnotes-parser";
-import { parseHevyData } from "@/lib/data-sources/hevy-parser";
-import { parseStrongData } from "@/lib/data-sources/strong-parser";
+} from "@/lib/import/parsers/fitnotes-parser";
+import { parseHevyData } from "@/lib/import/parsers/hevy-parser";
+import { parseStrongData } from "@/lib/import/parsers/strong-parser";
 import {
   isStrongliftsExport,
   parseStrongliftsData,
-} from "@/lib/data-sources/stronglifts-parser";
-import { parseTurnKeyData } from "@/lib/data-sources/turnkey-parser";
-import { parseWodifyData } from "@/lib/data-sources/wodify-parser";
-import { decodeCSV } from "@/lib/data-sources/decode-csv";
-import { decodeWorkbook } from "@/lib/data-sources/decode-workbook";
+} from "@/lib/import/parsers/stronglifts-parser";
+import { parseTurnKeyData } from "@/lib/import/parsers/turnkey-parser";
+import { parseWodifyData } from "@/lib/import/parsers/wodify-parser";
+import { decodeCSV } from "@/lib/import/decode-csv";
+import { decodeWorkbook } from "@/lib/import/decode-workbook";
 
 /**
  * A single logged lift after parsing and normalization.
  *
  * This is the canonical data shape used throughout the app. See
- * `data-sources/sample-parsed-data.js` for concrete examples of this structure in use.
+ * `import/sample-parsed-data.js` for concrete examples of this structure in use.
  *
  * @typedef {Object} LiftEntry
  * @property {string} date          ISO date string "YYYY-MM-DD"
@@ -270,4 +270,4 @@ export async function parseImportedFile(file) {
 }
 
 // Re-export normalization utilities for use by other modules
-export { normalizeLiftTypeNames } from "@/lib/data-sources/parser-utilities";
+export { normalizeLiftTypeNames } from "@/lib/import/parsers/parser-utilities";

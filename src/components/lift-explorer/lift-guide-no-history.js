@@ -19,8 +19,8 @@ import { ImportWorkflowSection } from "@/components/onboarding/import-workflow-s
 import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { formatDateToYmdLocal } from "@/lib/date-utils";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 
 // The card repeats on every guide without data, so its words rotate by lift
 // and day rather than reading identically page after page.

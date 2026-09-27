@@ -13,10 +13,10 @@
  */
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
+import { classifySheetFlowError } from "@/lib/sheet/sheet-flow-errors";
 import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
-import { isValidLiftWeight } from "@/lib/data-sources/parser-utilities";
+import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
 import {
   buildVisibleImportProvenance,
   hasVisibleImportProvenance,

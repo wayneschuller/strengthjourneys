@@ -4,8 +4,8 @@
  * tail of other sheets folded away. Keep sheet selection separate from "open in
  * Google Sheets" so titles are not mistaken for primary CTAs.
  */
-import { handleOpenFilePicker } from "@/lib/handle-open-picker";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { handleOpenFilePicker } from "@/lib/sheet/handle-open-picker";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

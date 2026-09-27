@@ -3,7 +3,7 @@ import {
   isValidLiftWeight,
   normalizeLiftTypeNames,
   normalizeDecimalComma,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 
 function getColumnIndex(headers, candidates) {
   for (const candidate of candidates) {

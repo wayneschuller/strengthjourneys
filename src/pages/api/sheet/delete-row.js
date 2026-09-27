@@ -25,7 +25,7 @@ import {
   readRawRow,
   startFirstSheetIdLookup,
   verifyRowSnapshot,
-} from "@/lib/sheet-row-ops";
+} from "@/lib/sheet/sheet-row-ops";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 export default async function handler(req, res) {

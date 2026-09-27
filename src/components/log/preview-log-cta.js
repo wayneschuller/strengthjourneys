@@ -9,9 +9,9 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/sheet/pending-sheet-action";
 
 export function PreviewLogCta({ isDemoMode = false, isImportedData = false }) {
   const { status: authStatus } = useSession();

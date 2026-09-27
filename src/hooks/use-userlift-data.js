@@ -13,10 +13,10 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   parseData,
   parseImportedFile,
-} from "@/lib/data-sources/import-dispatcher";
-import { getDemoParsedData } from "@/lib/data-sources/sample-parsed-data";
-import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
-import { rdtTrackSheetLinked } from "@/lib/reddit-pixel";
+} from "@/lib/import/import-dispatcher";
+import { getDemoParsedData } from "@/lib/import/sample-parsed-data";
+import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics/analytics";
+import { rdtTrackSheetLinked } from "@/lib/analytics/reddit-pixel";
 import {
   flushTimings,
   processTopLiftsByTypeAndReps,
@@ -29,7 +29,7 @@ import { processStreakLeaderboard } from "@/lib/home-dashboard/streak-leaderboar
 import {
   applyDateOutlierPreviewFix,
   getDateOutlierWarnings,
-} from "@/lib/data-quality/date-outliers";
+} from "@/lib/import/date-outliers";
 import { useLocalStorage } from "usehooks-ts";
 
 // ---------------------------------------------------------------------------
@@ -157,7 +157,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
 export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
-  const [parsedData, setParsedData] = useState(null); // see @/lib/data-sources/sample-parsed-data.js for data structure design
+  const [parsedData, setParsedData] = useState(null); // see @/lib/import/sample-parsed-data.js for data structure design
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);

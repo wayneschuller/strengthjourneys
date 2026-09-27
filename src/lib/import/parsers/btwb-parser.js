@@ -3,7 +3,7 @@ import { recordTiming } from "@/lib/processing-utils";
 import {
   isValidLiftWeight,
   normalizeLiftTypeNames,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 
 const TITLE_COLUMN_CANDIDATES = [
   "Workout",

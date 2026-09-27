@@ -7,7 +7,7 @@ import {
   isValidLiftWeight,
   normalizeLiftTypeNames,
   normalizeDecimalComma,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 
 // Legacy exports use a "wide" row per workout. Header shape from a 2018 export:
 //

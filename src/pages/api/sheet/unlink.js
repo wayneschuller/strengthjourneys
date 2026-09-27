@@ -20,7 +20,7 @@
 
 import { kv } from "@/lib/kv";
 import { devLog } from "@/lib/processing-utils";
-import { requireSheetFlowContext } from "@/lib/sheet-flow";
+import { requireSheetFlowContext } from "@/lib/sheet/sheet-flow";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

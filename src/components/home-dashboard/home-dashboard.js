@@ -21,7 +21,7 @@ import { motion } from "motion/react";
 import {
   gaTrackHomeDashboardFirstView,
   gaTrackHomeDashboardStageEntered,
-} from "@/lib/analytics";
+} from "@/lib/analytics/analytics";
 import {
   LOCAL_STORAGE_KEYS,
   getSheetScopedStorageKey,

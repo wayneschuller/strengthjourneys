@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { gaTrackSignInSuccess } from "@/lib/analytics";
-import { rdtTrackSignUp } from "@/lib/reddit-pixel";
+import { gaTrackSignInSuccess } from "@/lib/analytics/analytics";
+import { rdtTrackSignUp } from "@/lib/analytics/reddit-pixel";
 
 // sessionStorage key used to ensure funnel_sign_in_success fires at most once
 // per browser session. sessionStorage persists across same-tab page loads

@@ -25,7 +25,7 @@ import {
   requireSheetFlowContext,
   toClientCandidate,
   withDebug,
-} from "@/lib/sheet-flow";
+} from "@/lib/sheet/sheet-flow";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

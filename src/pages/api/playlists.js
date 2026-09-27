@@ -14,10 +14,10 @@ import {
   isContentFlaggedByAI,
   moderateThumbnail,
   thumbnailStatusFromVerdict,
-} from "@/lib/playlist-security";
+} from "@/lib/playlists/playlist-security";
 import {
   notifyPlaylistModeration,
-} from "@/lib/playlist-moderation-mail";
+} from "@/lib/playlists/playlist-moderation-mail";
 import { RegExpMatcher, englishDataset } from "obscenity";
 
 // Initialize obscenity matcher

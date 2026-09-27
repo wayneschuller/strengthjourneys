@@ -9,7 +9,7 @@ import { Check, X } from "lucide-react";
 import {
   isBodyweightLoadLiftName,
   isValidLiftWeight,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 import { parseWeightInput } from "@/components/log/sheet-snapshot-utils";
 import { UnitLabel } from "@/components/log/unit-label";
 

@@ -6,7 +6,7 @@ import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { useLocalStorage } from "usehooks-ts";
 import { useSession, signIn } from "next-auth/react";
-import { gaTrackSignInClick } from "@/lib/analytics";
+import { gaTrackSignInClick } from "@/lib/analytics/analytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

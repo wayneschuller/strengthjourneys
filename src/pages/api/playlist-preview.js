@@ -9,7 +9,7 @@ import {
 import {
   getRequestClientIp,
   moderateThumbnail,
-} from "@/lib/playlist-security";
+} from "@/lib/playlists/playlist-security";
 
 // Matches the server-side title limit, so a resolved title always arrives already valid rather
 // than failing validation after the submitter has filled in everything else.

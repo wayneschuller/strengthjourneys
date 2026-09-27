@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { gaTrackShareCopy } from "@/lib/analytics";
+import { gaTrackShareCopy } from "@/lib/analytics/analytics";
 import {
   captureRecapSlideBlob,
   canNativeShareFiles,

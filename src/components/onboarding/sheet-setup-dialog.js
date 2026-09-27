@@ -10,21 +10,21 @@ import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel";
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { handleOpenFilePicker } from "@/lib/handle-open-picker";
+import { handleOpenFilePicker } from "@/lib/sheet/handle-open-picker";
 import { deduplicateImportedEntries } from "@/lib/import/dedupe";
-import { postImportHistory } from "@/lib/import-history-client";
+import { postImportHistory } from "@/lib/import/import-history-client";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { OPEN_SHEET_SETUP_EVENT } from "@/lib/open-sheet-setup";
+import { OPEN_SHEET_SETUP_EVENT } from "@/lib/sheet/open-sheet-setup";
 import {
   PENDING_SHEET_ACTIONS,
   clearPendingSheetAction,
   persistPendingSheetAction,
   readPendingSheetAction,
-} from "@/lib/pending-sheet-action";
+} from "@/lib/sheet/pending-sheet-action";
 import { devLog } from "@/lib/processing-utils";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { SHEET_FLOW_ERROR_CODES } from "@/lib/sheet-flow-errors";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { SHEET_FLOW_ERROR_CODES } from "@/lib/sheet/sheet-flow-errors";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {

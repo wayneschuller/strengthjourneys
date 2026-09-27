@@ -35,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/page-header";
 import { QuickLinkCard } from "@/components/quick-link-card";
 import { getNotFoundLine } from "@/lib/not-found-lines";
-import { gaTrackPageNotFound } from "@/lib/analytics";
+import { gaTrackPageNotFound } from "@/lib/analytics/analytics";
 
 import { getLiftArtwork } from "@/components/lift-artwork";
 /**

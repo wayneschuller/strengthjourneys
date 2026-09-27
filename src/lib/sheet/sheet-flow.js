@@ -6,7 +6,7 @@ import {
   normalizeColumnName,
   normalizeBigFourLiftType,
   STANDARD_BIG_FOUR_LIFT_TYPES,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 import { devLog } from "@/lib/processing-utils";
 import { getUserKvKey, mergeUserRecord } from "@/lib/user-kv-keys";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";

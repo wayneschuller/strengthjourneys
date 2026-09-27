@@ -48,7 +48,7 @@ import {
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { MiniFeedbackWidget } from "@/components/feedback";
-import { gaTrackCoffeeNudgeClick } from "@/lib/analytics";
+import { gaTrackCoffeeNudgeClick } from "@/lib/analytics/analytics";
 import {
   buildAiAssistantPromptLink,
   buildMonthlyReviewPrompt,

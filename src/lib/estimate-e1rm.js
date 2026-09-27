@@ -8,7 +8,7 @@
 import {
   isBodyweightLoadLiftName,
   STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 
 // FIXME: add more formulae from the Wikipedia article?
 export const e1rmFormulae = [

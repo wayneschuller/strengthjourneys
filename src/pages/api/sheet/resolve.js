@@ -1,6 +1,6 @@
 import { devLog } from "@/lib/processing-utils";
-import { issueOnboardingFlowToken } from "@/lib/onboarding-flow-events";
-import { classifySheetFlowError } from "@/lib/sheet-flow-errors";
+import { issueOnboardingFlowToken } from "@/lib/analytics/onboarding-flow-events";
+import { classifySheetFlowError } from "@/lib/sheet/sheet-flow-errors";
 import {
   buildSheetName,
   classifyLifecycle,
@@ -20,7 +20,7 @@ import {
   respondLinkExisting,
   respondRecoverReturningUser,
   scoreAndSortCandidates,
-} from "@/lib/sheet-flow";
+} from "@/lib/sheet/sheet-flow";
 import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
 // POST /api/sheet/resolve

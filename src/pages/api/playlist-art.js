@@ -7,7 +7,7 @@ import {
   isValidPlaylistId,
   moderateThumbnail,
   thumbnailStatusFromVerdict,
-} from "@/lib/playlist-security";
+} from "@/lib/playlists/playlist-security";
 
 /*
  * Admin-only cover art moderation.

@@ -14,7 +14,7 @@
 // src/pages/api/sheet/insert-row.js.
 //
 // Returns a `ParsedData` array that is always sorted by date ascending.
-// See @/lib/data-sources/sample-parsed-data.js for example data using this structure.
+// See @/lib/import/sample-parsed-data.js for example data using this structure.
 
 import { recordTiming } from "@/lib/processing-utils";
 import { normalizeDateInput } from "@/lib/date-utils";
@@ -25,7 +25,7 @@ import {
   convertWeightAndUnitType,
   createParseRepairLog,
   isDistanceOrTimeText,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 
 /**
  * Parse the Strength Journeys Google Sheet format into `ParsedData`.

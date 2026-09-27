@@ -19,7 +19,7 @@ import {
   forceNotesPlainText,
   startFirstSheetIdLookup,
   verifyRowSnapshot,
-} from "@/lib/sheet-row-ops";
+} from "@/lib/sheet/sheet-row-ops";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

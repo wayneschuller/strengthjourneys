@@ -16,7 +16,7 @@ import Link from "next/link";
 
 import { FileUp } from "lucide-react";
 
-import { gaTrackHomeImportNudge, gaTrackLongGameLogCta } from "@/lib/analytics";
+import { gaTrackHomeImportNudge, gaTrackLongGameLogCta } from "@/lib/analytics/analytics";
 
 import { formatMilestoneRemaining } from "@/lib/home-dashboard/long-game-milestones";
 

@@ -7,7 +7,7 @@
  * - The base pixel (window.rdt) is loaded in _app.js via next/script. That
  *   snippet also fires the first PageVisit, for the landing page.
  * - Client-side route changes fire their own PageVisit from _app.js, the same
- *   way GA4 re-sends page_view (see lib/analytics.js). Next.js only emits
+ *   way GA4 re-sends page_view (see lib/analytics/analytics.js). Next.js only emits
  *   routeChangeComplete for real navigations, so the landing page is not
  *   counted twice.
  * - SignUp fires when a lifter first becomes authenticated (see

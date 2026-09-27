@@ -21,8 +21,8 @@ import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/components/mini-timer";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
-import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 import { getRepeatImportHref } from "@/lib/import/import-sources";
 
 import {

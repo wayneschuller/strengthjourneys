@@ -50,11 +50,11 @@ registerHooks({
   },
 });
 
-const { decodeCSV } = await import("../src/lib/data-sources/decode-csv.js");
+const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseFitNotesData } =
-  await import("../src/lib/data-sources/fitnotes-parser.js");
+  await import("../src/lib/import/parsers/fitnotes-parser.js");
 const { detectFormat } =
-  await import("../src/lib/data-sources/import-dispatcher.js");
+  await import("../src/lib/import/import-dispatcher.js");
 
 // Synthetic rows in the FitNotes export shape, not a real export. It covers
 // barbell sets, a bodyweight lift the registry knows carries no load, one it

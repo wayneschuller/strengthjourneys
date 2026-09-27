@@ -10,7 +10,7 @@ import {
   gaEvent,
   GA_EVENT_TAGS,
   gaTrackHomeImportNudge,
-} from "@/lib/analytics";
+} from "@/lib/analytics/analytics";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import {
   AiReviewActions,

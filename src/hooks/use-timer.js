@@ -39,7 +39,7 @@ import { format } from "date-fns";
 import { useLocalStorage } from "usehooks-ts";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 

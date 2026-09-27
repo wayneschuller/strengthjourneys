@@ -15,7 +15,7 @@ import {
   isValidLiftWeight,
   normalizeLiftTypeNames,
   normalizeDecimalComma,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 import { buildVisibleImportProvenance } from "@/lib/import/provenance";
 
 function normalizeHeader(header) {

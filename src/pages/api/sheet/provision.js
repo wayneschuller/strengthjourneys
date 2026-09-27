@@ -38,7 +38,7 @@ import {
   normalizeColumnName,
   normalizeBigFourLiftType,
   STANDARD_BIG_FOUR_LIFT_TYPES,
-} from "@/lib/data-sources/parser-utilities";
+} from "@/lib/import/parsers/parser-utilities";
 
 const TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 const PROVISION_VERSION = 2;
@@ -361,7 +361,7 @@ async function readHeaderInfo(ssid, headers) {
 }
 
 // Legacy copy of the sheet chooser scanner. Keep this behavior aligned with
-// src/lib/sheet-flow.js and parseStrengthJourneysData(), especially sparse
+// src/lib/sheet/sheet-flow.js and parseStrengthJourneysData(), especially sparse
 // Date/Lift Type inheritance and optional row semantics such as isGoal.
 function parseYmd(value) {
   if (!value) return null;

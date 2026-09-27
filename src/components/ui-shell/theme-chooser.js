@@ -35,7 +35,7 @@ import {
   getUnlockedThemes,
   isThemeLocked,
 } from "@/lib/rewards/theme-unlocks";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 

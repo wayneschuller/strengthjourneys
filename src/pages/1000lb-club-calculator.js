@@ -63,9 +63,9 @@ import {
 } from "recharts";
 
 import { getRelatedArticles } from "@/lib/articles";
-import { gaTrackShareCopy } from "@/lib/analytics";
-import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
-import { PENDING_SHEET_ACTIONS } from "@/lib/pending-sheet-action";
+import { gaTrackShareCopy } from "@/lib/analytics/analytics";
+import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
+import { PENDING_SHEET_ACTIONS } from "@/lib/sheet/pending-sheet-action";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { useTransientSuccess } from "@/hooks/use-transient-success";

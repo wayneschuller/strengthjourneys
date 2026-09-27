@@ -6,7 +6,7 @@ import {
   gaTrackSheetSelected,
   gaEvent,
   GA_EVENT_TAGS,
-} from "@/lib/analytics";
+} from "@/lib/analytics/analytics";
 
 /**
  * Container that initializes the Google Drive Picker using the official

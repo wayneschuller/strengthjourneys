@@ -10,10 +10,10 @@ import { Resend } from "resend";
 import {
   handleSupportActivation,
   handleSupportSignIn,
-} from "@/lib/founder-support-outreach";
+} from "@/lib/founder/founder-support-outreach";
 import { kv } from "@/lib/kv";
-import { shouldSendFounderNotification } from "@/lib/founder-notifications";
-import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
+import { shouldSendFounderNotification } from "@/lib/founder/founder-notifications";
+import { isLeaderboardAdminEmail } from "@/lib/playlists/playlist-security";
 import { mergeUserRecord, readUserRecord } from "@/lib/user-kv-keys";
 import { devLog } from "@/lib/processing-utils";
 

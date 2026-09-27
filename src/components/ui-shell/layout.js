@@ -13,7 +13,7 @@ import { Footer } from "@/components/ui-shell/footer";
 import { AppBackground } from "@/components/ui-shell/app-background";
 import { FeedbackWidget } from "@/components/feedback";
 import { HomeImportMergeNudge } from "@/components/home-dashboard/home-import-merge-nudge";
-import { ThemeRewardUnlockBanner } from "@/components/rewards/theme-reward-unlock-banner";
+import { ThemeRewardUnlockBanner } from "@/components/ui-shell/theme-reward-unlock-banner";
 import {
   GoogleSignInButton,
   GoogleSignInToastAction,

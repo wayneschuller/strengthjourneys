@@ -14,7 +14,7 @@ import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { Layers } from "lucide-react";
 
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { LiftGrid } from "@/components/lift-explorer/lift-grid";
 import {
   PageContainer,

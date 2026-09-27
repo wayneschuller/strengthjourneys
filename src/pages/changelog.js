@@ -18,7 +18,7 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { formatArticleDate, PROSE_THEME_STYLE } from "@/components/article-cards";
+import { formatArticleDate, PROSE_THEME_STYLE } from "@/components/articles/article-cards";
 import { FeatureRequestCard } from "@/components/feedback";
 import { useMarkChangelogSeen } from "@/components/ui-shell/whats-new";
 import { cn } from "@/lib/utils";

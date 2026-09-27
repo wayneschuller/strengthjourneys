@@ -12,7 +12,7 @@
 // Everything about the timing itself (wall-clock accuracy, screen wake lock, the
 // ping) lives in the shared TimerProvider so the nav bar MiniTimer keeps
 // counting when a lifter navigates away mid-set. The deck's buttons live in
-// components/timer-controls.js, because the MiniTimer's panel offers the same
+// components/timer/timer-controls.js, because the MiniTimer's panel offers the same
 // set of actions to a lifter who is somewhere else in the app.
 
 import React, { useCallback, useEffect, useRef } from "react";
@@ -20,14 +20,14 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { NextSeo } from "next-seo";
 import { useTheme } from "next-themes";
 
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { PageContainer } from "@/components/page-header";
 import {
   TimerPingControls,
   TimerTransportControls,
-} from "@/components/timer-controls";
-import { TimerDigits } from "@/components/timer-digits";
-import { TimerPingHistory } from "@/components/timer-ping-history";
+} from "@/components/timer/timer-controls";
+import { TimerDigits } from "@/components/timer/timer-digits";
+import { TimerPingHistory } from "@/components/timer/timer-ping-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatAlarmLabel, formatTime, useTimer } from "@/hooks/use-timer";
 import { getRelatedArticles } from "@/lib/articles";

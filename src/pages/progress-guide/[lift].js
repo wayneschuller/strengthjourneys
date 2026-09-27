@@ -61,13 +61,13 @@ import { MostRecentSessionCard } from "@/components/lift-explorer/most-recent-se
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { Button } from "@/components/ui/button";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
 import { LiftGuideNoHistory } from "@/components/lift-explorer/lift-guide-no-history";
 import {
   SectionReveal,
-} from "@/components/big-four/section-reveal";
+} from "@/components/section-reveal";
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftArtwork } from "@/components/lift-artwork";

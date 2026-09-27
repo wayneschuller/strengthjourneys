@@ -32,7 +32,7 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 import { getRelatedArticles } from "@/lib/articles";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 
 const ITEMS_PER_PAGE = 10;
 

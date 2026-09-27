@@ -10,7 +10,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { motion, useReducedMotion } from "motion/react";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { ImportDataOwnershipPromo } from "@/components/import-data-ownership-promo";
 import { getLongReadableDateString } from "@/lib/date-utils";

@@ -26,7 +26,7 @@ import {
   parseAiChatQuotaFromHeaders,
 } from "@/lib/ai/chat-quota";
 import { devLog } from "@/lib/processing-utils";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { AiReplyFeedback } from "@/components/feedback/ai-reply-feedback";
 import { ModelSwitcher } from "@/components/ai-assistant/model-switcher";
 import {

@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { Flame } from "lucide-react";
 
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
@@ -41,7 +41,7 @@ import {
   getDefaultBarType,
 } from "@/lib/barbell-defaults";
 import { generateSessionSets, formatPlateBreakdown } from "@/lib/warmups";
-import { PlateDiagram } from "@/components/warmups/plate-diagram";
+import { PlateDiagram } from "@/components/plate-diagram";
 import { buildShareUrl } from "@/lib/share-url";
 
 import { getRelatedArticles } from "@/lib/articles";

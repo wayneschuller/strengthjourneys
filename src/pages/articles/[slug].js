@@ -18,12 +18,12 @@ import {
   ArticleGrid,
   formatArticleDate,
   PROSE_THEME_STYLE,
-} from "@/components/article-cards";
+} from "@/components/articles/article-cards";
 import {
   TopArticleShareButton,
   ArticleShareFooterCta,
   MobileFloatingArticleShareButton,
-} from "@/components/article-share-controls";
+} from "@/components/articles/article-share-controls";
 
 import { getArticleBySlug, getPublishedArticles } from "@/lib/articles";
 

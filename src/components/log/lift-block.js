@@ -29,8 +29,8 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
-import { StrengthBar } from "@/components/strength-level/strength-bar";
-import { LiftPercentileLine } from "@/components/strength-level/lift-percentile-line";
+import { StrengthBar } from "@/components/log/strength-bar";
+import { LiftPercentileLine } from "@/components/log/lift-percentile-line";
 import {
   LiftStrengthLevel,
   LiftTonnageRow,

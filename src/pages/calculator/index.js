@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 
@@ -42,7 +42,7 @@ import { cn } from "@/lib/utils";
 
 import { useLocalStorage, useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { calculatePlateBreakdown } from "@/lib/warmups";
-import { PlateDiagram } from "@/components/warmups/plate-diagram";
+import { PlateDiagram } from "@/components/plate-diagram";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";

@@ -8,7 +8,7 @@ import { motion } from "motion/react";
 import { Share2, Shield } from "lucide-react";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { UnitChooser } from "@/components/unit-type-chooser";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getRelatedArticles } from "@/lib/articles";
 import {

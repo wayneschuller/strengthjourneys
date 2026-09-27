@@ -13,7 +13,7 @@ import { useRouter } from "next/router";
 import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { PlateDiagram } from "@/components/warmups/plate-diagram";
+import { PlateDiagram } from "@/components/plate-diagram";
 import { calculatePlateBreakdown } from "@/lib/warmups";
 import { getRelatedArticles } from "@/lib/articles";
 import { gaTrackShareCopy } from "@/lib/analytics/analytics";

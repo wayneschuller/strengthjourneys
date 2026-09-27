@@ -22,11 +22,11 @@ import Link from "next/link";
 
 import { ChevronDown } from "lucide-react";
 
-import { TimerDigits } from "@/components/timer-digits";
+import { TimerDigits } from "@/components/timer/timer-digits";
 import {
   TimerPingControls,
   TimerTransportControls,
-} from "@/components/timer-controls";
+} from "@/components/timer/timer-controls";
 import {
   Popover,
   PopoverContent,

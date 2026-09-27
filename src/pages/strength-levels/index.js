@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import {
   PageContainer,

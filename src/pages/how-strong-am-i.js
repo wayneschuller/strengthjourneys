@@ -22,7 +22,7 @@ import {
   Anvil,
 } from "lucide-react";
 
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { ImportDataOwnershipPromo } from "@/components/import-data-ownership-promo";
 import {
   PageContainer,

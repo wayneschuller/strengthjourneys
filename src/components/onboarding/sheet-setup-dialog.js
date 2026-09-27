@@ -47,7 +47,7 @@ import {
   Activity,
   Sparkles,
 } from "lucide-react";
-import { PlateDiagram } from "@/components/warmups/plate-diagram";
+import { PlateDiagram } from "@/components/plate-diagram";
 import { PLATE_SETS } from "@/lib/warmups";
 
 const ENRICH_CANDIDATE_LIMIT = 12;

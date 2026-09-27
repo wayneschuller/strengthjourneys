@@ -16,7 +16,7 @@ import {
 import { LineChart } from "lucide-react";
 
 import { getRelatedArticles } from "@/lib/articles";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Visualizer";

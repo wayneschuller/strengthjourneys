@@ -10,7 +10,7 @@ import {
   ArticleGrid,
   ArticlePagination,
   buildArticlePageHref,
-} from "@/components/article-cards";
+} from "@/components/articles/article-cards";
 import {
   PageContainer,
   PageHeader,

@@ -3,7 +3,7 @@
  * MiniTimer panel.
  *
  * Lives here rather than inside pages/timer.js for the same reason
- * components/mini-timer.js does: the nav bar must not have to import a Next page
+ * components/timer/mini-timer.js does: the nav bar must not have to import a Next page
  * module (and drag its SEO and article-fetching imports) into every route.
  *
  * Two variants, because the same controls have to work at two very different

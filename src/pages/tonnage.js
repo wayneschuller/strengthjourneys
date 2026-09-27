@@ -15,7 +15,7 @@ import {
 import { Bus } from "lucide-react";
 
 import { getRelatedArticles } from "@/lib/articles";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 
 export async function getStaticProps() {

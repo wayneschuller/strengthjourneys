@@ -8,7 +8,7 @@ import { Anvil, BicepsFlexed, BookOpen, Calculator, CircleDashed, Mountain } fro
 import { motion, useReducedMotion } from "motion/react";
 
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
-import { RelatedArticles } from "@/components/article-cards";
+import { RelatedArticles } from "@/components/articles/article-cards";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { QuickLinkCard } from "@/components/quick-link-card";
 import { InlineMarkdown, inlineMarkdownToText } from "@/components/inline-markdown";

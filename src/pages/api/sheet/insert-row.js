@@ -53,7 +53,7 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 //
 // The Google Sheet uses a SPARSE ENCODING to stay human-readable. Date (col A)
 // and Lift Type (col B) are only written on "anchor rows" — the parser
-// (`parse-data.js`) carries each value forward to subsequent blank cells.
+// (`parseData()` in import-dispatcher.js) carries each value forward to subsequent blank cells.
 //
 // Sheet layout (newest session at top, header = row 1):
 //

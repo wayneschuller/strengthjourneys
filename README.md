@@ -97,7 +97,7 @@ This repo has grown into a multi-tool lifting app (home dashboard, visualizer, s
 - `src/components/home-dashboard/` — home dashboard cards (PRs, heatmaps, session highlights)
 - `src/components/visualizer/` — charting + visualizer UI
 - `src/components/ui-shell/` — app shell: layout, nav, footer, theme provider and backgrounds
-- `src/components/ai-elements/` — composable chat UI building blocks used by the AI assistant
+- `src/components/ai-elements/` — the ai-elements chat pieces the AI assistant uses (add more from the upstream registry when needed)
 - `src/components/ui/` — shadcn/Radix-based primitives
 - `src/hooks/use-userlift-data.js` — central Google Sheets fetch/parse/cache context (SWR + demo mode + derived metrics)
 - `src/lib/data-sources/import-dispatcher.js` — the single parsing entry point: `parseData()` for Google Sheets rows, `parseImportedFile()` for drag-and-drop CSV/XLSX
@@ -122,8 +122,6 @@ This repo has grown into a multi-tool lifting app (home dashboard, visualizer, s
 - Improve parser tolerance for real-world spreadsheets (header variations, blank-row patterns, date/weight formats): `src/lib/data-sources/strength-journeys-parser.js` and the shared `parser-utilities.js`
 - UI polish and usability improvements (layout spacing, card composition, mobile tweaks, theme details): `src/components/`, `src/components/ui/`, `src/styles/globals.css`
 - Add import support for another lifting app: add a parser under `src/lib/data-sources/` (copy the shape of `hevy-parser.js`), then register its detection in `import-dispatcher.js`. There is a regression script for this — `npm run validate:imports`, which checks synthetic sample rows kept inside the scripts in `scripts/`
-
-> `src/lib/parse-data.js` and `src/lib/parse-turnkey-importer.js` are thin re-exports kept for older import sites. New work should reach for `src/lib/data-sources/` directly.
 
 ## Branch strategy
 

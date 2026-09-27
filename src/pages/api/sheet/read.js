@@ -14,7 +14,7 @@
 //
 // Returns: Google Sheets values payload + { name, webViewLink, modifiedTime,
 //          modifiedByMeTime } merged in from Drive. The client passes this to
-//          parse-data.js to produce the ParsedData array.
+//          parseData() to produce the ParsedData array.
 //
 // Post-response side effect: updates a KV record (sj:user:<email>) to track
 // last-seen time and trigger a one-time "returning user" founder notification

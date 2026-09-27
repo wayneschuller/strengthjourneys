@@ -41,7 +41,7 @@ export const NEXT_TIER = {
  * Feeds the celebration-tier policy: a 10-year veteran hitting a PR deserves
  * a bigger party than a 3-month beginner who's still on the beginner growth curve.
  *
- * @param {Array<{ date?: string, isGoal?: boolean }>} parsedData - Output of parse-data.js.
+ * @param {Array<{ date?: string, isGoal?: boolean }>} parsedData - Output of parseData().
  * @param {string} referenceDate - `YYYY-MM-DD` (usually the current set's session date).
  * @returns {number} Fractional years; 0 if no data or reference date precedes first lift.
  */

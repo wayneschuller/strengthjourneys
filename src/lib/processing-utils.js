@@ -18,7 +18,7 @@ import {
 //
 // 1. lift.unitType  ("kg" | "lb")
 //    The native unit stored in the user's Google Sheet for each lift row.
-//    Assigned once at parse time (parse-data.js). Never changes after parsing.
+//    Assigned once at parse time (parseData in import-dispatcher.js). Never changes after parsing.
 //    Used for: PR detection, sorting, tonnage accumulation — all raw-value
 //    comparisons. These are always valid because we assume single-unit users
 //    (everyone lifts in either all-kg or all-lb, never mixed).

@@ -64,10 +64,9 @@ emails use Resend on best-effort server-side paths.
 Key data flow:
 
 1. `src/pages/api/sheet/read.js` fetches linked sheet values + Drive metadata
-2. `src/lib/data-sources/import-dispatcher.js` handles file-import format detection and parsing
-3. `src/lib/parse-data.js` and parser utilities normalize rows into canonical lift objects
-4. `src/lib/processing-utils.js` computes historical PRs, tonnage, and derived lift summaries
-5. `src/hooks/use-userlift-data.js` is the central app data provider
+2. `src/lib/data-sources/import-dispatcher.js` is the single parsing entry point: `parseData()` normalizes sheet rows into canonical lift objects, `parseImportedFile()` detects and parses file imports
+3. `src/lib/processing-utils.js` computes historical PRs, tonnage, and derived lift summaries
+4. `src/hooks/use-userlift-data.js` is the central app data provider
 
 Important supporting flows:
 
@@ -91,8 +90,7 @@ authenticated users.
 - **Import pipeline:** `data-sources/import-dispatcher.js` is the single entry
   point, with two functions — `parseData(rows)` for Google Sheets (Strength
   Journeys format only, read/write) and `parseImportedFile(file)` for
-  drag-and-drop CSV/XLSX (any format, view-only). `parse-data.js` is a thin
-  re-export kept for older import sites.
+  drag-and-drop CSV/XLSX (any format, view-only).
 - **Sheet writes** in `api/sheet/*` are *operation-oriented*, not
   REST-over-rows. Each file's header comment explains why it earns its own
   operation — read it before adding a new one.

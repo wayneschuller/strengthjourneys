@@ -33,10 +33,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import {
-  useChangelogDot,
-  WhatsNewDot,
-} from "@/components/ui-shell/whats-new";
 
 /**
  * User avatar button in the nav bar. Shows a Google sign-in button when unauthenticated,
@@ -49,7 +45,6 @@ export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
   const { sheetInfo } = useUserLiftingData();
-  const changelogDot = useChangelogDot();
 
   const runKvReset = useCallback(async (mode) => {
     setIsResettingKv(true);
@@ -100,9 +95,6 @@ export function AvatarDropdown() {
                       {session.user.name?.[0] || "?"}
                     </AvatarFallback>
                   </Avatar>
-                  {changelogDot && (
-                    <WhatsNewDot floating ping={changelogDot === "ping"} />
-                  )}
                 </span>
               </DropdownMenuTrigger>
             </TooltipTrigger>
@@ -192,12 +184,7 @@ export function AvatarDropdown() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/changelog")}>
               <Megaphone className="mr-2 h-4 w-4" />
-              <span className="relative">
-                What&apos;s New
-                {changelogDot && (
-                  <WhatsNewDot corner ping={changelogDot === "ping"} />
-                )}
-              </span>
+              What&apos;s New
             </DropdownMenuItem>
             {/* Non-production tools for QA/reset workflows.
                     These are available in development-like envs (including

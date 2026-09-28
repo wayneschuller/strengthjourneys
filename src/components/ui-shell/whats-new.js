@@ -4,13 +4,42 @@
  * the newest one this browser has seen, so the check costs no request.
  */
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useIsClient, useLocalStorage } from "usehooks-ts";
 
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 
 const LATEST_ENTRY_DATE = process.env.NEXT_PUBLIC_CHANGELOG_LATEST ?? "";
+// { slug, title, sections } of the newest entry, also baked in by next.config.js.
+const LATEST_ENTRY = readLatestEntry();
+
+// The hover card lists this many section headings, then counts the rest.
+const HOVER_CARD_SECTION_LIMIT = 5;
+
+// UTC, so the date reads the same everywhere it renders.
+const entryDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function readLatestEntry() {
+  try {
+    return JSON.parse(
+      process.env.NEXT_PUBLIC_CHANGELOG_LATEST_SUMMARY || "null",
+    );
+  } catch {
+    return null;
+  }
+}
 
 // A signed-out browser with no stored date is most likely a first visit, so
 // its dot waits while the landing sinks in, then waits again before pinging.
@@ -42,7 +71,8 @@ export function useChangelogDot() {
     isClient &&
     Boolean(LATEST_ENTRY_DATE) &&
     (!hasStoredDate || seenDate < LATEST_ENTRY_DATE);
-  const isFirstVisit = isDue && !hasStoredDate && authStatus === "unauthenticated";
+  const isFirstVisit =
+    isDue && !hasStoredDate && authStatus === "unauthenticated";
 
   useEffect(() => {
     if (!isFirstVisit) return undefined;
@@ -97,7 +127,7 @@ function useReadStoredSeenDate() {
 /**
  * Red dot, pinging unless `ping` is false. `corner` pins it to the top-right of
  * a relative label, so it reads as belonging to "What's New"; `floating` pins
- * it to the corner of a relative icon, such as the avatar or the mobile menu
+ * it to the corner of a relative icon, such as the mobile menu
  * button.
  */
 export function WhatsNewDot({
@@ -126,5 +156,54 @@ export function WhatsNewDot({
       />
       <span className="sr-only">New updates</span>
     </span>
+  );
+}
+
+/**
+ * Wraps the "What's New" link so hovering it previews the newest changelog
+ * entry: its date, title and section headings, like the old Canny widget did.
+ * Hover only, so touch and keyboard users simply follow the link.
+ */
+export function WhatsNewHoverCard({ children }) {
+  if (!LATEST_ENTRY?.title) return children;
+
+  const { slug, title, sections = [] } = LATEST_ENTRY;
+  const shownSections = sections.slice(0, HOVER_CARD_SECTION_LIMIT);
+  const moreCount = sections.length - shownSections.length;
+
+  return (
+    <HoverCard openDelay={250} closeDelay={150}>
+      <HoverCardTrigger asChild>{children}</HoverCardTrigger>
+      <HoverCardContent align="start" sideOffset={10} className="w-80 p-0">
+        <Link
+          prefetch={false}
+          href={`/changelog#${slug}`}
+          className="hover:bg-muted/50 block rounded-md p-4 transition-colors"
+        >
+          <time
+            dateTime={LATEST_ENTRY_DATE}
+            className="text-muted-foreground text-xs"
+          >
+            {entryDateFormatter.format(new Date(LATEST_ENTRY_DATE))}
+          </time>
+          <p className="mt-1 leading-snug font-semibold text-balance">
+            {title}
+          </p>
+          {shownSections.length > 0 && (
+            <ul className="text-muted-foreground marker:text-muted-foreground/60 mt-2 list-disc space-y-0.5 pl-4 text-sm">
+              {shownSections.map((section) => (
+                <li key={section}>{section}</li>
+              ))}
+              {moreCount > 0 && (
+                <li className="list-none">and {moreCount} more</li>
+              )}
+            </ul>
+          )}
+          <p className="text-primary mt-3 text-sm font-medium">
+            Read the update
+          </p>
+        </Link>
+      </HoverCardContent>
+    </HoverCard>
   );
 }

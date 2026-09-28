@@ -1,17 +1,40 @@
 const fs = require("fs");
 const path = require("path");
 
-// Date of the newest changelog entry, read from the file names in
-// content/changelog/ (2026-09-14.md). The nav compares it with what the browser
-// has seen to show the "What's new" dot, with no request to find out. Dev reads
-// it once at startup, so restart to see the dot for a brand new entry.
-const CHANGELOG_LATEST =
+// The newest changelog entry, read from content/changelog/ (2026-09-14.md,
+// sorted by name the way /changelog sorts them). The nav compares its date with
+// what the browser has seen to show the "What's new" dot, and shows its title
+// and ### headings in the hover card, with no request for either. Dev reads it
+// once at startup, so restart to see a brand new entry.
+const CHANGELOG_DIR = path.join(__dirname, "content/changelog");
+const CHANGELOG_LATEST_SLUG =
   fs
-    .readdirSync(path.join(__dirname, "content/changelog"))
-    .map((file) => /^(\d{4}-\d{2}-\d{2}).*\.md$/.exec(file)?.[1])
-    .filter(Boolean)
-    .sort()
+    .readdirSync(CHANGELOG_DIR)
+    .filter((file) => /^\d{4}-\d{2}-\d{2}.*\.md$/.test(file))
+    .map((file) => file.replace(/\.md$/, ""))
+    .sort((a, b) => a.localeCompare(b))
     .at(-1) ?? "";
+const CHANGELOG_LATEST = CHANGELOG_LATEST_SLUG.slice(0, 10);
+const CHANGELOG_LATEST_SUMMARY = readChangelogSummary(CHANGELOG_LATEST_SLUG);
+
+// Title and section headings as plain text, like src/lib/changelog.js reads
+// them, so the hover card matches the folded entry on /changelog.
+function readChangelogSummary(slug) {
+  if (!slug) return "";
+  const source = fs.readFileSync(
+    path.join(CHANGELOG_DIR, `${slug}.md`),
+    "utf8",
+  );
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? "";
+  const title = require("js-yaml").load(frontmatter)?.title?.trim() ?? "";
+  const sections = [...source.matchAll(/^###\s+(.+)$/gm)].map(([, heading]) =>
+    heading
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/[*_`]/g, "")
+      .trim(),
+  );
+  return JSON.stringify({ slug, title, sections });
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -20,6 +43,7 @@ const nextConfig = {
 
   env: {
     NEXT_PUBLIC_CHANGELOG_LATEST: CHANGELOG_LATEST,
+    NEXT_PUBLIC_CHANGELOG_LATEST_SUMMARY: CHANGELOG_LATEST_SUMMARY,
   },
 
   // Vercel's Hobby plan bills edge requests, and this site is nowhere near its

@@ -1268,7 +1268,7 @@ html:not([data-restoring]) [data-returning-visit] {
  * Numbers: every `tabular-nums` stat reads in Space Mono, like an arcade high
  * score. The AI coach keeps its own reading face.
  *
- * Primary buttons: a pink to orange Outrun sunset. `button-primary` is set by
+ * Buttons: a pink to orange Outrun sunset, solid on primary, a rim on outline. `button-primary` is set by
  * the Button primitive's default variant; requiring `.bg-primary` too means a
  * button whose className swaps the background (twMerge drops bg-primary) keeps
  * that colour instead of getting the gradient.
@@ -1292,6 +1292,31 @@ html:not([data-restoring]) [data-returning-visit] {
 
 :is(.retro-arcade, .retro-arcade-dark) .button-primary.bg-primary:hover {
   filter: brightness(1.08);
+}
+
+/* Outline buttons: a sunset rim that fills with the full sunset on hover, so
+   the solid primary button still reads as the main action. Same guard idea:
+   `.bg-background` is dropped when a className swaps the background. */
+:is(.retro-arcade, .retro-arcade-dark) .button-outline.bg-background {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    linear-gradient(
+        90deg,
+        hsl(330.9554 64.0816% 51.9608%),
+        hsl(17.5691 80.4444% 50%)
+      )
+      border-box;
+}
+
+:is(.retro-arcade, .retro-arcade-dark) .button-outline.bg-background:hover {
+  background: linear-gradient(
+      90deg,
+      hsl(330.9554 64.0816% 51.9608%),
+      hsl(17.5691 80.4444% 50%)
+    )
+    border-box;
+  color: hsl(0 0% 100%);
 }
 
 .retro-arcade-dark :is(h1, h2):not(.font-coach *) {

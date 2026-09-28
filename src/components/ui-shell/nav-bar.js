@@ -69,7 +69,7 @@ import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 import {
   useChangelogDot,
-  WhatsNewDatePill,
+  WhatsNewIcon,
   WhatsNewHoverCard,
 } from "@/components/ui-shell/whats-new";
 
@@ -308,9 +308,9 @@ export function DesktopNav() {
   );
 }
 
-// Last link in, first to wait for room. It carries the newest entry's date,
-// tinted when that entry has shipped since this browser last opened
-// /changelog, and hovering it previews the entry.
+// Last link in, first to wait for room. Its megaphone shows when a changelog
+// entry has shipped since this browser last opened /changelog, and hovering it
+// previews the newest entry.
 function WhatsNewLink() {
   const pathname = usePathname();
   const changelogDot = useChangelogDot();
@@ -321,13 +321,15 @@ function WhatsNewLink() {
         prefetch={false}
         href="/changelog"
         className={cn(
-          "hover:text-foreground/80 items-center gap-1.5 transition-colors",
+          "hover:text-foreground/80 items-center transition-colors",
           pathname === "/changelog" ? "text-foreground" : "text-foreground/60",
           "hidden min-[1800px]:inline-flex",
         )}
       >
-        What&apos;s New
-        <WhatsNewDatePill due={Boolean(changelogDot)} />
+        <span className="relative">
+          What&apos;s New
+          {changelogDot && <WhatsNewIcon />}
+        </span>
       </Link>
     </WhatsNewHoverCard>
   );

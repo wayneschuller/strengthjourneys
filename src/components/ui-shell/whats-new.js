@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { Megaphone } from "lucide-react";
 import { useIsClient, useLocalStorage } from "usehooks-ts";
 
 import {
@@ -23,12 +24,6 @@ const LATEST_ENTRY = readLatestEntry();
 // The hover card lists this many section headings, then counts the rest.
 const HOVER_CARD_SECTION_LIMIT = 5;
 
-// UTC, so the server render and hydration agree.
-const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-});
 const entryDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
   day: "numeric",
@@ -165,28 +160,21 @@ export function WhatsNewDot({
 }
 
 /**
- * The newest entry's date beside "What's New", e.g. "Sep 26". While `due`
- * (from useChangelogDot) it is a tinted pill; once seen it stays as quiet
- * muted text, so the date still shows the site is active. Both states share
- * one box, so nothing shifts when it changes.
+ * Small megaphone on the top-right corner of a relative "What's New" label,
+ * in the theme's first chart color. A calmer mark than the red dot, for the
+ * desktop nav.
  */
-export function WhatsNewDatePill({ due = false, className }) {
-  if (!LATEST_ENTRY_DATE) return null;
-
+export function WhatsNewIcon({ className }) {
   return (
-    <time
-      dateTime={LATEST_ENTRY_DATE}
+    <span
       className={cn(
-        "rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap tabular-nums ring-1 transition-colors",
-        due
-          ? "bg-primary/10 text-primary ring-primary/25"
-          : "text-muted-foreground ring-transparent",
+        "text-chart-1 animate-in fade-in-0 absolute -top-2 -right-3.5 duration-500",
         className,
       )}
     >
-      {shortDateFormatter.format(new Date(LATEST_ENTRY_DATE))}
-      {due && <span className="sr-only"> (new updates)</span>}
-    </time>
+      <Megaphone className="size-3" strokeWidth={2.5} aria-hidden="true" />
+      <span className="sr-only">New updates</span>
+    </span>
   );
 }
 

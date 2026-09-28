@@ -2,7 +2,8 @@
  * Shared slider. `aria-label` is applied to the thumb, not the root: the
  * thumb is the element with role="slider". Optional `tooltip` lives inside
  * the thumb so it follows Radix's transform; wrapping the thumb in
- * TooltipTrigger fights pointer capture while dragging.
+ * TooltipTrigger fights pointer capture while dragging. `rangeClassName`
+ * recolors the filled part of the track.
  */
 
 import * as React from "react";
@@ -14,7 +15,10 @@ const THUMB_CLASS =
   "relative block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
 const Slider = React.forwardRef(
-  ({ className, "aria-label": ariaLabel, tooltip, ...props }, ref) => (
+  (
+    { className, rangeClassName, "aria-label": ariaLabel, tooltip, ...props },
+    ref,
+  ) => (
     <SliderPrimitive.Root
       ref={ref}
       className={cn(
@@ -24,7 +28,9 @@ const Slider = React.forwardRef(
       {...props}
     >
       <SliderPrimitive.Track className="bg-secondary relative h-2 w-full grow overflow-hidden rounded-full">
-        <SliderPrimitive.Range className="bg-primary absolute h-full" />
+        <SliderPrimitive.Range
+          className={cn("bg-primary absolute h-full", rangeClassName)}
+        />
       </SliderPrimitive.Track>
       <SliderPrimitive.Thumb aria-label={ariaLabel} className={THUMB_CLASS}>
         {tooltip != null && tooltip !== false && (

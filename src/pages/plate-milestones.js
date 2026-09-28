@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { NextSeo } from "next-seo";
+import { useAnimate, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/articles/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -84,6 +85,7 @@ import {
   XAxis,
   YAxis,
   ReferenceLine,
+  ReferenceDot,
   Tooltip as RechartsTooltip,
 } from "recharts";
 
@@ -660,10 +662,14 @@ function clusterNotches(notches, max) {
 // --- Slider with clustered notches + per-pill tooltips ---
 // Notches: { key, valueLb, shortLabel, headline, detail, zIndex, isDominant, accent }
 // accent: "default" | "single" | "now" | "newPR"
+// tierMarks: { n, valueLb, reached } — numbered plate thresholds drawn above
+// the track so the slider reads as a path through the tiers. They render
+// before the Slider so the thumb paints over their stems.
 function NotchedMilestoneSlider({
   value,
   max,
   notches,
+  tierMarks,
   onValueChange,
   onValueCommit,
   className,
@@ -671,7 +677,32 @@ function NotchedMilestoneSlider({
   const clusters = clusterNotches(notches || [], max);
 
   return (
-    <div className={cn("relative pb-9", className)}>
+    <div className={cn("relative pb-9", tierMarks?.length && "pt-5", className)}>
+      {tierMarks?.map(({ n, valueLb, reached }) => (
+        <div
+          key={`tier-${n}`}
+          aria-hidden
+          className="pointer-events-none absolute top-0 flex -translate-x-1/2 flex-col items-center"
+          style={{ left: `${(valueLb / max) * 100}%` }}
+        >
+          <span
+            className={cn(
+              "flex h-4 w-4 items-center justify-center rounded-full text-[9px] leading-none font-bold transition-colors duration-300",
+              reached
+                ? "bg-blue-600 text-white shadow-sm"
+                : "border-muted-foreground/40 bg-background text-muted-foreground border",
+            )}
+          >
+            {n}
+          </span>
+          <span
+            className={cn(
+              "h-3 w-px transition-colors duration-300",
+              reached ? "bg-blue-600/60" : "bg-muted-foreground/30",
+            )}
+          />
+        </div>
+      ))}
       <Slider
         value={[value]}
         min={0}
@@ -680,6 +711,7 @@ function NotchedMilestoneSlider({
         onValueChange={onValueChange}
         onValueCommit={onValueCommit}
         className="mt-2"
+        rangeClassName="bg-blue-600"
       />
       {clusters.length > 0 && (
         <TooltipProvider delayDuration={150}>
@@ -1688,6 +1720,12 @@ function PlateMilestonesMain({ relatedArticles }) {
       {liftTimelines ? (
         <PlateTimelinesSection
           liftTimelines={liftTimelines}
+          tierCrossingsByLift={
+            liftStats &&
+            Object.fromEntries(
+              MILESTONES.map((m) => [m.key, liftStats[m.key]?.tierCrossings]),
+            )
+          }
           isMetric={isMetric}
         />
       ) : (
@@ -1940,6 +1978,21 @@ function MilestoneRow({
     ? ALL_TIERS.filter((n) => tierCrossings[n])
     : [];
 
+  // How full each plate slot is (0..1), driven by the slider value.
+  const plateSlotProgress = Array.from({ length: targetPlates }, (_, i) => {
+    const sliceStart = BAR_LB + i * (2 * PLATE_LB);
+    const sliceEnd = BAR_LB + (i + 1) * (2 * PLATE_LB);
+    if (value <= sliceStart) return 0;
+    if (value >= sliceEnd) return 1;
+    return (value - sliceStart) / (sliceEnd - sliceStart);
+  });
+
+  const tierMarks = tiers.map((n) => ({
+    n,
+    valueLb: plateTotal(n, false),
+    reached: value >= plateTotal(n, false),
+  }));
+
   return (
     <div
       className={cn(
@@ -1963,31 +2016,15 @@ function MilestoneRow({
             />
           </Link>
 
-          {/* Blue plate images — fill left-to-right like a thermometer */}
-          <div className="flex items-center gap-1">
-          {Array.from({ length: targetPlates }, (_, i) => {
-            const sliceStart = BAR_LB + i * (2 * PLATE_LB);
-            const sliceEnd = BAR_LB + (i + 1) * (2 * PLATE_LB);
-            const sliceProgress =
-              value <= sliceStart
-                ? 0
-                : value >= sliceEnd
-                  ? 1
-                  : (value - sliceStart) / (sliceEnd - sliceStart);
-            const opacity = 0.15 + sliceProgress * 0.85;
-            return (
-              <img
-                key={i}
-                src="/blue_plate.svg"
-                alt="20 kg plate"
-                className="h-16 w-16 md:h-[4.5rem] md:w-[4.5rem]"
-                style={{
-                  opacity,
-                  transition: "opacity 300ms ease",
-                }}
-              />
-            );
-          })}
+          {/* Blue plates fill left-to-right like a thermometer */}
+          <div
+            role="img"
+            aria-label={`${plateSlotProgress.filter((p) => p >= 1).length} of ${targetPlates} ${targetPlates === 1 ? "plate" : "plates"} loaded`}
+            className="flex items-center gap-1"
+          >
+            {plateSlotProgress.map((progress, i) => (
+              <PlateSlot key={i} progress={progress} />
+            ))}
           </div>
         </div>
 
@@ -2002,8 +2039,11 @@ function MilestoneRow({
               >
                 {liftType}
               </Link>
-              <span className="text-muted-foreground text-xs tabular-nums">
-                {displayWeight(value, isMetric)}
+              <span className="text-2xl leading-none font-bold tabular-nums">
+                {isMetric ? toKg(value) : value}
+                <span className="text-muted-foreground ml-0.5 text-sm font-medium">
+                  {isMetric ? "kg" : "lb"}
+                </span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -2035,6 +2075,7 @@ function MilestoneRow({
             value={value}
             max={maxLb}
             notches={notches}
+            tierMarks={tierMarks}
             onValueChange={onValueChange(key, setter)}
             onValueCommit={() => {}}
           />
@@ -2092,6 +2133,49 @@ function MilestoneRow({
   );
 }
 
+// --- One plate slot in a lift's thermometer ---
+// Empty slots are a dashed ghost, the plate being chased fills bottom-up, and
+// a plate clanks with a quick spring the moment it becomes fully earned.
+function PlateSlot({ progress }) {
+  const [scope, animate] = useAnimate();
+  const prefersReducedMotion = useReducedMotion();
+  const isFull = progress >= 1;
+  const wasFullRef = useRef(isFull);
+
+  useEffect(() => {
+    if (isFull && !wasFullRef.current && !prefersReducedMotion) {
+      animate(
+        scope.current,
+        { scale: [1, 1.2, 0.95, 1], x: [0, -3, 2, 0] },
+        { duration: 0.45, ease: "easeOut" },
+      );
+    }
+    wasFullRef.current = isFull;
+  }, [isFull, prefersReducedMotion, animate, scope]);
+
+  return (
+    <div
+      ref={scope}
+      className="relative h-16 w-16 md:h-[4.5rem] md:w-[4.5rem]"
+    >
+      {!isFull && (
+        <div className="border-muted-foreground/30 absolute inset-[3%] rounded-full border-2 border-dashed" />
+      )}
+      {progress > 0 && (
+        <img
+          src="/blue_plate.svg"
+          alt=""
+          className="absolute inset-0 h-full w-full drop-shadow-sm"
+          style={{
+            clipPath: `inset(${(1 - progress) * 100}% 0 0 0)`,
+            transition: "clip-path 200ms ease-out",
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 // --- Sparkline tooltip ---
 function SparklineTooltipContent({ active, payload, unit }) {
   if (!active || !payload?.[0]) return null;
@@ -2112,7 +2196,13 @@ function SparklineTooltipContent({ active, payload, unit }) {
 }
 
 // --- Per-lift E1RM sparkline with single plate target reference line ---
-function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
+function MilestoneSparkline({
+  timeline,
+  tiers,
+  tierCrossings,
+  liftKey,
+  isMetric,
+}) {
   if (!timeline || timeline.length < 2) return null;
 
   // Only show the classic target tier (last/highest tier for this lift)
@@ -2157,6 +2247,24 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
   };
 
   const targetLabel = `${plateLabel(targetTier)} (${targetDisplay} ${unit})`;
+
+  // "The day you earned it": a plate-blue dot at each tier's first crossing,
+  // sitting on that tier's weight. The timeline starts 90 days after the first
+  // log (rolling window), so an early crossing pins to the chart's left edge;
+  // the hover title carries the true date.
+  const firstTimestamp = timeline[0].timestamp;
+  const crossingDots = tiers
+    .filter((n) => tierCrossings?.[n])
+    .map((n) => {
+      const { first } = tierCrossings[n];
+      return {
+        n,
+        x: Math.max(new Date(first.date).getTime(), firstTimestamp),
+        y: plateTotal(n, isMetric),
+        title: `First ${plateLabel(n)}: ${formatSet(first, isMetric)} on ${formatFullDate(first.date)}`,
+      };
+    })
+    .filter((dot) => dot.y >= yMin && dot.y <= yMax);
 
   return (
     <div className="h-[110px] w-full">
@@ -2215,6 +2323,37 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
             dot={false}
             activeDot={{ r: 3, strokeWidth: 1.5 }}
           />
+          {crossingDots.map((dot) => (
+            <ReferenceDot
+              key={dot.n}
+              x={dot.x}
+              y={dot.y}
+              shape={({ cx, cy }) => (
+                <g>
+                  <title>{dot.title}</title>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={7}
+                    fill="#2563eb"
+                    stroke="#fff"
+                    strokeWidth={1.5}
+                  />
+                  <text
+                    x={cx}
+                    y={cy}
+                    dy="0.35em"
+                    textAnchor="middle"
+                    fontSize={9}
+                    fontWeight={700}
+                    fill="#fff"
+                  >
+                    {dot.n}
+                  </text>
+                </g>
+              )}
+            />
+          ))}
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -2222,7 +2361,11 @@ function MilestoneSparkline({ timeline, tiers, liftKey, isMetric }) {
 }
 
 // --- Charts section: shows real sparklines when data exists ---
-function PlateTimelinesSection({ liftTimelines, isMetric }) {
+function PlateTimelinesSection({
+  liftTimelines,
+  tierCrossingsByLift,
+  isMetric,
+}) {
   return (
     <Card className="mt-6">
       <CardHeader className="pb-2">
@@ -2232,7 +2375,8 @@ function PlateTimelinesSection({ liftTimelines, isMetric }) {
         </CardTitle>
         <CardDescription>
           Rolling 90-day best estimated 1RM for each lift. The dashed line
-          marks the classic plate target.
+          marks the classic plate target, and each blue dot marks the day
+          you first earned that many plates.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -2267,6 +2411,7 @@ function PlateTimelinesSection({ liftTimelines, isMetric }) {
                   <MilestoneSparkline
                     timeline={timeline}
                     tiers={milestone.tiers}
+                    tierCrossings={tierCrossingsByLift?.[milestone.key]}
                     liftKey={milestone.key}
                     isMetric={isMetric}
                   />

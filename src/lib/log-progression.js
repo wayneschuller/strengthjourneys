@@ -22,15 +22,12 @@ const MAX_GAP_DAYS = 42;
 // the session's heaviest weight count as work worth comparing.
 const WORKING_SET_SHARE = 0.7;
 
-// A session whose best effort sits this far under the recent best was a light
-// day. The streak steps over it rather than ending, so heavy/light programs
-// can build a streak at all.
-const LIGHT_DAY_SHARE = 0.9;
-
 // A progressing set has to be real work for this lift right now, at least
 // this share of the recent best effort. Without it, once heavy days move to
 // triples, the light day's fives keep "beating" the last light day's fives.
-// A back-off five after heavy singles sits well above it.
+// A back-off five after heavy singles sits well above it. The set it beat has
+// to clear the same share of its own session's top effort, so a warm-up on
+// the way to a heavy day is never the thing that was beaten.
 const SERIOUS_EFFORT_SHARE = 0.8;
 
 const MAX_REPS = 12;
@@ -130,7 +127,7 @@ function daysBetween(fromYmd, toYmd) {
   );
 }
 
-// Epley, only to tell a light day from a heavy one across rep counts.
+// Epley, only to compare how hard sets were across rep counts.
 function effort({ reps, kg }) {
   return kg * (1 + reps / 30);
 }
@@ -142,11 +139,14 @@ function toComparableSet(entry) {
   return { reps, kg: toKg(weight, entry.unitType), entry };
 }
 
-function markWorkingSets(sets) {
+function markWorkingSets(sets, sessionIndex = null) {
   const topKg = Math.max(0, ...sets.map((set) => set.kg));
+  const topEffort = Math.max(0, ...sets.map(effort));
   return sets.map((set) => ({
     ...set,
+    sessionIndex,
     working: set.kg >= topKg * WORKING_SET_SHARE && set.reps <= MAX_REPS,
+    serious: effort(set) >= topEffort * SERIOUS_EFFORT_SHARE,
   }));
 }
 
@@ -167,8 +167,8 @@ export function getLiftSessionHistory(parsedData, liftType, beforeDate) {
     byDate.get(entry.date).push(set);
   }
 
-  return [...byDate.keys()].sort().map((date) => {
-    const sets = markWorkingSets(byDate.get(date));
+  return [...byDate.keys()].sort().map((date, sessionIndex) => {
+    const sets = markWorkingSets(byDate.get(date), sessionIndex);
     return {
       date,
       sets,
@@ -190,35 +190,42 @@ function getLookback(history, endIndex, date) {
 }
 
 /**
- * The recent working set this one moved past, or null when it did not. A set
- * progresses when nothing recent matched it on both reps and weight, and some
- * recent working set it is directly comparable to sits under it: the same
- * reps at less weight, or fewer reps (within MAX_REP_STEP) at no more weight.
+ * The recent serious sets this one moved past, closest comparison first, or
+ * an empty list when it did not progress. A set progresses when nothing
+ * recent matched it on both reps and weight, and some recent serious set it
+ * is directly comparable to sits under it: the same reps at less weight, or
+ * fewer reps (within MAX_REP_STEP) at no more weight.
  */
-function findBeatenSet(set, lookback) {
-  let beaten = null;
+function findBeatenSets(set, lookback) {
+  const beaten = [];
   for (const session of lookback) {
     for (const prior of session.sets) {
       if (prior.reps >= set.reps && prior.kg >= set.kg - EPSILON_KG) {
-        return null;
+        return [];
       }
-      if (!prior.working) continue;
+      if (!prior.working || !prior.serious) continue;
       if (prior.reps > set.reps || prior.reps < set.reps - MAX_REP_STEP) {
         continue;
       }
       if (prior.kg > set.kg + EPSILON_KG) continue;
-      // The closest comparison wins: most reps, then most weight, then the
-      // most recent session (lookback runs newest first).
+      // A repeat of the same set is a hold, and only the latest one counts.
+      // Otherwise a stalled week would be stepped over by linking back to the
+      // identical set before it.
       if (
-        !beaten ||
-        prior.reps > beaten.reps ||
-        (prior.reps === beaten.reps && prior.kg > beaten.kg + EPSILON_KG)
+        beaten.some(
+          (other) =>
+            other.reps === prior.reps &&
+            Math.abs(other.kg - prior.kg) <= EPSILON_KG,
+        )
       ) {
-        beaten = prior;
+        continue;
       }
+      beaten.push(prior);
     }
   }
-  return beaten;
+  // Most reps, then most weight; the sort is stable, so the most recent
+  // session wins what is left (lookback runs newest first).
+  return beaten.sort((a, b) => b.reps - a.reps || b.kg - a.kg);
 }
 
 // The sets in a session that progressed. Each rep count speaks through its
@@ -228,15 +235,14 @@ function getSessionProgress(sets, lookback) {
   const recentBest = getRecentBestEffort(lookback);
   const bestByReps = new Map();
   for (const set of sets) {
-    if (!set.working) continue;
-    if (effort(set) < recentBest * SERIOUS_EFFORT_SHARE) continue;
+    if (!isProgressCandidate(set, recentBest)) continue;
     const current = bestByReps.get(set.reps);
     if (!current || set.kg > current.kg) bestByReps.set(set.reps, set);
   }
   const results = [];
   for (const set of bestByReps.values()) {
-    const beaten = findBeatenSet(set, lookback);
-    if (beaten) results.push({ set, beaten });
+    const beaten = findBeatenSets(set, lookback);
+    if (beaten.length > 0) results.push({ set, beaten });
   }
   return results;
 }
@@ -245,45 +251,57 @@ function getRecentBestEffort(lookback) {
   return Math.max(0, ...lookback.map((session) => session.topEffort));
 }
 
-function isLightDay(topEffort, lookback) {
-  const recentBest = getRecentBestEffort(lookback);
-  return recentBest > 0 && topEffort < recentBest * LIGHT_DAY_SHARE;
+function isProgressCandidate(set, recentBest) {
+  return set.working && effort(set) >= recentBest * SERIOUS_EFFORT_SHARE;
 }
 
-function strongest(progress) {
-  return progress.reduce((best, item) =>
-    effort(item.set) > effort(best.set) ? item : best,
-  );
-}
-
-// Walks back from the session before today, counting sessions that progressed.
-// Light days are stepped over; a real attempt that held, a gap past
-// MAX_GAP_DAYS, or the start of the log ends the walk.
-function getPriorStreak(history) {
-  const chain = [];
-  for (
-    let i = history.length - 1;
-    i >= 0 && history.length - i <= MAX_STREAK_WALK;
-    i -= 1
+// Follows one set's own line back: the sets it beat, whether those had beaten
+// something in their own session, and so on. The streak belongs to the set
+// that climbed, so a heavy single never borrows the fives' run. Where a set
+// beat several, the line runs through whichever has the longest run behind
+// it, so 6@127.5 after 5@127.5 after 7@125 reads as one staircase. Light days
+// drop out on their own, because the bar is set by the heavier sessions
+// around them.
+//
+// Returns the run ending at `set`, oldest first, or an empty list when `set`
+// did not progress in its own session. `memo` keeps the walk linear.
+function getRunEndingAt(history, set, memo, depth = 0) {
+  if (memo.has(set)) return memo.get(set);
+  let run = [];
+  const session = history[set.sessionIndex];
+  const lookback = getLookback(history, set.sessionIndex, session.date);
+  if (
+    depth < MAX_STREAK_WALK &&
+    lookback.length > 0 &&
+    isProgressCandidate(set, getRecentBestEffort(lookback))
   ) {
-    const session = history[i];
-    const lookback = getLookback(history, i, session.date);
-    if (lookback.length === 0) break;
-    const progress = getSessionProgress(session.sets, lookback);
-    if (progress.length > 0) {
-      chain.unshift(strongest(progress).set.entry);
-      continue;
+    const beaten = findBeatenSets(set, lookback);
+    if (beaten.length > 0) {
+      run = [...getLongestRun(history, beaten, memo, depth + 1).run, set.entry];
     }
-    if (isLightDay(session.topEffort, lookback)) continue;
-    break;
   }
-  return chain;
+  memo.set(set, run);
+  return run;
+}
+
+// Of the sets something beat, the one with the longest run behind it. Ties
+// keep the closest comparison, which findBeatenSets put first.
+function getLongestRun(history, beaten, memo, depth = 0) {
+  let best = {
+    set: beaten[0],
+    run: getRunEndingAt(history, beaten[0], memo, depth),
+  };
+  for (const set of beaten.slice(1)) {
+    const run = getRunEndingAt(history, set, memo, depth);
+    if (run.length > best.run.length) best = { set, run };
+  }
+  return best;
 }
 
 /**
  * One entry per set, aligned with `sets`, for the sets that progressed:
- * { message, previousSet, previousDate, streak, chain }. The strongest
- * progressing set carries the streak; any others get a plain phrase.
+ * { message, previousSet, previousDate, streak, chain }. Each set carries
+ * its own streak, traced through the sets it grew out of.
  */
 export function getProgressionBadges({ sets, history, sessionDate, liftType }) {
   const result = sets.map(() => null);
@@ -304,31 +322,26 @@ export function getProgressionBadges({ sets, history, sessionDate, liftType }) {
   );
 
   const progress = getSessionProgress(marked, lookback);
-  if (progress.length === 0) return result;
-
-  const lead = strongest(progress);
-  const priorChain = getPriorStreak(history);
-  const streak = priorChain.length + 1;
   const offset = hashPhraseSeed(`${sessionDate}:${liftType}`);
-  const tier = STREAK_TIERS.find(({ min }) => streak >= min);
 
+  const memo = new Map();
   progress
     .slice()
     .sort((a, b) => indexBySet.get(a.set) - indexBySet.get(b.set))
     .forEach((item, position) => {
-      const isLead = item === lead;
-      const message =
-        isLead && tier
-          ? tier.phrases[offset % tier.phrases.length](streak)
-          : PROGRESSION_PHRASES[
-              (offset + position) % PROGRESSION_PHRASES.length
-            ];
+      const { set: previous, run } = getLongestRun(history, item.beaten, memo);
+      const chain = [...run, item.set.entry];
+      const streak = chain.length;
+      const tier = STREAK_TIERS.find(({ min }) => streak >= min);
+      const message = tier
+        ? tier.phrases[(offset + position) % tier.phrases.length](streak)
+        : PROGRESSION_PHRASES[(offset + position) % PROGRESSION_PHRASES.length];
       result[indexBySet.get(item.set)] = {
         message,
-        previousSet: item.beaten.entry,
-        previousDate: item.beaten.entry.date,
-        streak: isLead ? streak : 1,
-        chain: isLead ? [...priorChain, item.set.entry] : [item.set.entry],
+        previousSet: previous.entry,
+        previousDate: previous.entry.date,
+        streak,
+        chain,
       };
     });
   return result;

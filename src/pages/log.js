@@ -389,6 +389,8 @@ export default function LogSessionPage({
     [sessionDates, sessionDate],
   );
 
+  const firstSessionDate = sessionDates[0] ?? null;
+
   const nextSessionDate = useMemo(
     () => getNextSessionDate(sessionDates, sessionDate, todayIso),
     [sessionDates, sessionDate, todayIso],
@@ -686,6 +688,7 @@ export default function LogSessionPage({
             <div className="mx-auto w-full max-w-[56rem] xl:max-w-[62rem] 2xl:max-w-none">
               <LogDateNav
                 datePickerOpen={datePickerOpen}
+                firstSessionDate={firstSessionDate}
                 isToday={isToday}
                 nextSessionDate={nextSessionDate}
                 onDatePickerOpenChange={setDatePickerOpen}

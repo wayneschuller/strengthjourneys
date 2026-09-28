@@ -3,7 +3,13 @@
  * Keeps calendar-picker rendering separate from session orchestration.
  */
 
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 import { getReadableDateString } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +23,7 @@ import { SyncIndicator } from "@/components/log/session-summary";
 
 export function LogDateNav({
   datePickerOpen,
+  firstSessionDate,
   isToday,
   nextSessionDate,
   onDatePickerOpenChange,
@@ -36,8 +43,20 @@ export function LogDateNav({
         variant="ghost"
         size="icon"
         className="shrink-0"
+        disabled={!firstSessionDate || sessionDate <= firstSessionDate}
+        onClick={() => onNavigateToDate(firstSessionDate)}
+        aria-label="First session"
+      >
+        <ChevronsLeft className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="shrink-0"
         disabled={!prevSessionDate}
         onClick={() => onNavigateToDate(prevSessionDate)}
+        aria-label="Previous session"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -102,8 +121,20 @@ export function LogDateNav({
         className="shrink-0"
         disabled={!nextSessionDate}
         onClick={() => onNavigateToDate(nextSessionDate)}
+        aria-label="Next session"
       >
         <ChevronRight className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="shrink-0"
+        disabled={sessionDate >= todayIso}
+        onClick={() => onNavigateToDate(todayIso)}
+        aria-label="Today"
+      >
+        <ChevronsRight className="h-4 w-4" />
       </Button>
     </div>
   );

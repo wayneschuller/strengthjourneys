@@ -67,6 +67,7 @@ import { GorillaIcon } from "@/components/gorilla-icon";
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
+import { FreshPill } from "@/components/ui/fresh-pill";
 import {
   useChangelogDot,
   WhatsNewIcon,
@@ -429,7 +430,7 @@ function BigFourBarbellInsightsMenu() {
   const lifts = BIG_FOUR_LIFTS;
 
   const ListItem = React.forwardRef(
-    ({ className, title, children, ...props }, ref) => {
+    ({ className, title, children, pill, ...props }, ref) => {
       return (
         <li>
           <NavigationMenuLink asChild>
@@ -445,6 +446,7 @@ function BigFourBarbellInsightsMenu() {
               <div className="flex flex-row items-center gap-2 align-middle">
                 <LiftIcon liftType={title} className="h-5 w-5" />
                 <div className="text-sm leading-none font-medium">{title}</div>
+                {pill && <FreshPill {...pill} />}
               </div>
               <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                 {children}
@@ -508,6 +510,7 @@ function StrengthInsightsMenu() {
       title: "Lift Explorer",
       href: "/lift-explorer",
       icon: <Layers className="h-5 w-5" />,
+      pill: { kind: "updated", date: "2026-09-14" },
     },
     {
       title: "Strength Levels",
@@ -523,6 +526,7 @@ function StrengthInsightsMenu() {
       title: "AI Lifting Assistant",
       href: "/ai-lifting-assistant",
       icon: <Bot className="h-5 w-5" />,
+      pill: { kind: "updated", date: "2026-09-26" },
     },
     {
       title: "Tonnage Metrics",
@@ -542,7 +546,7 @@ function StrengthInsightsMenu() {
   ];
 
   const ListItem = React.forwardRef(
-    ({ className, title, children, ...props }, ref) => {
+    ({ className, title, children, pill, ...props }, ref) => {
       return (
         <li>
           <NavigationMenuLink asChild>
@@ -558,6 +562,7 @@ function StrengthInsightsMenu() {
               <div className="flex flex-row items-center gap-2 align-middle">
                 {props.icon} {/* Icon based on title */}
                 <div className="text-sm leading-none font-medium">{title}</div>
+                {pill && <FreshPill {...pill} />}
               </div>
               <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                 {children}
@@ -601,6 +606,7 @@ function StrengthInsightsMenu() {
                   title={insight.title}
                   href={insight.href}
                   icon={insight.icon}
+                  pill={insight.pill}
                 >
                   {/* {insight.pageTitle} */}
                 </ListItem>
@@ -627,6 +633,7 @@ function CalculatorsMenu() {
       title: "How Strong Am I?",
       href: "/how-strong-am-i",
       icon: <CircleDashed className="h-5 w-5" />,
+      pill: { kind: "updated", date: "2026-09-17" },
     },
     {
       title: "Warm Ups Calculator",
@@ -661,7 +668,7 @@ function CalculatorsMenu() {
   ];
 
   const ListItem = React.forwardRef(
-    ({ className, title, children, ...props }, ref) => {
+    ({ className, title, children, pill, ...props }, ref) => {
       return (
         <li>
           <NavigationMenuLink asChild>
@@ -677,6 +684,7 @@ function CalculatorsMenu() {
               <div className="flex flex-row items-center gap-2 align-middle">
                 {props.icon} {/* Icon based on calculator title */}
                 <div className="text-sm leading-none font-medium">{title}</div>
+                {pill && <FreshPill {...pill} />}
               </div>
               <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                 {children}
@@ -722,6 +730,7 @@ function CalculatorsMenu() {
                   title={calculator.title}
                   href={calculator.href}
                   icon={calculator.icon}
+                  pill={calculator.pill}
                 >
                   {/* {calculator.pageTitle} */}
                 </ListItem>

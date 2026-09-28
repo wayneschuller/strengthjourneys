@@ -23,6 +23,7 @@ import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 import { getRepeatImportHref } from "@/lib/import/import-sources";
 import { cn } from "@/lib/utils";
 import { featurePages } from "@/pages";
+import { FreshPill } from "@/components/ui/fresh-pill";
 
 import {
   Sheet,
@@ -78,7 +79,7 @@ export function MobileNav() {
   const changelogDot = useChangelogDot();
 
   // Internal nav link row: icon + label, highlights the active route.
-  const NavLink = ({ href, title, IconComponent }) => (
+  const NavLink = ({ href, title, IconComponent, pill }) => (
     <SheetClose asChild>
       <Link
         prefetch={false}
@@ -90,6 +91,7 @@ export function MobileNav() {
       >
         <IconComponent size={24} strokeWidth={1} />
         {title}
+        {pill && <FreshPill {...pill} />}
       </Link>
     </SheetClose>
   );

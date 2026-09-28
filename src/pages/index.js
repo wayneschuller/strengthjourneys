@@ -46,7 +46,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { FreshPill } from "@/components/ui/fresh-pill";
 
 const Testimonials = dynamic(
   () => import("@/components/homepage/testimonials").then((m) => m.Testimonials),
@@ -91,6 +91,7 @@ export const featurePages = [
     description:
       "Log your lifting session or browse past workouts in detail with strength tracking and warm-up suggestions.",
     IconComponent: Plus,
+    pill: { kind: "updated", date: "2026-09-28" },
   },
   {
     href: "/calculator",
@@ -104,6 +105,7 @@ export const featurePages = [
     description:
       "See your percentile rank across four groups, from the general population to powerlifting culture.",
     IconComponent: CircleDashed,
+    pill: { kind: "updated", date: "2026-09-17" },
   },
   {
     href: "/1000lb-club-calculator",
@@ -125,6 +127,7 @@ export const featurePages = [
     description:
       "Explore your lifting history lift by lift. PRs across every rep range, your journey, and training frequency.",
     IconComponent: Layers,
+    pill: { kind: "updated", date: "2026-09-14" },
   },
   {
     href: "/warm-up-sets-calculator",
@@ -146,7 +149,6 @@ export const featurePages = [
     description:
       "How many plates can you lift? Track your 1/2/3/4 plate club progress. Plates get dates.",
     IconComponent: Disc,
-    badgeLabel: "New",
   },
   {
     href: "/articles",
@@ -154,6 +156,7 @@ export const featurePages = [
     description:
       "A collection of our articles, common questions, plus curated lifting content.",
     IconComponent: LibraryBig,
+    pill: { kind: "updated", date: "2026-09-26" },
   },
   {
     href: "/ai-lifting-assistant",
@@ -161,6 +164,7 @@ export const featurePages = [
     description:
       "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
     IconComponent: Bot,
+    pill: { kind: "updated", date: "2026-09-26" },
   },
   {
     href: "/visualizer",
@@ -221,6 +225,7 @@ const insightTools = [
     description:
       "Explore your lifting history lift by lift. PRs across every rep range, your journey, and training frequency.",
     IconComponent: Layers,
+    pill: { kind: "updated", date: "2026-09-14" },
   },
   {
     href: "/ai-lifting-assistant",
@@ -228,6 +233,7 @@ const insightTools = [
     description:
       "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
     IconComponent: Bot,
+    pill: { kind: "updated", date: "2026-09-26" },
   },
   {
     href: "/tonnage",
@@ -258,6 +264,7 @@ const calculatorTools = [
     description:
       "See your percentile rank across four groups, from the general population to powerlifting culture.",
     IconComponent: CircleDashed,
+    pill: { kind: "updated", date: "2026-09-17" },
   },
   {
     href: "/strength-levels",
@@ -282,7 +289,6 @@ const milestoneTools = [
     description:
       "How many plates can you lift? Track your 1/2/3/4 plate club progress. Plates get dates.",
     IconComponent: Disc,
-    badgeLabel: "New",
   },
   {
     href: "/1000lb-club-calculator",
@@ -305,6 +311,7 @@ const moreTools = [
     href: "/articles",
     title: "Strength Articles",
     IconComponent: LibraryBig,
+    pill: { kind: "updated", date: "2026-09-26" },
   },
   {
     href: "/gym-playlist-leaderboard",
@@ -587,6 +594,7 @@ export default function Home({ starterArticles = [] }) {
             >
               <tool.IconComponent size={16} strokeWidth={1.5} />
               {tool.title}
+              {tool.pill && <FreshPill {...tool.pill} />}
             </Link>
           ))}
         </div>
@@ -615,20 +623,15 @@ function FeatureCard({
   title,
   description,
   IconComponent,
-  badgeLabel,
+  pill,
   index = 0,
 }) {
   const chartColorVar = `--chart-${(index % 5) + 1}`;
 
   return (
     <Card className="group ring-ring relative h-full shadow-lg ring-0 transition-shadow hover:shadow-xl hover:ring-1">
-      {badgeLabel && (
-        <Badge
-          variant="outline"
-          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
-        >
-          {badgeLabel}
-        </Badge>
+      {pill && (
+        <FreshPill {...pill} className="absolute top-2 right-2 z-10" />
       )}
       {/* Phones get a compact row with the icon on the left, so eleven tools
           do not each cost a full screen of scrolling. From sm up the card is a

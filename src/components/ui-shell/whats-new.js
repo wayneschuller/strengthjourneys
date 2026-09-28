@@ -161,14 +161,14 @@ export function WhatsNewDot({
 
 /**
  * Small megaphone on the top-right corner of a relative "What's New" label,
- * in the theme's first chart color. A calmer mark than the red dot, for the
- * desktop nav.
+ * in the theme's first chart color. It wiggles three times, then keeps still,
+ * a calmer mark than the red dot for the desktop nav.
  */
 export function WhatsNewIcon({ className }) {
   return (
     <span
       className={cn(
-        "text-chart-1 animate-in fade-in-0 absolute -top-2 -right-3.5 duration-500",
+        "text-chart-1 animate-in fade-in-0 whats-new-wiggle absolute -top-1.5 -right-3 duration-500",
         className,
       )}
     >

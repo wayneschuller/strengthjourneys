@@ -206,6 +206,33 @@
   animation: recap-nudge-arrow 3.6s ease-in-out infinite;
 }
 
+/*
+ * The What's New megaphone tilts in a short burst at the start of each 6s
+ * cycle, three cycles and then still, so it catches the eye without nagging.
+ * On the svg, because its wrapper already runs the fade-in transform.
+ */
+@keyframes whats-new-wiggle {
+  0%,
+  12%,
+  100% {
+    transform: rotate(0deg);
+  }
+  3% {
+    transform: rotate(-14deg);
+  }
+  6% {
+    transform: rotate(12deg);
+  }
+  9% {
+    transform: rotate(-6deg);
+  }
+}
+
+.whats-new-wiggle svg {
+  transform-origin: 40% 60%;
+  animation: whats-new-wiggle 6s ease-in-out 3;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

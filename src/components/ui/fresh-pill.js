@@ -74,8 +74,10 @@ const subscribe = () => () => {};
  * @param {"new"|"updated"} props.kind
  * @param {string} props.date - Launch or update day, YYYY-MM-DD.
  * @param {string} [props.className]
+ * @param {number} [props.delay=0.15] - Seconds to wait after scrolling into
+ *   view, so a card's own entrance can land first.
  */
-export function FreshPill({ kind, date, className }) {
+export function FreshPill({ kind, date, className, delay = 0.15 }) {
   const fresh = useSyncExternalStore(
     subscribe,
     () => isPillFresh(date),
@@ -95,7 +97,7 @@ export function FreshPill({ kind, date, className }) {
       initial={{ opacity: 0, scale: 0.6 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: "-40px", amount: 0.5 }}
-      transition={{ type: "spring", stiffness: 400, damping: 16, delay: 0.15 }}
+      transition={{ type: "spring", stiffness: 400, damping: 16, delay }}
       title={`${label} ${readableDate}`}
       className={cn(
         "group/pill text-foreground inline-flex shrink-0 items-center gap-1 rounded-full border py-0.5 pr-2 pl-1.5 text-xs leading-none font-semibold",

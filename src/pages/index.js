@@ -627,11 +627,17 @@ function FeatureCard({
   index = 0,
 }) {
   const chartColorVar = `--chart-${(index % 5) + 1}`;
+  const iconDelay = (index % 12) * 0.04;
 
   return (
     <Card className="group ring-ring relative h-full shadow-lg ring-0 transition-shadow hover:shadow-xl hover:ring-1">
       {pill && (
-        <FreshPill {...pill} className="absolute top-2 right-2 z-10" />
+        // Lands after the card's big icon has sprung in below.
+        <FreshPill
+          {...pill}
+          delay={iconDelay + 0.5}
+          className="absolute top-2 right-2 z-10"
+        />
       )}
       {/* Phones get a compact row with the icon on the left, so eleven tools
           do not each cost a full screen of scrolling. From sm up the card is a
@@ -663,7 +669,7 @@ function FeatureCard({
               type: "spring",
               stiffness: 400,
               damping: 18,
-              delay: (index % 12) * 0.04,
+              delay: iconDelay,
             }}
           >
             <IconComponent size={64} strokeWidth={1.25} className="shrink-0" />

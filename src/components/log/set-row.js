@@ -703,8 +703,8 @@ function ProgressionBadge({ badge, isMetric, className }) {
         </TooltipTrigger>
         <TooltipContent side="bottom">
           <p>
-            Last time, {dateLabel}: {previousSet.reps}@{value}
-            {unit}
+            Beats {previousSet.reps}@{value}
+            {unit} from {dateLabel}
           </p>
         </TooltipContent>
       </Tooltip>

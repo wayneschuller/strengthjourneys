@@ -1269,8 +1269,8 @@ html:not([data-restoring]) [data-returning-visit] {
 /*
  * Retro Arcade touches that tokens alone can't express.
  *
- * Numbers: every `tabular-nums` stat reads in Space Mono, like an arcade high
- * score. The AI coach keeps its own reading face.
+ * Numbers: the digits of every `tabular-nums` stat read in Space Mono, like an
+ * arcade high score. The AI coach keeps its own reading face.
  *
  * Buttons: a pink to orange Outrun sunset, solid on primary, a rim on outline.
  * The stock shadcn Button stays untouched: each variant is matched by its own
@@ -1286,6 +1286,15 @@ html:not([data-restoring]) [data-returning-visit] {
  * glow, and html2canvas capture mode ([data-capture]) keeps the plain card.
  */
 :is(.retro-arcade, .retro-arcade-dark) {
+  /* 80s racing stripes, 10px tall: pink, orange, gold with 2px gaps. */
+  --sunset-stripes: linear-gradient(
+    to bottom,
+    hsl(330.9554 64.0816% 51.9608%) 0 2px,
+    transparent 2px 4px,
+    hsl(17.5691 80.4444% 50%) 4px 6px,
+    transparent 6px 8px,
+    hsl(42 90% 55%) 8px 10px
+  );
   --sunset: linear-gradient(
     90deg,
     hsl(330.9554 64.0816% 51.9608%),
@@ -1293,8 +1302,29 @@ html:not([data-restoring]) [data-returning-visit] {
   );
 }
 
+/* Digits only: a monospace comma takes a full cell and "6,525" read like a
+   decimal, and "@" looked like "a". Punctuation and units fall through to
+   Outfit. 600 has no file, so the browser takes 700 for font-semibold. */
+@font-face {
+  font-family: "Space Mono Digits";
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+  src: url("../../node_modules/@fontsource/space-mono/files/space-mono-latin-400-normal.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Space Mono Digits";
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+  src: url("../../node_modules/@fontsource/space-mono/files/space-mono-latin-700-normal.woff2")
+    format("woff2");
+}
+
 :is(.retro-arcade, .retro-arcade-dark) .tabular-nums:not(.font-coach *) {
-  font-family: var(--font-mono);
+  font-family: "Space Mono Digits", var(--font-sans);
 }
 
 :is(.retro-arcade, .retro-arcade-dark) .bg-primary.text-primary-foreground.hover\:bg-primary\/90 {
@@ -1306,15 +1336,16 @@ html:not([data-restoring]) [data-returning-visit] {
 }
 
 /* Outline buttons: a sunset rim that fills with the full sunset on hover, so
-   the solid primary button still reads as the main action. */
-:is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent {
+   the solid primary button still reads as the main action. A button painted
+   with an inline background (the lift colour picker) keeps its own fill. */
+:is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent:not([style*="background"]) {
   border: 2px solid transparent;
   background:
     linear-gradient(var(--background), var(--background)) padding-box,
     var(--sunset) border-box;
 }
 
-:is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent:hover {
+:is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent:not([style*="background"]):hover {
   background: var(--sunset) border-box;
   color: hsl(0 0% 100%);
 }

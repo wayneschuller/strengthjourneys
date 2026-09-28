@@ -1268,10 +1268,13 @@ html:not([data-restoring]) [data-returning-visit] {
  * Numbers: every `tabular-nums` stat reads in Space Mono, like an arcade high
  * score. The AI coach keeps its own reading face.
  *
- * Buttons: a pink to orange Outrun sunset, solid on primary, a rim on outline. `button-primary` is set by
- * the Button primitive's default variant; requiring `.bg-primary` too means a
- * button whose className swaps the background (twMerge drops bg-primary) keeps
- * that colour instead of getting the gradient.
+ * Buttons: a pink to orange Outrun sunset, solid on primary, a rim on outline.
+ * The stock shadcn Button stays untouched: each variant is matched by its own
+ * cva class signature (default: bg-primary + text-primary-foreground +
+ * hover:bg-primary/90; outline: border-input + bg-background +
+ * hover:bg-accent). A className that swaps the background makes twMerge drop
+ * the matching class, so that button keeps its own colour. If Button is ever
+ * upgraded to shadcn's data-variant attribute, match on that instead.
  *
  * Dark only: neon-sign glow on page headings, and cards lit softly from behind.
  * The card rule is unlayered because Tailwind v4 inlines shadow-* values, so
@@ -1282,7 +1285,7 @@ html:not([data-restoring]) [data-returning-visit] {
   font-family: var(--font-mono);
 }
 
-:is(.retro-arcade, .retro-arcade-dark) .button-primary.bg-primary {
+:is(.retro-arcade, .retro-arcade-dark) .bg-primary.text-primary-foreground.hover\:bg-primary\/90 {
   background-image: linear-gradient(
     90deg,
     hsl(330.9554 64.0816% 51.9608%),
@@ -1290,14 +1293,13 @@ html:not([data-restoring]) [data-returning-visit] {
   );
 }
 
-:is(.retro-arcade, .retro-arcade-dark) .button-primary.bg-primary:hover {
+:is(.retro-arcade, .retro-arcade-dark) .bg-primary.text-primary-foreground.hover\:bg-primary\/90:hover {
   filter: brightness(1.08);
 }
 
 /* Outline buttons: a sunset rim that fills with the full sunset on hover, so
-   the solid primary button still reads as the main action. Same guard idea:
-   `.bg-background` is dropped when a className swaps the background. */
-:is(.retro-arcade, .retro-arcade-dark) .button-outline.bg-background {
+   the solid primary button still reads as the main action. */
+:is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent {
   border: 2px solid transparent;
   background:
     linear-gradient(var(--background), var(--background)) padding-box,
@@ -1309,7 +1311,7 @@ html:not([data-restoring]) [data-returning-visit] {
       border-box;
 }
 
-:is(.retro-arcade, .retro-arcade-dark) .button-outline.bg-background:hover {
+:is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent:hover {
   background: linear-gradient(
       90deg,
       hsl(330.9554 64.0816% 51.9608%),

@@ -12,9 +12,14 @@ export const IMPORT_APP_PAGES = [
   {
     slug: "hevy",
     appName: "Hevy",
-    title: "Import Hevy Data to Google Sheets | Strength Journeys",
+    // GSC review 2026-09-29: "hevy export data" and its variants (~2.4k
+    // impressions, position ~6) are how-to searches, so the title leads with
+    // exporting rather than importing. Baseline for /import/hevy, last 6
+    // months to 2026-09-28: 128 clicks / 30,890 imp / 0.41% CTR / pos 6.8.
+    // Review ~2026-10-29.
+    title: "How to Export Hevy Data (CSV) and Chart Your Progress",
     metaDescription:
-      "Upload a Hevy workout CSV in kg or lb to preview weighted sets, PRs, volume trends, and long-term strength progression. No account required.",
+      "How to export your Hevy workout data as a CSV, step by step, then upload it in kg or lb to see PRs, volume trends, and long-term strength progression. No account required.",
     heroTitle: "Turn Your Hevy Export Into a Strength Timeline",
     hookLine: "Your Hevy history, made useful beyond the app",
     heroDescription:

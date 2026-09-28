@@ -127,6 +127,20 @@ export default function StrengthStandardsLiftPage({ page, relatedArticles }) {
           {JSON.stringify(structuredData)}
         </script>
       </Head>
+      {/* GSC review 2026-09-29: seoTitle/description in each lift's
+          strengthLevels block now name kg and "chart", and strict press leads
+          with overhead/military press, the words searchers actually used.
+          The kg column in the example table also shows on phones now.
+          Baseline, last 6 months to 2026-09-28 (clicks / imp / CTR / pos):
+            bench-press   196 / 175,392 / 0.11% / 7.9
+            squat         147 / 102,949 / 0.14% / 8.2
+            deadlift      219 / 153,225 / 0.14% / 8.5
+            strict-press  233 /  36,065 / 0.65% / 7.0
+          Target queries then: kg standards ~3.8k imp / ~22 clicks;
+          "bench press chart" 1,359 imp / 5 clicks; overhead/military press
+          standards ~1.5k imp / ~3 clicks at pos 8-10.
+          Review ~2026-10-29 with GSC's 28-day compare split at 2026-09-29.
+          Judge on clicks and CTR: site impressions were falling all window. */}
       <NextSeo
         title={page.seoTitle}
         description={page.description}
@@ -306,26 +320,46 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                             <span className="ml-1 text-muted-foreground">/ {row.bwKg} kg</span>
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
-                            {row.active[1]} lb<span className="hidden sm:inline"> / {row.active[0]} kg</span>
+                            {row.active[1]} lb
+                            <span className="block text-xs sm:inline sm:text-sm">
+                              <span className="hidden sm:inline"> / </span>
+                              {row.active[0]} kg
+                            </span>
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
-                            {row.beginner[1]} lb<span className="hidden sm:inline"> / {row.beginner[0]} kg</span>
+                            {row.beginner[1]} lb
+                            <span className="block text-xs sm:inline sm:text-sm">
+                              <span className="hidden sm:inline"> / </span>
+                              {row.beginner[0]} kg
+                            </span>
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
-                            {row.intermediate[1]} lb<span className="hidden sm:inline"> / {row.intermediate[0]} kg</span>
+                            {row.intermediate[1]} lb
+                            <span className="block text-xs sm:inline sm:text-sm">
+                              <span className="hidden sm:inline"> / </span>
+                              {row.intermediate[0]} kg
+                            </span>
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
-                            {row.advanced[1]} lb<span className="hidden sm:inline"> / {row.advanced[0]} kg</span>
+                            {row.advanced[1]} lb
+                            <span className="block text-xs sm:inline sm:text-sm">
+                              <span className="hidden sm:inline"> / </span>
+                              {row.advanced[0]} kg
+                            </span>
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
-                            {row.elite[1]} lb<span className="hidden sm:inline"> / {row.elite[0]} kg</span>
+                            {row.elite[1]} lb
+                            <span className="block text-xs sm:inline sm:text-sm">
+                              <span className="hidden sm:inline"> / </span>
+                              {row.elite[0]} kg
+                            </span>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                   <p className="px-3 py-2 text-xs text-muted-foreground">
-                    {interpretation.exampleTable.caption}. Values in lb<span className="hidden sm:inline"> / kg</span>.
+                    {interpretation.exampleTable.caption}. Values in lb / kg.
                     Use the interactive tool above for personalised results by age, sex, and bodyweight.
                   </p>
                 </div>

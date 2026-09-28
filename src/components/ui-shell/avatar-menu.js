@@ -1,14 +1,11 @@
-import { useCallback, useState } from "react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import {
   Coffee,
-  Eraser,
   ExternalLink,
   LogOut,
   Megaphone,
   MessageSquarePlus,
-  Trash2,
   Upload,
 } from "lucide-react";
 
@@ -16,7 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
-import { devLog } from "@/lib/processing-utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,30 +39,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
  */
 export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
-  const [isResettingKv, setIsResettingKv] = useState(false);
   const { sheetInfo } = useUserLiftingData();
-
-  const runKvReset = useCallback(async (mode) => {
-    setIsResettingKv(true);
-    try {
-      const response = await fetch("/api/dev/reset-user-kv", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ mode }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || "KV reset failed");
-      }
-      devLog("[dev-kv-reset]", payload);
-    } catch (error) {
-      console.error("[dev-kv-reset] failed:", error);
-    } finally {
-      setIsResettingKv(false);
-    }
-  }, []);
 
   if (authStatus !== "authenticated")
     return (
@@ -80,112 +53,67 @@ export function AvatarDropdown() {
     );
 
   return (
-    <>
-      <DropdownMenu>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild aria-label="User menu">
-                <button
-                  type="button"
-                  className="focus-visible:ring-ring relative ml-2 inline-flex rounded-full focus-visible:ring-2 focus-visible:outline-none"
-                >
-                  <Avatar className="ring-muted-foreground h-8 w-8 hover:ring-2">
-                    {session.user.image && (
-                      <AvatarImage src={session.user.image} />
-                    )}
-                    <AvatarFallback>
-                      {session.user.name?.[0] || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Open user menu</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <DropdownMenuContent className="w-56" align="end">
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="font-bold">Athlete: </p>
-              {/* <p className="flex-row text-sm font-medium leading-none"> {session.user.name} </p> */}
-              <p className="text-muted-foreground pl-2 text-xs leading-none">
-                {session.user.email}
-              </p>
-              {sheetInfo?.filename && (
-                <>
-                  <p className="font-bold">Data source loaded: </p>
-                  {sheetInfo?.url ? (
-                    <a
-                      href={sheetInfo.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      title="Open in Google Sheets (new tab)"
-                      className="text-muted-foreground hover:text-foreground flex min-w-0 items-center gap-1 pl-2 text-xs leading-none underline-offset-2 hover:underline"
-                    >
-                      <span className="truncate">{sheetInfo.filename}</span>
-                      <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
-                      <span className="sr-only">(opens in a new tab)</span>
-                    </a>
-                  ) : (
-                    <p className="text-muted-foreground pl-2 text-xs leading-none">
-                      {sheetInfo.filename}
-                    </p>
+    <DropdownMenu>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild aria-label="User menu">
+              <button
+                type="button"
+                className="focus-visible:ring-ring relative ml-2 inline-flex rounded-full focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <Avatar className="ring-muted-foreground h-8 w-8 hover:ring-2">
+                  {session.user.image && (
+                    <AvatarImage src={session.user.image} />
                   )}
-                </>
-              )}
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            {!sheetInfo?.ssid && (
-              <DropdownMenuItem
-                onClick={() => {
-                  openSheetSetupDialog("bootstrap");
-                }}
-              >
+                  <AvatarFallback>
+                    {session.user.name?.[0] || "?"}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Open user menu</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent className="w-60" align="end">
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex min-w-0 flex-col gap-1">
+            {session.user.name && (
+              <p className="truncate text-sm font-semibold">
+                {session.user.name}
+              </p>
+            )}
+            <p className="text-muted-foreground truncate text-xs">
+              {session.user.email}
+            </p>
+            {sheetInfo?.filename && (
+              <p className="text-muted-foreground mt-1 flex min-w-0 items-center gap-1.5 text-xs">
                 <img
                   src={GOOGLE_SHEETS_ICON_URL}
                   alt=""
-                  className="mr-2 h-4 w-4 shrink-0"
+                  className="h-3.5 w-3.5 shrink-0"
                   aria-hidden
                 />
-                Set Up Google Sheet
-              </DropdownMenuItem>
+                <span className="truncate">{sheetInfo.filename}</span>
+              </p>
             )}
-            {sheetInfo?.ssid && (
-              <DropdownMenuItem
-                onClick={() => {
-                  openSheetSetupDialog("switch_sheet");
-                }}
-              >
-                <img
-                  src={GOOGLE_SHEETS_ICON_URL}
-                  alt=""
-                  className="mr-2 h-4 w-4 shrink-0"
-                  aria-hidden
-                />
-                Select New Data Source
-              </DropdownMenuItem>
-            )}
-            {/* Public actions shown in all environments. Keep these outside
-                    any dev-only gate so production users always see them. */}
-            <DropdownMenuItem
-              onClick={() => window.dispatchEvent(new Event("open-feedback"))}
-            >
-              <MessageSquarePlus className="mr-2 h-4 w-4" />
-              Send Feedback
-            </DropdownMenuItem>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          {sheetInfo?.url && (
             <DropdownMenuItem asChild>
-              <a
-                href="https://buymeacoffee.com/lrhvbjxzqr"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Coffee className="mr-2 h-4 w-4" />
-                Buy Me A Coffee
+              <a href={sheetInfo.url} target="_blank" rel="noreferrer">
+                <img
+                  src={GOOGLE_SHEETS_ICON_URL}
+                  alt=""
+                  className="mr-2 h-4 w-4 shrink-0"
+                  aria-hidden
+                />
+                Open Google Sheet
                 <ExternalLink
                   className="text-muted-foreground ml-auto size-3!"
                   aria-hidden
@@ -193,60 +121,67 @@ export function AvatarDropdown() {
                 <span className="sr-only">(opens in a new tab)</span>
               </a>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/import" prefetch={false}>
-                <Upload className="mr-2 h-4 w-4" />
-                Import / Export
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/changelog" prefetch={false}>
-                <Megaphone className="mr-2 h-4 w-4" />
-                What&apos;s New
-              </Link>
-            </DropdownMenuItem>
-            {/* Non-production tools for QA/reset workflows.
-                    These are available in development-like envs (including
-                    Vercel preview/main) and hidden on stable/production. */}
-            {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV ===
-              "development" && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-muted-foreground text-xs font-semibold">
-                  Dev Tools
-                </DropdownMenuLabel>
-                <DropdownMenuItem
-                  disabled={isResettingKv}
-                  onClick={() => {
-                    runKvReset("onboarding");
-                  }}
-                >
-                  <Eraser className="mr-2 h-4 w-4" />
-                  Clear KV onboarding state
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={isResettingKv}
-                  onClick={() => {
-                    runKvReset("delete");
-                  }}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete full KV user record
-                </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                signOut();
-              }}
+          )}
+          <DropdownMenuItem
+            onClick={() => {
+              openSheetSetupDialog(
+                sheetInfo?.ssid ? "switch_sheet" : "bootstrap",
+              );
+            }}
+          >
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="mr-2 h-4 w-4 shrink-0"
+              aria-hidden
+            />
+            {sheetInfo?.ssid ? "Select New Data Source" : "Set Up Google Sheet"}
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/import" prefetch={false}>
+              <Upload className="mr-2 h-4 w-4" />
+              Import / Export
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <Link href="/changelog" prefetch={false}>
+              <Megaphone className="mr-2 h-4 w-4" />
+              What&apos;s New
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => window.dispatchEvent(new Event("open-feedback"))}
+          >
+            <MessageSquarePlus className="mr-2 h-4 w-4" />
+            Send Feedback
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <a
+              href="https://buymeacoffee.com/lrhvbjxzqr"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sign out</span>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+              <Coffee className="mr-2 h-4 w-4" />
+              Buy Me A Coffee
+              <ExternalLink
+                className="text-muted-foreground ml-auto size-3!"
+                aria-hidden
+              />
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => signOut()}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

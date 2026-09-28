@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useReducedMotion } from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
 
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
@@ -71,7 +71,7 @@ export function LiftBlock({
   usedSessionUrls,
   onSessionUrlAccepted,
 }) {
-  const { hasUserData, isDemoMode, isImportedData } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const { getColor } = useLiftColors();
   const prefersReducedMotion = useReducedMotion();
@@ -292,7 +292,7 @@ export function LiftBlock({
 
   // Find the set index with the heaviest e1RM for the strength badge
   const canShowStrength =
-    (hasUserData || isDemoMode || isImportedData) && hasBioData;
+    (isOwnData(dataSource) || dataSource === "demo") && hasBioData;
   const { bestE1rmIndex, bestE1rmValue } = useMemo(() => {
     if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;

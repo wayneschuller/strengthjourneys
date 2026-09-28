@@ -3,15 +3,8 @@
  * Reward definitions supply metric criteria, keeping this engine feature-agnostic.
  */
 
-export function getRewardProgress({
-  isAuthenticated,
-  isDemoMode,
-  parsedData,
-  rewards,
-}) {
-  const metrics = getTrainingRewardMetrics(
-    isAuthenticated && !isDemoMode ? parsedData : [],
-  );
+export function getRewardProgress({ isAuthenticated, parsedData, rewards }) {
+  const metrics = getTrainingRewardMetrics(isAuthenticated ? parsedData : []);
   const unlockedRewardIds = new Set();
 
   if (isAuthenticated) {

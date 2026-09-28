@@ -87,6 +87,11 @@ authenticated users.
   `UserLiftingDataProvider` context owns fetching, parsing, demo mode,
   imported-file mode, and every shared derived metric. **Consume derived data
   from this context — do not recompute PRs or tonnage in a component.**
+  Where the data on screen comes from has one answer, `dataSource`
+  (`loading`, `restoring`, `demo`, `import`, `sheet`, `none`); switch on it,
+  with `isOwnData(dataSource)` for "sheet or import". Don't rebuild it from
+  `authStatus` and `sheetInfo`, and don't add boolean flags for it.
+  `hasLinkedSheet` is the one separate fact: a sheet can sit under an import.
 - **Import pipeline:** `import/import-dispatcher.js` is the single entry
   point, with two functions — `parseData(rows)` for Google Sheets (Strength
   Journeys format only, read/write) and `parseImportedFile(file)` for

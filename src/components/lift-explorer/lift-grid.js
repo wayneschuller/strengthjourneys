@@ -61,7 +61,7 @@ const STALE_LENS_MIN_SETS = 5;
 const DEFAULT_VISIBLE_TEXT_LIFTS = 48;
 
 export function LiftGrid() {
-  const { liftTypes, isDemoMode } = useUserLiftingData();
+  const { liftTypes, dataSource } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const [sortMode, setSortMode] = useState("sets");
   const [query, setQuery] = useState("");
@@ -146,7 +146,7 @@ export function LiftGrid() {
   return (
     <section className="mt-4 flex flex-col gap-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {isDemoMode && <DemoModeBadge />}
+        {dataSource === "demo" && <DemoModeBadge />}
         <div className="relative min-w-0 flex-1 sm:max-w-sm">
           <Search
             aria-hidden="true"

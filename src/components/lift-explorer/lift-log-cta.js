@@ -112,9 +112,9 @@ const LIFT_LOG_CTA_PHRASES = {
  * @param {string} props.liftType - Selected lift type.
  */
 export function LiftLogCta({ liftType }) {
-  const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
+  const { parsedData, isLoading, dataSource } = useUserLiftingData();
 
-  if (!liftType || isDemoMode) return null;
+  if (!liftType || dataSource === "demo") return null;
 
   const today = formatDateToYmdLocal(new Date());
   const latestLiftDate = getLatestLiftDate(parsedData, liftType);

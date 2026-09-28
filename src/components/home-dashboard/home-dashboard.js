@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
 import {
   DashboardHeaderStatus,
@@ -99,13 +99,13 @@ export function HomeDashboard() {
     () => WELCOME_QUIPS[Math.floor(Math.random() * WELCOME_QUIPS.length)],
   );
 
-  const { sheetInfo, parsedData, rawRows, dataSyncedAt, isValidating, mutate, hasUserData, isImportedData } =
+  const { sheetInfo, parsedData, rawRows, dataSyncedAt, isValidating, mutate, dataSource } =
     useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
   // The cards wait on the data, not on the header's row count animation. That animation used to
   // gate them too, holding parsed data back for 1.2s; now it rolls on while the cards arrive.
   const hasDataLoaded =
-    hasUserData && Array.isArray(parsedData) && (isImportedData || rawRows !== null);
+    isOwnData(dataSource) && Array.isArray(parsedData) && (dataSource === "import" || rawRows !== null);
   const previewEntryCount = useMemo(
     () =>
       Array.isArray(parsedData)
@@ -139,7 +139,7 @@ export function HomeDashboard() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (isImportedData || !sheetSsid || rawRows === null) return;
+    if (dataSource === "import" || !sheetSsid || rawRows === null) return;
     try {
       window.localStorage.setItem(
         getSheetScopedStorageKey(
@@ -151,7 +151,7 @@ export function HomeDashboard() {
     } catch {
       // Storage can be full or blocked. The pill then creeps without a number, which is fine.
     }
-  }, [isImportedData, sheetSsid, rawRows]);
+  }, [dataSource, sheetSsid, rawRows]);
   // `dashboardStage` drives onboarding vs mature behavior. Keep all stage
   // branching anchored here so child cards receive one consistent signal.
   const { dashboardStage, starterSheetState, sessionCount, dataMaturityStage } =
@@ -237,7 +237,7 @@ export function HomeDashboard() {
     // A flex column below lg only, so the inspiration strip can drop beneath the headline cards
     // with `order`. At lg and up it stays plain block flow, margins and all.
     <div className="flex flex-col lg:block">
-      {hasUserData && (
+      {isOwnData(dataSource) && (
         <div className="relative mb-4 2xl:mb-6 text-xl">
           {/* 2xl: welcome left + status right in one row; below that they stack.
               The status slot holds the load indicator first and the synced-sheet line
@@ -262,15 +262,15 @@ export function HomeDashboard() {
               isProgressDone={isProgressDone}
               indicator={
                 <RowProcessingIndicator
-                  mode={isImportedData ? "preview" : "sheet"}
-                  count={isImportedData ? previewEntryCount : rawRows}
-                  expectedCount={isImportedData ? null : expectedRowCount}
+                  mode={dataSource === "import" ? "preview" : "sheet"}
+                  count={dataSource === "import" ? previewEntryCount : rawRows}
+                  expectedCount={dataSource === "import" ? null : expectedRowCount}
                   isProgressDone={isProgressDone}
                   setIsProgressDone={setIsProgressDone}
                 />
               }
               status={
-                isImportedData ? null : (
+                dataSource === "import" ? null : (
                   <DataSheetStatus
                     rawRows={rawRows}
                     parsedData={parsedData}
@@ -288,7 +288,7 @@ export function HomeDashboard() {
       )}
       {/* The first week is intentionally quieter: skip the inspiration row until
           the user has enough real data for those cards to feel earned. */}
-      {hasUserData && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
+      {isOwnData(dataSource) && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
         // Below lg the strip sits after The Long Game, so the headline cards lead on a phone; mt-6
         // matches the card grid's gap. While loading it waits there too, behind the loading panel.
         <div
@@ -303,17 +303,17 @@ export function HomeDashboard() {
           />
         </div>
       )}
-      {hasUserData && !hasDataLoaded && (
+      {isOwnData(dataSource) && !hasDataLoaded && (
         <>
           <DashboardLoadingPanel
             className="lg:hidden"
-            mode={isImportedData ? "preview" : "sheet"}
+            mode={dataSource === "import" ? "preview" : "sheet"}
             sheetFilename={sheetInfo?.filename}
           />
           <HomeDashboardCardsSkeleton />
         </>
       )}
-      {hasUserData && hasDataLoaded && (
+      {isOwnData(dataSource) && hasDataLoaded && (
         <>
           {/* No top margin below lg: the header's mb-4 already spaces it, and flex margins do not collapse. */}
           <section className="grid grid-cols-1 gap-6 lg:mt-4 lg:grid-cols-2 xl:grid-cols-3">

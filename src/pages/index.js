@@ -12,7 +12,7 @@ import { NextSeo } from "next-seo";
 import { getFeaturedArticles } from "@/lib/articles";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useMemo } from "react";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 
 import {
@@ -384,12 +384,9 @@ export default function Home({ starterArticles = [] }) {
   const { status: authStatus } = useSession();
   const {
     dataSource,
-    hasUserData,
-    isImportedData,
     parsedData,
     rawRows,
     sheetInfo,
-    isReturningUserLoading,
   } = useUserLiftingData();
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
   const { dashboardStage } = useMemo(
@@ -406,13 +403,13 @@ export default function Home({ starterArticles = [] }) {
   // dashboard stage. Also suppressed while a returning user's sheet resolves,
   // so it never flashes in and straight back out.
   const showBigFourSubtitle =
-    !isReturningUserLoading &&
-    !(hasUserData && dashboardStage === "established");
+    dataSource !== "restoring" &&
+    !(isOwnData(dataSource) && dashboardStage === "established");
 
   // Keep the Big Four cards visible for early users, but delay the personalized
   // stats treatment until they have enough history for those comparisons to land.
   const showEnhancedBigFourStats =
-    hasUserData &&
+    isOwnData(dataSource) &&
     (dashboardStage === "early_base" || dashboardStage === "established");
 
   // Which of the three home surfaces belongs in the top slot.
@@ -427,10 +424,10 @@ export default function Home({ starterArticles = [] }) {
   //   welcome   - signed in, nothing linked yet: the activation home
   //   dashboard - real data, from a linked sheet or an imported file
   const surface = useMemo(() => {
-    if (hasUserData) return "dashboard";
+    if (isOwnData(dataSource)) return "dashboard";
     if (dataSource === "none") return "welcome";
     return "hero";
-  }, [dataSource, hasUserData]);
+  }, [dataSource]);
 
   const showWelcome = surface === "welcome";
 
@@ -438,7 +435,7 @@ export default function Home({ starterArticles = [] }) {
   // (hero fade + row processing ~1.2s + top stat cards ~2.2s). For guests and
   // signed-in demo mode, show them immediately.
   useEffect(() => {
-    if (hasUserData) {
+    if (isOwnData(dataSource)) {
       const totalIntroMs = 4000; // Row processing + section cards left-to-right stagger
       const timeoutId = setTimeout(() => {
         setBigFourAnimated(true);
@@ -446,10 +443,10 @@ export default function Home({ starterArticles = [] }) {
       return () => clearTimeout(timeoutId);
     }
 
-    if (!hasUserData && authStatus !== "loading") {
+    if (!isOwnData(dataSource) && authStatus !== "loading") {
       setBigFourAnimated(true);
     }
-  }, [authStatus, hasUserData]);
+  }, [authStatus, dataSource]);
 
   return (
     <>
@@ -493,7 +490,7 @@ export default function Home({ starterArticles = [] }) {
               flashing a surface we are about to replace. AnimatePresence is unmounted entirely
               here on purpose: were it merely childless it would run an exit animation, which
               would paint the very hero this guard exists to suppress. */}
-          {isReturningUserLoading ? null : (
+          {dataSource === "restoring" ? null : (
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={surface}

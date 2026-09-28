@@ -84,7 +84,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { Bot, CopyIcon, RefreshCcwIcon, CheckIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
@@ -206,8 +206,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const {
     parsedData,
     isLoading,
-    isDemoMode,
-    hasUserData,
+    dataSource,
     liftTypes,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
@@ -257,7 +256,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   // on page load: nothing needs the text until then, and the lifter's
   // settings keep changing while the page settles.
   const buildCoachContext = useCallback(() => {
-    if (isDemoMode) return "";
+    if (dataSource === "demo") return "";
     return buildLiftingContext({
       parsedData,
       liftTypes,
@@ -278,7 +277,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     bodyWeight,
     e1rmFormula,
     height,
-    isDemoMode,
+    dataSource,
     isMetric,
     liftTypes,
     parsedData,
@@ -301,14 +300,14 @@ function AILiftingAssistantMain({ relatedArticles }) {
         </PageHeaderDescription>
       </PageHeader>
       <AILiftingAssistantCard
-        hasSharedBioData={!isDemoMode && shareBioDetails}
-        hasSharedFullTrainingData={!isDemoMode && hasSharedFullTrainingData}
-        hasSharedTrainingData={!isDemoMode && hasSharedTrainingData}
-        hasLiftingLog={hasUserData}
-        loggedLiftTypes={isDemoMode ? undefined : liftTypes}
+        hasSharedBioData={dataSource !== "demo" && shareBioDetails}
+        hasSharedFullTrainingData={dataSource !== "demo" && hasSharedFullTrainingData}
+        hasSharedTrainingData={dataSource !== "demo" && hasSharedTrainingData}
+        hasLiftingLog={isOwnData(dataSource)}
+        loggedLiftTypes={dataSource === "demo" ? undefined : liftTypes}
         personalizationControls={
           <PersonalizationDialog
-            enabled={!isDemoMode && (shareBioDetails || hasSharedTrainingData)}
+            enabled={dataSource !== "demo" && (shareBioDetails || hasSharedTrainingData)}
             buildSummary={buildCoachContext}
           >
             <BioDetailsCard

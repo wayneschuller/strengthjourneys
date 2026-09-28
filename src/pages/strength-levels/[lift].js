@@ -37,7 +37,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 import { getRelatedArticles } from "@/lib/articles";
@@ -448,10 +448,10 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
 
 function StrengthLevelsDataCta({ page }) {
   const { status: authStatus } = useSession();
-  const { hasUserData, isReturningUserLoading } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
 
-  if (hasUserData) return null;
-  if (isReturningUserLoading) return null;
+  if (isOwnData(dataSource)) return null;
+  if (dataSource === "restoring") return null;
 
   const showSignIn = authStatus === "unauthenticated";
   const showSheetSetup = authStatus === "authenticated";

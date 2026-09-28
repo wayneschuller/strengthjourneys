@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBio,
   STRENGTH_LEVEL_EMOJI,
@@ -79,7 +79,7 @@ export function BigFourLiftCards({
   gridClassName = "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4",
 }) {
   const {
-    hasUserData,
+    dataSource,
     parsedData,
     topLiftsByTypeAndReps,
     liftTypes,
@@ -182,7 +182,7 @@ export function BigFourLiftCards({
   // Stagger the description→stats fade per card, left to right.
   // Only run when user has a connected sheet (real data), not demo.
   useEffect(() => {
-    if (hasUserData && topLiftsByTypeAndReps && animated) {
+    if (isOwnData(dataSource) && topLiftsByTypeAndReps && animated) {
       const timeouts = [0, 1, 2, 3].map((i) =>
         setTimeout(
           () => setStatsVisibleCount((c) => Math.max(c, i + 1)),
@@ -192,7 +192,7 @@ export function BigFourLiftCards({
       return () => timeouts.forEach(clearTimeout);
     }
     setStatsVisibleCount(0);
-  }, [hasUserData, topLiftsByTypeAndReps, animated]);
+  }, [dataSource, topLiftsByTypeAndReps, animated]);
 
   const {
     liftTonnageMap,
@@ -225,7 +225,7 @@ export function BigFourLiftCards({
         // Only show personal stats when user has connected a sheet (avoid demo data on cards).
         const isStatsMode =
           enhancedStats &&
-          hasUserData &&
+          isOwnData(dataSource) &&
           hasAnyData;
 
         const recentPRTier = topLiftsByTypeAndReps

@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { useMemo, useState, useEffect } from "react";
 import { NextSeo } from "next-seo";
 import { useTheme } from "next-themes";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { getYearsWithData } from "@/components/year-recap/year-selector";
 import {
   PageContainer,
@@ -224,7 +224,7 @@ function RecapCustomiseSidebar() {
 function StrengthYearInReviewMain() {
   const router = useRouter();
   const { status: authStatus } = useSession();
-  const { parsedData, isLoading, hasUserData, dataSource } = useUserLiftingData();
+  const { parsedData, isLoading, dataSource } = useUserLiftingData();
 
   // Signed in with nothing to recap yet: show the start-your-log card.
   const needsToConnectSheet = dataSource === "none";
@@ -338,7 +338,7 @@ function StrengthYearInReviewMain() {
             )}
             {showCarousel && (
               <div className="order-3 flex flex-col gap-6 pt-2 xl:col-start-3 xl:pt-2">
-                {hasUserData && (
+                {isOwnData(dataSource) && (
                   <RecapCustomiseSidebar />
                 )}
                 {dataSource === "none" ? (

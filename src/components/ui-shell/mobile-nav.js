@@ -15,7 +15,7 @@ import {
   useChangelogDot,
   WhatsNewDot,
 } from "@/components/ui-shell/whats-new";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { getLiftIcon } from "@/components/lift-icon";
 import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -44,7 +44,7 @@ const BAR_LOGO_WIDTH = 100;
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { hasUserData, importProfile } = useUserLiftingData();
+  const { dataSource, importProfile } = useUserLiftingData();
   const hasImportRitual = Boolean(importProfile?.lastSourceId);
   const repeatImportHref = getRepeatImportHref(
     importProfile,
@@ -157,7 +157,7 @@ export function MobileNav() {
                 </Link>
               </SheetClose>
               {featurePages
-                .filter((item) => !item.authRequired || hasUserData)
+                .filter((item) => !item.authRequired || isOwnData(dataSource))
                 .map((item) => {
                   const isImportLink = item.href === "/import";
                   return (

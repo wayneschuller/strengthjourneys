@@ -499,9 +499,7 @@ export function TheWeekInIronCard({
   const cardRef = useRef(null);
   const { status: authStatus } = useSession();
   const {
-    isDemoMode,
-    isImportedData,
-    isReadOnly,
+    dataSource,
     parsedData,
     sessionTonnageLookup,
     streakLeaderboard,
@@ -613,9 +611,7 @@ export function TheWeekInIronCard({
     return (
       <EarlyWeekCard
         authStatus={authStatus}
-        isDemoMode={isDemoMode}
-        isImportedData={isImportedData}
-        isReadOnly={isReadOnly}
+        dataSource={dataSource}
         dataMaturityStage={dataMaturityStage}
         dashboardStage={dashboardStage}
       />
@@ -629,7 +625,7 @@ export function TheWeekInIronCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2">
-                {isDemoMode && <DemoModeBadge size="sm" />}
+                {dataSource === "demo" && <DemoModeBadge size="sm" />}
                 {title}
               </CardTitle>
               <CardDescription>{subtitle}</CardDescription>
@@ -707,13 +703,12 @@ export function TheWeekInIronCard({
               >
                 <WeekSessionList
                   authStatus={authStatus}
-                  isImportedData={isImportedData}
+                  dataSource={dataSource}
                   rows={weeklySessionRows}
-                  isReadOnly={isReadOnly}
                 />
               </WeekSection>
 
-              {!isReadOnly && boundaries.isCurrentWeek && (
+              {dataSource === "sheet" && boundaries.isCurrentWeek && (
                 <>
                   <Separator />
                   <WeekSection
@@ -772,14 +767,13 @@ export function TheWeekInIronCard({
           {!hasLoggedSessions && (
             <EmptyWeekState
               authStatus={authStatus}
-              isImportedData={isImportedData}
-              isReadOnly={isReadOnly}
+              dataSource={dataSource}
             />
           )}
-          {isReadOnly && (
+          {dataSource !== "sheet" && (
             <ReadOnlyWeekCta
               authStatus={authStatus}
-              isImportedData={isImportedData}
+              dataSource={dataSource}
               hasLoggedSessions={hasLoggedSessions}
             />
           )}
@@ -849,18 +843,16 @@ function StreakCelebrationBox({ streakCelebration }) {
 
 function WeekSessionList({
   authStatus,
-  isImportedData = false,
+  dataSource,
   rows,
-  isReadOnly = false,
 }) {
   return (
     <div className="space-y-2">
       {rows.length === 0 ? (
-        isReadOnly ? (
+        dataSource !== "sheet" ? (
           <EmptyWeekState
             authStatus={authStatus}
-            isImportedData={isImportedData}
-            isReadOnly={isReadOnly}
+            dataSource={dataSource}
           />
         ) : (
           <div className="bg-muted/20 text-muted-foreground rounded-xl border border-dashed px-4 py-4 text-sm">
@@ -924,9 +916,7 @@ function WeekSessionList({
 
 function EarlyWeekCard({
   authStatus,
-  isDemoMode,
-  isImportedData,
-  isReadOnly,
+  dataSource,
   dataMaturityStage,
   dashboardStage,
 }) {
@@ -944,7 +934,7 @@ function EarlyWeekCard({
     <Card className="flex h-full flex-1 flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="flex flex-wrap items-center gap-2">
-          {isDemoMode && <DemoModeBadge size="sm" />}
+          {dataSource === "demo" && <DemoModeBadge size="sm" />}
           {title}
         </CardTitle>
         <CardDescription>{subtitle}</CardDescription>
@@ -952,14 +942,13 @@ function EarlyWeekCard({
       <CardContent className="flex flex-1 flex-col items-center justify-center">
         <EmptyWeekState
           authStatus={authStatus}
-          isImportedData={isImportedData}
-          isReadOnly={isReadOnly}
+          dataSource={dataSource}
           dashboardStage={dashboardStage}
         />
-        {isReadOnly && (
+        {dataSource !== "sheet" && (
           <ReadOnlyWeekCta
             authStatus={authStatus}
-            isImportedData={isImportedData}
+            dataSource={dataSource}
             hasLoggedSessions={false}
             className="mt-4"
           />
@@ -976,11 +965,10 @@ function EarlyWeekCard({
 
 function EmptyWeekState({
   authStatus,
-  isImportedData = false,
-  isReadOnly,
+  dataSource,
   dashboardStage,
 }) {
-  if (!isReadOnly) {
+  if (dataSource === "sheet") {
     // On a brand-new sheet the CardDescription directly above already says the
     // summary arrives with the first session. Saying it a second time in a
     // grey box costs the card its best vertical space and tells the reader
@@ -1000,7 +988,7 @@ function EmptyWeekState({
     return (
       <div className="bg-muted/30 w-full space-y-4 rounded-lg border border-dashed px-4 py-6 text-center">
         <p className="text-muted-foreground text-sm">
-          {isImportedData
+          {dataSource === "import"
             ? `Your imported preview is ready. Save it to a Google Sheet to keep this weekly recap and unlock ${LOGGING_FEATURES_BLURB}.`
             : `Unlock weekly session tracking, momentum cues, and ${LOGGING_FEATURES_BLURB} by setting up your Google Sheet.`}
         </p>
@@ -1011,7 +999,7 @@ function EmptyWeekState({
   return (
     <div className="bg-muted/30 w-full space-y-4 rounded-lg border border-dashed px-4 py-6 text-center">
       <p className="text-muted-foreground text-sm">
-        {isImportedData
+        {dataSource === "import"
           ? `Your imported preview is ready. Sign in with Google to save it and unlock ${LOGGING_FEATURES_BLURB}.`
           : `Unlock weekly session tracking, momentum cues, and ${LOGGING_FEATURES_BLURB} when you sign in with Google.`}
       </p>
@@ -1021,18 +1009,18 @@ function EmptyWeekState({
 
 function ReadOnlyWeekCta({
   authStatus,
-  isImportedData = false,
+  dataSource,
   hasLoggedSessions = false,
   className = "",
 }) {
   const description =
     authStatus === "authenticated"
-      ? isImportedData
+      ? dataSource === "import"
         ? `Save this imported history to a new Google Sheet so this week becomes part of your permanent log with ${LOGGING_FEATURES_BLURB}.`
         : hasLoggedSessions
           ? `Make this card live by linking your Google Sheet so each session updates your weekly recap automatically, with ${LOGGING_FEATURES_BLURB}.`
           : `Set up your Google Sheet to turn this card into a live weekly recap with ${LOGGING_FEATURES_BLURB}.`
-      : isImportedData
+      : dataSource === "import"
         ? `Sign in with Google to save this imported week and keep building from it with ${LOGGING_FEATURES_BLURB}.`
         : hasLoggedSessions
           ? `Sign in with Google to unlock live weekly tracking and keep your sessions attached to your own log with ${LOGGING_FEATURES_BLURB}.`
@@ -1049,7 +1037,7 @@ function ReadOnlyWeekCta({
             className="gap-2"
             onClick={() => {
               openSheetSetupDialog("bootstrap", {
-                action: isImportedData
+                action: dataSource === "import"
                   ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
                   : null,
               });
@@ -1063,7 +1051,7 @@ function ReadOnlyWeekCta({
               className="h-4 w-4"
               aria-hidden
             />
-            {isImportedData
+            {dataSource === "import"
               ? "Save imported data to my sheet"
               : "Set up sheet to enable logging"}
           </Button>
@@ -1072,7 +1060,7 @@ function ReadOnlyWeekCta({
             cta="week_in_iron_read_only_cta"
             className="gap-2"
           >
-            {isImportedData
+            {dataSource === "import"
               ? "Sign in to save imported data"
               : "Sign in to enable logging"}
           </GoogleSignInButton>

@@ -378,7 +378,6 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const {
     topLiftsByTypeAndReps,
     parsedData,
-    isDemoMode,
     dataSource,
     hasLinkedSheet,
   } = useUserLiftingData();
@@ -443,7 +442,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     if (
       hasAutoPopulatedRef.current ||
       !topLiftsByTypeAndReps ||
-      isDemoMode
+      dataSource === "demo"
     )
       return;
 
@@ -489,7 +488,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     setUsingUserData(true);
   }, [
     topLiftsByTypeAndReps,
-    isDemoMode,
+    dataSource,
     e1rmFormula,
     setSquat,
     setBench,
@@ -498,7 +497,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   // Recent 90-day best E1RM per lift (in lbs, rounded to 5)
   const recent90dData = useMemo(() => {
-    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+    if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
 
     const SBD_TYPES = {
       "Back Squat": "squat",
@@ -538,7 +537,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       (k) => values[k] != null && values[k] !== pr[k],
     );
     return hasDistinct ? { values, sources } : null;
-  }, [usingUserData, parsedData, isDemoMode, e1rmFormula]);
+  }, [usingUserData, parsedData, dataSource, e1rmFormula]);
   const recent90dLb = recent90dData?.values;
   const recent90dE1rmSources = recent90dData?.sources;
 
@@ -617,7 +616,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   // Rolling 90-day SBD total timeline
   const totalTimeline = useMemo(() => {
-    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+    if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
 
     const SBD_TYPES = {
       "Back Squat": "squat",
@@ -706,7 +705,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     }
 
     return points.length >= 2 ? points : null;
-  }, [usingUserData, parsedData, isDemoMode, e1rmFormula]);
+  }, [usingUserData, parsedData, dataSource, e1rmFormula]);
 
   const total = squat + bench + deadlift;
   const inClub = total >= 1000;

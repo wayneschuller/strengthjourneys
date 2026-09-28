@@ -39,7 +39,7 @@ export function DailyTrainingHeatmap({
   isSharing,
   showMonthLabels = true,
 }) {
-  const { isDemoMode } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
   const heatmapYear = startDate
@@ -61,9 +61,9 @@ export function DailyTrainingHeatmap({
       parsedData,
       startDate,
       endDate,
-      isDemoMode, // This is a clue we have sample data and we will fake the heatmap to impress shallow people
+      dataSource, // This is a clue we have sample data and we will fake the heatmap to impress shallow people
     );
-  }, [parsedData, startDate, endDate, isDemoMode]);
+  }, [parsedData, startDate, endDate, dataSource]);
 
   const handleMouseOver = useCallback((e, value) => {
     if (!value || !value.sessionData) return;

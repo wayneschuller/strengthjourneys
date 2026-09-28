@@ -39,7 +39,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { getRelatedArticles } from "@/lib/articles";
 import { findBestE1RM } from "@/lib/processing-utils";
@@ -236,9 +236,7 @@ function HowStrongAmIPageMain() {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     parsedData,
-    isReturningUserLoading,
-    isDemoMode,
-    hasUserData,
+    dataSource,
   } = useUserLiftingData();
 
   const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
@@ -307,7 +305,7 @@ function HowStrongAmIPageMain() {
   // supplies the slider values, but it must not cost a logged-in lifter their PR
   // markers, their 90-day markers, or the reset buttons that get back to them.
   const prWeightsKg = useMemo(() => {
-    if (!topLiftsByTypeAndReps || isDemoMode) return null;
+    if (!topLiftsByTypeAndReps || dataSource === "demo") return null;
 
     const toKgFromUnit = (weight, unitType) =>
       unitType === "kg" ? weight : weight / 2.2046;
@@ -321,7 +319,7 @@ function HowStrongAmIPageMain() {
     }
 
     return LIFTS.some(({ key }) => best[key] != null) ? best : null;
-  }, [topLiftsByTypeAndReps, isDemoMode]);
+  }, [topLiftsByTypeAndReps, dataSource]);
 
   // True once the log has given us real PRs to compare against, which is what
   // every "from your log" affordance on this page keys off.
@@ -359,7 +357,7 @@ function HowStrongAmIPageMain() {
 
   // Recent 90-day best E1RM per lift, in kg, for the second slider marker
   const recent90dKg = useMemo(() => {
-    if (!prWeightsKg || !parsedData?.length || isDemoMode) return null;
+    if (!prWeightsKg || !parsedData?.length || dataSource === "demo") return null;
 
     const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
     const cutoffDate = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
@@ -380,7 +378,7 @@ function HowStrongAmIPageMain() {
       bench: bestKg.bench > 0 ? bestKg.bench : null,
       deadlift: bestKg.deadlift > 0 ? bestKg.deadlift : null,
     };
-  }, [prWeightsKg, parsedData, isDemoMode]);
+  }, [prWeightsKg, parsedData, dataSource]);
 
   // Only worth a marker when a recent best sits somewhere other than the PR
   const recent90dDisplay = useMemo(() => {
@@ -555,7 +553,7 @@ function HowStrongAmIPageMain() {
 
   // Compute percentile timeline from training history
   const percentileTimeline = useMemo(() => {
-    if (!usingUserData || !parsedData?.length || isDemoMode) return null;
+    if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
 
     const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
     const WINDOW_DAYS = 90;
@@ -636,7 +634,7 @@ function HowStrongAmIPageMain() {
     }
 
     return points.length >= 2 ? points : null;
-  }, [usingUserData, parsedData, isDemoMode, age, sex, bodyWeightKg, e1rmFormula]);
+  }, [usingUserData, parsedData, dataSource, age, sex, bodyWeightKg, e1rmFormula]);
 
   const handleShare = () => {
     const percentile = chartPercentiles[activeUniverse];
@@ -708,7 +706,7 @@ function HowStrongAmIPageMain() {
                   revealProgressively={
                     !usingUserData &&
                     !hasArrivalLiftQuery &&
-                    !isReturningUserLoading
+                    dataSource !== "restoring"
                   }
                 />
               </div>
@@ -742,10 +740,10 @@ function HowStrongAmIPageMain() {
                 onCopyResult={handleShare}
                 firstName={session?.user?.name?.split(" ")[0]}
                 showImportTeaser={
-                  authStatus === "unauthenticated" && !isReturningUserLoading
+                  authStatus === "unauthenticated" && dataSource !== "restoring"
                 }
                 historySlot={
-                  hasUserData && userStoryData ? (
+                  isOwnData(dataSource) && userStoryData ? (
                     <StrengthStorySummary
                       storyData={userStoryData}
                       chartPercentiles={chartPercentiles}

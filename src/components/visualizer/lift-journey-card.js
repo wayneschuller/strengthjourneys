@@ -224,7 +224,7 @@ export function LiftJourneyCard({
     topTonnageByType,
     topTonnageByTypeLast12Months,
     isLoading,
-    isDemoMode,
+    dataSource,
   } = useUserLiftingData();
   const { isMetric, bodyWeight, bodyWeightIsDefault } = useAthleteBio();
   const { getColor } = useLiftColors();
@@ -390,7 +390,7 @@ export function LiftJourneyCard({
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {isDemoMode && <DemoModeBadge size="sm" />}
+            {dataSource === "demo" && <DemoModeBadge size="sm" />}
             <h2 className="text-2xl leading-none font-semibold tracking-tight">
               My {liftType} Journey
             </h2>
@@ -476,7 +476,7 @@ export function LiftJourneyCard({
           </div>
         )}
 
-        {isDemoMode && (
+        {dataSource === "demo" && (
           <p className="mt-3 text-sm text-muted-foreground italic">
             This is sample data. Sign in with Google and connect your sheet to
             see your own numbers.

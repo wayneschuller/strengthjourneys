@@ -127,7 +127,7 @@ function SyncedMultiLiftTooltip({
  *   hovered ISO date string; used to sync with TheLatestSessionCard.
  */
 export function VisualizerShadcn({ setHighlightDate }) {
-  const { isDemoMode, parsedData, liftTypes } = useUserLiftingData();
+  const { dataSource, parsedData, liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const { isMetric, bodyWeight, bodyWeightIsDefault } = useAthleteBio();
@@ -140,7 +140,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     if (authStatus === "loading" || !liftTypes?.length) return;
 
     const localStorageKey = getSelectedLiftsKey(
-      isDemoMode,
+      dataSource,
       VISUALIZER_STORAGE_PREFIX,
     );
     let stored = null;
@@ -166,7 +166,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
 
     setSelectedLiftTypes(resolved);
-  }, [authStatus, isDemoMode, liftTypes]);
+  }, [authStatus, dataSource, liftTypes]);
 
   // Get reactive colors for all selected lift types
   const liftColors = {};
@@ -286,7 +286,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle className="flex flex-wrap items-center gap-2">
-            {isDemoMode && <DemoModeBadge />}
+            {dataSource === "demo" && <DemoModeBadge />}
             {selectedLiftTypes.length === 1 && selectedLiftTypes[0]} Estimated
             One Rep Maxes
           </CardTitle>

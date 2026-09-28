@@ -85,7 +85,7 @@ import {
  */
 export function TonnageChart({ setHighlightDate, liftType }) {
   const cardRef = useRef(null);
-  const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
+  const { parsedData, isLoading, dataSource } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -298,7 +298,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle className="flex flex-wrap items-center gap-2">
-            {isDemoMode && <DemoModeBadge />}
+            {dataSource === "demo" && <DemoModeBadge />}
             {liftType ? `${liftType} Tonnage` : "Total Tonnage"}
           </CardTitle>
           <CardDescription>

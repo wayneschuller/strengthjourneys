@@ -6,7 +6,7 @@ import {
   getTopLiftStats,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { formatDateToYmdLocal, getReadableDateString } from "@/lib/date-utils";
@@ -55,7 +55,7 @@ export function StandardsSlider({
   const containerRef = useRef(null);
   const {
     isLoading: isUserDataLoading,
-    hasUserData,
+    dataSource,
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
@@ -86,7 +86,7 @@ export function StandardsSlider({
 
   // --- Find the most recent session date for this lift type ---
   const latestSessionDate = useMemo(() => {
-    if (!hasUserData || !parsedData?.length) return null;
+    if (!isOwnData(dataSource) || !parsedData?.length) return null;
     let latest = null;
     for (const entry of parsedData) {
       if (
@@ -100,11 +100,11 @@ export function StandardsSlider({
       if (!latest || entry.date > latest) latest = entry.date;
     }
     return latest;
-  }, [hasUserData, parsedData, liftType]);
+  }, [dataSource, parsedData, liftType]);
 
   // --- Compute period-best E1RMs EXCLUDING the most recent session ---
   const periodBestNotches = useMemo(() => {
-    if (!hasUserData || !parsedData?.length || !e1rmFormula)
+    if (!isOwnData(dataSource) || !parsedData?.length || !e1rmFormula)
       return [];
 
     const now = new Date();
@@ -171,12 +171,12 @@ export function StandardsSlider({
     });
 
     return summaries;
-  }, [hasUserData, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
+  }, [dataSource, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
 
   // --- "Now" marker: best E1RM from the most recent session ---
   const nowNotch = useMemo(() => {
     if (
-      !hasUserData ||
+      !isOwnData(dataSource) ||
       !parsedData?.length ||
       !e1rmFormula ||
       !latestSessionDate
@@ -217,11 +217,11 @@ export function StandardsSlider({
     }
 
     return { ...bestOnLatest, shortLabel, isNewPR: false, matchesPR: false };
-  }, [hasUserData, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
+  }, [dataSource, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
 
   // Prevent initial render on standards-only scale, then jumping once
   // authenticated user data (PR/E1RM) hydrates and expands min/max bounds.
-  if (hasUserData && isUserDataLoading) {
+  if (isOwnData(dataSource) && isUserDataLoading) {
     return (
       <div className="bg-muted/30 h-[7.5rem] w-full animate-pulse rounded" />
     );
@@ -246,7 +246,7 @@ export function StandardsSlider({
   // Raw (native-unit) copies kept for dedup comparison against period notches
   let rawBestWeightTuple = null;
   let rawBestE1RMTuple = null;
-  if (hasUserData) {
+  if (isOwnData(dataSource)) {
     const topLifts = isYearly
       ? topLiftsByTypeAndRepsLast12Months?.[liftType]
       : topLiftsByTypeAndReps?.[liftType];
@@ -306,7 +306,7 @@ export function StandardsSlider({
       ).value
     : Infinity;
   const userMin =
-    hasUserData
+    isOwnData(dataSource)
       ? Math.min(
           athleteRankingWeight > 0 ? athleteRankingWeight : Infinity,
           periodMinE1RMDisplay,
@@ -374,7 +374,7 @@ export function StandardsSlider({
   }
 
   if (
-    hasUserData &&
+    isOwnData(dataSource) &&
     highestE1RM > 0 &&
     highestE1RM > athleteRankingWeight
   ) {
@@ -734,7 +734,7 @@ export function StandardsSlider({
           })}
         </TooltipProvider>
       </div>
-      {!hideRating && hasUserData && strengthRating && (
+      {!hideRating && isOwnData(dataSource) && strengthRating && (
         <div className="text-muted-foreground mt-2 flex items-center justify-between gap-4 text-sm font-medium">
           <span>
             My lifetime {liftType} level:{" "}

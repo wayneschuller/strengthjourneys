@@ -269,11 +269,11 @@ export function OnBoardingDashboard() {
 export function GettingStartedCard() {
   const { status: authStatus } = useSession();
 
-  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
+  const { sheetInfo, dataSource } = useUserLiftingData();
   const isConnected = !!sheetInfo?.ssid;
 
   if (authStatus === "authenticated" && isConnected) return null;
-  if (isReturningUserLoading) return null;
+  if (dataSource === "restoring") return null;
 
   return (
     <Card className="relative overflow-hidden border hover:ring-0">
@@ -421,9 +421,9 @@ export function GettingStartedCard() {
 export function GettingStartedCardCompact() {
   const { status: authStatus } = useSession();
 
-  const { sheetInfo, isReturningUserLoading } = useUserLiftingData();
+  const { sheetInfo, dataSource } = useUserLiftingData();
 
-  if (isReturningUserLoading) return null;
+  if (dataSource === "restoring") return null;
 
   return (
     <Card>
@@ -509,11 +509,11 @@ export function GettingStartedCardCompact() {
  */
 export const SignInInvite = () => {
   const { status: authStatus } = useSession();
-  const { isReturningUserLoading } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
 
   // FIXME: add in a check for ssid and prompt for file picker if needed.
   if (authStatus === "authenticated") return null;
-  if (isReturningUserLoading) return null;
+  if (dataSource === "restoring") return null;
 
   return (
     <div>
@@ -644,10 +644,10 @@ export function StartLiftingLogCard({ payoff }) {
  */
 export function DemoModeSignInCard() {
   const { status: authStatus } = useSession();
-  const { isReturningUserLoading } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
 
   if (authStatus === "authenticated") return null;
-  if (isReturningUserLoading) return null;
+  if (dataSource === "restoring") return null;
 
   return (
     <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">

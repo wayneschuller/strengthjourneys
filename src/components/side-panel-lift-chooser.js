@@ -107,7 +107,7 @@ const CheckboxLifts = ({
   setSelectedLiftTypes,
   storagePrefix,
 }) => {
-  const { isDemoMode, liftTypes } = useUserLiftingData();
+  const { dataSource, liftTypes } = useUserLiftingData();
 
   const handleCheckboxChange = (liftType) => {
     // Calculate updatedSelected first
@@ -128,7 +128,7 @@ const CheckboxLifts = ({
       .filter((liftType) => updatedSelected.includes(liftType));
 
     // Update localStorage
-    const localStorageKey = getSelectedLiftsKey(isDemoMode, storagePrefix);
+    const localStorageKey = getSelectedLiftsKey(dataSource, storagePrefix);
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
 
     // Set the state

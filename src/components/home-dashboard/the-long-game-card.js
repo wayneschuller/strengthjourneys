@@ -81,7 +81,7 @@ export function TheLongGameCard({
     isLoading,
     sheetInfo,
     streakLeaderboard,
-    isImportedData,
+    dataSource,
   } = useUserLiftingData();
   const [intervals, setIntervals] = useState(null);
   // The card opens top to bottom: the consistency rings run their wave, then the
@@ -157,7 +157,7 @@ export function TheLongGameCard({
   // person in the whole funnel to have years of history sitting in another app,
   // and until now this was the one stage where we never made the offer.
   const showImportMergeNudge =
-    !isSharing && !isImportedData && dashboardStage !== "established";
+    !isSharing && dataSource !== "import" && dashboardStage !== "established";
   const effectiveViewMode = useMemo(() => {
     if (dashboardStage === "starter_sample") return "daily";
     if (dashboardStage === "first_real_week") return "daily";

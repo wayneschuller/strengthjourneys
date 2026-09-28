@@ -46,7 +46,7 @@ function getLogHref(date) {
  * @param {string} [props.liftType] - Display name of the lift to chart; defaults to "Bench Press".
  */
 export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
-  const { parsedData, topLiftsByTypeAndReps, isValidating, isLoading, isDemoMode } =
+  const { parsedData, topLiftsByTypeAndReps, isValidating, isLoading, dataSource } =
     useUserLiftingData();
   const { isMetric, bodyWeight, bodyWeightIsDefault } = useAthleteBio();
   const { getColor } = useLiftColors();
@@ -164,7 +164,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="flex flex-wrap items-center gap-2">
-              {isDemoMode && <DemoModeBadge size="sm" />}
+              {dataSource === "demo" && <DemoModeBadge size="sm" />}
               {liftType} Strength Potential By Rep Range
             </CardTitle>
             <CardDescription className="space-y-1">

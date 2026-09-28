@@ -80,8 +80,8 @@ import {
  */
 export function NavBar() {
   const { status: authStatus } = useSession();
-  const { importProfile, isReadOnly, isImportedData } = useUserLiftingData();
-  const canOpenLog = !isReadOnly || isImportedData;
+  const { importProfile, dataSource } = useUserLiftingData();
+  const canOpenLog = dataSource === "sheet" || dataSource === "import";
   const hasImportRitual = Boolean(importProfile?.lastSourceId);
   const importHref = getRepeatImportHref(importProfile, "repeat-import-nav");
 
@@ -102,16 +102,16 @@ export function NavBar() {
                   className="mr-0 inline-flex h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:mr-2 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
                 >
                   <Link href="/log" prefetch={false}>
-                    {canOpenLog && !isImportedData ? (
+                    {canOpenLog && dataSource !== "import" ? (
                       <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                     ) : (
                       <NotebookText className="h-3.5 w-3.5" strokeWidth={2.5} />
                     )}
                     <span className="xl:hidden">
-                      {canOpenLog && !isImportedData ? "Log" : "Sessions"}
+                      {canOpenLog && dataSource !== "import" ? "Log" : "Sessions"}
                     </span>
                     <span className="hidden xl:inline">
-                      {canOpenLog && !isImportedData
+                      {canOpenLog && dataSource !== "import"
                         ? "Log Session"
                         : "Session Browser"}
                     </span>

@@ -78,7 +78,7 @@ if (typeof window !== "undefined") {
 
 /**
  * The single rule for where the app's data comes from. See dataSource in the provider.
- * @returns {"loading"|"demo"|"import"|"sheet"|"none"}
+ * @returns {"loading"|"restoring"|"demo"|"import"|"sheet"|"none"}
  */
 export function getDataSource({
   authStatus,
@@ -87,9 +87,18 @@ export function getDataSource({
   isReturningUserLoading,
 }) {
   if (isImportedData) return "import";
-  if (authStatus === "loading" || isReturningUserLoading) return "loading";
+  if (isReturningUserLoading) return "restoring";
+  if (authStatus === "loading") return "loading";
   if (authStatus === "unauthenticated") return "demo";
   return hasSheet ? "sheet" : "none";
+}
+
+/**
+ * True when the data on screen is the lifter's own: a linked sheet or an import.
+ * @param {string} dataSource
+ */
+export function isOwnData(dataSource) {
+  return dataSource === "sheet" || dataSource === "import";
 }
 
 // ---------------------------------------------------------------------------
@@ -165,11 +174,10 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context fetchFailed {boolean} - True after retries are exhausted (used by Layout for error toast).
  * @context apiError {{status, statusText, message}|null} - Structured error from the last failed fetch.
  * @context parseError {string|null} - Error message if sheet data failed to parse (sheet is auto-cleared).
- * @context dataSource {"loading"|"demo"|"import"|"sheet"|"none"} - Where the data on screen comes
- *   from. Prefer switching on this over combining authStatus, sheetInfo and the flags below.
- * @context isDemoMode {boolean} - dataSource === "demo": signed out, showing sample data.
- * @context hasUserData {boolean} - dataSource is "sheet" or "import".
- * @context isReadOnly {boolean} - dataSource is anything but "sheet".
+ * @context dataSource {"loading"|"restoring"|"demo"|"import"|"sheet"|"none"} - Where the data on
+ *   screen comes from. The one way to ask demo, import, sheet or nothing yet; switch on it rather
+ *   than combining authStatus and sheetInfo. "sheet" or "import" means the lifter's own data;
+ *   only "sheet" can be written to.
  * @context hasLinkedSheet {boolean} - Signed in with a sheet linked, even while an import is
  *   previewed on top of it. Import surfaces use it to offer merge vs create.
  * @context sheetParsedData {Array|null} - The linked sheet's rows, kept loaded under an import.
@@ -363,12 +371,13 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   // Where the data on screen comes from. This is the one answer to "demo,
   // import, sheet or nothing yet?", so components switch on it rather than
-  // combining authStatus, sheetInfo and the flags below themselves.
-  //   loading - auth is resolving, or a returning lifter's sheet is hydrating
-  //   demo    - signed out with no import: sample data
-  //   import  - an imported file is being previewed (signed in or out)
-  //   sheet   - signed in with a linked Google Sheet
-  //   none    - signed in with no sheet and no import: nudge them to start a log
+  // combining authStatus and sheetInfo themselves.
+  //   loading   - auth is resolving and no sheet was saved (also the server render)
+  //   restoring - a returning lifter's saved sheet is hydrating; hide onboarding
+  //   demo      - signed out with no import: sample data
+  //   import    - an imported file is being previewed (signed in or out)
+  //   sheet     - signed in with a linked Google Sheet
+  //   none      - signed in with no sheet and no import: nudge them to start a log
   const dataSource = getDataSource({
     authStatus,
     hasSheet: !!sheetInfo?.ssid,
@@ -376,13 +385,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     isReturningUserLoading,
   });
 
-  // Shorthands derived from dataSource, kept so they can never disagree.
-  const isDemoMode = dataSource === "demo";
-  // Real data from a sheet or an imported file. Use this for layout decisions
-  // (e.g. personal charts first vs editorial first).
-  const hasUserData = dataSource === "sheet" || dataSource === "import";
-  // Only a linked sheet can be written to. Use this to hide write-only UI.
-  const isReadOnly = dataSource !== "sheet";
   // The second axis: whether a sheet is linked, whatever is on screen. During
   // an import preview dataSource is "import" but the linked sheet keeps
   // loading in sheetParsedData, so the import can be merged into it.
@@ -540,7 +542,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       return;
     }
 
-    const result = getParsedDataWithFallback({ authStatus, data, isDemoMode });
+    const result = getParsedDataWithFallback({ authStatus, data, dataSource });
 
     if (result.parseError) {
       clearSheet();
@@ -548,7 +550,7 @@ export const UserLiftingDataProvider = ({ children }) => {
 
     setParsedData(result.parsedData);
     setParseError(result.parseError);
-  }, [data, isLoading, isError, error, authStatus, clearSheet, isDemoMode]);
+  }, [data, isLoading, isError, error, authStatus, clearSheet, dataSource]);
 
   // -----------------------------------------------------------------------------------------------
   // Effect B: Sync API metadata into sheetInfo when fresh data arrives
@@ -591,8 +593,8 @@ export const UserLiftingDataProvider = ({ children }) => {
   const activeParsedData = importedParsedData || parsedData;
 
   const dataQualityWarnings = useMemo(
-    () => getDateOutlierWarnings(activeParsedData, { isDemoMode }),
-    [activeParsedData, isDemoMode],
+    () => getDateOutlierWarnings(activeParsedData, { dataSource }),
+    [activeParsedData, dataSource],
   );
   const linkedSheetId = sheetInfo?.ssid;
 
@@ -702,17 +704,12 @@ export const UserLiftingDataProvider = ({ children }) => {
         fetchFailed,
         apiError,
         isValidating,
-        isDemoMode,
-        hasUserData,
-        isReadOnly,
-        isImportedData,
         importedFormatName,
         importedFormatId,
         importedFileName,
         importedDiagnostics,
         importProfile,
         rememberImportProfile,
-        isReturningUserLoading,
         parseError,
         liftTypes,
         parsedData: activeParsedData,
@@ -748,9 +745,9 @@ export const UserLiftingDataProvider = ({ children }) => {
  * On parse error: returns parseError string (caller handles clearing sheet).
  * Uses demo data only when unauthenticated.
  * When authenticated without usable sheet data, returns empty data so UI can nudge the lifter to start a log.
- * Returns { parsedData, isDemoMode, parseError }.
+ * Returns { parsedData, parseError }.
  */
-function getParsedDataWithFallback({ authStatus, data, isDemoMode }) {
+function getParsedDataWithFallback({ authStatus, data, dataSource }) {
   let parsedData = null; // A local version for this scope only
   let parseError = null;
 
@@ -774,7 +771,7 @@ function getParsedDataWithFallback({ authStatus, data, isDemoMode }) {
     }
   }
 
-  const shouldUseDemoData = isDemoMode;
+  const shouldUseDemoData = dataSource === "demo";
 
   if (shouldUseDemoData) {
     parsedData = getDemoParsedData();

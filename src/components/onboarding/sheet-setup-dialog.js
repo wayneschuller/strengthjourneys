@@ -311,7 +311,7 @@ export function SheetSetupDialog() {
     apiError,
     importFile,
     clearImportedData,
-    isImportedData,
+    dataSource,
     importedFileName,
     importedFormatId,
     importedFormatName,
@@ -703,7 +703,7 @@ export function SheetSetupDialog() {
           modifiedByMeTime: payload.modifiedByMeTime ?? null,
         };
 
-        if (isImportedData) {
+        if (dataSource === "import") {
           clearImportedData();
         }
         if (
@@ -754,7 +754,7 @@ export function SheetSetupDialog() {
       resetUiState,
       router,
       clearImportedData,
-      isImportedData,
+      dataSource,
       selectSheet,
       sheetInfo?.ssid,
       showCandidateChooser,
@@ -1401,7 +1401,7 @@ export function SheetSetupDialog() {
     if (sheetInfo?.ssid) return;
     if (isSetupDismissed) return;
     if (readPendingSheetAction()?.type) return;
-    if (isImportedData) return; // Suppress auto-open when user has imported data — banner handles it
+    if (dataSource === "import") return; // Suppress auto-open when user has imported data — banner handles it
     if (provisioningStartedRef.current) return;
 
     provisioningStartedRef.current = true;
@@ -1409,7 +1409,7 @@ export function SheetSetupDialog() {
     void resolveSheetFlow({ intent: "bootstrap", hadLocalBefore: false });
   }, [
     authStatus,
-    isImportedData,
+    dataSource,
     isSetupDismissed,
     resolveSheetFlow,
     sheetInfo?.ssid,
@@ -1432,7 +1432,7 @@ export function SheetSetupDialog() {
     outcomeReportedRef.current = false;
 
     if (pendingAction.type === PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT) {
-      if (!isImportedData) return;
+      if (dataSource !== "import") return;
       void handleCreateSheetFromImportedPreview({ resumeAfterReauth: true });
       return;
     }
@@ -1446,7 +1446,7 @@ export function SheetSetupDialog() {
   }, [
     authStatus,
     handleCreateSheetFromImportedPreview,
-    isImportedData,
+    dataSource,
     isProvisionActionLoading,
     open,
     resolveSheetFlow,
@@ -1466,7 +1466,7 @@ export function SheetSetupDialog() {
 
       if (
         requestedAction === PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT &&
-        isImportedData
+        dataSource === "import"
       ) {
         void handleCreateSheetFromImportedPreview();
         return;
@@ -1485,7 +1485,7 @@ export function SheetSetupDialog() {
   }, [
     authStatus,
     handleCreateSheetFromImportedPreview,
-    isImportedData,
+    dataSource,
     resolveSheetFlow,
     sheetInfo?.ssid,
   ]);
@@ -1625,7 +1625,7 @@ export function SheetSetupDialog() {
                       currentSsid={sheetInfo?.ssid || null}
                       currentSheetInfo={sheetInfo}
                       recommendedId={recommendedCandidateId}
-                      showImportedPreviewWarning={isImportedData}
+                      showImportedPreviewWarning={dataSource === "import"}
                       importedPreviewEntryCount={
                         parsedData?.filter((entry) => !entry.isGoal)?.length ||
                         0
@@ -1637,7 +1637,7 @@ export function SheetSetupDialog() {
                       isEnriching={isCandidateEnrichmentLoading}
                       statusMessage={sheetDiscoveryStatusMessage}
                       onMergeImportedPreview={
-                        isImportedData && sheetInfo?.ssid
+                        dataSource === "import" && sheetInfo?.ssid
                           ? handleMergeImportedIntoCurrentSheet
                           : null
                       }

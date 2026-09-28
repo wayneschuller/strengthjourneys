@@ -66,7 +66,7 @@ export function TheMonthInIronCard({
   dataMaturityStage: stageFromParent = null,
   sessionCount: sessionCountFromParent = null,
 }) {
-  const { isDemoMode, parsedData, sheetInfo } = useUserLiftingData();
+  const { dataSource, parsedData, sheetInfo } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
@@ -226,7 +226,7 @@ export function TheMonthInIronCard({
     boundaries.daysRemainingInCurrentMonth <= 7;
   const isPastMonthWin = !!boundaries && !boundaries.isCurrentMonthView;
   const showCoffeeNudge =
-    !isDemoMode &&
+    dataSource !== "demo" &&
     hasComparisonMonth &&
     verdictHeadline?.tone === "win" &&
     highlightsComplete &&
@@ -374,7 +374,7 @@ export function TheMonthInIronCard({
   if (dataMaturityStage !== "mature") {
     return (
       <EarlyMonthMomentumCard
-        isDemoMode={isDemoMode}
+        dataSource={dataSource}
         parsedData={parsedData}
         dashboardStage={dashboardStage}
         dataMaturityStage={dataMaturityStage}
@@ -390,7 +390,7 @@ export function TheMonthInIronCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <CardTitle className="flex flex-wrap items-center gap-2">
-              {isDemoMode && <DemoModeBadge />}
+              {dataSource === "demo" && <DemoModeBadge />}
               {monthCardTitle}
             </CardTitle>
             <CardDescription>{motivationalPhrase}</CardDescription>
@@ -560,7 +560,7 @@ export function TheMonthInIronCard({
 }
 
 function EarlyMonthMomentumCard({
-  isDemoMode,
+  dataSource,
   parsedData,
   dashboardStage,
   dataMaturityStage,
@@ -647,7 +647,7 @@ function EarlyMonthMomentumCard({
     <Card className="flex h-full flex-1 flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="flex flex-wrap items-center gap-2">
-          {isDemoMode && <DemoModeBadge />}
+          {dataSource === "demo" && <DemoModeBadge />}
           {title}
         </CardTitle>
         <CardDescription>{subtitle}</CardDescription>

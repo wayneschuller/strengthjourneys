@@ -76,8 +76,7 @@ export function Layout({ children }) {
   const {
     fetchFailed,
     apiError,
-    isDemoMode,
-    isImportedData,
+    dataSource,
     importedFormatName,
     importedFormatId,
     clearImportedData,
@@ -227,7 +226,7 @@ export function Layout({ children }) {
   useEffect(() => {
     if (demoShown.current) return;
     if (authStatus === "loading") return;
-    if (!isDemoMode || authStatus !== "unauthenticated") return;
+    if (dataSource !== "demo" || authStatus !== "unauthenticated") return;
 
     if (!PERSONALIZED_DATA_CTA_PATHS.includes(router.pathname)) return;
 
@@ -257,7 +256,7 @@ export function Layout({ children }) {
     return () => clearTimeout(timeoutId);
   }, [
     authStatus,
-    isDemoMode,
+    dataSource,
     missingDemoLiftName,
     router.asPath,
     router.pathname,
@@ -270,7 +269,7 @@ export function Layout({ children }) {
 
       <div className="relative z-10">
         <NavBar />
-        {isImportedData ? (
+        {dataSource === "import" ? (
           <ImportedDataBanner
             formatId={importedFormatId}
             formatName={importedFormatName}
@@ -288,7 +287,7 @@ export function Layout({ children }) {
           onFix={fixDataQualityWarning}
         />
         {router.pathname === "/" && <HomeImportMergeNudge />}
-        <ThemeRewardUnlockBanner suppress={isImportedData} />
+        <ThemeRewardUnlockBanner suppress={dataSource === "import"} />
         <SheetSetupDialog />
         <main
           className={cn(

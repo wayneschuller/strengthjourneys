@@ -89,7 +89,7 @@ import {
  */
 export function VisualizerMini({ liftType }) {
   const cardRef = useRef(null);
-  const { parsedData, isDemoMode, isLoading } = useUserLiftingData();
+  const { parsedData, dataSource, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -301,7 +301,7 @@ export function VisualizerMini({ liftType }) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle className="flex flex-wrap items-center gap-2">
-            {isDemoMode && <DemoModeBadge />}
+            {dataSource === "demo" && <DemoModeBadge />}
             {liftType} Estimated One Rep Maxes
           </CardTitle>
           <CardDescription>

@@ -22,7 +22,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
@@ -80,7 +80,7 @@ export function SingleLiftStrengthCirclesSection({
   compactClassName = "",
 }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
-  const { parsedData, hasUserData, isDemoMode } = useUserLiftingData();
+  const { parsedData, dataSource } = useUserLiftingData();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
@@ -90,7 +90,7 @@ export function SingleLiftStrengthCirclesSection({
 
   const percentileKey = LIFT_TYPE_TO_PERCENTILE_KEY[liftType];
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
-  const showTimelinePanel = showTimeline && hasUserData;
+  const showTimelinePanel = showTimeline && isOwnData(dataSource);
 
   // Progressive reveal: always show only the outer ring (General Population) until
   // thresholds are crossed (66th percentile). This creates better focus for all users.
@@ -99,7 +99,7 @@ export function SingleLiftStrengthCirclesSection({
 
   const bestE1rmKg = useMemo(() => {
     if (e1rmKgOverride > 0) return e1rmKgOverride;
-    if (!hasUserData || isDemoMode || !parsedData?.length || !liftType) {
+    if (!isOwnData(dataSource) || !parsedData?.length || !liftType) {
       // Fall back to sensible defaults so anonymous/demo visitors see the circles
       return DEFAULT_E1RM_KG[liftType] ?? 0;
     }
@@ -127,7 +127,7 @@ export function SingleLiftStrengthCirclesSection({
     }
 
     return best;
-  }, [e1rmFormula, e1rmKgOverride, hasUserData, isDemoMode, liftType, parsedData]);
+  }, [e1rmFormula, e1rmKgOverride, dataSource, liftType, parsedData]);
 
   const currentPercentiles = useMemo(() => {
     if (
@@ -152,8 +152,7 @@ export function SingleLiftStrengthCirclesSection({
 
   const percentileTimeline = useMemo(() => {
     if (
-      !hasUserData ||
-      isDemoMode ||
+      !isOwnData(dataSource) ||
       !parsedData?.length ||
       !liftType ||
       !percentileKey ||
@@ -264,8 +263,7 @@ export function SingleLiftStrengthCirclesSection({
     age,
     bodyWeight,
     e1rmFormula,
-    hasUserData,
-    isDemoMode,
+    dataSource,
     isMetric,
     liftType,
     parsedData,

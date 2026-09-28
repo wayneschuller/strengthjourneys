@@ -189,17 +189,18 @@ export const getSheetScopedStorageKey = (baseKey, ssid) => {
 /**
  * Returns the appropriate selected lifts key based on auth status and optional prefix.
  * Use a prefix when the lift selector is scoped to a specific component (e.g. "visualizer").
- * @param {boolean} isDemoMode - Whether user is in demo mode (unauthenticated)
+ * @param {string} dataSource - From useUserLiftingData; "demo" keeps its own selection
  * @param {string|null} [prefix] - Optional prefix for component-scoped keys (e.g. "visualizer" → "visualizer_selectedLifts")
  * @returns {string}
  */
-export const getSelectedLiftsKey = (isDemoMode, prefix = null) => {
+export const getSelectedLiftsKey = (dataSource, prefix = null) => {
+  const isDemoMode = dataSource === "demo";
   if (prefix) {
-    return isDemoMode
+    return dataSource === "demo"
       ? `${prefix}_selectedLifts_demo`
       : `${prefix}_selectedLifts`;
   }
-  return isDemoMode
+  return dataSource === "demo"
     ? LOCAL_STORAGE_KEYS.SELECTED_LIFTS_DEMO
     : LOCAL_STORAGE_KEYS.SELECTED_LIFTS;
 };

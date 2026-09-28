@@ -471,7 +471,7 @@ function StrengthClubMain({ relatedArticles }) {
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
-  const { topLiftsByTypeAndReps, parsedData, isDemoMode } = useUserLiftingData();
+  const { topLiftsByTypeAndReps, parsedData, dataSource } = useUserLiftingData();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
     initializeWithValue: false,
   });
@@ -565,7 +565,7 @@ function StrengthClubMain({ relatedArticles }) {
     hasInteracted,
   });
   const prData = useMemo(() => {
-    if (!topLiftsByTypeAndReps || isDemoMode) return null;
+    if (!topLiftsByTypeAndReps || dataSource === "demo") return null;
 
     const weights = {};
     const sources = {};
@@ -594,7 +594,7 @@ function StrengthClubMain({ relatedArticles }) {
     return Object.values(weights).some((value) => value != null)
       ? { weights, sources }
       : null;
-  }, [e1rmFormula, isDemoMode, topLiftsByTypeAndReps]);
+  }, [e1rmFormula, dataSource, topLiftsByTypeAndReps]);
   const prWeightsLb = prData?.weights ?? null;
   const prSources = prData?.sources ?? null;
   const usingUserData = Boolean(prWeightsLb);
@@ -616,7 +616,7 @@ function StrengthClubMain({ relatedArticles }) {
   }, [prWeightsLb, setters]);
 
   const recent90dData = useMemo(() => {
-    if (!prWeightsLb || !parsedData?.length || isDemoMode) return null;
+    if (!prWeightsLb || !parsedData?.length || dataSource === "demo") return null;
 
     const liftKeyByType = Object.fromEntries(
       MILESTONES.map((milestone) => [milestone.liftType, milestone.key]),
@@ -675,7 +675,7 @@ function StrengthClubMain({ relatedArticles }) {
     );
 
     return hasDistinct ? { weights, sources } : null;
-  }, [e1rmFormula, isDemoMode, parsedData, prWeightsLb, recent90dCutoffDate]);
+  }, [e1rmFormula, dataSource, parsedData, prWeightsLb, recent90dCutoffDate]);
   const recent90dLb = recent90dData?.weights ?? null;
   const recent90dSources = recent90dData?.sources ?? null;
 

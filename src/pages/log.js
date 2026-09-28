@@ -172,9 +172,7 @@ export default function LogSessionPage({
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
-    isDemoMode,
-    isImportedData,
-    hasUserData,
+    dataSource,
   } = useUserLiftingData();
   const { isMetric, sex, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
@@ -187,7 +185,7 @@ export default function LogSessionPage({
       return null;
     }
   }, [isClient]);
-  const hasLinkedSheet = hasUserData && !isImportedData;
+  const hasLinkedSheet = dataSource === "sheet";
 
   // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
   const todayIso = useMemo(() => {
@@ -276,7 +274,7 @@ export default function LogSessionPage({
   useEffect(() => {
     if (hasAutoNavigatedRef.current) return;
     // Auto-navigate for imported data or demo mode when today has no session
-    if (!isImportedData && !isDemoMode) return;
+    if (dataSource !== "import" && dataSource !== "demo") return;
     if (sessionDates.length === 0) return;
     if (router.query.date) return;
     if (sessionDates.includes(sessionDate)) return;
@@ -286,8 +284,7 @@ export default function LogSessionPage({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- preview/demo mode redirects from an empty today to real imported data
     navigateToDate(latestDate);
   }, [
-    isImportedData,
-    isDemoMode,
+    dataSource,
     sessionDates,
     sessionDate,
     navigateToDate,
@@ -597,7 +594,7 @@ export default function LogSessionPage({
 
   // Heads the read-only lift gallery that preview visitors browse.
   const previewLogCta = (
-    <PreviewLogCta isDemoMode={isDemoMode} isImportedData={isImportedData} />
+    <PreviewLogCta dataSource={dataSource} />
   );
 
   const addLiftControl = previewMode ? (

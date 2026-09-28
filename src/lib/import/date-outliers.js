@@ -12,7 +12,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export function getDateOutlierWarnings(parsedData, options = {}) {
   if (!Array.isArray(parsedData) || parsedData.length < 3) return [];
-  if (options.isDemoMode) return [];
+  if (options.dataSource === "demo") return [];
 
   const sections = getContiguousDateSections(parsedData);
   if (sections.length < 3) return [];

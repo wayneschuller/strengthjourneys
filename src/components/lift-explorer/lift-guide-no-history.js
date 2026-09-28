@@ -61,13 +61,13 @@ const SIGNED_IN_NO_SHEET_DESCRIPTION =
  */
 export function LiftGuideNoHistory({ liftType }) {
   const { status: authStatus } = useSession();
-  const { hasUserData, isImportedData, isLoading, isReturningUserLoading } =
+  const { dataSource, isLoading} =
     useUserLiftingData();
 
-  if (authStatus === "loading" || isReturningUserLoading) return null;
+  if (authStatus === "loading" || dataSource === "restoring") return null;
 
   // Linked sheet, no sets of this lift: invite the first one.
-  if (hasUserData && !isImportedData) {
+  if (dataSource === "sheet") {
     if (isLoading) return null;
     return <LiftLogCta liftType={liftType} />;
   }

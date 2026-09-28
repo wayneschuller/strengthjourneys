@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { cn } from "@/lib/utils";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 
@@ -31,13 +31,11 @@ export function LiftingDataCard({
   setSelectedOptions,
   embedded = false,
 }) {
-  const { parsedData, isLoading, hasUserData, dataSource } =
+  const { parsedData, isLoading, dataSource } =
     useUserLiftingData();
 
-  const isUnauthenticated = dataSource === "demo";
-  const needsLiftingLog = dataSource === "none";
   const hasPersonalData =
-    hasUserData && parsedData && parsedData.length > 0;
+    isOwnData(dataSource) && parsedData && parsedData.length > 0;
   const isTrainingEnabled = Boolean(
     selectedOptions.records ||
       selectedOptions.trainingLoad ||
@@ -102,17 +100,17 @@ export function LiftingDataCard({
         </div>
       )}
       <CardDescription className={cn("mb-5", !embedded && "hidden")}>
-        {!hasPersonalData && hasUserData && isLoading &&
+        {!hasPersonalData && isOwnData(dataSource) && isLoading &&
           "Loading your data..."}
-        {!hasPersonalData && hasUserData && !isLoading &&
+        {!hasPersonalData && isOwnData(dataSource) && !isLoading &&
           "No lifting data found"}
-        {!hasUserData && isUnauthenticated &&
+        {dataSource === "demo" &&
           "Sign in to share your lifting data with the AI"}
-        {!hasUserData && needsLiftingLog &&
+        {dataSource === "none" &&
           "Set up your Google Sheet to get started"}
       </CardDescription>
       {/* State 1: Unauthenticated (and no CSV import) - prompt to sign in */}
-      {!hasUserData && isUnauthenticated && (
+      {dataSource === "demo" && (
         <div className="flex flex-col items-start gap-3">
           <p className="text-muted-foreground max-w-sm text-pretty text-sm">
             Sign in with Google to connect your lifting spreadsheet and share
@@ -125,7 +123,7 @@ export function LiftingDataCard({
       )}
 
       {/* State 2: Authenticated but no sheet connected */}
-      {!hasUserData && needsLiftingLog && (
+      {dataSource === "none" && (
         <div className="flex flex-col items-start gap-3">
           <p className="text-muted-foreground max-w-sm text-pretty text-sm">
             Set up your Google Sheet to share your personal lifting data with
@@ -150,7 +148,7 @@ export function LiftingDataCard({
       )}
 
       {/* State 3: User has data (GSheet or CSV import) - show sharing checkboxes */}
-      {hasUserData && (!embedded || isTrainingEnabled) && (
+      {isOwnData(dataSource) && (!embedded || isTrainingEnabled) && (
         <div className={cn(!hasPersonalData && "pointer-events-none opacity-50")}>
           {embedded ? (
             <div className="space-y-3 md:border-l md:pl-8">
@@ -284,11 +282,11 @@ export function LiftingDataCard({
         <CardTitle>Talk To Your Lifting Data</CardTitle>
         <CardDescription>
           {hasPersonalData && "Data successfully loaded and available."}
-          {!hasPersonalData && hasUserData && isLoading && "Loading your data..."}
-          {!hasPersonalData && hasUserData && !isLoading &&
+          {!hasPersonalData && isOwnData(dataSource) && isLoading && "Loading your data..."}
+          {!hasPersonalData && isOwnData(dataSource) && !isLoading &&
             "No lifting data found"}
-          {!hasUserData && isUnauthenticated && "Sign in to share your lifting data with the AI"}
-          {!hasUserData && needsLiftingLog &&
+          {dataSource === "demo" && "Sign in to share your lifting data with the AI"}
+          {dataSource === "none" &&
             "Set up your Google Sheet to get started"}
         </CardDescription>
       </CardHeader>

@@ -198,9 +198,9 @@ export function buildWeeklyTrainingActivityByYear(
   parsedData,
   startYear,
   endYear,
-  isDemoMode,
+  dataSource,
 ) {
-  if (isDemoMode) {
+  if (dataSource === "demo") {
     const result = {};
     for (let year = startYear; year <= endYear; year++) {
       result[year] = {};
@@ -256,9 +256,9 @@ export function buildMonthlyTrainingActivityByYear(
   parsedData,
   startYear,
   endYear,
-  isDemoMode,
+  dataSource,
 ) {
-  if (isDemoMode) {
+  if (dataSource === "demo") {
     const result = {};
     for (let year = startYear; year <= endYear; year++) {
       result[year] = {};
@@ -366,10 +366,10 @@ export function buildDailyTrainingHeatmapDays(
   parsedData,
   startDate,
   endDate,
-  isDemoMode,
+  dataSource,
 ) {
   // Generate a full interval of random data for demo mode because it looks good
-  if (isDemoMode) {
+  if (dataSource === "demo") {
     const demoHeatmapData = [];
     const start = parseTrainingDateAsLocalDate(startDate).getTime();
     const end = parseTrainingDateAsLocalDate(endDate).getTime();

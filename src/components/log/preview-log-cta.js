@@ -13,11 +13,11 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/sheet/pending-sheet-action";
 
-export function PreviewLogCta({ isDemoMode = false, isImportedData = false }) {
+export function PreviewLogCta({ dataSource }) {
   const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === "authenticated";
 
-  const message = isImportedData
+  const message = dataSource === "import"
     ? isAuthenticated
       ? "Save your imported history to a Google Sheet and one tap on any of these lifts starts a new set."
       : "Sign in with Google to save your imported history, and one tap on any of these lifts starts a new set."
@@ -28,7 +28,7 @@ export function PreviewLogCta({ isDemoMode = false, isImportedData = false }) {
   return (
     <div className="border-primary/25 bg-primary/5 flex flex-col items-start gap-3 rounded-xl border border-dashed px-4 py-3 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
-        {isDemoMode && <DemoModeBadge size="sm" />}
+        {dataSource === "demo" && <DemoModeBadge size="sm" />}
         <p className="text-muted-foreground text-sm">{message}</p>
       </div>
       {isAuthenticated ? (
@@ -37,7 +37,7 @@ export function PreviewLogCta({ isDemoMode = false, isImportedData = false }) {
           className="shrink-0 gap-2"
           onClick={() => {
             openSheetSetupDialog("bootstrap", {
-              action: isImportedData
+              action: dataSource === "import"
                 ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
                 : null,
             });
@@ -51,7 +51,7 @@ export function PreviewLogCta({ isDemoMode = false, isImportedData = false }) {
             className="h-4 w-4"
             aria-hidden
           />
-          {isImportedData
+          {dataSource === "import"
             ? "Save imported data to my sheet"
             : "Set up sheet to enable logging"}
         </Button>
@@ -62,7 +62,7 @@ export function PreviewLogCta({ isDemoMode = false, isImportedData = false }) {
           callbackUrl="/log"
           className="shrink-0"
         >
-          {isImportedData ? "Sign in to save imported data" : "Sign in to start logging"}
+          {dataSource === "import" ? "Sign in to save imported data" : "Sign in to start logging"}
         </GoogleSignInButton>
       )}
     </div>

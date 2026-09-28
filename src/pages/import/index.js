@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
 import Image from "next/image";
 import Link from "next/link";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { ImportWorkflowSection } from "@/components/onboarding/import-workflow-section";
 import { ImporterFeedbackCard } from "@/components/feedback";
@@ -490,11 +490,8 @@ export default function ImportPage() {
     sheetInfo,
     mutate,
     parsedData,
-    isReturningUserLoading,
-    isImportedData,
-    hasUserData,
+    dataSource,
     importProfile,
-    isReadOnly,
   } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
@@ -601,11 +598,11 @@ export default function ImportPage() {
 
   // The whole page renders on the server, since almost none of it depends on
   // who is signed in. The session and stored sheet are unknown until after
-  // mount, so the first render is the first-visit page. isReturningUserLoading
+  // mount, so the first render is the first-visit page. dataSource "restoring"
   // flips before paint for someone with a stored sheet, so the first-visit
   // heading and benefits row never flash for them.
   const showReturningCopy =
-    hasUserData || importProfile?.lastSourceId || isReturningUserLoading;
+    isOwnData(dataSource) || importProfile?.lastSourceId || dataSource === "restoring";
 
   return (
     <>
@@ -618,7 +615,7 @@ export default function ImportPage() {
               : "Your Lifting Data is Trapped. Let's Fix That."}
           </PageHeaderHeading>
           <PageHeaderDescription>
-            {hasUserData || isReturningUserLoading ? (
+            {isOwnData(dataSource) || dataSource === "restoring" ? (
               <>
                 Choose a newer workout export and preview the changes before
                 merging them into the Google Sheet you already own.
@@ -640,12 +637,12 @@ export default function ImportPage() {
               </>
             )}
             {authStatus !== "authenticated" &&
-              !isReturningUserLoading &&
+              dataSource !== "restoring" &&
               " No account required."}
           </PageHeaderDescription>
         </PageHeader>
 
-        {isAuthenticated && sheetInfo?.url && !isImportedData && (
+        {isAuthenticated && sheetInfo?.url && dataSource !== "import" && (
           <div className="border-primary/20 bg-primary/[0.03] mx-auto mb-8 flex max-w-5xl flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border px-4 py-3 text-sm">
             <FileSpreadsheet
               className="h-[22px] w-[22px] shrink-0 text-green-600"
@@ -666,7 +663,7 @@ export default function ImportPage() {
         )}
 
         {/* Value proposition - show what they'll get before asking for a file */}
-        {!showReturningCopy && !isImportedData && <BenefitsRow />}
+        {!showReturningCopy && dataSource !== "import" && <BenefitsRow />}
 
         {/* File Import Section - always visible, no auth required */}
         <ImportWorkflowSection hideTitle />
@@ -680,17 +677,17 @@ export default function ImportPage() {
         </p>
 
         {/* Keep supported-app guidance visible beside the primary import path. */}
-        {!isImportedData && <ImportSeoLinksSection />}
+        {dataSource !== "import" && <ImportSeoLinksSection />}
 
         {/* Ask about importer quality only after the user has tried a file. */}
-        {isImportedData && (
+        {dataSource === "import" && (
           <section className="mx-auto mb-12 max-w-5xl">
             <ImporterFeedbackCard />
           </section>
         )}
 
         {/* Quick Add Section - only for users with write access (GSheet mode) */}
-        {!isReadOnly && !isImportedData && (
+        {dataSource === "sheet" && (
           <section className="border-primary/15 bg-primary/[0.025] mx-auto mb-12 max-w-5xl space-y-4 rounded-xl border p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -753,7 +750,7 @@ export default function ImportPage() {
         )}
 
         {/* Export Section */}
-        {isAuthenticated && hasUserData && !isImportedData && (
+        {isAuthenticated && dataSource === "sheet" && (
           <section className="mx-auto mb-16 max-w-5xl">
             <div className="mb-4">
               <h2 className="text-lg font-semibold">

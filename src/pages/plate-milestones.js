@@ -768,7 +768,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   const { toast } = useToast();
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
-  const { topLiftsByTypeAndReps, parsedData, isDemoMode, dataSource } =
+  const { topLiftsByTypeAndReps, parsedData, dataSource } =
     useUserLiftingData();
   const { isMetric } = useAthleteBio();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
@@ -875,7 +875,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
   // PR weights from user data (converted to lb)
   const prWeightsLb = useMemo(() => {
-    if (!topLiftsByTypeAndReps || isDemoMode) return null;
+    if (!topLiftsByTypeAndReps || dataSource === "demo") return null;
 
     const nextPrWeights = {};
     for (const milestone of MILESTONES) {
@@ -893,7 +893,7 @@ function PlateMilestonesMain({ relatedArticles }) {
     return Object.values(nextPrWeights).some((value) => value != null)
       ? nextPrWeights
       : null;
-  }, [e1rmFormula, isDemoMode, topLiftsByTypeAndReps]);
+  }, [e1rmFormula, dataSource, topLiftsByTypeAndReps]);
   const usingUserData = Boolean(prWeightsLb);
 
   // Auto-populate effect is defined further down once `actualBestByLift` is in
@@ -904,7 +904,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   // most-recent-session E1RM, 6-month E1RM delta, and first/last sets crossing each tier.
   // All weights normalized to lb (display layer converts).
   const liftStats = useMemo(() => {
-    if (!parsedData?.length || isDemoMode || !usingUserData) return null;
+    if (!parsedData?.length || dataSource === "demo" || !usingUserData) return null;
 
     const now = new Date();
     const ymd = (date) => date.toISOString().slice(0, 10);
@@ -1062,7 +1062,7 @@ function PlateMilestonesMain({ relatedArticles }) {
     }
 
     return Object.keys(result).length > 0 ? result : null;
-  }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
+  }, [parsedData, dataSource, usingUserData, e1rmFormula]);
 
   // 6-month bests in lb (for snap targets + reset button)
   const recent6mLb = useMemo(() => {
@@ -1164,7 +1164,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
   // Rolling 90-day best E1RM timeline per lift (same approach as 1000lb page)
   const liftTimelines = useMemo(() => {
-    if (!parsedData?.length || isDemoMode || !usingUserData) return null;
+    if (!parsedData?.length || dataSource === "demo" || !usingUserData) return null;
 
     const WINDOW_DAYS = 90;
     const timelines = {};
@@ -1241,7 +1241,7 @@ function PlateMilestonesMain({ relatedArticles }) {
     }
 
     return Object.keys(timelines).length > 0 ? timelines : null;
-  }, [parsedData, isDemoMode, usingUserData, e1rmFormula]);
+  }, [parsedData, dataSource, usingUserData, e1rmFormula]);
 
   // Unified 5-slot notch system: NOW, 1M, 6M, 1Y, BEST. Both modes share the
   // same temporal slots; the toggle picks which underlying values fill them.

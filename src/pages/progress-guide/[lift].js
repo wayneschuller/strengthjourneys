@@ -27,7 +27,7 @@ import {
   getTopLiftStats,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getRelatedArticles } from "@/lib/articles";
@@ -232,7 +232,7 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
  * long page reads as chapters rather than one flat column of cards.
  */
 function CuratedLiftGuideMain({ page, relatedArticles }) {
-  const { hasUserData, liftTypes } = useUserLiftingData();
+  const { dataSource, liftTypes } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const { liftType, coaching, videos, introduction, resources, quote, faqItems } =
     page;
@@ -332,7 +332,7 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
     </>
   ) : null;
 
-  const lifterFirst = hasUserData && hasLiftData;
+  const lifterFirst = isOwnData(dataSource) && hasLiftData;
 
   return (
     <PageContainer>
@@ -665,9 +665,9 @@ function TechniqueCard({ liftType, coaching }) {
  * @param {string} props.liftType - The lift type to display PRs for (e.g. "Back Squat").
  */
 function MyLiftTypePRsCard({ liftType }) {
-  const { hasUserData } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
 
-  if (!hasUserData) return null;
+  if (!isOwnData(dataSource)) return null;
 
   // FIXME: add a skeleton loader
 
@@ -761,11 +761,11 @@ function ResourcesCard({ resources, className }) {
  */
 function StrengthLevelsCard({ liftType, strengthLevelsPath }) {
   const { standards, isMetric, age, bodyWeight, sex } = useAthleteBio();
-  const { topLiftsByTypeAndReps, hasUserData } = useUserLiftingData();
+  const { topLiftsByTypeAndReps, dataSource } = useUserLiftingData();
 
   let strengthRating = null;
   let isBeyondElite = false;
-  if (hasUserData) {
+  if (isOwnData(dataSource)) {
     const topLifts = topLiftsByTypeAndReps?.[liftType];
     const bioForDateRating =
       age && bodyWeight != null && sex != null

@@ -76,7 +76,7 @@ export function MostRecentSessionCard({
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
-    isDemoMode,
+    dataSource,
   } = useUserLiftingData();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
@@ -256,7 +256,7 @@ export function MostRecentSessionCard({
           <CardHeader className="pb-1.5">
             <div className="flex items-start justify-between gap-4">
               <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
-                {isDemoMode && <DemoModeBadge size="sm" />}
+                {dataSource === "demo" && <DemoModeBadge size="sm" />}
                 {titlePrefix}
               </CardTitle>
               <AiReviewActions
@@ -349,7 +349,7 @@ export function MostRecentSessionCard({
       <Card className="rounded-xl border">
         <CardHeader className="pb-2">
           <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
-            {isDemoMode && <DemoModeBadge size="sm" />}
+            {dataSource === "demo" && <DemoModeBadge size="sm" />}
             {titlePrefix}
           </CardTitle>
         </CardHeader>
@@ -370,7 +370,7 @@ export function MostRecentSessionCard({
       <Card className="rounded-xl border">
         <CardHeader className="pb-2">
           <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
-            {isDemoMode && <DemoModeBadge size="sm" />}
+            {dataSource === "demo" && <DemoModeBadge size="sm" />}
             {titlePrefix}
           </CardTitle>
         </CardHeader>
@@ -392,7 +392,7 @@ export function MostRecentSessionCard({
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2 text-lg leading-tight">
-                {isDemoMode && <DemoModeBadge size="sm" />}
+                {dataSource === "demo" && <DemoModeBadge size="sm" />}
                 {titlePrefix} — {getReadableDateString(sessionDate, true)}
               </CardTitle>
             </div>

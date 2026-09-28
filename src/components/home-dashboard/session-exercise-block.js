@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { cn } from "@/lib/utils";
 import {
   PlayCircle,
@@ -147,10 +147,10 @@ export function SessionExerciseBlock({
   // Compact: big four uses SVG; full always uses LiftTypeIndicator
   const svgPath = isCompact && !hideSvg ? getLiftArtwork(liftType) : null;
 
-  const { hasUserData } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
 
    const canShowStrengthLevel =
-    hasUserData &&
+    isOwnData(dataSource) &&
     hasBioData &&
     (standards?.[liftType] ||
       (sessionDate && age && bodyWeight != null && sex != null));

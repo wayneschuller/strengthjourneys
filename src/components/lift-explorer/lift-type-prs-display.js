@@ -78,7 +78,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
-    isDemoMode,
+    dataSource,
   } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
@@ -212,7 +212,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
         <>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold sm:text-2xl">
-              {isDemoMode && <DemoModeBadge size="sm" />}
+              {dataSource === "demo" && <DemoModeBadge size="sm" />}
               {liftType} PRs
             </h2>
             {hasYearlyData && (

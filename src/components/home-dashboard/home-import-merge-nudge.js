@@ -32,9 +32,8 @@ import {
 
 export function HomeImportMergeNudge() {
   const {
-    hasUserData,
+    dataSource,
     importProfile,
-    isImportedData,
     parsedData,
     rawRows,
     sheetInfo,
@@ -56,13 +55,11 @@ export function HomeImportMergeNudge() {
     initializeWithValue: false,
   });
   const shouldShowFreshness =
-    hasUserData &&
-    !isImportedData &&
+    dataSource === "sheet" &&
     Boolean(importProfile?.lastSourceId) &&
     (!importProfile?.lastSheetId || importProfile.lastSheetId === sheetInfo?.ssid);
   const shouldShow =
-    hasUserData &&
-    !isImportedData &&
+    dataSource === "sheet" &&
     !shouldShowFreshness &&
     Array.isArray(parsedData) &&
     rawRows != null &&

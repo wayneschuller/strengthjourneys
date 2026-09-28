@@ -89,7 +89,7 @@ export function WeeklyTrainingPatternGrid({
   endYear,
   isSharing,
 }) {
-  const { isDemoMode } = useUserLiftingData();
+  const { dataSource } = useUserLiftingData();
   const prefersReducedMotion = useReducedMotion();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
@@ -104,9 +104,9 @@ export function WeeklyTrainingPatternGrid({
         parsedData,
         startYear,
         endYear,
-        isDemoMode,
+        dataSource,
       ),
-    [parsedData, startYear, endYear, isDemoMode],
+    [parsedData, startYear, endYear, dataSource],
   );
 
   const years = useMemo(() => {

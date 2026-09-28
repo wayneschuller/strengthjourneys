@@ -976,7 +976,7 @@ export function ImportWorkflowSection({
     parsedData,
     importFile,
     clearImportedData,
-    isImportedData,
+    dataSource,
     importedFormatName,
     importedFormatId,
     importedFileName,
@@ -1207,7 +1207,7 @@ export function ImportWorkflowSection({
     });
   }, [parsedData]);
 
-  if (isImportedData) {
+  if (dataSource === "import") {
     const entryCount =
       parsedData?.filter((entry) => !entry.isGoal)?.length || 0;
     const showCreateSheet = isAuthenticated && !hasLinkedSheet;

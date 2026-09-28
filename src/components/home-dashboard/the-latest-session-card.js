@@ -87,14 +87,13 @@ export function TheLatestSessionCard({
   sessionCount = 0,
 }) {
   const {
-    isDemoMode,
+    dataSource,
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
     sheetInfo,
     isValidating,
-    isReadOnly,
   } = useUserLiftingData();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const e1rmFormula =
@@ -209,7 +208,7 @@ export function TheLatestSessionCard({
 
   // devLog(analyzedSessionLifts);
 
-  if (analyzedSessionLifts && !sessionRatingRef.current && !isDemoMode) {
+  if (analyzedSessionLifts && !sessionRatingRef.current && dataSource !== "demo") {
     const tupleCountForDate = parsedData?.filter(
       (e) => e.date === sessionDate && !e.isGoal,
     ).length ?? 0;
@@ -311,7 +310,7 @@ export function TheLatestSessionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2">
-                {isDemoMode && (
+                {dataSource === "demo" && (
                   <DemoModeBadge size="sm" />
                 )}
                 {getSessionCardTitle(sessionDate, isLastDate)}
@@ -335,7 +334,7 @@ export function TheLatestSessionCard({
                   getReadableDateString(sessionDate, true)}
                 {hasLoggedSessions &&
                 analyzedSessionLifts &&
-                !isDemoMode &&
+                dataSource !== "demo" &&
                 !isStarterSampleStage &&
                 sessionRatingRef.current
                   ? `${isLastDate ? " · " : ""}${sessionRatingRef.current}`
@@ -466,7 +465,7 @@ export function TheLatestSessionCard({
             ))}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-4 pt-0">
-          {!isReadOnly && hasLoggedSessions && sessionDate && (
+          {dataSource === "sheet" && hasLoggedSessions && sessionDate && (
             <Button asChild variant="outline" className="gap-2">
               <Link href={`/log?date=${sessionDate}`}>
                 <Eye className="h-4 w-4" />

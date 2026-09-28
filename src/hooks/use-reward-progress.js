@@ -12,25 +12,18 @@ import { getRewardProgress } from "@/lib/rewards/progression";
 
 export function useRewardProgress(category) {
   const { status: authStatus } = useSession();
-  const {
-    parsedData,
-    isDemoMode,
-    hasUserData,
-    isLoading,
-    isReturningUserLoading,
-    sheetInfo,
-  } = useUserLiftingData();
+  const { parsedData, dataSource, isLoading, sheetInfo } =
+    useUserLiftingData();
   const rewards = useMemo(() => getRewardsByCategory(category), [category]);
   const isAuthenticated = authStatus === "authenticated";
   const progress = useMemo(
     () =>
       getRewardProgress({
         isAuthenticated,
-        isDemoMode,
         parsedData,
         rewards,
       }),
-    [isAuthenticated, isDemoMode, parsedData, rewards],
+    [isAuthenticated, parsedData, rewards],
   );
 
   // The provider writes parsedData from an effect that runs *after* the render
@@ -38,7 +31,8 @@ export function useRewardProgress(category) {
   // returning lifter looks like "loaded, but zero training data", which made the
   // ThemeChooser demote a legitimately unlocked theme back to light and persist
   // it. Stay loading until real data has actually landed in context.
-  const isAwaitingUserData = hasUserData && !parsedData;
+  const isAwaitingUserData =
+    (dataSource === "sheet" || dataSource === "import") && !parsedData;
 
   return {
     ...progress,
@@ -49,7 +43,7 @@ export function useRewardProgress(category) {
     isProgressLoading:
       authStatus === "loading" ||
       isLoading ||
-      isReturningUserLoading ||
+      dataSource === "restoring" ||
       isAwaitingUserData,
   };
 }

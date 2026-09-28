@@ -18,7 +18,7 @@ import { Upload, ArrowRight } from "lucide-react";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics/analytics";
 import { SloganCarousel } from "@/components/homepage/slogan-carousel";
 import { Button } from "@/components/ui/button";
@@ -65,9 +65,9 @@ export function HeroSection() {
 // authenticated demo-mode users who still need to set up a sheet.
 function HeroPrimaryCta() {
   const { status: authStatus } = useSession();
-  const { hasUserData, sheetInfo } = useUserLiftingData();
+  const { dataSource, sheetInfo } = useUserLiftingData();
 
-  if (hasUserData) return null;
+  if (isOwnData(dataSource)) return null;
 
   // Treat "loading" the same as "unauthenticated" — this matches SSR output so
   // there's no hydration mismatch, then React updates once auth resolves.

@@ -10,12 +10,16 @@ import {
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { parseData, parseImportedFile } from "@/lib/import/import-dispatcher";
 import {
-  parseData,
-  parseImportedFile,
-} from "@/lib/import/import-dispatcher";
-import { getDemoParsedData } from "@/lib/import/sample-parsed-data";
-import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics/analytics";
+  getDemoAnchorDate,
+  getDemoParsedData,
+} from "@/lib/import/sample-parsed-data";
+import {
+  gaEvent,
+  GA_EVENT_TAGS,
+  gaTrackSheetLinked,
+} from "@/lib/analytics/analytics";
 import { rdtTrackSheetLinked } from "@/lib/analytics/reddit-pixel";
 import {
   flushTimings,
@@ -85,10 +89,11 @@ export function getDataSource({
   hasSheet,
   isImportedData,
   isReturningUserLoading,
+  presumeDemo = false,
 }) {
   if (isImportedData) return "import";
   if (isReturningUserLoading) return "restoring";
-  if (authStatus === "loading") return "loading";
+  if (authStatus === "loading") return presumeDemo ? "demo" : "loading";
   if (authStatus === "unauthenticated") return "demo";
   return hasSheet ? "sheet" : "none";
 }
@@ -155,6 +160,11 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  *
  * Context value exposed via {@link useUserLiftingData}:
  * @param {React.ReactNode} props.children
+ * @param {string} [props.demoAnchorDate] - Set by a page that renders the demo on the
+ *   server, from its getStaticProps (see getDemoAnchorDate). Until auth resolves, that page
+ *   gets the demo as parsedData, so its HTML carries real sessions. Returning lifters never
+ *   see it: data-restoring hides [data-first-visit] before paint. A signed-in lifter with no
+ *   saved sheet on this device does see it until auth resolves.
  *
  * @context parsedData {Array|null} - Processed lift objects. null until first load.
  *   Each entry: { date, liftType, reps, weight, unitType, isHistoricalPR, isGoal }
@@ -185,7 +195,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context hasCachedSheetData {boolean} - True if SWR holds valid sheet values (even if stale).
  * @context dataSyncedAt {number|null} - Timestamp (Date.now()) of the last successful data load.
  */
-export const UserLiftingDataProvider = ({ children }) => {
+export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   const [parsedData, setParsedData] = useState(null); // see @/lib/import/sample-parsed-data.js for data structure design
@@ -379,7 +389,9 @@ export const UserLiftingDataProvider = ({ children }) => {
   // combining authStatus and sheetInfo themselves.
   //   loading   - auth is resolving and no sheet was saved (also the server render)
   //   restoring - a returning lifter's saved sheet is hydrating; hide onboarding
-  //   demo      - signed out with no import: sample data
+  //   demo      - signed out with no import: sample data. Also while auth
+  //               resolves on a page that server-renders the demo, since a
+  //               stranger is by far its likeliest visitor
   //   import    - an imported file is being previewed (signed in or out)
   //   sheet     - signed in with a linked Google Sheet
   //   none      - signed in with no sheet and no import: nudge them to start a log
@@ -388,8 +400,17 @@ export const UserLiftingDataProvider = ({ children }) => {
     hasSheet: !!sheetInfo?.ssid,
     isImportedData,
     isReturningUserLoading,
+    presumeDemo: !!demoAnchorDate,
   });
 
+  // One demo per page load. The first page's anchor wins, so a page rendered
+  // with the demo on the server hydrates to the same sets, and moving between
+  // pages never shifts the demo's dates.
+  const [demoAnchor] = useState(() => demoAnchorDate ?? getDemoAnchorDate());
+  const demoParsedData = useMemo(
+    () => markHigherWeightAsHistoricalPRs(getDemoParsedData(demoAnchor)),
+    [demoAnchor],
+  );
   // The second axis: whether a sheet is linked, whatever is on screen. During
   // an import preview dataSource is "import" but the linked sheet keeps
   // loading in sheetParsedData, so the import can be merged into it.
@@ -547,7 +568,12 @@ export const UserLiftingDataProvider = ({ children }) => {
       return;
     }
 
-    const result = getParsedDataWithFallback({ authStatus, data, dataSource });
+    const result = getParsedDataWithFallback({
+      authStatus,
+      data,
+      dataSource,
+      demoParsedData,
+    });
 
     if (result.parseError) {
       clearSheet();
@@ -555,7 +581,16 @@ export const UserLiftingDataProvider = ({ children }) => {
 
     setParsedData(result.parsedData);
     setParseError(result.parseError);
-  }, [data, isLoading, isError, error, authStatus, clearSheet, dataSource]);
+  }, [
+    data,
+    isLoading,
+    isError,
+    error,
+    authStatus,
+    clearSheet,
+    dataSource,
+    demoParsedData,
+  ]);
 
   // -----------------------------------------------------------------------------------------------
   // Effect B: Sync API metadata into sheetInfo when fresh data arrives
@@ -595,7 +630,12 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   // When imported file data is active, it overrides the normal parsedData pipeline.
   // All downstream computations (liftTypes, PRs, tonnage, etc.) derive from activeParsedData.
-  const activeParsedData = importedParsedData || parsedData;
+  // Demo data shows from the first render, not only once Effect A has run,
+  // so a page rendered on the server paints real sessions.
+  const activeParsedData =
+    importedParsedData ||
+    parsedData ||
+    (dataSource === "demo" ? demoParsedData : null);
 
   const dataQualityWarnings = useMemo(
     () => getDateOutlierWarnings(activeParsedData, { dataSource }),
@@ -752,7 +792,12 @@ export const UserLiftingDataProvider = ({ children }) => {
  * When authenticated without usable sheet data, returns empty data so UI can nudge the lifter to start a log.
  * Returns { parsedData, parseError }.
  */
-function getParsedDataWithFallback({ authStatus, data, dataSource }) {
+function getParsedDataWithFallback({
+  authStatus,
+  data,
+  dataSource,
+  demoParsedData,
+}) {
   let parsedData = null; // A local version for this scope only
   let parseError = null;
 
@@ -776,14 +821,12 @@ function getParsedDataWithFallback({ authStatus, data, dataSource }) {
     }
   }
 
-  const shouldUseDemoData = dataSource === "demo";
+  // The demo arrives with its PRs already marked, and the same array every
+  // time, so switching into demo mode recomputes nothing downstream.
+  if (dataSource === "demo") return { parsedData: demoParsedData, parseError };
 
-  if (shouldUseDemoData) {
-    parsedData = getDemoParsedData();
-  } else if (!parsedData) {
-    // Authenticated users without a selected/valid sheet should not see demo data.
-    parsedData = [];
-  }
+  // Authenticated users without a selected/valid sheet should not see demo data.
+  if (!parsedData) parsedData = [];
 
   // As far as possible try to get components to do their own unique processing of parsedData
   // However if there are metrics commonly needed we can do it here just once to save CPU later

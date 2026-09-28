@@ -10,18 +10,19 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useIsClient } from "usehooks-ts";
+import { useIsClient, useIsomorphicLayoutEffect } from "usehooks-ts";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { CELEBRATION_KEYFRAMES } from "@/lib/celebration";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
+import { getDemoAnchorDate } from "@/lib/import/sample-parsed-data";
 import {
   buildAiAssistantPromptLink,
   buildLogSessionReviewPrompt,
 } from "@/lib/ai/review-prompts";
-import { getDaysBetweenYmd } from "@/lib/date-utils";
+import { formatDateToYmdLocal, getDaysBetweenYmd } from "@/lib/date-utils";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -151,6 +152,7 @@ const LOG_PAGE_STRUCTURED_DATA = [
 
 export default function LogSessionPage({
   staticContent = LOG_PAGE_STATIC_CONTENT,
+  demoAnchorDate,
 }) {
   // Route-level orchestration lives here: user data, URL date state, optimistic
   // sheet writes, and the static SEO block all meet in this page component.
@@ -187,13 +189,19 @@ export default function LogSessionPage({
   }, [isClient]);
   const hasLinkedSheet = dataSource === "sheet";
 
-  // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
-  const todayIso = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  // The server renders the demo as if its last session were today, and the
+  // first client render has to agree. The lifter's own local date replaces it
+  // before paint. Local, not toISOString(), which is UTC and a day off in
+  // AU/Asia/Pacific.
+  const [todayIso, setTodayIso] = useState(
+    () => demoAnchorDate ?? formatDateToYmdLocal(new Date()),
+  );
+  useIsomorphicLayoutEffect(() => {
+    setTodayIso(formatDateToYmdLocal(new Date()));
   }, []);
 
-  const [sessionDate, setSessionDate] = useState(todayIso);
+  // A date the lifter or the URL chose; null follows the default below.
+  const [requestedDate, setRequestedDate] = useState(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [acceptedSessionUrls, setAcceptedSessionUrls] = useState(
@@ -207,12 +215,22 @@ export default function LogSessionPage({
   useEffect(() => {
     if (router.query.date && typeof router.query.date === "string") {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- URL state is the external source of truth after hydration
-      setSessionDate(router.query.date);
+      setRequestedDate(router.query.date);
     }
   }, [router.query.date]);
 
   // All unique session dates from parsedData (ascending)
   const sessionDates = useMemo(() => getSessionDates(parsedData), [parsedData]);
+
+  // A preview log (the demo or an import) opens on its latest session when
+  // today has none, so a visitor lands on real training. A lifter's own log
+  // opens on today, ready to log it.
+  const latestSessionDate = sessionDates.at(-1) ?? null;
+  const sessionDate =
+    requestedDate ??
+    (!hasLinkedSheet && latestSessionDate && !sessionDates.includes(todayIso)
+      ? latestSessionDate
+      : todayIso);
 
   const {
     syncState,
@@ -241,7 +259,7 @@ export default function LogSessionPage({
 
   const navigateToDate = useCallback(
     (date) => {
-      setSessionDate(date);
+      setRequestedDate(date);
       setShowDeleteConfirm(false);
       setActiveNewLiftType(null);
       resetOptimisticSessionState();
@@ -263,33 +281,6 @@ export default function LogSessionPage({
     },
     [navigateToDate],
   );
-
-  // In preview mode, if no date was requested and today has no session data,
-  // auto-navigate to the most recent session so the user sees actual data
-  // instead of an empty state.  Skip when a date query param is present —
-  // the user (or heatmap link) explicitly asked for that date.
-  const hasAutoNavigatedRef = useRef(false);
-  // Demo/import views should open on a real training day instead of today's
-  // empty state, but only when the URL did not request a specific date.
-  useEffect(() => {
-    if (hasAutoNavigatedRef.current) return;
-    // Auto-navigate for imported data or demo mode when today has no session
-    if (dataSource !== "import" && dataSource !== "demo") return;
-    if (sessionDates.length === 0) return;
-    if (router.query.date) return;
-    if (sessionDates.includes(sessionDate)) return;
-    // Navigate to the most recent session date
-    const latestDate = sessionDates[sessionDates.length - 1];
-    hasAutoNavigatedRef.current = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- preview/demo mode redirects from an empty today to real imported data
-    navigateToDate(latestDate);
-  }, [
-    dataSource,
-    sessionDates,
-    sessionDate,
-    navigateToDate,
-    router.query.date,
-  ]);
 
   // Session dates as Date objects for the calendar picker modifier highlights
   const sessionDateObjects = useMemo(
@@ -362,12 +353,14 @@ export default function LogSessionPage({
       }),
     [parsedData, rawRows, sheetInfo, persistedSheetInfo],
   );
+  // Skeleton only while there is nothing to show. The demo is there from the
+  // server render on, so strangers and crawlers get real sessions.
   const showSessionBootstrap =
-    !isClient ||
-    authStatus === "loading" ||
-    (authStatus === "authenticated" &&
-      !!effectiveSsid &&
-      (isLoading || parsedData === null));
+    parsedData === null ||
+    (authStatus === "authenticated" && !!effectiveSsid && isLoading);
+  // The demo painted before auth resolves. A returning lifter's pre-paint
+  // mark hides it and shows the skeleton in its place (see _document.js).
+  const isPresumedDemo = dataSource === "demo" && authStatus === "loading";
   // Existing rows are deliberately locked during SWR refresh because editing or
   // deleting by a stale rowIndex is unsafe. Add-set controls use the narrower
   // gate below: the sync hook can accept one optimistic add and defer its insert
@@ -593,9 +586,7 @@ export default function LogSessionPage({
   );
 
   // Heads the read-only lift gallery that preview visitors browse.
-  const previewLogCta = (
-    <PreviewLogCta dataSource={dataSource} />
-  );
+  const previewLogCta = <PreviewLogCta dataSource={dataSource} />;
 
   const addLiftControl = previewMode ? (
     <AddLiftButton
@@ -710,21 +701,31 @@ export default function LogSessionPage({
               />
 
               {showSessionBootstrap && <LogSessionSkeleton />}
+              {isPresumedDemo && (
+                <div data-returning-visit="">
+                  <LogSessionSkeleton />
+                </div>
+              )}
 
               {!showSessionBootstrap && !isLoading && !hasSession && (
-                <EmptySessionState
-                  addLiftChips={addLiftChips}
-                  isStructuralSaving={isAddBlocked}
-                  isToday={isToday}
-                  onAddLift={handleAddLift}
-                  previewMode={previewMode}
-                  previewCta={previewLogCta}
-                  sessionDate={sessionDate}
-                />
+                <div data-first-visit={isPresumedDemo ? "" : undefined}>
+                  <EmptySessionState
+                    addLiftChips={addLiftChips}
+                    isStructuralSaving={isAddBlocked}
+                    isToday={isToday}
+                    onAddLift={handleAddLift}
+                    previewMode={previewMode}
+                    previewCta={previewLogCta}
+                    sessionDate={sessionDate}
+                  />
+                </div>
               )}
 
               {!showSessionBootstrap && hasSession && (
-                <div className="space-y-5">
+                <div
+                  className="space-y-5"
+                  data-first-visit={isPresumedDemo ? "" : undefined}
+                >
                   <AnimatePresence initial={false}>
                     {Object.entries(sessionLiftsWithPending).map(
                       ([liftType, sets]) => (
@@ -824,11 +825,15 @@ LogSessionPage.pageTitle = "Log";
 LogSessionPage.pageDescription =
   "Log your lifting session and track your progress.";
 
+// The demo log ends on the anchor date, so the HTML reads like a lifter who
+// trained today. Regenerating hourly keeps it within a day of now.
 export async function getStaticProps() {
   return {
     props: {
       staticContent: LOG_PAGE_STATIC_CONTENT,
+      demoAnchorDate: getDemoAnchorDate(),
     },
+    revalidate: 3600,
   };
 }
 
@@ -904,6 +909,7 @@ function formatPromptNumber(value) {
 function LogStaticContent({ content }) {
   return (
     <section
+      data-first-visit=""
       aria-labelledby="log-static-heading"
       className="border-border/50 mx-auto mt-14 max-w-[56rem] border-t pt-8"
     >

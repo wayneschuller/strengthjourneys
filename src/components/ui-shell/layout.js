@@ -500,7 +500,9 @@ function DataAccessBanner({ pathname, currentPath }) {
   if (!showSignInCta && !showSetupSheetCta) return null;
 
   return (
-    <AppBanner tint="amber">
+    // The demo shows during server render on some pages, so a returning
+    // lifter's pre-paint mark hides this banner until React takes over.
+    <AppBanner tint="amber" data-first-visit={showSignInCta ? "" : undefined}>
       <AppBannerContent density="comfortable">
         <AppBannerMessage>
           {showSignInCta

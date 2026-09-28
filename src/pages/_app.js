@@ -89,7 +89,9 @@ export default function App({ Component, pageProps, session }) {
         >
           <SessionProvider session={session}>
             <AnalyticsSession />
-            <UserLiftingDataProvider>
+            {/* A page that server-renders the demo sets demoAnchorDate in
+                its getStaticProps; see UserLiftingDataProvider. */}
+            <UserLiftingDataProvider demoAnchorDate={pageProps.demoAnchorDate}>
               <TimerProvider>
                 <LiftColorsProvider>
                   <AthleteBioProvider>

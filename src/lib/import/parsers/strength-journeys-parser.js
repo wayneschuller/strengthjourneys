@@ -14,7 +14,7 @@
 // src/pages/api/sheet/insert-row.js.
 //
 // Returns a `ParsedData` array that is always sorted by date ascending.
-// See @/lib/import/sample-parsed-data.js for example data using this structure.
+// See getDemoParsedData in @/lib/import/sample-parsed-data.js for example data.
 
 import { recordTiming } from "@/lib/processing-utils";
 import { normalizeDateInput } from "@/lib/date-utils";

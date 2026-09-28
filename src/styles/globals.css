@@ -224,6 +224,11 @@
 html[data-restoring] [data-first-visit] {
   display: none;
 }
+/* Its counterpart: a stand-in, such as a skeleton, that only a returning
+   lifter should see before React takes over. */
+html:not([data-restoring]) [data-returning-visit] {
+  display: none;
+}
 
 @layer base {
   :root {

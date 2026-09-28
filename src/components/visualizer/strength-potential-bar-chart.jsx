@@ -24,7 +24,7 @@ import { getDisplayWeight } from "@/lib/processing-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import {
   Card,
   CardContent,
@@ -277,9 +277,19 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const { width: contentWidth = 0 } = useResizeObserver({ ref: contentRef });
   const isCompact = contentWidth > 0 && contentWidth < COMPACT_MAX_WIDTH;
   const yAxisWidth = isCompact ? 0 : Y_AXIS_WIDTH;
-  const handleChartClick = (state) => {
-    const reps = Number(state?.activeLabel);
-    if (!REP_COUNTS.includes(reps)) return;
+  // Work out the column from where the click landed. Recharts' own active
+  // index follows hover, and a tap on a phone has no hover before it, so it
+  // still names the previously picked column and the tap would let go of it.
+  const chartRef = useRef(null);
+  const handleChartClick = (event) => {
+    const rect = chartRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const plotLeft = CHART_MARGIN.left + yAxisWidth;
+    const band =
+      (rect.width - plotLeft - CHART_MARGIN.right) / REP_COUNTS.length;
+    const index = Math.floor((event.clientX - rect.left - plotLeft) / band);
+    const reps = REP_COUNTS[index];
+    if (!reps) return;
     // A second click on the picked rep lets go of it.
     setSelection(reps === pickedReps ? null : { liftType, scope, reps });
   };
@@ -395,13 +405,14 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
               })}
             </div>
             <div
+              ref={chartRef}
+              onClick={handleChartClick}
               style={isCompact ? { marginInline: -COMPACT_BLEED } : undefined}
             >
               <ChartContainer config={{}} className="!aspect-auto h-[280px]">
                 <BarChart
                   data={rows}
                   margin={CHART_MARGIN}
-                  onClick={handleChartClick}
                   // Recharts sets an inline cursor: default on its wrapper, which
                   // beats a class. Any click in a column's band picks that rep.
                   style={{ cursor: "pointer" }}
@@ -428,11 +439,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                     tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                     tickFormatter={(tick) => `${tick}${displayUnit}`}
                   />
-                  {/* Hover shows nothing: a click puts the rep's details in the
-                    callout above, which works the same on a phone. The empty
-                    tooltip stays so Recharts still reports which column was
-                    hit. */}
-                  <ChartTooltip cursor={false} content={() => null} />
                   <Bar
                     dataKey="range"
                     animationDuration={700}

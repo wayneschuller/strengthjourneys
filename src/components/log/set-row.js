@@ -12,6 +12,7 @@ import { Link2, Loader2, Trash2 } from "lucide-react";
 import { getCelebrationStyles } from "@/lib/celebration";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { getSetIdentityKey } from "@/lib/pr-ranking";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -45,6 +46,7 @@ export function SetRow({
   onDelete,
   isDeleteDisabled = false,
   strengthBadge,
+  progressionBadge = null,
   usedSessionUrls,
   onSessionUrlAccepted,
   reserveVideoSlot = false,
@@ -318,7 +320,8 @@ export function SetRow({
     [displayUrl],
   );
   const showVideoSlot = reserveVideoSlot || Boolean(videoSource);
-  const hasBadges = !set._pending && Boolean(strengthBadge);
+  const hasBadges =
+    !set._pending && (Boolean(strengthBadge) || Boolean(progressionBadge));
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
   const prBadgeTooltip = getLogPRBadgeTooltip(set.liftType);
 
@@ -511,43 +514,52 @@ export function SetRow({
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {hasRankingBadges && (
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex flex-col items-end gap-1">
-                          {rankingBadges.map((badge) => (
-                            <Link
-                              key={`${badge.scope}-${badge.message}`}
-                              href={getLogPRBadgeHref(set.liftType, badge)}
-                              className="inline-flex"
-                            >
-                              <CelebrationReveal
-                                animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
+                <span className="inline-flex flex-col items-end gap-1">
+                  {hasRankingBadges && (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex flex-col items-end gap-1">
+                            {rankingBadges.map((badge) => (
+                              <Link
+                                key={`${badge.scope}-${badge.message}`}
+                                href={getLogPRBadgeHref(set.liftType, badge)}
+                                className="inline-flex"
                               >
-                                <Badge
-                                  variant="outline"
-                                  className={cn(
-                                    metaBadgeClassName,
-                                    rankingBadgeMaxClass,
-                                    getPrToneClass(badge.scope),
-                                  )}
+                                <CelebrationReveal
+                                  animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
                                 >
-                                  <span className="truncate">
-                                    {badge.message}
-                                  </span>
-                                </Badge>
-                              </CelebrationReveal>
-                            </Link>
-                          ))}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>{prBadgeTooltip}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      metaBadgeClassName,
+                                      rankingBadgeMaxClass,
+                                      getPrToneClass(badge.scope),
+                                    )}
+                                  >
+                                    <span className="truncate">
+                                      {badge.message}
+                                    </span>
+                                  </Badge>
+                                </CelebrationReveal>
+                              </Link>
+                            ))}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>{prBadgeTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {progressionBadge && (
+                    <ProgressionBadge
+                      badge={progressionBadge}
+                      isMetric={isMetric}
+                      className={cn(metaBadgeClassName, rankingBadgeMaxClass)}
+                    />
+                  )}
+                </span>
               </div>
               {onDelete && (
                 <TooltipProvider delayDuration={0}>
@@ -629,6 +641,13 @@ export function SetRow({
                   </Tooltip>
                 </TooltipProvider>
               )}
+              {progressionBadge && (
+                <ProgressionBadge
+                  badge={progressionBadge}
+                  isMetric={isMetric}
+                  className={cn(metaBadgeClassName, "max-w-[11rem]")}
+                />
+              )}
               <div className="flex-1" />
               {onDelete && (
                 <TooltipProvider delayDuration={0}>
@@ -654,6 +673,42 @@ export function SetRow({
         </div>
       )}
     </motion.div>
+  );
+}
+
+// Says which set this one moved past, so the badge is checkable at a glance.
+function ProgressionBadge({ badge, isMetric, className }) {
+  const { previousSet, previousDate } = badge;
+  const { value, unit } = getDisplayWeight(previousSet, isMetric);
+  const dateLabel = new Date(`${previousDate}T00:00:00`).toLocaleDateString(
+    "en-US",
+    { month: "short", day: "numeric" },
+  );
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <Badge
+              variant="outline"
+              className={cn(
+                className,
+                "text-emerald-600 dark:text-emerald-400",
+              )}
+            >
+              <span className="truncate">{badge.message}</span>
+            </Badge>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>
+            Last time, {dateLabel}: {previousSet.reps}@{value}
+            {unit}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

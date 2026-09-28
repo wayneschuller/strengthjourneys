@@ -27,6 +27,10 @@ import {
 } from "@/lib/celebration";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import {
+  getPreviousSessionBests,
+  getProgressionBadges,
+} from "@/lib/log-progression";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
 import { StrengthBar } from "@/components/log/strength-bar";
@@ -407,6 +411,33 @@ export function LiftBlock({
     optimisticFieldsByKey,
   ]);
 
+  const previousSessionBests = useMemo(
+    () => getPreviousSessionBests(parsedData, liftType, sessionDate),
+    [parsedData, liftType, sessionDate],
+  );
+
+  // A #1 PR already says it beat last time, so progression only speaks up for
+  // the quieter wins.
+  const progressionBadges = useMemo(() => {
+    const badges = getProgressionBadges({
+      sets: optimisticSetsForStrength,
+      previous: previousSessionBests,
+      sessionDate,
+      liftType,
+    });
+    return badges.map((badge, index) =>
+      badge && prMeta[index]?.badges?.some((pr) => pr.rank === 0)
+        ? null
+        : badge,
+    );
+  }, [
+    optimisticSetsForStrength,
+    previousSessionBests,
+    sessionDate,
+    liftType,
+    prMeta,
+  ]);
+
   useEffect(() => {
     return () => {
       if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
@@ -635,6 +666,7 @@ export function LiftBlock({
               usedSessionUrls={usedSessionUrls}
               onSessionUrlAccepted={onSessionUrlAccepted}
               reserveVideoSlot={hasAnyVideo}
+              progressionBadge={progressionBadges[idx] ?? null}
               strengthBadge={
                 idx === bestE1rmIndex ? (
                   <LiftStrengthLevel

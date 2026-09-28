@@ -78,50 +78,39 @@ export function AvatarDropdown() {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <DropdownMenuContent className="w-60" align="end">
+      <DropdownMenuContent className="w-56" align="end">
         <DropdownMenuLabel className="font-normal">
-          <div className="flex min-w-0 flex-col gap-1">
-            {session.user.name && (
-              <p className="truncate text-sm font-semibold">
-                {session.user.name}
-              </p>
-            )}
-            <p className="text-muted-foreground truncate text-xs">
+          <div className="flex flex-col space-y-1">
+            <p className="font-bold">Athlete: </p>
+            <p className="text-muted-foreground pl-2 text-xs leading-none">
               {session.user.email}
             </p>
             {sheetInfo?.filename && (
-              <p className="text-muted-foreground mt-1 flex min-w-0 items-center gap-1.5 text-xs">
-                <img
-                  src={GOOGLE_SHEETS_ICON_URL}
-                  alt=""
-                  className="h-3.5 w-3.5 shrink-0"
-                  aria-hidden
-                />
-                <span className="truncate">{sheetInfo.filename}</span>
-              </p>
+              <>
+                <p className="font-bold">Data source loaded: </p>
+                {sheetInfo?.url ? (
+                  <a
+                    href={sheetInfo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Open in Google Sheets (new tab)"
+                    className="text-muted-foreground hover:text-foreground flex min-w-0 items-center gap-1 pl-2 text-xs leading-none underline-offset-2 hover:underline"
+                  >
+                    <span className="truncate">{sheetInfo.filename}</span>
+                    <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                    <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                ) : (
+                  <p className="text-muted-foreground pl-2 text-xs leading-none">
+                    {sheetInfo.filename}
+                  </p>
+                )}
+              </>
             )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {sheetInfo?.url && (
-            <DropdownMenuItem asChild>
-              <a href={sheetInfo.url} target="_blank" rel="noreferrer">
-                <img
-                  src={GOOGLE_SHEETS_ICON_URL}
-                  alt=""
-                  className="mr-2 h-4 w-4 shrink-0"
-                  aria-hidden
-                />
-                Open Google Sheet
-                <ExternalLink
-                  className="text-muted-foreground ml-auto size-3!"
-                  aria-hidden
-                />
-                <span className="sr-only">(opens in a new tab)</span>
-              </a>
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem
             onClick={() => {
               openSheetSetupDialog(

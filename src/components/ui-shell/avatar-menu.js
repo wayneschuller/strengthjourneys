@@ -1,9 +1,10 @@
 import { useCallback, useState } from "react";
-import { useRouter } from "next/router";
+import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import {
   Coffee,
   Eraser,
+  ExternalLink,
   LogOut,
   Megaphone,
   MessageSquarePlus,
@@ -41,7 +42,6 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
  * @param {Object} props - No props; all data is sourced from session and lifting data context.
  */
 export function AvatarDropdown() {
-  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
   const { sheetInfo } = useUserLiftingData();
@@ -86,7 +86,10 @@ export function AvatarDropdown() {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild aria-label="User menu">
-                <span className="relative ml-2 inline-flex">
+                <button
+                  type="button"
+                  className="focus-visible:ring-ring relative ml-2 inline-flex rounded-full focus-visible:ring-2 focus-visible:outline-none"
+                >
                   <Avatar className="ring-muted-foreground h-8 w-8 hover:ring-2">
                     {session.user.image && (
                       <AvatarImage src={session.user.image} />
@@ -95,7 +98,7 @@ export function AvatarDropdown() {
                       {session.user.name?.[0] || "?"}
                     </AvatarFallback>
                   </Avatar>
-                </span>
+                </button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent>
@@ -119,9 +122,12 @@ export function AvatarDropdown() {
                       href={sheetInfo.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-muted-foreground hover:text-foreground pl-2 text-xs leading-none underline-offset-2 hover:underline"
+                      title="Open in Google Sheets (new tab)"
+                      className="text-muted-foreground hover:text-foreground flex min-w-0 items-center gap-1 pl-2 text-xs leading-none underline-offset-2 hover:underline"
                     >
-                      {sheetInfo.filename}
+                      <span className="truncate">{sheetInfo.filename}</span>
+                      <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                      <span className="sr-only">(opens in a new tab)</span>
                     </a>
                   ) : (
                     <p className="text-muted-foreground pl-2 text-xs leading-none">
@@ -172,19 +178,32 @@ export function AvatarDropdown() {
               <MessageSquarePlus className="mr-2 h-4 w-4" />
               Send Feedback
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => window.open("https://buymeacoffee.com/lrhvbjxzqr")}
-            >
-              <Coffee className="mr-2 h-4 w-4" />
-              Buy Me A Coffee
+            <DropdownMenuItem asChild>
+              <a
+                href="https://buymeacoffee.com/lrhvbjxzqr"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Coffee className="mr-2 h-4 w-4" />
+                Buy Me A Coffee
+                <ExternalLink
+                  className="text-muted-foreground ml-auto size-3!"
+                  aria-hidden
+                />
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/import")}>
-              <Upload className="mr-2 h-4 w-4" />
-              Import / Export
+            <DropdownMenuItem asChild>
+              <Link href="/import" prefetch={false}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import / Export
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/changelog")}>
-              <Megaphone className="mr-2 h-4 w-4" />
-              What&apos;s New
+            <DropdownMenuItem asChild>
+              <Link href="/changelog" prefetch={false}>
+                <Megaphone className="mr-2 h-4 w-4" />
+                What&apos;s New
+              </Link>
             </DropdownMenuItem>
             {/* Non-production tools for QA/reset workflows.
                     These are available in development-like envs (including

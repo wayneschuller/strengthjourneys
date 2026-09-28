@@ -88,7 +88,7 @@ export function NavBar() {
   const importHref = getRepeatImportHref(importProfile, "repeat-import-nav");
 
   return (
-    <Collapsible className="bg-background/50 retro-arcade:bg-(image:--sunset-stripes) retro-arcade:bg-size-[100%_10px] retro-arcade:bg-bottom retro-arcade:bg-no-repeat mx-2 my-3 rounded-lg md:mx-10 xl:mx-12 2xl:mx-24">
+    <Collapsible className="app-nav bg-background/50 relative mx-2 my-3 rounded-lg md:mx-10 xl:mx-12 2xl:mx-24">
       <div className="flex items-center px-3 md:px-6">
         <div className="flex items-center">
           <DesktopNav />

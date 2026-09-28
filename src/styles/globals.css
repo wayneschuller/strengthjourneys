@@ -1286,15 +1286,6 @@ html:not([data-restoring]) [data-returning-visit] {
  * glow, and html2canvas capture mode ([data-capture]) keeps the plain card.
  */
 :is(.retro-arcade, .retro-arcade-dark) {
-  /* 80s racing stripes, 10px tall: pink, orange, gold with 2px gaps. */
-  --sunset-stripes: linear-gradient(
-    to bottom,
-    hsl(330.9554 64.0816% 51.9608%) 0 2px,
-    transparent 2px 4px,
-    hsl(17.5691 80.4444% 50%) 4px 6px,
-    transparent 6px 8px,
-    hsl(42 90% 55%) 8px 10px
-  );
   --sunset: linear-gradient(
     90deg,
     hsl(330.9554 64.0816% 51.9608%),
@@ -1348,6 +1339,30 @@ html:not([data-restoring]) [data-returning-visit] {
 :is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent:not([style*="background"]):hover {
   background: var(--sunset) border-box;
   color: hsl(0 0% 100%);
+}
+
+/* 80s speed stripes in the margin above the nav bar (outside it, so they never
+   crowd the logo): pink, orange and gold bands, cut into slanted dashes by the
+   second mask layer and fading out to the right by the first. */
+:is(.retro-arcade, .retro-arcade-dark) .app-nav::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: -10px;
+  height: 8px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    hsl(330.9554 64.0816% 51.9608%) 0 2px,
+    transparent 2px 3px,
+    hsl(17.5691 80.4444% 50%) 3px 5px,
+    transparent 5px 6px,
+    hsl(42 90% 55%) 6px 8px
+  );
+  mask-image:
+    linear-gradient(to right, #000 35%, transparent 90%),
+    repeating-linear-gradient(115deg, #000 0 28px, transparent 28px 36px);
+  mask-composite: intersect;
 }
 
 /* Top-level nav links (the only users of hover:text-foreground/80) light up

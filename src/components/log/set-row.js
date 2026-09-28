@@ -688,11 +688,17 @@ function ProgressionBadge({ badge, liftType, isMetric, className }) {
             <span className="inline-flex">{pill}</span>
           )}
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-[16rem]">
+        <TooltipContent side="bottom" className="max-w-[18rem]">
           <p>
             Beats {previousSet.reps}@{value}
             {unit} from {dateLabel}
           </p>
+          {badge.streak >= 2 && (
+            <p className="mt-1">
+              Up {badge.streak} sessions running:{" "}
+              {formatProgressionChain(badge.chain, isMetric)}
+            </p>
+          )}
           {href && (
             <p className="mt-1 opacity-70">
               Open the {liftType} progress chart
@@ -702,6 +708,19 @@ function ProgressionBadge({ badge, liftType, isMetric, className }) {
       </Tooltip>
     </TooltipProvider>
   );
+}
+
+// The staircase, newest last. A long run keeps its latest steps.
+const CHAIN_STEPS_SHOWN = 6;
+
+function formatProgressionChain(chain, isMetric) {
+  const steps = chain.slice(-CHAIN_STEPS_SHOWN).map((entry) => {
+    const { value, unit } = getDisplayWeight(entry, isMetric);
+    return { text: `${entry.reps}@${value}`, unit };
+  });
+  const lastUnit = steps.at(-1)?.unit ?? "";
+  const body = steps.map(({ text }) => text).join(" → ");
+  return `${chain.length > CHAIN_STEPS_SHOWN ? "… → " : ""}${body}${lastUnit}`;
 }
 
 function isHttpUrl(value) {

@@ -29,7 +29,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import {
-  getPreviousSessionBests,
+  getLiftSessionHistory,
   getProgressionBadges,
 } from "@/lib/log-progression";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
@@ -423,28 +423,31 @@ export function LiftBlock({
     optimisticFieldsByKey,
   ]);
 
-  const previousSessionBests = useMemo(
-    () => getPreviousSessionBests(parsedData, liftType, sessionDate),
+  const liftSessionHistory = useMemo(
+    () => getLiftSessionHistory(parsedData, liftType, sessionDate),
     [parsedData, liftType, sessionDate],
   );
 
-  // A #1 PR already says it beat last time, so progression only speaks up for
-  // the quieter wins.
+  // A #1 PR already says it beat last time, so a single progression only
+  // speaks up for the quieter wins. A streak is news a PR badge cannot carry,
+  // so it shows either way.
   const progressionBadges = useMemo(() => {
     const badges = getProgressionBadges({
       sets: optimisticSetsForStrength,
-      previous: previousSessionBests,
+      history: liftSessionHistory,
       sessionDate,
       liftType,
     });
     return badges.map((badge, index) =>
-      badge && prMeta[index]?.badges?.some((pr) => pr.rank === 0)
+      badge &&
+      badge.streak < 2 &&
+      prMeta[index]?.badges?.some((pr) => pr.rank === 0)
         ? null
         : badge,
     );
   }, [
     optimisticSetsForStrength,
-    previousSessionBests,
+    liftSessionHistory,
     sessionDate,
     liftType,
     prMeta,

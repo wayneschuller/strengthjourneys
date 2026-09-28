@@ -443,7 +443,9 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                 />
                 <ChartTooltip
                   position={tooltipPosition}
-                  cursor={{ fill: "var(--muted)", opacity: 0.6, radius: 8 }}
+                  // No hover band: it looked like a second selection next to
+                  // the picked column. The tooltip already marks the hover.
+                  cursor={false}
                   content={
                     <PotentialTooltip
                       liftType={liftType}

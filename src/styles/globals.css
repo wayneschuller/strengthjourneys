@@ -1326,11 +1326,12 @@ html:not([data-restoring]) [data-returning-visit] {
   filter: brightness(1.08);
 }
 
-/* Outline buttons: a sunset rim that fills with the full sunset on hover, so
+/* Outline buttons: a 1px sunset rim (2px read as a keyboard focus ring on the
+   small square icon buttons) that fills with the full sunset on hover, so
    the solid primary button still reads as the main action. A button painted
    with an inline background (the lift colour picker) keeps its own fill. */
 :is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent:not([style*="background"]) {
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   background:
     linear-gradient(var(--background), var(--background)) padding-box,
     var(--sunset) border-box;
@@ -1345,21 +1346,31 @@ html:not([data-restoring]) [data-returning-visit] {
    never crowd the logo). Three sunset bands run solid under the logo, then
    break into a Mopar-style strobe: slanted blocks that get shorter while the
    gaps grow, dimming as they go. Stops are percentages so the strobe scales
-   with the nav's width. */
+   with the nav's width.
+
+   From md up the bands curl around the nav's top-left corner and run a short
+   way down its left side, wrapping the logo. Three background layers share one
+   band recipe: a quarter-ring corner (radial rings, 20px radius, outermost
+   pink so it meets the top run's pink), the top run, and the side run. On
+   phones the nav sits 8px from the screen edge, so the curl is dropped. */
 :is(.retro-arcade, .retro-arcade-dark) .app-nav::before {
+  --stripe-pink: hsl(330.9554 64.0816% 51.9608%);
+  --stripe-orange: hsl(17.5691 80.4444% 50%);
+  --stripe-gold: hsl(42 90% 55%);
   content: "";
   position: absolute;
-  inset-inline: 0;
   top: -10px;
+  left: 0;
+  right: 0;
   height: 8px;
   pointer-events: none;
   background: linear-gradient(
     to bottom,
-    hsl(330.9554 64.0816% 51.9608%) 0 2px,
+    var(--stripe-pink) 0 2px,
     transparent 2px 3px,
-    hsl(17.5691 80.4444% 50%) 3px 5px,
+    var(--stripe-orange) 3px 5px,
     transparent 5px 6px,
-    hsl(42 90% 55%) 6px 8px
+    var(--stripe-gold) 6px 8px
   );
   mask-image:
     linear-gradient(to right, #000 55%, rgb(0 0 0 / 0.25) 95%),
@@ -1383,6 +1394,43 @@ html:not([data-restoring]) [data-returning-visit] {
       transparent 91.3%
     );
   mask-composite: intersect;
+}
+
+@media (width >= 48rem) {
+  :is(.retro-arcade, .retro-arcade-dark) .app-nav::before {
+    left: -10px;
+    height: 44px;
+    background:
+      radial-gradient(
+          circle at 100% 100%,
+          transparent 12px,
+          var(--stripe-gold) 12px 14px,
+          transparent 14px 15px,
+          var(--stripe-orange) 15px 17px,
+          transparent 17px 18px,
+          var(--stripe-pink) 18px 20px,
+          transparent 20px
+        )
+        0 0 / 20px 20px no-repeat,
+      linear-gradient(
+          to bottom,
+          var(--stripe-pink) 0 2px,
+          transparent 2px 3px,
+          var(--stripe-orange) 3px 5px,
+          transparent 5px 6px,
+          var(--stripe-gold) 6px 8px
+        )
+        20px 0 / calc(100% - 20px) 8px no-repeat,
+      linear-gradient(
+          to right,
+          var(--stripe-pink) 0 2px,
+          transparent 2px 3px,
+          var(--stripe-orange) 3px 5px,
+          transparent 5px 6px,
+          var(--stripe-gold) 6px 8px
+        )
+        0 20px / 8px 24px no-repeat;
+  }
 }
 
 /* Top-level nav links (the only users of hover:text-foreground/80) light up

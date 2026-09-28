@@ -906,7 +906,7 @@ function SparklineTooltip({ bucket, x, repCount, unit, scope, isRecord }) {
   );
 }
 
-function ScopeButton({ isActive, onClick, children }) {
+export function ScopeButton({ isActive, onClick, children }) {
   return (
     <button
       type="button"

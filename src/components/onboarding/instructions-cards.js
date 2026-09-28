@@ -276,7 +276,10 @@ export function GettingStartedCard() {
   if (dataSource === "restoring") return null;
 
   return (
-    <Card className="relative overflow-hidden border hover:ring-0">
+    <Card
+      data-first-visit=""
+      className="relative overflow-hidden border hover:ring-0"
+    >
       <div
         className="pointer-events-none absolute inset-0 opacity-70"
         aria-hidden
@@ -426,7 +429,7 @@ export function GettingStartedCardCompact() {
   if (dataSource === "restoring") return null;
 
   return (
-    <Card>
+    <Card data-first-visit="">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <img
@@ -516,7 +519,7 @@ export const SignInInvite = () => {
   if (dataSource === "restoring") return null;
 
   return (
-    <div>
+    <div data-first-visit="">
       <GoogleSignInInlineButton cta="sign_in_invite">
         Sign in
       </GoogleSignInInlineButton>{" "}
@@ -650,7 +653,10 @@ export function DemoModeSignInCard() {
   if (dataSource === "restoring") return null;
 
   return (
-    <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">
+    <Card
+      data-first-visit=""
+      className="flex min-w-[14rem] flex-col md:min-w-[18rem]"
+    >
       <CardHeader className="space-y-2 pt-6 pb-5">
         <CardTitle className="flex items-center gap-2 text-lg">
           <img

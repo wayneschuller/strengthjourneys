@@ -610,9 +610,13 @@ export default function ImportPage() {
       <PageContainer>
         <PageHeader className="mx-auto w-full max-w-5xl px-0 sm:px-0 md:px-0 lg:px-0 xl:px-0">
           <PageHeaderHeading icon={Upload}>
-            {showReturningCopy
-              ? "Bring Your Training Timeline Up to Date"
-              : "Your Lifting Data is Trapped. Let's Fix That."}
+            {showReturningCopy ? (
+              "Bring Your Training Timeline Up to Date"
+            ) : (
+              <span data-first-visit="">
+                Your Lifting Data is Trapped. Let&apos;s Fix That.
+              </span>
+            )}
           </PageHeaderHeading>
           <PageHeaderDescription>
             {isOwnData(dataSource) || dataSource === "restoring" ? (
@@ -628,17 +632,17 @@ export default function ImportPage() {
                 spreadsheet at any time.
               </>
             ) : (
-              <>
+              <span data-first-visit="">
                 Choose a file from Hevy, Strong, StrongLifts 5x5, Wodify, BTWB,
                 TurnKey, FitNotes, or any spreadsheet and see your full strength
                 dashboard instantly. Use Strength Journeys as the migration
                 layer for your lifting life: preview first, then merge every
                 export into one Google Sheet you own.
-              </>
+              </span>
             )}
-            {authStatus !== "authenticated" &&
-              dataSource !== "restoring" &&
-              " No account required."}
+            {authStatus !== "authenticated" && dataSource !== "restoring" && (
+              <span data-first-visit=""> No account required.</span>
+            )}
           </PageHeaderDescription>
         </PageHeader>
 

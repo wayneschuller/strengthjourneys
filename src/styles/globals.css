@@ -219,6 +219,12 @@
 
 /* Shadcn stuff is below */
 
+/* Set by the inline script in _document.js for a returning lifter, and
+   removed once React knows where their data comes from. */
+html[data-restoring] [data-first-visit] {
+  display: none;
+}
+
 @layer base {
   :root {
     --background: hsl(0 0% 100%);

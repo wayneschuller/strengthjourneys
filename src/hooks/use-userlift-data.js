@@ -352,7 +352,12 @@ export const UserLiftingDataProvider = ({ children }) => {
   // no localStorage). useLayoutEffect flips it before the browser paints, so
   // consumers still suppress onboarding UI before anything is visible.
   const [hasMounted, setHasMounted] = useState(false);
-  useIsomorphicLayoutEffect(() => setHasMounted(true), []);
+  useIsomorphicLayoutEffect(() => {
+    setHasMounted(true);
+    // The pre-paint mark from _document.js has done its job: from here
+    // dataSource "restoring" hides first-visit content, in this same frame.
+    document.documentElement.removeAttribute("data-restoring");
+  }, []);
 
   // _hadSheetOnLoad is a snapshot taken once at module load, so it cannot know about a sheet
   // removed later in the same session. Without this flag it stays true after a disconnect while

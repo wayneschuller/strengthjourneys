@@ -494,6 +494,7 @@ export default function Home({ starterArticles = [] }) {
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={surface}
+                data-first-visit={surface === "hero" ? "" : undefined}
                 className="w-full"
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -525,7 +526,11 @@ export default function Home({ starterArticles = [] }) {
             >
               🏋️ The Big Four Barbell Lifts
             </h2>
-            {showBigFourSubtitle && <BigFourSubtitle className="mb-4" />}
+            {showBigFourSubtitle && (
+              <div data-first-visit="">
+                <BigFourSubtitle className="mb-4" />
+              </div>
+            )}
 
             <BigFourLiftCards
               animated={bigFourAnimated}

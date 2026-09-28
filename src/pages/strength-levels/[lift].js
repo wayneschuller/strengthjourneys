@@ -457,7 +457,10 @@ function StrengthLevelsDataCta({ page }) {
   const showSheetSetup = authStatus === "authenticated";
 
   return (
-    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+    <div
+      data-first-visit=""
+      className="rounded-lg border border-primary/20 bg-primary/5 p-4"
+    >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <h3 className="text-base font-semibold">See Your Actual Lifts Ranked</h3>

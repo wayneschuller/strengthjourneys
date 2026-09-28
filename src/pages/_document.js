@@ -4,6 +4,15 @@
  */
 
 import { Html, Head, Main, NextScript } from "next/document";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+
+// The server cannot see localStorage, so it renders the first-visit page. For
+// a returning lifter this marks <html> before the first paint, and CSS hides
+// every [data-first-visit] element until React takes over (dataSource
+// "restoring" in use-userlift-data.js removes the mark).
+const RESTORING_SCRIPT = `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(
+  LOCAL_STORAGE_KEYS.SHEET_INFO,
+)}));if(s&&s.ssid)document.documentElement.setAttribute("data-restoring","")}catch(e){}`;
 
 export default function Document() {
   return (
@@ -16,6 +25,7 @@ export default function Document() {
         <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
+        <script dangerouslySetInnerHTML={{ __html: RESTORING_SCRIPT }} />
       </Head>
       <body>
         <Main />

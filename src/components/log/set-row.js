@@ -515,7 +515,7 @@ export function SetRow({
                             strengthTooltip ? "mt-1 opacity-70" : undefined
                           }
                         >
-                          View detailed strength levels
+                          Click for {set.liftType} strength levels
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -586,7 +586,7 @@ export function SetRow({
                           strengthTooltip ? "mt-1 opacity-70" : undefined
                         }
                       >
-                        View detailed strength levels
+                        Click for {set.liftType} strength levels
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -716,7 +716,7 @@ function ProgressionBadge({ badge, liftType, isMetric, className }) {
           )}
           {href && (
             <p className="mt-1 opacity-70">
-              Open the {liftType} progress chart
+              Click for the {liftType} progress chart
             </p>
           )}
         </TooltipContent>
@@ -755,8 +755,8 @@ function getLogPRBadgeHref(liftType, badge) {
 }
 
 function getLogPRBadgeTooltip(liftType) {
-  if (!liftType) return "Open lift details";
-  return `Open ${liftType} details`;
+  if (!liftType) return "Click for rep PRs";
+  return `Click for ${liftType} rep PRs`;
 }
 
 function getPrToneClass(scope) {

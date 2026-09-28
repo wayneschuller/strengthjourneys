@@ -4,7 +4,8 @@
 // a tooltip showing the next tier, and a link to the per-lift strength page.
 //
 // Reusable wherever a lift's current E1RM is visible (log page, analyzer,
-// progress-guide, future AI coaching).
+// progress-guide, future AI coaching). StrengthLevelTooltipBody is the same
+// tooltip on its own, for the log's strength level badge.
 
 import Link from "next/link";
 import {
@@ -13,6 +14,7 @@ import {
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { NEXT_TIER } from "@/lib/celebration";
+import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +29,104 @@ const LIFT_STRENGTH_SLUGS = {
   "Strict Press": "strict-press",
 };
 
+// The standard as of the session date when the bio allows it, so an old
+// session is rated against the age the lifter was then.
+export function getStrengthStandard({
+  liftType,
+  standards,
+  age,
+  sessionDate,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  return sessionDate && age && bodyWeight != null && sex != null
+    ? getStandardForLiftDate(
+        age,
+        sessionDate,
+        bodyWeight,
+        sex,
+        liftType,
+        isMetric ?? false,
+      )
+    : standards?.[liftType];
+}
+
+// The lightest weight on the plate grid whose e1RM at `reps` reaches the
+// target. Starts from the formula's inverse and steps up past its rounding.
+function getWeightToReach(targetE1rm, reps, formula, isMetric) {
+  const step = isMetric ? 2.5 : 5;
+  let weight =
+    Math.floor(estimateWeightForReps(targetE1rm, reps, formula) / step) * step;
+  for (let i = 0; i < 20; i += 1) {
+    if (estimateE1RM(reps, weight, formula) >= targetE1rm) return weight;
+    weight += step;
+  }
+  return null;
+}
+
+/**
+ * Where an e1RM sits and what the next level asks for. With `reps` it also
+ * names the set at that rep count that would get there.
+ */
+export function StrengthLevelTooltipBody({
+  liftType,
+  e1rmValue,
+  standard,
+  isMetric,
+  reps = null,
+  e1rmFormula = "Brzycki",
+}) {
+  if (!standard?.elite || !e1rmValue) return null;
+  const rating = getStrengthRatingForE1RM(e1rmValue, standard);
+  if (!rating) return null;
+
+  const unit = isMetric ? "kg" : "lb";
+  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+  const nextTierInfo = NEXT_TIER[rating];
+  const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
+  const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmValue) : null;
+  const nextEmoji = nextTierInfo
+    ? (STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? "")
+    : "";
+  const setToReach =
+    nextTierValue && diff > 0 && reps >= 1 && reps <= 10
+      ? getWeightToReach(nextTierValue, reps, e1rmFormula, isMetric)
+      : null;
+
+  return (
+    <>
+      <p className="font-semibold">{liftType}</p>
+      <p>
+        {emoji} {rating} · E1RM {Math.round(e1rmValue)}
+        {unit}
+      </p>
+      {nextTierInfo && diff > 0 ? (
+        <>
+          <p className="text-muted-foreground">
+            {nextEmoji} {nextTierInfo.name} at {Math.round(nextTierValue)}
+            {unit}, {diff}
+            {unit} to go
+          </p>
+          {setToReach && (
+            <p className="text-muted-foreground">
+              {reps === 1 ? "A single at " : `A set of ${reps}@`}
+              {setToReach}
+              {unit} would get you there
+            </p>
+          )}
+        </>
+      ) : nextTierInfo ? (
+        <p className="text-muted-foreground">
+          {nextEmoji} {nextTierInfo.name}, you&apos;re there!
+        </p>
+      ) : (
+        <p className="text-muted-foreground">Top of the chart!</p>
+      )}
+    </>
+  );
+}
+
 export function StrengthBar({
   liftType,
   e1rmValue,
@@ -37,17 +137,15 @@ export function StrengthBar({
   sex,
   isMetric,
 }) {
-  const standard =
-    sessionDate && age && bodyWeight != null && sex != null
-      ? getStandardForLiftDate(
-          age,
-          sessionDate,
-          bodyWeight,
-          sex,
-          liftType,
-          isMetric ?? false,
-        )
-      : standards?.[liftType];
+  const standard = getStrengthStandard({
+    liftType,
+    standards,
+    age,
+    sessionDate,
+    bodyWeight,
+    sex,
+    isMetric,
+  });
 
   if (!standard?.elite || !e1rmValue) return null;
 
@@ -64,11 +162,6 @@ export function StrengthBar({
           Math.max(2, ((e1rmValue - physicallyActive) / range) * 100),
         )
       : 50;
-
-  const nextTierInfo = NEXT_TIER[rating];
-  const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
-  const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmValue) : null;
-  const unit = isMetric ? "kg" : "lb";
 
   // Tier divider positions
   const tiers = [standard.beginner, standard.intermediate, standard.advanced]
@@ -115,25 +208,12 @@ export function StrengthBar({
               />
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
-              <p className="font-semibold">{liftType}</p>
-              <p>
-                {emoji} {rating} · E1RM {Math.round(e1rmValue)}
-                {unit}
-              </p>
-              {nextTierInfo && diff > 0 ? (
-                <p className="text-muted-foreground">
-                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
-                  {nextTierInfo.name} — {diff}
-                  {unit} away
-                </p>
-              ) : nextTierInfo && diff <= 0 ? (
-                <p className="text-muted-foreground">
-                  {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
-                  {nextTierInfo.name} — you&apos;re there!
-                </p>
-              ) : (
-                <p className="text-muted-foreground">Top of the chart!</p>
-              )}
+              <StrengthLevelTooltipBody
+                liftType={liftType}
+                e1rmValue={e1rmValue}
+                standard={standard}
+                isMetric={isMetric}
+              />
             </TooltipContent>
           </Tooltip>
         </div>

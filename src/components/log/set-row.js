@@ -46,6 +46,7 @@ export function SetRow({
   onDelete,
   isDeleteDisabled = false,
   strengthBadge,
+  strengthTooltip = null,
   progressionBadge = null,
   usedSessionUrls,
   onSessionUrlAccepted,
@@ -508,7 +509,14 @@ export function SetRow({
                         <span className="inline-flex">{strengthBadge}</span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p>View detailed strength levels</p>
+                        {strengthTooltip}
+                        <p
+                          className={
+                            strengthTooltip ? "mt-1 opacity-70" : undefined
+                          }
+                        >
+                          View detailed strength levels
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -572,7 +580,14 @@ export function SetRow({
                       <span className="inline-flex">{strengthBadge}</span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p>View detailed strength levels</p>
+                      {strengthTooltip}
+                      <p
+                        className={
+                          strengthTooltip ? "mt-1 opacity-70" : undefined
+                        }
+                      >
+                        View detailed strength levels
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

@@ -34,7 +34,11 @@ import {
 } from "@/lib/log-progression";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
-import { StrengthBar } from "@/components/log/strength-bar";
+import {
+  getStrengthStandard,
+  StrengthBar,
+  StrengthLevelTooltipBody,
+} from "@/components/log/strength-bar";
 import { LiftPercentileLine } from "@/components/log/lift-percentile-line";
 import {
   LiftStrengthLevel,
@@ -682,6 +686,26 @@ export function LiftBlock({
               onSessionUrlAccepted={onSessionUrlAccepted}
               reserveVideoSlot={hasAnyVideo}
               progressionBadge={progressionBadges[idx] ?? null}
+              strengthTooltip={
+                idx === bestE1rmIndex ? (
+                  <StrengthLevelTooltipBody
+                    liftType={liftType}
+                    e1rmValue={bestE1rmValue}
+                    standard={getStrengthStandard({
+                      liftType,
+                      standards,
+                      age,
+                      sessionDate,
+                      bodyWeight,
+                      sex,
+                      isMetric,
+                    })}
+                    isMetric={isMetric}
+                    reps={effectiveSet.reps}
+                    e1rmFormula={e1rmFormula}
+                  />
+                ) : null
+              }
               strengthBadge={
                 idx === bestE1rmIndex ? (
                   <LiftStrengthLevel

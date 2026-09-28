@@ -323,7 +323,6 @@ export function SetRow({
   const hasBadges =
     !set._pending && (Boolean(strengthBadge) || Boolean(progressionBadge));
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
-  const prBadgeTooltip = getLogPRBadgeTooltip(set.liftType);
 
   return (
     <motion.div
@@ -515,46 +514,20 @@ export function SetRow({
                   </TooltipProvider>
                 )}
                 <span className="inline-flex flex-col items-end gap-1">
-                  {hasRankingBadges && (
-                    <TooltipProvider delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="inline-flex flex-col items-end gap-1">
-                            {rankingBadges.map((badge) => (
-                              <Link
-                                key={`${badge.scope}-${badge.message}`}
-                                href={getLogPRBadgeHref(set.liftType, badge)}
-                                className="inline-flex"
-                              >
-                                <CelebrationReveal
-                                  animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
-                                >
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      metaBadgeClassName,
-                                      rankingBadgeMaxClass,
-                                      getPrToneClass(badge.scope),
-                                    )}
-                                  >
-                                    <span className="truncate">
-                                      {badge.message}
-                                    </span>
-                                  </Badge>
-                                </CelebrationReveal>
-                              </Link>
-                            ))}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          <p>{prBadgeTooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
+                  {hasRankingBadges &&
+                    rankingBadges.map((badge) => (
+                      <PrRankBadge
+                        key={`${badge.scope}-${badge.message}`}
+                        badge={badge}
+                        liftType={set.liftType}
+                        animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
+                        className={cn(metaBadgeClassName, rankingBadgeMaxClass)}
+                      />
+                    ))}
                   {progressionBadge && (
                     <ProgressionBadge
                       badge={progressionBadge}
+                      liftType={set.liftType}
                       isMetric={isMetric}
                       className={cn(metaBadgeClassName, rankingBadgeMaxClass)}
                     />
@@ -605,45 +578,22 @@ export function SetRow({
                 </TooltipProvider>
               )}
               {hasRankingBadges && (
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex flex-col items-start gap-1">
-                        {rankingBadges.map((badge) => (
-                          <Link
-                            key={`${badge.scope}-${badge.message}`}
-                            href={getLogPRBadgeHref(set.liftType, badge)}
-                            className="inline-flex"
-                          >
-                            <CelebrationReveal
-                              animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
-                            >
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  metaBadgeClassName,
-                                  "max-w-[11rem]",
-                                  getPrToneClass(badge.scope),
-                                )}
-                              >
-                                <span className="truncate">
-                                  {badge.message}
-                                </span>
-                              </Badge>
-                            </CelebrationReveal>
-                          </Link>
-                        ))}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p>{prBadgeTooltip}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <span className="inline-flex flex-col items-start gap-1">
+                  {rankingBadges.map((badge) => (
+                    <PrRankBadge
+                      key={`${badge.scope}-${badge.message}`}
+                      badge={badge}
+                      liftType={set.liftType}
+                      animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
+                      className={cn(metaBadgeClassName, "max-w-[11rem]")}
+                    />
+                  ))}
+                </span>
               )}
               {progressionBadge && (
                 <ProgressionBadge
                   badge={progressionBadge}
+                  liftType={set.liftType}
                   isMetric={isMetric}
                   className={cn(metaBadgeClassName, "max-w-[11rem]")}
                 />
@@ -676,36 +626,78 @@ export function SetRow({
   );
 }
 
-// Says which set this one moved past, so the badge is checkable at a glance.
-function ProgressionBadge({ badge, isMetric, className }) {
+// A PR badge opens the lift's rep PRs; its tooltip carries the record it
+// passed or the one it is chasing.
+function PrRankBadge({ badge, liftType, animationKey, className }) {
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href={getLogPRBadgeHref(liftType, badge)}
+            className="inline-flex"
+          >
+            <CelebrationReveal animationKey={animationKey}>
+              <Badge
+                variant="outline"
+                className={cn(className, getPrToneClass(badge.scope))}
+              >
+                <span className="truncate">{badge.message}</span>
+              </Badge>
+            </CelebrationReveal>
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[16rem]">
+          {badge.detail && <p>{badge.detail}</p>}
+          <p className={badge.detail ? "mt-1 opacity-70" : undefined}>
+            {getLogPRBadgeTooltip(liftType)}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+// Says which set this one moved past, and opens the lift's progress chart.
+function ProgressionBadge({ badge, liftType, isMetric, className }) {
   const { previousSet, previousDate } = badge;
   const { value, unit } = getDisplayWeight(previousSet, isMetric);
   const dateLabel = new Date(`${previousDate}T00:00:00`).toLocaleDateString(
     "en-US",
     { month: "short", day: "numeric" },
   );
+  const href = getLiftDetailUrl(liftType, "#progress-chart");
+  const pill = (
+    <Badge
+      variant="outline"
+      className={cn(className, "text-emerald-600 dark:text-emerald-400")}
+    >
+      <span className="truncate">{badge.message}</span>
+    </Badge>
+  );
 
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <Badge
-              variant="outline"
-              className={cn(
-                className,
-                "text-emerald-600 dark:text-emerald-400",
-              )}
-            >
-              <span className="truncate">{badge.message}</span>
-            </Badge>
-          </span>
+          {href ? (
+            <Link href={href} className="inline-flex">
+              {pill}
+            </Link>
+          ) : (
+            <span className="inline-flex">{pill}</span>
+          )}
         </TooltipTrigger>
-        <TooltipContent side="bottom">
+        <TooltipContent side="bottom" className="max-w-[16rem]">
           <p>
             Beats {previousSet.reps}@{value}
             {unit} from {dateLabel}
           </p>
+          {href && (
+            <p className="mt-1 opacity-70">
+              Open the {liftType} progress chart
+            </p>
+          )}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

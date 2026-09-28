@@ -551,7 +551,8 @@ function LiftAnalysisSections({ liftType, isBigFour, strengthLevelsPath }) {
           <LiftLogCta liftType={liftType} />
         </div>
       </SectionReveal>
-      <SectionReveal>
+      {/* The log's progression badge deep links here. */}
+      <SectionReveal id="progress-chart">
         <VisualizerMini liftType={liftType} />
       </SectionReveal>
       <SectionReveal id="tonnage-chart">

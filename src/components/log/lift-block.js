@@ -27,6 +27,7 @@ import {
 } from "@/lib/celebration";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import {
   getPreviousSessionBests,
   getProgressionBadges,
@@ -352,7 +353,18 @@ export function LiftBlock({
       const rankingBadges = getLogRankingBadges({
         rankingMeta,
         trainingAgeYears,
-      });
+      }).map((badge) => ({
+        ...badge,
+        detail: getPrBadgeDetail({
+          badge,
+          set: s,
+          effectiveSet,
+          lane: (badge.scope === "yearly"
+            ? topLiftsByTypeAndRepsLast12Months
+            : topLiftsByTypeAndReps)?.[liftType]?.[effectiveSet.reps - 1],
+          isMetric,
+        }),
+      }));
       const primaryBadge = rankingBadges[0] ?? active;
       const celebration = getCelebrationTier({
         rankingMeta,
@@ -753,6 +765,43 @@ export function LiftBlock({
       )}
     </div>
   );
+}
+
+// One line of context for a PR badge's tooltip. A #1 names the record it just
+// passed; anything below #1 names the record it is chasing.
+function getPrBadgeDetail({ badge, set, effectiveSet, lane, isMetric }) {
+  if (!Array.isArray(lane) || lane.length === 0) return null;
+  const reps = effectiveSet.reps;
+  const scopeLabel = badge.scope === "yearly" ? "12-month" : "lifetime";
+
+  // The lane holds the saved version of this set, so skip it by row, by
+  // object, or by its exact values when there is no row yet.
+  const isThisSet = (entry) =>
+    entry === set ||
+    (set.rowIndex != null
+      ? entry.rowIndex === set.rowIndex
+      : entry.date === effectiveSet.date &&
+        entry.reps === effectiveSet.reps &&
+        entry.weight === effectiveSet.weight &&
+        entry.unitType === effectiveSet.unitType);
+  const describe = (entry) => {
+    const { value, unit } = getDisplayWeight(entry, isMetric);
+    const date = new Date(`${entry.date}T00:00:00`).toLocaleDateString(
+      "en-US",
+      { month: "short", day: "numeric", year: "numeric" },
+    );
+    return `${entry.reps}@${value}${unit} on ${date}`;
+  };
+
+  const other = lane.find((entry) => !isThisSet(entry));
+  if (badge.rank === 0) {
+    return other
+      ? `New ${scopeLabel} best ${reps}RM. It passes ${describe(other)}.`
+      : `Your first ${reps}RM on record. Every one from here builds on it.`;
+  }
+  return other
+    ? `Your ${scopeLabel} best ${reps}RM is ${describe(other)}.`
+    : null;
 }
 
 function getLogRankingBadges({ rankingMeta, trainingAgeYears }) {

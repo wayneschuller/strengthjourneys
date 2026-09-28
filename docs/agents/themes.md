@@ -18,6 +18,9 @@ Theme system is a mix of `next-themes` + CSS variable packs.
 - **`dark:` Tailwind variant:** `src/styles/globals.css` defines a custom `dark` variant that activates when `html` has one of the dark theme classes (currently `.dark`, `.neo-brutalism-dark`, `.blueprint-dark`, `.retro-arcade-dark`, `.starry-night-dark`).
   - If you add a new `*-dark` theme and expect Tailwind `dark:` utilities to apply inside it, add the new dark class to this `@custom-variant dark` selector.
 
+- **Per-theme Tailwind variants:** `blueprint:` and `retro-arcade:` (both light and dark variants of each) are declared as `@custom-variant` in `src/styles/globals.css`. Retro Arcade also exposes a `--sunset` gradient token, e.g. `retro-arcade:bg-(image:--sunset)`.
+  - Style stock shadcn primitives in `src/components/ui` from theme CSS (matching their cva class signature) rather than editing them.
+
 - **Theme picker + access control:** `src/components/ui-shell/theme-chooser.js`
   - Unauthenticated users are limited to `light` / `dark`.
   - Authenticated users can choose any theme from the registered list and can toggle the animated background option.

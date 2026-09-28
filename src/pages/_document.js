@@ -10,9 +10,24 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 // a returning lifter this marks <html> before the first paint, and CSS hides
 // every [data-first-visit] element until React takes over (dataSource
 // "restoring" in use-userlift-data.js removes the mark).
-const RESTORING_SCRIPT = `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(
+//
+// It runs in the browser as text, via toString() below, so it must stand
+// alone: only its argument and browser globals, no imports, and plain syntax
+// the build will not rewrite into helper calls. Comments stay out here because
+// toString() would ship them. It reads the sheet we saved last visit; the
+// try/catch covers blocked storage (some private modes) and a damaged value.
+function markRestoringBeforePaint(sheetInfoKey) {
+  try {
+    var sheetInfo = JSON.parse(localStorage.getItem(sheetInfoKey));
+    if (sheetInfo && sheetInfo.ssid) {
+      document.documentElement.setAttribute("data-restoring", "");
+    }
+  } catch (error) {}
+}
+
+const RESTORING_SCRIPT = `(${markRestoringBeforePaint.toString()})(${JSON.stringify(
   LOCAL_STORAGE_KEYS.SHEET_INFO,
-)}));if(s&&s.ssid)document.documentElement.setAttribute("data-restoring","")}catch(e){}`;
+)});`;
 
 export default function Document() {
   return (

@@ -555,11 +555,11 @@ html:not([data-restoring]) [data-returning-visit] {
 
   .retro-arcade-dark {
     --background: hsl(192.2222 100% 10.5882%);
-    --foreground: hsl(180 6.9307% 60.3922%);
+    --foreground: hsl(180 45% 88%);
     --card: hsl(192.2034 80.8219% 14.3137%);
-    --card-foreground: hsl(180 6.9307% 60.3922%);
+    --card-foreground: hsl(180 45% 88%);
     --popover: hsl(192.2034 80.8219% 14.3137%);
-    --popover-foreground: hsl(180 6.9307% 60.3922%);
+    --popover-foreground: hsl(180 45% 88%);
     --primary: hsl(330.9554 64.0816% 51.9608%);
     --primary-foreground: hsl(0 0% 100%);
     --link: hsl(330.9554 70% 72%);
@@ -580,7 +580,7 @@ html:not([data-restoring]) [data-returning-visit] {
     --chart-4: hsl(17.5691 80.4444% 44.1176%);
     --chart-5: hsl(1.0405 71.1934% 52.3529%);
     --sidebar: hsl(192.2222 100% 10.5882%);
-    --sidebar-foreground: hsl(180 6.9307% 60.3922%);
+    --sidebar-foreground: hsl(180 45% 88%);
     --sidebar-primary: hsl(330.9554 64.0816% 51.9608%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
     --sidebar-accent: hsl(175.4622 58.6207% 28%);
@@ -1260,4 +1260,52 @@ html:not([data-restoring]) [data-returning-visit] {
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
+}
+
+/*
+ * Retro Arcade touches that tokens alone can't express.
+ *
+ * Numbers: every `tabular-nums` stat reads in Space Mono, like an arcade high
+ * score. The AI coach keeps its own reading face.
+ *
+ * Primary buttons: a pink to orange Outrun sunset. `button-primary` is set by
+ * the Button primitive's default variant; requiring `.bg-primary` too means a
+ * button whose className swaps the background (twMerge drops bg-primary) keeps
+ * that colour instead of getting the gradient.
+ *
+ * Dark only: neon-sign glow on page headings, and cards lit softly from behind.
+ * The card rule is unlayered because Tailwind v4 inlines shadow-* values, so
+ * the Card primitive's `shadow-sm` would otherwise win. Nested cards skip the
+ * glow, and html2canvas capture mode ([data-capture]) keeps the plain card.
+ */
+:is(.retro-arcade, .retro-arcade-dark) .tabular-nums:not(.font-coach *) {
+  font-family: var(--font-mono);
+}
+
+:is(.retro-arcade, .retro-arcade-dark) .button-primary.bg-primary {
+  background-image: linear-gradient(
+    90deg,
+    hsl(330.9554 64.0816% 51.9608%),
+    hsl(17.5691 80.4444% 50%)
+  );
+}
+
+:is(.retro-arcade, .retro-arcade-dark) .button-primary.bg-primary:hover {
+  filter: brightness(1.08);
+}
+
+.retro-arcade-dark :is(h1, h2):not(.font-coach *) {
+  text-shadow:
+    0 0 8px hsl(330.9554 64.0816% 51.9608% / 0.55),
+    0 0 22px hsl(330.9554 64.0816% 51.9608% / 0.3);
+}
+
+.retro-arcade-dark .blueprint-card:not([data-capture]) {
+  box-shadow:
+    0 0 0 1px hsl(330.9554 64.0816% 51.9608% / 0.18),
+    0 0 20px -4px hsl(330.9554 64.0816% 51.9608% / 0.4);
+}
+
+.retro-arcade-dark .blueprint-card .blueprint-card {
+  box-shadow: none;
 }

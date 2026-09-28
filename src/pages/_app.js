@@ -30,6 +30,8 @@ import { AthleteBioProvider } from "@/hooks/use-athlete-biodata";
 import "@fontsource/geist-sans/index.css"; // Used in: light, dark
 import "@fontsource/dm-sans/index.css"; // Used in: neo-brutalism, neo-brutalism-dark
 import "@fontsource/outfit/index.css"; // Used in: retro-arcade, retro-arcade-dark
+import "@fontsource/space-mono/latin-400.css"; // Scoreboard numbers in retro-arcade, retro-arcade-dark
+import "@fontsource/space-mono/latin-700.css";
 import "@fontsource/ibm-plex-sans-condensed/index.css"; // Used in: blueprint, blueprint-dark
 import "@fontsource/libre-baskerville/index.css"; // Used in: starry-night, starry-night-dark (400 weight)
 import "@fontsource/libre-baskerville/500.css"; // font-medium

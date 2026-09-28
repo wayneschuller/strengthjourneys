@@ -30,6 +30,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
+import { StrengthLevelTooltipBody } from "@/components/log/strength-bar";
 
 export function getConsecutiveWorkoutGroups(workouts = []) {
   const groups = [];
@@ -677,6 +678,7 @@ export function LiftStrengthLevel({
   inline = false,
   asBadge = false,
   badgeClassName = "",
+  withTooltip = false,
 }) {
   const formula = e1rmFormula || "Brzycki";
   const standard =
@@ -723,7 +725,7 @@ export function LiftStrengthLevel({
   );
 
   if (asBadge) {
-    return (
+    const badge = (
       <Link
         href={href}
         aria-label={`View detailed ${liftType} strength levels`}
@@ -737,6 +739,38 @@ export function LiftStrengthLevel({
           <span>{ratingLabel}</span>
         </Badge>
       </Link>
+    );
+    if (!withTooltip) return badge;
+
+    // The same tooltip the log's strength badge carries, so a rating reads
+    // the same everywhere it appears. The rep count comes from the set that
+    // earned the e1RM, for the "would get you there" line.
+    const bestWorkout = workouts.find(
+      (lift) =>
+        (lift.reps ?? 0) > 0 &&
+        estimateE1RM(lift.reps, lift.weight ?? 0, formula) === bestE1RM,
+    );
+    return (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">{badge}</span>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[18rem]">
+            <StrengthLevelTooltipBody
+              liftType={liftType}
+              e1rmValue={bestE1RM}
+              standard={standard}
+              isMetric={isMetric}
+              reps={bestWorkout?.reps ?? null}
+              e1rmFormula={formula}
+            />
+            <p className="mt-1 opacity-70">
+              Click for {liftType} strength levels
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 

@@ -352,6 +352,7 @@ function RepRangeCard({
       isMetric={bio.isMetric}
       inline
       asBadge
+      withTooltip
     />
   ) : null;
 
@@ -728,6 +729,7 @@ function RecordRow({
               isMetric={bio.isMetric}
               inline
               asBadge
+              withTooltip
             />
           )}
           {/* Hangs off the near right of the set, after the weight and the

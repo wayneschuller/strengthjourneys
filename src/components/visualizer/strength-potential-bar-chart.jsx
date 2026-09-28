@@ -6,9 +6,9 @@
  * clicked to make it the target instead. A scope toggle projects from the
  * last 12 months, so an old lifetime best does not set every target.
  */
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useResizeObserver } from "usehooks-ts";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Crown, Info, LoaderCircle, Target } from "lucide-react";
 
@@ -37,6 +37,14 @@ import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-setting
 import { ScopeButton } from "@/components/lift-explorer/lift-type-prs-display";
 
 const REP_COUNTS = Array.from({ length: 10 }, (_, i) => i + 1);
+
+// Chart geometry the tooltip placement depends on. The tooltip sits beside
+// the hovered column rather than following the mouse, so it never hides the
+// dumbbell it is describing.
+const Y_AXIS_WIDTH = 56;
+const CHART_MARGIN = { top: 28, right: 8, bottom: 4, left: 0 };
+const TOOLTIP_WIDTH = 240; // w-60
+const TOOLTIP_GAP = 6;
 
 // A gap smaller than this share of the potential is rounding noise, not a PR
 // worth pointing at, so the suggestion looks elsewhere first.
@@ -258,6 +266,35 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
     ? `${bestLift.reps}@${formatWeight(bestDisplay.value)}${bestDisplay.unit}`
     : null;
 
+  // CardContent is always mounted, so the observer attaches on the first pass.
+  const contentRef = useRef(null);
+  const { width: contentWidth = 0 } = useResizeObserver({ ref: contentRef });
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+
+  const tooltipPosition = useMemo(() => {
+    if (hoveredIndex === null || !contentWidth) return undefined;
+    const plotLeft = CHART_MARGIN.left + Y_AXIS_WIDTH;
+    const band =
+      (contentWidth - plotLeft - CHART_MARGIN.right) / REP_COUNTS.length;
+    const columnLeft = plotLeft + band * hoveredIndex;
+    const right = columnLeft + band + TOOLTIP_GAP;
+    const left = columnLeft - TOOLTIP_GAP - TOOLTIP_WIDTH;
+    // Prefer the right of the column, flip left near the edge, and on a
+    // phone too narrow for either, pin it to whichever side has more room.
+    let x;
+    if (right + TOOLTIP_WIDTH <= contentWidth) x = right;
+    else if (left >= 0) x = left;
+    else x = columnLeft > contentWidth / 2 ? 0 : contentWidth - TOOLTIP_WIDTH;
+    return { x: Math.max(0, x), y: 0 };
+  }, [hoveredIndex, contentWidth]);
+
+  const handleChartMouseMove = (state) => {
+    const index = Number(state?.activeTooltipIndex);
+    setHoveredIndex(
+      state?.isTooltipActive && Number.isInteger(index) ? index : null,
+    );
+  };
+
   const handleChartClick = (state) => {
     const reps = Number(state?.activeLabel);
     if (!REP_COUNTS.includes(reps)) return;
@@ -338,7 +375,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent ref={contentRef} className="space-y-4">
         {isLoading || !topLiftsByTypeAndReps ? (
           <Skeleton className="h-[340px] w-full" />
         ) : rows.length === 0 ? (
@@ -363,8 +400,10 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
             <ChartContainer config={{}} className="h-[280px] !aspect-auto">
               <BarChart
                 data={rows}
-                margin={{ top: 28, right: 8, bottom: 4, left: 0 }}
+                margin={CHART_MARGIN}
                 onClick={handleChartClick}
+                onMouseMove={handleChartMouseMove}
+                onMouseLeave={() => setHoveredIndex(null)}
                 className="cursor-pointer"
               >
                 <CartesianGrid
@@ -384,11 +423,12 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                   allowDataOverflow
                   axisLine={false}
                   tickLine={false}
-                  width={56}
+                  width={Y_AXIS_WIDTH}
                   tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                   tickFormatter={(tick) => `${tick}${displayUnit}`}
                 />
                 <ChartTooltip
+                  position={tooltipPosition}
                   cursor={{ fill: "var(--muted)", opacity: 0.6, radius: 8 }}
                   content={
                     <PotentialTooltip
@@ -670,18 +710,37 @@ function ChartKey({ colors }) {
   );
 }
 
-// Recharts tooltip for the hovered rep count: the best set, and the potential
-// when there is room above it.
+// Recharts tooltip for the hovered rep count, in the chart's top-down order:
+// the potential when there is room above the best set, then the best set.
 function PotentialTooltip({ active, payload, liftType, displayUnit, colors }) {
   if (!active || !payload?.length) return null;
   const row = payload[0].payload;
   const { reps, lift } = row;
 
   return (
-    <div className="border-border bg-card w-52 space-y-1.5 rounded-lg border p-3 text-sm shadow-lg md:w-60">
+    <div className="border-border bg-card w-60 space-y-1.5 rounded-lg border p-3 text-sm shadow-lg">
       <p className="font-semibold">
         {repsWord(reps)}, {liftType}
       </p>
+      {(row.gap > 0 || !row.isTested) && (
+        <p className="flex items-start gap-2">
+          <span
+            className="mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full border-2"
+            style={{ borderColor: colors.ink }}
+          />
+          <span>
+            Potential: {reps}@{formatWeight(row.potential)}
+            {displayUnit}
+            {row.gap > 0 && (
+              <span className="text-muted-foreground">
+                {" "}
+                (+{formatWeight(Math.round(row.gap * 10) / 10)}
+                {displayUnit})
+              </span>
+            )}
+          </span>
+        </p>
+      )}
       {row.isTested ? (
         <p className="flex items-start gap-2">
           <span
@@ -701,25 +760,6 @@ function PotentialTooltip({ active, payload, liftType, displayUnit, colors }) {
         </p>
       ) : (
         <p className="text-muted-foreground">Not logged yet.</p>
-      )}
-      {(row.gap > 0 || !row.isTested) && (
-        <p className="flex items-start gap-2">
-          <span
-            className="mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full border-2"
-            style={{ borderColor: colors.ink }}
-          />
-          <span>
-            Potential: {reps}@{formatWeight(row.potential)}
-            {displayUnit}
-            {row.gap > 0 && (
-              <span className="text-muted-foreground">
-                {" "}
-                (+{formatWeight(Math.round(row.gap * 10) / 10)}
-                {displayUnit})
-              </span>
-            )}
-          </span>
-        </p>
       )}
       {row.isBenchmark && (
         <p className="text-muted-foreground text-xs">

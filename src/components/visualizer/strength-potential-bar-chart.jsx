@@ -43,6 +43,11 @@ const REP_COUNTS = Array.from({ length: 10 }, (_, i) => i + 1);
 // the hovered column rather than following the mouse, so it never hides the
 // dumbbell it is describing.
 const Y_AXIS_WIDTH = 56;
+// On a phone every pixel goes to the ten columns: the Y axis goes (the gap
+// labels and tooltip carry the numbers) and the chart runs into the card's
+// side padding.
+const COMPACT_MAX_WIDTH = 520;
+const COMPACT_BLEED = 16;
 const CHART_MARGIN = { top: 28, right: 8, bottom: 4, left: 0 };
 const TOOLTIP_WIDTH = 240; // w-60
 const TOOLTIP_GAP = 6;
@@ -269,24 +274,27 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   // CardContent is always mounted, so the observer attaches on the first pass.
   const contentRef = useRef(null);
   const { width: contentWidth = 0 } = useResizeObserver({ ref: contentRef });
+  const isCompact = contentWidth > 0 && contentWidth < COMPACT_MAX_WIDTH;
+  const yAxisWidth = isCompact ? 0 : Y_AXIS_WIDTH;
+  const chartWidth = contentWidth + (isCompact ? COMPACT_BLEED * 2 : 0);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const tooltipPosition = useMemo(() => {
-    if (hoveredIndex === null || !contentWidth) return undefined;
-    const plotLeft = CHART_MARGIN.left + Y_AXIS_WIDTH;
+    if (hoveredIndex === null || !chartWidth) return undefined;
+    const plotLeft = CHART_MARGIN.left + yAxisWidth;
     const band =
-      (contentWidth - plotLeft - CHART_MARGIN.right) / REP_COUNTS.length;
+      (chartWidth - plotLeft - CHART_MARGIN.right) / REP_COUNTS.length;
     const columnLeft = plotLeft + band * hoveredIndex;
     const right = columnLeft + band + TOOLTIP_GAP;
     const left = columnLeft - TOOLTIP_GAP - TOOLTIP_WIDTH;
     // Prefer the right of the column, flip left near the edge, and on a
     // phone too narrow for either, pin it to whichever side has more room.
     let x;
-    if (right + TOOLTIP_WIDTH <= contentWidth) x = right;
+    if (right + TOOLTIP_WIDTH <= chartWidth) x = right;
     else if (left >= 0) x = left;
-    else x = columnLeft > contentWidth / 2 ? 0 : contentWidth - TOOLTIP_WIDTH;
+    else x = columnLeft > chartWidth / 2 ? 0 : chartWidth - TOOLTIP_WIDTH;
     return { x: Math.max(0, x), y: 0 };
-  }, [hoveredIndex, contentWidth]);
+  }, [hoveredIndex, chartWidth, yAxisWidth]);
 
   const handleChartMouseMove = (state) => {
     const index = Number(state?.activeTooltipIndex);
@@ -411,7 +419,15 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                 );
               })}
             </div>
-            <ChartContainer config={{}} className="h-[280px] !aspect-auto">
+            <ChartContainer
+              config={{}}
+              className="h-[280px] !aspect-auto"
+              style={
+                isCompact
+                  ? { marginInline: -COMPACT_BLEED }
+                  : undefined
+              }
+            >
               <BarChart
                 data={rows}
                 margin={CHART_MARGIN}
@@ -433,11 +449,12 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                   tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                 />
                 <YAxis
+                  hide={isCompact}
                   domain={yDomain}
                   allowDataOverflow
                   axisLine={false}
                   tickLine={false}
-                  width={Y_AXIS_WIDTH}
+                  width={yAxisWidth}
                   tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                   tickFormatter={(tick) => `${tick}${displayUnit}`}
                 />

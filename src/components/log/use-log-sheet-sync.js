@@ -413,7 +413,7 @@ export function useLogSheetSync({
         if (!res.ok) {
           const apiError = await readApiError(res, "Update failed");
           if (apiError.code === "PRECONDITION_FAILED") {
-            console.error("[sheet/edit-cell] preflight verification failed", {
+            console.warn("[sheet/edit-cell] preflight verification failed", {
               rowIndex,
               field,
               beforeSnapshot,
@@ -434,7 +434,7 @@ export function useLogSheetSync({
         }
         markSaved();
       } catch (err) {
-        console.error("[sheet/edit-cell] updateSet failed:", err);
+        console.warn("[sheet/edit-cell] updateSet failed:", err);
         markError();
       }
       logSheetTimings(
@@ -466,7 +466,7 @@ export function useLogSheetSync({
         if (!res.ok) {
           const apiError = await readApiError(res, "Update failed");
           if (apiError.code === "PRECONDITION_FAILED") {
-            console.error("[sheet/edit-row] preflight verification failed", {
+            console.warn("[sheet/edit-row] preflight verification failed", {
               rowIndex,
               beforeSnapshot,
               afterSnapshot,
@@ -490,7 +490,7 @@ export function useLogSheetSync({
         clearPendingQueuedSync(tempId, snapshotToEditableFields(afterSnapshot));
         markSaved();
       } catch (err) {
-        console.error("[sheet/edit-row] updateSet failed:", err);
+        console.warn("[sheet/edit-row] updateSet failed:", err);
         abandonPendingQueuedSync(tempId, beforeSnapshot);
         if (tempId) void mutate();
         markError();
@@ -701,7 +701,7 @@ export function useLogSheetSync({
         const data = await res.json();
         if (!res.ok) {
           if (data?.code === "PRECONDITION_FAILED") {
-            console.error("[sheet/delete-row] preflight verification failed", {
+            console.warn("[sheet/delete-row] preflight verification failed", {
               rowIndex: set.rowIndex,
               before: buildSheetSnapshotFromFields(
                 getEditableSetFields(set),
@@ -755,7 +755,7 @@ export function useLogSheetSync({
         startDeleteCooldown();
         markStructuralSaved();
       } catch (err) {
-        console.error("[sheet/delete-row] deleteSet failed:", err);
+        console.warn("[sheet/delete-row] deleteSet failed:", err);
         // Restore the row on failure
         setDeletedRowIndices((prev) => {
           const next = new Set(prev);
@@ -831,11 +831,18 @@ export function useLogSheetSync({
         const data = await res.json();
         if (!res.ok) {
           if (data?.code === "PRECONDITION_FAILED") {
-            console.error("[sheet/insert-row] preflight verification failed", {
+            console.warn("[sheet/insert-row] preflight verification failed", {
               rowIndex: insertAfterRowIndex,
               beforeSnapshot,
               actual: data?.actual ?? null,
               message: data?.error || "Add set failed",
+            });
+            toast({
+              title: "Set not added to protect the sheet",
+              description:
+                "The sheet changed since the log last loaded. It is refreshing now, so try adding the set again.",
+              variant: "destructive",
+              duration: 8000,
             });
             // If indices drifted, immediately revalidate so a retry can succeed.
             // Keep this lightweight: we already removed the optimistic in-flight row below.
@@ -856,7 +863,7 @@ export function useLogSheetSync({
         markStructuralSaved();
         void mutate();
       } catch (err) {
-        console.error("[sheet/insert-row] addSet failed:", err);
+        console.warn("[sheet/insert-row] addSet failed:", err);
         // Remove the failed pending row
         setPendingSetsSync((prev) => {
           const next = { ...prev };
@@ -879,6 +886,7 @@ export function useLogSheetSync({
       sessionDate,
       setPendingSetsSync,
       promotePendingByTempId,
+      toast,
       mutate,
     ],
   );
@@ -1117,7 +1125,7 @@ export function useLogSheetSync({
         const data = await res.json();
         if (!res.ok) {
           if (data?.code === "PRECONDITION_FAILED") {
-            console.error("[sheet/insert-row] preflight verification failed", {
+            console.warn("[sheet/insert-row] preflight verification failed", {
               rowIndex: insertAfterRowIndex,
               beforeSnapshot,
               actual: data?.actual ?? null,
@@ -1132,7 +1140,7 @@ export function useLogSheetSync({
         markStructuralSaved();
         void mutate();
       } catch (err) {
-        console.error("[sheet/insert-row] addLift failed:", err);
+        console.warn("[sheet/insert-row] addLift failed:", err);
         setPendingSetsSync((prev) => {
           const next = { ...prev };
           if (next[liftType]) {
@@ -1274,7 +1282,7 @@ export function useLogSheetSync({
           : todayIso,
       };
     } catch (err) {
-      console.error("[sheet/delete] deleteSession failed:", err);
+      console.warn("[sheet/delete] deleteSession failed:", err);
       markStructuralError();
     }
     logSheetTimings("deleteSession", timings, performance.now() - t0);

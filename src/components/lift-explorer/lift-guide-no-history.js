@@ -100,6 +100,7 @@ export function LiftGuideNoHistory({ liftType }) {
               width={16}
               height={16}
               className="h-4 w-4"
+              unoptimized
               aria-hidden
             />
             Connect Google Sheet

@@ -10,6 +10,7 @@ import { useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocalStorage, useResizeObserver } from "usehooks-ts";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { AnimatePresence, motion } from "motion/react";
 import { Crown, Info, LoaderCircle, Target } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -39,9 +40,8 @@ import { cn } from "@/lib/utils";
 
 const REP_COUNTS = Array.from({ length: 10 }, (_, i) => i + 1);
 
-// Chart geometry the tooltip placement depends on. The tooltip sits beside
-// the hovered column rather than following the mouse, so it never hides the
-// dumbbell it is describing.
+// Chart geometry the popover placement depends on. The popover sits beside
+// the picked column, so it never hides the dumbbell it is describing.
 const Y_AXIS_WIDTH = 56;
 // On a phone every pixel goes to the ten columns: the Y axis goes (the gap
 // labels and tooltip carry the numbers) and the chart runs into the card's
@@ -49,8 +49,8 @@ const Y_AXIS_WIDTH = 56;
 const COMPACT_MAX_WIDTH = 520;
 const COMPACT_BLEED = 16;
 const CHART_MARGIN = { top: 28, right: 8, bottom: 4, left: 0 };
-const TOOLTIP_WIDTH = 240; // w-60
-const TOOLTIP_GAP = 6;
+const POPOVER_WIDTH = 240; // w-60
+const POPOVER_GAP = 6;
 
 // A gap smaller than this share of the potential is rounding noise, not a PR
 // worth pointing at, so the suggestion looks elsewhere first.
@@ -87,10 +87,12 @@ const HEADROOM_PHRASES = [
 
 const UNTESTED_PHRASES = [
   (reps) => `A ${reps} rep set is fresh ground, so your first one is a PR.`,
-  (reps) => `You have not logged ${repsWord(reps)} yet. The first one sets the record.`,
+  (reps) =>
+    `You have not logged ${repsWord(reps)} yet. The first one sets the record.`,
   (reps) => `${repsWord(reps)} is open territory.`,
   (reps) => `Your ${reps}RM is waiting to be written.`,
-  (reps) => `Nothing logged at ${repsWord(reps)} yet, which makes it an easy first PR.`,
+  (reps) =>
+    `Nothing logged at ${repsWord(reps)} yet, which makes it an easy first PR.`,
 ];
 
 function capitalise(text) {
@@ -157,7 +159,9 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   );
   const scope = hasYearlyData ? scopeChoice : "lifetime";
   const topLifts = (
-    scope === "yearly" ? topLiftsByTypeAndRepsLast12Months : topLiftsByTypeAndReps
+    scope === "yearly"
+      ? topLiftsByTypeAndRepsLast12Months
+      : topLiftsByTypeAndReps
   )?.[liftType];
   const isBodyweightLoadChart = isBodyweightLoadLift(liftType);
   const displayUnit = isMetric ? "kg" : "lb";
@@ -209,8 +213,10 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       const potential = Math.max(
         0,
         Math.round(
-          getDisplayWeight({ weight: rawPotential, unitType: bestUnit }, isMetric)
-            .value * 10,
+          getDisplayWeight(
+            { weight: rawPotential, unitType: bestUnit },
+            isMetric,
+          ).value * 10,
         ) / 10,
       );
       const achieved = lift ? getDisplayWeight(lift, isMetric).value : null;
@@ -277,31 +283,24 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const isCompact = contentWidth > 0 && contentWidth < COMPACT_MAX_WIDTH;
   const yAxisWidth = isCompact ? 0 : Y_AXIS_WIDTH;
   const chartWidth = contentWidth + (isCompact ? COMPACT_BLEED * 2 : 0);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const pickedRow = rows.find((row) => row.reps === pickedReps) ?? null;
 
-  const tooltipPosition = useMemo(() => {
-    if (hoveredIndex === null || !chartWidth) return undefined;
+  const popoverPosition = useMemo(() => {
+    if (pickedReps === null || !chartWidth) return null;
     const plotLeft = CHART_MARGIN.left + yAxisWidth;
     const band =
       (chartWidth - plotLeft - CHART_MARGIN.right) / REP_COUNTS.length;
-    const columnLeft = plotLeft + band * hoveredIndex;
-    const right = columnLeft + band + TOOLTIP_GAP;
-    const left = columnLeft - TOOLTIP_GAP - TOOLTIP_WIDTH;
+    const columnLeft = plotLeft + band * (pickedReps - 1);
+    const right = columnLeft + band + POPOVER_GAP;
+    const left = columnLeft - POPOVER_GAP - POPOVER_WIDTH;
     // Prefer the right of the column, flip left near the edge, and on a
     // phone too narrow for either, pin it to whichever side has more room.
     let x;
-    if (right + TOOLTIP_WIDTH <= chartWidth) x = right;
+    if (right + POPOVER_WIDTH <= chartWidth) x = right;
     else if (left >= 0) x = left;
-    else x = columnLeft > chartWidth / 2 ? 0 : chartWidth - TOOLTIP_WIDTH;
+    else x = columnLeft > chartWidth / 2 ? 0 : chartWidth - POPOVER_WIDTH;
     return { x: Math.max(0, x), y: 0 };
-  }, [hoveredIndex, chartWidth, yAxisWidth]);
-
-  const handleChartMouseMove = (state) => {
-    const index = Number(state?.activeTooltipIndex);
-    setHoveredIndex(
-      state?.isTooltipActive && Number.isInteger(index) ? index : null,
-    );
-  };
+  }, [pickedReps, chartWidth, yAxisWidth]);
 
   const handleChartClick = (state) => {
     const reps = Number(state?.activeLabel);
@@ -329,7 +328,8 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                       href={getLogHref(bestLift.date)}
                       className="text-foreground hover:text-primary font-medium underline decoration-dotted underline-offset-2 transition-colors"
                     >
-                      {bestSetLabel} ({getReadableDateString(bestLift.date, true)})
+                      {bestSetLabel} (
+                      {getReadableDateString(bestLift.date, true)})
                     </Link>
                   </>
                 ) : (
@@ -419,74 +419,80 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                 );
               })}
             </div>
-            <ChartContainer
-              config={{}}
-              className="h-[280px] !aspect-auto"
-              style={
-                isCompact
-                  ? { marginInline: -COMPACT_BLEED }
-                  : undefined
-              }
+            <div
+              className="relative"
+              style={isCompact ? { marginInline: -COMPACT_BLEED } : undefined}
             >
-              <BarChart
-                data={rows}
-                margin={CHART_MARGIN}
-                onClick={handleChartClick}
-                onMouseMove={handleChartMouseMove}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className="cursor-pointer"
-              >
-                <CartesianGrid
-                  vertical={false}
-                  strokeDasharray="3 4"
-                  stroke="var(--border)"
-                />
-                <XAxis
-                  dataKey="reps"
-                  axisLine={false}
-                  tickLine={false}
-                  tickMargin={8}
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-                />
-                <YAxis
-                  hide={isCompact}
-                  domain={yDomain}
-                  allowDataOverflow
-                  axisLine={false}
-                  tickLine={false}
-                  width={yAxisWidth}
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-                  tickFormatter={(tick) => `${tick}${displayUnit}`}
-                />
-                <ChartTooltip
-                  position={tooltipPosition}
-                  // No hover band: it looked like a second selection next to
-                  // the picked column. The tooltip already marks the hover.
-                  cursor={false}
-                  content={
-                    <PotentialTooltip
+              <ChartContainer config={{}} className="!aspect-auto h-[280px]">
+                <BarChart
+                  data={rows}
+                  margin={CHART_MARGIN}
+                  onClick={handleChartClick}
+                  className="cursor-pointer"
+                >
+                  <CartesianGrid
+                    vertical={false}
+                    strokeDasharray="3 4"
+                    stroke="var(--border)"
+                  />
+                  <XAxis
+                    dataKey="reps"
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={8}
+                    tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                  />
+                  <YAxis
+                    hide={isCompact}
+                    domain={yDomain}
+                    allowDataOverflow
+                    axisLine={false}
+                    tickLine={false}
+                    width={yAxisWidth}
+                    tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                    tickFormatter={(tick) => `${tick}${displayUnit}`}
+                  />
+                  {/* Hover shows nothing: the details open as a popover on
+                    click, which works the same on a phone. The empty tooltip
+                    stays so Recharts still reports which column was hit. */}
+                  <ChartTooltip cursor={false} content={() => null} />
+                  <Bar
+                    dataKey="range"
+                    animationDuration={700}
+                    animationEasing="ease-out"
+                    shape={(props) => (
+                      <DumbbellShape
+                        {...props}
+                        chartId={chartId}
+                        colors={colors}
+                        isSelected={props.payload?.reps === pickedReps}
+                        displayUnit={displayUnit}
+                      />
+                    )}
+                  />
+                </BarChart>
+              </ChartContainer>
+              <AnimatePresence>
+                {pickedRow && popoverPosition && (
+                  <motion.div
+                    key={pickedRow.reps}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-0 z-10"
+                    style={{ left: popoverPosition.x }}
+                  >
+                    <RepPopover
+                      row={pickedRow}
                       liftType={liftType}
                       displayUnit={displayUnit}
                       colors={colors}
                     />
-                  }
-                />
-                <Bar
-                  dataKey="range"
-                  animationDuration={700}
-                  animationEasing="ease-out"
-                  shape={(props) => (
-                    <DumbbellShape
-                      {...props}
-                      chartId={chartId}
-                      colors={colors}
-                      isSelected={props.payload?.reps === pickedReps}
-                      displayUnit={displayUnit}
-                    />
-                  )}
-                />
-              </BarChart>
-            </ChartContainer>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             <ChartKey colors={colors} />
           </>
         )}
@@ -520,11 +526,15 @@ function TargetCallout({
     body = `${bestSetLabel} is your strongest set on this chart. Every other target is projected from it.`;
     headline = bestSetLabel;
   } else if (!row.isTested) {
-    title = isSuggested ? "Easiest PR to chase" : `${capitalise(repsWord(reps))} target`;
+    title = isSuggested
+      ? "Easiest PR to chase"
+      : `${capitalise(repsWord(reps))} target`;
     body = `${UNTESTED_PHRASES[phraseIndex](reps)} Your ${bestSetLabel} says ${targetLabel} is in reach.`;
   } else if (target > row.achieved) {
     const lift = row.lift;
-    title = isSuggested ? "Easiest PR to chase" : `${capitalise(repsWord(reps))} target`;
+    title = isSuggested
+      ? "Easiest PR to chase"
+      : `${capitalise(repsWord(reps))} target`;
     body = `${HEADROOM_PHRASES[phraseIndex](reps)} Your best is ${reps}@${formatWeight(row.achieved)}${displayUnit}${lift?.date ? ` from ${getReadableDateString(lift.date)}` : ""}, and your ${bestSetLabel} says ${targetLabel} is in reach.`;
   } else {
     title = `${capitalise(repsWord(reps))}, right on potential`;
@@ -553,7 +563,9 @@ function TargetCallout({
         </div>
         <div className="min-w-0 space-y-0.5">
           <p className="font-semibold">{title}</p>
-          <p className="text-muted-foreground text-sm leading-relaxed">{body}</p>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            {body}
+          </p>
           {!isPicked || isSuggested ? (
             <p className="text-muted-foreground/80 text-xs leading-5">
               {isPicked
@@ -660,7 +672,11 @@ function DumbbellShape({
             <>
               <defs>
                 <radialGradient id={`halo-${chartId}`}>
-                  <stop offset="0%" stopColor={colors.base} stopOpacity={0.45} />
+                  <stop
+                    offset="0%"
+                    stopColor={colors.base}
+                    stopOpacity={0.45}
+                  />
                   <stop offset="100%" stopColor={colors.base} stopOpacity={0} />
                 </radialGradient>
               </defs>
@@ -716,7 +732,14 @@ function ChartKey({ colors }) {
       </span>
       <span className="flex items-center gap-1.5">
         <svg width="12" height="12" aria-hidden="true">
-          <circle cx="6" cy="6" r="4.5" fill="none" stroke={colors.ink} strokeWidth="2" />
+          <circle
+            cx="6"
+            cy="6"
+            r="4.5"
+            fill="none"
+            stroke={colors.ink}
+            strokeWidth="2"
+          />
         </svg>
         Potential
       </span>
@@ -735,18 +758,20 @@ function ChartKey({ colors }) {
         Not logged yet
       </span>
       <span className="flex items-center gap-1.5">
-        <Crown className="h-3.5 w-3.5" style={{ color: colors.ink }} aria-hidden="true" />
+        <Crown
+          className="h-3.5 w-3.5"
+          style={{ color: colors.ink }}
+          aria-hidden="true"
+        />
         Benchmark set
       </span>
     </div>
   );
 }
 
-// Recharts tooltip for the hovered rep count, in the chart's top-down order:
-// the potential when there is room above the best set, then the best set.
-function PotentialTooltip({ active, payload, liftType, displayUnit, colors }) {
-  if (!active || !payload?.length) return null;
-  const row = payload[0].payload;
+// Details for the picked rep count, in the chart's top-down order: the
+// potential when there is room above the best set, then the best set.
+function RepPopover({ row, liftType, displayUnit, colors }) {
   const { reps, lift } = row;
 
   return (
@@ -806,7 +831,10 @@ const normalizeHex = (value) => {
   if (typeof value !== "string" || !value.startsWith("#")) return null;
   const hex = value.slice(1);
   if (hex.length === 3) {
-    return `#${hex.split("").map((c) => c + c).join("")}`.toLowerCase();
+    return `#${hex
+      .split("")
+      .map((c) => c + c)
+      .join("")}`.toLowerCase();
   }
   if (hex.length === 6) {
     return `#${hex}`.toLowerCase();

@@ -228,10 +228,13 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   ]);
 
   const suggestedReps = useMemo(() => getSuggestedReps(rows), [rows]);
-  const selectedReps =
+  // Only a click picks a rep; with nothing picked the callout follows the
+  // suggestion and no column is highlighted.
+  const pickedReps =
     selection?.liftType === liftType && selection?.scope === scope
       ? selection.reps
-      : suggestedReps;
+      : null;
+  const selectedReps = pickedReps ?? suggestedReps;
   const selectedRow = rows.find((row) => row.reps === selectedReps) ?? null;
 
   const yDomain = useMemo(() => {
@@ -258,7 +261,8 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const handleChartClick = (state) => {
     const reps = Number(state?.activeLabel);
     if (!REP_COUNTS.includes(reps)) return;
-    setSelection({ liftType, scope, reps });
+    // A second click on the picked rep lets go of it.
+    setSelection(reps === pickedReps ? null : { liftType, scope, reps });
   };
 
   return (
@@ -348,6 +352,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
               <TargetCallout
                 row={selectedRow}
                 isSuggested={selectedRow.reps === suggestedReps}
+                isPicked={pickedReps !== null}
                 onShowSuggested={() => setSelection(null)}
                 bestSetLabel={bestSetLabel}
                 isMetric={isMetric}
@@ -402,7 +407,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                       {...props}
                       chartId={chartId}
                       colors={colors}
-                      isSelected={props.payload?.reps === selectedReps}
+                      isSelected={props.payload?.reps === pickedReps}
                       displayUnit={displayUnit}
                     />
                   )}
@@ -421,6 +426,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
 function TargetCallout({
   row,
   isSuggested,
+  isPicked,
   onShowSuggested,
   bestSetLabel,
   isMetric,
@@ -476,9 +482,11 @@ function TargetCallout({
         <div className="min-w-0 space-y-0.5">
           <p className="font-semibold">{title}</p>
           <p className="text-muted-foreground text-sm leading-relaxed">{body}</p>
-          {isSuggested ? (
+          {!isPicked || isSuggested ? (
             <p className="text-muted-foreground/80 text-xs">
-              Click any rep count on the chart to see its target.
+              {isPicked
+                ? "Click it again to let go."
+                : "Click any rep count on the chart to see its target."}
             </p>
           ) : (
             <button

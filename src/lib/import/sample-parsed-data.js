@@ -53,7 +53,8 @@ export function getDemoParsedData(anchorDate = getDemoAnchorDate()) {
 // Oldest first. Each set is [reps, weight, notes?, videoUrl?], weights in lb.
 // Warm-ups climb the plates the way a lifter loads them. The last session is
 // the one /log opens on: a squat PR, the press finally beating 120, and a
-// deadlift PR. The videos are famous record lifts the lifter watched.
+// deadlift PR. The "form check" videos are famous record lifts, a joke for
+// whoever taps one to see what a video link does.
 const DEMO_SESSIONS = [
   {
     daysAgo: 81,
@@ -788,16 +789,16 @@ const DEMO_SESSIONS = [
         [5, 112.5],
       ],
       Deadlift: [
-        [
-          5,
-          135,
-          "Watched Thor pull 501 kg before my sets. Perspective.",
-          "https://www.youtube.com/watch?v=2kEC7X1FUIg",
-        ],
+        [5, 135],
         [5, 185],
         [3, 225],
         [2, 275],
-        [5, 335],
+        [
+          5,
+          335,
+          "Filmed my deadlift for a form check. Lockout looks solid.",
+          "https://www.youtube.com/watch?v=2kEC7X1FUIg",
+        ],
       ],
     },
   },
@@ -825,7 +826,7 @@ const DEMO_SESSIONS = [
         [
           5,
           165,
-          "165 for 3x5. One day I will bench like Olivares.",
+          "Filmed my last set of bench. Arch and leg drive feel dialed in.",
           "https://www.youtube.com/watch?v=jTQTiW_g2pU",
         ],
       ],
@@ -1176,7 +1177,7 @@ const DEMO_SESSIONS = [
         [
           5,
           305,
-          "305. Watched Ray Williams squat 860 on the way in.",
+          "305 on video. Depth looks good to me.",
           "https://www.youtube.com/watch?v=qgbnLdH4qjc",
         ],
       ],
@@ -1202,7 +1203,7 @@ const DEMO_SESSIONS = [
         [
           3,
           135,
-          "135 cleans. Klokov cleans and presses 162 kg in this one. One day.",
+          "Got my cleans on video. Fast under the bar.",
           "https://www.youtube.com/watch?v=WnJd42b3EfI",
         ],
       ],

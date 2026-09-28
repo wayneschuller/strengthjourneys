@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { RefreshCw, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -15,12 +16,25 @@ import { cn } from "@/lib/utils";
  * renders no pill and the browser adds it after hydration using its own date.
  */
 
-const KIND_STYLES = {
-  new: "bg-primary/10 text-primary border-primary/30",
-  updated: "bg-transparent text-primary border-primary/30",
+// Each kind takes a theme chart color for its fill, border and icon, so the
+// pills pick up every theme's palette. The label stays in the foreground color
+// because some themes' chart colors are too light to read as text. The icon
+// plays when the pill or its surrounding card (a `group`) is hovered.
+const KINDS = {
+  new: {
+    label: "New",
+    Icon: Sparkles,
+    pillClass: "bg-chart-1/15 border-chart-1/40",
+    iconClass:
+      "text-chart-1 group-hover:scale-125 group-hover:rotate-12 group-hover/pill:scale-125 group-hover/pill:rotate-12",
+  },
+  updated: {
+    label: "Updated",
+    Icon: RefreshCw,
+    pillClass: "bg-chart-2/15 border-chart-2/40",
+    iconClass: "text-chart-2 group-hover:rotate-180 group-hover/pill:rotate-180",
+  },
 };
-
-const KIND_LABELS = { new: "New", updated: "Updated" };
 
 // Local midnight of a YYYY-MM-DD date, or null if it does not parse.
 function parseLocalDate(isoDate) {
@@ -68,7 +82,7 @@ export function FreshPill({ kind, date, className }) {
   );
   if (!fresh) return null;
 
-  const label = KIND_LABELS[kind];
+  const { label, Icon, pillClass, iconClass } = KINDS[kind];
   const readableDate = parseLocalDate(date).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -78,11 +92,18 @@ export function FreshPill({ kind, date, className }) {
     <span
       title={`${label} ${readableDate}`}
       className={cn(
-        "animate-in fade-in inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-xs leading-none font-semibold duration-500",
-        KIND_STYLES[kind],
+        "group/pill animate-in fade-in zoom-in-90 text-foreground inline-flex shrink-0 items-center gap-1 rounded-full border py-0.5 pr-2 pl-1.5 text-xs leading-none font-semibold duration-500",
+        pillClass,
         className,
       )}
     >
+      <Icon
+        aria-hidden
+        className={cn(
+          "size-3 transition-transform duration-500 ease-out",
+          iconClass,
+        )}
+      />
       {label}
     </span>
   );

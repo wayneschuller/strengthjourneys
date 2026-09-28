@@ -1458,3 +1458,77 @@ html:not([data-restoring]) [data-returning-visit] {
 .retro-arcade-dark .blueprint-card .blueprint-card {
   box-shadow: none;
 }
+
+/*
+ * Blueprint buttons, drawn like a technical drawing rather than a copy of the
+ * Retro Arcade sunset. Same matching contract as there: the stock shadcn
+ * Button is untouched and each variant is found by its cva class signature;
+ * a className that swaps the background drops the matched class, and a button
+ * with an inline background (the lift colour picker) keeps its own fill.
+ *
+ * Primary: cyanotype blue with a faint drafting grid and an inner double line,
+ * like a framed title block. Grid and line are mixed from primary-foreground,
+ * so they are light on light Blueprint's deep blue and dark on dark
+ * Blueprint's bright cyan. `--drafting-grid` also serves the nav's Log pill.
+ *
+ * Outline: a blue hairline with orange registration ticks in the corners,
+ * echoing the card corner marks. Hover fills pale blue instead of the stock
+ * orange accent, which was loud against the blue page.
+ */
+:is(.blueprint, .blueprint-dark) {
+  --drafting-line: color-mix(in srgb, var(--primary-foreground) 14%, transparent);
+  --drafting-grid:
+    linear-gradient(to right, var(--drafting-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--drafting-line) 1px, transparent 1px);
+  --drafting-tick: var(--accent);
+}
+
+:is(.blueprint, .blueprint-dark)
+  .bg-primary.text-primary-foreground.hover\:bg-primary\/90:not(
+    [style*="background"]
+  ) {
+  background-image: var(--drafting-grid);
+  background-size: 8px 8px;
+  box-shadow:
+    inset 0 0 0 2px var(--primary),
+    inset 0 0 0 3px
+      color-mix(in srgb, var(--primary-foreground) 40%, transparent);
+}
+
+:is(.blueprint, .blueprint-dark)
+  .bg-primary.text-primary-foreground.hover\:bg-primary\/90:not(
+    [style*="background"]
+  ):hover {
+  filter: brightness(1.08);
+}
+
+:is(.blueprint, .blueprint-dark)
+  .border-input.bg-background.hover\:bg-accent:not([style*="background"]) {
+  border-color: color-mix(in srgb, var(--primary) 60%, transparent);
+  background-image:
+    linear-gradient(var(--drafting-tick), var(--drafting-tick)) top 2px left
+      2px / 6px 1px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick)) top 2px left
+      2px / 1px 6px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick)) top 2px right
+      2px / 6px 1px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick)) top 2px right
+      2px / 1px 6px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick)) bottom 2px
+      left 2px / 6px 1px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick)) bottom 2px
+      left 2px / 1px 6px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick)) bottom 2px
+      right 2px / 6px 1px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick)) bottom 2px
+      right 2px / 1px 6px no-repeat;
+}
+
+:is(.blueprint, .blueprint-dark)
+  .border-input.bg-background.hover\:bg-accent:not(
+    [style*="background"]
+  ):hover {
+  border-color: var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 12%, var(--background));
+  color: var(--foreground);
+}

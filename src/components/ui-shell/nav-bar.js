@@ -88,7 +88,7 @@ export function NavBar() {
   const importHref = getRepeatImportHref(importProfile, "repeat-import-nav");
 
   return (
-    <Collapsible className="bg-background/50 mx-2 my-3 rounded-lg md:mx-10 xl:mx-12 2xl:mx-24">
+    <Collapsible className="bg-background/50 retro-arcade:bg-(image:--sunset) retro-arcade:bg-size-[100%_2px] retro-arcade:bg-bottom retro-arcade:bg-no-repeat mx-2 my-3 rounded-lg md:mx-10 xl:mx-12 2xl:mx-24">
       <div className="flex items-center px-3 md:px-6">
         <div className="flex items-center">
           <DesktopNav />
@@ -101,7 +101,7 @@ export function NavBar() {
                 <Button
                   asChild
                   size="sm"
-                  className="mr-0 inline-flex h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:mr-2 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+                  className="mr-0 inline-flex h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:mr-2 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200 retro-arcade:bg-(image:--sunset) retro-arcade:text-white retro-arcade:hover:brightness-110 retro-arcade:focus-visible:ring-primary"
                 >
                   <Link href="/log" prefetch={false}>
                     {canOpenLog && dataSource !== "import" ? (
@@ -179,7 +179,7 @@ export function NavBar() {
           {authStatus === "authenticated" && !canOpenLog && (
             <Button
               size="sm"
-              className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+              className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200 retro-arcade:bg-(image:--sunset) retro-arcade:text-white retro-arcade:hover:brightness-110 retro-arcade:focus-visible:ring-primary"
               onClick={() => {
                 openSheetSetupDialog("bootstrap");
               }}

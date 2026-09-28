@@ -10,6 +10,10 @@
 /* blueprint: applies when html has .blueprint or .blueprint-dark (either light or dark variant) */
 @custom-variant blueprint (&:where(.blueprint, .blueprint-dark, .blueprint *, .blueprint-dark *));
 
+/* retro-arcade: applies when html has .retro-arcade or .retro-arcade-dark. Declared after
+   dark so a retro-arcade: utility wins over a dark: one on the same property. */
+@custom-variant retro-arcade (&:where(.retro-arcade, .retro-arcade-dark, .retro-arcade *, .retro-arcade-dark *));
+
 /* Required for MessageResponse component (Streamdown) */
 @source "../../node_modules/streamdown/dist/*.js";
 
@@ -1281,16 +1285,20 @@ html:not([data-restoring]) [data-returning-visit] {
  * the Card primitive's `shadow-sm` would otherwise win. Nested cards skip the
  * glow, and html2canvas capture mode ([data-capture]) keeps the plain card.
  */
+:is(.retro-arcade, .retro-arcade-dark) {
+  --sunset: linear-gradient(
+    90deg,
+    hsl(330.9554 64.0816% 51.9608%),
+    hsl(17.5691 80.4444% 50%)
+  );
+}
+
 :is(.retro-arcade, .retro-arcade-dark) .tabular-nums:not(.font-coach *) {
   font-family: var(--font-mono);
 }
 
 :is(.retro-arcade, .retro-arcade-dark) .bg-primary.text-primary-foreground.hover\:bg-primary\/90 {
-  background-image: linear-gradient(
-    90deg,
-    hsl(330.9554 64.0816% 51.9608%),
-    hsl(17.5691 80.4444% 50%)
-  );
+  background-image: var(--sunset);
 }
 
 :is(.retro-arcade, .retro-arcade-dark) .bg-primary.text-primary-foreground.hover\:bg-primary\/90:hover {
@@ -1303,22 +1311,22 @@ html:not([data-restoring]) [data-returning-visit] {
   border: 2px solid transparent;
   background:
     linear-gradient(var(--background), var(--background)) padding-box,
-    linear-gradient(
-        90deg,
-        hsl(330.9554 64.0816% 51.9608%),
-        hsl(17.5691 80.4444% 50%)
-      )
-      border-box;
+    var(--sunset) border-box;
 }
 
 :is(.retro-arcade, .retro-arcade-dark) .border-input.bg-background.hover\:bg-accent:hover {
-  background: linear-gradient(
-      90deg,
-      hsl(330.9554 64.0816% 51.9608%),
-      hsl(17.5691 80.4444% 50%)
-    )
-    border-box;
+  background: var(--sunset) border-box;
   color: hsl(0 0% 100%);
+}
+
+/* Top-level nav links (the only users of hover:text-foreground/80) light up
+   pink on hover, with the neon glow in dark. */
+:is(.retro-arcade, .retro-arcade-dark) .hover\:text-foreground\/80:hover {
+  color: var(--link);
+}
+
+.retro-arcade-dark .hover\:text-foreground\/80:hover {
+  text-shadow: 0 0 8px hsl(330.9554 64.0816% 51.9608% / 0.6);
 }
 
 .retro-arcade-dark :is(h1, h2):not(.font-coach *) {

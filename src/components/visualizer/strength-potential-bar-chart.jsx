@@ -262,7 +262,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   };
 
   return (
-    <Card className="shadow-lg md:mx-2">
+    <Card>
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">

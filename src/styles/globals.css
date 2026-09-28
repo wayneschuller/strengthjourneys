@@ -923,6 +923,12 @@ html:not([data-restoring]) [data-returning-visit] {
   body {
     @apply bg-background text-foreground;
   }
+  /* Recharts 3 wraps its drawing layers in <g tabindex="-1">. A click
+     focuses one and the browser outlines it as a stray box around the
+     plot. They are never reachable by keyboard, so the outline helps no one. */
+  .recharts-wrapper g[tabindex="-1"]:focus {
+    outline: none;
+  }
 }
 
 @layer utilities {

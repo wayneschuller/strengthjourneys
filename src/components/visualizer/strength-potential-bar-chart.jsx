@@ -402,7 +402,9 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                   data={rows}
                   margin={CHART_MARGIN}
                   onClick={handleChartClick}
-                  className="cursor-pointer"
+                  // Recharts sets an inline cursor: default on its wrapper, which
+                  // beats a class. Any click in a column's band picks that rep.
+                  style={{ cursor: "pointer" }}
                 >
                   <CartesianGrid
                     vertical={false}

@@ -52,9 +52,9 @@ export function getDemoParsedData(anchorDate = getDemoAnchorDate()) {
 
 // Oldest first. Each set is [reps, weight, notes?, videoUrl?], weights in lb.
 // Warm-ups climb the plates the way a lifter loads them. The last session is
-// the one /log opens on: a squat PR, the press finally beating 120, and a
-// deadlift PR. The "form check" videos are famous record lifts, a joke for
-// whoever taps one to see what a video link does.
+// the one /log opens on: a filmed squat PR, the press finally beating 120,
+// and a deadlift PR. The "form check" videos are famous record lifts, a joke
+// for whoever taps one to see what a video link does.
 const DEMO_SESSIONS = [
   {
     daysAgo: 81,
@@ -1174,12 +1174,7 @@ const DEMO_SESSIONS = [
         [2, 225],
         [5, 305],
         [5, 305],
-        [
-          5,
-          305,
-          "305 on video. Depth looks good to me.",
-          "https://www.youtube.com/watch?v=qgbnLdH4qjc",
-        ],
+        [5, 305, "305. Legs feel fresh since the reset."],
       ],
       "Bench Press": [
         [5, 45],
@@ -1225,7 +1220,8 @@ const DEMO_SESSIONS = [
         [
           5,
           310,
-          "310 for three sets of five. Twelve weeks ago I squatted 135.",
+          "310 for three sets of five, filmed the last one. Twelve weeks ago I squatted 135.",
+          "https://www.youtube.com/watch?v=qgbnLdH4qjc",
         ],
       ],
       "Strict Press": [

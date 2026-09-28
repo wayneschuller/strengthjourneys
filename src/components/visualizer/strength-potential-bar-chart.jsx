@@ -10,7 +10,6 @@ import { useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocalStorage, useResizeObserver } from "usehooks-ts";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { AnimatePresence, motion } from "motion/react";
 import { Crown, Info, LoaderCircle, Target } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -40,17 +39,13 @@ import { cn } from "@/lib/utils";
 
 const REP_COUNTS = Array.from({ length: 10 }, (_, i) => i + 1);
 
-// Chart geometry the popover placement depends on. The popover sits beside
-// the picked column, so it never hides the dumbbell it is describing.
 const Y_AXIS_WIDTH = 56;
 // On a phone every pixel goes to the ten columns: the Y axis goes (the gap
-// labels and tooltip carry the numbers) and the chart runs into the card's
-// side padding.
+// labels and the callout carry the numbers) and the chart runs into the
+// card's side padding.
 const COMPACT_MAX_WIDTH = 520;
 const COMPACT_BLEED = 16;
 const CHART_MARGIN = { top: 28, right: 8, bottom: 4, left: 0 };
-const POPOVER_WIDTH = 240; // w-60
-const POPOVER_GAP = 6;
 
 // A gap smaller than this share of the potential is rounding noise, not a PR
 // worth pointing at, so the suggestion looks elsewhere first.
@@ -282,26 +277,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const { width: contentWidth = 0 } = useResizeObserver({ ref: contentRef });
   const isCompact = contentWidth > 0 && contentWidth < COMPACT_MAX_WIDTH;
   const yAxisWidth = isCompact ? 0 : Y_AXIS_WIDTH;
-  const chartWidth = contentWidth + (isCompact ? COMPACT_BLEED * 2 : 0);
-  const pickedRow = rows.find((row) => row.reps === pickedReps) ?? null;
-
-  const popoverPosition = useMemo(() => {
-    if (pickedReps === null || !chartWidth) return null;
-    const plotLeft = CHART_MARGIN.left + yAxisWidth;
-    const band =
-      (chartWidth - plotLeft - CHART_MARGIN.right) / REP_COUNTS.length;
-    const columnLeft = plotLeft + band * (pickedReps - 1);
-    const right = columnLeft + band + POPOVER_GAP;
-    const left = columnLeft - POPOVER_GAP - POPOVER_WIDTH;
-    // Prefer the right of the column, flip left near the edge, and on a
-    // phone too narrow for either, pin it to whichever side has more room.
-    let x;
-    if (right + POPOVER_WIDTH <= chartWidth) x = right;
-    else if (left >= 0) x = left;
-    else x = columnLeft > chartWidth / 2 ? 0 : chartWidth - POPOVER_WIDTH;
-    return { x: Math.max(0, x), y: 0 };
-  }, [pickedReps, chartWidth, yAxisWidth]);
-
   const handleChartClick = (state) => {
     const reps = Number(state?.activeLabel);
     if (!REP_COUNTS.includes(reps)) return;
@@ -420,7 +395,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
               })}
             </div>
             <div
-              className="relative"
               style={isCompact ? { marginInline: -COMPACT_BLEED } : undefined}
             >
               <ChartContainer config={{}} className="!aspect-auto h-[280px]">
@@ -452,9 +426,10 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                     tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                     tickFormatter={(tick) => `${tick}${displayUnit}`}
                   />
-                  {/* Hover shows nothing: the details open as a popover on
-                    click, which works the same on a phone. The empty tooltip
-                    stays so Recharts still reports which column was hit. */}
+                  {/* Hover shows nothing: a click puts the rep's details in the
+                    callout above, which works the same on a phone. The empty
+                    tooltip stays so Recharts still reports which column was
+                    hit. */}
                   <ChartTooltip cursor={false} content={() => null} />
                   <Bar
                     dataKey="range"
@@ -472,26 +447,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                   />
                 </BarChart>
               </ChartContainer>
-              <AnimatePresence>
-                {pickedRow && popoverPosition && (
-                  <motion.div
-                    key={pickedRow.reps}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-0 z-10"
-                    style={{ left: popoverPosition.x }}
-                  >
-                    <RepPopover
-                      row={pickedRow}
-                      liftType={liftType}
-                      displayUnit={displayUnit}
-                      colors={colors}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
             <ChartKey colors={colors} />
           </>
@@ -765,64 +720,6 @@ function ChartKey({ colors }) {
         />
         Benchmark set
       </span>
-    </div>
-  );
-}
-
-// Details for the picked rep count, in the chart's top-down order: the
-// potential when there is room above the best set, then the best set.
-function RepPopover({ row, liftType, displayUnit, colors }) {
-  const { reps, lift } = row;
-
-  return (
-    <div className="border-border bg-card w-60 space-y-1.5 rounded-lg border p-3 text-sm shadow-lg">
-      <p className="font-semibold">
-        {repsWord(reps)}, {liftType}
-      </p>
-      {(row.gap > 0 || !row.isTested) && (
-        <p className="flex items-start gap-2">
-          <span
-            className="mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full border-2"
-            style={{ borderColor: colors.ink }}
-          />
-          <span>
-            Potential: {reps}@{formatWeight(row.potential)}
-            {displayUnit}
-            {row.gap > 0 && (
-              <span className="text-muted-foreground">
-                {" "}
-                (+{formatWeight(Math.round(row.gap * 10) / 10)}
-                {displayUnit})
-              </span>
-            )}
-          </span>
-        </p>
-      )}
-      {row.isTested ? (
-        <p className="flex items-start gap-2">
-          <span
-            className="mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: colors.base }}
-          />
-          <span>
-            Best: {reps}@{formatWeight(row.achieved)}
-            {displayUnit}
-            {lift?.date && (
-              <span className="text-muted-foreground">
-                {" "}
-                on {getReadableDateString(lift.date)}
-              </span>
-            )}
-          </span>
-        </p>
-      ) : (
-        <p className="text-muted-foreground">Not logged yet.</p>
-      )}
-      {row.isBenchmark && (
-        <p className="text-muted-foreground text-xs">
-          Your benchmark set. Every potential is projected from it.
-        </p>
-      )}
     </div>
   );
 }

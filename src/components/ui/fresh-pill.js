@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { motion } from "motion/react";
 import { RefreshCw, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -89,10 +90,15 @@ export function FreshPill({ kind, date, className }) {
   });
 
   return (
-    <span
+    // Pops in the first time it scrolls into view, like the landing cards' icons.
+    <motion.span
+      initial={{ opacity: 0, scale: 0.6 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, margin: "-40px", amount: 0.5 }}
+      transition={{ type: "spring", stiffness: 400, damping: 16, delay: 0.15 }}
       title={`${label} ${readableDate}`}
       className={cn(
-        "group/pill animate-in fade-in zoom-in-90 text-foreground inline-flex shrink-0 items-center gap-1 rounded-full border py-0.5 pr-2 pl-1.5 text-xs leading-none font-semibold duration-500",
+        "group/pill text-foreground inline-flex shrink-0 items-center gap-1 rounded-full border py-0.5 pr-2 pl-1.5 text-xs leading-none font-semibold",
         pillClass,
         className,
       )}
@@ -105,7 +111,7 @@ export function FreshPill({ kind, date, className }) {
         )}
       />
       {label}
-    </span>
+    </motion.span>
   );
 }
 

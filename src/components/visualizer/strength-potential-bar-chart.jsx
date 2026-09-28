@@ -35,6 +35,7 @@ import {
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { ScopeButton } from "@/components/lift-explorer/lift-type-prs-display";
+import { cn } from "@/lib/utils";
 
 const REP_COUNTS = Array.from({ length: 10 }, (_, i) => i + 1);
 
@@ -243,7 +244,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       ? selection.reps
       : null;
   const selectedReps = pickedReps ?? suggestedReps;
-  const selectedRow = rows.find((row) => row.reps === selectedReps) ?? null;
 
   const yDomain = useMemo(() => {
     if (rows.length === 0) return [0, "auto"];
@@ -385,18 +385,32 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
           </p>
         ) : (
           <>
-            {selectedRow && (
-              <TargetCallout
-                row={selectedRow}
-                isSuggested={selectedRow.reps === suggestedReps}
-                isPicked={pickedReps !== null}
-                onShowSuggested={() => setSelection(null)}
-                bestSetLabel={bestSetLabel}
-                isMetric={isMetric}
-                displayUnit={displayUnit}
-                colors={colors}
-              />
-            )}
+            {/* Every rep's callout shares one grid cell and only the selected
+                one is visible, so the box always holds the height of the
+                tallest at this width and a click never shifts the chart. */}
+            <div className="grid" aria-live="polite">
+              {rows.map((row) => {
+                const isShown = row.reps === selectedReps;
+                return (
+                  <div
+                    key={row.reps}
+                    className={cn("[grid-area:1/1]", !isShown && "invisible")}
+                    aria-hidden={!isShown}
+                  >
+                    <TargetCallout
+                      row={row}
+                      isSuggested={row.reps === suggestedReps}
+                      isPicked={pickedReps !== null}
+                      onShowSuggested={() => setSelection(null)}
+                      bestSetLabel={bestSetLabel}
+                      isMetric={isMetric}
+                      displayUnit={displayUnit}
+                      colors={colors}
+                    />
+                  </div>
+                );
+              })}
+            </div>
             <ChartContainer config={{}} className="h-[280px] !aspect-auto">
               <BarChart
                 data={rows}
@@ -501,12 +515,11 @@ function TargetCallout({
 
   return (
     <div
-      className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+      className="flex h-full flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
       style={{
         backgroundColor: `${colors.base}12`,
         borderColor: `${colors.base}40`,
       }}
-      aria-live="polite"
     >
       <div className="flex min-w-0 items-start gap-3">
         <div
@@ -523,7 +536,7 @@ function TargetCallout({
           <p className="font-semibold">{title}</p>
           <p className="text-muted-foreground text-sm leading-relaxed">{body}</p>
           {!isPicked || isSuggested ? (
-            <p className="text-muted-foreground/80 text-xs">
+            <p className="text-muted-foreground/80 text-xs leading-5">
               {isPicked
                 ? "Click it again to let go."
                 : "Click any rep count on the chart to see its target."}
@@ -532,7 +545,7 @@ function TargetCallout({
             <button
               type="button"
               onClick={onShowSuggested}
-              className="text-xs font-medium underline decoration-dotted underline-offset-2"
+              className="block text-xs leading-5 font-medium underline decoration-dotted underline-offset-2"
               style={{ color: colors.ink }}
             >
               Show the easiest PR

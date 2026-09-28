@@ -51,7 +51,9 @@ export function getDemoParsedData(anchorDate = getDemoAnchorDate()) {
 }
 
 // Oldest first. Each set is [reps, weight, notes?, videoUrl?], weights in lb.
-// Warm-ups climb the plates the way a lifter loads them. The last session is
+// Warm-ups climb the plates the way a lifter loads them. The notes tell the
+// story as the lifter lived it: the empty 6am gym, the morning crew, buying a
+// belt and chalk, the first failed squat and the reset that got him through. The last session is
 // the one /log opens on: a filmed squat PR, the press finally beating 120,
 // and a deadlift PR. The "form check" videos are famous record lifts, a joke
 // for whoever taps one to see what a video link does.
@@ -60,15 +62,15 @@ const DEMO_SESSIONS = [
     daysAgo: 81,
     lifts: {
       "Back Squat": [
-        [5, 45],
-        [5, 45],
+        [5, 45, "First time under a barbell. Nervous, but it felt natural."],
+        [5, 45, "The empty bar is heavier than it looks."],
         [2, 95],
         [5, 135],
         [5, 135],
         [
           5,
           135,
-          "Day one of Starting Strength. Hips back, bar over midfoot, book open on the bench.",
+          "Day one of Starting Strength. 135 for three sets of five, book open on the bench.",
         ],
       ],
       "Bench Press": [
@@ -77,7 +79,11 @@ const DEMO_SESSIONS = [
         [2, 95],
         [5, 115],
         [5, 115],
-        [5, 115],
+        [
+          5,
+          115,
+          "Watched a bench setup video between sets. Shoulder blades back, feet planted.",
+        ],
       ],
       Deadlift: [
         [5, 135],
@@ -102,10 +108,10 @@ const DEMO_SESSIONS = [
         [2, 95],
         [5, 145],
         [5, 145],
-        [5, 145],
+        [5, 145, "Knees caving on the way up. Knees out next time."],
       ],
       "Strict Press": [
-        [5, 45],
+        [5, 45, "Why is the empty bar so heavy overhead?"],
         [5, 45],
         [2, 65],
         [5, 75],
@@ -122,7 +128,7 @@ const DEMO_SESSIONS = [
     daysAgo: 77,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "6am session. The gym was empty. Just me and the cleaner."],
         [5, 45],
         [3, 95],
         [2, 135],
@@ -141,7 +147,7 @@ const DEMO_SESSIONS = [
       Deadlift: [
         [5, 135],
         [2, 185],
-        [5, 215],
+        [5, 215, "Grip was the limit, not my legs."],
       ],
     },
   },
@@ -154,7 +160,7 @@ const DEMO_SESSIONS = [
         [3, 95],
         [2, 135],
         [5, 165],
-        [5, 165],
+        [5, 165, "Knees out fixed it. Every rep came up straight."],
         [5, 165],
       ],
       "Strict Press": [
@@ -163,7 +169,7 @@ const DEMO_SESSIONS = [
         [2, 65],
         [5, 80],
         [5, 80],
-        [5, 80],
+        [5, 80, "Press at 80. Every pound is earned on this lift."],
       ],
       Deadlift: [
         [5, 135],
@@ -176,13 +182,21 @@ const DEMO_SESSIONS = [
     daysAgo: 72,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [
+          5,
+          45,
+          "Same five people here every morning. Starting to recognize faces.",
+        ],
         [5, 45],
         [3, 95],
         [2, 135],
         [5, 175],
         [5, 175],
-        [5, 175, "Knees out, drive the hips up. It is starting to click."],
+        [
+          5,
+          175,
+          "Hips back, chest up, drive the hips. It is starting to click.",
+        ],
       ],
       "Bench Press": [
         [5, 45],
@@ -190,7 +204,7 @@ const DEMO_SESSIONS = [
         [2, 95],
         [5, 125],
         [5, 125],
-        [5, 125],
+        [5, 125, "Leg drive makes the bench feel way more stable."],
       ],
       Deadlift: [
         [5, 135],
@@ -204,7 +218,7 @@ const DEMO_SESSIONS = [
     lifts: {
       "Back Squat": [
         [5, 45],
-        [5, 45],
+        [5, 45, "Slept nine hours. Warm-ups felt like butter."],
         [3, 95],
         [2, 135],
         [5, 185],
@@ -217,10 +231,10 @@ const DEMO_SESSIONS = [
         [2, 65],
         [5, 85],
         [5, 85],
-        [5, 85],
+        [5, 85, "85 overhead. Squeezing my glutes stops me leaning back."],
       ],
       Deadlift: [
-        [5, 135],
+        [5, 135, "135 used to be heavy. Now it is the first warm-up."],
         [2, 185],
         [5, 245],
       ],
@@ -230,7 +244,7 @@ const DEMO_SESSIONS = [
     daysAgo: 67,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Bought a belt. Bracing feels way more solid."],
         [5, 45],
         [3, 95],
         [2, 135],
@@ -244,13 +258,17 @@ const DEMO_SESSIONS = [
         [2, 95],
         [5, 130],
         [5, 130],
-        [5, 130],
+        [
+          5,
+          130,
+          "Older guy gave me a nod after my last set. Felt like a graduation.",
+        ],
       ],
       Deadlift: [
         [5, 135],
         [3, 185],
         [2, 225],
-        [5, 255],
+        [5, 255, "Deadlift day is the best day."],
       ],
     },
   },
@@ -264,11 +282,11 @@ const DEMO_SESSIONS = [
         [2, 135],
         [5, 195],
         [5, 195],
-        [5, 195],
+        [5, 195, "195. Slow grind on the last rep, but it came up."],
       ],
       "Strict Press": [
         [5, 45],
-        [5, 45],
+        [5, 45, "Empty bar press is basically meditation now."],
         [2, 65],
         [5, 90],
         [5, 90],
@@ -300,13 +318,17 @@ const DEMO_SESSIONS = [
         [2, 95],
         [5, 135],
         [5, 135],
-        [5, 135],
+        [5, 135, "135 on the bench. A plate on each side!"],
       ],
       Deadlift: [
         [5, 135],
         [3, 185],
         [2, 225],
-        [5, 275],
+        [
+          5,
+          275,
+          "275 moved fast. Someone in the corner pulled 600 and the floor shook.",
+        ],
       ],
     },
   },
@@ -314,7 +336,7 @@ const DEMO_SESSIONS = [
     daysAgo: 60,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Coffee, creatine and a banana. The holy trinity."],
         [5, 45],
         [3, 95],
         [2, 135],
@@ -329,7 +351,7 @@ const DEMO_SESSIONS = [
         [2, 85],
         [5, 95],
         [5, 95],
-        [5, 95],
+        [5, 95, "95 on the press. Five pounds from a plate."],
       ],
       Deadlift: [
         [5, 135],
@@ -350,7 +372,7 @@ const DEMO_SESSIONS = [
         [2, 185],
         [5, 210],
         [5, 210],
-        [5, 210],
+        [5, 210, "Asked a regular to watch my depth. All below parallel."],
       ],
       "Bench Press": [
         [5, 45],
@@ -358,7 +380,7 @@ const DEMO_SESSIONS = [
         [2, 95],
         [5, 140],
         [5, 140],
-        [5, 140],
+        [5, 140, "Someone asked ME for a spot. I have officially made it."],
       ],
       Deadlift: [
         [5, 135],
@@ -372,7 +394,7 @@ const DEMO_SESSIONS = [
     daysAgo: 56,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Forgot my headphones. The gym music is questionable."],
         [5, 45],
         [5, 95],
         [3, 135],
@@ -386,15 +408,15 @@ const DEMO_SESSIONS = [
         [5, 45],
         [3, 65],
         [2, 85],
-        [5, 97.5],
-        [5, 97.5],
         [5, 97.5, "Microplates arrived. The press goes up 2.5 at a time now."],
+        [5, 97.5],
+        [5, 97.5],
       ],
       Deadlift: [
         [5, 135],
         [3, 185],
         [2, 225],
-        [5, 290],
+        [5, 290, "290. The deadlift is flying past the squat."],
       ],
     },
   },
@@ -402,18 +424,14 @@ const DEMO_SESSIONS = [
     daysAgo: 53,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Eating a lot more. Up six pounds of bodyweight."],
         [5, 45],
         [5, 95],
         [3, 135],
         [2, 185],
         [5, 220],
         [5, 220],
-        [
-          5,
-          220,
-          "Eating a lot more. Up six pounds of bodyweight and the squat keeps moving.",
-        ],
+        [5, 220, "220 and the squat keeps moving."],
       ],
       "Bench Press": [
         [5, 45],
@@ -421,7 +439,7 @@ const DEMO_SESSIONS = [
         [2, 95],
         [5, 145],
         [5, 145],
-        [5, 145],
+        [5, 145, "145. Pausing the bar on my chest keeps it honest."],
       ],
       Deadlift: [
         [5, 135],
@@ -435,14 +453,14 @@ const DEMO_SESSIONS = [
     daysAgo: 51,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Knee sleeves on. War paint, basically."],
         [5, 45],
         [5, 95],
         [3, 135],
         [2, 185],
         [5, 225],
         [5, 225],
-        [5, 225, "Two plates on the squat for all three sets."],
+        [5, 225, "225 for all three sets. Two plates on the squat!"],
       ],
       "Strict Press": [
         [5, 45],
@@ -451,7 +469,7 @@ const DEMO_SESSIONS = [
         [2, 85],
         [5, 100],
         [5, 100],
-        [5, 100],
+        [5, 100, "100 overhead. Triple digits on the press."],
       ],
       Deadlift: [
         [5, 135],
@@ -465,7 +483,7 @@ const DEMO_SESSIONS = [
     daysAgo: 49,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Had to wait for a rack today. Busy morning."],
         [5, 45],
         [5, 95],
         [3, 135],
@@ -487,7 +505,11 @@ const DEMO_SESSIONS = [
         [5, 135],
         [3, 185],
         [2, 225],
-        [5, 305],
+        [
+          5,
+          305,
+          "305. Pull the slack out of the bar before it leaves the floor. That cue clicked.",
+        ],
       ],
     },
   },
@@ -495,14 +517,18 @@ const DEMO_SESSIONS = [
     daysAgo: 46,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Foam rolled for ten minutes first. Hips feel open."],
         [5, 45],
         [5, 95],
         [3, 135],
         [2, 185],
         [5, 235],
         [5, 235],
-        [5, 235],
+        [
+          5,
+          235,
+          "Older lifter in knee wraps told me my depth looks good. Made my week.",
+        ],
       ],
       "Strict Press": [
         [5, 45],
@@ -526,7 +552,7 @@ const DEMO_SESSIONS = [
     daysAgo: 44,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Brought a buddy today. He lasted 45 minutes."],
         [5, 45],
         [5, 95],
         [3, 135],
@@ -542,7 +568,11 @@ const DEMO_SESSIONS = [
         [2, 135],
         [5, 155],
         [5, 155],
-        [5, 155],
+        [
+          5,
+          155,
+          "155. A regular showed me how to pin my shoulder blades. Game changer.",
+        ],
       ],
       Deadlift: [
         [5, 135],
@@ -573,14 +603,14 @@ const DEMO_SESSIONS = [
         [2, 85],
         [5, 105],
         [5, 105],
-        [5, 105],
+        [5, 105, "105. The bar path finally makes sense."],
       ],
       Deadlift: [
         [5, 135],
         [5, 185],
         [3, 225],
         [2, 275],
-        [5, 320],
+        [5, 320, "320. Straps stayed in the bag."],
       ],
     },
   },
@@ -596,7 +626,7 @@ const DEMO_SESSIONS = [
         [2, 225],
         [5, 250],
         [5, 250],
-        [5, 250],
+        [5, 250, "250. Long day at work, still got every rep."],
       ],
       "Bench Press": [
         [5, 45],
@@ -605,7 +635,7 @@ const DEMO_SESSIONS = [
         [2, 135],
         [5, 157.5],
         [5, 157.5],
-        [5, 157.5],
+        [5, 157.5, "157.5. Microplates on the bench now too."],
       ],
       "Power Clean": [
         [
@@ -648,14 +678,14 @@ const DEMO_SESSIONS = [
         [2, 85],
         [5, 107.5],
         [5, 107.5],
-        [5, 107.5],
+        [5, 107.5, "107.5. The regulars know my name now."],
       ],
       Deadlift: [
         [5, 135],
         [5, 185],
         [3, 225],
         [2, 275],
-        [5, 325],
+        [5, 325, "325. Chalk everywhere. Worth it."],
       ],
     },
   },
@@ -663,7 +693,7 @@ const DEMO_SESSIONS = [
     daysAgo: 35,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Someone curling in the squat rack again. Classic."],
         [5, 45],
         [5, 95],
         [5, 135],
@@ -706,7 +736,7 @@ const DEMO_SESSIONS = [
         [2, 225],
         [5, 265],
         [5, 265],
-        [5, 265],
+        [5, 265, "265. Walked it out clean and sat right back into it."],
       ],
       "Strict Press": [
         [5, 45],
@@ -715,7 +745,7 @@ const DEMO_SESSIONS = [
         [2, 85],
         [5, 110],
         [5, 110],
-        [5, 110],
+        [5, 110, "110 overhead. Still humbling, and I keep showing up."],
       ],
       Deadlift: [
         [5, 135],
@@ -751,7 +781,7 @@ const DEMO_SESSIONS = [
         [2, 135],
         [5, 162.5],
         [5, 162.5],
-        [5, 162.5],
+        [5, 162.5, "162.5. Tempo work: two seconds down, then drive."],
       ],
       "Power Clean": [
         [3, 45],
@@ -761,7 +791,7 @@ const DEMO_SESSIONS = [
         [3, 105],
         [3, 105],
         [3, 105],
-        [3, 105],
+        [3, 105, "105. The snap under the bar is addictive."],
       ],
     },
   },
@@ -769,7 +799,7 @@ const DEMO_SESSIONS = [
     daysAgo: 28,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "5am alarm, no snooze. This is who I am now."],
         [5, 45],
         [5, 95],
         [5, 135],
@@ -786,7 +816,7 @@ const DEMO_SESSIONS = [
         [2, 85],
         [5, 112.5],
         [5, 112.5],
-        [5, 112.5],
+        [5, 112.5, "112.5. Deep breath, brace, drive. Every rep."],
       ],
       Deadlift: [
         [5, 135],
@@ -814,7 +844,7 @@ const DEMO_SESSIONS = [
         [2, 225],
         [5, 280],
         [5, 280],
-        [5, 280],
+        [5, 280, "280. The regulars cheer when someone PRs. This gym rules."],
       ],
       "Bench Press": [
         [5, 45],
@@ -839,7 +869,7 @@ const DEMO_SESSIONS = [
         [3, 110],
         [3, 110],
         [3, 110],
-        [3, 110],
+        [3, 110, "110 cleans. Elbows fast."],
       ],
     },
   },
@@ -855,7 +885,7 @@ const DEMO_SESSIONS = [
         [2, 225],
         [5, 285],
         [5, 285],
-        [5, 285],
+        [5, 285, "285. Every set is a real effort now."],
       ],
       "Strict Press": [
         [5, 45],
@@ -875,7 +905,7 @@ const DEMO_SESSIONS = [
         [5, 185],
         [3, 225],
         [2, 275],
-        [5, 340],
+        [5, 340, "340. The deadlift does not care how the press went."],
       ],
     },
   },
@@ -883,7 +913,7 @@ const DEMO_SESSIONS = [
     daysAgo: 21,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Wore my lucky socks. Yes, it matters."],
         [5, 45],
         [5, 95],
         [5, 135],
@@ -891,7 +921,7 @@ const DEMO_SESSIONS = [
         [2, 225],
         [5, 290],
         [5, 290],
-        [5, 290],
+        [5, 290, "290. These are getting heavy."],
       ],
       "Bench Press": [
         [5, 45],
@@ -900,7 +930,7 @@ const DEMO_SESSIONS = [
         [2, 135],
         [5, 167.5],
         [5, 167.5],
-        [5, 167.5],
+        [5, 167.5, "167.5. Two months ago 115 felt heavy."],
       ],
       "Power Clean": [
         [3, 45],
@@ -927,7 +957,7 @@ const DEMO_SESSIONS = [
         [2, 225],
         [5, 295],
         [5, 295],
-        [5, 295],
+        [5, 295, "295. One more jump to three plates."],
       ],
       "Strict Press": [
         [5, 45],
@@ -943,7 +973,7 @@ const DEMO_SESSIONS = [
         [5, 185],
         [3, 225],
         [2, 275],
-        [5, 345],
+        [5, 345, "345. Hips and shoulders rise together now."],
       ],
     },
   },
@@ -957,7 +987,7 @@ const DEMO_SESSIONS = [
         [5, 135],
         [3, 185],
         [2, 225],
-        [5, 300],
+        [5, 300, "300 on the bar. Three plates a side for the first time."],
         [5, 300],
         [3, 300, "Missed the last two reps at 300. First failed squat."],
       ],
@@ -979,7 +1009,7 @@ const DEMO_SESSIONS = [
         [3, 120],
         [3, 120],
         [3, 120],
-        [3, 120],
+        [3, 120, "120. The cleans still move when the squat does not."],
       ],
     },
   },
@@ -1009,7 +1039,7 @@ const DEMO_SESSIONS = [
         [2, 105],
         [5, 117.5],
         [5, 117.5],
-        [5, 117.5],
+        [5, 117.5, "117.5 for all fifteen. The press is still going."],
       ],
       Deadlift: [
         [5, 135],
@@ -1017,7 +1047,7 @@ const DEMO_SESSIONS = [
         [5, 225],
         [3, 275],
         [2, 315],
-        [5, 350],
+        [5, 350, "350. At least the deadlift is happy."],
       ],
     },
   },
@@ -1025,7 +1055,7 @@ const DEMO_SESSIONS = [
     daysAgo: 11,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Back to 275 today. Feeling fresh."],
         [5, 45],
         [5, 95],
         [5, 135],
@@ -1069,7 +1099,7 @@ const DEMO_SESSIONS = [
         [2, 225],
         [5, 285],
         [5, 285],
-        [5, 285],
+        [5, 285, "285 moves fast after the reset."],
       ],
       "Strict Press": [
         [5, 45],
@@ -1112,7 +1142,7 @@ const DEMO_SESSIONS = [
         [2, 135],
         [5, 172.5],
         [5, 172.5],
-        [5, 172.5],
+        [5, 172.5, "172.5. The morning crew yelled me through the last rep."],
       ],
       "Power Clean": [
         [3, 45],
@@ -1132,7 +1162,7 @@ const DEMO_SESSIONS = [
     daysAgo: 4,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [5, 45, "Three plates today. Chalk, belt, sleeves, lucky socks."],
         [5, 45],
         [5, 95],
         [5, 135],
@@ -1150,7 +1180,7 @@ const DEMO_SESSIONS = [
         [2, 105],
         [5, 120],
         [5, 120],
-        [4, 120],
+        [4, 120, "One rep short at 120 again. So close."],
       ],
       Deadlift: [
         [5, 135],
@@ -1158,7 +1188,7 @@ const DEMO_SESSIONS = [
         [5, 225],
         [3, 275],
         [2, 315],
-        [5, 360],
+        [5, 360, "360. My grip is the strongest it has ever been."],
       ],
     },
   },
@@ -1183,7 +1213,7 @@ const DEMO_SESSIONS = [
         [2, 135],
         [5, 175],
         [5, 175],
-        [5, 175],
+        [5, 175, "175 for three sets. 60 pounds on the bench in twelve weeks."],
       ],
       "Power Clean": [
         [3, 45],
@@ -1208,7 +1238,11 @@ const DEMO_SESSIONS = [
     daysAgo: 0,
     lifts: {
       "Back Squat": [
-        [5, 45],
+        [
+          5,
+          45,
+          "Twelve weeks since my first session. Same gym, same morning crew.",
+        ],
         [5, 45],
         [5, 95],
         [5, 135],
@@ -1225,7 +1259,7 @@ const DEMO_SESSIONS = [
         ],
       ],
       "Strict Press": [
-        [5, 45],
+        [5, 45, "Empty bar press. Still humbling, always humbling."],
         [5, 45],
         [5, 65],
         [3, 85],

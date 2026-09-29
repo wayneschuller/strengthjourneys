@@ -17,6 +17,7 @@ import {
 } from "@/lib/playlists/playlist-security";
 import {
   notifyPlaylistModeration,
+  notifyPlaylistSubmitted,
 } from "@/lib/playlists/playlist-moderation-mail";
 import { RegExpMatcher, englishDataset } from "obscenity";
 
@@ -142,6 +143,13 @@ export default async function handler(req, res) {
           upVotes: 0,
           downVotes: 0,
         });
+
+        await notifyPlaylistSubmitted({
+          playlist: playlistRecord,
+          submitter: session?.user?.email || "anonymous",
+          clientIp,
+        });
+
         res.status(201).json({
           message: "Playlist added successfully",
           playlist: {

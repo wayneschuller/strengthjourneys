@@ -143,6 +143,59 @@ export async function notifyPlaylistReported({
   });
 }
 
+/**
+ * Someone added a playlist and it went live on the leaderboard.
+ * @param {Object} params
+ * @param {Object} params.playlist - The stored playlist record.
+ * @param {string} params.submitter - Signed-in email, or "anonymous".
+ * @param {string} params.clientIp - Request IP, for spotting repeat submitters.
+ */
+export async function notifyPlaylistSubmitted({ playlist, submitter, clientIp }) {
+  const categories = (playlist.categories || []).join(", ") || "none";
+  const artNote =
+    playlist.thumbnailUrl && playlist.thumbnailStatus !== "approved"
+      ? ` (withheld: ${playlist.thumbnailStatus})`
+      : "";
+
+  await send({
+    subject: `🎵 New playlist submitted — ${playlist.title}`,
+    text: [
+      "A new playlist just went live on the gym playlist leaderboard.",
+      "",
+      `Title: ${playlist.title}`,
+      `URL: ${playlist.url}`,
+      `Categories: ${categories}`,
+      `Cover art: ${playlist.thumbnailUrl || "none"}${artNote}`,
+      `Submitted by: ${submitter}`,
+      `IP: ${clientIp}`,
+      `Playlist ID: ${playlist.id}`,
+      `Leaderboard: ${LEADERBOARD_URL}`,
+      "",
+      "Description:",
+      playlist.description || "(none)",
+    ].join("\n"),
+    html: buildHtml({
+      emoji: "🎵",
+      headline: "New playlist submitted",
+      subheading: "It is live on the gym playlist leaderboard now.",
+      imageUrl: playlist.thumbnailUrl,
+      imageCaption: artNote ? `Cover art${artNote}` : "",
+      rows: [
+        ["Title", `<strong>${escapeHtml(playlist.title)}</strong>`],
+        [
+          "Playlist URL",
+          `<a href="${escapeHtml(playlist.url)}" style="color:#2563eb;">${escapeHtml(playlist.url)}</a>`,
+        ],
+        ["Categories", escapeHtml(categories)],
+        ["Submitted by", escapeHtml(submitter)],
+        ["IP", escapeHtml(clientIp)],
+        ["Playlist ID", `<code>${escapeHtml(playlist.id)}</code>`],
+      ],
+      note: playlist.description,
+    }),
+  });
+}
+
 const MODERATION_EVENTS = {
   "image-rejected": {
     emoji: "🔞",

@@ -105,6 +105,110 @@ export function StarryNightLayer({
 }
 
 // -----------------------------------------------------------------------------
+// Evergreen – Topographic contour lines, like the survey map in a field guide
+// -----------------------------------------------------------------------------
+
+const CONTOUR_VIEWBOX = { width: 1600, height: 1000 };
+const CONTOUR_POINTS = 72;
+
+// Each hill is a stack of wobbly rings around one summit. The wobble phase
+// drifts a little per ring so the slopes look surveyed rather than stamped,
+// but slowly enough that neighbouring rings never cross.
+const CONTOUR_HILLS = [
+  { cx: 1400, cy: 170, rings: 15, step: 34, phase: [0.4, 2.1, 4.0] },
+  { cx: 180, cy: 880, rings: 13, step: 36, phase: [1.9, 0.3, 2.7] },
+  { cx: 820, cy: 560, rings: 5, step: 30, phase: [3.1, 1.2, 0.8] },
+];
+
+function contourRingPath({ cx, cy, step, phase }, ring) {
+  const points = [];
+  for (let i = 0; i < CONTOUR_POINTS; i++) {
+    const t = (i / CONTOUR_POINTS) * Math.PI * 2;
+    const wobble =
+      1 +
+      0.12 * Math.sin(2 * t + phase[0] + ring * 0.07) +
+      0.07 * Math.sin(3 * t + phase[1] - ring * 0.05) +
+      0.04 * Math.sin(5 * t + phase[2]);
+    const r = (ring + 1) * step * wobble;
+    points.push([cx + r * Math.cos(t), cy + r * Math.sin(t)]);
+  }
+  // Quadratic curves through the midpoints give a smooth closed line.
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const fmt = ([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`;
+  let d = `M${fmt(mid(points[CONTOUR_POINTS - 1], points[0]))}`;
+  for (let i = 0; i < CONTOUR_POINTS; i++) {
+    const next = points[(i + 1) % CONTOUR_POINTS];
+    d += `Q${fmt(points[i])} ${fmt(mid(points[i], next))}`;
+  }
+  return `${d}Z`;
+}
+
+// Every fifth ring is an index contour, drawn heavier like on a real map.
+const CONTOUR_RINGS = CONTOUR_HILLS.flatMap((hill, hillIndex) =>
+  Array.from({ length: hill.rings }, (_, ring) => ({
+    key: `${hillIndex}-${ring}`,
+    d: contourRingPath(hill, ring),
+    isIndex: (ring + 1) % 5 === 0,
+  })),
+);
+
+/**
+ * Full-bleed background layer of topographic contour lines in the theme's
+ * primary colour. When `animated` is true the map drifts very slowly.
+ *
+ * @param {Object} props
+ * @param {string} [props.className] - Additional CSS classes applied to the outer wrapper.
+ * @param {boolean} [props.animated=false] - When true, enables the slow drift.
+ * @param {"light"|"dark"} [props.variant="light"] - Tunes line strength for the ground colour.
+ */
+export function EvergreenContourLayer({
+  className,
+  animated = false,
+  variant = "light",
+}) {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimate = animated && !prefersReducedMotion;
+
+  return (
+    <div
+      className={cn("relative h-full w-full overflow-hidden", className)}
+      aria-hidden
+    >
+      <motion.svg
+        className={cn(
+          "text-primary absolute inset-[-4%] h-[108%] w-[108%]",
+          variant === "dark" ? "opacity-[0.16]" : "opacity-[0.2]",
+        )}
+        viewBox={`0 0 ${CONTOUR_VIEWBOX.width} ${CONTOUR_VIEWBOX.height}`}
+        preserveAspectRatio="xMidYMid slice"
+        fill="none"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        animate={
+          shouldAnimate
+            ? { x: ["0%", "-2%", "0%"], y: ["0%", "1.5%", "0%"] }
+            : undefined
+        }
+        transition={
+          shouldAnimate
+            ? { duration: 60, repeat: Infinity, ease: "easeInOut" }
+            : undefined
+        }
+      >
+        {CONTOUR_RINGS.map(({ key, d, isIndex }) => (
+          <path
+            key={key}
+            d={d}
+            strokeWidth={isIndex ? 2.2 : 1}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+      </motion.svg>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
 // Warp – Retro-arcade 3D warp grid with animated beams
 // -----------------------------------------------------------------------------
 

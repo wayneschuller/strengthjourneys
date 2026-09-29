@@ -34,15 +34,17 @@ export const THEME_REWARDS = [
   createThemeReward("blueprint-dark", "Blueprint Dark", 60, 200, 14),
   createThemeReward("retro-arcade", "Retro Arcade", 120, 400, 28),
   createThemeReward("retro-arcade-dark", "Retro Arcade Dark", 180, 600, 42),
-  createThemeReward("starry-night", "Starry Night", 240, 800, 56),
-  createThemeReward("starry-night-dark", "Starry Night Dark", 300, 1000, 70),
-  createThemeReward("neo-brutalism", "Neo Brutalism", 360, 1200, 84),
+  createThemeReward("evergreen", "Evergreen", 240, 800, 56),
+  createThemeReward("evergreen-dark", "Evergreen Dark", 300, 1000, 70),
+  createThemeReward("starry-night", "Starry Night", 360, 1200, 84),
+  createThemeReward("starry-night-dark", "Starry Night Dark", 420, 1400, 98),
+  createThemeReward("neo-brutalism", "Neo Brutalism", 480, 1600, 112),
   createThemeReward(
     "neo-brutalism-dark",
     "Neo Brutalism Dark",
-    420,
-    1400,
-    98,
+    540,
+    1800,
+    126,
   ),
 ];
 

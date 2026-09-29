@@ -196,6 +196,7 @@ const DARK_THEMES = [
   "blueprint-dark",
   "neo-brutalism-dark",
   "retro-arcade-dark",
+  "evergreen-dark",
   "starry-night-dark",
 ];
 

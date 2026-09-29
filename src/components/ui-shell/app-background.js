@@ -5,6 +5,7 @@ import { useLocalStorage } from "usehooks-ts";
 import GridPattern from "@/components/magicui/grid-pattern";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
 import {
+  EvergreenContourLayer,
   NeoBrutalistStickerBombLayer,
   StarryNightLayer,
   WarpBackground,
@@ -88,17 +89,25 @@ export function AppBackground() {
     themeForBackground === "blueprint" ||
     themeForBackground === "blueprint-dark";
   const isBlueprintDark = themeForBackground === "blueprint-dark";
+  const isEvergreen =
+    themeForBackground === "evergreen" ||
+    themeForBackground === "evergreen-dark";
   const isRetroArcadeDark = themeForBackground === "retro-arcade-dark";
 
   const showAnimated = animatedBackground ?? false;
   const shouldShowBackground = showBackground ?? true;
   const isVanillaLightDark =
-    !isRetroArcade && !isNeoBrutalism && !isStarryNight && !isBlueprint;
+    !isRetroArcade &&
+    !isNeoBrutalism &&
+    !isStarryNight &&
+    !isBlueprint &&
+    !isEvergreen;
   const showStaticGrid =
     shouldShowBackground &&
     !showAnimated &&
     !isStarryNight &&
     !isBlueprint &&
+    !isEvergreen &&
     !isNeoBrutalism &&
     !isRetroArcade;
   const showAnimatedGrid = mounted && showAnimated && isVanillaLightDark;
@@ -117,6 +126,18 @@ export function AppBackground() {
             themeForBackground === "starry-night-dark" ? "dark" : "light"
           }
           className="pointer-events-none absolute inset-0 h-full w-full"
+        />
+      )}
+
+      {/* Evergreen theme: topographic contour lines, faded toward the centre */}
+      {mounted && isEvergreen && (
+        <EvergreenContourLayer
+          animated={showAnimated}
+          variant={themeForBackground === "evergreen-dark" ? "dark" : "light"}
+          className={cn(
+            "pointer-events-none absolute inset-0",
+            "[mask-image:radial-gradient(ellipse_at_center,transparent_0,transparent_28%,white_78%)]",
+          )}
         />
       )}
 

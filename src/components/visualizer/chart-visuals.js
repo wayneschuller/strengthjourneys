@@ -4,8 +4,8 @@
  * Gradients, glow layers, axis styling and tick rules live here so the charts
  * read as one family instead of drifting apart, and so a polish tweak lands on
  * every chart at once. Everything is expressed with theme tokens or the caller's
- * lift color because the app ships ten themes (light/dark plus blueprint,
- * starry-night, retro-arcade and neo-brutalism variants).
+ * lift color because the app ships twelve themes (light/dark plus blueprint,
+ * retro-arcade, evergreen, starry-night and neo-brutalism variants).
  */
 import { ReferenceDot, ReferenceLine } from "recharts";
 

@@ -5,7 +5,7 @@
 @plugin "@tailwindcss/typography";
 
 /* dark: applies when html has .dark or any *-dark theme class */
-@custom-variant dark (&:where(.dark, .neo-brutalism-dark, .retro-arcade-dark, .starry-night-dark, .blueprint-dark, .dark *, .neo-brutalism-dark *, .retro-arcade-dark *, .starry-night-dark *, .blueprint-dark *));
+@custom-variant dark (&:where(.dark, .neo-brutalism-dark, .retro-arcade-dark, .starry-night-dark, .blueprint-dark, .evergreen-dark, .dark *, .neo-brutalism-dark *, .retro-arcade-dark *, .starry-night-dark *, .blueprint-dark *, .evergreen-dark *));
 
 /* blueprint: applies when html has .blueprint or .blueprint-dark (either light or dark variant) */
 @custom-variant blueprint (&:where(.blueprint, .blueprint-dark, .blueprint *, .blueprint-dark *));
@@ -770,6 +770,156 @@ html:not([data-restoring]) [data-returning-visit] {
     --heatmap-4: #6bf2ff;
   }
 
+  /* Evergreen (light): a field guide printed on warm cream stock. Pine ink,
+     brass for the highlights, pale sage washes and a rust accent in charts. */
+  .evergreen {
+    --background: oklch(0.96 0.02 90);
+    --foreground: oklch(0.24 0.04 160);
+    --card: oklch(0.985 0.012 95);
+    --card-foreground: oklch(0.24 0.04 160);
+    --popover: oklch(0.985 0.012 95);
+    --popover-foreground: oklch(0.24 0.04 160);
+    --primary: oklch(0.42 0.09 160);
+    --primary-foreground: oklch(0.97 0.02 90);
+    --link: oklch(0.4 0.09 160);
+    --secondary: oklch(0.75 0.13 75);
+    --secondary-foreground: oklch(0.24 0.04 160);
+    --muted: oklch(0.92 0.022 110);
+    --muted-foreground: oklch(0.46 0.04 155);
+    --accent: oklch(0.9 0.04 145);
+    --accent-foreground: oklch(0.24 0.04 160);
+    --destructive: oklch(0.55 0.17 32);
+    --destructive-foreground: oklch(0.97 0.02 90);
+    --border: oklch(0.85 0.03 130);
+    --input: oklch(0.78 0.04 130);
+    --ring: oklch(0.72 0.13 75);
+    --chart-1: oklch(0.45 0.1 160);
+    --chart-2: oklch(0.72 0.14 75);
+    --chart-3: oklch(0.56 0.14 42);
+    --chart-4: oklch(0.52 0.07 245);
+    --chart-5: oklch(0.62 0.1 125);
+    --sidebar: oklch(0.985 0.012 95);
+    --sidebar-background: oklch(0.985 0.012 95);
+    --sidebar-foreground: oklch(0.24 0.04 160);
+    --sidebar-primary: oklch(0.42 0.09 160);
+    --sidebar-primary-foreground: oklch(0.97 0.02 90);
+    --sidebar-accent: oklch(0.9 0.04 145);
+    --sidebar-accent-foreground: oklch(0.24 0.04 160);
+    --sidebar-border: oklch(0.85 0.03 130);
+    --sidebar-ring: oklch(0.72 0.13 75);
+    --font-sans: DM Sans, sans-serif;
+    --font-serif: "Fraunces Variable", Georgia, serif;
+    --font-mono:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+      "Courier New", monospace;
+    --radius: 0.5rem;
+    --shadow-x: 0;
+    --shadow-y: 2px;
+    --shadow-blur: 8px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.1;
+    --shadow-color: oklch(0.3 0.05 160);
+    --shadow-2xs: 0 1px 3px 0px oklch(0.3 0.05 160 / 0.05);
+    --shadow-xs: 0 1px 3px 0px oklch(0.3 0.05 160 / 0.05);
+    --shadow-sm:
+      0 1px 3px 0px oklch(0.3 0.05 160 / 0.08),
+      0 1px 2px -1px oklch(0.3 0.05 160 / 0.08);
+    --shadow:
+      0 1px 3px 0px oklch(0.3 0.05 160 / 0.08),
+      0 1px 2px -1px oklch(0.3 0.05 160 / 0.08);
+    --shadow-md:
+      0 2px 6px 0px oklch(0.3 0.05 160 / 0.1),
+      0 2px 4px -1px oklch(0.3 0.05 160 / 0.1);
+    --shadow-lg:
+      0 4px 12px 0px oklch(0.3 0.05 160 / 0.12),
+      0 4px 6px -1px oklch(0.3 0.05 160 / 0.1);
+    --shadow-xl:
+      0 8px 20px 0px oklch(0.3 0.05 160 / 0.14),
+      0 8px 10px -1px oklch(0.3 0.05 160 / 0.1);
+    --shadow-2xl: 0 12px 32px 0px oklch(0.3 0.05 160 / 0.22);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
+    --heatmap-0: #ece6cf;
+    --heatmap-1: #c8d5a8;
+    --heatmap-2: #8fb07a;
+    --heatmap-3: #4e8061;
+    --heatmap-4: #22513e;
+  }
+
+  /* Evergreen (dark): the forest after dusk. Deep green-black ground, cream
+     text, soft sage for the main actions and brass for the highlights. */
+  .evergreen-dark {
+    --background: oklch(0.2 0.025 165);
+    --foreground: oklch(0.93 0.025 90);
+    --card: oklch(0.245 0.03 165);
+    --card-foreground: oklch(0.93 0.025 90);
+    --popover: oklch(0.245 0.03 165);
+    --popover-foreground: oklch(0.93 0.025 90);
+    --primary: oklch(0.74 0.1 155);
+    --primary-foreground: oklch(0.2 0.03 165);
+    --link: oklch(0.8 0.09 150);
+    --secondary: oklch(0.76 0.12 78);
+    --secondary-foreground: oklch(0.2 0.03 165);
+    --muted: oklch(0.27 0.03 165);
+    --muted-foreground: oklch(0.72 0.03 140);
+    --accent: oklch(0.31 0.04 160);
+    --accent-foreground: oklch(0.93 0.025 90);
+    --destructive: oklch(0.63 0.17 32);
+    --destructive-foreground: oklch(0.97 0.02 90);
+    --border: oklch(0.34 0.03 160);
+    --input: oklch(0.42 0.04 155);
+    --ring: oklch(0.76 0.12 78);
+    --chart-1: oklch(0.72 0.11 155);
+    --chart-2: oklch(0.8 0.13 80);
+    --chart-3: oklch(0.66 0.14 42);
+    --chart-4: oklch(0.7 0.08 240);
+    --chart-5: oklch(0.74 0.11 125);
+    --sidebar: oklch(0.245 0.03 165);
+    --sidebar-background: oklch(0.245 0.03 165);
+    --sidebar-foreground: oklch(0.93 0.025 90);
+    --sidebar-primary: oklch(0.74 0.1 155);
+    --sidebar-primary-foreground: oklch(0.2 0.03 165);
+    --sidebar-accent: oklch(0.31 0.04 160);
+    --sidebar-accent-foreground: oklch(0.93 0.025 90);
+    --sidebar-border: oklch(0.34 0.03 160);
+    --sidebar-ring: oklch(0.76 0.12 78);
+    --font-sans: DM Sans, sans-serif;
+    --font-serif: "Fraunces Variable", Georgia, serif;
+    --font-mono:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+      "Courier New", monospace;
+    --radius: 0.5rem;
+    --shadow-x: 0;
+    --shadow-y: 2px;
+    --shadow-blur: 10px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.35;
+    --shadow-color: oklch(0.08 0.02 165);
+    --shadow-2xs: 0 1px 3px 0px oklch(0.08 0.02 165 / 0.2);
+    --shadow-xs: 0 1px 3px 0px oklch(0.08 0.02 165 / 0.2);
+    --shadow-sm:
+      0 2px 6px 0px oklch(0.08 0.02 165 / 0.3),
+      0 1px 2px -1px oklch(0.08 0.02 165 / 0.3);
+    --shadow:
+      0 2px 6px 0px oklch(0.08 0.02 165 / 0.3),
+      0 1px 2px -1px oklch(0.08 0.02 165 / 0.3);
+    --shadow-md:
+      0 2px 6px 0px oklch(0.08 0.02 165 / 0.32),
+      0 2px 4px -1px oklch(0.08 0.02 165 / 0.32);
+    --shadow-lg:
+      0 2px 10px 0px oklch(0.08 0.02 165 / 0.36),
+      0 4px 6px -1px oklch(0.08 0.02 165 / 0.36);
+    --shadow-xl:
+      0 2px 10px 0px oklch(0.08 0.02 165 / 0.4),
+      0 8px 10px -1px oklch(0.08 0.02 165 / 0.4);
+    --shadow-2xl: 0 2px 10px 0px oklch(0.08 0.02 165 / 0.5);
+    --heatmap-0: #1d2a24;
+    --heatmap-1: #2c4a3a;
+    --heatmap-2: #3f7355;
+    --heatmap-3: #7fae7a;
+    --heatmap-4: #d8c27a;
+  }
+
   /* Starry Night (light): a warm primed canvas with ivory paper cards hung on
      it, ultramarine ink, chrome yellow stars and cypress green. */
   .starry-night {
@@ -1040,7 +1190,8 @@ html:not([data-restoring]) [data-returning-visit] {
     .neo-brutalism-dark,
     .retro-arcade-dark,
     .starry-night-dark,
-    .blueprint-dark
+    .blueprint-dark,
+    .evergreen-dark
   )
   .lift-card {
   background-image: linear-gradient(
@@ -1573,6 +1724,93 @@ html:not([data-restoring]) [data-returning-visit] {
 
 :is(.blueprint, .blueprint-dark) .log-pill:hover {
   filter: brightness(1.08);
+}
+
+/*
+ * Evergreen, a field guide on cream stock. Same matching contract as the
+ * themes above: the stock shadcn Button is untouched and each variant is found
+ * by its cva class signature; a button with an inline background keeps its own
+ * fill, and html2canvas capture mode ([data-capture]) keeps the plain card.
+ *
+ * Tokens: `--brass` is the highlight metal, used as hairlines rather than
+ * fills so the page stays calm.
+ */
+:is(.evergreen, .evergreen-dark) {
+  --brass: oklch(0.72 0.13 75);
+}
+
+.evergreen-dark {
+  --brass: oklch(0.78 0.12 80);
+}
+
+/* Headings set in Fraunces, the only serif in the theme, so numbers and body
+   copy stay in the plain sans; pine ink on cream. Both live in the base layer
+   so a heading with its own font or colour utility keeps it. The AI coach
+   keeps its own face. */
+@layer base {
+  :is(.evergreen, .evergreen-dark) :is(h1, h2, h3):not(.font-coach *) {
+    font-family: var(--font-serif);
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+  }
+
+  .evergreen :is(h1, h2):not(.font-coach *) {
+    color: var(--primary);
+  }
+}
+
+/* Primary buttons and Log pills: pine with a soft top light and a brass
+   hairline inside the edge. */
+:is(.evergreen, .evergreen-dark)
+  .bg-primary.text-primary-foreground.hover\:bg-primary\/90:not(
+    [style*="background"]
+  ),
+:is(.evergreen, .evergreen-dark) .log-pill {
+  background-color: var(--primary);
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--primary-foreground) 12%, transparent),
+    transparent 60%
+  );
+  color: var(--primary-foreground);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--brass) 55%, transparent),
+    0 1px 3px -1px oklch(0.2 0.05 160 / 0.35);
+}
+
+:is(.evergreen, .evergreen-dark)
+  .bg-primary.text-primary-foreground.hover\:bg-primary\/90:not(
+    [style*="background"]
+  ):hover,
+:is(.evergreen, .evergreen-dark) .log-pill:hover {
+  filter: brightness(1.08);
+}
+
+/* Outline buttons keep the stock sage wash on hover and pick up a brass rim. */
+:is(.evergreen, .evergreen-dark)
+  .border-input.bg-background.hover\:bg-accent:not(
+    [style*="background"]
+  ):hover {
+  border-color: var(--brass);
+}
+
+/* Cards: a brass rule along the top edge, like the band on a field guide
+   cover. Nested cards stay plain. */
+:is(.evergreen, .evergreen-dark) .blueprint-card:not([data-capture]) {
+  border-top-color: color-mix(in srgb, var(--brass) 70%, transparent);
+  border-top-width: 2px;
+}
+
+:is(.evergreen, .evergreen-dark)
+  .blueprint-card
+  .blueprint-card:not([data-capture]) {
+  border-top-color: var(--border);
+  border-top-width: 1px;
+}
+
+/* Nav links turn pine (sage at night) on hover. */
+:is(.evergreen, .evergreen-dark) .hover\:text-foreground\/80:hover {
+  color: var(--link);
 }
 
 /*

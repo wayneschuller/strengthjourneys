@@ -1326,6 +1326,18 @@ html:not([data-restoring]) [data-returning-visit] {
   filter: brightness(1.08);
 }
 
+/* Log pills (`log-pill`: the nav's Log / Set Up pills and the week card's Log
+   any lift) are hand-styled zinc, not a Button variant, so they opt in by
+   class. */
+:is(.retro-arcade, .retro-arcade-dark) .log-pill {
+  background-image: var(--sunset);
+  color: hsl(0 0% 100%);
+}
+
+:is(.retro-arcade, .retro-arcade-dark) .log-pill:hover {
+  filter: brightness(1.1);
+}
+
 /* Outline buttons: a 1px sunset rim (2px read as a keyboard focus ring on the
    small square icon buttons) that fills with the full sunset on hover, so
    the solid primary button still reads as the main action. A button painted
@@ -1469,7 +1481,7 @@ html:not([data-restoring]) [data-returning-visit] {
  * Primary: cyanotype blue with a faint drafting grid and an inner double line,
  * like a framed title block. Grid and line are mixed from primary-foreground,
  * so they are light on light Blueprint's deep blue and dark on dark
- * Blueprint's bright cyan. `--drafting-grid` also serves the nav's Log pill.
+ * Blueprint's bright cyan.
  *
  * Outline: a blue hairline over a faint blue drafting grid, with orange
  * registration ticks in the corners echoing the card corner marks. The layers
@@ -1539,4 +1551,21 @@ html:not([data-restoring]) [data-returning-visit] {
   border-color: var(--primary);
   background-color: color-mix(in srgb, var(--primary) 12%, var(--background));
   color: var(--foreground);
+}
+
+/* Log pills (see the Retro Arcade note): the primary drafting treatment, with
+   the inner double line following the pill's round ends. */
+:is(.blueprint, .blueprint-dark) .log-pill {
+  background-color: var(--primary);
+  background-image: var(--drafting-grid);
+  background-size: 8px 8px;
+  color: var(--primary-foreground);
+  box-shadow:
+    inset 0 0 0 2px var(--primary),
+    inset 0 0 0 3px
+      color-mix(in srgb, var(--primary-foreground) 40%, transparent);
+}
+
+:is(.blueprint, .blueprint-dark) .log-pill:hover {
+  filter: brightness(1.08);
 }

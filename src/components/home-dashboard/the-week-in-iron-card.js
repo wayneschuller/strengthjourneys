@@ -1358,7 +1358,7 @@ function StartLiftPrompt({
       ) : null}
       <Button
         asChild
-        className="w-full justify-center gap-2 rounded-full bg-zinc-700 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="log-pill w-full justify-center gap-2 rounded-full bg-zinc-700 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
       >
         <Link href="/log">
           <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />

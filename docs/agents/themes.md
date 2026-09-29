@@ -18,7 +18,7 @@ Theme system is a mix of `next-themes` + CSS variable packs.
 - **`dark:` Tailwind variant:** `src/styles/globals.css` defines a custom `dark` variant that activates when `html` has one of the dark theme classes (currently `.dark`, `.neo-brutalism-dark`, `.blueprint-dark`, `.retro-arcade-dark`, `.starry-night-dark`).
   - If you add a new `*-dark` theme and expect Tailwind `dark:` utilities to apply inside it, add the new dark class to this `@custom-variant dark` selector.
 
-- **Per-theme Tailwind variants:** `blueprint:` and `retro-arcade:` (both light and dark variants of each) are declared as `@custom-variant` in `src/styles/globals.css`. Retro Arcade also exposes a `--sunset` gradient token, e.g. `retro-arcade:bg-(image:--sunset)`.
+- **Per-theme Tailwind variants:** `blueprint:` and `retro-arcade:` (both light and dark variants of each) are declared as `@custom-variant` in `src/styles/globals.css`. Retro Arcade exposes a `--sunset` gradient token and Blueprint a `--drafting-grid` token. The hand-styled zinc Log pills carry a `log-pill` class that each theme styles in `globals.css`.
   - Style stock shadcn primitives in `src/components/ui` from theme CSS (matching their cva class signature) rather than editing them.
 
 - **Theme picker + access control:** `src/components/ui-shell/theme-chooser.js`

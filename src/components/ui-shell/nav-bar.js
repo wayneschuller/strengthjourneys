@@ -101,7 +101,7 @@ export function NavBar() {
                 <Button
                   asChild
                   size="sm"
-                  className="mr-0 inline-flex h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:mr-2 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200 retro-arcade:bg-(image:--sunset) retro-arcade:text-white retro-arcade:hover:brightness-110 retro-arcade:focus-visible:ring-primary blueprint:bg-primary blueprint:bg-(image:--drafting-grid) blueprint:bg-size-[8px_8px] blueprint:text-primary-foreground blueprint:hover:brightness-110 blueprint:focus-visible:ring-primary"
+                  className="log-pill mr-0 inline-flex h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 md:mr-2 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
                 >
                   <Link href="/log" prefetch={false}>
                     {canOpenLog && dataSource !== "import" ? (
@@ -179,7 +179,7 @@ export function NavBar() {
           {authStatus === "authenticated" && !canOpenLog && (
             <Button
               size="sm"
-              className="mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200 retro-arcade:bg-(image:--sunset) retro-arcade:text-white retro-arcade:hover:brightness-110 retro-arcade:focus-visible:ring-primary blueprint:bg-primary blueprint:bg-(image:--drafting-grid) blueprint:bg-size-[8px_8px] blueprint:text-primary-foreground blueprint:hover:brightness-110 blueprint:focus-visible:ring-primary"
+              className="log-pill mr-2 h-9 shrink-0 rounded-full bg-zinc-700 px-3 text-zinc-50 shadow-sm transition-colors hover:bg-zinc-600 focus-visible:ring-zinc-700 dark:bg-zinc-300 dark:text-zinc-950 dark:hover:bg-zinc-200"
               onClick={() => {
                 openSheetSetupDialog("bootstrap");
               }}

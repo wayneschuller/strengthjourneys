@@ -74,6 +74,11 @@ const HUMAN_PERCENTILE_TABLE = [
 
 const FAQ_ITEMS = [
   {
+    question: "How much can a gorilla bench press?",
+    answer:
+      "Roughly 1,050–1,750 lb (475–795 kg), with about 1,400 lb as a middle estimate. That is the commonly cited 6–10x upper-body multiplier applied to a trained human bench of around 175 lb. No gorilla has ever been put under a barbell, so treat it as a fun estimate, not a world record.",
+  },
+  {
     question: "How strong is a gorilla actually?",
     answer:
       "A silverback gorilla is estimated at 6–10x the upper-body strength of a trained human, based on comparative anatomy studies of muscle fiber density and limb mechanics. Nobody has tested this in a gym setting. For obvious reasons.",
@@ -122,9 +127,15 @@ export async function getStaticProps() {
 export default function GorillaStrengthPage({ relatedArticles }) {
   const canonicalURL =
     "https://www.strengthjourneys.xyz/how-strong-is-a-gorilla";
-  const title = "How Strong Are You Compared to a Gorilla? | Strength Journeys";
+  // GSC review 2026-09-29: ~8k impressions at position 7.4 over six months
+  // were searches like "how much can a gorilla bench press" and "silverback
+  // gorilla bench press estimate", which the old "How Strong Are You Compared
+  // to a Gorilla?" title never answered. Lead with the question and the number.
+  // Baseline, last 6 months to 2026-09-28: 27 clicks / 26,526 imp / 0.10% CTR /
+  // pos 7.5. Review ~2026-10-29.
+  const title = "How Much Can a Gorilla Bench Press? Silverback vs You";
   const description =
-    "Playful gorilla strength comparison tool. Estimate your upper-body strength score versus a silverback range.";
+    "A silverback gorilla's bench press is estimated at roughly 1,050–1,750 lb (475–795 kg), about 6–10x a trained lifter. Enter your bench to see how you compare.";
   const keywords =
     "how strong is a gorilla, gorilla strength, gorilla vs human strength, how strong are you";
 

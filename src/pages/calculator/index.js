@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/articles/article-cards";
+import { CalculatorHubGuide } from "@/components/calculator-hub-guide";
 
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 
@@ -258,7 +259,10 @@ export default function E1RMCalculator({ relatedArticles }) {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <E1RMCalculatorMain relatedArticles={relatedArticles} />
+      <E1RMCalculatorMain
+        relatedArticles={relatedArticles}
+        guide={<CalculatorHubGuide />}
+      />
     </>
   );
 }
@@ -293,6 +297,9 @@ export default function E1RMCalculator({ relatedArticles }) {
  * @param {Object|null} [props.exampleSnippet] - Optional example block rendered above the calculator card.
  *   Shape: { heading: string, input: string|Array, calculation: string|Array, result: string|Array, takeaway: string|Array }.
  * @param {Array} [props.faqItems] - FAQ items rendered at the bottom of the page.
+ * @param {React.ReactNode} [props.guide] - Long-form guide rendered below the tool and
+ *   before the FAQ. Only the /calculator hub passes one; the sub-pages carry their own
+ *   example and support panels instead.
  */
 export function E1RMCalculatorMain({
   relatedArticles,
@@ -306,6 +313,7 @@ export function E1RMCalculatorMain({
   formulaSupport = null,
   liftLinks = null,
   faqItems = CALCULATOR_FAQ,
+  guide = null,
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -886,6 +894,7 @@ export function E1RMCalculatorMain({
         formulaSupport={formulaSupport}
         liftLinks={liftLinks}
       />
+      {guide}
       <section className="mt-10">
         <h2 className="mb-4 text-xl font-semibold">One Rep Max Calculator FAQ</h2>
         <div className="space-y-4">

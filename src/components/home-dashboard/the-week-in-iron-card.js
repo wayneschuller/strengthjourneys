@@ -49,8 +49,10 @@ import {
 } from "@/components/ui/tooltip";
 import { BIG_FOUR_LIFT_TYPES, getDisplayWeight } from "@/lib/processing-utils";
 import { getLiftArtwork } from "@/components/lift-artwork";
-import { BigFourNextUp } from "@/components/log/big-four-next-up";
-import { getBigFourNextUp } from "@/components/log/big-four-next-up-utils";
+import {
+  BigFourNextUp,
+  useNextLiftPlan,
+} from "@/components/log/big-four-next-up";
 import {
   formatDateToYmdLocal,
   addDaysFromStr,
@@ -564,17 +566,10 @@ export function TheWeekInIronCard({
   );
 
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
-  const bigFourNextUp = useMemo(
-    () =>
-      boundaries.isCurrentWeek
-        ? getBigFourNextUp({
-            parsedData,
-            referenceDate: boundaries.todayStr,
-            isMetric,
-          })
-        : [],
-    [parsedData, boundaries.isCurrentWeek, boundaries.todayStr, isMetric],
-  );
+  const nextLiftPlan = useNextLiftPlan({
+    referenceDate: boundaries.todayStr,
+    dashboardStage,
+  });
 
   const viewPreviousWeek = () => {
     setWeekOffset((prev) => Math.min(maxWeekOffset, prev + 1));
@@ -746,7 +741,7 @@ export function TheWeekInIronCard({
                       )}
                     <StartLiftPrompt
                       showIntro={false}
-                      nextUp={bigFourNextUp}
+                      nextLiftPlan={nextLiftPlan}
                       showStarterButtons={stats.sessions.current < 3}
                       trainedLiftTypes={stats.liftTypes}
                     />
@@ -934,6 +929,10 @@ function EarlyWeekCard({
   dataMaturityStage,
   dashboardStage,
 }) {
+  const nextLiftPlan = useNextLiftPlan({
+    referenceDate: formatDateToYmdLocal(new Date()),
+    dashboardStage,
+  });
   const title =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week"
       ? "The First Week"
@@ -970,6 +969,7 @@ function EarlyWeekCard({
         <div className="mt-5 w-full">
           <StartLiftPrompt
             showLiftCoaching={dashboardStage === "starter_sample"}
+            nextLiftPlan={dataSource === "sheet" ? nextLiftPlan : null}
           />
         </div>
       </CardContent>
@@ -1313,13 +1313,14 @@ function StartLiftPrompt({
   showStarterButtons = true,
   showLiftCoaching = false,
   trainedLiftTypes = [],
-  nextUp = [],
-}) {
-  // With history, the untrained lifts come in the order they're due, each
-  // with the top set to go for, the same numbers the log page leads with.
-  const nextUpUntrained = nextUp.filter(
-    ({ liftType }) => !trainedLiftTypes.includes(liftType),
-  );
+  nextLiftPlan = null,
+}) {  const hasNextUp =
+    nextLiftPlan?.mode === "novice" ||
+    Boolean(
+      nextLiftPlan?.lifts.some(
+        ({ liftType }) => !trainedLiftTypes.includes(liftType),
+      ),
+    );
   // Show only untrained big four lifts when the user has already trained some
   const starters =
     trainedLiftTypes.length > 0
@@ -1340,11 +1341,16 @@ function StartLiftPrompt({
           </p>
         </div>
       )}
-      {showStarterButtons && nextUpUntrained.length > 0 ? (
+      {/* A lifter with no sessions yet still needs to learn which lift is
+          which, so the described starter tiles stay until the first log. */}
+      {showStarterButtons && hasNextUp && !showLiftCoaching ? (
         <BigFourNextUp
           variant="compact"
-          lifts={nextUpUntrained}
+          plan={nextLiftPlan}
           getHref={getStartLiftHref}
+          // A pattern plan offers only what this week hasn't touched. A novice
+          // plan is the next workout, squat included, trained or not.
+          excludeLiftTypes={trainedLiftTypes}
         />
       ) : showStarterButtons && starters.length > 0 ? (
         <div className="grid grid-cols-2 gap-3">

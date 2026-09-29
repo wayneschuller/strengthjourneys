@@ -43,7 +43,7 @@ import { useLogSheetSync } from "@/components/log/use-log-sheet-sync";
 import { LiftBlock } from "@/components/log/lift-block";
 import { SessionFooterActions } from "@/components/log/session-footer-actions";
 import { EmptySessionState } from "@/components/log/empty-session-state";
-import { getBigFourNextUp } from "@/components/log/big-four-next-up-utils";
+import { useNextLiftPlan } from "@/components/log/big-four-next-up";
 import { LogDateNav } from "@/components/log/log-date-nav";
 import { PreviewLogCta } from "@/components/log/preview-log-cta";
 
@@ -435,10 +435,10 @@ export default function LogSessionPage({
       }));
   }, [parsedData, sessionDate]);
 
-  const bigFourNextUp = useMemo(
-    () => getBigFourNextUp({ parsedData, referenceDate: todayIso, isMetric }),
-    [parsedData, todayIso, isMetric],
-  );
+  const nextLiftPlan = useNextLiftPlan({
+    referenceDate: todayIso,
+    dashboardStage,
+  });
 
   const sessionLiftTypes = useMemo(
     () => Object.keys(sessionLiftsWithPending),
@@ -720,7 +720,7 @@ export default function LogSessionPage({
                 <div data-first-visit={isPresumedDemo ? "" : undefined}>
                   <EmptySessionState
                     addLiftChips={addLiftChips}
-                    bigFourNextUp={bigFourNextUp}
+                    nextLiftPlan={nextLiftPlan}
                     isStructuralSaving={isAddBlocked}
                     isToday={isToday}
                     onAddLift={handleAddLift}

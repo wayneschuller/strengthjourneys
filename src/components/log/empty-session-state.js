@@ -10,7 +10,7 @@ import { BigFourNextUp } from "@/components/log/big-four-next-up";
 
 export function EmptySessionState({
   addLiftChips,
-  bigFourNextUp,
+  nextLiftPlan,
   isStructuralSaving,
   isToday,
   onAddLift,
@@ -19,7 +19,7 @@ export function EmptySessionState({
   sessionDate,
 }) {
   // A past date is back-filling history, where "go for" numbers don't apply.
-  const showNextUp = isToday && bigFourNextUp?.length > 0;
+  const showNextUp = isToday && nextLiftPlan?.lifts.length > 0;
 
   return (
     <div className="mt-6 flex flex-col items-center gap-6">
@@ -43,7 +43,7 @@ export function EmptySessionState({
       ) : showNextUp ? (
         <>
           <BigFourNextUp
-            lifts={bigFourNextUp}
+            plan={nextLiftPlan}
             onStart={onAddLift}
             disabled={isStructuralSaving}
           />
@@ -52,7 +52,7 @@ export function EmptySessionState({
             label="Or pick another lift"
             onAddLift={onAddLift}
             chips={addLiftChips}
-            excludeLiftTypes={bigFourNextUp.map(({ liftType }) => liftType)}
+            excludeLiftTypes={nextLiftPlan.lifts.map(({ liftType }) => liftType)}
             sessionDate={sessionDate}
             isToday={isToday}
             disabled={isStructuralSaving}

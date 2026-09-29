@@ -18,7 +18,16 @@
  */
 
 import { BIG_FOUR_LIFT_TYPES, getCuratedLift } from "@/lib/lifts/lift-registry";
-import { getDaysBetweenYmd, parseYmdUtc } from "@/lib/date-utils";
+import { getDisplayWeight } from "@/lib/processing-utils";
+import {
+  getDaysBetweenYmd,
+  parseYmdUtc,
+  subtractDaysFromStr,
+} from "@/lib/date-utils";
+import {
+  getFirstTimeTargetWeight,
+  isEarlyStrengthJourneyStage,
+} from "@/components/log/coaching-utils";
 import {
   RECENT_TOP_SET_SESSION_LIMIT,
   getRecentTopSetHistory,
@@ -54,6 +63,20 @@ const SUPPORTING_LIFT_WEIGHT = 0.8;
 const COMPANION_MIN_SESSIONS = 3;
 const COMPANION_MIN_SHARE = 0.6;
 
+// Starting Strength's two alternating workouts. Squat every session, the
+// presses take turns, and deadlift closes both.
+const NOVICE_WORKOUTS = {
+  A: ["Back Squat", "Bench Press", "Deadlift"],
+  B: ["Back Squat", "Strict Press", "Deadlift"],
+};
+const NOVICE_WORK_SETS = { Deadlift: 1 };
+const NOVICE_DEFAULT_WORK_SETS = 3;
+const NOVICE_REPS = 5;
+
+// The program adds weight every session, so a novice who's been away longer
+// than this repeats last time's weight before climbing again.
+const NOVICE_REPEAT_AFTER_DAYS = 14;
+
 const WEEKDAY_NAMES = [
   "Sunday",
   "Monday",
@@ -63,6 +86,50 @@ const WEEKDAY_NAMES = [
   "Friday",
   "Saturday",
 ];
+
+/**
+ * What the athlete should lift next, in one of two modes.
+ *
+ * "novice": the dashboard's early stages (starter sheet, first week, first
+ * month), the same line the log's first-time coaching draws. There is no
+ * weekday or rhythm to read yet, and a new athlete gains most from the
+ * Starting Strength novice linear progression, fitted to what they've logged.
+ * "pattern": everything after, ranked by getBigFourNextUp.
+ *
+ * @param {Object} params
+ * @param {Array} params.parsedData
+ * @param {string} params.referenceDate - YYYY-MM-DD, usually today.
+ * @param {boolean} params.isMetric
+ * @param {string} params.dashboardStage - From getDashboardStage.
+ * @param {Object} [params.standards] - From useAthleteBio, for first-time
+ *   weights. Without it a first lift starts from the empty bar.
+ * @param {number} params.barWeight - In the display unit.
+ * @returns {{mode: "novice"|"pattern", lifts: Array, workout?: "A"|"B",
+ *   nextWorkout?: "A"|"B", trainedYesterday?: boolean}|null}
+ */
+export function getNextLiftPlan({
+  parsedData,
+  referenceDate,
+  isMetric,
+  dashboardStage,
+  standards,
+  barWeight,
+}) {
+  if (!Array.isArray(parsedData) || !referenceDate) return null;
+
+  if (!isEarlyStrengthJourneyStage(dashboardStage)) {
+    const lifts = getBigFourNextUp({ parsedData, referenceDate, isMetric });
+    return lifts.length ? { mode: "pattern", lifts } : null;
+  }
+
+  return getNovicePlan({
+    parsedData,
+    referenceDate,
+    isMetric,
+    standards,
+    barWeight,
+  });
+}
 
 /**
  * @param {Object} params
@@ -247,8 +314,122 @@ function getCadenceDays(recent) {
   return gaps.length % 2 ? gaps[mid] : (gaps[mid - 1] + gaps[mid]) / 2;
 }
 
-/** "5@152.5kg", the app's usual shorthand for a set. */
+/**
+ * "5@152.5kg", the app's usual shorthand for a set, or "3×5@60kg" when the
+ * set carries a count of work sets.
+ */
 export function formatNextUpSet(set, unit) {
   if (!set) return null;
-  return `${set.reps}@${set.weight}${unit}`;
+  const sets = set.sets > 1 ? `${set.sets}×` : "";
+  return `${sets}${set.reps}@${set.weight}${unit}`;
+}
+
+/**
+ * The Starting Strength workout that comes next. Bench last time means B,
+ * press last time means A, and a first session is A. Each lift climbs from
+ * its last five-rep work weight (deadlift by two steps, as the program does
+ * early on), or starts from the lift block's own first-time target.
+ */
+function getNovicePlan({
+  parsedData,
+  referenceDate,
+  isMetric,
+  standards,
+  barWeight,
+}) {
+  const unit = isMetric ? "kg" : "lb";
+  const minIncrement = isMetric ? 2.5 : 5;
+  const lastDateOf = (liftType) =>
+    parsedData.reduce(
+      (latest, e) =>
+        !e.isGoal &&
+        e.liftType === liftType &&
+        e.date < referenceDate &&
+        (!latest || e.date > latest)
+          ? e.date
+          : latest,
+      null,
+    );
+  const lastBench = lastDateOf("Bench Press");
+  const lastPress = lastDateOf("Strict Press");
+  const workout =
+    lastBench && (!lastPress || lastBench > lastPress) ? "B" : "A";
+  const yesterday = subtractDaysFromStr(referenceDate, 1);
+
+  const lifts = NOVICE_WORKOUTS[workout].map((liftType) => {
+    const lastDate = lastDateOf(liftType);
+    const daysSince = lastDate
+      ? getDaysBetweenYmd(lastDate, referenceDate)
+      : null;
+    const sets = NOVICE_WORK_SETS[liftType] ?? NOVICE_DEFAULT_WORK_SETS;
+    const lastWork = lastDate
+      ? getLastFiveRepWork(parsedData, liftType, lastDate, isMetric)
+      : null;
+    const step = liftType === "Deadlift" ? minIncrement * 2 : minIncrement;
+    const nextWeight = lastWork
+      ? daysSince > NOVICE_REPEAT_AFTER_DAYS
+        ? lastWork.weight
+        : Math.round((lastWork.weight + step) / minIncrement) * minIncrement
+      : null;
+
+    return {
+      liftType,
+      lastDate,
+      daysSince,
+      cadenceDays: null,
+      isDue: true,
+      usualWeekday: null,
+      companionOf: null,
+      workSets: sets,
+      lastTopSet: lastWork,
+      nextTopSet: nextWeight
+        ? { sets, reps: NOVICE_REPS, weight: nextWeight }
+        : null,
+      // First time under this bar: the same target the lift block builds its
+      // warmups toward, or null to start from the empty bar.
+      firstTimeTarget: lastDate
+        ? null
+        : {
+            sets,
+            reps: NOVICE_REPS,
+            weight: getFirstTimeTargetWeight({
+              standards,
+              liftType,
+              barWeight,
+              minIncrement,
+            }),
+          },
+      unit,
+    };
+  });
+
+  return {
+    mode: "novice",
+    workout,
+    nextWorkout: workout === "A" ? "B" : "A",
+    // Any lift yesterday, since the program wants a rest day between sessions.
+    trainedYesterday: parsedData.some((e) => !e.isGoal && e.date === yesterday),
+    lifts,
+  };
+}
+
+/**
+ * The heaviest weight done for five or more reps in that session, with how
+ * many such sets were done at it, e.g. 3x5@60kg. Null when every set was
+ * under five reps, since a heavy single says little about a five.
+ */
+function getLastFiveRepWork(parsedData, liftType, date, isMetric) {
+  let best = null;
+  for (const e of parsedData) {
+    if (e.isGoal || e.liftType !== liftType || e.date !== date) continue;
+    if ((e.reps ?? 0) < NOVICE_REPS) continue;
+    const { value } = getDisplayWeight(e, isMetric);
+    if (!(value > 0)) continue;
+    if (!best || value > best.weight) {
+      best = { sets: 1, reps: e.reps, weight: value };
+    } else if (value === best.weight) {
+      best.sets += 1;
+    }
+  }
+  return best;
 }

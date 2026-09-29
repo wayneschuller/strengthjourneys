@@ -1471,8 +1471,10 @@ html:not([data-restoring]) [data-returning-visit] {
  * so they are light on light Blueprint's deep blue and dark on dark
  * Blueprint's bright cyan. `--drafting-grid` also serves the nav's Log pill.
  *
- * Outline: a blue hairline with orange registration ticks in the corners,
- * echoing the card corner marks. Hover fills pale blue instead of the stock
+ * Outline: a blue hairline over a faint blue drafting grid, with orange
+ * registration ticks in the corners echoing the card corner marks. The layers
+ * need the `background` shorthand (position and size are not valid inside
+ * `background-image`), so the base colour rides on the last layer. Hover fills pale blue instead of the stock
  * orange accent, which was loud against the blue page.
  */
 :is(.blueprint, .blueprint-dark) {
@@ -1481,6 +1483,7 @@ html:not([data-restoring]) [data-returning-visit] {
     linear-gradient(to right, var(--drafting-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--drafting-line) 1px, transparent 1px);
   --drafting-tick: var(--accent);
+  --drafting-faint: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 :is(.blueprint, .blueprint-dark)
@@ -1505,23 +1508,28 @@ html:not([data-restoring]) [data-returning-visit] {
 :is(.blueprint, .blueprint-dark)
   .border-input.bg-background.hover\:bg-accent:not([style*="background"]) {
   border-color: color-mix(in srgb, var(--primary) 60%, transparent);
-  background-image:
-    linear-gradient(var(--drafting-tick), var(--drafting-tick)) top 2px left
-      2px / 6px 1px no-repeat,
-    linear-gradient(var(--drafting-tick), var(--drafting-tick)) top 2px left
-      2px / 1px 6px no-repeat,
-    linear-gradient(var(--drafting-tick), var(--drafting-tick)) top 2px right
-      2px / 6px 1px no-repeat,
-    linear-gradient(var(--drafting-tick), var(--drafting-tick)) top 2px right
-      2px / 1px 6px no-repeat,
-    linear-gradient(var(--drafting-tick), var(--drafting-tick)) bottom 2px
-      left 2px / 6px 1px no-repeat,
-    linear-gradient(var(--drafting-tick), var(--drafting-tick)) bottom 2px
-      left 2px / 1px 6px no-repeat,
-    linear-gradient(var(--drafting-tick), var(--drafting-tick)) bottom 2px
-      right 2px / 6px 1px no-repeat,
-    linear-gradient(var(--drafting-tick), var(--drafting-tick)) bottom 2px
-      right 2px / 1px 6px no-repeat;
+  background:
+    linear-gradient(var(--drafting-tick), var(--drafting-tick))
+      top 2px left 2px / 6px 1px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick))
+      top 2px left 2px / 1px 6px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick))
+      top 2px right 2px / 6px 1px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick))
+      top 2px right 2px / 1px 6px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick))
+      bottom 2px left 2px / 6px 1px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick))
+      bottom 2px left 2px / 1px 6px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick))
+      bottom 2px right 2px / 6px 1px no-repeat,
+    linear-gradient(var(--drafting-tick), var(--drafting-tick))
+      bottom 2px right 2px / 1px 6px no-repeat,
+    linear-gradient(to right, var(--drafting-faint) 1px, transparent 1px)
+      0 0 / 8px 8px,
+    linear-gradient(to bottom, var(--drafting-faint) 1px, transparent 1px)
+      0 0 / 8px 8px
+      var(--background);
 }
 
 :is(.blueprint, .blueprint-dark)

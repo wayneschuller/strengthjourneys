@@ -1863,19 +1863,51 @@ html:not([data-restoring]) [data-returning-visit] {
   pointer-events: none;
 }
 
+/* On desktop the corner sprig is mirrored into the top-right corner too, and
+   the twig moves off the nav into .app-nav-sprig, a spacer that fills the gap
+   between the last nav link and the action buttons, so it hangs from the top
+   edge in the middle of that gap whatever its width. */
+:is(.evergreen, .evergreen-dark) .app-nav-sprig {
+  background: var(--leaf-twig) center top / 96px 48px no-repeat;
+}
+
 @media (width >= 80rem) {
-  :is(.evergreen, .evergreen-dark) .app-nav::before {
+  :is(.evergreen, .evergreen-dark) .app-nav {
+    background-image: none;
+  }
+
+  :is(.evergreen, .evergreen-dark) .app-nav::before,
+  :is(.evergreen, .evergreen-dark) .app-nav::after {
     top: -6px;
     left: -40px;
+  }
+
+  :is(.evergreen, .evergreen-dark) .app-nav::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: auto;
+    right: -40px;
+    width: 190px;
+    height: 84px;
+    background: var(--leaf-corner) left top / 100% 100% no-repeat;
+    transform: scaleX(-1);
+    pointer-events: none;
   }
 }
 
 @media (width >= 96rem) {
-  :is(.evergreen, .evergreen-dark) .app-nav::before {
+  :is(.evergreen, .evergreen-dark) .app-nav::before,
+  :is(.evergreen, .evergreen-dark) .app-nav::after {
     top: -10px;
     left: -88px;
     width: 228px;
     height: 101px;
+  }
+
+  :is(.evergreen, .evergreen-dark) .app-nav::after {
+    left: auto;
+    right: -88px;
   }
 }
 

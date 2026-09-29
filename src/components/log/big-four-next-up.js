@@ -82,7 +82,7 @@ export function BigFourNextUp({
           Your next lift
         </h2>
         <p className="text-muted-foreground text-sm">
-          Ordered by your training rhythm over the last two months.
+          Ordered by your training pattern over the last two months.
         </p>
       </div>
 
@@ -160,7 +160,9 @@ export function BigFourNextUp({
                 </span>
                 {lift.lastDate && (
                   <span className="text-muted-foreground/80 block text-xs leading-snug">
-                    {getLastTrainedLabel(lift.daysSince)}
+                    {lift.companionOf
+                      ? `Usually after ${lift.companionOf}`
+                      : getLastTrainedLabel(lift.daysSince)}
                   </span>
                 )}
               </span>
@@ -222,7 +224,7 @@ function TopSetLines({ lift }) {
     return (
       <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 pt-1">
         <span className="text-base font-semibold tabular-nums">
-          Go for {next}
+          Go for {next}?
         </span>
         <span className="text-muted-foreground text-sm tabular-nums">
           Last time {last}
@@ -246,7 +248,7 @@ function TopSetLines({ lift }) {
 
 function getTargetLine(lift) {
   const next = formatNextUpSet(lift.nextTopSet, lift.unit);
-  if (next) return `Go for ${next}`;
+  if (next) return `Go for ${next}?`;
   const last = formatNextUpSet(lift.lastTopSet, lift.unit);
   if (last) return `Last time ${last}`;
   return "Your first session";
@@ -255,6 +257,10 @@ function getTargetLine(lift) {
 function getRhythmLine(lift) {
   if (!lift.lastDate) return "Ready when you are.";
   const when = getLastTrainedLabel(lift.daysSince);
+  if (lift.usualWeekday) {
+    return `${when}. You usually train it on ${lift.usualWeekday}s.`;
+  }
+  if (lift.companionOf) return `${when}. Usually after ${lift.companionOf}.`;
   if (!lift.cadenceDays) return `${when}. Welcome back to it.`;
   return `${when}. You train it ${getCadenceLabel(lift.cadenceDays)}.`;
 }

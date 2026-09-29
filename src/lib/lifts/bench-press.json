@@ -3,6 +3,7 @@
   "slug": "bench-press",
   "shortName": "Bench",
   "bigFour": true,
+  "powerlifting": true,
   "icon": "Shield",
   "tagline": "The lift everyone asks about first.",
   "homepageDescription": "A horizontal press from the chest while lying on a bench.",

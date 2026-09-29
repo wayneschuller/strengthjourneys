@@ -2,6 +2,7 @@
   "liftType": "Deadlift",
   "slug": "deadlift",
   "bigFour": true,
+  "powerlifting": true,
   "icon": "Skull",
   "tagline": "The heaviest bar you will ever move.",
   "homepageDescription": "Lifting a barbell from the floor to a standing lockout.",

@@ -19,6 +19,8 @@
  *                   Importers already drop a "(Barbell)" or leading
  *                   "Barbell " qualifier, so never list those spellings.
  *   bigFour         true for squat, bench, deadlift and press.
+ *   powerlifting    true for the three competition lifts. The log's next-lift
+ *                   ranking leans on them, since press often rides along.
  *   icon            Lucide icon name, registered in components/lift-icon.js.
  *   parentLift      { liftType, tonnageRatio, note? }. The big four lift a
  *                   variation counts toward on the Month in Iron card, and

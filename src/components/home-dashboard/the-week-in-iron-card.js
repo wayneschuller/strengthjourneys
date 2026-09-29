@@ -49,6 +49,8 @@ import {
 } from "@/components/ui/tooltip";
 import { BIG_FOUR_LIFT_TYPES, getDisplayWeight } from "@/lib/processing-utils";
 import { getLiftArtwork } from "@/components/lift-artwork";
+import { BigFourNextUp } from "@/components/log/big-four-next-up";
+import { getBigFourNextUp } from "@/components/log/big-four-next-up-utils";
 import {
   formatDateToYmdLocal,
   addDaysFromStr,
@@ -562,6 +564,17 @@ export function TheWeekInIronCard({
   );
 
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
+  const bigFourNextUp = useMemo(
+    () =>
+      boundaries.isCurrentWeek
+        ? getBigFourNextUp({
+            parsedData,
+            referenceDate: boundaries.todayStr,
+            isMetric,
+          })
+        : [],
+    [parsedData, boundaries.isCurrentWeek, boundaries.todayStr, isMetric],
+  );
 
   const viewPreviousWeek = () => {
     setWeekOffset((prev) => Math.min(maxWeekOffset, prev + 1));
@@ -733,6 +746,7 @@ export function TheWeekInIronCard({
                       )}
                     <StartLiftPrompt
                       showIntro={false}
+                      nextUp={bigFourNextUp}
                       showStarterButtons={stats.sessions.current < 3}
                       trainedLiftTypes={stats.liftTypes}
                     />
@@ -1299,7 +1313,13 @@ function StartLiftPrompt({
   showStarterButtons = true,
   showLiftCoaching = false,
   trainedLiftTypes = [],
+  nextUp = [],
 }) {
+  // With history, the untrained lifts come in the order they're due, each
+  // with the top set to go for, the same numbers the log page leads with.
+  const nextUpUntrained = nextUp.filter(
+    ({ liftType }) => !trainedLiftTypes.includes(liftType),
+  );
   // Show only untrained big four lifts when the user has already trained some
   const starters =
     trainedLiftTypes.length > 0
@@ -1320,17 +1340,18 @@ function StartLiftPrompt({
           </p>
         </div>
       )}
-      {showStarterButtons && starters.length > 0 ? (
+      {showStarterButtons && nextUpUntrained.length > 0 ? (
+        <BigFourNextUp
+          variant="compact"
+          lifts={nextUpUntrained}
+          getHref={getStartLiftHref}
+        />
+      ) : showStarterButtons && starters.length > 0 ? (
         <div className="grid grid-cols-2 gap-3">
           {starters.map(({ liftType, icon }) => (
             <Link
               key={liftType}
-              href={`/log?startLift=${encodeURIComponent(liftType)}#${encodeURIComponent(
-                `lift-${liftType
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]+/g, "-")
-                  .replace(/^-|-$/g, "")}`,
-              )}`}
+              href={getStartLiftHref(liftType)}
               className="border-border bg-card hover:border-primary hover:bg-muted/40 flex items-center gap-3 rounded-xl border px-3 py-3 transition-colors"
             >
               <Image
@@ -1368,4 +1389,13 @@ function StartLiftPrompt({
       </Button>
     </div>
   );
+}
+
+function getStartLiftHref(liftType) {
+  return `/log?startLift=${encodeURIComponent(liftType)}#${encodeURIComponent(
+    `lift-${liftType
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`,
+  )}`;
 }

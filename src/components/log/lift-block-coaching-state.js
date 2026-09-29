@@ -62,7 +62,7 @@ const TOP_SET_SUBLABELS = [
   "big swing",
   "for the gram",
 ];
-const RECENT_TOP_SET_SESSION_LIMIT = 6;
+export const RECENT_TOP_SET_SESSION_LIMIT = 6;
 
 export function getLiftBlockCoachingState({
   dashboardStage,
@@ -690,7 +690,9 @@ export function getLiftBlockCoachingState({
   };
 }
 
-function getRecentTopSetHistory({ prior, isMetric, limit }) {
+// Shared with the big four next-up cards, so the weight they propose is the
+// one the lift block offers once the athlete starts the lift.
+export function getRecentTopSetHistory({ prior, isMetric, limit }) {
   const dateOrder = [];
   const setsByDate = new Map();
 
@@ -727,7 +729,7 @@ function getRecentTopSetHistory({ prior, isMetric, limit }) {
     .filter((entry) => entry?.weight > 0 && entry?.reps > 0);
 }
 
-function getTargetTopSetSummary({ topSetHistory, minIncrement }) {
+export function getTargetTopSetSummary({ topSetHistory, minIncrement }) {
   if (!topSetHistory.length) return null;
 
   const latest = topSetHistory[topSetHistory.length - 1];

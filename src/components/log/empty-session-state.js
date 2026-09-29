@@ -1,13 +1,16 @@
 /**
  * Empty-session start state for the log page.
  * Preview users browse a read-only gallery; linked-sheet users can start a
- * lift block.
+ * lift block. On today, an athlete with big four history is led by the lift
+ * they're due to train, and the gallery follows for everything else.
  */
 
 import { AddLiftButton } from "@/components/log/add-controls";
+import { BigFourNextUp } from "@/components/log/big-four-next-up";
 
 export function EmptySessionState({
   addLiftChips,
+  bigFourNextUp,
   isStructuralSaving,
   isToday,
   onAddLift,
@@ -15,6 +18,9 @@ export function EmptySessionState({
   previewCta,
   sessionDate,
 }) {
+  // A past date is back-filling history, where "go for" numbers don't apply.
+  const showNextUp = isToday && bigFourNextUp?.length > 0;
+
   return (
     <div className="mt-6 flex flex-col items-center gap-6">
       {previewMode ? (
@@ -32,6 +38,24 @@ export function EmptySessionState({
             chips={addLiftChips}
             sessionDate={sessionDate}
             isToday={isToday}
+          />
+        </>
+      ) : showNextUp ? (
+        <>
+          <BigFourNextUp
+            lifts={bigFourNextUp}
+            onStart={onAddLift}
+            disabled={isStructuralSaving}
+          />
+
+          <AddLiftButton
+            label="Or pick another lift"
+            onAddLift={onAddLift}
+            chips={addLiftChips}
+            excludeLiftTypes={bigFourNextUp.map(({ liftType }) => liftType)}
+            sessionDate={sessionDate}
+            isToday={isToday}
+            disabled={isStructuralSaving}
           />
         </>
       ) : (

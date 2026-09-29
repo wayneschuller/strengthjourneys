@@ -1727,6 +1727,31 @@ html:not([data-restoring]) [data-returning-visit] {
 }
 
 /*
+ * Heading ink. Light Starry Night and light Evergreen print h1 and h2 in the
+ * primary colour rather than the body text colour. A heading that inherits
+ * its colour from a surface that picked its own (white text over a photo,
+ * primary-foreground on a primary fill) must keep that colour, or pine or
+ * ultramarine lands on a dark image. CSS cannot ask what colour a heading
+ * would have inherited, so the ink skips any heading inside an ancestor that
+ * sets one of those surface colours, plus an explicit `.own-ink` escape hatch
+ * for anything else (an inline colour, say). In the base layer, so a colour
+ * utility on the heading itself always wins. The AI coach keeps its own face.
+ */
+@layer base {
+  :is(.starry-night, .evergreen)
+    :is(h1, h2):not(
+      .font-coach *,
+      .own-ink,
+      .own-ink *,
+      [class*="text-white"] *,
+      [class*="text-black"] *,
+      [class*="text-primary-foreground"] *
+    ) {
+    color: var(--primary);
+  }
+}
+
+/*
  * Evergreen, a field guide on cream stock. Same matching contract as the
  * themes above: the stock shadcn Button is untouched and each variant is found
  * by its cva class signature; a button with an inline background keeps its own
@@ -1752,10 +1777,6 @@ html:not([data-restoring]) [data-returning-visit] {
     font-family: var(--font-serif);
     font-optical-sizing: auto;
     letter-spacing: -0.01em;
-  }
-
-  .evergreen :is(h1, h2):not(.font-coach *) {
-    color: var(--primary);
   }
 }
 
@@ -1950,14 +1971,8 @@ html:not([data-restoring]) [data-returning-visit] {
   content: none;
 }
 
-/* Headings: ultramarine ink on the canvas (in the base layer so a heading
-   with its own text colour keeps it); at night each carries a star's soft
-   golden halo. The AI coach keeps its own reading face. */
-@layer base {
-  .starry-night :is(h1, h2):not(.font-coach *) {
-    color: var(--primary);
-  }
-}
+/* Headings: at night each carries a star's soft golden halo. The ultramarine
+   ink on the light canvas is the shared heading ink rule below. */
 
 .starry-night-dark :is(h1, h2):not(.font-coach *) {
   text-shadow:

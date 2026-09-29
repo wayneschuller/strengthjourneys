@@ -2253,7 +2253,9 @@ function MilestoneSparkline({
   // log (rolling window), so an early crossing pins to the chart's left edge;
   // the hover title carries the true date.
   const firstTimestamp = timeline[0].timestamp;
-  const crossingDots = tiers
+  // Dots cover every tier crossed, not just up to the classic target, so a
+  // 4-plate squat still gets its "4" even though squat's goal line is 3.
+  const crossingDots = ALL_TIERS
     .filter((n) => tierCrossings?.[n])
     .map((n) => {
       const { first } = tierCrossings[n];

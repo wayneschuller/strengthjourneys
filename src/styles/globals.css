@@ -1835,19 +1835,48 @@ html:not([data-restoring]) [data-returning-visit] {
 }
 
 /* A sprig of leaves spills faintly into the nav from its top-left corner,
-   with a smaller twig at the far end. Background images on the nav itself,
-   so they sit over its fill and under its content with no stacking context.
-   Colours are baked into the SVGs (pine on cream, sage at night) because a
-   data URI cannot read theme tokens. */
+   with a smaller twig near the far end. Colours are baked into the SVGs
+   (pine on cream, sage at night) because a data URI cannot read theme tokens.
+
+   The twig is a background image on the nav. The corner sprig is ::before at
+   z-index -1: it paints under the nav's own fill (the page content wrapper is
+   the stacking context), so it never covers the logo, and it is free to grow
+   outside the nav. On wide screens the nav has a big side margin, so the
+   sprig slides left into it and the leaves sit in the empty corner beside
+   the logo; on tablets and phones it stays inside, behind the logo. */
 :is(.evergreen, .evergreen-dark) .app-nav {
-  background-image: var(--leaf-corner), var(--leaf-twig);
-  background-position:
-    left top,
-    right 18% top;
-  background-size:
-    190px 84px,
-    80px 40px;
+  background-image: var(--leaf-twig);
+  background-position: right 18% top;
+  background-size: 80px 40px;
   background-repeat: no-repeat;
+}
+
+:is(.evergreen, .evergreen-dark) .app-nav::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 190px;
+  height: 84px;
+  background: var(--leaf-corner) left top / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+@media (width >= 80rem) {
+  :is(.evergreen, .evergreen-dark) .app-nav::before {
+    top: -6px;
+    left: -40px;
+  }
+}
+
+@media (width >= 96rem) {
+  :is(.evergreen, .evergreen-dark) .app-nav::before {
+    top: -10px;
+    left: -88px;
+    width: 228px;
+    height: 101px;
+  }
 }
 
 .evergreen .app-nav {

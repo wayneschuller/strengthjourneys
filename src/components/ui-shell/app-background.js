@@ -113,12 +113,10 @@ export function AppBackground() {
       {mounted && isStarryNight && (
         <StarryNightLayer
           animated={showAnimated}
-          className={cn(
-            "pointer-events-none absolute inset-0 h-full w-full",
-            themeForBackground === "starry-night-dark"
-              ? "text-amber-100/60"
-              : "text-primary/85",
-          )}
+          variant={
+            themeForBackground === "starry-night-dark" ? "dark" : "light"
+          }
+          className="pointer-events-none absolute inset-0 h-full w-full"
         />
       )}
 

@@ -18,7 +18,7 @@ Theme system is a mix of `next-themes` + CSS variable packs.
 - **`dark:` Tailwind variant:** `src/styles/globals.css` defines a custom `dark` variant that activates when `html` has one of the dark theme classes (currently `.dark`, `.neo-brutalism-dark`, `.blueprint-dark`, `.retro-arcade-dark`, `.starry-night-dark`).
   - If you add a new `*-dark` theme and expect Tailwind `dark:` utilities to apply inside it, add the new dark class to this `@custom-variant dark` selector.
 
-- **Per-theme Tailwind variants:** `blueprint:` and `retro-arcade:` (both light and dark variants of each) are declared as `@custom-variant` in `src/styles/globals.css`. Retro Arcade exposes a `--sunset` gradient token and Blueprint a `--drafting-grid` token. The hand-styled zinc Log pills carry a `log-pill` class that each theme styles in `globals.css`.
+- **Per-theme Tailwind variants:** `blueprint:` and `retro-arcade:` (both light and dark variants of each) are declared as `@custom-variant` in `src/styles/globals.css`. Retro Arcade exposes a `--sunset` gradient token and Blueprint a `--drafting-grid` token. Starry Night has no variant; its painted touches (`--impasto` buttons, a gilt hairline inside cards, a wind-and-stars band over the nav, dark heading halos) are plain theme-class rules at the end of `globals.css`. The hand-styled zinc Log pills carry a `log-pill` class that each theme styles in `globals.css`.
   - Style stock shadcn primitives in `src/components/ui` from theme CSS (matching their cva class signature) rather than editing them.
 
 - **Theme picker + access control:** `src/components/ui-shell/theme-chooser.js`
@@ -33,7 +33,7 @@ Theme system is a mix of `next-themes` + CSS variable packs.
   - Vanilla `light/dark`: grid pattern; animated version uses `AnimatedGridPattern`.
   - `neo-brutalism*`: when animated enabled, uses layered `FlickeringGrid` with theme-tuned colors.
   - `retro-arcade*`: when animated enabled, uses `WarpBackground` from `src/components/ui-shell/theme-backgrounds.js`.
-  - `starry-night*`: uses `StarryNightLayer` from `src/components/ui-shell/theme-backgrounds.js` (static or gently animated depending on the toggle) and suppresses the grid.
+  - `starry-night*`: uses `StarryNightLayer` from `src/components/ui-shell/theme-backgrounds.js` (static or gently animated depending on the toggle) and suppresses the grid. Its two paintings, `public/swirls-starry-{light,dark}.webp`, are pre-tinted per variant (ultramarine strokes with chrome yellow stars, cobalt with gold), so the layer needs no blend mode.
 
 - **Theme logos (optional):** `src/lib/theme-logos.js` maps theme name -> logo asset for nav.
 

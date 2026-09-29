@@ -770,41 +770,43 @@ html:not([data-restoring]) [data-returning-visit] {
     --heatmap-4: #6bf2ff;
   }
 
-  /* Starry Night (light) — warm gallery canvas, not a cool UI blue like Blueprint */
+  /* Starry Night (light): a warm primed canvas with ivory paper cards hung on
+     it, ultramarine ink, chrome yellow stars and cypress green. */
   .starry-night {
-    --background: oklch(0.9754 0.0138 87.87);
-    --foreground: oklch(0.235 0.05 265);
-    --card: oklch(0.9411 0.0247 251.85);
-    --card-foreground: oklch(0.235 0.05 265);
-    --popover: oklch(0.9821 0.0242 90.76);
-    --popover-foreground: oklch(0.235 0.05 265);
-    --primary: oklch(0.398 0.1479 266.75);
-    --primary-foreground: oklch(0.9821 0.0242 90.76);
-    --secondary: oklch(0.7973 0.1592 82.85);
-    --secondary-foreground: oklch(0.235 0.05 265);
-    --muted: oklch(0.9134 0.0166 82.15);
-    --muted-foreground: oklch(0.4459 0.0619 264.53);
-    --accent: oklch(0.6431 0.0936 231.87);
-    --accent-foreground: oklch(0.9821 0.0242 90.76);
-    --destructive: oklch(0.5472 0.1892 27.87);
-    --destructive-foreground: oklch(0.9821 0.0242 90.76);
-    --border: oklch(0.7889 0.0271 74.16);
-    --input: oklch(0.6431 0.0936 231.87);
-    --ring: oklch(0.7973 0.1592 82.85);
-    --chart-1: oklch(0.398 0.1479 266.75);
-    --chart-2: oklch(0.7973 0.1592 82.85);
-    --chart-3: oklch(0.6431 0.0936 231.87);
-    --chart-4: oklch(0.4692 0.0645 149.99);
-    --chart-5: oklch(0.5472 0.1892 27.87);
-    --sidebar: oklch(0.9411 0.0247 251.85);
-    --sidebar-background: oklch(0.9411 0.0247 251.85);
-    --sidebar-foreground: oklch(0.235 0.05 265);
-    --sidebar-primary: oklch(0.398 0.1479 266.75);
-    --sidebar-primary-foreground: oklch(0.9821 0.0242 90.76);
-    --sidebar-accent: oklch(0.7973 0.1592 82.85);
-    --sidebar-accent-foreground: oklch(0.235 0.05 265);
-    --sidebar-border: oklch(0.7889 0.0271 74.16);
-    --sidebar-ring: oklch(0.7973 0.1592 82.85);
+    --background: oklch(0.955 0.026 86);
+    --foreground: oklch(0.255 0.075 266);
+    --card: oklch(0.985 0.014 92);
+    --card-foreground: oklch(0.255 0.075 266);
+    --popover: oklch(0.985 0.014 92);
+    --popover-foreground: oklch(0.255 0.075 266);
+    --primary: oklch(0.4 0.155 266);
+    --primary-foreground: oklch(0.985 0.02 92);
+    --link: oklch(0.42 0.16 262);
+    --secondary: oklch(0.83 0.155 84);
+    --secondary-foreground: oklch(0.255 0.075 266);
+    --muted: oklch(0.93 0.028 86);
+    --muted-foreground: oklch(0.46 0.065 262);
+    --accent: oklch(0.935 0.07 92);
+    --accent-foreground: oklch(0.255 0.075 266);
+    --destructive: oklch(0.55 0.19 30);
+    --destructive-foreground: oklch(0.985 0.02 92);
+    --border: oklch(0.85 0.045 82);
+    --input: oklch(0.78 0.06 80);
+    --ring: oklch(0.8 0.15 84);
+    --chart-1: oklch(0.4 0.155 266);
+    --chart-2: oklch(0.8 0.155 82);
+    --chart-3: oklch(0.62 0.1 232);
+    --chart-4: oklch(0.47 0.075 152);
+    --chart-5: oklch(0.58 0.18 38);
+    --sidebar: oklch(0.985 0.014 92);
+    --sidebar-background: oklch(0.985 0.014 92);
+    --sidebar-foreground: oklch(0.255 0.075 266);
+    --sidebar-primary: oklch(0.4 0.155 266);
+    --sidebar-primary-foreground: oklch(0.985 0.02 92);
+    --sidebar-accent: oklch(0.935 0.07 92);
+    --sidebar-accent-foreground: oklch(0.255 0.075 266);
+    --sidebar-border: oklch(0.85 0.045 82);
+    --sidebar-ring: oklch(0.8 0.15 84);
     --font-sans: Libre Baskerville, serif;
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono:
@@ -844,41 +846,44 @@ html:not([data-restoring]) [data-returning-visit] {
     --heatmap-4: #1f2f66;
   }
 
-  /* Starry Night (dark) — deep ultramarine night sky with vivid cobalt swirls and chrome-gold stars */
+  /* Starry Night (dark): the night sky itself. Moonlit cream text, cobalt
+     wind, and chrome gold as the lead colour, so the main actions shine like
+     the stars. */
   .starry-night-dark {
-    --background: oklch(0.1877 0.0349 272.98);
-    --foreground: oklch(0.9366 0.0129 266.6974);
-    --card: oklch(0.238 0.0533 277.16);
-    --card-foreground: oklch(0.9366 0.0129 266.6974);
-    --popover: oklch(0.238 0.0533 277.16);
-    --popover-foreground: oklch(0.9097 0.144 95.112);
-    --primary: oklch(0.6247 0.155 258.02);
-    --primary-foreground: oklch(0.1877 0.0349 272.98);
-    --secondary: oklch(0.9097 0.144 95.112);
-    --secondary-foreground: oklch(0.238 0.0533 277.16);
-    --muted: oklch(0.2557 0.0417 278.5);
-    --muted-foreground: oklch(0.6812 0.0453 262.04);
-    --accent: oklch(0.8469 0.0524 264.7751);
-    --accent-foreground: oklch(0.1877 0.0349 272.98);
-    --destructive: oklch(0.5989 0.1917 26.87);
-    --destructive-foreground: oklch(0.9694 0.0146 90.76);
-    --border: oklch(0.3283 0.0459 279.86);
-    --input: oklch(0.6247 0.155 258.02);
-    --ring: oklch(0.9097 0.144 95.112);
-    --chart-1: oklch(0.6247 0.155 258.02);
-    --chart-2: oklch(0.9097 0.144 95.112);
-    --chart-3: oklch(0.7484 0.0879 231.87);
-    --chart-4: oklch(0.6812 0.0871 149.99);
-    --chart-5: oklch(0.5989 0.1917 26.87);
-    --sidebar: oklch(0.238 0.0533 277.16);
-    --sidebar-background: oklch(0.238 0.0533 277.16);
-    --sidebar-foreground: oklch(0.9366 0.0129 266.6974);
-    --sidebar-primary: oklch(0.6247 0.155 258.02);
-    --sidebar-primary-foreground: oklch(0.1877 0.0349 272.98);
-    --sidebar-accent: oklch(0.9097 0.144 95.112);
-    --sidebar-accent-foreground: oklch(0.238 0.0533 277.16);
-    --sidebar-border: oklch(0.3283 0.0459 279.86);
-    --sidebar-ring: oklch(0.9097 0.144 95.112);
+    --background: oklch(0.185 0.048 268);
+    --foreground: oklch(0.94 0.022 92);
+    --card: oklch(0.228 0.06 270);
+    --card-foreground: oklch(0.94 0.022 92);
+    --popover: oklch(0.228 0.06 270);
+    --popover-foreground: oklch(0.94 0.022 92);
+    --primary: oklch(0.86 0.15 88);
+    --primary-foreground: oklch(0.2 0.055 268);
+    --link: oklch(0.88 0.14 90);
+    --secondary: oklch(0.6 0.15 260);
+    --secondary-foreground: oklch(0.97 0.015 92);
+    --muted: oklch(0.26 0.052 270);
+    --muted-foreground: oklch(0.72 0.05 262);
+    --accent: oklch(0.31 0.08 266);
+    --accent-foreground: oklch(0.96 0.02 92);
+    --destructive: oklch(0.62 0.19 28);
+    --destructive-foreground: oklch(0.97 0.015 92);
+    --border: oklch(0.34 0.065 270);
+    --input: oklch(0.44 0.08 266);
+    --ring: oklch(0.86 0.15 88);
+    --chart-1: oklch(0.66 0.15 258);
+    --chart-2: oklch(0.86 0.15 88);
+    --chart-3: oklch(0.76 0.09 225);
+    --chart-4: oklch(0.68 0.09 152);
+    --chart-5: oklch(0.66 0.18 40);
+    --sidebar: oklch(0.228 0.06 270);
+    --sidebar-background: oklch(0.228 0.06 270);
+    --sidebar-foreground: oklch(0.94 0.022 92);
+    --sidebar-primary: oklch(0.86 0.15 88);
+    --sidebar-primary-foreground: oklch(0.2 0.055 268);
+    --sidebar-accent: oklch(0.31 0.08 266);
+    --sidebar-accent-foreground: oklch(0.96 0.02 92);
+    --sidebar-border: oklch(0.34 0.065 270);
+    --sidebar-ring: oklch(0.86 0.15 88);
     --font-sans: Libre Baskerville, serif;
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono:
@@ -1568,4 +1573,219 @@ html:not([data-restoring]) [data-returning-visit] {
 
 :is(.blueprint, .blueprint-dark) .log-pill:hover {
   filter: brightness(1.08);
+}
+
+/*
+ * Starry Night, painted rather than tinted. Same matching contract as Retro
+ * Arcade and Blueprint: the stock shadcn Button is untouched and each variant
+ * is found by its cva class signature; a button with an inline background
+ * (the lift colour picker) keeps its own fill, and html2canvas capture mode
+ * ([data-capture]) keeps the plain card.
+ *
+ * Tokens: `--impasto` is a loaded brush dragged across the primary colour
+ * (thin diagonal streaks over a lit edge), `--gilt` is the gold of a frame's
+ * inner fillet, `--halo` the glow around a star.
+ */
+:is(.starry-night, .starry-night-dark) {
+  --gilt: oklch(0.76 0.14 82);
+  --halo: oklch(0.88 0.15 90);
+  --impasto:
+    repeating-linear-gradient(
+      -24deg,
+      color-mix(in srgb, var(--primary-foreground) 9%, transparent) 0 1.5px,
+      transparent 1.5px 5px,
+      color-mix(in srgb, var(--primary-foreground) 5%, transparent) 5px 6px,
+      transparent 6px 11px
+    ),
+    radial-gradient(
+      130% 160% at 15% -20%,
+      color-mix(in srgb, var(--primary-foreground) 22%, transparent),
+      transparent 60%
+    );
+}
+
+/* Primed canvas: a faint linen weave under the painting on the light theme. */
+.starry-night body {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      oklch(0.6 0.05 70 / 0.05) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      oklch(0.6 0.05 70 / 0.04) 0 1px,
+      transparent 1px 4px
+    );
+}
+
+/* Primary buttons and Log pills: impasto over the primary colour with a gilt
+   hairline. Ultramarine on the canvas; on the night sky they are the stars,
+   so they glow. */
+:is(.starry-night, .starry-night-dark)
+  .bg-primary.text-primary-foreground.hover\:bg-primary\/90:not(
+    [style*="background"]
+  ),
+:is(.starry-night, .starry-night-dark) .log-pill {
+  background-color: var(--primary);
+  background-image: var(--impasto);
+  color: var(--primary-foreground);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gilt) 55%, transparent),
+    0 2px 6px -2px oklch(0.2 0.08 266 / 0.35);
+}
+
+.starry-night-dark
+  .bg-primary.text-primary-foreground.hover\:bg-primary\/90:not(
+    [style*="background"]
+  ),
+.starry-night-dark .log-pill {
+  box-shadow:
+    inset 0 0 0 1px oklch(1 0 0 / 0.25),
+    0 0 14px -3px color-mix(in srgb, var(--halo) 60%, transparent);
+}
+
+:is(.starry-night, .starry-night-dark)
+  .bg-primary.text-primary-foreground.hover\:bg-primary\/90:not(
+    [style*="background"]
+  ):hover,
+:is(.starry-night, .starry-night-dark) .log-pill:hover {
+  filter: brightness(1.1) saturate(1.05);
+}
+
+/* Outline buttons: a gilt rim on the card colour, washed in pale chrome yellow
+   (or cobalt at night) on hover. */
+:is(.starry-night, .starry-night-dark)
+  .border-input.bg-background.hover\:bg-accent:not([style*="background"]) {
+  border-color: color-mix(in srgb, var(--gilt) 60%, transparent);
+  background-color: var(--card);
+}
+
+:is(.starry-night, .starry-night-dark)
+  .border-input.bg-background.hover\:bg-accent:not(
+    [style*="background"]
+  ):hover {
+  border-color: var(--gilt);
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Cards hang like framed canvases: a gilt hairline sits 3px inside the edge,
+   the way a gallery frame's inner lip catches the light. Drawn on ::after so
+   a card with its own fill keeps it. The shadow rule is unlayered so it beats
+   the Card primitive's inlined shadow-sm; nested cards stay plain. */
+:is(.starry-night, .starry-night-dark) .blueprint-card {
+  position: relative;
+}
+
+:is(.starry-night, .starry-night-dark) .blueprint-card:not([data-capture]) {
+  box-shadow:
+    0 1px 2px oklch(0.3 0.06 266 / 0.06),
+    0 8px 24px -12px oklch(0.3 0.08 266 / 0.22);
+}
+
+.starry-night-dark .blueprint-card:not([data-capture]) {
+  box-shadow: 0 10px 30px -14px oklch(0.05 0.03 275 / 0.8);
+}
+
+:is(.starry-night, .starry-night-dark)
+  .blueprint-card:not([data-capture])::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--gilt) 32%, transparent);
+  border-radius: calc(var(--radius) - 3px);
+  pointer-events: none;
+}
+
+.starry-night-dark .blueprint-card:not([data-capture])::after {
+  border-color: color-mix(in srgb, var(--gilt) 22%, transparent);
+}
+
+:is(.starry-night, .starry-night-dark)
+  .blueprint-card
+  .blueprint-card:not([data-capture]) {
+  box-shadow: none;
+}
+
+:is(.starry-night, .starry-night-dark) .blueprint-card .blueprint-card::after {
+  content: none;
+}
+
+/* Headings: ultramarine ink on the canvas (in the base layer so a heading
+   with its own text colour keeps it); at night each carries a star's soft
+   golden halo. The AI coach keeps its own reading face. */
+@layer base {
+  .starry-night :is(h1, h2):not(.font-coach *) {
+    color: var(--primary);
+  }
+}
+
+.starry-night-dark :is(h1, h2):not(.font-coach *) {
+  text-shadow:
+    0 0 10px color-mix(in srgb, var(--halo) 35%, transparent),
+    0 0 26px color-mix(in srgb, var(--halo) 15%, transparent);
+}
+
+/* Nav links turn to starlight on hover. */
+:is(.starry-night, .starry-night-dark) .hover\:text-foreground\/80:hover {
+  color: var(--link);
+}
+
+.starry-night-dark .hover\:text-foreground\/80:hover {
+  text-shadow: 0 0 8px color-mix(in srgb, var(--halo) 55%, transparent);
+}
+
+/* A breath of the painting above the nav bar: two strokes of wind rolling
+   left to right (cobalt over ultramarine, drawn as rows of offset arcs), with
+   three chrome yellow stars hanging in them. The strokes fade out before the
+   right edge so the stars have sky to sit in. Outside the nav so it never
+   crowds the logo. */
+:is(.starry-night, .starry-night-dark) .app-nav::before {
+  --wind-deep: oklch(0.4 0.155 266 / 0.75);
+  --wind-light: oklch(0.62 0.12 245 / 0.7);
+  --star: oklch(0.8 0.155 84);
+  content: "";
+  position: absolute;
+  top: -11px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, var(--star) 0 2px, transparent 2.6px)
+      calc(100% - 18px) 1px / 8px 8px no-repeat,
+    radial-gradient(circle, var(--star) 0 1.4px, transparent 2px)
+      calc(100% - 44px) 4px / 6px 6px no-repeat,
+    radial-gradient(circle, var(--star) 0 1px, transparent 1.6px)
+      calc(100% - 66px) 0 / 4px 4px no-repeat,
+    radial-gradient(
+        circle at 50% 100%,
+        transparent 5px,
+        var(--wind-light) 5px 6.5px,
+        transparent 7px
+      )
+      0 0 / 18px 7px repeat-x,
+    radial-gradient(
+        circle at 50% 0%,
+        transparent 5px,
+        var(--wind-deep) 5px 6.5px,
+        transparent 7px
+      )
+      9px 3px / 18px 7px repeat-x;
+  mask-image: linear-gradient(
+    to right,
+    #000 0 55%,
+    rgb(0 0 0 / 0.4) 78%,
+    transparent 86%,
+    transparent 88%,
+    #000 88%
+  );
+}
+
+.starry-night-dark .app-nav::before {
+  --wind-deep: oklch(0.6 0.15 260 / 0.8);
+  --wind-light: oklch(0.8 0.08 240 / 0.6);
+  --star: oklch(0.88 0.15 90);
+  filter: drop-shadow(0 0 3px oklch(0.88 0.15 90 / 0.5));
 }

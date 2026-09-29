@@ -14,7 +14,13 @@ import { cn } from "@/lib/utils";
 // Starry Night – Single giant swirl canvas with gentle drift
 // -----------------------------------------------------------------------------
 
-const SWIRL_IMAGE_HREF = "/swirls-medium.png";
+// Two paintings of the same swirl drawing: ultramarine strokes with chrome
+// yellow stars on the light canvas, moonlit cobalt strokes with gold stars on
+// the night sky. Each is tinted in the file, so the layer needs no blend mode.
+const SWIRL_IMAGE_HREF = {
+  light: "/swirls-starry-light.webp",
+  dark: "/swirls-starry-dark.webp",
+};
 const NARROW_VIEWPORT_MAX_WIDTH = 1300;
 
 /**
@@ -24,8 +30,13 @@ const NARROW_VIEWPORT_MAX_WIDTH = 1300;
  * @param {Object} props
  * @param {string} [props.className] - Additional CSS classes applied to the outer wrapper.
  * @param {boolean} [props.animated=false] - When true, enables the slow orbital drift animation.
+ * @param {"light"|"dark"} [props.variant="light"] - Which painting to show.
  */
-export function StarryNightLayer({ className, animated = false }) {
+export function StarryNightLayer({
+  className,
+  animated = false,
+  variant = "light",
+}) {
   const [narrowViewport, setNarrowViewport] = useState(true);
 
   useEffect(() => {
@@ -37,8 +48,11 @@ export function StarryNightLayer({ className, animated = false }) {
   }, []);
 
   const baseClassName = cn("relative h-full w-full overflow-hidden", className);
-  const imageLayerClassName =
-    "pointer-events-none absolute inset-0 select-none opacity-[0.05] dark:opacity-[0.08]";
+  const imageHref = SWIRL_IMAGE_HREF[variant] ?? SWIRL_IMAGE_HREF.light;
+  const imageLayerClassName = cn(
+    "pointer-events-none absolute inset-0 select-none",
+    variant === "dark" ? "opacity-[0.2]" : "opacity-[0.14]",
+  );
 
   if (!animated) {
     return (
@@ -46,7 +60,7 @@ export function StarryNightLayer({ className, animated = false }) {
         <div
           className={imageLayerClassName}
           style={{
-            backgroundImage: `url(${SWIRL_IMAGE_HREF})`,
+            backgroundImage: `url(${imageHref})`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "50% 50%",
             backgroundSize: "cover",
@@ -81,7 +95,7 @@ export function StarryNightLayer({ className, animated = false }) {
           ease: "easeInOut",
         }}
         style={{
-          backgroundImage: `url(${SWIRL_IMAGE_HREF})`,
+          backgroundImage: `url(${imageHref})`,
           backgroundRepeat: "no-repeat",
           backgroundSize,
         }}

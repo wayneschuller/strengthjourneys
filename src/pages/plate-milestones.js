@@ -2271,7 +2271,7 @@ function MilestoneSparkline({
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={displayData}
-          margin={{ top: 4, right: 8, bottom: 0, left: 8 }}
+          margin={{ top: 14, right: 8, bottom: 0, left: 8 }}
         >
           <defs>
             <linearGradient
@@ -2303,9 +2303,9 @@ function MilestoneSparkline({
             strokeWidth={1.5}
             label={{
               value: targetLabel,
-              position: "insideTopRight",
-              offset: -4,
-              dy: -2,
+              // Sits the text on top of the line; insideTop* hangs it below.
+              position: "insideBottomRight",
+              offset: 3,
               fill: "#10B981",
               fontSize: 10,
               fontWeight: 600,

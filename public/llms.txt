@@ -17,7 +17,7 @@
 ## Tracking and Visualization (requires Google Sheet connection)
 
 - [Session Logger](https://www.strengthjourneys.xyz/log): Log sets directly to your Google Sheet from the browser. The page opens on a live demo log that anyone can browse without signing in.
-- [Lift Explorer](https://www.strengthjourneys.xyz/lift-explorer): Browse and search your full lifting history.
+- [Lift Explorer](https://www.strengthjourneys.xyz/lift-explorer): Every lift, each with its own progress guide. The big four lead.
 - [Strength Visualizer](https://www.strengthjourneys.xyz/visualizer): Interactive charts of your estimated 1RM trends over time.
 - [Tonnage Tracker](https://www.strengthjourneys.xyz/tonnage): Weekly and monthly training volume analysis.
 - [Strength Year in Review](https://www.strengthjourneys.xyz/strength-year-in-review): Annual recap of PRs, consistency, and milestones.
@@ -64,7 +64,6 @@
 
 ## Progress Guides
 
-- [Progress Guides](https://www.strengthjourneys.xyz/progress-guide): Hub for the big four lift progress guides.
 - [Squat Progress Guide](https://www.strengthjourneys.xyz/progress-guide/squat)
 - [Bench Press Progress Guide](https://www.strengthjourneys.xyz/progress-guide/bench-press)
 - [Deadlift Progress Guide](https://www.strengthjourneys.xyz/progress-guide/deadlift)

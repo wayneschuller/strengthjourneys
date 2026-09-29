@@ -61,7 +61,12 @@ import {
   Mountain,
 } from "lucide-react";
 import { LiftIcon } from "@/components/lift-icon";
-import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
+import {
+  BIG_FOUR_LIFTS,
+  CURATED_LIFTS,
+  getLiftGuidePath,
+  isLiftGuideIndexable,
+} from "@/lib/lifts/lift-registry";
 import { GorillaIcon } from "@/components/gorilla-icon";
 
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
@@ -271,7 +276,7 @@ export function DesktopNav() {
       </Link>
 
       <nav className="flex min-w-0 flex-1 items-center space-x-2 text-sm font-medium lg:space-x-4 2xl:space-x-6">
-        <BigFourBarbellInsightsMenu />
+        <LiftsMenu />
 
         <StrengthInsightsMenu />
 
@@ -424,94 +429,139 @@ function GitHubIcon({ className }) {
   );
 }
 
-// Internal dropdown menu for the four main barbell lift insight pages.
-function BigFourBarbellInsightsMenu() {
-  const pathname = usePathname();
-  const lifts = BIG_FOUR_LIFTS;
-
-  const ListItem = React.forwardRef(
-    ({ className, title, children, pill, ...props }, ref) => {
-      return (
-        <li>
-          <NavigationMenuLink asChild>
-            <Link
-              prefetch={false}
-              ref={ref}
-              className={cn(
-                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
-                className,
-              )}
-              {...props}
-            >
-              <div className="flex flex-row items-center gap-2 align-middle">
-                <LiftIcon liftType={title} className="h-5 w-5" />
-                <div className="text-sm leading-none font-medium">{title}</div>
-                {pill && <FreshPill {...pill} />}
-              </div>
-              <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-                {children}
-              </p>
-            </Link>
-          </NavigationMenuLink>
-        </li>
-      );
-    },
-  );
-  ListItem.displayName = "ListItem";
-
-  return (
-    <>
-      {/* Open on hover straight away; Radix waits 200ms by default. */}
-      <NavigationMenu delayDuration={0}>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger
-              className={cn(
-                "hover:text-foreground/80 bg-transparent transition-colors",
-                pathname.startsWith("/progress-guide/")
-                  ? "text-foreground"
-                  : "text-foreground/60",
-              )}
-            >
-              <>
-                {/* Short title on small screens */}
-                <span className="hidden md:block 2xl:hidden">Big Four</span>
-                {/* Full title on larger screens */}
-                <span className="hidden 2xl:block">Big Four Barbell Lifts</span>
-              </>
-            </NavigationMenuTrigger>
-            <NavigationMenuContent className="">
-              <ul className="grid w-[400px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
-                {lifts.map((lift) => (
-                  <ListItem
-                    key={lift.liftType}
-                    title={lift.liftType}
-                    href={"/progress-guide/" + lift.slug}
-                  >
-                    {/* {lift.pageTitle} */}
-                  </ListItem>
-                ))}
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
-    </>
+// Whether the current route is one of a menu's pages or sits beneath one.
+function isOnAnyPage(pathname, hrefs) {
+  return hrefs.some(
+    (href) => pathname === href || pathname.startsWith(href + "/"),
   );
 }
 
-// Internal dropdown menu for strength insight tools (Analyzer, Visualizer, AI assistant, etc.).
+// One menu entry: icon, title, optional fresh pill and a short description.
+function MenuListItem({ href, title, icon, pill, children, className }) {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <Link
+          prefetch={false}
+          href={href}
+          className={cn(
+            "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
+            className,
+          )}
+        >
+          <div className="flex flex-row items-center gap-2 align-middle">
+            {icon}
+            <div className="text-sm leading-none font-medium">{title}</div>
+            {pill && <FreshPill {...pill} />}
+          </div>
+          {children && (
+            <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
+              {children}
+            </p>
+          )}
+        </Link>
+      </NavigationMenuLink>
+    </li>
+  );
+}
+
+// A hover-open dropdown with a two-column grid of links. Radix waits 200ms
+// before opening by default; these open straight away.
+function NavDropdown({ isActive, shortLabel, fullLabel, fullFrom, children }) {
+  return (
+    <NavigationMenu delayDuration={0}>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger
+            className={cn(
+              "hover:text-foreground/80 bg-transparent transition-colors",
+              isActive ? "text-foreground" : "text-foreground/60",
+            )}
+          >
+            <span className={cn("hidden md:block", fullFrom === "2xl" && "2xl:hidden")}>
+              {shortLabel}
+            </span>
+            {fullFrom === "2xl" && (
+              <span className="hidden 2xl:block">{fullLabel}</span>
+            )}
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>{children}</NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+}
+
+// The other lifts with a written guide, in registry order. They follow the
+// big four in the Lifts menu so a new guide appears there on its own.
+const OTHER_GUIDED_LIFTS = CURATED_LIFTS.filter(
+  (lift) => !lift.bigFour && isLiftGuideIndexable(lift),
+);
+
+// Lifts menu: the big four lead as the main tiles, the other guided lifts
+// follow as a line of links, and Lift Explorer closes it as the way to every
+// lift in the log.
+function LiftsMenu() {
+  const pathname = usePathname();
+
+  return (
+    <NavDropdown
+      isActive={isOnAnyPage(pathname, ["/progress-guide", "/lift-explorer"])}
+      shortLabel="Lifts"
+      fullLabel="Barbell Lifts"
+      fullFrom="2xl"
+    >
+      <div className="w-[400px] p-4 lg:w-[500px]">
+        <ul className="grid grid-cols-2 gap-3">
+          {BIG_FOUR_LIFTS.map((lift) => (
+            <MenuListItem
+              key={lift.slug}
+              title={lift.liftType}
+              href={getLiftGuidePath(lift.liftType)}
+              icon={<LiftIcon liftType={lift.liftType} className="h-5 w-5" />}
+            >
+              {lift.tagline}
+            </MenuListItem>
+          ))}
+        </ul>
+        {OTHER_GUIDED_LIFTS.length > 0 && (
+          <ul className="border-border mt-3 flex flex-wrap gap-x-1 gap-y-1 border-t px-1 pt-3">
+            {OTHER_GUIDED_LIFTS.map((lift) => (
+              <li key={lift.slug}>
+                <NavigationMenuLink asChild>
+                  <Link
+                    prefetch={false}
+                    href={getLiftGuidePath(lift.liftType)}
+                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block rounded-md px-2 py-1 text-sm transition-colors outline-none"
+                  >
+                    {lift.commonName}
+                  </Link>
+                </NavigationMenuLink>
+              </li>
+            ))}
+          </ul>
+        )}
+        <ul className="border-border mt-3 border-t pt-3">
+          <MenuListItem
+            title="Lift Explorer"
+            href="/lift-explorer"
+            icon={<Layers className="h-5 w-5" />}
+            pill={{ kind: "updated", date: "2026-09-14" }}
+          >
+            Every lift in your log, each with its own progress guide.
+          </MenuListItem>
+        </ul>
+      </div>
+    </NavDropdown>
+  );
+}
+
+// Strength insight tools (Visualizer, AI assistant, tonnage and so on).
 function StrengthInsightsMenu() {
   const pathname = usePathname();
   const { status: authStatus } = useSession();
 
   const insights = [
-    {
-      title: "Lift Explorer",
-      href: "/lift-explorer",
-      icon: <Layers className="h-5 w-5" />,
-      pill: { kind: "updated", date: "2026-09-14" },
-    },
     {
       title: "Strength Levels",
       href: "/strength-levels",
@@ -545,200 +595,80 @@ function StrengthInsightsMenu() {
     },
   ];
 
-  const ListItem = React.forwardRef(
-    ({ className, title, children, pill, ...props }, ref) => {
-      return (
-        <li>
-          <NavigationMenuLink asChild>
-            <Link
-              prefetch={false}
-              ref={ref}
-              className={cn(
-                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
-                className,
-              )}
-              {...props}
-            >
-              <div className="flex flex-row items-center gap-2 align-middle">
-                {props.icon} {/* Icon based on title */}
-                <div className="text-sm leading-none font-medium">{title}</div>
-                {pill && <FreshPill {...pill} />}
-              </div>
-              <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-                {children}
-              </p>
-            </Link>
-          </NavigationMenuLink>
-        </li>
-      );
-    },
-  );
-  ListItem.displayName = "ListItem";
-
-  // Open on hover straight away; Radix waits 200ms by default.
   return (
-    <NavigationMenu delayDuration={0}>
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger
-            className={cn(
-              "hover:text-foreground/80 bg-transparent transition-colors",
-              pathname.startsWith("/lift-explorer") ||
-                pathname.startsWith("/strength-levels") ||
-                pathname.startsWith("/visualizer") ||
-                pathname.startsWith("/ai-lifting-assistant")
-                ? "text-foreground"
-                : "text-foreground/60",
-            )}
-          >
-            <>
-              {/* Short title on small screens */}
-              <span className="hidden md:block 2xl:hidden">Insights</span>
-              {/* Full title on larger screens */}
-              <span className="hidden 2xl:block">Strength Insights</span>
-            </>
-          </NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
-              {insights.map((insight) => (
-                <ListItem
-                  key={insight.title}
-                  title={insight.title}
-                  href={insight.href}
-                  icon={insight.icon}
-                  pill={insight.pill}
-                >
-                  {/* {insight.pageTitle} */}
-                </ListItem>
-              ))}
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-    </NavigationMenu>
+    <NavDropdown
+      isActive={isOnAnyPage(pathname, insights.map((item) => item.href))}
+      shortLabel="Insights"
+      fullLabel="Strength Insights"
+      fullFrom="2xl"
+    >
+      <ul className="grid w-[400px] grid-cols-2 gap-3 p-4 lg:w-[500px]">
+        {insights.map((item) => (
+          <MenuListItem key={item.href} {...item} />
+        ))}
+      </ul>
+    </NavDropdown>
   );
 }
 
-// Internal dropdown menu for calculator tools (1RM, warm-ups, strength level, timer, etc.).
+const CALCULATORS = [
+  {
+    title: "One Rep Max Calculator",
+    href: "/calculator",
+    icon: <Calculator className="h-5 w-5" />,
+  },
+  {
+    title: "How Strong Am I?",
+    href: "/how-strong-am-i",
+    icon: <CircleDashed className="h-5 w-5" />,
+    pill: { kind: "updated", date: "2026-09-17" },
+  },
+  {
+    title: "Warm Ups Calculator",
+    href: "/warm-up-sets-calculator",
+    icon: <Flame className="h-5 w-5" />,
+  },
+  {
+    title: "1000lb Club Calculator",
+    href: "/1000lb-club-calculator",
+    icon: <Anvil className="h-5 w-5" />,
+  },
+  {
+    title: "200/300/400/500 Club",
+    href: "/200-300-400-500-strength-club-calculator",
+    icon: <Mountain className="h-5 w-5" />,
+  },
+  {
+    title: "Plate Milestones",
+    href: "/plate-milestones",
+    icon: <Disc className="h-5 w-5" />,
+  },
+  {
+    title: "Lifting Set Timer",
+    href: "/timer",
+    icon: <Timer className="h-5 w-5" />,
+  },
+  {
+    title: "How Strong Is a Gorilla?",
+    href: "/how-strong-is-a-gorilla",
+    icon: <GorillaIcon className="h-5 w-5" />,
+  },
+];
+
+// Calculator tools (1RM, warm-ups, clubs, timer and so on).
 function CalculatorsMenu() {
   const pathname = usePathname();
 
-  const calculators = [
-    {
-      title: "One Rep Max Calculator",
-      href: "/calculator",
-      icon: <Calculator className="h-5 w-5" />,
-    },
-    {
-      title: "How Strong Am I?",
-      href: "/how-strong-am-i",
-      icon: <CircleDashed className="h-5 w-5" />,
-      pill: { kind: "updated", date: "2026-09-17" },
-    },
-    {
-      title: "Warm Ups Calculator",
-      href: "/warm-up-sets-calculator",
-      icon: <Flame className="h-5 w-5" />,
-    },
-    {
-      title: "1000lb Club Calculator",
-      href: "/1000lb-club-calculator",
-      icon: <Anvil className="h-5 w-5" />,
-    },
-    {
-      title: "200/300/400/500 Club",
-      href: "/200-300-400-500-strength-club-calculator",
-      icon: <Mountain className="h-5 w-5" />,
-    },
-    {
-      title: "Plate Milestones",
-      href: "/plate-milestones",
-      icon: <Disc className="h-5 w-5" />,
-    },
-    {
-      title: "Lifting Set Timer",
-      href: "/timer",
-      icon: <Timer className="h-5 w-5" />,
-    },
-    {
-      title: "How Strong Is a Gorilla?",
-      href: "/how-strong-is-a-gorilla",
-      icon: <GorillaIcon className="h-5 w-5" />,
-    },
-  ];
-
-  const ListItem = React.forwardRef(
-    ({ className, title, children, pill, ...props }, ref) => {
-      return (
-        <li>
-          <NavigationMenuLink asChild>
-            <Link
-              prefetch={false}
-              ref={ref}
-              className={cn(
-                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
-                className,
-              )}
-              {...props}
-            >
-              <div className="flex flex-row items-center gap-2 align-middle">
-                {props.icon} {/* Icon based on calculator title */}
-                <div className="text-sm leading-none font-medium">{title}</div>
-                {pill && <FreshPill {...pill} />}
-              </div>
-              <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-                {children}
-              </p>
-            </Link>
-          </NavigationMenuLink>
-        </li>
-      );
-    },
-  );
-  ListItem.displayName = "ListItem";
-
-  // Open on hover straight away; Radix waits 200ms by default.
   return (
-    <NavigationMenu delayDuration={0}>
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger
-            className={cn(
-              "hover:text-foreground/80 bg-transparent transition-colors",
-              pathname.startsWith("/calculator") ||
-                pathname.startsWith("/warm-up-sets-calculator") ||
-                pathname.startsWith(
-                  "/big-four-strength-standards-calculator",
-                ) ||
-                pathname.startsWith("/timer")
-                ? "text-foreground"
-                : "text-foreground/60",
-            )}
-          >
-            <>
-              {/* Short title on small screens */}
-              <span className="hidden md:block xl:hidden">Calculators</span>
-              {/* Full title on larger screens */}
-              <span className="hidden xl:block">Calculators</span>
-            </>
-          </NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
-              {calculators.map((calculator) => (
-                <ListItem
-                  key={calculator.title}
-                  title={calculator.title}
-                  href={calculator.href}
-                  icon={calculator.icon}
-                  pill={calculator.pill}
-                >
-                  {/* {calculator.pageTitle} */}
-                </ListItem>
-              ))}
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-    </NavigationMenu>
+    <NavDropdown
+      isActive={isOnAnyPage(pathname, CALCULATORS.map((item) => item.href))}
+      shortLabel="Calculators"
+    >
+      <ul className="grid w-[400px] grid-cols-2 gap-3 p-4 lg:w-[500px]">
+        {CALCULATORS.map((item) => (
+          <MenuListItem key={item.href} {...item} />
+        ))}
+      </ul>
+    </NavDropdown>
   );
 }

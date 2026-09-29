@@ -133,6 +133,13 @@ const nextConfig = {
         destination: "/articles/the-iron-and-the-soul-author-henry-rollins",
         permanent: true,
       },
+      // 2026-09-29: Lift Explorer is the one lift hub, listing every lift with
+      // its progress guide; the big-four-only /progress-guide hub retired.
+      {
+        source: "/progress-guide",
+        destination: "/lift-explorer",
+        permanent: true,
+      },
       // 2026-03-25: Insight pages moved under /progress-guide/ cluster.
       {
         source: "/barbell-squat-insights",

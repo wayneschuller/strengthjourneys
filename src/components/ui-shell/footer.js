@@ -11,7 +11,7 @@ import {
 const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },
   { href: "/strength-levels", label: "Strength Levels" },
-  { href: "/progress-guide", label: "Lift Insights & Progress" },
+  { href: "/lift-explorer", label: "Lift Explorer" },
   { href: "/how-strong-am-i", label: "How Strong Am I?" },
   { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },
   { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
@@ -52,7 +52,6 @@ const PROGRESS_GUIDES = BIG_FOUR_LIFTS.map((lift) => ({
 
 const RESOURCES = [
   { href: "/articles", label: "Strength Articles" },
-  { href: "/lift-explorer", label: "Lift Explorer" },
   { href: "/visualizer", label: "Strength Visualizer" },
   { href: "/tonnage", label: "Tonnage Metrics" },
   { href: "/timer", label: "Gym Timer" },

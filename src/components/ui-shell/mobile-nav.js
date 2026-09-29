@@ -16,8 +16,8 @@ import {
   WhatsNewDot,
 } from "@/components/ui-shell/whats-new";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
-import { getLiftIcon } from "@/components/lift-icon";
-import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
+import { LiftIcon } from "@/components/lift-icon";
+import { BIG_FOUR_LIFTS, getLiftGuidePath } from "@/lib/lifts/lift-registry";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 import { getRepeatImportHref } from "@/lib/import/import-sources";
@@ -40,7 +40,8 @@ const BAR_LOGO_WIDTH = 100;
 
 /**
  * Slide-out navigation drawer triggered by a hamburger button, used below lg.
- * Renders the app logo, all feature page links, and Big Four lift insight links inside a shadcn Sheet.
+ * Renders the app logo and all feature page links inside a shadcn Sheet, with
+ * Lift Explorer and the big four progress guides grouped just after the log.
  */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -76,6 +77,7 @@ export function MobileNav() {
   }, [theme, resolvedTheme]);
 
   const lifts = BIG_FOUR_LIFTS;
+  const liftExplorer = featurePages.find((item) => item.href === "/lift-explorer");
   const changelogDot = useChangelogDot();
 
   // Internal nav link row: icon + label, highlights the active route.
@@ -161,32 +163,53 @@ export function MobileNav() {
               {featurePages
                 .filter((item) => !item.authRequired || isOwnData(dataSource))
                 .map((item) => {
+                  // Lift Explorer leads the lifts cluster just after the log.
+                  if (item.href === liftExplorer?.href) return null;
                   const isImportLink = item.href === "/import";
                   return (
-                    <NavLink
-                      key={item.href}
-                      {...item}
-                      href={
-                        isImportLink && hasImportRitual
-                          ? repeatImportHref
-                          : item.href
-                      }
-                      title={
-                        isImportLink && hasImportRitual
-                          ? `Update / Export · ${importProfile.lastSourceName} or any format`
-                          : item.title
-                      }
-                    />
+                    <React.Fragment key={item.href}>
+                      <NavLink
+                        {...item}
+                        href={
+                          isImportLink && hasImportRitual
+                            ? repeatImportHref
+                            : item.href
+                        }
+                        title={
+                          isImportLink && hasImportRitual
+                            ? `Update / Export · ${importProfile.lastSourceName} or any format`
+                            : item.title
+                        }
+                      />
+                      {item.href === "/log" && liftExplorer && (
+                        <div className="flex flex-col gap-3">
+                          <NavLink {...liftExplorer} />
+                          {lifts.map((lift) => (
+                            <SheetClose asChild key={lift.slug}>
+                              <Link
+                                prefetch={false}
+                                href={getLiftGuidePath(lift.liftType)}
+                                className={cn(
+                                  "hover:text-foreground/80 flex flex-row items-center gap-3 pl-9 text-base transition-colors",
+                                  pathname === getLiftGuidePath(lift.liftType)
+                                    ? "text-foreground"
+                                    : "text-foreground/60",
+                                )}
+                              >
+                                <LiftIcon
+                                  liftType={lift.liftType}
+                                  size={18}
+                                  strokeWidth={1}
+                                />
+                                {lift.commonName}
+                              </Link>
+                            </SheetClose>
+                          ))}
+                        </div>
+                      )}
+                    </React.Fragment>
                   );
                 })}
-              {lifts.map((lift) => (
-                <NavLink
-                  key={lift.slug}
-                  href={"/progress-guide/" + lift.slug}
-                  title={`${lift.liftType} Insights`}
-                  IconComponent={getLiftIcon(lift.liftType)}
-                />
-              ))}
             </div>
           </div>
           <div className="border-border flex shrink-0 items-center justify-between border-t pt-4 pr-6">

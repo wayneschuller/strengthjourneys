@@ -5,7 +5,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ import { Table2, Loader2, Layers, LineChart, NotebookText, Plus, Disc, Upload } 
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/components/timer/mini-timer";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
@@ -64,6 +64,7 @@ import { LiftIcon } from "@/components/lift-icon";
 import {
   BIG_FOUR_LIFTS,
   CURATED_LIFTS,
+  getCuratedLift,
   getLiftGuidePath,
   isLiftGuideIndexable,
 } from "@/lib/lifts/lift-registry";
@@ -492,17 +493,54 @@ function NavDropdown({ isActive, shortLabel, fullLabel, fullFrom, children }) {
   );
 }
 
-// The other lifts with a written guide, in registry order. They follow the
-// big four in the Lifts menu so a new guide appears there on its own.
+// How many lifts the Lifts menu lists after the big four.
+const MORE_LIFTS_COUNT = 10;
+
+// The other lifts with a written guide, in registry order. Guests see these
+// after the big four, and they top up an athlete's own list when it is short.
 const OTHER_GUIDED_LIFTS = CURATED_LIFTS.filter(
   (lift) => !lift.bigFour && isLiftGuideIndexable(lift),
-);
+).map((lift) => ({ name: lift.commonName, href: getLiftGuidePath(lift.liftType) }));
 
-// Lifts menu: the big four lead as the main tiles, the other guided lifts
-// follow as a line of links, and Lift Explorer closes it as the way to every
+// An athlete's most trained lifts beyond the big four, then curated guides to
+// make up the count. liftTypes arrives sorted by set count. Every lift has a
+// guide, so uncurated lifts link too; a synonym ("Squat") counts as its
+// curated lift and is only listed once.
+function getMoreLifts(liftTypes) {
+  const lifts = [];
+  const seen = new Set();
+  const add = (lift) => {
+    if (!lift.href || seen.has(lift.href)) return;
+    seen.add(lift.href);
+    lifts.push(lift);
+  };
+
+  for (const { liftType } of liftTypes ?? []) {
+    if (lifts.length >= MORE_LIFTS_COUNT) break;
+    const curated = getCuratedLift(liftType);
+    if (curated?.bigFour) continue;
+    add({
+      name: curated?.commonName ?? liftType,
+      href: getLiftGuidePath(curated?.liftType ?? liftType),
+    });
+  }
+  for (const lift of OTHER_GUIDED_LIFTS) {
+    if (lifts.length >= MORE_LIFTS_COUNT) break;
+    add(lift);
+  }
+  return lifts;
+}
+
+// Lifts menu: the big four lead as the main tiles, then a line of ten more
+// (an athlete's own most trained lifts, or curated guides for guests), and Lift Explorer closes it as the way to every
 // lift in the log.
 function LiftsMenu() {
   const pathname = usePathname();
+  const { liftTypes, dataSource } = useUserLiftingData();
+  const moreLifts = useMemo(
+    () => getMoreLifts(isOwnData(dataSource) ? liftTypes : null),
+    [liftTypes, dataSource],
+  );
 
   return (
     <NavDropdown
@@ -524,17 +562,17 @@ function LiftsMenu() {
             </MenuListItem>
           ))}
         </ul>
-        {OTHER_GUIDED_LIFTS.length > 0 && (
+        {moreLifts.length > 0 && (
           <ul className="border-border mt-3 flex flex-wrap gap-x-1 gap-y-1 border-t px-1 pt-3">
-            {OTHER_GUIDED_LIFTS.map((lift) => (
-              <li key={lift.slug}>
+            {moreLifts.map((lift) => (
+              <li key={lift.href}>
                 <NavigationMenuLink asChild>
                   <Link
                     prefetch={false}
-                    href={getLiftGuidePath(lift.liftType)}
+                    href={lift.href}
                     className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block rounded-md px-2 py-1 text-sm transition-colors outline-none"
                   >
-                    {lift.commonName}
+                    {lift.name}
                   </Link>
                 </NavigationMenuLink>
               </li>

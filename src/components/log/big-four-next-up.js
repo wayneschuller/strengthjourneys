@@ -1,7 +1,7 @@
 /**
  * "Your next lift": the big four ordered by what the athlete is due to train,
  * each with last time's top set and one linear-progression step up. A new
- * athlete sees "Your next workout" instead, the Starting Strength novice
+ * athlete sees "Your next lifts" instead, the Starting Strength novice
  * workout that comes next, fitted to what they've logged so far.
  *
  * Deliberately not a gallery. The lift explorer and the add-lift picker are
@@ -227,7 +227,9 @@ export function BigFourNextUp({
 
 /**
  * A new athlete's next Starting Strength workout: its three lifts in order,
- * each startable, with the weight to aim for.
+ * each startable, with the weight to aim for. The copy never names the
+ * program or its A/B workouts. The athlete just sees good lifts in a sensible
+ * order, and anyone who knows the program will recognise it.
  */
 function NoviceWorkout({ plan, onStart, getHref, disabled }) {
   const { getColor } = useLiftColors();
@@ -242,11 +244,10 @@ function NoviceWorkout({ plan, onStart, getHref, disabled }) {
     >
       <div className="space-y-0.5">
         <h2 id="big-four-next-up-heading" className="text-base font-semibold">
-          Your next workout
+          Your next lifts
         </h2>
         <p className="text-muted-foreground text-sm">
-          From the Starting Strength novice program: two short workouts,
-          alternated three days a week, adding a little weight every session.
+          Squat, a press, then a deadlift, each a little heavier than last time.
         </p>
       </div>
 
@@ -258,12 +259,12 @@ function NoviceWorkout({ plan, onStart, getHref, disabled }) {
         <div className="space-y-4 p-4 pl-6 sm:p-5 sm:pl-7">
           <div className="space-y-1">
             <p className="text-xl leading-tight font-semibold sm:text-2xl">
-              Workout {plan.workout}?
+              Today&apos;s session?
             </p>
             <p className="text-muted-foreground text-sm">
               {plan.trainedYesterday
-                ? "You trained yesterday. The program rests a day between workouts, so this one might suit tomorrow."
-                : `${plan.lifts.map(({ liftType }) => liftType).join(", ")}, in that order.`}
+                ? "You trained yesterday. Strength builds on the rest day, so these might suit tomorrow."
+                : "Three lifts, in this order."}
             </p>
           </div>
 
@@ -308,8 +309,7 @@ function NoviceWorkout({ plan, onStart, getHref, disabled }) {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-muted-foreground text-xs">
-              Next time: Workout {plan.nextWorkout}, with {swapped} in place of{" "}
-              {swappedFor}.
+              Next time, {swapped} takes the place of {swappedFor}.
             </p>
             <StartButton
               liftType={first.liftType}

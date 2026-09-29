@@ -6,9 +6,9 @@
  *
  * Deliberately not a gallery. The lift explorer and the add-lift picker are
  * grids of drawings to browse; this is a short list of instructions to act on
- * right now, so it leads with the lift name and the number to hit, and the
- * artwork stays small. `featured` gives the most due lift the full width with
- * a start button. `compact` is a two-up list for tighter cards.
+ * right now, so it leads with the lift name and the number to hit. `featured`
+ * is four equal cards with the most due one quietly marked, since the choice
+ * is always the athlete's. `compact` is a two-up list for tighter cards.
  *
  * The plan comes from useNextLiftPlan. Pass `onStart` to start the lift in
  * place, or `getHref` to link to it from elsewhere.
@@ -129,9 +129,6 @@ export function BigFourNextUp({
     );
   }
 
-  const [next, ...rest] = lifts;
-  const nextColor = getColor(next.liftType);
-
   return (
     <section
       aria-labelledby="big-four-next-up-heading"
@@ -139,86 +136,66 @@ export function BigFourNextUp({
     >
       <div className="space-y-0.5">
         <h2 id="big-four-next-up-heading" className="text-base font-semibold">
-          Your next lift
+          Pick your lift
         </h2>
         <p className="text-muted-foreground text-sm">
-          Ordered by your training pattern over the last two months.
+          Suggested from your training pattern over the last two months.
         </p>
       </div>
 
-      <div
-        className="bg-card relative overflow-hidden rounded-2xl border shadow-sm"
-        style={{ "--lift-color": nextColor }}
-      >
-        <LiftColorEdge wide />
-        <div className="flex flex-col gap-4 p-4 pl-6 sm:flex-row sm:items-center sm:gap-6 sm:p-5 sm:pl-7">
-          <div className="flex min-w-0 flex-1 items-center gap-4">
-            <LiftArtwork
-              liftType={next.liftType}
-              size="md"
-              animate={false}
-              className="h-20 shrink-0 md:h-24"
-            />
-            <div className="min-w-0 space-y-1">
-              <p className="text-xl leading-tight font-semibold sm:text-2xl">
-                {next.isDue ? `${next.liftType} day?` : next.liftType}
-              </p>
-              <p className="text-muted-foreground text-sm">
-                {getRhythmLine(next)}
-              </p>
-              <TopSetLines lift={next} />
-            </div>
-          </div>
-          <StartButton
-            liftType={next.liftType}
-            label={`Start ${next.liftType}`}
-            onStart={onStart}
-            getHref={getHref}
-            disabled={disabled}
-            className="sm:self-center"
-          />
-        </div>
-      </div>
-
-      {rest.length > 0 && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {rest.map((lift) => (
+      {/* Four equal cards, so the choice stays the athlete's. The suggestion
+          earns a ring in its lift colour and a small label, nothing louder. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {lifts.map((lift, index) => {
+          const isSuggested = index === 0 && lift.isDue;
+          return (
             <NextUpAction
               key={lift.liftType}
               lift={lift}
               onStart={onStart}
               getHref={getHref}
               disabled={disabled}
-              aria-label={getActionLabel(lift)}
-              className="group bg-card hover:bg-muted/40 relative flex items-center gap-3 overflow-hidden rounded-xl border py-3 pr-3 pl-4 text-left shadow-sm transition-colors hover:border-[color:color-mix(in_srgb,var(--lift-color)_55%,transparent)] disabled:pointer-events-none disabled:opacity-50"
+              aria-label={`${isSuggested ? "Suggested. " : ""}${getActionLabel(lift)}`}
+              className={`group bg-card hover:bg-muted/40 relative flex items-center gap-4 overflow-hidden rounded-xl border py-3 pr-4 pl-5 text-left shadow-sm transition-colors hover:border-[color:color-mix(in_srgb,var(--lift-color)_55%,transparent)] disabled:pointer-events-none disabled:opacity-50 ${
+                isSuggested
+                  ? "border-[color:color-mix(in_srgb,var(--lift-color)_45%,transparent)] ring-1 ring-[color:color-mix(in_srgb,var(--lift-color)_30%,transparent)]"
+                  : ""
+              }`}
               style={{ "--lift-color": getColor(lift.liftType) }}
             >
               <LiftColorEdge />
               <LiftArtwork
                 liftType={lift.liftType}
-                size="sm"
+                size="md"
                 animate={false}
-                className="shrink-0"
+                className="h-14 shrink-0 md:h-16"
               />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm leading-tight font-medium">
-                  {lift.liftType}
+              <span className="min-w-0 flex-1 space-y-0.5">
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span className="text-base leading-tight font-semibold">
+                    {lift.liftType}
+                  </span>
+                  {isSuggested && (
+                    <span className="text-muted-foreground rounded-full border px-2 py-px text-[11px] leading-4 font-medium">
+                      Suggested
+                    </span>
+                  )}
                 </span>
-                <span className="text-muted-foreground mt-0.5 block text-xs leading-snug">
+                <span className="block text-sm font-medium tabular-nums">
                   {getTargetLine(lift)}
                 </span>
-                {lift.lastDate && (
-                  <span className="text-muted-foreground/80 block text-xs leading-snug">
-                    {lift.companionOf
-                      ? `Usually after ${lift.companionOf}`
-                      : getLastTrainedLabel(lift.daysSince)}
-                  </span>
-                )}
+                <span className="text-muted-foreground block text-xs leading-snug tabular-nums">
+                  {getContextLine(lift)}
+                </span>
               </span>
+              <ArrowRight
+                aria-hidden="true"
+                className="text-muted-foreground group-hover:text-foreground size-4 shrink-0 transition-colors"
+              />
             </NextUpAction>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -258,7 +235,7 @@ function NoviceWorkout({ plan, onStart, getHref, disabled }) {
         <LiftColorEdge wide />
         <div className="space-y-4 p-4 pl-6 sm:p-5 sm:pl-7">
           <div className="space-y-1">
-            <p className="text-xl leading-tight font-semibold sm:text-2xl">
+            <p className="text-lg leading-tight font-semibold">
               Today&apos;s session?
             </p>
             <p className="text-muted-foreground text-sm">
@@ -336,10 +313,10 @@ function StartButton({
   return (
     <Button
       asChild={!onStart}
-      size="lg"
+      variant="outline"
       disabled={disabled}
       onClick={onStart ? () => onStart(liftType) : undefined}
-      className={`h-12 shrink-0 rounded-xl px-6 ${className}`}
+      className={`shrink-0 rounded-xl ${className}`}
     >
       {onStart ? (
         <>
@@ -396,36 +373,6 @@ function LiftColorEdge({ wide = false }) {
   );
 }
 
-function TopSetLines({ lift }) {
-  const last = formatNextUpSet(lift.lastTopSet, lift.unit);
-  const next = formatNextUpSet(lift.nextTopSet, lift.unit);
-
-  if (next) {
-    return (
-      <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 pt-1">
-        <span className="text-base font-semibold tabular-nums">
-          Go for {next}?
-        </span>
-        <span className="text-muted-foreground text-sm tabular-nums">
-          Last time {last}
-        </span>
-      </p>
-    );
-  }
-  if (last) {
-    return (
-      <p className="pt-1 text-sm tabular-nums">
-        Last time {last}. Warm up and find today&apos;s working weight.
-      </p>
-    );
-  }
-  return (
-    <p className="pt-1 text-sm">
-      Your first session. We&apos;ll suggest the warmups.
-    </p>
-  );
-}
-
 function getTargetLine(lift) {
   const next = formatNextUpSet(lift.nextTopSet, lift.unit);
   if (next) return `Go for ${next}?`;
@@ -455,23 +402,19 @@ function getNoviceContextLine(lift) {
     : `Last time ${last}`;
 }
 
-function getRhythmLine(lift) {
-  if (!lift.lastDate) return "Ready when you are.";
-  const when = getLastTrainedLabel(lift.daysSince);
-  if (lift.usualWeekday) {
-    return `${when}. You usually train it on ${lift.usualWeekday}s.`;
-  }
-  if (lift.companionOf) return `${when}. Usually after ${lift.companionOf}.`;
-  if (!lift.cadenceDays) return `${when}. Welcome back to it.`;
-  return `${when}. You train it ${getCadenceLabel(lift.cadenceDays)}.`;
-}
-
-function getCadenceLabel(days) {
-  const rounded = Math.max(1, Math.round(days));
-  if (rounded >= 6 && rounded <= 8) return "about once a week";
-  if (rounded >= 13 && rounded <= 15) return "about every two weeks";
-  if (rounded === 1) return "most days";
-  return `about every ${rounded} days`;
+// Under a pattern target: last time's set, then why it's in this order.
+function getContextLine(lift) {
+  const last = formatNextUpSet(lift.lastTopSet, lift.unit);
+  const why = lift.usualWeekday
+    ? `usually on ${lift.usualWeekday}s`
+    : lift.companionOf
+      ? `usually after ${lift.companionOf}`
+      : lift.lastDate
+        ? getLastTrainedLabel(lift.daysSince).toLowerCase()
+        : null;
+  if (last && why) return `Last time ${last}, ${why}`;
+  if (last) return `Last time ${last}`;
+  return why ? why[0].toUpperCase() + why.slice(1) : "Ready when you are";
 }
 
 function getLastTrainedLabel(days) {

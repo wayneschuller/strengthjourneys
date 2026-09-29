@@ -1736,56 +1736,60 @@ html:not([data-restoring]) [data-returning-visit] {
   text-shadow: 0 0 8px color-mix(in srgb, var(--halo) 55%, transparent);
 }
 
-/* A breath of the painting above the nav bar: two strokes of wind rolling
-   left to right (cobalt over ultramarine, drawn as rows of offset arcs), with
-   three chrome yellow stars hanging in them. The strokes fade out before the
-   right edge so the stars have sky to sit in. Outside the nav so it never
+/* A breath of the painting above the nav bar: two long strokes of wind,
+   painted as tapered brush marks that swell and thin (an SVG mask stretched
+   to the nav's width), with the paint shifting from ultramarine to cobalt
+   along the stroke. They trail off before the right end, where three chrome
+   yellow stars hang on ::after, outside the mask. Outside the nav so it never
    crowds the logo. */
-:is(.starry-night, .starry-night-dark) .app-nav::before {
-  --wind-deep: oklch(0.4 0.155 266 / 0.75);
-  --wind-light: oklch(0.62 0.12 245 / 0.7);
-  --star: oklch(0.8 0.155 84);
-  content: "";
-  position: absolute;
-  top: -11px;
-  left: 0;
-  right: 0;
-  height: 10px;
-  pointer-events: none;
-  background:
-    radial-gradient(circle, var(--star) 0 2px, transparent 2.6px)
-      calc(100% - 18px) 1px / 8px 8px no-repeat,
-    radial-gradient(circle, var(--star) 0 1.4px, transparent 2px)
-      calc(100% - 44px) 4px / 6px 6px no-repeat,
-    radial-gradient(circle, var(--star) 0 1px, transparent 1.6px)
-      calc(100% - 66px) 0 / 4px 4px no-repeat,
-    radial-gradient(
-        circle at 50% 100%,
-        transparent 5px,
-        var(--wind-light) 5px 6.5px,
-        transparent 7px
-      )
-      0 0 / 18px 7px repeat-x,
-    radial-gradient(
-        circle at 50% 0%,
-        transparent 5px,
-        var(--wind-deep) 5px 6.5px,
-        transparent 7px
-      )
-      9px 3px / 18px 7px repeat-x;
-  mask-image: linear-gradient(
+:is(.starry-night, .starry-night-dark) .app-nav {
+  --wind: linear-gradient(
     to right,
-    #000 0 55%,
-    rgb(0 0 0 / 0.4) 78%,
-    transparent 86%,
-    transparent 88%,
-    #000 88%
+    oklch(0.4 0.155 266 / 0.85),
+    oklch(0.55 0.14 250 / 0.8) 55%,
+    oklch(0.68 0.11 235 / 0.6)
   );
+  --star: oklch(0.8 0.155 84);
 }
 
-.starry-night-dark .app-nav::before {
-  --wind-deep: oklch(0.6 0.15 260 / 0.8);
-  --wind-light: oklch(0.8 0.08 240 / 0.6);
+.starry-night-dark .app-nav {
+  --wind: linear-gradient(
+    to right,
+    oklch(0.58 0.15 262 / 0.85),
+    oklch(0.72 0.11 245 / 0.75) 55%,
+    oklch(0.84 0.06 90 / 0.6)
+  );
   --star: oklch(0.88 0.15 90);
-  filter: drop-shadow(0 0 3px oklch(0.88 0.15 90 / 0.5));
+}
+
+:is(.starry-night, .starry-night-dark) .app-nav::before,
+:is(.starry-night, .starry-night-dark) .app-nav::after {
+  content: "";
+  position: absolute;
+  top: -13px;
+  height: 12px;
+  pointer-events: none;
+}
+
+:is(.starry-night, .starry-night-dark) .app-nav::before {
+  left: 0;
+  right: 0;
+  background: var(--wind);
+  mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 14' preserveAspectRatio='none'%3E%3Cpath d='M0 5.5 20 6.3 41 7.1 62 7.5 82 7.4 102 6.9 123 6.0 144 4.9 164 3.7 184 2.6 205 1.9 226 1.6 246 1.8 266 2.4 287 3.3 308 4.4 328 5.4 348 6.1 369 6.5 390 6.3 410 5.8 430 4.9 451 3.8 472 2.8 492 1.9 512 1.4 533 1.4 554 1.9 574 2.8 594 3.9 615 5.0 636 6.1 656 6.8 676 7.1 697 6.9 718 6.3 738 5.5 758 4.5 779 3.6 800 3.0 820 2.9 820 2.9 800 3.4 779 4.3 758 5.5 738 6.7 718 7.8 697 8.6 676 9.0 656 8.9 636 8.3 615 7.5 594 6.4 574 5.5 554 4.7 533 4.4 512 4.4 492 5.0 472 5.9 451 7.0 430 8.1 410 9.0 390 9.5 369 9.6 348 9.2 328 8.4 308 7.4 287 6.2 266 5.2 246 4.5 226 4.1 205 4.3 184 4.9 164 5.7 144 6.8 123 7.7 102 8.4 82 8.7 62 8.5 41 7.8 20 6.7 0 5.5Z'/%3E%3Cpath d='M90 8.4 105 7.5 120 6.8 136 6.3 151 5.9 166 5.8 182 5.8 197 6.1 212 6.6 227 7.2 242 7.8 258 8.5 273 9.0 288 9.4 304 9.6 319 9.6 334 9.4 349 9.0 364 8.4 380 7.7 395 7.0 410 6.4 426 5.8 441 5.4 456 5.2 471 5.3 486 5.5 502 6.0 517 6.6 532 7.3 548 8.1 563 8.8 578 9.4 593 9.8 608 10.1 624 10.1 639 9.9 654 9.5 670 9.0 685 8.5 700 7.9 700 7.9 685 8.7 670 9.5 654 10.2 639 10.8 624 11.1 608 11.2 593 11.1 578 10.8 563 10.3 548 9.7 532 9.1 517 8.4 502 7.9 486 7.5 471 7.3 456 7.3 441 7.6 426 8.0 410 8.6 395 9.2 380 9.9 364 10.6 349 11.1 334 11.5 319 11.7 304 11.6 288 11.3 273 10.9 258 10.2 242 9.5 227 8.7 212 8.0 197 7.4 182 7.0 166 6.8 151 6.8 136 6.9 120 7.3 105 7.8 90 8.4Z' opacity='.7'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+}
+
+:is(.starry-night, .starry-night-dark) .app-nav::after {
+  right: 0;
+  width: 90px;
+  background:
+    radial-gradient(circle, var(--star) 0 2.2px, transparent 3px) right 14px
+      top 1px / 10px 10px no-repeat,
+    radial-gradient(circle, var(--star) 0 1.5px, transparent 2.2px) right 42px
+      top 5px / 7px 7px no-repeat,
+    radial-gradient(circle, var(--star) 0 1px, transparent 1.6px) right 66px
+      top 1px / 5px 5px no-repeat;
+}
+
+.starry-night-dark .app-nav::after {
+  filter: drop-shadow(0 0 3px oklch(0.88 0.15 90 / 0.6));
 }

@@ -110,7 +110,7 @@ const CALCULATOR_FAQ = [
   {
     question: "How many reps should I use to estimate my 1RM?",
     answer:
-      "Sets of 3–10 reps give the most reliable 1RM estimates. Below 3 reps you're already near your max. Above 10 reps, fatigue factors make estimates less accurate. A set of 5 reps is a common sweet spot.",
+      "Sets of 3–10 reps give the most reliable 1RM estimates. Below 3 reps you're already near your max. Above 10 reps, the formulas themselves become unpredictable. A set of 5 reps is a common sweet spot.",
   },
   {
     question: "What is an E1RM (estimated one rep max)?",

@@ -252,8 +252,8 @@ export function CalculatorHubGuide() {
               2006 Journal of Strength and Conditioning Research study
             </a>{" "}
             found that 5-rep sets gave the most accurate predictions. Above 10
-            reps, your muscular endurance starts to count as much as your
-            strength, which is why the table above scatters at 15.
+            reps, the formulas themselves become unpredictable, which is why
+            the table above scatters at 15.
           </p>
           <p>
             The formulas also describe an average lifter. If you have always

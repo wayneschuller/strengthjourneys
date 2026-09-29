@@ -503,9 +503,8 @@ const OTHER_GUIDED_LIFTS = CURATED_LIFTS.filter(
 ).map((lift) => ({ name: lift.commonName, href: getLiftGuidePath(lift.liftType) }));
 
 // An athlete's most trained lifts beyond the big four, then curated guides to
-// make up the count. liftTypes arrives sorted by set count. Every lift has a
-// guide, so uncurated lifts link too; a synonym ("Squat") counts as its
-// curated lift and is only listed once.
+// make up the count. liftTypes arrives sorted by set count, and a synonym
+// ("Squat") counts as its curated lift so it is only listed once.
 function getMoreLifts(liftTypes) {
   const lifts = [];
   const seen = new Set();
@@ -518,11 +517,13 @@ function getMoreLifts(liftTypes) {
   for (const { liftType } of liftTypes ?? []) {
     if (lifts.length >= MORE_LIFTS_COUNT) break;
     const curated = getCuratedLift(liftType);
-    if (curated?.bigFour) continue;
-    add({
-      name: curated?.commonName ?? liftType,
-      href: getLiftGuidePath(curated?.liftType ?? liftType),
-    });
+    // TEMPORARY: registry lifts only. Every lift has a guide page, but
+    // bodyweight and cardio work (push ups, sit ups, running, rowing) has no
+    // registry entry and no good way to show it yet, so a heavy runner's menu
+    // would fill with it. This also drops uncurated barbell and machine
+    // lifts. Lift the filter once the registry covers bodyweight and cardio.
+    if (!curated || curated.bigFour) continue;
+    add({ name: curated.commonName, href: getLiftGuidePath(curated.liftType) });
   }
   for (const lift of OTHER_GUIDED_LIFTS) {
     if (lifts.length >= MORE_LIFTS_COUNT) break;

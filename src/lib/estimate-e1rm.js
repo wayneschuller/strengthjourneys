@@ -138,6 +138,9 @@ export function estimateE1RM(reps, weight, equation) {
       );
     case "OConner":
       return Math.round(weight * (1 + reps / 40));
+    // The formula list, saved preferences and URLs spell it "Wathan", so
+    // accept both or every Wathan estimate silently falls through to Brzycki.
+    case "Wathan":
     case "Wathen":
       return Math.round(
         (100 * weight) / (48.8 + 53.8 * Math.pow(Math.E, -0.075 * reps)),
@@ -168,6 +171,9 @@ export function estimateWeightForReps(e1rm, reps, equation) {
       );
     case "OConner":
       return Math.round(e1rm / (1 + reps / 40));
+    // The formula list, saved preferences and URLs spell it "Wathan", so
+    // accept both or every Wathan estimate silently falls through to Brzycki.
+    case "Wathan":
     case "Wathen":
       return Math.round(
         (e1rm * (48.8 + 53.8 * Math.pow(Math.E, -0.075 * reps))) / 100,

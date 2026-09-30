@@ -75,6 +75,7 @@ import {
   EvergreenGapTwig,
   EvergreenNavLeaves,
 } from "@/components/ui-shell/evergreen-nav-leaves";
+import { EvergreenCardLeaves } from "@/components/ui-shell/evergreen-card-leaves";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 import { FreshPill } from "@/components/ui/fresh-pill";
@@ -100,6 +101,7 @@ export function NavBar() {
   return (
     <Collapsible className="app-nav bg-background/50 relative mx-2 my-3 rounded-lg md:mx-10 xl:mx-12 2xl:mx-24">
       <EvergreenNavLeaves />
+      <EvergreenCardLeaves />
       <div className="flex items-center px-3 md:px-6">
         <div className="flex items-center">
           <DesktopNav />

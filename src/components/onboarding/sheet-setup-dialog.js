@@ -1519,6 +1519,8 @@ export function SheetSetupDialog() {
     if (!sheetInfo?.ssid) return;
     if (!apiError?.status) return;
     if (![400, 403, 404].includes(apiError.status)) return;
+    // Unlinking is destructive, so never do it on a flaky connection.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
 
     clearSheet();
     provisioningStartedRef.current = true;

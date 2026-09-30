@@ -15,6 +15,10 @@ import { FeedbackWidget } from "@/components/feedback";
 import { HomeImportMergeNudge } from "@/components/home-dashboard/home-import-merge-nudge";
 import { ThemeRewardUnlockBanner } from "@/components/ui-shell/theme-reward-unlock-banner";
 import {
+  SheetConnectionNotice,
+  isRetryableSheetError,
+} from "@/components/ui-shell/sheet-connection-notice";
+import {
   GoogleSignInButton,
   GoogleSignInToastAction,
 } from "@/components/onboarding/google-sign-in";
@@ -133,6 +137,8 @@ export function Layout({ children }) {
     if (apiErrorShown.current) return;
     if (!fetchFailed || authStatus !== "authenticated") return;
     if (rawRows != null || hasCachedSheetData) return;
+    // Network and 5xx failures get SheetConnectionNotice's retry countdown.
+    if (isRetryableSheetError(apiError)) return;
 
     apiErrorShown.current = true;
     const { title, description } = buildApiErrorToast(apiError);
@@ -287,6 +293,7 @@ export function Layout({ children }) {
           onFix={fixDataQualityWarning}
         />
         {router.pathname === "/" && <HomeImportMergeNudge />}
+        <SheetConnectionNotice />
         <ThemeRewardUnlockBanner suppress={dataSource === "import"} />
         <SheetSetupDialog />
         <main

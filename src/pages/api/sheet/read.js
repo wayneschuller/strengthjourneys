@@ -53,8 +53,10 @@ export default async function handler(req, res) {
     return;
   }
 
+  // 401, not 400: the client reads 400/403/404 as "this sheet is gone" and
+  // unlinks it, but a missing token is an auth problem, not a sheet problem.
   if (!session.accessToken) {
-    res.status(400).json({ error: "Auth missing accessToken" });
+    res.status(401).json({ error: "Auth missing accessToken" });
     return;
   }
 
@@ -221,9 +223,10 @@ export default async function handler(req, res) {
       console.error("[personal-support] sheet activity check failed:", err);
     }
   } catch (error) {
-    console.log(error);
-
-    // FIXME: If Google gives 404 propagate to client. All other errors will be sent back to client as 400.
-    res.status(400).json({ error: error.message });
+    // Google's own 4xx responses are passed through above. Anything thrown
+    // here is a network failure reaching Google (DNS, timeout, offline dev
+    // box), so answer 502: a 4xx would make the client unlink a healthy sheet.
+    console.error("[read-sheet] could not reach Google:", error);
+    res.status(502).json({ error: "Could not reach Google Sheets." });
   }
 }

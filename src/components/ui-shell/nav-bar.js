@@ -71,6 +71,10 @@ import {
 import { GorillaIcon } from "@/components/gorilla-icon";
 
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
+import {
+  EvergreenGapTwig,
+  EvergreenNavLeaves,
+} from "@/components/ui-shell/evergreen-nav-leaves";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 import { FreshPill } from "@/components/ui/fresh-pill";
@@ -95,6 +99,7 @@ export function NavBar() {
 
   return (
     <Collapsible className="app-nav bg-background/50 relative mx-2 my-3 rounded-lg md:mx-10 xl:mx-12 2xl:mx-24">
+      <EvergreenNavLeaves />
       <div className="flex items-center px-3 md:px-6">
         <div className="flex items-center">
           <DesktopNav />
@@ -103,8 +108,10 @@ export function NavBar() {
         <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 self-stretch py-3">
           <span
             aria-hidden
-            className="app-nav-sprig -mt-6 -mb-3 hidden flex-1 self-stretch xl:block"
-          />
+            className="app-nav-sprig relative -mt-6 -mb-3 hidden flex-1 self-stretch xl:block"
+          >
+            <EvergreenGapTwig />
+          </span>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

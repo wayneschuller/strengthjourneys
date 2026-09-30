@@ -1834,165 +1834,190 @@ html:not([data-restoring]) [data-returning-visit] {
   color: var(--link);
 }
 
-/* A sprig of leaves spills faintly into the nav from its top-left corner,
-   with a smaller twig near the far end. Colours are baked into the SVGs
-   (pine on cream, sage at night) because a data URI cannot read theme tokens.
-
-   The twig is a background image on the nav. The corner sprig is ::before at
-   z-index -1: it paints under the nav's own fill (the page content wrapper is
-   the stacking context), so it never covers the logo, and it is free to grow
-   outside the nav. On desktop the sprig slides out by exactly the nav's
-   margin (my-3, xl:mx-12, 2xl:mx-24) so its stems start at the very corner
-   of the window and the leaves sit in the empty corner beside the logo; on tablets and phones it stays inside, behind the logo. */
-:is(.evergreen, .evergreen-dark) .app-nav {
-  background-image: var(--leaf-twig);
-  background-position: right 18% top;
-  background-size: 80px 40px;
-  background-repeat: no-repeat;
+/* Sprigs of leaves hang faintly into the nav from the window edge: one in
+   each top corner, and a small twig in the gap between the nav links and the
+   buttons (EvergreenNavLeaves). They sit at z-index -1, under the nav's own
+   fill (the page content wrapper is the stacking context), so they never
+   cover the logo and are free to grow outside the nav. On desktop each corner
+   sprig slides out by exactly the nav's margin (my-3, xl:mx-12, 2xl:mx-24) so
+   its stems start at the very corner of the window; on tablets and phones the
+   left one stays inside, behind the logo, and the twig hangs from the nav near
+   the buttons. */
+.evergreen-sprig,
+.evergreen-sprig-right-mirror {
+  display: none;
 }
 
-:is(.evergreen, .evergreen-dark) .app-nav::before {
-  content: "";
+:is(.evergreen, .evergreen-dark) {
+  --sprig-ink: #2f6b4f;
+  --sprig-rib: #f5f1e4;
+  --sprig-opacity: 0.2;
+  --twig-opacity: 0.15;
+}
+
+.evergreen-dark {
+  --sprig-ink: #8fc3a0;
+  --sprig-rib: #1b2621;
+  --sprig-opacity: 0.16;
+  --twig-opacity: 0.12;
+}
+
+:is(.evergreen, .evergreen-dark) .evergreen-sprig {
+  display: block;
   position: absolute;
   z-index: -1;
+  pointer-events: none;
+  fill: var(--sprig-ink);
+  stroke: var(--sprig-ink);
+  opacity: var(--sprig-opacity);
+}
+
+:is(.evergreen, .evergreen-dark) .evergreen-rib {
+  stroke: var(--sprig-rib);
+  stroke-opacity: 0.7;
+}
+
+:is(.evergreen, .evergreen-dark) .evergreen-sprig-left {
   top: 0;
   left: 0;
   width: 190px;
   height: 84px;
-  background: var(--leaf-corner) left top / 100% 100% no-repeat;
-  pointer-events: none;
 }
 
-/* On desktop the corner sprig is mirrored into the top-right corner too, and
-   the twig moves off the nav into .app-nav-sprig, a spacer that fills the gap
-   between the last nav link and the action buttons, so it sits in the middle
-   of that gap whatever its width. The spacer reaches up through the nav's
-   padding and top margin (-mt-6) so the stem starts at the window edge, like
-   the corner sprigs. */
-:is(.evergreen, .evergreen-dark) .app-nav-sprig {
-  background: var(--leaf-twig) center top / 96px 48px no-repeat;
+:is(.evergreen, .evergreen-dark) .evergreen-twig {
+  width: 96px;
+  height: 48px;
+  opacity: var(--twig-opacity);
+}
+
+:is(.evergreen, .evergreen-dark) .evergreen-twig-nav {
+  top: 0;
+  right: 18%;
+}
+
+/* The gap twig lives in .app-nav-sprig, a spacer that fills the gap between
+   the last nav link and the buttons, so it sits in the middle of that gap
+   whatever its width. The spacer reaches up through the nav's padding and top
+   margin (-mt-6) so the stem starts at the window edge. */
+:is(.evergreen, .evergreen-dark) .evergreen-twig-gap {
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
 }
 
 @media (width >= 80rem) {
-  :is(.evergreen, .evergreen-dark) .app-nav {
-    background-image: none;
+  :is(.evergreen, .evergreen-dark) .evergreen-twig-nav {
+    display: none;
   }
 
-  :is(.evergreen, .evergreen-dark) .app-nav::before,
-  :is(.evergreen, .evergreen-dark) .app-nav::after {
+  :is(.evergreen, .evergreen-dark) .evergreen-sprig-left {
     top: -12px;
     left: -48px;
   }
 
-  :is(.evergreen, .evergreen-dark) .app-nav::after {
-    content: "";
+  /* The right corner is the left one mirrored. The wind still has to blow the
+     same way on screen, so its bend runs the other way inside the mirror. */
+  :is(.evergreen, .evergreen-dark) .evergreen-sprig-right-mirror {
+    display: block;
     position: absolute;
     z-index: -1;
-    left: auto;
+    top: -12px;
     right: -48px;
     width: 190px;
     height: 84px;
-    background: var(--leaf-corner) left top / 100% 100% no-repeat;
-    /* Mirrored about its own box with the origin at the window corner, so a
-       rotate() in front of this pivots on the stems. */
-    transform-origin: right top;
-    transform: scaleX(-1) translateX(100%);
+    transform: scaleX(-1);
     pointer-events: none;
+    --wind-dir: -1;
+  }
+
+  :is(.evergreen, .evergreen-dark) .evergreen-sprig-right {
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 }
 
 @media (width >= 96rem) {
-  :is(.evergreen, .evergreen-dark) .app-nav::before,
-  :is(.evergreen, .evergreen-dark) .app-nav::after {
+  :is(.evergreen, .evergreen-dark) .evergreen-sprig-left,
+  :is(.evergreen, .evergreen-dark) .evergreen-sprig-right-mirror {
     top: -12px;
     left: -96px;
     width: 228px;
     height: 101px;
   }
 
-  :is(.evergreen, .evergreen-dark) .app-nav::after {
+  :is(.evergreen, .evergreen-dark) .evergreen-sprig-right-mirror {
     left: auto;
     right: -96px;
   }
 }
 
-/* With the animated background on, the sprigs sway in a light breeze. Each
-   pivots on its stem root at the window edge and turns only a degree or two.
-   One long, uneven gust pattern is shared by all three, and the wind reaches
-   the left corner first, the middle twig next and the right corner last, so
-   they move together without moving in lockstep. The twig is lighter and
-   swings a little further. */
-@keyframes evergreen-sway {
-  0%, 100% { rotate: 0deg; }
-  9% { rotate: 0.5deg; }
-  17% { rotate: 1.4deg; }
-  24% { rotate: 0.9deg; }
-  31% { rotate: 1.7deg; }
-  40% { rotate: 0.3deg; }
-  48% { rotate: -0.4deg; }
-  56% { rotate: 0.2deg; }
-  66% { rotate: 0.8deg; }
-  73% { rotate: 0.4deg; }
-  84% { rotate: 1.1deg; }
-  92% { rotate: 0.2deg; }
+/* With the animated background on, the leaves move in a light breeze. One
+   long, uneven gust (--gust) runs per sprig and every stem segment turns by a
+   share of it at its own joint; the segments are nested, so the turns add up
+   and the stem bends most toward its tip. On top of that each leaf flutters on
+   its stalk with its own amplitude, period and phase (set inline), smaller
+   leaves more than big ones. The gust reaches the left corner first, the gap
+   twig next and the right corner last. */
+@property --gust {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
 }
 
-@keyframes evergreen-sway-mirrored {
-  0%, 100% { transform: rotate(0deg) scaleX(-1) translateX(100%); }
-  9% { transform: rotate(0.5deg) scaleX(-1) translateX(100%); }
-  17% { transform: rotate(1.4deg) scaleX(-1) translateX(100%); }
-  24% { transform: rotate(0.9deg) scaleX(-1) translateX(100%); }
-  31% { transform: rotate(1.7deg) scaleX(-1) translateX(100%); }
-  40% { transform: rotate(0.3deg) scaleX(-1) translateX(100%); }
-  48% { transform: rotate(-0.4deg) scaleX(-1) translateX(100%); }
-  56% { transform: rotate(0.2deg) scaleX(-1) translateX(100%); }
-  66% { transform: rotate(0.8deg) scaleX(-1) translateX(100%); }
-  73% { transform: rotate(0.4deg) scaleX(-1) translateX(100%); }
-  84% { transform: rotate(1.1deg) scaleX(-1) translateX(100%); }
-  92% { transform: rotate(0.2deg) scaleX(-1) translateX(100%); }
+@keyframes evergreen-gust {
+  0%, 100% { --gust: 0deg; }
+  9% { --gust: -0.6deg; }
+  17% { --gust: -1.8deg; }
+  24% { --gust: -1.1deg; }
+  31% { --gust: -2.2deg; }
+  40% { --gust: -0.4deg; }
+  48% { --gust: 0.5deg; }
+  56% { --gust: -0.2deg; }
+  66% { --gust: -1deg; }
+  73% { --gust: -0.5deg; }
+  84% { --gust: -1.4deg; }
+  92% { --gust: -0.2deg; }
 }
 
-@keyframes evergreen-sway-twig {
-  0%, 100% { rotate: 0deg; }
-  9% { rotate: 1deg; }
-  17% { rotate: 2.8deg; }
-  24% { rotate: 1.6deg; }
-  31% { rotate: 3.2deg; }
-  40% { rotate: 0.4deg; }
-  48% { rotate: -0.9deg; }
-  56% { rotate: 0.5deg; }
-  66% { rotate: 1.6deg; }
-  73% { rotate: 0.7deg; }
-  84% { rotate: 2.2deg; }
-  92% { rotate: 0.3deg; }
+@keyframes evergreen-leaf-flutter {
+  0%, 100% { rotate: calc(var(--leaf-amp) * -0.6); }
+  22% { rotate: calc(var(--leaf-amp) * 0.9); }
+  41% { rotate: calc(var(--leaf-amp) * 0.1); }
+  63% { rotate: calc(var(--leaf-amp) * 1); }
+  81% { rotate: calc(var(--leaf-amp) * -1); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  :is(.evergreen, .evergreen-dark)[data-animated-background] .app-nav::before {
-    transform-origin: left top;
-    animation: evergreen-sway 13s ease-in-out infinite;
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .evergreen-sprig {
+    animation: evergreen-gust 13s ease-in-out infinite;
   }
 
-  :is(.evergreen, .evergreen-dark)[data-animated-background] .app-nav::after {
-    animation: evergreen-sway-mirrored 13s ease-in-out 1.2s infinite;
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .evergreen-twig {
+    animation-delay: 0.6s;
   }
 
-  /* The twig's stem root is the top-right corner of its 96px image, which is
-     centred in the spacer. */
-  :is(.evergreen, .evergreen-dark)[data-animated-background] .app-nav-sprig {
-    transform-origin: calc(50% + 48px) 0;
-    animation: evergreen-sway-twig 13s ease-in-out 0.6s infinite;
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .evergreen-sprig-right {
+    animation-delay: 1.2s;
   }
-}
 
-.evergreen .app-nav {
-  --leaf-corner: url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 190 84%22 fill=%22%232f6b4f%22 stroke=%22%232f6b4f%22 opacity=%22.2%22%3E%3Cpath d=%22M-4 -4C40 14 95 20 168 22%22 fill=%22none%22 stroke-width=%221.4%22 stroke-linecap=%22round%22/%3E%3Cg transform=%22translate(20.9 4.6) rotate(61.1)%22%3E%3Cpath d=%22M0 0C7.2 -7.2 17.9 -5.7 23.9 0C17.9 5.7 7.2 7.2 0 0Z%22/%3E%3Cpath d=%22M1.9 0L20.3 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(38.8 9.2) rotate(-32.3)%22%3E%3Cpath d=%22M0 0C6.7 -6.7 16.9 -5.4 22.5 0C16.9 5.4 6.7 6.7 0 0Z%22/%3E%3Cpath d=%22M1.8 0L19.1 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(61.1 13.5) rotate(54.3)%22%3E%3Cpath d=%22M0 0C6.3 -6.3 15.6 -5.0 20.9 0C15.6 5.0 6.3 6.3 0 0Z%22/%3E%3Cpath d=%22M1.7 0L17.7 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(83.3 16.6) rotate(-38.3)%22%3E%3Cpath d=%22M0 0C5.8 -5.8 14.5 -4.6 19.3 0C14.5 4.6 5.8 5.8 0 0Z%22/%3E%3Cpath d=%22M1.5 0L16.4 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(107.0 18.9) rotate(49.7)%22%3E%3Cpath d=%22M0 0C5.3 -5.3 13.4 -4.3 17.8 0C13.4 4.3 5.3 5.3 0 0Z%22/%3E%3Cpath d=%22M1.4 0L15.1 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(130.3 20.5) rotate(-41.8)%22%3E%3Cpath d=%22M0 0C4.9 -4.9 12.3 -3.9 16.4 0C12.3 3.9 4.9 4.9 0 0Z%22/%3E%3Cpath d=%22M1.3 0L13.9 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(168.0 22.0) rotate(1.6)%22%3E%3Cpath d=%22M0 0C4.7 -4.7 11.7 -3.7 15.6 0C11.7 3.7 4.7 4.7 0 0Z%22/%3E%3Cpath d=%22M1.2 0L13.3 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cpath d=%22M-4 -4C14 22 24 44 30 70%22 fill=%22none%22 stroke-width=%221.4%22 stroke-linecap=%22round%22/%3E%3Cg transform=%22translate(10.1 18.5) rotate(105.9)%22%3E%3Cpath d=%22M0 0C5.2 -5.2 13.0 -4.2 17.3 0C13.0 4.2 5.2 5.2 0 0Z%22/%3E%3Cpath d=%22M1.4 0L14.7 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(17.5 33.0) rotate(20.4)%22%3E%3Cpath d=%22M0 0C4.6 -4.6 11.6 -3.7 15.5 0C11.6 3.7 4.6 4.6 0 0Z%22/%3E%3Cpath d=%22M1.2 0L13.2 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(23.4 47.5) rotate(115.2)%22%3E%3Cpath d=%22M0 0C4.1 -4.1 10.3 -3.3 13.7 0C10.3 3.3 4.1 4.1 0 0Z%22/%3E%3Cpath d=%22M1.1 0L11.6 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(30.0 70.0) rotate(77.0)%22%3E%3Cpath d=%22M0 0C3.6 -3.6 9.0 -2.9 12.0 0C9.0 2.9 3.6 3.6 0 0Z%22/%3E%3Cpath d=%22M1.0 0L10.2 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3C/svg%3E");
-  --leaf-twig: url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 40%22 fill=%22%232f6b4f%22 stroke=%22%232f6b4f%22 opacity=%22.15%22%3E%3Cg transform=%22translate(80 0) scale(-1 1)%22%3E%3Cpath d=%22M-4 -4C20 8 45 12 70 13%22 fill=%22none%22 stroke-width=%221.4%22 stroke-linecap=%22round%22/%3E%3Cg transform=%22translate(21.5 5.9) rotate(60.9)%22%3E%3Cpath d=%22M0 0C4.5 -4.5 11.4 -3.6 15.2 0C11.4 3.6 4.5 4.5 0 0Z%22/%3E%3Cpath d=%22M1.2 0L12.9 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(43.8 10.6) rotate(-36.5)%22%3E%3Cpath d=%22M0 0C3.8 -3.8 9.6 -3.1 12.7 0C9.6 3.1 3.8 3.8 0 0Z%22/%3E%3Cpath d=%22M1.0 0L10.8 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(70.0 13.0) rotate(2.3)%22%3E%3Cpath d=%22M0 0C3.2 -3.2 8.1 -2.6 10.8 0C8.1 2.6 3.2 3.2 0 0Z%22/%3E%3Cpath d=%22M0.9 0L9.2 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%23f5f1e4%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-}
+  /* Stem segments pivot on their joint (inline transform-origin, in viewBox
+     units); the twig is lighter, so it bends further. */
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .evergreen-stem {
+    transform-box: view-box;
+    rotate: calc(var(--gust) * var(--joint) * var(--wind-dir, 1));
+  }
 
-.evergreen-dark .app-nav {
-  --leaf-corner: url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 190 84%22 fill=%22%238fc3a0%22 stroke=%22%238fc3a0%22 opacity=%22.16%22%3E%3Cpath d=%22M-4 -4C40 14 95 20 168 22%22 fill=%22none%22 stroke-width=%221.4%22 stroke-linecap=%22round%22/%3E%3Cg transform=%22translate(20.9 4.6) rotate(61.1)%22%3E%3Cpath d=%22M0 0C7.2 -7.2 17.9 -5.7 23.9 0C17.9 5.7 7.2 7.2 0 0Z%22/%3E%3Cpath d=%22M1.9 0L20.3 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(38.8 9.2) rotate(-32.3)%22%3E%3Cpath d=%22M0 0C6.7 -6.7 16.9 -5.4 22.5 0C16.9 5.4 6.7 6.7 0 0Z%22/%3E%3Cpath d=%22M1.8 0L19.1 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(61.1 13.5) rotate(54.3)%22%3E%3Cpath d=%22M0 0C6.3 -6.3 15.6 -5.0 20.9 0C15.6 5.0 6.3 6.3 0 0Z%22/%3E%3Cpath d=%22M1.7 0L17.7 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(83.3 16.6) rotate(-38.3)%22%3E%3Cpath d=%22M0 0C5.8 -5.8 14.5 -4.6 19.3 0C14.5 4.6 5.8 5.8 0 0Z%22/%3E%3Cpath d=%22M1.5 0L16.4 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(107.0 18.9) rotate(49.7)%22%3E%3Cpath d=%22M0 0C5.3 -5.3 13.4 -4.3 17.8 0C13.4 4.3 5.3 5.3 0 0Z%22/%3E%3Cpath d=%22M1.4 0L15.1 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(130.3 20.5) rotate(-41.8)%22%3E%3Cpath d=%22M0 0C4.9 -4.9 12.3 -3.9 16.4 0C12.3 3.9 4.9 4.9 0 0Z%22/%3E%3Cpath d=%22M1.3 0L13.9 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(168.0 22.0) rotate(1.6)%22%3E%3Cpath d=%22M0 0C4.7 -4.7 11.7 -3.7 15.6 0C11.7 3.7 4.7 4.7 0 0Z%22/%3E%3Cpath d=%22M1.2 0L13.3 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cpath d=%22M-4 -4C14 22 24 44 30 70%22 fill=%22none%22 stroke-width=%221.4%22 stroke-linecap=%22round%22/%3E%3Cg transform=%22translate(10.1 18.5) rotate(105.9)%22%3E%3Cpath d=%22M0 0C5.2 -5.2 13.0 -4.2 17.3 0C13.0 4.2 5.2 5.2 0 0Z%22/%3E%3Cpath d=%22M1.4 0L14.7 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(17.5 33.0) rotate(20.4)%22%3E%3Cpath d=%22M0 0C4.6 -4.6 11.6 -3.7 15.5 0C11.6 3.7 4.6 4.6 0 0Z%22/%3E%3Cpath d=%22M1.2 0L13.2 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(23.4 47.5) rotate(115.2)%22%3E%3Cpath d=%22M0 0C4.1 -4.1 10.3 -3.3 13.7 0C10.3 3.3 4.1 4.1 0 0Z%22/%3E%3Cpath d=%22M1.1 0L11.6 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(30.0 70.0) rotate(77.0)%22%3E%3Cpath d=%22M0 0C3.6 -3.6 9.0 -2.9 12.0 0C9.0 2.9 3.6 3.6 0 0Z%22/%3E%3Cpath d=%22M1.0 0L10.2 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3C/svg%3E");
-  --leaf-twig: url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 40%22 fill=%22%238fc3a0%22 stroke=%22%238fc3a0%22 opacity=%22.12%22%3E%3Cg transform=%22translate(80 0) scale(-1 1)%22%3E%3Cpath d=%22M-4 -4C20 8 45 12 70 13%22 fill=%22none%22 stroke-width=%221.4%22 stroke-linecap=%22round%22/%3E%3Cg transform=%22translate(21.5 5.9) rotate(60.9)%22%3E%3Cpath d=%22M0 0C4.5 -4.5 11.4 -3.6 15.2 0C11.4 3.6 4.5 4.5 0 0Z%22/%3E%3Cpath d=%22M1.2 0L12.9 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(43.8 10.6) rotate(-36.5)%22%3E%3Cpath d=%22M0 0C3.8 -3.8 9.6 -3.1 12.7 0C9.6 3.1 3.8 3.8 0 0Z%22/%3E%3Cpath d=%22M1.0 0L10.8 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3Cg transform=%22translate(70.0 13.0) rotate(2.3)%22%3E%3Cpath d=%22M0 0C3.2 -3.2 8.1 -2.6 10.8 0C8.1 2.6 3.2 3.2 0 0Z%22/%3E%3Cpath d=%22M0.9 0L9.2 0%22 fill=%22none%22 stroke-width=%220.8%22 stroke=%22%231b2621%22 stroke-opacity=%22.7%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .evergreen-twig .evergreen-stem {
+    rotate: calc(var(--gust) * var(--joint) * 2 * var(--wind-dir, 1));
+  }
+
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .evergreen-leaf {
+    transform-origin: 0 0;
+    animation-name: evergreen-leaf-flutter;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
 }
 
 /*

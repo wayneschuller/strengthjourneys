@@ -111,6 +111,15 @@ export function AppBackground() {
     !isNeoBrutalism &&
     !isRetroArcade;
   const showAnimatedGrid = mounted && showAnimated && isVanillaLightDark;
+  const animateNav = mounted && showAnimated && shouldShowBackground;
+
+  // Theme decorations outside this layer (the Evergreen nav leaves) read this
+  // flag from CSS to know the athlete wants motion.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.toggleAttribute("data-animated-background", animateNav);
+    return () => root.removeAttribute("data-animated-background");
+  }, [animateNav]);
 
   if (!shouldShowBackground) {
     return null;

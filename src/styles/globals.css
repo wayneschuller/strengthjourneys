@@ -1893,7 +1893,10 @@ html:not([data-restoring]) [data-returning-visit] {
     width: 190px;
     height: 84px;
     background: var(--leaf-corner) left top / 100% 100% no-repeat;
-    transform: scaleX(-1);
+    /* Mirrored about its own box with the origin at the window corner, so a
+       rotate() in front of this pivots on the stems. */
+    transform-origin: right top;
+    transform: scaleX(-1) translateX(100%);
     pointer-events: none;
   }
 }
@@ -1910,6 +1913,75 @@ html:not([data-restoring]) [data-returning-visit] {
   :is(.evergreen, .evergreen-dark) .app-nav::after {
     left: auto;
     right: -96px;
+  }
+}
+
+/* With the animated background on, the sprigs sway in a light breeze. Each
+   pivots on its stem root at the window edge and turns only a degree or two.
+   One long, uneven gust pattern is shared by all three, and the wind reaches
+   the left corner first, the middle twig next and the right corner last, so
+   they move together without moving in lockstep. The twig is lighter and
+   swings a little further. */
+@keyframes evergreen-sway {
+  0%, 100% { rotate: 0deg; }
+  9% { rotate: 0.5deg; }
+  17% { rotate: 1.4deg; }
+  24% { rotate: 0.9deg; }
+  31% { rotate: 1.7deg; }
+  40% { rotate: 0.3deg; }
+  48% { rotate: -0.4deg; }
+  56% { rotate: 0.2deg; }
+  66% { rotate: 0.8deg; }
+  73% { rotate: 0.4deg; }
+  84% { rotate: 1.1deg; }
+  92% { rotate: 0.2deg; }
+}
+
+@keyframes evergreen-sway-mirrored {
+  0%, 100% { transform: rotate(0deg) scaleX(-1) translateX(100%); }
+  9% { transform: rotate(0.5deg) scaleX(-1) translateX(100%); }
+  17% { transform: rotate(1.4deg) scaleX(-1) translateX(100%); }
+  24% { transform: rotate(0.9deg) scaleX(-1) translateX(100%); }
+  31% { transform: rotate(1.7deg) scaleX(-1) translateX(100%); }
+  40% { transform: rotate(0.3deg) scaleX(-1) translateX(100%); }
+  48% { transform: rotate(-0.4deg) scaleX(-1) translateX(100%); }
+  56% { transform: rotate(0.2deg) scaleX(-1) translateX(100%); }
+  66% { transform: rotate(0.8deg) scaleX(-1) translateX(100%); }
+  73% { transform: rotate(0.4deg) scaleX(-1) translateX(100%); }
+  84% { transform: rotate(1.1deg) scaleX(-1) translateX(100%); }
+  92% { transform: rotate(0.2deg) scaleX(-1) translateX(100%); }
+}
+
+@keyframes evergreen-sway-twig {
+  0%, 100% { rotate: 0deg; }
+  9% { rotate: 1deg; }
+  17% { rotate: 2.8deg; }
+  24% { rotate: 1.6deg; }
+  31% { rotate: 3.2deg; }
+  40% { rotate: 0.4deg; }
+  48% { rotate: -0.9deg; }
+  56% { rotate: 0.5deg; }
+  66% { rotate: 1.6deg; }
+  73% { rotate: 0.7deg; }
+  84% { rotate: 2.2deg; }
+  92% { rotate: 0.3deg; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .app-nav::before {
+    transform-origin: left top;
+    animation: evergreen-sway 13s ease-in-out infinite;
+  }
+
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .app-nav::after {
+    animation: evergreen-sway-mirrored 13s ease-in-out 1.2s infinite;
+  }
+
+  /* The twig's stem root is the top-right corner of its 96px image, which is
+     centred in the spacer. */
+  :is(.evergreen, .evergreen-dark)[data-animated-background] .app-nav-sprig {
+    transform-origin: calc(50% + 48px) 0;
+    animation: evergreen-sway-twig 13s ease-in-out 0.6s infinite;
   }
 }
 

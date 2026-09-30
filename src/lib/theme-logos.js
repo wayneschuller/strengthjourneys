@@ -8,6 +8,10 @@ import logoNeoBrutalism from "../../public/nav_logo_neo-brutalism.png";
 import logoRetroArcade from "../../public/nav_logo_retro-arcade.png";
 //import logoRetroArcadeDark from "../../public/nav_logo_retro-arcade-dark.png";
 import logoStarryNight from "../../public/nav_logo_starry-night.png";
+// Evergreen is vector, Fraunces lettering outlined to paths; pine ink by day,
+// cream at night.
+import logoEvergreen from "../../public/nav_logo_evergreen.svg";
+import logoEvergreenDark from "../../public/nav_logo_evergreen-dark.svg";
 
 // Fallback logos (existing light/dark logic)
 import fallbackDarkLogo from "../../public/nav_logo_light.png";
@@ -23,6 +27,8 @@ export const logoMap = {
   "retro-arcade-dark": logoRetroArcade,
   "starry-night": logoStarryNight,
   "starry-night-dark": logoStarryNight,
+  evergreen: logoEvergreen,
+  "evergreen-dark": logoEvergreenDark,
 };
 
 /**

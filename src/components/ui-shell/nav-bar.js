@@ -103,7 +103,7 @@ export function NavBar() {
         <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 self-stretch py-3">
           <span
             aria-hidden
-            className="app-nav-sprig -my-3 hidden flex-1 self-stretch xl:block"
+            className="app-nav-sprig -mt-6 -mb-3 hidden flex-1 self-stretch xl:block"
           />
           <TooltipProvider>
             <Tooltip>

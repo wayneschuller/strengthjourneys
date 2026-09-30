@@ -1865,8 +1865,10 @@ html:not([data-restoring]) [data-returning-visit] {
 
 /* On desktop the corner sprig is mirrored into the top-right corner too, and
    the twig moves off the nav into .app-nav-sprig, a spacer that fills the gap
-   between the last nav link and the action buttons, so it hangs from the top
-   edge in the middle of that gap whatever its width. */
+   between the last nav link and the action buttons, so it sits in the middle
+   of that gap whatever its width. The spacer reaches up through the nav's
+   padding and top margin (-mt-6) so the stem starts at the window edge, like
+   the corner sprigs. */
 :is(.evergreen, .evergreen-dark) .app-nav-sprig {
   background: var(--leaf-twig) center top / 96px 48px no-repeat;
 }

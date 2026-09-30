@@ -2,6 +2,12 @@ import { Resend } from "resend";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { RegExpMatcher, englishDataset } from "obscenity";
+import { kv } from "@/lib/kv";
+import { getRequestClientIp } from "@/lib/playlists/playlist-security";
+
+// One submission per client per minute is enough for genuine feedback while
+// blocking scripted floods that would burn Resend/email quota.
+const FEEDBACK_THROTTLE_SECONDS = 60;
 
 const matcher = new RegExpMatcher({ ...englishDataset.build() });
 

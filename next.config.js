@@ -81,13 +81,6 @@ const nextConfig = {
 
   async redirects() {
     return [
-      // 2026-09-15: Articles joined the main sitemap. This URL was their own
-      // sitemap and is still registered in Search Console.
-      {
-        source: "/server-sitemap.xml",
-        destination: "/sitemap.xml",
-        permanent: true,
-      },
       // 2026-03-08: Legacy analyzer route now maps to the home dashboard/landing page.
       {
         source: "/analyzer",

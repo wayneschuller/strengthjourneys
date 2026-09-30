@@ -100,7 +100,7 @@ export function NavBar() {
           <DesktopNav />
           <MobileNav />
         </div>
-        <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 py-3">
+        <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2 self-stretch py-3">
           <span
             aria-hidden
             className="app-nav-sprig -my-3 hidden flex-1 self-stretch xl:block"

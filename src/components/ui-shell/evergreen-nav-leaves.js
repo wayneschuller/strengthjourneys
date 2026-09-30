@@ -184,7 +184,7 @@ function buildBranch(branch, branchIndex, seedBase) {
         length * scale,
       ),
       flutter: {
-        "--leaf-amp": `${(3.4 - scale * 1.4).toFixed(2)}deg`,
+        "--leaf-amp": `${(6.4 - scale * 2.8).toFixed(2)}deg`,
         animationDuration: `${(2.6 + hash(seed + 3) * 1.9).toFixed(2)}s`,
         animationDelay: `-${(hash(seed + 4) * 4).toFixed(2)}s`,
       },

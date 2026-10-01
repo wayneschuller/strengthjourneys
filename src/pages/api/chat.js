@@ -101,13 +101,12 @@ export default async function handler(req, res) {
   }
 
   // The coach prompt is proprietary, so it lives in KV as a versioned edition
-  // (see lib/ai/prompt-editions.js). EXTENDED_AI_PROMPT is the pre-edition home of
-  // the same text, kept as a fallback until editions have proven themselves in
-  // production; SYSTEM_PROMPT is the open-source baseline.
+  // (see lib/ai/prompt-editions.js). With no edition to hand, such as a KV
+  // outage on a cold instance, the open-source SYSTEM_PROMPT answers.
   const edition = await getActivePromptEdition();
-  const promptText = edition?.text || process.env.EXTENDED_AI_PROMPT || SYSTEM_PROMPT;
+  const promptText = edition?.text || SYSTEM_PROMPT;
   devLog(
-    `Coach prompt: ${edition ? `edition ${edition.id}` : process.env.EXTENDED_AI_PROMPT ? "EXTENDED_AI_PROMPT" : "baseline"} (${promptText.length} chars)`,
+    `Coach prompt: ${edition ? `edition ${edition.id}` : "baseline"} (${promptText.length} chars)`,
   );
 
   const systemMessages = [{ role: "system", content: promptText }];
@@ -145,7 +144,6 @@ export default async function handler(req, res) {
     });
   }
 
-  const AI_model = chatModel.model;
   const convertedUserMessages = await convertToModelMessages(userMessages);
   const modelMessages = hasLiftingContext
     ? [
@@ -157,40 +155,73 @@ export default async function handler(req, res) {
       ]
     : convertedUserMessages;
 
-  devLog(`AI model: ${AI_model.modelId}`);
+  devLog(`AI model: ${chatModel.id}`);
 
-  const result = streamText({
-    model: AI_model,
-    instructions: systemMessages,
-    messages: modelMessages,
-    maxOutputTokens: MAX_OUTPUT_TOKENS,
-    providerOptions: chatModel.providerOptions,
-    reasoning: chatModel.reasoning,
+  const streamReplyFrom = (picked) =>
+    streamText({
+      model: picked.model,
+      instructions: systemMessages,
+      messages: modelMessages,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      providerOptions: picked.providerOptions,
+      reasoning: picked.reasoning,
+      // The lifter only ever sees "An error occurred", so keep the cause in the logs.
+      onError: ({ error }) => {
+        console.error(`AI chat model ${picked.id} failed:`, error?.message ?? error);
+      },
+    }).toUIMessageStream({
+      originalMessages: userMessages,
+      sendSources: true,
+      // The UI never renders reasoning parts, so don't pay to ship them.
+      sendReasoning: false,
+      // Each reply carries what produced it, so the UI can label it and a
+      // thumbs vote can be counted against the right edition and model.
+      // A null edition means the baseline prompt answered, which is not voted on.
+      messageMetadata: ({ part }) =>
+        part.type === "start"
+          ? { edition: edition?.id ?? null, model: picked.id }
+          : undefined,
+    });
+
+  // A picked model that fails before writing anything (its provider is down,
+  // or the AI Gateway is out of credit) hands the question to the default
+  // model, so the lifter still gets an answer. The opening chunks are held
+  // back until then, because they name the model and must name the one that
+  // actually answers.
+  const defaultModel = getChatModel(undefined, {
+    isSignedIn: Boolean(session?.user),
   });
+  const canFallBack = Boolean(defaultModel) && defaultModel.id !== chatModel.id;
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
-      const uiStream = result.toUIMessageStream({
-        originalMessages: userMessages,
-        sendSources: true,
-        // The UI never renders reasoning parts, so don't pay to ship them.
-        sendReasoning: false,
-        // Each reply carries what produced it, so the UI can label it and a
-        // thumbs vote can be counted against the right edition and model.
-        // A null edition means a fallback prompt answered, which is not voted on.
-        messageMetadata: ({ part }) =>
-          part.type === "start"
-            ? { edition: edition?.id ?? null, model: chatModel.id }
-            : undefined,
-      });
-      const reader = uiStream.getReader();
+      let reader = streamReplyFrom(chatModel).getReader();
+      let held = canFallBack ? [] : null;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        writer.write(value);
+        if (!held) {
+          writer.write(value);
+          continue;
+        }
+
+        if (value.type === "error") {
+          reader.cancel().catch(() => {});
+          reader = streamReplyFrom(defaultModel).getReader();
+          held = null;
+          continue;
+        }
+
+        held.push(value);
+        if (value.type !== "start" && value.type !== "start-step") {
+          held.forEach((chunk) => writer.write(chunk));
+          held = null;
+        }
       }
+
+      held?.forEach((chunk) => writer.write(chunk));
     },
   });
 

@@ -46,9 +46,9 @@ export function getAvailableChatModelIds() {
  * grok-4.20-non-reasoning rejects reasoningEffort outright (any value is a
  * 400), so xAI gets no options. The OpenAI models reason by default, which
  * is slow, so they are told not to. Gateway models take the SDK's own
- * `reasoning` setting instead of provider options: DeepSeek is told not to
- * reason, and Claude is left on its default because the gateway lists no
- * "none" level for it.
+ * `reasoning` setting instead of provider options, and are all told not to
+ * reason: left alone, Claude Sonnet 5.5 took 5.2s to its first word instead
+ * of 2.0s, and DeepSeek 4.9s instead of 1.1s (Oct 2 2026).
  *
  * `id` is the catalog ID, which for gateway models differs from the SDK's
  * modelId ("anthropic/claude-sonnet-5.5").
@@ -73,7 +73,7 @@ export function getChatModel(requestedId, { isSignedIn = false } = {}) {
     return {
       id,
       model: gateway(entry.gatewayId),
-      reasoning: entry.provider === "deepseek" ? "none" : undefined,
+      reasoning: "none",
     };
   }
   if (entry.provider === "xai") {

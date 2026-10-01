@@ -9,8 +9,8 @@ Wayne's laptop. The repo only holds the code that reads them.
 - `src/lib/ai/prompt-editions.js` owns the KV keys and the rules.
 - `src/pages/api/chat.js` reads the active edition (cached 60 seconds per warm
   instance) and tags every reply with `{ edition, model }` message metadata.
-  If no edition is active it falls back to `EXTENDED_AI_PROMPT`, then to the
-  open-source `SYSTEM_PROMPT`; those replies carry `edition: null`.
+  If no edition is active, or KV is down on a cold instance, it falls back to
+  the open-source `SYSTEM_PROMPT`; those replies carry `edition: null`.
 - `src/components/feedback/ai-reply-feedback.js` shows thumbs and a quiet
   "Sep 26 edition" label on the latest reply. After a vote the lifter can
   choose to share the chat, which is emailed to Wayne.

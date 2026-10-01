@@ -24,8 +24,13 @@
  *
  * An entry with a `gatewayId` is served through the Vercel AI Gateway on one
  * shared key, so its provider needs no key or billing account of its own.
- * Claude Sonnet 5.5 and DeepSeek V4.1 Flash arrived this way on Oct 2 2026
- * and are yet to be benchmarked; their blurbs are placeholders until then.
+ * Claude Sonnet 5.5 and DeepSeek V4.1 Flash arrived this way on Oct 2 2026.
+ * Benchmarked that day on five general questions with no lifting data,
+ * median first word, full answer and cost per 1,000 answers: gpt-6-luna
+ * 1.6s 3.0s $0.36, gpt-6-sol 1.2s 4.9s $7.41, claude-sonnet-5.5 2.0s 7.3s
+ * $15.60, deepseek-v4.1-flash 1.1s 5.7s $0.99. Claude costs twice GPT-6 Sol
+ * at the same list price because it counts more input tokens for the same
+ * prompt and writes answers about three times as long.
  *
  * `access` gates a model: "everyone", or "signed-in", which doubles as a
  * sign-in nudge in the switcher. The server enforces it (lib/ai/models.js);
@@ -72,7 +77,7 @@ export const CHAT_MODELS = [
     label: "Claude Sonnet 5.5",
     provider: "anthropic",
     gatewayId: "anthropic/claude-sonnet-5.5",
-    blurb: "Anthropic's all-rounder, clear and considered",
+    blurb: "The most thorough answers, laid out step by step",
     access: "signed-in",
   },
   {
@@ -80,7 +85,7 @@ export const CHAT_MODELS = [
     label: "DeepSeek V4.1 Flash",
     provider: "deepseek",
     gatewayId: "deepseek/deepseek-v4.1-flash",
-    blurb: "A lightweight model for quick questions",
+    blurb: "Quick to start, with practical detail",
     access: "everyone",
   },
 ];

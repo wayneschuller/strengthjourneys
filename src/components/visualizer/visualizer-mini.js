@@ -444,7 +444,13 @@ export function VisualizerMini({ liftType }) {
                   fill={`url(#fill)`}
                   fillOpacity={1}
                   filter="url(#e1rmGlow)" // soft halo around the line
-                  dot={false}
+                  // Short ranges have room to mark every session, labelled or
+                  // not. Longer ones would turn the line into a string of beads.
+                  dot={
+                    ["3M", "6M"].includes(timeRange)
+                      ? { r: 3, fill: "var(--background)", strokeWidth: 2 }
+                      : false
+                  }
                   activeDot={chartActiveDotProps(liftColor)}
                   animationDuration={900}
                   animationEasing="ease-out"

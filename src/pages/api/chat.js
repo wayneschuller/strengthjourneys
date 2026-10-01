@@ -201,6 +201,10 @@ export default async function handler(req, res) {
     res.setHeader(key, value);
   });
 
+  // no-transform stops the Next server gzipping the stream, which on next dev
+  // held every token back until the reply ended.
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+
   appendAiChatQuotaHeaders(res, quota);
 
   res.status(response.status);

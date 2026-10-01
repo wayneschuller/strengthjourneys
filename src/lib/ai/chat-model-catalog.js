@@ -31,6 +31,10 @@
  * $15.60, deepseek-v4.1-flash 1.1s 5.7s $0.99. Claude costs twice GPT-6 Sol
  * at the same list price because it counts more input tokens for the same
  * prompt and writes answers about three times as long.
+ * deepseek-v4-flash-0731 is the cheapest model here at $0.27, but the
+ * slowest and least steady: 1.4-2.1s to the first word and 5.9-11.8s for a
+ * full answer across two rounds, from a single gateway provider. The plain
+ * deepseek-v4-flash was left out: $0.50 and no quicker.
  *
  * `access` gates a model: "everyone", or "signed-in", which doubles as a
  * sign-in nudge in the switcher. The server enforces it (lib/ai/models.js);
@@ -86,6 +90,14 @@ export const CHAT_MODELS = [
     provider: "deepseek",
     gatewayId: "deepseek/deepseek-v4.1-flash",
     blurb: "Quick to start, with practical detail",
+    access: "everyone",
+  },
+  {
+    id: "deepseek-v4-flash-0731",
+    label: "DeepSeek V4 Flash",
+    provider: "deepseek",
+    gatewayId: "deepseek/deepseek-v4-flash-0731",
+    blurb: "Detailed answers in plain prose",
     access: "everyone",
   },
 ];

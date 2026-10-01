@@ -24,17 +24,19 @@
  *
  * An entry with a `gatewayId` is served through the Vercel AI Gateway on one
  * shared key, so its provider needs no key or billing account of its own.
- * Claude Sonnet 5.5 and DeepSeek V4.1 Flash arrived this way on Oct 2 2026.
+ * Claude Sonnet 5.5 and DeepSeek V4 Flash arrived this way on Oct 2 2026.
  * Benchmarked that day on five general questions with no lifting data,
  * median first word, full answer and cost per 1,000 answers: gpt-6-luna
  * 1.6s 3.0s $0.36, gpt-6-sol 1.2s 4.9s $7.41, claude-sonnet-5.5 2.0s 7.3s
- * $15.60, deepseek-v4.1-flash 1.1s 5.7s $0.99. Claude costs twice GPT-6 Sol
- * at the same list price because it counts more input tokens for the same
- * prompt and writes answers about three times as long.
+ * $15.60. Claude costs twice GPT-6 Sol at the same list price because it
+ * counts more input tokens for the same prompt and writes answers about
+ * three times as long.
  * deepseek-v4-flash-0731 is the cheapest model here at $0.27, but the
  * slowest and least steady: 1.4-2.1s to the first word and 5.9-11.8s for a
- * full answer across two rounds, from a single gateway provider. The plain
- * deepseek-v4-flash was left out: $0.50 and no quicker.
+ * full answer across two rounds, from a single gateway provider.
+ * deepseek-v4.1-flash was quicker (1.1s, 2.9-7.2s) at $1.01-1.39 and was
+ * offered briefly, then dropped: two DeepSeek entries confused the menu.
+ * The plain deepseek-v4-flash was never offered: $0.50 and no quicker.
  *
  * `access` gates a model: "everyone", or "signed-in", which doubles as a
  * sign-in nudge in the switcher. The server enforces it (lib/ai/models.js);
@@ -83,14 +85,6 @@ export const CHAT_MODELS = [
     gatewayId: "anthropic/claude-sonnet-5.5",
     blurb: "The most thorough answers, laid out step by step",
     access: "signed-in",
-  },
-  {
-    id: "deepseek-v4.1-flash",
-    label: "DeepSeek V4.1 Flash",
-    provider: "deepseek",
-    gatewayId: "deepseek/deepseek-v4.1-flash",
-    blurb: "Quick to start, with practical detail",
-    access: "everyone",
   },
   {
     id: "deepseek-v4-flash-0731",

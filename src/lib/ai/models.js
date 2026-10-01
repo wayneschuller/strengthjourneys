@@ -48,7 +48,8 @@ export function getAvailableChatModelIds() {
  * is slow, so they are told not to. Gateway models take the SDK's own
  * `reasoning` setting instead of provider options, and are all told not to
  * reason: left alone, Claude Sonnet 5.5 took 5.2s to its first word instead
- * of 2.0s, and DeepSeek 4.9s instead of 1.1s (Oct 2 2026).
+ * of 2.0s, and DeepSeek V4.1 Flash, since dropped, 4.9s instead of 1.1s
+ * (Oct 2 2026).
  *
  * `id` is the catalog ID, which for gateway models differs from the SDK's
  * modelId ("anthropic/claude-sonnet-5.5").

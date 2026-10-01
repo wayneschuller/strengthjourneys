@@ -158,6 +158,9 @@ function ModelText({ model }) {
         )}
       </span>
       <span className="text-muted-foreground block text-xs">{model.blurb}</span>
+      <span className="text-muted-foreground/80 block text-[11px]">
+        {model.openWeights ? "Open weights" : "Closed weights"} · {model.cost}
+      </span>
     </span>
   );
 }

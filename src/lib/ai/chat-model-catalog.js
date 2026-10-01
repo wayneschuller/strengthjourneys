@@ -22,6 +22,12 @@
  * Blurbs describe how a model answers, never how recent it is: "newest"
  * goes stale the day another model ships.
  *
+ * Under the blurb the switcher shows two plain facts. `openWeights` says
+ * whether anyone can download and run the model (DeepSeek V4 Flash is MIT
+ * licensed on Hugging Face; the rest are closed). `cost` is what an answer
+ * costs the site to produce, in broad bands from the benchmarks above: under
+ * $1 per 1,000 answers is low, $1 to $10 is mid, above that is the highest.
+ *
  * An entry with a `gatewayId` is served through the Vercel AI Gateway on one
  * shared key, so its provider needs no key or billing account of its own.
  * Claude Sonnet 5.5 and DeepSeek V4 Flash arrived this way on Oct 2 2026.
@@ -47,7 +53,7 @@
 export const DEFAULT_CHAT_MODEL_ID = "gpt-6-luna";
 
 /**
- * @type {{ id: string, label: string, provider: "xai"|"openai"|"anthropic"|"deepseek", blurb: string, access: "everyone"|"signed-in", gatewayId?: string }[]}
+ * @type {{ id: string, label: string, provider: "xai"|"openai"|"anthropic"|"deepseek", blurb: string, openWeights: boolean, cost: string, access: "everyone"|"signed-in", gatewayId?: string }[]}
  */
 export const CHAT_MODELS = [
   {
@@ -55,6 +61,8 @@ export const CHAT_MODELS = [
     label: "GPT-6 Luna",
     provider: "openai",
     blurb: "The quickest full answers, short and precise",
+    openWeights: false,
+    cost: "Low cost",
     access: "everyone",
   },
   {
@@ -62,6 +70,8 @@ export const CHAT_MODELS = [
     label: "GPT-5.6 Luna",
     provider: "openai",
     blurb: "A balance of detail and length",
+    openWeights: false,
+    cost: "Low cost",
     access: "signed-in",
   },
   {
@@ -69,6 +79,8 @@ export const CHAT_MODELS = [
     label: "GPT-6 Sol",
     provider: "openai",
     blurb: "OpenAI's larger model, concise and careful",
+    openWeights: false,
+    cost: "Mid cost",
     access: "signed-in",
   },
   {
@@ -76,6 +88,8 @@ export const CHAT_MODELS = [
     label: "Grok 4.20",
     provider: "xai",
     blurb: "Quickest to start, with detailed answers",
+    openWeights: false,
+    cost: "Mid cost",
     access: "everyone",
   },
   {
@@ -84,6 +98,8 @@ export const CHAT_MODELS = [
     provider: "anthropic",
     gatewayId: "anthropic/claude-sonnet-5.5",
     blurb: "The most thorough answers, laid out step by step",
+    openWeights: false,
+    cost: "Highest cost",
     access: "signed-in",
   },
   {
@@ -91,7 +107,9 @@ export const CHAT_MODELS = [
     label: "DeepSeek V4 Flash",
     provider: "deepseek",
     gatewayId: "deepseek/deepseek-v4-flash-0731",
-    blurb: "Detailed answers in plain prose",
+    blurb: "Detailed, conversational answers at a steady pace",
+    openWeights: true,
+    cost: "Lowest cost",
     access: "everyone",
   },
 ];

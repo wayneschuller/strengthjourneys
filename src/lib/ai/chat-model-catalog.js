@@ -22,6 +22,11 @@
  * Blurbs describe how a model answers, never how recent it is: "newest"
  * goes stale the day another model ships.
  *
+ * An entry with a `gatewayId` is served through the Vercel AI Gateway on one
+ * shared key, so its provider needs no key or billing account of its own.
+ * Claude Sonnet 5.5 and DeepSeek V4.1 Flash arrived this way on Oct 2 2026
+ * and are yet to be benchmarked; their blurbs are placeholders until then.
+ *
  * `access` gates a model: "everyone", or "signed-in", which doubles as a
  * sign-in nudge in the switcher. The server enforces it (lib/ai/models.js);
  * the page only uses it to show the lock. A future supporter level would be
@@ -31,7 +36,7 @@
 export const DEFAULT_CHAT_MODEL_ID = "gpt-6-luna";
 
 /**
- * @type {{ id: string, label: string, provider: "xai"|"openai", blurb: string, access: "everyone"|"signed-in" }[]}
+ * @type {{ id: string, label: string, provider: "xai"|"openai"|"anthropic"|"deepseek", blurb: string, access: "everyone"|"signed-in", gatewayId?: string }[]}
  */
 export const CHAT_MODELS = [
   {
@@ -62,9 +67,30 @@ export const CHAT_MODELS = [
     blurb: "Quickest to start, with detailed answers",
     access: "everyone",
   },
+  {
+    id: "claude-sonnet-5.5",
+    label: "Claude Sonnet 5.5",
+    provider: "anthropic",
+    gatewayId: "anthropic/claude-sonnet-5.5",
+    blurb: "Anthropic's all-rounder, clear and considered",
+    access: "signed-in",
+  },
+  {
+    id: "deepseek-v4.1-flash",
+    label: "DeepSeek V4.1 Flash",
+    provider: "deepseek",
+    gatewayId: "deepseek/deepseek-v4.1-flash",
+    blurb: "A lightweight model for quick questions",
+    access: "everyone",
+  },
 ];
 
-export const PROVIDER_NAMES = { xai: "xAI", openai: "OpenAI" };
+export const PROVIDER_NAMES = {
+  xai: "xAI",
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+  deepseek: "DeepSeek",
+};
 
 /**
  * @param {{ access: string }} model A catalog entry.

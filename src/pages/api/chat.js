@@ -165,6 +165,7 @@ export default async function handler(req, res) {
     messages: modelMessages,
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     providerOptions: chatModel.providerOptions,
+    reasoning: chatModel.reasoning,
   });
 
   const stream = createUIMessageStream({
@@ -179,7 +180,7 @@ export default async function handler(req, res) {
         // A null edition means a fallback prompt answered, which is not voted on.
         messageMetadata: ({ part }) =>
           part.type === "start"
-            ? { edition: edition?.id ?? null, model: AI_model.modelId }
+            ? { edition: edition?.id ?? null, model: chatModel.id }
             : undefined,
       });
       const reader = uiStream.getReader();

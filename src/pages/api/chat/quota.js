@@ -49,7 +49,7 @@ async function getCoachDetails() {
   return {
     edition: edition?.id ?? null,
     // What a lifter gets when their pick is unavailable or they have none.
-    defaultModel: getChatModel()?.model.modelId ?? null,
+    defaultModel: getChatModel()?.id ?? null,
     // The switcher only offers models whose provider key is configured.
     availableModels: getAvailableChatModelIds(),
     suggestionModel: getSuggestionModel()?.model.modelId ?? null,

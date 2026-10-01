@@ -10,6 +10,7 @@
  * access: the page's lock icons are only a hint.
  */
 
+import { gateway } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { xai } from "@ai-sdk/xai";
 import {
@@ -19,7 +20,14 @@ import {
   findChatModel,
 } from "@/lib/ai/chat-model-catalog";
 
-const PROVIDER_KEYS = { xai: "XAI_API_KEY", openai: "OPENAI_API_KEY" };
+// Anthropic and DeepSeek have no key of their own: they are reached through
+// the Vercel AI Gateway, which bills every provider to one credit balance.
+const PROVIDER_KEYS = {
+  xai: "XAI_API_KEY",
+  openai: "OPENAI_API_KEY",
+  anthropic: "AI_GATEWAY_API_KEY",
+  deepseek: "AI_GATEWAY_API_KEY",
+};
 
 /**
  * IDs of the catalog models whose provider key is configured here.
@@ -37,11 +45,17 @@ export function getAvailableChatModelIds() {
  *
  * grok-4.20-non-reasoning rejects reasoningEffort outright (any value is a
  * 400), so xAI gets no options. The OpenAI models reason by default, which
- * is slow, so they are told not to.
+ * is slow, so they are told not to. Gateway models take the SDK's own
+ * `reasoning` setting instead of provider options: DeepSeek is told not to
+ * reason, and Claude is left on its default because the gateway lists no
+ * "none" level for it.
+ *
+ * `id` is the catalog ID, which for gateway models differs from the SDK's
+ * modelId ("anthropic/claude-sonnet-5.5").
  *
  * @param {string} [requestedId] A catalog ID chosen by the lifter.
  * @param {{ isSignedIn?: boolean }} [requester] Who is asking, from the session.
- * @returns {{ model: import("ai").LanguageModel, providerOptions?: object } | null}
+ * @returns {{ id: string, model: import("ai").LanguageModel, providerOptions?: object, reasoning?: string } | null}
  */
 export function getChatModel(requestedId, { isSignedIn = false } = {}) {
   const available = getAvailableChatModelIds().filter((id) =>
@@ -54,10 +68,19 @@ export function getChatModel(requestedId, { isSignedIn = false } = {}) {
       : available[0];
   if (!id) return null;
 
-  if (findChatModel(id).provider === "xai") {
-    return { model: xai.responses(id) };
+  const entry = findChatModel(id);
+  if (entry.gatewayId) {
+    return {
+      id,
+      model: gateway(entry.gatewayId),
+      reasoning: entry.provider === "deepseek" ? "none" : undefined,
+    };
+  }
+  if (entry.provider === "xai") {
+    return { id, model: xai.responses(id) };
   }
   return {
+    id,
     model: openai(id),
     providerOptions: { openai: { reasoningEffort: "none" } },
   };

@@ -1003,11 +1003,13 @@ const EARLY_MONTH_ON_TRACK_HEADLINES = [
   "Stay with it.",
 ];
 
+// Week one has no gap to close yet, so these open the month rather than
+// measure it.
 const EARLY_MONTH_CATCH_UP_HEADLINES = [
   "Plenty of month left.",
-  "One good week flips this.",
+  "The month is wide open.",
+  "A perfect month is still on.",
   "Get the next session in.",
-  "Start closing the gap.",
 ];
 
 const MID_MONTH_ON_TRACK_HEADLINES = [
@@ -1947,6 +1949,7 @@ function getTonnageStatusTooltip({
   tonnagePassed,
   liftPaceStatus,
   isCurrentMonthView,
+  tonnagePending = false,
 }) {
   const liftLabel = formatLiftTypeLabel(liftType).toLowerCase();
 
@@ -1955,6 +1958,9 @@ function getTonnageStatusTooltip({
   }
   if (tonnageNewWin) {
     return `First ${liftLabel} tonnage recorded this month — baseline set.`;
+  }
+  if (tonnagePending) {
+    return `Early days. Plenty of month left to match last month's ${liftLabel} tonnage.`;
   }
   if (isCurrentMonthView && liftPaceStatus !== "no-data") {
     if (liftPaceStatus === "ahead")
@@ -2151,6 +2157,14 @@ function BigFourCriteriaTable({
   hasComparisonMonth = true,
 }) {
   const isCurrentMonthView = boundaries?.isCurrentMonthView;
+  /*
+   * In week one the pace maths is mostly noise: a lift trained once a week is
+   * "behind" until the day it happens, and on the 2nd every row is. Painting
+   * that red tells a lifter they are losing a month they have barely started
+   * and can still win outright. So in week one a row that is not yet green
+   * stays neutral, and red waits until there is a real gap to report.
+   */
+  const earlyDays = getCurrentMonthPhase(boundaries) === "first-week";
   const allRows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const tonnage = bigFourByLift?.[liftType] ?? {
       current: 0,
@@ -2241,16 +2255,20 @@ function BigFourCriteriaTable({
           const currentMonthSuffix = isCurrentMonthView
             ? currentSessionsReporting.replace(`${sessions.current ?? 0} `, "")
             : null;
-          const rowBg = baseline
-            ? "bg-muted/20"
-            : passed
-              ? "bg-emerald-50/30 dark:bg-emerald-950/15"
-              : "bg-red-50/30 dark:bg-red-950/15";
+          const pending = earlyDays && !baseline && !passed;
+          const rowBg =
+            baseline || pending
+              ? "bg-muted/20"
+              : passed
+                ? "bg-emerald-50/30 dark:bg-emerald-950/15"
+                : "bg-red-50/30 dark:bg-red-950/15";
           const rightColor = baseline
             ? "text-muted-foreground"
             : passed
               ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400";
+              : pending
+                ? "text-foreground"
+                : "text-red-600 dark:text-red-400";
           const revealRowBg = rowHighlighted ? rowBg : "bg-transparent";
           const revealRightColor = rowHighlighted
             ? rightColor
@@ -2325,20 +2343,24 @@ function BigFourCriteriaTable({
                               ? "text-emerald-600 dark:text-emerald-400"
                               : sessionPace === "on-pace"
                                 ? "text-amber-600 dark:text-amber-400"
-                                : "text-red-600 dark:text-red-400"
+                                : pending
+                                  ? "text-muted-foreground"
+                                  : "text-red-600 dark:text-red-400"
                           }`}
                         >
                           {sessionPace === "ahead"
                             ? "▲ Ahead of pace"
                             : sessionPace === "on-pace"
                               ? "→ On track"
-                              : "▼ Behind pace"}
+                              : pending
+                                ? "Early days"
+                                : "▼ Behind pace"}
                         </div>
                       )}
                       {rowHighlighted && !baseline && (
                         <div className="bg-muted/40 mt-1 h-1 w-full overflow-hidden rounded-full">
                           <motion.div
-                            className={`h-full rounded-full ${passed ? "bg-emerald-500" : "bg-red-500"}`}
+                            className={`h-full rounded-full ${passed ? "bg-emerald-500" : pending ? "bg-muted-foreground/40" : "bg-red-500"}`}
                             initial={{ width: 0 }}
                             animate={{
                               width: `${Math.min(100, ((sessions.current ?? 0) / previousSessionsCompared) * 100)}%`,
@@ -2386,12 +2408,15 @@ function BigFourCriteriaTable({
           : isCurrentMonthView
             ? liftPaceStatus === "ahead" || liftPaceStatus === "on-pace"
             : passesTonnageThreshold(currentTonnage, lastTonnage);
+        const tonnagePending = earlyDays && !tonnageBaseline && !tonnagePassed;
         const tonnageColor =
           tonnageBaseline && !tonnageNewWin
             ? "text-muted-foreground"
             : tonnageNewWin || tonnagePassed
               ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400";
+              : tonnagePending
+                ? "text-foreground"
+                : "text-red-600 dark:text-red-400";
 
         const currentStrengthFmt = formatStrengthLevel(strength.current);
         const lastStrengthFmt = formatStrengthLevel(strength.last);
@@ -2405,21 +2430,26 @@ function BigFourCriteriaTable({
         const strengthPassed = strengthLocked
           ? true
           : strengthBaseline || !strengthRegressed;
+        const strengthPending = earlyDays && !strengthPassed;
         const strengthColor = strengthLocked
           ? "text-muted-foreground"
           : strengthBaseline && !strengthNewWin
             ? "text-muted-foreground"
             : strengthNewWin || strengthPassed
               ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400";
+              : strengthPending
+                ? "text-muted-foreground"
+                : "text-red-600 dark:text-red-400";
         const strengthBg =
-          strengthLocked || (strengthBaseline && !strengthNewWin)
+          strengthLocked ||
+          strengthPending ||
+          (strengthBaseline && !strengthNewWin)
             ? "bg-muted/20"
             : strengthPassed
               ? "bg-emerald-50/30 dark:bg-emerald-950/15"
               : "bg-red-50/30 dark:bg-red-950/15";
         const tonnageBg =
-          tonnageBaseline && !tonnageNewWin
+          tonnagePending || (tonnageBaseline && !tonnageNewWin)
             ? "bg-muted/20"
             : tonnagePassed
               ? "bg-emerald-50/30 dark:bg-emerald-950/15"
@@ -2455,6 +2485,7 @@ function BigFourCriteriaTable({
           tonnagePassed,
           liftPaceStatus,
           isCurrentMonthView,
+          tonnagePending,
         });
         const lastVariations = describeVariations(
           tonnage.variations,
@@ -2552,7 +2583,7 @@ function BigFourCriteriaTable({
                       ? "bg-muted/10 ring-border/40"
                       : tonnagePassed || tonnageNewWin
                         ? "bg-emerald-500/10 ring-emerald-500/40"
-                        : tonnageBaseline
+                        : tonnageBaseline || tonnagePending
                           ? "bg-muted/10 ring-border/40"
                           : "bg-red-500/10 ring-red-500/40"
                   }`}
@@ -2589,7 +2620,9 @@ function BigFourCriteriaTable({
                             rowHighlighted
                               ? strengthPassed || strengthNewWin
                                 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                                : "bg-red-500/15 text-red-700 dark:text-red-400"
+                                : strengthPending
+                                  ? "bg-muted/60 text-foreground"
+                                  : "bg-red-500/15 text-red-700 dark:text-red-400"
                               : "bg-muted/60 text-foreground"
                           }`}
                         >
@@ -2597,7 +2630,11 @@ function BigFourCriteriaTable({
                         </span>
                       ) : (
                         <span className={revealStrengthColor}>
-                          {strength.last !== null ? "Not trained" : "—"}
+                          {strength.last === null
+                            ? "—"
+                            : strengthPending
+                              ? "Still to come"
+                              : "Not trained"}
                         </span>
                       )}
                       {rowHighlighted &&
@@ -2685,14 +2722,18 @@ function BigFourCriteriaTable({
                               ? "text-emerald-600 dark:text-emerald-400"
                               : liftPaceStatus === "on-pace"
                                 ? "text-amber-600 dark:text-amber-400"
-                                : "text-red-600 dark:text-red-400"
+                                : tonnagePending
+                                  ? "text-muted-foreground"
+                                  : "text-red-600 dark:text-red-400"
                           }`}
                         >
                           {liftPaceStatus === "ahead"
                             ? "▲ Ahead of pace"
                             : liftPaceStatus === "on-pace"
                               ? "→ On track"
-                              : "▼ Behind pace"}
+                              : tonnagePending
+                                ? "Early days"
+                                : "▼ Behind pace"}
                         </div>
                       )}
                     {rowHighlighted && currentVariationNames && (
@@ -2704,7 +2745,11 @@ function BigFourCriteriaTable({
                       <div className="bg-muted/40 mt-1 h-1 w-full overflow-hidden rounded-full">
                         <motion.div
                           className={`h-full rounded-full ${
-                            tonnagePassed ? "bg-emerald-500" : "bg-red-500"
+                            tonnagePassed
+                              ? "bg-emerald-500"
+                              : tonnagePending
+                                ? "bg-muted-foreground/40"
+                                : "bg-red-500"
                           }`}
                           initial={{ width: 0 }}
                           animate={{

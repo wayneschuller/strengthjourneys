@@ -404,6 +404,9 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                 );
               })}
             </div>
+            {/* The key sits above the chart so the marks are explained before
+                they are read. */}
+            <ChartKey colors={colors} />
             <div
               ref={chartRef}
               onClick={handleChartClick}
@@ -456,7 +459,6 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                 </BarChart>
               </ChartContainer>
             </div>
-            <ChartKey colors={colors} />
           </>
         )}
       </CardContent>
@@ -686,19 +688,19 @@ function DumbbellShape({
 /** Explains the marks, since a dumbbell chart has no stock legend. */
 function ChartKey({ colors }) {
   return (
-    <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
-      <span className="flex items-center gap-1.5">
-        <svg width="12" height="12" aria-hidden="true">
-          <circle cx="6" cy="6" r="5" fill={colors.base} />
+    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-1 text-sm font-medium">
+      <span className="flex items-center gap-2">
+        <svg width="16" height="16" aria-hidden="true">
+          <circle cx="8" cy="8" r="6" fill={colors.base} />
         </svg>
         Best set
       </span>
-      <span className="flex items-center gap-1.5">
-        <svg width="12" height="12" aria-hidden="true">
+      <span className="flex items-center gap-2">
+        <svg width="16" height="16" aria-hidden="true">
           <circle
-            cx="6"
-            cy="6"
-            r="4.5"
+            cx="8"
+            cy="8"
+            r="6"
             fill="none"
             stroke={colors.ink}
             strokeWidth="2"
@@ -706,23 +708,23 @@ function ChartKey({ colors }) {
         </svg>
         Potential
       </span>
-      <span className="flex items-center gap-1.5">
-        <svg width="14" height="14" aria-hidden="true">
+      <span className="flex items-center gap-2">
+        <svg width="16" height="16" aria-hidden="true">
           <circle
-            cx="7"
-            cy="7"
-            r="5.5"
+            cx="8"
+            cy="8"
+            r="7"
             fill="none"
             stroke={colors.ink}
-            strokeWidth="1.75"
-            strokeDasharray="2.5 2.5"
+            strokeWidth="2"
+            strokeDasharray="3 3"
           />
         </svg>
         Not logged yet
       </span>
-      <span className="flex items-center gap-1.5">
+      <span className="flex items-center gap-2">
         <Crown
-          className="h-3.5 w-3.5"
+          className="h-4 w-4"
           style={{ color: colors.ink }}
           aria-hidden="true"
         />

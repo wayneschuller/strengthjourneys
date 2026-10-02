@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { Loader2, Trash2 } from "lucide-react";
 
 import { getCelebrationStyles } from "@/lib/celebration";
@@ -73,7 +73,6 @@ export function SetRow({
   // A video link found on the clipboard while the pointer rests on this row.
   const [offeredUrl, setOfferedUrl] = useState(null);
   const [justAttached, setJustAttached] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
   const cancelledEditRef = useRef(false);
   const prefUnit = isMetric ? "kg" : "lb";
   const unitMismatch = set.unitType && set.unitType !== prefUnit;
@@ -322,29 +321,14 @@ export function SetRow({
     commitUrlRef.current = commitUrl;
   });
 
-  // A one-click attach writes to the sheet with nothing typed, so say what
-  // happened and leave a way back. Undo also frees the link for another set,
-  // since the wrong row is the likeliest reason to want it.
+  // A one-click attach: the mark spinning into its slot is the confirmation,
+  // and its menu has Remove for a link that landed on the wrong set.
   function attachCopiedUrl(url) {
     commitUrl(url);
     setJustAttached(true);
-    const sourceName = getVideoSourceMeta(url)?.name;
-    toast({
-      title: sourceName ? `${sourceName} link saved` : "Video link saved",
-      description: `Attached to ${displayReps}@${displayWeight}${set.unitType ?? ""}.`,
-      duration: 8000,
-      action: (
-        <ToastAction
-          altText="Undo attaching the video link"
-          onClick={() => {
-            commitUrlRef.current("");
-            onSessionUrlReleased?.(url);
-          }}
-        >
-          Undo
-        </ToastAction>
-      ),
-    });
+    // Cleared on a timer as well as on animation end, which never fires
+    // when reduced motion leaves the animation out.
+    setTimeout(() => setJustAttached(false), 1300);
   }
 
   function copyVideoLink() {
@@ -480,15 +464,10 @@ export function SetRow({
     <TooltipProvider delayDuration={0}>
       <Tooltip open>
         <TooltipTrigger asChild>
-          <motion.button
+          <button
             type="button"
-            className="border-primary/60 bg-card hover:bg-accent hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed shadow-sm md:inline-flex"
-            animate={
-              prefersReducedMotion
-                ? { rotate: 0 }
-                : { rotate: [-9, 9, -9], scale: [1, 1.06, 1] }
-            }
-            transition={{ duration: 1.3, ease: "easeInOut", repeat: Infinity }}
+            // CSS sway for the same reason as the landing: see below.
+            className="border-primary/60 bg-card hover:bg-accent hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed shadow-sm motion-safe:animate-[log-video-offer_1.3s_ease-in-out_infinite] md:inline-flex"
             onClick={acceptOfferedUrl}
             aria-label={`Save the ${offeredSource.name} link you copied to this set`}
           >
@@ -496,7 +475,7 @@ export function SetRow({
               source={offeredSource}
               className="h-[18px] w-[18px] opacity-55"
             />
-          </motion.button>
+          </button>
         </TooltipTrigger>
         <TooltipContent side="top">
           <p>{`Click to save the ${offeredSource.name} link you copied to this set`}</p>
@@ -654,29 +633,18 @@ export function SetRow({
               ) : !displayUrl ? (
                 attachButton
               ) : (
-                <motion.div
+                <div
                   // A link that has just landed spins in, overshoots and
-                  // settles with a wobble. This element only mounts once
-                  // there is a link, so `initial` is the start of that entrance.
-                  initial={
-                    justAttached && !prefersReducedMotion
-                      ? { rotate: -360, scale: 0.3 }
-                      : false
+                  // settles with a wobble (log-video-landed in celebration.js).
+                  // Plain CSS on purpose: the page's AnimatePresence runs with
+                  // initial={false}, which silences the mount animation of
+                  // every motion element that appears inside a lift card.
+                  className={
+                    justAttached
+                      ? "motion-safe:animate-[log-video-landed_1.1s_ease-out]"
+                      : undefined
                   }
-                  animate={
-                    justAttached && !prefersReducedMotion
-                      ? {
-                          rotate: [-360, 22, -15, 9, -4, 0],
-                          scale: [0.3, 1.5, 0.92, 1.12, 0.98, 1],
-                        }
-                      : { rotate: 0, scale: 1 }
-                  }
-                  transition={{
-                    duration: 1.1,
-                    ease: "easeOut",
-                    times: [0, 0.45, 0.62, 0.78, 0.9, 1],
-                  }}
-                  onAnimationComplete={() => setJustAttached(false)}
+                  onAnimationEnd={() => setJustAttached(false)}
                 >
                   {isReadOnly || isLocked || !videoSource ? (
                     <VideoLinkButton url={displayUrl} source={videoSource} />
@@ -687,9 +655,13 @@ export function SetRow({
                       onSave={saveEditedVideoLink}
                       onCopy={copyVideoLink}
                       onRemove={removeVideoLink}
+                      // The pointer is still parked on the mark it just
+                      // clicked, and a menu opening there would upstage the
+                      // landing.
+                      suppressHover={justAttached}
                     />
                   )}
-                </motion.div>
+                </div>
               )}
             </div>
           )}

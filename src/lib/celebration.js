@@ -18,6 +18,18 @@ export const CELEBRATION_KEYFRAMES = `
   72% { transform: translate3d(6px, -1px, 0); }
   84% { transform: translate3d(-3px, 2px, 0); }
 }
+@keyframes log-video-offer {
+  0%, 100% { transform: rotate(-9deg) scale(1); }
+  50% { transform: rotate(9deg) scale(1.06); }
+}
+@keyframes log-video-landed {
+  0% { transform: rotate(-360deg) scale(0.3); }
+  45% { transform: rotate(22deg) scale(1.5); }
+  62% { transform: rotate(-15deg) scale(0.92); }
+  78% { transform: rotate(9deg) scale(1.12); }
+  90% { transform: rotate(-4deg) scale(0.98); }
+  100% { transform: rotate(0deg) scale(1); }
+}
 `;
 
 export const CELEBRATION_TIERS = {

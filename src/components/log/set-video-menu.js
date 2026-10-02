@@ -46,8 +46,16 @@ function canHover() {
  * @param {(url: string) => void} props.onSave - Replace the link.
  * @param {() => void} props.onCopy - Copy the link to the clipboard.
  * @param {() => void} props.onRemove - Take the link off the set.
+ * @param {boolean} [props.suppressHover] - Hold the menu shut on hover, for the moment a link lands under the pointer.
  */
-export function SetVideoMenu({ url, source, onSave, onCopy, onRemove }) {
+export function SetVideoMenu({
+  url,
+  source,
+  onSave,
+  onCopy,
+  onRemove,
+  suppressHover = false,
+}) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const anchorRef = useRef(null);
@@ -85,7 +93,8 @@ export function SetVideoMenu({ url, source, onSave, onCopy, onRemove }) {
           ref={anchorRef}
           className="inline-flex"
           onMouseEnter={() => {
-            if (canHover()) setOpenSoon(true, HOVER_OPEN_DELAY_MS);
+            if (canHover() && !suppressHover)
+              setOpenSoon(true, HOVER_OPEN_DELAY_MS);
           }}
           onMouseLeave={closeOnLeave}
         >

@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import { Anchor as PopoverAnchor } from "@radix-ui/react-popover";
-import { Copy, Link2, Pencil, Play, Plus, Trash2, Video } from "lucide-react";
+import { Copy, Link2, Pencil, Play, Trash2, Video } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent } from "@/components/ui/popover";
@@ -183,7 +183,12 @@ export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
                 type="button"
                 className={cn(
                   "hover:bg-muted hover:text-foreground relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
-                  open ? "text-foreground" : "text-muted-foreground/45",
+                  // Barely there until the row is hovered: on a set list
+                  // most rows never get a video, so it should not compete
+                  // with the numbers. `group` is the set row.
+                  open
+                    ? "text-foreground"
+                    : "text-muted-foreground/25 md:group-hover:text-muted-foreground/60",
                   className,
                 )}
                 onClick={async () => {
@@ -196,11 +201,7 @@ export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
                 }}
                 aria-label={label}
               >
-                <Video className="h-[18px] w-[18px]" strokeWidth={1.5} />
-                <Plus
-                  className="bg-card absolute right-0.5 bottom-0.5 size-3 rounded-full"
-                  strokeWidth={2.5}
-                />
+                <Video className="size-4" strokeWidth={1.5} />
               </button>
             </TooltipTrigger>
           </PopoverAnchor>
@@ -214,8 +215,22 @@ export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
       <PopoverContent
         side="top"
         align="start"
-        className={cn("p-2", LINK_FIELD_WIDTH)}
+        className={cn("space-y-2 p-3", LINK_FIELD_WIDTH)}
       >
+        {/* Only seen when the clipboard had no link to attach, so it says
+            what the button is for and how to make it one tap next time. */}
+        <div className="space-y-1">
+          <p className="text-sm font-semibold">Add a video of this set</p>
+          <p className="text-muted-foreground text-xs leading-5">
+            Paste a share link from Google Photos, YouTube, Instagram, Drive,
+            iCloud, Dropbox, Vimeo, TikTok or Facebook. It is saved in your
+            sheet beside the set.
+          </p>
+          <p className="text-muted-foreground text-xs leading-5">
+            <span className="text-foreground font-medium">Quickest way:</span>{" "}
+            copy the link first, then tap this icon and it attaches itself.
+          </p>
+        </div>
         <VideoLinkField
           initialUrl=""
           onSave={(nextUrl) => {

@@ -62,6 +62,7 @@ export function SetRow({
   const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
   const [draftUrl, setDraftUrl] = useState(set.URL ?? "");
   const urlInputRef = useRef(null);
+  const cancelledEditRef = useRef(false);
   const prefUnit = isMetric ? "kg" : "lb";
   const unitMismatch = set.unitType && set.unitType !== prefUnit;
 
@@ -230,6 +231,7 @@ export function SetRow({
 
   function commitReps() {
     if (isLocked) return;
+    if (cancelledEditRef.current) return;
     setEditingReps(false);
     const parsed = parseInt(draftReps, 10);
     if (!isNaN(parsed) && parsed !== latestFieldsRef.current.reps) {
@@ -246,6 +248,7 @@ export function SetRow({
 
   function commitWeight() {
     if (isLocked) return;
+    if (cancelledEditRef.current) return;
     setEditingWeight(false);
     const num = parseWeightInput(draftWeight);
     if (!isNaN(num) && num !== latestFieldsRef.current.weight) {
@@ -289,6 +292,19 @@ export function SetRow({
         nextFields,
       });
     }
+  }
+
+  // Tab walks one row as a single form: reps, weight, notes, video link, each
+  // field saving as it is left. Without this, Tab from an open field landed on
+  // the next field's idle button and needed Enter to open it.
+  function cancelNumberEdit() {
+    // Some browsers fire blur as the input unmounts, which would save the
+    // very edit being abandoned.
+    cancelledEditRef.current = true;
+    setDraftReps(String(displayReps ?? ""));
+    setDraftWeight(String(displayWeight ?? ""));
+    setEditingReps(false);
+    setEditingWeight(false);
   }
 
   function closeNotesEdit() {
@@ -368,7 +384,21 @@ export function SetRow({
                 disabled={isLocked}
                 onChange={(e) => setDraftReps(e.target.value)}
                 onBlur={commitReps}
-                onKeyDown={(e) => e.key === "Enter" && commitReps()}
+                onFocus={(e) => {
+                  cancelledEditRef.current = false;
+                  e.currentTarget.select();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    commitReps();
+                  } else if (e.key === "Tab" && !e.shiftKey) {
+                    e.preventDefault();
+                    commitReps();
+                    setEditingWeight(true);
+                  } else if (e.key === "Escape") {
+                    cancelNumberEdit();
+                  }
+                }}
                 autoFocus
               />
             ) : isLocked || isReadOnly ? (
@@ -378,7 +408,10 @@ export function SetRow({
             ) : (
               <button
                 className="hover:bg-muted/60 w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums"
-                onClick={() => setEditingReps(true)}
+                onClick={() => {
+                  cancelledEditRef.current = false;
+                  setEditingReps(true);
+                }}
               >
                 {displayReps}
               </button>
@@ -398,7 +431,22 @@ export function SetRow({
                 disabled={isLocked}
                 onChange={(e) => setDraftWeight(e.target.value)}
                 onBlur={commitWeight}
-                onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+                onFocus={(e) => {
+                  cancelledEditRef.current = false;
+                  e.currentTarget.select();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    commitWeight();
+                  } else if (e.key === "Tab") {
+                    e.preventDefault();
+                    commitWeight();
+                    if (e.shiftKey) setEditingReps(true);
+                    else openNotesEdit();
+                  } else if (e.key === "Escape") {
+                    cancelNumberEdit();
+                  }
+                }}
                 autoFocus
               />
             ) : isLocked || isReadOnly ? (
@@ -408,7 +456,10 @@ export function SetRow({
             ) : (
               <button
                 className="hover:bg-muted/60 rounded py-0.5 text-left text-xl font-semibold tabular-nums"
-                onClick={() => setEditingWeight(true)}
+                onClick={() => {
+                  cancelledEditRef.current = false;
+                  setEditingWeight(true);
+                }}
               >
                 {displayWeight}
               </button>
@@ -449,6 +500,10 @@ export function SetRow({
                   if (e.key === "Enter") {
                     e.preventDefault();
                     urlInputRef.current?.focus();
+                  } else if (e.key === "Tab" && e.shiftKey) {
+                    e.preventDefault();
+                    closeNotesEdit();
+                    setEditingWeight(true);
                   } else if (e.key === "Escape") {
                     closeNotesEdit();
                   }

@@ -32,6 +32,7 @@ const SIZES = {
  * @param {"sm"|"lg"} [props.size="sm"] - Rail-sized, or headline-sized.
  * @param {string} [props.fallbackLabel] - Caption when the host has no known name.
  * @param {string} [props.className] - Spacing from the caller's layout only.
+ * @param {boolean} [props.showTooltip=true] - Off when the caller hangs its own popup on the mark.
  */
 export function VideoLinkButton({
   url,
@@ -39,30 +40,35 @@ export function VideoLinkButton({
   size = "sm",
   fallbackLabel = "Open the video link",
   className,
+  showTooltip = true,
 }) {
   if (!url || !source) return null;
 
   const tooltip = source.name ? `Watch on ${source.name}` : fallbackLabel;
   const { button, icon } = SIZES[size] ?? SIZES.sm;
 
+  const link = (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        "hover:bg-muted focus-visible:ring-ring inline-flex shrink-0 items-center justify-center rounded-full opacity-85 transition hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none",
+        button,
+        className,
+      )}
+      aria-label={`${tooltip} (opens in a new tab)`}
+    >
+      <VideoSourceIcon source={source} className={icon} />
+    </a>
+  );
+
+  if (!showTooltip) return link;
+
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              "hover:bg-muted focus-visible:ring-ring inline-flex shrink-0 items-center justify-center rounded-full opacity-85 transition hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none",
-              button,
-              className,
-            )}
-            aria-label={`${tooltip} (opens in a new tab)`}
-          >
-            <VideoSourceIcon source={source} className={icon} />
-          </a>
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{link}</TooltipTrigger>
         <TooltipContent side="bottom">
           <p>{tooltip} — opens in a new tab</p>
         </TooltipContent>

@@ -4,10 +4,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { motion, useReducedMotion } from "motion/react";
-import { Link2, Loader2, Trash2 } from "lucide-react";
+import { Copy, Link2, Loader2, Pencil, Play, Trash2 } from "lucide-react";
 
 import { getCelebrationStyles } from "@/lib/celebration";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
@@ -17,6 +18,11 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +36,7 @@ import {
 } from "@/components/log/sheet-snapshot-utils";
 import { CelebrationReveal } from "@/components/log/celebration-reveal";
 import { VideoLinkButton } from "@/components/log/video-link-button";
+import { getYouTubeThumbnailSrc } from "@/components/log/utils";
 import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { UnitLabel } from "@/components/log/unit-label";
 
@@ -352,6 +359,38 @@ export function SetRow({
     });
   }
 
+  function copyVideoLink() {
+    navigator.clipboard
+      ?.writeText(displayUrl)
+      .then(() => toast({ title: "Video link copied", duration: 3000 }))
+      .catch(() => {});
+  }
+
+  // Removing frees the link for another set, and Undo puts it straight back.
+  function removeVideoLink() {
+    const removedUrl = displayUrl;
+    if (!removedUrl) return;
+    setDraftUrl("");
+    commitUrl("");
+    onSessionUrlReleased?.(removedUrl);
+    toast({
+      title: "Video link removed",
+      description: `Taken off ${displayReps}@${displayWeight}${set.unitType ?? ""}.`,
+      duration: 8000,
+      action: (
+        <ToastAction
+          altText="Put the video link back"
+          onClick={() => {
+            setDraftUrl(removedUrl);
+            commitUrlRef.current(removedUrl);
+          }}
+        >
+          Undo
+        </ToastAction>
+      ),
+    });
+  }
+
   function closeNotesEdit() {
     setEditingNotes(false);
     commitNotes();
@@ -650,7 +689,34 @@ export function SetRow({
                   transition={{ duration: 0.7, ease: "easeOut" }}
                   onAnimationComplete={() => setJustAttached(false)}
                 >
-                  <VideoLinkButton url={displayUrl} source={videoSource} />
+                  {isReadOnly || isLocked || !videoSource ? (
+                    <VideoLinkButton url={displayUrl} source={videoSource} />
+                  ) : (
+                    <HoverCard openDelay={120} closeDelay={150}>
+                      <HoverCardTrigger asChild>
+                        <span className="inline-flex">
+                          <VideoLinkButton
+                            url={displayUrl}
+                            source={videoSource}
+                            showTooltip={false}
+                          />
+                        </span>
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        side="top"
+                        align="start"
+                        className="w-64 space-y-2 p-2"
+                      >
+                        <VideoLinkMenu
+                          url={displayUrl}
+                          source={videoSource}
+                          onEdit={() => setEditingNotes("url")}
+                          onCopy={copyVideoLink}
+                          onRemove={removeVideoLink}
+                        />
+                      </HoverCardContent>
+                    </HoverCard>
+                  )}
                 </motion.div>
               )}
             </div>
@@ -902,6 +968,63 @@ export function SetRow({
         </div>
       )}
     </motion.div>
+  );
+}
+
+// What hovering a set's video mark opens: watching is the main thing, so it
+// gets the room, with the housekeeping kept small underneath.
+function VideoLinkMenu({ url, source, onEdit, onCopy, onRemove }) {
+  const thumbnailSrc = getYouTubeThumbnailSrc(url);
+  const playLabel = source.name ? `Watch on ${source.name}` : "Watch the video";
+  const smallActionClass =
+    "text-muted-foreground hover:bg-muted hover:text-foreground inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors";
+
+  return (
+    <>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group/play bg-muted relative flex aspect-video items-center justify-center overflow-hidden rounded-md"
+      >
+        {thumbnailSrc ? (
+          <Image
+            src={thumbnailSrc}
+            alt=""
+            fill
+            unoptimized
+            className="object-cover"
+          />
+        ) : (
+          <VideoSourceIcon source={source} className="h-10 w-10 opacity-40" />
+        )}
+        <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <span className="bg-primary text-primary-foreground absolute flex size-12 items-center justify-center rounded-full shadow-lg transition-transform group-hover/play:scale-110">
+          <Play className="size-5 translate-x-px fill-current" />
+        </span>
+        <span className="absolute inset-x-2 bottom-1.5 text-left text-xs font-semibold text-white">
+          {playLabel}
+        </span>
+      </a>
+      <div className="flex gap-1">
+        <button type="button" className={smallActionClass} onClick={onEdit}>
+          <Pencil className="size-3.5" />
+          Edit
+        </button>
+        <button type="button" className={smallActionClass} onClick={onCopy}>
+          <Copy className="size-3.5" />
+          Copy
+        </button>
+        <button
+          type="button"
+          className={cn(smallActionClass, "hover:text-destructive")}
+          onClick={onRemove}
+        >
+          <Trash2 className="size-3.5" />
+          Remove
+        </button>
+      </div>
+    </>
   );
 }
 

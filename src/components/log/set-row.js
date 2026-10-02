@@ -37,6 +37,8 @@ import {
 import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { UnitLabel } from "@/components/log/unit-label";
 
+const WARMUP_FRACTION = 0.6;
+
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
@@ -59,6 +61,7 @@ export function SetRow({
   onSessionUrlAccepted,
   onSessionUrlReleased,
   reserveVideoSlot = false,
+  weightFraction = null,
 }) {
   const { toast } = useToast();
   const isLocked = Boolean(set._pending);
@@ -490,11 +493,21 @@ export function SetRow({
         onSave={commitUrl}
       />
     ) : null;
+  // Sets well under the day's heaviest are the way up to it, so their
+  // numbers sit back and the working sets carry the list.
+  const warmupClass =
+    weightFraction !== null && weightFraction < WARMUP_FRACTION
+      ? "opacity-60"
+      : "";
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
 
   return (
     <motion.div
-      className={cn("group py-3", celebrationStyles.rowClassName)}
+      // `isolate` keeps the weight bar's negative z-index inside the row.
+      className={cn(
+        "group relative isolate py-3",
+        celebrationStyles.rowClassName,
+      )}
       onMouseEnter={offerCopiedLinkOnHover}
       onMouseLeave={endHoverOffer}
       initial={shouldPassiveAnimate ? { opacity: 0, y: 12 } : false}
@@ -521,6 +534,16 @@ export function SetRow({
         boxShadow: { duration: 0.6, ease: "easeOut" },
       }}
     >
+      {/* This set's weight against the day's heaviest, as a wash of the
+          lift's colour behind the row. Down the list it draws the session:
+          the climb through the warm-ups, the top set, the back-off. */}
+      {weightFraction > 0 && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 -z-10 rounded-r-md bg-[color-mix(in_srgb,var(--lift-color)_11%,transparent)] transition-[width] duration-300"
+          style={{ width: `${Math.min(weightFraction, 1) * 100}%` }}
+        />
+      )}
       {/* Main row: reps@weight + notes + desktop meta rail */}
       <div className="flex items-center gap-4">
         {/* Reps @ Weight unit — tight visual unit.
@@ -528,7 +551,7 @@ export function SetRow({
             starts at the same x on every row. min-w is not enough: a wide
             value like 132.5 outgrows it and drags that row's notes right. */}
         <div className="flex shrink-0 items-center">
-          <div className="w-7">
+          <div className={cn("w-7", warmupClass)}>
             {editingReps && !isReadOnly ? (
               <input
                 type="number"
@@ -570,11 +593,20 @@ export function SetRow({
               </button>
             )}
           </div>
-          <span className="text-muted-foreground mx-0.5 text-base">@</span>
+          <span
+            className={cn(
+              "text-muted-foreground mx-0.5 text-base",
+              warmupClass,
+            )}
+          >
+            @
+          </span>
           {/* Weight and unit share one fixed box, wide enough for a four digit
               weight with a decimal. The unit still hugs the number rather than
               floating at the far edge. */}
-          <div className="flex w-[5.5rem] shrink-0 items-center">
+          <div
+            className={cn("flex w-[5.5rem] shrink-0 items-center", warmupClass)}
+          >
             {editingWeight && !isReadOnly ? (
               <input
                 type="text"

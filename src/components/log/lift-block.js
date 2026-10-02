@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { ChevronRight } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
 
@@ -48,6 +49,7 @@ import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import {
   LiftSuggestions,
   LiftTechniqueAssist,
+  LiftVideoThumb,
   SmartAddButtons,
 } from "@/components/log/add-controls";
 import { CustomSetDraftRow } from "@/components/log/custom-set-draft-row";
@@ -199,6 +201,27 @@ export function LiftBlock({
       ),
     [sets, optimisticFieldsByKey],
   );
+
+  // Today's heaviest set. It headlines the card, and every row draws its
+  // weight against it so the ramp up and the back-off sets show as a shape.
+  const { sessionTopWeight, topSetLabel } = useMemo(() => {
+    let top = null;
+    let topValue = 0;
+    for (const s of optimisticSetsForStrength) {
+      if (!(s.reps > 0) || !(s.weight > 0)) continue;
+      const { value } = getDisplayWeight(s, isMetric);
+      if (value > topValue || (value === topValue && s.reps > top.reps)) {
+        top = s;
+        topValue = value;
+      }
+    }
+    if (!top) return { sessionTopWeight: 0, topSetLabel: null };
+    const { value, unit } = getDisplayWeight(top, isMetric);
+    return {
+      sessionTopWeight: topValue,
+      topSetLabel: `${top.reps}@${value}${unit}`,
+    };
+  }, [optimisticSetsForStrength, isMetric]);
 
   // Recompute tonnage stats using optimistic reps/weight so the tonnage
   // row updates instantly as the user edits inline.
@@ -566,8 +589,9 @@ export function LiftBlock({
     e1rmFormula,
   ]);
 
-  const desktopIconInsetClass = "md:pl-34";
-  const desktopIconOffsetClass = "md:ml-34";
+  const guideUrl = getLiftDetailUrl(liftType);
+  const headerVideoAssist =
+    inSessionCoachState?.journeyTechniqueAssist?.videoAssist ?? null;
 
   return (
     <div
@@ -586,48 +610,33 @@ export function LiftBlock({
         className="absolute inset-x-0 top-0 h-1 rounded-t-xl dark:h-1.5"
         style={{ backgroundColor: liftColor }}
       />
-      {/* Desktop: large icon in left gutter */}
-      {artworkSrc && (
-        <div className="absolute top-4 left-4 hidden md:block">
-          <Link href={getLiftDetailUrl(liftType)}>
-            <Image
-              src={artworkSrc}
-              alt=""
-              width={104}
-              height={104}
-              // PNG drawings would otherwise go through the optimiser, which
-              // costs more bytes than the indexed file (see lift-artwork.js).
-              unoptimized
-              className="object-contain opacity-80 transition-opacity hover:opacity-100"
-            />
-          </Link>
-        </div>
-      )}
-
-      {/* Header: icon + lift name + last session */}
-      <div className={`flex gap-3 px-4 pt-4 ${desktopIconInsetClass}`}>
+      {/* Header: the lift's face. Drawing, name and today's top set, the
+          last session with a way on to the full guide, and on desktop the
+          form-check video to the right. */}
+      <div className="flex gap-3 px-4 pt-4 md:gap-6 md:px-5 md:pt-6">
         {artworkSrc && (
           <Link
             href={getLiftDetailUrl(liftType)}
-            className="shrink-0 self-start md:hidden"
+            className="shrink-0 self-start"
           >
             <Image
               src={artworkSrc}
               alt=""
-              // The box is 5:3 like the drawings, so the lifter fills it
-              // rather than floating in a square.
-              width={120}
-              height={72}
+              // 5:3 like the drawings, so the lifter fills the box.
+              width={213}
+              height={128}
+              // PNG drawings would otherwise go through the optimiser, which
+              // costs more bytes than the indexed file (see lift-artwork.js).
               unoptimized
-              className="h-18 w-30 object-contain"
+              className="h-18 w-30 object-contain md:h-32 md:w-[13.3rem]"
             />
           </Link>
         )}
         <div className="min-w-0 flex-1">
-          <div className="pb-1">
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 pb-1">
             <Link
               href={getLiftDetailUrl(liftType)}
-              className="text-foreground flex items-center gap-2 text-base font-semibold hover:underline"
+              className="text-foreground flex items-center gap-2 text-lg font-semibold hover:underline md:text-2xl"
               style={{ textDecorationColor: liftColor }}
             >
               <span
@@ -636,6 +645,14 @@ export function LiftBlock({
               />
               {liftType}
             </Link>
+            {topSetLabel && (
+              <span className="text-muted-foreground text-sm">
+                Top set{" "}
+                <span className="text-foreground font-semibold tabular-nums">
+                  {topSetLabel}
+                </span>
+              </span>
+            )}
           </div>
           <LiftSuggestions
             liftType={liftType}
@@ -644,18 +661,30 @@ export function LiftBlock({
             isMetric={isMetric}
             onNavigateToDate={onNavigateToDate}
           />
+          {guideUrl && (
+            <Link
+              href={guideUrl}
+              className="text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1 text-xs font-medium"
+            >
+              {`Full ${liftType} progress guide`}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
         </div>
+        {headerVideoAssist && (
+          <div className="hidden w-60 shrink-0 md:block">
+            <LiftVideoThumb videoAssist={headerVideoAssist} />
+          </div>
+        )}
       </div>
 
       <LiftTechniqueAssist
         techniqueAssist={inSessionCoachState?.journeyTechniqueAssist}
-        hasBigFourIcon
+        videoBesideHeader
       />
 
-      {/* Set rows — border-t inset on desktop to clear the icon gutter */}
-      <div
-        className={`divide-border/40 border-border/40 mx-4 mt-1 divide-y border-t ${desktopIconOffsetClass}`}
-      >
+      {/* Set rows */}
+      <div className="divide-border/40 border-border/40 mx-4 mt-3 divide-y border-t md:mx-5">
         {sets.map((set, idx) => {
           const rowIdentityKey = getSetIdentityKey(set, `pending-${idx}`);
           const effectiveSet = optimisticSetsForStrength[idx] ?? set;
@@ -706,6 +735,12 @@ export function LiftBlock({
               onSessionUrlReleased={onSessionUrlReleased}
               reserveVideoSlot={hasAnyVideo}
               progressionBadge={progressionBadges[idx] ?? null}
+              weightFraction={
+                sessionTopWeight > 0
+                  ? getDisplayWeight(effectiveSet, isMetric).value /
+                    sessionTopWeight
+                  : null
+              }
               strengthTooltip={
                 idx === bestE1rmIndex ? (
                   <StrengthLevelTooltipBody
@@ -761,7 +796,7 @@ export function LiftBlock({
         )}
       </div>
       {canShowStrength && bestE1rmValue > 0 && (
-        <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
+        <div className={`mx-4 mt-3`}>
           <StrengthBar
             liftType={liftType}
             e1rmValue={bestE1rmValue}
@@ -775,7 +810,7 @@ export function LiftBlock({
         </div>
       )}
       {canShowStrength && bestE1rmValue > 0 && (
-        <div className={`mx-4 mt-2 ${desktopIconOffsetClass}`}>
+        <div className={`mx-4 mt-2`}>
           <LiftPercentileLine
             liftType={liftType}
             e1rmValue={bestE1rmValue}
@@ -787,7 +822,7 @@ export function LiftBlock({
         </div>
       )}
       {shouldShowTonnage && (
-        <div className={`mx-4 mt-3 ${desktopIconOffsetClass}`}>
+        <div className={`mx-4 mt-3`}>
           <LiftTonnageRow
             liftType={liftType}
             stats={optimisticTonnageStats}
@@ -805,7 +840,6 @@ export function LiftBlock({
           onAddSet={handleSuggestedAddSet}
           onStartCustomSet={openCustomSetDraft}
           showHint={showSuggestionHint}
-          hasBigFourIcon
           isPastSession={isPastSession}
           collapseSuggestions={collapseSuggestions}
           disabled={isAddSaving}

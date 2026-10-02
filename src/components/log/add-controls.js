@@ -96,13 +96,18 @@ export function LiftSuggestions({
 
 export function LiftTechniqueAssist({
   techniqueAssist,
-  hasBigFourIcon = false,
+  videoBesideHeader = false,
 }) {
-  if (!techniqueAssist?.cues?.length && !techniqueAssist?.videoAssist)
-    return null;
+  const hasCues = techniqueAssist?.cues?.length > 0;
+  if (!hasCues && !techniqueAssist?.videoAssist) return null;
+  // On desktop the lift header carries the video as LiftVideoThumb, so the
+  // fold-out here is for phones.
+  const desktopHiddenClass = videoBesideHeader ? "md:hidden" : "";
 
   return (
-    <div className={`mx-4 mt-2 space-y-3 ${hasBigFourIcon ? "md:ml-34" : ""}`}>
+    <div
+      className={`mx-4 mt-2 space-y-3 md:mx-5 ${hasCues ? "" : desktopHiddenClass}`}
+    >
       {techniqueAssist?.cues?.length > 0 && (
         <div className="space-y-2">
           {/* What the lift is, for someone who only has the artwork to go on */}
@@ -128,11 +133,50 @@ export function LiftTechniqueAssist({
         </div>
       )}
       {techniqueAssist?.videoAssist && (
-        <div className="pt-1">
+        <div className={`pt-1 ${desktopHiddenClass}`}>
           <LiftCoachVideoAssist videoAssist={techniqueAssist.videoAssist} />
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The form-check video as a thumbnail card, for the right of a lift block's
+ * header on desktop. One click opens the video.
+ */
+export function LiftVideoThumb({ videoAssist }) {
+  const videoUrl = videoAssist?.videoUrl;
+  if (!videoUrl) return null;
+  const href = getYouTubeWatchHref(videoUrl) ?? videoUrl;
+  const thumbnailSrc = getYouTubeThumbnailSrc(videoUrl);
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="group border-border/60 bg-card hover:border-primary/40 block overflow-hidden rounded-xl border shadow-sm transition-colors"
+    >
+      <div className="bg-muted relative aspect-video overflow-hidden">
+        {thumbnailSrc ? (
+          <Image
+            src={thumbnailSrc}
+            alt=""
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            unoptimized
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/5" />
+        <span className="absolute top-1/2 left-1/2 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-900 shadow-sm transition-transform group-hover:scale-110">
+          <PlayCircle className="size-5" />
+        </span>
+        <p className="absolute inset-x-2.5 bottom-2 text-xs leading-tight font-semibold text-white">
+          {videoAssist.prompt}
+        </p>
+      </div>
+    </a>
   );
 }
 

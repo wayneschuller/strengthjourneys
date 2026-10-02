@@ -28,6 +28,7 @@ import {
 } from "@/components/log/sheet-snapshot-utils";
 import { CelebrationReveal } from "@/components/log/celebration-reveal";
 import { VideoLinkButton } from "@/components/log/video-link-button";
+import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { UnitLabel } from "@/components/log/unit-label";
 
 // --- Set row (click-to-edit) ---
@@ -63,6 +64,9 @@ export function SetRow({
   const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
   const [draftUrl, setDraftUrl] = useState(set.URL ?? "");
   const urlInputRef = useRef(null);
+  const isHoveredRef = useRef(false);
+  // A video link found on the clipboard while the pointer rests on this row.
+  const [offeredUrl, setOfferedUrl] = useState(null);
   const cancelledEditRef = useRef(false);
   const prefUnit = isMetric ? "kg" : "lb";
   const unitMismatch = set.unitType && set.unitType !== prefUnit;
@@ -339,6 +343,42 @@ export function SetRow({
     setEditingNotes("url");
   }
 
+  // Hovering a set with no video looks at the clipboard and, if a video link
+  // is waiting there, offers to attach it. Only where clipboard access is
+  // already granted (Chrome and Edge, after the first paste here): a hover
+  // must never raise a permission prompt, so other browsers stay quiet and
+  // keep the link icon.
+  async function offerCopiedLinkOnHover() {
+    isHoveredRef.current = true;
+    if (isReadOnly || isLocked || displayUrl || editingNotes) return;
+    try {
+      const permission = await navigator.permissions.query({
+        name: "clipboard-read",
+      });
+      if (permission.state !== "granted") return;
+      const copied = (await navigator.clipboard.readText())?.trim() ?? "";
+      const source = /\s/.test(copied) ? null : getVideoSourceMeta(copied);
+      // An unrecognised host is not worth interrupting for.
+      const qualifies =
+        source && source.kind !== "other" && !usedSessionUrls?.has(copied);
+      if (isHoveredRef.current) setOfferedUrl(qualifies ? copied : null);
+    } catch {
+      // No clipboard access here; the link icon still works.
+    }
+  }
+
+  function endHoverOffer() {
+    isHoveredRef.current = false;
+    setOfferedUrl(null);
+  }
+
+  function acceptOfferedUrl() {
+    if (!offeredUrl) return;
+    setDraftUrl(offeredUrl);
+    commitUrl(offeredUrl);
+    setOfferedUrl(null);
+  }
+
   function openNotesEdit() {
     setEditingNotes("notes");
     // Try to pre-fill URL from clipboard if the field is currently empty
@@ -365,6 +405,10 @@ export function SetRow({
   const showVideoSlot = reserveVideoSlot || Boolean(videoSource);
   const hasBadges =
     !set._pending && (Boolean(strengthBadge) || Boolean(progressionBadge));
+  const offeredSource =
+    offeredUrl && !displayUrl && !editingNotes
+      ? getVideoSourceMeta(offeredUrl)
+      : null;
   const attachButton =
     !isReadOnly && !isLocked && !displayUrl && !editingNotes ? (
       <TooltipProvider delayDuration={0}>
@@ -390,6 +434,8 @@ export function SetRow({
   return (
     <motion.div
       className={cn("group py-3", celebrationStyles.rowClassName)}
+      onMouseEnter={offerCopiedLinkOnHover}
+      onMouseLeave={endHoverOffer}
       initial={shouldPassiveAnimate ? { opacity: 0, y: 12 } : false}
       animate={{
         opacity: 1,
@@ -526,7 +572,19 @@ export function SetRow({
         </div>
 
         {/* Notes + URL — flex-1, tap to edit */}
-        <div className="min-w-0 flex-1 md:max-w-[calc(100%-18rem)]">
+        <div className="relative min-w-0 flex-1 md:max-w-[calc(100%-18rem)]">
+          {/* Floats over the end of the note, so offering it never moves the
+              row. */}
+          {offeredSource && (
+            <button
+              type="button"
+              className="bg-card text-foreground hover:bg-accent border-primary/40 absolute top-1/2 right-0 z-10 hidden -translate-y-1/2 items-center gap-2 rounded-full border py-1 pr-3 pl-2 text-xs font-medium shadow-md transition-colors md:inline-flex"
+              onClick={acceptOfferedUrl}
+            >
+              <VideoSourceIcon source={offeredSource} className="h-4 w-4" />
+              {`Attach copied ${offeredSource.name} link`}
+            </button>
+          )}
           {editingNotes && !isReadOnly ? (
             <div className="space-y-1">
               <input

@@ -613,13 +613,14 @@ export function LiftBlock({
       {/* Header: the lift's face. Drawing, name and today's top set, the
           last session with a way on to the full guide, and on desktop the
           form-check video to the right. */}
-      {/* On a phone the drawing takes a row of its own, centred, since
-          beside the text it had to stay small to leave the name room. */}
-      <div className="flex flex-col gap-3 px-4 pt-5 md:flex-row md:gap-6 md:px-5 md:pt-6">
+      <div className="flex gap-3 px-4 pt-4 md:gap-6 md:px-5 md:pt-6">
         {artworkSrc && (
           <Link
             href={getLiftDetailUrl(liftType)}
-            className="shrink-0 self-center md:self-start"
+            // On a phone the drawing takes a good share of the row's width
+            // and sits centred against the text beside it, however many
+            // lines that text wraps to.
+            className="flex w-[42%] max-w-48 shrink-0 items-center justify-center self-stretch md:w-auto md:max-w-none md:self-start"
           >
             <Image
               src={artworkSrc}
@@ -630,7 +631,7 @@ export function LiftBlock({
               // PNG drawings would otherwise go through the optimiser, which
               // costs more bytes than the indexed file (see lift-artwork.js).
               unoptimized
-              className="h-32 w-[13.3rem] object-contain"
+              className="h-auto w-full object-contain md:h-32 md:w-[13.3rem]"
             />
           </Link>
         )}

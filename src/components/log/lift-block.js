@@ -202,8 +202,8 @@ export function LiftBlock({
     [sets, optimisticFieldsByKey],
   );
 
-  // Today's heaviest set. It headlines the card, and every row draws its
-  // weight against it so the ramp up and the back-off sets show as a shape.
+  // Today's heaviest set. It headlines the card, and rows well under it read
+  // as warm-ups and sit back.
   const { sessionTopWeight, topSetLabel } = useMemo(() => {
     let top = null;
     let topValue = 0;

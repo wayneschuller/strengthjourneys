@@ -503,11 +503,7 @@ export function SetRow({
 
   return (
     <motion.div
-      // `isolate` keeps the weight bar's negative z-index inside the row.
-      className={cn(
-        "group relative isolate py-3",
-        celebrationStyles.rowClassName,
-      )}
+      className={cn("group py-3", celebrationStyles.rowClassName)}
       onMouseEnter={offerCopiedLinkOnHover}
       onMouseLeave={endHoverOffer}
       initial={shouldPassiveAnimate ? { opacity: 0, y: 12 } : false}
@@ -534,16 +530,6 @@ export function SetRow({
         boxShadow: { duration: 0.6, ease: "easeOut" },
       }}
     >
-      {/* This set's weight against the day's heaviest, as a wash of the
-          lift's colour behind the row. Down the list it draws the session:
-          the climb through the warm-ups, the top set, the back-off. */}
-      {weightFraction > 0 && (
-        <div
-          aria-hidden="true"
-          className="absolute inset-y-0 left-0 -z-10 rounded-r-md bg-[color-mix(in_srgb,var(--lift-color)_11%,transparent)] transition-[width] duration-300"
-          style={{ width: `${Math.min(weightFraction, 1) * 100}%` }}
-        />
-      )}
       {/* Main row: reps@weight + notes + desktop meta rail */}
       <div className="flex items-center gap-4">
         {/* Reps @ Weight unit — tight visual unit.

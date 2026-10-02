@@ -58,6 +58,7 @@ function isValidReasonCode(sentiment, reasonCode) {
  * @param {string} props.page
  * @param {object} [props.analyticsExtra]
  * @param {string} [props.className]
+ * @param {boolean} [props.hidePromptOnMobile] - Thumbs only on a phone, for a row it shares with other controls.
  * @param {number} [props.revealDelayMs]
  * @param {number} [props.revealJitterMs]
  */
@@ -68,6 +69,7 @@ export function MiniFeedbackWidget({
   page,
   analyticsExtra = {},
   className = "",
+  hidePromptOnMobile = false,
   revealDelayMs = DEFAULT_REVEAL_DELAY_MS,
   revealJitterMs = DEFAULT_REVEAL_JITTER_MS,
 }) {
@@ -193,7 +195,7 @@ export function MiniFeedbackWidget({
             isCelebrating
               ? "font-medium text-green-500"
               : "text-muted-foreground"
-          }`}
+          } ${hidePromptOnMobile && !vote ? "hidden sm:inline" : ""}`}
         >
           {labelText}
         </span>

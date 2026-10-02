@@ -227,15 +227,26 @@ export const SingleLiftTooltipContent = ({
  * @param {Object} props
  * @param {string} props.e1rmFormula - Currently selected formula name.
  * @param {function(string)} props.setE1rmFormula - Callback to update the selected formula.
+ * @param {boolean} [props.compact] - On a phone, drop the label and narrow the control so it shares a row.
  */
-export function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {
+export function E1RMFormulaSelect({
+  e1rmFormula,
+  setE1rmFormula,
+  compact = false,
+}) {
   return (
     <div className="flex flex-row items-center space-x-2">
-      <div className="text-sm font-light">E1RM Algorithm</div>
+      <div
+        className={`text-sm font-light ${compact ? "hidden sm:block" : ""}`}
+      >
+        E1RM Algorithm
+      </div>
       <Select value={e1rmFormula} onValueChange={setE1rmFormula}>
         <SelectTrigger
-          className="w-[160px] rounded-lg sm:ml-auto"
-          aria-label="Select a value"
+          className={`rounded-lg sm:ml-auto ${
+            compact ? "w-[130px] sm:w-[160px]" : "w-[160px]"
+          }`}
+          aria-label="E1RM algorithm"
         >
           <SelectValue placeholder="Brzycki" />
         </SelectTrigger>

@@ -99,7 +99,7 @@ export function TimeRangeSelect({ timeRange, setTimeRange, liftType }) {
   return (
     <Select value={timeRange} onValueChange={setTimeRange}>
       <SelectTrigger
-        className="w-[160px] rounded-lg sm:ml-auto"
+        className="w-[140px] rounded-lg sm:ml-auto sm:w-[160px]"
         aria-label="Select a value"
       >
         <SelectValue placeholder="All time" />

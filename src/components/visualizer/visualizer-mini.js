@@ -298,11 +298,16 @@ export function VisualizerMini({ liftType }) {
 
   return (
     <Card ref={cardRef} className="">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1 text-pretty">
-          <CardTitle className="flex flex-wrap items-center gap-2">
+      {/* One row at every width: title left, time range right. */}
+      <CardHeader className="flex flex-row items-center gap-3 space-y-0 border-b py-4 sm:py-5">
+        <div className="grid min-w-0 flex-1 gap-1 text-pretty">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-lg leading-tight sm:text-2xl sm:leading-none">
             {dataSource === "demo" && <DemoModeBadge />}
-            {liftType} Estimated One Rep Maxes
+            {/* The full name leaves a phone no room for the time range. */}
+            <span className="sm:hidden">{liftType} E1RM</span>
+            <span className="hidden sm:inline">
+              {liftType} Estimated One Rep Maxes
+            </span>
           </CardTitle>
           <CardDescription>
             {getTimeRangeDescription(rangeFirstDate, parsedData)}
@@ -544,10 +549,13 @@ export function VisualizerMini({ liftType }) {
         )}
       </CardContent>
       <CardFooter>
-        <div className="relative flex w-full flex-col items-center justify-between gap-3 md:flex-row">
+        {/* One row at every width. A phone drops the prompt and the
+            formula label to make the three controls fit. */}
+        <div className="relative flex w-full flex-row items-center justify-between gap-2">
           <div className="order-1" data-copy-exclude>
             <MiniFeedbackWidget
               prompt="Useful chart?"
+              hidePromptOnMobile
               contextId={feedbackContextId}
               page="/visualizer"
               analyticsExtra={{
@@ -560,6 +568,7 @@ export function VisualizerMini({ liftType }) {
             <E1RMFormulaSelect
               e1rmFormula={e1rmFormula}
               setE1rmFormula={setE1rmFormula}
+              compact
             />
           </div>
           <div className="order-2 md:absolute md:left-1/2 md:-translate-x-1/2">

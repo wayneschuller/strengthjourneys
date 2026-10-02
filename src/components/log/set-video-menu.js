@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import { Anchor as PopoverAnchor } from "@radix-ui/react-popover";
-import { Copy, Link2, Pencil, Play, Trash2, Video } from "lucide-react";
+import { Copy, Link2, Pencil, Play, Plus, Trash2, Video } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent } from "@/components/ui/popover";
@@ -182,7 +182,7 @@ export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
               <button
                 type="button"
                 className={cn(
-                  "hover:bg-muted hover:text-foreground relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
+                  "group/add hover:bg-muted hover:text-foreground relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
                   // Barely there until the row is hovered: on a set list
                   // most rows never get a video, so it should not compete
                   // with the numbers. `group` is the set row.
@@ -202,6 +202,16 @@ export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
                 aria-label={label}
               >
                 <Video className="size-4" strokeWidth={1.5} />
+                {/* The plus only shows under the pointer, where it says what
+                    a click will do. */}
+                <Plus
+                  aria-hidden="true"
+                  className={cn(
+                    "bg-card absolute right-0.5 bottom-0.5 size-3 rounded-full transition-opacity group-hover/add:opacity-100",
+                    open ? "opacity-100" : "opacity-0",
+                  )}
+                  strokeWidth={2.5}
+                />
               </button>
             </TooltipTrigger>
           </PopoverAnchor>

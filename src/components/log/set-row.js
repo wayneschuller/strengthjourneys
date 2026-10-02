@@ -56,6 +56,7 @@ export function SetRow({
   const isReadOnly = !onUpdate;
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
+  // false, or which field takes focus as the editor opens: "notes" or "url".
   const [editingNotes, setEditingNotes] = useState(false);
   const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
   const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
@@ -313,8 +314,33 @@ export function SetRow({
     commitUrl();
   }
 
+  // One tap attaches the link sitting on the clipboard, which is where a
+  // video's share link lands. Anything else on the clipboard, a link already
+  // used this session, or a browser that keeps the clipboard to itself, opens
+  // the link field to type or paste into.
+  async function attachCopiedLink() {
+    if (isLocked) return;
+    let copied = "";
+    try {
+      copied = (await navigator.clipboard.readText())?.trim() ?? "";
+    } catch {
+      copied = "";
+    }
+    if (
+      copied &&
+      !/\s/.test(copied) &&
+      isHttpUrl(copied) &&
+      !usedSessionUrls?.has(copied)
+    ) {
+      setDraftUrl(copied);
+      commitUrl(copied);
+      return;
+    }
+    setEditingNotes("url");
+  }
+
   function openNotesEdit() {
-    setEditingNotes(true);
+    setEditingNotes("notes");
     // Try to pre-fill URL from clipboard if the field is currently empty
     // and the URL hasn't already been assigned to another set this session.
     if (!draftUrl && navigator?.clipboard?.readText) {
@@ -339,6 +365,26 @@ export function SetRow({
   const showVideoSlot = reserveVideoSlot || Boolean(videoSource);
   const hasBadges =
     !set._pending && (Boolean(strengthBadge) || Boolean(progressionBadge));
+  const attachButton =
+    !isReadOnly && !isLocked && !displayUrl && !editingNotes ? (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="text-muted-foreground/60 hover:text-foreground rounded p-2 transition-colors focus-visible:opacity-100 md:p-1 md:opacity-0 md:group-hover:opacity-100"
+              onClick={attachCopiedLink}
+              aria-label="Attach the video link you copied"
+            >
+              <Link2 className="h-4 w-4 md:h-3.5 md:w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Attach the video link you copied</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : null;
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
 
   return (
@@ -523,7 +569,7 @@ export function SetRow({
                   commitUrl(pasted);
                 }}
                 placeholder="notes..."
-                autoFocus
+                autoFocus={editingNotes !== "url"}
               />
               <div className="flex items-center gap-1">
                 <Link2 className="text-muted-foreground/60 h-3 w-3 shrink-0" />
@@ -544,6 +590,7 @@ export function SetRow({
                     }
                   }}
                   placeholder="video link..."
+                  autoFocus={editingNotes === "url"}
                 />
               </div>
             </div>
@@ -611,6 +658,7 @@ export function SetRow({
                   )}
                 </span>
               </div>
+              {attachButton}
               {onDelete && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
@@ -636,7 +684,11 @@ export function SetRow({
       </div>
 
       {/* Mobile: badges + ranking + trash on second row */}
-      {(hasBadges || hasRankingBadges || onDelete || set._pending) && (
+      {(hasBadges ||
+        hasRankingBadges ||
+        onDelete ||
+        attachButton ||
+        set._pending) && (
         <div className="mt-1 flex items-center gap-2 pl-7 md:hidden">
           {set._pending ? (
             <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
@@ -683,6 +735,7 @@ export function SetRow({
                 />
               )}
               <div className="flex-1" />
+              {attachButton}
               {onDelete && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>

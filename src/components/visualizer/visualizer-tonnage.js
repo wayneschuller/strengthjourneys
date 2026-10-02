@@ -568,7 +568,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               aiReviewLink={aiReviewLink}
               contentRef={cardRef}
               showText={false}
-              menuBelowOnMobile
+              stackOnMobile
             />
             <span
               className="text-muted-foreground hidden text-xs font-medium tracking-wide italic"

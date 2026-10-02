@@ -38,7 +38,8 @@ const RECENT_SESSIONS_COUNT = 3;
  * Displays the most recent workout session or recent sessions for a specific lift type.
  * When used on a lift-specific page (e.g. /bench-press), shows the last 3 sessions for that lift.
  * When used on the home dashboard, shows the single most recent session across all lifts with
- * prev/next navigation to browse sessions.
+ * prev/next navigation to browse sessions. `mobileVisibleCount` lets a phone
+ * open on fewer sessions than `defaultVisibleCount`.
  *
  * @param {Object} props
  * @param {string|null} [props.liftType=null] - When set (e.g. "Bench Press"), filters to show only
@@ -59,9 +60,18 @@ export function MostRecentSessionCard({
   setHighlightDate: setHighlightDateProp,
   isProgressDone = true,
   defaultVisibleCount = RECENT_SESSIONS_COUNT,
+  mobileVisibleCount = null,
 }) {
   const [internalHighlightDate, setInternalHighlightDate] = useState(null);
   const [visibleCount, setVisibleCount] = useState(defaultVisibleCount);
+  // A phone can open on fewer sessions than desktop. The extra ones are
+  // hidden with CSS so the server render suits both, until the lifter asks
+  // for more and the count takes over.
+  const [hasAskedForMore, setHasAskedForMore] = useState(false);
+  const mobileCap =
+    !hasAskedForMore && mobileVisibleCount && mobileVisibleCount < visibleCount
+      ? mobileVisibleCount
+      : null;
   const cardRef = useRef(null);
 
   const isControlled = setHighlightDateProp != null;
@@ -287,7 +297,11 @@ export function MostRecentSessionCard({
                         delay: sessionIndex * 0.04,
                         duration: 0.2,
                       }}
-                      className="rounded-lg"
+                      className={
+                        mobileCap !== null && sessionIndex >= mobileCap
+                          ? "hidden rounded-lg md:block"
+                          : "rounded-lg"
+                      }
                     >
                       {liftEntries.map(([lt, workouts]) => (
                         <SessionExerciseBlock
@@ -312,13 +326,22 @@ export function MostRecentSessionCard({
                   );
                 },
               )}
-              {visibleCount < recentSessions.length && (
+              {(visibleCount < recentSessions.length ||
+                (mobileCap !== null && mobileCap < recentSessions.length)) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground mt-1 self-start"
+                  className={`text-muted-foreground mt-1 self-start ${
+                    visibleCount < recentSessions.length ? "" : "md:hidden"
+                  }`}
                   data-copy-exclude
-                  onClick={() => setVisibleCount((c) => c + 1)}
+                  onClick={() => {
+                    const onPhone =
+                      mobileCap !== null &&
+                      window.matchMedia("(max-width: 767px)").matches;
+                    setHasAskedForMore(true);
+                    setVisibleCount((c) => (onPhone ? mobileCap + 1 : c + 1));
+                  }}
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" />
                   Show one more session

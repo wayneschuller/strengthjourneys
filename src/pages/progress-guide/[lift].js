@@ -21,7 +21,10 @@ import { NextSeo } from "next-seo";
 import { motion } from "motion/react";
 import { ChevronLeft, ExternalLink, Layers, Plus } from "lucide-react";
 
-import { InlineMarkdown, inlineMarkdownToText } from "@/components/inline-markdown";
+import {
+  InlineMarkdown,
+  inlineMarkdownToText,
+} from "@/components/inline-markdown";
 import {
   useAthleteBio,
   getTopLiftStats,
@@ -65,9 +68,7 @@ import { RelatedArticles } from "@/components/articles/article-cards";
 import { Button } from "@/components/ui/button";
 import { LiftLogCta } from "@/components/lift-explorer/lift-log-cta";
 import { LiftGuideNoHistory } from "@/components/lift-explorer/lift-guide-no-history";
-import {
-  SectionReveal,
-} from "@/components/section-reveal";
+import { SectionReveal } from "@/components/section-reveal";
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { getLiftArtwork } from "@/components/lift-artwork";
@@ -108,7 +109,11 @@ export async function getStaticProps({ params }) {
   // borrows the articles of its parent lift, then of the lift its strength
   // standards are measured against.
   const relatedArticles =
-    [lift.liftType, lift.parentLift?.liftType, lift.coaching?.standardsRef?.liftType]
+    [
+      lift.liftType,
+      lift.parentLift?.liftType,
+      lift.coaching?.standardsRef?.liftType,
+    ]
       .filter((liftType) => text(liftType))
       .map((liftType) => getRelatedArticles(liftType))
       .find((articles) => articles.length > 0) ?? [];
@@ -216,9 +221,7 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
           cardType: "summary_large_image",
         }}
         additionalMetaTags={
-          page.keywords
-            ? [{ name: "keywords", content: page.keywords }]
-            : []
+          page.keywords ? [{ name: "keywords", content: page.keywords }] : []
         }
       />
       <CuratedLiftGuideMain page={page} relatedArticles={relatedArticles} />
@@ -234,8 +237,15 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
 function CuratedLiftGuideMain({ page, relatedArticles }) {
   const { dataSource, liftTypes } = useUserLiftingData();
   const { getColor } = useLiftColors();
-  const { liftType, coaching, videos, introduction, resources, quote, faqItems } =
-    page;
+  const {
+    liftType,
+    coaching,
+    videos,
+    introduction,
+    resources,
+    quote,
+    faqItems,
+  } = page;
   const liftColor = getColor(liftType);
   const navLiftLabel = page.shortName ?? liftType;
   const strengthLevelsPath = getStrengthLevelsPath(liftType);
@@ -250,7 +260,10 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
   const showAnalysis = page.bigFour || hasLiftData;
 
   const sections = [
-    showAnalysis && { href: "#progress-history", label: `${navLiftLabel} Progress` },
+    showAnalysis && {
+      href: "#progress-history",
+      label: `${navLiftLabel} Progress`,
+    },
     showAnalysis &&
       strengthLevelsPath && {
         href: "#strength-standards",
@@ -265,7 +278,10 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
       href: "#strength-potential",
       label: `${navLiftLabel} Potential`,
     },
-    showAnalysis && { href: "#recent-sessions", label: `${navLiftLabel} Sessions` },
+    showAnalysis && {
+      href: "#recent-sessions",
+      label: `${navLiftLabel} Sessions`,
+    },
     coaching && { href: "#technique", label: "Technique" },
     videos.length > 0 && { href: "#video-guides", label: "Videos" },
     showAnalysis && { href: "#lift-prs", label: "Rep PRs" },
@@ -351,9 +367,7 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
             {/* Primary action: the same log entry point the rest of the app
                 uses, so a lifter reading their own numbers can act on them. */}
             <Button asChild size="lg" className="h-11">
-              <Link
-                href={{ pathname: "/log", query: { startLift: liftType } }}
-              >
+              <Link href={{ pathname: "/log", query: { startLift: liftType } }}>
                 <Plus className="h-5 w-5" strokeWidth={2.5} />
                 {`Log ${liftType}`}
               </Link>
@@ -546,6 +560,7 @@ function LiftAnalysisSections({ liftType, isBigFour, strengthLevelsPath }) {
             key={liftType}
             liftType={liftType}
             defaultVisibleCount={5}
+            mobileVisibleCount={3}
           />
           {/* Self-hides in demo mode, so anonymous visitors never see it. */}
           <LiftLogCta liftType={liftType} />
@@ -609,7 +624,7 @@ function LiftSectionNav({ liftType, sections }) {
       aria-label={`${liftType} page sections`}
       className="border-border/40 bg-background/90 sticky top-0 z-20 -mx-4 border-y px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
     >
-      <div className="text-muted-foreground flex gap-x-4 gap-y-2 overflow-x-auto text-sm whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="text-muted-foreground flex [scrollbar-width:none] gap-x-4 gap-y-2 overflow-x-auto text-sm whitespace-nowrap [&::-webkit-scrollbar]:hidden">
         {sections.map((section) => (
           <Link
             key={section.href}
@@ -696,7 +711,11 @@ function IntroductionCard({ introduction }) {
         </CardHeader>
       )}
       <CardContent
-        className={introduction.title ? "flex flex-col gap-4" : "flex flex-col gap-4 pt-6"}
+        className={
+          introduction.title
+            ? "flex flex-col gap-4"
+            : "flex flex-col gap-4 pt-6"
+        }
       >
         {introduction.paragraphs.map((para, i) => (
           <p key={i}>
@@ -886,7 +905,10 @@ function VideoCard({ liftType, videos }) {
           }
         >
           {videos.map((video, index) => (
-            <figure key={`${index}-${video.embedUrl}`} className="flex flex-col gap-2">
+            <figure
+              key={`${index}-${video.embedUrl}`}
+              className="flex flex-col gap-2"
+            >
               <div className="aspect-video w-full overflow-hidden rounded-md">
                 <iframe
                   src={video.embedUrl}
@@ -979,7 +1001,10 @@ function readGuideLift(lift) {
       : null,
     faqItems: asList(guide.faqItems)
       .map(asObject)
-      .map((item) => ({ question: text(item.question), answer: text(item.answer) }))
+      .map((item) => ({
+        question: text(item.question),
+        answer: text(item.answer),
+      }))
       .filter((item) => item.question && item.answer),
   };
 }
@@ -996,7 +1021,9 @@ function asList(value) {
 
 /** A plain object, or an empty one to read nothing from. */
 function asObject(value) {
-  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value
+    : {};
 }
 
 /** Coaching videos are stored as watch links; iframes need the embed form. */

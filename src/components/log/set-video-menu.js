@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import { Anchor as PopoverAnchor } from "@radix-ui/react-popover";
-import { Copy, Link2, Pencil, Play, Trash2 } from "lucide-react";
+import { Copy, Link2, Pencil, Play, Plus, Trash2, Video } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent } from "@/components/ui/popover";
@@ -27,6 +27,8 @@ import { getYouTubeThumbnailSrc } from "@/components/log/utils";
 import { VideoLinkButton } from "@/components/log/video-link-button";
 import { VideoSourceIcon } from "@/components/log/video-source-icon";
 
+// As wide as a share link wants, short of the screen edge on a phone.
+const LINK_FIELD_WIDTH = "w-[min(30rem,calc(100vw-2rem))]";
 const HOVER_OPEN_DELAY_MS = 120;
 const HOVER_CLOSE_DELAY_MS = 180;
 
@@ -104,7 +106,7 @@ export function SetVideoMenu({ url, source, onSave, onCopy, onRemove }) {
       <PopoverContent
         side="top"
         align="start"
-        className="w-64 space-y-2 p-2"
+        className={cn("space-y-2 p-2", editing ? LINK_FIELD_WIDTH : "w-64")}
         // Opening on hover must not pull focus out of whatever is being typed.
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => {
@@ -114,7 +116,8 @@ export function SetVideoMenu({ url, source, onSave, onCopy, onRemove }) {
         onMouseEnter={() => clearTimeout(timerRef.current)}
         onMouseLeave={closeOnLeave}
       >
-        <PlayPanel url={url} source={source} />
+        {/* A link is long, so the field takes the menu over and runs wide. */}
+        {!editing && <PlayPanel url={url} source={source} />}
         {editing ? (
           <VideoLinkField
             initialUrl={url}
@@ -156,7 +159,8 @@ export function SetVideoMenu({ url, source, onSave, onCopy, onRemove }) {
 }
 
 /**
- * The link icon on a set with no video. One tap tries the clipboard through
+ * The add-video button that holds the video slot on a set with no video, so
+ * the place a link will live is on show before there is one. One tap tries the clipboard through
  * `onAttachCopied`; when that finds nothing to attach, the link field opens
  * here to type or paste into.
  *
@@ -167,7 +171,7 @@ export function SetVideoMenu({ url, source, onSave, onCopy, onRemove }) {
  */
 export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
   const [open, setOpen] = useState(false);
-  const label = "Attach the video link you copied";
+  const label = "Add a video link";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -178,9 +182,9 @@ export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
               <button
                 type="button"
                 className={cn(
-                  "text-muted-foreground/60 hover:text-foreground rounded p-2 transition-colors md:p-1",
-                  // Stays in view while its field is open, hover or not.
-                  open ? "text-foreground md:opacity-100" : className,
+                  "hover:bg-muted hover:text-foreground relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
+                  open ? "text-foreground" : "text-muted-foreground/45",
+                  className,
                 )}
                 onClick={async () => {
                   if (open) {
@@ -192,7 +196,11 @@ export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
                 }}
                 aria-label={label}
               >
-                <Link2 className="h-4 w-4 md:h-3.5 md:w-3.5" />
+                <Video className="h-[18px] w-[18px]" strokeWidth={1.5} />
+                <Plus
+                  className="bg-card absolute right-0.5 bottom-0.5 size-3 rounded-full"
+                  strokeWidth={2.5}
+                />
               </button>
             </TooltipTrigger>
           </PopoverAnchor>
@@ -203,7 +211,11 @@ export function AttachVideoLinkButton({ onAttachCopied, onSave, className }) {
           )}
         </Tooltip>
       </TooltipProvider>
-      <PopoverContent side="top" align="end" className="w-64 p-2">
+      <PopoverContent
+        side="top"
+        align="start"
+        className={cn("p-2", LINK_FIELD_WIDTH)}
+      >
         <VideoLinkField
           initialUrl=""
           onSave={(nextUrl) => {

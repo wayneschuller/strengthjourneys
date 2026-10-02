@@ -465,7 +465,9 @@ export function SetRow({
     () => getVideoSourceMeta(displayUrl),
     [displayUrl],
   );
-  const showVideoSlot = reserveVideoSlot || Boolean(videoSource);
+  // An editable row always keeps the slot: it holds the add-video button
+  // until there is a link to show.
+  const showVideoSlot = reserveVideoSlot || Boolean(videoSource) || !isReadOnly;
   const hasBadges =
     !set._pending && (Boolean(strengthBadge) || Boolean(progressionBadge));
   const offeredSource =
@@ -503,11 +505,10 @@ export function SetRow({
     </TooltipProvider>
   ) : null;
   const attachButton =
-    !isReadOnly && !isLocked && !displayUrl && !editingNotes ? (
+    !isReadOnly && !isLocked && !displayUrl ? (
       <AttachVideoLinkButton
         onAttachCopied={attachCopiedLink}
         onSave={commitUrl}
-        className="focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
       />
     ) : null;
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
@@ -643,12 +644,15 @@ export function SetRow({
           {/* Video mark — the clip belongs to the set, so it rides with the
               numbers rather than crowding the badge rail on the right. The
               slot is reserved for every row of a lift that has any video at
-              all, which keeps the marks in one clean vertical line and stops
-              notes reflowing between filmed and unfilmed sets. */}
+              all, and for every row that can take one, which keeps the marks
+              in one clean vertical line and stops notes reflowing between
+              filmed and unfilmed sets. */}
           {showVideoSlot && (
             <div className="flex w-8 shrink-0 justify-center">
               {offeredSource ? (
                 offerGhost
+              ) : !displayUrl ? (
+                attachButton
               ) : (
                 <motion.div
                   // A link that has just landed gets a small happy wobble.
@@ -673,16 +677,6 @@ export function SetRow({
                   )}
                 </motion.div>
               )}
-            </div>
-          )}
-          {/* A lift with no video yet has no slot reserved. The offer still
-              sits where the slot will open once the link is saved, laid over
-              the gap so the row holds still. */}
-          {!showVideoSlot && offeredSource && (
-            <div className="relative w-0">
-              <div className="absolute top-1/2 left-0 -translate-y-1/2">
-                {offerGhost}
-              </div>
             </div>
           )}
         </div>
@@ -785,7 +779,6 @@ export function SetRow({
                   )}
                 </span>
               </div>
-              {attachButton}
               {onDelete && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
@@ -811,11 +804,7 @@ export function SetRow({
       </div>
 
       {/* Mobile: badges + ranking + trash on second row */}
-      {(hasBadges ||
-        hasRankingBadges ||
-        onDelete ||
-        attachButton ||
-        set._pending) && (
+      {(hasBadges || hasRankingBadges || onDelete || set._pending) && (
         <div className="mt-1 flex items-center gap-2 pl-7 md:hidden">
           {set._pending ? (
             <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
@@ -862,7 +851,6 @@ export function SetRow({
                 />
               )}
               <div className="flex-1" />
-              {attachButton}
               {onDelete && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>

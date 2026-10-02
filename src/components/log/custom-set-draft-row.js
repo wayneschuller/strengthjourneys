@@ -1,8 +1,10 @@
 /**
  * Inline draft row for entering a custom log set before it is inserted.
+ * Reps, weight and notes run as one Tab or Enter sequence, and a weight far
+ * past the lifter's best asks for a second confirm before it reaches the sheet.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Check, X } from "lucide-react";
 
@@ -18,17 +20,21 @@ export function CustomSetDraftRow({
   unitType,
   defaultWeight,
   defaultNotes,
+  heaviestWeight = null,
   onCommit,
   onCancel,
   disabled = false,
 }) {
+  const weightHintId = useId();
   const repsInputRef = useRef(null);
   const weightInputRef = useRef(null);
   const notesInputRef = useRef(null);
   const [draftReps, setDraftReps] = useState("");
   const [draftWeight, setDraftWeight] = useState("");
   const [draftNotes, setDraftNotes] = useState(defaultNotes ?? "");
-  const shouldPlaceNotesCaretRef = useRef(false);
+  const notesPointerFocusRef = useRef(false);
+  // The weight string the lifter has already been asked about once.
+  const [queriedWeight, setQueriedWeight] = useState(null);
 
   useEffect(() => {
     if (disabled) return;
@@ -44,6 +50,9 @@ export function CustomSetDraftRow({
     ? "0"
     : String(defaultWeight ?? (unitType === "kg" ? 20 : 45));
   const canSubmit = !disabled && hasValidReps && hasValidWeight;
+  const weightCeiling = getPlausibleWeightCeiling(heaviestWeight, unitType);
+  const isSuspectWeight = hasValidWeight && parsedWeight > weightCeiling;
+  const wasQueried = isSuspectWeight && queriedWeight === draftWeight;
 
   const moveToWeight = useCallback(() => {
     if (!hasValidReps || disabled) return;
@@ -53,32 +62,48 @@ export function CustomSetDraftRow({
 
   const moveToNotes = useCallback(() => {
     if (!hasValidWeight || disabled) return;
-    shouldPlaceNotesCaretRef.current = true;
-    const notesInput = notesInputRef.current;
-    if (!notesInput) return;
-    notesInput.focus();
-    const caretPosition = (defaultNotes ?? "").length;
-    notesInput.setSelectionRange(caretPosition, caretPosition);
-  }, [defaultNotes, disabled, hasValidWeight]);
+    notesInputRef.current?.focus();
+  }, [disabled, hasValidWeight]);
 
+  // Arriving by Tab or Enter, the browser would select the whole note and the
+  // next keystroke would wipe the time stamp. Put the caret after it instead,
+  // ready to type. A click keeps the caret wherever it landed.
   const handleNotesFocus = useCallback(() => {
-    if (!shouldPlaceNotesCaretRef.current) return;
-    shouldPlaceNotesCaretRef.current = false;
-    const notesInput = notesInputRef.current;
-    if (!notesInput) return;
-    const caretPosition = (defaultNotes ?? "").length;
-    notesInput.setSelectionRange(caretPosition, caretPosition);
-  }, [defaultNotes]);
+    if (notesPointerFocusRef.current) return;
+    const placeCaret = () => {
+      const notesInput = notesInputRef.current;
+      if (!notesInput || document.activeElement !== notesInput) return;
+      const end = notesInput.value.length;
+      notesInput.setSelectionRange(end, end);
+    };
+    placeCaret();
+    // Safari applies its select-all after the focus event.
+    requestAnimationFrame(placeCaret);
+  }, []);
 
   const commitDraft = useCallback(() => {
     if (!canSubmit) return;
+    if (isSuspectWeight && !wasQueried) {
+      setQueriedWeight(draftWeight);
+      return;
+    }
     onCommit({
       reps: parsedReps,
       weight: parsedWeight,
       unitType,
       notes: draftNotes,
     });
-  }, [canSubmit, draftNotes, onCommit, parsedReps, parsedWeight, unitType]);
+  }, [
+    canSubmit,
+    draftNotes,
+    draftWeight,
+    isSuspectWeight,
+    onCommit,
+    parsedReps,
+    parsedWeight,
+    unitType,
+    wasQueried,
+  ]);
 
   return (
     <div className="border-primary/35 bg-primary/5 rounded-lg border border-dashed px-2 py-3">
@@ -86,13 +111,18 @@ export function CustomSetDraftRow({
         <div className="flex items-center">
           <input
             ref={repsInputRef}
-            type="number"
+            // Text, not number: a number input spends half this box on
+            // spinner arrows and clips a two digit rep count.
+            type="text"
             inputMode="numeric"
-            className="border-primary w-10 rounded border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+            aria-label="Reps"
+            className="border-primary w-12 rounded border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
             value={draftReps}
             disabled={disabled}
             placeholder="5"
-            onChange={(e) => setDraftReps(e.target.value)}
+            onChange={(e) =>
+              setDraftReps(e.target.value.replace(/\D/g, "").slice(0, 3))
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -108,7 +138,11 @@ export function CustomSetDraftRow({
             ref={weightInputRef}
             type="text"
             inputMode="decimal"
-            className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+            aria-label="Weight"
+            aria-describedby={isSuspectWeight ? weightHintId : undefined}
+            className={`w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none ${
+              isSuspectWeight ? "border-amber-500" : "border-primary"
+            }`}
             value={draftWeight}
             disabled={disabled}
             placeholder={weightPlaceholder}
@@ -134,6 +168,12 @@ export function CustomSetDraftRow({
             value={draftNotes}
             disabled={disabled}
             placeholder="notes..."
+            onPointerDown={() => {
+              notesPointerFocusRef.current = true;
+            }}
+            onBlur={() => {
+              notesPointerFocusRef.current = false;
+            }}
             onFocus={handleNotesFocus}
             onChange={(e) => setDraftNotes(e.target.value)}
             onKeyDown={(e) => {
@@ -170,6 +210,20 @@ export function CustomSetDraftRow({
         </div>
       </div>
 
+      {isSuspectWeight && (
+        <p
+          id={weightHintId}
+          role="status"
+          className="mt-2 text-xs text-amber-600 dark:text-amber-400"
+        >
+          {wasQueried
+            ? `Still ${parsedWeight}${unitType}? Press Enter or the tick once more to log it.`
+            : heaviestWeight > 0
+              ? `${parsedWeight}${unitType} is a long way past your ${heaviestWeight}${unitType} best. Worth a glance at the digits.`
+              : `${parsedWeight}${unitType} is a huge ${liftType}. Worth a glance at the digits.`}
+        </p>
+      )}
+
       <div className="mt-2 flex items-center justify-end gap-1 md:hidden">
         <button
           type="button"
@@ -192,4 +246,13 @@ export function CustomSetDraftRow({
       </div>
     </div>
   );
+}
+
+// A slipped extra digit multiplies the weight by about ten, so anything past
+// three times the lifter's best on this lift is far likelier a typo than a PR,
+// while a real jump never comes near it. With no history for the lift, fall
+// back to a weight almost nobody moves.
+function getPlausibleWeightCeiling(heaviestWeight, unitType) {
+  if (heaviestWeight > 0) return heaviestWeight * 3;
+  return unitType === "kg" ? 500 : 1100;
 }

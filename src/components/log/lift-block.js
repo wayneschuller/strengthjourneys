@@ -223,14 +223,30 @@ export function LiftBlock({
     };
   }, [tonnageStats, optimisticSetsForStrength]);
 
+  // The heaviest this lift has ever gone, in the unit a custom set would be
+  // entered in. The draft row uses it to catch a slipped extra digit.
+  const customSetUnitType = lastRealSet?.unitType ?? (isMetric ? "kg" : "lb");
+  const heaviestWeight = useMemo(() => {
+    const lanes = topLiftsByTypeAndReps?.[liftType];
+    if (!Array.isArray(lanes)) return null;
+    let heaviest = 0;
+    for (const lane of lanes) {
+      const top = lane?.[0];
+      if (!top) continue;
+      const { value } = getDisplayWeight(top, customSetUnitType === "kg");
+      if (value > heaviest) heaviest = value;
+    }
+    return heaviest > 0 ? heaviest : null;
+  }, [topLiftsByTypeAndReps, liftType, customSetUnitType]);
+
   const openCustomSetDraft = useCallback(() => {
     if (!canAddSets) return;
     setCustomDraftSeed((prev) => prev + 1);
     setCustomDraftConfig({
-      unitType: lastRealSet?.unitType ?? (isMetric ? "kg" : "lb"),
+      unitType: customSetUnitType,
       notes: getAutoTimestampNotes(),
     });
-  }, [canAddSets, isMetric, lastRealSet?.unitType]);
+  }, [canAddSets, customSetUnitType]);
 
   const handleSuggestedAddSet = useCallback(
     async (setFields) => {
@@ -735,6 +751,7 @@ export function LiftBlock({
             unitType={customDraftConfig.unitType}
             defaultWeight={defaultBarWeight}
             defaultNotes={customDraftConfig.notes}
+            heaviestWeight={heaviestWeight}
             onCommit={handleCustomDraftCommit}
             onCancel={closeCustomSetDraft}
             disabled={isAddSaving}

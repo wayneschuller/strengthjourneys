@@ -10,7 +10,7 @@ import {
   BIG_FOUR_PROGRESS_GUIDE_PATHS,
 } from "@/lib/lifts/lift-registry";
 import { devLog, logTiming } from "@/lib/processing-utils";
-import { convertWeight } from "@/lib/weight-units";
+import { convertWeight, toKg } from "@/lib/weight-units";
 
 export const BIG_FOUR_LIFTS = BIG_FOUR_LIFT_TYPES;
 
@@ -921,16 +921,24 @@ function chooseFrequentLiftSecondaryClassicCandidate(liftType, repRanges) {
     if (!topAtReps) continue;
 
     const reps = repsIndex + 1;
-    const estimated = estimateE1RM(reps, topAtReps.weight, "Brzycki");
+    // Compared in kg so a log that mixes kg and lb picks by real load
+    const estimated = toKg(
+      estimateE1RM(reps, topAtReps.weight, "Brzycki"),
+      topAtReps.unitType,
+    );
     if (estimated > bestE1RMWeight) {
       bestE1RMWeight = estimated;
       bestE1RMCandidate = topAtReps;
     }
 
+    const topKg = toKg(topAtReps.weight, topAtReps.unitType);
+    const currentTopKg = topWeightAnyRepCandidate
+      ? toKg(topWeightAnyRepCandidate.weight, topWeightAnyRepCandidate.unitType)
+      : 0;
     if (
       !topWeightAnyRepCandidate ||
-      topAtReps.weight > topWeightAnyRepCandidate.weight ||
-      (topAtReps.weight === topWeightAnyRepCandidate.weight &&
+      topKg > currentTopKg ||
+      (topKg === currentTopKg &&
         reps > (topWeightAnyRepCandidate.reps ?? 0))
     ) {
       topWeightAnyRepCandidate = topAtReps;

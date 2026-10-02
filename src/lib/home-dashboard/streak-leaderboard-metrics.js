@@ -5,6 +5,7 @@ import {
 } from "@/lib/date-utils";
 import { recordTiming, BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { toKg } from "@/lib/weight-units";
 
 const BIG_FOUR_SET = new Set(BIG_FOUR_LIFT_TYPES);
 
@@ -166,8 +167,9 @@ export function enrichStreaks(
   });
 
   // Running maxes per (liftType|reps)
+  // Both hold kg, so a log that mixes kg and lb compares real load
   const bestEver = new Map(); // → max weight ever
-  const twelveMo = new Map(); // → array of {date, weight}, sorted asc by date
+  const twelveMo = new Map(); // → array of {date, weightKg}, sorted asc by date
 
   let bucketIdx = 0;
 
@@ -181,11 +183,12 @@ export function enrichStreaks(
     if (weight <= 0) continue;
 
     const key = `${lift.liftType}|${reps}`;
+    const weightKg = toKg(weight, lift.unitType);
 
     // Lifetime-at-time
     const prevBest = bestEver.get(key) ?? 0;
-    const isLifetimeAtTime = weight > prevBest;
-    if (isLifetimeAtTime) bestEver.set(key, weight);
+    const isLifetimeAtTime = weightKg > prevBest;
+    if (isLifetimeAtTime) bestEver.set(key, weightKg);
 
     // 12-month-at-time (sliding window)
     const cutoff = subtractOneYear(lift.date);
@@ -197,10 +200,10 @@ export function enrichStreaks(
     while (arr.length > 0 && arr[0].date < cutoff) arr.shift();
     let best12mo = 0;
     for (let j = 0; j < arr.length; j++) {
-      if (arr[j].weight > best12mo) best12mo = arr[j].weight;
+      if (arr[j].weightKg > best12mo) best12mo = arr[j].weightKg;
     }
-    const is12moAtTime = weight > best12mo;
-    arr.push({ date: lift.date, weight });
+    const is12moAtTime = weightKg > best12mo;
+    arr.push({ date: lift.date, weightKg });
 
     // Find which streak (if any) contains this date. Pointer advances monotonically.
     while (

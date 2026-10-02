@@ -18,6 +18,7 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import { getReadableDateString } from "@/lib/date-utils";
+import { toKg } from "@/lib/weight-units";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -166,7 +167,11 @@ export function DailyTrainingHeatmapTooltip({ value }) {
   // Keep only the heaviest PR per lift type
   const bestPrs = Object.values(
     prs.reduce((acc, pr) => {
-      if (!acc[pr.liftType] || pr.weight > acc[pr.liftType].weight) {
+      if (
+        !acc[pr.liftType] ||
+        toKg(pr.weight, pr.unitType) >
+          toKg(acc[pr.liftType].weight, acc[pr.liftType].unitType)
+      ) {
         acc[pr.liftType] = pr;
       }
       return acc;

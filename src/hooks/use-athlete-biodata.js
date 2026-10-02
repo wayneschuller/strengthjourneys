@@ -21,7 +21,7 @@ import {
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { LB_PER_KG } from "@/lib/weight-units";
+import { LB_PER_KG, toKg } from "@/lib/weight-units";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -102,6 +102,10 @@ export function getTopLiftStats(
 ) {
   let bestE1RM = 0;
   let bestWeight = 0;
+  // Rep buckets can hold different units, so rank in kg and report the
+  // winner's own number
+  let bestE1RMKg = 0;
+  let bestWeightKg = 0;
   let bestLiftDate = null;
   let bestWeightTuple = null;
   let bestE1RMTuple = null;
@@ -112,7 +116,10 @@ export function getTopLiftStats(
       const reps = repsIdx + 1;
       const weight = topSet.weight || 0;
       const e1rm = estimateE1RM(reps, weight, e1rmFormula);
-      if (weight > bestWeight) {
+      const weightKg = toKg(weight, topSet.unitType);
+      const e1rmKg = toKg(e1rm, topSet.unitType);
+      if (weightKg > bestWeightKg) {
+        bestWeightKg = weightKg;
         bestWeight = weight;
         bestWeightTuple = {
           weight,
@@ -120,7 +127,8 @@ export function getTopLiftStats(
           date: topSet.date || null,
         };
       }
-      if (e1rm > bestE1RM) {
+      if (e1rmKg > bestE1RMKg) {
+        bestE1RMKg = e1rmKg;
         bestE1RM = e1rm;
         bestLiftDate = topSet.date || null;
         bestE1RMTuple = { weight, reps, date: topSet.date || null, e1rm };

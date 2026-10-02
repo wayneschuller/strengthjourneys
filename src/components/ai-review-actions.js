@@ -5,6 +5,11 @@
  * tap reveals the full actions. Consumers deliberately author the rich text
  * payload; only the image path reads from the rendered card.
  *
+ * The actions normally unfold sideways over the robot. `menuBelowOnMobile` is
+ * for a robot sitting mid-row on a phone, where that would cover its
+ * neighbours: the actions drop underneath as a short stack and the robot stays
+ * put to close them again.
+ *
  * Copy-image output is a share artifact, not a literal screenshot. Keep the
  * card's rich, meaningful content, add subtle strengthjourneys.xyz branding,
  * and mark navigation, legends, feedback, support prompts, and other controls
@@ -41,6 +46,7 @@ export function AiReviewActions({
   onCopyImage,
   className,
   showText = true,
+  menuBelowOnMobile = false,
 }) {
   const { toast } = useToast();
   const rootRef = useRef(null);
@@ -116,6 +122,13 @@ export function AiReviewActions({
     }
   };
 
+  // Stacked under the robot on a phone, each action is a full-width tap row.
+  const actionClassName = cn(
+    "h-7 gap-1.5 px-2 whitespace-nowrap",
+    menuBelowOnMobile &&
+      "h-10 justify-start px-3 sm:h-7 sm:justify-center sm:px-2",
+  );
+
   return (
     <div
       ref={rootRef}
@@ -135,7 +148,10 @@ export function AiReviewActions({
         size="icon"
         className={cn(
           "absolute right-0 h-8 w-8 transition-opacity",
-          isOpen && "pointer-events-none opacity-0",
+          isOpen &&
+            (menuBelowOnMobile
+              ? "sm:pointer-events-none sm:opacity-0"
+              : "pointer-events-none opacity-0"),
         )}
         aria-label="AI review and copy options"
         aria-expanded={isOpen}
@@ -146,19 +162,24 @@ export function AiReviewActions({
 
       <div
         className={cn(
-          "bg-card absolute top-0 right-0 z-20 flex h-8 items-center gap-1 rounded-md border p-0.5 shadow-sm transition-all duration-150",
+          "bg-card absolute z-20 flex gap-1 rounded-md border p-0.5 transition-all duration-150",
+          menuBelowOnMobile
+            ? "top-full left-1/2 mt-1.5 -translate-x-1/2 flex-col items-stretch shadow-md sm:top-0 sm:right-0 sm:left-auto sm:mt-0 sm:h-8 sm:flex-row sm:items-center sm:shadow-sm"
+            : "top-0 right-0 h-8 items-center shadow-sm",
           isOpen
-            ? "pointer-events-auto translate-x-0 opacity-100"
-            : "pointer-events-none translate-x-1 opacity-0",
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0",
+          menuBelowOnMobile
+            ? isOpen
+              ? "sm:translate-x-0"
+              : "sm:translate-x-1"
+            : isOpen
+              ? "translate-x-0"
+              : "translate-x-1",
         )}
         aria-hidden={!isOpen}
       >
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1.5 px-2 whitespace-nowrap"
-        >
+        <Button asChild variant="ghost" size="sm" className={actionClassName}>
           <Link
             href={aiReviewLink.href}
             tabIndex={isOpen ? 0 : -1}
@@ -173,7 +194,7 @@ export function AiReviewActions({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 gap-1.5 px-2 whitespace-nowrap"
+            className={actionClassName}
             tabIndex={isOpen ? 0 : -1}
             onClick={handleCopyText}
           >
@@ -189,7 +210,7 @@ export function AiReviewActions({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 gap-1.5 px-2 whitespace-nowrap"
+          className={actionClassName}
           tabIndex={isOpen ? 0 : -1}
           disabled={isCopyingImage}
           onClick={handleCopyImage}

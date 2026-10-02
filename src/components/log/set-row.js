@@ -278,9 +278,9 @@ export function SetRow({
     }
   }
 
-  function commitUrl() {
+  function commitUrl(value = draftUrl) {
     if (isLocked) return;
-    const trimmed = draftUrl.trim();
+    const trimmed = value.trim();
     if (trimmed !== (latestFieldsRef.current.url ?? "").trim()) {
       const beforeFields = latestFieldsRef.current;
       const nextFields = { ...beforeFields, url: trimmed };
@@ -498,8 +498,11 @@ export function SetRow({
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
+                    // Saves the note and whatever link is showing, so a link
+                    // picked up from the clipboard needs no second step. Tab
+                    // still reaches the link field to change it.
                     e.preventDefault();
-                    urlInputRef.current?.focus();
+                    closeNotesEdit();
                   } else if (e.key === "Tab" && e.shiftKey) {
                     e.preventDefault();
                     closeNotesEdit();
@@ -507,6 +510,17 @@ export function SetRow({
                   } else if (e.key === "Escape") {
                     closeNotesEdit();
                   }
+                }}
+                onPaste={(e) => {
+                  // A link pasted into the note is the video for this set.
+                  // File it as the link and save it at once, unless the set
+                  // already has one, where a paste stays a plain paste.
+                  const pasted = e.clipboardData?.getData("text")?.trim() ?? "";
+                  if (draftUrl.trim() && draftUrl.trim() !== pasted) return;
+                  if (/\s/.test(pasted) || !isHttpUrl(pasted)) return;
+                  e.preventDefault();
+                  setDraftUrl(pasted);
+                  commitUrl(pasted);
                 }}
                 placeholder="notes..."
                 autoFocus

@@ -127,8 +127,7 @@ export function AiReviewActions({
   // Stacked above the robot on a phone, each action is a full-width tap row.
   const actionClassName = cn(
     "h-7 gap-1.5 px-2 whitespace-nowrap",
-    stackOnMobile &&
-      "h-10 justify-start px-3 sm:h-7 sm:justify-center sm:px-2",
+    stackOnMobile && "h-10 justify-start px-3 sm:h-7 sm:justify-center sm:px-2",
   );
 
   return (

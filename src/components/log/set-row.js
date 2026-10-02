@@ -655,13 +655,27 @@ export function SetRow({
                 attachButton
               ) : (
                 <motion.div
-                  // A link that has just landed gets a small happy wobble.
+                  // A link that has just landed spins in, overshoots and
+                  // settles with a wobble. This element only mounts once
+                  // there is a link, so `initial` is the start of that entrance.
+                  initial={
+                    justAttached && !prefersReducedMotion
+                      ? { rotate: -360, scale: 0.3 }
+                      : false
+                  }
                   animate={
                     justAttached && !prefersReducedMotion
-                      ? { rotate: [0, -16, 13, -9, 5, 0], scale: [1, 1.3, 1] }
+                      ? {
+                          rotate: [-360, 22, -15, 9, -4, 0],
+                          scale: [0.3, 1.5, 0.92, 1.12, 0.98, 1],
+                        }
                       : { rotate: 0, scale: 1 }
                   }
-                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  transition={{
+                    duration: 1.1,
+                    ease: "easeOut",
+                    times: [0, 0.45, 0.62, 0.78, 0.9, 1],
+                  }}
                   onAnimationComplete={() => setJustAttached(false)}
                 >
                   {isReadOnly || isLocked || !videoSource ? (

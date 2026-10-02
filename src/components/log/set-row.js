@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Link2, Loader2, Trash2 } from "lucide-react";
 
 import { getCelebrationStyles } from "@/lib/celebration";
@@ -67,6 +67,8 @@ export function SetRow({
   const isHoveredRef = useRef(false);
   // A video link found on the clipboard while the pointer rests on this row.
   const [offeredUrl, setOfferedUrl] = useState(null);
+  const [justAttached, setJustAttached] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const cancelledEditRef = useRef(false);
   const prefUnit = isMetric ? "kg" : "lb";
   const unitMismatch = set.unitType && set.unitType !== prefUnit;
@@ -338,6 +340,7 @@ export function SetRow({
     ) {
       setDraftUrl(copied);
       commitUrl(copied);
+      setJustAttached(true);
       return;
     }
     setEditingNotes("url");
@@ -351,6 +354,9 @@ export function SetRow({
   async function offerCopiedLinkOnHover() {
     isHoveredRef.current = true;
     if (isReadOnly || isLocked || displayUrl || editingNotes) return;
+    // A tap fires mouseenter too, and the offer is drawn for a pointer.
+    if (!window.matchMedia("(hover: hover) and (min-width: 768px)").matches)
+      return;
     try {
       const permission = await navigator.permissions.query({
         name: "clipboard-read",
@@ -377,6 +383,7 @@ export function SetRow({
     setDraftUrl(offeredUrl);
     commitUrl(offeredUrl);
     setOfferedUrl(null);
+    setJustAttached(true);
   }
 
   function openNotesEdit() {
@@ -409,6 +416,36 @@ export function SetRow({
     offeredUrl && !displayUrl && !editingNotes
       ? getVideoSourceMeta(offeredUrl)
       : null;
+  // The copied link's own mark, shown faint and swaying in the spot the real
+  // one will take, with the instruction held open beside it.
+  const offerGhost = offeredSource ? (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip open>
+        <TooltipTrigger asChild>
+          <motion.button
+            type="button"
+            className="border-primary/60 bg-card hover:bg-accent hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed shadow-sm md:inline-flex"
+            animate={
+              prefersReducedMotion
+                ? { rotate: 0 }
+                : { rotate: [-9, 9, -9], scale: [1, 1.06, 1] }
+            }
+            transition={{ duration: 1.3, ease: "easeInOut", repeat: Infinity }}
+            onClick={acceptOfferedUrl}
+            aria-label={`Save the ${offeredSource.name} link you copied to this set`}
+          >
+            <VideoSourceIcon
+              source={offeredSource}
+              className="h-[18px] w-[18px] opacity-55"
+            />
+          </motion.button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p>{`Click to save the ${offeredSource.name} link you copied to this set`}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  ) : null;
   const attachButton =
     !isReadOnly && !isLocked && !displayUrl && !editingNotes ? (
       <TooltipProvider delayDuration={0}>
@@ -566,25 +603,38 @@ export function SetRow({
               notes reflowing between filmed and unfilmed sets. */}
           {showVideoSlot && (
             <div className="flex w-8 shrink-0 justify-center">
-              <VideoLinkButton url={displayUrl} source={videoSource} />
+              {offeredSource ? (
+                offerGhost
+              ) : (
+                <motion.div
+                  // A link that has just landed gets a small happy wobble.
+                  animate={
+                    justAttached && !prefersReducedMotion
+                      ? { rotate: [0, -16, 13, -9, 5, 0], scale: [1, 1.3, 1] }
+                      : { rotate: 0, scale: 1 }
+                  }
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  onAnimationComplete={() => setJustAttached(false)}
+                >
+                  <VideoLinkButton url={displayUrl} source={videoSource} />
+                </motion.div>
+              )}
+            </div>
+          )}
+          {/* A lift with no video yet has no slot reserved. The offer still
+              sits where the slot will open once the link is saved, laid over
+              the gap so the row holds still. */}
+          {!showVideoSlot && offeredSource && (
+            <div className="relative w-0">
+              <div className="absolute top-1/2 left-0 -translate-y-1/2">
+                {offerGhost}
+              </div>
             </div>
           )}
         </div>
 
         {/* Notes + URL — flex-1, tap to edit */}
-        <div className="relative min-w-0 flex-1 md:max-w-[calc(100%-18rem)]">
-          {/* Floats over the end of the note, so offering it never moves the
-              row. */}
-          {offeredSource && (
-            <button
-              type="button"
-              className="bg-card text-foreground hover:bg-accent border-primary/40 absolute top-1/2 right-0 z-10 hidden -translate-y-1/2 items-center gap-2 rounded-full border py-1 pr-3 pl-2 text-xs font-medium shadow-md transition-colors md:inline-flex"
-              onClick={acceptOfferedUrl}
-            >
-              <VideoSourceIcon source={offeredSource} className="h-4 w-4" />
-              {`Attach copied ${offeredSource.name} link`}
-            </button>
-          )}
+        <div className="min-w-0 flex-1 md:max-w-[calc(100%-18rem)]">
           {editingNotes && !isReadOnly ? (
             <div className="space-y-1">
               <input

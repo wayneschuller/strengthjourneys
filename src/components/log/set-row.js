@@ -4,11 +4,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 
 import { motion, useReducedMotion } from "motion/react";
-import { Copy, Link2, Loader2, Pencil, Play, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 import { getCelebrationStyles } from "@/lib/celebration";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
@@ -18,11 +17,6 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import {
   Tooltip,
   TooltipContent,
@@ -36,7 +30,10 @@ import {
 } from "@/components/log/sheet-snapshot-utils";
 import { CelebrationReveal } from "@/components/log/celebration-reveal";
 import { VideoLinkButton } from "@/components/log/video-link-button";
-import { getYouTubeThumbnailSrc } from "@/components/log/utils";
+import {
+  AttachVideoLinkButton,
+  SetVideoMenu,
+} from "@/components/log/set-video-menu";
 import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { UnitLabel } from "@/components/log/unit-label";
 
@@ -68,13 +65,10 @@ export function SetRow({
   const isReadOnly = !onUpdate;
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
-  // false, or which field takes focus as the editor opens: "notes" or "url".
   const [editingNotes, setEditingNotes] = useState(false);
   const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
   const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
   const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
-  const [draftUrl, setDraftUrl] = useState(set.URL ?? "");
-  const urlInputRef = useRef(null);
   const isHoveredRef = useRef(false);
   // A video link found on the clipboard while the pointer rests on this row.
   const [offeredUrl, setOfferedUrl] = useState(null);
@@ -141,10 +135,6 @@ export function SetRow({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
     setDraftNotes(set.notes ?? "");
   }, [set.notes]);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
-    setDraftUrl(set.URL ?? "");
-  }, [set.URL]);
 
   // Clear pending once parsedData reflects the committed value
   useEffect(() => {
@@ -296,7 +286,7 @@ export function SetRow({
     }
   }
 
-  function commitUrl(value = draftUrl) {
+  function commitUrl(value) {
     if (isLocked) return;
     const trimmed = value.trim();
     if (trimmed !== (latestFieldsRef.current.url ?? "").trim()) {
@@ -312,8 +302,8 @@ export function SetRow({
     }
   }
 
-  // Tab walks one row as a single form: reps, weight, notes, video link, each
-  // field saving as it is left. Without this, Tab from an open field landed on
+  // Tab walks one row as a single form: reps, weight, notes, each field
+  // saving as it is left. Without this, Tab from an open field landed on
   // the next field's idle button and needed Enter to open it.
   function cancelNumberEdit() {
     // Some browsers fire blur as the input unmounts, which would save the
@@ -336,7 +326,6 @@ export function SetRow({
   // happened and leave a way back. Undo also frees the link for another set,
   // since the wrong row is the likeliest reason to want it.
   function attachCopiedUrl(url) {
-    setDraftUrl(url);
     commitUrl(url);
     setJustAttached(true);
     const sourceName = getVideoSourceMeta(url)?.name;
@@ -348,7 +337,6 @@ export function SetRow({
         <ToastAction
           altText="Undo attaching the video link"
           onClick={() => {
-            setDraftUrl("");
             commitUrlRef.current("");
             onSessionUrlReleased?.(url);
           }}
@@ -370,7 +358,6 @@ export function SetRow({
   function removeVideoLink() {
     const removedUrl = displayUrl;
     if (!removedUrl) return;
-    setDraftUrl("");
     commitUrl("");
     onSessionUrlReleased?.(removedUrl);
     toast({
@@ -381,7 +368,6 @@ export function SetRow({
         <ToastAction
           altText="Put the video link back"
           onClick={() => {
-            setDraftUrl(removedUrl);
             commitUrlRef.current(removedUrl);
           }}
         >
@@ -391,18 +377,30 @@ export function SetRow({
     });
   }
 
+  // The link's own menu is the only place it is edited. Emptying the field
+  // there is a removal, and a replaced link is free for another set again.
+  function saveEditedVideoLink(nextUrl) {
+    if (!nextUrl) {
+      removeVideoLink();
+      return;
+    }
+    const previousUrl = displayUrl;
+    if (nextUrl === previousUrl) return;
+    commitUrl(nextUrl);
+    if (previousUrl) onSessionUrlReleased?.(previousUrl);
+  }
+
   function closeNotesEdit() {
     setEditingNotes(false);
     commitNotes();
-    commitUrl();
   }
 
   // One tap attaches the link sitting on the clipboard, which is where a
-  // video's share link lands. Anything else on the clipboard, a link already
-  // used this session, or a browser that keeps the clipboard to itself, opens
-  // the link field to type or paste into.
+  // video's share link lands. It answers false for anything else on the
+  // clipboard, a link already used this session, or a browser that keeps the
+  // clipboard to itself, and the button then opens a field to paste into.
   async function attachCopiedLink() {
-    if (isLocked) return;
+    if (isLocked) return true;
     let copied = "";
     try {
       copied = (await navigator.clipboard.readText())?.trim() ?? "";
@@ -416,9 +414,9 @@ export function SetRow({
       !usedSessionUrls?.has(copied)
     ) {
       attachCopiedUrl(copied);
-      return;
+      return true;
     }
-    setEditingNotes("url");
+    return false;
   }
 
   // Hovering a set with no video looks at the clipboard and, if a video link
@@ -460,22 +458,7 @@ export function SetRow({
   }
 
   function openNotesEdit() {
-    setEditingNotes("notes");
-    // Try to pre-fill URL from clipboard if the field is currently empty
-    // and the URL hasn't already been assigned to another set this session.
-    if (!draftUrl && navigator?.clipboard?.readText) {
-      navigator.clipboard
-        .readText()
-        .then((text) => {
-          const trimmed = text?.trim() ?? "";
-          if (isHttpUrl(trimmed)) {
-            if (!usedSessionUrls?.has(trimmed)) {
-              setDraftUrl(trimmed);
-            }
-          }
-        })
-        .catch(() => {});
-    }
+    setEditingNotes(true);
   }
 
   const videoSource = useMemo(
@@ -521,23 +504,11 @@ export function SetRow({
   ) : null;
   const attachButton =
     !isReadOnly && !isLocked && !displayUrl && !editingNotes ? (
-      <TooltipProvider delayDuration={0}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="text-muted-foreground/60 hover:text-foreground rounded p-2 transition-colors focus-visible:opacity-100 md:p-1 md:opacity-0 md:group-hover:opacity-100"
-              onClick={attachCopiedLink}
-              aria-label="Attach the video link you copied"
-            >
-              <Link2 className="h-4 w-4 md:h-3.5 md:w-3.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>Attach the video link you copied</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <AttachVideoLinkButton
+        onAttachCopied={attachCopiedLink}
+        onSave={commitUrl}
+        className="focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+      />
     ) : null;
   const metaBadgeClassName = "h-8 rounded-full px-3 text-xs font-semibold";
 
@@ -692,30 +663,13 @@ export function SetRow({
                   {isReadOnly || isLocked || !videoSource ? (
                     <VideoLinkButton url={displayUrl} source={videoSource} />
                   ) : (
-                    <HoverCard openDelay={120} closeDelay={150}>
-                      <HoverCardTrigger asChild>
-                        <span className="inline-flex">
-                          <VideoLinkButton
-                            url={displayUrl}
-                            source={videoSource}
-                            showTooltip={false}
-                          />
-                        </span>
-                      </HoverCardTrigger>
-                      <HoverCardContent
-                        side="top"
-                        align="start"
-                        className="w-64 space-y-2 p-2"
-                      >
-                        <VideoLinkMenu
-                          url={displayUrl}
-                          source={videoSource}
-                          onEdit={() => setEditingNotes("url")}
-                          onCopy={copyVideoLink}
-                          onRemove={removeVideoLink}
-                        />
-                      </HoverCardContent>
-                    </HoverCard>
+                    <SetVideoMenu
+                      url={displayUrl}
+                      source={videoSource}
+                      onSave={saveEditedVideoLink}
+                      onCopy={copyVideoLink}
+                      onRemove={removeVideoLink}
+                    />
                   )}
                 </motion.div>
               )}
@@ -733,75 +687,40 @@ export function SetRow({
           )}
         </div>
 
-        {/* Notes + URL — flex-1, tap to edit */}
+        {/* Notes — flex-1, tap to edit. The video link is edited from its
+            own menu on the mark, not here. */}
         <div className="min-w-0 flex-1 md:max-w-[calc(100%-18rem)]">
           {editingNotes && !isReadOnly ? (
-            <div className="space-y-1">
-              <input
-                type="text"
-                className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs focus:outline-none"
-                value={draftNotes}
-                disabled={isLocked}
-                onChange={(e) => setDraftNotes(e.target.value)}
-                onBlur={(e) => {
-                  commitNotes();
-                  // Only close if focus isn't moving to the URL input
-                  if (e.relatedTarget !== urlInputRef.current) {
-                    setEditingNotes(false);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    // Saves the note and whatever link is showing, so a link
-                    // picked up from the clipboard needs no second step. Tab
-                    // still reaches the link field to change it.
-                    e.preventDefault();
-                    closeNotesEdit();
-                  } else if (e.key === "Tab" && e.shiftKey) {
-                    e.preventDefault();
-                    closeNotesEdit();
-                    setEditingWeight(true);
-                  } else if (e.key === "Escape") {
-                    closeNotesEdit();
-                  }
-                }}
-                onPaste={(e) => {
-                  // A link pasted into the note is the video for this set.
-                  // File it as the link and save it at once, unless the set
-                  // already has one, where a paste stays a plain paste.
-                  const pasted = e.clipboardData?.getData("text")?.trim() ?? "";
-                  if (draftUrl.trim() && draftUrl.trim() !== pasted) return;
-                  if (/\s/.test(pasted) || !isHttpUrl(pasted)) return;
+            <input
+              type="text"
+              className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs focus:outline-none"
+              value={draftNotes}
+              disabled={isLocked}
+              onChange={(e) => setDraftNotes(e.target.value)}
+              onBlur={closeNotesEdit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === "Escape") {
                   e.preventDefault();
-                  setDraftUrl(pasted);
-                  commitUrl(pasted);
-                }}
-                placeholder="notes..."
-                autoFocus={editingNotes !== "url"}
-              />
-              <div className="flex items-center gap-1">
-                <Link2 className="text-muted-foreground/60 h-3 w-3 shrink-0" />
-                <input
-                  ref={urlInputRef}
-                  type="url"
-                  className="border-input text-muted-foreground focus:border-primary min-w-0 flex-1 border-b bg-transparent py-0.5 text-xs focus:outline-none"
-                  value={draftUrl}
-                  disabled={isLocked}
-                  onChange={(e) => setDraftUrl(e.target.value)}
-                  onBlur={() => {
-                    commitUrl();
-                    setEditingNotes(false);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === "Escape") {
-                      closeNotesEdit();
-                    }
-                  }}
-                  placeholder="video link..."
-                  autoFocus={editingNotes === "url"}
-                />
-              </div>
-            </div>
+                  closeNotesEdit();
+                } else if (e.key === "Tab" && e.shiftKey) {
+                  e.preventDefault();
+                  closeNotesEdit();
+                  setEditingWeight(true);
+                }
+              }}
+              onPaste={(e) => {
+                // A link pasted into the note is the video for this set.
+                // File it as the link and save it at once, unless the set
+                // already has one, where a paste stays a plain paste.
+                const pasted = e.clipboardData?.getData("text")?.trim() ?? "";
+                if (displayUrl) return;
+                if (/\s/.test(pasted) || !isHttpUrl(pasted)) return;
+                e.preventDefault();
+                commitUrl(pasted);
+              }}
+              placeholder="notes..."
+              autoFocus
+            />
           ) : (
             <div className="space-y-0.5">
               {isLocked || isReadOnly ? (
@@ -968,63 +887,6 @@ export function SetRow({
         </div>
       )}
     </motion.div>
-  );
-}
-
-// What hovering a set's video mark opens: watching is the main thing, so it
-// gets the room, with the housekeeping kept small underneath.
-function VideoLinkMenu({ url, source, onEdit, onCopy, onRemove }) {
-  const thumbnailSrc = getYouTubeThumbnailSrc(url);
-  const playLabel = source.name ? `Watch on ${source.name}` : "Watch the video";
-  const smallActionClass =
-    "text-muted-foreground hover:bg-muted hover:text-foreground inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors";
-
-  return (
-    <>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group/play bg-muted relative flex aspect-video items-center justify-center overflow-hidden rounded-md"
-      >
-        {thumbnailSrc ? (
-          <Image
-            src={thumbnailSrc}
-            alt=""
-            fill
-            unoptimized
-            className="object-cover"
-          />
-        ) : (
-          <VideoSourceIcon source={source} className="h-10 w-10 opacity-40" />
-        )}
-        <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-        <span className="bg-primary text-primary-foreground absolute flex size-12 items-center justify-center rounded-full shadow-lg transition-transform group-hover/play:scale-110">
-          <Play className="size-5 translate-x-px fill-current" />
-        </span>
-        <span className="absolute inset-x-2 bottom-1.5 text-left text-xs font-semibold text-white">
-          {playLabel}
-        </span>
-      </a>
-      <div className="flex gap-1">
-        <button type="button" className={smallActionClass} onClick={onEdit}>
-          <Pencil className="size-3.5" />
-          Edit
-        </button>
-        <button type="button" className={smallActionClass} onClick={onCopy}>
-          <Copy className="size-3.5" />
-          Copy
-        </button>
-        <button
-          type="button"
-          className={cn(smallActionClass, "hover:text-destructive")}
-          onClick={onRemove}
-        >
-          <Trash2 className="size-3.5" />
-          Remove
-        </button>
-      </div>
-    </>
   );
 }
 

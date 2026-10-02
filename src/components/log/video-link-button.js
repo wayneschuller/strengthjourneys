@@ -33,6 +33,7 @@ const SIZES = {
  * @param {string} [props.fallbackLabel] - Caption when the host has no known name.
  * @param {string} [props.className] - Spacing from the caller's layout only.
  * @param {boolean} [props.showTooltip=true] - Off when the caller hangs its own popup on the mark.
+ * @param {(event: MouseEvent) => void} [props.onClick] - Lets that caller take the click where there is no hover.
  */
 export function VideoLinkButton({
   url,
@@ -41,6 +42,7 @@ export function VideoLinkButton({
   fallbackLabel = "Open the video link",
   className,
   showTooltip = true,
+  onClick,
 }) {
   if (!url || !source) return null;
 
@@ -58,6 +60,7 @@ export function VideoLinkButton({
         className,
       )}
       aria-label={`${tooltip} (opens in a new tab)`}
+      onClick={onClick}
     >
       <VideoSourceIcon source={source} className={icon} />
     </a>

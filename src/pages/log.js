@@ -314,6 +314,14 @@ export default function LogSessionPage({
       return next;
     });
   }, []);
+  const handleSessionUrlReleased = useCallback((url) => {
+    setAcceptedSessionUrls((prev) => {
+      if (!prev.has(url)) return prev;
+      const next = new Set(prev);
+      next.delete(url);
+      return next;
+    });
+  }, []);
   const perLiftTonnageStats = useMemo(
     () =>
       getPerLiftTonnageStats({
@@ -789,6 +797,7 @@ export default function LogSessionPage({
                             }
                             usedSessionUrls={usedSessionUrls}
                             onSessionUrlAccepted={handleSessionUrlAccepted}
+                            onSessionUrlReleased={handleSessionUrlReleased}
                           />
                         </motion.div>
                       ),

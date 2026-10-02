@@ -79,6 +79,7 @@ export function LiftBlock({
   previewMode = false,
   usedSessionUrls,
   onSessionUrlAccepted,
+  onSessionUrlReleased,
 }) {
   const { dataSource } = useUserLiftingData();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
@@ -702,6 +703,7 @@ export function LiftBlock({
               isDeleteDisabled={isStructuralSaving || isDeleteCooldownActive}
               usedSessionUrls={usedSessionUrls}
               onSessionUrlAccepted={onSessionUrlAccepted}
+              onSessionUrlReleased={onSessionUrlReleased}
               reserveVideoSlot={hasAnyVideo}
               progressionBadge={progressionBadges[idx] ?? null}
               strengthTooltip={

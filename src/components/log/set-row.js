@@ -14,6 +14,8 @@ import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { getSetIdentityKey } from "@/lib/pr-ranking";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -51,8 +53,10 @@ export function SetRow({
   progressionBadge = null,
   usedSessionUrls,
   onSessionUrlAccepted,
+  onSessionUrlReleased,
   reserveVideoSlot = false,
 }) {
+  const { toast } = useToast();
   const isLocked = Boolean(set._pending);
   const isReadOnly = !onUpdate;
   const [editingReps, setEditingReps] = useState(false);
@@ -292,7 +296,7 @@ export function SetRow({
       const beforeFields = latestFieldsRef.current;
       const nextFields = { ...beforeFields, url: trimmed };
       setPendingUrl(trimmed);
-      onSessionUrlAccepted?.(trimmed);
+      if (trimmed) onSessionUrlAccepted?.(trimmed);
       flushUpdate({
         field: "url",
         beforeFields,
@@ -312,6 +316,40 @@ export function SetRow({
     setDraftWeight(String(displayWeight ?? ""));
     setEditingReps(false);
     setEditingWeight(false);
+  }
+
+  // The toast outlives the render that raised it, so Undo reaches the row's
+  // current commit function instead of the one it closed over.
+  const commitUrlRef = useRef(commitUrl);
+  useEffect(() => {
+    commitUrlRef.current = commitUrl;
+  });
+
+  // A one-click attach writes to the sheet with nothing typed, so say what
+  // happened and leave a way back. Undo also frees the link for another set,
+  // since the wrong row is the likeliest reason to want it.
+  function attachCopiedUrl(url) {
+    setDraftUrl(url);
+    commitUrl(url);
+    setJustAttached(true);
+    const sourceName = getVideoSourceMeta(url)?.name;
+    toast({
+      title: sourceName ? `${sourceName} link saved` : "Video link saved",
+      description: `Attached to ${displayReps}@${displayWeight}${set.unitType ?? ""}.`,
+      duration: 8000,
+      action: (
+        <ToastAction
+          altText="Undo attaching the video link"
+          onClick={() => {
+            setDraftUrl("");
+            commitUrlRef.current("");
+            onSessionUrlReleased?.(url);
+          }}
+        >
+          Undo
+        </ToastAction>
+      ),
+    });
   }
 
   function closeNotesEdit() {
@@ -338,9 +376,7 @@ export function SetRow({
       isHttpUrl(copied) &&
       !usedSessionUrls?.has(copied)
     ) {
-      setDraftUrl(copied);
-      commitUrl(copied);
-      setJustAttached(true);
+      attachCopiedUrl(copied);
       return;
     }
     setEditingNotes("url");
@@ -380,10 +416,8 @@ export function SetRow({
 
   function acceptOfferedUrl() {
     if (!offeredUrl) return;
-    setDraftUrl(offeredUrl);
-    commitUrl(offeredUrl);
+    attachCopiedUrl(offeredUrl);
     setOfferedUrl(null);
-    setJustAttached(true);
   }
 
   function openNotesEdit() {

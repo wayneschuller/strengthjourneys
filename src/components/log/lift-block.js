@@ -597,10 +597,12 @@ export function LiftBlock({
             <Image
               src={artworkSrc}
               alt=""
-              width={52}
-              height={52}
+              // The box is 5:3 like the drawings, so the lifter fills it
+              // rather than floating in a square.
+              width={120}
+              height={72}
               unoptimized
-              className="object-contain"
+              className="h-18 w-30 object-contain"
             />
           </Link>
         )}

@@ -285,28 +285,20 @@ function SmartAddButtonGrid({
     "grid min-h-[6.25rem] min-w-0 grid-rows-[1.75rem_1.1rem_1.4rem] place-items-center gap-1 px-2 py-3 text-center text-sm transition-colors";
   const desktopGridClass =
     visibleButtons.length >= 4 ? "sm:grid-cols-5" : "sm:grid-cols-4";
-  const buttonBorderClass = (index, count) => {
-    const mobileLastRowStart = count % 2 === 0 ? count - 2 : count - 1;
+  // On a phone the custom set always closes the grid as a full-width row, so
+  // the suggestions above it have to pair up. An odd count gives the first
+  // suggestion a row of its own rather than leaving a hole beside the last.
+  const leadSpansRow = visibleButtons.length % 2 === 1;
+  const suggestionCellClass = (index) => {
+    const spansRow = leadSpansRow && index === 0;
+    const isLeftOfPair =
+      !spansRow && (leadSpansRow ? index % 2 === 1 : index % 2 === 0);
 
     return [
-      "border-border/40",
-      index % 2 === 0 && index < count - 1 ? "border-r" : "",
-      index < mobileLastRowStart ? "border-b" : "",
-      "sm:border-b-0",
-      index < count - 1 ? "sm:border-r" : "sm:border-r-0",
-    ]
-      .filter(Boolean)
-      .join(" ");
-  };
-  const buttonRadiusClass = (index, count) => {
-    const mobileRow = Math.floor(index / 2);
-    const mobileLastRow = Math.ceil(count / 2) - 1;
-    const isMobileBottomLeft = mobileRow === mobileLastRow && index % 2 === 0;
-
-    return [
-      isMobileBottomLeft ? "rounded-bl-xl" : "",
-      index === 0 ? "sm:rounded-bl-xl" : "sm:rounded-bl-none",
-      index === count - 1 ? "sm:rounded-br-xl" : "sm:rounded-br-none",
+      "border-border/40 border-b sm:border-r sm:border-b-0",
+      spansRow ? "col-span-2 sm:col-span-1" : "",
+      isLeftOfPair ? "border-r" : "",
+      index === 0 ? "sm:rounded-bl-xl" : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -322,14 +314,13 @@ function SmartAddButtonGrid({
             s,
             lastRealSet,
           );
-          const totalButtonCount = visibleButtons.length + 1;
 
           return (
             <button
               key={i}
               type="button"
               disabled={disabled}
-              className={`${suggestionButtonClass} ${buttonBorderClass(i, totalButtonCount)} ${buttonRadiusClass(i, totalButtonCount)} ${
+              className={`${suggestionButtonClass} ${suggestionCellClass(i)} ${
                 disabled
                   ? "cursor-not-allowed opacity-50"
                   : "hover:bg-accent/50"
@@ -380,20 +371,26 @@ function SmartAddButtonGrid({
         <button
           type="button"
           disabled={disabled}
-          className={`${suggestionButtonClass} ${buttonBorderClass(visibleButtons.length, visibleButtons.length + 1)} ${buttonRadiusClass(visibleButtons.length, visibleButtons.length + 1)} ${
+          // A full-width row on a phone, where it is the one control that
+          // always applies; one more column beside the suggestions from sm.
+          className={`col-span-2 flex min-h-16 min-w-0 items-center justify-center gap-3 rounded-b-xl px-4 py-3 text-sm transition-colors sm:col-span-1 sm:min-h-[6.25rem] sm:flex-col sm:gap-1.5 sm:rounded-bl-none sm:px-2 ${
             disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
-          } text-muted-foreground`}
+          }`}
           onClick={onStartCustomSet}
         >
-          <span className="flex min-w-0 items-center justify-center gap-1.5 self-end">
-            <PenLine className="text-muted-foreground h-3.5 w-3.5" />
-            <span className="min-w-0 break-words">Custom set</span>
+          <span
+            aria-hidden="true"
+            className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-full sm:size-8"
+          >
+            <PenLine className="size-4" />
           </span>
-          <span className="text-muted-foreground/70 self-start text-[10px] tracking-wider uppercase">
-            any reps or weight
-          </span>
-          <span className="invisible self-start text-[10px] tracking-wide uppercase">
-            No ranking
+          <span className="flex min-w-0 flex-col items-start gap-0.5 sm:items-center">
+            <span className="text-foreground text-base font-semibold sm:text-sm sm:font-medium">
+              Custom set
+            </span>
+            <span className="text-muted-foreground/70 text-[10px] tracking-wider uppercase">
+              any reps or weight
+            </span>
           </span>
         </button>
       </div>
@@ -699,7 +696,9 @@ export function AddLiftButton({
             />
             <span
               aria-hidden="true"
-              className="flex h-12 w-full items-center justify-center sm:h-14"
+              // Two tiles across on a phone leave room for a taller drawing
+              // than the four and six across layouts do.
+              className="flex h-20 w-full items-center justify-center sm:h-14"
             >
               <LiftArtwork
                 liftType={name}
@@ -758,7 +757,7 @@ export function AddLiftButton({
           >
             <span
               aria-hidden="true"
-              className="flex h-12 items-center justify-center sm:h-14"
+              className="flex h-20 items-center justify-center sm:h-14"
             >
               <span className="bg-primary/10 text-primary group-hover:bg-primary/15 flex size-8 items-center justify-center rounded-full transition-colors">
                 <Plus className="size-4" strokeWidth={1.5} />

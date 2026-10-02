@@ -73,6 +73,9 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { getLocalYmdDaysAgo } from "@/lib/date-utils";
+import { sampleRollingBestE1RMs } from "@/lib/lift-bests";
+import { LB_PER_KG, toLb } from "@/lib/weight-units";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
@@ -244,13 +247,10 @@ const WHATS_NEXT_FEATURES = [
 ];
 
 // --- Helpers ---
-const KG_PER_LB = 0.453592;
-const LB_PER_KG = 2.20462;
+const KG_PER_LB = 1 / LB_PER_KG;
 const toKg = (lbs) => Math.round(Number(lbs) * KG_PER_LB);
 const displayWeight = (lbs, isMetric) =>
   isMetric ? `${toKg(lbs)} kg` : `${lbs} lb`;
-const toLb = (weight, unitType) =>
-  unitType === "lb" ? weight : weight * LB_PER_KG;
 const roundTo5 = (value) => Math.round(value / 5) * 5;
 const clampToMax = (value, max) => Math.min(max, Math.max(0, roundTo5(value)));
 
@@ -372,7 +372,7 @@ function buildStatusSentence({ milestone, stats, isMetric }) {
 
   // BRANCH: Just crossed (latest tier crossed within 30 days)
   if (latestCrossedDate) {
-    const todayYmd = new Date().toISOString().slice(0, 10);
+    const todayYmd = getLocalYmdDaysAgo(0);
     const daysSinceCross = daysBetween(todayYmd, latestCrossedDate);
     if (daysSinceCross >= 0 && daysSinceCross <= 30) {
       const crossing = tierCrossings[latestCrossedTier];
@@ -412,7 +412,7 @@ function buildStatusSentence({ milestone, stats, isMetric }) {
   const targetTier = milestone.targetPlates;
   const targetCrossing = tierCrossings?.[targetTier];
   if (targetCrossing?.currentlyAbove) {
-    const todayYmd = new Date().toISOString().slice(0, 10);
+    const todayYmd = getLocalYmdDaysAgo(0);
     const daysSinceTarget = daysBetween(todayYmd, targetCrossing.first.date);
     const years = Math.floor(daysSinceTarget / 365.25);
     const significantGainLb = isMetric ? 11 : 11; // ~5kg
@@ -433,7 +433,7 @@ function buildStatusSentence({ milestone, stats, isMetric }) {
   }
 
   // BRANCH: AFAF stuck — recent actual single is meaningfully below PR E1RM, 6m progress is small
-  const todayYmd2 = new Date().toISOString().slice(0, 10);
+  const todayYmd2 = getLocalYmdDaysAgo(0);
   const singleIsRecent = single && daysBetween(todayYmd2, single.date) <= 365;
   const meaningfulGapLb = isMetric ? 5 : 5; // ~2.5 kg
   const smallProgressLb = isMetric ? 11 : 11; // ~5 kg
@@ -938,12 +938,10 @@ function PlateMilestonesMain({ relatedArticles }) {
   const liftStats = useMemo(() => {
     if (!parsedData?.length || dataSource === "demo" || !usingUserData) return null;
 
-    const now = new Date();
-    const ymd = (date) => date.toISOString().slice(0, 10);
-    const cutoff1M = ymd(new Date(now.getTime() - 30 * 86400000));
-    const cutoff6M = ymd(new Date(now.getTime() - 183 * 86400000));
-    const cutoff1Y = ymd(new Date(now.getTime() - 365 * 86400000));
-    const todayStr = ymd(now);
+    const cutoff1M = getLocalYmdDaysAgo(30);
+    const cutoff6M = getLocalYmdDaysAgo(183);
+    const cutoff1Y = getLocalYmdDaysAgo(365);
+    const todayStr = getLocalYmdDaysAgo(0);
 
     const result = {};
 
@@ -1198,72 +1196,21 @@ function PlateMilestonesMain({ relatedArticles }) {
   const liftTimelines = useMemo(() => {
     if (!parsedData?.length || dataSource === "demo" || !usingUserData) return null;
 
-    const WINDOW_DAYS = 90;
     const timelines = {};
 
     for (const milestone of MILESTONES) {
-      const entries = [];
-      for (const d of parsedData) {
-        if (
-          d.liftType !== milestone.liftType ||
-          d.isGoal ||
-          d.reps <= 0 ||
-          d.weight <= 0
-        )
-          continue;
-        entries.push({
-          ms: new Date(d.date).getTime(),
-          weightLb: toLb(d.weight, d.unitType),
-          reps: d.reps,
-        });
-      }
-      entries.sort((a, b) => a.ms - b.ms);
-      if (entries.length < 2) continue;
-
-      const firstMs = entries[0].ms;
-      const lastMs = entries[entries.length - 1].ms;
-      const spanDays = (lastMs - firstMs) / 86400000;
-
-      let intervalDays;
-      if (spanDays <= 180) intervalDays = 7;
-      else if (spanDays <= 730) intervalDays = 14;
-      else intervalDays = 30;
-
-      const sampleTimestamps = [];
-      let cursorMs = firstMs + WINDOW_DAYS * 86400000;
-      while (cursorMs <= lastMs) {
-        sampleTimestamps.push(cursorMs);
-        cursorMs += intervalDays * 86400000;
-      }
-      if (
-        sampleTimestamps.length === 0 ||
-        (lastMs - sampleTimestamps[sampleTimestamps.length - 1]) / 86400000 > 7
-      ) {
-        sampleTimestamps.push(lastMs);
-      }
-      if (sampleTimestamps.length < 2) continue;
-
       const points = [];
-      for (const sampleMs of sampleTimestamps) {
-        const cutoff = sampleMs - WINDOW_DAYS * 86400000;
-        let bestE1rm = 0;
-
-        for (const entry of entries) {
-          if (entry.ms > sampleMs) break;
-          if (entry.ms < cutoff) continue;
-          const e1rm =
-            entry.reps === 1
-              ? entry.weightLb
-              : estimateE1RM(entry.reps, entry.weightLb, e1rmFormula);
-          if (e1rm > bestE1rm) bestE1rm = e1rm;
-        }
-
-        if (bestE1rm === 0) continue;
-
+      for (const { date, bests } of sampleRollingBestE1RMs(
+        parsedData,
+        [milestone.liftType],
+        { e1rmFormula },
+      )) {
+        const best = bests[milestone.liftType];
+        if (!best) continue;
         points.push({
-          date: new Date(sampleMs).toISOString().slice(0, 10),
-          timestamp: sampleMs,
-          e1rm: Math.round(bestE1rm),
+          date,
+          timestamp: new Date(date).getTime(),
+          e1rm: Math.round(toLb(best.bestE1RMWeight, best.unitType)),
         });
       }
 

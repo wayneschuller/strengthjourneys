@@ -54,7 +54,9 @@ import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { findBestE1RM } from "@/lib/processing-utils";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { getLocalYmdDaysAgo } from "@/lib/date-utils";
+import { findBestE1RMInWindow } from "@/lib/lift-bests";
+import { LB_PER_KG, toLb } from "@/lib/weight-units";
 
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
@@ -323,9 +325,8 @@ export default function StrengthClubCalculator({ relatedArticles }) {
 }
 
 // Helpers: dual lb/kg display (lb-primary, same as 1000lb club)
-const KG_PER_LB = 0.453592;
+const KG_PER_LB = 1 / LB_PER_KG;
 const toKgF = (lbs) => (Number(lbs) * KG_PER_LB).toFixed(1);
-const toLb = (weight, unitType) => (unitType === "lb" ? weight : weight * 2.2046);
 const roundTo5 = (value) => Math.round(value / 5) * 5;
 const clampLbToMax = (value, max) => Math.min(max, Math.max(0, roundTo5(value)));
 const formatFullDate = (dateStr) => {
@@ -486,9 +487,7 @@ function StrengthClubMain({ relatedArticles }) {
   const hasExplicitQueryRef = useRef(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [activeLiftKey, setActiveLiftKey] = useState(null);
-  const [recent90dCutoffDate] = useState(() =>
-    new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10),
-  );
+  const [recent90dCutoffDate] = useState(() => getLocalYmdDaysAgo(90));
 
   const [press, setPress, pressIsDefault, , pressIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
@@ -618,29 +617,15 @@ function StrengthClubMain({ relatedArticles }) {
   const recent90dData = useMemo(() => {
     if (!prWeightsLb || !parsedData?.length || dataSource === "demo") return null;
 
-    const liftKeyByType = Object.fromEntries(
-      MILESTONES.map((milestone) => [milestone.liftType, milestone.key]),
-    );
-    const best = Object.fromEntries(
-      MILESTONES.map((milestone) => [milestone.key, 0]),
-    );
-    const bestEntry = Object.fromEntries(
-      MILESTONES.map((milestone) => [milestone.key, null]),
-    );
-
-    for (const entry of parsedData) {
-      const key = liftKeyByType[entry.liftType];
-      if (!key || entry.isGoal || entry.reps <= 0 || entry.weight <= 0) continue;
-      if (entry.date < recent90dCutoffDate) continue;
-      const weightLb = toLb(entry.weight, entry.unitType);
-      const e1rm =
-        entry.reps === 1
-          ? weightLb
-          : estimateE1RM(entry.reps, weightLb, e1rmFormula);
-      if (e1rm > best[key]) {
-        best[key] = e1rm;
-        bestEntry[key] = entry;
-      }
+    const best = {};
+    const bestEntry = {};
+    for (const milestone of MILESTONES) {
+      const found = findBestE1RMInWindow(parsedData, milestone.liftType, {
+        sinceDate: recent90dCutoffDate,
+        e1rmFormula,
+      });
+      best[milestone.key] = toLb(found.bestE1RMWeight, found.unitType);
+      bestEntry[milestone.key] = found.bestLift;
     }
 
     const weights = Object.fromEntries(

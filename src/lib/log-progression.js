@@ -5,6 +5,7 @@
  * weight (6@125kg after 5@125kg), and counts how many sessions in a row the
  * lift has kept doing it.
  */
+import { toKg } from "@/lib/weight-units";
 
 // The bar is set by this many recent sessions, not just the last one. Plenty
 // of programs wave the load within a week (heavy/light, or heavy/light/medium
@@ -114,10 +115,6 @@ function hashPhraseSeed(seed) {
     hash = (hash * 31 + seed.charCodeAt(i)) | 0;
   }
   return Math.abs(hash);
-}
-
-function toKg(weight, unitType) {
-  return unitType === "lb" ? weight / 2.2046 : weight;
 }
 
 function daysBetween(fromYmd, toYmd) {

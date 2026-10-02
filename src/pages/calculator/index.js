@@ -46,6 +46,7 @@ import { calculatePlateBreakdown } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/plate-diagram";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { LB_PER_KG, toKg, unitTypeFor } from "@/lib/weight-units";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { buildLiftResultSummary, formatLiftResultText } from "@/lib/lift-result-summary";
@@ -434,13 +435,13 @@ export function E1RMCalculatorMain({
 
     if (!isMetric) {
       // Going from kg to lb
-      newWeight = Math.round(weight * 2.2046);
-      newBodyWeight = Math.round(bodyWeight * 2.2046);
+      newWeight = Math.round(weight * LB_PER_KG);
+      newBodyWeight = Math.round(bodyWeight * LB_PER_KG);
       setIsMetric(false);
     } else {
       // Going from lb to kg
-      newWeight = Math.round(weight / 2.2046);
-      newBodyWeight = Math.round(bodyWeight / 2.2046);
+      newWeight = Math.round(weight / LB_PER_KG);
+      newBodyWeight = Math.round(bodyWeight / LB_PER_KG);
       setIsMetric(true);
     }
 
@@ -480,8 +481,8 @@ export function E1RMCalculatorMain({
     let sharePercentiles = null;
     const pctKey = bigFourName ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName] : null;
     if (hasBio && pctKey) {
-      const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
-      const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+      const bwKg = toKg(bodyWeight, unitTypeFor(isMetric));
+      const e1rmKg = toKg(e1rmWeight, unitTypeFor(isMetric));
       sharePercentiles = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);
     }
 
@@ -610,7 +611,7 @@ export function E1RMCalculatorMain({
   const plateBreakdown = calculatePlateBreakdown(e1rmWeight, plateBarWeight, isMetric, storedPlatePreference);
   const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
   const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
-  const calculatorE1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+  const calculatorE1rmKg = toKg(e1rmWeight, unitTypeFor(isMetric));
   const circlesLiftType = forceLift ? (LIFT_SLUG_TO_BIG_FOUR[forceLift] ?? forceLift) : null;
 
   return (
@@ -1156,8 +1157,8 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   const percentileKey = bigFourName ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName] : null;
   const percentiles = useMemo(() => {
     if (!percentileKey || bioDataIsDefault || !bodyWeight || !e1rmWeight) return null;
-    const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
-    const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+    const bwKg = toKg(bodyWeight, unitTypeFor(isMetric));
+    const e1rmKg = toKg(e1rmWeight, unitTypeFor(isMetric));
     return getLiftPercentiles(age, bwKg, sex, percentileKey, e1rmKg);
   }, [percentileKey, bioDataIsDefault, bodyWeight, e1rmWeight, isMetric, age, sex]);
   const gymGoerPercentile = percentiles?.["Gym-Goers"];
@@ -1706,8 +1707,8 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   // Pre-compute percentiles for all supported lifts, including strict press.
   const liftPercentiles = useMemo(() => {
     if (bioDataIsDefault || !bodyWeight || !e1rmWeight) return {};
-    const bwKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
-    const e1rmKg = isMetric ? e1rmWeight : e1rmWeight / 2.2046;
+    const bwKg = toKg(bodyWeight, unitTypeFor(isMetric));
+    const e1rmKg = toKg(e1rmWeight, unitTypeFor(isMetric));
     const out = {};
     for (const [bigFourName, pctKey] of Object.entries(LIFT_TYPE_TO_PERCENTILE_KEY)) {
       out[bigFourName] = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);

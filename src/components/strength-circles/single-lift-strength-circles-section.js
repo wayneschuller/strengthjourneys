@@ -23,7 +23,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { findBestE1RMInWindow, sampleRollingBestE1RMs } from "@/lib/lift-bests";
+import { convertWeight, toKg, unitTypeFor } from "@/lib/weight-units";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { getLiftPercentiles } from "@/lib/strength-circles/universe-percentiles";
@@ -104,29 +105,8 @@ export function SingleLiftStrengthCirclesSection({
       return DEFAULT_E1RM_KG[liftType] ?? 0;
     }
 
-    let best = 0;
-    for (const entry of parsedData) {
-      if (
-        entry.liftType !== liftType ||
-        entry.isGoal ||
-        !entry.date ||
-        entry.reps <= 0 ||
-        entry.weight <= 0
-      ) {
-        continue;
-      }
-
-      const weightKg =
-        entry.unitType === "kg" ? entry.weight : entry.weight / 2.2046;
-      const e1rmKg =
-        entry.reps === 1
-          ? weightKg
-          : estimateE1RM(entry.reps, weightKg, e1rmFormula);
-
-      if (e1rmKg > best) best = e1rmKg;
-    }
-
-    return best;
+    const best = findBestE1RMInWindow(parsedData, liftType, { e1rmFormula });
+    return toKg(best.bestE1RMWeight, best.unitType);
   }, [e1rmFormula, e1rmKgOverride, dataSource, liftType, parsedData]);
 
   const currentPercentiles = useMemo(() => {
@@ -140,7 +120,7 @@ export function SingleLiftStrengthCirclesSection({
       return null;
     }
 
-    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+    const bodyWeightKg = toKg(bodyWeight, unitTypeFor(isMetric));
     return getLiftPercentiles(
       age,
       bodyWeightKg,
@@ -163,75 +143,22 @@ export function SingleLiftStrengthCirclesSection({
       return null;
     }
 
-    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+    const bodyWeightKg = toKg(bodyWeight, unitTypeFor(isMetric));
     const gender = sex === "female" ? "female" : "male";
     const today = new Date();
 
-    const liftEntries = parsedData
-      .filter(
-        (entry) =>
-          entry.liftType === liftType &&
-          !entry.isGoal &&
-          entry.reps > 0 &&
-          entry.weight > 0 &&
-          entry.date,
-      )
-      .map((entry) => {
-        const weightKg =
-          entry.unitType === "kg" ? entry.weight : entry.weight / 2.2046;
-        return {
-          date: entry.date,
-          // Parse and estimate once up front — the sampling loop below is
-          // O(samples × entries) and a long history makes that expensive.
-          ms: new Date(entry.date).getTime(),
-          e1rmKg:
-            entry.reps === 1
-              ? weightKg
-              : estimateE1RM(entry.reps, weightKg, e1rmFormula),
-        };
-      })
-      .sort((a, b) => a.ms - b.ms);
-
-    if (liftEntries.length < 2) return null;
-
-    const firstDate = new Date(liftEntries[0].date);
-    const lastDate = new Date(liftEntries[liftEntries.length - 1].date);
-    const spanDays = (lastDate - firstDate) / 86400000;
-
-    let intervalDays;
-    if (spanDays <= 180) intervalDays = 7;
-    else if (spanDays <= 730) intervalDays = 14;
-    else intervalDays = 30;
-
-    const samples = [];
-    const cursor = new Date(firstDate);
-    cursor.setDate(cursor.getDate() + WINDOW_DAYS);
-    while (cursor <= lastDate) {
-      samples.push(new Date(cursor));
-      cursor.setDate(cursor.getDate() + intervalDays);
-    }
-    if (
-      samples.length === 0 ||
-      (lastDate - samples[samples.length - 1]) / 86400000 > 7
-    ) {
-      samples.push(new Date(lastDate));
-    }
-
+    const samples = sampleRollingBestE1RMs(parsedData, [liftType], {
+      windowDays: WINDOW_DAYS,
+      e1rmFormula,
+    });
     if (samples.length < 2) return null;
 
     const points = [];
-    for (const sampleDate of samples) {
-      const sampleMs = sampleDate.getTime();
-      const cutoffMs = sampleMs - WINDOW_DAYS * 86400000;
-      let bestSampleE1rmKg = 0;
-
-      for (const entry of liftEntries) {
-        if (entry.ms > sampleMs) break;
-        if (entry.ms < cutoffMs) continue;
-        if (entry.e1rmKg > bestSampleE1rmKg) bestSampleE1rmKg = entry.e1rmKg;
-      }
-
-      if (bestSampleE1rmKg <= 0) continue;
+    for (const { date, bests } of samples) {
+      const best = bests[liftType];
+      if (!best) continue;
+      const bestSampleE1rmKg = toKg(best.bestE1RMWeight, best.unitType);
+      const sampleDate = new Date(date);
 
       // Score each point against the athlete they were then, not the athlete
       // they are now — the strength standards are age-adjusted, so using
@@ -252,7 +179,7 @@ export function SingleLiftStrengthCirclesSection({
       if (!pointPercentiles?.["General Population"]) continue;
 
       points.push({
-        date: sampleDate.toISOString().slice(0, 10),
+        date,
         e1rmKg: bestSampleE1rmKg,
         ...pointPercentiles,
       });
@@ -376,7 +303,7 @@ function TimelineTooltip({
   if (!active || !payload?.length) return null;
 
   const point = payload[0].payload;
-  const weight = isMetric ? point.e1rmKg : point.e1rmKg * 2.2046;
+  const weight = convertWeight(point.e1rmKg, "kg", unitTypeFor(isMetric));
 
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-popover-foreground shadow-md">

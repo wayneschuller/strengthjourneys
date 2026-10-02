@@ -31,6 +31,7 @@ import {
 import { getStrengthLevelsPath } from "@/lib/lifts/lift-registry";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { cn } from "@/lib/utils";
+import { LB_PER_KG, toKg, unitTypeFor } from "@/lib/weight-units";
 
 const STORY_LIFTS = [
   {
@@ -147,7 +148,7 @@ export function HowStrongStoryPanel({
   const displayPercentile = chartPercentiles?.[activeUniverse];
   // 1000lb club is a pounds milestone even when the page is showing kg.
   const thousandClubLabel = getThousandClubLabel(
-    Math.round(isMetric ? total * 2.2046 : total),
+    Math.round(isMetric ? total * LB_PER_KG : total),
   );
   const showStoryHeader =
     hasMovedFromPR || hasMovedFrom90d || usingUserData;
@@ -313,7 +314,7 @@ export function HowStrongStoryPanel({
               const rating =
                 showRating && liftResult?.standard
                   ? getStrengthRatingForE1RM(
-                      toKg(liftWeights[key], isMetric),
+                      toKg(liftWeights[key], unitTypeFor(isMetric)),
                       liftResult.standard,
                     )
                   : null;
@@ -653,10 +654,6 @@ function normalizeLiftWeight(weight, isMetric) {
   return Math.min(Math.max(rounded, min), max);
 }
 
-function toKg(weight, isMetric) {
-  return isMetric ? weight : weight / 2.2046;
-}
-
 function getThousandClubLabel(totalLb) {
   if (totalLb >= 1000) return "In the 1000lb club";
   if (totalLb >= 900) return "You are approaching the 1000lb club!";
@@ -671,7 +668,7 @@ function getThousandClubHref(liftWeights, isMetric) {
   const exactLb = Object.fromEntries(
     keys.map((key) => [
       key,
-      isMetric ? liftWeights[key] * 2.2046 : liftWeights[key],
+      isMetric ? liftWeights[key] * LB_PER_KG : liftWeights[key],
     ]),
   );
   const clubLb = Object.fromEntries(

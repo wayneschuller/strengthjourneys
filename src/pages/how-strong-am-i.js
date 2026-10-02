@@ -43,7 +43,9 @@ import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { getRelatedArticles } from "@/lib/articles";
 import { findBestE1RM } from "@/lib/processing-utils";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { getLocalYmdDaysAgo } from "@/lib/date-utils";
+import { findBestE1RMInWindow, sampleRollingBestE1RMs } from "@/lib/lift-bests";
+import { convertWeight, toKg, unitTypeFor } from "@/lib/weight-units";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, getFirstQueryValue, parseQueryNumber } from "@/lib/share-url";
@@ -239,10 +241,16 @@ function HowStrongAmIPageMain() {
     dataSource,
   } = useUserLiftingData();
 
+  // The lifter's chosen e1RM formula. Every number on this page that comes
+  // from the log uses it, so the markers, the story and the timeline agree
+  // with each other and with the calculator.
+  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false });
+  const e1rmFormula = storedFormula ?? "Brzycki";
+
   const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
-    squat: toKg(225, false),
-    bench: toKg(155, false),
-    deadlift: toKg(265, false),
+    squat: toKg(225, "lb"),
+    bench: toKg(155, "lb"),
+    deadlift: toKg(265, "lb"),
   }));
   const [queryHydrated, setQueryHydrated] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -266,7 +274,7 @@ function HowStrongAmIPageMain() {
     const queryWeights = {};
     for (const lift of LIFTS) {
       const value = parseQueryNumber(router.query[lift.key], { min: 1 });
-      if (value !== null) queryWeights[lift.key] = toKg(value, isMetric);
+      if (value !== null) queryWeights[lift.key] = toKg(value, unitTypeFor(isMetric));
     }
 
     if (Object.keys(queryWeights).length > 0) {
@@ -307,19 +315,16 @@ function HowStrongAmIPageMain() {
   const prWeightsKg = useMemo(() => {
     if (!topLiftsByTypeAndReps || dataSource === "demo") return null;
 
-    const toKgFromUnit = (weight, unitType) =>
-      unitType === "kg" ? weight : weight / 2.2046;
-
     const best = {};
     for (const { key, label } of LIFTS) {
-      const found = findBestE1RM(label, topLiftsByTypeAndReps, "Brzycki");
+      const found = findBestE1RM(label, topLiftsByTypeAndReps, e1rmFormula);
       best[key] = found.bestE1RMWeight
-        ? toKgFromUnit(found.bestE1RMWeight, found.unitType)
+        ? toKg(found.bestE1RMWeight, found.unitType)
         : null;
     }
 
     return LIFTS.some(({ key }) => best[key] != null) ? best : null;
-  }, [topLiftsByTypeAndReps, dataSource]);
+  }, [topLiftsByTypeAndReps, dataSource, e1rmFormula]);
 
   // True once the log has given us real PRs to compare against, which is what
   // every "from your log" affordance on this page keys off.
@@ -347,7 +352,7 @@ function HowStrongAmIPageMain() {
       display[key] =
         prWeightsKg[key] != null
           ? normalizeLiftWeight(
-              convertWeight(prWeightsKg[key], true, isMetric),
+              convertWeight(prWeightsKg[key], "kg", unitTypeFor(isMetric)),
               isMetric,
             )
           : null;
@@ -359,26 +364,19 @@ function HowStrongAmIPageMain() {
   const recent90dKg = useMemo(() => {
     if (!prWeightsKg || !parsedData?.length || dataSource === "demo") return null;
 
-    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
-    const cutoffDate = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
-
-    const bestKg = { squat: 0, bench: 0, deadlift: 0 };
-
-    for (const d of parsedData) {
-      const k = SBD_TYPES[d.liftType];
-      if (!k || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
-      if (d.date < cutoffDate) continue;
-      const wKg = d.unitType === "kg" ? d.weight : d.weight / 2.2046;
-      const e1rm = d.reps === 1 ? wKg : estimateE1RM(d.reps, wKg, "Brzycki");
-      if (e1rm > bestKg[k]) bestKg[k] = e1rm;
+    const sinceDate = getLocalYmdDaysAgo(90);
+    const recent = {};
+    for (const { key, label } of LIFTS) {
+      const found = findBestE1RMInWindow(parsedData, label, {
+        sinceDate,
+        e1rmFormula,
+      });
+      recent[key] = found.bestE1RMWeight
+        ? toKg(found.bestE1RMWeight, found.unitType)
+        : null;
     }
-
-    return {
-      squat: bestKg.squat > 0 ? bestKg.squat : null,
-      bench: bestKg.bench > 0 ? bestKg.bench : null,
-      deadlift: bestKg.deadlift > 0 ? bestKg.deadlift : null,
-    };
-  }, [prWeightsKg, parsedData, dataSource]);
+    return recent;
+  }, [prWeightsKg, parsedData, dataSource, e1rmFormula]);
 
   // Only worth a marker when a recent best sits somewhere other than the PR
   const recent90dDisplay = useMemo(() => {
@@ -392,13 +390,13 @@ function HowStrongAmIPageMain() {
         continue;
       }
       const displayVal = normalizeLiftWeight(
-        convertWeight(recent90dKg[key], true, isMetric),
+        convertWeight(recent90dKg[key], "kg", unitTypeFor(isMetric)),
         isMetric,
       );
       const prDisplay =
         prWeightsKg[key] != null
           ? normalizeLiftWeight(
-              convertWeight(prWeightsKg[key], true, isMetric),
+              convertWeight(prWeightsKg[key], "kg", unitTypeFor(isMetric)),
               isMetric,
             )
           : null;
@@ -417,9 +415,9 @@ function HowStrongAmIPageMain() {
     const liftStories = {};
 
     for (const [key, liftType] of Object.entries(allTimeLookup)) {
-      const allTime = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
+      const allTime = findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula);
       const lastYear = topLiftsByTypeAndRepsLast12Months
-        ? findBestE1RM(liftType, topLiftsByTypeAndRepsLast12Months, "Brzycki")
+        ? findBestE1RM(liftType, topLiftsByTypeAndRepsLast12Months, e1rmFormula)
         : null;
 
       if (!allTime.bestE1RMWeight) continue;
@@ -457,7 +455,7 @@ function HowStrongAmIPageMain() {
       totalSessions,
       liftCount: Object.keys(liftStories).length,
     };
-  }, [usingUserData, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, parsedData]);
+  }, [usingUserData, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, parsedData, e1rmFormula]);
 
   const liftWeights = useMemo(
     () => convertLiftWeights(liftWeightsKg, true, isMetric),
@@ -466,7 +464,7 @@ function HowStrongAmIPageMain() {
 
   const handleLiftChange = (key, value) => {
     setHasInteracted(true);
-    setLiftWeightsKg((prev) => ({ ...prev, [key]: toKg(value, isMetric) }));
+    setLiftWeightsKg((prev) => ({ ...prev, [key]: toKg(value, unitTypeFor(isMetric)) }));
   };
 
   const handleUniverseChange = (value) => {
@@ -524,7 +522,7 @@ function HowStrongAmIPageMain() {
   });
 
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
-  const bodyWeightKg = toKg(bodyWeight, isMetric);
+  const bodyWeightKg = toKg(bodyWeight, unitTypeFor(isMetric));
 
   const results = useMemo(
     () => computeStrengthResults({ age, sex, bodyWeightKg }, liftWeightsKg),
@@ -547,90 +545,34 @@ function HowStrongAmIPageMain() {
     return out;
   }, [results]);
 
-  // User's preferred E1RM formula from localStorage
-  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false });
-  const e1rmFormula = storedFormula ?? "Brzycki";
-
   // Compute percentile timeline from training history
   const percentileTimeline = useMemo(() => {
     if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
 
-    const SBD_TYPES = { "Back Squat": "squat", "Bench Press": "bench", Deadlift: "deadlift" };
-    const WINDOW_DAYS = 90;
-
-    // Filter to SBD lifts, convert weights to kg, sort by date
-    const sbdEntries = parsedData
-      .filter((d) => SBD_TYPES[d.liftType] && !d.isGoal && d.reps > 0 && d.weight > 0)
-      .map((d) => ({
-        date: d.date,
-        key: SBD_TYPES[d.liftType],
-        weightKg: d.unitType === "kg" ? d.weight : d.weight / 2.2046,
-        reps: d.reps,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    if (sbdEntries.length < 2) return null;
-
-    const firstDate = new Date(sbdEntries[0].date);
-    const lastDate = new Date(sbdEntries[sbdEntries.length - 1].date);
-    const spanDays = (lastDate - firstDate) / 86400000;
-
-    // Decide sample interval based on career length
-    let intervalDays;
-    if (spanDays <= 180) intervalDays = 7;        // weekly for < 6mo
-    else if (spanDays <= 730) intervalDays = 14;   // biweekly for < 2yr
-    else intervalDays = 30;                         // monthly for 2yr+
-
-    // Generate sample dates
-    const samples = [];
-    const cursor = new Date(firstDate);
-    // Start first sample at least 90 days in so we have data to look back on
-    cursor.setDate(cursor.getDate() + WINDOW_DAYS);
-    while (cursor <= lastDate) {
-      samples.push(new Date(cursor));
-      cursor.setDate(cursor.getDate() + intervalDays);
-    }
-    // Always include the final date if not already close
-    if (samples.length === 0 || (lastDate - samples[samples.length - 1]) / 86400000 > 7) {
-      samples.push(new Date(lastDate));
-    }
-
+    const samples = sampleRollingBestE1RMs(
+      parsedData,
+      LIFTS.map(({ label }) => label),
+      { e1rmFormula },
+    );
     if (samples.length < 2) return null;
 
     const bio = { age, sex, bodyWeightKg };
     const points = [];
 
-    for (const sampleDate of samples) {
-      const sampleMs = sampleDate.getTime();
-      const cutoff = sampleMs - WINDOW_DAYS * 86400000;
+    for (const { date, bests } of samples) {
+      // Need all 3 lifts for SBD total percentile
+      if (LIFTS.some(({ label }) => !bests[label])) continue;
 
-      const bestE1rm = { squat: null, bench: null, deadlift: null };
-
-      for (const key of ["squat", "bench", "deadlift"]) {
-        let best = 0;
-        for (const entry of sbdEntries) {
-          const entryMs = new Date(entry.date).getTime();
-          if (entryMs > sampleMs) break;
-          if (entryMs < cutoff || entry.key !== key) continue;
-          const e1rm = entry.reps === 1
-            ? entry.weightKg
-            : estimateE1RM(entry.reps, entry.weightKg, e1rmFormula);
-          if (e1rm > best) best = e1rm;
-        }
-        if (best > 0) bestE1rm[key] = best;
+      const bestE1rmKg = {};
+      for (const { key, label } of LIFTS) {
+        bestE1rmKg[key] = toKg(bests[label].bestE1RMWeight, bests[label].unitType);
       }
 
-      // Need all 3 lifts for SBD total percentile
-      if (bestE1rm.squat == null || bestE1rm.bench == null || bestE1rm.deadlift == null) continue;
-
-      const result = computeStrengthResults(bio, bestE1rm);
+      const result = computeStrengthResults(bio, bestE1rmKg);
       const allPcts = result.total?.percentiles;
       if (!allPcts?.["General Population"]) continue;
 
-      points.push({
-        date: sampleDate.toISOString().slice(0, 10),
-        ...allPcts,
-      });
+      points.push({ date, ...allPcts });
     }
 
     return points.length >= 2 ? points : null;
@@ -776,16 +718,6 @@ function HowStrongAmIPageMain() {
   );
 }
 
-function toKg(weight, isMetric) {
-  return isMetric ? weight : weight / 2.2046;
-}
-
-
-function convertWeight(weight, fromMetric, toMetric) {
-  if (fromMetric === toMetric) return weight;
-  return toMetric ? weight / 2.2046 : weight * 2.2046;
-}
-
 function roundToStep(value, step) {
   return Math.round(value / step) * step;
 }
@@ -805,15 +737,15 @@ function normalizeLiftWeight(weight, isMetric) {
 function convertLiftWeights(liftWeights, fromMetric, toMetric) {
   return {
     squat: normalizeLiftWeight(
-      convertWeight(liftWeights.squat, fromMetric, toMetric),
+      convertWeight(liftWeights.squat, unitTypeFor(fromMetric), unitTypeFor(toMetric)),
       toMetric,
     ),
     bench: normalizeLiftWeight(
-      convertWeight(liftWeights.bench, fromMetric, toMetric),
+      convertWeight(liftWeights.bench, unitTypeFor(fromMetric), unitTypeFor(toMetric)),
       toMetric,
     ),
     deadlift: normalizeLiftWeight(
-      convertWeight(liftWeights.deadlift, fromMetric, toMetric),
+      convertWeight(liftWeights.deadlift, unitTypeFor(fromMetric), unitTypeFor(toMetric)),
       toMetric,
     ),
   };
@@ -841,12 +773,7 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
   if (liftCount >= 3) {
     const unit = isMetric ? "kg" : "lb";
     const total = Object.values(liftStories).reduce((sum, ls) => {
-      const w = ls.unitType === "lb" && isMetric
-        ? ls.allTimeE1RM / 2.2046
-        : ls.unitType === "kg" && !isMetric
-          ? ls.allTimeE1RM * 2.2046
-          : ls.allTimeE1RM;
-      return sum + Math.round(w);
+      return sum + Math.round(convertWeight(ls.allTimeE1RM, ls.unitType, unit));
     }, 0);
     threeLiftTotal = `${total}${unit}`;
   }

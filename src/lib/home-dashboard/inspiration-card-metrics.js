@@ -8,6 +8,7 @@ import {
 
 import { addDaysFromStr, getWeekKeyFromDateStr, subtractDaysFromStr } from "@/lib/date-utils";
 import { JOURNEY_COMPLIMENT_POOLS } from "@/lib/home-dashboard/inspiration-card-copy";
+import { LB_PER_KG } from "@/lib/weight-units";
 
 export function formatJourneyLength(startDate) {
   const today = new Date();
@@ -142,8 +143,7 @@ export function calculateLifetimeTonnageFromLookup(
   const primaryUnit = preferredUnit || unitKeys[0] || "lb";
 
   let primaryTotal = 0;
-  const KG_PER_LB = 1 / 2.2046;
-  const LB_PER_KG = 2.2046;
+  const KG_PER_LB = 1 / LB_PER_KG;
 
   unitKeys.forEach((unit) => {
     const value = totalByUnit[unit] ?? 0;

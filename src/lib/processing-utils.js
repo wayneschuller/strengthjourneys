@@ -5,6 +5,7 @@
  */
 import { format } from "date-fns";
 import { estimateE1RM, estimateLiftE1RM } from "@/lib/estimate-e1rm";
+import { LB_PER_KG, toKg } from "@/lib/weight-units";
 import {
   BIG_FOUR_LIFT_TYPES as CANONICAL_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/lifts/lift-registry";
@@ -66,11 +67,11 @@ export function getDisplayWeight(lift, isMetric) {
     // Preferred unit matches native unit — return exact value, no rounding
     return { value: lift.weight, unit: lift.unitType };
   }
-  const kg = nativeIsKg ? lift.weight : lift.weight / 2.2046;
+  const kg = toKg(lift.weight, lift.unitType);
   if (isMetric) {
     return { value: Math.round(kg * 10) / 10, unit: "kg" };
   }
-  return { value: Math.round(kg * 2.2046 * 10) / 10, unit: "lb" };
+  return { value: Math.round(kg * LB_PER_KG * 10) / 10, unit: "lb" };
 }
 
 // ---------------------------------------------------------------------------
@@ -453,12 +454,16 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   });
 
   // Function to sort and trim arrays
-  // When weights are equal, earlier dates rank better (later warmups get trimmed)
+  // Ranked in kg so a log that mixes kg and lb rows still puts the heavier
+  // bar first. When weights are equal, earlier dates rank better (later
+  // warmups get trimmed)
   const sortAndTrimArrays = (dataStructure, maxEntries) => {
     Object.keys(dataStructure).forEach((liftType) => {
       dataStructure[liftType].forEach((repArray) => {
         repArray.sort((a, b) => {
-          if (b.weight !== a.weight) return b.weight - a.weight;
+          const aKg = toKg(a.weight, a.unitType);
+          const bKg = toKg(b.weight, b.unitType);
+          if (bKg !== aKg) return bKg - aKg;
           return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; // earlier date wins
         });
         if (repArray.length > maxEntries) {
@@ -824,8 +829,10 @@ export const markHigherWeightAsHistoricalPRs = (parsedData) => {
 
     const key = `${record.liftType}-${record.reps}`;
 
-    if (!bestRecordsMap[key] || record.weight > bestRecordsMap[key].weight) {
-      bestRecordsMap[key] = record;
+    // Compared in kg: 100kg beats 215lb even though 215 is the bigger number.
+    const weightKg = toKg(record.weight, record.unitType);
+    if (bestRecordsMap[key] === undefined || weightKg > bestRecordsMap[key]) {
+      bestRecordsMap[key] = weightKg;
       record.isHistoricalPR = true; // Directly set the property
     } else {
       record.isHistoricalPR = false; // Directly set the property
@@ -1112,6 +1119,7 @@ export function findBestE1RM(
 ) {
   const topLifts = topLiftsByTypeAndReps[liftType];
   let bestE1RMWeight = 0;
+  let bestE1RMKg = 0; // Rep buckets can hold different units, so rank in kg
   let bestLift = null;
   let unitType = "lb"; // Default to lb if not specified
 
@@ -1132,7 +1140,9 @@ export function findBestE1RM(
         bodyWeightUnitType: e1rmOptions.bodyWeightUnitType,
         liftUnitType: lift.unitType,
       });
-      if (currentE1RMweight > bestE1RMWeight) {
+      const currentE1RMKg = toKg(currentE1RMweight, lift.unitType);
+      if (currentE1RMKg > bestE1RMKg) {
+        bestE1RMKg = currentE1RMKg;
         bestE1RMWeight = currentE1RMweight;
         bestLift = lift;
         if (lift.unitType) unitType = lift.unitType;

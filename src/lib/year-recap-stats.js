@@ -25,6 +25,7 @@ import {
   getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
 import { getGradeAndColor, getTargetSessions } from "@/lib/consistency-grades";
+import { LB_PER_KG } from "@/lib/weight-units";
 
 // The consistency grade assumes a 3-sessions-per-week training habit.
 
@@ -160,8 +161,7 @@ export function computeTonnageForYear(parsedData, year, preferredUnit) {
     preferredUnit && unitKeys.includes(preferredUnit)
       ? preferredUnit
       : unitKeys[0] || "lb";
-  const KG_PER_LB = 1 / 2.2046;
-  const LB_PER_KG = 2.2046;
+  const KG_PER_LB = 1 / LB_PER_KG;
   let tonnage = tonnageByUnit[primaryUnit] ?? 0;
   unitKeys.forEach((u) => {
     if (u === primaryUnit) return;

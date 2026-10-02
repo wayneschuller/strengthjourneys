@@ -83,6 +83,16 @@ export function formatDateToYmdUtc(date) {
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * The lifter's own calendar day, `daysAgo` days back, as "YYYY-MM-DD".
+ * Reads the clock in LOCAL time: `new Date().toISOString()` is UTC and is a
+ * day off for much of the day in AU/Asia/Pacific, which shifts every
+ * "last 90 days" window that is compared against logged dates.
+ */
+export function getLocalYmdDaysAgo(daysAgo = 0) {
+  return subtractDaysFromStr(formatDateToYmdLocal(new Date()), daysAgo);
+}
+
 const READABLE_DAY_NAMES = [
   "Sunday",
   "Monday",

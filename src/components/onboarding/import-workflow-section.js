@@ -14,6 +14,7 @@ import {
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useReadLocalStorage } from "usehooks-ts";
 import {
   ArrowRight,
   AlertTriangle,
@@ -38,6 +39,8 @@ import { computeStrengthResults } from "@/lib/strength-circles/universe-percenti
 import { findBestE1RM } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { convertWeight, toKg, toLb, unitTypeFor } from "@/lib/weight-units";
 import {
   analyzeImportedEntries,
   deduplicateImportedEntries,
@@ -69,6 +72,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+
+// The lifter's chosen e1RM formula, so this preview agrees with the calculator
+// and every page it links to.
+function useStoredE1rmFormula() {
+  return (
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+      initializeWithValue: false,
+    }) ?? "Brzycki"
+  );
+}
 
 function clampFileName(rawName) {
   if (!rawName) return null;
@@ -192,6 +205,7 @@ function SinglePercentileRing({ percentile }) {
 
 function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
+  const e1rmFormula = useStoredE1rmFormula();
   const { topLiftsByTypeAndReps } = useUserLiftingData();
 
   const stats = useMemo(() => {
@@ -213,8 +227,7 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
   const strength = useMemo(() => {
     if (!topLiftsByTypeAndReps) return null;
 
-    const toKg = (w, unit) => (unit === "kg" ? w : w / 2.2046);
-    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
+    const bodyWeightKg = toKg(bodyWeight, unitTypeFor(isMetric));
     const liftKgs = {};
 
     for (const [key, liftType] of Object.entries({
@@ -222,7 +235,7 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
       bench: "Bench Press",
       deadlift: "Deadlift",
     })) {
-      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
+      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula);
       liftKgs[key] =
         best.bestE1RMWeight > 0
           ? toKg(best.bestE1RMWeight, best.unitType)
@@ -257,13 +270,11 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
       liftCount: pcts.length,
       liftLabels,
     };
-  }, [topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric]);
+  }, [topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric, e1rmFormula]);
 
   const thousandClub = useMemo(() => {
     if (!topLiftsByTypeAndReps) return null;
 
-    const toLb = (weight, unitType) =>
-      unitType === "lb" ? weight : weight * 2.2046;
     const sbdLifts = [
       ["Back Squat", "squat"],
       ["Bench Press", "bench"],
@@ -272,7 +283,7 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
     const liftTotals = {};
 
     for (const [liftType, key] of sbdLifts) {
-      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, "Brzycki");
+      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula);
       if (!best?.bestE1RMWeight || !best.unitType) return null;
       liftTotals[key] = Math.round(toLb(best.bestE1RMWeight, best.unitType));
     }
@@ -293,7 +304,7 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
       lifts: liftTotals,
       biggestOpportunity,
     };
-  }, [topLiftsByTypeAndReps]);
+  }, [topLiftsByTypeAndReps, e1rmFormula]);
 
   if (!stats) return null;
 
@@ -379,7 +390,7 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
                   Biggest opportunity:
                 </span>{" "}
                 Add ~{thousandClub.biggestOpportunity.gapLbs} lb (
-                {Math.round(thousandClub.biggestOpportunity.gapLbs * 0.453592)}{" "}
+                {Math.round(toKg(thousandClub.biggestOpportunity.gapLbs, "lb"))}{" "}
                 kg) to your {thousandClub.biggestOpportunity.lift.toLowerCase()}
                 .
               </p>
@@ -402,6 +413,7 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
 
 function ImportedDataOverview({ parsedData, label }) {
   const { age, bodyWeight, sex, isMetric } = useAthleteBio();
+  const e1rmFormula = useStoredE1rmFormula();
   const hasBio = age && bodyWeight && sex;
   const dailyHeatmapScrollRef = useRef(null);
 
@@ -460,7 +472,7 @@ function ImportedDataOverview({ parsedData, label }) {
         liftMap[e.liftType] = { count: 0, bestE1RM: 0, bestSet: null };
       }
       liftMap[e.liftType].count++;
-      const e1rm = estimateE1RM(e.reps, e.weight, "Brzycki");
+      const e1rm = estimateE1RM(e.reps, e.weight, e1rmFormula);
       if (e1rm > liftMap[e.liftType].bestE1RM) {
         liftMap[e.liftType].bestE1RM = e1rm;
         liftMap[e.liftType].bestSet = e;
@@ -475,14 +487,13 @@ function ImportedDataOverview({ parsedData, label }) {
         const needsConversion = bestSet.unitType !== preferredUnit;
         const displayWeight = needsConversion
           ? Math.round(
-              (preferredUnit === "kg"
-                ? bestSet.weight / 2.2046
-                : bestSet.weight * 2.2046) * 10,
+              convertWeight(bestSet.weight, bestSet.unitType, preferredUnit) *
+                10,
             ) / 10
           : bestSet.weight;
         const displayE1RM = needsConversion
           ? Math.round(
-              preferredUnit === "kg" ? bestE1RM / 2.2046 : bestE1RM * 2.2046,
+              convertWeight(bestE1RM, bestSet.unitType, preferredUnit),
             )
           : bestE1RM;
         return {
@@ -505,7 +516,7 @@ function ImportedDataOverview({ parsedData, label }) {
       bestStreakStart,
       topLifts,
     };
-  }, [parsedData, isMetric]);
+  }, [parsedData, isMetric, e1rmFormula]);
 
   const yearIntervals = useMemo(() => {
     if (!stats?.dateRange?.first || !stats?.dateRange?.last) return [];
@@ -532,7 +543,7 @@ function ImportedDataOverview({ parsedData, label }) {
 
   const buildCalcUrl = (reps, weight, unitType) => {
     const calcIsMetric = unitType === "kg";
-    return `/calculator?reps=${JSON.stringify(reps)}&weight=${JSON.stringify(weight)}&calcIsMetric=${JSON.stringify(calcIsMetric)}&formula=${JSON.stringify("Brzycki")}`;
+    return `/calculator?reps=${JSON.stringify(reps)}&weight=${JSON.stringify(weight)}&calcIsMetric=${JSON.stringify(calcIsMetric)}&formula=${JSON.stringify(e1rmFormula)}`;
   };
 
   return (

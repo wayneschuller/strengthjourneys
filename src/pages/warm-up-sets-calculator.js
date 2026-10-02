@@ -32,6 +32,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { LB_PER_KG } from "@/lib/weight-units";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
@@ -261,11 +262,11 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     let newWeight;
     if (!newIsMetric) {
       // Going from kg to lb
-      newWeight = Math.round(Number(weight) * 2.2046);
+      newWeight = Math.round(Number(weight) * LB_PER_KG);
       setIsMetric(false);
     } else {
       // Going from lb to kg
-      newWeight = Math.round(Number(weight) / 2.2046);
+      newWeight = Math.round(Number(weight) / LB_PER_KG);
       setIsMetric(true);
     }
     const newBarWeight = getDefaultBarbellWeight({

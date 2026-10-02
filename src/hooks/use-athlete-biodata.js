@@ -21,6 +21,7 @@ import {
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { LB_PER_KG } from "@/lib/weight-units";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -66,7 +67,7 @@ export function getStandardForLiftDate(
   const ageAtLift = Math.max(0, currentAge - yearsAgo);
   const bodyWeightKG = isMetric
     ? bodyWeight
-    : Math.round(bodyWeight / 2.2046);
+    : Math.round(bodyWeight / LB_PER_KG);
   const gender = sex === "female" ? "female" : "male";
   const standard = interpolateStandardKG(
     ageAtLift,
@@ -78,11 +79,11 @@ export function getStandardForLiftDate(
   if (!standard) return null;
   if (isMetric) return standard;
   return {
-    physicallyActive: Math.round(standard.physicallyActive * 2.2046),
-    beginner: Math.round(standard.beginner * 2.2046),
-    intermediate: Math.round(standard.intermediate * 2.2046),
-    advanced: Math.round(standard.advanced * 2.2046),
-    elite: Math.round(standard.elite * 2.2046),
+    physicallyActive: Math.round(standard.physicallyActive * LB_PER_KG),
+    beginner: Math.round(standard.beginner * LB_PER_KG),
+    intermediate: Math.round(standard.intermediate * LB_PER_KG),
+    advanced: Math.round(standard.advanced * LB_PER_KG),
+    elite: Math.round(standard.elite * LB_PER_KG),
   };
 }
 
@@ -434,7 +435,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   useEffect(() => {
     const bodyWeightKG = isMetric
       ? bodyWeight
-      : Math.round(bodyWeight / 2.2046);
+      : Math.round(bodyWeight / LB_PER_KG);
 
     const uniqueLiftNames = Array.from(
       new Set(LiftingStandardsKG.map((item) => item.liftType)),
@@ -454,11 +455,11 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
         newStandards[liftType] = standard || {};
       } else {
         newStandards[liftType] = {
-          physicallyActive: Math.round(standard?.physicallyActive * 2.2046),
-          beginner: Math.round(standard?.beginner * 2.2046),
-          intermediate: Math.round(standard?.intermediate * 2.2046),
-          advanced: Math.round(standard?.advanced * 2.2046),
-          elite: Math.round(standard?.elite * 2.2046),
+          physicallyActive: Math.round(standard?.physicallyActive * LB_PER_KG),
+          beginner: Math.round(standard?.beginner * LB_PER_KG),
+          intermediate: Math.round(standard?.intermediate * LB_PER_KG),
+          advanced: Math.round(standard?.advanced * LB_PER_KG),
+          elite: Math.round(standard?.elite * LB_PER_KG),
         };
       }
     });
@@ -536,11 +537,11 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
 
     if (!isMetric) {
       // Going from kg to lb
-      newBodyWeight = Math.round(bodyWeight * 2.2046);
+      newBodyWeight = Math.round(bodyWeight * LB_PER_KG);
       setIsMetric(false);
     } else {
       // Going from lb to kg
-      newBodyWeight = Math.round(bodyWeight / 2.2046);
+      newBodyWeight = Math.round(bodyWeight / LB_PER_KG);
       setIsMetric(true);
     }
 

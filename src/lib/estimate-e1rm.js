@@ -9,6 +9,7 @@ import {
   isBodyweightLoadLiftName,
   STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES,
 } from "@/lib/import/parsers/parser-utilities";
+import { convertWeight } from "@/lib/weight-units";
 
 // FIXME: add more formulae from the Wikipedia article?
 export const e1rmFormulae = [
@@ -23,20 +24,11 @@ export const e1rmFormulae = [
 
 export const BODYWEIGHT_LOAD_LIFT_TYPES = STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES;
 
-const LB_PER_KG = 2.2046;
-
-function normalizeUnitType(unitType) {
-  return unitType === "kg" ? "kg" : "lb";
-}
-
+// Bodyweight can arrive as a string from a form field, so guard before converting.
 function convertWeightUnit(weight, fromUnitType, toUnitType) {
   const numericWeight = Number(weight);
   if (!Number.isFinite(numericWeight)) return null;
-
-  const from = normalizeUnitType(fromUnitType);
-  const to = normalizeUnitType(toUnitType);
-  if (from === to) return numericWeight;
-  return from === "kg" ? numericWeight * LB_PER_KG : numericWeight / LB_PER_KG;
+  return convertWeight(numericWeight, fromUnitType, toUnitType);
 }
 
 export function isBodyweightLoadLift(liftType) {

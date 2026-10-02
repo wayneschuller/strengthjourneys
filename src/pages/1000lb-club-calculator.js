@@ -13,7 +13,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/articles/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { ImportDataOwnershipPromo } from "@/components/import-data-ownership-promo";
-import { getLongReadableDateString } from "@/lib/date-utils";
+import { getLocalYmdDaysAgo, getLongReadableDateString } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
@@ -73,7 +73,8 @@ import { ThousandDonut } from "@/components/thousand-club-donut";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { findBestE1RM } from "@/lib/processing-utils";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { findBestE1RMInWindow, sampleRollingBestE1RMs } from "@/lib/lift-bests";
+import { LB_PER_KG, toLb } from "@/lib/weight-units";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
@@ -293,8 +294,12 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
 }
 
 // Helpers: dual lb/kg display (1000lb club is lb-primary)
-const toKg = (lbs) => (lbs * 0.453592).toFixed(1);
-const KG_PER_LB = 0.453592;
+const KG_PER_LB = 1 / LB_PER_KG;
+const SBD_KEYS = {
+  "Back Squat": "squat",
+  "Bench Press": "bench",
+  Deadlift: "deadlift",
+};
 
 function buildE1RMSource(result) {
   const lift = result?.bestLift;
@@ -454,17 +459,14 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
     hasAutoPopulatedRef.current = true;
 
-    const toLbs = (weight, unitType) =>
-      unitType === "lb" ? weight : weight * 2.2046;
-
     const prSquat = sq.bestE1RMWeight
-      ? clampLb(toLbs(sq.bestE1RMWeight, sq.unitType))
+      ? clampLb(toLb(sq.bestE1RMWeight, sq.unitType))
       : null;
     const prBench = bp.bestE1RMWeight
-      ? clampLb(toLbs(bp.bestE1RMWeight, bp.unitType))
+      ? clampLb(toLb(bp.bestE1RMWeight, bp.unitType))
       : null;
     const prDeadlift = dl.bestE1RMWeight
-      ? clampLb(toLbs(dl.bestE1RMWeight, dl.unitType))
+      ? clampLb(toLb(dl.bestE1RMWeight, dl.unitType))
       : null;
 
     prWeightsLbRef.current = {
@@ -499,29 +501,16 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const recent90dData = useMemo(() => {
     if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
 
-    const SBD_TYPES = {
-      "Back Squat": "squat",
-      "Bench Press": "bench",
-      Deadlift: "deadlift",
-    };
-    const cutoffDate = new Date(
-      Date.now() - 90 * 86400000,
-    ).toISOString().slice(0, 10);
-
-    const best = { squat: 0, bench: 0, deadlift: 0 };
-    const sources = { squat: null, bench: null, deadlift: null };
-
-    for (const d of parsedData) {
-      const key = SBD_TYPES[d.liftType];
-      if (!key || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
-      if (d.date < cutoffDate) continue;
-      const weightLb = d.unitType === "lb" ? d.weight : d.weight * 2.2046;
-      const e1rm =
-        d.reps === 1 ? weightLb : estimateE1RM(d.reps, weightLb, e1rmFormula);
-      if (e1rm > best[key]) {
-        best[key] = e1rm;
-        sources[key] = buildE1RMSourceFromLift(d);
-      }
+    const sinceDate = getLocalYmdDaysAgo(90);
+    const best = {};
+    const sources = {};
+    for (const [liftType, key] of Object.entries(SBD_KEYS)) {
+      const found = findBestE1RMInWindow(parsedData, liftType, {
+        sinceDate,
+        e1rmFormula,
+      });
+      best[key] = toLb(found.bestE1RMWeight, found.unitType);
+      sources[key] = buildE1RMSource(found);
     }
 
     const values = {
@@ -618,90 +607,22 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const totalTimeline = useMemo(() => {
     if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
 
-    const SBD_TYPES = {
-      "Back Squat": "squat",
-      "Bench Press": "bench",
-      Deadlift: "deadlift",
-    };
-    const WINDOW_DAYS = 90;
-
-    // Pre-split entries by lift for O(samples * entries_per_lift) instead of O(samples * all_entries * 3)
-    const byLift = { squat: [], bench: [], deadlift: [] };
-    for (const d of parsedData) {
-      const key = SBD_TYPES[d.liftType];
-      if (!key || d.isGoal || d.reps <= 0 || d.weight <= 0) continue;
-      byLift[key].push({
-        ms: new Date(d.date).getTime(),
-        weightLb: d.unitType === "lb" ? d.weight : d.weight * 2.2046,
-        reps: d.reps,
-      });
-    }
-    for (const key of ["squat", "bench", "deadlift"]) {
-      byLift[key].sort((a, b) => a.ms - b.ms);
-    }
-
-    const allEntries = [...byLift.squat, ...byLift.bench, ...byLift.deadlift];
-    if (allEntries.length < 2) return null;
-
-    const firstDate = new Date(Math.min(...allEntries.map((e) => e.ms)));
-    const lastDate = new Date(Math.max(...allEntries.map((e) => e.ms)));
-    const spanDays = (lastDate - firstDate) / 86400000;
-
-    let intervalDays;
-    if (spanDays <= 180) intervalDays = 7;
-    else if (spanDays <= 730) intervalDays = 14;
-    else intervalDays = 30;
-
-    const samples = [];
-    const cursor = new Date(firstDate);
-    cursor.setDate(cursor.getDate() + WINDOW_DAYS);
-    while (cursor <= lastDate) {
-      samples.push(new Date(cursor));
-      cursor.setDate(cursor.getDate() + intervalDays);
-    }
-    const latestSample = samples[samples.length - 1];
-    if (!latestSample || latestSample.getTime() !== lastDate.getTime()) {
-      samples.push(new Date(lastDate));
-    }
-    if (samples.length < 2) return null;
+    const samples = sampleRollingBestE1RMs(parsedData, Object.keys(SBD_KEYS), {
+      e1rmFormula,
+    });
 
     const points = [];
-    for (const sampleDate of samples) {
-      const sampleMs = sampleDate.getTime();
-      const cutoff = sampleMs - WINDOW_DAYS * 86400000;
+    for (const { date, bests } of samples) {
+      // The total only means something once all three lifts are in the window
+      if (Object.keys(SBD_KEYS).some((liftType) => !bests[liftType])) continue;
 
-      const bestE1rm = { squat: 0, bench: 0, deadlift: 0 };
-
-      for (const key of ["squat", "bench", "deadlift"]) {
-        for (const entry of byLift[key]) {
-          if (entry.ms > sampleMs) break;
-          if (entry.ms < cutoff) continue;
-          const e1rm =
-            entry.reps === 1
-              ? entry.weightLb
-              : estimateE1RM(entry.reps, entry.weightLb, e1rmFormula);
-          if (e1rm > bestE1rm[key]) bestE1rm[key] = e1rm;
-        }
+      const point = { date, timestamp: new Date(date).getTime(), total: 0 };
+      for (const [liftType, key] of Object.entries(SBD_KEYS)) {
+        const best = bests[liftType];
+        point[key] = Math.round(toLb(best.bestE1RMWeight, best.unitType));
+        point.total += point[key];
       }
-
-      if (
-        bestE1rm.squat === 0 ||
-        bestE1rm.bench === 0 ||
-        bestE1rm.deadlift === 0
-      )
-        continue;
-
-      const total = Math.round(
-        bestE1rm.squat + bestE1rm.bench + bestE1rm.deadlift,
-      );
-      points.push({
-        date: sampleDate.toISOString().slice(0, 10),
-        timestamp: sampleMs,
-        total,
-        squat: Math.round(bestE1rm.squat),
-        bench: Math.round(bestE1rm.bench),
-        deadlift: Math.round(bestE1rm.deadlift),
-      });
+      points.push(point);
     }
 
     return points.length >= 2 ? points : null;

@@ -10,6 +10,7 @@ import {
   BIG_FOUR_PROGRESS_GUIDE_PATHS,
 } from "@/lib/lifts/lift-registry";
 import { devLog, logTiming } from "@/lib/processing-utils";
+import { convertWeight } from "@/lib/weight-units";
 
 export const BIG_FOUR_LIFTS = BIG_FOUR_LIFT_TYPES;
 
@@ -436,11 +437,9 @@ function getLiftStrengthRating({
   if (!oneRepMax) return null;
 
   if (liftUnit !== unitForStandards) {
-    if (liftUnit === "kg" && unitForStandards === "lb") {
-      oneRepMax = Math.round(oneRepMax * 2.2046);
-    } else if (liftUnit === "lb" && unitForStandards === "kg") {
-      oneRepMax = Math.round(oneRepMax / 2.2046);
-    }
+    oneRepMax = Math.round(
+      convertWeight(oneRepMax, liftUnit, unitForStandards),
+    );
   }
 
   return getStrengthRatingForE1RM(oneRepMax, standardForLift);

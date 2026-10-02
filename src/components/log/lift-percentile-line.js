@@ -13,6 +13,7 @@ import {
   LIFT_TYPE_TO_PERCENTILE_KEY,
   LIFT_TYPE_TO_CALCULATOR_URL,
 } from "@/lib/strength-circles/strength-score";
+import { toKg, unitTypeFor } from "@/lib/weight-units";
 
 const UNIVERSE_LABELS = {
   "General Population": "the general population",
@@ -37,8 +38,8 @@ export function LiftPercentileLine({
       return null;
     }
 
-    const bodyWeightKg = isMetric ? bodyWeight : bodyWeight / 2.2046;
-    const e1rmKg = isMetric ? e1rmValue : e1rmValue / 2.2046;
+    const bodyWeightKg = toKg(bodyWeight, unitTypeFor(isMetric));
+    const e1rmKg = toKg(e1rmValue, unitTypeFor(isMetric));
     const allPercentiles = getLiftPercentiles(
       age,
       bodyWeightKg,

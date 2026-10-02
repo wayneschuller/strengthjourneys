@@ -31,10 +31,10 @@ import { Button } from "@/components/ui/button";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl } from "@/lib/share-url";
+import { LB_PER_KG } from "@/lib/weight-units";
 
 import { getLiftArtwork } from "@/components/lift-artwork";
-const LB_PER_KG = 2.20462;
-const KG_PER_LB = 0.453592;
+const KG_PER_LB = 1 / LB_PER_KG;
 const GORILLA_MULTIPLIER_LOW = 6;
 const GORILLA_MULTIPLIER_HIGH = 10;
 const GORILLA_MULTIPLIER_MID = 8;

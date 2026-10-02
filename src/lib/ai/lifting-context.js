@@ -23,6 +23,7 @@ import { getStrengthRatingForE1RM } from "@/lib/lifting-standards-kg";
 import { processConsistency } from "@/lib/consistency";
 import { MAX_CHAT_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
 import { logTimingGroup } from "@/lib/processing-utils";
+import { LB_PER_KG } from "@/lib/weight-units";
 
 // The last 20 sessions, counted rather than dated, so the summary stays the
 // same size whether someone trains daily or weekly: three sessions a week
@@ -34,7 +35,6 @@ const RECENT_SESSIONS_MAX_CHARS = 7000;
 const MAIN_LIFT_LIMIT = 6;
 const WEEKS_OF_SESSION_COUNTS = 12;
 const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
-const LB_PER_KG = 2.2046;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [

@@ -5,9 +5,10 @@
  * than a separate widget.
  *
  * Desktop puts the two on one row and the thread runs across from the end of
- * the underline into the story. Both wait about ten seconds before fading in,
- * so the three headline cards have the stage first. Phones stack them and drop the thread, which
- * has no room to say anything there.
+ * the underline into the story. Both wait until the three headline cards are
+ * on screen, then about ten seconds more before fading in, so the cards have
+ * the stage first. Phones stack them and drop the thread, which has no room to
+ * say anything there.
  *
  * Owns layout and entrance only. Which story shows lives in StoryOfTheDay,
  * passed in as children.
@@ -17,7 +18,18 @@ import { motion, useReducedMotion } from "motion/react";
 // Long enough to take in the three headline cards before anything else moves.
 export const STORY_REVEAL_DELAY_SECONDS = 10;
 
-export function DashboardGreeting({ quip, firstName, children }) {
+/**
+ * @param {Object} props
+ * @param {boolean} [props.isStoryReady=false] - True once the headline cards
+ *   are on screen. The reveal delay counts from here, not from page load, so
+ *   a slow sheet load cannot eat into the cards' time alone.
+ */
+export function DashboardGreeting({
+  quip,
+  firstName,
+  isStoryReady = false,
+  children,
+}) {
   const prefersReducedMotion = useReducedMotion();
   const [before = "", after = ""] = quip.split("{name}");
 
@@ -34,7 +46,7 @@ export function DashboardGreeting({ quip, firstName, children }) {
         {after && <span className="text-muted-foreground">{after}</span>}
       </motion.p>
 
-      {children && (
+      {isStoryReady && children && (
         // The thread and story wait their turn: the lifter gets a few seconds
         // with the three headline cards first, then the story arrives as a
         // small extra.

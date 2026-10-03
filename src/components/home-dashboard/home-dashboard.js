@@ -266,6 +266,7 @@ export function HomeDashboard() {
                 <DashboardGreeting
                   quip={welcomeQuip}
                   firstName={session.user.name.split(" ")[0]}
+                  isStoryReady={hasDataLoaded}
                 >
                   {headerStory}
                 </DashboardGreeting>

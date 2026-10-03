@@ -205,13 +205,13 @@ function StoryLine({ line }) {
   const content = (
     <>
       <span
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
           ACCENT_CLASSES[accent] ?? ACCENT_CLASSES.primary
         }`}
       >
-        <Icon className="h-3.5 w-3.5" />
+        <Icon className="h-3 w-3" />
       </span>
-      <span className="text-foreground shrink-0 font-semibold whitespace-nowrap tabular-nums decoration-1 underline-offset-4 group-hover:underline">
+      <span className="text-foreground/80 shrink-0 font-medium whitespace-nowrap tabular-nums decoration-1 underline-offset-4 group-hover:underline">
         {lead}
       </span>
       {commentary && (
@@ -220,12 +220,12 @@ function StoryLine({ line }) {
         </span>
       )}
       {href && (
-        <ArrowRight className="text-muted-foreground h-3.5 w-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+        <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
       )}
     </>
   );
-  const className =
-    "group flex min-w-0 items-center gap-2.5 text-sm sm:text-base";
+  // A step below the greeting's size: an aside, not a second headline.
+  const className = "group flex min-w-0 items-center gap-2 text-xs sm:text-sm";
   const title = [lead, commentary].filter(Boolean).join(". ");
 
   return (
@@ -248,9 +248,9 @@ function StoryLine({ line }) {
           rel="noopener noreferrer"
           aria-label="Watch the video of this lift"
           title="Watch the video"
-          className="text-muted-foreground hover:text-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors"
+          className="text-muted-foreground hover:text-primary flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors"
         >
-          <PlayCircle className="h-4.5 w-4.5" />
+          <PlayCircle className="h-4 w-4" />
         </a>
       )}
     </div>
@@ -300,9 +300,7 @@ function buildStoryLine(story, context) {
           story.meetName ||
           null,
         href: logHref(story.date),
-        videoUrl:
-          story.bestSingles.map(getVideoUrl).find(Boolean) ??
-          getVideoUrl(story.meetVideoLift),
+        videoUrl: story.bestSingles.map(getVideoUrl).find(Boolean) ?? null,
       };
     case "journeyBirthday":
       return {

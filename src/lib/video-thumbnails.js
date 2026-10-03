@@ -152,3 +152,36 @@ export function getVideoSourceMeta(url) {
 
   return { kind: "other", name, host };
 }
+
+/**
+ * A URL that plays a stored clip inside the page, for the hosts that allow
+ * it: YouTube (privacy-enhanced), Vimeo and Google Drive. Google Photos,
+ * iCloud, Instagram and the rest refuse to be framed or need their own
+ * scripts, so they return null and the caller opens them in a new tab.
+ * @param {string} url - The stored set URL.
+ * @returns {string|null}
+ */
+export function getVideoEmbedUrl(url) {
+  const source = getVideoSourceMeta(url);
+  if (!source) return null;
+
+  if (source.kind === "youtube") {
+    const videoId = extractYouTubeVideoId(url);
+    return videoId
+      ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1`
+      : null;
+  }
+  if (source.kind === "vimeo") {
+    const videoId = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1];
+    return videoId
+      ? `https://player.vimeo.com/video/${videoId}?autoplay=1`
+      : null;
+  }
+  if (source.kind === "google-drive") {
+    const fileId =
+      url.match(/\/file\/d\/([\w-]+)/)?.[1] ??
+      url.match(/[?&]id=([\w-]+)/)?.[1];
+    return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
+  }
+  return null;
+}

@@ -52,6 +52,7 @@ import {
   buildEventStories,
   rankSummaryStories,
 } from "@/lib/home-dashboard/story-of-the-day";
+import { STORY_REVEAL_DELAY_SECONDS } from "@/components/home-dashboard/dashboard-greeting";
 
 // Which summary stories each stage may draw on, in its preferred order.
 const SUMMARY_KEYS_BY_STAGE = {
@@ -60,6 +61,9 @@ const SUMMARY_KEYS_BY_STAGE = {
   early_base: ["journey", "momentum", "lifetime-tonnage"],
   established: ["journey", "classic", "momentum", "lifetime-tonnage"],
 };
+
+// How long a revealed story must stay on screen before it counts as seen.
+const STORY_SEEN_AFTER_SECONDS = 2;
 
 // Below this the momentum story reads as a dip, so it is not told at all.
 const MOMENTUM_STEADY_PERCENT = 15;
@@ -168,9 +172,16 @@ function RotatingStory({ stories, dashboardStage, sessionCount }) {
     );
   });
 
+  // Move on to the next story only once this one has been on screen for a
+  // moment. A lifter who leaves before the greeting reveals it finds the same
+  // story waiting next time, so a good one is never skipped unseen.
   useEffect(() => {
-    // Absolute, not prev + 1, so a double-run effect still advances by one.
-    setCursor((shownCursor + 1) % stories.length);
+    const timer = setTimeout(
+      // Absolute, not prev + 1, so a double-run effect still advances by one.
+      () => setCursor((shownCursor + 1) % stories.length),
+      (STORY_REVEAL_DELAY_SECONDS + STORY_SEEN_AFTER_SECONDS) * 1000,
+    );
+    return () => clearTimeout(timer);
   }, [shownCursor, stories.length, setCursor]);
 
   if (!line) return null;

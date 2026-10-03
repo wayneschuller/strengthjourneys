@@ -15,7 +15,7 @@
 import { motion, useReducedMotion } from "motion/react";
 
 // Long enough to take in the three headline cards before anything else moves.
-const STORY_REVEAL_DELAY_SECONDS = 10;
+export const STORY_REVEAL_DELAY_SECONDS = 10;
 
 export function DashboardGreeting({ quip, firstName, children }) {
   const prefersReducedMotion = useReducedMotion();

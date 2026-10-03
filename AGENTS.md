@@ -30,6 +30,8 @@ calls for them:
 npm run dev            # Turbopack dev server; the user usually has one running
 npm run dev:webpack    # fallback when Turbopack itself seems to be the problem
 npx eslint <paths>     # lint the files you touched
+npx prettier --write <paths>  # format the files you touched
+npm run format         # format the whole repo; format:check only reports
 npm run validate:imports  # importer and lift-name checks on synthetic rows
 ```
 
@@ -40,8 +42,20 @@ or a registry synonym.
 Do not run `npm run build` unless the user asks. It disrupts the user's local
 `npm run dev` flow. It runs `next-sitemap` as a postbuild step.
 
-Node `>=24` is required. Formatting is Prettier with
-`prettier-plugin-tailwindcss` (`.prettierrc`).
+Node `>=24` is required.
+
+### Formatting
+
+Formatting is Prettier with `prettier-plugin-tailwindcss` (`.prettierrc`), which
+also sets the order of Tailwind classes. Do not format or order classes by hand.
+Run `npx prettier --write` on every file you create or edit before you commit.
+
+A pre-commit hook (`.githooks/pre-commit`, wired up by `npm install`) rejects a
+commit whose staged files are not formatted. When it fires, format those files,
+re-stage them and commit again. Never bypass it with `--no-verify`.
+
+Prose is exempt: `.prettierignore` covers markdown, `content/`, `docs/` and
+`public/`. Formatting-only commits are listed in `.git-blame-ignore-revs`.
 
 ### Sitemaps
 

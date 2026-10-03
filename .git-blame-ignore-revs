@@ -1,0 +1,5 @@
+# Formatting-only commits, skipped by git blame.
+# Local setup: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Run prettier over the codebase (Oct 3 2026)
+bdc74bc56ad56e5daa48842c3b00f67ea3be1ac7

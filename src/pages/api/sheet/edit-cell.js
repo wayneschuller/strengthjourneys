@@ -39,11 +39,9 @@ export default async function handler(req, res) {
   const { ssid, rowIndex, field, value, before } = req.body;
 
   if (!ssid || !rowIndex || typeof rowIndex !== "number" || !field || !before) {
-    return res
-      .status(400)
-      .json({
-        error: "Missing required fields: ssid, rowIndex, field, value, before",
-      });
+    return res.status(400).json({
+      error: "Missing required fields: ssid, rowIndex, field, value, before",
+    });
   }
 
   const config = EDITABLE_COLUMN_CONFIG[field];

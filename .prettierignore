@@ -1,0 +1,5 @@
+# Prose and hand-authored HTML: Prettier would reflow them.
+*.md
+content/
+docs/
+public/

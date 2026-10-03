@@ -35,11 +35,9 @@ export default async function handler(req, res) {
   const { ssid, rowIndex, before, after } = req.body;
 
   if (!ssid || !rowIndex || typeof rowIndex !== "number" || !before || !after) {
-    return res
-      .status(400)
-      .json({
-        error: "Missing required fields: ssid, rowIndex, before, after",
-      });
+    return res.status(400).json({
+      error: "Missing required fields: ssid, rowIndex, before, after",
+    });
   }
 
   const headers = {

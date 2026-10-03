@@ -1,8 +1,8 @@
 /**
  * Renders one event story from lib/home-dashboard/story-of-the-day.js (a PR
  * this week, a meet or lifting anniversary, a PR anniversary, the longest
- * streak) as an InspirationCard, with the lift's artwork beside it when we
- * have a drawing.
+ * streak) as an InspirationCard, matching the quiet evergreen cards it
+ * rotates with in the dashboard header.
  *
  * Copy here is shown day after day while a story is live, so lines that would
  * repeat come from small variant sets picked by the story id.
@@ -10,7 +10,6 @@
 import { format, parseISO } from "date-fns";
 import { Cake, Flame, History, Medal, Trophy } from "lucide-react";
 
-import { LiftArtwork } from "@/components/lift-artwork";
 import { InspirationCard } from "@/components/home-dashboard/inspiration-cards/inspiration-card";
 
 export function EventStoryCard({ story }) {
@@ -18,26 +17,14 @@ export function EventStoryCard({ story }) {
   if (!content) return null;
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-4">
-      <div className="min-w-0 flex-1">
-        <InspirationCard
-          accent={content.accent}
-          icon={content.icon}
-          description={content.description}
-          title={content.title}
-          footer={content.footer}
-          footerMultiline
-          animationDelay={0}
-        />
-      </div>
-      {story.liftType && (
-        <LiftArtwork
-          liftType={story.liftType}
-          size="tile"
-          className="hidden shrink-0 sm:block md:h-20"
-        />
-      )}
-    </div>
+    <InspirationCard
+      accent={content.accent}
+      icon={content.icon}
+      description={content.description}
+      title={content.title}
+      footer={content.footer}
+      animationDelay={0}
+    />
   );
 }
 

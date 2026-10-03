@@ -12,11 +12,7 @@ import { TheWeekInIronCard } from "@/components/home-dashboard/the-week-in-iron-
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { motion } from "motion/react";
 import {
   gaTrackHomeDashboardFirstView,
@@ -99,13 +95,22 @@ export function HomeDashboard() {
     () => WELCOME_QUIPS[Math.floor(Math.random() * WELCOME_QUIPS.length)],
   );
 
-  const { sheetInfo, parsedData, rawRows, dataSyncedAt, isValidating, mutate, dataSource } =
-    useUserLiftingData();
+  const {
+    sheetInfo,
+    parsedData,
+    rawRows,
+    dataSyncedAt,
+    isValidating,
+    mutate,
+    dataSource,
+  } = useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
   // The cards wait on the data, not on the header's row count animation. That animation used to
   // gate them too, holding parsed data back for 1.2s; now it rolls on while the cards arrive.
   const hasDataLoaded =
-    isOwnData(dataSource) && Array.isArray(parsedData) && (dataSource === "import" || rawRows !== null);
+    isOwnData(dataSource) &&
+    Array.isArray(parsedData) &&
+    (dataSource === "import" || rawRows !== null);
   const previewEntryCount = useMemo(
     () =>
       Array.isArray(parsedData)
@@ -167,7 +172,8 @@ export function HomeDashboard() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (authStatus !== "authenticated") return;
-    if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData)) return;
+    if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData))
+      return;
 
     // Track first loaded dashboard view once per linked sheet so switching data
     // sources does not suppress onboarding analytics for a new sheet.
@@ -204,8 +210,10 @@ export function HomeDashboard() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (authStatus !== "authenticated") return;
-    if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData)) return;
-    if (typeof dashboardStage !== "string" || dashboardStage.length === 0) return;
+    if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData))
+      return;
+    if (typeof dashboardStage !== "string" || dashboardStage.length === 0)
+      return;
 
     // Track stage entry once per sheet so we can see users progressing from
     // starter sample -> first real week -> first month -> established.
@@ -234,14 +242,13 @@ export function HomeDashboard() {
   ]);
 
   return (
-    // A flex column below lg only, so the inspiration strip can drop beneath the headline cards
-    // with `order`. At lg and up it stays plain block flow, margins and all.
-    <div className="flex flex-col lg:block">
+    <div>
       {isOwnData(dataSource) && (
-        <div className="relative mb-4 2xl:mb-6 text-xl">
-          {/* 2xl: welcome left + status right in one row; below that they stack.
-              The status slot holds the load indicator first and the synced-sheet line
-              afterwards, so hydration never pushes the dashboard down and back up. */}
+        <div className="relative mb-4 text-xl 2xl:mb-6">
+          {/* 2xl: welcome left, story of the day in the middle, status right, all in one
+              row; below that they stack. The status slot holds the load indicator first
+              and the synced-sheet line afterwards, so hydration never pushes the
+              dashboard down and back up. */}
           <div className="flex flex-col items-center gap-2 2xl:flex-row 2xl:items-start 2xl:justify-between 2xl:gap-4">
             {session?.user?.name && (
               <motion.div
@@ -258,13 +265,29 @@ export function HomeDashboard() {
                 </span>
               </motion.div>
             )}
+            {/* The first week is intentionally quieter: no story until the lifter has
+                enough real data for one to feel earned. */}
+            {dashboardStage !== "starter_sample" &&
+              dashboardStage !== "first_real_week" && (
+                <div className="flex w-full min-w-0 justify-center 2xl:w-auto 2xl:flex-1">
+                  <div className="max-w-xl min-w-0">
+                    <HomeInspirationCards
+                      isProgressDone={hasDataLoaded}
+                      dashboardStage={dashboardStage}
+                      sessionCount={sessionCount}
+                    />
+                  </div>
+                </div>
+              )}
             <DashboardHeaderStatus
               isProgressDone={isProgressDone}
               indicator={
                 <RowProcessingIndicator
                   mode={dataSource === "import" ? "preview" : "sheet"}
                   count={dataSource === "import" ? previewEntryCount : rawRows}
-                  expectedCount={dataSource === "import" ? null : expectedRowCount}
+                  expectedCount={
+                    dataSource === "import" ? null : expectedRowCount
+                  }
                   isProgressDone={isProgressDone}
                   setIsProgressDone={setIsProgressDone}
                 />
@@ -286,23 +309,6 @@ export function HomeDashboard() {
           </div>
         </div>
       )}
-      {/* The first week is intentionally quieter: skip the inspiration row until
-          the user has enough real data for those cards to feel earned. */}
-      {isOwnData(dataSource) && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
-        // Below lg the strip sits after The Long Game, so the headline cards lead on a phone; mt-6
-        // matches the card grid's gap. While loading it waits there too, behind the loading panel.
-        <div
-          className={
-            hasDataLoaded ? "order-last mt-6 lg:order-none lg:mt-0" : "hidden lg:block"
-          }
-        >
-          <HomeInspirationCards
-            isProgressDone={hasDataLoaded}
-            dashboardStage={dashboardStage}
-            sessionCount={sessionCount}
-          />
-        </div>
-      )}
       {isOwnData(dataSource) && !hasDataLoaded && (
         <>
           <DashboardLoadingPanel
@@ -315,7 +321,6 @@ export function HomeDashboard() {
       )}
       {isOwnData(dataSource) && hasDataLoaded && (
         <>
-          {/* No top margin below lg: the header's mb-4 already spaces it, and flex margins do not collapse. */}
           <section className="grid grid-cols-1 gap-6 lg:mt-4 lg:grid-cols-2 xl:grid-cols-3">
             {/* Three headline cards intentionally begin with "The" and widen chronology:
                 The Week in Iron -> The Month in Iron -> The Long Game.

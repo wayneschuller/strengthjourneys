@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
-import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
+import { StoryOfTheDay } from "@/components/home-dashboard/story-of-the-day-line";
 import { DashboardGreeting } from "@/components/home-dashboard/dashboard-greeting";
 import {
   DashboardHeaderStatus,
@@ -245,7 +245,7 @@ export function HomeDashboard() {
   // enough real data for one to feel earned.
   const headerStory = dashboardStage !== "starter_sample" &&
     dashboardStage !== "first_real_week" && (
-      <HomeInspirationCards
+      <StoryOfTheDay
         isProgressDone={hasDataLoaded}
         dashboardStage={dashboardStage}
         sessionCount={sessionCount}

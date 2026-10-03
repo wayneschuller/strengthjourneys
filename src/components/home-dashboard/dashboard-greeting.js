@@ -8,8 +8,8 @@
  * the underline into the story. Phones stack them and drop the thread, which
  * has no room to say anything there.
  *
- * Owns layout and entrance only. Which story shows lives in
- * HomeInspirationCards, passed in as children.
+ * Owns layout and entrance only. Which story shows lives in StoryOfTheDay,
+ * passed in as children.
  */
 import { motion, useReducedMotion } from "motion/react";
 
@@ -56,7 +56,7 @@ export function DashboardGreeting({ quip, firstName, children }) {
               transition={{ delay: 0.6, duration: 0.45, ease: "easeOut" }}
             />
           </div>
-          <div className="min-w-0 lg:max-w-md">{children}</div>
+          <div className="max-w-full min-w-0 lg:max-w-xl">{children}</div>
         </>
       )}
     </div>

@@ -150,6 +150,8 @@ export const LOCAL_STORAGE_KEYS = {
   // Last row count per linked sheet (use getSheetScopedStorageKey). A number only, so the home
   // dashboard's load pill has something to roll towards while the next sheet read is out.
   HOME_DASHBOARD_LAST_ROW_COUNT: "SJ_homeDashboardLastRowCount",
+  // Which ranked story the dashboard greeting shows next; advances on every visit.
+  HOME_DASHBOARD_STORY_CURSOR: "SJ_homeDashboardStoryCursor",
   // Cached copy of the authenticated user's KV-backed recurring-import profile.
   // Contains workflow freshness only, never filenames or lifting data.
   IMPORT_PROFILE: "SJ_importProfile",

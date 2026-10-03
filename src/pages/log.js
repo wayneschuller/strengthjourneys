@@ -45,6 +45,7 @@ import { SessionFooterActions } from "@/components/log/session-footer-actions";
 import { EmptySessionState } from "@/components/log/empty-session-state";
 import { useNextLiftPlan } from "@/components/log/big-four-next-up";
 import { LogDateNav } from "@/components/log/log-date-nav";
+import { MeetDayBanner } from "@/components/log/meet-day-banner";
 import { PreviewLogCta } from "@/components/log/preview-log-cta";
 
 import { DRAWN_LIFT_TYPES, getLiftArtwork } from "@/components/lift-artwork";
@@ -175,6 +176,7 @@ export default function LogSessionPage({
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
+    meetDays,
     dataSource,
   } = useUserLiftingData();
   const { isMetric, sex, toggleIsMetric } = useAthleteBio();
@@ -738,6 +740,20 @@ export default function LogSessionPage({
                   />
                 </div>
               )}
+
+              {/* A past meet gets a look back above its lifts. Never on the
+                  day itself: mid-meet, the log must stay the one they know. */}
+              {!showSessionBootstrap &&
+                hasSession &&
+                sessionDate < todayIso &&
+                meetDays?.has(sessionDate) && (
+                  <MeetDayBanner
+                    meetDay={meetDays.get(sessionDate)}
+                    sessionDate={sessionDate}
+                    todayIso={todayIso}
+                    isMetric={isMetric}
+                  />
+                )}
 
               {!showSessionBootstrap && hasSession && (
                 <div

@@ -17,9 +17,15 @@ export const MEET_GOLD = "var(--color-amber-500, #f59e0b)";
 
 /**
  * A medal on a ribbon. Scales with `size`, inherits nothing, safe to drop
- * into a heatmap cell or a tooltip line.
+ * into a heatmap cell or a tooltip line. `color` lets an image capture pass a
+ * literal gold, since canvas renderers cannot always resolve a CSS variable
+ * inside SVG attributes.
  */
-export function MeetMedalGlyph({ size = 14, className = "" }) {
+export function MeetMedalGlyph({
+  size = 14,
+  className = "",
+  color = MEET_GOLD,
+}) {
   return (
     <svg
       viewBox="-8 -8 16 16"
@@ -31,12 +37,12 @@ export function MeetMedalGlyph({ size = 14, className = "" }) {
       <path
         d="M -3.2 -6 L 0 -1.3 L 3.2 -6"
         fill="none"
-        stroke={MEET_GOLD}
+        stroke={color}
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx={0} cy={2.4} r={3.6} fill={MEET_GOLD} />
+      <circle cx={0} cy={2.4} r={3.6} fill={color} />
     </svg>
   );
 }

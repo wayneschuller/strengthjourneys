@@ -22,6 +22,7 @@ import { MEET_LIFTS, formatMeetTotal } from "@/lib/meet-detection";
 import { MEET_GOLD, MeetMedalGlyph } from "@/components/meet-medal";
 import { MeetShareButton } from "@/components/log/meet-share-button";
 import { VideoSourceIcon } from "@/components/log/video-source-icon";
+import { LiftArtwork } from "@/components/lift-artwork";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
   const prefersReducedMotion = useReducedMotion();
   const attempts = MEET_LIFTS.map(({ liftType, name }) => ({
     name,
+    liftType,
     set: meetDay.topSets[liftType],
   })).filter(({ set }) => set);
   const total = formatMeetTotal(meetDay.topSets, isMetric);
@@ -50,7 +52,7 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
   return (
     <motion.section
       aria-label="Meet day"
-      className="relative mb-5 overflow-hidden rounded-2xl border px-4 py-3.5 sm:px-5"
+      className="relative mb-5 overflow-hidden rounded-2xl border px-4 py-4 sm:px-6 sm:py-5"
       style={{
         borderColor: `color-mix(in srgb, ${MEET_GOLD} 55%, transparent)`,
         background: `linear-gradient(135deg, color-mix(in srgb, ${MEET_GOLD} 14%, var(--card)) 0%, var(--card) 60%)`,
@@ -61,7 +63,7 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
     >
       <div className="flex items-center gap-3.5">
         <motion.span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2"
           style={{ borderColor: MEET_GOLD, background: "var(--background)" }}
           initial={prefersReducedMotion ? false : { scale: 0.4, rotate: -30 }}
           animate={{ scale: 1, rotate: 0 }}
@@ -72,10 +74,10 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
             delay: 0.15,
           }}
         >
-          <MeetMedalGlyph size={24} />
+          <MeetMedalGlyph size={26} />
         </motion.span>
         <div className="min-w-0 flex-1">
-          <p className="text-base leading-snug font-semibold sm:text-lg">
+          <p className="text-lg leading-snug font-semibold sm:text-xl">
             {meetDay.name ?? "Meet day"}
           </p>
           <p className="text-muted-foreground text-sm">
@@ -90,28 +92,21 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
         />
       </div>
 
+      {/* Two by two: squat, bench, deadlift, and the total as the fourth. */}
       {attempts.length > 0 && (
-        <div className="mt-3.5 flex flex-wrap items-stretch gap-2.5">
-          {attempts.map(({ name, set }) => (
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {attempts.map(({ name, liftType, set }, index) => (
             <AttemptTile
               key={name}
               name={name}
+              liftType={liftType}
               set={set}
               isMetric={isMetric}
+              index={index}
               onPlay={() => setPlaying({ name, set })}
             />
           ))}
-          {total && (
-            <div className="ml-auto flex flex-col justify-center px-1 text-right">
-              <p className="text-muted-foreground text-xs">Total</p>
-              <p
-                className="text-xl font-bold tabular-nums"
-                style={{ color: MEET_GOLD }}
-              >
-                {total}
-              </p>
-            </div>
-          )}
+          {total && <TotalTile total={total} index={attempts.length} />}
         </div>
       )}
 
@@ -145,10 +140,21 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
   );
 }
 
-// One attempt: the lift and its weight, and when it was filmed, a big gold
-// play button. Embeddable clips open the dialog; anything else is a plain
-// link to the clip's own site, captioned with that site's mark.
-function AttemptTile({ name, set, isMetric, onPlay }) {
+// The tiles rise in one after another, squat first, the total last.
+function tileMotion(index, prefersReducedMotion) {
+  return {
+    initial: prefersReducedMotion ? false : { opacity: 0, y: 8 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.35, ease: "easeOut", delay: 0.2 + index * 0.08 },
+  };
+}
+
+// One attempt: the lift's drawing and name, the weight, the lifter's note
+// from that set, and when it was filmed a big button to watch it. Clips that
+// play here get the gold play button and open the dialog; clips that live on
+// their own site get a gold-ringed button wearing that site's mark.
+function AttemptTile({ name, liftType, set, isMetric, index, onPlay }) {
+  const prefersReducedMotion = useReducedMotion();
   const { value, unit } = getDisplayWeight(set, isMetric);
   const url = set.URL || set.url || null;
   const source = url ? getVideoSourceMeta(url) : null;
@@ -157,7 +163,7 @@ function AttemptTile({ name, set, isMetric, onPlay }) {
   const label = `Watch the ${name.toLowerCase()} attempt`;
 
   const bigButtonClass =
-    "group/play relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none";
+    "group/play relative flex h-14 w-14 shrink-0 items-center justify-center self-center rounded-full shadow-md transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none";
   const ping = (
     <span
       aria-hidden="true"
@@ -167,21 +173,27 @@ function AttemptTile({ name, set, isMetric, onPlay }) {
   );
 
   return (
-    <div className="bg-background/70 flex max-w-[24rem] min-w-[11rem] flex-1 items-start gap-3 rounded-xl border px-3 py-2">
-      <div className="min-w-0 flex-1">
-        <p className="text-muted-foreground text-xs">{name}</p>
-        <p className="text-lg font-semibold tabular-nums">
+    <motion.div
+      {...tileMotion(index, prefersReducedMotion)}
+      className="bg-background/75 flex min-h-[8.5rem] items-stretch gap-4 rounded-xl border p-4"
+    >
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center gap-2">
+          <LiftArtwork liftType={liftType} size="sm" animate={false} />
+          <p className="text-muted-foreground text-sm font-medium">{name}</p>
+        </div>
+        <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums">
           {value}
-          {unit}
+          <span className="text-xl font-semibold">{unit}</span>
           {set.reps > 1 ? (
-            <span className="text-muted-foreground text-sm font-normal">
+            <span className="text-muted-foreground text-lg font-normal">
               {` × ${set.reps}`}
             </span>
           ) : null}
         </p>
         {note && (
           <p
-            className="text-muted-foreground line-clamp-2 text-xs italic"
+            className="text-muted-foreground mt-1.5 line-clamp-3 text-sm leading-snug italic"
             title={note}
           >
             “{note}”
@@ -190,33 +202,61 @@ function AttemptTile({ name, set, isMetric, onPlay }) {
       </div>
       {url &&
         (canEmbed ? (
-          // Plays here, so the gold play button.
           <button
             type="button"
             onClick={onPlay}
             aria-label={label}
-            className={`${bigButtonClass} self-center text-white`}
+            className={`${bigButtonClass} text-white`}
             style={{ background: MEET_GOLD }}
           >
             {ping}
-            <Play className="relative h-5 w-5 translate-x-px fill-current" />
+            <Play className="relative h-6 w-6 translate-x-px fill-current" />
           </button>
         ) : (
-          // Plays on its own site, so that site's mark, big, ringed in gold.
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${label} on ${source?.name ?? "its site"}`}
             title={source?.name ? `Watch on ${source.name}` : label}
-            className={`${bigButtonClass} bg-background self-center border-2`}
+            className={`${bigButtonClass} bg-background border-2`}
             style={{ borderColor: MEET_GOLD }}
           >
             {ping}
-            <VideoSourceIcon source={source} className="relative h-6 w-6" />
+            <VideoSourceIcon source={source} className="relative h-7 w-7" />
           </a>
         ))}
-    </div>
+    </motion.div>
+  );
+}
+
+// The fourth square: the meet total, the one number a meet is remembered by.
+function TotalTile({ total, index }) {
+  const prefersReducedMotion = useReducedMotion();
+  return (
+    <motion.div
+      {...tileMotion(index, prefersReducedMotion)}
+      className="relative flex min-h-[8.5rem] flex-col justify-center overflow-hidden rounded-xl border-2 p-4"
+      style={{
+        borderColor: MEET_GOLD,
+        background: `linear-gradient(140deg, color-mix(in srgb, ${MEET_GOLD} 22%, var(--background)) 0%, var(--background) 75%)`,
+      }}
+    >
+      <MeetMedalGlyph
+        size={96}
+        className="pointer-events-none absolute -right-3 -bottom-4 opacity-15"
+      />
+      <p className="text-muted-foreground text-sm font-medium">Meet total</p>
+      <p
+        className="mt-1 text-4xl font-extrabold tracking-tight tabular-nums sm:text-5xl"
+        style={{ color: MEET_GOLD }}
+      >
+        {total}
+      </p>
+      <p className="text-muted-foreground mt-1 text-sm">
+        Squat, bench and deadlift
+      </p>
+    </motion.div>
   );
 }
 

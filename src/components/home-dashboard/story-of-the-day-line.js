@@ -18,6 +18,10 @@
  * says why this story is showing. The pools are per kind and hashed on the
  * story, so the same story always arrives with the same kicker.
  *
+ * In the early base stage (21 to 60 sessions) the story is occasional: event
+ * stories always show, summaries only on alternate days. Before that stage
+ * the dashboard does not render it at all.
+ *
  * Streaks are not told here: The Long Game card already owns them.
  */
 import { useEffect, useMemo, useState } from "react";
@@ -148,6 +152,17 @@ export function StoryOfTheDay({
 
   if (!isProgressDone) return null;
   if (stories.length === 0) return null;
+  // Early base gets the story now and then rather than every visit: always
+  // when the log has earned an event (a PR, a milestone in reach, an
+  // anniversary), otherwise on alternate days. Seeded on the date, so a day
+  // is consistent however many times the lifter comes back.
+  if (
+    dashboardStage === "early_base" &&
+    !stories.some((story) => story.kind !== "summary") &&
+    getDayNumber(formatDateToYmdLocal(new Date())) % 2 === 1
+  ) {
+    return null;
+  }
 
   return <RotatingStory stories={stories} dashboardStage={dashboardStage} />;
 }
@@ -257,7 +272,7 @@ function StoryLine({ line }) {
   const title = toSentence(line);
 
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <div data-story-line className="flex min-w-0 items-center gap-2">
       {href ? (
         <Link href={href} className={className} title={title}>
           {content}
@@ -623,6 +638,12 @@ function joinList(items) {
 // Lift names as they sit mid-sentence: "squat", "bench", "deadlift", "press".
 function getLiftNoun(liftType) {
   return (MEET_SHORT_NAMES[liftType] ?? liftType).toLowerCase();
+}
+
+// Days since 1970 for a YYYY-MM-DD date, for day-by-day alternation.
+function getDayNumber(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
 }
 
 function logHref(dateStr) {

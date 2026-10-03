@@ -50,8 +50,10 @@ export function DashboardGreeting({
         // The thread and story wait their turn: the lifter gets a few seconds
         // with the three headline cards first, then the story arrives as a
         // small extra.
+        // Hidden until a story line actually renders inside it, so a day with
+        // no story never shows a thread leading to nothing.
         <motion.div
-          className="flex max-w-full min-w-0 items-center"
+          className="hidden max-w-full min-w-0 items-center has-[[data-story-line]]:flex"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: STORY_REVEAL_DELAY_SECONDS, duration: 0.8 }}

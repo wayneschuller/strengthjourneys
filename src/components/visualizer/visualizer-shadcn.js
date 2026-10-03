@@ -108,13 +108,17 @@ function SyncedMultiLiftTooltip({
     return () => clearTimeout(timer);
   }, [date, setHighlightDate, debounceMs]);
 
+  // The Tooltip pins this wrapper's top edge near the plot floor; shifting up by
+  // its own height sits the tooltip on that line however many lifts it lists.
   return (
-    <MultiLiftTooltipContent
-      active={active}
-      payload={payload}
-      label={label}
-      selectedLiftTypes={selectedLiftTypes}
-    />
+    <div className="-translate-y-full">
+      <MultiLiftTooltipContent
+        active={active}
+        payload={payload}
+        label={label}
+        selectedLiftTypes={selectedLiftTypes}
+      />
+    </div>
   );
 }
 
@@ -356,7 +360,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   debounceMs={tooltipDebounceMs}
                 />
               }
-              position={{ y: 40 }}
+              // Bottom of the plot: the top band belongs to the meet medals
+              // and their hover titles.
+              position={{ y: 360 }}
               cursor={chartCursorProps(
                 // A single crosshair colour only makes sense to tie to a lift
                 // when exactly one is selected; otherwise keep it neutral.

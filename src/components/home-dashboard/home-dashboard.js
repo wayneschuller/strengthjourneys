@@ -265,17 +265,17 @@ export function HomeDashboard() {
               pushes the dashboard down and back up. */}
           <div className="flex flex-col items-center gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between 2xl:gap-8">
             <div className="flex w-full min-w-0 justify-center 2xl:w-auto 2xl:flex-1 2xl:justify-start">
-              {session?.user?.name ? (
-                <DashboardGreeting
-                  quip={welcomeQuip}
-                  firstName={session.user.name.split(" ")[0]}
-                  isStoryReady={hasDataLoaded}
-                >
-                  {headerStory}
-                </DashboardGreeting>
-              ) : (
-                headerStory
-              )}
+              {/* Always through the greeting, which owns the story's delayed
+                  reveal. Rendering the story bare while the session was still
+                  loading let cached sheet data show it at once. The countdown
+                  waits for the session to settle too. */}
+              <DashboardGreeting
+                quip={welcomeQuip}
+                firstName={session?.user?.name?.split(" ")[0] ?? null}
+                isStoryReady={hasDataLoaded && authStatus !== "loading"}
+              >
+                {headerStory}
+              </DashboardGreeting>
             </div>
             <div className="w-full 2xl:w-1/5 2xl:min-w-fit">
               <DashboardHeaderStatus

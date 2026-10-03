@@ -7,9 +7,11 @@ import { Children, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
+import { motion } from "motion/react";
 import {
   ChevronLeft,
   ChevronRight,
+  PartyPopper,
   Plus,
   TrendingUp,
   TrendingDown,
@@ -105,6 +107,17 @@ const CONSISTENCY_PHRASES = [
   "The bar was there. You showed up.",
   "This is what progress looks like.",
   "Week after week. That's the whole secret.",
+];
+
+// The current week's "Week won" banner. Picked by the week's Monday, so it
+// holds still all week and changes the next.
+const WEEK_WON_LINES = [
+  "Another week of barbell lifting for life.",
+  "That is what consistency looks like.",
+  "The streak gets another week.",
+  "Anything else this week is a bonus.",
+  "Three sessions is the whole game. Done.",
+  "This one goes in the bank.",
 ];
 
 const LOGGING_FEATURES_BLURB =
@@ -502,12 +515,8 @@ export function TheWeekInIronCard({
 }) {
   const cardRef = useRef(null);
   const { status: authStatus } = useSession();
-  const {
-    dataSource,
-    parsedData,
-    sessionTonnageLookup,
-    streakLeaderboard,
-  } = useUserLiftingData();
+  const { dataSource, parsedData, sessionTonnageLookup, streakLeaderboard } =
+    useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
   const [weekOffset, setWeekOffset] = useState(0);
@@ -699,6 +708,14 @@ export function TheWeekInIronCard({
 
           {stats && (
             <>
+              {/* Celebrate only. A week short of three gets no banner at all,
+                  so this never reads as a shortfall. */}
+              {boundaries.isCurrentWeek && stats.sessions.current >= 3 && (
+                <WeekWonBanner
+                  sessionCount={stats.sessions.current}
+                  mondayStr={boundaries.mondayStr}
+                />
+              )}
               <WeekSection
                 stepLabel="A"
                 title="What happened this week"
@@ -774,10 +791,7 @@ export function TheWeekInIronCard({
           )}
 
           {!hasLoggedSessions && (
-            <EmptyWeekState
-              authStatus={authStatus}
-              dataSource={dataSource}
-            />
+            <EmptyWeekState authStatus={authStatus} dataSource={dataSource} />
           )}
           {dataSource !== "sheet" && (
             <ReadOnlyWeekCta
@@ -840,6 +854,37 @@ function WeekSection({
   );
 }
 
+function WeekWonBanner({ sessionCount, mondayStr }) {
+  return (
+    <motion.div
+      className="border-primary/30 bg-primary/10 flex items-center gap-3 rounded-xl border px-4 py-3"
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: "spring", stiffness: 320, damping: 18, delay: 0.2 }}
+    >
+      <motion.span
+        className="bg-primary/15 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+        initial={{ rotate: -25, scale: 0.6 }}
+        animate={{ rotate: 0, scale: 1 }}
+        transition={{
+          type: "spring",
+          stiffness: 260,
+          damping: 10,
+          delay: 0.35,
+        }}
+      >
+        <PartyPopper className="h-5 w-5" />
+      </motion.span>
+      <div className="min-w-0">
+        <p className="text-primary text-sm leading-5 font-bold">Week won</p>
+        <p className="text-muted-foreground text-sm leading-5">
+          {`${sessionCount} sessions logged. ${pickPhrase(WEEK_WON_LINES, mondayStr)}`}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
 function StreakCelebrationBox({ streakCelebration }) {
   return (
     <div
@@ -850,19 +895,12 @@ function StreakCelebrationBox({ streakCelebration }) {
   );
 }
 
-function WeekSessionList({
-  authStatus,
-  dataSource,
-  rows,
-}) {
+function WeekSessionList({ authStatus, dataSource, rows }) {
   return (
     <div className="space-y-2">
       {rows.length === 0 ? (
         dataSource !== "sheet" ? (
-          <EmptyWeekState
-            authStatus={authStatus}
-            dataSource={dataSource}
-          />
+          <EmptyWeekState authStatus={authStatus} dataSource={dataSource} />
         ) : (
           <div className="bg-muted/20 text-muted-foreground rounded-xl border border-dashed px-4 py-4 text-sm">
             No sessions logged in this week.
@@ -977,11 +1015,7 @@ function EarlyWeekCard({
   );
 }
 
-function EmptyWeekState({
-  authStatus,
-  dataSource,
-  dashboardStage,
-}) {
+function EmptyWeekState({ authStatus, dataSource, dashboardStage }) {
   if (dataSource === "sheet") {
     // On a brand-new sheet the CardDescription directly above already says the
     // summary arrives with the first session. Saying it a second time in a
@@ -1051,9 +1085,10 @@ function ReadOnlyWeekCta({
             className="gap-2"
             onClick={() => {
               openSheetSetupDialog("bootstrap", {
-                action: dataSource === "import"
-                  ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
-                  : null,
+                action:
+                  dataSource === "import"
+                    ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
+                    : null,
               });
             }}
           >
@@ -1314,7 +1349,8 @@ function StartLiftPrompt({
   showLiftCoaching = false,
   trainedLiftTypes = [],
   nextLiftPlan = null,
-}) {  const hasNextUp =
+}) {
+  const hasNextUp =
     nextLiftPlan?.mode === "novice" ||
     Boolean(
       nextLiftPlan?.lifts.some(

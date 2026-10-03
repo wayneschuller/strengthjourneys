@@ -19,7 +19,11 @@ const reactCompilerRulesToRevisit = {
 const eslintConfig = [
   ...coreWebVitals,
   {
-    rules: reactCompilerRulesToRevisit,
+    rules: {
+      ...reactCompilerRulesToRevisit,
+      // A call to a helper that no longer exists crashes the page at runtime.
+      "no-undef": "error",
+    },
   },
 ];
 

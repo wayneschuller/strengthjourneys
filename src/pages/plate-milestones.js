@@ -80,7 +80,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { getLocalYmdDaysAgo } from "@/lib/date-utils";
+import { formatDateToYmdUtc, getLocalYmdDaysAgo } from "@/lib/date-utils";
 import { sampleRollingBestE1RMs } from "@/lib/lift-bests";
 import { LB_PER_KG, toLb } from "@/lib/weight-units";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
@@ -1071,7 +1071,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       // currentE1rm = rolling 90-day best ending at the latest log (matches the
       // pre-existing tier-badge semantics from milestoneDates so green/amber dots
       // behave as before).
-      const window90Cutoff = ymd(
+      const window90Cutoff = formatDateToYmdUtc(
         new Date(new Date(latestDate + "T00:00:00Z").getTime() - 90 * 86400000),
       );
       let currentE1rm = 0;

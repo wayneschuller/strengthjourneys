@@ -140,6 +140,93 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
   );
 }
 
+/**
+ * The same look back, cut down for a narrow column (the session browser beside
+ * the charts): the medal, the meet's name, the attempts that counted and the
+ * total. No clips or share button here; the log's full banner is one click
+ * away through the card's own link.
+ *
+ * Follows the banner's rule of never showing on the day itself, and works out
+ * today for itself so callers only pass the session.
+ *
+ * @param {Object} props
+ * @param {{name: string|null, topSets: Object}} props.meetDay - From meetDays.
+ * @param {string} props.sessionDate - YYYY-MM-DD.
+ * @param {boolean} props.isMetric - Display unit for weights and the total.
+ */
+export function MeetDayCompactBanner({ meetDay, sessionDate, isMetric }) {
+  const todayIso = getLocalTodayIso();
+  if (!meetDay || !(sessionDate < todayIso)) return null;
+
+  const attempts = MEET_LIFTS.map(({ liftType, name }) => ({
+    name,
+    set: meetDay.topSets[liftType],
+  })).filter(({ set }) => set);
+  const total = formatMeetTotal(meetDay.topSets, isMetric);
+  const ago = getTimeAgo(sessionDate, todayIso);
+
+  return (
+    <section
+      aria-label="Meet day"
+      className="overflow-hidden rounded-xl border px-3.5 py-3"
+      style={{
+        borderColor: `color-mix(in srgb, ${MEET_GOLD} 55%, transparent)`,
+        background: `linear-gradient(135deg, color-mix(in srgb, ${MEET_GOLD} 14%, var(--card)) 0%, var(--card) 70%)`,
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2"
+          style={{ borderColor: MEET_GOLD, background: "var(--background)" }}
+        >
+          <MeetMedalGlyph size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="leading-snug font-semibold text-pretty">
+            {meetDay.name ?? "Meet day"}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            {meetDay.name ? `Meet day, ${ago}` : capitalize(ago)}
+          </p>
+        </div>
+      </div>
+
+      {attempts.length > 0 && (
+        <dl className="mt-2.5 grid grid-cols-[repeat(auto-fit,minmax(4.25rem,1fr))] gap-x-3 gap-y-2">
+          {attempts.map(({ name, set }) => {
+            const { value, unit } = getDisplayWeight(set, isMetric);
+            return (
+              <div key={name}>
+                <dt className="text-muted-foreground text-xs">{name}</dt>
+                <dd className="font-bold tracking-tight tabular-nums">
+                  {value}
+                  <span className="text-xs font-semibold">{unit}</span>
+                  {set.reps > 1 ? (
+                    <span className="text-muted-foreground text-xs font-normal">
+                      {` × ${set.reps}`}
+                    </span>
+                  ) : null}
+                </dd>
+              </div>
+            );
+          })}
+          {total && (
+            <div>
+              <dt className="text-muted-foreground text-xs">Total</dt>
+              <dd
+                className="font-extrabold tracking-tight tabular-nums"
+                style={{ color: MEET_GOLD }}
+              >
+                {total}
+              </dd>
+            </div>
+          )}
+        </dl>
+      )}
+    </section>
+  );
+}
+
 // The tiles rise in one after another, squat first, the total last.
 function tileMotion(index, prefersReducedMotion) {
   return {
@@ -258,6 +345,13 @@ function TotalTile({ total, index }) {
       </p>
     </motion.div>
   );
+}
+
+// Today in the lifter's own timezone, as YYYY-MM-DD.
+function getLocalTodayIso() {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 function getTimeAgo(sessionDate, todayIso) {

@@ -55,8 +55,20 @@ import { getReadableDateString } from "@/lib/date-utils";
 import { LoaderCircle, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { SessionExerciseBlock } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { MeetDayCompactBanner } from "@/components/log/meet-day-banner";
+import { MEET_GOLD } from "@/components/meet-medal";
 
 // "Latest Session" when on the most recent date.
+// One figure in the summary strip under the card header.
+function SummaryStat({ value, label }) {
+  return (
+    <div className="min-w-0 px-2">
+      <dd className="truncate text-sm font-semibold tabular-nums">{value}</dd>
+      <dt className="text-muted-foreground text-xs">{label}</dt>
+    </div>
+  );
+}
+
 // "Feb 6 Session" for an earlier date in the current year.
 // "Feb 6, 2024 Session" for a date in a previous year.
 function getSessionCardTitle(sessionDate, isLastDate) {
@@ -94,6 +106,7 @@ export function TheLatestSessionCard({
     sessionTonnageLookup,
     sheetInfo,
     isValidating,
+    meetDays,
   } = useUserLiftingData();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const e1rmFormula =
@@ -208,6 +221,31 @@ export function TheLatestSessionCard({
 
   // devLog(analyzedSessionLifts);
 
+  // The session at a glance, shown as a strip under the header.
+  const sessionSummary = useMemo(() => {
+    if (!analyzedSessionLifts) return null;
+    const blocks = Object.values(analyzedSessionLifts);
+    if (blocks.length === 0) return null;
+    const tonnageByUnit =
+      sessionTonnageLookup?.sessionTonnageByDate?.[sessionDate] ?? {};
+    // Tonnage is kept per logged unit; show the lifter's own when the session
+    // has it, otherwise whichever unit the session was logged in.
+    const preferredUnit = isMetric ? "kg" : "lb";
+    const unit =
+      tonnageByUnit[preferredUnit] != null
+        ? preferredUnit
+        : Object.keys(tonnageByUnit)[0];
+    return {
+      liftCount: blocks.length,
+      setCount: blocks.reduce((sum, workouts) => sum + workouts.length, 0),
+      tonnage: unit
+        ? `${Math.round(tonnageByUnit[unit]).toLocaleString()}${unit}`
+        : null,
+    };
+  }, [analyzedSessionLifts, sessionTonnageLookup, sessionDate, isMetric]);
+
+  const meetDay = (sessionDate && meetDays?.get(sessionDate)) || null;
+
   if (analyzedSessionLifts && !sessionRatingRef.current && dataSource !== "demo") {
     const tupleCountForDate = parsedData?.filter(
       (e) => e.date === sessionDate && !e.isGoal,
@@ -305,7 +343,17 @@ export function TheLatestSessionCard({
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
-      <Card className="flex h-full flex-col overflow-hidden">
+      <Card
+        className="flex h-full flex-col overflow-hidden transition-colors"
+        // A meet day rings the whole card in the meet gold.
+        style={
+          meetDay
+            ? {
+                borderColor: `color-mix(in srgb, ${MEET_GOLD} 55%, transparent)`,
+              }
+            : undefined
+        }
+      >
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -377,7 +425,30 @@ export function TheLatestSessionCard({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 space-y-6 pt-0">
+        <CardContent className="flex-1 space-y-4 pt-0">
+          {hasLoggedSessions && sessionSummary && !isStarterSampleStage && (
+            <dl className="bg-muted/30 grid grid-cols-3 divide-x rounded-lg border py-2 text-center">
+              <SummaryStat
+                value={sessionSummary.liftCount}
+                label={sessionSummary.liftCount === 1 ? "Lift" : "Lifts"}
+              />
+              <SummaryStat
+                value={sessionSummary.setCount}
+                label={sessionSummary.setCount === 1 ? "Set" : "Sets"}
+              />
+              <SummaryStat
+                value={sessionSummary.tonnage ?? "0"}
+                label="Tonnage"
+              />
+            </dl>
+          )}
+          {meetDay && hasLoggedSessions && (
+            <MeetDayCompactBanner
+              meetDay={meetDay}
+              sessionDate={sessionDate}
+              isMetric={isMetric}
+            />
+          )}
           {!hasLoggedSessions && (
             <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
               Start simple: use the Log page to add one training session. Your

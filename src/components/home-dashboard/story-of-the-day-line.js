@@ -307,9 +307,9 @@ const IS_DEVELOPMENT =
 // itself. Each entry: at least `min` candidates -> `classics` classic turns
 // after every `stories` other stories.
 const CLASSIC_SHARE_BY_COUNT = [
-  { min: 60, stories: 1, classics: 2 }, // 2 of every 3 visits
-  { min: 25, stories: 1, classics: 1 }, // every 2nd visit
-  { min: 10, stories: 2, classics: 1 }, // every 3rd visit
+  { min: 40, stories: 1, classics: 2 }, // 2 of every 3 visits
+  { min: 20, stories: 1, classics: 1 }, // every 2nd visit
+  { min: 8, stories: 2, classics: 1 }, // every 3rd visit
 ];
 
 function isClassicStory(story) {

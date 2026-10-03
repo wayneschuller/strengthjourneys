@@ -11,8 +11,8 @@
  *   gives one per lift: the squat, bench and deadlift of a meet are three
  *   separate memories.
  * - Sources a lifter recognises: meet days, lifetime bests at 1, 3 and 5
- *   reps, the first time over a plate milestone, the best lift of each year,
- *   and heavy sets on video.
+ *   reps, the first time over a plate milestone, a year's best when it was
+ *   also the best ever at the time, and heavy sets on video.
  * - Labels a lifter would say out loud ("Your first 200kg deadlift"), never
  *   engine terms.
  * - The pick is weighted by score and spread across the years, so a twelve
@@ -59,6 +59,11 @@ const SOURCE_SCORES = {
 const VIDEO_BONUS = 15;
 const NOTE_BONUS = 5;
 
+// Scores are raised to this power when picking. Cubing means a meet lift
+// (120) is drawn about five times as often as a year's best (65) in the same
+// year, where squaring made it only about three times.
+const PICK_SHARPNESS = 3;
+
 // A filmed set counts as a source when it is within this share of the
 // lifter's best estimated max for that lift.
 const FILMED_SHARE_OF_BEST = 0.9;
@@ -71,8 +76,8 @@ const YEAR_BEST_MIN_SESSIONS = 6;
 /**
  * Picks one classic lift from buildClassicLiftCandidates' list: a year first
  * (weighted by its strongest memory), then a lift within it (weighted by
- * score). Squaring the scores keeps the best memories ahead without making a
- * year's best impossible, and choosing the year first stops a twelve-year
+ * score). The scores are raised to PICK_SHARPNESS, which keeps the best
+ * memories well ahead without making a lesser one impossible, and choosing the year first stops a twelve-year
  * log from living in its peak year.
  *
  * @param {Array} candidates
@@ -91,10 +96,15 @@ export function pickClassicLiftFrom(candidates, random = Math.random) {
 
   const years = Array.from(byYear.values()).map((list) => ({
     list,
-    weight: Math.max(...list.map((candidate) => candidate.score)) ** 2,
+    weight:
+      Math.max(...list.map((candidate) => candidate.score)) ** PICK_SHARPNESS,
   }));
   const { list } = weightedChoice(years, (year) => year.weight, random);
-  return weightedChoice(list, (candidate) => candidate.score ** 2, random);
+  return weightedChoice(
+    list,
+    (candidate) => candidate.score ** PICK_SHARPNESS,
+    random,
+  );
 }
 
 /**
@@ -214,19 +224,27 @@ export function buildClassicLiftCandidates({ parsedData, isMetric, meetDays }) {
     }
   }
 
-  for (const [key, { sessions: liftSessions, best }] of Object.entries(
-    yearly,
-  )) {
-    if (!best || liftSessions.size < YEAR_BEST_MIN_SESSIONS) continue;
+  // A year's best set is only a memory if it was the lifter's best ever at
+  // the time: it had to beat every earlier year's best for that lift. "Best
+  // of 2020" from a flat year, well short of what came before, is a statistic
+  // rather than something anyone remembers. Years are walked in order per
+  // lift so each is compared with the best that preceded it.
+  const bestSoFarKg = {};
+  for (const key of Object.keys(yearly).sort()) {
+    const { sessions: liftSessions, best } = yearly[key];
+    if (!best) continue;
     const [liftType, year] = key.split("|");
-    // Stronger years make better memories: up to ten points for a year whose
-    // best came close to the lifter's all-time best.
+    const previousBestKg = bestSoFarKg[liftType] ?? 0;
+    bestSoFarKg[liftType] = Math.max(previousBestKg, best.e1rmKg);
+    if (liftSessions.size < YEAR_BEST_MIN_SESSIONS) continue;
+    if (best.e1rmKg <= previousBestKg) continue;
+    // Up to ten points for how close it came to the all-time best.
     const shareOfBest = best.e1rmKg / (bestE1rmKg[liftType] || best.e1rmKg);
     raw.push({
       source: "yearBest",
       entry: best.entry,
       score: SOURCE_SCORES.yearBest + Math.round(shareOfBest * 10),
-      label: `Your best ${LIFT_NOUNS[liftType]} of ${year}`,
+      label: `Your best ${LIFT_NOUNS[liftType]} yet in ${year}`,
     });
   }
 

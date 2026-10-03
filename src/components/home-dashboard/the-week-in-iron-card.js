@@ -327,6 +327,28 @@ function getTonnageDelta(current, prev) {
   return pct;
 }
 
+// Recap line under the week title. Each entry takes the training-day label
+// ("3 training days") and the formatted volume. An in-progress week can say
+// "so far"; a finished week is told in the past tense.
+const CURRENT_WEEK_RECAP_LINES = [
+  (days, volume) =>
+    `${days} logged so far, with ${volume} of total volume across the week.`,
+  (days, volume) => `${days} in the log so far and ${volume} moved this week.`,
+  (days, volume) => `${days} down so far, adding up to ${volume} of volume.`,
+  (days, volume) => `${volume} moved across ${days} so far this week.`,
+  (days, volume) => `This week so far: ${days} and ${volume} of total volume.`,
+];
+
+const PAST_WEEK_RECAP_LINES = [
+  (days, volume) =>
+    `${days} logged, with ${volume} of total volume across the week.`,
+  (days, volume) => `${days} in the log and ${volume} moved that week.`,
+  (days, volume) => `${volume} of total volume across ${days}.`,
+  (days, volume) => `A week of ${days}, adding up to ${volume} of volume.`,
+  (days, volume) => `${days} on the board, with ${volume} lifted in total.`,
+  (days, volume) => `${volume} moved over ${days} that week.`,
+];
+
 /** Pick a deterministic phrase from a pool based on the week's Monday string. */
 function pickPhrase(pool, mondayStr) {
   let hash = 0;
@@ -1118,13 +1140,17 @@ function getWeekRecapCopy(stats, boundaries, unit, weeklySessionRows) {
       : "No sessions were logged in this week.";
   }
 
-  const sessionsLabel =
+  const daysLabel =
     weeklySessionRows.length === 1
-      ? "1 training day logged"
-      : `${weeklySessionRows.length} training days logged`;
+      ? "1 training day"
+      : `${weeklySessionRows.length} training days`;
   const volumeLabel = formatTonnage(stats.tonnage.current, unit);
+  const buildLine = pickPhrase(
+    boundaries.isCurrentWeek ? CURRENT_WEEK_RECAP_LINES : PAST_WEEK_RECAP_LINES,
+    boundaries.mondayStr,
+  );
 
-  return `${sessionsLabel} so far, with ${volumeLabel} of total volume across the week.`;
+  return buildLine(daysLabel, volumeLabel);
 }
 
 function getWeekReviewCopy(stats, boundaries) {

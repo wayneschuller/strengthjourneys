@@ -23,18 +23,9 @@ import {
   captureRecapSlideBlob,
   downloadBlob,
 } from "@/lib/recap-share-image";
-import { toKg } from "@/lib/weight-units";
+import { MEET_LIFTS, formatMeetTotal } from "@/lib/meet-detection";
 import { MeetMedalGlyph } from "@/components/meet-medal";
 import { ShareCopyButton } from "@/components/share-copy-button";
-
-const LB_PER_KG = 2.20462;
-
-// The order a meet runs in, with the names lifters say.
-const MEET_LIFTS = [
-  { liftType: "Back Squat", name: "Squat" },
-  { liftType: "Bench Press", name: "Bench" },
-  { liftType: "Deadlift", name: "Deadlift" },
-];
 
 // Literal colours for the captured card (see the header comment).
 const CARD_COLORS = {
@@ -171,7 +162,7 @@ function MeetShareCard({ ref, meetDay, sessionDate, isMetric }) {
     name,
     set: meetDay.topSets[liftType],
   })).filter(({ set }) => set);
-  const total = getMeetTotal(meetDay.topSets, isMetric);
+  const total = formatMeetTotal(meetDay.topSets, isMetric);
 
   return (
     <div
@@ -307,20 +298,6 @@ function MeetShareCard({ ref, meetDay, sessionDate, isMetric }) {
       )}
     </div>
   );
-}
-
-// A powerlifting total needs a single at each of squat, bench and deadlift;
-// anything less is not a total. Mirrors getMeetTotal in meet-day-banner.js.
-function getMeetTotal(topSets, isMetric) {
-  const singles = MEET_LIFTS.map(({ liftType }) => topSets[liftType]);
-  if (singles.some((set) => !set || set.reps !== 1)) return null;
-  const totalKg = singles.reduce(
-    (sum, set) => sum + toKg(set.weight, set.unitType),
-    0,
-  );
-  return isMetric
-    ? `${Math.round(totalKg * 2) / 2}kg`
-    : `${Math.round(totalKg * LB_PER_KG)}lb`;
 }
 
 function formatMeetDate(sessionDate) {

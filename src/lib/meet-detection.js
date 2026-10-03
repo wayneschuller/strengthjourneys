@@ -46,6 +46,37 @@ const MEET_NOTE_EXCLUDE_PATTERN =
 const MEET_NAME_PATTERN =
   /([A-Z0-9][\w'&.-]*(?:\s+(?:(?:and|of|the|at|in|for|de|du|la)\s+)?[A-Z0-9][\w'&.-]*)*\s+(?:Powerlifting\s+)?(?:Competition|Comp|Meet|Championships?|Contest|Open))/;
 
+// The lifts of a full-power meet in the order they run, with the names
+// lifters say.
+export const MEET_LIFTS = [
+  { liftType: "Back Squat", name: "Squat" },
+  { liftType: "Bench Press", name: "Bench" },
+  { liftType: "Deadlift", name: "Deadlift" },
+];
+
+const LB_PER_KG = 2.20462;
+
+/**
+ * A meet's total as display text ("510kg", "1124lb"), or null. A total needs
+ * a single at each of squat, bench and deadlift; anything less is not a
+ * total. Added in kg so a meet logged in mixed units still sums correctly.
+ *
+ * @param {Object} topSets - A meetDays entry's topSets.
+ * @param {boolean} isMetric - Unit to show the total in.
+ * @returns {string|null}
+ */
+export function formatMeetTotal(topSets, isMetric) {
+  const singles = MEET_LIFTS.map(({ liftType }) => topSets?.[liftType]);
+  if (singles.some((set) => !set || set.reps !== 1)) return null;
+  const totalKg = singles.reduce(
+    (sum, set) => sum + toKg(set.weight, set.unitType),
+    0,
+  );
+  return isMetric
+    ? `${Math.round(totalKg * 2) / 2}kg`
+    : `${Math.round(totalKg * LB_PER_KG)}lb`;
+}
+
 /**
  * Every meet day in the log.
  *

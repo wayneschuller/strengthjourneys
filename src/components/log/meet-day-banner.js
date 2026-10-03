@@ -18,8 +18,9 @@ import { Play } from "lucide-react";
 
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getVideoEmbedUrl, getVideoSourceMeta } from "@/lib/video-thumbnails";
-import { toKg } from "@/lib/weight-units";
+import { MEET_LIFTS, formatMeetTotal } from "@/lib/meet-detection";
 import { MEET_GOLD, MeetMedalGlyph } from "@/components/meet-medal";
+import { MeetShareButton } from "@/components/log/meet-share-button";
 import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import {
   Dialog,
@@ -27,15 +28,6 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-const LB_PER_KG = 2.20462;
-
-// The order a meet runs in, with the names lifters say.
-const MEET_LIFTS = [
-  { liftType: "Back Squat", name: "Squat" },
-  { liftType: "Bench Press", name: "Bench" },
-  { liftType: "Deadlift", name: "Deadlift" },
-];
 
 /**
  * @param {Object} props
@@ -50,7 +42,7 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
     name,
     set: meetDay.topSets[liftType],
   })).filter(({ set }) => set);
-  const total = getMeetTotal(meetDay.topSets, isMetric);
+  const total = formatMeetTotal(meetDay.topSets, isMetric);
   const ago = getTimeAgo(sessionDate, todayIso);
   // The attempt whose clip is playing in the dialog, if any.
   const [playing, setPlaying] = useState(null);
@@ -90,6 +82,12 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
             {meetDay.name ? `Meet day, ${ago}` : capitalize(ago)}
           </p>
         </div>
+        <MeetShareButton
+          meetDay={meetDay}
+          sessionDate={sessionDate}
+          isMetric={isMetric}
+          className="shrink-0 self-start"
+        />
       </div>
 
       {attempts.length > 0 && (
@@ -216,20 +214,6 @@ function AttemptTile({ name, set, isMetric, onPlay }) {
         ))}
     </div>
   );
-}
-
-// A powerlifting total needs a single at each of squat, bench and deadlift;
-// anything less is not a total, so nothing is shown.
-function getMeetTotal(topSets, isMetric) {
-  const singles = MEET_LIFTS.map(({ liftType }) => topSets[liftType]);
-  if (singles.some((set) => !set || set.reps !== 1)) return null;
-  const totalKg = singles.reduce(
-    (sum, set) => sum + toKg(set.weight, set.unitType),
-    0,
-  );
-  return isMetric
-    ? `${Math.round(totalKg * 2) / 2}kg`
-    : `${Math.round(totalKg * LB_PER_KG)}lb`;
 }
 
 function getTimeAgo(sessionDate, todayIso) {

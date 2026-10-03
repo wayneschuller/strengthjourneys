@@ -10,7 +10,7 @@
  * A filmed attempt gets a big gold play button. Hosts that allow framing
  * (YouTube, Vimeo, Google Drive) play in a dialog on the page; the rest,
  * Google Photos above all, refuse to be embedded, so the button opens them in
- * a new tab and says where the clip lives.
+ * a new tab, and their button wears that site's own mark instead.
  */
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
@@ -153,23 +153,21 @@ function AttemptTile({ name, set, isMetric, onPlay }) {
   const url = set.URL || set.url || null;
   const source = url ? getVideoSourceMeta(url) : null;
   const canEmbed = !!(url && getVideoEmbedUrl(url));
-
-  const playButtonClass =
-    "group/play relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white shadow-md transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none";
-  const playIcon = (
-    <>
-      <span
-        aria-hidden="true"
-        className="absolute inset-0 rounded-full opacity-40 group-hover/play:animate-ping"
-        style={{ background: MEET_GOLD }}
-      />
-      <Play className="relative h-5 w-5 translate-x-px fill-current" />
-    </>
-  );
+  const note = set.notes?.trim();
   const label = `Watch the ${name.toLowerCase()} attempt`;
 
+  const bigButtonClass =
+    "group/play relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none";
+  const ping = (
+    <span
+      aria-hidden="true"
+      className="absolute inset-0 rounded-full opacity-40 group-hover/play:animate-ping"
+      style={{ background: MEET_GOLD }}
+    />
+  );
+
   return (
-    <div className="bg-background/70 flex min-w-[9.5rem] items-center gap-3 rounded-xl border px-3 py-2">
+    <div className="bg-background/70 flex max-w-[24rem] min-w-[11rem] flex-1 items-start gap-3 rounded-xl border px-3 py-2">
       <div className="min-w-0 flex-1">
         <p className="text-muted-foreground text-xs">{name}</p>
         <p className="text-lg font-semibold tabular-nums">
@@ -181,35 +179,41 @@ function AttemptTile({ name, set, isMetric, onPlay }) {
             </span>
           ) : null}
         </p>
-        {url && !canEmbed && source && (
-          <p className="text-muted-foreground flex items-center gap-1 text-[11px]">
-            <VideoSourceIcon source={source} className="h-3 w-3" />
-            {source.name ?? "Video"}
+        {note && (
+          <p
+            className="text-muted-foreground line-clamp-2 text-xs italic"
+            title={note}
+          >
+            “{note}”
           </p>
         )}
       </div>
       {url &&
         (canEmbed ? (
+          // Plays here, so the gold play button.
           <button
             type="button"
             onClick={onPlay}
             aria-label={label}
-            className={playButtonClass}
+            className={`${bigButtonClass} self-center text-white`}
             style={{ background: MEET_GOLD }}
           >
-            {playIcon}
+            {ping}
+            <Play className="relative h-5 w-5 translate-x-px fill-current" />
           </button>
         ) : (
+          // Plays on its own site, so that site's mark, big, ringed in gold.
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${label} on ${source?.name ?? "its site"}`}
-            title={source?.name ? `Opens in ${source.name}` : undefined}
-            className={playButtonClass}
-            style={{ background: MEET_GOLD }}
+            title={source?.name ? `Watch on ${source.name}` : label}
+            className={`${bigButtonClass} bg-background self-center border-2`}
+            style={{ borderColor: MEET_GOLD }}
           >
-            {playIcon}
+            {ping}
+            <VideoSourceIcon source={source} className="relative h-6 w-6" />
           </a>
         ))}
     </div>

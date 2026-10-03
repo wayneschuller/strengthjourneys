@@ -68,6 +68,9 @@ const WELCOME_QUIPS = [
   "Proof is in the logbook, {name}",
   "Built with patience, {name}",
 ];
+// Dashboard stages that get a story of the day beside the greeting.
+const STORY_STAGES = new Set(["early_base", "established"]);
+
 /**
  * Top-level authenticated home dashboard for a linked Google Sheet.
  *
@@ -241,16 +244,16 @@ export function HomeDashboard() {
     sessionCount,
   ]);
 
-  // The first week is intentionally quieter: no story until the lifter has
-  // enough real data for one to feel earned.
-  const headerStory = dashboardStage !== "starter_sample" &&
-    dashboardStage !== "first_real_week" && (
-      <StoryOfTheDay
-        isProgressDone={hasDataLoaded}
-        dashboardStage={dashboardStage}
-        sessionCount={sessionCount}
-      />
-    );
+  // No story until there is history worth telling: through setup, the first
+  // week and the first month a new lifter's attention belongs on the cards and
+  // the log, and every story would be thin ("3 weeks of lifting", every set a
+  // PR). It arrives with the early base stage, past FIRST_MONTH_MAX_SESSIONS.
+  const headerStory = STORY_STAGES.has(dashboardStage) && (
+    <StoryOfTheDay
+      isProgressDone={hasDataLoaded}
+      dashboardStage={dashboardStage}
+    />
+  );
 
   return (
     <div>

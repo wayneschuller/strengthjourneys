@@ -31,10 +31,8 @@ import {
   Cake,
   Calendar,
   History,
-  Lightbulb,
   Medal,
   PlayCircle,
-  Target,
   Trophy,
 } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
@@ -66,8 +64,6 @@ import { STORY_REVEAL_DELAY_SECONDS } from "@/components/home-dashboard/dashboar
 
 // Which summary stories each stage may draw on, in its preferred order.
 const SUMMARY_KEYS_BY_STAGE = {
-  first_real_week: ["journey", "classic", "first-week-goal", "programming-tip"],
-  first_month: ["journey", "programming-tip"],
   early_base: ["journey", "momentum", "lifetime-tonnage", "year-bests"],
   established: [
     "journey",
@@ -89,12 +85,10 @@ const MOMENTUM_STEADY_PERCENT = 15;
  * @param {boolean} [props.isProgressDone=false] - Nothing shows until the
  *   data has loaded; the greeting holds the line back for longer anyway.
  * @param {string} [props.dashboardStage="established"]
- * @param {number} [props.sessionCount=0]
  */
 export function StoryOfTheDay({
   isProgressDone = false,
   dashboardStage = "established",
-  sessionCount = 0,
 }) {
   const { parsedData, topLiftsByTypeAndReps, sessionTonnageLookup, meetDays } =
     useUserLiftingData();
@@ -155,13 +149,7 @@ export function StoryOfTheDay({
   if (!isProgressDone) return null;
   if (stories.length === 0) return null;
 
-  return (
-    <RotatingStory
-      stories={stories}
-      dashboardStage={dashboardStage}
-      sessionCount={sessionCount}
-    />
-  );
+  return <RotatingStory stories={stories} dashboardStage={dashboardStage} />;
 }
 
 // ─── Supporting components ─────────────────────────────────────────────────
@@ -171,7 +159,7 @@ export function StoryOfTheDay({
 // story one before the real one). The line is built once per mount: it is
 // this visit's story, and a sheet revalidation or a random classic-lift pick
 // should not swap it out from under the lifter.
-function RotatingStory({ stories, dashboardStage, sessionCount }) {
+function RotatingStory({ stories, dashboardStage }) {
   const {
     parsedData,
     liftTypes,
@@ -197,7 +185,6 @@ function RotatingStory({ stories, dashboardStage, sessionCount }) {
       meetDays,
       athleteBio,
       dashboardStage,
-      sessionCount,
     };
     const story = stories[shownCursor % stories.length];
     // The classic lift can come up empty on a thin log; the journey line
@@ -498,32 +485,6 @@ function buildSummaryLine(story, context, setLabel) {
         href: "/tonnage?range=MAX",
       };
     }
-    case "first-week-goal": {
-      const { sessionsThisWeek = 0 } = story.streakStats ?? {};
-      return {
-        icon: Target,
-        accent: "emerald",
-        lead: `${context.sessionCount} session${context.sessionCount === 1 ? "" : "s"} logged`,
-        commentary:
-          sessionsThisWeek >= 3
-            ? "Three this week. The habit is forming."
-            : "One honest workout at a time.",
-        href: null,
-      };
-    }
-    case "programming-tip": {
-      const isFirstMonth = context.dashboardStage === "first_month";
-      const tips = isFirstMonth ? FIRST_MONTH_TIPS : FIRST_WEEK_TIPS;
-      return {
-        icon: Lightbulb,
-        accent: "amber",
-        lead: isFirstMonth
-          ? "Build a repeatable month"
-          : "Keep week one simple",
-        commentary: pickVariant(tips, story.todayStr),
-        href: null,
-      };
-    }
     default:
       return null;
   }
@@ -549,8 +510,6 @@ const KICKERS = {
   journey: ["Your story so far", "The long view", "Where it all adds up"],
   momentum: ["Lately", "Recent form", "How it is going"],
   "lifetime-tonnage": ["By the numbers", "The big picture", "All added up"],
-  "first-week-goal": ["So far", "Off and running"],
-  "programming-tip": ["Coach's note", "Worth knowing", "A tip"],
   milestoneInReach: ["Nearly there", "Within reach", "Next up"],
   yearPrs: ["This year", "A big year", "Year in review"],
   "year-bests": ["This year so far", "Your year", "Year to date"],
@@ -592,20 +551,6 @@ const MOMENTUM_UP_LINES = [
   "This is what progress looks like.",
   "Good run. Stay on the gas.",
   "You moved this block forward.",
-];
-
-const FIRST_WEEK_TIPS = [
-  "Run the same basic lifts twice before changing anything.",
-  "Keep the last rep looking clean.",
-  "A simple week beats an ambitious one you cannot repeat.",
-  "Write down every set. The habit matters as much as the weight.",
-];
-
-const FIRST_MONTH_TIPS = [
-  "Squat and press often, deadlift once a week, leave a rep in reserve.",
-  "If recovery feels rough, add consistency before load.",
-  "Repeat lifts often enough that technique improves each session.",
-  "Let the logbook get boring before you make it impressive.",
 ];
 
 // ─── Helpers ───────────────────────────────────────────────────────────────

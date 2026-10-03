@@ -717,8 +717,6 @@ export function TheWeekInIronCard({
                 />
               )}
               <WeekSection
-                stepLabel="A"
-                title="What happened this week"
                 description={getWeekRecapCopy(
                   stats,
                   boundaries,
@@ -737,8 +735,6 @@ export function TheWeekInIronCard({
                 <>
                   <Separator />
                   <WeekSection
-                    stepLabel="B"
-                    title="Looking ahead"
                     streakCallout={getStreakCallout(streakStats, true)}
                     streakCelebration={streakCelebration}
                     description={getNextStepCopy(
@@ -770,8 +766,6 @@ export function TheWeekInIronCard({
                 <>
                   <Separator />
                   <WeekSection
-                    stepLabel="B"
-                    title="Week in review"
                     streakCallout={getStreakCallout(streakStats, false)}
                     streakCelebration={streakCelebration}
                     description={getWeekReviewCopy(stats, boundaries)}
@@ -808,9 +802,9 @@ export function TheWeekInIronCard({
 
 // ─── Supporting components ─────────────────────────────────────────────────
 
+// No heading of its own: the first line (the recap, or the streak callout)
+// already says what the section is, and Wayne removed kicker labels app-wide.
 function WeekSection({
-  stepLabel,
-  title,
   streakCallout,
   streakCelebration,
   description,
@@ -822,9 +816,6 @@ function WeekSection({
   return (
     <section className="space-y-3">
       <div className="space-y-1">
-        <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.22em] uppercase">
-          {stepLabel}. {title}
-        </p>
         {streakCallout ? (
           <p className="text-foreground text-sm leading-6 font-semibold">
             {streakCallout}

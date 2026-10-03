@@ -40,9 +40,11 @@ const MEET_HINT_PATTERN = /comp|meet|attempt|event|contest|champion|national/i;
 const MEET_NOTE_EXCLUDE_PATTERN =
   /\b(imagine|imagining|find|possible|prep|preparing|dreaming|thinking|practice|treat|pretend|like a|for a comp|for the comp|next comp|upcoming|mock|will be|would be|window)\b/i;
 // The event's name as written in a note, e.g. "2021 Strength Haven Novice
-// Powerlifting Competition".
+// Powerlifting Competition". Short joining words may sit between the
+// capitalised ones: "Jungle Strength and Performance Berwick Winter
+// Powerlifting Comp".
 const MEET_NAME_PATTERN =
-  /([A-Z0-9][\w'&.-]*(?:\s+[A-Z0-9][\w'&.-]*)*\s+(?:Powerlifting\s+)?(?:Competition|Comp|Meet|Championships?|Contest|Open))/;
+  /([A-Z0-9][\w'&.-]*(?:\s+(?:(?:and|of|the|at|in|for|de|du|la)\s+)?[A-Z0-9][\w'&.-]*)*\s+(?:Powerlifting\s+)?(?:Competition|Comp|Meet|Championships?|Contest|Open))/;
 
 /**
  * Every meet day in the log.

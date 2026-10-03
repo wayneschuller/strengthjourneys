@@ -4,6 +4,7 @@
  * chart-visuals so the two charts on a lift page read as a matched pair.
  */
 import { useMemo, useRef, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -20,6 +21,7 @@ import {
   TimeRangeSelect,
   calculateThresholdDate,
   getTimeRangeDescription,
+  periodTargets,
   snapTimeRangeToData,
 } from "@/components/visualizer/time-range-select";
 
@@ -93,13 +95,30 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const { getColor } = useLiftColors();
   const { isMetric } = useAthleteBio();
   const liftColor = liftType ? getColor(liftType) : null;
-  const [storedTimeRange, setTimeRange] = useLocalStorage(
+  const [storedRangePreference, setRangePreference] = useLocalStorage(
     LOCAL_STORAGE_KEYS.TIME_RANGE,
     "MAX",
     {
       initializeWithValue: false,
     },
   );
+  // A link can ask for a period with ?range= (the dashboard's tonnage story
+  // sends ?range=MAX so the chart matches the lifetime figure it quoted). It
+  // holds until the lifter picks a range themselves, and never overwrites
+  // their saved preference.
+  const router = useRouter();
+  const queryRange = periodTargets.some(
+    (period) => period.shortLabel === router.query.range,
+  )
+    ? router.query.range
+    : null;
+  const [isQueryRangeDismissed, setIsQueryRangeDismissed] = useState(false);
+  const storedTimeRange =
+    queryRange && !isQueryRangeDismissed ? queryRange : storedRangePreference;
+  const setTimeRange = (range) => {
+    setIsQueryRangeDismissed(true);
+    setRangePreference(range);
+  };
   // Snap up to the nearest period that has data for this lift, without
   // overwriting the user's global preference.
   const timeRange = useMemo(
@@ -118,7 +137,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   // Used to hide the y-axis and other UI elements on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
 
-  const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
+  const rangeFirstDate = calculateThresholdDate(timeRange, setRangePreference);
   const feedbackContextId = `tonnage_chart_${(liftType || "all_lifts")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")}`;
@@ -323,10 +342,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
             config={chartConfig}
             className="!aspect-auto h-[400px] [&_.recharts-wrapper]:outline-none"
           >
-            <AreaChart
-              data={chartData}
-              margin={{ left: 5, right: 20 }}
-            >
+            <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
               <CartesianGrid {...CHART_GRID_PROPS} />
               <XAxis
                 {...CHART_AXIS_PROPS}
@@ -425,10 +441,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
             config={chartConfig}
             className="!aspect-auto h-[400px]"
           >
-            <AreaChart
-              data={chartData}
-              margin={{ left: 5, right: 20 }}
-            >
+            <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
               <CartesianGrid {...CHART_GRID_PROPS} />
               <XAxis
                 {...CHART_AXIS_PROPS}

@@ -79,6 +79,7 @@ import {
   formatWeightTick,
   getDateTickProps,
   paddedDateDomain,
+  renderMeetMarkers,
   renderYearDividers,
   selectTopPoints,
 } from "@/components/visualizer/chart-visuals";
@@ -127,7 +128,7 @@ function SyncedMultiLiftTooltip({
  *   hovered ISO date string; used to sync with TheLatestSessionCard.
  */
 export function VisualizerShadcn({ setHighlightDate }) {
-  const { dataSource, parsedData, liftTypes } = useUserLiftingData();
+  const { dataSource, parsedData, liftTypes, meetDays } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const { isMetric, bodyWeight, bodyWeightIsDefault } = useAthleteBio();
@@ -434,6 +435,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
               ))}
             {/* Faint year boundary dividers with the year beneath them */}
             {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
+            {/* Gold medal markers at each meet one of these lifts was in */}
+            {renderMeetMarkers(meetDays, { liftTypes: selectedLiftTypes })}
             <ChartLegend
               content={<ChartLegendContent />}
               className="tracking-tight md:text-lg"

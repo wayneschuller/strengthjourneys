@@ -239,7 +239,11 @@ export function ChartInlineLabel({
     >
       {rows.length > 1
         ? rows.map((line, i) => (
-            <tspan key={`${i}-${line}`} x={x} dy={i === 0 ? 0 : LABEL_LINE_HEIGHT}>
+            <tspan
+              key={`${i}-${line}`}
+              x={x}
+              dy={i === 0 ? 0 : LABEL_LINE_HEIGHT}
+            >
               {line}
             </tspan>
           ))
@@ -277,7 +281,10 @@ export function selectTopPoints(data, getValue, { count = 5 } = {}) {
 
   const DAY_MS = 24 * 60 * 60 * 1000;
   const spanMs = data[data.length - 1].rechartsDate - data[0].rechartsDate;
-  const separationMs = Math.min(Math.max(spanMs / 12, 7 * DAY_MS), 180 * DAY_MS);
+  const separationMs = Math.min(
+    Math.max(spanMs / 12, 7 * DAY_MS),
+    180 * DAY_MS,
+  );
 
   const ranked = data
     .map((point, index) => ({ point, index, value: getValue(point) }))
@@ -499,9 +506,7 @@ export function selectValueLabelIndices(
   if (!n) return new Set();
 
   const values = data.map((row) => getValue(row));
-  const reserved = new Set(
-    [...reservedIndices].filter((i) => i >= 0 && i < n),
-  );
+  const reserved = new Set([...reservedIndices].filter((i) => i >= 0 && i < n));
 
   // Small datasets keep labelling everything, which is what the toggle has
   // always done and is still readable at a few months of sessions.
@@ -592,4 +597,131 @@ export function renderYearDividers(yearLabels, showLabels = true) {
       }
     />
   ));
+}
+
+// Medal gold for meet markers. Falls back to a literal in case a build ever
+// drops Tailwind's palette variable for want of an amber utility.
+const MEET_MARKER_COLOR = "var(--color-amber-500, #f59e0b)";
+
+const MEET_SHORT_LIFT_NAMES = {
+  "Back Squat": "Squat",
+  "Bench Press": "Bench",
+  "Strict Press": "Press",
+};
+
+/**
+ * A gold hairline at each powerlifting meet, topped by a small medal badge.
+ * Solid where the year dividers are dashed and grey, so a meet reads as an
+ * event on the timeline rather than another gridline. Hovering the badge
+ * names the meet and the day's top sets.
+ *
+ * Returned as an array for the same reason as renderYearDividers: Recharts
+ * only recognises ReferenceLine as a direct child of the chart. Meets outside
+ * the chart's time range are discarded by Recharts, not drawn at the edge.
+ *
+ * @param {Map|null} meetDays - From the data provider (lib/meet-detection.js).
+ * @param {Object} [options]
+ * @param {string|string[]} [options.liftTypes] - Only mark meets where one of
+ *   these lifts was lifted (a squat chart skips a bench-only meet). Omit to
+ *   mark every meet.
+ * @param {boolean} [options.compact] - Smaller badge for the mini charts.
+ */
+export function renderMeetMarkers(
+  meetDays,
+  { liftTypes, compact = false } = {},
+) {
+  if (!meetDays?.size) return null;
+  const wanted = liftTypes
+    ? new Set(Array.isArray(liftTypes) ? liftTypes : [liftTypes])
+    : null;
+
+  const markers = [];
+  for (const [date, { name, topSets }] of meetDays) {
+    const sets = Object.values(topSets).filter(
+      (set) => !wanted || wanted.has(set.liftType),
+    );
+    if (wanted && sets.length === 0) continue;
+
+    const [y, m, d] = date.split("-").map(Number);
+    const title = [
+      name ?? "Meet day",
+      new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }),
+      sets
+        .map(
+          (set) =>
+            `${MEET_SHORT_LIFT_NAMES[set.liftType] ?? set.liftType} ${set.reps}@${set.weight}${set.unitType}`,
+        )
+        .join(" · "),
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    markers.push(
+      <ReferenceLine
+        key={`meet-${date}`}
+        x={Date.UTC(y, m - 1, d)}
+        stroke={MEET_MARKER_COLOR}
+        strokeOpacity={0.55}
+        strokeWidth={1.25}
+        ifOverflow="discard"
+        label={{
+          content: ({ viewBox }) => (
+            <MeetBadge
+              x={viewBox.x}
+              y={viewBox.y}
+              compact={compact}
+              title={title}
+            />
+          ),
+        }}
+      />,
+    );
+  }
+  return markers;
+}
+
+// A medal on a ribbon inside a ringed disc, sitting at the top of the meet's
+// hairline. Drawn in SVG so it scales with the chart and takes the theme's
+// background, and fades in after the series has drawn.
+function MeetBadge({ x, y, compact, title }) {
+  const radius = compact ? 7 : 9;
+  const scale = compact ? 0.78 : 1;
+  const cy = y + radius + 2;
+  return (
+    <g style={{ cursor: "default" }} opacity={0}>
+      <animate
+        attributeName="opacity"
+        from="0"
+        to="1"
+        begin="0.6s"
+        dur="0.5s"
+        fill="freeze"
+      />
+      <title>{title}</title>
+      <circle
+        cx={x}
+        cy={cy}
+        r={radius}
+        fill="var(--background)"
+        stroke={MEET_MARKER_COLOR}
+        strokeWidth={1.5}
+      />
+      <g transform={`translate(${x} ${cy}) scale(${scale})`}>
+        <path
+          d="M -3.2 -5.5 L 0 -0.8 L 3.2 -5.5"
+          fill="none"
+          stroke={MEET_MARKER_COLOR}
+          strokeWidth={1.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx={0} cy={2.2} r={3} fill={MEET_MARKER_COLOR} />
+      </g>
+    </g>
+  );
 }

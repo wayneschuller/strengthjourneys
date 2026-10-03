@@ -60,6 +60,7 @@ import {
   getDateTickProps,
   getResponsiveLabelCount,
   paddedDateDomain,
+  renderMeetMarkers,
   renderYearDividers,
   selectTopPoints,
   selectValueLabelIndices,
@@ -87,7 +88,7 @@ import {
  */
 export function TonnageChart({ setHighlightDate, liftType }) {
   const cardRef = useRef(null);
-  const { parsedData, isLoading, dataSource } = useUserLiftingData();
+  const { parsedData, isLoading, dataSource, meetDays } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -423,6 +424,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               )}
 
               {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
+              {renderMeetMarkers(meetDays, { liftTypes: liftType })}
 
               {/* The best sessions in range, ranked — see selectTopPoints. */}
               {!hiddenSeries.tonnage && (
@@ -537,6 +539,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               )}
 
               {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
+              {renderMeetMarkers(meetDays, { liftTypes: liftType })}
             </AreaChart>
           </ChartContainer>
         )}

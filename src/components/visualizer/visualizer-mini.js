@@ -36,6 +36,7 @@ import {
   getDateTickProps,
   getResponsiveLabelCount,
   paddedDateDomain,
+  renderMeetMarkers,
   renderYearDividers,
   selectTopPoints,
 } from "@/components/visualizer/chart-visuals";
@@ -89,7 +90,7 @@ import {
  */
 export function VisualizerMini({ liftType }) {
   const cardRef = useRef(null);
-  const { parsedData, dataSource, isLoading } = useUserLiftingData();
+  const { parsedData, dataSource, isLoading, meetDays } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -463,6 +464,10 @@ export function VisualizerMini({ liftType }) {
                 />
                 {/* Faint year boundary dividers with the year beneath them */}
                 {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
+                {renderMeetMarkers(meetDays, {
+                  liftTypes: liftType,
+                  compact: true,
+                })}
 
                 {/* The best sessions in range, ranked. A multi-rep session names
                     the set that produced the estimate above the estimate itself

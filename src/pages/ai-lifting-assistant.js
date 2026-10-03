@@ -1361,13 +1361,7 @@ function FlickeringGridDemo() {
 }
 
 function getMostRecentSessionDate(parsedData) {
-  for (let i = (parsedData?.length ?? 0) - 1; i >= 0; i -= 1) {
-    if (!parsedData[i].isGoal) {
-      return parsedData[i].date;
-    }
-  }
-
-  return null;
+  return parsedData?.[parsedData.length - 1]?.date ?? null;
 }
 
 function getPrioritizedLiftTypes({
@@ -1382,7 +1376,7 @@ function getPrioritizedLiftTypes({
 
   if (recentSessionDate && parsedData) {
     parsedData.forEach((entry) => {
-      if (entry.date !== recentSessionDate || entry.isGoal || !entry.liftType) {
+      if (entry.date !== recentSessionDate || !entry.liftType) {
         return;
       }
       if (seen.has(entry.liftType)) return;

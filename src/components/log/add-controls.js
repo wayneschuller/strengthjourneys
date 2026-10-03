@@ -54,7 +54,7 @@ export function LiftSuggestions({
   const lastSets = useMemo(() => {
     if (!parsedData) return null;
     const prior = parsedData.filter(
-      (e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal,
+      (e) => e.liftType === liftType && e.date < sessionDate,
     );
     if (!prior.length) return null;
     const lastDate = prior[prior.length - 1].date;

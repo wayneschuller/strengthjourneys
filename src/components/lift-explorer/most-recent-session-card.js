@@ -146,12 +146,7 @@ export function MostRecentSessionCard({
     if (highlightDate) {
       sessionDate = highlightDate;
     } else {
-      for (let i = parsedData.length - 1; i >= 0; i--) {
-        if (!parsedData[i].isGoal) {
-          sessionDate = parsedData[i].date;
-          break;
-        }
-      }
+      sessionDate = parsedData[parsedData.length - 1]?.date ?? null;
     }
 
     const isFirstDate =

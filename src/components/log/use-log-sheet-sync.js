@@ -34,7 +34,6 @@ function getPriorOpeningSet({ parsedData, liftType, sessionDate, isMetric }) {
     (entry) =>
       entry.liftType === liftType &&
       entry.date < sessionDate &&
-      !entry.isGoal &&
       (entry.reps ?? 0) > 0 &&
       (entry.weight ?? 0) > 0,
   );
@@ -794,11 +793,7 @@ export function useLogSheetSync({
         pendingSetsRef.current[liftType] ?? []
       ).filter((s) => !s._pending && s.rowIndex);
       const parsedRows = parsedData.filter(
-        (e) =>
-          e.date === sessionDate &&
-          e.liftType === liftType &&
-          !e.isGoal &&
-          e.rowIndex,
+        (e) => e.date === sessionDate && e.liftType === liftType && e.rowIndex,
       );
       const predecessorRow = [...parsedRows, ...confirmedPendingRows].reduce(
         (latest, row) =>
@@ -914,7 +909,6 @@ export function useLogSheetSync({
         (latest, e) =>
           e.date === sessionDate &&
           e.liftType === liftType &&
-          !e.isGoal &&
           e.rowIndex &&
           (!latest || e.rowIndex > latest.rowIndex)
             ? e
@@ -937,7 +931,6 @@ export function useLogSheetSync({
             notes,
             URL: "",
             rowIndex: null,
-            isGoal: false,
             isHistoricalPR: false,
             _pending: true,
             _tempId: tempId,
@@ -1012,7 +1005,7 @@ export function useLogSheetSync({
       );
 
       const sessionRows = parsedData.filter(
-        (e) => e.date === sessionDate && !e.isGoal && e.rowIndex,
+        (e) => e.date === sessionDate && e.rowIndex,
       );
 
       // Also include confirmed-pending row indices for correct insertion position
@@ -1039,7 +1032,7 @@ export function useLogSheetSync({
         // Sheet is newest-first (low rowIndex = newer). For a historical
         // date, insert after the last row whose date is still newer.
         const allRows = [
-          ...parsedData.filter((e) => e.rowIndex && !e.isGoal),
+          ...parsedData.filter((e) => e.rowIndex),
           ...Object.values(currentPending)
             .flat()
             .filter((s) => !s._pending && s.rowIndex),
@@ -1081,7 +1074,6 @@ export function useLogSheetSync({
             unitType,
             notes,
             rowIndex: null,
-            isGoal: false,
             isHistoricalPR: false,
             _pending: true,
             _tempId: tempId,
@@ -1209,7 +1201,7 @@ export function useLogSheetSync({
     markStructuralSaving();
 
     const sessionRows = parsedData.filter(
-      (entry) => entry.date === sessionDate && !entry.isGoal && entry.rowIndex,
+      (entry) => entry.date === sessionDate && entry.rowIndex,
     );
 
     if (!sessionRows.length) {
@@ -1227,7 +1219,7 @@ export function useLogSheetSync({
     const maxRow = lastSessionRow.rowIndex;
 
     const otherRows = parsedData
-      .filter((e) => e.date !== sessionDate && !e.isGoal && e.rowIndex)
+      .filter((e) => e.date !== sessionDate && e.rowIndex)
       .map((e) => e.rowIndex);
 
     const rowsAfter = otherRows.filter((r) => r > maxRow);

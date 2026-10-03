@@ -88,7 +88,7 @@ export function getLiftBlockCoachingState({
     new Set(
       parsedData
         .filter(
-          (e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal,
+          (e) => e.liftType === liftType && e.date < sessionDate,
         )
         .map((e) => e.date)
         .filter(Boolean),
@@ -125,7 +125,7 @@ export function getLiftBlockCoachingState({
 
   // Find last session's sets for this lift (same logic as LiftSuggestions)
   const prior = parsedData.filter(
-    (e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal,
+    (e) => e.liftType === liftType && e.date < sessionDate,
   );
   if (!prior.length) {
     const firstTimeButtons = firstTimeProgression

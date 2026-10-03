@@ -30,9 +30,8 @@ export function processVisualizerData(
   let weightMin = 1000;
 
   parsedData.forEach((lift) => {
-    const { date, liftType, reps, isGoal, label } = lift;
+    const { date, liftType, reps, label } = lift;
     if (date < timeRange) return; // Skip if date out of range of chart
-    if (isGoal) return; // FIXME: implement goal dashed lines at some point
 
     // Skip if the lift type is not selected
     if (selectedLiftTypes && !selectedLiftTypes.includes(liftType)) {

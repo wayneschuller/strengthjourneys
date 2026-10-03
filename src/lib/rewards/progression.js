@@ -100,7 +100,7 @@ function joinRequirements(requirements, conjunction) {
 
 export function getTrainingRewardMetrics(parsedData) {
   const completedSets = Array.isArray(parsedData)
-    ? parsedData.filter((lift) => !lift?.isGoal)
+    ? parsedData
     : [];
 
   if (completedSets.length === 0) {

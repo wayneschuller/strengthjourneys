@@ -217,7 +217,6 @@ export function buildWeeklyTrainingActivityByYear(
   const dateToWeekKey = new Map();
   const yearWeekIndexCache = new Map();
   for (const lift of parsedData) {
-    if (lift.isGoal) continue;
     const year = parseInt(lift.date.substring(0, 4));
     if (year < startYear || year > endYear) continue;
     let weekKey = dateToWeekKey.get(lift.date);
@@ -295,7 +294,6 @@ export function buildMonthlyTrainingActivityByYear(
   const monthMap = {};
   const dateToWeekKey = new Map();
   for (const lift of parsedData) {
-    if (lift.isGoal) continue;
     const year = parseInt(lift.date.substring(0, 4));
     if (year < startYear || year > endYear) continue;
     const month = parseInt(lift.date.substring(5, 7));
@@ -404,7 +402,6 @@ export function buildDailyTrainingHeatmapDays(
 
   for (const lift of parsedData) {
     if (lift.date < startDate || lift.date > endDate) continue;
-    if (lift.isGoal) continue;
 
     const dateStr = lift.date;
     if (!dayMap[dateStr]) {

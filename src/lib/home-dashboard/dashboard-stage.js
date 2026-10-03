@@ -24,20 +24,19 @@ export const FIRST_WEEK_SPAN_DAYS = 7;
 export const FIRST_MONTH_MAX_SESSIONS = 20;
 export const EARLY_BASE_MAX_SESSIONS = 60;
 
-function getNonGoalEntries(parsedData) {
-  if (!Array.isArray(parsedData)) return [];
-  return parsedData.filter((entry) => !entry?.isGoal);
+function toEntries(parsedData) {
+  return Array.isArray(parsedData) ? parsedData : [];
 }
 
 /**
- * Count unique non-goal training sessions in parsedData.
+ * Count unique training sessions in parsedData.
  *
  * @param {Array|null|undefined} parsedData
  * @returns {number}
  */
-export function getNonGoalSessionCount(parsedData) {
+export function getSessionCount(parsedData) {
   const uniqueDates = new Set();
-  getNonGoalEntries(parsedData).forEach((entry) => {
+  toEntries(parsedData).forEach((entry) => {
     if (entry?.date) uniqueDates.add(entry.date);
   });
   return uniqueDates.size;
@@ -52,7 +51,7 @@ export function getNonGoalSessionCount(parsedData) {
 export function getTrainingSpanDays(parsedData) {
   const uniqueDates = Array.from(
     new Set(
-      getNonGoalEntries(parsedData)
+      toEntries(parsedData)
         .map((entry) => entry?.date)
         .filter(Boolean),
     ),
@@ -82,19 +81,19 @@ export function detectStarterSheetState({
   rawRows,
   sheetInfo,
 } = {}) {
-  const nonGoalEntries = getNonGoalEntries(parsedData);
-  const sessionCount = getNonGoalSessionCount(parsedData);
-  const firstEntry = nonGoalEntries[0] ?? null;
+  const entries = toEntries(parsedData);
+  const sessionCount = getSessionCount(parsedData);
+  const firstEntry = entries[0] ?? null;
   const lowerFilename = sheetInfo?.filename?.toLowerCase?.() ?? "";
   const uniqueDates = new Set(
-    nonGoalEntries.map((entry) => entry?.date).filter(Boolean),
+    entries.map((entry) => entry?.date).filter(Boolean),
   );
   const uniqueLiftTypes = new Set(
-    nonGoalEntries.map((entry) => entry?.liftType).filter(Boolean),
+    entries.map((entry) => entry?.liftType).filter(Boolean),
   );
   const allEntriesMatchSeed =
-    nonGoalEntries.length >= 1 &&
-    nonGoalEntries.every(
+    entries.length >= 1 &&
+    entries.every(
       (entry) =>
         entry?.liftType === "Back Squat" &&
         entry?.reps === 5 &&
@@ -107,11 +106,11 @@ export function detectStarterSheetState({
   // auto-provisioned example, not merely because the user is new.
   //
   // Older starter sheets seeded a single Back Squat session at 3x5@20kg or
-  // 3x5@45lb, which arrives in parsedData as multiple non-goal rows on the
+  // 3x5@45lb, which arrives in parsedData as multiple rows on the
   // same date. Match that exact shape so the onboarding dashboard only treats
   // real rows as sample data when they have not been personalized.
   const looksLikeSeededSample =
-    nonGoalEntries.length <= 4 &&
+    entries.length <= 4 &&
     sessionCount === 1 &&
     uniqueDates.size === 1 &&
     uniqueLiftTypes.size === 1 &&
@@ -145,7 +144,7 @@ export function detectStarterSheetState({
  * }}
  */
 export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
-  const sessionCount = getNonGoalSessionCount(parsedData);
+  const sessionCount = getSessionCount(parsedData);
   const trainingSpanDays = getTrainingSpanDays(parsedData);
   const starterSheetState = detectStarterSheetState({
     parsedData,

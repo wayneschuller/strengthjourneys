@@ -92,7 +92,7 @@ export function buildLiftHighlights({
 
   const sets = [];
   for (const lift of parsedData) {
-    if (lift.liftType !== liftType || lift.isGoal) continue;
+    if (lift.liftType !== liftType) continue;
     const { value: weight, unit } = getDisplayWeight(lift, isMetric);
     if (!(weight > 0) || !(lift.reps > 0)) continue;
     sets.push({

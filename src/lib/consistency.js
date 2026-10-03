@@ -370,7 +370,6 @@ export function processConsistency(parsedData) {
     // Data is date-ascending, so the first entry older than the widest window
     // means every remaining entry is too old to count anywhere.
     if (entryDate < oldestStartDate) break;
-    if (parsedData[i].isGoal) continue;
     // A session's sets sit together, so only its first set needs recording.
     if (entryDate === sessionDatesDesc[sessionDatesDesc.length - 1]) continue;
     sessionDatesDesc.push(entryDate);

@@ -133,7 +133,7 @@ export function getYearBestSets(parsedData, todayStr) {
   const yearStart = `${todayStr.slice(0, 4)}-01-01`;
   const best = {};
   for (const entry of parsedData ?? []) {
-    if (entry.isGoal || !entry.date || entry.date < yearStart) continue;
+    if (!entry.date || entry.date < yearStart) continue;
     if (entry.date > todayStr || !BIG_FOUR_LIFT_TYPE_SET.has(entry.liftType)) {
       continue;
     }
@@ -166,7 +166,7 @@ function findMilestoneInReachStory(parsedData, isMetric, todayStr) {
   const heaviestKg = {};
   const recentBest = {};
   for (const entry of parsedData) {
-    if (entry.isGoal || !entry.date || entry.date > todayStr) continue;
+    if (!entry.date || entry.date > todayStr) continue;
     if (!BIG_FOUR_LIFT_TYPE_SET.has(entry.liftType)) continue;
     if (!(entry.reps >= 1) || !(entry.weight > 0)) continue;
     const kg = toKg(entry.weight, entry.unitType);
@@ -299,12 +299,12 @@ function findAnniversaryStories(
   todayStr,
 ) {
   const windowByMonthDay = buildAnniversaryWindow(todayStr);
-  const firstEntry = parsedData.find((entry) => !entry.isGoal && entry.date);
+  const firstEntry = parsedData.find((entry) => entry.date);
 
   const sessionsByDate = new Map();
   for (let i = 0; i < parsedData.length; i++) {
     const entry = parsedData[i];
-    if (entry.isGoal || !entry.date) continue;
+    if (!entry.date) continue;
     const match = windowByMonthDay.get(entry.date.slice(5));
     if (!match) continue;
     const yearsAgo = match.year - Number(entry.date.slice(0, 4));

@@ -561,7 +561,7 @@ function buildStoryParts(story, context) {
 
 function buildSummaryLine(story, context, setLabel) {
   const { parsedData, liftTypes, athleteBio } = context;
-  const firstDate = parsedData?.find((entry) => !entry.isGoal)?.date;
+  const firstDate = parsedData?.[0]?.date;
 
   switch (story.id) {
     case "journey": {

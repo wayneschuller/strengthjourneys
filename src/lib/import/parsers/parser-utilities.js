@@ -254,18 +254,6 @@ export function normalizeColumnName(columnName) {
     Comments: "Notes",
     COMMENTS: "Notes",
 
-    // isGoal variations
-    isgoal: "isGoal",
-    ISGOAL: "isGoal",
-    "is goal": "isGoal",
-    "Is Goal": "isGoal",
-    "IS GOAL": "isGoal",
-    is_goal: "isGoal",
-    Is_Goal: "isGoal",
-    goal: "isGoal",
-    Goal: "isGoal",
-    GOAL: "isGoal",
-
     // Label variations
     label: "Label",
     LABEL: "Label",

@@ -53,7 +53,6 @@ export function parseStrengthJourneysData(data) {
   let repsColumnIndex = normalizedColumnNames.indexOf("Reps");
   let weightColumnIndex = normalizedColumnNames.indexOf("Weight");
   let notesColumnIndex = normalizedColumnNames.indexOf("Notes");
-  let isGoalColumnIndex = normalizedColumnNames.indexOf("isGoal");
   let labelColumnIndex = normalizedColumnNames.indexOf("Label");
   let urlColumnIndex = normalizedColumnNames.indexOf("URL");
 
@@ -82,7 +81,6 @@ export function parseStrengthJourneysData(data) {
   const repsCol = repsColumnIndex;
   const weightCol = weightColumnIndex;
   const notesCol = notesColumnIndex;
-  const isGoalCol = isGoalColumnIndex;
   const labelCol = labelColumnIndex;
   const urlCol = urlColumnIndex;
 
@@ -177,7 +175,6 @@ export function parseStrengthJourneysData(data) {
 
     // Process optional fields only if they exist
     if (row[notesCol]) obj.notes = row[notesCol];
-    if (row[isGoalCol]) obj.isGoal = row[isGoalCol] === "TRUE";
     if (row[labelCol]) obj.label = row[labelCol];
     if (row[urlCol]) obj.URL = row[urlCol];
 

@@ -115,13 +115,7 @@ export function HomeDashboard() {
     Array.isArray(parsedData) &&
     (dataSource === "import" || rawRows !== null);
   const previewEntryCount = useMemo(
-    () =>
-      Array.isArray(parsedData)
-        ? parsedData.reduce(
-            (count, entry) => (entry?.isGoal ? count : count + 1),
-            0,
-          )
-        : null,
+    () => (Array.isArray(parsedData) ? parsedData.length : null),
     [parsedData],
   );
   // Each sheet's last row count, remembered on this device so the header's odometer has a
@@ -187,14 +181,9 @@ export function HomeDashboard() {
     if (window.localStorage.getItem(storageKey) === "1") return;
 
     const parsedDataCount = parsedData.length;
-    const nonGoalParsedDataCount = parsedData.reduce(
-      (count, entry) => (entry?.isGoal ? count : count + 1),
-      0,
-    );
 
     gaTrackHomeDashboardFirstView({
       parsedDataCount,
-      nonGoalParsedDataCount,
       dashboardStage,
       starterSheetState,
       sessionCount,

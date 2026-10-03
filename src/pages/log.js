@@ -413,9 +413,7 @@ export default function LogSessionPage({
     const history = getLiftHistoryBeforeDate(parsedData, sessionDate);
     if (parsedData) {
       for (const entry of parsedData) {
-        if (!entry.isGoal) {
-          freq[entry.liftType] = (freq[entry.liftType] ?? 0) + 1;
-        }
+        freq[entry.liftType] = (freq[entry.liftType] ?? 0) + 1;
       }
     }
     const frequentExtras = Object.entries(freq)
@@ -473,7 +471,7 @@ export default function LogSessionPage({
   // preference correction before new rows are written in the other unit.
   useEffect(() => {
     if (!parsedData?.length || unitNudgeShown.current) return;
-    const realEntries = parsedData.filter((e) => !e.isGoal && e.unitType);
+    const realEntries = parsedData.filter((e) => e.unitType);
     if (!realEntries.length) return;
     const kgCount = realEntries.filter((e) => e.unitType === "kg").length;
     const allKg = kgCount === realEntries.length;

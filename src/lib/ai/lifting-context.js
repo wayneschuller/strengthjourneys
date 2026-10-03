@@ -182,7 +182,7 @@ function getRecentTail(parsedData, today) {
       previousDate = entry.date;
       sessionCount += 1;
     }
-    if (entry.isGoal || !entry.liftType || !(entry.reps > 0)) continue;
+    if (!entry.liftType || !(entry.reps > 0)) continue;
     tail.push(entry);
   }
 

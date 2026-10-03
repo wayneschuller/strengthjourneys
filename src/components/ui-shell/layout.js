@@ -484,7 +484,7 @@ function useMissingDemoLiftName() {
     if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
     if (typeof slug !== "string") return null;
     const hasLift = parsedData.some(
-      (entry) => !entry.isGoal && getLiftSlug(entry.liftType) === slug,
+      (entry) => getLiftSlug(entry.liftType) === slug,
     );
     if (hasLift) return null;
     return getCuratedLiftBySlug(slug)?.liftType ?? "this lift";
@@ -835,8 +835,7 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
           formatName,
           importSummary: {
             outcome: "merged",
-            candidateEntryCount: parsedData.filter((entry) => !entry.isGoal)
-              .length,
+            candidateEntryCount: parsedData.length,
             skippedCount,
             conflictCount,
             latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),

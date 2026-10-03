@@ -736,11 +736,10 @@ const TonnageTooltipMinimal = ({
 function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
   if (!parsedData || !dateStr) return {};
 
-  // Filter lifts for the given date, excluding goals
+  // Filter lifts for the given date
   const sessionLifts = parsedData.filter(
     (lift) =>
       lift.date === dateStr &&
-      lift.isGoal !== true &&
       (!chartLiftType || lift.liftType === chartLiftType),
   );
 

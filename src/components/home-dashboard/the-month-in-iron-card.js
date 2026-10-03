@@ -77,7 +77,7 @@ export function TheMonthInIronCard({
     if (!Array.isArray(parsedData)) return 0;
     const dates = new Set();
     parsedData.forEach((entry) => {
-      if (!entry?.isGoal && entry?.date) dates.add(entry.date);
+      if (entry?.date) dates.add(entry.date);
     });
     return dates.size;
   }, [parsedData, sessionCountFromParent]);
@@ -574,9 +574,7 @@ function EarlyMonthMomentumCard({
   sheetUrl,
 }) {
   const stats = useMemo(() => {
-    const entries = Array.isArray(parsedData)
-      ? parsedData.filter((entry) => !entry?.isGoal)
-      : [];
+    const entries = Array.isArray(parsedData) ? parsedData : [];
     const sessions = new Set(entries.map((entry) => entry.date)).size;
     const sets = entries.length;
     const totalTonnageNative = entries.reduce(
@@ -1261,7 +1259,7 @@ function getMaxMonthOffsetFromData(parsedData) {
 
   let earliestDate = null;
   for (const entry of parsedData) {
-    if (!entry || entry.isGoal) continue;
+    if (!entry) continue;
     const entryDate = parseIsoDate(entry.date);
     if (!entryDate) continue;
     if (!earliestDate || entryDate < earliestDate) {
@@ -1286,7 +1284,7 @@ function getMaxMonthOffsetFromData(parsedData) {
 // ─── Monthly stats calculation ─────────────────────────────────────────────
 
 function computeMonthlyBattleStats(parsedData, boundaries) {
-  const nativeUnit = parsedData.find((e) => !e.isGoal)?.unitType ?? "lb";
+  const nativeUnit = parsedData[0]?.unitType ?? "lb";
   // Each row also tallies the variations that fed it, so the card can say
   // what is inside a number that no longer matches the lift's own page.
   const initBigFourByLift = () =>
@@ -1309,7 +1307,6 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
   const bigFourByLift = initBigFourByLift();
 
   for (const entry of parsedData) {
-    if (entry.isGoal) continue;
     if ((entry.reps ?? 0) < 1) continue;
     if (entry.unitType !== nativeUnit) continue;
 
@@ -1405,7 +1402,6 @@ function computeStrengthLevelStats(parsedData, boundaries, bio) {
   );
 
   for (const entry of parsedData) {
-    if (entry.isGoal) continue;
     const reps = entry.reps ?? 0;
     if (reps < 1) continue;
     if (!BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) continue;
@@ -2847,7 +2843,7 @@ function getLastMonthBestSets(parsedData, boundaries) {
   if (!Array.isArray(parsedData) || !boundaries?.prevMonthStart) return {};
   const best = {};
   for (const entry of parsedData) {
-    if (entry.isGoal || !entry.date) continue;
+    if (!entry.date) continue;
     if (
       entry.date < boundaries.prevMonthStart ||
       entry.date > boundaries.prevMonthEnd

@@ -90,7 +90,6 @@ export function StandardsSlider({
     let latest = null;
     for (const entry of parsedData) {
       if (
-        entry.isGoal ||
         entry.liftType !== liftType ||
         !entry.reps ||
         !entry.weight ||
@@ -121,7 +120,6 @@ export function StandardsSlider({
     PERIOD_KEYS.forEach((key) => (bestByPeriod[key] = null));
 
     parsedData.forEach((entry) => {
-      if (entry.isGoal) return;
       if (entry.liftType !== liftType || !entry.reps || !entry.weight) return;
       if (!entry.date) return;
       // Exclude the most recent session so period markers show "where you were"
@@ -186,7 +184,6 @@ export function StandardsSlider({
     let bestOnLatest = null;
     for (const entry of parsedData) {
       if (
-        entry.isGoal ||
         entry.liftType !== liftType ||
         !entry.reps ||
         !entry.weight ||

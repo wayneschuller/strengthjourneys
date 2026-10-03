@@ -156,7 +156,7 @@ export function getLiftSessionHistory(parsedData, liftType, beforeDate) {
 
   const byDate = new Map();
   for (const entry of parsedData) {
-    if (entry.isGoal || entry.liftType !== liftType) continue;
+    if (entry.liftType !== liftType) continue;
     if (!entry.date || entry.date >= beforeDate) continue;
     const set = toComparableSet(entry);
     if (!set) continue;

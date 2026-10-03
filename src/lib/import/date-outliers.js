@@ -100,7 +100,6 @@ function getContiguousDateSections(parsedData) {
   const rowBackedEntries = parsedData
     .filter(
       (entry) =>
-        !entry.isGoal &&
         entry.date &&
         Number.isFinite(entry.rowIndex),
     )

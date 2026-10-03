@@ -131,7 +131,7 @@ function computeSeasonalPatternForYear(parsedData, year) {
   const yearEnd = `${year}-12-31`;
   const sessionDatesByMonth = Array.from({ length: 12 }, () => new Set());
   parsedData.forEach((entry) => {
-    if (entry.isGoal || !entry.date) return;
+    if (!entry.date) return;
     if (entry.date < yearStart || entry.date > yearEnd) return;
     const month = parseInt(entry.date.slice(5, 7), 10) - 1;
     sessionDatesByMonth[month].add(entry.date);

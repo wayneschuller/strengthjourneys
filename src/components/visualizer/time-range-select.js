@@ -58,7 +58,7 @@ export function TimeRangeSelect({ timeRange, setTimeRange, liftType }) {
   if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
 
   const relevantData = liftType
-    ? parsedData.filter((entry) => entry.liftType === liftType && !entry.isGoal)
+    ? parsedData.filter((entry) => entry.liftType === liftType)
     : parsedData;
 
   if (relevantData.length === 0) return null;
@@ -130,7 +130,7 @@ export function snapTimeRangeToData(parsedData, liftType, preferredRange) {
   if (!Array.isArray(parsedData) || parsedData.length === 0) return preferredRange;
 
   const relevantData = liftType
-    ? parsedData.filter((e) => e.liftType === liftType && !e.isGoal)
+    ? parsedData.filter((e) => e.liftType === liftType)
     : parsedData;
   if (relevantData.length === 0) return preferredRange;
 

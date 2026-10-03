@@ -76,7 +76,7 @@ export function computeSessionStatsForYear(parsedData, year, todayYmd) {
   const prevYearDates = new Set();
 
   parsedData.forEach((entry) => {
-    if (entry.isGoal || !entry.date) return;
+    if (!entry.date) return;
     if (entry.date >= yearStart && entry.date <= yearEnd) {
       sessionDates.add(entry.date);
     }
@@ -140,7 +140,7 @@ export function computeTonnageForYear(parsedData, year, preferredUnit) {
   const prevYearTonnageByUnit = {};
   const tonnageByLiftRaw = {};
   parsedData.forEach((entry) => {
-    if (entry.isGoal || !entry.date) return;
+    if (!entry.date) return;
     const t = (entry.weight ?? 0) * (entry.reps ?? 0);
     const u = entry.unitType || "lb";
     if (entry.date >= yearStart && entry.date <= yearEnd) {
@@ -224,7 +224,7 @@ export function computeMostTrainedLiftForYear(parsedData, year) {
   const liftTypeReps = {};
   const liftTypeSessionDates = {};
   parsedData.forEach((entry) => {
-    if (entry.isGoal || !entry.date) return;
+    if (!entry.date) return;
     if (entry.date < yearStart || entry.date > yearEnd) return;
     sessionDates.add(entry.date);
     const lt = entry.liftType;

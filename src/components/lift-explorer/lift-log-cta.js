@@ -175,7 +175,7 @@ function getLatestLiftDate(parsedData, liftType) {
   let latestDate = null;
   for (let i = 0; i < parsedData.length; i += 1) {
     const entry = parsedData[i];
-    if (entry?.liftType === liftType && !entry.isGoal && entry.date) {
+    if (entry?.liftType === liftType && entry.date) {
       latestDate = !latestDate || entry.date > latestDate ? entry.date : latestDate;
     }
   }

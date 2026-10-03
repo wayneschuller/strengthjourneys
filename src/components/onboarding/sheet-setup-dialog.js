@@ -927,7 +927,7 @@ export function SheetSetupDialog() {
     setProvisionError(null);
     setIsProvisionActionLoading(true);
     try {
-      const importedEntries = parsedData.filter((entry) => !entry.isGoal);
+      const importedEntries = parsedData;
       const { newEntries, skippedCount, conflictCount } =
         deduplicateImportedEntries(importedEntries, sheetParsedData);
       const importSummary = {
@@ -1051,7 +1051,7 @@ export function SheetSetupDialog() {
           );
         }
 
-        const importedEntries = parsedData.filter((entry) => !entry.isGoal);
+        const importedEntries = parsedData;
         const payload = await writeEntriesToSheet(
           linkPayload.ssid,
           importedEntries,
@@ -1178,7 +1178,7 @@ export function SheetSetupDialog() {
 
         // Step 3: Use the parsed entries returned from importFile so the flow
         // does not depend on sessionStorage remaining writable.
-        const importedEntries = entries.filter((entry) => !entry.isGoal);
+        const importedEntries = entries;
 
         if (importedEntries.length > 0) {
           setSheetDiscoveryStatusMessage(
@@ -1628,10 +1628,7 @@ export function SheetSetupDialog() {
                       currentSheetInfo={sheetInfo}
                       recommendedId={recommendedCandidateId}
                       showImportedPreviewWarning={dataSource === "import"}
-                      importedPreviewEntryCount={
-                        parsedData?.filter((entry) => !entry.isGoal)?.length ||
-                        0
-                      }
+                      importedPreviewEntryCount={parsedData?.length || 0}
                       importedPreviewFileName={importedFileName || ""}
                       openPicker={openPicker}
                       isWorking={isProvisionActionLoading}

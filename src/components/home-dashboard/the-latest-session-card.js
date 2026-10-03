@@ -77,7 +77,7 @@ function getSessionCardTitle(sessionDate, isLastDate) {
  *
  * @param {Object} props
  * @param {string|null} [props.highlightDate=null] - ISO date string (YYYY-MM-DD) for the session
- *   to display. When null, defaults to the most recent non-goal session in parsedData.
+ *   to display. When null, defaults to the most recent session in parsedData.
  * @param {function(string)} props.setHighlightDate - Callback to update the displayed session date.
  *   Called when user clicks prev/next or when parent (e.g. Visualizer) wants to sync.
  */
@@ -122,7 +122,7 @@ export function TheLatestSessionCard({
   const [persistCacheTrigger, setPersistCacheTrigger] = useState(0);
   const pendingCacheUpdateRef = useRef(null);
   const hasLoggedSessions = useMemo(
-    () => Array.isArray(parsedData) && parsedData.some((entry) => !entry?.isGoal),
+    () => Array.isArray(parsedData) && parsedData.length > 0,
     [parsedData],
   );
   const isStarterSampleStage = dashboardStage === "starter_sample";
@@ -143,13 +143,7 @@ export function TheLatestSessionCard({
   // The Visualizer will normally set the highlight date prop based on chart mouseover.
   // The PR Analyzer defaults to no highlight date prop expecting to get the most recent session
   if (!sessionDate) {
-    // Iterate backwards to find the most recent non-goal entry date
-    for (let i = parsedData?.length - 1; i >= 0; i--) {
-      if (!parsedData[i].isGoal) {
-        sessionDate = parsedData[i].date;
-        break; // Stop as soon as we find the most recent non-goal entry
-      }
-    }
+    sessionDate = parsedData?.[parsedData.length - 1]?.date;
     isLastDate = true;
   }
 
@@ -215,7 +209,7 @@ export function TheLatestSessionCard({
 
   if (analyzedSessionLifts && !sessionRatingRef.current && dataSource !== "demo") {
     const tupleCountForDate = parsedData?.filter(
-      (e) => e.date === sessionDate && !e.isGoal,
+      (e) => e.date === sessionDate,
     ).length ?? 0;
 
     const cache = sessionRatingCache;

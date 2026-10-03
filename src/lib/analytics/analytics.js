@@ -278,21 +278,18 @@ export function gaTrackFeedbackSentiment(sentiment, page, extra = {}) {
  * Track first time a user sees their loaded home dashboard.
  * @param {object} params
  * @param {number} params.parsedDataCount - Total parsedData items.
- * @param {number} params.nonGoalParsedDataCount - Parsed items excluding goals.
  * @param {string} [params.dashboardStage] - Current staged dashboard experience.
  * @param {string} [params.starterSheetState] - Whether the linked sheet still resembles the starter sample.
- * @param {number} [params.sessionCount] - Unique non-goal session count.
+ * @param {number} [params.sessionCount] - Unique session count.
  */
 export function gaTrackHomeDashboardFirstView({
   parsedDataCount = 0,
-  nonGoalParsedDataCount = 0,
   dashboardStage,
   starterSheetState,
   sessionCount,
 } = {}) {
   const params = {
     parsed_data_count: parsedDataCount,
-    non_goal_parsed_data_count: nonGoalParsedDataCount,
   };
   if (typeof dashboardStage === "string")
     params.dashboard_stage = dashboardStage;

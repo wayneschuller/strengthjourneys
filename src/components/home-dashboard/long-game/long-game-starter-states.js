@@ -146,11 +146,11 @@ export function StarterLongGameState({
   // The old fallback lit Monday whenever the week was empty, which drew a training
   // day that never happened on a brand new lifter's very first screen.
   const { litDayIndexes, todayIndex } = useMemo(() => {
-    const nonGoalDates = Array.isArray(parsedData)
+    const loggedDates = Array.isArray(parsedData)
       ? Array.from(
           new Set(
             parsedData
-              .filter((entry) => !entry?.isGoal && entry?.date)
+              .filter((entry) => entry?.date)
               .map((entry) => entry.date),
           ),
         )
@@ -166,7 +166,7 @@ export function StarterLongGameState({
     endOfWeek.setHours(23, 59, 59, 999);
 
     const dayIndexes = new Set();
-    nonGoalDates.forEach((dateStr) => {
+    loggedDates.forEach((dateStr) => {
       const entryDate = new Date(`${dateStr}T00:00:00`);
       if (entryDate < startOfWeek || entryDate > endOfWeek) return;
       dayIndexes.add((entryDate.getDay() + 6) % 7);
@@ -300,11 +300,11 @@ export function FirstMonthLongGameState({
   // weeks forever while their recent training fell off the end.
   const { weekdayLabels, weekRows, activeDays, todayIndex } = useMemo(() => {
     const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
-    const nonGoalDates = Array.isArray(parsedData)
+    const loggedDates = Array.isArray(parsedData)
       ? Array.from(
           new Set(
             parsedData
-              .filter((entry) => !entry?.isGoal && entry?.date)
+              .filter((entry) => entry?.date)
               .map((entry) => entry.date),
           ),
         ).sort()
@@ -323,7 +323,7 @@ export function FirstMonthLongGameState({
     today.setHours(0, 0, 0, 0);
     const thisWeekStart = startOfWeekFor(today);
 
-    const firstDateStr = nonGoalDates[0] || format(today, "yyyy-MM-dd");
+    const firstDateStr = loggedDates[0] || format(today, "yyyy-MM-dd");
     const firstWeekStart = startOfWeekFor(new Date(`${firstDateStr}T00:00:00`));
 
     const weeksSinceStart =
@@ -340,7 +340,7 @@ export function FirstMonthLongGameState({
       Math.floor((date.getTime() - gridStart.getTime()) / 86400000);
 
     const activeDays = new Set();
-    nonGoalDates.forEach((dateStr) => {
+    loggedDates.forEach((dateStr) => {
       const offset = dayOffsetFor(new Date(`${dateStr}T00:00:00`));
       if (offset < 0 || offset >= dayCount) return;
       activeDays.add(offset);

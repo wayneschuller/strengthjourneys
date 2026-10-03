@@ -58,19 +58,19 @@ const { parseStrengthJourneysData } =
 // the typos real logs hold: a decimal comma, a stray backtick beside the 1,
 // "g" for "kg", a range, a unitless weight in a kg sheet, and cardio logged
 // with distances and times, which the parser leaves out.
-const SHEET_CSV = `Date,Lift Type,Reps,Weight,Notes,URL,isGoal,Label
-2026-03-02,Back Squat,5,100kg,,,,
-,,3,"112,5kg",,,,
-,,1,1\`57.5kg,,,,
-,,3,60g,,,,
-,,5,60-70kg,,,,
-,,10,20,,,,
-,,,,session note only,,,
-2026-03-04,Run,3,100m,,,,
-,Rowing,1,10 minute,,,,
-,Waist,1,111cm,,,,
-,Run,5km,41,,,,
-,Bench Press,5,"1,025lb",,,,
+const SHEET_CSV = `Date,Lift Type,Reps,Weight,Notes,URL,Label
+2026-03-02,Back Squat,5,100kg,,,
+,,3,"112,5kg",,,
+,,1,1\`57.5kg,,,
+,,3,60g,,,
+,,5,60-70kg,,,
+,,10,20,,,
+,,,,session note only,,
+2026-03-04,Run,3,100m,,,
+,Rowing,1,10 minute,,,
+,Waist,1,111cm,,,
+,Run,5km,41,,,
+,Bench Press,5,"1,025lb",,,
 `;
 
 const logged = [];

@@ -950,7 +950,6 @@ function PlateMilestonesMain({ relatedArticles }) {
       for (const d of parsedData) {
         if (
           d.liftType !== milestone.liftType ||
-          d.isGoal ||
           d.reps <= 0 ||
           d.weight <= 0 ||
           !d.date

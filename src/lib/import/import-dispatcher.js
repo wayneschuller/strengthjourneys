@@ -41,7 +41,6 @@ import { decodeWorkbook } from "@/lib/import/decode-workbook";
  * @property {number} weight        Weight used for this set
  * @property {"lb"|"kg"} [unitType] Units, if known
  * @property {string} [notes]       Optional notes from the sheet
- * @property {boolean} [isGoal]     True if this row represents a goal instead of an executed set
  * @property {string} [label]       Optional label or tag for this lift
  * @property {string} [URL]         Optional video or reference URL
  * @property {boolean} [isHistoricalPR] Marked true when this entry is a historical PR for its liftType + reps

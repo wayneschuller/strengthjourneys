@@ -95,7 +95,7 @@ export function processMeetDays(parsedData) {
   const meetDates = new Set();
   const attemptSetsByDate = new Map();
   for (const entry of parsedData) {
-    if (entry.isGoal || !entry.date || meetDates.has(entry.date)) continue;
+    if (!entry.date || meetDates.has(entry.date)) continue;
     if (!entry.notes && !entry.label) continue;
     const signal = getMeetSignal(entry);
     if (signal === "meet") {
@@ -111,7 +111,7 @@ export function processMeetDays(parsedData) {
   if (meetDates.size > 0) {
     const entriesByDate = new Map();
     for (const entry of parsedData) {
-      if (entry.isGoal || !meetDates.has(entry.date)) continue;
+      if (!meetDates.has(entry.date)) continue;
       if (!entriesByDate.has(entry.date)) entriesByDate.set(entry.date, []);
       entriesByDate.get(entry.date).push(entry);
     }

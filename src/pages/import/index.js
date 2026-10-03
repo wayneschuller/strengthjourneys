@@ -407,7 +407,7 @@ function escapeCsvField(val) {
 
 function buildCsvFromParsedData(parsedData) {
   const header = "Date,Lift Type,Reps,Weight,Notes,Label,URL";
-  const entries = parsedData.filter((e) => !e.isGoal);
+  const entries = parsedData;
 
   // parsedData is date-ascending with intraday order preserved.
   // Group by date, then reverse the groups for newest-first output
@@ -826,9 +826,7 @@ export default function ImportPage() {
                   <h3 className="text-sm font-medium">Need a quick copy?</h3>
                   <p className="text-muted-foreground text-xs">
                     Download all{" "}
-                    {parsedData
-                      .filter((e) => !e.isGoal)
-                      .length.toLocaleString()}{" "}
+                    {parsedData.length.toLocaleString()}{" "}
                     rows as CSV.
                   </p>
                 </div>

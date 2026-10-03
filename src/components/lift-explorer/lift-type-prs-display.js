@@ -986,7 +986,7 @@ function getDailyBestsByReps(parsedData, liftType, isMetric, fromYmd) {
   if (!Array.isArray(parsedData)) return byReps.map(() => []);
 
   for (const entry of parsedData) {
-    if (entry.liftType !== liftType || entry.isGoal) continue;
+    if (entry.liftType !== liftType) continue;
     if (!(entry.reps >= 1 && entry.reps <= 10)) continue;
     if (fromYmd && entry.date < fromYmd) continue;
 

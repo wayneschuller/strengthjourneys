@@ -260,12 +260,10 @@ export function toClientCandidate(candidate) {
       Number.isInteger(candidate.headerHint.weightColumnIndex) &&
       Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
         ? {
-            ...candidate.headerHint,
-            goalColumnIndex: Number.isInteger(
-              candidate.headerHint.goalColumnIndex,
-            )
-              ? candidate.headerHint.goalColumnIndex
-              : -1,
+            dateColumnIndex: candidate.headerHint.dateColumnIndex,
+            repsColumnIndex: candidate.headerHint.repsColumnIndex,
+            weightColumnIndex: candidate.headerHint.weightColumnIndex,
+            liftTypeColumnIndex: candidate.headerHint.liftTypeColumnIndex,
           }
         : null,
   };
@@ -381,15 +379,12 @@ export async function readHeaderInfo(ssid, headers) {
     repsColumnIndex: normalized.indexOf("reps"),
     weightColumnIndex: normalized.indexOf("weight"),
     liftTypeColumnIndex: normalized.indexOf("lift type"),
-    goalColumnIndex: canonical.indexOf("isGoal"),
   };
 }
 
 // Keep this server-side scanner in lockstep with parseStrengthJourneysData().
 // It does a fast raw Sheets API scan instead of calling the client-oriented
-// parser, so it must manually mirror sparse Date/Lift Type inheritance and
-// optional row semantics such as isGoal. The 2026-05 chooser regression showed
-// why this matters: a goal row can otherwise appear as a "best actual set".
+// parser, so it must manually mirror sparse Date/Lift Type inheritance.
 function parseYmd(value, localeHint) {
   return normalizeDateInput(value, localeHint);
 }
@@ -429,14 +424,6 @@ function parseWeightAndUnit(value) {
   return { weight: parsed, unitType: hasKg ? "kg" : hasLb ? "lb" : null };
 }
 
-function isGoalCellValue(value) {
-  return (
-    String(value || "")
-      .trim()
-      .toLowerCase() === "true"
-  );
-}
-
 function shouldReplacePreviewSet(current, candidate) {
   // Use e1RM only as a ranking score; client previews show the actual set.
   if (!current) return true;
@@ -470,7 +457,6 @@ export async function enrichCandidateMetadata(
   repsColumnIndex,
   weightColumnIndex,
   liftTypeColumnIndex,
-  goalColumnIndex = -1,
 ) {
   // Only five columns are ever read below, so asking for A:Z pulled roughly
   // six times the cells we use. Narrowing to the last hinted column is what
@@ -481,7 +467,6 @@ export async function enrichCandidateMetadata(
       repsColumnIndex,
       weightColumnIndex,
       liftTypeColumnIndex,
-      goalColumnIndex,
       0,
     ),
   );
@@ -566,10 +551,6 @@ export async function enrichCandidateMetadata(
       weightColumnIndex >= 0 &&
       String(row?.[weightColumnIndex] || "").trim() !== "";
     if (!hasReps || !hasWeight) continue;
-
-    if (goalColumnIndex >= 0 && isGoalCellValue(row?.[goalColumnIndex])) {
-      continue;
-    }
 
     approxRows += 1;
 
@@ -742,7 +723,6 @@ export async function discoverValidCandidates(headers, debug) {
           repsColumnIndex: headerInfo.repsColumnIndex,
           weightColumnIndex: headerInfo.weightColumnIndex,
           liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
-          goalColumnIndex: headerInfo.goalColumnIndex,
         },
       });
     }
@@ -786,7 +766,6 @@ export async function enrichCandidatesByIds({
         repsColumnIndex: headerInfo.repsColumnIndex,
         weightColumnIndex: headerInfo.weightColumnIndex,
         liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
-        goalColumnIndex: headerInfo.goalColumnIndex,
       };
     }
     enriched.push(
@@ -798,7 +777,6 @@ export async function enrichCandidatesByIds({
         headerHint.repsColumnIndex,
         headerHint.weightColumnIndex,
         headerHint.liftTypeColumnIndex,
-        headerHint.goalColumnIndex,
       ),
     );
   }

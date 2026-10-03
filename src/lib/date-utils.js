@@ -242,7 +242,7 @@ export function getCompactAgeFromYmd(dateStr, todayYmd) {
   );
 
   if (!Number.isFinite(days)) return null;
-  if (days <= 0) return "today"; // Future-dated goal rows read as current
+  if (days <= 0) return "today"; // Future-dated rows read as current
   if (days < 7) return `${days}d`;
   if (days < 60) return `${Math.round(days / 7)}w`;
   if (days < 365) return `${Math.round(days / 30)}mo`;

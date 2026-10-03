@@ -168,7 +168,7 @@ export function LiftBlock({
     if (!parsedData) return false;
     const dates = new Set();
     for (const e of parsedData) {
-      if (!e.isGoal) dates.add(e.date);
+      dates.add(e.date);
     }
     return dates.size <= 20;
   }, [parsedData]);

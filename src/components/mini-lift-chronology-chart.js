@@ -168,7 +168,7 @@ export function buildLiftChronology(
   if (!parsedData?.length || !liftType) return null;
 
   const validEntries = parsedData.filter(
-    (entry) => !entry.isGoal && entry.date,
+    (entry) => entry.date,
   );
   if (!validEntries.length) return null;
 
@@ -183,7 +183,6 @@ export function buildLiftChronology(
   const aggregates = new Map();
 
   parsedData.forEach((entry) => {
-    if (entry.isGoal) return;
     if (entry.liftType !== liftType) return;
     if (typeof entry.reps !== "number") return;
     const d = parseDateUTC(entry.date);

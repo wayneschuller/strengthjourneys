@@ -445,7 +445,7 @@ function HowStrongAmIPageMain() {
     // Total sessions (unique dates)
     let totalSessions = null;
     if (parsedData?.length) {
-      const dates = new Set(parsedData.filter((d) => !d.isGoal).map((d) => d.date));
+      const dates = new Set(parsedData.map((d) => d.date));
       totalSessions = dates.size;
     }
 

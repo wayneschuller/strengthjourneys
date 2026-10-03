@@ -25,7 +25,7 @@ export function getLiftHistoryBeforeDate(parsedData, sessionDate) {
   if (!parsedData || !sessionDate) return history;
   const weightByDate = new Map();
   for (const entry of parsedData) {
-    if (entry.isGoal || entry.date >= sessionDate) continue;
+    if (entry.date >= sessionDate) continue;
     let weight = weightByDate.get(entry.date);
     if (weight === undefined) {
       const daysAgo = getDaysBetweenYmd(entry.date, sessionDate);
@@ -48,7 +48,7 @@ export function getSessionDates(parsedData) {
   const seen = new Set();
   const dates = [];
   for (const entry of parsedData) {
-    if (!entry.isGoal && !seen.has(entry.date)) {
+    if (!seen.has(entry.date)) {
       seen.add(entry.date);
       dates.push(entry.date);
     }
@@ -61,7 +61,6 @@ export function groupSessionLifts(parsedData, sessionDate, deletedRowIndices) {
   const entries = parsedData.filter(
     (entry) =>
       entry.date === sessionDate &&
-      !entry.isGoal &&
       !deletedRowIndices.has(entry.rowIndex),
   );
   const grouped = {};

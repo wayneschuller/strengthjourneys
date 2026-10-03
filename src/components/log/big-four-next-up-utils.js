@@ -160,7 +160,7 @@ export function getBigFourNextUp({ parsedData, referenceDate, isMetric }) {
     BIG_FOUR_LIFT_TYPES.map((liftType) => [liftType, []]),
   );
   for (const entry of parsedData) {
-    if (entry.isGoal || !entry.date || entry.date >= referenceDate) continue;
+    if (!entry.date || entry.date >= referenceDate) continue;
     priorByLift[entry.liftType]?.push(entry);
   }
 
@@ -342,7 +342,6 @@ function getNovicePlan({
   const lastDateOf = (liftType) =>
     parsedData.reduce(
       (latest, e) =>
-        !e.isGoal &&
         e.liftType === liftType &&
         e.date < referenceDate &&
         (!latest || e.date > latest)
@@ -408,7 +407,7 @@ function getNovicePlan({
     workout,
     nextWorkout: workout === "A" ? "B" : "A",
     // Any lift yesterday, since the program wants a rest day between sessions.
-    trainedYesterday: parsedData.some((e) => !e.isGoal && e.date === yesterday),
+    trainedYesterday: parsedData.some((e) => e.date === yesterday),
     lifts,
   };
 }
@@ -421,7 +420,7 @@ function getNovicePlan({
 function getLastFiveRepWork(parsedData, liftType, date, isMetric) {
   let best = null;
   for (const e of parsedData) {
-    if (e.isGoal || e.liftType !== liftType || e.date !== date) continue;
+    if (e.liftType !== liftType || e.date !== date) continue;
     if ((e.reps ?? 0) < NOVICE_REPS) continue;
     const { value } = getDisplayWeight(e, isMetric);
     if (!(value > 0)) continue;

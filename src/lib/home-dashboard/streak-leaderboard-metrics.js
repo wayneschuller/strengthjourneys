@@ -175,7 +175,6 @@ export function enrichStreaks(
 
   for (let i = 0; i < parsedData.length; i++) {
     const lift = parsedData[i];
-    if (lift.isGoal) continue;
     if (!lift.date) continue;
     const reps = lift.reps;
     if (!reps || reps < 1 || reps > 10) continue;

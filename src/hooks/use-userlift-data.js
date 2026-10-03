@@ -168,7 +168,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  *   saved sheet on this device does see it until auth resolves.
  *
  * @context parsedData {Array|null} - Processed lift objects. null until first load.
- *   Each entry: { date, liftType, reps, weight, unitType, isHistoricalPR, isGoal }
+ *   Each entry: { date, liftType, reps, weight, unitType, isHistoricalPR }
  * @context liftTypes {string[]} - Unique lift names in parsedData, sorted by frequency.
  * @context topLiftsByTypeAndReps {Object|null} - All-time PR table: liftType → reps → best lift.
  * @context topLiftsByTypeAndRepsLast12Months {Object|null} - Same, last 12 months only.

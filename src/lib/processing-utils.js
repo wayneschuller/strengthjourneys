@@ -251,10 +251,9 @@ function toUTCDate(dateStr) {
   return new Date(dateStr + "T00:00:00Z");
 }
 
-// Internal: check if a given entry should be included based on goal and unit type
+// Internal: check if a given entry should be included based on unit type
 function isIncludedLift(entry, unitType) {
   if (!entry) return false;
-  if (entry.isGoal) return false;
   if (unitType && entry.unitType && entry.unitType !== unitType) return false;
   return true;
 }
@@ -438,8 +437,6 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   parsedData.forEach((entry) => {
     const { liftType, reps, date } = entry;
 
-    if (entry.isGoal) return; // Dreams do not count
-
     // Ensure that the reps value is within the expected range
     if (reps < 1 || reps > 10) {
       return;
@@ -517,7 +514,6 @@ export function processTopTonnageByType(parsedData, liftTypes) {
   // Aggregate tonnage per (date, liftType, unitType) in one pass
   const byDateLiftUnit = {};
   parsedData.forEach((entry) => {
-    if (entry.isGoal) return;
     const { date, liftType, weight, reps, unitType } = entry;
     if (!date || !liftType) return;
     const tonnage = (weight ?? 0) * (reps ?? 0);
@@ -574,7 +570,6 @@ export function processSessionTonnageLookup(parsedData) {
   }
 
   parsedData.forEach((entry) => {
-    if (entry.isGoal) return;
     const { date, liftType, weight, reps, unitType } = entry;
     if (!date) return;
     const tonnage = (weight ?? 0) * (reps ?? 0);
@@ -783,8 +778,6 @@ export function calculateLiftTypes(parsedData) {
 
   const liftTypeStats = {};
   parsedData.forEach((lift) => {
-    if (lift.isGoal) return; // Don't include goals here
-
     const liftType = lift.liftType;
     if (!liftTypeStats[liftType]) {
       liftTypeStats[liftType] = {
@@ -825,7 +818,6 @@ export const markHigherWeightAsHistoricalPRs = (parsedData) => {
   // Directly modify the objects for performance
   parsedData.forEach((record) => {
     if (record.reps === 0) return; // Ignore fail records
-    if (record.isGoal) return; // Don't include goals here
 
     const key = `${record.liftType}-${record.reps}`;
 
@@ -898,7 +890,6 @@ export function getPRHighlightsForYear(parsedData, year, e1rmFormula = "Brzycki"
 
   const yearLifts = [];
   parsedData.forEach((entry) => {
-    if (entry.isGoal) return;
     const reps = entry.reps ?? 0;
     if (reps < 1 || reps > 10) return;
     if (entry.date < yearStart || entry.date > yearEnd) return;
@@ -998,7 +989,6 @@ export function getLifetimePRsAchievedInYear(parsedData, year) {
   // Best isHistoricalPR per (liftType, reps) in this year
   const bestByLiftAndReps = {};
   parsedData.forEach((entry) => {
-    if (entry.isGoal) return;
     if (entry.isHistoricalPR !== true) return;
     const reps = entry.reps ?? 0;
     if (reps < 1 || reps > 10) return;
@@ -1055,7 +1045,6 @@ export function getSessionDatesContainingLiftType(parsedData, liftType) {
   const dates = [];
   for (let i = parsedData.length - 1; i >= 0; i--) {
     const entry = parsedData[i];
-    if (entry.isGoal) continue;
     if (entry.liftType === liftType && !seen.has(entry.date)) {
       seen.add(entry.date);
       dates.unshift(entry.date);
@@ -1073,9 +1062,9 @@ export function getAnalyzedSessionLifts(
   topLiftsByTypeAndReps,
   topLiftsByTypeAndRepsLast12Months,
 ) {
-  // Grab all the lifts on this date (that are not goals)
+  // Grab all the lifts on this date
   const sessionLifts = parsedData?.filter(
-    (lift) => lift.date === date && lift.isGoal !== true,
+    (lift) => lift.date === date,
   );
 
   const analyzedLifts = sessionLifts?.reduce((acc, entry) => {

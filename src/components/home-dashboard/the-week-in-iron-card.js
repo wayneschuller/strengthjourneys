@@ -184,7 +184,7 @@ function getMaxWeekOffsetFromData(parsedData) {
   if (!Array.isArray(parsedData) || parsedData.length === 0) return 0;
   let earliest = null;
   for (const entry of parsedData) {
-    if (!entry || entry.isGoal) continue;
+    if (!entry) continue;
     if (!earliest || entry.date < earliest) earliest = entry.date;
   }
   if (!earliest) return 0;
@@ -200,7 +200,7 @@ function getMaxWeekOffsetFromData(parsedData) {
 // ─── Weekly stats computation ──────────────────────────────────────────────
 
 function computeWeeklyStats(parsedData, boundaries) {
-  const nativeUnit = parsedData.find((e) => !e.isGoal)?.unitType ?? "lb";
+  const nativeUnit = parsedData[0]?.unitType ?? "lb";
 
   let currentTonnage = 0;
   let prevTonnage = 0;
@@ -218,7 +218,6 @@ function computeWeeklyStats(parsedData, boundaries) {
   const liftTypeSets = {};
 
   for (const entry of parsedData) {
-    if (entry.isGoal) continue;
     if ((entry.reps ?? 0) < 1) continue;
 
     const { date, liftType } = entry;
@@ -282,7 +281,7 @@ function getWeeklySessionRows(parsedData, boundaries, isMetric) {
   const sessionsByDate = new Map();
 
   for (const entry of parsedData) {
-    if (!entry || entry.isGoal) continue;
+    if (!entry) continue;
     if ((entry.reps ?? 0) < 1) continue;
     if (
       entry.date < boundaries.mondayStr ||
@@ -635,7 +634,7 @@ export function TheWeekInIronCard({
   );
 
   const hasLoggedSessions = useMemo(
-    () => Array.isArray(parsedData) && parsedData.some((e) => !e?.isGoal),
+    () => Array.isArray(parsedData) && parsedData.length > 0,
     [parsedData],
   );
   const shouldShowEarlyWeekCard =

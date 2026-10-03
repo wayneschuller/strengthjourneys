@@ -54,7 +54,7 @@ export function summarizeLiftJourney({
   let lastDate = null;
 
   for (const lift of parsedData) {
-    if (lift.liftType !== liftType || lift.isGoal) continue;
+    if (lift.liftType !== liftType) continue;
 
     const { value: weight } = getDisplayWeight(lift, isMetric);
 

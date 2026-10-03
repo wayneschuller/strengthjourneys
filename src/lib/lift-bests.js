@@ -153,9 +153,7 @@ export function sampleRollingBestE1RMs(
   });
 }
 
-// A set that was actually lifted: not a goal row, not a failed rep, and dated.
+// A set that was actually lifted: not a failed rep, and dated.
 function isRealSet(entry) {
-  return (
-    !entry.isGoal && entry.reps > 0 && entry.weight > 0 && Boolean(entry.date)
-  );
+  return entry.reps > 0 && entry.weight > 0 && Boolean(entry.date);
 }

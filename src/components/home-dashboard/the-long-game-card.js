@@ -107,7 +107,7 @@ export function TheLongGameCard({
     if (!Array.isArray(parsedData)) return 0;
     const dates = new Set();
     parsedData.forEach((entry) => {
-      if (!entry?.isGoal && entry?.date) dates.add(entry.date);
+      if (entry?.date) dates.add(entry.date);
     });
     return dates.size;
   }, [parsedData, sessionCountFromParent]);
@@ -715,7 +715,7 @@ function buildLongGameCopyLines({
 
   const trainingDates = [
     ...new Set(
-      parsedData.filter((entry) => !entry?.isGoal).map((entry) => entry.date),
+      parsedData.map((entry) => entry.date),
     ),
   ];
   const startDate = trainingDates[0];

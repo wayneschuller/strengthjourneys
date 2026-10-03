@@ -210,7 +210,7 @@ function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
 
   const stats = useMemo(() => {
     if (!parsedData?.length) return null;
-    const entries = parsedData.filter((e) => !e.isGoal);
+    const entries = parsedData;
     if (!entries.length) return null;
     const dates = [...new Set(entries.map((e) => e.date))].sort();
     const liftTypes = new Set(entries.map((e) => e.liftType));
@@ -419,7 +419,7 @@ function ImportedDataOverview({ parsedData, label }) {
 
   const stats = useMemo(() => {
     if (!parsedData || parsedData.length === 0) return null;
-    const entries = parsedData.filter((e) => !e.isGoal);
+    const entries = parsedData;
     if (entries.length === 0) return null;
 
     const dates = [...new Set(entries.map((e) => e.date))].sort();
@@ -1123,7 +1123,7 @@ export function ImportWorkflowSection({
           : conflictCount > 0
             ? "conflicts_only"
             : "already_current",
-      candidateEntryCount: parsedData.filter((entry) => !entry.isGoal).length,
+      candidateEntryCount: parsedData.length,
       skippedCount,
       conflictCount,
       latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),
@@ -1220,7 +1220,7 @@ export function ImportWorkflowSection({
 
   if (dataSource === "import") {
     const entryCount =
-      parsedData?.filter((entry) => !entry.isGoal)?.length || 0;
+      parsedData?.length || 0;
     const showCreateSheet = isAuthenticated && !hasLinkedSheet;
     const showMerge = isAuthenticated && !showCreateSheet && canMerge;
     const importAnalysis = showMerge
@@ -1228,7 +1228,7 @@ export function ImportWorkflowSection({
       : null;
     const newEntries =
       importAnalysis?.newEntries ||
-      parsedData?.filter((entry) => !entry.isGoal) ||
+      parsedData ||
       [];
     const skippedCount = importAnalysis?.duplicateCount || 0;
     const conflictCount = importAnalysis?.conflictCount || 0;
@@ -1354,7 +1354,6 @@ export function ImportWorkflowSection({
                         // Find the user's most-logged big-four lift for a dynamic progress guide link
                         const liftCounts = {};
                         for (const e of parsedData || []) {
-                          if (e.isGoal) continue;
                           liftCounts[e.liftType] =
                             (liftCounts[e.liftType] || 0) + 1;
                         }

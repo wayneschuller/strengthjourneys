@@ -185,7 +185,6 @@ licence for new code — treat the warnings as real when writing anything new.
   - `weight`
   - `unitType`
   - `isHistoricalPR`
-  - `isGoal`
 - Do not modify this schema without updating parsing + processing
 - Imported file preview data is stored client-side in `sessionStorage` and
   overrides the normal linked-sheet pipeline until cleared

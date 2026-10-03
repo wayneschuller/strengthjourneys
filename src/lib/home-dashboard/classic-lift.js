@@ -333,7 +333,7 @@ function groupBigFourSessions(parsedData, meetDays) {
   const bigFour = new Set(BIG_FOUR_LIFT_TYPES);
   const entriesByDate = new Map();
   for (const entry of parsedData) {
-    if (entry.isGoal || !entry.date || !bigFour.has(entry.liftType)) continue;
+    if (!entry.date || !bigFour.has(entry.liftType)) continue;
     if (!(entry.reps >= 1) || !(entry.weight > 0)) continue;
     if (!entriesByDate.has(entry.date)) entriesByDate.set(entry.date, []);
     entriesByDate.get(entry.date).push(entry);

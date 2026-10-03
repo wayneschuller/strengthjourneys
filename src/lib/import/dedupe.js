@@ -10,7 +10,7 @@ import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
 import { getImportedSourceIdentity } from "@/lib/import/provenance";
 
 function normalizeComparableEntry(entry) {
-  if (!entry || entry.isGoal) return null;
+  if (!entry) return null;
 
   const date = String(entry.date || "").trim();
   const liftType = normalizeLiftTypeNames(String(entry.liftType || "").trim());
@@ -107,7 +107,6 @@ export function deduplicateImportedEntries(importedData, existingData) {
   let skippedCount = 0;
 
   for (const entry of Array.isArray(importedData) ? importedData : []) {
-    if (entry?.isGoal) continue;
     const contentKey = buildComparableLiftKey(entry);
     if (!contentKey) continue;
 
@@ -147,9 +146,7 @@ export function deduplicateImportedEntries(importedData, existingData) {
 }
 
 export function analyzeImportedEntries(importedData, existingData) {
-  const importedEntries = Array.isArray(importedData)
-    ? importedData.filter((entry) => !entry?.isGoal)
-    : [];
+  const importedEntries = Array.isArray(importedData) ? importedData : [];
   const { newEntries, skippedCount, conflictCount, conflicts } =
     deduplicateImportedEntries(importedEntries, existingData);
 

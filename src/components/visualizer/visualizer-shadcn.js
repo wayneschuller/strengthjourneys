@@ -72,7 +72,7 @@ import {
   CHART_GRID_PROPS,
   ChartAreaGradient,
   ChartGlowFilter,
-  TopPointMarkers,
+  StaggeredTopPointMarkers,
   e1rmMarkerLines,
   formatWeightTick,
   getDateTickProps,
@@ -438,29 +438,27 @@ export const VisualizerShadcn = memo(function VisualizerShadcn({
             {/* Ranked high points per lift, opt-in via the Show Values switch.
                 Replaces the old always-dense per-point labels, which became an
                 unreadable smear across several years and four lift types. */}
-            {showLabelValues &&
-              selectedLiftTypes.map((liftType, index) => (
-                <TopPointMarkers
-                  key={`top-${liftType}`}
-                  topPoints={topPointsByLift[liftType] || []}
-                  color={liftColors[liftType]}
-                  getLines={e1rmMarkerLines(liftType)}
-                  // Stagger each lift's label stack higher than the last so two
-                  // lifts peaking around the same week don't print on top of
-                  // each other — see TopPointMarkers' labelOffset doc.
-                  labelOffset={index * 22}
+            {showLabelValues && (
+              // Staggered so two lifts peaking around the same week don't
+              // print their labels on top of each other.
+              <StaggeredTopPointMarkers
+                series={selectedLiftTypes.map((liftType) => ({
+                  key: `top-${liftType}`,
+                  topPoints: topPointsByLift[liftType] || [],
+                  color: liftColors[liftType],
+                  getLines: e1rmMarkerLines(liftType),
                   // With several lifts on screen, foreground/muted text can't
                   // tell one label from another — tint each with its own lift
                   // colour so a label reads back to its line the same way the
                   // legend does. A single selected lift keeps the plain
                   // foreground styling, since there's nothing to disambiguate.
-                  labelColor={
+                  labelColor:
                     selectedLiftTypes.length > 1
                       ? liftColors[liftType]
-                      : undefined
-                  }
-                />
-              ))}
+                      : undefined,
+                }))}
+              />
+            )}
             {/* Faint year boundary dividers with the year beneath them */}
             {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
             {/* Gold medal markers at each meet one of these lifts was in */}

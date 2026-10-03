@@ -455,13 +455,10 @@ export function getResponsiveLabelCount(
  * @param {function} props.getLines - ({ point, value, rank, isWinner }) =>
  *   string[]. One or more lines to stack above the marker — e.g. a rep@weight
  *   line above the E1RM estimate it produced.
- * @param {number} [props.labelOffset] - Extra px lifted above the marker, on
- *   top of the usual clearance. Two markers from *different* series can land
- *   close together in both time and value — selectTopPoints only keeps a
- *   series' own points apart, it has no view of any other series being drawn
- *   alongside it — so a multi-series chart should stagger each series by a
- *   different offset (e.g. its index among the selected series) to keep their
- *   label stacks from colliding. Single-series charts can ignore this.
+ * @param {number[]} [props.labelOffsets] - Extra px each label is lifted above
+ *   its marker, by rank, on top of the usual clearance. Single-series charts
+ *   can ignore this; a multi-series chart should render through
+ *   StaggeredTopPointMarkers, which works the offsets out.
  * @param {string} [props.labelColor] - Overrides the default foreground/muted
  *   label colour with `color` (or any colour the caller passes). A chart with
  *   one series doesn't need this — foreground already reads as "the" line —
@@ -473,7 +470,7 @@ export function TopPointMarkers({
   topPoints,
   color,
   getLines,
-  labelOffset = 0,
+  labelOffsets,
   labelColor,
 }) {
   if (!topPoints?.length) return null;
@@ -515,7 +512,7 @@ export function TopPointMarkers({
                     viewBox.y -
                     (isWinner ? 12 : 10) -
                     (lines.length - 1) * LABEL_LINE_HEIGHT -
-                    labelOffset
+                    (labelOffsets?.[rank] ?? 0)
                   }
                   textAnchor="middle"
                   // Foreground rather than the series colour, which is too dark
@@ -536,6 +533,76 @@ export function TopPointMarkers({
       })}
     </>
   );
+}
+
+// Rough width of one 12px semibold label character, and the gap kept between
+// two label stacks. Estimates: SVG text can't be measured before it is drawn.
+const LABEL_CHAR_WIDTH_PX = 7;
+const LABEL_GAP_PX = 3;
+
+/**
+ * TopPointMarkers for several series sharing one plot. selectTopPoints keeps a
+ * series' own points apart but has no view of the other series, so two lifts
+ * peaking the same week would print their labels on top of each other. Each
+ * label here sits just above its marker unless a label already placed is in
+ * the way, in which case it rises only far enough to clear it. Earlier series
+ * get first pick, so their labels stay put.
+ *
+ * Must be rendered inside a Recharts chart: it reads the axis scales to work
+ * in screen pixels.
+ *
+ * @param {Object} props
+ * @param {Array<{key: string, topPoints: Array, color: string, getLines: function, labelColor?: string}>} props.series
+ *   One entry per series, each the props TopPointMarkers takes.
+ */
+export function StaggeredTopPointMarkers({ series }) {
+  const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
+
+  const placed = [];
+  const offsetsBySeries = series.map(({ topPoints, getLines }) =>
+    (topPoints ?? []).map(({ point, value, rank }) => {
+      const isWinner = rank === 0;
+      const cx = xScale?.(point.rechartsDate);
+      const cy = yScale?.(value);
+      if (!Number.isFinite(cx) || !Number.isFinite(cy)) return 0;
+
+      const lines = getLines({ point, value, rank, isWinner });
+      const halfWidth =
+        (Math.max(...lines.map((line) => String(line).length)) *
+          LABEL_CHAR_WIDTH_PX) /
+        2;
+      const height = lines.length * LABEL_LINE_HEIGHT;
+      const restingBottom = cy - (isWinner ? 12 : 10) + 4;
+
+      // Rise past whichever placed label is in the way, then look again: the
+      // new spot may sit on a different one. Bounded by the label count.
+      let offset = 0;
+      for (let pass = 0; pass <= placed.length; pass++) {
+        const bottom = restingBottom - offset;
+        const blocker = placed.find(
+          (box) =>
+            Math.abs(box.cx - cx) < box.halfWidth + halfWidth + LABEL_GAP_PX &&
+            bottom > box.top - LABEL_GAP_PX &&
+            bottom - height < box.bottom + LABEL_GAP_PX,
+        );
+        if (!blocker) break;
+        offset = restingBottom - (blocker.top - LABEL_GAP_PX);
+      }
+
+      const bottom = restingBottom - offset;
+      placed.push({ cx, halfWidth, top: bottom - height, bottom });
+      return offset;
+    }),
+  );
+
+  return series.map(({ key, ...markerProps }, index) => (
+    <TopPointMarkers
+      key={key}
+      {...markerProps}
+      labelOffsets={offsetsBySeries[index]}
+    />
+  ));
 }
 
 /**

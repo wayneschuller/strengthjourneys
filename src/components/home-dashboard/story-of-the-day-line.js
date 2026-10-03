@@ -14,6 +14,10 @@
  * date links to that day in the log, and any story about a lift with a video
  * gets its own play button beside the line.
  *
+ * Each line opens with a short kicker ("Remember this?", "On this day") that
+ * says why this story is showing. The pools are per kind and hashed on the
+ * story, so the same story always arrives with the same kicker.
+ *
  * Streaks are not told here: The Long Game card already owns them.
  */
 import { useEffect, useMemo, useState } from "react";
@@ -214,7 +218,7 @@ const ACCENT_CLASSES = {
 };
 
 function StoryLine({ line }) {
-  const { icon: Icon, accent, lead, commentary, href, videoUrl } = line;
+  const { icon: Icon, accent, kicker, lead, commentary, href, videoUrl } = line;
   const content = (
     <>
       <span
@@ -224,6 +228,11 @@ function StoryLine({ line }) {
       >
         <Icon className="h-3 w-3" />
       </span>
+      {kicker && (
+        <span className="text-muted-foreground shrink-0 whitespace-nowrap">
+          {kicker}
+        </span>
+      )}
       <span className="text-foreground/80 shrink-0 font-medium whitespace-nowrap tabular-nums decoration-1 underline-offset-4 group-hover:underline">
         {lead}
       </span>
@@ -239,7 +248,7 @@ function StoryLine({ line }) {
   );
   // A step below the greeting's size: an aside, not a second headline.
   const className = "group flex min-w-0 items-center gap-2 text-xs sm:text-sm";
-  const title = [lead, commentary].filter(Boolean).join(". ");
+  const title = [kicker, lead, commentary].filter(Boolean).join(" ");
 
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -278,6 +287,18 @@ function StoryLine({ line }) {
  * Returns null when the story has nothing to say.
  */
 function buildStoryLine(story, context) {
+  const line = buildStoryParts(story, context);
+  if (!line) return null;
+  const pool = getKickerPool(story);
+  // Seeded on the link too, so each classic lift (one story id, many lifts)
+  // keeps its own kicker.
+  return {
+    ...line,
+    kicker: pool ? pickVariant(pool, `${story.id}${line.href ?? ""}`) : null,
+  };
+}
+
+function buildStoryParts(story, context) {
   const { isMetric } = context.athleteBio;
   const setLabel = (set) => {
     const { value, unit } = getDisplayWeight(set, isMetric);
@@ -451,6 +472,38 @@ function buildSummaryLine(story, context, setLabel) {
 
 // ─── Copy ──────────────────────────────────────────────────────────────────
 
+// Why this story is showing, said in a few words before it. Anniversaries
+// split on whether today is the day or only the same week.
+const KICKERS = {
+  recentPr: ["Just in", "Hot off the bar", "Fresh from the log"],
+  anniversaryToday: ["On this day", "Today in your history"],
+  anniversaryThisWeek: ["This week in your history", "This week, years back"],
+  journeyBirthday: ["Lifting birthday", "Worth a moment", "Milestone"],
+  classic: [
+    "Remember this?",
+    "Classic memory",
+    "From the archive",
+    "Throwback",
+    "One for the highlight reel",
+    "A favourite from the log",
+  ],
+  journey: ["Your story so far", "The long view", "Where it all adds up"],
+  momentum: ["Lately", "Recent form", "How it is going"],
+  "lifetime-tonnage": ["By the numbers", "The big picture", "All added up"],
+  "first-week-goal": ["So far", "Off and running"],
+  "programming-tip": ["Coach's note", "Worth knowing", "A tip"],
+};
+
+function getKickerPool(story) {
+  if (story.kind === "summary") return KICKERS[story.id];
+  if (story.kind === "meetAnniversary" || story.kind === "prAnniversary") {
+    return story.daysAgo === 0
+      ? KICKERS.anniversaryToday
+      : KICKERS.anniversaryThisWeek;
+  }
+  return KICKERS[story.kind];
+}
+
 const MEET_SHORT_NAMES = {
   "Back Squat": "Squat",
   "Bench Press": "Bench",
@@ -539,8 +592,9 @@ function whenPhrase(story) {
   return story.daysAgo === 0 ? "today" : "this week";
 }
 
+// No "this week" here: the kicker already says when.
 function yearsAgo(story) {
-  return `${pluralYears(story.yearsAgo)} ago ${whenPhrase(story)}`;
+  return `${pluralYears(story.yearsAgo)} ago`;
 }
 
 function getDayPhrase(daysAgo, dateStr) {

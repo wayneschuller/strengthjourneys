@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
+import { MEET_GOLD, MeetTooltipLine } from "@/components/meet-medal";
 
 import {
   buildDailyTrainingHeatmapDays,
@@ -40,7 +41,7 @@ export function DailyTrainingHeatmap({
   isSharing,
   showMonthLabels = true,
 }) {
-  const { dataSource } = useUserLiftingData();
+  const { dataSource, meetDays } = useUserLiftingData();
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
   const heatmapYear = startDate
@@ -113,9 +114,14 @@ export function DailyTrainingHeatmap({
         onMouseLeave={handleMouseLeave}
         transformDayElement={(element, value, index) => {
           const dayStyle = value?.dateKey ? { cursor: "pointer" } : {};
+          // Meet days get a gold ring; the click already opens the log.
+          const isMeet = !!value?.dateKey && !!meetDays?.has(value.dateKey);
           return cloneElement(element, {
             rx: 3,
             ry: 3,
+            ...(isMeet
+              ? { stroke: MEET_GOLD, strokeWidth: 1.5, paintOrder: "stroke" }
+              : null),
             style: {
               ...element.props.style,
               ...dayStyle,
@@ -156,6 +162,8 @@ export const MemoizedDailyTrainingHeatmap = memo(DailyTrainingHeatmap);
 export function DailyTrainingHeatmapTooltip({ value }) {
   const { sessionData, dateKey } = value;
   const { isMetric } = useAthleteBio();
+  const { meetDays } = useUserLiftingData();
+  const meetDay = meetDays?.get(dateKey);
   if (!sessionData) return null;
 
   const { totalSets, uniqueLifts, prs, liftsByType } = sessionData;
@@ -181,6 +189,12 @@ export function DailyTrainingHeatmapTooltip({ value }) {
   return (
     <div className="border-border/50 bg-background grid max-w-[20rem] min-w-[10rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
+      {meetDay && (
+        <MeetTooltipLine
+          meet={{ date: dateKey, ...meetDay }}
+          showDate={false}
+        />
+      )}
       <p className="text-muted-foreground">
         {totalSets} {totalSets === 1 ? "set" : "sets"} across {uniqueLifts}{" "}
         {uniqueLifts === 1 ? "lift" : "lifts"}

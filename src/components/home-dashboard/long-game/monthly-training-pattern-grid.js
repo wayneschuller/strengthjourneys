@@ -1,9 +1,12 @@
 /**
  * Monthly training pattern grid groups a lifter's history by month and compares
  * each active month against the rest of the lifter's own training history.
+ * A month with a powerlifting meet carries a gold medal and opens that day in
+ * the log.
  */
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 
 import { useReducedMotion } from "motion/react";
 
@@ -17,6 +20,13 @@ import {
 } from "@/lib/date-utils";
 
 import { buildMonthlyTrainingActivityByYear } from "@/components/home-dashboard/long-game/long-game-training-activity";
+import {
+  MEET_GOLD,
+  MeetMedalGlyph,
+  MeetTooltipLine,
+  getMeetLogHref,
+  indexMeetsByMonth,
+} from "@/components/meet-medal";
 
 const MONTHLY_GAP = 5;
 
@@ -218,7 +228,7 @@ export function MonthlyTrainingPatternGrid({
   endYear,
   isSharing,
 }) {
-  const { dataSource } = useUserLiftingData();
+  const { dataSource, meetDays } = useUserLiftingData();
   const prefersReducedMotion = useReducedMotion();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
@@ -226,6 +236,7 @@ export function MonthlyTrainingPatternGrid({
     y: 0,
     showBelow: false,
   });
+  const meetsByMonth = useMemo(() => indexMeetsByMonth(meetDays), [meetDays]);
 
   const monthlyData = useMemo(
     () =>
@@ -253,8 +264,8 @@ export function MonthlyTrainingPatternGrid({
   const currentMonth = todayDate.getMonth() + 1;
 
   const handleMouseOver = useCallback(
-    (e, year, month, data, relativeLevel) => {
-      const cellRect = e.target.getBoundingClientRect();
+    (e, year, month, data, relativeLevel, meet) => {
+      const cellRect = e.currentTarget.getBoundingClientRect();
       const x = cellRect.left + cellRect.width / 2;
       const y = cellRect.top;
       const showBelow = y < 200;
@@ -263,7 +274,7 @@ export function MonthlyTrainingPatternGrid({
         y: showBelow ? cellRect.bottom + 8 : y - 8,
         showBelow,
       });
-      setHoveredValue({ year, month, relativeLevel, ...(data ?? {}) });
+      setHoveredValue({ year, month, relativeLevel, meet, ...(data ?? {}) });
     },
     [],
   );
@@ -347,13 +358,34 @@ export function MonthlyTrainingPatternGrid({
                   isFuture,
                   isSharing,
                 );
+                const meet = isFuture
+                  ? null
+                  : meetsByMonth.get(`${year}-${month}`);
+                // A meet month is a link to the meet day, ringed in gold with
+                // the medal at its centre. Every other month stays a plain cell.
+                const Cell = meet && !isSharing ? Link : "div";
                 return (
-                  <div
+                  <Cell
                     key={month}
-                    className={`relative overflow-hidden rounded-[8px] ${isSharing ? "" : "transition-transform duration-150"} ${!isFuture && relativeLevel > 0 && !isSharing ? "hover:scale-[1.03]" : ""}`}
+                    {...(Cell === Link
+                      ? {
+                          href: getMeetLogHref(meet),
+                          "aria-label": `${meet.name ?? "Meet day"}, open ${meet.date} in the log`,
+                        }
+                      : null)}
+                    className={`relative flex items-center justify-center overflow-hidden rounded-[8px] ${isSharing ? "" : "transition-transform duration-150"} ${!isFuture && relativeLevel > 0 && !isSharing ? "hover:scale-[1.03]" : ""}`}
                     style={{
                       height: 28,
                       ...cellStyle,
+                      ...(meet
+                        ? {
+                            boxShadow: `inset 0 0 0 1.5px ${MEET_GOLD}${
+                              cellStyle.boxShadow
+                                ? `, ${cellStyle.boxShadow}`
+                                : ""
+                            }`,
+                          }
+                        : null),
                       ...(!isSharing && !prefersReducedMotion
                         ? {
                             animation: "long-game-cell-pop 560ms both",
@@ -374,11 +406,19 @@ export function MonthlyTrainingPatternGrid({
                               month,
                               data,
                               relativeLevel,
+                              meet,
                             )
                         : undefined
                     }
                     onMouseLeave={!isFuture ? handleMouseLeave : undefined}
-                  />
+                  >
+                    {meet && (
+                      <MeetMedalGlyph
+                        size={16}
+                        className="pointer-events-none drop-shadow-sm"
+                      />
+                    )}
+                  </Cell>
                 );
               })}
             </div>
@@ -410,6 +450,12 @@ export function MonthlyTrainingPatternGrid({
               <span>{label}</span>
             </div>
           ))}
+          {meetsByMonth.size > 0 && (
+            <div className="flex items-center gap-1.5">
+              <MeetMedalGlyph size={14} className="shrink-0" />
+              <span>Meet</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -465,7 +511,8 @@ function getMonthWeekKeys(year, month, isMonthInProgress) {
   const todayYmd = `${today.getFullYear()}-${String(
     today.getMonth() + 1,
   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const rangeEnd = isMonthInProgress && todayYmd < monthEnd ? todayYmd : monthEnd;
+  const rangeEnd =
+    isMonthInProgress && todayYmd < monthEnd ? todayYmd : monthEnd;
   const endWeekKey = getWeekKeyFromDateStr(rangeEnd);
   const weekKeys = [];
   let weekKey = getWeekKeyFromDateStr(monthStart);
@@ -620,6 +667,7 @@ function MonthlyTrainingPatternTooltip({ value }) {
     <div className="border-border/50 bg-background grid max-w-[18rem] min-w-[12rem] items-start gap-1.5 rounded-lg border px-2.5 py-2 text-xs shadow-xl">
       <div className="grid gap-0.5">
         <p className="text-foreground font-bold">{title}</p>
+        <MeetTooltipLine meet={value.meet} />
         <p className="text-muted-foreground">
           <span className="text-foreground font-semibold">
             {totalSessions} {totalSessions === 1 ? "session" : "sessions"}

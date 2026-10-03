@@ -6,6 +6,7 @@
 import { format } from "date-fns";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 
 import { useReducedMotion } from "motion/react";
 
@@ -19,6 +20,12 @@ import {
 } from "@/lib/date-utils";
 
 import { buildWeeklyTrainingActivityByYear } from "@/components/home-dashboard/long-game/long-game-training-activity";
+import {
+  MEET_GOLD,
+  MeetTooltipLine,
+  getMeetLogHref,
+  indexMeetsByWeek,
+} from "@/components/meet-medal";
 
 const WEEKLY_GAP = 2;
 
@@ -64,6 +71,7 @@ function WeeklyTrainingPatternTooltip({ value }) {
       <p className="font-bold">
         Week of {getWeekStartDate(year, weekNum)}, {year}
       </p>
+      <MeetTooltipLine meet={value.meet} />
       <p className="text-muted-foreground">
         {sessions === 0
           ? "No training sessions"
@@ -89,7 +97,7 @@ export function WeeklyTrainingPatternGrid({
   endYear,
   isSharing,
 }) {
-  const { dataSource } = useUserLiftingData();
+  const { dataSource, meetDays } = useUserLiftingData();
   const prefersReducedMotion = useReducedMotion();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
@@ -97,6 +105,7 @@ export function WeeklyTrainingPatternGrid({
     y: 0,
     showBelow: false,
   });
+  const meetsByWeek = useMemo(() => indexMeetsByWeek(meetDays), [meetDays]);
 
   const weeklyData = useMemo(
     () =>
@@ -127,8 +136,8 @@ export function WeeklyTrainingPatternGrid({
     [currentYear],
   );
 
-  const handleMouseOver = useCallback((e, year, weekNum, data) => {
-    const cellRect = e.target.getBoundingClientRect();
+  const handleMouseOver = useCallback((e, year, weekNum, data, meet) => {
+    const cellRect = e.currentTarget.getBoundingClientRect();
     const x = cellRect.left + cellRect.width / 2;
     const y = cellRect.top;
     const showBelow = y < 200;
@@ -137,7 +146,7 @@ export function WeeklyTrainingPatternGrid({
       y: showBelow ? cellRect.bottom + 8 : y - 8,
       showBelow,
     });
-    setHoveredValue({ year, weekNum, ...data });
+    setHoveredValue({ year, weekNum, meet, ...data });
   }, []);
 
   const handleMouseLeave = useCallback(() => setHoveredValue(null), []);
@@ -220,12 +229,30 @@ export function WeeklyTrainingPatternGrid({
                         aspectRatio: "1",
                         backgroundColor: `var(--heatmap-${count === 3 ? 4 : count})`,
                       };
+                const meet = isFuture
+                  ? null
+                  : meetsByWeek.get(`${year}-${weekNum}`);
+                // A meet week is outlined in gold and opens the meet day in
+                // the log. The cells are too small to carry the medal itself.
+                const Cell = meet && !isSharing ? Link : "div";
                 return (
-                  <div
+                  <Cell
                     key={weekNum}
-                    className="rounded-sm"
+                    {...(Cell === Link
+                      ? {
+                          href: getMeetLogHref(meet),
+                          "aria-label": `${meet.name ?? "Meet day"}, open ${meet.date} in the log`,
+                        }
+                      : null)}
+                    className="block rounded-sm"
                     style={{
                       ...cellStyle,
+                      ...(meet
+                        ? {
+                            outline: `1.5px solid ${MEET_GOLD}`,
+                            outlineOffset: 1,
+                          }
+                        : null),
                       ...(!isSharing && !prefersReducedMotion
                         ? {
                             animation: "long-game-cell-pop 520ms both",
@@ -239,7 +266,7 @@ export function WeeklyTrainingPatternGrid({
                     }}
                     onMouseOver={
                       data && !isFuture
-                        ? (e) => handleMouseOver(e, year, weekNum, data)
+                        ? (e) => handleMouseOver(e, year, weekNum, data, meet)
                         : undefined
                     }
                     onMouseLeave={

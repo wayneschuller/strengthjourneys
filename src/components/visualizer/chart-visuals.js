@@ -9,6 +9,8 @@
  */
 import { ReferenceDot, ReferenceLine } from "recharts";
 
+import { MEET_GOLD } from "@/components/meet-medal";
+
 // Muted token rather than a hardcoded grey so axis furniture stays legible in every theme.
 const AXIS_TEXT_COLOR = "var(--muted-foreground)";
 
@@ -599,9 +601,8 @@ export function renderYearDividers(yearLabels, showLabels = true) {
   ));
 }
 
-// Medal gold for meet markers. Falls back to a literal in case a build ever
-// drops Tailwind's palette variable for want of an amber utility.
-const MEET_MARKER_COLOR = "var(--color-amber-500, #f59e0b)";
+// The same gold as every other meet mark in the app (components/meet-medal.js).
+const MEET_MARKER_COLOR = MEET_GOLD;
 
 const MEET_SHORT_LIFT_NAMES = {
   "Back Squat": "Squat",

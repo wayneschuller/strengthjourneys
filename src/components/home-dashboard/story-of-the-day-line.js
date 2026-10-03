@@ -25,6 +25,7 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import {
   Activity,
+  TrendingUp,
   Anvil,
   ArrowRight,
   Cake,
@@ -58,6 +59,7 @@ import {
 } from "@/lib/home-dashboard/inspiration-card-metrics";
 import {
   buildEventStories,
+  getYearBestSets,
   rankSummaryStories,
 } from "@/lib/home-dashboard/story-of-the-day";
 import { STORY_REVEAL_DELAY_SECONDS } from "@/components/home-dashboard/dashboard-greeting";
@@ -66,8 +68,14 @@ import { STORY_REVEAL_DELAY_SECONDS } from "@/components/home-dashboard/dashboar
 const SUMMARY_KEYS_BY_STAGE = {
   first_real_week: ["journey", "classic", "first-week-goal", "programming-tip"],
   first_month: ["journey", "programming-tip"],
-  early_base: ["journey", "momentum", "lifetime-tonnage"],
-  established: ["journey", "classic", "momentum", "lifetime-tonnage"],
+  early_base: ["journey", "momentum", "lifetime-tonnage", "year-bests"],
+  established: [
+    "journey",
+    "classic",
+    "momentum",
+    "lifetime-tonnage",
+    "year-bests",
+  ],
 };
 
 // How long a revealed story must stay on screen before it counts as seen.
@@ -90,6 +98,7 @@ export function StoryOfTheDay({
 }) {
   const { parsedData, topLiftsByTypeAndReps, sessionTonnageLookup, meetDays } =
     useUserLiftingData();
+  const { isMetric } = useAthleteBio();
 
   const allSessionDates = useMemo(
     () => sessionTonnageLookup?.allSessionDates ?? [],
@@ -106,8 +115,10 @@ export function StoryOfTheDay({
       parsedData,
       topLiftsByTypeAndReps,
       meetDays,
+      isMetric,
       todayStr,
     });
+    const yearBestSets = getYearBestSets(parsedData, todayStr);
     const summaryKeys = (
       SUMMARY_KEYS_BY_STAGE[dashboardStage] ?? SUMMARY_KEYS_BY_STAGE.established
     ).filter((key) => {
@@ -118,6 +129,8 @@ export function StoryOfTheDay({
             momentum.percentageChange >= -MOMENTUM_STEADY_PERCENT)
         );
       }
+      // One lift is not a year yet; early January skips this story.
+      if (key === "year-bests") return yearBestSets.length >= 2;
       return true;
     });
     return [
@@ -126,6 +139,7 @@ export function StoryOfTheDay({
         ...story,
         streakStats,
         momentum,
+        yearBestSets,
         todayStr,
       })),
     ].sort((a, b) => b.score - a.score);
@@ -133,6 +147,7 @@ export function StoryOfTheDay({
     parsedData,
     topLiftsByTypeAndReps,
     meetDays,
+    isMetric,
     allSessionDates,
     dashboardStage,
   ]);
@@ -310,6 +325,35 @@ function buildStoryParts(story, context) {
   };
 
   switch (story.kind) {
+    case "milestoneInReach":
+      return {
+        icon: TrendingUp,
+        accent: "emerald",
+        lead: `A ${story.milestone}${story.unit} ${story.liftNoun} is in reach`,
+        commentary: `Your ${setLabel(story.lift)} ${getRecentDayPhrase(story.daysAgo, story.date)} estimates ${story.estimate}${story.unit}.`,
+        href: logHref(story.date),
+        videoUrl: getVideoUrl(story.lift),
+      };
+    case "yearPrs": {
+      // Singles first, then triples and fives, in squat, bench, deadlift
+      // order: the three most brag-worthy, with the count carrying the rest.
+      const shown = [...story.prs]
+        .sort((a, b) => a.reps - b.reps)
+        .slice(0, 3)
+        .map(
+          (set) =>
+            `${MEET_SHORT_NAMES[set.liftType] ?? set.liftType} ${setLabel(set)}`,
+        );
+      const count = story.prs.length;
+      return {
+        icon: Trophy,
+        accent: "amber",
+        lead: `${count} lifetime best${count === 1 ? "" : "s"} in ${story.year}`,
+        commentary: shown.join(" · ") + (count > 3 ? " and more." : "."),
+        href: logHref(story.date),
+        videoUrl: null,
+      };
+    }
     case "recentPr":
       return {
         icon: Trophy,
@@ -424,6 +468,23 @@ function buildSummaryLine(story, context, setLabel) {
         href: null,
       };
     }
+    case "year-bests": {
+      const sets = story.yearBestSets ?? [];
+      if (sets.length === 0) return null;
+      return {
+        icon: Medal,
+        accent: "primary",
+        lead: `Best of ${story.todayStr.slice(0, 4)} so far`,
+        commentary:
+          sets
+            .map(
+              (set) =>
+                `${MEET_SHORT_NAMES[set.liftType] ?? set.liftType} ${setLabel(set)}`,
+            )
+            .join(" · ") + ".",
+        href: null,
+      };
+    }
     case "lifetime-tonnage": {
       const tonnage = calculateLifetimeTonnageFromLookup(
         context.sessionTonnageLookup,
@@ -504,6 +565,7 @@ function getKickerPool(story) {
   return KICKERS[story.kind];
 }
 
+// Also the short names every story uses when it lists lifts.
 const MEET_SHORT_NAMES = {
   "Back Squat": "Squat",
   "Bench Press": "Bench",
@@ -595,6 +657,12 @@ function whenPhrase(story) {
 // No "this week" here: the kicker already says when.
 function yearsAgo(story) {
   return `${pluralYears(story.yearsAgo)} ago`;
+}
+
+// "today", "yesterday", "on Tuesday" within the week, "on 12 Sep" beyond it.
+function getRecentDayPhrase(daysAgo, dateStr) {
+  if (daysAgo < 7) return getDayPhrase(daysAgo, dateStr);
+  return `on ${format(parseISO(dateStr), "d MMM")}`;
 }
 
 function getDayPhrase(daysAgo, dateStr) {

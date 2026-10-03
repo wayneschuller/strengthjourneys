@@ -3,7 +3,8 @@
  * dashboard with, and ranks them.
  *
  * Event stories (a PR this week, a meet anniversary, the day they started
- * lifting, a PR anniversary) only exist when the log earns them, and always
+ * lifting, a plate milestone within reach, lifetime bests set this year, a PR
+ * anniversary) only exist when the log earns them, and always
  * outrank the summary stories (journey length, tonnage, momentum and the
  * like) the line falls back on. That ranking is what keeps a new lifter from
  * being shown lifetime stats they do not have yet.
@@ -15,12 +16,32 @@
  * Everything here is pure so it can run against a real exported log in Node.
  */
 
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { BIG_FOUR_LIFT_TYPE_SET } from "@/lib/lifts/lift-registry";
 import { subtractDaysFromStr } from "@/lib/date-utils";
+import { MILESTONES } from "@/lib/home-dashboard/classic-lift";
 import { toKg } from "@/lib/weight-units";
 
 export const ANNIVERSARY_WINDOW_DAYS = 7;
 export const RECENT_PR_WINDOW_DAYS = 7;
+// How far back "recent form" looks when judging whether a milestone is in reach.
+const RECENT_FORM_DAYS = 42;
+// Recent form must estimate at least this share of the milestone.
+const MILESTONE_REACH_SHARE = 0.95;
+const LB_PER_KG = 2.20462;
+
+const BIG_FOUR_ORDER = [
+  "Back Squat",
+  "Bench Press",
+  "Deadlift",
+  "Strict Press",
+];
+const LIFT_NOUNS = {
+  "Back Squat": "squat",
+  "Bench Press": "bench",
+  Deadlift: "deadlift",
+  "Strict Press": "press",
+};
 
 // Event scores sit above anything a summary story can reach
 // (SUMMARY_MAX_SCORE), so a real moment always leads.
@@ -28,6 +49,8 @@ const STORY_SCORES = {
   recentPr: 100,
   meetAnniversary: 95,
   journeyBirthday: 90,
+  milestoneInReach: 80,
+  yearPrs: 75,
   prAnniversary: 70,
 };
 export const SUMMARY_MAX_SCORE = 60;
@@ -44,6 +67,7 @@ const HEADLINE_REPS = [1, 3, 5, 2, 10, 8, 4, 6];
  * @param {Array} params.parsedData - Canonical lift objects, oldest first.
  * @param {Object} params.topLiftsByTypeAndReps - liftType -> [reps-1] -> best-first sets.
  * @param {Map} [params.meetDays] - From lib/meet-detection.js, via the data provider.
+ * @param {boolean} [params.isMetric] - Milestones are counted in kg or lb plates.
  * @param {string} params.todayStr - Local YYYY-MM-DD.
  * @returns {Array<Object>} Stories, best first.
  */
@@ -51,6 +75,7 @@ export function buildEventStories({
   parsedData,
   topLiftsByTypeAndReps,
   meetDays,
+  isMetric = false,
   todayStr,
 }) {
   if (!Array.isArray(parsedData) || parsedData.length === 0 || !todayStr) {
@@ -59,6 +84,8 @@ export function buildEventStories({
 
   const stories = [
     findRecentPrStory(topLiftsByTypeAndReps, todayStr),
+    findMilestoneInReachStory(parsedData, isMetric, todayStr),
+    findYearPrsStory(topLiftsByTypeAndReps, todayStr),
     ...findAnniversaryStories(
       parsedData,
       topLiftsByTypeAndReps,
@@ -93,7 +120,132 @@ export function rankSummaryStories(keys, todayStr) {
     .sort((a, b) => b.score - a.score);
 }
 
+/**
+ * The best heavy set (5 reps or fewer, by estimated max in real load) of each
+ * Big Four lift so far this calendar year, in squat, bench, deadlift, press
+ * order. Feeds the "best of the year" summary story.
+ *
+ * @param {Array} parsedData
+ * @param {string} todayStr - Local YYYY-MM-DD.
+ * @returns {Array<Object>} Lift objects.
+ */
+export function getYearBestSets(parsedData, todayStr) {
+  const yearStart = `${todayStr.slice(0, 4)}-01-01`;
+  const best = {};
+  for (const entry of parsedData ?? []) {
+    if (entry.isGoal || !entry.date || entry.date < yearStart) continue;
+    if (entry.date > todayStr || !BIG_FOUR_LIFT_TYPE_SET.has(entry.liftType)) {
+      continue;
+    }
+    if (!(entry.reps >= 1) || entry.reps > 5 || !(entry.weight > 0)) continue;
+    const e1rmKg = toKg(
+      estimateE1RM(entry.reps, entry.weight, "Brzycki"),
+      entry.unitType,
+    );
+    if (!best[entry.liftType] || e1rmKg > best[entry.liftType].e1rmKg) {
+      best[entry.liftType] = { e1rmKg, entry };
+    }
+  }
+  return BIG_FOUR_ORDER.map((liftType) => best[liftType]?.entry).filter(
+    Boolean,
+  );
+}
+
 // ─── Event finders ─────────────────────────────────────────────────────────
+
+// The next plate milestone above a lift's best ever set, when recent form
+// says it is close: the best estimated max of the last six weeks reaches 95%
+// of it. The closest such milestone across the Big Four wins. Framed as
+// something within reach, never as a gap.
+function findMilestoneInReachStory(parsedData, isMetric, todayStr) {
+  const unit = isMetric ? "kg" : "lb";
+  const milestones = MILESTONES[unit];
+  const toUnit = (kg) => (isMetric ? kg : kg * LB_PER_KG);
+  const recentStart = subtractDaysFromStr(todayStr, RECENT_FORM_DAYS - 1);
+
+  const heaviestKg = {};
+  const recentBest = {};
+  for (const entry of parsedData) {
+    if (entry.isGoal || !entry.date || entry.date > todayStr) continue;
+    if (!BIG_FOUR_LIFT_TYPE_SET.has(entry.liftType)) continue;
+    if (!(entry.reps >= 1) || !(entry.weight > 0)) continue;
+    const kg = toKg(entry.weight, entry.unitType);
+    heaviestKg[entry.liftType] = Math.max(heaviestKg[entry.liftType] ?? 0, kg);
+    if (entry.date >= recentStart && entry.reps <= 10) {
+      const e1rmKg = toKg(
+        estimateE1RM(entry.reps, entry.weight, "Brzycki"),
+        entry.unitType,
+      );
+      if (
+        !recentBest[entry.liftType] ||
+        e1rmKg > recentBest[entry.liftType].e1rmKg
+      ) {
+        recentBest[entry.liftType] = { e1rmKg, entry };
+      }
+    }
+  }
+
+  let best = null;
+  for (const [liftType, recent] of Object.entries(recentBest)) {
+    const heaviest = toUnit(heaviestKg[liftType]);
+    const milestone = milestones.find((value) => value > heaviest + 0.01);
+    if (!milestone) continue;
+    const estimate = toUnit(recent.e1rmKg);
+    if (estimate < milestone * MILESTONE_REACH_SHARE) continue;
+    const reach = estimate / milestone;
+    if (!best || reach > best.reach) {
+      best = { liftType, milestone, reach, recent, estimate };
+    }
+  }
+  if (!best) return null;
+
+  return {
+    id: `milestone-in-reach:${best.liftType}:${best.milestone}${unit}`,
+    kind: "milestoneInReach",
+    score: STORY_SCORES.milestoneInReach,
+    liftType: best.liftType,
+    liftNoun: LIFT_NOUNS[best.liftType],
+    milestone: best.milestone,
+    unit,
+    lift: best.recent.entry,
+    date: best.recent.entry.date,
+    estimate: Math.round(best.estimate * 2) / 2,
+    daysAgo: getDaysBetween(best.recent.entry.date, todayStr),
+  };
+}
+
+// Lifetime bests at 1, 3 and 5 reps on the Big Four set this calendar year,
+// each beating a best from an earlier year. A first-ever set at a rep count
+// is not counted, so a lifter in their first year is not told everything is
+// a lifetime best.
+function findYearPrsStory(topLiftsByTypeAndReps, todayStr) {
+  if (!topLiftsByTypeAndReps) return null;
+  const year = todayStr.slice(0, 4);
+  const yearStart = `${year}-01-01`;
+
+  const prs = [];
+  for (const liftType of BIG_FOUR_ORDER) {
+    for (const reps of [1, 3, 5]) {
+      const sets = topLiftsByTypeAndReps[liftType]?.[reps - 1];
+      const top = sets?.[0];
+      if (!top || top.date < yearStart || top.date > todayStr) continue;
+      if (!sets.some((set) => set.date < yearStart)) continue;
+      prs.push(top);
+    }
+  }
+  if (prs.length === 0) return null;
+
+  const latest = prs.reduce((a, b) => (b.date > a.date ? b : a));
+  return {
+    id: `year-prs:${year}:${prs.length}`,
+    kind: "yearPrs",
+    score: STORY_SCORES.yearPrs,
+    year,
+    prs,
+    date: latest.date,
+    lift: latest,
+  };
+}
 
 function findRecentPrStory(topLiftsByTypeAndReps, todayStr) {
   if (!topLiftsByTypeAndReps) return null;

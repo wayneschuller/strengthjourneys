@@ -31,8 +31,9 @@ import { toKg } from "@/lib/weight-units";
 const LB_PER_KG = 2.20462;
 
 // Plate milestones: one to five plates a side, in the units the lifter reads.
+// Shared with the story of the day's "next milestone" story.
 // 200kg and 500lb join them because every lifter counts those too.
-const MILESTONES = {
+export const MILESTONES = {
   kg: [60, 100, 140, 180, 200, 220, 260, 300],
   lb: [135, 225, 315, 405, 495, 500, 585, 675],
 };

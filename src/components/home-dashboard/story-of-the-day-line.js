@@ -84,7 +84,7 @@ export function StoryOfTheDay({
   dashboardStage = "established",
   sessionCount = 0,
 }) {
-  const { parsedData, topLiftsByTypeAndReps, sessionTonnageLookup } =
+  const { parsedData, topLiftsByTypeAndReps, sessionTonnageLookup, meetDays } =
     useUserLiftingData();
 
   const allSessionDates = useMemo(
@@ -101,6 +101,7 @@ export function StoryOfTheDay({
     const events = buildEventStories({
       parsedData,
       topLiftsByTypeAndReps,
+      meetDays,
       todayStr,
     });
     const summaryKeys = (
@@ -124,7 +125,13 @@ export function StoryOfTheDay({
         todayStr,
       })),
     ].sort((a, b) => b.score - a.score);
-  }, [parsedData, topLiftsByTypeAndReps, allSessionDates, dashboardStage]);
+  }, [
+    parsedData,
+    topLiftsByTypeAndReps,
+    meetDays,
+    allSessionDates,
+    dashboardStage,
+  ]);
 
   if (!isProgressDone) return null;
   if (stories.length === 0) return null;
@@ -146,8 +153,13 @@ export function StoryOfTheDay({
 // this visit's story, and a sheet revalidation or a random classic-lift pick
 // should not swap it out from under the lifter.
 function RotatingStory({ stories, dashboardStage, sessionCount }) {
-  const { parsedData, liftTypes, topLiftsByTypeAndReps, sessionTonnageLookup } =
-    useUserLiftingData();
+  const {
+    parsedData,
+    liftTypes,
+    topLiftsByTypeAndReps,
+    sessionTonnageLookup,
+    meetDays,
+  } = useUserLiftingData();
   const athleteBio = useAthleteBio();
   const [cursor, setCursor] = useLocalStorage(
     LOCAL_STORAGE_KEYS.HOME_DASHBOARD_STORY_CURSOR,
@@ -163,6 +175,7 @@ function RotatingStory({ stories, dashboardStage, sessionCount }) {
       liftTypes,
       topLiftsByTypeAndReps,
       sessionTonnageLookup,
+      meetDays,
       athleteBio,
       dashboardStage,
       sessionCount,
@@ -352,6 +365,7 @@ function buildSummaryLine(story, context, setLabel) {
       const candidates = buildClassicLiftCandidates({
         parsedData,
         isMetric: athleteBio.isMetric,
+        meetDays: context.meetDays,
       });
       logClassicLiftCandidates(candidates);
       const classic = pickClassicLiftFrom(candidates);

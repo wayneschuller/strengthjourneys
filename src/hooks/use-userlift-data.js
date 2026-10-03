@@ -30,6 +30,7 @@ import {
   calculateLiftTypes,
 } from "@/lib/processing-utils";
 import { processStreakLeaderboard } from "@/lib/home-dashboard/streak-leaderboard-metrics";
+import { processMeetDays } from "@/lib/meet-detection";
 import {
   applyDateOutlierPreviewFix,
   getDateOutlierWarnings,
@@ -174,6 +175,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context topTonnageByType {Object|null} - All-time heaviest tonnage session per lift type.
  * @context topTonnageByTypeLast12Months {Object|null} - Same, last 12 months only.
  * @context sessionTonnageLookup {Object|null} - date → per-lift and total tonnage; powers tonnage chart.
+ * @context meetDays {Map|null} - date → { name, topSets } for every powerlifting meet in the log; see lib/meet-detection.js.
  * @context sheetInfo {Object|null} - { ssid, url, filename, modifiedTime, modifiedByMeTime } from localStorage.
  * @context selectSheet {(ssid: string) => void} - Link a Google Sheet by spreadsheet ID.
  * @context clearSheet {() => void} - Unlink the current sheet.
@@ -720,6 +722,13 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     return processSessionTonnageLookup(activeParsedData);
   }, [activeParsedData]);
 
+  // Meet days: date -> { name, topSets }, from notes that name a competition
+  // or carry attempt numbers. See lib/meet-detection.js.
+  const meetDays = useMemo(() => {
+    if (!activeParsedData) return null;
+    return processMeetDays(activeParsedData);
+  }, [activeParsedData]);
+
   // Streak leaderboard: all qualifying streaks (>=3 weeks, each with >=3 sessions),
   // each enriched with tonnage and a top-5 ranked PR list. Drives the Streaks
   // view inside TheLongGameCard.
@@ -763,6 +772,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         topTonnageByType,
         topTonnageByTypeLast12Months,
         sessionTonnageLookup,
+        meetDays,
         streakLeaderboard,
         rawRows,
         hasCachedSheetData,

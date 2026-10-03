@@ -36,30 +36,6 @@ export const SUMMARY_MAX_SCORE = 60;
 // about them. A 7RM PR is real but rarely the headline.
 const HEADLINE_REPS = [1, 3, 5, 2, 10, 8, 4, 6];
 
-// A meet is a high bar, checked against a real twelve-year log. A session
-// counts when a note names a competition ("2019 South Melbourne PTC Novice
-// Competition", "powerlifting comp", "meet day"), or two or more sets carry
-// attempt numbers. The athlete sees the word "meet" (our audience is mostly
-// American), but notes are read in every dialect: an Australian writes
-// "powerlifting comp" or "powerlifting event" for the same day. The Label
-// column counts too, quietly: it is an unofficial column some sheets have,
-// never advertised, so nothing in the UI should mention it. An online
-// contest run over a multi-day window has no single meet day and is left out. One "second attempt" is just a
-// second try. "Comp" on its own is not enough either, because lifters write
-// "comp pause" and "comp prep" all the time.
-const MEET_LABEL_PATTERN =
-  /\b(comp|competition|meet|championships?|nationals)\b/i;
-// Case-sensitive: a capitalised Competition or Championship is a named event.
-const MEET_NAMED_EVENT_PATTERN =
-  /\b(Competition|Championships?|Nationals|Contest)\b/;
-const MEET_NOTE_PATTERN =
-  /\b(powerlifting|weightlifting|strongman|bench|deadlift) (competition|comp|meet|event|contest)\b|\bmeet day\b|\bcomp day\b/i;
-const MEET_ATTEMPT_PATTERN = /\b(1st|2nd|3rd|first|second|third) attempt\b/i;
-// Notes that talk about a meet without being one: prep, rehearsals, plans
-// and daydreams.
-const MEET_NOTE_EXCLUDE_PATTERN =
-  /\b(imagine|imagining|find|possible|prep|preparing|dreaming|thinking|practice|treat|pretend|like a|for a comp|for the comp|next comp|upcoming|mock|will be|would be|window)\b/i;
-
 /**
  * Builds the ranked event stories for today. Summary stories are ranked by the
  * caller with rankSummaryStories and merged after these.
@@ -67,12 +43,14 @@ const MEET_NOTE_EXCLUDE_PATTERN =
  * @param {Object} params
  * @param {Array} params.parsedData - Canonical lift objects, oldest first.
  * @param {Object} params.topLiftsByTypeAndReps - liftType -> [reps-1] -> best-first sets.
+ * @param {Map} [params.meetDays] - From lib/meet-detection.js, via the data provider.
  * @param {string} params.todayStr - Local YYYY-MM-DD.
  * @returns {Array<Object>} Stories, best first.
  */
 export function buildEventStories({
   parsedData,
   topLiftsByTypeAndReps,
+  meetDays,
   todayStr,
 }) {
   if (!Array.isArray(parsedData) || parsedData.length === 0 || !todayStr) {
@@ -81,7 +59,12 @@ export function buildEventStories({
 
   const stories = [
     findRecentPrStory(topLiftsByTypeAndReps, todayStr),
-    ...findAnniversaryStories(parsedData, topLiftsByTypeAndReps, todayStr),
+    ...findAnniversaryStories(
+      parsedData,
+      topLiftsByTypeAndReps,
+      meetDays,
+      todayStr,
+    ),
   ].filter(Boolean);
 
   return stories.sort((a, b) => b.score - a.score);
@@ -108,28 +91,6 @@ export function rankSummaryStories(keys, todayStr) {
         (hashString(`${todayStr}:${key}`) % 20),
     }))
     .sort((a, b) => b.score - a.score);
-}
-
-/**
- * True when a session looks like a competition day. Exported so the logic can
- * be checked against real logs.
- *
- * @param {Array} entries - Every lift object from one date.
- * @returns {boolean}
- */
-export function isMeetSession(entries) {
-  let attemptSets = 0;
-  for (const entry of entries) {
-    if (entry.label && MEET_LABEL_PATTERN.test(entry.label)) return true;
-    const notes = entry.notes;
-    if (!notes || typeof notes !== "string") continue;
-    if (MEET_NOTE_EXCLUDE_PATTERN.test(notes)) continue;
-    if (MEET_NAMED_EVENT_PATTERN.test(notes) || MEET_NOTE_PATTERN.test(notes)) {
-      return true;
-    }
-    if (MEET_ATTEMPT_PATTERN.test(notes)) attemptSets++;
-  }
-  return attemptSets >= 2;
 }
 
 // ─── Event finders ─────────────────────────────────────────────────────────
@@ -179,7 +140,12 @@ function findRecentPrStory(topLiftsByTypeAndReps, todayStr) {
   };
 }
 
-function findAnniversaryStories(parsedData, topLiftsByTypeAndReps, todayStr) {
+function findAnniversaryStories(
+  parsedData,
+  topLiftsByTypeAndReps,
+  meetDays,
+  todayStr,
+) {
   const windowByMonthDay = buildAnniversaryWindow(todayStr);
   const firstEntry = parsedData.find((entry) => !entry.isGoal && entry.date);
 
@@ -219,26 +185,24 @@ function findAnniversaryStories(parsedData, topLiftsByTypeAndReps, todayStr) {
   // The most recent meet in the window wins if a lifter somehow competed on
   // two of these seven days across different years.
   let meet = null;
-  for (const [date, entries] of sessionsByDate) {
-    if (!isMeetSession(entries)) continue;
-    if (!meet || date > meet.date) meet = { date, entries };
+  for (const [date, meetDay] of meetDays ?? []) {
+    const match = windowByMonthDay.get(date.slice(5));
+    if (!match || match.year - Number(date.slice(0, 4)) < 1) continue;
+    if (!meet || date > meet.date) meet = { date, meetDay, match };
   }
   if (meet) {
-    const match = windowByMonthDay.get(meet.date.slice(5));
     stories.push({
       id: `meet-anniversary:${meet.date}`,
       kind: "meetAnniversary",
       score: STORY_SCORES.meetAnniversary,
       date: meet.date,
-      meetName: findMeetName(meet.entries),
-      bestSingles: getHeaviestSetPerLift(meet.entries),
-      // A meet's footage may be a warm-up or an attempt that is not the day's
-      // top set, so keep the heaviest filmed set as a fallback.
-      meetVideoLift: meet.entries
-        .filter((entry) => entry.URL || entry.url)
-        .sort((a, b) => b.weight - a.weight)[0],
-      yearsAgo: match.year - Number(meet.date.slice(0, 4)),
-      daysAgo: match.daysAgo,
+      meetName: meet.meetDay.name,
+      // Squat, bench, deadlift, the order a meet runs in.
+      bestSingles: MEET_LIFT_ORDER.map(
+        (liftType) => meet.meetDay.topSets[liftType],
+      ).filter(Boolean),
+      yearsAgo: meet.match.year - Number(meet.date.slice(0, 4)),
+      daysAgo: meet.match.daysAgo,
     });
   }
 
@@ -320,39 +284,6 @@ function buildAnniversaryWindow(todayStr) {
   return window;
 }
 
-function findMeetName(entries) {
-  const labelled = entries.find(
-    (entry) => entry.label && MEET_LABEL_PATTERN.test(entry.label),
-  );
-  if (labelled) return labelled.label.trim();
-  // Fall back to the note that names the competition, trimmed to the name.
-  for (const entry of entries) {
-    const match = entry.notes?.match(
-      /([A-Z0-9][\w'&.-]*(?:\s+[A-Z0-9][\w'&.-]*)*\s+(?:Powerlifting\s+)?(?:Competition|Comp|Meet|Championships?|Open))/,
-    );
-    if (match) return match[1].trim();
-  }
-  return null;
-}
-
-// Heaviest set of each lift that day, big four first, so a meet reads as
-// squat, bench, deadlift.
-function getHeaviestSetPerLift(entries) {
-  const byLift = new Map();
-  entries.forEach((entry) => {
-    const current = byLift.get(entry.liftType);
-    if (!current || entry.weight > current.weight) {
-      byLift.set(entry.liftType, entry);
-    }
-  });
-  return Array.from(byLift.values())
-    .filter((entry) => BIG_FOUR_LIFT_TYPE_SET.has(entry.liftType))
-    .sort(
-      (a, b) =>
-        MEET_LIFT_ORDER.indexOf(a.liftType) -
-        MEET_LIFT_ORDER.indexOf(b.liftType),
-    );
-}
 const MEET_LIFT_ORDER = [
   "Back Squat",
   "Bench Press",

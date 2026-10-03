@@ -26,7 +26,6 @@
 
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/lifts/lift-registry";
-import { isMeetSession } from "@/lib/home-dashboard/story-of-the-day";
 import { toKg } from "@/lib/weight-units";
 
 const LB_PER_KG = 2.20462;
@@ -100,11 +99,16 @@ export function pickClassicLiftFrom(candidates, random = Math.random) {
 /**
  * Every classic lift candidate, one per session (one per lift on meet days),
  * best first. Exported so the rules can be checked against real logs.
+ *
+ * @param {Object} params
+ * @param {Array} params.parsedData - Canonical lift objects.
+ * @param {boolean} params.isMetric - Milestones are counted in kg or lb plates.
+ * @param {Map} [params.meetDays] - From lib/meet-detection.js, via the data provider.
  */
-export function buildClassicLiftCandidates({ parsedData, isMetric }) {
+export function buildClassicLiftCandidates({ parsedData, isMetric, meetDays }) {
   if (!Array.isArray(parsedData) || parsedData.length === 0) return [];
 
-  const sessions = groupBigFourSessions(parsedData);
+  const sessions = groupBigFourSessions(parsedData, meetDays);
   if (sessions.length === 0) return [];
 
   const milestoneUnit = isMetric ? "kg" : "lb";
@@ -185,18 +189,11 @@ export function buildClassicLiftCandidates({ parsedData, isMetric }) {
     }
 
     if (isMeet) {
+      const { topSets } = meetDays.get(date);
       for (const liftType of liftsToday) {
-        const heaviest = entries
-          .filter((entry) => entry.liftType === liftType)
-          .reduce((best, entry) =>
-            toKg(entry.weight, entry.unitType) >
-            toKg(best.weight, best.unitType)
-              ? entry
-              : best,
-          );
         raw.push({
           source: "meet",
-          entry: heaviest,
+          entry: topSets[liftType],
           score: SOURCE_SCORES.meet,
           label: `Meet day ${LIFT_NOUNS[liftType]}`,
         });
@@ -311,32 +308,25 @@ function weightedChoice(items, getWeight, random) {
   return items[items.length - 1];
 }
 
-// Big-four sets grouped by date, oldest first, each date flagged when it was
-// a meet. Meet detection looks at every lift that day, since a meet note or
-// label can sit on a warm-up row.
-function groupBigFourSessions(parsedData) {
+// Big-four sets grouped by date, oldest first, each date flagged when the
+// data provider's meetDays says it was a meet.
+function groupBigFourSessions(parsedData, meetDays) {
   const bigFour = new Set(BIG_FOUR_LIFT_TYPES);
-  const allByDate = new Map();
+  const entriesByDate = new Map();
   for (const entry of parsedData) {
-    if (entry.isGoal || !entry.date) continue;
-    if (!allByDate.has(entry.date)) allByDate.set(entry.date, []);
-    allByDate.get(entry.date).push(entry);
+    if (entry.isGoal || !entry.date || !bigFour.has(entry.liftType)) continue;
+    if (!(entry.reps >= 1) || !(entry.weight > 0)) continue;
+    if (!entriesByDate.has(entry.date)) entriesByDate.set(entry.date, []);
+    entriesByDate.get(entry.date).push(entry);
   }
 
-  return Array.from(allByDate.keys())
+  return Array.from(entriesByDate.keys())
     .sort()
-    .map((date) => {
-      const all = allByDate.get(date);
-      return {
-        date,
-        isMeet: isMeetSession(all),
-        entries: all.filter(
-          (entry) =>
-            bigFour.has(entry.liftType) && entry.reps >= 1 && entry.weight > 0,
-        ),
-      };
-    })
-    .filter((session) => session.entries.length > 0);
+    .map((date) => ({
+      date,
+      isMeet: meetDays?.has(date) ?? false,
+      entries: entriesByDate.get(date),
+    }));
 }
 
 // Sheets carry the column as URL; some imports spell it url.

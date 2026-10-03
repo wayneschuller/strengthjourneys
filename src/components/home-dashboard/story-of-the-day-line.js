@@ -64,7 +64,10 @@ import {
   getYearBestSets,
   rankSummaryStories,
 } from "@/lib/home-dashboard/story-of-the-day";
-import { STORY_REVEAL_DELAY_SECONDS } from "@/components/home-dashboard/dashboard-greeting";
+import {
+  STORY_REVEAL_DELAY_SECONDS,
+  STORY_REVEAL_JITTER_SECONDS,
+} from "@/components/home-dashboard/dashboard-greeting";
 
 // Which summary stories each stage may draw on, in its preferred order.
 const SUMMARY_KEYS_BY_STAGE = {
@@ -219,7 +222,12 @@ function RotatingStory({ stories, dashboardStage }) {
     const timer = setTimeout(
       // Absolute, not prev + 1, so a double-run effect still advances by one.
       () => setCursor((shownCursor + 1) % stories.length),
-      (STORY_REVEAL_DELAY_SECONDS + STORY_SEEN_AFTER_SECONDS) * 1000,
+      // The longest the reveal can take, so the story is always on screen
+      // before it counts as seen.
+      (STORY_REVEAL_DELAY_SECONDS +
+        STORY_REVEAL_JITTER_SECONDS +
+        STORY_SEEN_AFTER_SECONDS) *
+        1000,
     );
     return () => clearTimeout(timer);
   }, [shownCursor, stories.length, setCursor]);

@@ -6,7 +6,7 @@
  *
  * Desktop puts the two on one row and the thread runs across from the end of
  * the underline into the story. Both wait until the three headline cards are
- * on screen, then thirty seconds more before fading in, so the cards have
+ * on screen, then 7 to 13 seconds more before fading in, so the cards have
  * the stage first. Development builds log the countdown to the console. Phones stack them and drop the thread, which has no room to
  * say anything there.
  *
@@ -18,10 +18,11 @@ import { motion, useReducedMotion } from "motion/react";
 
 import { devLog } from "@/lib/processing-utils";
 
-// Long enough to take in the three headline cards, which spend their first
-// several seconds counting up and revealing rows, before anything else moves.
-// Ten seconds felt like no wait at all once the cards' own entrance had run.
-export const STORY_REVEAL_DELAY_SECONDS = 30;
+// Long enough to take in the three headline cards before anything else
+// moves, give or take a few seconds each visit so the story never lands on a
+// beat the lifter learns to expect: 7 to 13 seconds.
+export const STORY_REVEAL_DELAY_SECONDS = 10;
+export const STORY_REVEAL_JITTER_SECONDS = 3;
 
 /*
  * Why the reveal is driven by state, not by motion's `initial` plus a delay:
@@ -54,15 +55,19 @@ export function DashboardGreeting({
   useEffect(() => {
     if (!isStoryReady || !hasStory) return;
     const startedAt = performance.now();
+    // Picked here rather than in render so each visit gets its own wait.
+    const delaySeconds =
+      STORY_REVEAL_DELAY_SECONDS +
+      (Math.random() * 2 - 1) * STORY_REVEAL_JITTER_SECONDS;
     devLog(
-      `Story of the day: cards are on screen, story in ${STORY_REVEAL_DELAY_SECONDS}s`,
+      `Story of the day: cards are on screen, story in ${delaySeconds.toFixed(1)}s`,
     );
     const timer = setTimeout(() => {
       setIsRevealed(true);
       devLog(
         `Story of the day: revealed after ${((performance.now() - startedAt) / 1000).toFixed(1)}s`,
       );
-    }, STORY_REVEAL_DELAY_SECONDS * 1000);
+    }, delaySeconds * 1000);
     return () => clearTimeout(timer);
   }, [isStoryReady, hasStory]);
 

@@ -320,9 +320,11 @@ export function HomeDashboard() {
       )}
       {isOwnData(dataSource) && hasDataLoaded && (
         <>
-          <section className="grid grid-cols-1 gap-6 lg:mt-4 lg:grid-cols-2 xl:grid-cols-3">
+          <section className="grid grid-cols-1 gap-6 lg:mt-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1.3fr)] lg:[&>*:last-child]:col-span-2 xl:[&>*:last-child]:col-span-1">
             {/* Three headline cards intentionally begin with "The" and widen chronology:
-                The Week in Iron -> The Month in Iron -> The Long Game.
+                The Week in Iron -> The Month in Iron -> The Long Game. The columns widen
+                with it: the Long Game holds grades, streak bars and heatmaps, so it gets
+                the most room (the full row at two columns, the widest column at three).
                 Together they make the app experience feel badass and motivating, like chapters in an ongoing strength story. */}
             <TheWeekInIronCard
               dashboardStage={dashboardStage}
@@ -348,7 +350,7 @@ export function HomeDashboard() {
 
 // One entry per headline card: The Week in Iron, The Month in Iron, The Long Game. At three
 // columns the grid stretches them level, so these shapes only show themselves at two columns,
-// where The Long Game wraps. Below lg the dashboard shows DashboardLoadingPanel instead.
+// where The Long Game wraps onto a full-width row of its own. Below lg the dashboard shows DashboardLoadingPanel instead.
 const HOME_CARD_SKELETON_SHAPES = [
   {
     minHeight: "min-h-[42rem]",
@@ -381,7 +383,7 @@ const HOME_CARD_SKELETON_SHAPES = [
 
 function HomeDashboardCardsSkeleton() {
   return (
-    <section className="mt-4 hidden gap-6 lg:grid lg:grid-cols-2 xl:grid-cols-3">
+    <section className="mt-4 hidden gap-6 lg:grid lg:grid-cols-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1.3fr)] lg:[&>*:last-child]:col-span-2 xl:[&>*:last-child]:col-span-1">
       {HOME_CARD_SKELETON_SHAPES.map((shape, index) => (
         // Built from the same Card primitives as the real cards, so the swap only changes the
         // contents: radius, border, shadow and theme treatment all carry over untouched.

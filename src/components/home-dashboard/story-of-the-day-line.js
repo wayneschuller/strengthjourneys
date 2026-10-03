@@ -6,7 +6,7 @@
  *
  * Which stories exist comes from lib/home-dashboard/story-of-the-day.js (the
  * event stories, which only exist when the log earns them) plus the stage's
- * evergreen stories. Evergreens that would read as a shortfall (a dip in
+ * summary stories. Summaries that would read as a shortfall (a dip in
  * momentum, a zero-week streak) are left out rather than softened.
  *
  * Every visit shows the next story in the ranked list, best first, so a
@@ -50,11 +50,11 @@ import {
 } from "@/lib/home-dashboard/inspiration-card-metrics";
 import {
   buildEventStories,
-  rankEvergreenStories,
+  rankSummaryStories,
 } from "@/lib/home-dashboard/story-of-the-day";
 
-// Which evergreen stories each stage may draw on, in its preferred order.
-const EVERGREEN_KEYS_BY_STAGE = {
+// Which summary stories each stage may draw on, in its preferred order.
+const SUMMARY_KEYS_BY_STAGE = {
   first_real_week: ["journey", "classic", "first-week-goal", "programming-tip"],
   first_month: ["journey", "programming-tip"],
   early_base: ["journey", "momentum", "lifetime-tonnage"],
@@ -95,9 +95,8 @@ export function StoryOfTheDay({
       topLiftsByTypeAndReps,
       todayStr,
     });
-    const evergreenKeys = (
-      EVERGREEN_KEYS_BY_STAGE[dashboardStage] ??
-      EVERGREEN_KEYS_BY_STAGE.established
+    const summaryKeys = (
+      SUMMARY_KEYS_BY_STAGE[dashboardStage] ?? SUMMARY_KEYS_BY_STAGE.established
     ).filter((key) => {
       if (key === "momentum") {
         return (
@@ -110,7 +109,7 @@ export function StoryOfTheDay({
     });
     return [
       ...events,
-      ...rankEvergreenStories(evergreenKeys, todayStr).map((story) => ({
+      ...rankSummaryStories(summaryKeys, todayStr).map((story) => ({
         ...story,
         streakStats,
         momentum,
@@ -165,7 +164,7 @@ function RotatingStory({ stories, dashboardStage, sessionCount }) {
     // always has something to say.
     return (
       buildStoryLine(story, context) ??
-      buildStoryLine({ ...story, kind: "evergreen", id: "journey" }, context)
+      buildStoryLine({ ...story, kind: "summary", id: "journey" }, context)
     );
   });
 
@@ -312,14 +311,14 @@ function buildStoryLine(story, context) {
         href: logHref(story.date),
         videoUrl: getVideoUrl(story.lift),
       };
-    case "evergreen":
-      return buildEvergreenLine(story, context, setLabel);
+    case "summary":
+      return buildSummaryLine(story, context, setLabel);
     default:
       return null;
   }
 }
 
-function buildEvergreenLine(story, context, setLabel) {
+function buildSummaryLine(story, context, setLabel) {
   const { parsedData, liftTypes, athleteBio } = context;
   const firstDate = parsedData?.find((entry) => !entry.isGoal)?.date;
 

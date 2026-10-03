@@ -3,10 +3,10 @@
  * dashboard with, and ranks them.
  *
  * Event stories (a PR this week, a meet anniversary, the day they started
- * lifting, a PR anniversary) only exist when the
- * log earns them, and always outrank the evergreen summary cards the hero
- * falls back on. That ranking is what keeps a new lifter from being shown
- * lifetime stats they do not have yet.
+ * lifting, a PR anniversary) only exist when the log earns them, and always
+ * outrank the summary stories (journey length, tonnage, momentum and the
+ * like) the line falls back on. That ranking is what keeps a new lifter from
+ * being shown lifetime stats they do not have yet.
  *
  * Anniversaries look back over the last seven days rather than only today, so
  * someone who opens the app twice a week still hears about the meet they did
@@ -22,15 +22,15 @@ import { toKg } from "@/lib/weight-units";
 export const ANNIVERSARY_WINDOW_DAYS = 7;
 export const RECENT_PR_WINDOW_DAYS = 7;
 
-// Event scores sit above anything the evergreen cards can reach
-// (EVERGREEN_MAX_SCORE), so a real moment always leads.
+// Event scores sit above anything a summary story can reach
+// (SUMMARY_MAX_SCORE), so a real moment always leads.
 const STORY_SCORES = {
   recentPr: 100,
   meetAnniversary: 95,
   journeyBirthday: 90,
   prAnniversary: 70,
 };
-export const EVERGREEN_MAX_SCORE = 60;
+export const SUMMARY_MAX_SCORE = 60;
 
 // Rep counts that mean something to a lifter, in the order we would brag
 // about them. A 7RM PR is real but rarely the headline.
@@ -48,8 +48,8 @@ const MEET_NOTE_EXCLUDE_PATTERN =
   /\b(imagine|imagining|find|possible|prep|preparing|dreaming|thinking|practice|treat|pretend|like a|for the comp|next comp|upcoming)\b/i;
 
 /**
- * Builds the ranked event stories for today. Evergreen cards are ranked by the
- * caller with rankEvergreenStories and merged after these.
+ * Builds the ranked event stories for today. Summary stories are ranked by the
+ * caller with rankSummaryStories and merged after these.
  *
  * @param {Object} params
  * @param {Array} params.parsedData - Canonical lift objects, oldest first.
@@ -75,21 +75,21 @@ export function buildEventStories({
 }
 
 /**
- * Gives evergreen cards a score that shuffles once a day, so the fallback
+ * Gives summary stories a score that shuffles once a day, so the fallback
  * rotation changes daily but holds still between page loads.
  *
- * @param {string[]} keys - Evergreen card keys, in the stage's preferred order.
+ * @param {string[]} keys - Summary story keys, in the stage's preferred order.
  * @param {string} todayStr
- * @returns {Array<{id:string, kind:"evergreen", score:number}>}
+ * @returns {Array<{id:string, kind:"summary", score:number}>}
  */
-export function rankEvergreenStories(keys, todayStr) {
+export function rankSummaryStories(keys, todayStr) {
   return keys
     .map((key, index) => ({
       id: key,
-      kind: "evergreen",
+      kind: "summary",
       // The stage's order still counts for a little, the day's seed for more.
       score:
-        EVERGREEN_MAX_SCORE -
+        SUMMARY_MAX_SCORE -
         20 -
         index * 2 +
         (hashString(`${todayStr}:${key}`) % 20),

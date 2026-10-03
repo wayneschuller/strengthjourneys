@@ -211,6 +211,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
+    meetDays,
   } = useUserLiftingData();
 
   const [shareBioDetails, setShareBioDetails] = useLocalStorage(
@@ -263,6 +264,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
       topLiftsByTypeAndReps,
       topLiftsByTypeAndRepsLast12Months,
       sessionTonnageLookup,
+      meetDays,
       options: userLiftingMetadata,
       bio: shareBioDetails
         ? { age, sex, bodyWeight, heightCm: height }
@@ -280,6 +282,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     dataSource,
     isMetric,
     liftTypes,
+    meetDays,
     parsedData,
     sessionTonnageLookup,
     sex,

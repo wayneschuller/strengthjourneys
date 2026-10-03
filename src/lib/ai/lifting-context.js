@@ -23,7 +23,7 @@ import { getStrengthRatingForE1RM } from "@/lib/lifting-standards-kg";
 import { processConsistency } from "@/lib/consistency";
 import { MAX_CHAT_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
 import { logTimingGroup } from "@/lib/processing-utils";
-import { LB_PER_KG } from "@/lib/weight-units";
+import { LB_PER_KG, toKg } from "@/lib/weight-units";
 
 // The last 20 sessions, counted rather than dated, so the summary stays the
 // same size whether someone trains daily or weekly: three sessions a week
@@ -35,6 +35,14 @@ const RECENT_SESSIONS_MAX_CHARS = 7000;
 const MAIN_LIFT_LIMIT = 6;
 const WEEKS_OF_SESSION_COUNTS = 12;
 const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
+const MEET_LIFTS = [
+  ["Back Squat", "squat"],
+  ["Bench Press", "bench"],
+  ["Deadlift", "deadlift"],
+];
+// Newest first; a lifter with a long competitive history still costs a few
+// hundred characters at most.
+const MEET_LIMIT = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -49,6 +57,7 @@ const MONTHS = [
  * @param {Object} [args.topLiftsByTypeAndReps] Pipeline PR table, all time.
  * @param {Object} [args.topLiftsByTypeAndRepsLast12Months] Pipeline PR table, last 12 months.
  * @param {Object} [args.sessionTonnageLookup] Pipeline per-session tonnage lookup.
+ * @param {Map<string, {name: string|null, topSets: Object}>} [args.meetDays] From processMeetDays, keyed by date.
  * @param {{ records?: boolean, trainingLoad?: boolean, frequency?: boolean, consistency?: boolean, sessionData?: boolean }} args.options
  * @param {{ age: number, sex: string, bodyWeight: number, heightCm: number } | null} args.bio Null when the profile is not shared.
  * @param {boolean} args.isMetric The lifter's preferred unit; every weight is shown in it.
@@ -63,6 +72,7 @@ export function buildLiftingContext({
   topLiftsByTypeAndReps,
   topLiftsByTypeAndRepsLast12Months,
   sessionTonnageLookup,
+  meetDays,
   options = {},
   bio = null,
   isMetric,
@@ -116,7 +126,7 @@ export function buildLiftingContext({
     : {};
 
   const sections = [
-    buildAboutSection({ ctx, options, bio, latestDate, hasTraining }),
+    buildAboutSection({ ctx, options, bio, latestDate, hasTraining, meetDays }),
     bio && buildProfileSection(bio, unit),
     bio && hasTraining && options.records &&
       buildStandingSection({ mainLifts, lifts, standards, ctx }),
@@ -125,6 +135,8 @@ export function buildLiftingContext({
       step("Main lifts", () =>
         buildLiftsSection({ mainLifts, lifts, options, ctx }),
       ),
+    hasTraining && options.records && meetDays?.size > 0 &&
+      step("Meets", () => buildMeetsSection({ meetDays, ctx })),
     hasTraining && options.consistency &&
       step("Consistency", () =>
         buildConsistencySection({ tail, parsedData, mainLifts, ctx }),
@@ -181,10 +193,11 @@ function getRecentTail(parsedData, today) {
 // Sections
 // -----------------------------------------------------------------------------
 
-function buildAboutSection({ ctx, options, bio, latestDate, hasTraining }) {
+function buildAboutSection({ ctx, options, bio, latestDate, hasTraining, meetDays }) {
   const shared = [
     bio && "profile",
     hasTraining && options.records && "records and e1RM trends",
+    hasTraining && options.records && meetDays?.size > 0 && "meets",
     hasTraining && options.frequency && "lift history",
     hasTraining && options.consistency && "consistency",
     hasTraining && options.trainingLoad && "training load",
@@ -258,6 +271,69 @@ function buildLiftsSection({ mainLifts, lifts, options, ctx }) {
   });
 
   return section("main lifts", blocks);
+}
+
+/**
+ * One line per meet, newest first: the heaviest squat, bench and deadlift of
+ * the day (the attempt that counted) and the total when all three were
+ * singles. Without this the coach sees a meet only as an odd session of
+ * heavy singles, if it falls in the recent tail at all. A meet with none of
+ * the three lists whatever it had, so a bench-only or strongman day still
+ * shows up.
+ */
+function buildMeetsSection({ meetDays, ctx }) {
+  const lines = Array.from(meetDays.keys())
+    .sort()
+    .reverse()
+    .slice(0, MEET_LIMIT)
+    .map((date) => {
+      const { name, topSets } = meetDays.get(date);
+      const competed = MEET_LIFTS.filter(([liftType]) => topSets[liftType]);
+      const parts = competed.length
+        ? competed.map(
+            ([liftType, word]) => `${word} ${formatMeetSet(topSets[liftType], ctx)}`,
+          )
+        : Object.entries(topSets).map(
+            ([liftType, set]) => `${liftType} ${formatMeetSet(set, ctx)}`,
+          );
+      if (parts.length === 0) return null;
+      const isFullMeet =
+        competed.length === MEET_LIFTS.length &&
+        competed.every(([liftType]) => topSets[liftType].reps === 1);
+      // Summed in kg from the logged weights so a mixed-unit day adds up right.
+      const totalKg = isFullMeet
+        ? competed.reduce(
+            (sum, [liftType]) =>
+              sum + toKg(topSets[liftType].weight, topSets[liftType].unitType),
+            0,
+          )
+        : 0;
+      // A meet logged in the other unit also gets its total as lifted, since
+      // the converted attempts are rounded and won't add up to it exactly.
+      const loggedUnits = new Set(
+        competed.map(([liftType]) => topSets[liftType].unitType || "lb"),
+      );
+      const loggedUnit = loggedUnits.size === 1 ? [...loggedUnits][0] : null;
+      const asLogged =
+        loggedUnit && loggedUnit !== ctx.unit
+          ? ` (${formatNumber(loggedUnit === "kg" ? totalKg : totalKg * LB_PER_KG)}${loggedUnit} as logged)`
+          : "";
+      const total = isFullMeet
+        ? `; total ${formatNumber(ctx.unit === "kg" ? totalKg : totalKg * LB_PER_KG)}${ctx.unit}${asLogged}`
+        : "";
+      return `${formatDate(date, ctx.today)}${name ? `, ${name}` : ""}: ${parts.join(", ")}${total}.`;
+    })
+    .filter(Boolean);
+
+  if (lines.length === 0) return "";
+  return section(
+    "powerlifting meets, newest first, heaviest set of each lift that day",
+    lines,
+  );
+}
+
+function formatMeetSet(set, ctx) {
+  return formatSet({ weight: ctx.toUnit(set), reps: set.reps });
 }
 
 function buildConsistencySection({ tail, parsedData, mainLifts, ctx }) {

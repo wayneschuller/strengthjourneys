@@ -11,22 +11,24 @@
  *
  * Every visit shows the next story in the ranked list, best first, so a
  * refresh or coming back to the dashboard brings a new one. A story tied to a
- * date links to that day in the log.
+ * date links to that day in the log, and any story about a lift with a video
+ * gets its own play button beside the line.
+ *
+ * Streaks are not told here: The Long Game card already owns them.
  */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { motion } from "motion/react";
 import {
   Activity,
   Anvil,
   ArrowRight,
   Cake,
   Calendar,
-  Flame,
   History,
   Lightbulb,
   Medal,
+  PlayCircle,
   Target,
   Trophy,
 } from "lucide-react";
@@ -50,20 +52,13 @@ import {
   buildEventStories,
   rankEvergreenStories,
 } from "@/lib/home-dashboard/story-of-the-day";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // Which evergreen stories each stage may draw on, in its preferred order.
 const EVERGREEN_KEYS_BY_STAGE = {
   first_real_week: ["journey", "classic", "first-week-goal", "programming-tip"],
-  first_month: ["journey", "consistency", "programming-tip"],
-  early_base: ["journey", "momentum", "lifetime-tonnage", "consistency"],
-  established: [
-    "journey",
-    "classic",
-    "momentum",
-    "lifetime-tonnage",
-    "consistency",
-  ],
+  first_month: ["journey", "programming-tip"],
+  early_base: ["journey", "momentum", "lifetime-tonnage"],
+  established: ["journey", "classic", "momentum", "lifetime-tonnage"],
 };
 
 // Below this the momentum story reads as a dip, so it is not told at all.
@@ -71,8 +66,8 @@ const MOMENTUM_STEADY_PERCENT = 15;
 
 /**
  * @param {Object} props
- * @param {boolean} [props.isProgressDone=false] - When false, a skeleton holds
- *   the line's place while the row-count animation runs.
+ * @param {boolean} [props.isProgressDone=false] - Nothing shows until the
+ *   data has loaded; the greeting holds the line back for longer anyway.
  * @param {string} [props.dashboardStage="established"]
  * @param {number} [props.sessionCount=0]
  */
@@ -98,7 +93,6 @@ export function StoryOfTheDay({
     const events = buildEventStories({
       parsedData,
       topLiftsByTypeAndReps,
-      streakStats,
       todayStr,
     });
     const evergreenKeys = (
@@ -112,7 +106,6 @@ export function StoryOfTheDay({
             momentum.percentageChange >= -MOMENTUM_STEADY_PERCENT)
         );
       }
-      if (key === "consistency") return (streakStats?.currentStreak ?? 0) > 0;
       return true;
     });
     return [
@@ -126,7 +119,7 @@ export function StoryOfTheDay({
     ].sort((a, b) => b.score - a.score);
   }, [parsedData, topLiftsByTypeAndReps, allSessionDates, dashboardStage]);
 
-  if (!isProgressDone) return <StorySkeleton />;
+  if (!isProgressDone) return null;
   if (stories.length === 0) return null;
 
   return (
@@ -194,7 +187,7 @@ const ACCENT_CLASSES = {
 };
 
 function StoryLine({ line }) {
-  const { icon: Icon, accent, lead, commentary, href } = line;
+  const { icon: Icon, accent, lead, commentary, href, videoUrl } = line;
   const content = (
     <>
       <span
@@ -218,18 +211,11 @@ function StoryLine({ line }) {
     </>
   );
   const className =
-    "group flex min-w-0 max-w-full items-center gap-2.5 text-sm sm:text-base";
+    "group flex min-w-0 items-center gap-2.5 text-sm sm:text-base";
   const title = [lead, commentary].filter(Boolean).join(". ");
 
   return (
-    <motion.div
-      className="flex min-w-0"
-      initial={{ opacity: 0, x: -8, filter: "blur(4px)" }}
-      animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-      // Mounts once the data has loaded, by which time the greeting's thread
-      // is already waiting for it, so it only needs a beat.
-      transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
-    >
+    <div className="flex min-w-0 items-center gap-2">
       {href ? (
         <Link href={href} className={className} title={title}>
           {content}
@@ -239,16 +225,20 @@ function StoryLine({ line }) {
           {content}
         </div>
       )}
-    </motion.div>
-  );
-}
-
-function StorySkeleton() {
-  return (
-    <div className="flex h-7 items-center gap-2.5">
-      <Skeleton className="h-7 w-7 rounded-full" />
-      <Skeleton className="h-4 w-40" />
-      <Skeleton className="h-4 w-56" />
+      {/* Its own button beside the line, not inside it: the line goes to the
+          log, this goes to the footage. */}
+      {videoUrl && (
+        <a
+          href={videoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Watch the video of this lift"
+          title="Watch the video"
+          className="text-muted-foreground hover:text-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors"
+        >
+          <PlayCircle className="h-4.5 w-4.5" />
+        </a>
+      )}
     </div>
   );
 }
@@ -279,6 +269,7 @@ function buildStoryLine(story, context) {
         lead: `${story.liftType} ${setLabel(story.lift)}`,
         commentary: `New PR ${getDayPhrase(story.daysAgo, story.date)}, up from ${setLabel(story.previous)}.`,
         href: logHref(story.date),
+        videoUrl: getVideoUrl(story.lift),
       };
     case "meetAnniversary":
       return {
@@ -295,6 +286,9 @@ function buildStoryLine(story, context) {
           story.meetName ||
           null,
         href: logHref(story.date),
+        videoUrl:
+          story.bestSingles.map(getVideoUrl).find(Boolean) ??
+          getVideoUrl(story.meetVideoLift),
       };
     case "journeyBirthday":
       return {
@@ -303,6 +297,7 @@ function buildStoryLine(story, context) {
         lead: `${pluralYears(story.yearsAgo)} of lifting ${whenPhrase(story)}`,
         commentary: `It started with ${story.lift.liftType} ${setLabel(story.lift)}.`,
         href: logHref(story.date),
+        videoUrl: getVideoUrl(story.lift),
       };
     case "prAnniversary":
       return {
@@ -315,14 +310,7 @@ function buildStoryLine(story, context) {
             : pickVariant(PR_ANNIVERSARY_LINES, story.id)
         }`,
         href: logHref(story.date),
-      };
-    case "longestStreak":
-      return {
-        icon: Flame,
-        accent: "orange",
-        lead: `${story.weeks} weeks in a row`,
-        commentary: "Your longest streak ever, and still going.",
-        href: null,
+        videoUrl: getVideoUrl(story.lift),
       };
     case "evergreen":
       return buildEvergreenLine(story, context, setLabel);
@@ -373,6 +361,7 @@ function buildEvergreenLine(story, context, setLabel) {
           ? `${when}: “${note}”`
           : `${memory.reasonLabel}, ${when}.`,
         href: logHref(memory.lift.date),
+        videoUrl: getVideoUrl(memory.lift),
       };
     }
     case "momentum": {
@@ -408,24 +397,7 @@ function buildEvergreenLine(story, context, setLabel) {
         accent: "violet",
         lead: `${formatLifetimeTonnage(tonnage.primaryTotal)} ${tonnage.primaryUnit} moved`,
         commentary: `${tonnage.sessionCount.toLocaleString()} sessions, about ${formatLifetimeTonnage(Math.round(tonnage.averagePerSession))} ${tonnage.primaryUnit} each.`,
-        href: null,
-      };
-    }
-    case "consistency": {
-      const { currentStreak, bestStreak, sessionsThisWeek } =
-        story.streakStats ?? {};
-      if (!currentStreak) return null;
-      return {
-        icon: Flame,
-        accent: "orange",
-        lead: `${currentStreak} week${currentStreak === 1 ? "" : "s"} in a row`,
-        commentary:
-          sessionsThisWeek >= 3
-            ? "This week is already in the bank."
-            : currentStreak >= bestStreak
-              ? "Your best run yet."
-              : `Your best run is ${bestStreak} weeks.`,
-        href: null,
+        href: "/tonnage",
       };
     }
     case "first-week-goal": {
@@ -503,6 +475,11 @@ const FIRST_MONTH_TIPS = [
 ];
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
+
+// Sheets carry the column as URL; some imports spell it url.
+function getVideoUrl(lift) {
+  return lift?.URL || lift?.url || null;
+}
 
 function logHref(dateStr) {
   return `/log?date=${dateStr}`;

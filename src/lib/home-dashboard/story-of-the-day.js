@@ -3,7 +3,7 @@
  * dashboard with, and ranks them.
  *
  * Event stories (a PR this week, a meet anniversary, the day they started
- * lifting, a PR anniversary, their longest streak ever) only exist when the
+ * lifting, a PR anniversary) only exist when the
  * log earns them, and always outrank the evergreen summary cards the hero
  * falls back on. That ranking is what keeps a new lifter from being shown
  * lifetime stats they do not have yet.
@@ -28,7 +28,6 @@ const STORY_SCORES = {
   recentPr: 100,
   meetAnniversary: 95,
   journeyBirthday: 90,
-  longestStreak: 80,
   prAnniversary: 70,
 };
 export const EVERGREEN_MAX_SCORE = 60;
@@ -55,14 +54,12 @@ const MEET_NOTE_EXCLUDE_PATTERN =
  * @param {Object} params
  * @param {Array} params.parsedData - Canonical lift objects, oldest first.
  * @param {Object} params.topLiftsByTypeAndReps - liftType -> [reps-1] -> best-first sets.
- * @param {{currentStreak:number, bestStreak:number}} [params.streakStats]
  * @param {string} params.todayStr - Local YYYY-MM-DD.
  * @returns {Array<Object>} Stories, best first.
  */
 export function buildEventStories({
   parsedData,
   topLiftsByTypeAndReps,
-  streakStats,
   todayStr,
 }) {
   if (!Array.isArray(parsedData) || parsedData.length === 0 || !todayStr) {
@@ -72,7 +69,6 @@ export function buildEventStories({
   const stories = [
     findRecentPrStory(topLiftsByTypeAndReps, todayStr),
     ...findAnniversaryStories(parsedData, topLiftsByTypeAndReps, todayStr),
-    findLongestStreakStory(streakStats),
   ].filter(Boolean);
 
   return stories.sort((a, b) => b.score - a.score);
@@ -219,6 +215,11 @@ function findAnniversaryStories(parsedData, topLiftsByTypeAndReps, todayStr) {
       date: meet.date,
       meetName: findMeetName(meet.entries),
       bestSingles: getHeaviestSetPerLift(meet.entries),
+      // A meet's footage may be a warm-up or an attempt that is not the day's
+      // top set, so keep the heaviest filmed set as a fallback.
+      meetVideoLift: meet.entries
+        .filter((entry) => entry.URL || entry.url)
+        .sort((a, b) => b.weight - a.weight)[0],
       yearsAgo: match.year - Number(meet.date.slice(0, 4)),
       daysAgo: match.daysAgo,
     });
@@ -282,20 +283,6 @@ function findPrAnniversary(
     isStillBest: best.isStillBest,
     yearsAgo: match.year - Number(best.date.slice(0, 4)),
     daysAgo: match.daysAgo,
-  };
-}
-
-function findLongestStreakStory(streakStats) {
-  const current = streakStats?.currentStreak ?? 0;
-  const bestEver = streakStats?.bestStreak ?? 0;
-  // Four weeks is the shortest run that feels like a streak rather than a
-  // good month.
-  if (current < 4 || current < bestEver) return null;
-  return {
-    id: `longest-streak:${current}`,
-    kind: "longestStreak",
-    score: STORY_SCORES.longestStreak,
-    weeks: current,
   };
 }
 

@@ -5,7 +5,8 @@
  * than a separate widget.
  *
  * Desktop puts the two on one row and the thread runs across from the end of
- * the underline into the story. Phones stack them and drop the thread, which
+ * the underline into the story. Both wait about ten seconds before fading in,
+ * so the three headline cards have the stage first. Phones stack them and drop the thread, which
  * has no room to say anything there.
  *
  * Owns layout and entrance only. Which story shows lives in StoryOfTheDay,
@@ -13,12 +14,15 @@
  */
 import { motion, useReducedMotion } from "motion/react";
 
+// Long enough to take in the three headline cards before anything else moves.
+const STORY_REVEAL_DELAY_SECONDS = 10;
+
 export function DashboardGreeting({ quip, firstName, children }) {
   const prefersReducedMotion = useReducedMotion();
   const [before = "", after = ""] = quip.split("{name}");
 
   return (
-    <div className="flex max-w-full flex-col items-center gap-2 lg:flex-row lg:items-center lg:gap-0">
+    <div className="flex max-w-full min-w-0 flex-col items-center gap-2 lg:flex-row lg:items-center lg:gap-0">
       <motion.p
         className="shrink-0 text-center text-xl leading-snug sm:text-2xl lg:text-left"
         initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 6 }}
@@ -31,7 +35,15 @@ export function DashboardGreeting({ quip, firstName, children }) {
       </motion.p>
 
       {children && (
-        <>
+        // The thread and story wait their turn: the lifter gets a few seconds
+        // with the three headline cards first, then the story arrives as a
+        // small extra.
+        <motion.div
+          className="flex max-w-full min-w-0 items-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: STORY_REVEAL_DELAY_SECONDS, duration: 0.8 }}
+        >
           {/* The thread: picks up where the underline ends, a knot, then a
               line that grows across into the story. */}
           <div
@@ -43,7 +55,7 @@ export function DashboardGreeting({ quip, firstName, children }) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{
-                delay: 0.55,
+                delay: STORY_REVEAL_DELAY_SECONDS + 0.1,
                 type: "spring",
                 stiffness: 400,
                 damping: 18,
@@ -53,11 +65,28 @@ export function DashboardGreeting({ quip, firstName, children }) {
               className="from-primary/60 to-primary/10 h-px flex-1 origin-left bg-gradient-to-r"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
-              transition={{ delay: 0.6, duration: 0.45, ease: "easeOut" }}
+              transition={{
+                delay: STORY_REVEAL_DELAY_SECONDS + 0.15,
+                duration: 0.45,
+                ease: "easeOut",
+              }}
             />
           </div>
-          <div className="max-w-full min-w-0 lg:max-w-xl">{children}</div>
-        </>
+          {/* No width cap: the line uses whatever the row has spare and only
+              truncates when it truly runs out. */}
+          <motion.div
+            className="max-w-full min-w-0"
+            initial={{ x: prefersReducedMotion ? 0 : -8 }}
+            animate={{ x: 0 }}
+            transition={{
+              delay: STORY_REVEAL_DELAY_SECONDS + 0.4,
+              duration: 0.5,
+              ease: "easeOut",
+            }}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

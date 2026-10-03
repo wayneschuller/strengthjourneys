@@ -9,8 +9,8 @@
  * a single solid form again; older runs simply fade back so the list reads as a
  * timeline, which the date beside each bar already explains.
  *
- * A powerlifting meet that fell inside a run sits on the bar as a gold medal, at
- * the week it happened. It is a mark laid over the bar, not a property of it.
+ * A powerlifting meet that fell inside a run, or in the week that ended it, sits
+ * on the bar as a gold medal at the week it happened. It is a mark laid over the bar, not a property of it.
  */
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -99,8 +99,11 @@ function formatStreakRange(startWeek, endWeek) {
   return `${format(s, "MMM yyyy")} → ${format(e, "MMM yyyy")}`;
 }
 
-// The meets that fell inside a streak, oldest first, each with the week of the
-// run it landed in (0 for the first week) so the bar can place its medal.
+// The meets that belong to a streak, oldest first, each with the week of the
+// run it landed in (0 for the first week) so the bar can place its medal. A
+// meet in the week that broke the streak belongs to it too: a taper week is
+// often short of sessions, and the run was the build-up to that meet. Its
+// medal goes on the last week of the bar.
 function getStreakMeets(streak, meetDays) {
   const start = parseISO(streak.startWeek);
   const meets = [];
@@ -108,8 +111,12 @@ function getStreakMeets(streak, meetDays) {
     const weekIndex = Math.floor(
       differenceInCalendarDays(parseISO(date), start) / 7,
     );
-    if (weekIndex < 0 || weekIndex >= streak.weeks) continue;
-    meets.push({ date, ...meetDay, weekIndex });
+    if (weekIndex < 0 || weekIndex > streak.weeks) continue;
+    meets.push({
+      date,
+      ...meetDay,
+      weekIndex: Math.min(weekIndex, streak.weeks - 1),
+    });
   }
   return meets.sort((a, b) => a.date.localeCompare(b.date));
 }

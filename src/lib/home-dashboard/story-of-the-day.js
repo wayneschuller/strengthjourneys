@@ -37,22 +37,28 @@ export const SUMMARY_MAX_SCORE = 60;
 const HEADLINE_REPS = [1, 3, 5, 2, 10, 8, 4, 6];
 
 // A meet is a high bar, checked against a real twelve-year log. A session
-// counts when the Label column names a competition, a note names one ("2019
-// South Melbourne PTC Novice Competition", "powerlifting comp", "meet day"),
-// or two or more sets carry attempt numbers. One "second attempt" is just a
+// counts when a note names a competition ("2019 South Melbourne PTC Novice
+// Competition", "powerlifting comp", "meet day"), or two or more sets carry
+// attempt numbers. The athlete sees the word "meet" (our audience is mostly
+// American), but notes are read in every dialect: an Australian writes
+// "powerlifting comp" or "powerlifting event" for the same day. The Label
+// column counts too, quietly: it is an unofficial column some sheets have,
+// never advertised, so nothing in the UI should mention it. An online
+// contest run over a multi-day window has no single meet day and is left out. One "second attempt" is just a
 // second try. "Comp" on its own is not enough either, because lifters write
 // "comp pause" and "comp prep" all the time.
 const MEET_LABEL_PATTERN =
   /\b(comp|competition|meet|championships?|nationals)\b/i;
 // Case-sensitive: a capitalised Competition or Championship is a named event.
-const MEET_NAMED_EVENT_PATTERN = /\b(Competition|Championships?|Nationals)\b/;
+const MEET_NAMED_EVENT_PATTERN =
+  /\b(Competition|Championships?|Nationals|Contest)\b/;
 const MEET_NOTE_PATTERN =
-  /\b(powerlifting|weightlifting|strongman|bench|deadlift) (competition|comp|meet)\b|\bmeet day\b|\bcomp day\b/i;
+  /\b(powerlifting|weightlifting|strongman|bench|deadlift) (competition|comp|meet|event|contest)\b|\bmeet day\b|\bcomp day\b/i;
 const MEET_ATTEMPT_PATTERN = /\b(1st|2nd|3rd|first|second|third) attempt\b/i;
 // Notes that talk about a meet without being one: prep, rehearsals, plans
 // and daydreams.
 const MEET_NOTE_EXCLUDE_PATTERN =
-  /\b(imagine|imagining|find|possible|prep|preparing|dreaming|thinking|practice|treat|pretend|like a|for a comp|for the comp|next comp|upcoming|mock|will be|would be)\b/i;
+  /\b(imagine|imagining|find|possible|prep|preparing|dreaming|thinking|practice|treat|pretend|like a|for a comp|for the comp|next comp|upcoming|mock|will be|would be|window)\b/i;
 
 /**
  * Builds the ranked event stories for today. Summary stories are ranked by the

@@ -2,7 +2,7 @@
  * Full multi-lift E1RM visualizer with lift selection, time range controls,
  * and shared processing for historical training charts.
  */
-import { Fragment, useMemo, useEffect, useState } from "react";
+import { Fragment, memo, useMemo, useEffect, useState } from "react";
 import {
   SidePanelSelectLiftsButton,
   VISUALIZER_STORAGE_PREFIX,
@@ -73,13 +73,13 @@ import {
   ChartAreaGradient,
   ChartGlowFilter,
   TopPointMarkers,
-  chartActiveDotProps,
-  chartCursorProps,
   e1rmMarkerLines,
   formatWeightTick,
   getDateTickProps,
   paddedDateDomain,
   renderMeetMarkers,
+  SnappedHoverMarks,
+  useHoverSnap,
   renderYearDividers,
   selectTopPoints,
 } from "@/components/visualizer/chart-visuals";
@@ -92,15 +92,20 @@ import {
 // Wraps MultiLiftTooltipContent and syncs the hovered date to TheLatestSessionCard via setHighlightDate.
 // recharts v3 doesn't reliably populate activePayload in onMouseMove for numeric/time XAxis,
 // but it always calls Tooltip content when a data point is active.
+// The hovered row is passed through the hover magnets first, so the tooltip and the session card
+// agree with the crosshair drawn by SnappedHoverMarks.
 function SyncedMultiLiftTooltip({
   active,
   payload,
   label,
   selectedLiftTypes,
   setHighlightDate,
+  hoverMagnets,
   debounceMs = 0,
 }) {
-  const date = active && payload?.length > 0 ? payload[0]?.payload?.date : null;
+  const snap = useHoverSnap(hoverMagnets);
+  const row = active && payload?.length > 0 ? snap(payload[0]?.payload) : null;
+  const date = row?.date ?? null;
 
   useEffect(() => {
     if (!date || !setHighlightDate) return;
@@ -117,6 +122,7 @@ function SyncedMultiLiftTooltip({
         payload={payload}
         label={label}
         selectedLiftTypes={selectedLiftTypes}
+        row={row}
       />
     </div>
   );
@@ -128,10 +134,16 @@ function SyncedMultiLiftTooltip({
  * value labels, and E1RM formula controls.
  *
  * @param {Object} props
+ * Memoised because every hovered day sets the page's highlight date; without it each one
+ * re-rendered this whole chart just to hand the session card a new date.
+ *
+ * @param {Object} props
  * @param {function(string)} [props.setHighlightDate] - Callback invoked on chart hover with the
- *   hovered ISO date string; used to sync with TheLatestSessionCard.
+ *   hovered ISO date string; used to sync with TheLatestSessionCard. Must be a stable reference.
  */
-export function VisualizerShadcn({ setHighlightDate }) {
+export const VisualizerShadcn = memo(function VisualizerShadcn({
+  setHighlightDate,
+}) {
   const { dataSource, parsedData, liftTypes, meetDays } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
@@ -249,6 +261,22 @@ export function VisualizerShadcn({ setHighlightDate }) {
     );
   }, [chartData, selectedLiftTypes, showLabelValues]);
 
+  // The marked days the hover snaps to (see useHoverSnap): meets with a medal
+  // on this chart, the labelled high points, and the lifter's own labels.
+  const hoverMagnets = useMemo(() => {
+    const dates = new Set();
+    for (const [date, { topSets }] of meetDays ?? []) {
+      const marked = Object.values(topSets).some((set) =>
+        selectedLiftTypes.includes(set.liftType),
+      );
+      if (marked) dates.add(date);
+    }
+    for (const topPoints of Object.values(topPointsByLift)) {
+      for (const { point } of topPoints) dates.add(point.date);
+    }
+    return chartData.filter((point) => dates.has(point.date) || point.label);
+  }, [chartData, meetDays, selectedLiftTypes, topPointsByLift]);
+
   // devLog("Rendering <VisualizerShadcn />...");
   if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
   // devLog(chartData);
@@ -357,19 +385,13 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 <SyncedMultiLiftTooltip
                   selectedLiftTypes={selectedLiftTypes}
                   setHighlightDate={setHighlightDate}
+                  hoverMagnets={hoverMagnets}
                   debounceMs={tooltipDebounceMs}
                 />
               }
-              // Bottom of the plot: the top band belongs to the meet medals
-              // and their hover titles.
+              // Bottom of the plot: the top band belongs to the meet medals.
               position={{ y: 360 }}
-              cursor={chartCursorProps(
-                // A single crosshair colour only makes sense to tie to a lift
-                // when exactly one is selected; otherwise keep it neutral.
-                selectedLiftTypes.length === 1
-                  ? liftColors[selectedLiftTypes[0]]
-                  : "var(--muted-foreground)",
-              )}
+              cursor={false} // SnappedHoverMarks draws the crosshair
             />
             <defs>
               {selectedLiftTypes.map((liftType) => {
@@ -399,7 +421,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   fillOpacity={1}
                   filter={`url(#glow-${liftSlug})`} // soft halo around the line
                   dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
-                  activeDot={chartActiveDotProps(liftColors[liftType])}
+                  activeDot={false} // SnappedHoverMarks draws the hover dots
                   animationDuration={900}
                   animationEasing="ease-out"
                   connectNulls
@@ -443,6 +465,20 @@ export function VisualizerShadcn({ setHighlightDate }) {
             {renderYearDividers(yearLabels, !dateTickProps.axisShowsYears)}
             {/* Gold medal markers at each meet one of these lifts was in */}
             {renderMeetMarkers(meetDays, { liftTypes: selectedLiftTypes })}
+            <SnappedHoverMarks
+              magnets={hoverMagnets}
+              series={selectedLiftTypes.map((liftType) => ({
+                dataKey: liftType,
+                color: liftColors[liftType],
+              }))}
+              // A single crosshair colour only makes sense to tie to a lift
+              // when exactly one is selected; otherwise keep it neutral.
+              cursorColor={
+                selectedLiftTypes.length === 1
+                  ? liftColors[selectedLiftTypes[0]]
+                  : "var(--muted-foreground)"
+              }
+            />
             <ChartLegend
               content={<ChartLegendContent />}
               className="tracking-tight md:text-lg"
@@ -474,4 +510,4 @@ export function VisualizerShadcn({ setHighlightDate }) {
       </CardFooter>
     </Card>
   );
-}
+});

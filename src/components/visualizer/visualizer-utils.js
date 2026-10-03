@@ -125,16 +125,18 @@ const TooltipUI = ({ date, dateLabel, tooltipsPerLift }) => (
  * @param {Array} props.payload - Recharts payload array for the hovered data point.
  * @param {*} props.label - Recharts label value (unused; date is read from payload).
  * @param {string[]} props.selectedLiftTypes - List of lift type names currently displayed on the chart.
+ * @param {Object} [props.row] - Chart data row to show instead of the hovered one (see useHoverSnap).
  */
 export const MultiLiftTooltipContent = ({
   active,
   payload,
   label,
   selectedLiftTypes,
+  row,
 }) => {
   if (!active || !payload?.length) return null;
 
-  const tuple = payload[0].payload;
+  const tuple = row ?? payload[0].payload;
   const dateLabel = getReadableDateString(tuple.date, true);
   const tooltipsPerLift = selectedLiftTypes
     .map((liftType) =>

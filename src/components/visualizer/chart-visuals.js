@@ -7,7 +7,18 @@
  * lift color because the app ships twelve themes (light/dark plus blueprint,
  * retro-arcade, evergreen, starry-night and neo-brutalism variants).
  */
-import { ReferenceDot, ReferenceLine } from "recharts";
+import { useCallback } from "react";
+import {
+  DefaultZIndexes,
+  ReferenceDot,
+  ReferenceLine,
+  ZIndexLayer,
+  useActiveTooltipDataPoints,
+  useIsTooltipActive,
+  usePlotArea,
+  useXAxisScale,
+  useYAxisScale,
+} from "recharts";
 
 import { MEET_GOLD } from "@/components/meet-medal";
 
@@ -108,6 +119,102 @@ export function chartActiveDotProps(color) {
     stroke: "var(--background)",
     strokeWidth: 2,
   };
+}
+
+// How far, in screen pixels, a marked day pulls the hover towards itself.
+const HOVER_MAGNET_REACH_PX = 7;
+
+/**
+ * Hover snapping for dense charts. Twelve years of sessions pack several days
+ * into each pixel, so landing on one exact day (a meet, a labelled peak) is
+ * luck. The marked days act as magnets: hovering within a few pixels of one
+ * reads as hovering it. The neighbours it swallows are still a chevron click
+ * away in the session card.
+ *
+ * Measured in pixels rather than days so it switches itself off on short time
+ * ranges, where days sit further apart than the reach.
+ *
+ * Must be called inside a Recharts chart (tooltip content counts).
+ *
+ * @param {Array} magnets - Chart data rows to snap to; a stable reference.
+ * @returns {function(Object): Object} Maps a hovered row to the row to show.
+ */
+export function useHoverSnap(magnets) {
+  const xScale = useXAxisScale();
+  return useCallback(
+    (row) => {
+      if (!row || !xScale || !magnets?.length) return row;
+      const x = xScale(row.rechartsDate);
+      let snapped = row;
+      let nearest = HOVER_MAGNET_REACH_PX;
+      for (const magnet of magnets) {
+        const distance = Math.abs(xScale(magnet.rechartsDate) - x);
+        if (distance <= nearest) {
+          snapped = magnet;
+          nearest = distance;
+        }
+      }
+      return snapped;
+    },
+    [xScale, magnets],
+  );
+}
+
+/**
+ * The hover crosshair and series dots, drawn at the snapped row instead of the
+ * raw hovered one so they agree with a tooltip that uses useHoverSnap. Stands
+ * in for the Tooltip's cursor and each series' activeDot, which Recharts can
+ * only draw at the raw row: turn both off on a chart that renders this.
+ *
+ * @param {Object} props
+ * @param {Array} props.magnets - Same rows the tooltip snaps to.
+ * @param {Array<{dataKey: string, color: string}>} props.series - A dot is
+ *   drawn for each series the snapped row has a value for.
+ * @param {string} props.cursorColor - Crosshair colour.
+ */
+export function SnappedHoverMarks({ magnets, series, cursorColor }) {
+  const isActive = useIsTooltipActive();
+  const activeRows = useActiveTooltipDataPoints();
+  const plotArea = usePlotArea();
+  const xScale = useXAxisScale();
+  const yScale = useYAxisScale();
+  const snap = useHoverSnap(magnets);
+
+  const row = isActive ? snap(activeRows?.[0]) : null;
+  if (!row || !plotArea || !xScale || !yScale) return null;
+  const x = xScale(row.rechartsDate);
+  if (!Number.isFinite(x)) return null;
+
+  return (
+    <>
+      <ZIndexLayer zIndex={DefaultZIndexes.cursorLine}>
+        <line
+          x1={x}
+          x2={x}
+          y1={plotArea.y}
+          y2={plotArea.y + plotArea.height}
+          pointerEvents="none"
+          {...chartCursorProps(cursorColor)}
+        />
+      </ZIndexLayer>
+      <ZIndexLayer zIndex={DefaultZIndexes.activeDot}>
+        <g pointerEvents="none">
+          {series.map(({ dataKey, color }) => {
+            const y = yScale(row[dataKey]);
+            if (row[dataKey] == null || !Number.isFinite(y)) return null;
+            return (
+              <circle
+                key={dataKey}
+                cx={x}
+                cy={y}
+                {...chartActiveDotProps(color)}
+              />
+            );
+          })}
+        </g>
+      </ZIndexLayer>
+    </>
+  );
 }
 
 /**
@@ -649,11 +756,7 @@ export function renderMeetMarkers(
         ifOverflow="discard"
         label={{
           content: ({ viewBox }) => (
-            <MeetBadge
-              x={viewBox.x}
-              y={viewBox.y}
-              compact={compact}
-            />
+            <MeetBadge x={viewBox.x} y={viewBox.y} compact={compact} />
           ),
         }}
       />,

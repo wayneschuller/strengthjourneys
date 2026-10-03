@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AnimatePresence, motion } from "motion/react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { cn } from "@/lib/utils";
 import { Activity, X } from "lucide-react";
 
@@ -53,7 +54,12 @@ export function AthleteBioQuickSettings() {
     const id = setTimeout(() => setAttentionArmed(true), 10000);
     return () => clearTimeout(id);
   }, []);
-  const showAttention = attentionArmed && bioDataIsDefault;
+  // Only nudge lifters who have committed: signed in ("sheet" or "none") or
+  // previewing an import. Anonymous visitors browsing the tools get the larger
+  // inline bio prompts on those pages instead.
+  const { dataSource } = useUserLiftingData();
+  const hasCommitted = isOwnData(dataSource) || dataSource === "none";
+  const showAttention = attentionArmed && bioDataIsDefault && hasCommitted;
 
   return (
     <DropdownMenu>

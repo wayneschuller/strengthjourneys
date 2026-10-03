@@ -22,9 +22,7 @@
  * stories always show, summaries only on alternate days. Before that stage
  * the dashboard does not render it at all.
  *
- * Streaks are told only in the early base stage, where a run of three-session
- * weeks is the habit worth reinforcing. Established lifters get them from The
- * Long Game card instead.
+ * Streaks are not told here: The Long Game card already owns them.
  */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -37,7 +35,6 @@ import {
   Cake,
   Calendar,
   History,
-  Flame,
   Medal,
   PlayCircle,
   Trophy,
@@ -71,13 +68,9 @@ import { STORY_REVEAL_DELAY_SECONDS } from "@/components/home-dashboard/dashboar
 
 // Which summary stories each stage may draw on, in its preferred order.
 const SUMMARY_KEYS_BY_STAGE = {
-  early_base: [
-    "journey",
-    "consistency",
-    "momentum",
-    "lifetime-tonnage",
-    "year-bests",
-  ],
+  // Momentum leads for a newer lifter: sessions over the last 90 days is the
+  // number that tells them the habit is taking.
+  early_base: ["momentum", "journey", "lifetime-tonnage", "year-bests"],
   established: [
     "journey",
     "classic",
@@ -138,8 +131,6 @@ export function StoryOfTheDay({
       }
       // One lift is not a year yet; early January skips this story.
       if (key === "year-bests") return yearBestSets.length >= 2;
-      // Two weeks is the shortest run worth calling a run.
-      if (key === "consistency") return (streakStats?.currentStreak ?? 0) >= 2;
       return true;
     });
     return [
@@ -483,23 +474,6 @@ function buildSummaryLine(story, context, setLabel) {
         href: null,
       };
     }
-    case "consistency": {
-      const { currentStreak, bestStreak, sessionsThisWeek } =
-        story.streakStats ?? {};
-      if (!currentStreak) return null;
-      return {
-        icon: Flame,
-        accent: "orange",
-        lead: `${currentStreak} three-session weeks in a row`,
-        commentary:
-          sessionsThisWeek >= 3
-            ? "and this week is already in the bank."
-            : currentStreak >= bestStreak
-              ? "your longest run yet."
-              : `your best run so far is ${bestStreak} weeks.`,
-        href: null,
-      };
-    }
     case "year-bests": {
       const sets = story.yearBestSets ?? [];
       if (sets.length === 0) return null;
@@ -556,7 +530,6 @@ const KICKERS = {
   milestoneInReach: ["Nearly there", "Within reach", "Next up"],
   yearPrs: ["This year", "A big year", "Year in review"],
   "year-bests": ["This year so far", "Your year", "Year to date"],
-  consistency: ["Showing up", "Week after week", "The habit is forming"],
 };
 
 function getKickerPool(story) {

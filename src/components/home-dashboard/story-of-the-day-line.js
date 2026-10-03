@@ -39,7 +39,11 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { formatDateToYmdLocal } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { pickClassicLiftMemory } from "@/lib/home-dashboard/classic-lift-highlight-selection";
+import {
+  buildClassicLiftCandidates,
+  getVideoUrl,
+  pickClassicLiftFrom,
+} from "@/lib/home-dashboard/classic-lift";
 import {
   calculateLifetimeTonnageFromLookup,
   calculateSessionMomentumFromDates,
@@ -342,36 +346,27 @@ function buildSummaryLine(story, context, setLabel) {
         accent: "primary",
         lead: formatJourneyLength(firstDate),
         commentary: `${totalReps.toLocaleString()} reps across ${totalSets.toLocaleString()} sets.`,
-        // Where it all started.
-        href: logHref(firstDate),
+        // Unlinked: a link to the first session undersells a whole journey.
+        href: null,
       };
     }
     case "classic": {
-      const { age, bodyWeight, sex, standards, isMetric } = athleteBio;
-      const memory = pickClassicLiftMemory({
+      const candidates = buildClassicLiftCandidates({
         parsedData,
-        liftTypes,
-        topLiftsByTypeAndReps: context.topLiftsByTypeAndReps,
-        hasBioData:
-          !!(age && bodyWeight && standards) &&
-          Object.keys(standards).length > 0,
-        age,
-        bodyWeight,
-        sex,
-        isMetric,
+        isMetric: athleteBio.isMetric,
       });
-      if (!memory?.lift) return null;
-      const note = memory.lift.notes?.trim();
-      const when = format(parseISO(memory.lift.date), "MMM yyyy");
+      logClassicLiftCandidates(candidates);
+      const classic = pickClassicLiftFrom(candidates);
+      if (!classic) return null;
+      const note = classic.lift.notes?.trim();
+      const when = format(parseISO(classic.lift.date), "MMMM yyyy");
       return {
         icon: Trophy,
         accent: "amber",
-        lead: `${memory.lift.liftType} ${setLabel(memory.lift)}`,
-        commentary: note
-          ? `${when}: “${note}”`
-          : `${memory.reasonLabel}, ${when}.`,
-        href: logHref(memory.lift.date),
-        videoUrl: getVideoUrl(memory.lift),
+        lead: `${classic.lift.liftType} ${setLabel(classic.lift)}`,
+        commentary: `${classic.label}, ${when}.${note ? ` “${note}”` : ""}`,
+        href: logHref(classic.lift.date),
+        videoUrl: getVideoUrl(classic.lift),
       };
     }
     case "momentum": {
@@ -405,9 +400,10 @@ function buildSummaryLine(story, context, setLabel) {
       return {
         icon: Anvil,
         accent: "violet",
-        lead: `${formatLifetimeTonnage(tonnage.primaryTotal)} ${tonnage.primaryUnit} moved`,
+        lead: `${formatLifetimeTonnage(tonnage.primaryTotal)} ${tonnage.primaryUnit} moved ${getSincePhrase(firstDate)}`,
         commentary: `${tonnage.sessionCount.toLocaleString()} sessions, about ${formatLifetimeTonnage(Math.round(tonnage.averagePerSession))} ${tonnage.primaryUnit} each.`,
-        href: "/tonnage",
+        // The figure is lifetime, so the chart opens on lifetime too.
+        href: "/tonnage?range=MAX",
       };
     }
     case "first-week-goal": {
@@ -486,9 +482,41 @@ const FIRST_MONTH_TIPS = [
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-// Sheets carry the column as URL; some imports spell it url.
-function getVideoUrl(lift) {
-  return lift?.URL || lift?.url || null;
+// "since 2014" for a log older than a year, "since March" within this
+// year, "since March 2025" in between: the tonnage figure's timeframe in
+// the words a lifter would use.
+function getSincePhrase(firstDate) {
+  const start = parseISO(firstDate);
+  const now = new Date();
+  if (start.getFullYear() === now.getFullYear()) {
+    return `since ${format(start, "MMMM")}`;
+  }
+  const monthsAgo =
+    (now.getFullYear() - start.getFullYear()) * 12 +
+    now.getMonth() -
+    start.getMonth();
+  return monthsAgo >= 12
+    ? `since ${start.getFullYear()}`
+    : `since ${format(start, "MMMM yyyy")}`;
+}
+
+// Development only: the whole classic lift candidate list as a table, so the
+// picks can be reviewed for feel against a real log.
+function logClassicLiftCandidates(candidates) {
+  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development") return;
+  console.groupCollapsed(`Classic lift candidates (${candidates.length})`);
+  console.table(
+    candidates.map(({ lift, label, source, score }) => ({
+      score,
+      source,
+      date: lift.date,
+      lift: `${lift.liftType} ${lift.reps}@${lift.weight}${lift.unitType}`,
+      label,
+      video: getVideoUrl(lift) ? "yes" : "",
+      note: lift.notes?.trim().slice(0, 80) ?? "",
+    })),
+  );
+  console.groupEnd();
 }
 
 function logHref(dateStr) {

@@ -36,16 +36,23 @@ export const SUMMARY_MAX_SCORE = 60;
 // about them. A 7RM PR is real but rarely the headline.
 const HEADLINE_REPS = [1, 3, 5, 2, 10, 8, 4, 6];
 
-// A meet is a high bar: the Label column naming a competition, an attempt
-// number, or a note that names the competition. "Comp" on its own is not
-// enough, because lifters write "comp pause" and "comp prep" all the time.
+// A meet is a high bar, checked against a real twelve-year log. A session
+// counts when the Label column names a competition, a note names one ("2019
+// South Melbourne PTC Novice Competition", "powerlifting comp", "meet day"),
+// or two or more sets carry attempt numbers. One "second attempt" is just a
+// second try. "Comp" on its own is not enough either, because lifters write
+// "comp pause" and "comp prep" all the time.
 const MEET_LABEL_PATTERN =
   /\b(comp|competition|meet|championships?|nationals)\b/i;
+// Case-sensitive: a capitalised Competition or Championship is a named event.
+const MEET_NAMED_EVENT_PATTERN = /\b(Competition|Championships?|Nationals)\b/;
 const MEET_NOTE_PATTERN =
-  /\b(1st|2nd|3rd|first|second|third) attempt\b|\b(powerlifting|weightlifting|strongman|bench|deadlift) (competition|comp|meet)\b|\bmeet day\b|\bcomp day\b/i;
-// Notes that talk about a meet without being one: prep, plans and daydreams.
+  /\b(powerlifting|weightlifting|strongman|bench|deadlift) (competition|comp|meet)\b|\bmeet day\b|\bcomp day\b/i;
+const MEET_ATTEMPT_PATTERN = /\b(1st|2nd|3rd|first|second|third) attempt\b/i;
+// Notes that talk about a meet without being one: prep, rehearsals, plans
+// and daydreams.
 const MEET_NOTE_EXCLUDE_PATTERN =
-  /\b(imagine|imagining|find|possible|prep|preparing|dreaming|thinking|practice|treat|pretend|like a|for the comp|next comp|upcoming)\b/i;
+  /\b(imagine|imagining|find|possible|prep|preparing|dreaming|thinking|practice|treat|pretend|like a|for a comp|for the comp|next comp|upcoming|mock|will be|would be)\b/i;
 
 /**
  * Builds the ranked event stories for today. Summary stories are ranked by the
@@ -105,14 +112,18 @@ export function rankSummaryStories(keys, todayStr) {
  * @returns {boolean}
  */
 export function isMeetSession(entries) {
-  return entries.some((entry) => {
+  let attemptSets = 0;
+  for (const entry of entries) {
     if (entry.label && MEET_LABEL_PATTERN.test(entry.label)) return true;
     const notes = entry.notes;
-    if (!notes || typeof notes !== "string") return false;
-    return (
-      MEET_NOTE_PATTERN.test(notes) && !MEET_NOTE_EXCLUDE_PATTERN.test(notes)
-    );
-  });
+    if (!notes || typeof notes !== "string") continue;
+    if (MEET_NOTE_EXCLUDE_PATTERN.test(notes)) continue;
+    if (MEET_NAMED_EVENT_PATTERN.test(notes) || MEET_NOTE_PATTERN.test(notes)) {
+      return true;
+    }
+    if (MEET_ATTEMPT_PATTERN.test(notes)) attemptSets++;
+  }
+  return attemptSets >= 2;
 }
 
 // ─── Event finders ─────────────────────────────────────────────────────────

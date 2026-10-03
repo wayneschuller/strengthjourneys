@@ -553,6 +553,9 @@ const KICKERS = {
   "lifetime-tonnage": ["By the numbers", "The big picture", "All added up"],
   "first-week-goal": ["So far", "Off and running"],
   "programming-tip": ["Coach's note", "Worth knowing", "A tip"],
+  milestoneInReach: ["Nearly there", "Within reach", "Next up"],
+  yearPrs: ["This year", "A big year", "Year in review"],
+  "year-bests": ["This year so far", "Your year", "Year to date"],
 };
 
 function getKickerPool(story) {

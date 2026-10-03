@@ -40,6 +40,7 @@ import {
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { toKg } from "@/lib/weight-units";
 import { LiftArtwork } from "@/components/lift-artwork";
 import {
   getBigFourBodyBenefit,
@@ -128,6 +129,10 @@ export function TheMonthInIronCard({
     if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
     return computeMonthlyBattleStats(parsedData, boundaries);
   }, [parsedData, boundaries]);
+  const lastMonthBestSets = useMemo(
+    () => getLastMonthBestSets(parsedData, boundaries),
+    [parsedData, boundaries],
+  );
 
   const strengthLevelStats = useMemo(() => {
     if (!Array.isArray(parsedData) || parsedData.length === 0 || !bio)
@@ -462,6 +467,7 @@ export function TheMonthInIronCard({
           <>
             <BigFourCriteriaTable
               sessions={stats.sessions}
+              lastMonthBestSets={lastMonthBestSets}
               bigFourByLift={stats.bigFourByLift}
               strengthLevelStats={strengthLevelStats}
               strengthSetupRequired={strengthSetupRequired}
@@ -496,7 +502,7 @@ export function TheMonthInIronCard({
                     />
                   )}
                   <div className="min-w-0">
-                    <div className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
+                    <div className="text-muted-foreground text-[10px] font-semibold">
                       {verdictHeadline?.phaseLabel}
                       {highlightsComplete && verdictHeadline?.scoreText
                         ? ` · ${verdictHeadline.scoreText}`
@@ -786,8 +792,8 @@ function EarlyMonthMomentumCard({
               . Keep stacking consistent sessions.
             </p>
             <div className="bg-background/80 rounded-lg border px-3 py-3">
-              <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-[0.12em] uppercase">
-                Coaching Notes
+              <p className="text-muted-foreground mb-2 text-xs font-semibold">
+                Coaching notes
               </p>
               <div className="text-muted-foreground space-y-2 text-sm">
                 {guidanceItems.map((item) => (
@@ -892,7 +898,7 @@ function WeekPlanLiftSession({ title, dayLabel, lifts, isToday = false }) {
         {isToday && (
           // The Log button sits over this badge on hover, so the badge fades
           // rather than the two stacking on top of each other.
-          <span className="text-primary shrink-0 text-[10px] font-semibold tracking-[0.12em] uppercase transition-opacity md:group-focus-within:opacity-0 md:group-hover:opacity-0">
+          <span className="text-primary shrink-0 text-[10px] font-semibold transition-opacity md:group-focus-within:opacity-0 md:group-hover:opacity-0">
             Start here
           </span>
         )}
@@ -2148,6 +2154,7 @@ function MetricRow({
 
 function BigFourCriteriaTable({
   sessions,
+  lastMonthBestSets,
   bigFourByLift,
   strengthLevelStats,
   strengthSetupRequired = false,
@@ -2296,7 +2303,7 @@ function BigFourCriteriaTable({
                         className={`text-2xl font-semibold tracking-tight tabular-nums transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
                       />
                       <div
-                        className={`text-[10px] font-medium tracking-wide uppercase transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}
+                        className={`text-[10px] font-medium transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}
                       >
                         {boundaries.prevMonthName}
                       </div>
@@ -2332,7 +2339,7 @@ function BigFourCriteriaTable({
                           </span>
                         )}
                       </div>
-                      <div className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
+                      <div className="text-muted-foreground text-[10px] font-medium">
                         {boundaries.currentMonthName}
                         {currentMonthSuffix ? ` · ${currentMonthSuffix}` : ""}
                       </div>
@@ -2505,6 +2512,10 @@ function BigFourCriteriaTable({
           ? `${getTonnageLastColumnTooltip(liftType)} Includes ${lastVariations}.`
           : getTonnageLastColumnTooltip(liftType);
         const liftInsightHref = getLiftDetailUrl(liftType);
+        // Week one, lift not trained yet: one quiet "Up next" cell with last
+        // month's best set stands in for "Still to come", "0 kg lifted" and
+        // "Early days", which read as three ways of saying nothing.
+        const showUpNext = earlyDays && currentTonnage === 0 && lastTonnage > 0;
 
         return (
           <motion.div
@@ -2603,58 +2614,66 @@ function BigFourCriteriaTable({
               </motion.div>
             </Link>
 
-            <div
-              className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealStrengthBg}`}
-            >
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 text-xs font-medium">
-                      {strengthLocked ? (
-                        <span className={revealStrengthColor}>
-                          Setup required
-                        </span>
-                      ) : currentStrengthFmt ? (
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition-colors duration-500 ${
-                            rowHighlighted
-                              ? strengthPassed || strengthNewWin
-                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                                : strengthPending
-                                  ? "bg-muted/60 text-foreground"
-                                  : "bg-red-500/15 text-red-700 dark:text-red-400"
-                              : "bg-muted/60 text-foreground"
-                          }`}
-                        >
-                          {currentStrengthFmt.emoji} {currentStrengthFmt.label}
-                        </span>
-                      ) : (
-                        <span className={revealStrengthColor}>
-                          {strength.last === null
-                            ? "—"
-                            : strengthPending
-                              ? "Still to come"
-                              : "Not trained"}
-                        </span>
-                      )}
-                      {rowHighlighted &&
-                        !strengthLocked &&
-                        strengthPassed &&
-                        (strengthNewWin || !strengthBaseline) && (
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                            ✓
+            {showUpNext ? (
+              <UpNextCell
+                bestSet={lastMonthBestSets?.[liftType]}
+                prevMonthName={boundaries.prevMonthName}
+              />
+            ) : (
+              <div
+                className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealStrengthBg}`}
+              >
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 text-xs font-medium">
+                        {strengthLocked ? (
+                          <span className={revealStrengthColor}>
+                            Setup required
+                          </span>
+                        ) : currentStrengthFmt ? (
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition-colors duration-500 ${
+                              rowHighlighted
+                                ? strengthPassed || strengthNewWin
+                                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                                  : strengthPending
+                                    ? "bg-muted/60 text-foreground"
+                                    : "bg-red-500/15 text-red-700 dark:text-red-400"
+                                : "bg-muted/60 text-foreground"
+                            }`}
+                          >
+                            {currentStrengthFmt.emoji}{" "}
+                            {currentStrengthFmt.label}
+                          </span>
+                        ) : (
+                          <span className={revealStrengthColor}>
+                            {strength.last === null
+                              ? "—"
+                              : strengthPending
+                                ? "Still to come"
+                                : "Not trained"}
                           </span>
                         )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" sideOffset={4}>
-                    <p className="max-w-52 text-center text-xs">
-                      {strengthStatusTooltip}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+                        {rowHighlighted &&
+                          !strengthLocked &&
+                          strengthPassed &&
+                          (strengthNewWin || !strengthBaseline) && (
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                              ✓
+                            </span>
+                          )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" sideOffset={4}>
+                      <p className="max-w-52 text-center text-xs">
+                        {strengthStatusTooltip}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
 
             <TooltipProvider>
               <Tooltip>
@@ -2690,97 +2709,96 @@ function BigFourCriteriaTable({
               </Tooltip>
             </TooltipProvider>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealTonnageBg}`}
-                  >
+            {!showUpNext && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <div
-                      className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}
+                      className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealTonnageBg}`}
                     >
-                      <span>
-                        <CountUp
-                          value={currentTonnage}
-                          format={formatTonnageFigure}
-                          duration={MONTH_COUNT_UP_SECONDS}
-                        />{" "}
-                        {unit} lifted
-                      </span>
-                      {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                          ✓
+                      <div
+                        className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}
+                      >
+                        <span>
+                          <CountUp
+                            value={currentTonnage}
+                            format={formatTonnageFigure}
+                            duration={MONTH_COUNT_UP_SECONDS}
+                          />{" "}
+                          {unit} lifted
                         </span>
-                      )}
-                    </div>
-                    {rowHighlighted &&
-                      isCurrentMonthView &&
-                      liftPaceStatus !== "no-data" && (
-                        <div
-                          className={`text-[10px] font-medium ${
-                            liftPaceStatus === "ahead"
-                              ? "text-emerald-600 dark:text-emerald-400"
+                        {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                            ✓
+                          </span>
+                        )}
+                      </div>
+                      {rowHighlighted &&
+                        isCurrentMonthView &&
+                        liftPaceStatus !== "no-data" && (
+                          <div
+                            className={`text-[10px] font-medium ${
+                              liftPaceStatus === "ahead"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : liftPaceStatus === "on-pace"
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : tonnagePending
+                                    ? "text-muted-foreground"
+                                    : "text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {liftPaceStatus === "ahead"
+                              ? "▲ Ahead of pace"
                               : liftPaceStatus === "on-pace"
-                                ? "text-amber-600 dark:text-amber-400"
+                                ? "→ On track"
                                 : tonnagePending
-                                  ? "text-muted-foreground"
-                                  : "text-red-600 dark:text-red-400"
-                          }`}
-                        >
-                          {liftPaceStatus === "ahead"
-                            ? "▲ Ahead of pace"
-                            : liftPaceStatus === "on-pace"
-                              ? "→ On track"
-                              : tonnagePending
-                                ? "Early days"
-                                : "▼ Behind pace"}
+                                  ? "Early days"
+                                  : "▼ Behind pace"}
+                          </div>
+                        )}
+                      {rowHighlighted && currentVariationNames && (
+                        <div className="text-muted-foreground text-[10px]">
+                          Includes {currentVariationNames}
                         </div>
                       )}
-                    {rowHighlighted && currentVariationNames && (
-                      <div className="text-muted-foreground text-[10px]">
-                        Includes {currentVariationNames}
-                      </div>
-                    )}
-                    {rowHighlighted && !tonnageBaseline && (
-                      <div className="bg-muted/40 mt-1 h-1 w-full overflow-hidden rounded-full">
-                        <motion.div
-                          className={`h-full rounded-full ${
-                            tonnagePassed
-                              ? "bg-emerald-500"
-                              : tonnagePending
-                                ? "bg-muted-foreground/40"
-                                : "bg-red-500"
-                          }`}
-                          initial={{ width: 0 }}
-                          animate={{
-                            width: `${Math.min(100, (currentTonnage / lastTonnage) * 100)}%`,
-                          }}
-                          transition={{
-                            duration: 0.6,
-                            ease: [0.22, 1, 0.36, 1],
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={4}>
-                  <p className="max-w-56 text-center text-xs">
-                    {tonnageStatusTooltip}
-                    {currentVariations && ` Includes ${currentVariations}.`}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                      {rowHighlighted && !tonnageBaseline && (
+                        <div className="bg-muted/40 mt-1 h-1 w-full overflow-hidden rounded-full">
+                          <motion.div
+                            className={`h-full rounded-full ${
+                              tonnagePassed
+                                ? "bg-emerald-500"
+                                : tonnagePending
+                                  ? "bg-muted-foreground/40"
+                                  : "bg-red-500"
+                            }`}
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: `${Math.min(100, (currentTonnage / lastTonnage) * 100)}%`,
+                            }}
+                            transition={{
+                              duration: 0.6,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={4}>
+                    <p className="max-w-56 text-center text-xs">
+                      {tonnageStatusTooltip}
+                      {currentVariations && ` Includes ${currentVariations}.`}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </motion.div>
         );
       })}
 
       {invitationRows.length > 0 && (
         <div className="space-y-2 pt-1">
-          <p className="text-muted-foreground text-[10px] font-semibold tracking-[0.12em] uppercase">
-            Still in the set
-          </p>
           {invitationRows.map(({ liftType }, i) => (
             <BigFourInvitationRow
               key={liftType}
@@ -2798,6 +2816,56 @@ function BigFourCriteriaTable({
         />
       </div>
     </div>
+  );
+}
+
+// The right-hand side of a Big Four row in week one before the lift has been
+// trained: what's next, and last month's best set as something to aim at.
+// Spans both rows so the comparison grid keeps its shape.
+function UpNextCell({ bestSet, prevMonthName }) {
+  const { isMetric } = useAthleteBio();
+  const display = bestSet ? getDisplayWeight(bestSet, isMetric) : null;
+  return (
+    <div className="bg-muted/20 row-span-2 flex flex-col justify-center rounded px-1.5 py-1 text-left">
+      <p className="text-foreground text-xs font-semibold">Up next</p>
+      {display && (
+        <p className="text-muted-foreground text-[11px] leading-snug">
+          {prevMonthName}&apos;s best{" "}
+          <span className="text-foreground font-medium tabular-nums">
+            {bestSet.reps}@{display.value}
+            {display.unit}
+          </span>
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Last month's best set for each Big Four lift, by estimated one-rep max in
+// real load, so a heavy triple can beat a lighter single.
+function getLastMonthBestSets(parsedData, boundaries) {
+  if (!Array.isArray(parsedData) || !boundaries?.prevMonthStart) return {};
+  const best = {};
+  for (const entry of parsedData) {
+    if (entry.isGoal || !entry.date) continue;
+    if (
+      entry.date < boundaries.prevMonthStart ||
+      entry.date > boundaries.prevMonthEnd
+    ) {
+      continue;
+    }
+    if (!BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) continue;
+    if (!(entry.reps >= 1) || !(entry.weight > 0)) continue;
+    const e1rmKg = toKg(
+      estimateE1RM(entry.reps, entry.weight, "Brzycki"),
+      entry.unitType,
+    );
+    if (!best[entry.liftType] || e1rmKg > best[entry.liftType].e1rmKg) {
+      best[entry.liftType] = { e1rmKg, set: entry };
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(best).map(([liftType, { set }]) => [liftType, set]),
   );
 }
 
@@ -2904,7 +2972,7 @@ function BigFourInvitationRow({ liftType, index = 0 }) {
         >
           {liftType}
         </Link>
-        <p className="text-muted-foreground/80 text-[11px] font-medium tracking-wide uppercase">
+        <p className="text-muted-foreground/80 text-[11px] font-medium">
           {copy.tagline}
         </p>
         <p className="text-muted-foreground mt-1 text-xs leading-relaxed">

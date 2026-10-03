@@ -33,10 +33,7 @@ function getEmpiricalPowerliftingPercentile() {
   return null;
 }
 
-export function getUniversePercentile({
-  universe,
-  position,
-}) {
+export function getUniversePercentile({ universe, position }) {
   if (universe === "Powerlifting Culture") {
     const empiricalPercentile = getEmpiricalPowerliftingPercentile();
     if (empiricalPercentile != null) return empiricalPercentile;

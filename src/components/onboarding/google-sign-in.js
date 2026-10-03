@@ -5,7 +5,10 @@ import { useRouter } from "next/router";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
-import { gaTrackSignInClick, getStoredUtmSource } from "@/lib/analytics/analytics";
+import {
+  gaTrackSignInClick,
+  getStoredUtmSource,
+} from "@/lib/analytics/analytics";
 import { cn } from "@/lib/utils";
 import { isReturningLifter } from "@/lib/sign-in-dialog-gate";
 

@@ -3,10 +3,7 @@
 // Pure helpers for ranking a set against lifetime / rolling-year top-N arrays.
 // Safe to use anywhere in the app — no React, no context, no side effects.
 
-import {
-  getDisplayWeight,
-  getCelebrationEmoji,
-} from "@/lib/processing-utils";
+import { getDisplayWeight, getCelebrationEmoji } from "@/lib/processing-utils";
 import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
 
 const TOP_THREE_RANK_CUTOFF = 3;
@@ -307,7 +304,11 @@ export function getRankingMeta({
         }
       : null;
 
-  return { best: getDisplayRankingMeta({ lifetime, yearly }), lifetime, yearly };
+  return {
+    best: getDisplayRankingMeta({ lifetime, yearly }),
+    lifetime,
+    yearly,
+  };
 }
 
 function getDisplayRankingMeta({ lifetime, yearly }) {

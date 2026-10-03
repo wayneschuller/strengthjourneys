@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
@@ -51,9 +50,7 @@ export function SidePanelSelectLiftsButton({
   description = (
     <>
       Select which lifts to show on your strength chart.
-      <p>
-        (numbers in parentheses show your total sets for each lift type)
-      </p>
+      <p>(numbers in parentheses show your total sets for each lift type)</p>
     </>
   ),
   tooltipLabel,

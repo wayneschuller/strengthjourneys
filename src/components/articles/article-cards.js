@@ -17,12 +17,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // The typography plugin ships its own grey palette. Pointing its variables at
 // the theme tokens keeps article and changelog text correct in every theme pack, light or
@@ -298,7 +293,10 @@ function FeaturedArticleTile({ article, isLead = false }) {
             isLead ? "p-6 md:p-8" : "p-5",
           )}
         >
-          <time dateTime={article.publishedAt} className="text-sm text-white/75">
+          <time
+            dateTime={article.publishedAt}
+            className="text-sm text-white/75"
+          >
             {formatArticleDate(article.publishedAt)}
           </time>
           <h2
@@ -345,7 +343,9 @@ function ArticleCoverImage({ article, sizes, priority = false }) {
       sizes={sizes}
       priority={priority}
       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-      style={article.coverFocus ? { objectPosition: article.coverFocus } : undefined}
+      style={
+        article.coverFocus ? { objectPosition: article.coverFocus } : undefined
+      }
     />
   );
 }
@@ -392,7 +392,11 @@ const ArticleImage = ({ article, className }) => {
         height={600}
         sizes="(max-width: 768px) 100vw, 150px"
         className="h-full w-full object-cover"
-        style={article.coverFocus ? { objectPosition: article.coverFocus } : undefined}
+        style={
+          article.coverFocus
+            ? { objectPosition: article.coverFocus }
+            : undefined
+        }
       />
     </div>
   );

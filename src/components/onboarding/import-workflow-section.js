@@ -492,9 +492,7 @@ function ImportedDataOverview({ parsedData, label }) {
             ) / 10
           : bestSet.weight;
         const displayE1RM = needsConversion
-          ? Math.round(
-              convertWeight(bestE1RM, bestSet.unitType, preferredUnit),
-            )
+          ? Math.round(convertWeight(bestE1RM, bestSet.unitType, preferredUnit))
           : bestE1RM;
         return {
           name,
@@ -1219,17 +1217,13 @@ export function ImportWorkflowSection({
   }, [parsedData]);
 
   if (dataSource === "import") {
-    const entryCount =
-      parsedData?.length || 0;
+    const entryCount = parsedData?.length || 0;
     const showCreateSheet = isAuthenticated && !hasLinkedSheet;
     const showMerge = isAuthenticated && !showCreateSheet && canMerge;
     const importAnalysis = showMerge
       ? analyzeImportedEntries(parsedData || [], sheetParsedData)
       : null;
-    const newEntries =
-      importAnalysis?.newEntries ||
-      parsedData ||
-      [];
+    const newEntries = importAnalysis?.newEntries || parsedData || [];
     const skippedCount = importAnalysis?.duplicateCount || 0;
     const conflictCount = importAnalysis?.conflictCount || 0;
     const isFullyDuplicate =

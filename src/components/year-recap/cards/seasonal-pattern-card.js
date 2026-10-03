@@ -1,7 +1,9 @@
-
 import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
-import { pickQuirkyPhrase, SEASONAL_PHRASES } from "@/components/year-recap/phrases";
+import {
+  pickQuirkyPhrase,
+  SEASONAL_PHRASES,
+} from "@/components/year-recap/phrases";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { BarChart3 } from "lucide-react";
 

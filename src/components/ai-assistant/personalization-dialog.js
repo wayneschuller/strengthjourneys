@@ -57,7 +57,9 @@ export function PersonalizationDialog({ children, enabled, buildSummary }) {
             is sent with each message, so answers can use your real numbers.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-2 md:grid-cols-2 md:gap-8">{children}</div>
+        <div className="grid gap-6 py-2 md:grid-cols-2 md:gap-8">
+          {children}
+        </div>
         {enabled && buildSummary && (
           <Collapsible
             open={isPreviewOpen}
@@ -72,7 +74,7 @@ export function PersonalizationDialog({ children, enabled, buildSummary }) {
               />
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
-              <pre className="bg-muted max-h-64 overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap [overflow-wrap:anywhere]">
+              <pre className="bg-muted max-h-64 overflow-auto rounded-md p-3 text-xs [overflow-wrap:anywhere] whitespace-pre-wrap">
                 {summary}
               </pre>
             </CollapsibleContent>

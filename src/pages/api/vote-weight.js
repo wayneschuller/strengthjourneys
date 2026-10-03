@@ -17,7 +17,8 @@ export default async function handler(req, res) {
 
   try {
     const session = await getServerSession(req, res, authOptions);
-    const ssid = typeof req.query.ssid === "string" ? req.query.ssid : undefined;
+    const ssid =
+      typeof req.query.ssid === "string" ? req.query.ssid : undefined;
     const info = await getVoteWeightInfo(session, ssid);
 
     // Cache per-user, briefly: training volume moves on the scale of days, not requests.

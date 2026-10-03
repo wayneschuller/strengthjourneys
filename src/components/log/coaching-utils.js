@@ -38,10 +38,7 @@ const FIRST_TIME_SMALL_JUMP_SUBLABELS = [
   "polite increase",
   "nudge upward",
 ];
-const FIRST_TIME_STRETCH_SUBLABELS = [
-  "if it felt easy",
-  "reckless optimism",
-];
+const FIRST_TIME_STRETCH_SUBLABELS = ["if it felt easy", "reckless optimism"];
 
 export function isEarlyStrengthJourneyStage(dashboardStage) {
   return (
@@ -94,7 +91,7 @@ export function getJourneyTechniqueAssist({
   const cues = shouldShowFullAssist ? defaultCues : [];
   // The plain-English summary travels with the cues: whoever needs cues may
   // not know the lift at all, and a regular does not need either.
-  const summary = shouldShowFullAssist ? match.summary ?? null : null;
+  const summary = shouldShowFullAssist ? (match.summary ?? null) : null;
 
   if (!cues.length && !videoAssist) return null;
 

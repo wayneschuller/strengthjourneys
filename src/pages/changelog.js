@@ -18,7 +18,10 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { formatArticleDate, PROSE_THEME_STYLE } from "@/components/articles/article-cards";
+import {
+  formatArticleDate,
+  PROSE_THEME_STYLE,
+} from "@/components/articles/article-cards";
 import { FeatureRequestCard } from "@/components/feedback";
 import { useMarkChangelogSeen } from "@/components/ui-shell/whats-new";
 import { cn } from "@/lib/utils";
@@ -86,7 +89,11 @@ export default function ChangelogPage({ entries }) {
             fold down to their date, title and section list. */}
         {entries.map((entry, index) =>
           index < OPEN_ENTRY_COUNT ? (
-            <article key={entry.slug} id={entry.slug} className={ENTRY_CARD_CLASS}>
+            <article
+              key={entry.slug}
+              id={entry.slug}
+              className={ENTRY_CARD_CLASS}
+            >
               <header className={cn(ENTRY_HEADER_CLASS, "border-b")}>
                 <EntryDateTile date={entry.date} />
                 <h2 className={ENTRY_TITLE_CLASS}>
@@ -98,7 +105,11 @@ export default function ChangelogPage({ entries }) {
               <EntryBody html={entry.html} />
             </article>
           ) : (
-            <article key={entry.slug} id={entry.slug} className={ENTRY_CARD_CLASS}>
+            <article
+              key={entry.slug}
+              id={entry.slug}
+              className={ENTRY_CARD_CLASS}
+            >
               {/* Native details: no JS to open, and the body stays in the HTML
                   for search while its lazy images wait until it is opened. */}
               <details className="group">
@@ -176,7 +187,8 @@ function useOpenLinkedEntry() {
   useEffect(() => {
     function openTarget() {
       const id = decodeURIComponent(window.location.hash.slice(1));
-      const details = id && document.getElementById(id)?.querySelector("details");
+      const details =
+        id && document.getElementById(id)?.querySelector("details");
       if (!details || details.open) return;
       details.open = true;
       details.closest("article")?.scrollIntoView();

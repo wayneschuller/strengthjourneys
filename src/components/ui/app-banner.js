@@ -111,7 +111,8 @@ export const bannerGhostButtonClassName = cva("h-7 text-xs", {
       amberAlert:
         "text-amber-900/70 hover:bg-amber-100 hover:text-amber-950 dark:text-amber-200/70 dark:hover:bg-amber-900/50",
       blue: "text-blue-800/60 hover:bg-blue-100 hover:text-blue-950 dark:text-blue-400/60 dark:hover:bg-blue-900/50",
-      primary: "text-muted-foreground hover:bg-primary/10 hover:text-foreground",
+      primary:
+        "text-muted-foreground hover:bg-primary/10 hover:text-foreground",
     },
   },
   defaultVariants: {
@@ -132,7 +133,14 @@ function useBannerContext() {
  * Root banner wrapper. Use strip layout under the nav; card layout inside page content.
  */
 const AppBanner = React.forwardRef(function AppBanner(
-  { className, tint = "amber", layout = "strip", as: Component = "section", children, ...props },
+  {
+    className,
+    tint = "amber",
+    layout = "strip",
+    as: Component = "section",
+    children,
+    ...props
+  },
   ref,
 ) {
   return (
@@ -183,7 +191,10 @@ const AppBannerMessage = React.forwardRef(function AppBannerMessage(
   return (
     <p
       ref={ref}
-      className={cn(bannerMessageVariants({ tint: tintProp || tint }), className)}
+      className={cn(
+        bannerMessageVariants({ tint: tintProp || tint }),
+        className,
+      )}
       {...props}
     />
   );
@@ -262,7 +273,7 @@ const AppBannerIconBadge = React.forwardRef(function AppBannerIconBadge(
   return (
     <div
       ref={ref}
-      className={cn("rounded-lg bg-primary/20 p-2", className)}
+      className={cn("bg-primary/20 rounded-lg p-2", className)}
       {...props}
     >
       {children}
@@ -292,7 +303,7 @@ const AppBannerDescription = React.forwardRef(function AppBannerDescription(
   return (
     <p
       ref={ref}
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   );

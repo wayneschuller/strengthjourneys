@@ -1,6 +1,8 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
-import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-react";
+import {
+  DrivePicker,
+  DrivePickerDocsView,
+} from "@googleworkspace/drive-picker-react";
 import {
   gaTrackSheetPickerCancelled,
   gaTrackSheetSelected,
@@ -40,7 +42,13 @@ export function DrivePickerContainer({
   }, [onPickerOpen]);
 
   useEffect(() => {
-    if (trigger && oauthToken && openPicker && onReady && !hasCalledReady.current) {
+    if (
+      trigger &&
+      oauthToken &&
+      openPicker &&
+      onReady &&
+      !hasCalledReady.current
+    ) {
       hasCalledReady.current = true;
       onReady(openPicker);
     }

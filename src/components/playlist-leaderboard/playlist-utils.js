@@ -20,11 +20,7 @@ export async function fetchPlaylists() {
     const playlistsWithVotes = await Promise.all(
       Object.entries(playlists).map(async ([id, storedPlaylist]) => {
         const playlist = parseStoredPlaylist(storedPlaylist);
-        const votes = await kv.hmget(
-          `playlists:${id}`,
-          "upVotes",
-          "downVotes",
-        );
+        const votes = await kv.hmget(`playlists:${id}`, "upVotes", "downVotes");
         const upVotes = parseInt(votes?.upVotes) || 0;
         const downVotes = parseInt(votes?.downVotes) || 0;
 
@@ -145,7 +141,8 @@ export function getPlaylistPlatform(url) {
     if (hostname.includes("spotify.com")) {
       return {
         name: "Spotify",
-        logoUrl: "https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png",
+        logoUrl:
+          "https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png",
       };
     }
 
@@ -226,7 +223,9 @@ export function validateAndProcessPlaylist(playlistData, isServer = false) {
   const rawTitle =
     typeof playlistData?.title === "string" ? playlistData.title : "";
   const rawDescription =
-    typeof playlistData?.description === "string" ? playlistData.description : "";
+    typeof playlistData?.description === "string"
+      ? playlistData.description
+      : "";
   const rawUrl = typeof playlistData?.url === "string" ? playlistData.url : "";
 
   // Description is deliberately optional: it was the field that stopped people submitting,

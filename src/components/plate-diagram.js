@@ -1,4 +1,3 @@
-
 /**
  * Renders the loading sequence for a warm-up set. The diagram intentionally
  * keeps one-sided loading simple, while the animation supplies enough depth
@@ -166,12 +165,17 @@ export function PlateDiagram({
     <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 items-center justify-end">
       <motion.div
         key={settledKey}
-        className={cn("relative h-2 w-48 overflow-hidden rounded-full", BAR_SHADOW)}
+        className={cn(
+          "relative h-2 w-48 overflow-hidden rounded-full",
+          BAR_SHADOW,
+        )}
         style={{
           ...BAR_STYLE,
           // Fade the unloaded end so this reads as the loaded half of a barbell.
-          maskImage: "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
-          WebkitMaskImage: "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
+          maskImage:
+            "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
+          WebkitMaskImage:
+            "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
         }}
         initial={{ opacity: 0.7 }}
         animate={{ opacity: [0.7, 1, 0.82] }}
@@ -182,28 +186,38 @@ export function PlateDiagram({
           className="absolute inset-y-0 w-10 bg-white/60 blur-sm"
           initial={{ x: -48, opacity: 0 }}
           animate={{ x: 210, opacity: [0, 0.8, 0] }}
-          transition={{ duration: 0.9, delay: animationDelay + 0.18, ease: "easeInOut" }}
+          transition={{
+            duration: 0.9,
+            delay: animationDelay + 0.18,
+            ease: "easeInOut",
+          }}
         />
         {/* A compact knurl band gives the shaft a tactile power-bar cue without
             turning the symbolic diagram into a photo-realistic illustration. */}
         <span
           aria-hidden="true"
-          className="absolute inset-y-0 left-1/4 right-1/4 opacity-35"
+          className="absolute inset-y-0 right-1/4 left-1/4 opacity-35"
           style={{
             backgroundImage:
               "repeating-linear-gradient(135deg, transparent 0 2px, rgb(15 23 42 / 0.55) 2px 3px, transparent 3px 5px)",
           }}
         />
         {/* Subtle powerlifting reference marks, kept generic rather than branded. */}
-        <span aria-hidden="true" className="absolute inset-y-[-1px] left-[43%] w-px bg-slate-950/45" />
-        <span aria-hidden="true" className="absolute inset-y-[-1px] left-[47%] w-px bg-slate-950/45" />
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-[-1px] left-[43%] w-px bg-slate-950/45"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-[-1px] left-[47%] w-px bg-slate-950/45"
+        />
       </motion.div>
     </div>
   );
 
   if (platesPerSide.length === 0) {
     return (
-      <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
+      <div className={cn("mt-2 flex flex-col items-end gap-8", className)}>
         {/* Base barbell - same structure as plates version for alignment */}
         {/* The picture restates the loading already written out above the
             diagram, so it is decoration as far as a screen reader is concerned. */}
@@ -216,8 +230,11 @@ export function PlateDiagram({
 
         {/* Reserve space for labels to match plates version */}
         {!hideLabels && (
-          <div className="flex flex-wrap justify-end gap-1 text-xs text-muted-foreground">
-            <span>Bar only ({barWeight}{unit})</span>
+          <div className="text-muted-foreground flex flex-wrap justify-end gap-1 text-xs">
+            <span>
+              Bar only ({barWeight}
+              {unit})
+            </span>
           </div>
         )}
       </div>
@@ -241,7 +258,7 @@ export function PlateDiagram({
   const fitScale = Math.min(1, SLEEVE_LENGTH / stackWidth);
 
   return (
-    <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
+    <div className={cn("mt-2 flex flex-col items-end gap-8", className)}>
       {/* Base barbell (same as bar-only state) with plates overlaid on the right */}
       <div
         aria-hidden="true"
@@ -253,7 +270,10 @@ export function PlateDiagram({
         {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
         {/* The innermost plate stays against the same shoulder; added plates
             extend outward to the right, as they do when loading a real bar. */}
-        <div key={settledKey} className="absolute left-32 top-1/2 -translate-y-1/2">
+        <div
+          key={settledKey}
+          className="absolute top-1/2 left-32 -translate-y-1/2"
+        >
           <div
             className="flex items-center"
             style={{
@@ -269,7 +289,11 @@ export function PlateDiagram({
               // needing a separate stagger of their own.
               const delay = animationDelay + idx * 0.06;
               const rest = { x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 };
-              const transition = { duration: 0.42, delay, ease: [0.22, 1, 0.36, 1] };
+              const transition = {
+                duration: 0.42,
+                delay,
+                ease: [0.22, 1, 0.36, 1],
+              };
 
               return (
                 <motion.div
@@ -324,7 +348,7 @@ export function PlateDiagram({
 
       {/* Plate labels - right-aligned, showing one side only */}
       {!hideLabels && (
-        <div className="flex flex-wrap justify-end gap-1 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex flex-wrap justify-end gap-1 text-xs">
           {/* The text above the diagram counts both sides; this counts one, so
               say which without adding a visible label to the design. */}
           <span className="sr-only">Per side:</span>

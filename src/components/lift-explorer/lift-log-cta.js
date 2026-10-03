@@ -124,18 +124,18 @@ export function LiftLogCta({ liftType }) {
   const copy = getLiftLogCtaCopy(liftType, daysSince, today);
 
   return (
-    <section className="overflow-hidden rounded-lg border bg-card shadow-sm">
+    <section className="bg-card overflow-hidden rounded-lg border shadow-sm">
       <div className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5">
         <div className="min-w-0 space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <Clock3 className="h-3.5 w-3.5" />
             <span>{copy.eyebrow}</span>
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-semibold tracking-tight text-foreground">
+            <h3 className="text-foreground text-xl font-semibold tracking-tight">
               {copy.heading}
             </h3>
-            <p className="max-w-2xl text-sm text-muted-foreground">
+            <p className="text-muted-foreground max-w-2xl text-sm">
               {copy.body}
             </p>
           </div>
@@ -155,11 +155,11 @@ export function LiftLogCta({ liftType }) {
       </div>
 
       {!isLoading && latestLiftDate && (
-        <div className="border-t bg-muted/25 px-4 py-2 text-xs text-muted-foreground sm:px-5">
+        <div className="bg-muted/25 text-muted-foreground border-t px-4 py-2 text-xs sm:px-5">
           Last logged:{" "}
           <Link
             href={{ pathname: "/log", query: { date: latestLiftDate } }}
-            className="font-medium text-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
+            className="text-foreground hover:text-primary font-medium underline decoration-dotted underline-offset-2"
           >
             {getLongReadableDateString(latestLiftDate)}
           </Link>
@@ -176,7 +176,8 @@ function getLatestLiftDate(parsedData, liftType) {
   for (let i = 0; i < parsedData.length; i += 1) {
     const entry = parsedData[i];
     if (entry?.liftType === liftType && entry.date) {
-      latestDate = !latestDate || entry.date > latestDate ? entry.date : latestDate;
+      latestDate =
+        !latestDate || entry.date > latestDate ? entry.date : latestDate;
     }
   }
 

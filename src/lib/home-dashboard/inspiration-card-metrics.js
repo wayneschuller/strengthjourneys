@@ -6,7 +6,11 @@ import {
   parseISO,
 } from "date-fns";
 
-import { addDaysFromStr, getWeekKeyFromDateStr, subtractDaysFromStr } from "@/lib/date-utils";
+import {
+  addDaysFromStr,
+  getWeekKeyFromDateStr,
+  subtractDaysFromStr,
+} from "@/lib/date-utils";
 import { JOURNEY_COMPLIMENT_POOLS } from "@/lib/home-dashboard/inspiration-card-copy";
 import { LB_PER_KG } from "@/lib/weight-units";
 
@@ -20,16 +24,28 @@ export function formatJourneyLength(startDate) {
 
   if (years > 0) {
     const pluralizedYears = `${years} year${years > 1 ? "s" : ""}`;
-    const compliment = getJourneyComplimentFromPool({ years, startDate, today });
+    const compliment = getJourneyComplimentFromPool({
+      years,
+      startDate,
+      today,
+    });
     return `${pluralizedYears} of ${compliment}`;
   }
 
   if (months > 0) {
-    const compliment = getJourneyComplimentFromPool({ years: 0, startDate, today });
+    const compliment = getJourneyComplimentFromPool({
+      years: 0,
+      startDate,
+      today,
+    });
     return `${months} month${months > 1 ? "s" : ""} of ${compliment}`;
   }
 
-  const compliment = getJourneyComplimentFromPool({ years: 0, startDate, today });
+  const compliment = getJourneyComplimentFromPool({
+    years: 0,
+    startDate,
+    today,
+  });
   return `${days} day${days !== 1 ? "s" : ""} of ${compliment}`;
 }
 
@@ -304,7 +320,8 @@ export function calculateStreakFromDates(
   }
 
   const oldestWeek = weekKeys[0];
-  const effectiveReferenceDate = referenceDate || format(new Date(), "yyyy-MM-dd");
+  const effectiveReferenceDate =
+    referenceDate || format(new Date(), "yyyy-MM-dd");
   const thisWeekKey = getWeekKeyFromDateStr(effectiveReferenceDate);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 
@@ -327,7 +344,9 @@ export function calculateStreakFromDates(
   let bestStreak = 0;
   let tempStreak = 0;
   weekKey = oldestWeek;
-  const bestStreakEndWeek = thisWeekIsQualified ? thisWeekKey : lastCompleteWeekKey;
+  const bestStreakEndWeek = thisWeekIsQualified
+    ? thisWeekKey
+    : lastCompleteWeekKey;
 
   while (weekKey <= bestStreakEndWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;

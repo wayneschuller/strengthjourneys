@@ -20,7 +20,15 @@ function escapeHtml(text = "") {
     .replaceAll("'", "&#39;");
 }
 
-function buildHtml({ emoji, headline, subheading, rows, note, imageUrl, imageCaption }) {
+function buildHtml({
+  emoji,
+  headline,
+  subheading,
+  rows,
+  note,
+  imageUrl,
+  imageCaption,
+}) {
   const rowHtml = rows
     .map(
       ([label, value]) =>
@@ -84,7 +92,13 @@ async function send({ subject, text, html }) {
 
   try {
     const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({ from: FROM, to, subject, text, html });
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject,
+      text,
+      html,
+    });
     if (error) console.error("Resend error sending moderation email:", error);
   } catch (error) {
     console.error("Failed to send moderation email:", error.message);
@@ -150,7 +164,11 @@ export async function notifyPlaylistReported({
  * @param {string} params.submitter - Signed-in email, or "anonymous".
  * @param {string} params.clientIp - Request IP, for spotting repeat submitters.
  */
-export async function notifyPlaylistSubmitted({ playlist, submitter, clientIp }) {
+export async function notifyPlaylistSubmitted({
+  playlist,
+  submitter,
+  clientIp,
+}) {
   const categories = (playlist.categories || []).join(", ") || "none";
   const artNote =
     playlist.thumbnailUrl && playlist.thumbnailStatus !== "approved"

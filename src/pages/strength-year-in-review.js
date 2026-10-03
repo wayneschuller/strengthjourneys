@@ -1,4 +1,3 @@
-
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useMemo, useState, useEffect } from "react";
@@ -16,7 +15,10 @@ import { Sparkles, Palette, Share2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
 import { YearSelector } from "@/components/year-recap/year-selector";
-import { DemoModeSignInCard, ConnectSheetRecapCard } from "@/components/onboarding/instructions-cards";
+import {
+  DemoModeSignInCard,
+  ConnectSheetRecapCard,
+} from "@/components/onboarding/instructions-cards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,10 +43,12 @@ export async function getStaticProps() {
  * Has no dynamic props — all data is loaded client-side from the user's lifting context.
  */
 export default function StrengthYearInReview() {
-  const title = "Strength Year in Review | Your Lifting Recap | Strength Journeys";
+  const title =
+    "Strength Year in Review | Your Lifting Recap | Strength Journeys";
   const description =
     "See your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more. Free.";
-  const canonicalURL = "https://www.strengthjourneys.xyz/strength-year-in-review";
+  const canonicalURL =
+    "https://www.strengthjourneys.xyz/strength-year-in-review";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const keywords =
     "strength year in review, lifting recap, workout year in review, strength training recap";
@@ -82,7 +86,10 @@ function YearSelectorSkeleton() {
       <Skeleton className="h-7 w-24" />
       <div className="grid grid-cols-2 gap-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="flex h-11 w-full items-center gap-2 rounded-lg border border-input px-4 py-2">
+          <div
+            key={i}
+            className="border-input flex h-11 w-full items-center gap-2 rounded-lg border px-4 py-2"
+          >
             <Skeleton className="h-4 w-4 shrink-0" />
             <Skeleton className="h-5 w-10" />
           </div>
@@ -95,7 +102,7 @@ function YearSelectorSkeleton() {
 // Skeleton placeholder for the year recap carousel shown while lifting data is loading.
 function CarouselSkeleton() {
   return (
-    <div className="relative mx-auto w-full max-w-[360px] rounded-xl border bg-card overflow-hidden">
+    <div className="bg-card relative mx-auto w-full max-w-[360px] overflow-hidden rounded-xl border">
       <Skeleton className="aspect-9/16 w-full rounded-xl" />
       <div className="flex items-center justify-between border-t px-4 py-3">
         <Skeleton className="h-4 w-12" />
@@ -106,9 +113,7 @@ function CarouselSkeleton() {
 }
 
 function formatThemeLabel(theme) {
-  return theme
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return theme.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 /**
@@ -138,18 +143,21 @@ function RecapCustomiseSidebar() {
   if (customThemes.length === 0) return null;
 
   return (
-    <div className="hidden xl:flex xl:flex-col xl:gap-5 xl:w-full">
-      <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 px-4 py-3">
-        <h3 className="flex items-center gap-2 font-semibold text-foreground tracking-tight">
-          <Palette className="h-4 w-4 text-primary" aria-hidden />
+    <div className="hidden xl:flex xl:w-full xl:flex-col xl:gap-5">
+      <div className="border-border/60 bg-muted/30 space-y-2 rounded-lg border px-4 py-3">
+        <h3 className="text-foreground flex items-center gap-2 font-semibold tracking-tight">
+          <Palette className="text-primary h-4 w-4" aria-hidden />
           Customise & share your recap
         </h3>
-        <p className="text-sm text-muted-foreground leading-snug">
-          Choose a theme below to match your style, then use <Share2 className="inline h-3.5 w-3.5 mx-0.5 -mt-0.5" aria-hidden /> on any card to copy it, save it as a 1080&times;1920 image, or grab a text summary.
+        <p className="text-muted-foreground text-sm leading-snug">
+          Choose a theme below to match your style, then use{" "}
+          <Share2 className="mx-0.5 -mt-0.5 inline h-3.5 w-3.5" aria-hidden />{" "}
+          on any card to copy it, save it as a 1080&times;1920 image, or grab a
+          text summary.
         </p>
       </div>
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
           Theme
         </span>
         <TooltipProvider>
@@ -180,8 +188,12 @@ function RecapCustomiseSidebar() {
                   )}
                   onClick={() => !isLocked && setTheme(t)}
                 >
-                  <span className="flex-1 text-left">{formatThemeLabel(t)}</span>
-                  {isLocked && <Lock className="h-3 w-3 shrink-0" aria-hidden />}
+                  <span className="flex-1 text-left">
+                    {formatThemeLabel(t)}
+                  </span>
+                  {isLocked && (
+                    <Lock className="h-3 w-3 shrink-0" aria-hidden />
+                  )}
                 </Button>
               );
 
@@ -203,9 +215,9 @@ function RecapCustomiseSidebar() {
           </div>
         </TooltipProvider>
         {nextReward && !isProgressLoading && (
-          <p className="mt-1 text-xs leading-snug text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs leading-snug">
             Next up:{" "}
-            <span className="font-medium text-foreground">
+            <span className="text-foreground font-medium">
               {nextReward.label}
             </span>{" "}
             — {getThemeUnlockSentence(nextReward.value, rewards)}
@@ -250,9 +262,7 @@ function StrengthYearInReviewMain() {
   const hasSingleYear = yearsWithData.length === 1;
   const hasMultipleYears = yearsWithData.length > 1;
   const effectiveYear =
-    selectedYear ??
-    yearFromQuery ??
-    (hasSingleYear ? yearsWithData[0] : null);
+    selectedYear ?? yearFromQuery ?? (hasSingleYear ? yearsWithData[0] : null);
 
   const showYearSelector = hasMultipleYears;
   const showCarousel = !!effectiveYear;
@@ -280,11 +290,11 @@ function StrengthYearInReviewMain() {
 
       <section className="mt-6 space-y-6 px-3 sm:px-[2vw] md:px-[3vw]">
         {isLoading && (
-          <div className="flex flex-col gap-6 xl:gap-8 xl:min-h-0 xl:grid xl:grid-cols-[13rem_1fr_minmax(18rem,22rem)] xl:items-start">
-            <div className="order-2 xl:order-1 xl:col-start-1 xl:w-52 xl:shrink-0 xl:pt-2 xl:flex xl:justify-end">
+          <div className="flex flex-col gap-6 xl:grid xl:min-h-0 xl:grid-cols-[13rem_1fr_minmax(18rem,22rem)] xl:items-start xl:gap-8">
+            <div className="order-2 xl:order-1 xl:col-start-1 xl:flex xl:w-52 xl:shrink-0 xl:justify-end xl:pt-2">
               <YearSelectorSkeleton />
             </div>
-            <div className="order-1 xl:order-2 xl:col-start-2 flex justify-center xl:min-w-0">
+            <div className="order-1 flex justify-center xl:order-2 xl:col-start-2 xl:min-w-0">
               <CarouselSkeleton />
             </div>
             <div className="order-3 flex flex-col pt-2 xl:col-start-3 xl:pt-2" />
@@ -292,14 +302,16 @@ function StrengthYearInReviewMain() {
         )}
 
         {!isLoading && yearsWithData.length === 0 && !needsToConnectSheet && (
-          <div className="rounded-lg border p-6 text-center text-muted-foreground">
-            <p>No training data yet. Set up your Google Sheet to get started.</p>
+          <div className="text-muted-foreground rounded-lg border p-6 text-center">
+            <p>
+              No training data yet. Set up your Google Sheet to get started.
+            </p>
           </div>
         )}
 
         {!isLoading && needsToConnectSheet && (
-          <div className="flex flex-col gap-6 xl:gap-8 xl:grid xl:grid-cols-[13rem_1fr_minmax(18rem,22rem)] xl:items-start">
-            <div className="xl:col-start-2 flex flex-col items-center justify-center rounded-lg border p-6 text-center text-muted-foreground xl:min-h-[280px]">
+          <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[13rem_1fr_minmax(18rem,22rem)] xl:items-start xl:gap-8">
+            <div className="text-muted-foreground flex flex-col items-center justify-center rounded-lg border p-6 text-center xl:col-start-2 xl:min-h-[280px]">
               <p>
                 Set up your Google Sheet using the button above to load your
                 lifting history. Your year in review will appear here once the
@@ -312,44 +324,47 @@ function StrengthYearInReviewMain() {
           </div>
         )}
 
-        {!isLoading && yearsWithData.length > 0 && (showYearSelector || showCarousel) && (
-          <div
-            className={cn(
-              "flex flex-col gap-6 xl:gap-8 xl:min-h-0",
-              showCarousel
-                ? "xl:grid xl:grid-cols-[13rem_1fr_minmax(18rem,22rem)] xl:items-start"
-                : "xl:flex xl:flex-row xl:items-start",
-            )}
-          >
-            {showCarousel && (
-              <div className="order-1 flex justify-center xl:order-2 xl:col-start-2 xl:min-w-0">
-                <YearRecapCarousel year={effectiveYear} isDemo={dataSource === "demo"} />
-              </div>
-            )}
-            {showYearSelector && (
-              <div className="order-2 xl:order-1 xl:col-start-1 xl:w-52 xl:shrink-0 xl:pt-2 xl:flex xl:justify-end">
-                <YearSelector
-                  years={yearsWithData}
-                  selectedYear={effectiveYear}
-                  onSelect={handleYearSelect}
-                  variant={showCarousel ? "sidebar" : "default"}
-                />
-              </div>
-            )}
-            {showCarousel && (
-              <div className="order-3 flex flex-col gap-6 pt-2 xl:col-start-3 xl:pt-2">
-                {isOwnData(dataSource) && (
-                  <RecapCustomiseSidebar />
-                )}
-                {dataSource === "none" ? (
-                  <ConnectSheetRecapCard />
-                ) : dataSource === "demo" ? (
-                  <DemoModeSignInCard />
-                ) : null}
-              </div>
-            )}
-          </div>
-        )}
+        {!isLoading &&
+          yearsWithData.length > 0 &&
+          (showYearSelector || showCarousel) && (
+            <div
+              className={cn(
+                "flex flex-col gap-6 xl:min-h-0 xl:gap-8",
+                showCarousel
+                  ? "xl:grid xl:grid-cols-[13rem_1fr_minmax(18rem,22rem)] xl:items-start"
+                  : "xl:flex xl:flex-row xl:items-start",
+              )}
+            >
+              {showCarousel && (
+                <div className="order-1 flex justify-center xl:order-2 xl:col-start-2 xl:min-w-0">
+                  <YearRecapCarousel
+                    year={effectiveYear}
+                    isDemo={dataSource === "demo"}
+                  />
+                </div>
+              )}
+              {showYearSelector && (
+                <div className="order-2 xl:order-1 xl:col-start-1 xl:flex xl:w-52 xl:shrink-0 xl:justify-end xl:pt-2">
+                  <YearSelector
+                    years={yearsWithData}
+                    selectedYear={effectiveYear}
+                    onSelect={handleYearSelect}
+                    variant={showCarousel ? "sidebar" : "default"}
+                  />
+                </div>
+              )}
+              {showCarousel && (
+                <div className="order-3 flex flex-col gap-6 pt-2 xl:col-start-3 xl:pt-2">
+                  {isOwnData(dataSource) && <RecapCustomiseSidebar />}
+                  {dataSource === "none" ? (
+                    <ConnectSheetRecapCard />
+                  ) : dataSource === "demo" ? (
+                    <DemoModeSignInCard />
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
       </section>
     </PageContainer>
   );

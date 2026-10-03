@@ -2,7 +2,12 @@ import { kv } from "@/lib/kv";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { parseStoredPlaylist } from "@/components/playlist-leaderboard/playlist-utils";
-import { getRequestClientIp, isValidPlaylistId, isLeaderboardAdminEmail, getVoteWeightInfo } from "@/lib/playlists/playlist-security";
+import {
+  getRequestClientIp,
+  isValidPlaylistId,
+  isLeaderboardAdminEmail,
+  getVoteWeightInfo,
+} from "@/lib/playlists/playlist-security";
 
 const VOTE_THROTTLE_SECONDS = 10 * 60;
 
@@ -29,7 +34,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: "Invalid voteType parameter" });
     }
 
-    const existingPlaylist = parseStoredPlaylist(await kv.hget("playlists", id));
+    const existingPlaylist = parseStoredPlaylist(
+      await kv.hget("playlists", id),
+    );
     if (!existingPlaylist) {
       return res.status(404).json({ message: "Playlist not found" });
     }
@@ -39,10 +46,14 @@ export default async function handler(req, res) {
     if (!isAdmin) {
       const voteSubject =
         session?.user?.email?.trim().toLowerCase() || getRequestClientIp(req);
-      const voteLock = await kv.set(`playlist-vote:${voteSubject}:${id}`, Date.now(), {
-        ex: VOTE_THROTTLE_SECONDS,
-        nx: true,
-      });
+      const voteLock = await kv.set(
+        `playlist-vote:${voteSubject}:${id}`,
+        Date.now(),
+        {
+          ex: VOTE_THROTTLE_SECONDS,
+          nx: true,
+        },
+      );
 
       if (voteLock === null) {
         return res.status(429).json({
@@ -52,7 +63,11 @@ export default async function handler(req, res) {
     }
 
     const weightInfo = await getVoteWeightInfo(session, ssid);
-    const newVotes = await kv.hincrby(`playlists:${id}`, field, weightInfo.weight);
+    const newVotes = await kv.hincrby(
+      `playlists:${id}`,
+      field,
+      weightInfo.weight,
+    );
 
     res.status(200).json({
       id,

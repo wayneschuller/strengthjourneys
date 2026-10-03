@@ -1,7 +1,4 @@
-import {
-  ChartContainer,
-  ChartTooltip,
-} from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, Cell } from "recharts";
 import { getDisplayWeight } from "@/lib/processing-utils";
@@ -31,8 +28,18 @@ function formatDateShortUTC(date, cadence) {
 }
 
 const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 function formatBucketRangeUTC(start, cadence) {
@@ -129,7 +136,8 @@ function chooseCadence(firstDate, lastDate, targetBarsOrOptions = 10) {
     const distance = Math.abs(count - targetBars);
     const effectiveMinBars = minBars ?? 4;
     const effectiveMaxBars = maxBars ?? 14;
-    const lowPenalty = count < effectiveMinBars ? (effectiveMinBars - count) * 3 : 0;
+    const lowPenalty =
+      count < effectiveMinBars ? (effectiveMinBars - count) * 3 : 0;
     const highPenalty =
       count > effectiveMaxBars ? (count - effectiveMaxBars) * 0.6 : 0;
     return { cadence, count, score: distance + lowPenalty + highPenalty };
@@ -167,9 +175,7 @@ export function buildLiftChronology(
 ) {
   if (!parsedData?.length || !liftType) return null;
 
-  const validEntries = parsedData.filter(
-    (entry) => entry.date,
-  );
+  const validEntries = parsedData.filter((entry) => entry.date);
   if (!validEntries.length) return null;
 
   const firstDate = parseDateUTC(validEntries[0].date);
@@ -325,7 +331,7 @@ export function MiniLiftChronologyChart({
           </Bar>
         </BarChart>
       </ChartContainer>
-      <p className="text-center text-xs text-muted-foreground">{header}</p>
+      <p className="text-muted-foreground text-center text-xs">{header}</p>
     </div>
   );
 }
@@ -338,10 +344,12 @@ function ChronologyBarTooltip({ active, payload }) {
   const topSets = Array.isArray(bar.topSets) ? bar.topSets : [];
 
   return (
-    <div className="rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-xs shadow-lg">
+    <div className="border-border/60 bg-background rounded-md border px-2.5 py-1.5 text-xs shadow-lg">
       <p className="font-semibold">{bar.label}</p>
       {bar.rangeLabel && (
-        <p className="mb-1 text-[10px] text-muted-foreground">{bar.rangeLabel}</p>
+        <p className="text-muted-foreground mb-1 text-[10px]">
+          {bar.rangeLabel}
+        </p>
       )}
       {topSets.length === 0 ? (
         <p className="text-muted-foreground">No sets logged</p>

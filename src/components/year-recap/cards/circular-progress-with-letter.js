@@ -1,11 +1,7 @@
-
 import * as React from "react";
 import { Label, Pie, PieChart } from "recharts";
 
-import {
-  ChartConfig,
-  ChartContainer,
-} from "@/components/ui/chart";
+import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { getGradeAndColor } from "@/lib/consistency-grades";
 
 const SIZES = {
@@ -23,7 +19,11 @@ const SIZES = {
  * @param {number} [props.gradeOverride] - When provided, overrides progress for grade/color calculation only
  *   while the ring still animates from the actual progress value.
  */
-export function CircularProgressWithLetter({ progress = 90, size = "sm", gradeOverride }) {
+export function CircularProgressWithLetter({
+  progress = 90,
+  size = "sm",
+  gradeOverride,
+}) {
   const displayProgress = gradeOverride ?? progress;
   const { grade, color } = getGradeAndColor(displayProgress);
   const { minH, innerRadius, strokeWidth, textClass } = SIZES[size] ?? SIZES.sm;

@@ -11,8 +11,8 @@ const fs = require("fs");
 const path = require("path");
 
 const SITE_URL = "https://www.strengthjourneys.xyz";
-const CHANGELOG_LATEST = require("./next.config.js").env
-  .NEXT_PUBLIC_CHANGELOG_LATEST;
+const CHANGELOG_LATEST =
+  require("./next.config.js").env.NEXT_PUBLIC_CHANGELOG_LATEST;
 
 // Every curated lift in src/lib/lifts/ gets a /progress-guide/ page, but one
 // without a guide block is noindex, so it stays out of the sitemap too. This

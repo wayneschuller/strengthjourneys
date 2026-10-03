@@ -105,10 +105,7 @@ export function ThousandDonut({
 
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <motion.div
-          className={cn(
-            "text-center tabular-nums",
-            compact ? "mt-1" : "",
-          )}
+          className={cn("text-center tabular-nums", compact ? "mt-1" : "")}
           animate={
             prefersReducedMotion
               ? undefined
@@ -128,7 +125,9 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "font-bold text-green-500",
-                  compact ? "text-[1.45rem] leading-[0.95]" : "text-3xl xl:text-4xl",
+                  compact
+                    ? "text-[1.45rem] leading-[0.95]"
+                    : "text-3xl xl:text-4xl",
                 )}
               >
                 {total}
@@ -143,7 +142,9 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "font-semibold text-green-400",
-                  compact ? "mt-2 text-[10px] leading-tight" : "text-sm xl:text-base",
+                  compact
+                    ? "mt-2 text-[10px] leading-tight"
+                    : "text-sm xl:text-base",
                 )}
               >
                 1000lb Club!
@@ -153,8 +154,10 @@ export function ThousandDonut({
             <>
               <div
                 className={cn(
-                  "font-bold leading-none",
-                  compact ? "text-[1.45rem] leading-[0.95]" : "text-2xl xl:text-4xl",
+                  "leading-none font-bold",
+                  compact
+                    ? "text-[1.45rem] leading-[0.95]"
+                    : "text-2xl xl:text-4xl",
                 )}
               >
                 {total}
@@ -169,7 +172,9 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "text-muted-foreground",
-                  compact ? "mt-1 text-[10px] leading-none" : "text-xs xl:text-sm",
+                  compact
+                    ? "mt-1 text-[10px] leading-none"
+                    : "text-xs xl:text-sm",
                 )}
               >
                 of {target}
@@ -177,7 +182,9 @@ export function ThousandDonut({
               <div
                 className={cn(
                   "text-muted-foreground",
-                  compact ? "mt-1 text-sm font-medium leading-none" : "text-sm xl:text-lg",
+                  compact
+                    ? "mt-1 text-sm leading-none font-medium"
+                    : "text-sm xl:text-lg",
                 )}
               >
                 {percent}%
@@ -191,7 +198,11 @@ export function ThousandDonut({
 
   if (href) {
     return (
-      <Link href={href} className="block" aria-label="Open the 1000lb Club calculator">
+      <Link
+        href={href}
+        className="block"
+        aria-label="Open the 1000lb Club calculator"
+      >
         {content}
       </Link>
     );

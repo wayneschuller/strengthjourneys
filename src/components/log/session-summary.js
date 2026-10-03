@@ -1,11 +1,6 @@
 import Link from "next/link";
 import { Check, Loader2, X } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getReadableDateString } from "@/lib/date-utils";
 import { getLiftAnchorId } from "@/components/log/utils";
@@ -65,13 +60,11 @@ function formatCompactVolume(value, unit) {
 }
 
 function getPrimarySessionHighlight(summary, perLiftTonnageStats) {
-  const topLift = summary?.lifts
-    ?.slice()
-    ?.sort((a, b) => {
-      const aVolume = perLiftTonnageStats?.[a.liftType]?.currentLiftTonnage ?? 0;
-      const bVolume = perLiftTonnageStats?.[b.liftType]?.currentLiftTonnage ?? 0;
-      return bVolume - aVolume;
-    })?.[0];
+  const topLift = summary?.lifts?.slice()?.sort((a, b) => {
+    const aVolume = perLiftTonnageStats?.[a.liftType]?.currentLiftTonnage ?? 0;
+    const bVolume = perLiftTonnageStats?.[b.liftType]?.currentLiftTonnage ?? 0;
+    return bVolume - aVolume;
+  })?.[0];
 
   if (!topLift) return null;
 
@@ -86,11 +79,11 @@ function getPrimarySessionHighlight(summary, perLiftTonnageStats) {
 
 function RailStat({ label, value }) {
   return (
-    <div className="rounded-md border border-border/30 bg-background/55 px-3 py-2 shadow-sm">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+    <div className="border-border/30 bg-background/55 rounded-md border px-3 py-2 shadow-sm">
+      <p className="text-muted-foreground text-[10px] font-semibold tracking-[0.18em] uppercase">
         {label}
       </p>
-      <p className="mt-1 text-sm font-medium text-foreground/90">{value}</p>
+      <p className="text-foreground/90 mt-1 text-sm font-medium">{value}</p>
     </div>
   );
 }
@@ -105,20 +98,20 @@ export function SessionSidebarRail({
   return (
     <>
       <Card className="border-border/35 bg-muted/8 shadow-sm">
-        <CardHeader className="space-y-2 px-4 pb-0 pt-4">
-          <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+        <CardHeader className="space-y-2 px-4 pt-4 pb-0">
+          <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-[0.22em] uppercase">
             Session pulse
           </CardTitle>
-          <p className="text-sm text-foreground/90">
+          <p className="text-foreground/90 text-sm">
             {isToday ? "Today" : getReadableDateString(sessionDate, true)}
           </p>
         </CardHeader>
-        <CardContent className="space-y-4 px-4 pb-4 pt-4">
+        <CardContent className="space-y-4 px-4 pt-4 pb-4">
           {hasSession ? (
             <>
               {getPrimarySessionHighlight(summary, perLiftTonnageStats) ? (
-                <div className="rounded-md border border-border/35 bg-background/70 px-3 py-3">
-                  <p className="text-sm font-medium text-foreground/90">
+                <div className="border-border/35 bg-background/70 rounded-md border px-3 py-3">
+                  <p className="text-foreground/90 text-sm font-medium">
                     {getPrimarySessionHighlight(summary, perLiftTonnageStats)}
                   </p>
                 </div>
@@ -133,7 +126,7 @@ export function SessionSidebarRail({
                 />
               </div>
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.18em] uppercase">
                   In this session
                 </p>
                 <div className="space-y-2">
@@ -141,10 +134,10 @@ export function SessionSidebarRail({
                     <Link
                       key={liftType}
                       href={`#${getLiftAnchorId(liftType)}`}
-                      className="flex items-start justify-between gap-3 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground"
+                      className="text-muted-foreground hover:bg-background/70 hover:text-foreground flex items-start justify-between gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
                     >
                       <span className="min-w-0">{liftType}</span>
-                      <span className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground/80">
+                      <span className="text-muted-foreground/80 shrink-0 text-xs tracking-wide uppercase">
                         {setCount} sets
                       </span>
                     </Link>
@@ -153,7 +146,7 @@ export function SessionSidebarRail({
               </div>
             </>
           ) : (
-            <p className="text-sm leading-6 text-muted-foreground">
+            <p className="text-muted-foreground text-sm leading-6">
               No sets logged yet for this date. Start in the center column and
               this rail will update as the session takes shape.
             </p>
@@ -163,7 +156,7 @@ export function SessionSidebarRail({
 
       {hasSession ? (
         <Card className="border-border/30 bg-transparent shadow-sm">
-          <CardContent className="space-y-2 px-4 py-4 text-xs leading-6 text-muted-foreground">
+          <CardContent className="text-muted-foreground space-y-2 px-4 py-4 text-xs leading-6">
             <p>
               Average sets per lift:{" "}
               <span className="text-foreground/80">
@@ -180,8 +173,8 @@ export function SessionSidebarRail({
 export function LogSessionSkeleton() {
   return (
     <div className="mt-6">
-      <div className="overflow-hidden rounded-xl border border-border/50 bg-card/70 shadow-sm">
-        <div className="space-y-3 border-b border-border/40 px-5 py-5">
+      <div className="border-border/50 bg-card/70 overflow-hidden rounded-xl border shadow-sm">
+        <div className="border-border/40 space-y-3 border-b px-5 py-5">
           <Skeleton className="h-7 w-48" />
           <Skeleton className="h-3 w-36" />
         </div>
@@ -198,7 +191,7 @@ export function LogSessionSkeleton() {
               <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
             </div>
           ))}
-          <div className="border-t border-border/40 pt-5">
+          <div className="border-border/40 border-t pt-5">
             <Skeleton className="h-12 w-full rounded-md" />
           </div>
         </div>
@@ -212,14 +205,10 @@ export function SyncIndicator({ state }) {
   return (
     <div className="flex w-8 items-center justify-center">
       {state === "saving" && (
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
       )}
-      {state === "saved" && (
-        <Check className="h-4 w-4 text-green-500" />
-      )}
-      {state === "error" && (
-        <X className="h-4 w-4 text-destructive" />
-      )}
+      {state === "saved" && <Check className="h-4 w-4 text-green-500" />}
+      {state === "error" && <X className="text-destructive h-4 w-4" />}
     </div>
   );
 }

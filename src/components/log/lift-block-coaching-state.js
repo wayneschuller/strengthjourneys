@@ -87,9 +87,7 @@ export function getLiftBlockCoachingState({
   const priorLiftDates = Array.from(
     new Set(
       parsedData
-        .filter(
-          (e) => e.liftType === liftType && e.date < sessionDate,
-        )
+        .filter((e) => e.liftType === liftType && e.date < sessionDate)
         .map((e) => e.date)
         .filter(Boolean),
     ),
@@ -176,22 +174,17 @@ export function getLiftBlockCoachingState({
     const lastLoggedReps = lastRealSet?.reps ?? 5;
     const nextWeight = lastLoggedWeight + minIncrement;
     const secondJumpWeight = lastLoggedWeight + minIncrement * 2;
-    const isBarOnlyIntro =
-      lastLoggedWeight <= barWeight && lastLoggedReps >= 8;
+    const isBarOnlyIntro = lastLoggedWeight <= barWeight && lastLoggedReps >= 8;
     const hasReachedFirstTimeTarget = firstTimeTargetWeight
       ? realSets.some((set) => {
           if ((set.reps ?? 0) < 5 || (set.weight ?? 0) <= 0) return false;
-          return (
-            getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight
-          );
+          return getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight;
         })
       : false;
     const firstTimeWorkSetCount = firstTimeTargetWeight
       ? realSets.filter((set) => {
           if ((set.reps ?? 0) < 5 || (set.weight ?? 0) <= 0) return false;
-          return (
-            getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight
-          );
+          return getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight;
         }).length
       : 0;
 
@@ -359,8 +352,9 @@ export function getLiftBlockCoachingState({
   const lastLoggedReps =
     lastLoggedSets[lastLoggedSets.length - 1]?.reps ?? topReps;
   const nextSet = !atOrPastTop ? progression[nextWarmupIdx] : null;
-  const nextReplaySet =
-    !replayAtOrPastTop ? replayProgression[nextReplayIdx] : null;
+  const nextReplaySet = !replayAtOrPastTop
+    ? replayProgression[nextReplayIdx]
+    : null;
   const nextActualWarmupSet =
     realSets.length === 0 && previousOpeningSet
       ? {
@@ -405,12 +399,7 @@ export function getLiftBlockCoachingState({
   const buttons = [];
   const seenButtonKeys = new Set();
 
-  const pushSuggestionButton = ({
-    reps,
-    weight,
-    sublabel,
-    variant,
-  }) => {
+  const pushSuggestionButton = ({ reps, weight, sublabel, variant }) => {
     if (!reps || !weight || buttons.length >= 4) return;
     const key = `${reps}-${weight}`;
     if (seenButtonKeys.has(key)) return;
@@ -751,7 +740,12 @@ export function getTargetTopSetSummary({ topSetHistory, minIncrement }) {
   return latest;
 }
 
-function getBridgeWarmupSet({ fromWeight, targetWeight, topReps, minIncrement }) {
+function getBridgeWarmupSet({
+  fromWeight,
+  targetWeight,
+  topReps,
+  minIncrement,
+}) {
   const gap = targetWeight - fromWeight;
   const bridgeThreshold = minIncrement * 4;
   if (gap < bridgeThreshold) return null;

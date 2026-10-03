@@ -39,13 +39,7 @@ export const THEME_REWARDS = [
   createThemeReward("starry-night", "Starry Night", 360, 1200, 84),
   createThemeReward("starry-night-dark", "Starry Night Dark", 420, 1400, 98),
   createThemeReward("neo-brutalism", "Neo Brutalism", 480, 1600, 112),
-  createThemeReward(
-    "neo-brutalism-dark",
-    "Neo Brutalism Dark",
-    540,
-    1800,
-    126,
-  ),
+  createThemeReward("neo-brutalism-dark", "Neo Brutalism Dark", 540, 1800, 126),
 ];
 
 export const REWARD_CATALOG = [...THEME_REWARDS];

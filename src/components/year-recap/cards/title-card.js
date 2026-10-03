@@ -1,4 +1,3 @@
-
 import { motion } from "motion/react";
 import { getLiftArtwork } from "@/components/lift-artwork";
 

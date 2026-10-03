@@ -33,7 +33,8 @@ const KINDS = {
     label: "Updated",
     Icon: RefreshCw,
     pillClass: "bg-chart-2/15 border-chart-2/40",
-    iconClass: "text-chart-2 group-hover:rotate-180 group-hover/pill:rotate-180",
+    iconClass:
+      "text-chart-2 group-hover:rotate-180 group-hover/pill:rotate-180",
   },
 };
 

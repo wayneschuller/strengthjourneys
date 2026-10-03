@@ -31,17 +31,16 @@ export function LiftingDataCard({
   setSelectedOptions,
   embedded = false,
 }) {
-  const { parsedData, isLoading, dataSource } =
-    useUserLiftingData();
+  const { parsedData, isLoading, dataSource } = useUserLiftingData();
 
   const hasPersonalData =
     isOwnData(dataSource) && parsedData && parsedData.length > 0;
   const isTrainingEnabled = Boolean(
     selectedOptions.records ||
-      selectedOptions.trainingLoad ||
-      selectedOptions.frequency ||
-      selectedOptions.consistency ||
-      selectedOptions.sessionData,
+    selectedOptions.trainingLoad ||
+    selectedOptions.frequency ||
+    selectedOptions.consistency ||
+    selectedOptions.sessionData,
   );
 
   const handleSelectAll = () => {
@@ -100,19 +99,22 @@ export function LiftingDataCard({
         </div>
       )}
       <CardDescription className={cn("mb-5", !embedded && "hidden")}>
-        {!hasPersonalData && isOwnData(dataSource) && isLoading &&
+        {!hasPersonalData &&
+          isOwnData(dataSource) &&
+          isLoading &&
           "Loading your data..."}
-        {!hasPersonalData && isOwnData(dataSource) && !isLoading &&
+        {!hasPersonalData &&
+          isOwnData(dataSource) &&
+          !isLoading &&
           "No lifting data found"}
         {dataSource === "demo" &&
           "Sign in to share your lifting data with the AI"}
-        {dataSource === "none" &&
-          "Set up your Google Sheet to get started"}
+        {dataSource === "none" && "Set up your Google Sheet to get started"}
       </CardDescription>
       {/* State 1: Unauthenticated (and no CSV import) - prompt to sign in */}
       {dataSource === "demo" && (
         <div className="flex flex-col items-start gap-3">
-          <p className="text-muted-foreground max-w-sm text-pretty text-sm">
+          <p className="text-muted-foreground max-w-sm text-sm text-pretty">
             Sign in with Google to connect your lifting spreadsheet and share
             your data with the AI assistant.
           </p>
@@ -125,7 +127,7 @@ export function LiftingDataCard({
       {/* State 2: Authenticated but no sheet connected */}
       {dataSource === "none" && (
         <div className="flex flex-col items-start gap-3">
-          <p className="text-muted-foreground max-w-sm text-pretty text-sm">
+          <p className="text-muted-foreground max-w-sm text-sm text-pretty">
             Set up your Google Sheet to share your personal lifting data with
             the AI.
           </p>
@@ -149,7 +151,9 @@ export function LiftingDataCard({
 
       {/* State 3: User has data (GSheet or CSV import) - show sharing checkboxes */}
       {isOwnData(dataSource) && (!embedded || isTrainingEnabled) && (
-        <div className={cn(!hasPersonalData && "pointer-events-none opacity-50")}>
+        <div
+          className={cn(!hasPersonalData && "pointer-events-none opacity-50")}
+        >
           {embedded ? (
             <div className="space-y-3 md:border-l md:pl-8">
               {renderTrainingOptions()}
@@ -282,12 +286,17 @@ export function LiftingDataCard({
         <CardTitle>Talk To Your Lifting Data</CardTitle>
         <CardDescription>
           {hasPersonalData && "Data successfully loaded and available."}
-          {!hasPersonalData && isOwnData(dataSource) && isLoading && "Loading your data..."}
-          {!hasPersonalData && isOwnData(dataSource) && !isLoading &&
+          {!hasPersonalData &&
+            isOwnData(dataSource) &&
+            isLoading &&
+            "Loading your data..."}
+          {!hasPersonalData &&
+            isOwnData(dataSource) &&
+            !isLoading &&
             "No lifting data found"}
-          {dataSource === "demo" && "Sign in to share your lifting data with the AI"}
-          {dataSource === "none" &&
-            "Set up your Google Sheet to get started"}
+          {dataSource === "demo" &&
+            "Sign in to share your lifting data with the AI"}
+          {dataSource === "none" && "Set up your Google Sheet to get started"}
         </CardDescription>
       </CardHeader>
       <CardContent>{content}</CardContent>

@@ -39,9 +39,9 @@ export function VoteWeightBanner({ authStatus, ssid }) {
   const isSignedIn = info?.signedIn;
 
   return (
-    <div className="mb-6 flex flex-col gap-3 rounded-lg border bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="bg-muted/40 mb-6 flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2.5 text-sm">
-        <span className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2.5 font-bold tabular-nums text-primary">
+        <span className="bg-primary/10 text-primary flex h-8 shrink-0 items-center gap-1 rounded-full px-2.5 font-bold tabular-nums">
           <Zap className="h-3.5 w-3.5 fill-current" />
           {weight}&times;
         </span>
@@ -49,14 +49,14 @@ export function VoteWeightBanner({ authStatus, ssid }) {
           <p className="font-medium">
             Your votes count {weight}&times;
             {isSignedIn && info?.label && info.unlockedCount > 0 && (
-              <span className="font-normal text-muted-foreground">
+              <span className="text-muted-foreground font-normal">
                 {" "}
                 &middot; {info.label}
               </span>
             )}
           </p>
           {info?.blurb && (
-            <p className="text-xs text-muted-foreground">{info.blurb}</p>
+            <p className="text-muted-foreground text-xs">{info.blurb}</p>
           )}
         </div>
       </div>

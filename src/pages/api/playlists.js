@@ -236,7 +236,9 @@ export default async function handler(req, res) {
         const rawId = req.query.id;
         const id = Array.isArray(rawId) ? rawId[0] : rawId;
         if (!isValidPlaylistId(id)) {
-          return res.status(400).json({ error: "Missing or invalid playlist ID" });
+          return res
+            .status(400)
+            .json({ error: "Missing or invalid playlist ID" });
         }
 
         const existingPlaylist = await kv.hget("playlists", id);
@@ -262,7 +264,9 @@ export default async function handler(req, res) {
       try {
         const rawId = typeof req.query.id === "string" ? req.query.id : null;
         if (!isValidPlaylistId(rawId)) {
-          return res.status(400).json({ error: "Missing or invalid playlist ID" });
+          return res
+            .status(400)
+            .json({ error: "Missing or invalid playlist ID" });
         }
 
         const existingPlaylist = parseStoredPlaylist(
@@ -279,7 +283,8 @@ export default async function handler(req, res) {
         // re-moderate rather than trust the earlier verdict. Art that changed goes back through
         // review; art that is byte-for-byte the same URL keeps an admin's earlier approval.
         const isSameArt =
-          refreshedThumbnail && refreshedThumbnail === existingPlaylist.thumbnailUrl;
+          refreshedThumbnail &&
+          refreshedThumbnail === existingPlaylist.thumbnailUrl;
         const keepsAdminApproval =
           isSameArt && existingPlaylist.thumbnailStatus === "approved";
 
@@ -327,7 +332,10 @@ export default async function handler(req, res) {
         try {
           await res.revalidate("/gym-playlist-leaderboard");
         } catch (revalError) {
-          console.error("Revalidation after metadata refresh failed:", revalError);
+          console.error(
+            "Revalidation after metadata refresh failed:",
+            revalError,
+          );
         }
 
         res.status(200).json({

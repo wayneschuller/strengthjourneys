@@ -1,4 +1,3 @@
-
 import { devLog } from "@/lib/processing-utils";
 
 // Data for lifting standards is based on the research of Professor Lon Kilgore

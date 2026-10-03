@@ -43,7 +43,7 @@ export function ImportDataOwnershipPromo({
   return (
     <section
       className={cn(
-        "rounded-lg border bg-card/80 p-5 shadow-sm md:p-6",
+        "bg-card/80 rounded-lg border p-5 shadow-sm md:p-6",
         className,
       )}
     >
@@ -52,7 +52,7 @@ export function ImportDataOwnershipPromo({
           <Badge variant="secondary" className="mb-3">
             Data ownership, not app lock-in
           </Badge>
-          <h2 className="text-2xl font-semibold leading-tight">{title}</h2>
+          <h2 className="text-2xl leading-tight font-semibold">{title}</h2>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
             {description}
           </p>

@@ -87,7 +87,10 @@ export async function checkPlaylistLink(url) {
   try {
     const res = await fetch(toCheckableUrl(url), {
       redirect: "follow",
-      headers: { "User-Agent": BROWSER_UA, "Accept-Language": "en-US,en;q=0.9" },
+      headers: {
+        "User-Agent": BROWSER_UA,
+        "Accept-Language": "en-US,en;q=0.9",
+      },
       signal: AbortSignal.timeout(20000),
     });
 
@@ -104,11 +107,15 @@ export async function checkPlaylistLink(url) {
 
     // A tiny body is a JS shell or an interstitial, not a verdict either way.
     if (body.length < 20000) {
-      return { status: "unknown", detail: `thin response (${body.length} bytes)` };
+      return {
+        status: "unknown",
+        detail: `thin response (${body.length} bytes)`,
+      };
     }
 
     const marker = GONE_MARKERS.find((pattern) => pattern.test(body));
-    if (marker) return { status: "unreachable", detail: "platform says it's gone" };
+    if (marker)
+      return { status: "unreachable", detail: "platform says it's gone" };
 
     return { status: "live", detail: "page ok" };
   } catch (error) {

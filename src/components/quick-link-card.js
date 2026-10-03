@@ -1,10 +1,5 @@
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function QuickLinkCard({ href, title, description, icon }) {
   return (
@@ -16,7 +11,7 @@ export function QuickLinkCard({ href, title, description, icon }) {
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0 text-sm text-muted-foreground">
+        <CardContent className="text-muted-foreground pt-0 text-sm">
           {description}
         </CardContent>
       </Card>

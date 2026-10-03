@@ -1,14 +1,8 @@
-
 /**
  * Renders a single-session drilldown card that stays in sync with the hovered
  * visualizer date while preserving session-specific cached copy per linked sheet.
  */
-import {
-  useRef,
-  useState,
-  useEffect,
-  useMemo,
-} from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
@@ -164,7 +158,8 @@ export function TheLatestSessionCard({
   ]);
 
   const perLiftTonnageStats = useMemo(() => {
-    if (!analyzedSessionLifts || !sessionDate || !sessionTonnageLookup) return null;
+    if (!analyzedSessionLifts || !sessionDate || !sessionTonnageLookup)
+      return null;
 
     return Object.fromEntries(
       Object.entries(analyzedSessionLifts).map(([liftType, workouts]) => {
@@ -207,10 +202,13 @@ export function TheLatestSessionCard({
 
   const meetDay = (sessionDate && meetDays?.get(sessionDate)) || null;
 
-  if (analyzedSessionLifts && !sessionRatingRef.current && dataSource !== "demo") {
-    const tupleCountForDate = parsedData?.filter(
-      (e) => e.date === sessionDate,
-    ).length ?? 0;
+  if (
+    analyzedSessionLifts &&
+    !sessionRatingRef.current &&
+    dataSource !== "demo"
+  ) {
+    const tupleCountForDate =
+      parsedData?.filter((e) => e.date === sessionDate).length ?? 0;
 
     const cache = sessionRatingCache;
     const stored = cache?.[sessionDate];
@@ -319,12 +317,10 @@ export function TheLatestSessionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2">
-                {dataSource === "demo" && (
-                  <DemoModeBadge size="sm" />
-                )}
+                {dataSource === "demo" && <DemoModeBadge size="sm" />}
                 {getSessionCardTitle(sessionDate, isLastDate)}
                 {isValidating && (
-                  <LoaderCircle className="inline-flex h-4 w-4 animate-spin text-muted-foreground" />
+                  <LoaderCircle className="text-muted-foreground inline-flex h-4 w-4 animate-spin" />
                 )}
               </CardTitle>
               <CardDescription className="mt-1">
@@ -350,7 +346,7 @@ export function TheLatestSessionCard({
                   : ""}
               </CardDescription>
             </div>
-            <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
+            <div className="bg-muted/30 flex shrink-0 items-center gap-0.5 rounded-lg border p-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -395,7 +391,7 @@ export function TheLatestSessionCard({
             />
           )}
           {!hasLoggedSessions && (
-            <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+            <p className="bg-muted/30 text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
               Start simple: use the Log page to add one training session. Your
               Google Sheet will stay in sync with the units you choose.
             </p>
@@ -427,32 +423,33 @@ export function TheLatestSessionCard({
                   ),
                 )}
                 {isStarterSampleStage && sheetInfo?.url && (
-                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                  <div className="border-primary/20 bg-primary/5 rounded-lg border p-4">
                     <div className="flex flex-col gap-4">
                       <div className="space-y-1">
-                        <p className="text-sm font-semibold text-foreground">
+                        <p className="text-foreground text-sm font-semibold">
                           This session is starter sample data
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           Open your Google Sheet, replace this row with your own
                           first workout, and add future sessions as new rows.
                           The dashboard will refresh from there.
                         </p>
                       </div>
-                      <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
-                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                      <div className="text-muted-foreground grid gap-2 text-sm sm:grid-cols-3">
+                        <p className="bg-background/80 rounded-md border px-3 py-2">
                           1. Open the sheet
                         </p>
-                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                        <p className="bg-background/80 rounded-md border px-3 py-2">
                           2. Edit the sample row
                         </p>
-                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                        <p className="bg-background/80 rounded-md border px-3 py-2">
                           3. Add new sessions as you train
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-xs text-muted-foreground">
-                          Tip: keep your latest session near the top so the log stays easy to update.
+                        <p className="text-muted-foreground text-xs">
+                          Tip: keep your latest session near the top so the log
+                          stays easy to update.
                         </p>
                         <Button asChild className="shrink-0">
                           <a
@@ -475,7 +472,7 @@ export function TheLatestSessionCard({
                 )}
               </div>
             ) : (
-              <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+              <p className="bg-muted/30 text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
                 No workouts available for the most recent date.
               </p>
             ))}
@@ -546,8 +543,7 @@ function getCreativeSessionRating(workouts, strengthContext, lastUsedAdlibRef) {
   );
 
   const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  const p = (arr, key) =>
-    pickWithoutRepeat(arr, lastUsedAdlibRef, key);
+  const p = (arr, key) => pickWithoutRepeat(arr, lastUsedAdlibRef, key);
 
   // Strength level: best rating across session (when bio data available)
   let bestStrengthRating = null;

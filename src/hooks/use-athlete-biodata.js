@@ -290,11 +290,15 @@ export const useAthleteBio = (options = {}) => {
           ...router.query,
           // Only write bio params when personalised — don't pollute URLs with defaults.
           // Existing shared links that already carry bio params are honoured on read.
-          ...(ctx.bioDataIsDefault ? {} : {
-            [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(ctx.age),
-            [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(ctx.sex),
-            [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(ctx.bodyWeight),
-          }),
+          ...(ctx.bioDataIsDefault
+            ? {}
+            : {
+                [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(ctx.age),
+                [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(ctx.sex),
+                [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(
+                  ctx.bodyWeight,
+                ),
+              }),
           [LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE]: JSON.stringify(ctx.liftType),
           [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(ctx.isMetric),
         },
@@ -340,22 +344,26 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   const hasAdvancedInteractedRef = useRef(false);
 
   // Advanced params: syncQuery=false here; we sync all four together in the effect below
-  const [age, setAgeBase, ageIsDefault, , ageIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.ATHLETE_AGE,
-    30,
-    false,
-  );
+  const [age, setAgeBase, ageIsDefault, , ageIsInitialized] =
+    useStateFromQueryOrLocalStorage(LOCAL_STORAGE_KEYS.ATHLETE_AGE, 30, false);
   const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     false,
     modifyURLQuery,
   );
-  const [sex, setSexBase, sexIsDefault, , sexIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.ATHLETE_SEX,
-    "male",
-    false,
-  );
-  const [bodyWeight, setBodyWeightBase, bodyWeightIsDefault, setBodyWeightSilent, bodyWeightIsInitialized] = useStateFromQueryOrLocalStorage(
+  const [sex, setSexBase, sexIsDefault, , sexIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.ATHLETE_SEX,
+      "male",
+      false,
+    );
+  const [
+    bodyWeight,
+    setBodyWeightBase,
+    bodyWeightIsDefault,
+    setBodyWeightSilent,
+    bodyWeightIsInitialized,
+  ] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT,
     200,
     false,
@@ -365,7 +373,8 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   // Used to prompt the user for bio data in the navbar, calculator strength levels, and hero card.
   const bioDataIsDefault = ageIsDefault && sexIsDefault && bodyWeightIsDefault;
   // True once localStorage has been read for all three bio fields (avoids hydration races).
-  const bioDataIsInitialized = ageIsInitialized && sexIsInitialized && bodyWeightIsInitialized;
+  const bioDataIsInitialized =
+    ageIsInitialized && sexIsInitialized && bodyWeightIsInitialized;
   const [liftType, setLiftTypeBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE,
     "Back Squat",
@@ -421,11 +430,14 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
         pathname: router.pathname,
         query: {
           ...router.query,
-          ...(bioDataIsDefault ? {} : {
-            [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(age),
-            [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(sex),
-            [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(bodyWeight),
-          }),
+          ...(bioDataIsDefault
+            ? {}
+            : {
+                [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(age),
+                [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(sex),
+                [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]:
+                  JSON.stringify(bodyWeight),
+              }),
           [LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE]: JSON.stringify(liftType),
           [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(isMetric),
         },
@@ -434,7 +446,16 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
       { shallow: true },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- router excluded to prevent infinite loop
-  }, [age, sex, bodyWeight, liftType, isMetric, syncAdvancedParams, router.isReady, bioDataIsDefault]);
+  }, [
+    age,
+    sex,
+    bodyWeight,
+    liftType,
+    isMetric,
+    syncAdvancedParams,
+    router.isReady,
+    bioDataIsDefault,
+  ]);
 
   const [standards, setStandards] = useState({});
 
@@ -531,7 +552,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     }
     // Mark as initialized so future loads don't override the user's subsequent choices
     localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- router object excluded to prevent infinite loop; router.query and router.isReady are explicit
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router object excluded to prevent infinite loop; router.query and router.isReady are explicit
   }, [parsedData, router.isReady, router.query]);
 
   // Helper function - if user toggles unit type, update isMetric and bodyweight state

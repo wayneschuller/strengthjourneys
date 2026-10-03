@@ -129,7 +129,10 @@ export async function listPromptEditions() {
   const ids = [];
   let cursor = "0";
   do {
-    const [next, keys] = await kv.scan(cursor, { match: `${prefix}*`, count: 500 });
+    const [next, keys] = await kv.scan(cursor, {
+      match: `${prefix}*`,
+      count: 500,
+    });
     ids.push(...keys.map((key) => key.slice(prefix.length)));
     cursor = String(next);
   } while (cursor !== "0");

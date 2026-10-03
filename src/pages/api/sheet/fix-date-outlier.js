@@ -22,13 +22,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const {
-    ssid,
-    startRowIndex,
-    endRowIndex,
-    currentDate,
-    suggestedDate,
-  } = req.body;
+  const { ssid, startRowIndex, endRowIndex, currentDate, suggestedDate } =
+    req.body;
 
   if (
     !ssid ||

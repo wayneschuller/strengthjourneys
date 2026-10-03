@@ -32,7 +32,10 @@ registerHooks({
     // The lift registry imports its JSON files the way the Next bundlers
     // allow, with no import attribute, which bare Node refuses before a hook
     // could step in. Serve them here as modules exporting the parsed object.
-    if (url.startsWith(pathToFileURL(sourceRoot).href) && url.endsWith(".json")) {
+    if (
+      url.startsWith(pathToFileURL(sourceRoot).href) &&
+      url.endsWith(".json")
+    ) {
       return {
         shortCircuit: true,
         format: "module",
@@ -50,8 +53,7 @@ registerHooks({
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseHevyData } =
   await import("../src/lib/import/parsers/hevy-parser.js");
-const { detectFormat } =
-  await import("../src/lib/import/import-dispatcher.js");
+const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
 const { deduplicateImportedEntries } =
   await import("../src/lib/import/dedupe.js");
 const { buildNextImportProfile } =
@@ -203,7 +205,10 @@ const switchedSheetImport = buildNextImportProfile(currentCheck.profile, {
 });
 assert.equal(switchedSheetImport.relationship, "first_import");
 assert.equal(switchedSheetImport.profile.lastSheetId, "sheet-b");
-assert.equal(switchedSheetImport.profile.latestImportedWorkoutDate, "2025-01-10");
+assert.equal(
+  switchedSheetImport.profile.latestImportedWorkoutDate,
+  "2025-01-10",
+);
 assert.deepEqual(Object.keys(switchedSheetImport.profile.sources), ["wodify"]);
 
 // An app that follows the phone's number format writes "117,5". Number()

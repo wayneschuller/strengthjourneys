@@ -29,7 +29,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const meta = typeof req.body?.meta === "object" && req.body?.meta ? req.body.meta : {};
+  const meta =
+    typeof req.body?.meta === "object" && req.body?.meta ? req.body.meta : {};
   const sanitizedMeta = {
     page: sanitizeString(meta.page, 120),
     fileName: sanitizeString(meta.fileName, 160),
@@ -44,6 +45,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   } catch (error) {
     console.error("[import-limit-event] failed:", error);
-    return res.status(500).json({ error: error.message || "Failed to report import limit event" });
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to report import limit event" });
   }
 }

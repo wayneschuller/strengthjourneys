@@ -82,7 +82,13 @@ export function CalculatorHubGuide() {
     );
     const low = Math.min(...estimates);
     const high = Math.max(...estimates);
-    return { weight, reps, low, high, pct: Math.round(((high - low) / low) * 100) };
+    return {
+      weight,
+      reps,
+      low,
+      high,
+      pct: Math.round(((high - low) / low) * 100),
+    };
   });
   const [fiveRep, tenRep, fifteenRep] = spreads;
   const brzyckiFive = estimateE1RM(5, 225, "Brzycki");
@@ -93,21 +99,20 @@ export function CalculatorHubGuide() {
         <h2 className="mb-3 text-xl font-semibold">
           How the One Rep Max Calculator Works
         </h2>
-        <div className="space-y-3 text-sm text-muted-foreground md:text-base">
+        <div className="text-muted-foreground space-y-3 text-sm md:text-base">
           <p>
             Give the calculator one hard set, the weight and how many reps you
-            got, and it estimates the heaviest single you could lift today.
-            That estimate is your E1RM, or estimated one rep max. It lets you
-            track your strength every week without grinding out a true max
-            every week.
+            got, and it estimates the heaviest single you could lift today. That
+            estimate is your E1RM, or estimated one rep max. It lets you track
+            your strength every week without grinding out a true max every week.
           </p>
           <p>
             Say you squat 225 lb for 5 reps. The Brzycki formula, the default
             here, divides the weight by 1.0278 − 0.0278 × reps: 225 ÷ (1.0278 −
             0.139) = {brzyckiFive} lb. So a solid set of five at 225 says you
             are good for about {brzyckiFive} lb on a single, today. Put in your
-            own set above and the calculator runs the same sum through all
-            seven formulas at once.
+            own set above and the calculator runs the same sum through all seven
+            formulas at once.
           </p>
         </div>
       </section>
@@ -116,10 +121,10 @@ export function CalculatorHubGuide() {
         <h2 className="mb-3 text-xl font-semibold">
           The 7 One Rep Max Formulas Compared
         </h2>
-        <p className="mb-4 text-sm text-muted-foreground md:text-base">
-          Every formula is someone&apos;s best fit to how reps fall away as
-          the bar gets heavier. Here is each one run on the same three sets,
-          where w is the weight and r is the reps.
+        <p className="text-muted-foreground mb-4 text-sm md:text-base">
+          Every formula is someone&apos;s best fit to how reps fall away as the
+          bar gets heavier. Here is each one run on the same three sets, where w
+          is the weight and r is the reps.
         </p>
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
@@ -127,7 +132,7 @@ export function CalculatorHubGuide() {
               Estimated one rep max from seven formulas for three example sets
             </caption>
             <thead>
-              <tr className="border-b bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-foreground/70">
+              <tr className="bg-muted/40 text-foreground/70 border-b text-left text-xs font-semibold tracking-wide uppercase">
                 <th className="px-3 py-2">Formula</th>
                 <th className="hidden px-3 py-2 sm:table-cell">Equation</th>
                 {EXAMPLE_SETS.map(({ weight, reps }) => (
@@ -145,13 +150,13 @@ export function CalculatorHubGuide() {
                       {name}
                     </Link>
                   </td>
-                  <td className="hidden px-3 py-2 font-mono text-xs text-muted-foreground sm:table-cell">
+                  <td className="text-muted-foreground hidden px-3 py-2 font-mono text-xs sm:table-cell">
                     {equation}
                   </td>
                   {EXAMPLE_SETS.map(({ weight, reps }) => (
                     <td
                       key={reps}
-                      className="px-3 py-2 text-right tabular-nums text-muted-foreground"
+                      className="text-muted-foreground px-3 py-2 text-right tabular-nums"
                     >
                       {estimateE1RM(reps, weight, formula)} lb
                     </td>
@@ -161,15 +166,15 @@ export function CalculatorHubGuide() {
             </tbody>
           </table>
         </div>
-        <div className="mt-4 space-y-3 text-sm text-muted-foreground md:text-base">
+        <div className="text-muted-foreground mt-4 space-y-3 text-sm md:text-base">
           <p>
             At 5 reps the seven formulas land within {fiveRep.pct}% of each
             other ({fiveRep.low}–{fiveRep.high} lb). At 10 reps the gap is{" "}
             {tenRep.pct}% ({tenRep.low}–{tenRep.high} lb). At 15 reps it opens
             to {fifteenRep.pct}% ({fifteenRep.low}–{fifteenRep.high} lb), and
-            the formulas stop agreeing on what your set means. That is the
-            real lesson of the table: the formula matters far less than the
-            rep count you feed it.
+            the formulas stop agreeing on what your set means. That is the real
+            lesson of the table: the formula matters far less than the rep count
+            you feed it.
           </p>
         </div>
       </section>
@@ -178,13 +183,13 @@ export function CalculatorHubGuide() {
         <h2 className="mb-3 text-xl font-semibold">
           Which Formula Should You Use?
         </h2>
-        <div className="space-y-3 text-sm text-muted-foreground md:text-base">
+        <div className="text-muted-foreground space-y-3 text-sm md:text-base">
           <p>
-            Pick one and stick with it. For tracking progress, a formula you
-            use every time beats a slightly more accurate one you swap between,
+            Pick one and stick with it. For tracking progress, a formula you use
+            every time beats a slightly more accurate one you swap between,
             because the trend is what tells you whether you are getting
-            stronger. Brzycki is the default here because it behaves well in
-            the 1–6 rep range where most strength work lives.{" "}
+            stronger. Brzycki is the default here because it behaves well in the
+            1–6 rep range where most strength work lives.{" "}
             <Link
               prefetch={false}
               href="/calculator/epley-formula-1rm-calculator"
@@ -212,19 +217,19 @@ export function CalculatorHubGuide() {
         <h2 className="mb-3 text-xl font-semibold">
           Using Your Estimate in Training
         </h2>
-        <div className="space-y-3 text-sm text-muted-foreground md:text-base">
+        <div className="text-muted-foreground space-y-3 text-sm md:text-base">
           <p>
             Most programs are written in percentages of your max, which is what
             the percentage table above is for. A 5-rep max usually sits around
-            85–90% of a one rep max ({Math.round((225 / brzyckiFive) * 100)}%
-            in the example above), so working sets of 5 that leave a rep or two
-            in the tank tend to live at 75–85%. Volume work sits lower, around
+            85–90% of a one rep max ({Math.round((225 / brzyckiFive) * 100)}% in
+            the example above), so working sets of 5 that leave a rep or two in
+            the tank tend to live at 75–85%. Volume work sits lower, around
             65–75%.
           </p>
           <p>
-            The rep max table works the other way. If your program says
-            &quot;a heavy triple&quot;, read off the 3RM row and start a little
-            under it. Before any of that, the{" "}
+            The rep max table works the other way. If your program says &quot;a
+            heavy triple&quot;, read off the 3RM row and start a little under
+            it. Before any of that, the{" "}
             <Link
               prefetch={false}
               href="/warm-up-sets-calculator"
@@ -242,7 +247,7 @@ export function CalculatorHubGuide() {
         <h2 className="mb-3 text-xl font-semibold">
           When to Trust the Estimate, and When to Test a True Max
         </h2>
-        <div className="space-y-3 text-sm text-muted-foreground md:text-base">
+        <div className="text-muted-foreground space-y-3 text-sm md:text-base">
           <p>
             Estimates are most reliable from a hard set of about 3–10 reps. A{" "}
             <a
@@ -252,8 +257,8 @@ export function CalculatorHubGuide() {
               2006 Journal of Strength and Conditioning Research study
             </a>{" "}
             found that 5-rep sets gave the most accurate predictions. Above 10
-            reps, the formulas themselves become unpredictable, which is why
-            the table above scatters at 15.
+            reps, the formulas themselves become unpredictable, which is why the
+            table above scatters at 15.
           </p>
           <p>
             The formulas also describe an average lifter. If you have always

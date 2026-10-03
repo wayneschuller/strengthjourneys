@@ -1,4 +1,3 @@
-
 import { useRef, useMemo, useState, useEffect } from "react";
 import { motion, animate } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -7,7 +6,11 @@ import {
   STREAK_SESSIONS_PER_WEEK,
 } from "@/lib/year-recap-stats";
 import { CircularProgressWithLetter } from "@/components/year-recap/cards/circular-progress-with-letter";
-import { pickQuirkyPhrase, SESSIONS_PHRASES, CONSISTENCY_PHRASES } from "@/components/year-recap/phrases";
+import {
+  pickQuirkyPhrase,
+  SESSIONS_PHRASES,
+  CONSISTENCY_PHRASES,
+} from "@/components/year-recap/phrases";
 import { Calendar } from "lucide-react";
 
 const MERGED_PHRASES = [...SESSIONS_PHRASES, ...CONSISTENCY_PHRASES];
@@ -22,7 +25,11 @@ const MERGED_PHRASES = [...SESSIONS_PHRASES, ...CONSISTENCY_PHRASES];
  */
 export function SessionsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
-  const phrase = pickQuirkyPhrase(MERGED_PHRASES, phraseRef, `sessions-${year}`);
+  const phrase = pickQuirkyPhrase(
+    MERGED_PHRASES,
+    phraseRef,
+    `sessions-${year}`,
+  );
 
   const { parsedData } = useUserLiftingData();
   const stats = useMemo(
@@ -65,10 +72,12 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
   const comparisonYearWord = isCurrentYear ? "last" : "previous";
 
   const comparisonText = useMemo(() => {
-    if (!showPrevYearComparison || prevYearCount == null || prevYearCount === 0) return null;
+    if (!showPrevYearComparison || prevYearCount == null || prevYearCount === 0)
+      return null;
     const diff = count - prevYearCount;
     if (diff > 0) return `Up ${diff} from ${comparisonYearWord} year`;
-    if (diff < 0) return `${Math.abs(diff)} fewer than ${comparisonYearWord} year`;
+    if (diff < 0)
+      return `${Math.abs(diff)} fewer than ${comparisonYearWord} year`;
     return `Same as ${comparisonYearWord} year`;
   }, [showPrevYearComparison, count, prevYearCount, comparisonYearWord]);
 
@@ -91,26 +100,38 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
           transition={{ type: "spring", stiffness: 240, damping: 20 }}
         >
-          <Calendar className="mb-4 h-12 w-12 text-chart-1" />
+          <Calendar className="text-chart-1 mb-4 h-12 w-12" />
         </motion.div>
         <motion.p
-          className="text-5xl font-bold tabular-nums text-foreground md:text-6xl"
+          className="text-foreground text-5xl font-bold tabular-nums md:text-6xl"
           initial={{ opacity: 0, scale: 0.9 }}
-          animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-          transition={{ type: "spring", stiffness: 220, damping: 22, delay: isActive ? 0.05 : 0 }}
+          animate={
+            isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }
+          }
+          transition={{
+            type: "spring",
+            stiffness: 220,
+            damping: 22,
+            delay: isActive ? 0.05 : 0,
+          }}
         >
           {count}
         </motion.p>
         <motion.p
-          className="mt-2 text-xl font-semibold text-chart-2"
+          className="text-chart-2 mt-2 text-xl font-semibold"
           initial={{ opacity: 0, x: -16 }}
           animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -16 }}
-          transition={{ type: "spring", stiffness: 180, damping: 18, delay: isActive ? 0.12 : 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 180,
+            damping: 18,
+            delay: isActive ? 0.12 : 0,
+          }}
         >
           training sessions
         </motion.p>
         <motion.p
-          className="mt-0.5 text-base text-muted-foreground"
+          className="text-muted-foreground mt-0.5 text-base"
           initial={{ opacity: 0 }}
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.15 : 0 }}
@@ -121,8 +142,15 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
           <motion.div
             className="mt-2"
             initial={{ opacity: 0, scale: 0.8 }}
-            animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.18 : 0 }}
+            animate={
+              isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }
+            }
+            transition={{
+              type: "spring",
+              stiffness: 200,
+              damping: 20,
+              delay: isActive ? 0.18 : 0,
+            }}
           >
             <CircularProgressWithLetter
               progress={Math.round(animatedProgress)}
@@ -133,7 +161,7 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
         )}
         {showGrade && (
           <motion.p
-            className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+            className="text-muted-foreground mt-1 text-xs font-medium tracking-wider uppercase"
             initial={{ opacity: 0 }}
             animate={isActive ? { opacity: 1 } : { opacity: 0 }}
             transition={{ delay: isActive ? 0.3 : 0 }}
@@ -143,7 +171,7 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
         )}
         {comparisonText && (
           <motion.p
-            className="mt-1 text-sm text-muted-foreground"
+            className="text-muted-foreground mt-1 text-sm"
             initial={{ opacity: 0, y: 8 }}
             animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
             transition={{ delay: isActive ? 0.32 : 0 }}
@@ -161,18 +189,18 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.3 : 0 }}
         >
-          <p className="text-base text-muted-foreground">Best streak:</p>
-          <p className="text-2xl font-bold tabular-nums text-foreground md:text-3xl">
+          <p className="text-muted-foreground text-base">Best streak:</p>
+          <p className="text-foreground text-2xl font-bold tabular-nums md:text-3xl">
             {bestStreak} week{bestStreak !== 1 ? "s" : ""}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             weeks with {STREAK_SESSIONS_PER_WEEK}+ sessions
           </p>
         </motion.div>
       )}
 
       <motion.p
-        className="mt-3 text-sm italic text-muted-foreground"
+        className="text-muted-foreground mt-3 text-sm italic"
         initial={{ opacity: 0, y: 12 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
         transition={{ delay: isActive ? 0.38 : 0 }}

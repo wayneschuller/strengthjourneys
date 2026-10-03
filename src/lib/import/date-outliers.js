@@ -98,11 +98,7 @@ export function applyDateOutlierPreviewFix(parsedData, warning) {
 
 function getContiguousDateSections(parsedData) {
   const rowBackedEntries = parsedData
-    .filter(
-      (entry) =>
-        entry.date &&
-        Number.isFinite(entry.rowIndex),
-    )
+    .filter((entry) => entry.date && Number.isFinite(entry.rowIndex))
     .slice()
     .sort((a, b) => a.rowIndex - b.rowIndex);
 

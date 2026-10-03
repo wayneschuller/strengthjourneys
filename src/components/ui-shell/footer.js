@@ -20,19 +20,49 @@ const TOOLS = [
 
 const LIFT_CALCULATORS = [
   { href: "/calculator/squat-1rm-calculator", label: "Squat 1RM Calculator" },
-  { href: "/calculator/bench-press-1rm-calculator", label: "Bench Press 1RM Calculator" },
-  { href: "/calculator/deadlift-1rm-calculator", label: "Deadlift 1RM Calculator" },
-  { href: "/calculator/strict-press-1rm-calculator", label: "Strict Press 1RM Calculator" },
+  {
+    href: "/calculator/bench-press-1rm-calculator",
+    label: "Bench Press 1RM Calculator",
+  },
+  {
+    href: "/calculator/deadlift-1rm-calculator",
+    label: "Deadlift 1RM Calculator",
+  },
+  {
+    href: "/calculator/strict-press-1rm-calculator",
+    label: "Strict Press 1RM Calculator",
+  },
 ];
 
 const FORMULA_CALCULATORS = [
-  { href: "/calculator/epley-formula-1rm-calculator", label: "Epley Formula 1RM Calculator" },
-  { href: "/calculator/brzycki-formula-1rm-calculator", label: "Brzycki Formula 1RM Calculator" },
-  { href: "/calculator/mayhew-1rm-formula-calculator", label: "Mayhew Formula 1RM Calculator" },
-  { href: "/calculator/wathan-1rm-formula-calculator", label: "Wathan Formula 1RM Calculator" },
-  { href: "/calculator/mcglothin-formula-1rm-calculator", label: "McGlothin Formula 1RM Calculator" },
-  { href: "/calculator/lombardi-formula-1rm-calculator", label: "Lombardi Formula 1RM Calculator" },
-  { href: "/calculator/oconner-formula-1rm-calculator", label: "O'Conner Formula 1RM Calculator" },
+  {
+    href: "/calculator/epley-formula-1rm-calculator",
+    label: "Epley Formula 1RM Calculator",
+  },
+  {
+    href: "/calculator/brzycki-formula-1rm-calculator",
+    label: "Brzycki Formula 1RM Calculator",
+  },
+  {
+    href: "/calculator/mayhew-1rm-formula-calculator",
+    label: "Mayhew Formula 1RM Calculator",
+  },
+  {
+    href: "/calculator/wathan-1rm-formula-calculator",
+    label: "Wathan Formula 1RM Calculator",
+  },
+  {
+    href: "/calculator/mcglothin-formula-1rm-calculator",
+    label: "McGlothin Formula 1RM Calculator",
+  },
+  {
+    href: "/calculator/lombardi-formula-1rm-calculator",
+    label: "Lombardi Formula 1RM Calculator",
+  },
+  {
+    href: "/calculator/oconner-formula-1rm-calculator",
+    label: "O'Conner Formula 1RM Calculator",
+  },
 ];
 
 const STRENGTH_STANDARDS_LINKS = [
@@ -41,7 +71,10 @@ const STRENGTH_STANDARDS_LINKS = [
     label: `${lift.commonName} Strength Levels`,
   })),
   { href: "/1000lb-club-calculator", label: "1000lb Club" },
-  { href: "/200-300-400-500-strength-club-calculator", label: "200/300/400/500 Club" },
+  {
+    href: "/200-300-400-500-strength-club-calculator",
+    label: "200/300/400/500 Club",
+  },
   { href: "/plate-milestones", label: "Plate Milestones" },
 ];
 
@@ -70,7 +103,7 @@ function FooterLink({ href, label, external }) {
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground text-sm transition-colors"
       >
         {label}
       </a>
@@ -80,7 +113,7 @@ function FooterLink({ href, label, external }) {
     <Link
       prefetch={false}
       href={href}
-      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
     >
       {label}
     </Link>
@@ -90,7 +123,7 @@ function FooterLink({ href, label, external }) {
 function FooterSection({ title, children }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="text-foreground text-sm font-semibold">{title}</p>
       {children}
     </div>
   );
@@ -132,7 +165,11 @@ export function Footer() {
               label="Buy me a coffee"
               external
             />
-            <FooterLink href="https://x.com/wayneschuller" label="@wayneschuller" external />
+            <FooterLink
+              href="https://x.com/wayneschuller"
+              label="@wayneschuller"
+              external
+            />
           </FooterSection>
 
           <FooterSection title="Legal">
@@ -145,25 +182,27 @@ export function Footer() {
         <div className="mx-auto mt-8 max-w-4xl border-t pt-6">
           <div className="flex flex-col gap-6">
             <div>
-              <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
+              <p className="text-muted-foreground/60 mb-3 text-xs font-medium tracking-wide uppercase">
                 More Calculators
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {[...LIFT_CALCULATORS, ...FORMULA_CALCULATORS].map(({ href, label }) => (
-                  <Link
-                    prefetch={false}
-                    key={href}
-                    href={href}
-                    className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
-                  >
-                    {label}
-                  </Link>
-                ))}
+                {[...LIFT_CALCULATORS, ...FORMULA_CALCULATORS].map(
+                  ({ href, label }) => (
+                    <Link
+                      prefetch={false}
+                      key={href}
+                      href={href}
+                      className="text-muted-foreground/70 hover:text-foreground text-xs transition-colors"
+                    >
+                      {label}
+                    </Link>
+                  ),
+                )}
               </div>
             </div>
 
             <div>
-              <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
+              <p className="text-muted-foreground/60 mb-3 text-xs font-medium tracking-wide uppercase">
                 Strength Standards & Levels
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -172,7 +211,7 @@ export function Footer() {
                     prefetch={false}
                     key={href}
                     href={href}
-                    className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
+                    className="text-muted-foreground/70 hover:text-foreground text-xs transition-colors"
                   >
                     {label}
                   </Link>
@@ -181,7 +220,7 @@ export function Footer() {
             </div>
 
             <div>
-              <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
+              <p className="text-muted-foreground/60 mb-3 text-xs font-medium tracking-wide uppercase">
                 Lift Guides & Progress Trackers
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -190,7 +229,7 @@ export function Footer() {
                     prefetch={false}
                     key={href}
                     href={href}
-                    className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
+                    className="text-muted-foreground/70 hover:text-foreground text-xs transition-colors"
                   >
                     {label}
                   </Link>
@@ -200,9 +239,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 border-t pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Strength Journeys · Free and open source · Your data stays
-          yours
+        <div className="text-muted-foreground mt-8 border-t pt-6 text-center text-xs">
+          © {new Date().getFullYear()} Strength Journeys · Free and open source
+          · Your data stays yours
         </div>
       </PageContainer>
     </footer>

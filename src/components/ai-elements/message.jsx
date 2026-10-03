@@ -1,10 +1,7 @@
-"use client";;
+"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  ButtonGroup,
-  ButtonGroupText,
-} from "@/components/ui/button-group";
+import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
 import {
   Tooltip,
   TooltipContent,
@@ -51,7 +48,10 @@ function MessageLink({ href, children, className, ...props }) {
   if (internalHref) {
     return (
       <Link
-        className={cn("wrap-anywhere font-medium text-link underline underline-offset-2", className)}
+        className={cn(
+          "text-link font-medium wrap-anywhere underline underline-offset-2",
+          className,
+        )}
         href={internalHref}
         {...props}
         // After the spread on purpose: our own pages always open in the same
@@ -67,7 +67,10 @@ function MessageLink({ href, children, className, ...props }) {
 
   return (
     <a
-      className={cn("wrap-anywhere font-medium text-link underline underline-offset-2", className)}
+      className={cn(
+        "text-link font-medium wrap-anywhere underline underline-offset-2",
+        className,
+      )}
       href={href}
       rel="noreferrer noopener"
       target="_blank"
@@ -78,44 +81,34 @@ function MessageLink({ href, children, className, ...props }) {
   );
 }
 
-export const Message = ({
-  className,
-  from,
-  ...props
-}) => (
+export const Message = ({ className, from, ...props }) => (
   <div
     className={cn(
       "group flex w-full max-w-[95%] flex-col gap-2",
       from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
-      className
+      className,
     )}
-    {...props} />
+    {...props}
+  />
 );
 
-export const MessageContent = ({
-  children,
-  className,
-  ...props
-}) => (
+export const MessageContent = ({ children, className, ...props }) => (
   <div
     className={cn(
-      "flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
-      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-secondary-foreground",
+      "flex w-fit max-w-full min-w-0 flex-col gap-2 overflow-hidden text-sm",
+      "group-[.is-user]:bg-secondary group-[.is-user]:text-secondary-foreground group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:px-4 group-[.is-user]:py-3",
       // Links inside the user bubble read against the bubble, not the page
       "group-[.is-user]:[&_a]:text-current",
       "group-[.is-assistant]:text-foreground",
-      className
+      className,
     )}
-    {...props}>
+    {...props}
+  >
     {children}
   </div>
 );
 
-export const MessageActions = ({
-  className,
-  children,
-  ...props
-}) => (
+export const MessageActions = ({ className, children, ...props }) => (
   <div className={cn("flex items-center gap-1", className)} {...props}>
     {children}
   </div>
@@ -158,7 +151,9 @@ const useMessageBranch = () => {
   const context = useContext(MessageBranchContext);
 
   if (!context) {
-    throw new Error("MessageBranch components must be used within MessageBranch");
+    throw new Error(
+      "MessageBranch components must be used within MessageBranch",
+    );
   }
 
   return context;
@@ -201,17 +196,20 @@ export const MessageBranch = ({
 
   return (
     <MessageBranchContext.Provider value={contextValue}>
-      <div className={cn("grid w-full gap-2 [&>div]:pb-0", className)} {...props} />
+      <div
+        className={cn("grid w-full gap-2 [&>div]:pb-0", className)}
+        {...props}
+      />
     </MessageBranchContext.Provider>
   );
 };
 
-export const MessageBranchContent = ({
-  children,
-  ...props
-}) => {
+export const MessageBranchContent = ({ children, ...props }) => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
-  const childrenArray = useMemo(() => (Array.isArray(children) ? children : [children]), [children]);
+  const childrenArray = useMemo(
+    () => (Array.isArray(children) ? children : [children]),
+    [children],
+  );
 
   // Use useEffect to update branches when they change
   useEffect(() => {
@@ -224,19 +222,17 @@ export const MessageBranchContent = ({
     <div
       className={cn(
         "grid gap-2 overflow-hidden [&>div]:pb-0",
-        index === currentBranch ? "block" : "hidden"
+        index === currentBranch ? "block" : "hidden",
       )}
       key={branch.key}
-      {...props}>
+      {...props}
+    >
       {branch}
     </div>
   ));
 };
 
-export const MessageBranchSelector = ({
-  className,
-  ...props
-}) => {
+export const MessageBranchSelector = ({ className, ...props }) => {
   const { totalBranches } = useMessageBranch();
 
   // Don't render if there's only one branch
@@ -248,17 +244,15 @@ export const MessageBranchSelector = ({
     <ButtonGroup
       className={cn(
         "[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md",
-        className
+        className,
       )}
       orientation="horizontal"
-      {...props} />
+      {...props}
+    />
   );
 };
 
-export const MessageBranchPrevious = ({
-  children,
-  ...props
-}) => {
+export const MessageBranchPrevious = ({ children, ...props }) => {
   const { goToPrevious, totalBranches } = useMessageBranch();
 
   return (
@@ -269,16 +263,14 @@ export const MessageBranchPrevious = ({
       size="icon-sm"
       type="button"
       variant="ghost"
-      {...props}>
+      {...props}
+    >
       {children ?? <ChevronLeftIcon size={14} />}
     </Button>
   );
 };
 
-export const MessageBranchNext = ({
-  children,
-  ...props
-}) => {
+export const MessageBranchNext = ({ children, ...props }) => {
   const { goToNext, totalBranches } = useMessageBranch();
 
   return (
@@ -289,49 +281,55 @@ export const MessageBranchNext = ({
       size="icon-sm"
       type="button"
       variant="ghost"
-      {...props}>
+      {...props}
+    >
       {children ?? <ChevronRightIcon size={14} />}
     </Button>
   );
 };
 
-export const MessageBranchPage = ({
-  className,
-  ...props
-}) => {
+export const MessageBranchPage = ({ className, ...props }) => {
   const { currentBranch, totalBranches } = useMessageBranch();
 
   return (
     <ButtonGroupText
-      className={cn("border-none bg-transparent text-muted-foreground shadow-none", className)}
-      {...props}>
+      className={cn(
+        "text-muted-foreground border-none bg-transparent shadow-none",
+        className,
+      )}
+      {...props}
+    >
       {currentBranch + 1}of {totalBranches}
     </ButtonGroupText>
   );
 };
 
-export const MessageResponse = memo(({
-  className,
-  ...props
-}) => (
-  <Streamdown
-    className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
-    components={{ a: MessageLink }}
-    linkSafety={{ enabled: false }}
-    plugins={{ cjk, code, math, mermaid }}
-    {...props} />
-), (prevProps, nextProps) => prevProps.children === nextProps.children);
+export const MessageResponse = memo(
+  ({ className, ...props }) => (
+    <Streamdown
+      className={cn(
+        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+        className,
+      )}
+      components={{ a: MessageLink }}
+      linkSafety={{ enabled: false }}
+      plugins={{ cjk, code, math, mermaid }}
+      {...props}
+    />
+  ),
+  (prevProps, nextProps) => prevProps.children === nextProps.children,
+);
 
 MessageResponse.displayName = "MessageResponse";
 
-export const MessageToolbar = ({
-  className,
-  children,
-  ...props
-}) => (
+export const MessageToolbar = ({ className, children, ...props }) => (
   <div
-    className={cn("mt-4 flex w-full items-center justify-between gap-4", className)}
-    {...props}>
+    className={cn(
+      "mt-4 flex w-full items-center justify-between gap-4",
+      className,
+    )}
+    {...props}
+  >
     {children}
   </div>
 );

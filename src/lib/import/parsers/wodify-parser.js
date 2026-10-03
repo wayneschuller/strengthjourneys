@@ -104,7 +104,10 @@ function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps, liftType) {
   if (!text) return [];
 
   // Split on commas or the word "then" (with optional surrounding whitespace)
-  const fragments = text.split(/,|\bthen\b/i).map((f) => f.trim()).filter(Boolean);
+  const fragments = text
+    .split(/,|\bthen\b/i)
+    .map((f) => f.trim())
+    .filter(Boolean);
 
   const results = [];
 
@@ -149,7 +152,11 @@ function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps, liftType) {
     if (bareWeightMatch) {
       const weight = parseNumber(bareWeightMatch[1]);
       if (isValidLiftWeight(liftType, weight)) {
-        results.push({ reps: fallbackReps || 1, weight, unitType: fallbackUnitType });
+        results.push({
+          reps: fallbackReps || 1,
+          weight,
+          unitType: fallbackUnitType,
+        });
         continue;
       }
     }

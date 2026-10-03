@@ -1,10 +1,7 @@
 {
   "liftType": "Pause Squat",
   "slug": "pause-squat",
-  "synonyms": [
-    "Paused Squat",
-    "Paused Back Squat"
-  ],
+  "synonyms": ["Paused Squat", "Paused Back Squat"],
   "parentLift": {
     "liftType": "Back Squat",
     "tonnageRatio": 1

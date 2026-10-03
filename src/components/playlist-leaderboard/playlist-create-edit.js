@@ -55,7 +55,10 @@ export function PlaylistCreateEditDialog({
     if (!isOpen) return;
 
     if (isEditMode) {
-      setPreview({ resolved: true, thumbnailUrl: currentPlaylist.thumbnailUrl });
+      setPreview({
+        resolved: true,
+        thumbnailUrl: currentPlaylist.thumbnailUrl,
+      });
       setUrl(currentPlaylist.url || "");
       setTitle(currentPlaylist.title || "");
       setDescription(currentPlaylist.description || "");
@@ -91,7 +94,9 @@ export function PlaylistCreateEditDialog({
       }
 
       if (data.duplicate) {
-        setErrors([`"${data.title}" is already on the leaderboard — go vote for it instead.`]);
+        setErrors([
+          `"${data.title}" is already on the leaderboard — go vote for it instead.`,
+        ]);
         return;
       }
 
@@ -117,7 +122,12 @@ export function PlaylistCreateEditDialog({
     event.preventDefault();
 
     const { errors: validationErrors, validatedPlaylist } =
-      validateAndProcessPlaylist({ title, description, url, categories: selected });
+      validateAndProcessPlaylist({
+        title,
+        description,
+        url,
+        categories: selected,
+      });
 
     if (validationErrors) {
       setErrors(validationErrors);
@@ -165,7 +175,11 @@ export function PlaylistCreateEditDialog({
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isResolving || !url.trim()}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isResolving || !url.trim()}
+            >
               {isResolving ? (
                 <>
                   <Spinner className="mr-2 h-4 w-4" />
@@ -180,7 +194,7 @@ export function PlaylistCreateEditDialog({
           <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
             {/* What we found. Platform titles run long — everything here has to be able to
                 shrink, or the row pushes its way out of the dialog. */}
-            <div className="flex min-w-0 items-start gap-3 overflow-hidden rounded-lg border bg-muted/50 p-3">
+            <div className="bg-muted/50 flex min-w-0 items-start gap-3 overflow-hidden rounded-lg border p-3">
               {preview?.thumbnailUrl ? (
                 <Image
                   src={preview.thumbnailUrl}
@@ -191,8 +205,8 @@ export function PlaylistCreateEditDialog({
                   className="h-14 w-14 shrink-0 rounded-md object-cover"
                 />
               ) : (
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-muted">
-                  <Music className="h-6 w-6 text-muted-foreground/40" />
+                <div className="bg-muted flex h-14 w-14 shrink-0 items-center justify-center rounded-md">
+                  <Music className="text-muted-foreground/40 h-6 w-6" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -205,7 +219,10 @@ export function PlaylistCreateEditDialog({
                   rows={2}
                   className="min-h-0 w-full resize-none border-0 bg-transparent p-0 font-semibold shadow-none focus-visible:ring-0"
                 />
-                <p className="mt-1 truncate text-xs text-muted-foreground" title={url}>
+                <p
+                  className="text-muted-foreground mt-1 truncate text-xs"
+                  title={url}
+                >
                   {url}
                 </p>
               </div>
@@ -229,23 +246,27 @@ export function PlaylistCreateEditDialog({
             <div>
               <div className="mb-2 flex items-baseline justify-between">
                 <p className="text-sm font-medium">
-                  Tags <span className="text-muted-foreground">(pick at least one)</span>
+                  Tags{" "}
+                  <span className="text-muted-foreground">
+                    (pick at least one)
+                  </span>
                 </p>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {selected.length}/{MAX_CATEGORIES}
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {categories.map((category) => {
                   const isSelected = selected.includes(category);
-                  const isFull = selected.length >= MAX_CATEGORIES && !isSelected;
+                  const isFull =
+                    selected.length >= MAX_CATEGORIES && !isSelected;
                   return (
                     <Badge
                       key={category}
                       variant={isSelected ? "default" : "secondary"}
                       onClick={() => !isFull && toggleCategory(category)}
                       className={cn(
-                        "cursor-pointer select-none gap-1 rounded-full",
+                        "cursor-pointer gap-1 rounded-full select-none",
                         isFull && "cursor-not-allowed opacity-40",
                       )}
                     >
@@ -275,7 +296,11 @@ export function PlaylistCreateEditDialog({
             )}
 
             <div className="flex justify-between gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={selected.length === 0}>

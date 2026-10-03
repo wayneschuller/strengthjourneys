@@ -48,7 +48,8 @@ export default function LiftExplorer({ relatedArticles }) {
   // OG Meta Tags
   const description =
     "Browse every lift you train. The big four, a gallery of barbell lifts, and everything else in your log, sorted by volume, recency or name. Pick one to open its progress guide.";
-  const title = "Lift Explorer - Explore Your Lifting History | Strength Journeys";
+  const title =
+    "Lift Explorer - Explore Your Lifting History | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/lift-explorer";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_analyzer_og.png";

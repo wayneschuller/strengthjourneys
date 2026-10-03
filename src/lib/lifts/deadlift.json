@@ -143,98 +143,38 @@
           {
             "bwKg": 68,
             "bwLb": 150,
-            "active": [
-              64,
-              140
-            ],
-            "beginner": [
-              112,
-              245
-            ],
-            "intermediate": [
-              139,
-              305
-            ],
-            "advanced": [
-              186,
-              410
-            ],
-            "elite": [
-              207,
-              455
-            ]
+            "active": [64, 140],
+            "beginner": [112, 245],
+            "intermediate": [139, 305],
+            "advanced": [186, 410],
+            "elite": [207, 455]
           },
           {
             "bwKg": 79,
             "bwLb": 175,
-            "active": [
-              76,
-              170
-            ],
-            "beginner": [
-              131,
-              290
-            ],
-            "intermediate": [
-              164,
-              360
-            ],
-            "advanced": [
-              219,
-              485
-            ],
-            "elite": [
-              243,
-              535
-            ]
+            "active": [76, 170],
+            "beginner": [131, 290],
+            "intermediate": [164, 360],
+            "advanced": [219, 485],
+            "elite": [243, 535]
           },
           {
             "bwKg": 91,
             "bwLb": 200,
-            "active": [
-              83,
-              185
-            ],
-            "beginner": [
-              144,
-              315
-            ],
-            "intermediate": [
-              180,
-              395
-            ],
-            "advanced": [
-              240,
-              530
-            ],
-            "elite": [
-              266,
-              585
-            ]
+            "active": [83, 185],
+            "beginner": [144, 315],
+            "intermediate": [180, 395],
+            "advanced": [240, 530],
+            "elite": [266, 585]
           },
           {
             "bwKg": 102,
             "bwLb": 225,
-            "active": [
-              84,
-              185
-            ],
-            "beginner": [
-              146,
-              320
-            ],
-            "intermediate": [
-              182,
-              400
-            ],
-            "advanced": [
-              243,
-              535
-            ],
-            "elite": [
-              270,
-              595
-            ]
+            "active": [84, 185],
+            "beginner": [146, 320],
+            "intermediate": [182, 400],
+            "advanced": [243, 535],
+            "elite": [270, 595]
           }
         ]
       },

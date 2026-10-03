@@ -1,9 +1,5 @@
 import { useEffect } from "react";
-import {
-  motion,
-  useAnimationControls,
-  useReducedMotion,
-} from "motion/react";
+import { motion, useAnimationControls, useReducedMotion } from "motion/react";
 import { FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,11 +14,7 @@ const SIZE_STYLES = {
   },
 };
 
-export function DemoModeBadge({
-  className,
-  size = "md",
-  animated = true,
-}) {
+export function DemoModeBadge({ className, size = "md", animated = true }) {
   const controls = useAnimationControls();
   const prefersReducedMotion = useReducedMotion();
   const styles = SIZE_STYLES[size] || SIZE_STYLES.md;
@@ -53,7 +45,7 @@ export function DemoModeBadge({
     <motion.span
       animate={controls}
       className={cn(
-        "relative inline-flex shrink-0 items-center overflow-hidden border border-amber-300/80 bg-amber-100 font-semibold uppercase tracking-[0.08em] text-amber-950 shadow-sm dark:border-amber-700/70 dark:bg-amber-950/70 dark:text-amber-200",
+        "relative inline-flex shrink-0 items-center overflow-hidden border border-amber-300/80 bg-amber-100 font-semibold tracking-[0.08em] text-amber-950 uppercase shadow-sm dark:border-amber-700/70 dark:bg-amber-950/70 dark:text-amber-200",
         styles.badge,
         className,
       )}

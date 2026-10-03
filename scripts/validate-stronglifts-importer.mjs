@@ -56,8 +56,7 @@ registerHooks({
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseStrongliftsData } =
   await import("../src/lib/import/parsers/stronglifts-parser.js");
-const { detectFormat } =
-  await import("../src/lib/import/import-dispatcher.js");
+const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
 
 // Synthetic rows in the legacy wide shape, not real exports. This variant
 // carries a bare "Body Weight" column with the unit inside the cell, which is

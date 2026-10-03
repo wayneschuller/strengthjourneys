@@ -46,8 +46,18 @@ const MEET_LIMIT = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 /**
@@ -128,24 +138,31 @@ export function buildLiftingContext({
   const sections = [
     buildAboutSection({ ctx, options, bio, latestDate, hasTraining, meetDays }),
     bio && buildProfileSection(bio, unit),
-    bio && hasTraining && options.records &&
+    bio &&
+      hasTraining &&
+      options.records &&
       buildStandingSection({ mainLifts, lifts, standards, ctx }),
     hasTraining &&
       (options.records || options.frequency) &&
       step("Main lifts", () =>
         buildLiftsSection({ mainLifts, lifts, options, ctx }),
       ),
-    hasTraining && options.records && meetDays?.size > 0 &&
+    hasTraining &&
+      options.records &&
+      meetDays?.size > 0 &&
       step("Meets", () => buildMeetsSection({ meetDays, ctx })),
-    hasTraining && options.consistency &&
+    hasTraining &&
+      options.consistency &&
       step("Consistency", () =>
         buildConsistencySection({ tail, parsedData, mainLifts, ctx }),
       ),
-    hasTraining && options.trainingLoad &&
+    hasTraining &&
+      options.trainingLoad &&
       step("Training load", () =>
         buildTrainingLoadSection({ sessionTonnageLookup, mainLifts, ctx }),
       ),
-    hasTraining && options.sessionData &&
+    hasTraining &&
+      options.sessionData &&
       step("Recent sessions", () =>
         buildRecentSessionsSection({ tail, lifts, mainLifts, ctx }),
       ),
@@ -155,9 +172,10 @@ export function buildLiftingContext({
   const text = combineSections(sections, MAX_CHAT_METADATA_CHARS);
   // Only once there is training data: before the log loads, builds are empty
   // and would just be noise in the console.
-  if (hasTraining) logTimingGroup("\u{1F916} AI Coach Context", timings, {
-    summary: `${text.length} chars, ${tail.length} recent sets`,
-  });
+  if (hasTraining)
+    logTimingGroup("\u{1F916} AI Coach Context", timings, {
+      summary: `${text.length} chars, ${tail.length} recent sets`,
+    });
   return text;
 }
 
@@ -193,7 +211,14 @@ function getRecentTail(parsedData, today) {
 // Sections
 // -----------------------------------------------------------------------------
 
-function buildAboutSection({ ctx, options, bio, latestDate, hasTraining, meetDays }) {
+function buildAboutSection({
+  ctx,
+  options,
+  bio,
+  latestDate,
+  hasTraining,
+  meetDays,
+}) {
   const shared = [
     bio && "profile",
     hasTraining && options.records && "records and e1RM trends",
@@ -261,10 +286,11 @@ function buildLiftsSection({ mainLifts, lifts, options, ctx }) {
       const e1rmAll = formatE1RMPoint(lift.bestE1RMAll, ctx);
       const e1rm12m = formatE1RMPoint(lift.bestE1RM12m, ctx);
       // No e1RM story for a lift only ever done at bodyweight.
-      if (lift.bestE1RMAll?.e1rm > 0) lines.push(
-        `  Best e1RM: ${e1rmAll === e1rm12m ? `all time and last 12 months ${e1rmAll}` : `all time ${e1rmAll}; last 12 months ${e1rm12m}`}; last 6 weeks ${formatE1RMPoint(lift.bestE1RM6w, ctx)}; the 6 weeks before ${formatE1RMPoint(lift.bestE1RMPrev6w, ctx)}.`,
-        `  Best e1RM by month, oldest to newest: ${formatMonthlyE1RM(lift.monthlyE1RM, lift.firstDate, ctx)}.`,
-      );
+      if (lift.bestE1RMAll?.e1rm > 0)
+        lines.push(
+          `  Best e1RM: ${e1rmAll === e1rm12m ? `all time and last 12 months ${e1rmAll}` : `all time ${e1rmAll}; last 12 months ${e1rm12m}`}; last 6 weeks ${formatE1RMPoint(lift.bestE1RM6w, ctx)}; the 6 weeks before ${formatE1RMPoint(lift.bestE1RMPrev6w, ctx)}.`,
+          `  Best e1RM by month, oldest to newest: ${formatMonthlyE1RM(lift.monthlyE1RM, lift.firstDate, ctx)}.`,
+        );
     }
 
     return lines.join("\n");
@@ -291,7 +317,8 @@ function buildMeetsSection({ meetDays, ctx }) {
       const competed = MEET_LIFTS.filter(([liftType]) => topSets[liftType]);
       const parts = competed.length
         ? competed.map(
-            ([liftType, word]) => `${word} ${formatMeetSet(topSets[liftType], ctx)}`,
+            ([liftType, word]) =>
+              `${word} ${formatMeetSet(topSets[liftType], ctx)}`,
           )
         : Object.entries(topSets).map(
             ([liftType, set]) => `${liftType} ${formatMeetSet(set, ctx)}`,
@@ -352,7 +379,9 @@ function buildConsistencySection({ tail, parsedData, mainLifts, ctx }) {
     monthDatesByLift.set(liftType, dates);
   }
   const perLift = mainLifts
-    .map((liftType) => `${liftType} ${monthDatesByLift.get(liftType)?.size ?? 0}`)
+    .map(
+      (liftType) => `${liftType} ${monthDatesByLift.get(liftType)?.size ?? 0}`,
+    )
     .join(", ");
   lines.push(
     `This calendar month so far (${formatShortDate(monthStart)} to ${formatShortDate(ctx.today)}): ${monthDates.size} ${monthDates.size === 1 ? "session" : "sessions"}. Sessions with each main lift: ${perLift}.`,
@@ -377,7 +406,15 @@ function buildConsistencySection({ tail, parsedData, mainLifts, ctx }) {
       period.periodDays <= 730 || index === allPeriods.length - 1,
   );
   consistency.forEach(
-    ({ label, actualWorkouts, targetWorkouts, periodDays, gradedDays, isPartiallyTracked, percentage }) => {
+    ({
+      label,
+      actualWorkouts,
+      targetWorkouts,
+      periodDays,
+      gradedDays,
+      isPartiallyTracked,
+      percentage,
+    }) => {
       const graded = isPartiallyTracked
         ? `, graded over the ${gradedDays} days since the log began`
         : "";
@@ -388,10 +425,7 @@ function buildConsistencySection({ tail, parsedData, mainLifts, ctx }) {
   );
 
   if (lines.length === 0) return "";
-  return section(
-    "consistency (target is about three sessions a week)",
-    lines,
-  );
+  return section("consistency (target is about three sessions a week)", lines);
 }
 
 /** Reads the pipeline's session tonnage lookup; walks only the last year of session dates. */
@@ -460,7 +494,13 @@ function buildRecentSessionsSection({ tail, lifts, mainLifts, ctx }) {
   const blocks = [];
   let chars = 0;
   for (const [date, sessionEntries] of byDate) {
-    const block = formatSessionBlock(date, sessionEntries, lifts, mainLifts, ctx);
+    const block = formatSessionBlock(
+      date,
+      sessionEntries,
+      lifts,
+      mainLifts,
+      ctx,
+    );
     if (chars + block.length + 1 > RECENT_SESSIONS_MAX_CHARS) break;
     blocks.push(block);
     chars += block.length + 1;
@@ -486,7 +526,10 @@ function buildStandardsSection({ mainLifts, standards, unit }) {
     .filter(Boolean);
 
   if (lines.length === 0) return "";
-  return section(`strength standards as e1RM in ${unit}, for this lifter`, lines);
+  return section(
+    `strength standards as e1RM in ${unit}, for this lifter`,
+    lines,
+  );
 }
 
 // -----------------------------------------------------------------------------
@@ -562,7 +605,11 @@ function readBestSets(repArrays, ctx) {
 function bestE1RMOf(bestByReps, ctx) {
   return Object.values(bestByReps).reduce(
     (best, set) =>
-      keepBestE1RM(best, set, estimateE1RM(set.reps, set.weight, ctx.e1rmFormula)),
+      keepBestE1RM(
+        best,
+        set,
+        estimateE1RM(set.reps, set.weight, ctx.e1rmFormula),
+      ),
     null,
   );
 }
@@ -651,7 +698,9 @@ function formatSessionBlock(date, sessionEntries, lifts, mainLifts, ctx) {
     let highlights = "";
     if (mainLifts.includes(liftType)) {
       const bestE1RM = Math.max(
-        ...sets.map((set) => estimateE1RM(set.reps, set.weight, ctx.e1rmFormula)),
+        ...sets.map((set) =>
+          estimateE1RM(set.reps, set.weight, ctx.e1rmFormula),
+        ),
       );
       if (bestE1RM > 0) summary.push(`best e1RM ${bestE1RM}${ctx.unit}`);
       highlights = describeHighlights(liftType, liftEntries, lifts, ctx);
@@ -685,9 +734,13 @@ function describeHighlights(liftType, liftEntries, lifts, ctx) {
     const year = lift.bestByReps12m[entry.reps];
     const label = entry.reps === 1 ? "single" : `${entry.reps}-rep set`;
     if (allTime && allTime.date === entry.date && allTime.weight === weight) {
-      notes.push(`${formatSet({ weight, reps: entry.reps })} is the best ${label} ever logged`);
+      notes.push(
+        `${formatSet({ weight, reps: entry.reps })} is the best ${label} ever logged`,
+      );
     } else if (year && year.date === entry.date && year.weight === weight) {
-      notes.push(`${formatSet({ weight, reps: entry.reps })} is the best ${label} in 12 months`);
+      notes.push(
+        `${formatSet({ weight, reps: entry.reps })} is the best ${label} in 12 months`,
+      );
     }
   });
 
@@ -706,8 +759,9 @@ function collapseSets(sets) {
     }
   });
   return groups
-    .map(({ weight, reps, count }) =>
-      `${formatWeight(weight)}×${reps}${count > 1 ? ` (${count} sets)` : ""}`,
+    .map(
+      ({ weight, reps, count }) =>
+        `${formatWeight(weight)}×${reps}${count > 1 ? ` (${count} sets)` : ""}`,
     )
     .join(", ");
 }
@@ -849,7 +903,9 @@ function convertWeight(weight, fromUnit, toUnit) {
 }
 
 function average(values) {
-  return values.length ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
+  return values.length
+    ? values.reduce((sum, v) => sum + v, 0) / values.length
+    : 0;
 }
 
 function percentile(sortedValues, fraction) {

@@ -35,10 +35,23 @@ function formatArticleDate(publishedAt) {
  * A single rail tile. Kept local so the article and evergreen tiles share one
  * shape — the rail reads as a row of equals rather than a hero plus filler.
  */
-function RailCard({ href, eyebrow, title, description, thumbnail, icon: Icon, onClick }) {
+function RailCard({
+  href,
+  eyebrow,
+  title,
+  description,
+  thumbnail,
+  icon: Icon,
+  onClick,
+}) {
   return (
     <Card className="group ring-ring h-full shadow-sm ring-0 transition hover:ring-1">
-      <Link href={href} onClick={onClick} className="block h-full" prefetch={false}>
+      <Link
+        href={href}
+        onClick={onClick}
+        className="block h-full"
+        prefetch={false}
+      >
         <CardContent className="flex h-full gap-3 p-4">
           {thumbnail ? (
             <div className="relative hidden h-16 w-16 shrink-0 overflow-hidden rounded-md sm:block">

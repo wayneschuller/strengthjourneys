@@ -169,7 +169,14 @@ export function StandardsSlider({
     });
 
     return summaries;
-  }, [dataSource, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
+  }, [
+    dataSource,
+    parsedData,
+    liftType,
+    e1rmFormula,
+    unitType,
+    latestSessionDate,
+  ]);
 
   // --- "Now" marker: best E1RM from the most recent session ---
   const nowNotch = useMemo(() => {
@@ -214,7 +221,14 @@ export function StandardsSlider({
     }
 
     return { ...bestOnLatest, shortLabel, isNewPR: false, matchesPR: false };
-  }, [dataSource, parsedData, liftType, e1rmFormula, unitType, latestSessionDate]);
+  }, [
+    dataSource,
+    parsedData,
+    liftType,
+    e1rmFormula,
+    unitType,
+    latestSessionDate,
+  ]);
 
   // Prevent initial render on standards-only scale, then jumping once
   // authenticated user data (PR/E1RM) hydrates and expands min/max bounds.
@@ -298,18 +312,20 @@ export function StandardsSlider({
       : Infinity;
   const nowE1RMDisplay = nowNotch
     ? getDisplayWeight(
-        { weight: nowNotch.e1rm, unitType: nowNotch.unitType || nativeUnitType },
+        {
+          weight: nowNotch.e1rm,
+          unitType: nowNotch.unitType || nativeUnitType,
+        },
         isMetric,
       ).value
     : Infinity;
-  const userMin =
-    isOwnData(dataSource)
-      ? Math.min(
-          athleteRankingWeight > 0 ? athleteRankingWeight : Infinity,
-          periodMinE1RMDisplay,
-          nowE1RMDisplay,
-        )
-      : Infinity;
+  const userMin = isOwnData(dataSource)
+    ? Math.min(
+        athleteRankingWeight > 0 ? athleteRankingWeight : Infinity,
+        periodMinE1RMDisplay,
+        nowE1RMDisplay,
+      )
+    : Infinity;
   const effectiveMin = Number.isFinite(userMin)
     ? Math.min(standardsMin, userMin)
     : standardsMin;
@@ -485,7 +501,10 @@ export function StandardsSlider({
       isMetric,
     ).value;
     const nowWeightDisp = getDisplayWeight(
-      { weight: nowNotch.weight, unitType: nowNotch.unitType || nativeUnitType },
+      {
+        weight: nowNotch.weight,
+        unitType: nowNotch.unitType || nativeUnitType,
+      },
       isMetric,
     ).value;
     const nowIsSingle = Number(nowNotch.reps) === 1;
@@ -511,7 +530,8 @@ export function StandardsSlider({
           )
         : 0;
     const isNewPR =
-      bestExcludingNow > 0 && nowE1rmDisp > bestExcludingNow * (1 + PR_MATCH_THRESHOLD);
+      bestExcludingNow > 0 &&
+      nowE1rmDisp > bestExcludingNow * (1 + PR_MATCH_THRESHOLD);
     const matchesPR =
       !isNewPR &&
       bestExcludingNow > 0 &&
@@ -546,12 +566,10 @@ export function StandardsSlider({
           <div className="text-muted-foreground">
             {nowNotch.reps} × {nowWeightDisp}
             {unitType}
-            {nowNotch.date && (
-              <> · {getReadableDateString(nowNotch.date)}</>
-            )}
+            {nowNotch.date && <> · {getReadableDateString(nowNotch.date)}</>}
           </div>
           {isNewPR && bestExcludingNow > 0 && (
-            <div className="text-green-400 font-medium">
+            <div className="font-medium text-green-400">
               +{Math.round(nowE1rmDisp - bestExcludingNow)}
               {unitType} over previous best
             </div>

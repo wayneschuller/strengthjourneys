@@ -31,13 +31,8 @@ import {
 } from "@/lib/localStorage-keys";
 
 export function HomeImportMergeNudge() {
-  const {
-    dataSource,
-    importProfile,
-    parsedData,
-    rawRows,
-    sheetInfo,
-  } = useUserLiftingData();
+  const { dataSource, importProfile, parsedData, rawRows, sheetInfo } =
+    useUserLiftingData();
   const trackedImpressionKeyRef = useRef(null);
   const { dashboardStage, sessionCount } = useMemo(
     () => getDashboardStage({ parsedData, rawRows, sheetInfo }),
@@ -57,7 +52,8 @@ export function HomeImportMergeNudge() {
   const shouldShowFreshness =
     dataSource === "sheet" &&
     Boolean(importProfile?.lastSourceId) &&
-    (!importProfile?.lastSheetId || importProfile.lastSheetId === sheetInfo?.ssid);
+    (!importProfile?.lastSheetId ||
+      importProfile.lastSheetId === sheetInfo?.ssid);
   const shouldShow =
     dataSource === "sheet" &&
     !shouldShowFreshness &&

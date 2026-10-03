@@ -619,8 +619,7 @@ const PAGE_CONFIG = {
       {
         href: "/strength-levels/squat",
         label: "Squat Strength Standards",
-        description:
-          "See where your squat ranks by bodyweight, age, and sex.",
+        description: "See where your squat ranks by bodyweight, age, and sex.",
       },
       {
         href: "/progress-guide/squat",
@@ -631,8 +630,7 @@ const PAGE_CONFIG = {
       {
         href: "/warm-up-sets-calculator",
         label: "Build Warm-Up Sets",
-        description:
-          "Generate warm-up percentages from your estimated max.",
+        description: "Generate warm-up percentages from your estimated max.",
       },
     ],
   },
@@ -689,8 +687,7 @@ const PAGE_CONFIG = {
       {
         href: "/strength-levels/bench-press",
         label: "Bench Press Strength Standards",
-        description:
-          "See where your bench ranks by bodyweight, age, and sex.",
+        description: "See where your bench ranks by bodyweight, age, and sex.",
       },
       {
         href: "/progress-guide/bench-press",
@@ -701,8 +698,7 @@ const PAGE_CONFIG = {
       {
         href: "/warm-up-sets-calculator",
         label: "Build Warm-Up Sets",
-        description:
-          "Generate warm-up percentages from your estimated max.",
+        description: "Generate warm-up percentages from your estimated max.",
       },
     ],
   },
@@ -766,8 +762,7 @@ const PAGE_CONFIG = {
       {
         href: "/warm-up-sets-calculator",
         label: "Build Warm-Up Sets",
-        description:
-          "Generate warm-up percentages from your estimated max.",
+        description: "Generate warm-up percentages from your estimated max.",
       },
     ],
   },
@@ -820,8 +815,7 @@ const PAGE_CONFIG = {
       {
         href: "/strength-levels/strict-press",
         label: "Strict Press Strength Standards",
-        description:
-          "See where your press ranks by bodyweight, age, and sex.",
+        description: "See where your press ranks by bodyweight, age, and sex.",
       },
       {
         href: "/progress-guide/strict-press",
@@ -832,8 +826,7 @@ const PAGE_CONFIG = {
       {
         href: "/warm-up-sets-calculator",
         label: "Build Warm-Up Sets",
-        description:
-          "Generate warm-up percentages from your estimated max.",
+        description: "Generate warm-up percentages from your estimated max.",
       },
     ],
   },

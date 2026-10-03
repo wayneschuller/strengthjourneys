@@ -76,13 +76,8 @@ export function TheLongGameCard({
   dataMaturityStage: stageFromParent = null,
   sessionCount: sessionCountFromParent = null,
 }) {
-  const {
-    parsedData,
-    isLoading,
-    sheetInfo,
-    streakLeaderboard,
-    dataSource,
-  } = useUserLiftingData();
+  const { parsedData, isLoading, sheetInfo, streakLeaderboard, dataSource } =
+    useUserLiftingData();
   const [intervals, setIntervals] = useState(null);
   // The card opens top to bottom: the consistency rings run their wave, then the
   // streak board grows its bars. The rings report when they are done, so nothing
@@ -713,11 +708,7 @@ function buildLongGameCopyLines({
 }) {
   if (!Array.isArray(parsedData) || parsedData.length === 0) return [];
 
-  const trainingDates = [
-    ...new Set(
-      parsedData.map((entry) => entry.date),
-    ),
-  ];
+  const trainingDates = [...new Set(parsedData.map((entry) => entry.date))];
   const startDate = trainingDates[0];
   const endDate = trainingDates[trainingDates.length - 1];
   const lines = [

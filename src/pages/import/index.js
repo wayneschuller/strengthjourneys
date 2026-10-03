@@ -486,13 +486,8 @@ function ImportPageSeo() {
 
 export default function ImportPage() {
   const { status: authStatus } = useSession();
-  const {
-    sheetInfo,
-    mutate,
-    parsedData,
-    dataSource,
-    importProfile,
-  } = useUserLiftingData();
+  const { sheetInfo, mutate, parsedData, dataSource, importProfile } =
+    useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -602,7 +597,9 @@ export default function ImportPage() {
   // flips before paint for someone with a stored sheet, so the first-visit
   // heading and benefits row never flash for them.
   const showReturningCopy =
-    isOwnData(dataSource) || importProfile?.lastSourceId || dataSource === "restoring";
+    isOwnData(dataSource) ||
+    importProfile?.lastSourceId ||
+    dataSource === "restoring";
 
   return (
     <>
@@ -825,9 +822,8 @@ export default function ImportPage() {
                 <div className="flex-1">
                   <h3 className="text-sm font-medium">Need a quick copy?</h3>
                   <p className="text-muted-foreground text-xs">
-                    Download all{" "}
-                    {parsedData.length.toLocaleString()}{" "}
-                    rows as CSV.
+                    Download all {parsedData.length.toLocaleString()} rows as
+                    CSV.
                   </p>
                 </div>
                 <Button

@@ -55,7 +55,9 @@ export function buildLiftResultSummary({
     unit,
     e1rm,
     formula,
-    bodyweightMultiple: hasBodyWeight ? Number((e1rm / bodyWeight).toFixed(2)) : null,
+    bodyweightMultiple: hasBodyWeight
+      ? Number((e1rm / bodyWeight).toFixed(2))
+      : null,
     rating: liftData ? { name: liftData.rating, emoji: liftData.emoji } : null,
     percentiles: percentiles
       ? SHAREABLE_UNIVERSES.filter((u) => percentiles[u] != null).map((u) => ({
@@ -119,7 +121,9 @@ export function formatLiftResultText(summary) {
   }
 
   if (nextTier?.name && nextTier?.diff) {
-    blocks.push(`Next tier: ${nextTier.emoji ?? ""} ${nextTier.name}, ${nextTier.diff}${unit} away`.trim());
+    blocks.push(
+      `Next tier: ${nextTier.emoji ?? ""} ${nextTier.name}, ${nextTier.diff}${unit} away`.trim(),
+    );
   }
 
   blocks.push(`Source: ${sourceUrl}`);

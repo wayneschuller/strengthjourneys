@@ -119,13 +119,15 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
  */
 function WarmUpSetsCalculatorMain({ relatedArticles }) {
   const router = useRouter();
-  const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
+  const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
+    useTransientSuccess();
   const { sex, bioDataIsInitialized } = useAthleteBio();
-  const [isMetric, setIsMetric, , , isMetricIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
-    false,
-    false,
-  );
+  const [isMetric, setIsMetric, , , isMetricIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
+      false,
+      false,
+    );
   const [barType, setBarType, barTypeIsDefault, , barTypeIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE,
@@ -139,34 +141,43 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     sex,
     storedBarType: explicitBarType,
   });
-  const [platePreference, setPlatePreference, , , platePreferenceIsInitialized] = useStateFromQueryOrLocalStorage(
+  const [
+    platePreference,
+    setPlatePreference,
+    ,
+    ,
+    platePreferenceIsInitialized,
+  ] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE,
     "red",
     false,
     null,
     (value) => value === "red" || value === "blue",
   );
-  const [warmupSetCount, setWarmupSetCount, , , warmupSetCountIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT,
-    4,
-    false,
-    null,
-    (value) => Number.isInteger(value) && value >= 2 && value <= 6,
-  );
-  const [reps, setReps, , , repsIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.WARMUP_REPS,
-    5,
-    false,
-    null,
-    (value) => Number.isInteger(value) && value >= 1 && value <= 12,
-  );
-  const [weight, setWeight, , , weightIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.WARMUP_WEIGHT,
-    100,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value > 0,
-  );
+  const [warmupSetCount, setWarmupSetCount, , , warmupSetCountIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT,
+      4,
+      false,
+      null,
+      (value) => Number.isInteger(value) && value >= 2 && value <= 6,
+    );
+  const [reps, setReps, , , repsIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.WARMUP_REPS,
+      5,
+      false,
+      null,
+      (value) => Number.isInteger(value) && value >= 1 && value <= 12,
+    );
+  const [weight, setWeight, , , weightIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.WARMUP_WEIGHT,
+      100,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value > 0,
+    );
   const warmupQuery = useMemo(
     () => ({
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: String(isMetric),
@@ -237,7 +248,8 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     }
 
     const minIncrement = metric ? 2.5 : 5;
-    const roundedWeight = minIncrement * Math.ceil(numericWeight / minIncrement);
+    const roundedWeight =
+      minIncrement * Math.ceil(numericWeight / minIncrement);
     return Math.min(maximum, Math.max(minimum, roundedWeight));
   };
 

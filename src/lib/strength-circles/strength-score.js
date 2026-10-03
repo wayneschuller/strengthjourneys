@@ -37,7 +37,7 @@ export const LIFT_TYPE_TO_CALCULATOR_URL = Object.fromEntries(
 export const DEFAULT_E1RM_KG = {
   "Back Squat": 115, // ~253lb
   "Bench Press": 90, // ~198lb
-  "Deadlift": 135, // ~298lb
+  Deadlift: 135, // ~298lb
   "Strict Press": 60, // ~132lb
 };
 
@@ -81,14 +81,19 @@ export function averagePercentiles(percentilesByLift, universe) {
     .filter((value) => value != null);
 
   if (!values.length) return null;
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  return Math.round(
+    values.reduce((sum, value) => sum + value, 0) / values.length,
+  );
 }
 
 export function sumStandards(standards) {
   if (!standards?.length) return null;
 
   return KILGORE_LEVELS.reduce((acc, level) => {
-    acc[level] = standards.reduce((sum, standard) => sum + (standard?.[level] ?? 0), 0);
+    acc[level] = standards.reduce(
+      (sum, standard) => sum + (standard?.[level] ?? 0),
+      0,
+    );
     return acc;
   }, {});
 }

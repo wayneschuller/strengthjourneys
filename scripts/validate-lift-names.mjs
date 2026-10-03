@@ -33,7 +33,10 @@ registerHooks({
   load(url, context, nextLoad) {
     // The lift registry imports its JSON files with no import attribute, which
     // bare Node refuses before a hook could step in. Serve them as modules.
-    if (url.startsWith(pathToFileURL(sourceRoot).href) && url.endsWith(".json")) {
+    if (
+      url.startsWith(pathToFileURL(sourceRoot).href) &&
+      url.endsWith(".json")
+    ) {
       return {
         shortCircuit: true,
         format: "module",
@@ -52,8 +55,7 @@ const { normalizeLiftTypeNames } =
   await import("../src/lib/import/parsers/parser-utilities.js");
 const { CURATED_LIFTS } = await import("../src/lib/lifts/lift-registry.js");
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
-const { detectFormat } =
-  await import("../src/lib/import/import-dispatcher.js");
+const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
 const { parseStrongData } =
   await import("../src/lib/import/parsers/strong-parser.js");
 
@@ -63,7 +65,10 @@ const owners = new Map();
 for (const lift of CURATED_LIFTS) {
   for (const name of [lift.liftType, ...(lift.synonyms ?? [])]) {
     assert.equal(normalizeLiftTypeNames(name), lift.liftType, name);
-    const key = name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const key = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
     assert.ok(
       !owners.has(key) || owners.get(key) === lift.liftType,
       `"${name}" names both ${owners.get(key)} and ${lift.liftType}`,

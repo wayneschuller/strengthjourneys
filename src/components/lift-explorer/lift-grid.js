@@ -107,7 +107,9 @@ export function LiftGrid() {
   // The big four keep the dashboard's fixed order under every lens.
   const bigFour = useMemo(() => {
     const matching = new Set(
-      filterByQuery(BIG_FOUR_LIFTS, normalizedQuery).map((lift) => lift.liftType),
+      filterByQuery(BIG_FOUR_LIFTS, normalizedQuery).map(
+        (lift) => lift.liftType,
+      ),
     );
     return BIG_FOUR_CARD_LIFTS.filter((card) => matching.has(card.liftType));
   }, [normalizedQuery]);
@@ -127,7 +129,9 @@ export function LiftGrid() {
       item.liftType.toLowerCase().includes(normalizedQuery),
     );
     if (sortMode === "stale") {
-      const established = pool.filter((item) => item.sets >= STALE_LENS_MIN_SETS);
+      const established = pool.filter(
+        (item) => item.sets >= STALE_LENS_MIN_SETS,
+      );
       if (established.length > 0) pool = established;
     }
     return sortStats(pool, sortMode);
@@ -161,7 +165,11 @@ export function LiftGrid() {
             className="pl-9"
           />
         </div>
-        <Tabs value={sortMode} onValueChange={setSortMode} className="sm:ml-auto">
+        <Tabs
+          value={sortMode}
+          onValueChange={setSortMode}
+          className="sm:ml-auto"
+        >
           <TabsList className="grid h-9 w-full grid-cols-4 sm:w-auto">
             {SORT_MODES.map((mode) => (
               <TabsTrigger
@@ -217,7 +225,8 @@ export function LiftGrid() {
               />
             ))}
           </ul>
-          {(hiddenTextCount > 0 || (isTextListExpanded && !normalizedQuery)) && (
+          {(hiddenTextCount > 0 ||
+            (isTextListExpanded && !normalizedQuery)) && (
             <button
               type="button"
               onClick={() => setIsTextListExpanded((expanded) => !expanded)}
@@ -319,7 +328,9 @@ function TileStats({ stats, hasLoaded }) {
       title={`Last trained ${getLongReadableDateString(stats.lastDate) ?? stats.lastDate}`}
     >
       {stats.sets.toLocaleString()} {stats.sets === 1 ? "set" : "sets"}
-      {stats.age ? ` · ${stats.age === "today" ? "today" : `${stats.age} ago`}` : ""}
+      {stats.age
+        ? ` · ${stats.age === "today" ? "today" : `${stats.age} ago`}`
+        : ""}
     </span>
   );
 }

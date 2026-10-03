@@ -148,8 +148,7 @@ export function ChatQuotaMeter({ quota }) {
             tone === "normal" && "text-muted-foreground",
             tone === "warn" &&
               "text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-950",
-            tone === "blocked" &&
-              "text-destructive hover:bg-destructive/10",
+            tone === "blocked" && "text-destructive hover:bg-destructive/10",
           )}
           type="button"
           variant="ghost"
@@ -162,14 +161,14 @@ export function ChatQuotaMeter({ quota }) {
         <div className="space-y-2 p-3">
           <div className="flex items-center justify-between gap-3 text-xs">
             <p className="font-medium">{copy.title}</p>
-            <p className="font-mono text-muted-foreground">
+            <p className="text-muted-foreground font-mono">
               {quota.used} / {quota.limit}
             </p>
           </div>
-          <Progress className="h-2 bg-muted" value={usedPercent} />
-          <p className="text-xs text-muted-foreground">{copy.detail}</p>
+          <Progress className="bg-muted h-2" value={usedPercent} />
+          <p className="text-muted-foreground text-xs">{copy.detail}</p>
         </div>
-        <div className="border-t px-3 py-2 text-xs text-muted-foreground">
+        <div className="text-muted-foreground border-t px-3 py-2 text-xs">
           {copy.footer}
         </div>
       </HoverCardContent>
@@ -201,7 +200,7 @@ export function ChatQuotaLimitNotice({ quota }) {
       <div className="flex min-w-0 items-start gap-2">
         <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
         <div className="min-w-0">
-          <p className="font-medium leading-snug">{copy.title}</p>
+          <p className="leading-snug font-medium">{copy.title}</p>
           <p className="text-xs leading-snug opacity-80">{copy.detail}</p>
         </div>
       </div>

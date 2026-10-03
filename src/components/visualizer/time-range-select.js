@@ -77,7 +77,9 @@ export function TimeRangeSelect({ timeRange, setTimeRange, liftType }) {
     // AND contain at least one set within the threshold window — otherwise the
     // option exists only to show an empty chart.
     if (firstDateStr >= thresholdDateStr) return;
-    const hasDataInPeriod = relevantData.some((e) => e.date >= thresholdDateStr);
+    const hasDataInPeriod = relevantData.some(
+      (e) => e.date >= thresholdDateStr,
+    );
     if (!hasDataInPeriod) return;
 
     validSelectTimeDomains.push({
@@ -127,14 +129,17 @@ export function TimeRangeSelect({ timeRange, setTimeRange, liftType }) {
  */
 export function snapTimeRangeToData(parsedData, liftType, preferredRange) {
   if (preferredRange === "MAX") return "MAX";
-  if (!Array.isArray(parsedData) || parsedData.length === 0) return preferredRange;
+  if (!Array.isArray(parsedData) || parsedData.length === 0)
+    return preferredRange;
 
   const relevantData = liftType
     ? parsedData.filter((e) => e.liftType === liftType)
     : parsedData;
   if (relevantData.length === 0) return preferredRange;
 
-  const startIdx = periodTargets.findIndex((p) => p.shortLabel === preferredRange);
+  const startIdx = periodTargets.findIndex(
+    (p) => p.shortLabel === preferredRange,
+  );
   if (startIdx === -1) return preferredRange;
 
   for (let i = startIdx; i < periodTargets.length; i++) {

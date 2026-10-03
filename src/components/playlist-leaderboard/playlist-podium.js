@@ -151,7 +151,7 @@ function PodiumTile({
       </ArtTag>
 
       {isAdmin && (
-        <div className="absolute right-1 top-1 rounded-full bg-background/80 backdrop-blur-sm">
+        <div className="bg-background/80 absolute top-1 right-1 rounded-full backdrop-blur-sm">
           <PlaylistAdminMenu
             playlist={playlist}
             onEdit={onEdit}

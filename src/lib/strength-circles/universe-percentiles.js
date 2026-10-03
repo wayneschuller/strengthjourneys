@@ -91,8 +91,7 @@ export function computeStrengthResults(bio, liftKgs) {
   // Total: only if all three lifts are present
   let total = null;
   if (enteredKeys.length === 3) {
-    const totalKg =
-      liftKgs.squat + liftKgs.bench + liftKgs.deadlift;
+    const totalKg = liftKgs.squat + liftKgs.bench + liftKgs.deadlift;
     const totalStandard = sumStandards([
       lifts.squat.standard,
       lifts.bench.standard,
@@ -121,8 +120,8 @@ export function computeStrengthResults(bio, liftKgs) {
   }
 
   return {
-    lifts,          // { squat, bench, deadlift } — each null or { e1rmKg, percentiles, standard }
-    total,          // null if fewer than 3 lifts, else { kg, percentiles }
+    lifts, // { squat, bench, deadlift } — each null or { e1rmKg, percentiles, standard }
+    total, // null if fewer than 3 lifts, else { kg, percentiles }
     enteredCount: enteredKeys.length,
     hasAllThree: enteredKeys.length === 3,
   };

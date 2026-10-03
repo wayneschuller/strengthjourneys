@@ -21,11 +21,14 @@ function parseStateValue(value, defaultValue, validateValue) {
               ? parsedValue
               : defaultValue
             : parsedValue;
-    return !validateValue || validateValue(typedValue) ? typedValue : defaultValue;
-  } catch {
-    const fallbackValue = typeof defaultValue === "string" && typeof rawValue === "string"
-      ? rawValue
+    return !validateValue || validateValue(typedValue)
+      ? typedValue
       : defaultValue;
+  } catch {
+    const fallbackValue =
+      typeof defaultValue === "string" && typeof rawValue === "string"
+        ? rawValue
+        : defaultValue;
     return !validateValue || validateValue(fallbackValue)
       ? fallbackValue
       : defaultValue;
@@ -98,7 +101,11 @@ export const useStateFromQueryOrLocalStorage = (
     let usingDefault = true;
 
     if (queryValue !== undefined) {
-      initialState = parseStateValue(queryValue, defaultValue, validateValueRef.current);
+      initialState = parseStateValue(
+        queryValue,
+        defaultValue,
+        validateValueRef.current,
+      );
       usingDefault = false;
     } else if (typeof window !== "undefined") {
       const localStorageValue = localStorage.getItem(key);
@@ -138,10 +145,7 @@ export const useStateFromQueryOrLocalStorage = (
         [key]: stringifyStateValue(state),
         ...(extras &&
           Object.fromEntries(
-            Object.entries(extras).map(([k, v]) => [
-              k,
-              stringifyStateValue(v),
-            ]),
+            Object.entries(extras).map(([k, v]) => [k, stringifyStateValue(v)]),
           )),
       };
 
@@ -173,5 +177,11 @@ export const useStateFromQueryOrLocalStorage = (
   // write the new value to localStorage when state changes.
   const setStateSilent = setState;
 
-  return [state, setStateWithInteraction, isDefault, setStateSilent, isInitialized];
+  return [
+    state,
+    setStateWithInteraction,
+    isDefault,
+    setStateSilent,
+    isInitialized,
+  ];
 };

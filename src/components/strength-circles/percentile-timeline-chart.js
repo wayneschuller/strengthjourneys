@@ -18,13 +18,17 @@ import {
 } from "recharts";
 
 const UNIVERSE_COLORS = {
-  "General Population":  "var(--chart-1)",
-  "Gym-Goers":           "var(--chart-2)",
-  "Barbell Lifters":     "var(--chart-3)",
+  "General Population": "var(--chart-1)",
+  "Gym-Goers": "var(--chart-2)",
+  "Barbell Lifters": "var(--chart-3)",
   "Powerlifting Culture": "var(--chart-4)",
 };
 
-export default function PercentileTimelineChart({ data, currentPercentile, activeUniverse = "General Population" }) {
+export default function PercentileTimelineChart({
+  data,
+  currentPercentile,
+  activeUniverse = "General Population",
+}) {
   const dataKey = activeUniverse;
   const chartColor = UNIVERSE_COLORS[activeUniverse] || "var(--chart-1)";
 
@@ -42,10 +46,17 @@ export default function PercentileTimelineChart({ data, currentPercentile, activ
     }
     if (spanDays <= 365 * 4) {
       // Medium: show "Mar '24"
-      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit", timeZone: tz });
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        year: "2-digit",
+        timeZone: tz,
+      });
     }
     // Long: show "'20", "'21", etc.
-    return "\u2019" + d.toLocaleDateString("en-US", { year: "2-digit", timeZone: tz });
+    return (
+      "\u2019" +
+      d.toLocaleDateString("en-US", { year: "2-digit", timeZone: tz })
+    );
   };
 
   // Thin out tick labels to avoid overlap — show ~5-7 labels max
@@ -72,12 +83,15 @@ export default function PercentileTimelineChart({ data, currentPercentile, activ
 
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         SBD percentile vs. {universeLabel} over time
       </p>
       <div className="h-28 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+          <AreaChart
+            data={data}
+            margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
+          >
             <defs>
               <linearGradient id="pctGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />

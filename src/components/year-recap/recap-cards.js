@@ -20,7 +20,11 @@ export const RECAP_CARDS = [
   { id: "title", label: "Title", Component: TitleCard },
   { id: "sessions", label: "Sessions", Component: SessionsCard },
   { id: "tonnage", label: "Tonnage", Component: TonnageCard },
-  { id: "most-trained", label: "Most trained lift", Component: MostTrainedLiftCard },
+  {
+    id: "most-trained",
+    label: "Most trained lift",
+    Component: MostTrainedLiftCard,
+  },
   { id: "lifetime-prs", label: "Lifetime PRs", Component: LifetimePRsCard },
   { id: "notable-lifts", label: "Notable lifts", Component: NotableLiftsCard },
   { id: "seasonal", label: "Seasonal pattern", Component: SeasonalPatternCard },

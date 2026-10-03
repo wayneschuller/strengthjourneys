@@ -30,7 +30,6 @@ const SYSTEM_PROMPT =
   "When writing dates for humans, use US style like June 3. Include the year only when referring to a previous year. Do not show users YYYY-MM-DD dates. " +
   "When writing lifts, prefer 5@225lb over 225lbx5. For multiple sets, write 3x5@225lb.";
 
-
 const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 3000;
 const MAX_TOTAL_MESSAGE_CHARS = 12000;
@@ -46,7 +45,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  if (process.env.NODE_ENV === "production" && !isAllowedOrigin(req.headers.origin)) {
+  if (
+    process.env.NODE_ENV === "production" &&
+    !isAllowedOrigin(req.headers.origin)
+  ) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
@@ -167,7 +169,10 @@ export default async function handler(req, res) {
       reasoning: picked.reasoning,
       // The lifter only ever sees "An error occurred", so keep the cause in the logs.
       onError: ({ error }) => {
-        console.error(`AI chat model ${picked.id} failed:`, error?.message ?? error);
+        console.error(
+          `AI chat model ${picked.id} failed:`,
+          error?.message ?? error,
+        );
       },
     }).toUIMessageStream({
       originalMessages: userMessages,
@@ -383,7 +388,7 @@ const LIFTING_CONTEXT_RULES = [
   "Use this context only when it helps answer the user's actual question.",
   "If a useful section is missing, say what is missing instead of inventing it.",
   "When giving personalized feedback, cite the specific dates, lifts, records, tonnage, frequency, or consistency data you used.",
-  "The context opens with an \"about this data\" section that explains its conventions; follow it, especially that sets are weight×reps and that best N-rep sets are not tested maxes.",
+  'The context opens with an "about this data" section that explains its conventions; follow it, especially that sets are weight×reps and that best N-rep sets are not tested maxes.',
   "Dates in the context are YYYY-MM-DD, but user-facing answers should use human-readable dates.",
 ].join(" ");
 
@@ -396,10 +401,3 @@ function buildUserLiftingContext(userProvidedMetadata) {
     LIFTING_CONTEXT_CLOSING_TAG,
   ].join("\n");
 }
-
-
-
-
-
-
-

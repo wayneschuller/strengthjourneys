@@ -1,4 +1,3 @@
-
 import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
 import {
@@ -59,39 +58,51 @@ export function MostTrainedLiftCard({ year, isDemo, isActive = true }) {
 
   return (
     <div className="flex flex-col items-center justify-center text-center">
-      <div className="mb-4 rounded-xl bg-accent/40 p-4">
+      <div className="bg-accent/40 mb-4 rounded-xl p-4">
         {lift ? (
           <LiftArtwork liftType={lift} size="lg" animate isActive={isActive} />
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
-            animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.5 }}
+            animate={
+              isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.5 }
+            }
             transition={{ type: "spring", stiffness: 220, damping: 18 }}
           >
-            <Trophy className="h-12 w-12 text-chart-5" />
+            <Trophy className="text-chart-5 h-12 w-12" />
           </motion.div>
         )}
       </div>
       <motion.p
-        className="text-2xl font-semibold text-chart-1"
+        className="text-chart-1 text-2xl font-semibold"
         initial={{ opacity: 0, y: 16 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-        transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.25 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 20,
+          delay: isActive ? 0.25 : 0,
+        }}
       >
         <span className="block">{label}</span>
         <span className="block">in {year}</span>
       </motion.p>
       <motion.p
-        className="mt-2 text-4xl font-bold text-foreground md:text-5xl"
+        className="text-foreground mt-2 text-4xl font-bold md:text-5xl"
         initial={{ opacity: 0, x: -24 }}
         animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -24 }}
-        transition={{ type: "spring", stiffness: 180, damping: 18, delay: isActive ? 0.35 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 180,
+          damping: 18,
+          delay: isActive ? 0.35 : 0,
+        }}
       >
         {lift ?? "—"}
       </motion.p>
       {lift && (sets > 0 || reps > 0) && (
         <motion.p
-          className="mt-2 text-sm text-muted-foreground"
+          className="text-muted-foreground mt-2 text-sm"
           initial={{ opacity: 0, y: 8 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
           transition={{ delay: isActive ? 0.4 : 0 }}
@@ -101,7 +112,7 @@ export function MostTrainedLiftCard({ year, isDemo, isActive = true }) {
       )}
       {sessionsLine && (
         <motion.p
-          className="mt-2 text-sm text-muted-foreground"
+          className="text-muted-foreground mt-2 text-sm"
           initial={{ opacity: 0, y: 8 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
           transition={{ delay: isActive ? 0.45 : 0 }}
@@ -110,7 +121,7 @@ export function MostTrainedLiftCard({ year, isDemo, isActive = true }) {
         </motion.p>
       )}
       <motion.p
-        className="mt-3 text-sm italic text-muted-foreground"
+        className="text-muted-foreground mt-3 text-sm italic"
         initial={{ opacity: 0, x: 20 }}
         animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
         transition={{ delay: isActive ? 0.5 : 0 }}

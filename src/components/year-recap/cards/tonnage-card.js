@@ -1,4 +1,3 @@
-
 import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -26,7 +25,12 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
     [parsedData, year, isMetric],
   );
 
-  const equiv = pickTonnageEquivalent(tonnage, primaryUnit, equivRef, `tonnage-${year}`);
+  const equiv = pickTonnageEquivalent(
+    tonnage,
+    primaryUnit,
+    equivRef,
+    `tonnage-${year}`,
+  );
 
   const showPrevYearComparison = useMemo(() => {
     const now = new Date();
@@ -40,10 +44,18 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
   const comparisonYearWord = isCurrentYear ? "last" : "previous";
 
   const comparisonText = useMemo(() => {
-    if (!showPrevYearComparison || prevYearTonnage == null || prevYearTonnage <= 0) return null;
-    const pct = Math.round(((tonnage - prevYearTonnage) / prevYearTonnage) * 100);
+    if (
+      !showPrevYearComparison ||
+      prevYearTonnage == null ||
+      prevYearTonnage <= 0
+    )
+      return null;
+    const pct = Math.round(
+      ((tonnage - prevYearTonnage) / prevYearTonnage) * 100,
+    );
     if (pct > 0) return `Up ${pct}% from ${comparisonYearWord} year`;
-    if (pct < 0) return `${Math.abs(pct)}% less than ${comparisonYearWord} year`;
+    if (pct < 0)
+      return `${Math.abs(pct)}% less than ${comparisonYearWord} year`;
     return `Same as ${comparisonYearWord} year`;
   }, [showPrevYearComparison, tonnage, prevYearTonnage, comparisonYearWord]);
 
@@ -63,30 +75,44 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
     <div className="flex flex-col items-center justify-center text-center">
       <motion.div
         initial={{ opacity: 0, rotate: -12 }}
-        animate={isActive ? { opacity: 1, rotate: 0 } : { opacity: 0, rotate: -12 }}
+        animate={
+          isActive ? { opacity: 1, rotate: 0 } : { opacity: 0, rotate: -12 }
+        }
         transition={{ type: "spring", stiffness: 200, damping: 18 }}
       >
-        <Dumbbell className="mb-4 h-12 w-12 text-chart-3" />
+        <Dumbbell className="text-chart-3 mb-4 h-12 w-12" />
       </motion.div>
       <motion.p
-        className="text-4xl font-bold tabular-nums text-foreground md:text-5xl"
+        className="text-foreground text-4xl font-bold tabular-nums md:text-5xl"
         initial={{ opacity: 0, scale: 0.8 }}
-        animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-        transition={{ type: "spring", stiffness: 260, damping: 22, delay: isActive ? 0.08 : 0 }}
+        animate={
+          isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }
+        }
+        transition={{
+          type: "spring",
+          stiffness: 260,
+          damping: 22,
+          delay: isActive ? 0.08 : 0,
+        }}
       >
         {formatYearTonnageTitle(tonnage)} {primaryUnit}
       </motion.p>
       <motion.p
-        className="mt-2 text-xl font-semibold text-chart-2"
+        className="text-chart-2 mt-2 text-xl font-semibold"
         initial={{ opacity: 0, y: 12 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-        transition={{ type: "spring", stiffness: 180, damping: 20, delay: isActive ? 0.18 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 180,
+          damping: 20,
+          delay: isActive ? 0.18 : 0,
+        }}
       >
         moved {yearPhrase}
       </motion.p>
       {comparisonText && (
         <motion.p
-          className="mt-2 text-sm text-muted-foreground"
+          className="text-muted-foreground mt-2 text-sm"
           initial={{ opacity: 0, y: 8 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
           transition={{ delay: isActive ? 0.25 : 0 }}
@@ -96,12 +122,13 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
       )}
       {equiv && (
         <motion.p
-          className="mt-4 text-sm text-chart-4"
+          className="text-chart-4 mt-4 text-sm"
           initial={{ opacity: 0, x: -20 }}
           animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
           transition={{ delay: isActive ? 0.35 : 0 }}
         >
-          About {formattedCount} {equiv.name}{equiv.count !== 1 ? "s" : ""} {equiv.emoji}
+          About {formattedCount} {equiv.name}
+          {equiv.count !== 1 ? "s" : ""} {equiv.emoji}
         </motion.p>
       )}
       {tonnageByLift.length > 0 && (
@@ -136,13 +163,13 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
                       className="h-20 w-20 object-contain"
                     />
                   ) : (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {liftType.slice(0, 2)}
                     </span>
                   )}
                 </div>
                 <div className="flex min-w-0 flex-1 items-center">
-                  <div className="flex h-5 min-w-0 flex-1 overflow-hidden rounded-md bg-muted/50">
+                  <div className="bg-muted/50 flex h-5 min-w-0 flex-1 overflow-hidden rounded-md">
                     <motion.div
                       className="h-full rounded-md"
                       style={{
@@ -204,7 +231,8 @@ const YEARLY_TONNAGE_EQUIVALENTS = {
 };
 
 function pickTonnageEquivalent(tonnage, unitType, ref, key) {
-  const equivalents = YEARLY_TONNAGE_EQUIVALENTS[unitType] ?? YEARLY_TONNAGE_EQUIVALENTS.lb;
+  const equivalents =
+    YEARLY_TONNAGE_EQUIVALENTS[unitType] ?? YEARLY_TONNAGE_EQUIVALENTS.lb;
   const valid = equivalents.filter((eq) => tonnage / eq.weight >= 0.1);
   const candidates = valid.length > 0 ? valid : equivalents;
 

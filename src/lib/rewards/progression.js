@@ -39,19 +39,21 @@ export function getActiveCriteria(reward) {
 }
 
 export function getRewardRequirement(reward) {
-  const requirements = getActiveCriteria(reward).map(({ metric, threshold }) => {
-    if (metric === "setCount") {
-      return threshold === 1 ? "your first set" : `${threshold} sets`;
-    }
-    if (metric === "repCount") {
-      return threshold === 1 ? "your first rep" : `${threshold} reps`;
-    }
-    if (metric === "historyDays") {
-      const weeks = Math.round(threshold / 7);
-      return `${weeks} week${weeks === 1 ? "" : "s"} of history`;
-    }
-    return `${threshold} ${metric}`;
-  });
+  const requirements = getActiveCriteria(reward).map(
+    ({ metric, threshold }) => {
+      if (metric === "setCount") {
+        return threshold === 1 ? "your first set" : `${threshold} sets`;
+      }
+      if (metric === "repCount") {
+        return threshold === 1 ? "your first rep" : `${threshold} reps`;
+      }
+      if (metric === "historyDays") {
+        const weeks = Math.round(threshold / 7);
+        return `${weeks} week${weeks === 1 ? "" : "s"} of history`;
+      }
+      return `${threshold} ${metric}`;
+    },
+  );
 
   if (requirements[0] === "your first set") return "Log your first set";
   return joinRequirements(
@@ -99,9 +101,7 @@ function joinRequirements(requirements, conjunction) {
 }
 
 export function getTrainingRewardMetrics(parsedData) {
-  const completedSets = Array.isArray(parsedData)
-    ? parsedData
-    : [];
+  const completedSets = Array.isArray(parsedData) ? parsedData : [];
 
   if (completedSets.length === 0) {
     return { setCount: 0, repCount: 0, historyDays: 0, hasTrainingData: false };

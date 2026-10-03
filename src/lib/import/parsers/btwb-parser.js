@@ -13,7 +13,19 @@ const TITLE_COLUMN_CANDIDATES = [
   "Title",
   "title",
 ];
-const SKIP_WORKOUT_TITLES = new Set(["Every", "FT", "RFT", "RFQ", "AMRAP", "Chipper", "Complex", "Lifting", "RemRep", "EMOM", "Tabata"]);
+const SKIP_WORKOUT_TITLES = new Set([
+  "Every",
+  "FT",
+  "RFT",
+  "RFQ",
+  "AMRAP",
+  "Chipper",
+  "Complex",
+  "Lifting",
+  "RemRep",
+  "EMOM",
+  "Tabata",
+]);
 const BTWB_LIFT_NAME_OVERRIDES = {
   "overhead presses": "Strict Press",
   "strict presses": "Strict Press",
@@ -90,7 +102,12 @@ function extractLiftType(rawTitle) {
 
   const match = title.match(/^[A-Za-z][A-Za-z '&/()-]*/);
   const parsed = match?.[0]?.replace(/\s+/g, " ").trim();
-  if (!parsed || SKIP_WORKOUT_TITLES.has(parsed) || SKIP_WORKOUT_TITLES.has(depluralizeLiftName(parsed))) return null;
+  if (
+    !parsed ||
+    SKIP_WORKOUT_TITLES.has(parsed) ||
+    SKIP_WORKOUT_TITLES.has(depluralizeLiftName(parsed))
+  )
+    return null;
 
   return normalizeBtwbLiftType(parsed);
 }
@@ -283,7 +300,9 @@ export function parseBtwbData(data) {
     // Merge Description and Notes into a single notes field
     const rawNotes = row[notesColumnIndex] || "";
     const descText = String(description).trim();
-    const notesText = String(rawNotes).replace(/^""+|""+$/g, "").trim();
+    const notesText = String(rawNotes)
+      .replace(/^""+|""+$/g, "")
+      .trim();
     const combinedNotes =
       [descText, notesText].filter(Boolean).join("\n") || undefined;
 

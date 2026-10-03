@@ -220,7 +220,8 @@ function AILiftingAssistantMain({ relatedArticles }) {
     { initializeWithValue: false },
   );
   const hasSharedTrainingData = hasAnySharedTrainingData(userLiftingMetadata);
-  const hasSharedFullTrainingData = hasAllSharedTrainingData(userLiftingMetadata);
+  const hasSharedFullTrainingData =
+    hasAllSharedTrainingData(userLiftingMetadata);
   const suggestionContext = useMemo(() => {
     const prioritizedLifts = hasSharedTrainingData
       ? getPrioritizedLiftTypes({
@@ -266,9 +267,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
       sessionTonnageLookup,
       meetDays,
       options: userLiftingMetadata,
-      bio: shareBioDetails
-        ? { age, sex, bodyWeight, heightCm: height }
-        : null,
+      bio: shareBioDetails ? { age, sex, bodyWeight, heightCm: height } : null,
       isMetric,
       standards,
       e1rmFormula,
@@ -304,13 +303,18 @@ function AILiftingAssistantMain({ relatedArticles }) {
       </PageHeader>
       <AILiftingAssistantCard
         hasSharedBioData={dataSource !== "demo" && shareBioDetails}
-        hasSharedFullTrainingData={dataSource !== "demo" && hasSharedFullTrainingData}
+        hasSharedFullTrainingData={
+          dataSource !== "demo" && hasSharedFullTrainingData
+        }
         hasSharedTrainingData={dataSource !== "demo" && hasSharedTrainingData}
         hasLiftingLog={isOwnData(dataSource)}
         loggedLiftTypes={dataSource === "demo" ? undefined : liftTypes}
         personalizationControls={
           <PersonalizationDialog
-            enabled={dataSource !== "demo" && (shareBioDetails || hasSharedTrainingData)}
+            enabled={
+              dataSource !== "demo" &&
+              (shareBioDetails || hasSharedTrainingData)
+            }
             buildSummary={buildCoachContext}
           >
             <BioDetailsCard
@@ -468,11 +472,11 @@ function buildBioDataPrompts(suggestionContext) {
 function hasAnySharedTrainingData(userLiftingMetadata) {
   return Boolean(
     userLiftingMetadata?.all ||
-      userLiftingMetadata?.records ||
-      userLiftingMetadata?.trainingLoad ||
-      userLiftingMetadata?.frequency ||
-      userLiftingMetadata?.consistency ||
-      userLiftingMetadata?.sessionData,
+    userLiftingMetadata?.records ||
+    userLiftingMetadata?.trainingLoad ||
+    userLiftingMetadata?.frequency ||
+    userLiftingMetadata?.consistency ||
+    userLiftingMetadata?.sessionData,
   );
 }
 
@@ -481,10 +485,10 @@ function hasAllSharedTrainingData(userLiftingMetadata) {
 
   return Boolean(
     userLiftingMetadata?.records &&
-      userLiftingMetadata?.trainingLoad &&
-      userLiftingMetadata?.frequency &&
-      userLiftingMetadata?.consistency &&
-      userLiftingMetadata?.sessionData,
+    userLiftingMetadata?.trainingLoad &&
+    userLiftingMetadata?.frequency &&
+    userLiftingMetadata?.consistency &&
+    userLiftingMetadata?.sessionData,
   );
 }
 
@@ -686,16 +690,19 @@ function AILiftingAssistantCard({
     });
   }, []);
 
-  const loadChatQuota = useCallback(async (options = {}) => {
-    try {
-      const response = await fetch("/api/chat/quota");
-      if (!response.ok) return;
-      const data = await response.json();
-      applyQuotaSnapshot(data, options);
-    } catch (error) {
-      devLog("Failed to load AI chat quota", error);
-    }
-  }, [applyQuotaSnapshot]);
+  const loadChatQuota = useCallback(
+    async (options = {}) => {
+      try {
+        const response = await fetch("/api/chat/quota");
+        if (!response.ok) return;
+        const data = await response.json();
+        applyQuotaSnapshot(data, options);
+      } catch (error) {
+        devLog("Failed to load AI chat quota", error);
+      }
+    },
+    [applyQuotaSnapshot],
+  );
 
   const chatFetch = useCallback(
     async (input, init) => {
@@ -839,19 +846,17 @@ function AILiftingAssistantCard({
   }, [router]);
 
   // Helper to send messages with fresh metadata (per AI SDK v6 docs for ChatRequestOptions.body)
-  const sendMessageWithMetadata = useCallback((message) => {
-    if (isChatUnavailable) return;
+  const sendMessageWithMetadata = useCallback(
+    (message) => {
+      if (isChatUnavailable) return;
 
-    reserveQuotaLocally();
-    sendMessage(typeof message === "string" ? { text: message } : message, {
-      body: buildChatRequestBody(),
-    });
-  }, [
-    buildChatRequestBody,
-    isChatUnavailable,
-    reserveQuotaLocally,
-    sendMessage,
-  ]);
+      reserveQuotaLocally();
+      sendMessage(typeof message === "string" ? { text: message } : message, {
+        body: buildChatRequestBody(),
+      });
+    },
+    [buildChatRequestBody, isChatUnavailable, reserveQuotaLocally, sendMessage],
+  );
 
   // Handle submit from PromptInput (receives message object with text)
   const handleSubmit = (message) => {
@@ -1258,7 +1263,9 @@ function AILiftingAssistantCard({
                                   onClick={() => {
                                     if (!isChatUnavailable) {
                                       reserveQuotaLocally();
-                                      regenerate({ body: buildChatRequestBody() });
+                                      regenerate({
+                                        body: buildChatRequestBody(),
+                                      });
                                     }
                                   }}
                                   label="Retry"
@@ -1276,14 +1283,14 @@ function AILiftingAssistantCard({
                           isLastMessage &&
                           suggestedQuestions.length > 0 && (
                             <div className="mt-3 max-w-3xl">
-                              <p className="mb-2 text-xs italic text-muted-foreground">
+                              <p className="text-muted-foreground mb-2 text-xs italic">
                                 Suggested follow-ups
                               </p>
                               <Suggestions>
                                 {suggestedQuestions.map((question) => (
                                   <Suggestion
                                     key={question}
-                                    className="border-border bg-muted/50 px-3 text-foreground hover:bg-muted hover:text-foreground disabled:bg-muted disabled:text-muted-foreground"
+                                    className="border-border bg-muted/50 text-foreground hover:bg-muted hover:text-foreground disabled:bg-muted disabled:text-muted-foreground px-3"
                                     suggestion={question}
                                     disabled={isChatUnavailable}
                                     onClick={(suggestion) => {
@@ -1323,7 +1330,7 @@ function AILiftingAssistantCard({
                       : "AI quota exhausted."
                     : !isChatQuotaReady
                       ? "Checking message quota..."
-                    : "Type a message..."
+                      : "Type a message..."
                 }
                 disabled={isChatUnavailable}
               />

@@ -9,7 +9,20 @@
  */
 import { findChatModel } from "@/lib/ai/chat-model-catalog";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 const REPO_URL = "https://github.com/wayneschuller/strengthjourneys";
 
 /**
@@ -33,7 +46,9 @@ export function CoachDetailsSummary({
       coach?.edition ? (
         <>
           {formatEditionDate(coach.edition)}{" "}
-          <span className="text-muted-foreground font-mono">({coach.edition})</span>
+          <span className="text-muted-foreground font-mono">
+            ({coach.edition})
+          </span>
         </>
       ) : null,
     ],
@@ -67,9 +82,9 @@ export function CoachDetailsSummary({
         ))}
       </dl>
       <p className="text-muted-foreground mt-2">
-        Each prompt version is a revision of our coaching instructions,
-        refined over time with your thumbs up and down. Chats stream to your device and are
-        not stored on our servers. Strength Journeys is{" "}
+        Each prompt version is a revision of our coaching instructions, refined
+        over time with your thumbs up and down. Chats stream to your device and
+        are not stored on our servers. Strength Journeys is{" "}
         <a
           href={REPO_URL}
           target="_blank"

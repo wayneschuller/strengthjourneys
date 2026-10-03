@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { getLiftGuidePath } from "@/lib/lifts/lift-registry";

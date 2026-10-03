@@ -6,9 +6,7 @@ import { useSession } from "next-auth/react";
 import { motion } from "motion/react";
 import { ThumbsSentimentControl } from "@/components/feedback/thumbs-sentiment-control";
 import { Button } from "@/components/ui/button";
-import {
-  trackFeedbackSentiment,
-} from "@/components/feedback/feedback-tracking";
+import { trackFeedbackSentiment } from "@/components/feedback/feedback-tracking";
 
 const CELEBRATE_DURATION_MS = 1200;
 const DEFAULT_REVEAL_DELAY_MS = 8000;
@@ -45,7 +43,9 @@ function getReasonOptions(sentiment) {
 
 function isValidReasonCode(sentiment, reasonCode) {
   if (typeof reasonCode !== "string" || !reasonCode) return false;
-  return getReasonOptions(sentiment).some((reason) => reason.code === reasonCode);
+  return getReasonOptions(sentiment).some(
+    (reason) => reason.code === reasonCode,
+  );
 }
 
 /**
@@ -88,9 +88,10 @@ export function MiniFeedbackWidget({
     const jitterOffset = Math.random() * jitterRange - jitterRange / 2;
     return Math.max(0, Math.round(revealDelayMs + jitterOffset));
   });
-  const safePromptOptions = Array.isArray(promptOptions) && promptOptions.length > 0
-    ? promptOptions
-    : DEFAULT_SHORT_PROMPTS;
+  const safePromptOptions =
+    Array.isArray(promptOptions) && promptOptions.length > 0
+      ? promptOptions
+      : DEFAULT_SHORT_PROMPTS;
   const [promptIndex] = useState(() =>
     Math.floor(Math.random() * safePromptOptions.length),
   );
@@ -182,10 +183,10 @@ export function MiniFeedbackWidget({
     <div
       className={`flex max-h-32 flex-col items-start gap-1.5 overflow-hidden transition-all duration-500 ${
         isHidden
-          ? "invisible pointer-events-none max-h-0 opacity-0"
+          ? "pointer-events-none invisible max-h-0 opacity-0"
           : isRevealed
             ? "visible opacity-100"
-            : "invisible pointer-events-none opacity-0"
+            : "pointer-events-none invisible opacity-0"
       } ${className}`.trim()}
       aria-hidden={isHidden || !isRevealed}
     >
@@ -216,7 +217,7 @@ export function MiniFeedbackWidget({
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="flex flex-wrap items-center gap-1"
         >
-          <span className="text-[11px] text-muted-foreground">Reason:</span>
+          <span className="text-muted-foreground text-[11px]">Reason:</span>
           {reasonOptions.map((reason) => (
             <Button
               key={reason.code}

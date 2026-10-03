@@ -1,4 +1,3 @@
-
 import { useRef, useMemo } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import {
@@ -65,44 +64,62 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -24 }}
         transition={{ type: "spring", stiffness: 220, damping: 22 }}
       >
-        <Sparkles className="mb-4 h-12 w-12 text-chart-1" />
+        <Sparkles className="text-chart-1 mb-4 h-12 w-12" />
       </motion.div>
       <motion.p
-        className="text-xl font-semibold text-chart-2"
+        className="text-chart-2 text-xl font-semibold"
         initial={{ opacity: 0, x: -12 }}
         animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -12 }}
-        transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.1 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 20,
+          delay: isActive ? 0.1 : 0,
+        }}
       >
         Notable lifts {yearLabel}
       </motion.p>
       {prs.length > 0 ? (
         <ul className="mt-4 space-y-2 text-left">
           {prs.map((pr, i) => {
-            const barColors = ["border-l-chart-1", "border-l-chart-2", "border-l-chart-3", "border-l-chart-4", "border-l-chart-5"];
+            const barColors = [
+              "border-l-chart-1",
+              "border-l-chart-2",
+              "border-l-chart-3",
+              "border-l-chart-4",
+              "border-l-chart-5",
+            ];
             return (
-            <motion.li
-              key={`${pr.date}-${pr.liftType}-${pr.reps}-${i}`}
-              initial={{ opacity: 0, x: -12 }}
-              animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -12 }}
-              transition={{ delay: isActive ? i * 0.08 : 0, duration: 0.25 }}
-              className={`flex items-center gap-2 border-l-4 pl-2 ${barColors[i % 5]}`}
-            >
-              {getLiftArtwork(pr.liftType) ? (
-                <span className="shrink-0">
-                  <LiftArtwork liftType={pr.liftType} size="sm" animate={false} />
+              <motion.li
+                key={`${pr.date}-${pr.liftType}-${pr.reps}-${i}`}
+                initial={{ opacity: 0, x: -12 }}
+                animate={
+                  isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -12 }
+                }
+                transition={{ delay: isActive ? i * 0.08 : 0, duration: 0.25 }}
+                className={`flex items-center gap-2 border-l-4 pl-2 ${barColors[i % 5]}`}
+              >
+                {getLiftArtwork(pr.liftType) ? (
+                  <span className="shrink-0">
+                    <LiftArtwork
+                      liftType={pr.liftType}
+                      size="sm"
+                      animate={false}
+                    />
+                  </span>
+                ) : null}
+                <span>
+                  {pr.liftType} {pr.reps}@{getDisplayWeight(pr, isMetric).value}
+                  {getDisplayWeight(pr, isMetric).unit} —{" "}
+                  {getReadableDateString(pr.date)}
                 </span>
-              ) : null}
-              <span>
-                {pr.liftType} {pr.reps}@{getDisplayWeight(pr, isMetric).value}
-                {getDisplayWeight(pr, isMetric).unit} — {getReadableDateString(pr.date)}
-              </span>
-            </motion.li>
+              </motion.li>
             );
           })}
         </ul>
       ) : (
         <motion.p
-          className="mt-4 text-muted-foreground"
+          className="text-muted-foreground mt-4"
           initial={{ opacity: 0 }}
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.2 : 0 }}
@@ -111,7 +128,7 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
         </motion.p>
       )}
       <motion.p
-        className="mt-4 text-sm italic text-muted-foreground"
+        className="text-muted-foreground mt-4 text-sm italic"
         initial={{ opacity: 0, y: 8 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
         transition={{ delay: isActive ? (prs.length > 0 ? 0.5 : 0.35) : 0 }}

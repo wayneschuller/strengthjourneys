@@ -77,7 +77,9 @@ export default async function handler(req, res) {
       }
 
       if (!playlist.thumbnailUrl) {
-        return res.status(400).json({ error: "This playlist has no cover art" });
+        return res
+          .status(400)
+          .json({ error: "This playlist has no cover art" });
       }
 
       let status;

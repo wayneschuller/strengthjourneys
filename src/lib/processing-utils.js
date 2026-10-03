@@ -6,9 +6,7 @@
 import { format } from "date-fns";
 import { estimateE1RM, estimateLiftE1RM } from "@/lib/estimate-e1rm";
 import { LB_PER_KG, toKg } from "@/lib/weight-units";
-import {
-  BIG_FOUR_LIFT_TYPES as CANONICAL_BIG_FOUR_LIFT_TYPES,
-} from "@/lib/lifts/lift-registry";
+import { BIG_FOUR_LIFT_TYPES as CANONICAL_BIG_FOUR_LIFT_TYPES } from "@/lib/lifts/lift-registry";
 
 // =============================================================================
 // UNIT TYPE SYSTEM — HOW IT WORKS
@@ -129,7 +127,10 @@ export function flushTimings(label = "\u{1F3CB}\uFE0F Processing Pipeline") {
   let rows = 0;
   for (const t of _perfTimings) {
     const match = t.extra?.match(/^(\d+) lifts/);
-    if (match) { rows = parseInt(match[1], 10); break; }
+    if (match) {
+      rows = parseInt(match[1], 10);
+      break;
+    }
   }
 
   logTimingGroup(label, _perfTimings, { rows });
@@ -578,9 +579,11 @@ export function processSessionTonnageLookup(parsedData) {
     allSessionDatesSet.add(date);
 
     if (!sessionTonnageByDate[date]) sessionTonnageByDate[date] = {};
-    sessionTonnageByDate[date][u] = (sessionTonnageByDate[date][u] ?? 0) + tonnage;
+    sessionTonnageByDate[date][u] =
+      (sessionTonnageByDate[date][u] ?? 0) + tonnage;
 
-    if (!sessionTonnageByDateAndLift[date]) sessionTonnageByDateAndLift[date] = {};
+    if (!sessionTonnageByDateAndLift[date])
+      sessionTonnageByDateAndLift[date] = {};
     if (!sessionTonnageByDateAndLift[date][liftType])
       sessionTonnageByDateAndLift[date][liftType] = {};
     sessionTonnageByDateAndLift[date][liftType][u] =
@@ -751,7 +754,7 @@ export function getSessionTonnagePercentileRangeFromPrecomputed(
   values.sort((a, b) => a - b);
   const n = values.length;
   // Nearest-rank: pth percentile index = ceil(p/100 * n) - 1
-  const lowIdx = Math.max(0, Math.ceil(0.25 * n) - 1);  // 25th - trims low outliers
+  const lowIdx = Math.max(0, Math.ceil(0.25 * n) - 1); // 25th - trims low outliers
   const highIdx = Math.min(n - 1, Math.ceil(0.9 * n) - 1); // 90th - trims high outliers
 
   return {
@@ -804,7 +807,11 @@ export function calculateLiftTypes(parsedData) {
     }))
     .sort((a, b) => b.totalSets - a.totalSets);
 
-  recordTiming("Lift Types", performance.now() - startTime, `${sortedLiftTypes.length} types`);
+  recordTiming(
+    "Lift Types",
+    performance.now() - startTime,
+    `${sortedLiftTypes.length} types`,
+  );
 
   return sortedLiftTypes;
 }
@@ -881,7 +888,11 @@ export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
  * @param {string} e1rmFormula - e.g. "Brzycki", "Epley"
  * @returns {Array} Sorted list of year PR objects: { date, liftType, reps, weight, unitType, ... }
  */
-export function getPRHighlightsForYear(parsedData, year, e1rmFormula = "Brzycki") {
+export function getPRHighlightsForYear(
+  parsedData,
+  year,
+  e1rmFormula = "Brzycki",
+) {
   const startTime = performance.now();
   if (!parsedData || !year) return [];
   const yearStr = String(year);
@@ -1000,7 +1011,10 @@ export function getLifetimePRsAchievedInYear(parsedData, year) {
 
     if (!existing || weight > (existing.weight ?? 0)) {
       bestByLiftAndReps[key] = { ...entry, reps };
-    } else if (weight === (existing.weight ?? 0) && entry.date < existing.date) {
+    } else if (
+      weight === (existing.weight ?? 0) &&
+      entry.date < existing.date
+    ) {
       bestByLiftAndReps[key] = { ...entry, reps }; // tie: earlier date wins
     }
   });
@@ -1063,9 +1077,7 @@ export function getAnalyzedSessionLifts(
   topLiftsByTypeAndRepsLast12Months,
 ) {
   // Grab all the lifts on this date
-  const sessionLifts = parsedData?.filter(
-    (lift) => lift.date === date,
-  );
+  const sessionLifts = parsedData?.filter((lift) => lift.date === date);
 
   const analyzedLifts = sessionLifts?.reduce((acc, entry) => {
     const { liftType } = entry;

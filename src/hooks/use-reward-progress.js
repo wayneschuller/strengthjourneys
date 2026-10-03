@@ -12,8 +12,7 @@ import { getRewardProgress } from "@/lib/rewards/progression";
 
 export function useRewardProgress(category) {
   const { status: authStatus } = useSession();
-  const { parsedData, dataSource, isLoading, sheetInfo } =
-    useUserLiftingData();
+  const { parsedData, dataSource, isLoading, sheetInfo } = useUserLiftingData();
   const rewards = useMemo(() => getRewardsByCategory(category), [category]);
   const isAuthenticated = authStatus === "authenticated";
   const progress = useMemo(

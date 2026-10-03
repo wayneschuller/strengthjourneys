@@ -37,8 +37,8 @@ export function Testimonials({}) {
           <TestimonialCard key={index} testimony={testimony} />
         ))}
       </Marquee>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-card" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-card" />
+      <div className="from-card pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r" />
+      <div className="from-card pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l" />
       {/* <div>Please tell us what you think.</div> */}
     </div>
   );
@@ -67,7 +67,7 @@ function TestimonialCard({ testimony }) {
         </div>
         <div className="flex-1">
           <figcaption className="text-lg">{testimony.name}</figcaption>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             {testimony.description}
           </div>
           <blockquote className="text-pretty">{testimony.comment}</blockquote>

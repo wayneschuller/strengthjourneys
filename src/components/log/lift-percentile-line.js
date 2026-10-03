@@ -67,10 +67,10 @@ export function LiftPercentileLine({
   if (!bestUniverse) return null;
 
   return (
-    <div className="text-xs text-muted-foreground">
+    <div className="text-muted-foreground text-xs">
       <Link
         href={calculatorUrl}
-        className="transition-colors hover:text-foreground"
+        className="hover:text-foreground transition-colors"
       >
         Stronger than {bestUniverse.percentile}% of {bestUniverse.label}
       </Link>

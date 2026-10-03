@@ -10,7 +10,14 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Fragment, useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  Fragment,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { NextSeo } from "next-seo";
 import { useAnimate, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/articles/article-cards";
@@ -165,9 +172,9 @@ const PLATE_DIAGRAM_PLATE_PREFERENCE = "blue";
 
 const FAQ_ITEMS = [
   {
-    question: "What does \"plates\" mean in the gym?",
+    question: 'What does "plates" mean in the gym?',
     answer:
-      "A \"plate\" almost always means a 45 lb (20 kg) weight plate. When someone says they bench \"two plates,\" they mean two 45 lb plates on each side of the bar, totaling 225 lbs (100 kg). The count is always per side. Also called wheels, 45s, or blues (from competition bumper plate colors).",
+      'A "plate" almost always means a 45 lb (20 kg) weight plate. When someone says they bench "two plates," they mean two 45 lb plates on each side of the bar, totaling 225 lbs (100 kg). The count is always per side. Also called wheels, 45s, or blues (from competition bumper plate colors).',
   },
   {
     question: "What is the 1/2/3/4 plate club?",
@@ -187,12 +194,12 @@ const FAQ_ITEMS = [
   {
     question: "How rare is a 4 plate deadlift?",
     answer:
-      "A 405 lb (180 kg) deadlift puts you well into advanced territory. Most dedicated lifters can reach it within 2 to 4 years of serious training. It is the classic \"big boy\" milestone and the sound of four plates rattling off the floor is unmistakable.",
+      'A 405 lb (180 kg) deadlift puts you well into advanced territory. Most dedicated lifters can reach it within 2 to 4 years of serious training. It is the classic "big boy" milestone and the sound of four plates rattling off the floor is unmistakable.',
   },
   {
-    question: "Why are they called \"blues\"?",
+    question: 'Why are they called "blues"?',
     answer:
-      "In competition bumper plates (used in Olympic weightlifting and CrossFit), the 20 kg plate is blue. Since 20 kg is essentially the same as 45 lbs, \"blues\" became shorthand for standard full-size plates. Other color names you might hear: reds (25 kg / 55 lb), yellows (15 kg / 35 lb), and greens (10 kg / 25 lb).",
+      'In competition bumper plates (used in Olympic weightlifting and CrossFit), the 20 kg plate is blue. Since 20 kg is essentially the same as 45 lbs, "blues" became shorthand for standard full-size plates. Other color names you might hear: reds (25 kg / 55 lb), yellows (15 kg / 35 lb), and greens (10 kg / 25 lb).',
   },
   {
     question: "Do these milestones work for kg lifters?",
@@ -347,7 +354,16 @@ function tierLabel(n) {
 // so the line stabilises until the user logs a new session).
 function buildStatusSentence({ milestone, stats, isMetric }) {
   if (!stats) return null;
-  const { pr, single, now: nowSet, periodBests, latestDate, daysSinceLatest, progress6mDelta, tierCrossings } = stats;
+  const {
+    pr,
+    single,
+    now: nowSet,
+    periodBests,
+    latestDate,
+    daysSinceLatest,
+    progress6mDelta,
+    tierCrossings,
+  } = stats;
   if (!pr || !nowSet || !latestDate) return null;
 
   const liftType = milestone.liftType;
@@ -378,7 +394,9 @@ function buildStatusSentence({ milestone, stats, isMetric }) {
       const crossing = tierCrossings[latestCrossedTier];
       const tStr = tierLabel(latestCrossedTier);
       const nextStr =
-        nextTierAfterLatest <= 4 ? tierLabel(nextTierAfterLatest) : "the next milestone";
+        nextTierAfterLatest <= 4
+          ? tierLabel(nextTierAfterLatest)
+          : "the next milestone";
       return pickVariant(
         [
           `🎉 Crossed ${tStr} on ${formatMonthDay(crossing.first.date)} with ${setStr(crossing.first)} · ${nextStr} to go`,
@@ -677,7 +695,9 @@ function NotchedMilestoneSlider({
   const clusters = clusterNotches(notches || [], max);
 
   return (
-    <div className={cn("relative pb-9", tierMarks?.length && "pt-5", className)}>
+    <div
+      className={cn("relative pb-9", tierMarks?.length && "pt-5", className)}
+    >
       {tierMarks?.map(({ n, valueLb, reached }) => (
         <div
           key={`tier-${n}`}
@@ -717,10 +737,8 @@ function NotchedMilestoneSlider({
         <TooltipProvider delayDuration={150}>
           {clusters.map((cluster) => {
             const centerPercent =
-              cluster.reduce(
-                (sum, n) => sum + (n.valueLb / max) * 100,
-                0,
-              ) / cluster.length;
+              cluster.reduce((sum, n) => sum + (n.valueLb / max) * 100, 0) /
+              cluster.length;
             const maxZ = Math.max(...cluster.map((n) => n.zIndex));
             const hasNewPR = cluster.some((n) => n.accent === "newPR");
             const mergedLabel = cluster.map((n) => n.shortLabel).join(" · ");
@@ -757,7 +775,7 @@ function NotchedMilestoneSlider({
                     <button
                       type="button"
                       className={cn(
-                        "absolute -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none whitespace-nowrap shadow-sm transition-colors hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        "focus-visible:ring-ring absolute -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] leading-none font-medium whitespace-nowrap shadow-sm transition-colors hover:brightness-110 focus:outline-none focus-visible:ring-2",
                         pillClass,
                       )}
                       style={{
@@ -811,39 +829,53 @@ function PlateMilestonesMain({ relatedArticles }) {
   const hasExplicitQueryRef = useRef(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  const [press, setPress, , , pressIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.PLATE_MILESTONE_PRESS,
-    MILESTONES[0].defaultValue,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= MILESTONES[0].maxLb,
-  );
-  const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.PLATE_MILESTONE_BENCH,
-    MILESTONES[1].defaultValue,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= MILESTONES[1].maxLb,
-  );
-  const [squat, setSquat, , , squatIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.PLATE_MILESTONE_SQUAT,
-    MILESTONES[2].defaultValue,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= MILESTONES[2].maxLb,
-  );
-  const [deadlift, setDeadlift, , , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.PLATE_MILESTONE_DEADLIFT,
-    MILESTONES[3].defaultValue,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= MILESTONES[3].maxLb,
-  );
+  const [press, setPress, , , pressIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.PLATE_MILESTONE_PRESS,
+      MILESTONES[0].defaultValue,
+      false,
+      null,
+      (value) =>
+        Number.isFinite(value) && value >= 0 && value <= MILESTONES[0].maxLb,
+    );
+  const [bench, setBench, , , benchIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.PLATE_MILESTONE_BENCH,
+      MILESTONES[1].defaultValue,
+      false,
+      null,
+      (value) =>
+        Number.isFinite(value) && value >= 0 && value <= MILESTONES[1].maxLb,
+    );
+  const [squat, setSquat, , , squatIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.PLATE_MILESTONE_SQUAT,
+      MILESTONES[2].defaultValue,
+      false,
+      null,
+      (value) =>
+        Number.isFinite(value) && value >= 0 && value <= MILESTONES[2].maxLb,
+    );
+  const [deadlift, setDeadlift, , , deadliftIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.PLATE_MILESTONE_DEADLIFT,
+      MILESTONES[3].defaultValue,
+      false,
+      null,
+      (value) =>
+        Number.isFinite(value) && value >= 0 && value <= MILESTONES[3].maxLb,
+    );
 
   // Achievement display mode: "actual" (heaviest bar load — honest default) or
   // "e1rm" (PR-derived estimated 1RM — optimistic, what your reps predict).
   // Toggle is visible only for users with parsed lifting data.
-  const [achievementMode, setAchievementMode, , , achievementModeIsInitialized] = useStateFromQueryOrLocalStorage(
+  const [
+    achievementMode,
+    setAchievementMode,
+    ,
+    ,
+    achievementModeIsInitialized,
+  ] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.PLATE_MILESTONE_MODE,
     "actual",
     false,
@@ -936,7 +968,8 @@ function PlateMilestonesMain({ relatedArticles }) {
   // most-recent-session E1RM, 6-month E1RM delta, and first/last sets crossing each tier.
   // All weights normalized to lb (display layer converts).
   const liftStats = useMemo(() => {
-    if (!parsedData?.length || dataSource === "demo" || !usingUserData) return null;
+    if (!parsedData?.length || dataSource === "demo" || !usingUserData)
+      return null;
 
     const cutoff1M = getLocalYmdDaysAgo(30);
     const cutoff6M = getLocalYmdDaysAgo(183);
@@ -957,9 +990,7 @@ function PlateMilestonesMain({ relatedArticles }) {
           continue;
         const weightLb = toLb(d.weight, d.unitType);
         const e1rm =
-          d.reps === 1
-            ? weightLb
-            : estimateE1RM(d.reps, weightLb, e1rmFormula);
+          d.reps === 1 ? weightLb : estimateE1RM(d.reps, weightLb, e1rmFormula);
         entries.push({
           date: d.date,
           reps: d.reps,
@@ -990,8 +1021,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       for (const e of entries) {
         if (e.date !== latestDate) continue;
         if (!nowSet || e.e1rm > nowSet.e1rm) nowSet = e;
-        if (!nowByWeight || e.weightLb > nowByWeight.weightLb)
-          nowByWeight = e;
+        if (!nowByWeight || e.weightLb > nowByWeight.weightLb) nowByWeight = e;
       }
 
       // Period bests track both metrics in parallel so the mode toggle can
@@ -1042,9 +1072,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       // pre-existing tier-badge semantics from milestoneDates so green/amber dots
       // behave as before).
       const window90Cutoff = ymd(
-        new Date(
-          new Date(latestDate + "T00:00:00Z").getTime() - 90 * 86400000,
-        ),
+        new Date(new Date(latestDate + "T00:00:00Z").getTime() - 90 * 86400000),
       );
       let currentE1rm = 0;
       for (const e of entries) {
@@ -1177,7 +1205,11 @@ function PlateMilestonesMain({ relatedArticles }) {
   // Check if classic 1/2/3/4 is complete — based on actual bar load when
   // available, falling back to slider value for unauthenticated/demo users.
   const classicClubAchieved = MILESTONES.every((m) =>
-    meetsPlateTarget(effectiveAchievementValue(m.key), m.targetPlates, isMetric),
+    meetsPlateTarget(
+      effectiveAchievementValue(m.key),
+      m.targetPlates,
+      isMetric,
+    ),
   );
 
   const totalTiersAchieved = useMemo(() => {
@@ -1193,7 +1225,8 @@ function PlateMilestonesMain({ relatedArticles }) {
 
   // Rolling 90-day best E1RM timeline per lift (same approach as 1000lb page)
   const liftTimelines = useMemo(() => {
-    if (!parsedData?.length || dataSource === "demo" || !usingUserData) return null;
+    if (!parsedData?.length || dataSource === "demo" || !usingUserData)
+      return null;
 
     const timelines = {};
 
@@ -1232,14 +1265,54 @@ function PlateMilestonesMain({ relatedArticles }) {
     const result = {};
 
     const ROLE_CONFIG = {
-      "1M": { label: "1M", priority: 1, accent: "default", zIndex: 10, isDominant: false },
-      "6M": { label: "6M", priority: 1, accent: "default", zIndex: 10, isDominant: false },
-      "1Y": { label: "1Y", priority: 1, accent: "default", zIndex: 10, isDominant: false },
-      best: { label: "Best", priority: 2, accent: "default", zIndex: 30, isDominant: false },
-      now: { label: "Now", priority: 4, accent: "now", zIndex: 40, isDominant: true },
-      newBest: { label: "🎉 New best!", priority: 5, accent: "newPR", zIndex: 40, isDominant: true },
+      "1M": {
+        label: "1M",
+        priority: 1,
+        accent: "default",
+        zIndex: 10,
+        isDominant: false,
+      },
+      "6M": {
+        label: "6M",
+        priority: 1,
+        accent: "default",
+        zIndex: 10,
+        isDominant: false,
+      },
+      "1Y": {
+        label: "1Y",
+        priority: 1,
+        accent: "default",
+        zIndex: 10,
+        isDominant: false,
+      },
+      best: {
+        label: "Best",
+        priority: 2,
+        accent: "default",
+        zIndex: 30,
+        isDominant: false,
+      },
+      now: {
+        label: "Now",
+        priority: 4,
+        accent: "now",
+        zIndex: 40,
+        isDominant: true,
+      },
+      newBest: {
+        label: "🎉 New best!",
+        priority: 5,
+        accent: "newPR",
+        zIndex: 40,
+        isDominant: true,
+      },
     };
-    const PERIOD_LABEL = { "1M": "Last month", "6M": "Last 6 months", "1Y": "Last year" };
+    const PERIOD_LABEL = {
+      "1M": "Last month",
+      "6M": "Last 6 months",
+      "1Y": "Last year",
+    };
     const setId = (s) => `${s.date}-${s.reps}-${s.weightLb}`;
 
     for (const milestone of MILESTONES) {
@@ -1395,16 +1468,14 @@ function PlateMilestonesMain({ relatedArticles }) {
     usingUserData &&
     prWeightsLb &&
     MILESTONES.some(
-      (m) =>
-        prWeightsLb[m.key] != null && values[m.key] !== prWeightsLb[m.key],
+      (m) => prWeightsLb[m.key] != null && values[m.key] !== prWeightsLb[m.key],
     );
 
   const hasMovedFrom6m =
     usingUserData &&
     recent6mLb &&
     MILESTONES.some(
-      (m) =>
-        recent6mLb[m.key] != null && values[m.key] !== recent6mLb[m.key],
+      (m) => recent6mLb[m.key] != null && values[m.key] !== recent6mLb[m.key],
     );
 
   const hasMovedFromActual =
@@ -1452,8 +1523,7 @@ function PlateMilestonesMain({ relatedArticles }) {
         const v = effectiveAchievementValue(m.key);
         const tierStr = m.tiers
           .map(
-            (n) =>
-              `${meetsPlateTarget(v, n, false) ? "\u2705" : "\u2b1c"}${n}`,
+            (n) => `${meetsPlateTarget(v, n, false) ? "\u2705" : "\u2b1c"}${n}`,
           )
           .join(" ");
         return `${m.liftType}: ${displayWeight(v, isMetric)} ${tierStr}`;
@@ -1473,13 +1543,11 @@ function PlateMilestonesMain({ relatedArticles }) {
   return (
     <PageContainer>
       <PageHeader>
-        <PageHeaderHeading icon={Disc}>
-          Plate Milestones
-        </PageHeaderHeading>
+        <PageHeaderHeading icon={Disc}>Plate Milestones</PageHeaderHeading>
         <PageHeaderDescription>
-          How many plates can you lift? Track your progress toward the
-          classic <strong>1/2/3/4 plate club</strong>. Plates, wheels,
-          45s, blues. Whatever you call them, plates get dates.
+          How many plates can you lift? Track your progress toward the classic{" "}
+          <strong>1/2/3/4 plate club</strong>. Plates, wheels, 45s, blues.
+          Whatever you call them, plates get dates.
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
@@ -1489,9 +1557,7 @@ function PlateMilestonesMain({ relatedArticles }) {
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <h3 className="text-base font-semibold">1000lb Club</h3>
-              <p className="text-sm">
-                Track your S/B/D total toward 1000 lbs.
-              </p>
+              <p className="text-sm">Track your S/B/D total toward 1000 lbs.</p>
             </Link>
             <Link
               prefetch={false}
@@ -1499,9 +1565,7 @@ function PlateMilestonesMain({ relatedArticles }) {
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <h3 className="text-base font-semibold">200/300/400/500</h3>
-              <p className="text-sm">
-                Advanced lifetime barbell goals.
-              </p>
+              <p className="text-sm">Advanced lifetime barbell goals.</p>
             </Link>
           </div>
         </PageHeaderRight>
@@ -1682,9 +1746,7 @@ function PlateMilestonesMain({ relatedArticles }) {
 
       {/* Plate reference table */}
       <section className="mt-10">
-        <h2 className="mb-4 text-xl font-semibold">
-          Plate loading reference
-        </h2>
+        <h2 className="mb-4 text-xl font-semibold">Plate loading reference</h2>
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
             <thead>
@@ -1698,9 +1760,7 @@ function PlateMilestonesMain({ relatedArticles }) {
                 <th className="px-3 py-2 text-right font-semibold">
                   Total (kg)
                 </th>
-                <th className="px-3 py-2 text-left font-semibold">
-                  Gym talk
-                </th>
+                <th className="px-3 py-2 text-left font-semibold">Gym talk</th>
                 {usingUserData && (
                   <th className="px-3 py-2 text-left font-semibold">
                     Your lifts
@@ -1711,8 +1771,8 @@ function PlateMilestonesMain({ relatedArticles }) {
             <tbody>
               {ALL_TIERS.map((n) => {
                 const liftsAtTier = usingUserData
-                  ? MILESTONES.filter(
-                      (m) => meetsPlateTarget(values[m.key], n, isMetric),
+                  ? MILESTONES.filter((m) =>
+                      meetsPlateTarget(values[m.key], n, isMetric),
                     ).map((m) => SHORT_LIFT_NAMES[m.liftType])
                   : [];
                 const liftsBelow = usingUserData
@@ -1735,10 +1795,10 @@ function PlateMilestonesMain({ relatedArticles }) {
                       {plateTotal(n, true)} kg
                     </td>
                     <td className="text-muted-foreground px-3 py-2">
-                      {n === 1 && "\"Got my first plate\""}
-                      {n === 2 && "\"Two wheels\" / \"two blues\""}
-                      {n === 3 && "\"Three plates\" / \"three wheels\""}
-                      {n === 4 && "\"Four plates\" / \"four 45s\""}
+                      {n === 1 && '"Got my first plate"'}
+                      {n === 2 && '"Two wheels" / "two blues"'}
+                      {n === 3 && '"Three plates" / "three wheels"'}
+                      {n === 4 && '"Four plates" / "four 45s"'}
                     </td>
                     {usingUserData && (
                       <td className="px-3 py-2">
@@ -1803,23 +1863,23 @@ function PlateMilestonesMain({ relatedArticles }) {
         <div className="space-y-3 text-sm leading-relaxed">
           <p>
             Counting plates is how lifters have measured progress since the
-            first barbell was loaded. A <strong>plate</strong> means a
-            standard 45 lb (20 kg) weight on each side of the bar. One plate
-            per side totals 135 lb (60 kg). Two plates: 225 lb (100 kg).
-            Three: 315 lb (140 kg). Four: 405 lb (180 kg).
+            first barbell was loaded. A <strong>plate</strong> means a standard
+            45 lb (20 kg) weight on each side of the bar. One plate per side
+            totals 135 lb (60 kg). Two plates: 225 lb (100 kg). Three: 315 lb
+            (140 kg). Four: 405 lb (180 kg).
           </p>
           <p>
             The <strong>1/2/3/4 plate club</strong> sets the benchmark: a 1
             plate strict press, 2 plate bench, 3 plate squat, and 4 plate
-            deadlift. These targets scale naturally with the relative
-            difficulty of each lift. Hitting all four marks you as a
-            well-rounded, genuinely strong lifter.
+            deadlift. These targets scale naturally with the relative difficulty
+            of each lift. Hitting all four marks you as a well-rounded,
+            genuinely strong lifter.
           </p>
           <p>
-            Whether you call them plates, wheels, 45s, or blues, the
-            satisfying clank of adding another full plate to the bar is a
-            universal gym experience. Use the sliders above to see where you
-            stand, then check your detailed standards with our{" "}
+            Whether you call them plates, wheels, 45s, or blues, the satisfying
+            clank of adding another full plate to the bar is a universal gym
+            experience. Use the sliders above to see where you stand, then check
+            your detailed standards with our{" "}
             <Link
               prefetch={false}
               href="/strength-levels"
@@ -1899,7 +1959,10 @@ function MilestoneRow({
   // - E1RM mode + actual lags: "(actual lags)" — but you haven't done it yet.
   let hintText = null;
   if (hasActualData && hasE1rmData) {
-    if (achievementMode === "actual" && tiersAchievedSecondary > tiersAchieved) {
+    if (
+      achievementMode === "actual" &&
+      tiersAchievedSecondary > tiersAchieved
+    ) {
       hintText =
         tiers.length === 1
           ? "(E1RM crossed)"
@@ -1917,8 +1980,7 @@ function MilestoneRow({
   const showE1rmHint = hintText != null;
   const e1rmHintText = hintText;
 
-  const hasCrossings =
-    tierCrossings && Object.keys(tierCrossings).length > 0;
+  const hasCrossings = tierCrossings && Object.keys(tierCrossings).length > 0;
   // Show all tiers with a crossing record (including bonus tiers beyond the classic target)
   const displayTiers = hasCrossings
     ? ALL_TIERS.filter((n) => tierCrossings[n])
@@ -1993,9 +2055,7 @@ function MilestoneRow({
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              {achieved && (
-                <Trophy className="h-4 w-4 text-amber-500" />
-              )}
+              {achieved && <Trophy className="h-4 w-4 text-amber-500" />}
               <span
                 className={cn("text-xs font-semibold tabular-nums", {
                   "text-green-600": achieved,
@@ -2069,9 +2129,7 @@ function MilestoneRow({
             </div>
           )}
           {statusSentence && (
-            <div className="text-foreground/80 text-xs">
-              {statusSentence}
-            </div>
+            <div className="text-foreground/80 text-xs">{statusSentence}</div>
           )}
         </div>
       )}
@@ -2100,10 +2158,7 @@ function PlateSlot({ progress }) {
   }, [isFull, prefersReducedMotion, animate, scope]);
 
   return (
-    <div
-      ref={scope}
-      className="relative h-16 w-16 md:h-[4.5rem] md:w-[4.5rem]"
-    >
+    <div ref={scope} className="relative h-16 w-16 md:h-[4.5rem] md:w-[4.5rem]">
       {!isFull && (
         <div className="border-muted-foreground/30 absolute inset-[3%] rounded-full border-2 border-dashed" />
       )}
@@ -2170,11 +2225,11 @@ function MilestoneSparkline({
   const minVal = Math.min(...displayData.map((p) => p.displayE1rm));
   const step = isMetric ? 10 : 25;
 
-  const yMax = Math.ceil(Math.max(maxVal + 5, targetDisplay + 10) / step) * step;
+  const yMax =
+    Math.ceil(Math.max(maxVal + 5, targetDisplay + 10) / step) * step;
   const yMin =
-    Math.floor(
-      Math.max(0, Math.min(minVal - 5, targetDisplay - 10)) / step,
-    ) * step;
+    Math.floor(Math.max(0, Math.min(minVal - 5, targetDisplay - 10)) / step) *
+    step;
 
   const spanDays =
     (timeline[timeline.length - 1].timestamp - timeline[0].timestamp) /
@@ -2201,8 +2256,7 @@ function MilestoneSparkline({
   const firstTimestamp = timeline[0].timestamp;
   // Dots cover every tier crossed, not just up to the classic target, so a
   // 4-plate squat still gets its "4" even though squat's goal line is 3.
-  const crossingDots = ALL_TIERS
-    .filter((n) => tierCrossings?.[n])
+  const crossingDots = ALL_TIERS.filter((n) => tierCrossings?.[n])
     .map((n) => {
       const { first } = tierCrossings[n];
       return {
@@ -2222,13 +2276,7 @@ function MilestoneSparkline({
           margin={{ top: 14, right: 8, bottom: 0, left: 8 }}
         >
           <defs>
-            <linearGradient
-              id={`spark-${liftKey}`}
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="1"
-            >
+            <linearGradient id={`spark-${liftKey}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#6366F1" stopOpacity={0.15} />
               <stop offset="100%" stopColor="#6366F1" stopOpacity={0.02} />
             </linearGradient>
@@ -2259,9 +2307,7 @@ function MilestoneSparkline({
               fontWeight: 600,
             }}
           />
-          <RechartsTooltip
-            content={<SparklineTooltipContent unit={unit} />}
-          />
+          <RechartsTooltip content={<SparklineTooltipContent unit={unit} />} />
           <Area
             type="monotone"
             dataKey="displayE1rm"
@@ -2322,9 +2368,9 @@ function PlateTimelinesSection({
           Your E1RM over time
         </CardTitle>
         <CardDescription>
-          Rolling 90-day best estimated 1RM for each lift. The dashed line
-          marks the classic plate target, and each blue dot marks the day
-          you first earned that many plates.
+          Rolling 90-day best estimated 1RM for each lift. The dashed line marks
+          the classic plate target, and each blue dot marks the day you first
+          earned that many plates.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -2429,9 +2475,9 @@ function PlateImportCtaCard() {
             Chase the plates
           </CardTitle>
           <CardDescription>
-            Import your lifting history to track your journey toward each
-            plate milestone. See when you first loaded two wheels, three
-            plates, or joined the four-plate club.
+            Import your lifting history to track your journey toward each plate
+            milestone. See when you first loaded two wheels, three plates, or
+            joined the four-plate club.
           </CardDescription>
         </div>
       </CardHeader>
@@ -2458,7 +2504,7 @@ function PlateImportCtaCard() {
               "from-muted/20 via-background to-muted/30 flex h-full flex-col justify-between rounded-xl border border-dashed bg-gradient-to-br p-4 text-left transition-colors sm:p-5",
               dragOver && "border-primary bg-primary/5",
               importing && "cursor-wait opacity-80",
-              !importing && "cursor-pointer hover:border-primary/60",
+              !importing && "hover:border-primary/60 cursor-pointer",
             )}
             aria-label="Upload workout export file"
           >
@@ -2523,10 +2569,26 @@ function PlateImportCtaCard() {
           <div className="from-muted/20 via-background to-muted/30 flex flex-col justify-center gap-3 rounded-xl border bg-gradient-to-br p-4 opacity-55 saturate-[0.85] sm:p-6">
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Press", target: 135, path: "M0,58 C15,54 30,50 50,46 C65,50 80,54 100,48 C115,44 130,48 150,42 C170,38 190,42 210,36 C225,34 235,36 240,34" },
-                { label: "Bench", target: 225, path: "M0,56 C15,50 35,44 55,40 C70,44 85,48 100,42 C120,36 135,32 155,28 C170,34 190,30 210,24 C225,20 235,18 240,16" },
-                { label: "Squat", target: 315, path: "M0,62 C15,56 35,52 50,44 C65,40 80,44 100,38 C115,34 135,30 155,26 C170,30 185,24 205,20 C220,16 232,18 240,14" },
-                { label: "Deadlift", target: 405, path: "M0,52 C15,46 35,40 50,34 C65,30 80,36 100,30 C115,26 135,22 150,18 C170,22 185,18 205,14 C220,12 232,14 240,10" },
+                {
+                  label: "Press",
+                  target: 135,
+                  path: "M0,58 C15,54 30,50 50,46 C65,50 80,54 100,48 C115,44 130,48 150,42 C170,38 190,42 210,36 C225,34 235,36 240,34",
+                },
+                {
+                  label: "Bench",
+                  target: 225,
+                  path: "M0,56 C15,50 35,44 55,40 C70,44 85,48 100,42 C120,36 135,32 155,28 C170,34 190,30 210,24 C225,20 235,18 240,16",
+                },
+                {
+                  label: "Squat",
+                  target: 315,
+                  path: "M0,62 C15,56 35,52 50,44 C65,40 80,44 100,38 C115,34 135,30 155,26 C170,30 185,24 205,20 C220,16 232,18 240,14",
+                },
+                {
+                  label: "Deadlift",
+                  target: 405,
+                  path: "M0,52 C15,46 35,40 50,34 C65,30 80,36 100,30 C115,26 135,22 150,18 C170,22 185,18 205,14 C220,12 232,14 240,10",
+                },
               ].map(({ label, path }) => (
                 <div key={label} className="space-y-0.5">
                   <span className="text-muted-foreground text-[10px] font-medium">
@@ -2539,7 +2601,10 @@ function PlateImportCtaCard() {
                     aria-hidden
                   >
                     <line
-                      x1="0" y1="30" x2="240" y2="30"
+                      x1="0"
+                      y1="30"
+                      x2="240"
+                      y2="30"
                       stroke="#10B981"
                       strokeWidth="1.5"
                       strokeDasharray="4 3"

@@ -110,7 +110,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  const meta = typeof req.body?.meta === "object" && req.body?.meta ? req.body.meta : {};
+  const meta =
+    typeof req.body?.meta === "object" && req.body?.meta ? req.body.meta : {};
   const sanitizedMeta = sanitizeOnboardingMeta(event, meta, flowRecord);
   const throttleKey = getOnboardingEventThrottleKey({
     email: sessionEmail,
@@ -122,7 +123,9 @@ export default async function handler(req, res) {
     nx: true,
   });
   if (throttleLock === null) {
-    res.status(429).json({ error: "Onboarding event already reported recently." });
+    res
+      .status(429)
+      .json({ error: "Onboarding event already reported recently." });
     return;
   }
 
@@ -143,6 +146,8 @@ export default async function handler(req, res) {
   } catch (error) {
     await kv.del(throttleKey);
     console.error("[onboarding-event] failed:", error);
-    res.status(500).json({ error: error.message || "Failed to send onboarding event" });
+    res
+      .status(500)
+      .json({ error: error.message || "Failed to send onboarding event" });
   }
 }

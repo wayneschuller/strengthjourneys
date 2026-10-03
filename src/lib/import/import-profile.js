@@ -74,9 +74,7 @@ export function buildNextImportProfile(
     ? current.recentImportDates
     : [];
   const recentImportDates = didMerge
-    ? [...existingRecentImportDates, checkedAt].slice(
-        -MAX_RECENT_IMPORTS,
-      )
+    ? [...existingRecentImportDates, checkedAt].slice(-MAX_RECENT_IMPORTS)
     : existingRecentImportDates;
 
   let relationship = "freshness_check";

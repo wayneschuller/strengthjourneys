@@ -25,7 +25,10 @@ export function MeetSetMedal({ date, size = 13, className = "" }) {
       role="img"
       aria-label={label}
       title={label}
-      className={cn("inline-flex shrink-0 items-center align-middle", className)}
+      className={cn(
+        "inline-flex shrink-0 items-center align-middle",
+        className,
+      )}
     >
       <MeetMedalGlyph size={size} />
     </span>

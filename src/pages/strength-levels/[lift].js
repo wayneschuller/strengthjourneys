@@ -4,14 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
-import { Anvil, BicepsFlexed, BookOpen, Calculator, CircleDashed, Mountain } from "lucide-react";
+import {
+  Anvil,
+  BicepsFlexed,
+  BookOpen,
+  Calculator,
+  CircleDashed,
+  Mountain,
+} from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { RelatedArticles } from "@/components/articles/article-cards";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { QuickLinkCard } from "@/components/quick-link-card";
-import { InlineMarkdown, inlineMarkdownToText } from "@/components/inline-markdown";
+import {
+  InlineMarkdown,
+  inlineMarkdownToText,
+} from "@/components/inline-markdown";
 import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
 import {
   PageContainer,
@@ -47,7 +57,6 @@ import {
   getStrengthStandardsPageBySlug,
   getStrengthStandardsUrl,
 } from "@/lib/lifts/lift-registry";
-
 
 export async function getStaticPaths() {
   return {
@@ -205,11 +214,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
               className="flex items-center justify-center"
               style={{ filter: `drop-shadow(0 4px 12px ${liftColor}40)` }}
             >
-              <LiftArtwork
-                liftType={page.liftType}
-                size="lg"
-                animate={false}
-              />
+              <LiftArtwork liftType={page.liftType} size="lg" animate={false} />
             </motion.div>
           </div>
         </PageHeaderRight>
@@ -237,25 +242,27 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                 <Link
                   prefetch={false}
                   href={page.calculatorUrl}
-                  className="whitespace-nowrap hover:text-foreground"
+                  className="hover:text-foreground whitespace-nowrap"
                 >
                   {page.commonName} 1RM Calculator →
                 </Link>
               }
             />
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm">
               <Link
                 prefetch={false}
                 href={page.calculatorUrl}
-                className="underline underline-offset-2 hover:text-foreground"
+                className="hover:text-foreground underline underline-offset-2"
               >
                 {page.commonName} 1RM Calculator
               </Link>
-              <span className="hidden sm:inline" aria-hidden>·</span>
+              <span className="hidden sm:inline" aria-hidden>
+                ·
+              </span>
               <Link
                 prefetch={false}
                 href={page.insightUrl}
-                className="underline underline-offset-2 hover:text-foreground"
+                className="hover:text-foreground underline underline-offset-2"
               >
                 {page.commonName} Progress Guide
               </Link>
@@ -273,17 +280,17 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
               >
                 {interpretation.title}
               </h2>
-              <div className="mt-4 space-y-3 text-sm text-muted-foreground md:text-base">
+              <div className="text-muted-foreground mt-4 space-y-3 text-sm md:text-base">
                 {interpretation.body.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
               </div>
 
-              <div className="mt-5 rounded-lg border bg-muted/30 p-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground/80">
+              <div className="bg-muted/30 mt-5 rounded-lg border p-4">
+                <h3 className="text-foreground/80 text-sm font-semibold tracking-wide uppercase">
                   Milestones Worth Chasing
                 </h3>
-                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
                   {interpretation.milestones.map((item) => (
                     <li key={item} className="flex gap-2">
                       <span
@@ -303,7 +310,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                       {interpretation.exampleTable.caption}
                     </caption>
                     <thead>
-                      <tr className="border-b bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                      <tr className="bg-muted/40 text-foreground/70 border-b text-left text-xs font-semibold tracking-wide uppercase">
                         <th className="px-3 py-2">Bodyweight</th>
                         <th className="px-3 py-2">Active</th>
                         <th className="px-3 py-2">Beginner</th>
@@ -317,37 +324,39 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                         <tr key={row.bwKg} className="border-b last:border-0">
                           <td className="px-3 py-2 font-medium">
                             <span>{row.bwLb} lb</span>
-                            <span className="ml-1 text-muted-foreground">/ {row.bwKg} kg</span>
+                            <span className="text-muted-foreground ml-1">
+                              / {row.bwKg} kg
+                            </span>
                           </td>
-                          <td className="px-3 py-2 text-muted-foreground">
+                          <td className="text-muted-foreground px-3 py-2">
                             {row.active[1]} lb
                             <span className="block text-xs sm:inline sm:text-sm">
                               <span className="hidden sm:inline"> / </span>
                               {row.active[0]} kg
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-muted-foreground">
+                          <td className="text-muted-foreground px-3 py-2">
                             {row.beginner[1]} lb
                             <span className="block text-xs sm:inline sm:text-sm">
                               <span className="hidden sm:inline"> / </span>
                               {row.beginner[0]} kg
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-muted-foreground">
+                          <td className="text-muted-foreground px-3 py-2">
                             {row.intermediate[1]} lb
                             <span className="block text-xs sm:inline sm:text-sm">
                               <span className="hidden sm:inline"> / </span>
                               {row.intermediate[0]} kg
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-muted-foreground">
+                          <td className="text-muted-foreground px-3 py-2">
                             {row.advanced[1]} lb
                             <span className="block text-xs sm:inline sm:text-sm">
                               <span className="hidden sm:inline"> / </span>
                               {row.advanced[0]} kg
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-muted-foreground">
+                          <td className="text-muted-foreground px-3 py-2">
                             {row.elite[1]} lb
                             <span className="block text-xs sm:inline sm:text-sm">
                               <span className="hidden sm:inline"> / </span>
@@ -358,15 +367,16 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                       ))}
                     </tbody>
                   </table>
-                  <p className="px-3 py-2 text-xs text-muted-foreground">
+                  <p className="text-muted-foreground px-3 py-2 text-xs">
                     {interpretation.exampleTable.caption}. Values in lb / kg.
-                    Use the interactive tool above for personalised results by age, sex, and bodyweight.
+                    Use the interactive tool above for personalised results by
+                    age, sex, and bodyweight.
                   </p>
                 </div>
               )}
 
               <div
-                className="mt-5 rounded-lg border-l-4 bg-muted/30 p-4 text-sm font-medium italic text-muted-foreground md:text-base"
+                className="bg-muted/30 text-muted-foreground mt-5 rounded-lg border-l-4 p-4 text-sm font-medium italic md:text-base"
                 style={{ borderColor: liftColor }}
               >
                 {interpretation.closer}
@@ -384,7 +394,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                   {question}
                 </AccordionTrigger>
                 <AccordionContent>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     <InlineMarkdown text={answer} />
                   </p>
                 </AccordionContent>
@@ -402,7 +412,14 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
               href="/plate-milestones"
               title="Plate Milestones"
               description="Track your progress toward 1/2/3/4 plate milestones."
-              icon={<img src="/blue_plate.svg" alt="" className="h-5 w-5" aria-hidden />}
+              icon={
+                <img
+                  src="/blue_plate.svg"
+                  alt=""
+                  className="h-5 w-5"
+                  aria-hidden
+                />
+              }
             />
             <QuickLinkCard
               href="/1000lb-club-calculator"
@@ -420,9 +437,7 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
         </section>
 
         <section className="rounded-lg border p-4">
-          <h2 className="mb-3 text-lg font-semibold">
-            Explore Other Lifts
-          </h2>
+          <h2 className="mb-3 text-lg font-semibold">Explore Other Lifts</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {STRENGTH_STANDARDS_PAGES.filter((p) => p.slug !== page.slug).map(
               (other) => {
@@ -432,15 +447,19 @@ function StrengthStandardsLiftPageMain({ page, relatedArticles }) {
                     prefetch={false}
                     key={other.slug}
                     href={getStrengthStandardsUrl(other.slug)}
-                    className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted"
+                    className="hover:bg-muted flex items-center gap-3 rounded-lg border p-3 transition-colors"
                     style={{ borderColor: `${otherColor}30` }}
                   >
-                    <LiftArtwork liftType={other.liftType} size="sm" animate={false} />
+                    <LiftArtwork
+                      liftType={other.liftType}
+                      size="sm"
+                      animate={false}
+                    />
                     <div>
                       <span className="text-sm font-semibold">
                         {other.commonName}
                       </span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                      <span className="text-muted-foreground mt-0.5 block text-xs">
                         Strength Levels
                       </span>
                     </div>
@@ -493,12 +512,14 @@ function StrengthLevelsDataCta({ page }) {
   return (
     <div
       data-first-visit=""
-      className="rounded-lg border border-primary/20 bg-primary/5 p-4"
+      className="border-primary/20 bg-primary/5 rounded-lg border p-4"
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <h3 className="text-base font-semibold">See Your Actual Lifts Ranked</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-base font-semibold">
+            See Your Actual Lifts Ranked
+          </h3>
+          <p className="text-muted-foreground text-sm">
             Sign in to create your free lifting log. Track your real lifts over
             time and see how your strength level stacks up against these
             standards.

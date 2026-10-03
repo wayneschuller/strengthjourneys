@@ -74,7 +74,7 @@ export function ArtworkBloom({ src, className }) {
         sizes="600px"
         className="scale-125 object-cover opacity-20 blur-2xl saturate-150 dark:opacity-30"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-card/50 via-card/70 to-card/85" />
+      <div className="from-card/50 via-card/70 to-card/85 absolute inset-0 bg-gradient-to-r" />
     </div>
   );
 }
@@ -86,7 +86,13 @@ export function ArtworkBloom({ src, className }) {
  * @param {boolean} props.isUserVote - Highlights the arrow the visitor already pressed.
  * @param {boolean} props.inTimeout - Disables the button during the ten minute vote cooldown.
  */
-function VoteButton({ isUpvote = true, isUserVote, inTimeout, onClick, className }) {
+function VoteButton({
+  isUpvote = true,
+  isUserVote,
+  inTimeout,
+  onClick,
+  className,
+}) {
   return (
     <Button
       variant="ghost"
@@ -102,7 +108,11 @@ function VoteButton({ isUpvote = true, isUserVote, inTimeout, onClick, className
         className,
       )}
     >
-      {isUpvote ? <ArrowBigUp className="h-6 w-6" /> : <ArrowBigDown className="h-6 w-6" />}
+      {isUpvote ? (
+        <ArrowBigUp className="h-6 w-6" />
+      ) : (
+        <ArrowBigDown className="h-6 w-6" />
+      )}
     </Button>
   );
 }
@@ -153,13 +163,13 @@ export function PlaylistCard({
       onError={() => setHasThumbnailError(true)}
     />
   ) : (
-    <div className="flex h-24 w-24 items-center justify-center rounded-md bg-muted md:h-28 md:w-28">
-      <Music className="h-8 w-8 text-muted-foreground/40" />
+    <div className="bg-muted flex h-24 w-24 items-center justify-center rounded-md md:h-28 md:w-28">
+      <Music className="text-muted-foreground/40 h-8 w-8" />
     </div>
   );
 
   const platformBadge = platform.logoUrl && !hasLogoError && (
-    <div className="absolute -bottom-1.5 -right-1.5 rounded-full border bg-background p-0.5 shadow-sm">
+    <div className="bg-background absolute -right-1.5 -bottom-1.5 rounded-full border p-0.5 shadow-sm">
       <Image
         src={platform.logoUrl}
         alt={platform.name}
@@ -175,7 +185,7 @@ export function PlaylistCard({
   return (
     <Card
       className={cn(
-        "relative isolate flex flex-col gap-3 overflow-hidden bg-muted/60 p-4 transition-shadow hover:shadow-md",
+        "bg-muted/60 relative isolate flex flex-col gap-3 overflow-hidden p-4 transition-shadow hover:shadow-md",
         className,
       )}
     >
@@ -186,7 +196,7 @@ export function PlaylistCard({
         {rank ? (
           <div
             className={cn(
-              "w-5 shrink-0 self-start pt-1 text-center text-2xl font-black leading-none tabular-nums md:w-7 md:text-3xl",
+              "w-5 shrink-0 self-start pt-1 text-center text-2xl leading-none font-black tabular-nums md:w-7 md:text-3xl",
               rankStyle ? rankStyle.text : "text-muted-foreground/30",
             )}
             aria-label={`Rank ${rank}`}
@@ -200,12 +210,19 @@ export function PlaylistCard({
           <button
             type="button"
             onClick={() => onTogglePlay?.(playlist.id)}
-            aria-label={isPlaying ? `Close ${playlist.title} player` : `Play ${playlist.title}`}
+            aria-label={
+              isPlaying
+                ? `Close ${playlist.title} player`
+                : `Play ${playlist.title}`
+            }
             title={isPlaying ? "Close player" : "Play here"}
-            className="group relative shrink-0 self-start rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="group focus-visible:ring-ring relative shrink-0 self-start rounded-md focus-visible:ring-2 focus-visible:outline-none"
           >
             {artwork}
-            <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/35 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 data-[playing=true]:opacity-100" data-playing={isPlaying}>
+            <span
+              className="absolute inset-0 flex items-center justify-center rounded-md bg-black/35 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 data-[playing=true]:opacity-100"
+              data-playing={isPlaying}
+            >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-black shadow-lg transition-transform group-hover:scale-110">
                 {isPlaying ? (
                   <Pause className="h-4 w-4 fill-current" />
@@ -234,7 +251,7 @@ export function PlaylistCard({
             href={playlist.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="line-clamp-2 font-semibold leading-snug hover:underline"
+            className="line-clamp-2 leading-snug font-semibold hover:underline"
           >
             {playlist.title}
           </a>
@@ -244,14 +261,14 @@ export function PlaylistCard({
               href={playlist.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground flex w-fit items-center gap-1 text-xs"
             >
               <span>{platform.name}</span>
               <ExternalLink className="h-3 w-3 shrink-0" />
             </a>
             {playlist.linkStatus === "broken" && (
               <span
-                className="flex items-center gap-1 text-xs text-destructive"
+                className="text-destructive flex items-center gap-1 text-xs"
                 title="Our last few checks couldn't reach this playlist"
               >
                 <Unlink className="h-3 w-3 shrink-0" />
@@ -260,7 +277,7 @@ export function PlaylistCard({
             )}
           </div>
 
-          <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 line-clamp-3 text-sm">
             {playlist.description}
           </p>
 
@@ -276,7 +293,6 @@ export function PlaylistCard({
               </Badge>
             ))}
           </div>
-
         </div>
 
         {/* Vote column */}
@@ -295,10 +311,17 @@ export function PlaylistCard({
             size="sm"
             onClick={() => onSave(playlist.id)}
             title={isSaved ? "Unsave playlist" : "Save for later"}
-            className="flex items-center gap-1 text-xs text-muted-foreground"
+            className="text-muted-foreground flex items-center gap-1 text-xs"
           >
-            <Heart className={cn("h-4 w-4", isSaved && "fill-yellow-400 text-yellow-400")} />
-            <span className="hidden md:inline">{isSaved ? "Saved" : "Save"}</span>
+            <Heart
+              className={cn(
+                "h-4 w-4",
+                isSaved && "fill-yellow-400 text-yellow-400",
+              )}
+            />
+            <span className="hidden md:inline">
+              {isSaved ? "Saved" : "Save"}
+            </span>
           </Button>
           <VoteButton
             isUpvote={true}
@@ -306,7 +329,12 @@ export function PlaylistCard({
             inTimeout={inTimeout}
             onClick={() => handleVote(playlist.id, true)}
           />
-          <span className={cn("cursor-default text-sm font-bold tabular-nums", scoreColor(score))}>
+          <span
+            className={cn(
+              "cursor-default text-sm font-bold tabular-nums",
+              scoreColor(score),
+            )}
+          >
             {score}
           </span>
           <VoteButton
@@ -320,14 +348,16 @@ export function PlaylistCard({
             size="icon"
             onClick={() => onReport(playlist)}
             disabled={isReported}
-            aria-label={isReported ? "Already reported" : "Report this playlist"}
+            aria-label={
+              isReported ? "Already reported" : "Report this playlist"
+            }
             title={
               isReported
                 ? "You've reported this — thanks, we're on it"
                 : "Report this playlist"
             }
             className={cn(
-              "mt-1 h-6 w-6 text-muted-foreground/50 hover:text-destructive",
+              "text-muted-foreground/50 hover:text-destructive mt-1 h-6 w-6",
               isReported && "text-destructive opacity-70",
             )}
           >
@@ -343,8 +373,13 @@ export function PlaylistCard({
             key="player"
             initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: "easeOut" }}
+            exit={
+              prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }
+            }
+            transition={{
+              duration: prefersReducedMotion ? 0 : 0.25,
+              ease: "easeOut",
+            }}
             className="overflow-hidden"
           >
             <PlaylistEmbed embed={embed} title={playlist.title} />

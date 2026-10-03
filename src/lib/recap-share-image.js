@@ -98,9 +98,13 @@ export function canNativeShareFiles() {
   if (typeof navigator.share !== "function") return false;
   if (typeof navigator.canShare !== "function") return false;
   try {
-    const probe = new File([new Blob([""], { type: "image/png" })], "probe.png", {
-      type: "image/png",
-    });
+    const probe = new File(
+      [new Blob([""], { type: "image/png" })],
+      "probe.png",
+      {
+        type: "image/png",
+      },
+    );
     return navigator.canShare({ files: [probe] });
   } catch {
     return false;

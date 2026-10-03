@@ -600,8 +600,8 @@ export function StartLiftingLogCard({ payoff }) {
       <CardHeader className="space-y-2">
         <CardTitle className="text-xl">Start your lifting log</CardTitle>
         <CardDescription className="text-base leading-relaxed">
-          {payoff} fills in from your own sessions. Log your first set, or
-          bring your history over from another app.
+          {payoff} fills in from your own sessions. Log your first set, or bring
+          your history over from another app.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-start">

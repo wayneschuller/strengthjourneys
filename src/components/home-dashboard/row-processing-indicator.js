@@ -6,10 +6,20 @@
  */
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
+import {
+  format,
+  differenceInSeconds,
+  differenceInMinutes,
+  differenceInHours,
+  isToday,
+} from "date-fns";
 import { FileUp, RefreshCw, Loader2 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
-import { CountUp, COUNT_UP_EASE, formatCountUpInteger } from "@/components/count-up";
+import {
+  CountUp,
+  COUNT_UP_EASE,
+  formatCountUpInteger,
+} from "@/components/count-up";
 
 function formatSyncTime(timestamp) {
   if (!timestamp) return null;
@@ -27,11 +37,25 @@ function formatSyncTime(timestamp) {
 function getFreshnessColor(dataSyncedAt) {
   if (!dataSyncedAt) return "text-muted-foreground";
   const hoursAgo = differenceInHours(Date.now(), dataSyncedAt);
-  return hoursAgo < 1 ? "text-green-600 dark:text-green-500" : "text-amber-600 dark:text-amber-500";
+  return hoursAgo < 1
+    ? "text-green-600 dark:text-green-500"
+    : "text-amber-600 dark:text-amber-500";
 }
 
 // One extra 0 on the end so a wheel can roll past 9 and wrap without snapping back.
-const ODOMETER_WHEEL_DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+const ODOMETER_WHEEL_DIGITS = [
+  "0",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "0",
+];
 
 // The digit pitch is shorter than the window, so the neighbouring numbers peek in at the
 // edges the way a mechanical counter shows the wheel curving away.
@@ -70,7 +94,10 @@ function OdometerCount({ value, layoutValue }) {
   const displayValue = Math.floor(safeValue).toLocaleString();
   // Never shrink below the number currently showing, so a roll past a digit boundary
   // (9,999 -> 10,000) widens early instead of clipping.
-  const widthSource = Math.max(Math.ceil(safeValue), Math.max(0, layoutValue ?? 0));
+  const widthSource = Math.max(
+    Math.ceil(safeValue),
+    Math.max(0, layoutValue ?? 0),
+  );
 
   if (prefersReducedMotion) {
     return <span className="tabular-nums">{displayValue}</span>;
@@ -185,7 +212,8 @@ function useRollingCount(target, durationMs = ROW_COUNT_ROLL_MS) {
     const tick = (now) => {
       const progress = Math.min(1, (now - start) / durationMs);
       const eased = 1 - (1 - progress) ** 3;
-      valueRef.current = progress >= 1 ? target : from + (target - from) * eased;
+      valueRef.current =
+        progress >= 1 ? target : from + (target - from) * eased;
       setValue(valueRef.current);
       if (progress < 1) frameId = requestAnimationFrame(tick);
     };
@@ -235,7 +263,9 @@ export function DataSheetStatus({
 
   const sheetLabel = (sheetFilename || "Your Google Sheet").trim();
   const timeSuffix = formatSyncTime(dataSyncedAt);
-  const freshnessColor = isValidating ? "text-muted-foreground" : getFreshnessColor(dataSyncedAt);
+  const freshnessColor = isValidating
+    ? "text-muted-foreground"
+    : getFreshnessColor(dataSyncedAt);
   const tooltipText = dataSyncedAt
     ? `Last synced: ${format(new Date(dataSyncedAt), "MMM d, h:mm a")}${rowText ? ` • ${rowText}` : ""}`
     : rowText || null;
@@ -243,7 +273,9 @@ export function DataSheetStatus({
   const sheetLinkContent = (
     <>
       <span className="2xl:hidden">Google Sheet</span>
-      <span className="hidden 2xl:inline-block max-w-[20ch] min-[1920px]:max-w-none truncate align-bottom underline">{sheetLabel}</span>
+      <span className="hidden max-w-[20ch] truncate align-bottom underline min-[1920px]:max-w-none 2xl:inline-block">
+        {sheetLabel}
+      </span>
     </>
   );
 
@@ -263,11 +295,15 @@ export function DataSheetStatus({
 
   const syncLabel = (
     <span title={tooltipText} className={freshnessColor}>
-      {isValidating
-        ? "Reading your workout data…"
-        : timeSuffix
-          ? <>✓ Synced with {sheetLink} {timeSuffix}</>
-          : <>✓ Up to date with {sheetLink}</>}
+      {isValidating ? (
+        "Reading your workout data…"
+      ) : timeSuffix ? (
+        <>
+          ✓ Synced with {sheetLink} {timeSuffix}
+        </>
+      ) : (
+        <>✓ Up to date with {sheetLink}</>
+      )}
     </span>
   );
 
@@ -296,7 +332,7 @@ export function DataSheetStatus({
           onClick={() => mutate()}
           disabled={isValidating}
           title="Sync now"
-          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Sync now"
         >
           {isValidating ? (
@@ -354,7 +390,11 @@ export function RowProcessingIndicator({
   const isCountKnown = count !== null && count !== undefined;
   const hasExpectedCount = Number.isFinite(expectedCount) && expectedCount > 0;
   // What "/ total" shows: the real count once it is known, the remembered one until then.
-  const displayTotal = isCountKnown ? count : hasExpectedCount ? expectedCount : null;
+  const displayTotal = isCountKnown
+    ? count
+    : hasExpectedCount
+      ? expectedCount
+      : null;
   const hasTotal = displayTotal !== null;
   const countLabel = isPreviewMode ? "entries" : "rows";
   // One label from start to finish. Swapping in a shorter word at the end narrowed the pill
@@ -370,18 +410,27 @@ export function RowProcessingIndicator({
 
   useEffect(() => {
     if (!isCountKnown) return;
-    const delayMs = count > 0 && !prefersReducedMotion ? finishSeconds * 1000 : 0;
+    const delayMs =
+      count > 0 && !prefersReducedMotion ? finishSeconds * 1000 : 0;
     const timer = setTimeout(() => setIsProgressDone(true), delayMs);
     return () => clearTimeout(timer);
-  }, [count, isCountKnown, finishSeconds, prefersReducedMotion, setIsProgressDone]);
+  }, [
+    count,
+    isCountKnown,
+    finishSeconds,
+    prefersReducedMotion,
+    setIsProgressDone,
+  ]);
 
   const fillPercent = isCountKnown ? 100 : READ_CEILING * 100;
   const phaseSeconds = isCountKnown ? finishSeconds : READ_SECONDS;
-  const countTarget = isCountKnown ? count : Math.round((expectedCount ?? 0) * READ_CEILING);
+  const countTarget = isCountKnown
+    ? count
+    : Math.round((expectedCount ?? 0) * READ_CEILING);
 
   return (
     <div
-      className={`relative flex items-center gap-2 overflow-hidden rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-xs whitespace-nowrap ${
+      className={`border-border/60 bg-muted/40 relative flex items-center gap-2 overflow-hidden rounded-full border px-2 py-0.5 text-xs whitespace-nowrap ${
         hasTotal ? "" : "min-w-40"
       }`}
       role="progressbar"
@@ -398,7 +447,10 @@ export function RowProcessingIndicator({
         className="bg-primary/15 absolute inset-y-0 left-0"
         initial={{ width: "0%" }}
         animate={{ width: `${fillPercent}%` }}
-        transition={{ duration: prefersReducedMotion ? 0 : phaseSeconds, ease: COUNT_UP_EASE }}
+        transition={{
+          duration: prefersReducedMotion ? 0 : phaseSeconds,
+          ease: COUNT_UP_EASE,
+        }}
       />
       <span className="relative flex items-center gap-2">
         {isPreviewMode ? (
@@ -413,12 +465,16 @@ export function RowProcessingIndicator({
         )}
         {hasTotal ? (
           <>
-            <span className="text-muted-foreground hidden sm:inline">{loadingLabel}:</span>
+            <span className="text-muted-foreground hidden sm:inline">
+              {loadingLabel}:
+            </span>
             <span className="flex items-center gap-1 tabular-nums">
               {/* Room for the whole total up front, so the pill does not widen as digits arrive. */}
               <span
                 className="inline-block text-right"
-                style={{ minWidth: `${displayTotal.toLocaleString().length}ch` }}
+                style={{
+                  minWidth: `${displayTotal.toLocaleString().length}ch`,
+                }}
               >
                 <CountUp
                   value={countTarget}
@@ -434,7 +490,9 @@ export function RowProcessingIndicator({
           </>
         ) : (
           // Below lg the loading panel under the header already says this in words.
-          <span className="text-muted-foreground hidden lg:inline">{loadingLabel}</span>
+          <span className="text-muted-foreground hidden lg:inline">
+            {loadingLabel}
+          </span>
         )}
         <motion.span
           className={`shrink-0 ${isProgressDone ? "text-green-500" : "text-amber-400"}`}

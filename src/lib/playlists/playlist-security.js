@@ -20,7 +20,11 @@ export function isLeaderboardAdminEmail(email) {
 export function getRequestClientIp(req) {
   const forwardedFor = req.headers["x-forwarded-for"];
   if (Array.isArray(forwardedFor)) {
-    return forwardedFor[0]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+    return (
+      forwardedFor[0]?.split(",")[0]?.trim() ||
+      req.socket.remoteAddress ||
+      "unknown"
+    );
   }
 
   if (typeof forwardedFor === "string" && forwardedFor.length > 0) {

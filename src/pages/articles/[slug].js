@@ -151,7 +151,9 @@ export default function ArticlePost({ article, relatedArticles }) {
             sizes="(max-width: 1100px) 100vw, 1024px"
             className="object-cover"
             style={
-              article.coverFocus ? { objectPosition: article.coverFocus } : undefined
+              article.coverFocus
+                ? { objectPosition: article.coverFocus }
+                : undefined
             }
           />
         </div>
@@ -250,10 +252,12 @@ function pickRelatedArticles(article, libraryArticles) {
     .map((candidate, recencyRank) => ({
       candidate,
       recencyRank,
-      sharedTopics: candidate.categories.filter((title) => topics.has(title)).length,
+      sharedTopics: candidate.categories.filter((title) => topics.has(title))
+        .length,
     }))
     .sort(
-      (a, b) => b.sharedTopics - a.sharedTopics || a.recencyRank - b.recencyRank,
+      (a, b) =>
+        b.sharedTopics - a.sharedTopics || a.recencyRank - b.recencyRank,
     )
     .slice(0, RELATED_ARTICLE_COUNT)
     .map(({ candidate }) => candidate);

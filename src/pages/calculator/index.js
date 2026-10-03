@@ -47,20 +47,21 @@ import { PlateDiagram } from "@/components/plate-diagram";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { LB_PER_KG, toKg, unitTypeFor } from "@/lib/weight-units";
-import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
+import {
+  useAthleteBio,
+  getStrengthRatingForE1RM,
+  STRENGTH_LEVEL_EMOJI,
+} from "@/hooks/use-athlete-biodata";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
-import { buildLiftResultSummary, formatLiftResultText } from "@/lib/lift-result-summary";
+import {
+  buildLiftResultSummary,
+  formatLiftResultText,
+} from "@/lib/lift-result-summary";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl } from "@/lib/share-url";
 import { Calculator } from "lucide-react";
-import {
-  motion,
-
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "motion/react";
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import {
   Tooltip,
   TooltipContent,
@@ -142,7 +143,8 @@ const FORMULA_GUIDE_LINKS = [
   {
     href: "/calculator/mayhew-1rm-formula-calculator",
     title: "Mayhew 1RM Formula Calculator",
-    description: "Useful when you want an option that is less linear at higher reps.",
+    description:
+      "Useful when you want an option that is less linear at higher reps.",
   },
   {
     href: "/calculator/wathan-1rm-formula-calculator",
@@ -162,7 +164,8 @@ const FORMULA_GUIDE_LINKS = [
   {
     href: "/calculator/oconner-formula-1rm-calculator",
     title: "O'Conner Formula 1RM Calculator",
-    description: "A conservative option that tends to estimate slightly lower than Epley.",
+    description:
+      "A conservative option that tends to estimate slightly lower than Epley.",
   },
 ];
 
@@ -329,42 +332,47 @@ export function E1RMCalculatorMain({
     bioDataIsDefault,
     bioDataIsInitialized,
   } = useAthleteBio();
-  const [reps, setReps, , , repsIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.REPS,
-    5,
-    false,
-    null,
-    (value) => Number.isInteger(value) && value >= 1 && value <= 20,
-  );
+  const [reps, setReps, , , repsIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.REPS,
+      5,
+      false,
+      null,
+      (value) => Number.isInteger(value) && value >= 1 && value <= 20,
+    );
   // For normal pages: URL query → localStorage → defaultFormula.
   // For formula slug pages: forceFormula prop drives the display directly (no state involved).
   // Clicking a different formula redirects to /calculator with all current state in the query.
-  const [hookFormula, setHookFormula, , , formulaIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.FORMULA,
-    defaultFormula,
-    false,
-    null,
-    (value) => e1rmFormulae.includes(value),
-  );
+  const [hookFormula, setHookFormula, , , formulaIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.FORMULA,
+      defaultFormula,
+      false,
+      null,
+      (value) => e1rmFormulae.includes(value),
+    );
   const e1rmFormula = forceFormula ?? hookFormula;
-  const setE1rmFormula = forceFormula !== null
-    ? (newFormula) => router.push({
-        pathname: "/calculator",
-        query: {
-          [LOCAL_STORAGE_KEYS.FORMULA]: JSON.stringify(newFormula),
-          [LOCAL_STORAGE_KEYS.REPS]: JSON.stringify(reps),
-          [LOCAL_STORAGE_KEYS.WEIGHT]: JSON.stringify(weight),
-          [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(isMetric),
-        },
-      })
-    : setHookFormula;
-  const [weight, setWeight, , , weightIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.WEIGHT,
-    225,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value > 0,
-  );
+  const setE1rmFormula =
+    forceFormula !== null
+      ? (newFormula) =>
+          router.push({
+            pathname: "/calculator",
+            query: {
+              [LOCAL_STORAGE_KEYS.FORMULA]: JSON.stringify(newFormula),
+              [LOCAL_STORAGE_KEYS.REPS]: JSON.stringify(reps),
+              [LOCAL_STORAGE_KEYS.WEIGHT]: JSON.stringify(weight),
+              [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(isMetric),
+            },
+          })
+      : setHookFormula;
+  const [weight, setWeight, , , weightIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.WEIGHT,
+      225,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value > 0,
+    );
   const calculatorQuery = useMemo(
     () => ({
       [LOCAL_STORAGE_KEYS.REPS]: String(reps),
@@ -379,7 +387,16 @@ export function E1RMCalculatorMain({
             [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: String(bodyWeight),
           }),
     }),
-    [age, bodyWeight, bioDataIsDefault, e1rmFormula, isMetric, reps, sex, weight],
+    [
+      age,
+      bodyWeight,
+      bioDataIsDefault,
+      e1rmFormula,
+      isMetric,
+      reps,
+      sex,
+      weight,
+    ],
   );
   useCalculatorQuerySync({
     router,
@@ -392,11 +409,14 @@ export function E1RMCalculatorMain({
   });
   const isClient = useIsClient();
   const [isCapturingImage, setIsCapturingImage] = useState(false);
-  const { isSuccess: isTextCopied, triggerSuccess: triggerTextCopied } = useTransientSuccess();
+  const { isSuccess: isTextCopied, triggerSuccess: triggerTextCopied } =
+    useTransientSuccess();
   const portraitRef = useRef(null);
   // Capture the resolved theme font at mount time so html2canvas gets the actual
   // font name (not just the unresolved --font-sans CSS variable)
-  const [themeFontFamily, setThemeFontFamily] = useState("system-ui, sans-serif");
+  const [themeFontFamily, setThemeFontFamily] = useState(
+    "system-ui, sans-serif",
+  );
   useEffect(() => {
     setThemeFontFamily(window.getComputedStyle(document.body).fontFamily);
   }, []);
@@ -461,7 +481,9 @@ export function E1RMCalculatorMain({
     // the same Reddit-safe formatting.
     const bigFourName = forceLift ? LIFT_SLUG_TO_BIG_FOUR[forceLift] : null;
     const liftName = bigFourName ?? forceLift ?? null;
-    const liftData = bigFourName ? getLiftBarData(bigFourName, standards, e1rmWeight) : null;
+    const liftData = bigFourName
+      ? getLiftBarData(bigFourName, standards, e1rmWeight)
+      : null;
     const hasBio = !bioDataIsDefault && bodyWeight > 0;
 
     const shareQuery = {
@@ -479,7 +501,9 @@ export function E1RMCalculatorMain({
     const shareUrl = buildShareUrl(router.asPath.split("?")[0], shareQuery);
 
     let sharePercentiles = null;
-    const pctKey = bigFourName ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName] : null;
+    const pctKey = bigFourName
+      ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName]
+      : null;
     if (hasBio && pctKey) {
       const bwKg = toKg(bodyWeight, unitTypeFor(isMetric));
       const e1rmKg = toKg(e1rmWeight, unitTypeFor(isMetric));
@@ -567,7 +591,8 @@ export function E1RMCalculatorMain({
           fontSize: "11px",
           fontWeight: "500",
           letterSpacing: "0.03em",
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          fontFamily:
+            'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
           boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
           pointerEvents: "none",
           zIndex: "10",
@@ -583,12 +608,17 @@ export function E1RMCalculatorMain({
           navigator.clipboard
             .write([new ClipboardItem({ "image/png": blob })])
             .then(() => {
-              toast({ title: "Image copied! Paste into Instagram or anywhere." });
+              toast({
+                title: "Image copied! Paste into Instagram or anywhere.",
+              });
               gaTrackCalcShareCopy("image", { page: router.asPath });
             })
             .catch((err) => {
               console.error("Copy image error:", err);
-              toast({ variant: "destructive", title: "Could not copy image to clipboard" });
+              toast({
+                variant: "destructive",
+                title: "Could not copy image to clipboard",
+              });
             });
         }, "image/png");
       } finally {
@@ -605,50 +635,72 @@ export function E1RMCalculatorMain({
   const unit = getUnitSuffix(isMetric);
 
   // Floating plate annotation state (reads warmup-calc prefs from localStorage)
-  const storedBarType = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, { initializeWithValue: false }) ?? "standard";
-  const storedPlatePreference = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, { initializeWithValue: false }) ?? "red";
-  const plateBarWeight = isMetric ? (storedBarType === "womens" ? 15 : 20) : (storedBarType === "womens" ? 35 : 45);
-  const plateBreakdown = calculatePlateBreakdown(e1rmWeight, plateBarWeight, isMetric, storedPlatePreference);
+  const storedBarType =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
+      initializeWithValue: false,
+    }) ?? "standard";
+  const storedPlatePreference =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, {
+      initializeWithValue: false,
+    }) ?? "red";
+  const plateBarWeight = isMetric
+    ? storedBarType === "womens"
+      ? 15
+      : 20
+    : storedBarType === "womens"
+      ? 35
+      : 45;
+  const plateBreakdown = calculatePlateBreakdown(
+    e1rmWeight,
+    plateBarWeight,
+    isMetric,
+    storedPlatePreference,
+  );
   const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
   const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
   const calculatorE1rmKg = toKg(e1rmWeight, unitTypeFor(isMetric));
-  const circlesLiftType = forceLift ? (LIFT_SLUG_TO_BIG_FOUR[forceLift] ?? forceLift) : null;
+  const circlesLiftType = forceLift
+    ? (LIFT_SLUG_TO_BIG_FOUR[forceLift] ?? forceLift)
+    : null;
 
   return (
     <PageContainer>
       <PageHeader>
-        <PageHeaderHeading icon={Calculator}>
-          {pageTitle}
-        </PageHeaderHeading>
+        <PageHeaderHeading icon={Calculator}>{pageTitle}</PageHeaderHeading>
         <PageHeaderDescription>
           {renderInlineContent(pageDescription)}
         </PageHeaderDescription>
         {formulaBlurb && (
-          <p className="mt-1 text-base text-muted-foreground font-mono">
-            {formulaBlurb.equation} {"\u2014"} {renderInlineContent(formulaBlurb.text)}
+          <p className="text-muted-foreground mt-1 font-mono text-base">
+            {formulaBlurb.equation} {"\u2014"}{" "}
+            {renderInlineContent(formulaBlurb.text)}
           </p>
         )}
-        {forceLift && getLiftArtwork(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
-          <PageHeaderRight>
-            <Link
-              prefetch={false}
-              href={LIFT_SLUG_TO_INSIGHTS_URL[forceLift]}
-              className="hover:bg-muted flex w-64 items-center gap-3 rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
-            >
-              <div className="flex-1">
-                <h3 className="text-base font-semibold">{forceLift} Insights</h3>
-                <p className="text-muted-foreground text-sm">
-                  Standards, PRs &amp; progress →
-                </p>
-              </div>
-              <img
-                src={getLiftArtwork(forceLift)}
-                alt={forceLift}
-                className="h-24 w-24 flex-shrink-0 object-contain opacity-90 transition-opacity hover:opacity-50"
-              />
-            </Link>
-          </PageHeaderRight>
-        )}
+        {forceLift &&
+          getLiftArtwork(forceLift) &&
+          LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
+            <PageHeaderRight>
+              <Link
+                prefetch={false}
+                href={LIFT_SLUG_TO_INSIGHTS_URL[forceLift]}
+                className="hover:bg-muted flex w-64 items-center gap-3 rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold">
+                    {forceLift} Insights
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    Standards, PRs &amp; progress →
+                  </p>
+                </div>
+                <img
+                  src={getLiftArtwork(forceLift)}
+                  alt={forceLift}
+                  className="h-24 w-24 flex-shrink-0 object-contain opacity-90 transition-opacity hover:opacity-50"
+                />
+              </Link>
+            </PageHeaderRight>
+          )}
       </PageHeader>
       <Card>
         <CardContent>
@@ -669,7 +721,7 @@ export function E1RMCalculatorMain({
             <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
               {reps} reps
             </div>
-            <div className="ml-2 mt-6 w-[9rem] justify-self-center md:hidden">
+            <div className="mt-6 ml-2 w-[9rem] justify-self-center md:hidden">
               <div className="flex items-center gap-1 text-2xl">
                 <Input
                   className="text-2xl"
@@ -732,26 +784,57 @@ export function E1RMCalculatorMain({
                   height: "640px",
                   fontFamily: themeFontFamily,
                 }}
-                className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
+                className="bg-card text-card-foreground relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 px-8 py-10"
               >
-                <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
+                <div
+                  className="w-full text-center"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      opacity: 0.5,
+                    }}
+                  >
                     One Rep Max
                   </div>
                   <div style={{ fontSize: "20px", opacity: 0.6 }}>
-                    {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
+                    {reps} reps @ {weight}
+                    {isMetric ? "kg" : "lb"}
                   </div>
                 </div>
                 <div style={{ textAlign: "center", lineHeight: 1 }}>
-                  <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em" }}>
+                  <div
+                    style={{
+                      fontSize: "128px",
+                      fontWeight: 800,
+                      letterSpacing: "-0.04em",
+                    }}
+                  >
                     {e1rmWeight}
                   </div>
-                  <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
+                  <div
+                    style={{
+                      fontSize: "40px",
+                      fontWeight: 700,
+                      opacity: 0.55,
+                      marginTop: "4px",
+                    }}
+                  >
                     {isMetric ? "kg" : "lb"}
                   </div>
                 </div>
                 <div style={{ fontSize: "15px", opacity: 0.45 }}>
-                  {Number(reps) === 1 ? "lifted, not estimated" : `${e1rmFormula} formula`}
+                  {Number(reps) === 1
+                    ? "lifted, not estimated"
+                    : `${e1rmFormula} formula`}
                 </div>
               </div>
 
@@ -760,10 +843,14 @@ export function E1RMCalculatorMain({
                 <div className="relative flex w-full justify-center">
                   {forceLift && (
                     <motion.div
-                      className="hidden xl:flex absolute left-0 2xl:-left-10 top-1/2 -translate-y-1/2 items-center"
+                      className="absolute top-1/2 left-0 hidden -translate-y-1/2 items-center xl:flex 2xl:-left-10"
                       initial={{ opacity: 0, scale: 0.85 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.6, duration: 0.6, ease: "easeOut" }}
+                      transition={{
+                        delay: 0.6,
+                        duration: 0.6,
+                        ease: "easeOut",
+                      }}
                     >
                       <SingleLiftStrengthCirclesSection
                         liftType={circlesLiftType}
@@ -785,7 +872,7 @@ export function E1RMCalculatorMain({
                   />
 
                   {/* Floating plate annotation: absolute in right whitespace on desktop */}
-                  <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
+                  <div className="absolute top-1/2 right-0 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
                     <Link href={warmupURL} prefetch={false}>
                       <PlateDiagram
                         platesPerSide={plateBreakdown.platesPerSide}
@@ -796,7 +883,11 @@ export function E1RMCalculatorMain({
                         useScrollTrigger={false}
                       />
                     </Link>
-                    <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground" prefetch={false}>
+                    <Link
+                      href={warmupURL}
+                      className="text-muted-foreground mt-1 text-right text-xs"
+                      prefetch={false}
+                    >
                       See warm-up sets →
                     </Link>
                   </div>
@@ -814,7 +905,11 @@ export function E1RMCalculatorMain({
                       useScrollTrigger={false}
                     />
                   </Link>
-                  <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground" prefetch={false}>
+                  <Link
+                    href={warmupURL}
+                    className="text-muted-foreground mt-1 text-xs"
+                    prefetch={false}
+                  >
                     See warm-up sets →
                   </Link>
                 </div>
@@ -840,7 +935,9 @@ export function E1RMCalculatorMain({
                   successLabel="Copied"
                   isSuccess={isTextCopied}
                   className="min-w-[112px]"
-                  onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
+                  onPressAnalytics={() =>
+                    gaTrackCalcShareCopy("text", { page: router.asPath })
+                  }
                   onClick={handleCopyToClipboard}
                 />
               </div>
@@ -897,29 +994,35 @@ export function E1RMCalculatorMain({
       />
       {guide}
       <section className="mt-10">
-        <h2 className="mb-4 text-xl font-semibold">One Rep Max Calculator FAQ</h2>
+        <h2 className="mb-4 text-xl font-semibold">
+          One Rep Max Calculator FAQ
+        </h2>
         <div className="space-y-4">
           {faqItems.map(({ question, answer }) => (
             <article key={question} className="rounded-lg border p-4">
               <h3 className="text-base font-semibold">{question}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {renderAnswer(answer)}
+              </p>
             </article>
           ))}
         </div>
       </section>
       {!forceFormula && !forceLift && (
         <section className="mt-10">
-          <h2 className="mb-4 text-xl font-semibold">Compare Every 1RM Formula</h2>
+          <h2 className="mb-4 text-xl font-semibold">
+            Compare Every 1RM Formula
+          </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {FORMULA_GUIDE_LINKS.map((formulaLink) => (
               <Link
                 prefetch={false}
                 key={formulaLink.href}
                 href={formulaLink.href}
-                className="block rounded-lg border p-4 transition-colors hover:bg-muted"
+                className="hover:bg-muted block rounded-lg border p-4 transition-colors"
               >
                 <h3 className="font-semibold">{formulaLink.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-sm">
                   {formulaLink.description}
                 </p>
               </Link>
@@ -937,7 +1040,9 @@ const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 function renderInlineContent(content) {
   if (typeof content === "string") return content;
   return content.map((seg, i) =>
-    typeof seg === "string" ? seg : (
+    typeof seg === "string" ? (
+      seg
+    ) : (
       <Link
         prefetch={false}
         key={i}
@@ -956,10 +1061,16 @@ function renderAnswer(answer) {
 
 function flattenAnswer(answer) {
   if (typeof answer === "string") return answer;
-  return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
+  return answer
+    .map((seg) => (typeof seg === "string" ? seg : seg.text))
+    .join("");
 }
 
-function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) {
+function CalculatorSupportPanels({
+  exampleSnippet,
+  formulaSupport,
+  liftLinks,
+}) {
   if (!exampleSnippet && !formulaSupport && !liftLinks) return null;
 
   if (exampleSnippet && !formulaSupport && !liftLinks) {
@@ -969,14 +1080,14 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <CardContent className="text-muted-foreground space-y-2 text-sm">
             <p>
               <strong className="text-foreground">Input:</strong>{" "}
               {renderInlineContent(exampleSnippet.input)}
             </p>
             <p>
               <strong className="text-foreground">Calculation:</strong>{" "}
-              <span className="font-mono text-foreground">
+              <span className="text-foreground font-mono">
                 {renderInlineContent(exampleSnippet.calculation)}
               </span>
             </p>
@@ -998,14 +1109,14 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <CardContent className="text-muted-foreground space-y-2 text-sm">
             <p>
               <strong className="text-foreground">Input:</strong>{" "}
               {renderInlineContent(exampleSnippet.input)}
             </p>
             <p>
               <strong className="text-foreground">Calculation:</strong>{" "}
-              <span className="font-mono text-foreground">
+              <span className="text-foreground font-mono">
                 {renderInlineContent(exampleSnippet.calculation)}
               </span>
             </p>
@@ -1026,9 +1137,9 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
                 prefetch={false}
                 key={link.href}
                 href={link.href}
-                className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+                className="hover:bg-muted block rounded-md border px-3 py-2 transition-colors"
               >
-                <div className="font-medium text-foreground">{link.label}</div>
+                <div className="text-foreground font-medium">{link.label}</div>
                 <div className="text-muted-foreground">{link.description}</div>
               </Link>
             ))}
@@ -1045,14 +1156,14 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">{exampleSnippet.heading}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <CardContent className="text-muted-foreground space-y-2 text-sm">
             <p>
               <strong className="text-foreground">Input:</strong>{" "}
               {renderInlineContent(exampleSnippet.input)}
             </p>
             <p>
               <strong className="text-foreground">Calculation:</strong>{" "}
-              <span className="font-mono text-foreground">
+              <span className="text-foreground font-mono">
                 {renderInlineContent(exampleSnippet.calculation)}
               </span>
             </p>
@@ -1069,26 +1180,26 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <CardContent className="text-muted-foreground space-y-3 text-sm">
             <p>{renderInlineContent(formulaSupport.summary)}</p>
             <ul className="space-y-2">
               <li>
                 <strong className="text-foreground">Best for:</strong>{" "}
                 {renderInlineContent(formulaSupport.bestFor)}
               </li>
-            <li>
-              <strong className="text-foreground">Rep range:</strong>{" "}
-              {renderInlineContent(formulaSupport.repRange)}
-            </li>
-            {formulaSupport.example && (
               <li>
-                <strong className="text-foreground">Worked example:</strong>{" "}
-                {renderInlineContent(formulaSupport.example)}
+                <strong className="text-foreground">Rep range:</strong>{" "}
+                {renderInlineContent(formulaSupport.repRange)}
               </li>
-            )}
-          </ul>
-        </CardContent>
-      </Card>
+              {formulaSupport.example && (
+                <li>
+                  <strong className="text-foreground">Worked example:</strong>{" "}
+                  {renderInlineContent(formulaSupport.example)}
+                </li>
+              )}
+            </ul>
+          </CardContent>
+        </Card>
       )}
       {formulaSupport && (
         <Card>
@@ -1101,9 +1212,9 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
                 prefetch={false}
                 key={link.href}
                 href={link.href}
-                className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+                className="hover:bg-muted block rounded-md border px-3 py-2 transition-colors"
               >
-                <div className="font-medium text-foreground">{link.label}</div>
+                <div className="text-foreground font-medium">{link.label}</div>
                 <div className="text-muted-foreground">{link.description}</div>
               </Link>
             ))}
@@ -1113,7 +1224,6 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
     </section>
   );
 }
-
 
 /**
  * Hero card displaying the animated estimated one-rep max number, the input set context, and
@@ -1127,7 +1237,14 @@ function CalculatorSupportPanels({ exampleSnippet, formulaSupport, liftLinks }) 
  * @param {Function} props.estimateE1RM - Function to compute the estimated one-rep max.
  * @param {string|null} [props.forceLift=null] - When set, shows lift name in title and strength rating.
  */
-const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, forceLift = null }) => {
+const E1RMSummaryCard = ({
+  reps,
+  weight,
+  isMetric,
+  e1rmFormula,
+  estimateE1RM,
+  forceLift = null,
+}) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   // At one rep every formula hands back the weight untouched, so there is
   // nothing estimated about the headline — the lifter is looking at a number
@@ -1146,45 +1263,70 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   // Strength rating for the forced lift type, when on a lift slug page
   const bigFourName = forceLift ? LIFT_SLUG_TO_BIG_FOUR[forceLift] : null;
   const liftStandard = bigFourName ? standards?.[bigFourName] : null;
-  const liftRating = liftStandard?.elite ? getStrengthRatingForE1RM(e1rmWeight, liftStandard) : null;
-  const liftRatingEmoji = liftRating ? (STRENGTH_LEVEL_EMOJI[liftRating] ?? "") : null;
-  const strengthStandardsUrl = bigFourName ? getStrengthLevelsPath(bigFourName) : null;
-  const standardsComparisonCopy = forceLift && liftRating
-    ? `${liftRating} ${forceLift.toLowerCase()} strength for your age, sex, and bodyweight`
+  const liftRating = liftStandard?.elite
+    ? getStrengthRatingForE1RM(e1rmWeight, liftStandard)
     : null;
+  const liftRatingEmoji = liftRating
+    ? (STRENGTH_LEVEL_EMOJI[liftRating] ?? "")
+    : null;
+  const strengthStandardsUrl = bigFourName
+    ? getStrengthLevelsPath(bigFourName)
+    : null;
+  const standardsComparisonCopy =
+    forceLift && liftRating
+      ? `${liftRating} ${forceLift.toLowerCase()} strength for your age, sex, and bodyweight`
+      : null;
 
   // Percentile for the forced lift (squat/bench/deadlift only, not strict press)
-  const percentileKey = bigFourName ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName] : null;
+  const percentileKey = bigFourName
+    ? LIFT_TYPE_TO_PERCENTILE_KEY[bigFourName]
+    : null;
   const percentiles = useMemo(() => {
-    if (!percentileKey || bioDataIsDefault || !bodyWeight || !e1rmWeight) return null;
+    if (!percentileKey || bioDataIsDefault || !bodyWeight || !e1rmWeight)
+      return null;
     const bwKg = toKg(bodyWeight, unitTypeFor(isMetric));
     const e1rmKg = toKg(e1rmWeight, unitTypeFor(isMetric));
     return getLiftPercentiles(age, bwKg, sex, percentileKey, e1rmKg);
-  }, [percentileKey, bioDataIsDefault, bodyWeight, e1rmWeight, isMetric, age, sex]);
+  }, [
+    percentileKey,
+    bioDataIsDefault,
+    bodyWeight,
+    e1rmWeight,
+    isMetric,
+    age,
+    sex,
+  ]);
   const gymGoerPercentile = percentiles?.["Gym-Goers"];
 
   return (
     <div className="relative w-full max-w-md">
       {/* Animated pulsating glow border */}
       <motion.div
-        className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-primary via-primary/60 to-primary opacity-75 blur-sm"
+        className="from-primary via-primary/60 to-primary absolute -inset-[2px] rounded-xl bg-gradient-to-r opacity-75 blur-sm"
         animate={{ opacity: [0.4, 0.75, 0.4] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
       />
-      <Card className="relative w-full border-2 border-primary/30">
+      <Card className="border-primary/30 relative w-full border-2">
         <CardHeader className="pb-2">
           <CardTitle className="text-center text-xl md:text-3xl">
             {forceLift ? (
               <>
                 <div>{forceLift}</div>
-                <div className="text-lg md:text-2xl font-semibold text-muted-foreground">{isTrueSingle ? "Actual 1RM" : "Estimated 1RM"}</div>
+                <div className="text-muted-foreground text-lg font-semibold md:text-2xl">
+                  {isTrueSingle ? "Actual 1RM" : "Estimated 1RM"}
+                </div>
               </>
-            ) : (isTrueSingle ? "Your One Rep Max" : "Estimated One Rep Max")}
+            ) : isTrueSingle ? (
+              "Your One Rep Max"
+            ) : (
+              "Estimated One Rep Max"
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-2">
-          <div className="text-center text-lg md:text-xl text-muted-foreground">
-            {reps}@{weight}{isMetric ? "kg" : "lb"}
+          <div className="text-muted-foreground text-center text-lg md:text-xl">
+            {reps}@{weight}
+            {isMetric ? "kg" : "lb"}
           </div>
           <div className="text-center text-6xl font-extrabold tracking-tight md:text-7xl xl:text-8xl">
             <motion.span className="tabular-nums">{displayVal}</motion.span>
@@ -1198,21 +1340,31 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
             </div>
           )}
           {gymGoerPercentile != null && (
-            <div className="mt-1 text-center text-sm text-muted-foreground">
-              <Link href="/how-strong-am-i" className="transition-opacity hover:opacity-70" prefetch={false}>
+            <div className="text-muted-foreground mt-1 text-center text-sm">
+              <Link
+                href="/how-strong-am-i"
+                className="transition-opacity hover:opacity-70"
+                prefetch={false}
+              >
                 Stronger than {gymGoerPercentile}% of gym-goers your age
               </Link>
             </div>
           )}
-          {gymGoerPercentile == null && standardsComparisonCopy && strengthStandardsUrl && (
-            <div className="mt-1 text-center text-sm text-muted-foreground">
-              <Link href={strengthStandardsUrl} className="transition-opacity hover:opacity-70" prefetch={false}>
-                {standardsComparisonCopy}
-              </Link>
-            </div>
-          )}
+          {gymGoerPercentile == null &&
+            standardsComparisonCopy &&
+            strengthStandardsUrl && (
+              <div className="text-muted-foreground mt-1 text-center text-sm">
+                <Link
+                  href={strengthStandardsUrl}
+                  className="transition-opacity hover:opacity-70"
+                  prefetch={false}
+                >
+                  {standardsComparisonCopy}
+                </Link>
+              </div>
+            )}
           {!bioDataIsDefault && bodyWeight > 0 && (
-            <div className="mt-1 text-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground mt-1 text-center text-sm">
               {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
             </div>
           )}
@@ -1220,9 +1372,13 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
         <CardFooter className="text-muted-foreground">
           <div className="flex-1 text-center">
             {isTrueSingle ? (
-              <>A single <strong>is</strong> a one rep max — no formula needed</>
+              <>
+                A single <strong>is</strong> a one rep max — no formula needed
+              </>
             ) : (
-              <>Using the <strong>{e1rmFormula}</strong> formula</>
+              <>
+                Using the <strong>{e1rmFormula}</strong> formula
+              </>
             )}
           </div>
         </CardFooter>
@@ -1241,7 +1397,13 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
  * @param {string} props.e1rmFormula - Currently active E1RM formula name.
  * @param {Function} props.setE1rmFormula - Setter to change the active formula.
  */
-function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula }) {
+function AlgorithmRangeBars({
+  reps,
+  weight,
+  isMetric,
+  e1rmFormula,
+  setE1rmFormula,
+}) {
   const unit = isMetric ? "kg" : "lb";
   const accentColor = "var(--primary)";
   const [openPopoverKey, setOpenPopoverKey] = useState(null);
@@ -1250,7 +1412,10 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const estimates = useMemo(
     () =>
       e1rmFormulae
-        .map((formula) => ({ formula, value: estimateE1RM(reps, weight, formula) }))
+        .map((formula) => ({
+          formula,
+          value: estimateE1RM(reps, weight, formula),
+        }))
         .sort((a, b) => a.value - b.value),
     [reps, weight],
   );
@@ -1261,7 +1426,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
 
   // Track spans exactly from the lowest to highest algorithm estimate.
   // Fallback padding only when all algorithms agree (range === 0) so the dot stays visible.
-  const trackRange = range > 0 ? range : (isMetric ? 10 : 25);
+  const trackRange = range > 0 ? range : isMetric ? 10 : 25;
   const detailMin = range > 0 ? minVal : minVal - trackRange / 2;
   const detailMax = detailMin + trackRange;
   const detailPct = (v) => ((v - detailMin) / trackRange) * 100;
@@ -1286,8 +1451,8 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
     if (last && pct - last.pct < DESKTOP_MERGE_THRESHOLD_PCT) {
       last.formulas.push(formula);
       last.values.push(value);
-      const memberPcts = last.formulas.map(
-        (f) => detailPct(estimates.find((e) => e.formula === f).value),
+      const memberPcts = last.formulas.map((f) =>
+        detailPct(estimates.find((e) => e.formula === f).value),
       );
       last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
     } else {
@@ -1310,14 +1475,18 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
     const pct = detailPct(value);
     const last = mobileMergedLabels[mobileMergedLabels.length - 1];
     if (last) {
-      const lastWidthPct = getMobileInitialsText(last.formulas, last.values).length * CHAR_WIDTH_PCT;
+      const lastWidthPct =
+        getMobileInitialsText(last.formulas, last.values).length *
+        CHAR_WIDTH_PCT;
       const isLastFirst = mobileMergedLabels.length === 1;
-      const lastRightEdge = isLastFirst ? last.pct + lastWidthPct : last.pct + lastWidthPct / 2;
+      const lastRightEdge = isLastFirst
+        ? last.pct + lastWidthPct
+        : last.pct + lastWidthPct / 2;
       if (pct - lastRightEdge < 4) {
         last.formulas.push(formula);
         last.values.push(value);
-        const memberPcts = last.formulas.map(
-          (f) => detailPct(estimates.find((e) => e.formula === f).value),
+        const memberPcts = last.formulas.map((f) =>
+          detailPct(estimates.find((e) => e.formula === f).value),
         );
         last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
       } else {
@@ -1338,11 +1507,14 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
         {/* Track */}
         <TooltipProvider>
           <div className="relative" style={{ height: "20px" }}>
-            <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
+            <div className="bg-muted absolute top-1/2 right-0 left-0 h-3 -translate-y-1/2 rounded-full" />
             <motion.div
               className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full"
               style={{ backgroundColor: accentColor, opacity: 0.4 }}
-              animate={{ left: `${detailBandLeft}%`, width: `${Math.max(detailBandWidth, 0.5)}%` }}
+              animate={{
+                left: `${detailBandLeft}%`,
+                width: `${Math.max(detailBandWidth, 0.5)}%`,
+              }}
               transition={springConfig}
             />
             {estimates.map(({ formula, value }) => {
@@ -1364,9 +1536,13 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                         top: "50%",
                         transform: "translate(-50%, -50%)",
                         borderRadius: "9999px",
-                        backgroundColor: isSelected ? accentColor : "var(--muted-foreground)",
+                        backgroundColor: isSelected
+                          ? accentColor
+                          : "var(--muted-foreground)",
                         zIndex: isSelected ? 10 : 1,
-                        boxShadow: isSelected ? `0 0 0 3px ${accentColor}30` : "none",
+                        boxShadow: isSelected
+                          ? `0 0 0 3px ${accentColor}30`
+                          : "none",
                         cursor: "pointer",
                         border: "none",
                       }}
@@ -1374,7 +1550,10 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs">
                     <p className="font-semibold">{formula}</p>
-                    <p>{value}{unit}</p>
+                    <p>
+                      {value}
+                      {unit}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               );
@@ -1383,13 +1562,17 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
         </TooltipProvider>
 
         {/* Labels: desktop — full formula names */}
-        <div className="relative mt-1 hidden md:block" style={{ height: "34px" }}>
+        <div
+          className="relative mt-1 hidden md:block"
+          style={{ height: "34px" }}
+        >
           {desktopMergedLabels.map((group, groupIndex) => {
             const isFirst = groupIndex === 0;
             const isLast = groupIndex === desktopMergedLabels.length - 1;
             const minV = Math.min(...group.values);
             const maxV = Math.max(...group.values);
-            const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+            const weightLabel =
+              minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
             const translateClass = isFirst
               ? "translate-x-0"
               : isLast
@@ -1400,20 +1583,22 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                 key={group.formulas.join("-")}
                 style={{ left: `${group.pct}%` }}
                 className={cn(
-                  "absolute top-0 whitespace-nowrap text-xs leading-tight",
+                  "absolute top-0 text-xs leading-tight whitespace-nowrap",
                   translateClass,
                 )}
               >
                 <div>
                   {group.formulas.map((formula, fi) => (
                     <span key={formula}>
-                      {fi > 0 && <span className="text-muted-foreground/40"> / </span>}
+                      {fi > 0 && (
+                        <span className="text-muted-foreground/40"> / </span>
+                      )}
                       <button
                         onClick={() => setE1rmFormula(formula)}
                         className={cn(
                           "cursor-pointer transition-colors",
                           e1rmFormula === formula
-                            ? "font-semibold text-foreground"
+                            ? "text-foreground font-semibold"
                             : "text-muted-foreground/80 hover:text-foreground",
                         )}
                       >
@@ -1435,7 +1620,8 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
             const isLast = groupIndex === mobileMergedLabels.length - 1;
             const minV = Math.min(...group.values);
             const maxV = Math.max(...group.values);
-            const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+            const weightLabel =
+              minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
             const translateClass = isFirst
               ? "translate-x-0"
               : isLast
@@ -1446,14 +1632,16 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
             const isGroupSelected = group.formulas.includes(e1rmFormula);
             const labelCls = cn(
               "cursor-pointer transition-colors",
-              isGroupSelected ? "font-semibold text-foreground" : "text-muted-foreground/80",
+              isGroupSelected
+                ? "font-semibold text-foreground"
+                : "text-muted-foreground/80",
             );
             return (
               <div
                 key={groupKey}
                 style={{ left: `${group.pct}%` }}
                 className={cn(
-                  "absolute top-0 whitespace-nowrap text-xs leading-tight",
+                  "absolute top-0 text-xs leading-tight whitespace-nowrap",
                   translateClass,
                 )}
               >
@@ -1466,7 +1654,9 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                   <PopoverTrigger asChild>
                     <button className={cn("text-left", labelCls)}>
                       <span className="block">{initials}</span>
-                      <span className="mt-0.5 block opacity-60">{weightLabel}</span>
+                      <span className="mt-0.5 block opacity-60">
+                        {weightLabel}
+                      </span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -1475,20 +1665,30 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                   >
                     <div className="flex flex-col gap-0.5">
                       {group.formulas.map((formula) => {
-                        const val = estimates.find((e) => e.formula === formula)?.value ?? 0;
+                        const val =
+                          estimates.find((e) => e.formula === formula)?.value ??
+                          0;
                         const isSelected = e1rmFormula === formula;
                         return (
                           <button
                             key={formula}
-                            onClick={() => { setE1rmFormula(formula); setOpenPopoverKey(null); }}
+                            onClick={() => {
+                              setE1rmFormula(formula);
+                              setOpenPopoverKey(null);
+                            }}
                             className={cn(
-                              "flex items-center gap-3 rounded px-2 py-1.5 text-xs transition-colors hover:bg-muted text-left",
+                              "hover:bg-muted flex items-center gap-3 rounded px-2 py-1.5 text-left text-xs transition-colors",
                               isSelected ? "font-semibold" : "",
                             )}
                           >
                             <span className="flex-1">{formula}</span>
-                            <span className="text-muted-foreground">{val}{unit}</span>
-                            {isSelected && <span className="text-primary">✓</span>}
+                            <span className="text-muted-foreground">
+                              {val}
+                              {unit}
+                            </span>
+                            {isSelected && (
+                              <span className="text-primary">✓</span>
+                            )}
                           </button>
                         );
                       })}
@@ -1499,9 +1699,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
             );
           })}
         </div>
-
       </div>
-
     </div>
   );
 }
@@ -1515,7 +1713,13 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
  * @param {string} props.e1rmFormula - E1RM formula used for all projections.
  * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
  */
-function RepRangeTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }) {
+function RepRangeTable({
+  reps,
+  weight,
+  e1rmFormula,
+  isMetric,
+  forceLift = null,
+}) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = isMetric ? "kg" : "lb";
   const currentReps = Number(reps);
@@ -1531,13 +1735,17 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }
       <h2 className="mb-1 text-base font-semibold">
         {forceLift ? `${forceLift} Rep Max Projections` : "Rep Max Projections"}
       </h2>
-      <p className="mb-3 text-sm text-muted-foreground">{e1rmFormula} algorithm</p>
+      <p className="text-muted-foreground mb-3 text-sm">
+        {e1rmFormula} algorithm
+      </p>
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/50">
+            <tr className="bg-muted/50 border-b">
               <th className="px-4 py-2 text-left font-medium">Reps</th>
-              <th className="px-4 py-2 text-right font-medium">Weight ({unit})</th>
+              <th className="px-4 py-2 text-right font-medium">
+                Weight ({unit})
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -1548,20 +1756,26 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }
                   key={r}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: Math.min(i, 10) * 0.04, ease: "easeOut" }}
+                  transition={{
+                    delay: Math.min(i, 10) * 0.04,
+                    ease: "easeOut",
+                  }}
                   className={cn(
                     "border-b last:border-b-0",
-                    isCurrentReps ? "font-semibold bg-accent" : "",
+                    isCurrentReps ? "bg-accent font-semibold" : "",
                   )}
                 >
                   <td className="px-4 py-2">
                     {r}RM
                     {isCurrentReps && (
-                      <span className="ml-2 text-xs text-muted-foreground">(current)</span>
+                      <span className="text-muted-foreground ml-2 text-xs">
+                        (current)
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums">
-                    {w}{unit}
+                    {w}
+                    {unit}
                   </td>
                 </motion.tr>
               );
@@ -1573,7 +1787,6 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }
   );
 }
 
-
 /**
  * Table showing common training intensities from 100% down to 50% of the estimated one-rep max in 5%
  * steps, useful for percentage-based programming templates.
@@ -1583,7 +1796,13 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }
  * @param {string} props.e1rmFormula - E1RM formula used to compute the base max.
  * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
  */
-function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }) {
+function PercentageTable({
+  reps,
+  weight,
+  e1rmFormula,
+  isMetric,
+  forceLift = null,
+}) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = isMetric ? "kg" : "lb";
 
@@ -1596,17 +1815,22 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null
   return (
     <div>
       <h2 className="mb-1 text-base font-semibold">
-        {forceLift ? `${forceLift} Percentage Calculator` : "Percentage Calculator"}
+        {forceLift
+          ? `${forceLift} Percentage Calculator`
+          : "Percentage Calculator"}
       </h2>
-      <p className="mb-3 text-sm text-muted-foreground">
-        Based on {e1rmWeight}{unit} {Number(reps) === 1 ? "max" : "estimated max"}
+      <p className="text-muted-foreground mb-3 text-sm">
+        Based on {e1rmWeight}
+        {unit} {Number(reps) === 1 ? "max" : "estimated max"}
       </p>
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/50">
+            <tr className="bg-muted/50 border-b">
               <th className="px-4 py-2 text-left font-medium">Intensity</th>
-              <th className="px-4 py-2 text-right font-medium">Weight ({unit})</th>
+              <th className="px-4 py-2 text-right font-medium">
+                Weight ({unit})
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -1620,12 +1844,13 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null
                   transition={{ delay: i * 0.04, ease: "easeOut" }}
                   className={cn(
                     "border-b last:border-b-0",
-                    isMax ? "font-semibold bg-accent" : "",
+                    isMax ? "bg-accent font-semibold" : "",
                   )}
                 >
                   <td className="px-4 py-2 tabular-nums">{pct}%</td>
                   <td className="px-4 py-2 text-right tabular-nums">
-                    {w}{unit}
+                    {w}
+                    {unit}
                   </td>
                 </motion.tr>
               );
@@ -1636,7 +1861,6 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null
     </div>
   );
 }
-
 
 const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 
@@ -1649,31 +1873,44 @@ function getLiftBarData(liftType, standards, e1rmWeight) {
   const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
   const { physicallyActive, elite } = standard;
   const range = elite - physicallyActive;
-  const pct = range > 0
-    ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
-    : 50;
+  const pct =
+    range > 0
+      ? Math.min(
+          98,
+          Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100),
+        )
+      : 50;
   const nextTierInfo = NEXT_TIER[rating];
   const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
   const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
   const svgPath = getLiftArtwork(liftType);
-  return { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath };
+  return {
+    standard,
+    rating,
+    emoji,
+    physicallyActive,
+    range,
+    pct,
+    nextTierInfo,
+    diff,
+    svgPath,
+  };
 }
 
 // Maps lift slug page names (from PAGE_CONFIG in [slug].js) to the internal BIG_FOUR names
 // used as keys in the strength standards lookup.
 const LIFT_SLUG_TO_BIG_FOUR = {
-  "Squat": "Back Squat",
+  Squat: "Back Squat",
   "Bench Press": "Bench Press",
-  "Deadlift": "Deadlift",
+  Deadlift: "Deadlift",
   "Strict Press": "Strict Press",
 };
 
-
 // Maps lift slug page names to the dedicated lift insights page URL.
 const LIFT_SLUG_TO_INSIGHTS_URL = {
-  "Squat": "/progress-guide/squat",
+  Squat: "/progress-guide/squat",
   "Bench Press": "/progress-guide/bench-press",
-  "Deadlift": "/progress-guide/deadlift",
+  Deadlift: "/progress-guide/deadlift",
   "Strict Press": "/progress-guide/strict-press",
 };
 
@@ -1698,7 +1935,14 @@ const NEXT_TIER = {
  * @param {string} props.e1rmFormula - Active E1RM formula name, included in copied text.
  * @param {string|null} [props.forceLift=null] - When set, features that lift prominently.
  */
-function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, forceLift = null }) {
+function BigFourStrengthBars({
+  reps,
+  weight,
+  e1rmWeight,
+  isMetric,
+  e1rmFormula,
+  forceLift = null,
+}) {
   const router = useRouter();
   const { standards, age, sex, bodyWeight, bioDataIsDefault } = useAthleteBio();
   const { toast } = useToast();
@@ -1710,7 +1954,9 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
     const bwKg = toKg(bodyWeight, unitTypeFor(isMetric));
     const e1rmKg = toKg(e1rmWeight, unitTypeFor(isMetric));
     const out = {};
-    for (const [bigFourName, pctKey] of Object.entries(LIFT_TYPE_TO_PERCENTILE_KEY)) {
+    for (const [bigFourName, pctKey] of Object.entries(
+      LIFT_TYPE_TO_PERCENTILE_KEY,
+    )) {
       out[bigFourName] = getLiftPercentiles(age, bwKg, sex, pctKey, e1rmKg);
     }
     return out;
@@ -1737,7 +1983,9 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
     }
     lines.push(`${liftType}: ${emoji} ${rating}`);
     if (nextTierInfo && diff) {
-      lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} ${nextTierInfo.name} — ${diff}${unit} away`);
+      lines.push(
+        `Next: ${STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} ${nextTierInfo.name} — ${diff}${unit} away`,
+      );
     }
     lines.push(`Source: ${buildShareUrl("/calculator", shareQuery)}`);
 
@@ -1767,36 +2015,73 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   const [openPopoverLift, setOpenPopoverLift] = useState(null);
 
   // For lift slug pages: resolve the slug lift name to the BIG_FOUR internal key.
-  const featuredBigFourName = forceLift ? LIFT_SLUG_TO_BIG_FOUR[forceLift] : null;
+  const featuredBigFourName = forceLift
+    ? LIFT_SLUG_TO_BIG_FOUR[forceLift]
+    : null;
 
   // getLiftBarData is defined at module level; bind the current standards + e1rmWeight.
 
   // Renders a single lift bar row. featured=true uses larger SVG and taller bar.
   // gymPct is the Gym-Goers percentile for this lift (null if unavailable).
   const renderLiftRow = (liftType, data, featured = false, gymPct = null) => {
-    const { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath } = data;
-    const percentileLine = gymPct != null ? `Stronger than ${gymPct}% of gym-goers` : null;
-    const calculatorUrl = LIFT_TYPE_TO_CALCULATOR_URL[liftType] ?? "/calculator";
+    const {
+      standard,
+      rating,
+      emoji,
+      physicallyActive,
+      range,
+      pct,
+      nextTierInfo,
+      diff,
+      svgPath,
+    } = data;
+    const percentileLine =
+      gymPct != null ? `Stronger than ${gymPct}% of gym-goers` : null;
+    const calculatorUrl =
+      LIFT_TYPE_TO_CALCULATOR_URL[liftType] ?? "/calculator";
 
     return (
-      <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+      <div
+        key={liftType}
+        className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3"
+      >
         {/* Row 1 on mobile: SVG + lift name + rating badge */}
         <div className="flex items-center gap-3">
-          <Link href={calculatorUrl} className="shrink-0 transition-opacity hover:opacity-50" prefetch={false}>
-            {svgPath
-              ? <img src={svgPath} alt={liftType} className={cn("object-contain opacity-90", featured ? "h-16 w-16" : "h-12 w-12")} />
-              : <div className={featured ? "h-16 w-16" : "h-12 w-12"} />
-            }
+          <Link
+            href={calculatorUrl}
+            className="shrink-0 transition-opacity hover:opacity-50"
+            prefetch={false}
+          >
+            {svgPath ? (
+              <img
+                src={svgPath}
+                alt={liftType}
+                className={cn(
+                  "object-contain opacity-90",
+                  featured ? "h-16 w-16" : "h-12 w-12",
+                )}
+              />
+            ) : (
+              <div className={featured ? "h-16 w-16" : "h-12 w-12"} />
+            )}
           </Link>
           <Link
             prefetch={false}
             href={calculatorUrl}
-            className={cn("flex-1 text-muted-foreground transition-opacity hover:opacity-70 md:flex-none md:truncate", featured ? "text-sm font-medium md:w-28" : "text-xs md:w-24")}
+            className={cn(
+              "text-muted-foreground flex-1 transition-opacity hover:opacity-70 md:flex-none md:truncate",
+              featured ? "text-sm font-medium md:w-28" : "text-xs md:w-24",
+            )}
           >
             {liftType}
           </Link>
           {/* Rating badge: mobile only (desktop shows it at the end) */}
-          <div className={cn("shrink-0 text-right md:hidden", featured ? "text-sm" : "text-xs")}>
+          <div
+            className={cn(
+              "shrink-0 text-right md:hidden",
+              featured ? "text-sm" : "text-xs",
+            )}
+          >
             <Link
               prefetch={false}
               href={calculatorUrl}
@@ -1805,7 +2090,9 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
               {emoji} {rating}
             </Link>
             {percentileLine && (
-              <div className="text-[10px] text-muted-foreground">{percentileLine}</div>
+              <div className="text-muted-foreground text-[10px]">
+                {percentileLine}
+              </div>
             )}
           </div>
         </div>
@@ -1814,33 +2101,50 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           <div className="relative flex-1">
             <div
               className={cn("w-full rounded-full", featured ? "h-3" : "h-2")}
-              style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
+              style={{
+                background:
+                  "linear-gradient(to right, #EAB308, #86EFAC, #166534)",
+              }}
             />
             {/* Tier dividers at beginner, intermediate, advanced */}
-            {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
-              <div
-                key={i}
-                className={cn("absolute top-0 w-px", featured ? "h-3" : "h-2")}
-                style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
-              />
-            ))}
+            {[standard.beginner, standard.intermediate, standard.advanced].map(
+              (val, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "absolute top-0 w-px",
+                    featured ? "h-3" : "h-2",
+                  )}
+                  style={{
+                    left: `${((val - physicallyActive) / range) * 100}%`,
+                    backgroundColor: "var(--background)",
+                    opacity: 0.7,
+                  }}
+                />
+              ),
+            )}
             {/* e1rm marker — desktop: hover tooltip; mobile: tap popover */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className="absolute top-1/2 hidden h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background md:block"
+                  className="bg-foreground ring-background absolute top-1/2 hidden h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm ring-1 md:block"
                   style={{ left: `${pct}%` }}
                 />
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
                 <p className="font-semibold">{liftType}</p>
-                <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                <p>
+                  {emoji} {rating} · {Math.round(e1rmWeight)}
+                  {unit}
+                </p>
                 {percentileLine && (
                   <p className="text-muted-foreground">{percentileLine}</p>
                 )}
                 {nextTierInfo ? (
                   <p className="text-muted-foreground">
-                    Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                    Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
+                    {nextTierInfo.name} — {diff}
+                    {unit} away
                   </p>
                 ) : (
                   <p className="text-muted-foreground">Already at the top!</p>
@@ -1857,18 +2161,23 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
                   style={{ left: `${pct}%` }}
                   aria-label={`${liftType} strength level`}
                 >
-                  <div className="h-4 w-1.5 rounded-full bg-foreground shadow-sm ring-1 ring-background" />
+                  <div className="bg-foreground ring-background h-4 w-1.5 rounded-full shadow-sm ring-1" />
                 </button>
               </PopoverTrigger>
               <PopoverContent side="top" className="w-auto p-2 text-xs">
                 <p className="font-semibold">{liftType}</p>
-                <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                <p>
+                  {emoji} {rating} · {Math.round(e1rmWeight)}
+                  {unit}
+                </p>
                 {percentileLine && (
                   <p className="text-muted-foreground">{percentileLine}</p>
                 )}
                 {nextTierInfo ? (
                   <p className="text-muted-foreground">
-                    Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                    Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""}{" "}
+                    {nextTierInfo.name} — {diff}
+                    {unit} away
                   </p>
                 ) : (
                   <p className="text-muted-foreground">Already at the top!</p>
@@ -1879,14 +2188,24 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           {/* Copy button — immediately after the bar on all screen sizes */}
           <LiftResultCopyButton
             liftType={liftType}
-            onCopy={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
+            onCopy={() =>
+              handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)
+            }
             onPressAnalytics={() =>
-              gaTrackCalcShareCopy("lift_bar", { page: router.asPath, liftType })
+              gaTrackCalcShareCopy("lift_bar", {
+                page: router.asPath,
+                liftType,
+              })
             }
           />
         </div>
         {/* Rating at end — desktop only (shown in row 1 on mobile) */}
-        <div className={cn("hidden w-36 shrink-0 text-right md:block", featured ? "text-sm" : "text-xs")}>
+        <div
+          className={cn(
+            "hidden w-36 shrink-0 text-right md:block",
+            featured ? "text-sm" : "text-xs",
+          )}
+        >
           <Link
             prefetch={false}
             href={calculatorUrl}
@@ -1895,14 +2214,18 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
             {emoji} {rating}
           </Link>
           {percentileLine && (
-            <div className="text-[10px] text-muted-foreground">{percentileLine}</div>
+            <div className="text-muted-foreground text-[10px]">
+              {percentileLine}
+            </div>
           )}
         </div>
       </div>
     );
   };
 
-  const featuredData = featuredBigFourName ? getLiftBarData(featuredBigFourName, standards, e1rmWeight) : null;
+  const featuredData = featuredBigFourName
+    ? getLiftBarData(featuredBigFourName, standards, e1rmWeight)
+    : null;
   const comparisonLifts = BIG_FOUR.filter((l) => l !== featuredBigFourName);
 
   return (
@@ -1912,21 +2235,35 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           <h2 className="text-center text-base font-semibold">
             <Link
               prefetch={false}
-              href={featuredBigFourName ? (getStrengthLevelsPath(featuredBigFourName) ?? "/strength-levels") : "/strength-levels"}
+              href={
+                featuredBigFourName
+                  ? (getStrengthLevelsPath(featuredBigFourName) ??
+                    "/strength-levels")
+                  : "/strength-levels"
+              }
               className="transition-opacity hover:opacity-70"
             >
-              {featuredBigFourName ? `${forceLift} Strength Standards` : "Strength Levels"}
+              {featuredBigFourName
+                ? `${forceLift} Strength Standards`
+                : "Strength Levels"}
             </Link>
           </h2>
           <div className="mt-1 flex justify-center">
-            <AthleteBioInlineSettings liftNote={`lifting ${e1rmWeight}${unit}${featuredBigFourName ? "" : " in each lift type"}`} />
+            <AthleteBioInlineSettings
+              liftNote={`lifting ${e1rmWeight}${unit}${featuredBigFourName ? "" : " in each lift type"}`}
+            />
           </div>
         </div>
 
         {/* Featured lift (lift slug pages only) */}
         {featuredData && (
           <div className="space-y-3">
-            {renderLiftRow(featuredBigFourName, featuredData, true, liftPercentiles[featuredBigFourName]?.["Gym-Goers"])}
+            {renderLiftRow(
+              featuredBigFourName,
+              featuredData,
+              true,
+              liftPercentiles[featuredBigFourName]?.["Gym-Goers"],
+            )}
           </div>
         )}
 
@@ -1936,7 +2273,12 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
             {comparisonLifts.map((liftType) => {
               const data = getLiftBarData(liftType, standards, e1rmWeight);
               if (!data) return null;
-              return renderLiftRow(liftType, data, false, liftPercentiles[liftType]?.["Gym-Goers"]);
+              return renderLiftRow(
+                liftType,
+                data,
+                false,
+                liftPercentiles[liftType]?.["Gym-Goers"],
+              );
             })}
           </div>
         )}

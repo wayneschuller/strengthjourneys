@@ -31,10 +31,7 @@ import {
   getRewardProgressParts,
   getRewardUnlockRule,
 } from "@/lib/rewards/progression";
-import {
-  getUnlockedThemes,
-  isThemeLocked,
-} from "@/lib/rewards/theme-unlocks";
+import { getUnlockedThemes, isThemeLocked } from "@/lib/rewards/theme-unlocks";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
@@ -73,12 +70,7 @@ export function ThemeChooser() {
     if (unlockedThemes.has(theme)) return;
 
     setTheme("light");
-  }, [
-    isProgressLoading,
-    setTheme,
-    theme,
-    unlockedThemes,
-  ]);
+  }, [isProgressLoading, setTheme, theme, unlockedThemes]);
 
   return (
     <DropdownMenu>
@@ -120,10 +112,7 @@ export function ThemeChooser() {
                 key={t}
                 value={t}
                 disabled={isLocked}
-                className={cn(
-                  "gap-2",
-                  isLocked && "opacity-50 cursor-default",
-                )}
+                className={cn("gap-2", isLocked && "cursor-default opacity-50")}
               >
                 <span className="flex-1">
                   {t
@@ -149,9 +138,9 @@ export function ThemeChooser() {
               isAuthenticated && setAnimatedBackground(checked === true)
             }
             className={cn(
-              "pl-8 text-muted-foreground",
+              "text-muted-foreground pl-8",
               !isAuthenticated &&
-                "opacity-50 pointer-events-none cursor-default",
+                "pointer-events-none cursor-default opacity-50",
             )}
           >
             Animated background
@@ -163,7 +152,7 @@ export function ThemeChooser() {
             <GoogleSignInMenuItem cta="theme_chooser">
               <span>
                 <span className="font-medium">Sign in with Google</span>
-                <span className="text-muted-foreground text-xs block">
+                <span className="text-muted-foreground block text-xs">
                   Earn themes from your training history
                 </span>
               </span>
@@ -173,7 +162,7 @@ export function ThemeChooser() {
         {isAuthenticated && nextReward && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="max-w-64 whitespace-normal text-xs font-normal">
+            <DropdownMenuLabel className="max-w-64 text-xs font-normal whitespace-normal">
               <span className="font-medium">Next: {nextReward.label}</span>
               <span className="text-muted-foreground block">
                 {getRewardProgressParts(nextReward, metrics).join(" · ")}

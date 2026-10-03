@@ -1,7 +1,9 @@
-
 import { useRef } from "react";
 import { motion } from "motion/react";
-import { pickQuirkyPhrase, CLOSING_PHRASES } from "@/components/year-recap/phrases";
+import {
+  pickQuirkyPhrase,
+  CLOSING_PHRASES,
+} from "@/components/year-recap/phrases";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -25,23 +27,30 @@ export function ClosingCard({ year, isDemo, isActive = true }) {
   return (
     <div className="flex flex-col items-center justify-center text-center">
       <motion.p
-        className="text-2xl font-semibold text-foreground md:text-3xl"
+        className="text-foreground text-2xl font-semibold md:text-3xl"
         initial={{ opacity: 0, scale: 0.95 }}
-        animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+        animate={
+          isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }
+        }
         transition={{ type: "spring", stiffness: 200, damping: 22 }}
       >
         {phrase}
       </motion.p>
       <motion.p
-        className="mt-4 text-chart-2"
+        className="text-chart-2 mt-4"
         initial={{ opacity: 0, y: 12 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-        transition={{ type: "spring", stiffness: 180, damping: 20, delay: isActive ? 0.15 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 180,
+          damping: 20,
+          delay: isActive ? 0.15 : 0,
+        }}
       >
         Keep training. The next year awaits.
       </motion.p>
       <motion.p
-        className="mt-2 text-sm text-chart-4"
+        className="text-chart-4 mt-2 text-sm"
         initial={{ opacity: 0, y: 8 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
         transition={{ delay: isActive ? 0.3 : 0 }}
@@ -51,7 +60,12 @@ export function ClosingCard({ year, isDemo, isActive = true }) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-        transition={{ type: "spring", stiffness: 180, damping: 20, delay: isActive ? 0.4 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 180,
+          damping: 20,
+          delay: isActive ? 0.4 : 0,
+        }}
       >
         <Link href="/">
           <Button variant="outline" className="mt-6">

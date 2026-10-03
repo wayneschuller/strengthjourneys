@@ -160,8 +160,8 @@ export function HomeWelcome({ starterArticles = [] }) {
             variants={riseIn}
             className="text-muted-foreground mb-6 max-w-xl text-center text-base leading-relaxed text-pretty lg:text-left"
           >
-            Nothing is linked yet, so there is nothing to lose. Pick whichever of
-            these sounds like you.
+            Nothing is linked yet, so there is nothing to lose. Pick whichever
+            of these sounds like you.
           </motion.p>
 
           <motion.div variants={optionsStagger} className="flex flex-col gap-3">

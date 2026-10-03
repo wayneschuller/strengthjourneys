@@ -17,13 +17,14 @@ export function PreviewLogCta({ dataSource }) {
   const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === "authenticated";
 
-  const message = dataSource === "import"
-    ? isAuthenticated
-      ? "Save your imported history to a Google Sheet and one tap on any of these lifts starts a new set."
-      : "Sign in with Google to save your imported history, and one tap on any of these lifts starts a new set."
-    : isAuthenticated
-      ? "Link your Google Sheet and one tap on any of these lifts starts a set in your own log."
-      : "This log is a demo. Sign in with Google and one tap on any of these lifts starts a set in your own log.";
+  const message =
+    dataSource === "import"
+      ? isAuthenticated
+        ? "Save your imported history to a Google Sheet and one tap on any of these lifts starts a new set."
+        : "Sign in with Google to save your imported history, and one tap on any of these lifts starts a new set."
+      : isAuthenticated
+        ? "Link your Google Sheet and one tap on any of these lifts starts a set in your own log."
+        : "This log is a demo. Sign in with Google and one tap on any of these lifts starts a set in your own log.";
 
   return (
     <div className="border-primary/25 bg-primary/5 flex flex-col items-start gap-3 rounded-xl border border-dashed px-4 py-3 sm:flex-row sm:items-center">
@@ -37,9 +38,10 @@ export function PreviewLogCta({ dataSource }) {
           className="shrink-0 gap-2"
           onClick={() => {
             openSheetSetupDialog("bootstrap", {
-              action: dataSource === "import"
-                ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
-                : null,
+              action:
+                dataSource === "import"
+                  ? PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT
+                  : null,
             });
           }}
         >
@@ -63,7 +65,9 @@ export function PreviewLogCta({ dataSource }) {
           callbackUrl="/log"
           className="shrink-0"
         >
-          {dataSource === "import" ? "Sign in to save imported data" : "Sign in to start logging"}
+          {dataSource === "import"
+            ? "Sign in to save imported data"
+            : "Sign in to start logging"}
         </GoogleSignInButton>
       )}
     </div>

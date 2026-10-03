@@ -169,8 +169,7 @@ export function FeedbackWidget({ labels = {} }) {
       clickedTriggerLabelRef.current = detail.triggerLabel || "menu";
       setOpen(true);
       if (
-        (detail.sentiment === "positive" ||
-          detail.sentiment === "negative") &&
+        (detail.sentiment === "positive" || detail.sentiment === "negative") &&
         thumbHandlerRef.current
       ) {
         thumbHandlerRef.current(detail.sentiment);
@@ -183,7 +182,9 @@ export function FeedbackWidget({ labels = {} }) {
   // Hydrates the rotating trigger label from sessionStorage; seeds a random start on first visit.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const raw = sessionStorage.getItem(SESSION_STORAGE_KEYS.FEEDBACK_TRIGGER_LABEL_INDEX);
+    const raw = sessionStorage.getItem(
+      SESSION_STORAGE_KEYS.FEEDBACK_TRIGGER_LABEL_INDEX,
+    );
     const parsed = Number.parseInt(raw || "", 10);
     if (Number.isInteger(parsed) && parsed >= 0) {
       setTriggerLabelIndex(parsed % TRIGGER_LABELS.length);
@@ -191,7 +192,10 @@ export function FeedbackWidget({ labels = {} }) {
     }
     const randomIndex = Math.floor(Math.random() * TRIGGER_LABELS.length);
     setTriggerLabelIndex(randomIndex);
-    sessionStorage.setItem(SESSION_STORAGE_KEYS.FEEDBACK_TRIGGER_LABEL_INDEX, String(randomIndex));
+    sessionStorage.setItem(
+      SESSION_STORAGE_KEYS.FEEDBACK_TRIGGER_LABEL_INDEX,
+      String(randomIndex),
+    );
   }, []);
 
   const resetState = useCallback(() => {
@@ -277,10 +281,12 @@ export function FeedbackWidget({ labels = {} }) {
   const triggerLabels = labels.triggerLabels?.length
     ? labels.triggerLabels
     : TRIGGER_LABELS;
-  const tooltipMessage = tooltipMessages[
-    phraseIndexRef.current.tooltip % tooltipMessages.length
-  ] || TOOLTIP_MESSAGES[0];
-  const triggerLabel = triggerLabels[triggerLabelIndex % triggerLabels.length] || TRIGGER_LABELS[0];
+  const tooltipMessage =
+    tooltipMessages[phraseIndexRef.current.tooltip % tooltipMessages.length] ||
+    TOOLTIP_MESSAGES[0];
+  const triggerLabel =
+    triggerLabels[triggerLabelIndex % triggerLabels.length] ||
+    TRIGGER_LABELS[0];
 
   const PAGE_NAMES = {
     "/": session ? "the Home Dashboard" : "the Landing Page",
@@ -349,12 +355,13 @@ export function FeedbackWidget({ labels = {} }) {
     router.pathname === "/progress-guide/[lift]"
       ? LIFT_SLUG_NAMES[router.query.lift] || "Lift Insights"
       : router.pathname === "/strength-levels/[lift]"
-        ? STRENGTH_LEVELS_LIFT_NAMES[router.query.lift] || "the Strength Levels page"
-      : router.pathname === "/import"
-        ? "the Import page"
-        : router.pathname === "/import/[slug]"
-          ? IMPORTER_SLUG_NAMES[router.query.slug] || "our importers"
-      : PAGE_NAMES[router.pathname] || "Strength Journeys";
+        ? STRENGTH_LEVELS_LIFT_NAMES[router.query.lift] ||
+          "the Strength Levels page"
+        : router.pathname === "/import"
+          ? "the Import page"
+          : router.pathname === "/import/[slug]"
+            ? IMPORTER_SLUG_NAMES[router.query.slug] || "our importers"
+            : PAGE_NAMES[router.pathname] || "Strength Journeys";
 
   function getUserType() {
     if (session && sheetInfo?.ssid) return "auth-with-sheet";
@@ -402,10 +409,13 @@ export function FeedbackWidget({ labels = {} }) {
           page: router.pathname,
           triggerLabel: clickedTriggerLabelRef.current,
           includeEmail,
-          email: includeEmail ? (session?.user?.email || email || "") : "",
+          email: includeEmail ? session?.user?.email || email || "" : "",
           userType: getUserType(),
           metadata: {
-            parsedRowCount: sheetInfo?.ssid && Array.isArray(parsedData) ? parsedData.length : null,
+            parsedRowCount:
+              sheetInfo?.ssid && Array.isArray(parsedData)
+                ? parsedData.length
+                : null,
           },
         }),
       });
@@ -414,7 +424,10 @@ export function FeedbackWidget({ labels = {} }) {
 
       setLayer(4);
       setHasFeedback(true);
-      sessionStorage.setItem(SESSION_STORAGE_KEYS.FEEDBACK_GIVEN, new Date().toISOString());
+      sessionStorage.setItem(
+        SESSION_STORAGE_KEYS.FEEDBACK_GIVEN,
+        new Date().toISOString(),
+      );
       startSuccessCountdown();
     } catch {
       setError("Couldn't send feedback. Please try again later.");
@@ -448,7 +461,7 @@ export function FeedbackWidget({ labels = {} }) {
           <TooltipTrigger asChild>
             <motion.div
               animate={controls}
-              className="fixed bottom-6 right-6 z-40 transition-opacity duration-300"
+              className="fixed right-6 bottom-6 z-40 transition-opacity duration-300"
               style={{
                 opacity: visible ? 1 : 0,
                 pointerEvents: visible ? "auto" : "none",
@@ -460,7 +473,8 @@ export function FeedbackWidget({ labels = {} }) {
                 onClick={() => {
                   clickedTriggerLabelRef.current = triggerLabel;
                   setOpen(true);
-                  const nextIndex = (triggerLabelIndex + 1) % triggerLabels.length;
+                  const nextIndex =
+                    (triggerLabelIndex + 1) % triggerLabels.length;
                   setTriggerLabelIndex(nextIndex);
                   sessionStorage.setItem(
                     SESSION_STORAGE_KEYS.FEEDBACK_TRIGGER_LABEL_INDEX,
@@ -487,19 +501,25 @@ export function FeedbackWidget({ labels = {} }) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {layer === 1 && (labels.introTitle || `${titlePrefix} ${pageName}?`)}
+              {layer === 1 &&
+                (labels.introTitle || `${titlePrefix} ${pageName}?`)}
               {layer === "celebrate" && "You're awesome!"}
-              {layer >= 2 && layer <= 3 && "Thanks! Anything you'd like to tell us?"}
+              {layer >= 2 &&
+                layer <= 3 &&
+                "Thanks! Anything you'd like to tell us?"}
               {layer === 4 && "Feedback sent"}
             </DialogTitle>
             <DialogDescription>
               {layer === 1 && (labels.introDescription || subtitle)}
               {layer === "celebrate" && "Thanks for the positive vibes!"}
-              {layer === 2 && countdown !== null && `Closing in ${countdown}s — start typing to keep open.`}
+              {layer === 2 &&
+                countdown !== null &&
+                `Closing in ${countdown}s — start typing to keep open.`}
               {layer === 3 && "Optional — skip anytime."}
-              {layer === 4 && (successCountdown !== null
-                ? `Thanks for helping us improve. Closing in ${successCountdown}s.`
-                : "Thanks for helping us improve.")}
+              {layer === 4 &&
+                (successCountdown !== null
+                  ? `Thanks for helping us improve. Closing in ${successCountdown}s.`
+                  : "Thanks for helping us improve.")}
             </DialogDescription>
           </DialogHeader>
 
@@ -531,7 +551,12 @@ export function FeedbackWidget({ labels = {} }) {
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+                transition={{
+                  delay: 0.2,
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20,
+                }}
                 className="text-sm font-medium text-green-600 dark:text-green-400"
               >
                 Your feedback means a lot!
@@ -544,20 +569,23 @@ export function FeedbackWidget({ labels = {} }) {
             <div className="space-y-4">
               {isImporterPage && (
                 <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-                  If you&apos;re sharing importer feedback, please consider emailing
-                  your original export to{" "}
+                  If you&apos;re sharing importer feedback, please consider
+                  emailing your original export to{" "}
                   <a
                     href="mailto:info@strengthjourneys.xyz?subject=Importer%20export%20for%20development"
                     className="font-medium underline underline-offset-2"
                   >
                     info@strengthjourneys.xyz
                   </a>
-                  . We&apos;ll use it only for development—and promise not to judge
-                  your lifting history.
+                  . We&apos;ll use it only for development—and promise not to
+                  judge your lifting history.
                 </div>
               )}
               <Textarea
-                placeholder={labels.commentPlaceholder || "Bug report, feature idea, or just say hi..."}
+                placeholder={
+                  labels.commentPlaceholder ||
+                  "Bug report, feature idea, or just say hi..."
+                }
                 value={message}
                 onChange={(e) => {
                   setMessage(e.target.value);
@@ -586,7 +614,7 @@ export function FeedbackWidget({ labels = {} }) {
                   {includeEmail && (
                     <>
                       {session?.user?.email ? (
-                        <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                        <p className="bg-muted text-muted-foreground rounded-md px-3 py-2 text-sm">
                           Sending as {session.user.email}
                         </p>
                       ) : (
@@ -603,9 +631,7 @@ export function FeedbackWidget({ labels = {} }) {
                 </div>
               )}
 
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-destructive text-sm">{error}</p>}
 
               <div className="flex justify-end gap-2">
                 <Button

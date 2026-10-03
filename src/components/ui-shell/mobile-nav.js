@@ -11,10 +11,7 @@ import { House, Megaphone, Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ThemeChooser } from "@/components/ui-shell/theme-chooser";
-import {
-  useChangelogDot,
-  WhatsNewDot,
-} from "@/components/ui-shell/whats-new";
+import { useChangelogDot, WhatsNewDot } from "@/components/ui-shell/whats-new";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { LiftIcon } from "@/components/lift-icon";
 import { BIG_FOUR_LIFTS, getLiftGuidePath } from "@/lib/lifts/lift-registry";
@@ -77,7 +74,9 @@ export function MobileNav() {
   }, [theme, resolvedTheme]);
 
   const lifts = BIG_FOUR_LIFTS;
-  const liftExplorer = featurePages.find((item) => item.href === "/lift-explorer");
+  const liftExplorer = featurePages.find(
+    (item) => item.href === "/lift-explorer",
+  );
   const changelogDot = useChangelogDot();
 
   // Internal nav link row: icon + label, highlights the active route.
@@ -87,7 +86,7 @@ export function MobileNav() {
         prefetch={false}
         href={href}
         className={cn(
-          "flex flex-row items-center gap-3 transition-colors hover:text-foreground/80",
+          "hover:text-foreground/80 flex flex-row items-center gap-3 transition-colors",
           pathname === href ? "text-foreground" : "text-foreground/60",
         )}
       >
@@ -261,7 +260,9 @@ export function MobileNav() {
         variant="ghost"
         className={cn(
           "hover:text-foreground h-9 px-2 hover:bg-transparent sm:hidden",
-          pathname === "/changelog" ? "text-foreground" : "text-muted-foreground",
+          pathname === "/changelog"
+            ? "text-foreground"
+            : "text-muted-foreground",
         )}
       >
         <Link href="/changelog" aria-label="What's new" prefetch={false}>

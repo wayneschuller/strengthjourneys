@@ -97,12 +97,12 @@ export function PlaylistAdminBanner({
   return (
     <div
       className={cn(
-        "mb-6 flex flex-col gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between",
+        "border-primary/40 bg-primary/5 mb-6 flex flex-col gap-3 rounded-lg border border-dashed p-3 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <ShieldCheck className="h-4 w-4 text-primary" />
+        <ShieldCheck className="text-primary h-4 w-4" />
         <span className="font-semibold">Admin mode</span>
         <span className="text-muted-foreground">
           {playlistCount} playlist{playlistCount === 1 ? "" : "s"}
@@ -125,7 +125,7 @@ export function PlaylistAdminBanner({
             {withheldArtCount} art withheld
           </Badge>
         )}
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           Per-playlist tools are in the ⋮ menu on each card.
         </span>
       </div>
@@ -138,7 +138,9 @@ export function PlaylistAdminBanner({
           disabled={isSweeping}
           className="flex items-center"
         >
-          <ScanEye className={cn("mr-1 h-4 w-4", isSweeping && "animate-pulse")} />
+          <ScanEye
+            className={cn("mr-1 h-4 w-4", isSweeping && "animate-pulse")}
+          />
           {isSweeping ? "Sweeping..." : "Run health sweep"}
         </Button>
         <Button
@@ -207,26 +209,26 @@ export function PlaylistAdminMenu({
           size="icon"
           aria-label="Admin tools for this playlist"
           title="Admin tools"
-          className={cn("relative h-7 w-7 text-muted-foreground", className)}
+          className={cn("text-muted-foreground relative h-7 w-7", className)}
         >
           <MoreVertical className="h-4 w-4" />
           {reportCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground">
+            <span className="bg-destructive text-destructive-foreground absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold">
               {reportCount}
             </span>
           )}
           {reportCount === 0 && needsArtReview && (
-            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-500" />
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500" />
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-primary" />
+          <ShieldCheck className="text-primary h-4 w-4" />
           Admin tools
         </DropdownMenuLabel>
         {reportCount > 0 && (
-          <DropdownMenuLabel className="flex items-center gap-2 pt-0 text-xs font-normal text-destructive">
+          <DropdownMenuLabel className="text-destructive flex items-center gap-2 pt-0 text-xs font-normal">
             <Flag className="h-3 w-3" />
             {reportCount} visitor report{reportCount === 1 ? "" : "s"}
           </DropdownMenuLabel>
@@ -236,7 +238,7 @@ export function PlaylistAdminMenu({
           <ScanEye className="mr-2 h-4 w-4" />
           Review cover art
           {artStatus && artStatus !== "approved" && (
-            <span className="ml-auto text-xs text-muted-foreground">
+            <span className="text-muted-foreground ml-auto text-xs">
               {artStatus === "legacy" ? "unchecked" : artStatus}
             </span>
           )}
@@ -252,7 +254,9 @@ export function PlaylistAdminMenu({
             handleRefreshMetadata();
           }}
         >
-          <RefreshCw className={cn("mr-2 h-4 w-4", isRefreshing && "animate-spin")} />
+          <RefreshCw
+            className={cn("mr-2 h-4 w-4", isRefreshing && "animate-spin")}
+          />
           {isRefreshing ? "Refreshing..." : "Refresh metadata"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />

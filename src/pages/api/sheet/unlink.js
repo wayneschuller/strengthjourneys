@@ -44,9 +44,12 @@ export default async function handler(req, res) {
 
     if (Object.keys(nextRecord).length === 0) {
       await kv.del(base.kvKey);
-      devLog("[sheet/unlink] cleared current sheet link and removed empty KV record", {
-        email: base.session.user.email,
-      });
+      devLog(
+        "[sheet/unlink] cleared current sheet link and removed empty KV record",
+        {
+          email: base.session.user.email,
+        },
+      );
       res.status(200).json({
         ok: true,
         message: "Current sheet disconnected.",
@@ -64,6 +67,8 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("[sheet/unlink] clear current sheet link failed:", error);
-    res.status(500).json({ error: error.message || "Failed to disconnect current sheet" });
+    res
+      .status(500)
+      .json({ error: error.message || "Failed to disconnect current sheet" });
   }
 }

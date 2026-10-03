@@ -22,7 +22,12 @@ export function generateSessionSets(
   targetWarmupCount = 4,
 ) {
   if (!topWeight || topWeight <= 0 || topReps <= 0) {
-    const topSetBreakdown = calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference);
+    const topSetBreakdown = calculatePlateBreakdown(
+      topWeight,
+      barWeight,
+      isMetric,
+      platePreference,
+    );
     return [
       {
         weight: topWeight,
@@ -41,7 +46,10 @@ export function generateSessionSets(
   const minIncrement = isMetric ? 2.5 : 5; // Minimum plate increment
 
   // Clamp target warmup count to a reasonable range
-  const clampedTargetCount = Math.min(Math.max(Math.round(targetWarmupCount), 2), 6);
+  const clampedTargetCount = Math.min(
+    Math.max(Math.round(targetWarmupCount), 2),
+    6,
+  );
 
   // Determine base jump size based on the top set weight
   // Heavier weights need larger jumps between warmup sets
@@ -70,7 +78,10 @@ export function generateSessionSets(
     clampedTargetCount <= 3 ? 1.4 : clampedTargetCount >= 5 ? 0.8 : 1.0;
   const totalRange = Math.max(topWeight - barWeight, minIncrement);
   const desiredAvgJump = totalRange / clampedTargetCount;
-  const effectiveMinJump = Math.min(baseJump * volumeJumpMultiplier, desiredAvgJump);
+  const effectiveMinJump = Math.min(
+    baseJump * volumeJumpMultiplier,
+    desiredAvgJump,
+  );
 
   // Helper to build a map of plate counts for "only add plates" checks
   const buildPlateCountMap = (platesPerSide) => {
@@ -94,7 +105,11 @@ export function generateSessionSets(
     }
 
     const allPlates = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
-    const allowedPlates = getAllowedPlates(allPlates, isMetric, platePreference);
+    const allowedPlates = getAllowedPlates(
+      allPlates,
+      isMetric,
+      platePreference,
+    );
     const largestLoadedPlate = Math.max(...previousPlateMap.keys());
     const nextSmallerPlate = allowedPlates.find(
       (plate) => plate.weight < largestLoadedPlate,
@@ -125,8 +140,7 @@ export function generateSessionSets(
     finalWarmupWeight,
   }) => {
     const candidates = [landmarkTargetWeight, anchorTargetWeight].filter(
-      (target, index, all) =>
-        target != null && all.indexOf(target) === index,
+      (target, index, all) => target != null && all.indexOf(target) === index,
     );
     let bestCandidate = null;
 
@@ -194,7 +208,12 @@ export function generateSessionSets(
 
   // For very light weights, we might only need the bar
   if (topWeight <= barWeight + minIncrement) {
-    const topSetBreakdown = calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference);
+    const topSetBreakdown = calculatePlateBreakdown(
+      topWeight,
+      barWeight,
+      isMetric,
+      platePreference,
+    );
     warmupSets.push({
       weight: topWeight,
       reps: topReps,
@@ -264,7 +283,10 @@ export function generateSessionSets(
 
       // For heavy lifts, add a second anchor set by adding another pair of anchor plates
       // This creates a smoother progression for very heavy weights
-      if (topWeight > (isMetric ? 140 : 310) && warmupSets.length < clampedTargetCount - 2) {
+      if (
+        topWeight > (isMetric ? 140 : 310) &&
+        warmupSets.length < clampedTargetCount - 2
+      ) {
         const secondAnchorWeight = isMetric
           ? anchorWeight + 40 // Add another pair of 20s
           : anchorWeight + 90; // Add another pair of 45s
@@ -288,7 +310,9 @@ export function generateSessionSets(
               plateBreakdown: secondAnchorBreakdown,
             });
             previousWeight = secondAnchorActual;
-            previousPlateMap = buildPlateCountMap(secondAnchorBreakdown.platesPerSide);
+            previousPlateMap = buildPlateCountMap(
+              secondAnchorBreakdown.platesPerSide,
+            );
           }
         }
       }
@@ -301,7 +325,7 @@ export function generateSessionSets(
 
   // Calculate how many sets we still need for middle + final sections
   const setsRemaining = clampedTargetCount - warmupSets.length;
-  
+
   // Determine how many final warmup sets we need based on top set reps
   // More final sets needed for 3-4 rep top sets to prime CNS properly
   let finalWarmupCount = 0;
@@ -336,24 +360,28 @@ export function generateSessionSets(
     // Calculate target weights by adding pairs of anchor plates
     // e.g., if anchor is 60kg (bar + 2×20kg), next would be 100kg (bar + 4×20kg), then 140kg (bar + 6×20kg)
     const anchorPairsPerSide = previousPlateMap.get(anchorPlateWeight) || 0;
-    
+
     // Calculate where final warmups start
     let finalWarmupWeight;
     if (topReps <= 2) {
       finalWarmupWeight = topWeight - baseJump;
     } else if (topReps >= 5) {
-      const finalJump = topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+      const finalJump =
+        topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
       finalWarmupWeight = topWeight - finalJump;
     } else {
       // 3-4 reps: final warmups start earlier
-      const finalJump = topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+      const finalJump =
+        topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
       finalWarmupWeight = topWeight - finalJump;
     }
-    
+
     // Calculate how many more pairs we can add before hitting final warmup
-    const maxPairsNeeded = Math.floor((finalWarmupWeight - previousWeight) / (anchorPlateWeight * 2));
+    const maxPairsNeeded = Math.floor(
+      (finalWarmupWeight - previousWeight) / (anchorPlateWeight * 2),
+    );
     const pairsToAdd = Math.min(middleSetCount, maxPairsNeeded);
-    
+
     for (let i = 0; i < pairsToAdd; i++) {
       const newPairsPerSide = anchorPairsPerSide + i + 1;
       const anchorTargetWeight =
@@ -367,17 +395,21 @@ export function generateSessionSets(
         landmarkTargetWeight: getNextPlateLandmarkTarget(),
         finalWarmupWeight,
       });
-      
+
       if (targetWeight >= finalWarmupWeight) {
         break; // Don't go past final warmup
       }
-      
+
       // Use existing plates to build on
-      const currentPlatesPerSide = Array.from(previousPlateMap.entries()).map(([weight, count]) => {
-        const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(p => p.weight === weight);
-        return plateInfo ? { ...plateInfo, count } : null;
-      }).filter(Boolean);
-      
+      const currentPlatesPerSide = Array.from(previousPlateMap.entries())
+        .map(([weight, count]) => {
+          const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(
+            (p) => p.weight === weight,
+          );
+          return plateInfo ? { ...plateInfo, count } : null;
+        })
+        .filter(Boolean);
+
       const breakdown = calculatePlateBreakdownWithExisting(
         targetWeight,
         barWeight,
@@ -386,14 +418,14 @@ export function generateSessionSets(
         platePreference,
       );
       const actualWeight = breakdown.closestWeight;
-      
+
       // Only add if it's meaningfully different and below final warmup
       if (
         actualWeight > previousWeight + effectiveMinJump &&
         actualWeight < finalWarmupWeight - effectiveMinJump
       ) {
         const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
-        
+
         // A warm-up may now change plates, not only add them: the breakdown swaps
         // only when the resulting bar is clearly simpler to load. What still has to
         // hold is that the bar goes up, and the weight checks above already do that.
@@ -407,7 +439,7 @@ export function generateSessionSets(
         previousPlateMap = newPlateMap;
       }
     }
-    
+
     // If we still need more middle sets and can't add more anchor pairs,
     // fill gaps with percentage-based sets that respect only-add-plates
     const openingSetsCount = warmupSets.length > 1 ? 2 : 1; // Bar + anchor (if added)
@@ -420,37 +452,52 @@ export function generateSessionSets(
       if (topReps <= 2) {
         finalWarmupWeight = topWeight - baseJump;
       } else if (topReps >= 5) {
-        const finalJump = topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+        const finalJump =
+          topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
         finalWarmupWeight = topWeight - finalJump;
       } else {
-        const finalJump = topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+        const finalJump =
+          topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
         finalWarmupWeight = topWeight - finalJump;
       }
       const gap = finalWarmupWeight - lastWeight;
-      
+
       // Be more aggressive: try multiple positions and relax constraints if needed
       let attempts = 0;
       const maxAttempts = stillNeeded * 15; // Try multiple times per needed set
-      
-      while (stillNeeded > 0 && warmupSets.length < clampedTargetCount - finalWarmupCount && attempts < maxAttempts) {
+
+      while (
+        stillNeeded > 0 &&
+        warmupSets.length < clampedTargetCount - finalWarmupCount &&
+        attempts < maxAttempts
+      ) {
         attempts++;
-        const setsAdded = warmupSets.length - openingSetsCount - (middleSetCount - stillNeeded);
-        const targetWeight = lastWeight + (gap * (setsAdded + 1) / (middleSetCount + 1));
+        const setsAdded =
+          warmupSets.length - openingSetsCount - (middleSetCount - stillNeeded);
+        const targetWeight =
+          lastWeight + (gap * (setsAdded + 1)) / (middleSetCount + 1);
         const roundedWeight = roundToIncrement(targetWeight, minIncrement);
-        
+
         // Progressively relax jump requirement
         const relaxedJump = Math.max(
           effectiveMinJump * 0.4, // Very relaxed
-          (gap / (stillNeeded + 1)) * 0.3 // Or based on remaining sets
+          (gap / (stillNeeded + 1)) * 0.3, // Or based on remaining sets
         );
-        
-        if (roundedWeight > previousWeight + relaxedJump && roundedWeight < finalWarmupWeight - relaxedJump) {
+
+        if (
+          roundedWeight > previousWeight + relaxedJump &&
+          roundedWeight < finalWarmupWeight - relaxedJump
+        ) {
           // Use existing plates to build on
-          const currentPlatesPerSide = Array.from(previousPlateMap.entries()).map(([weight, count]) => {
-            const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(p => p.weight === weight);
-            return plateInfo ? { ...plateInfo, count } : null;
-          }).filter(Boolean);
-          
+          const currentPlatesPerSide = Array.from(previousPlateMap.entries())
+            .map(([weight, count]) => {
+              const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(
+                (p) => p.weight === weight,
+              );
+              return plateInfo ? { ...plateInfo, count } : null;
+            })
+            .filter(Boolean);
+
           const breakdown = calculatePlateBreakdownWithExisting(
             roundedWeight,
             barWeight,
@@ -459,13 +506,13 @@ export function generateSessionSets(
             platePreference,
           );
           const actualWeight = breakdown.closestWeight;
-          
+
           if (
             actualWeight > previousWeight + relaxedJump &&
             actualWeight < finalWarmupWeight - relaxedJump
           ) {
             const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
-            
+
             // A warm-up may now change plates, not only add them: the breakdown swaps
             // only when the resulting bar is clearly simpler to load. What still has to
             // hold is that the bar goes up, and the weight checks above already do that.
@@ -481,7 +528,7 @@ export function generateSessionSets(
             continue; // Successfully added, try again
           }
         }
-        
+
         // If we couldn't add at that position, try adjusting incrementally
         if (attempts % 3 === 0) {
           // Every 3 attempts, try a slightly different position
@@ -525,10 +572,7 @@ export function generateSessionSets(
       break;
     }
 
-    const relaxedJump = Math.max(
-      effectiveMinJump * 0.5,
-      minGapPerSet * 0.8,
-    );
+    const relaxedJump = Math.max(effectiveMinJump * 0.5, minGapPerSet * 0.8);
     const roundedWeight = roundToIncrement(
       lastSet.weight + minGapPerSet,
       minIncrement,
@@ -596,7 +640,7 @@ export function generateSessionSets(
     // normal average jump here can suppress the primer after a finely spaced
     // fill set, especially at lighter loads.
     const finalMinJump = Math.min(effectiveMinJump, minIncrement);
-    
+
     if (
       roundedWeight < previousWeight + finalMinJump ||
       roundedWeight > topWeight - finalMinJump
@@ -605,11 +649,15 @@ export function generateSessionSets(
     }
 
     // Use existing plates to build on
-    const currentPlatesPerSide = Array.from(previousPlateMap.entries()).map(([weight, count]) => {
-      const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(p => p.weight === weight);
-      return plateInfo ? { ...plateInfo, count } : null;
-    }).filter(Boolean);
-    
+    const currentPlatesPerSide = Array.from(previousPlateMap.entries())
+      .map(([weight, count]) => {
+        const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(
+          (p) => p.weight === weight,
+        );
+        return plateInfo ? { ...plateInfo, count } : null;
+      })
+      .filter(Boolean);
+
     const breakdown = calculatePlateBreakdownWithExisting(
       roundedWeight,
       barWeight,
@@ -648,23 +696,25 @@ export function generateSessionSets(
   } else if (topReps >= 5) {
     // 5+ reps: one final warmup at 3 reps, baseJump below top (e.g., 130kg for 140kg top)
     // The 3-rep set primes the CNS without causing excessive fatigue
-    const finalJump = topWeight > (isMetric ? 100 : 220) 
-      ? (isMetric ? 10 : 25)  // ~10kg/25lb for heavier lifts
-      : baseJump;
-    
+    const finalJump =
+      topWeight > (isMetric ? 100 : 220)
+        ? isMetric
+          ? 10
+          : 25 // ~10kg/25lb for heavier lifts
+        : baseJump;
+
     const finalWarmupWeight = topWeight - finalJump;
     addFinalWarmupSet(finalWarmupWeight, 3);
   } else {
     // 3-4 reps: 3 reps, then 2 reps (with smaller jumps ~10kg/20-25lb when top > 100kg/220lb)
-    const finalJump = topWeight > (isMetric ? 100 : 220) 
-      ? (isMetric ? 10 : 25)
-      : baseJump;
-    
+    const finalJump =
+      topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+
     // First final warmup: 3 reps
     const firstFinalWeight = topWeight - finalJump;
     if (addFinalWarmupSet(firstFinalWeight, 3)) {
       // Second final warmup: 2 reps at half the jump
-      const secondFinalWeight = topWeight - (finalJump / 2);
+      const secondFinalWeight = topWeight - finalJump / 2;
       addFinalWarmupSet(secondFinalWeight, 2);
     }
   }
@@ -692,7 +742,12 @@ export function generateSessionSets(
     );
   } else {
     // Fallback to standard calculation if no warmup sets
-    topSetBreakdown = calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference);
+    topSetBreakdown = calculatePlateBreakdown(
+      topWeight,
+      barWeight,
+      isMetric,
+      platePreference,
+    );
   }
 
   // Add top set to the array
@@ -734,22 +789,100 @@ const ROGUE = {
 
 export const PLATE_SETS = {
   kg: [
-    { weight: 25, color: ROGUE.red, diameter: 450, thickness: 87, name: "25kg" },
-    { weight: 20, color: ROGUE.blue, diameter: 450, thickness: 72, name: "20kg" },
-    { weight: 15, color: ROGUE.yellow, diameter: 450, thickness: 56, name: "15kg" },
-    { weight: 10, color: ROGUE.green, diameter: 450, thickness: 43, name: "10kg" },
-    { weight: 5, color: ROGUE.white, diameter: 228, thickness: 26, name: "5kg" },
-    { weight: 2.5, color: ROGUE.red, diameter: 190, thickness: 20, name: "2.5kg" },
-    { weight: 1.25, color: ROGUE.chrome, diameter: 160, thickness: 16, name: "1.25kg" },
+    {
+      weight: 25,
+      color: ROGUE.red,
+      diameter: 450,
+      thickness: 87,
+      name: "25kg",
+    },
+    {
+      weight: 20,
+      color: ROGUE.blue,
+      diameter: 450,
+      thickness: 72,
+      name: "20kg",
+    },
+    {
+      weight: 15,
+      color: ROGUE.yellow,
+      diameter: 450,
+      thickness: 56,
+      name: "15kg",
+    },
+    {
+      weight: 10,
+      color: ROGUE.green,
+      diameter: 450,
+      thickness: 43,
+      name: "10kg",
+    },
+    {
+      weight: 5,
+      color: ROGUE.white,
+      diameter: 228,
+      thickness: 26,
+      name: "5kg",
+    },
+    {
+      weight: 2.5,
+      color: ROGUE.red,
+      diameter: 190,
+      thickness: 20,
+      name: "2.5kg",
+    },
+    {
+      weight: 1.25,
+      color: ROGUE.chrome,
+      diameter: 160,
+      thickness: 16,
+      name: "1.25kg",
+    },
   ],
   lb: [
-    { weight: 55, color: ROGUE.red, diameter: 450, thickness: 87, name: "55lb" },
-    { weight: 45, color: ROGUE.blue, diameter: 450, thickness: 72, name: "45lb" },
-    { weight: 35, color: ROGUE.yellow, diameter: 450, thickness: 56, name: "35lb" },
-    { weight: 25, color: ROGUE.green, diameter: 450, thickness: 43, name: "25lb" },
-    { weight: 10, color: ROGUE.white, diameter: 228, thickness: 26, name: "10lb" },
+    {
+      weight: 55,
+      color: ROGUE.red,
+      diameter: 450,
+      thickness: 87,
+      name: "55lb",
+    },
+    {
+      weight: 45,
+      color: ROGUE.blue,
+      diameter: 450,
+      thickness: 72,
+      name: "45lb",
+    },
+    {
+      weight: 35,
+      color: ROGUE.yellow,
+      diameter: 450,
+      thickness: 56,
+      name: "35lb",
+    },
+    {
+      weight: 25,
+      color: ROGUE.green,
+      diameter: 450,
+      thickness: 43,
+      name: "25lb",
+    },
+    {
+      weight: 10,
+      color: ROGUE.white,
+      diameter: 228,
+      thickness: 26,
+      name: "10lb",
+    },
     { weight: 5, color: ROGUE.red, diameter: 190, thickness: 20, name: "5lb" },
-    { weight: 2.5, color: ROGUE.chrome, diameter: 160, thickness: 16, name: "2.5lb" },
+    {
+      weight: 2.5,
+      color: ROGUE.chrome,
+      diameter: 160,
+      thickness: 16,
+      name: "2.5lb",
+    },
   ],
 };
 
@@ -878,7 +1011,7 @@ function cheapestLoading(weightPerSide, allowedPlates) {
   if (cost[steps] === Infinity) return null;
 
   const counts = new Map();
-  for (let step = steps; step > 0; ) {
+  for (let step = steps; step > 0;) {
     const plate = via[step];
     counts.set(plate.weight, (counts.get(plate.weight) ?? 0) + 1);
     step -= Math.round(plate.weight / smallest);

@@ -35,7 +35,11 @@ export default async function handler(req, res) {
   const { ssid, rowIndex, before, after } = req.body;
 
   if (!ssid || !rowIndex || typeof rowIndex !== "number" || !before || !after) {
-    return res.status(400).json({ error: "Missing required fields: ssid, rowIndex, before, after" });
+    return res
+      .status(400)
+      .json({
+        error: "Missing required fields: ssid, rowIndex, before, after",
+      });
   }
 
   const headers = {
@@ -58,7 +62,10 @@ export default async function handler(req, res) {
     });
 
     if (!verification.ok) {
-      console.warn("[sheet/edit-row] verification failed:", verification.message);
+      console.warn(
+        "[sheet/edit-row] verification failed:",
+        verification.message,
+      );
       return res.status(409).json({
         error: verification.message,
         code: "PRECONDITION_FAILED",
@@ -67,7 +74,14 @@ export default async function handler(req, res) {
     }
 
     const range = `C${rowIndex}:F${rowIndex}`;
-    const values = [[after.reps ?? "", after.weight ?? "", after.notes ?? "", after.url ?? ""]];
+    const values = [
+      [
+        after.reps ?? "",
+        after.weight ?? "",
+        after.notes ?? "",
+        after.url ?? "",
+      ],
+    ];
     const writeResponse = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?valueInputOption=USER_ENTERED`,
       {
@@ -84,7 +98,10 @@ export default async function handler(req, res) {
     if (!writeResponse.ok) {
       const body = await writeResponse.json().catch(() => ({}));
       const message = body?.error?.message || "Failed to update row";
-      console.error("[sheet/edit-row] values.update failed:", message, { rowIndex, range });
+      console.error("[sheet/edit-row] values.update failed:", message, {
+        rowIndex,
+        range,
+      });
       return res.status(writeResponse.status).json({ error: message });
     }
 
@@ -95,6 +112,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ updated: true, rowIndex });
   } catch (error) {
     console.error("[sheet/edit-row] unexpected error:", error);
-    return res.status(500).json({ error: error.message || "Internal server error" });
+    return res
+      .status(500)
+      .json({ error: error.message || "Internal server error" });
   }
 }

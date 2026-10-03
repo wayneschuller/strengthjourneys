@@ -61,8 +61,7 @@ const SIGNED_IN_NO_SHEET_DESCRIPTION =
  */
 export function LiftGuideNoHistory({ liftType }) {
   const { status: authStatus } = useSession();
-  const { dataSource, isLoading} =
-    useUserLiftingData();
+  const { dataSource, isLoading } = useUserLiftingData();
 
   if (authStatus === "loading" || dataSource === "restoring") return null;
 

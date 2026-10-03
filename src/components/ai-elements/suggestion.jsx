@@ -1,14 +1,13 @@
-"use client";;
+"use client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCallback } from "react";
 
-export const Suggestions = ({
-  className,
-  children,
-  ...props
-}) => (
-  <div className={cn("flex flex-wrap items-center gap-2", className)} {...props}>
+export const Suggestions = ({ className, children, ...props }) => (
+  <div
+    className={cn("flex flex-wrap items-center gap-2", className)}
+    {...props}
+  >
     {children}
   </div>
 );
@@ -33,7 +32,8 @@ export const Suggestion = ({
       size={size}
       type="button"
       variant={variant}
-      {...props}>
+      {...props}
+    >
       {children || suggestion}
     </Button>
   );

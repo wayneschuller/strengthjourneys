@@ -36,7 +36,8 @@ function getBaseUrl(req) {
 }
 
 function toAbsolutePageUrl(req, page) {
-  const safePage = typeof page === "string" && page.startsWith("/") ? page : "/";
+  const safePage =
+    typeof page === "string" && page.startsWith("/") ? page : "/";
   const baseUrl = getBaseUrl(req);
   return baseUrl ? `${baseUrl}${safePage}` : safePage;
 }
@@ -76,7 +77,16 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "Feedback service not configured" });
   }
 
-  const { message, sentiment, page, triggerLabel, includeEmail, email, userType, metadata } = req.body;
+  const {
+    message,
+    sentiment,
+    page,
+    triggerLabel,
+    includeEmail,
+    email,
+    userType,
+    metadata,
+  } = req.body;
 
   if (!message || typeof message !== "string" || message.trim().length === 0) {
     return res.status(400).json({ error: "Message is required" });
@@ -89,10 +99,14 @@ export default async function handler(req, res) {
   // Get session if authenticated
   const session = await getServerSession(req, res, authOptions);
   const isLoggedIn = Boolean(session?.user);
-  const userName = isLoggedIn ? (session?.user?.name || "Authenticated user") : "Anonymous visitor";
+  const userName = isLoggedIn
+    ? session?.user?.name || "Authenticated user"
+    : "Anonymous visitor";
   const optedInForReply = includeEmail === true;
   const submittedEmail = typeof email === "string" ? email.trim() : "";
-  const replyToCandidate = optedInForReply ? (submittedEmail || session?.user?.email || "") : "";
+  const replyToCandidate = optedInForReply
+    ? submittedEmail || session?.user?.email || ""
+    : "";
   const replyToEmail = isValidEmail(replyToCandidate) ? replyToCandidate : null;
   const contactEmailLabel = replyToEmail
     ? replyToEmail
@@ -112,10 +126,12 @@ export default async function handler(req, res) {
         : "thumbs down";
   const sentimentEmoji =
     sentiment === "request" ? "💡" : sentiment === "positive" ? "👍" : "👎";
-  const pagePath = typeof page === "string" && page.startsWith("/") ? page : "/";
-  const triggerLabelValue = typeof triggerLabel === "string" && triggerLabel.trim().length > 0
-    ? triggerLabel.trim()
-    : "unknown";
+  const pagePath =
+    typeof page === "string" && page.startsWith("/") ? page : "/";
+  const triggerLabelValue =
+    typeof triggerLabel === "string" && triggerLabel.trim().length > 0
+      ? triggerLabel.trim()
+      : "unknown";
   const baseUrl = getBaseUrl(req);
   const pageUrl = toAbsolutePageUrl(req, pagePath);
   // Straight from public/ so the URL survives asset changes. The optimizer

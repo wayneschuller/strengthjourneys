@@ -558,13 +558,7 @@ export function NeoBrutalistStickerBombLayer({
                 stroke={stroke}
                 strokeWidth="6"
               />
-              <rect
-                x="26"
-                y="58"
-                width="382"
-                height="38"
-                fill={stroke}
-              />
+              <rect x="26" y="58" width="382" height="38" fill={stroke} />
               <text
                 x="44"
                 y="84"
@@ -583,11 +577,30 @@ export function NeoBrutalistStickerBombLayer({
               >
                 167.5 KG
               </text>
-              <line x1="44" y1="172" x2="388" y2="172" stroke={stroke} strokeWidth="3" />
-              <text x="44" y="211" fill={stroke} fontSize="18" style={BRUTALIST_TEXT_STYLE}>
+              <line
+                x1="44"
+                y1="172"
+                x2="388"
+                y2="172"
+                stroke={stroke}
+                strokeWidth="3"
+              />
+              <text
+                x="44"
+                y="211"
+                fill={stroke}
+                fontSize="18"
+                style={BRUTALIST_TEXT_STYLE}
+              >
                 SET 05
               </text>
-              <text x="238" y="211" fill={stroke} fontSize="18" style={BRUTALIST_TEXT_STYLE}>
+              <text
+                x="238"
+                y="211"
+                fill={stroke}
+                fontSize="18"
+                style={BRUTALIST_TEXT_STYLE}
+              >
                 RPE 8.5
               </text>
             </g>
@@ -609,7 +622,13 @@ export function NeoBrutalistStickerBombLayer({
               stroke={stroke}
               strokeWidth="7"
             />
-            <rect x="1374" y="70" width="260" height="116" fill="url(#nb-hatch)" />
+            <rect
+              x="1374"
+              y="70"
+              width="260"
+              height="116"
+              fill="url(#nb-hatch)"
+            />
             <text
               x="1503"
               y="280"
@@ -630,7 +649,14 @@ export function NeoBrutalistStickerBombLayer({
             >
               WORK SETS
             </text>
-            <line x1="1402" y1="362" x2="1606" y2="362" stroke="hsl(0 0% 0%)" strokeWidth="5" />
+            <line
+              x1="1402"
+              y1="362"
+              x2="1606"
+              y2="362"
+              stroke="hsl(0 0% 0%)"
+              strokeWidth="5"
+            />
             <text
               x="1503"
               y="422"
@@ -650,7 +676,13 @@ export function NeoBrutalistStickerBombLayer({
             transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
           >
             <g transform="rotate(4 1370 770)">
-              <rect x="1226" y="690" width="430" height="148" fill={shadowFill} />
+              <rect
+                x="1226"
+                y="690"
+                width="430"
+                height="148"
+                fill={shadowFill}
+              />
               <rect
                 x="1212"
                 y="676"

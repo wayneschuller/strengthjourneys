@@ -81,7 +81,8 @@ const FAQ_ITEMS = [
     ],
   },
   {
-    question: "What do strength levels like beginner, intermediate, advanced, and elite actually mean?",
+    question:
+      "What do strength levels like beginner, intermediate, advanced, and elite actually mean?",
     answer:
       "They are comparison buckets. Your estimated max is matched against standards for lifters with a similar age, bodyweight, and sex, so the label tells you where your lift sits on the usual progression curve rather than giving you a random pass-fail score.",
   },
@@ -100,7 +101,8 @@ const FAQ_ITEMS = [
     ctaLabel: "Open the 1000lb Club Calculator",
   },
   {
-    question: "I'm already in the 1000lb club, is there a more exclusive strength level?",
+    question:
+      "I'm already in the 1000lb club, is there a more exclusive strength level?",
     answer:
       "Yes. Once you are past the 1000lb club, one of the clearest next benchmarks is hitting the classic round-number milestones across the big four lifts. A true long-term measure of strength is stacking those 200, 300, 400, and 500 pound achievements over time. For most lifters, that is not a quick challenge but a lifelong training milestone.",
     ctaHref: "/200-300-400-500-strength-club-calculator",
@@ -220,7 +222,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
         </PageHeader>
 
         <div className="grid gap-6">
-          <Card className="border-t-2 border-primary/40">
+          <Card className="border-primary/40 border-t-2">
             <CardHeader>
               <CardTitle>Your Athlete Profile</CardTitle>
               <CardDescription>
@@ -255,8 +257,10 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                       }}
                     >
                       <div className="min-w-0">
-                        <CardTitle className="text-xl">{page.pageTitle}</CardTitle>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <CardTitle className="text-xl">
+                          {page.pageTitle}
+                        </CardTitle>
+                        <p className="text-muted-foreground mt-1 text-sm">
                           {page.tagline}
                         </p>
                       </div>
@@ -275,7 +279,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                         <Link
                           prefetch={false}
                           href={getStrengthStandardsUrl(page.slug)}
-                          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors"
                         >
                           <ArrowUpRight className="h-4 w-4" />
                           {page.commonName} Standards
@@ -283,7 +287,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                         <Link
                           prefetch={false}
                           href={page.calculatorUrl}
-                          className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+                          className="hover:bg-muted inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors"
                         >
                           <Calculator className="h-4 w-4" />
                           {page.commonName} 1RM Calculator
@@ -291,7 +295,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                         <Link
                           prefetch={false}
                           href={page.insightUrl}
-                          className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+                          className="hover:bg-muted inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors"
                         >
                           <BookOpen className="h-4 w-4" />
                           {page.commonName} Guide
@@ -305,7 +309,9 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
           </section>
 
           <section className="rounded-lg border p-4">
-            <h2 className="mb-2 text-xl font-semibold">Frequently Asked Questions</h2>
+            <h2 className="mb-2 text-xl font-semibold">
+              Frequently Asked Questions
+            </h2>
             <Accordion type="multiple">
               {FAQ_ITEMS.map(
                 ({ question, answer, inlineLinks, ctaHref, ctaLabel }) => (
@@ -314,20 +320,22 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                       {question}
                     </AccordionTrigger>
                     <AccordionContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {answer}
                         {inlineLinks?.length ? (
                           <>
                             {" "}
                             {inlineLinks.map((link, index) => (
                               <Fragment key={link.href}>
-                                {index === 0 ? null : index === inlineLinks.length - 1
-                                  ? ", and "
-                                  : ", "}
+                                {index === 0
+                                  ? null
+                                  : index === inlineLinks.length - 1
+                                    ? ", and "
+                                    : ", "}
                                 <Link
                                   prefetch={false}
                                   href={link.href}
-                                  className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
+                                  className="text-foreground hover:text-primary font-medium underline decoration-1 underline-offset-2 transition-colors"
                                 >
                                   {link.label}
                                 </Link>
@@ -342,7 +350,7 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                             <Link
                               prefetch={false}
                               href={ctaHref}
-                              className="font-medium text-foreground underline decoration-1 underline-offset-2 transition-colors hover:text-primary"
+                              className="text-foreground hover:text-primary font-medium underline decoration-1 underline-offset-2 transition-colors"
                             >
                               {ctaLabel}
                             </Link>
@@ -366,7 +374,14 @@ export default function StrengthStandardsHubPage({ relatedArticles }) {
                 href="/plate-milestones"
                 title="Plate Milestones"
                 description="Track your progress toward 1/2/3/4 plate milestones."
-                icon={<img src="/blue_plate.svg" alt="" className="h-5 w-5" aria-hidden />}
+                icon={
+                  <img
+                    src="/blue_plate.svg"
+                    alt=""
+                    className="h-5 w-5"
+                    aria-hidden
+                  />
+                }
               />
               <QuickLinkCard
                 href="/1000lb-club-calculator"

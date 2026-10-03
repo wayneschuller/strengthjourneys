@@ -20,9 +20,7 @@ export function classifySheetFlowError(error) {
       ? error.message.trim()
       : "";
 
-  if (
-    GOOGLE_DRIVE_SCOPE_PATTERNS.some((pattern) => pattern.test(message))
-  ) {
+  if (GOOGLE_DRIVE_SCOPE_PATTERNS.some((pattern) => pattern.test(message))) {
     return {
       code: SHEET_FLOW_ERROR_CODES.GOOGLE_DRIVE_SCOPE_MISSING,
       httpStatus: 403,
@@ -37,4 +35,3 @@ export function classifySheetFlowError(error) {
     userMessage: message,
   };
 }
-

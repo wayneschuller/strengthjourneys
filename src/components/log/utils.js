@@ -9,7 +9,10 @@ import {
 
 export function getLiftAnchorId(liftType) {
   if (typeof liftType !== "string") return "lift";
-  return `lift-${liftType.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+  return `lift-${liftType
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")}`;
 }
 
 export function getYouTubeWatchHref(videoUrl) {

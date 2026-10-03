@@ -75,7 +75,10 @@ export function PlaylistArtReviewDialog({ playlist, onOpenChange, onUpdated }) {
         if (!isCurrent) return;
         setArt(data);
         // Art that is already public holds no surprises, so don't make the admin click twice.
-        setIsRevealed(data.thumbnailStatus === "approved" || data.thumbnailStatus === "legacy");
+        setIsRevealed(
+          data.thumbnailStatus === "approved" ||
+            data.thumbnailStatus === "legacy",
+        );
       })
       .catch((loadError) => isCurrent && setError(loadError.message))
       .finally(() => isCurrent && setIsLoading(false));
@@ -102,7 +105,10 @@ export function PlaylistArtReviewDialog({ playlist, onOpenChange, onUpdated }) {
       onUpdated?.(data.playlist);
 
       if (action === "recheck") {
-        setArt((prev) => ({ ...prev, thumbnailStatus: data.playlist.thumbnailStatus }));
+        setArt((prev) => ({
+          ...prev,
+          thumbnailStatus: data.playlist.thumbnailStatus,
+        }));
       } else {
         onOpenChange(false);
       }
@@ -128,14 +134,14 @@ export function PlaylistArtReviewDialog({ playlist, onOpenChange, onUpdated }) {
         </DialogHeader>
 
         {isLoading && (
-          <div className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
+          <div className="text-muted-foreground flex items-center justify-center gap-2 py-10">
             <Spinner className="h-4 w-4" />
             Loading art...
           </div>
         )}
 
         {!isLoading && art && !art.thumbnailUrl && (
-          <p className="py-6 text-center text-muted-foreground">
+          <p className="text-muted-foreground py-6 text-center">
             This playlist has no cover art stored.
           </p>
         )}
@@ -160,16 +166,24 @@ export function PlaylistArtReviewDialog({ playlist, onOpenChange, onUpdated }) {
                     !isRevealed && "blur-2xl",
                   )}
                 />
-                <span className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-background/90 text-foreground shadow">
-                  {isRevealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <span className="bg-background/90 text-foreground absolute right-1 bottom-1 flex h-7 w-7 items-center justify-center rounded-full shadow">
+                  {isRevealed ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </span>
               </button>
 
               <Badge variant={copy.variant}>{copy.label}</Badge>
-              <p className="text-center text-sm text-muted-foreground">{copy.blurb}</p>
+              <p className="text-muted-foreground text-center text-sm">
+                {copy.blurb}
+              </p>
             </div>
 
-            {error && <p className="text-center text-sm text-red-500">{error}</p>}
+            {error && (
+              <p className="text-center text-sm text-red-500">{error}</p>
+            )}
 
             <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
               <Button

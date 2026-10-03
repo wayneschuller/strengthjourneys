@@ -35,8 +35,9 @@ const PROVIDER_KEYS = {
  * @returns {string[]}
  */
 export function getAvailableChatModelIds() {
-  return CHAT_MODELS.filter((entry) => process.env[PROVIDER_KEYS[entry.provider]])
-    .map((entry) => entry.id);
+  return CHAT_MODELS.filter(
+    (entry) => process.env[PROVIDER_KEYS[entry.provider]],
+  ).map((entry) => entry.id);
 }
 
 /**

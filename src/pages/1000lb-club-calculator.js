@@ -13,7 +13,10 @@ import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/articles/article-cards";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { ImportDataOwnershipPromo } from "@/components/import-data-ownership-promo";
-import { getLocalYmdDaysAgo, getLongReadableDateString } from "@/lib/date-utils";
+import {
+  getLocalYmdDaysAgo,
+  getLongReadableDateString,
+} from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { MeetSetMedal } from "@/components/meet-set-medal";
@@ -329,10 +332,18 @@ function formatE1RMSourceText(source) {
   return `Based on your ${source.reps}@${weightText} ${unitText} set on ${dateText}`;
 }
 
-function SliderWithMarkers({ value, prVal, r90Val, onValueChange, onValueCommit, className }) {
+function SliderWithMarkers({
+  value,
+  prVal,
+  r90Val,
+  onValueChange,
+  onValueCommit,
+  className,
+}) {
   const MAX = 700;
   const showPr = prVal != null && prVal > 0 && prVal <= MAX;
-  const showR90 = r90Val != null && r90Val > 0 && r90Val <= MAX && r90Val !== prVal;
+  const showR90 =
+    r90Val != null && r90Val > 0 && r90Val <= MAX && r90Val !== prVal;
   const prPercent = showPr ? (prVal / MAX) * 100 : 0;
   const r90Percent = showR90 ? (r90Val / MAX) * 100 : 0;
 
@@ -353,7 +364,9 @@ function SliderWithMarkers({ value, prVal, r90Val, onValueChange, onValueCommit,
           style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
         >
           <div className="bg-primary/40 h-3 w-px" />
-          <span className="text-primary/60 text-[9px] leading-none font-medium">PR</span>
+          <span className="text-primary/60 text-[9px] leading-none font-medium">
+            PR
+          </span>
         </div>
       )}
       {showR90 && (
@@ -362,7 +375,9 @@ function SliderWithMarkers({ value, prVal, r90Val, onValueChange, onValueCommit,
           style={{ left: `${r90Percent}%`, transform: "translateX(-50%)" }}
         >
           <div className="h-3 w-px bg-amber-500/40" />
-          <span className="text-[9px] leading-none font-medium text-amber-600/60">90d</span>
+          <span className="text-[9px] leading-none font-medium text-amber-600/60">
+            90d
+          </span>
         </div>
       )}
     </div>
@@ -381,41 +396,40 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
-  const {
-    topLiftsByTypeAndReps,
-    parsedData,
-    dataSource,
-    hasLinkedSheet,
-  } = useUserLiftingData();
+  const { topLiftsByTypeAndReps, parsedData, dataSource, hasLinkedSheet } =
+    useUserLiftingData();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
     initializeWithValue: false,
   });
   const e1rmFormula = storedFormula ?? "Brzycki";
 
-  const [squat, setSquat, , , squatIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
-    275,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= 700,
-    "squat",
-  );
-  const [bench, setBench, , , benchIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.THOUSAND_BENCH,
-    205,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= 700,
-    "bench",
-  );
-  const [deadlift, setDeadlift, , , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT,
-    315,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= 700,
-    "deadlift",
-  );
+  const [squat, setSquat, , , squatIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
+      275,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value >= 0 && value <= 700,
+      "squat",
+    );
+  const [bench, setBench, , , benchIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.THOUSAND_BENCH,
+      205,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value >= 0 && value <= 700,
+      "bench",
+    );
+  const [deadlift, setDeadlift, , , deadliftIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT,
+      315,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value >= 0 && value <= 700,
+      "deadlift",
+    );
   const [hasInteracted, setHasInteracted] = useState(false);
   const hasExplicitQueryRef = useRef(false);
 
@@ -500,7 +514,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   // Recent 90-day best E1RM per lift (in lbs, rounded to 5)
   const recent90dData = useMemo(() => {
-    if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
+    if (!usingUserData || !parsedData?.length || dataSource === "demo")
+      return null;
 
     const sinceDate = getLocalYmdDaysAgo(90);
     const best = {};
@@ -606,7 +621,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   // Rolling 90-day SBD total timeline
   const totalTimeline = useMemo(() => {
-    if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
+    if (!usingUserData || !parsedData?.length || dataSource === "demo")
+      return null;
 
     const samples = sampleRollingBestE1RMs(parsedData, Object.keys(SBD_KEYS), {
       e1rmFormula,
@@ -642,7 +658,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   useCalculatorQuerySync({
     router,
     query: thousandClubQuery,
-    isInitialized: squatIsInitialized && benchIsInitialized && deadliftIsInitialized,
+    isInitialized:
+      squatIsInitialized && benchIsInitialized && deadliftIsInitialized,
     hasInteracted,
   });
 
@@ -881,7 +898,11 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       r90Val={recent90dLb?.[key]}
                       onValueChange={handleLiftValueChange(key, set)}
                       onValueCommit={handleLiftValueCommit}
-                      className={prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}
+                      className={
+                        prefersReducedMotion
+                          ? ""
+                          : `thumb-spring thumb-spring-${index}`
+                      }
                     />
                     <p
                       className={cn(
@@ -894,7 +915,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                           <Link
                             prefetch={false}
                             href={`/log?date=${visibleE1rmSources[key].date}`}
-                            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+                            className="hover:text-foreground underline decoration-dotted underline-offset-2"
                           >
                             {formatE1RMSourceText(visibleE1rmSources[key])}.
                           </Link>
@@ -1054,9 +1075,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
         <TotalTimelineChart
           data={totalTimeline}
           target={TARGET_TOTAL}
-          showSavePrompt={
-            dataSource === "import" && !hasLinkedSheet
-          }
+          showSavePrompt={dataSource === "import" && !hasLinkedSheet}
         />
       ) : dataSource === "demo" || dataSource === "none" ? (
         <TotalTimelineCtaCard />
@@ -1200,9 +1219,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
           {/* Bench-light / T-Rex */}
           <div className="rounded-lg border p-4">
-            <h3 className="mb-2 text-sm font-semibold">
-              🦖 The T-Rex
-            </h3>
+            <h3 className="mb-2 text-sm font-semibold">🦖 The T-Rex</h3>
             <p className="text-muted-foreground mb-3 text-xs">
               Big squat, big pull, tiny arms. Bench day is a rest day in
               disguise.
@@ -1538,7 +1555,7 @@ function TotalTimelineCtaCard() {
               "from-muted/20 via-background to-muted/30 flex h-full flex-col justify-between rounded-xl border border-dashed bg-gradient-to-br p-4 text-left transition-colors sm:p-5",
               dragOver && "border-primary bg-primary/5",
               importing && "cursor-wait opacity-80",
-              !importing && "cursor-pointer hover:border-primary/60",
+              !importing && "hover:border-primary/60 cursor-pointer",
             )}
             aria-label="Upload workout export file"
           >
@@ -1647,7 +1664,11 @@ function TotalTimelineCtaCard() {
                         x2="0"
                         y2="1"
                       >
-                        <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.2" />
+                        <stop
+                          offset="0%"
+                          stopColor="#F59E0B"
+                          stopOpacity="0.2"
+                        />
                         <stop
                           offset="100%"
                           stopColor="#F59E0B"
@@ -1729,7 +1750,7 @@ function TotalTimelineSavePromptInline() {
         </div>
         {authStatus === "authenticated" ? (
           <Button
-            className="border-blue-300 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 sm:shrink-0"
+            className="border-blue-300 bg-blue-600 text-white hover:bg-blue-700 sm:shrink-0 dark:bg-blue-700 dark:hover:bg-blue-600"
             onClick={handleCreateFromPrompt}
           >
             Save my data

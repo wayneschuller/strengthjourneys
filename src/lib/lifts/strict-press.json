@@ -1,11 +1,7 @@
 {
   "liftType": "Strict Press",
   "slug": "strict-press",
-  "synonyms": [
-    "Overhead Press",
-    "Press",
-    "Shoulder Press"
-  ],
+  "synonyms": ["Overhead Press", "Press", "Shoulder Press"],
   "bigFour": true,
   "icon": "Luggage",
   "tagline": "The slowest to climb and the most rewarding.",
@@ -163,98 +159,38 @@
           {
             "bwKg": 68,
             "bwLb": 150,
-            "active": [
-              28,
-              60
-            ],
-            "beginner": [
-              39,
-              85
-            ],
-            "intermediate": [
-              51,
-              110
-            ],
-            "advanced": [
-              62,
-              135
-            ],
-            "elite": [
-              82,
-              180
-            ]
+            "active": [28, 60],
+            "beginner": [39, 85],
+            "intermediate": [51, 110],
+            "advanced": [62, 135],
+            "elite": [82, 180]
           },
           {
             "bwKg": 79,
             "bwLb": 175,
-            "active": [
-              31,
-              70
-            ],
-            "beginner": [
-              43,
-              95
-            ],
-            "intermediate": [
-              55,
-              120
-            ],
-            "advanced": [
-              68,
-              150
-            ],
-            "elite": [
-              89,
-              195
-            ]
+            "active": [31, 70],
+            "beginner": [43, 95],
+            "intermediate": [55, 120],
+            "advanced": [68, 150],
+            "elite": [89, 195]
           },
           {
             "bwKg": 91,
             "bwLb": 200,
-            "active": [
-              35,
-              75
-            ],
-            "beginner": [
-              49,
-              110
-            ],
-            "intermediate": [
-              63,
-              140
-            ],
-            "advanced": [
-              78,
-              170
-            ],
-            "elite": [
-              102,
-              225
-            ]
+            "active": [35, 75],
+            "beginner": [49, 110],
+            "intermediate": [63, 140],
+            "advanced": [78, 170],
+            "elite": [102, 225]
           },
           {
             "bwKg": 102,
             "bwLb": 225,
-            "active": [
-              36,
-              80
-            ],
-            "beginner": [
-              50,
-              110
-            ],
-            "intermediate": [
-              65,
-              145
-            ],
-            "advanced": [
-              80,
-              175
-            ],
-            "elite": [
-              105,
-              230
-            ]
+            "active": [36, 80],
+            "beginner": [50, 110],
+            "intermediate": [65, 145],
+            "advanced": [80, 175],
+            "elite": [105, 230]
           }
         ]
       },

@@ -52,7 +52,9 @@ export function EmptySessionState({
             label="Or pick another lift"
             onAddLift={onAddLift}
             chips={addLiftChips}
-            excludeLiftTypes={nextLiftPlan.lifts.map(({ liftType }) => liftType)}
+            excludeLiftTypes={nextLiftPlan.lifts.map(
+              ({ liftType }) => liftType,
+            )}
             sessionDate={sessionDate}
             isToday={isToday}
             disabled={isStructuralSaving}
@@ -62,9 +64,13 @@ export function EmptySessionState({
         <>
           <div className="space-y-1 text-center">
             <h2 className="text-xl font-semibold">
-              {isToday ? "Start today's session" : "Start a session for this date"}
+              {isToday
+                ? "Start today's session"
+                : "Start a session for this date"}
             </h2>
-            <p className="text-muted-foreground text-sm">Pick a lift to begin.</p>
+            <p className="text-muted-foreground text-sm">
+              Pick a lift to begin.
+            </p>
           </div>
 
           <AddLiftButton

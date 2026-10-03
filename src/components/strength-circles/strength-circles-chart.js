@@ -23,33 +23,33 @@ import { cn } from "@/lib/utils";
 const RING_CONFIG = [
   {
     universe: "General Population",
-    label:    "Gen. Pop.",
-    ofLabel:  "of the General Population",
-    radius:   162,
+    label: "Gen. Pop.",
+    ofLabel: "of the General Population",
+    radius: 162,
     strokeWidth: 21,
     color: "var(--chart-1)",
   },
   {
     universe: "Gym-Goers",
-    label:    "Gym-Goers",
-    ofLabel:  "of Gym-Goers",
-    radius:   136,
+    label: "Gym-Goers",
+    ofLabel: "of Gym-Goers",
+    radius: 136,
     strokeWidth: 22,
     color: "var(--chart-2)",
   },
   {
     universe: "Barbell Lifters",
-    label:    "Barbell",
-    ofLabel:  "of Barbell Lifters",
-    radius:   110,
+    label: "Barbell",
+    ofLabel: "of Barbell Lifters",
+    radius: 110,
     strokeWidth: 23,
     color: "var(--chart-3)",
   },
   {
     universe: "Powerlifting Culture",
-    label:    "Powerlifting",
-    ofLabel:  "of Powerlifting Culture",
-    radius:   84,
+    label: "Powerlifting",
+    ofLabel: "of Powerlifting Culture",
+    radius: 84,
     strokeWidth: 24,
     color: "var(--chart-4)",
   },
@@ -93,7 +93,14 @@ function percentileToOffset(percentile, radius) {
 
 // ─── Single ring ──────────────────────────────────────────────────────────────
 
-function Ring({ config, percentile, isActive, unlocked, onClick, onHoverChange }) {
+function Ring({
+  config,
+  percentile,
+  isActive,
+  unlocked,
+  onClick,
+  onHoverChange,
+}) {
   const { radius, strokeWidth, color } = config;
   const circumference = 2 * Math.PI * radius;
   const fillPercentile = unlocked ? percentile : 0;
@@ -119,7 +126,10 @@ function Ring({ config, percentile, isActive, unlocked, onClick, onHoverChange }
         cy={CENTER}
         r={radius}
         fill="none"
-        style={{ stroke: "var(--muted-foreground)", opacity: unlocked ? 0.15 : 0.08 }}
+        style={{
+          stroke: "var(--muted-foreground)",
+          opacity: unlocked ? 0.15 : 0.08,
+        }}
         strokeWidth={strokeWidth}
       />
 
@@ -135,18 +145,18 @@ function Ring({ config, percentile, isActive, unlocked, onClick, onHoverChange }
           strokeDasharray={circumference}
           animate={{
             strokeDashoffset: offset,
-            opacity:     !unlocked ? 0 : isActive ? 1 : 0.45,
+            opacity: !unlocked ? 0 : isActive ? 1 : 0.45,
             strokeWidth: isActive ? strokeWidth + 3 : strokeWidth,
           }}
           initial={{
             strokeDashoffset: circumference,
-            opacity:     !unlocked ? 0 : isActive ? 1 : 0.45,
+            opacity: !unlocked ? 0 : isActive ? 1 : 0.45,
             strokeWidth: isActive ? strokeWidth + 3 : strokeWidth,
           }}
           transition={{
             strokeDashoffset: { duration: 0.55, ease: "easeOut" },
-            opacity:          { duration: 0.25 },
-            strokeWidth:      { duration: 0.25 },
+            opacity: { duration: 0.25 },
+            strokeWidth: { duration: 0.25 },
           }}
         />
       </g>
@@ -176,10 +186,10 @@ function CenterLabel({ activeUniverse, percentiles }) {
         >
           {hasData ? (
             <>
-              <span className="text-xs font-medium tracking-wide text-muted-foreground">
+              <span className="text-muted-foreground text-xs font-medium tracking-wide">
                 Stronger than
               </span>
-              <span className="mt-0.5 flex items-baseline justify-center leading-none tracking-tighter text-foreground">
+              <span className="text-foreground mt-0.5 flex items-baseline justify-center leading-none tracking-tighter">
                 <CountUp
                   value={percentile}
                   format={formatCountUpInteger}
@@ -191,7 +201,7 @@ function CenterLabel({ activeUniverse, percentiles }) {
                 </span>
               </span>
               <span
-                className="mt-1 w-full text-balance text-xs font-semibold leading-snug sm:text-[13px]"
+                className="mt-1 w-full text-xs leading-snug font-semibold text-balance sm:text-[13px]"
                 style={{ color: config?.color }}
               >
                 {activeUniverse === "Powerlifting Culture" ? (
@@ -201,14 +211,18 @@ function CenterLabel({ activeUniverse, percentiles }) {
                     <span className="block">Culture</span>
                   </>
                 ) : (
-                  config?.ofLabel ?? activeUniverse
+                  (config?.ofLabel ?? activeUniverse)
                 )}
               </span>
             </>
           ) : (
             <>
-              <span className="text-xs text-muted-foreground">Enter a lift</span>
-              <span className="text-xs text-muted-foreground">to see results</span>
+              <span className="text-muted-foreground text-xs">
+                Enter a lift
+              </span>
+              <span className="text-muted-foreground text-xs">
+                to see results
+              </span>
             </>
           )}
         </motion.div>
@@ -230,8 +244,8 @@ function Legend({
     <div className="mt-1 flex flex-col gap-0.5">
       {RING_CONFIG.map((config) => {
         const percentile = percentiles?.[config.universe];
-        const isActive   = config.universe === activeUniverse;
-        const unlocked   = unlockedUniverses.has(config.universe);
+        const isActive = config.universe === activeUniverse;
+        const unlocked = unlockedUniverses.has(config.universe);
 
         return (
           <button
@@ -305,7 +319,10 @@ export function StrengthCirclesChart({
           ))}
         </svg>
 
-        <CenterLabel activeUniverse={activeUniverse} percentiles={percentiles} />
+        <CenterLabel
+          activeUniverse={activeUniverse}
+          percentiles={percentiles}
+        />
       </div>
 
       {showLegend && (
@@ -319,7 +336,7 @@ export function StrengthCirclesChart({
       )}
 
       {showTrustLine && (
-        <p className="mt-2 text-center text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-center text-[11px]">
           As the groups become more specialised, the comparison becomes tougher.
         </p>
       )}

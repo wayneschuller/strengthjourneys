@@ -34,10 +34,7 @@ import {
 import { HowStrongStoryPanel } from "@/components/strength-circles/how-strong-story-panel";
 import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
@@ -48,7 +45,11 @@ import { findBestE1RMInWindow, sampleRollingBestE1RMs } from "@/lib/lift-bests";
 import { convertWeight, toKg, unitTypeFor } from "@/lib/weight-units";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
-import { buildShareUrl, getFirstQueryValue, parseQueryNumber } from "@/lib/share-url";
+import {
+  buildShareUrl,
+  getFirstQueryValue,
+  parseQueryNumber,
+} from "@/lib/share-url";
 import { cn } from "@/lib/utils";
 import {
   computeStrengthResults,
@@ -100,7 +101,8 @@ const NEXT_TOOL_LINKS = [
   {
     href: "/lift-explorer",
     title: "Lift Explorer",
-    description: "Review PRs, consistency, and milestones across your training.",
+    description:
+      "Review PRs, consistency, and milestones across your training.",
     IconComponent: Trophy,
   },
   {
@@ -120,7 +122,7 @@ const PercentileTimelineChart = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex flex-col gap-1">
-        <p className="text-xs text-muted-foreground">&nbsp;</p>
+        <p className="text-muted-foreground text-xs">&nbsp;</p>
         <div className="h-28 w-full" />
       </div>
     ),
@@ -244,7 +246,9 @@ function HowStrongAmIPageMain() {
   // The lifter's chosen e1RM formula. Every number on this page that comes
   // from the log uses it, so the markers, the story and the timeline agree
   // with each other and with the calculator.
-  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false });
+  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+    initializeWithValue: false,
+  });
   const e1rmFormula = storedFormula ?? "Brzycki";
 
   const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
@@ -254,7 +258,8 @@ function HowStrongAmIPageMain() {
   }));
   const [queryHydrated, setQueryHydrated] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [selectedUniverse, setSelectedUniverse] = useState("General Population");
+  const [selectedUniverse, setSelectedUniverse] =
+    useState("General Population");
   const [hoveredUniverse, setHoveredUniverse] = useState(null);
   const hasExplicitQueryRef = useRef(false);
   const queryHydratedRef = useRef(false);
@@ -274,7 +279,8 @@ function HowStrongAmIPageMain() {
     const queryWeights = {};
     for (const lift of LIFTS) {
       const value = parseQueryNumber(router.query[lift.key], { min: 1 });
-      if (value !== null) queryWeights[lift.key] = toKg(value, unitTypeFor(isMetric));
+      if (value !== null)
+        queryWeights[lift.key] = toKg(value, unitTypeFor(isMetric));
     }
 
     if (Object.keys(queryWeights).length > 0) {
@@ -333,7 +339,11 @@ function HowStrongAmIPageMain() {
   // Auto-populate the sliders from those PRs, unless the URL already said otherwise
   const hasAutoPopulatedRef = useRef(false);
   useEffect(() => {
-    if (hasExplicitQueryRef.current || hasAutoPopulatedRef.current || !prWeightsKg)
+    if (
+      hasExplicitQueryRef.current ||
+      hasAutoPopulatedRef.current ||
+      !prWeightsKg
+    )
       return;
 
     hasAutoPopulatedRef.current = true;
@@ -362,7 +372,8 @@ function HowStrongAmIPageMain() {
 
   // Recent 90-day best E1RM per lift, in kg, for the second slider marker
   const recent90dKg = useMemo(() => {
-    if (!prWeightsKg || !parsedData?.length || dataSource === "demo") return null;
+    if (!prWeightsKg || !parsedData?.length || dataSource === "demo")
+      return null;
 
     const sinceDate = getLocalYmdDaysAgo(90);
     const recent = {};
@@ -411,11 +422,19 @@ function HowStrongAmIPageMain() {
   const userStoryData = useMemo(() => {
     if (!usingUserData || !topLiftsByTypeAndReps) return null;
 
-    const allTimeLookup = { squat: "Back Squat", bench: "Bench Press", deadlift: "Deadlift" };
+    const allTimeLookup = {
+      squat: "Back Squat",
+      bench: "Bench Press",
+      deadlift: "Deadlift",
+    };
     const liftStories = {};
 
     for (const [key, liftType] of Object.entries(allTimeLookup)) {
-      const allTime = findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula);
+      const allTime = findBestE1RM(
+        liftType,
+        topLiftsByTypeAndReps,
+        e1rmFormula,
+      );
       const lastYear = topLiftsByTypeAndRepsLast12Months
         ? findBestE1RM(liftType, topLiftsByTypeAndRepsLast12Months, e1rmFormula)
         : null;
@@ -424,7 +443,9 @@ function HowStrongAmIPageMain() {
 
       liftStories[key] = {
         allTimeE1RM: Math.round(allTime.bestE1RMWeight),
-        lastYearE1RM: lastYear?.bestE1RMWeight ? Math.round(lastYear.bestE1RMWeight) : null,
+        lastYearE1RM: lastYear?.bestE1RMWeight
+          ? Math.round(lastYear.bestE1RMWeight)
+          : null,
         unitType: allTime.unitType,
         prDate: allTime.bestLift?.date,
       };
@@ -455,7 +476,13 @@ function HowStrongAmIPageMain() {
       totalSessions,
       liftCount: Object.keys(liftStories).length,
     };
-  }, [usingUserData, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, parsedData, e1rmFormula]);
+  }, [
+    usingUserData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    parsedData,
+    e1rmFormula,
+  ]);
 
   const liftWeights = useMemo(
     () => convertLiftWeights(liftWeightsKg, true, isMetric),
@@ -464,7 +491,10 @@ function HowStrongAmIPageMain() {
 
   const handleLiftChange = (key, value) => {
     setHasInteracted(true);
-    setLiftWeightsKg((prev) => ({ ...prev, [key]: toKg(value, unitTypeFor(isMetric)) }));
+    setLiftWeightsKg((prev) => ({
+      ...prev,
+      [key]: toKg(value, unitTypeFor(isMetric)),
+    }));
   };
 
   const handleUniverseChange = (value) => {
@@ -512,7 +542,15 @@ function HowStrongAmIPageMain() {
             [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: String(bodyWeight),
           }),
     }),
-    [age, bioDataIsDefault, bodyWeight, isMetric, liftWeights, selectedUniverse, sex],
+    [
+      age,
+      bioDataIsDefault,
+      bodyWeight,
+      isMetric,
+      liftWeights,
+      selectedUniverse,
+      sex,
+    ],
   );
   useCalculatorQuerySync({
     router,
@@ -547,7 +585,8 @@ function HowStrongAmIPageMain() {
 
   // Compute percentile timeline from training history
   const percentileTimeline = useMemo(() => {
-    if (!usingUserData || !parsedData?.length || dataSource === "demo") return null;
+    if (!usingUserData || !parsedData?.length || dataSource === "demo")
+      return null;
 
     const samples = sampleRollingBestE1RMs(
       parsedData,
@@ -565,7 +604,10 @@ function HowStrongAmIPageMain() {
 
       const bestE1rmKg = {};
       for (const { key, label } of LIFTS) {
-        bestE1rmKg[key] = toKg(bests[label].bestE1RMWeight, bests[label].unitType);
+        bestE1rmKg[key] = toKg(
+          bests[label].bestE1RMWeight,
+          bests[label].unitType,
+        );
       }
 
       const result = computeStrengthResults(bio, bestE1rmKg);
@@ -576,7 +618,15 @@ function HowStrongAmIPageMain() {
     }
 
     return points.length >= 2 ? points : null;
-  }, [usingUserData, parsedData, dataSource, age, sex, bodyWeightKg, e1rmFormula]);
+  }, [
+    usingUserData,
+    parsedData,
+    dataSource,
+    age,
+    sex,
+    bodyWeightKg,
+    e1rmFormula,
+  ]);
 
   const handleShare = () => {
     const percentile = chartPercentiles[activeUniverse];
@@ -604,21 +654,21 @@ function HowStrongAmIPageMain() {
   return (
     <PageContainer>
       <PageHeader className="pb-0 md:pb-8">
-        <PageHeaderHeading icon={CircleDashed}>How Strong Am I?</PageHeaderHeading>
+        <PageHeaderHeading icon={CircleDashed}>
+          How Strong Am I?
+        </PageHeaderHeading>
         <PageHeaderDescription>
           Strength Percentile Calculator — see how you rank across four groups,
           from the general population to competitive powerlifters.
         </PageHeaderDescription>
         <PageHeaderRight className="hidden md:flex">
-          <div className="flex flex-col gap-2 text-muted-foreground xl:flex-row">
+          <div className="text-muted-foreground flex flex-col gap-2 xl:flex-row">
             <Link
               prefetch={false}
               href="/strength-levels"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+              className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
-              <h3 className="text-base font-semibold">
-                Strength Levels
-              </h3>
+              <h3 className="text-base font-semibold">Strength Levels</h3>
               <p className="text-sm">
                 Check beginner-to-elite benchmarks per lift.
               </p>
@@ -626,7 +676,7 @@ function HowStrongAmIPageMain() {
             <Link
               prefetch={false}
               href="/calculator"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+              className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <h3 className="text-base font-semibold">E1RM Calculator</h3>
               <p className="text-sm">Estimate your one rep max from any set.</p>
@@ -638,7 +688,7 @@ function HowStrongAmIPageMain() {
       <Card className="mt-0 md:mt-4">
         <CardContent className="px-3 pt-0 pb-4 sm:p-6 sm:pt-5">
           <div className="flex flex-col items-center gap-3 lg:flex-row lg:items-start lg:gap-10">
-            <div className="flex w-full max-w-md flex-col items-center gap-4 lg:order-1 lg:flex-1 lg:max-w-none">
+            <div className="flex w-full max-w-md flex-col items-center gap-4 lg:order-1 lg:max-w-none lg:flex-1">
               <div className="w-full max-w-xl xl:max-w-2xl">
                 <StrengthCirclesChart
                   percentiles={chartPercentiles}
@@ -737,21 +787,40 @@ function normalizeLiftWeight(weight, isMetric) {
 function convertLiftWeights(liftWeights, fromMetric, toMetric) {
   return {
     squat: normalizeLiftWeight(
-      convertWeight(liftWeights.squat, unitTypeFor(fromMetric), unitTypeFor(toMetric)),
+      convertWeight(
+        liftWeights.squat,
+        unitTypeFor(fromMetric),
+        unitTypeFor(toMetric),
+      ),
       toMetric,
     ),
     bench: normalizeLiftWeight(
-      convertWeight(liftWeights.bench, unitTypeFor(fromMetric), unitTypeFor(toMetric)),
+      convertWeight(
+        liftWeights.bench,
+        unitTypeFor(fromMetric),
+        unitTypeFor(toMetric),
+      ),
       toMetric,
     ),
     deadlift: normalizeLiftWeight(
-      convertWeight(liftWeights.deadlift, unitTypeFor(fromMetric), unitTypeFor(toMetric)),
+      convertWeight(
+        liftWeights.deadlift,
+        unitTypeFor(fromMetric),
+        unitTypeFor(toMetric),
+      ),
       toMetric,
     ),
   };
 }
 
-function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentileTimeline, activeUniverse, firstName }) {
+function StrengthStorySummary({
+  storyData,
+  chartPercentiles,
+  isMetric,
+  percentileTimeline,
+  activeUniverse,
+  firstName,
+}) {
   const { careerYears, totalSessions, liftCount, liftStories } = storyData;
 
   const genPop = chartPercentiles["General Population"];
@@ -780,24 +849,28 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border-t pt-5">
-      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wider uppercase">
         <Trophy className="h-3.5 w-3.5 text-yellow-500" />
-        {firstName ? `${firstName}\u2019s Strength Story` : "Your Strength Story"}
+        {firstName
+          ? `${firstName}\u2019s Strength Story`
+          : "Your Strength Story"}
       </p>
 
       {/* Career headline */}
       <div className="flex flex-col gap-1">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           {careerLabel && (
-            <span className="text-2xl font-bold tracking-tight">{careerLabel}</span>
+            <span className="text-2xl font-bold tracking-tight">
+              {careerLabel}
+            </span>
           )}
           {totalSessions && (
-            <span className="text-lg font-semibold text-muted-foreground">
+            <span className="text-muted-foreground text-lg font-semibold">
               {totalSessions.toLocaleString()} sessions
             </span>
           )}
           {threeLiftTotal && (
-            <span className="text-lg font-semibold text-muted-foreground">
+            <span className="text-muted-foreground text-lg font-semibold">
               {threeLiftTotal} total
             </span>
           )}
@@ -812,24 +885,24 @@ function StrengthStorySummary({ storyData, chartPercentiles, isMetric, percentil
           activeUniverse={activeUniverse}
         />
       )}
-
     </div>
   );
 }
 
-
 function ExplainerSection() {
   return (
-    <div className="rounded-lg border bg-muted/30 p-6 shadow-sm">
+    <div className="bg-muted/30 rounded-lg border p-6 shadow-sm">
       <h2 className="mb-2 text-base font-semibold">What these circles mean</h2>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Each ring compares you to a different group. As the group gets more
         specialised, the comparison gets tougher — beating 70% of barbell
         lifters is a much harder feat than beating 70% of the general
         population.
       </p>
-      <h2 className="mb-2 mt-4 text-base font-semibold">How accurate is this?</h2>
-      <p className="text-sm text-muted-foreground">
+      <h2 className="mt-4 mb-2 text-base font-semibold">
+        How accurate is this?
+      </h2>
+      <p className="text-muted-foreground text-sm">
         These percentiles are estimates anchored to the Kilgore strength
         standards and calibrated against published population distributions.
         They are informed comparisons, not exact rankings. Age adjustments are
@@ -909,14 +982,14 @@ function FAQSection() {
     <div className="mt-8">
       <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             How Strong Am I?
           </p>
-          <h2 className="text-2xl font-semibold leading-tight">
+          <h2 className="text-2xl leading-tight font-semibold">
             Frequently asked questions
           </h2>
         </div>
-        <p className="max-w-xl text-sm text-muted-foreground">
+        <p className="text-muted-foreground max-w-xl text-sm">
           Strength comparisons get cleaner when the lifts are measurable,
           repeatable, and hard to negotiate with.
         </p>
@@ -926,12 +999,12 @@ function FAQSection() {
           <article
             key={q}
             className={cn(
-              "rounded-lg border bg-background/80 p-5 shadow-sm transition-colors hover:bg-muted/30",
+              "bg-background/80 hover:bg-muted/30 rounded-lg border p-5 shadow-sm transition-colors",
               index < 2 && "lg:p-6",
             )}
           >
-            <h3 className="text-base font-semibold leading-snug">{q}</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            <h3 className="text-base leading-snug font-semibold">{q}</h3>
+            <p className="text-muted-foreground mt-2 text-sm leading-6">
               {renderAnswer || a}
             </p>
           </article>
@@ -944,20 +1017,22 @@ function FAQSection() {
 function NextToolsSection() {
   return (
     <section className="mt-10">
-      <h2 className="mb-4 text-xl font-semibold">What should you check next?</h2>
+      <h2 className="mb-4 text-xl font-semibold">
+        What should you check next?
+      </h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {NEXT_TOOL_LINKS.map(({ href, title, description, IconComponent }) => (
           <Link
             prefetch={false}
             key={href}
             href={href}
-            className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+            className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
           >
             <div className="mb-2 flex items-center gap-2">
               <IconComponent className="h-5 w-5" />
               <h3 className="font-semibold">{title}</h3>
             </div>
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="text-muted-foreground text-sm">{description}</p>
           </Link>
         ))}
       </div>

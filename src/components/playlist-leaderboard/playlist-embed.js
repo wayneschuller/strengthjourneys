@@ -56,7 +56,9 @@ export function getPlaylistEmbed(url) {
 
   if (host.endsWith("spotify.com")) {
     const path = stripSpotifyLocale(parsed.pathname);
-    if (!/^\/(playlist|album|track|episode|show|artist)\/[A-Za-z0-9]+/.test(path)) {
+    if (
+      !/^\/(playlist|album|track|episode|show|artist)\/[A-Za-z0-9]+/.test(path)
+    ) {
       return null;
     }
     return { src: `https://open.spotify.com/embed${path}`, height: 352 };
@@ -134,7 +136,7 @@ export function PlaylistEmbed({ embed, title, className }) {
       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
       referrerPolicy="strict-origin-when-cross-origin"
       className={cn(
-        "w-full rounded-lg border-0 bg-muted",
+        "bg-muted w-full rounded-lg border-0",
         embed.aspect === "video" && "aspect-video h-auto",
         className,
       )}

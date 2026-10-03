@@ -24,7 +24,14 @@ import { PlaylistArtReviewDialog } from "@/components/playlist-leaderboard/playl
 import { PlaylistAdminBanner } from "@/components/playlist-leaderboard/playlist-admin";
 import { VoteWeightBanner } from "@/components/playlist-leaderboard/playlist-vote-weight";
 import { buildLeaderboardJsonLd } from "@/components/playlist-leaderboard/playlist-jsonld";
-import { TrendingUp, Clock, Heart, Music, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  TrendingUp,
+  Clock,
+  Heart,
+  Music,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import {
   PageContainer,
   PageHeader,
@@ -44,7 +51,9 @@ export async function getStaticProps() {
   const relatedArticles = getRelatedArticles("Gym Music");
 
   if (process.env.NEXT_PUBLIC_USE_DEMO_PLAYLISTS === "true") {
-    console.log("NEXT_PUBLIC_USE_DEMO_PLAYLISTS=true: using demo playlist data");
+    console.log(
+      "NEXT_PUBLIC_USE_DEMO_PLAYLISTS=true: using demo playlist data",
+    );
     return {
       props: { initialPlaylists: dummyPlaylists, relatedArticles },
     };
@@ -77,7 +86,10 @@ export async function getStaticProps() {
  * @param {Object} props
  * @param {Array} props.initialPlaylists - Pre-fetched playlist array from the Vercel KV store, used for ISR hydration.
  */
-export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticles }) {
+export default function GymPlaylistLeaderboard({
+  initialPlaylists,
+  relatedArticles,
+}) {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [playlists, setPlaylists] = useState(initialPlaylists);
@@ -313,7 +325,9 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
 
   const refreshPlaylistMetadata = (updatedPlaylist) => {
     setPlaylists((prev) =>
-      prev.map((p) => (p.id === updatedPlaylist.id ? { ...p, ...updatedPlaylist } : p)),
+      prev.map((p) =>
+        p.id === updatedPlaylist.id ? { ...p, ...updatedPlaylist } : p,
+      ),
     );
   };
 
@@ -636,9 +650,11 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
             </TabsList>
             <TabsContent value={currentTab} className="space-y-4">
               {paginatedPlaylists.length === 0 && currentTab === "saved" ? (
-                <div className="flex flex-col items-center gap-3 py-16 text-center text-muted-foreground">
+                <div className="text-muted-foreground flex flex-col items-center gap-3 py-16 text-center">
                   <Heart className="h-10 w-10 opacity-30" />
-                  <p className="text-base font-medium">No saved playlists yet</p>
+                  <p className="text-base font-medium">
+                    No saved playlists yet
+                  </p>
                   <p className="text-sm">
                     Tap the ♥ on any playlist to save it here for quick access.
                   </p>
@@ -686,7 +702,9 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                             onSave={toggleSavePlaylist}
                             isSaved={savedPlaylists.includes(playlist.id)}
                             rank={
-                              currentTab === "top" ? firstCardRank + index : null
+                              currentTab === "top"
+                                ? firstCardRank + index
+                                : null
                             }
                             isPlaying={playingId === playlist.id}
                             onTogglePlay={togglePlay}

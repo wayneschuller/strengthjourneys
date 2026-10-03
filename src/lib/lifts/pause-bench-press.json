@@ -1,11 +1,7 @@
 {
   "liftType": "Pause Bench Press",
   "slug": "pause-bench-press",
-  "synonyms": [
-    "Paused Bench Press",
-    "Paused Bench",
-    "Pause Bench"
-  ],
+  "synonyms": ["Paused Bench Press", "Paused Bench", "Pause Bench"],
   "parentLift": {
     "liftType": "Bench Press",
     "tonnageRatio": 1

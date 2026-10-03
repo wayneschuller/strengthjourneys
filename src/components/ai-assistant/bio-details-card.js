@@ -57,7 +57,10 @@ export function BioDetailsCard({
       {embedded && (
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <Label htmlFor="shareBioDetails" className="text-base font-semibold">
+            <Label
+              htmlFor="shareBioDetails"
+              className="text-base font-semibold"
+            >
               Use my athlete profile
             </Label>
             <p className="text-muted-foreground mt-1 text-sm">
@@ -82,7 +85,7 @@ export function BioDetailsCard({
           />
           <Label
             htmlFor="shareBioDetails"
-            className="cursor-pointer text-sm font-medium leading-none group-hover:underline peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="cursor-pointer text-sm leading-none font-medium group-hover:underline peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             Share this with the AI
           </Label>
@@ -96,58 +99,61 @@ export function BioDetailsCard({
             !shareBioDetails && "text-muted-foreground/40",
           )}
         >
-        <div className="flex w-full flex-col">
-          <div className="py-2">
-            <Label id="age-label" className="text-xl">
-              Age: {age}
-            </Label>
-          </div>
-          <Slider
-            min={13}
-            max={100}
-            step={1}
-            value={[age]}
-            onValueChange={(values) => setAge(values[0])}
-            className="mt-2 min-w-40 flex-1"
-            aria-labelledby="age-label"
-          />
-        </div>
-        <div className="flex min-h-16 w-full flex-col justify-between">
-          <div className="flex flex-wrap items-center gap-y-2">
-            <Label className="mr-2 text-xl">Bodyweight:</Label>
-            <span className="mr-2 min-w-12 text-right text-xl">
-              {bodyWeight}
-            </span>
-            <UnitChooser
-              isMetric={isMetric}
-              onSwitchChange={toggleIsMetric}
+          <div className="flex w-full flex-col">
+            <div className="py-2">
+              <Label id="age-label" className="text-xl">
+                Age: {age}
+              </Label>
+            </div>
+            <Slider
+              min={13}
+              max={100}
+              step={1}
+              value={[age]}
+              onValueChange={(values) => setAge(values[0])}
+              className="mt-2 min-w-40 flex-1"
+              aria-labelledby="age-label"
             />
           </div>
-          <Slider
-            min={isMetric ? 40 : 100}
-            max={isMetric ? 230 : 500}
-            step={1}
-            value={[bodyWeight]}
-            onValueChange={(values) => setBodyWeight(values[0])}
-            className="mt-2 min-w-40 flex-1"
-            aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"}`}
-          />
-        </div>
-        <div className="flex w-full flex-col justify-between">
-          <HeightWidget height={height} setHeight={setHeight} />
-        </div>
-        <div className="flex min-h-16 w-full items-center gap-2">
-          <Label className="text-xl">Sex:</Label>
-          <Select value={sex} onValueChange={(value) => setSex(value)}>
-            <SelectTrigger className="w-full max-w-52" aria-label="Select sex">
-              <SelectValue placeholder="Select sex" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="flex min-h-16 w-full flex-col justify-between">
+            <div className="flex flex-wrap items-center gap-y-2">
+              <Label className="mr-2 text-xl">Bodyweight:</Label>
+              <span className="mr-2 min-w-12 text-right text-xl">
+                {bodyWeight}
+              </span>
+              <UnitChooser
+                isMetric={isMetric}
+                onSwitchChange={toggleIsMetric}
+              />
+            </div>
+            <Slider
+              min={isMetric ? 40 : 100}
+              max={isMetric ? 230 : 500}
+              step={1}
+              value={[bodyWeight]}
+              onValueChange={(values) => setBodyWeight(values[0])}
+              className="mt-2 min-w-40 flex-1"
+              aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"}`}
+            />
+          </div>
+          <div className="flex w-full flex-col justify-between">
+            <HeightWidget height={height} setHeight={setHeight} />
+          </div>
+          <div className="flex min-h-16 w-full items-center gap-2">
+            <Label className="text-xl">Sex:</Label>
+            <Select value={sex} onValueChange={(value) => setSex(value)}>
+              <SelectTrigger
+                className="w-full max-w-52"
+                aria-label="Select sex"
+              >
+                <SelectValue placeholder="Select sex" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       )}
     </>
@@ -196,11 +202,11 @@ const HeightWidget = ({ height, setHeight }) => {
         min={100}
         max={250}
         step={1}
-      value={[height]}
-      onValueChange={handleHeightChange}
-      className="mt-2"
-      aria-label="Height in centimetres"
-    />
+        value={[height]}
+        onValueChange={handleHeightChange}
+        className="mt-2"
+        aria-label="Height in centimetres"
+      />
     </div>
   );
 };

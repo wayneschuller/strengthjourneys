@@ -79,7 +79,10 @@ export function ThemeRewardUnlockBanner({ suppress = false }) {
             <strong>{reward.label} unlocked.</strong> Your training earned a new
             look.
             {additionalCount > 0 && (
-              <> You also unlocked {additionalCount} earlier {additionalLabel}.</>
+              <>
+                {" "}
+                You also unlocked {additionalCount} earlier {additionalLabel}.
+              </>
             )}
           </span>
         </AppBannerMessage>
@@ -120,10 +123,7 @@ function readSeenRewardIds(storageKey) {
 
 function writeSeenRewardIds(storageKey, rewardIds) {
   try {
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify([...rewardIds]),
-    );
+    window.localStorage.setItem(storageKey, JSON.stringify([...rewardIds]));
   } catch {
     // A blocked/full localStorage should not prevent the reward from appearing.
   }

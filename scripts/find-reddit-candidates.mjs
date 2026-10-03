@@ -97,12 +97,20 @@ const ACCESSORY_RE =
 const VARIANT_RE =
   /\b(?:rdls?|(?:romanian|stiff[\s-]?leg(?:ged)?|trap[\s-]?bar|hex[\s-]?bar)(?:\s*dead\s*lifts?)?|(?:front|hack|goblet|split|bulgarian)\s*squats?|(?:incline|decline)\s*bench(?:\s*press)?)\b/gi;
 
-const NAMED_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+const NAMED_ENTITIES = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+};
 
 function parseArgs(argv) {
   const args = { subs: DEFAULT_SUBS, limit: 60, json: false };
   for (let i = 0; i < argv.length; i += 1) {
-    if (argv[i] === "--subs") args.subs = argv[++i].split(",").map((s) => s.trim());
+    if (argv[i] === "--subs")
+      args.subs = argv[++i].split(",").map((s) => s.trim());
     else if (argv[i] === "--limit") args.limit = Number(argv[++i]);
     else if (argv[i] === "--json") args.json = true;
   }
@@ -131,7 +139,12 @@ export function findSet(text, bodyWeight = null) {
     // Whichever number is small is the rep count.
     const [weight, reps] = a > b ? [a, b] : [b, a];
     if (reps >= 1 && reps <= 20 && weight >= 20 && weight <= 1000) {
-      return { weight, reps, unit: normaliseUnit(null, weight), assumedReps: false };
+      return {
+        weight,
+        reps,
+        unit: normaliseUnit(null, weight),
+        assumedReps: false,
+      };
     }
   }
 
@@ -175,7 +188,8 @@ export function scorePost(post) {
 
   const withoutVariants = text.replace(VARIANT_RE, " ");
   const lift = detectLift(withoutVariants);
-  if (!lift && (withoutVariants !== text || ACCESSORY_RE.test(text))) return null;
+  if (!lift && (withoutVariants !== text || ACCESSORY_RE.test(text)))
+    return null;
 
   const bodyWeight = findBodyWeight(text);
   const set = findSet(text, bodyWeight);
@@ -215,7 +229,9 @@ function decodeEntities(text) {
   return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
     if (entity[0] !== "#") return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
     const hex = entity[1].toLowerCase() === "x";
-    return String.fromCodePoint(parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10));
+    return String.fromCodePoint(
+      parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10),
+    );
   });
 }
 
@@ -234,19 +250,24 @@ export function parseFeed(xml, sub) {
   const posts = [];
   for (const [, entry] of xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
     const html = decodeEntities(readTag(entry, "content") ?? "");
-    const body = html.match(/<!-- SC_OFF -->([\s\S]*?)<!-- SC_ON -->/)?.[1] ?? "";
+    const body =
+      html.match(/<!-- SC_OFF -->([\s\S]*?)<!-- SC_ON -->/)?.[1] ?? "";
     const selftext = decodeEntities(
       body
         .replace(/<\/(?:p|li|h\d|blockquote|pre)>|<br\s*\/?>/gi, "\n")
         .replace(/<[^>]+>/g, ""),
     ).trim();
-    const posted = Date.parse(readTag(entry, "published") ?? readTag(entry, "updated"));
+    const posted = Date.parse(
+      readTag(entry, "published") ?? readTag(entry, "updated"),
+    );
 
     posts.push({
       sub,
       id: (readTag(entry, "id") ?? "").replace(/^t3_/, ""),
       author: (readTag(entry, "name") ?? "").replace(/^\/u\//, ""),
-      title: decodeEntities(decodeEntities(readTag(entry, "title") ?? "")).trim(),
+      title: decodeEntities(
+        decodeEntities(readTag(entry, "title") ?? ""),
+      ).trim(),
       selftext,
       ageHours: (Date.now() - posted) / 3_600_000,
       url: entry.match(/<link href="([^"]+)"/)?.[1] ?? "",
@@ -268,7 +289,9 @@ async function politeFetch(url) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const wait = nextRequestAt - Date.now();
     if (wait > 0) {
-      console.error(`  waiting ${Math.ceil(wait / 1000)}s for Reddit's rate limit`);
+      console.error(
+        `  waiting ${Math.ceil(wait / 1000)}s for Reddit's rate limit`,
+      );
       await sleep(wait);
     }
 
@@ -289,7 +312,9 @@ async function fetchSub(sub, limit) {
     const url = `https://www.reddit.com/r/${sub}/${listing}/.rss?limit=${limit}`;
     const res = await politeFetch(url);
     if (!res?.ok) {
-      console.error(`  ! r/${sub}/${listing} returned ${res?.status ?? "429 three times"}`);
+      console.error(
+        `  ! r/${sub}/${listing} returned ${res?.status ?? "429 three times"}`,
+      );
       continue;
     }
     results.push(...parseFeed(await res.text(), sub));
@@ -312,11 +337,16 @@ export function mergeCrossposts(candidates) {
     const { set, bodyWeight } = candidate;
     const key =
       set || bodyWeight
-        ? [candidate.author, set && `${set.weight}x${set.reps}`, bodyWeight?.value].join("|")
+        ? [
+            candidate.author,
+            set && `${set.weight}x${set.reps}`,
+            bodyWeight?.value,
+          ].join("|")
         : null;
     const first = key ? firstByKey.get(key) : null;
     if (first && first.sub !== candidate.sub) {
-      if (!first.alsoIn.includes(candidate.sub)) first.alsoIn.push(candidate.sub);
+      if (!first.alsoIn.includes(candidate.sub))
+        first.alsoIn.push(candidate.sub);
       continue;
     }
     if (key && !first) firstByKey.set(key, post);
@@ -348,7 +378,9 @@ async function main() {
 
   console.log(`\n${merged.length} candidates\n`);
   for (const c of merged.slice(0, 25)) {
-    const bw = c.bodyWeight ? `bw ${c.bodyWeight.value}${c.bodyWeight.unit}` : "no bodyweight";
+    const bw = c.bodyWeight
+      ? `bw ${c.bodyWeight.value}${c.bodyWeight.unit}`
+      : "no bodyweight";
     const also = c.alsoIn.length ? `  also r/${c.alsoIn.join(", r/")}` : "";
     console.log(
       `[${String(c.score).padStart(2)}] r/${c.sub}  ${Math.round(c.ageHours)}h  (${bw})${also}`,

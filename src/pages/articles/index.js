@@ -49,9 +49,7 @@ export default function ArticleListingPage({
         <meta name="description" content={description} />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={canonicalUrl} />
-        {totalPages > 1 && (
-          <link rel="next" href={`${canonicalUrl}/page/2`} />
-        )}
+        {totalPages > 1 && <link rel="next" href={`${canonicalUrl}/page/2`} />}
         <meta property="og:title" content={fullTitle} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonicalUrl} />

@@ -110,13 +110,7 @@ export function SingleLiftStrengthCirclesSection({
   }, [e1rmFormula, e1rmKgOverride, dataSource, liftType, parsedData]);
 
   const currentPercentiles = useMemo(() => {
-    if (
-      !percentileKey ||
-      !bestE1rmKg ||
-      !age ||
-      !sex ||
-      bodyWeight == null
-    ) {
+    if (!percentileKey || !bestE1rmKg || !age || !sex || bodyWeight == null) {
       return null;
     }
 
@@ -225,7 +219,12 @@ export function SingleLiftStrengthCirclesSection({
 
   if (compact) {
     return (
-      <div className={cn("w-full max-w-[360px] xl:max-w-[420px] 2xl:max-w-[500px]", compactClassName)}>
+      <div
+        className={cn(
+          "w-full max-w-[360px] xl:max-w-[420px] 2xl:max-w-[500px]",
+          compactClassName,
+        )}
+      >
         <StrengthCirclesChart
           percentiles={currentPercentiles}
           activeUniverse={activeUniverse}
@@ -243,8 +242,9 @@ export function SingleLiftStrengthCirclesSection({
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base">{liftType} Strength Circles</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          See how your current {liftType.toLowerCase()} stacks up across four comparison groups.
+        <p className="text-muted-foreground text-sm">
+          See how your current {liftType.toLowerCase()} stacks up across four
+          comparison groups.
         </p>
       </CardHeader>
       <CardContent
@@ -277,8 +277,9 @@ export function SingleLiftStrengthCirclesSection({
                 isMetric={isMetric}
               />
             ) : (
-              <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                Log more {liftType.toLowerCase()} sessions to unlock the long-term percentile chart.
+              <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+                Log more {liftType.toLowerCase()} sessions to unlock the
+                long-term percentile chart.
               </div>
             )}
           </div>
@@ -306,11 +307,11 @@ function TimelineTooltip({
   const weight = convertWeight(point.e1rmKg, "kg", unitTypeFor(isMetric));
 
   return (
-    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-popover-foreground shadow-md">
+    <div className="border-border bg-popover text-popover-foreground rounded-lg border px-3 py-2 shadow-md">
       <p className="text-xs font-semibold">{formatMonthYear(label)}</p>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">
+      <p className="text-muted-foreground mt-0.5 text-[11px]">
         Best {liftLabel.toLowerCase()} e1RM:{" "}
-        <span className="font-medium tabular-nums text-foreground">
+        <span className="text-foreground font-medium tabular-nums">
           {Math.round(weight)}
           {isMetric ? "kg" : "lb"}
         </span>{" "}
@@ -325,7 +326,7 @@ function TimelineTooltip({
               className={cn(
                 "flex items-center justify-between gap-4 text-[11px]",
                 isActive
-                  ? "font-semibold text-foreground"
+                  ? "text-foreground font-semibold"
                   : "text-muted-foreground",
               )}
             >
@@ -415,7 +416,8 @@ function SingleLiftPercentileTimelineChart({
     const fromYear = new Date(from).getUTCFullYear();
     const change = latestPercentile - firstPercentile;
 
-    if (change >= 2) return `up from ${ordinal(firstPercentile)} in ${fromYear}`;
+    if (change >= 2)
+      return `up from ${ordinal(firstPercentile)} in ${fromYear}`;
     if (change <= -2)
       return `down from ${ordinal(firstPercentile)} in ${fromYear}`;
     return `holding around ${ordinal(firstPercentile)} since ${fromYear}`;
@@ -437,7 +439,7 @@ function SingleLiftPercentileTimelineChart({
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
           {liftLabel} percentile over time
         </p>
         {story?.latestPercentile != null && (
@@ -449,7 +451,7 @@ function SingleLiftPercentileTimelineChart({
           </p>
         )}
         {(journey || peakNote) && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {[journey, peakNote].filter(Boolean).join(" · ")}
           </p>
         )}
@@ -457,7 +459,10 @@ function SingleLiftPercentileTimelineChart({
 
       <div className="h-[240px] w-full sm:h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 6, right: 6, bottom: 0, left: -22 }}>
+          <AreaChart
+            data={data}
+            margin={{ top: 6, right: 6, bottom: 0, left: -22 }}
+          >
             <defs>
               <linearGradient
                 id={`single-lift-pct-grad-${liftSlug}`}
@@ -553,7 +558,7 @@ function SingleLiftPercentileTimelineChart({
         </ResponsiveContainer>
       </div>
 
-      <p className="text-[11px] leading-snug text-muted-foreground">
+      <p className="text-muted-foreground text-[11px] leading-snug">
         Each point is your best e1RM in the {WINDOW_DAYS} days before it, scored
         at your age at the time and your current bodyweight. Hover a group to
         bring its line forward.

@@ -73,7 +73,7 @@ export function AthleteBioQuickSettings() {
                 <Activity className="h-4 w-4" />
                 {showAttention && (
                   <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-ping" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
                   </span>
                 )}
@@ -93,7 +93,7 @@ export function AthleteBioQuickSettings() {
           {showAttention && (
             <Badge
               variant="secondary"
-              className="text-[0.6rem] font-semibold uppercase tracking-wide animate-pulse"
+              className="animate-pulse text-[0.6rem] font-semibold tracking-wide uppercase"
             >
               Recommended
             </Badge>
@@ -101,7 +101,7 @@ export function AthleteBioQuickSettings() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="space-y-3 px-3 pt-2 pb-3 text-xs">
-          <p className="text-[11px] leading-snug text-muted-foreground">
+          <p className="text-muted-foreground text-[11px] leading-snug">
             Tell us your age, sex, and bodyweight and we&apos;ll tailor your
             strength levels and percentile ratings to you.
           </p>
@@ -110,7 +110,7 @@ export function AthleteBioQuickSettings() {
             <div className="flex items-center gap-2">
               <Label
                 htmlFor="nav-athlete-age"
-                className="text-xs font-normal text-muted-foreground"
+                className="text-muted-foreground text-xs font-normal"
               >
                 Age
               </Label>
@@ -130,7 +130,7 @@ export function AthleteBioQuickSettings() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-muted-foreground">
+              <span className="text-muted-foreground text-xs font-semibold">
                 M
               </span>
               <Switch
@@ -141,7 +141,7 @@ export function AthleteBioQuickSettings() {
                 }
                 className="h-5 w-9 data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500 [&>[data-state=checked]]:!translate-x-3"
               />
-              <span className="pl-1 text-xs font-semibold text-muted-foreground">
+              <span className="text-muted-foreground pl-1 text-xs font-semibold">
                 F
               </span>
             </div>
@@ -152,7 +152,7 @@ export function AthleteBioQuickSettings() {
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="nav-athlete-bodyweight-slider"
-                className="text-xs font-normal text-muted-foreground"
+                className="text-muted-foreground text-xs font-normal"
               >
                 Bodyweight
               </Label>
@@ -176,7 +176,7 @@ export function AthleteBioQuickSettings() {
               />
             </div>
           </div>
-          <p className="pt-1 text-[10px] leading-snug text-muted-foreground">
+          <p className="text-muted-foreground pt-1 text-[10px] leading-snug">
             Stays on this device — stored only in your browser, never sent to
             our servers, and used solely to personalize your results. See our{" "}
             <Link href="/privacy" className="underline underline-offset-2">
@@ -217,9 +217,9 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       {bioDataIsDefault && (
-        <p className="text-center text-xs text-muted-foreground">
-          Set your real details so the standards reflect your profile instead
-          of the default starting values.
+        <p className="text-muted-foreground text-center text-xs">
+          Set your real details so the standards reflect your profile instead of
+          the default starting values.
         </p>
       )}
 
@@ -228,7 +228,7 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
           <div className="flex items-end justify-between gap-4">
             <Label
               htmlFor="page-athlete-age-slider"
-              className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+              className="text-muted-foreground text-sm font-semibold tracking-wide uppercase"
             >
               Age
             </Label>
@@ -243,7 +243,7 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
             onValueChange={(values) => setAge(values[0])}
             aria-label="Age"
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex justify-between text-xs">
             <span>13</span>
             <span>100</span>
           </div>
@@ -251,19 +251,23 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
 
         <div className="flex flex-col gap-1.5 xl:min-w-[15rem]">
           <div className="flex items-end justify-center">
-            <Label className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
               Sex
             </Label>
           </div>
           <div className="flex items-center justify-center gap-3">
-            <span className="text-sm font-semibold text-muted-foreground">M</span>
+            <span className="text-muted-foreground text-sm font-semibold">
+              M
+            </span>
             <Switch
               aria-label="Sex"
               checked={sex === "female"}
               onCheckedChange={(checked) => setSex(checked ? "female" : "male")}
               className="h-6 w-11 data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500"
             />
-            <span className="text-sm font-semibold text-muted-foreground">F</span>
+            <span className="text-muted-foreground text-sm font-semibold">
+              F
+            </span>
           </div>
         </div>
 
@@ -271,14 +275,14 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <Label
               htmlFor="page-athlete-bodyweight-slider"
-              className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+              className="text-muted-foreground text-sm font-semibold tracking-wide uppercase"
             >
               Bodyweight
             </Label>
             <div className="flex items-center gap-3">
               <div className="text-2xl font-bold">
                 {bodyWeight}
-                <span className="ml-1 text-sm font-medium text-muted-foreground">
+                <span className="text-muted-foreground ml-1 text-sm font-medium">
                   {unit}
                 </span>
               </div>
@@ -297,7 +301,7 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
             onValueChange={(values) => setBodyWeight(values[0])}
             aria-label="Bodyweight"
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex justify-between text-xs">
             <span>
               {isMetric ? 40 : 90}
               {unit}
@@ -356,7 +360,9 @@ export function AthleteBioInlineSettings({
   // and effects for the current cycle have fully settled, so the ref reflects the real
   // post-localStorage value regardless of child-before-parent effect ordering.
   const [isOpen, setIsOpen] = useState(false);
-  const needsBioAttention = bodyweightOnly ? bodyWeightIsDefault : bioDataIsDefault;
+  const needsBioAttention = bodyweightOnly
+    ? bodyWeightIsDefault
+    : bioDataIsDefault;
   const needsBioAttentionRef = useRef(needsBioAttention);
   useEffect(() => {
     needsBioAttentionRef.current = needsBioAttention;
@@ -370,28 +376,39 @@ export function AthleteBioInlineSettings({
   const unit = isMetric ? "kg" : "lb";
 
   // JSX bio summary — values are bolded, labels stay light
-  const bioSummaryContent = bodyweightOnly && compactBodyweightSummary && !bodyWeightIsDefault ? (
-    <>
-      BW <strong className="font-semibold text-foreground">{bodyWeight}{unit}</strong>
-    </>
-  ) : bodyweightOnly && !bodyWeightIsDefault ? (
-    <>
-      Using current bodyweight{" "}
-      <strong className="font-semibold text-foreground">{bodyWeight}{unit}</strong>{" "}
-      for added-load estimates.
-    </>
-  ) : (needsBioAttention && defaultBioPrompt) ? (
-    defaultBioPrompt
-  ) : (
-    <>
-      Strength levels for a{" "}
-      <strong className="font-semibold text-foreground">{bodyWeight}{unit}</strong>{" "}
-      <strong className="font-semibold text-foreground">{sex}</strong>,{" "}
-      age <strong className="font-semibold text-foreground">{age}</strong>
-      {liftNote ? ` ${liftNote}` : ""}
-      {bioDataIsDefault ? " · enter your details" : ""}.
-    </>
-  );
+  const bioSummaryContent =
+    bodyweightOnly && compactBodyweightSummary && !bodyWeightIsDefault ? (
+      <>
+        BW{" "}
+        <strong className="text-foreground font-semibold">
+          {bodyWeight}
+          {unit}
+        </strong>
+      </>
+    ) : bodyweightOnly && !bodyWeightIsDefault ? (
+      <>
+        Using current bodyweight{" "}
+        <strong className="text-foreground font-semibold">
+          {bodyWeight}
+          {unit}
+        </strong>{" "}
+        for added-load estimates.
+      </>
+    ) : needsBioAttention && defaultBioPrompt ? (
+      defaultBioPrompt
+    ) : (
+      <>
+        Strength levels for a{" "}
+        <strong className="text-foreground font-semibold">
+          {bodyWeight}
+          {unit}
+        </strong>{" "}
+        <strong className="text-foreground font-semibold">{sex}</strong>, age{" "}
+        <strong className="text-foreground font-semibold">{age}</strong>
+        {liftNote ? ` ${liftNote}` : ""}
+        {bioDataIsDefault ? " · enter your details" : ""}.
+      </>
+    );
 
   const ageOnChange = (e) => {
     const v = parseInt(e.target.value || "0", 10);
@@ -405,22 +422,28 @@ export function AthleteBioInlineSettings({
   const opensDown = expandDirection === "down";
 
   return (
-    <div className={cn(
-      "flex flex-col gap-1",
-      opensDown ? "items-end" : "items-center",
-      forceStackedControls && "w-full",
-    )}>
+    <div
+      className={cn(
+        "flex flex-col gap-1",
+        opensDown ? "items-end" : "items-center",
+        forceStackedControls && "w-full",
+      )}
+    >
       {/* Row 1: bio summary + toggle button — always visible */}
-      <div className={cn(
-        "flex items-center gap-2",
-        forceStackedControls && "w-full flex-wrap justify-center",
-      )}>
-        <p className={cn(
-          "text-xs",
-          needsBioAttention ? "text-amber-500" : "text-muted-foreground",
-          opensDown && "text-right",
-          forceStackedControls && "text-center",
-        )}>
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          forceStackedControls && "w-full flex-wrap justify-center",
+        )}
+      >
+        <p
+          className={cn(
+            "text-xs",
+            needsBioAttention ? "text-amber-500" : "text-muted-foreground",
+            opensDown && "text-right",
+            forceStackedControls && "text-center",
+          )}
+        >
           {bioSummaryContent}
         </p>
 
@@ -445,7 +468,7 @@ export function AthleteBioInlineSettings({
                     <Activity className="h-3.5 w-3.5" />
                   )}
                   {needsBioAttention && !isOpen && (
-                    <span className="absolute -right-1 -top-1 flex h-2 w-2">
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
                       <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
                     </span>
@@ -453,7 +476,9 @@ export function AthleteBioInlineSettings({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {bodyweightOnly ? "Set bodyweight" : "Set athlete age, weight, and sex"}
+                {bodyweightOnly
+                  ? "Set bodyweight"
+                  : "Set athlete age, weight, and sex"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -465,17 +490,26 @@ export function AthleteBioInlineSettings({
                 className={cn(
                   "absolute z-20 items-center gap-x-2 whitespace-nowrap",
                   opensDown
-                    ? "right-0 top-full mt-1 flex rounded-md border border-border bg-popover p-2 shadow-md"
-                    : "left-full top-1/2 ml-2 hidden -translate-y-1/2 xl:flex",
+                    ? "border-border bg-popover top-full right-0 mt-1 flex rounded-md border p-2 shadow-md"
+                    : "top-1/2 left-full ml-2 hidden -translate-y-1/2 xl:flex",
                 )}
-                initial={opensDown ? { opacity: 0, y: -4 } : { opacity: 0, x: -8 }}
-                animate={opensDown ? { opacity: 1, y: 0 } : { opacity: 1, x: 0 }}
+                initial={
+                  opensDown ? { opacity: 0, y: -4 } : { opacity: 0, x: -8 }
+                }
+                animate={
+                  opensDown ? { opacity: 1, y: 0 } : { opacity: 1, x: 0 }
+                }
                 exit={opensDown ? { opacity: 0, y: -4 } : { opacity: 0, x: -8 }}
                 transition={{ duration: 0.15 }}
               >
                 {!bodyweightOnly && (
                   <>
-                    <Label htmlFor="inline-bio-age" className="text-xs text-muted-foreground">Age</Label>
+                    <Label
+                      htmlFor="inline-bio-age"
+                      className="text-muted-foreground text-xs"
+                    >
+                      Age
+                    </Label>
                     <Input
                       id="inline-bio-age"
                       type="number"
@@ -485,14 +519,18 @@ export function AthleteBioInlineSettings({
                       onChange={ageOnChange}
                       className="h-7 w-16 px-2 text-xs"
                     />
-                    <span className="text-xs font-semibold text-muted-foreground">M</span>
+                    <span className="text-muted-foreground text-xs font-semibold">
+                      M
+                    </span>
                     <Switch
                       id="inline-bio-sex"
                       checked={sex === "female"}
                       onCheckedChange={(c) => setSex(c ? "female" : "male")}
                       className="h-5 w-9 data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500 [&>[data-state=checked]]:!translate-x-3"
                     />
-                    <span className="text-xs font-semibold text-muted-foreground">F</span>
+                    <span className="text-muted-foreground text-xs font-semibold">
+                      F
+                    </span>
                   </>
                 )}
                 <Input
@@ -503,7 +541,10 @@ export function AthleteBioInlineSettings({
                   onChange={bwOnChange}
                   className="h-7 w-20 px-2 text-xs"
                 />
-                <UnitChooser isMetric={isMetric} onSwitchChange={handleUnitSwitch} />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={handleUnitSwitch}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -528,7 +569,7 @@ export function AthleteBioInlineSettings({
             {!bodyweightOnly && (
               <>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Age</span>
+                  <span className="text-muted-foreground text-xs">Age</span>
                   <Input
                     aria-label="Age"
                     type="number"
@@ -541,14 +582,18 @@ export function AthleteBioInlineSettings({
                 </div>
 
                 <div className="flex items-center gap-2 whitespace-nowrap">
-                  <span className="text-xs font-semibold text-muted-foreground">M</span>
+                  <span className="text-muted-foreground text-xs font-semibold">
+                    M
+                  </span>
                   <Switch
                     aria-label="Sex"
                     checked={sex === "female"}
                     onCheckedChange={(c) => setSex(c ? "female" : "male")}
                     className="h-5 w-9 data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-blue-500 [&>[data-state=checked]]:!translate-x-3"
                   />
-                  <span className="text-xs font-semibold text-muted-foreground">F</span>
+                  <span className="text-muted-foreground text-xs font-semibold">
+                    F
+                  </span>
                 </div>
               </>
             )}
@@ -563,7 +608,10 @@ export function AthleteBioInlineSettings({
                 onChange={bwOnChange}
                 className="h-7 w-20 px-2 text-xs"
               />
-              <UnitChooser isMetric={isMetric} onSwitchChange={handleUnitSwitch} />
+              <UnitChooser
+                isMetric={isMetric}
+                onSwitchChange={handleUnitSwitch}
+              />
             </div>
           </motion.div>
         )}

@@ -60,7 +60,8 @@ export function YearRecapCarousel({ year, isDemo }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const shareRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
-  const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
+  const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
+    useTransientSuccess();
   const { toast } = useToast();
 
   const { parsedData } = useUserLiftingData();
@@ -159,7 +160,9 @@ export function YearRecapCarousel({ year, isDemo }) {
     try {
       const blob = await captureActiveSlide();
       if (!blob) return;
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": blob }),
+      ]);
       triggerCopied();
     } catch (error) {
       console.error("Copy error:", error);
@@ -237,14 +240,17 @@ export function YearRecapCarousel({ year, isDemo }) {
 
   return (
     <div className="relative">
-      <div ref={shareRef} className="mx-auto max-w-[360px] rounded-xl border bg-card">
+      <div
+        ref={shareRef}
+        className="bg-card mx-auto max-w-[360px] rounded-xl border"
+      >
         <Carousel setApi={setApi} className="w-full">
           <CarouselContent className="-ml-0">
             {RECAP_CARDS.map(({ id, Component }, index) => (
               <CarouselItem key={id} className="pl-0">
                 <div
                   data-recap-slide
-                  className="relative flex aspect-[9/16] w-full items-center justify-center rounded-xl border border-border bg-card p-6"
+                  className="border-border bg-card relative flex aspect-[9/16] w-full items-center justify-center rounded-xl border p-6"
                 >
                   <Component
                     key={`${id}-${year}`}
@@ -256,10 +262,10 @@ export function YearRecapCarousel({ year, isDemo }) {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="-left-4 top-1/2 hidden md:flex" />
+          <CarouselPrevious className="top-1/2 -left-4 hidden md:flex" />
           <CarouselNext
             className={cn(
-              "-right-4 top-1/2 hidden md:flex",
+              "top-1/2 -right-4 hidden md:flex",
               showNudge && "recap-next-nudge",
             )}
           />
@@ -269,7 +275,7 @@ export function YearRecapCarousel({ year, isDemo }) {
           id="ignoreCopy"
           className="flex items-center justify-between gap-2 border-t px-4 py-3"
         >
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             {selectedIndex + 1} of {RECAP_CARDS.length}
           </span>
           {isDemo ? (
@@ -304,14 +310,18 @@ export function YearRecapCarousel({ year, isDemo }) {
                 <DropdownMenuContent align="end">
                   {canNativeShare && (
                     <DropdownMenuItem
-                      onSelect={() => runShareAction("copy_image", handleCopyImage)}
+                      onSelect={() =>
+                        runShareAction("copy_image", handleCopyImage)
+                      }
                     >
                       <Copy className="mr-2 h-4 w-4" />
                       Copy image
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
-                    onSelect={() => runShareAction("download_png", handleDownload)}
+                    onSelect={() =>
+                      runShareAction("download_png", handleDownload)
+                    }
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Save image (1080&times;1920)

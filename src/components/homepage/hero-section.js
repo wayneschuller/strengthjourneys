@@ -41,15 +41,18 @@ export function HeroSection() {
         <div>
           <div className="flex justify-center lg:justify-start">
             <p className="bg-background/85 text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium shadow-sm">
-              <span className="bg-chart-2 h-1.5 w-1.5 rounded-full" aria-hidden />
+              <span
+                className="bg-chart-2 h-1.5 w-1.5 rounded-full"
+                aria-hidden
+              />
               Free barbell lifting log &amp; analysis
             </p>
           </div>
           <h1 className="mt-3 mb-4 text-center text-3xl leading-tight font-extrabold tracking-tight text-balance md:mb-5 lg:text-left lg:text-4xl xl:text-5xl">
-            Every barbell set you&rsquo;ve ever lifted, in one place you&rsquo;ll
-            never lose.
+            Every barbell set you&rsquo;ve ever lifted, in one place
+            you&rsquo;ll never lose.
           </h1>
-          <p className="text-muted-foreground mb-6 max-w-xl text-center text-base leading-relaxed text-pretty lg:text-left md:text-lg">
+          <p className="text-muted-foreground mb-6 max-w-xl text-center text-base leading-relaxed text-pretty md:text-lg lg:text-left">
             Log today&rsquo;s session in seconds, watch your estimated one rep
             max climb, and keep the whole history in a Google Sheet you own.
           </p>

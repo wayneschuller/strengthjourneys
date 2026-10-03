@@ -21,10 +21,18 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
  * @param {string|null} [props.sheetFilename] - Linked sheet name, known before the read returns.
  * @param {string} [props.className] - Extra classes, e.g. to hide it at larger breakpoints.
  */
-export function DashboardLoadingPanel({ mode = "sheet", sheetFilename, className = "" }) {
+export function DashboardLoadingPanel({
+  mode = "sheet",
+  sheetFilename,
+  className = "",
+}) {
   const isPreviewMode = mode === "preview";
-  const label = isPreviewMode ? "Preparing your imported preview" : "Reading your workout data";
-  const sourceName = isPreviewMode ? null : (sheetFilename || "Your Google Sheet").trim();
+  const label = isPreviewMode
+    ? "Preparing your imported preview"
+    : "Reading your workout data";
+  const sourceName = isPreviewMode
+    ? null
+    : (sheetFilename || "Your Google Sheet").trim();
 
   return (
     <motion.div

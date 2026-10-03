@@ -1,6 +1,5 @@
 /** @format */
 
-
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
@@ -224,9 +223,7 @@ export function BigFourLiftCards({
           (stats.totalSets > 0 || stats.totalReps > 0 || stats.bestLift);
         // Only show personal stats when user has connected a sheet (avoid demo data on cards).
         const isStatsMode =
-          enhancedStats &&
-          isOwnData(dataSource) &&
-          hasAnyData;
+          enhancedStats && isOwnData(dataSource) && hasAnyData;
 
         const recentPRTier = topLiftsByTypeAndReps
           ? getRecentPRTier(
@@ -277,131 +274,131 @@ export function BigFourLiftCards({
             key={lift.slug}
             className="group ring-ring relative shadow-lg ring-0 hover:ring-1"
           >
-              <Link href={`/${lift.slug}`} prefetch={false}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-start gap-3">
-                    {/* The two-line reserve only matters beside the stacked
+            <Link href={`/${lift.slug}`} prefetch={false}>
+              <CardHeader className="pb-2">
+                <div className="flex items-start gap-3">
+                  {/* The two-line reserve only matters beside the stacked
                         stats badges; without them it strands the description. */}
-                    <CardTitle
-                      className={cn(
-                        "min-w-0 flex-1 text-xl leading-tight sm:text-2xl",
-                        isStatsMode && "lg:min-h-[3.8rem]",
-                      )}
-                    >
-                      {lift.liftType}
-                    </CardTitle>
-                    {isStatsMode && badges.length > 0 && (
-                      <CardAction className="static ml-auto flex flex-col items-end gap-1 text-[11px] leading-tight">
-                        <div className="flex flex-col items-end gap-1">
-                          {badges.map((badge, i) => (
-                            <motion.div
-                              key={badge.type}
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={
-                                showStats
-                                  ? { opacity: 1, scale: 1 }
-                                  : { opacity: 0, scale: 0.9 }
-                              }
-                              transition={{
-                                type: "spring",
-                                stiffness: 220,
-                                damping: 22,
-                                delay: showStats ? i * 0.06 : 0,
-                              }}
-                            >
-                              <Badge
-                                variant={badge.variant}
-                                className="pointer-events-none whitespace-nowrap"
-                              >
-                                {badge.label}
-                              </Badge>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </CardAction>
+                  <CardTitle
+                    className={cn(
+                      "min-w-0 flex-1 text-xl leading-tight sm:text-2xl",
+                      isStatsMode && "lg:min-h-[3.8rem]",
                     )}
-                  </div>
-                </CardHeader>
-                {!isStatsMode && (
-                  <CardContent className="px-6 pt-0 pb-2">
-                    <p className="text-muted-foreground text-sm">
-                      {lift.liftDescription}
-                    </p>
-                  </CardContent>
-                )}
-                {miniBarData && (
-                  <motion.div
-                    className="px-6 pb-2"
-                    initial={{ opacity: 0 }}
-                    animate={showStats ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 220,
-                      damping: 24,
-                      delay: showStats ? 0.1 : 0,
-                    }}
                   >
-                    {/* Mini gradient strength bar */}
-                    <div className="relative py-1">
-                      <div className="h-1.5 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
-                      <div
-                        className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow"
-                        style={{ left: `${miniBarData.thumbPercent}%` }}
-                      />
-                    </div>
-                    <div className="mt-0.5 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        ~{Math.round(miniBarData.e1rmDisplay)}
-                        {isMetric ? "kg" : "lb"} best E1RM this month
-                      </span>
-                      <span>
-                        {STRENGTH_LEVEL_EMOJI[miniBarData.strengthRating]}{" "}
-                        {miniBarData.strengthRating}
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-                <CardFooter className="flex justify-center px-2 pt-4 pb-6">
+                    {lift.liftType}
+                  </CardTitle>
+                  {isStatsMode && badges.length > 0 && (
+                    <CardAction className="static ml-auto flex flex-col items-end gap-1 text-[11px] leading-tight">
+                      <div className="flex flex-col items-end gap-1">
+                        {badges.map((badge, i) => (
+                          <motion.div
+                            key={badge.type}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={
+                              showStats
+                                ? { opacity: 1, scale: 1 }
+                                : { opacity: 0, scale: 0.9 }
+                            }
+                            transition={{
+                              type: "spring",
+                              stiffness: 220,
+                              damping: 22,
+                              delay: showStats ? i * 0.06 : 0,
+                            }}
+                          >
+                            <Badge
+                              variant={badge.variant}
+                              className="pointer-events-none whitespace-nowrap"
+                            >
+                              {badge.label}
+                            </Badge>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </CardAction>
+                  )}
+                </div>
+              </CardHeader>
+              {!isStatsMode && (
+                <CardContent className="px-6 pt-0 pb-2">
+                  <p className="text-muted-foreground text-sm">
+                    {lift.liftDescription}
+                  </p>
+                </CardContent>
+              )}
+              {miniBarData && (
+                <motion.div
+                  className="px-6 pb-2"
+                  initial={{ opacity: 0 }}
+                  animate={showStats ? { opacity: 1 } : { opacity: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 220,
+                    damping: 24,
+                    delay: showStats ? 0.1 : 0,
+                  }}
+                >
+                  {/* Mini gradient strength bar */}
+                  <div className="relative py-1">
+                    <div className="h-1.5 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
+                    <div
+                      className="bg-foreground absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full shadow"
+                      style={{ left: `${miniBarData.thumbPercent}%` }}
+                    />
+                  </div>
+                  <div className="text-muted-foreground mt-0.5 flex items-center justify-between text-xs">
+                    <span>
+                      ~{Math.round(miniBarData.e1rmDisplay)}
+                      {isMetric ? "kg" : "lb"} best E1RM this month
+                    </span>
+                    <span>
+                      {STRENGTH_LEVEL_EMOJI[miniBarData.strengthRating]}{" "}
+                      {miniBarData.strengthRating}
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+              <CardFooter className="flex justify-center px-2 pt-4 pb-6">
+                <motion.div
+                  className="flex justify-center"
+                  initial={false}
+                  animate={{
+                    rotate: showStats ? [0, -8, 8, -4, 0] : 0,
+                  }}
+                  transition={{
+                    duration: 0.35,
+                    ease: "easeOut",
+                  }}
+                >
                   <motion.div
                     className="flex justify-center"
-                    initial={false}
-                    animate={{
-                      rotate: showStats ? [0, -8, 8, -4, 0] : 0,
-                    }}
+                    initial={isMobile ? { opacity: 0, y: 24 } : false}
+                    {...(isMobile
+                      ? {
+                          whileInView: { opacity: 1, y: 0 },
+                          viewport: {
+                            once: true,
+                            amount: 0.6,
+                            margin: "-40px",
+                          },
+                        }
+                      : { animate: { opacity: 1, y: 0 } })}
                     transition={{
-                      duration: 0.35,
-                      ease: "easeOut",
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 24,
                     }}
                   >
-                    <motion.div
-                      className="flex justify-center"
-                      initial={
-                        isMobile
-                          ? { opacity: 0, y: 24 }
-                          : false
-                      }
-                      {...(isMobile
-                        ? {
-                            whileInView: { opacity: 1, y: 0 },
-                            viewport: { once: true, amount: 0.6, margin: "-40px" },
-                          }
-                        : { animate: { opacity: 1, y: 0 } })}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 24,
-                      }}
-                    >
-                      <img
-                        src={getLiftArtwork(lift.liftType)}
-                        alt={`${lift.liftType} diagram`}
-                        className="h-36 w-auto max-w-full object-contain transition-transform group-hover:scale-110"
-                      />
-                    </motion.div>
+                    <img
+                      src={getLiftArtwork(lift.liftType)}
+                      alt={`${lift.liftType} diagram`}
+                      className="h-36 w-auto max-w-full object-contain transition-transform group-hover:scale-110"
+                    />
                   </motion.div>
-                </CardFooter>
-              </Link>
-            </Card>
+                </motion.div>
+              </CardFooter>
+            </Link>
+          </Card>
         );
       })}
     </div>
@@ -781,7 +778,13 @@ function buildBadgesForLiftType(
  * Shows where the user's best E1RM from the last month sits on the standards scale.
  * Returns { strengthRating, thumbPercent } or null if no data in the last month.
  */
-function getMiniBarData(liftType, parsedData, standards, isMetric, e1rmFormula) {
+function getMiniBarData(
+  liftType,
+  parsedData,
+  standards,
+  isMetric,
+  e1rmFormula,
+) {
   const liftStandards = standards?.[liftType];
   if (!liftStandards || !parsedData?.length) return null;
 

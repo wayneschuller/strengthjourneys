@@ -1,4 +1,3 @@
-
 /**
  * Summarizes one lift's long-term journey and links dated milestones back to
  * the session log so exploration can jump from aggregate insight to raw context.
@@ -25,7 +24,10 @@ import {
 } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { isBodyweightLoadLift } from "@/lib/estimate-e1rm";
-import { summarizeLiftJourney, MOMENTUM_WINDOW_DAYS } from "@/lib/lift-journey-stats";
+import {
+  summarizeLiftJourney,
+  MOMENTUM_WINDOW_DAYS,
+} from "@/lib/lift-journey-stats";
 import { buildLiftHighlights } from "@/lib/lift-highlights";
 import { getVideoSourceMeta } from "@/lib/video-thumbnails";
 import { VideoLinkButton } from "@/components/log/video-link-button";
@@ -56,27 +58,159 @@ function getLogHref(date) {
 // Reps thresholds track ~100% of a 2,000 reps/year pace, so a consistent
 // lifter reaches the year-N tier's reps requirement at roughly year N.
 const TIERS = [
-  { name: "Baby",         minReps: 0,     minYears: 0,  icon: "🌱", bg: "bg-stone-100 dark:bg-stone-800",         text: "text-stone-500 dark:text-stone-400" },
-  { name: "Initiate",     minReps: 300,   minYears: 1,  icon: "🌿", bg: "bg-green-50 dark:bg-green-950",          text: "text-green-700 dark:text-green-400" },
-  { name: "Scout",        minReps: 1500,  minYears: 2,  icon: "💡", bg: "bg-teal-50 dark:bg-teal-950",            text: "text-teal-700 dark:text-teal-400" },
-  { name: "Squire",       minReps: 3000,  minYears: 3,  icon: "🔧", bg: "bg-sky-100 dark:bg-sky-950",             text: "text-sky-700 dark:text-sky-400" },
-  { name: "Warden",       minReps: 5000,  minYears: 4,  icon: "⚡", bg: "bg-blue-100 dark:bg-blue-950",           text: "text-blue-700 dark:text-blue-400" },
-  { name: "Padawan",      minReps: 7000,  minYears: 5,  icon: "🎯", bg: "bg-indigo-100 dark:bg-indigo-950",       text: "text-indigo-700 dark:text-indigo-400" },
-  { name: "Journeyman",   minReps: 9500,  minYears: 6,  icon: "🛤️", bg: "bg-violet-100 dark:bg-violet-950",       text: "text-violet-700 dark:text-violet-400" },
-  { name: "Dedicated",    minReps: 12000, minYears: 7,  icon: "💪", bg: "bg-purple-100 dark:bg-purple-950",       text: "text-purple-700 dark:text-purple-400" },
-  { name: "Veteran",      minReps: 14500, minYears: 8,  icon: "🎖️", bg: "bg-fuchsia-100 dark:bg-fuchsia-950",     text: "text-fuchsia-700 dark:text-fuchsia-400" },
-  { name: "Predator",     minReps: 17000, minYears: 9,  icon: "⭐", bg: "bg-pink-100 dark:bg-pink-950",           text: "text-pink-700 dark:text-pink-400" },
-  { name: "Paragon",      minReps: 19500, minYears: 10, icon: "🌟", bg: "bg-rose-100 dark:bg-rose-950",           text: "text-rose-700 dark:text-rose-400" },
-  { name: "Jedimaster",   minReps: 22000, minYears: 11, icon: "🏆", bg: "bg-amber-100 dark:bg-amber-950",         text: "text-amber-700 dark:text-amber-400" },
-  { name: "Terminator",   minReps: 24000, minYears: 12, icon: "👑", bg: "bg-amber-200 dark:bg-amber-900",         text: "text-amber-800 dark:text-amber-300" },
-  { name: "Champion",     minReps: 26000, minYears: 13, icon: "🥇", bg: "bg-orange-100 dark:bg-orange-950",       text: "text-orange-700 dark:text-orange-400" },
-  { name: "Luminary",     minReps: 28000, minYears: 14, icon: "✨", bg: "bg-orange-200 dark:bg-orange-900",       text: "text-orange-800 dark:text-orange-300" },
-  { name: "Legend",       minReps: 30000, minYears: 15, icon: "🔱", bg: "bg-red-100 dark:bg-red-950",             text: "text-red-700 dark:text-red-400" },
-  { name: "Titan",        minReps: 40000, minYears: 20, icon: "🏔️", bg: "bg-slate-700 dark:bg-slate-800",         text: "text-slate-100" },
-  { name: "Immortal",     minReps: 50000, minYears: 25, icon: "🌌", bg: "bg-gray-800 dark:bg-gray-900",           text: "text-amber-300" },
-  { name: "Eternal",      minReps: 60000, minYears: 30, icon: "🌠", bg: "bg-zinc-900 dark:bg-zinc-950",           text: "text-yellow-400" },
+  {
+    name: "Baby",
+    minReps: 0,
+    minYears: 0,
+    icon: "🌱",
+    bg: "bg-stone-100 dark:bg-stone-800",
+    text: "text-stone-500 dark:text-stone-400",
+  },
+  {
+    name: "Initiate",
+    minReps: 300,
+    minYears: 1,
+    icon: "🌿",
+    bg: "bg-green-50 dark:bg-green-950",
+    text: "text-green-700 dark:text-green-400",
+  },
+  {
+    name: "Scout",
+    minReps: 1500,
+    minYears: 2,
+    icon: "💡",
+    bg: "bg-teal-50 dark:bg-teal-950",
+    text: "text-teal-700 dark:text-teal-400",
+  },
+  {
+    name: "Squire",
+    minReps: 3000,
+    minYears: 3,
+    icon: "🔧",
+    bg: "bg-sky-100 dark:bg-sky-950",
+    text: "text-sky-700 dark:text-sky-400",
+  },
+  {
+    name: "Warden",
+    minReps: 5000,
+    minYears: 4,
+    icon: "⚡",
+    bg: "bg-blue-100 dark:bg-blue-950",
+    text: "text-blue-700 dark:text-blue-400",
+  },
+  {
+    name: "Padawan",
+    minReps: 7000,
+    minYears: 5,
+    icon: "🎯",
+    bg: "bg-indigo-100 dark:bg-indigo-950",
+    text: "text-indigo-700 dark:text-indigo-400",
+  },
+  {
+    name: "Journeyman",
+    minReps: 9500,
+    minYears: 6,
+    icon: "🛤️",
+    bg: "bg-violet-100 dark:bg-violet-950",
+    text: "text-violet-700 dark:text-violet-400",
+  },
+  {
+    name: "Dedicated",
+    minReps: 12000,
+    minYears: 7,
+    icon: "💪",
+    bg: "bg-purple-100 dark:bg-purple-950",
+    text: "text-purple-700 dark:text-purple-400",
+  },
+  {
+    name: "Veteran",
+    minReps: 14500,
+    minYears: 8,
+    icon: "🎖️",
+    bg: "bg-fuchsia-100 dark:bg-fuchsia-950",
+    text: "text-fuchsia-700 dark:text-fuchsia-400",
+  },
+  {
+    name: "Predator",
+    minReps: 17000,
+    minYears: 9,
+    icon: "⭐",
+    bg: "bg-pink-100 dark:bg-pink-950",
+    text: "text-pink-700 dark:text-pink-400",
+  },
+  {
+    name: "Paragon",
+    minReps: 19500,
+    minYears: 10,
+    icon: "🌟",
+    bg: "bg-rose-100 dark:bg-rose-950",
+    text: "text-rose-700 dark:text-rose-400",
+  },
+  {
+    name: "Jedimaster",
+    minReps: 22000,
+    minYears: 11,
+    icon: "🏆",
+    bg: "bg-amber-100 dark:bg-amber-950",
+    text: "text-amber-700 dark:text-amber-400",
+  },
+  {
+    name: "Terminator",
+    minReps: 24000,
+    minYears: 12,
+    icon: "👑",
+    bg: "bg-amber-200 dark:bg-amber-900",
+    text: "text-amber-800 dark:text-amber-300",
+  },
+  {
+    name: "Champion",
+    minReps: 26000,
+    minYears: 13,
+    icon: "🥇",
+    bg: "bg-orange-100 dark:bg-orange-950",
+    text: "text-orange-700 dark:text-orange-400",
+  },
+  {
+    name: "Luminary",
+    minReps: 28000,
+    minYears: 14,
+    icon: "✨",
+    bg: "bg-orange-200 dark:bg-orange-900",
+    text: "text-orange-800 dark:text-orange-300",
+  },
+  {
+    name: "Legend",
+    minReps: 30000,
+    minYears: 15,
+    icon: "🔱",
+    bg: "bg-red-100 dark:bg-red-950",
+    text: "text-red-700 dark:text-red-400",
+  },
+  {
+    name: "Titan",
+    minReps: 40000,
+    minYears: 20,
+    icon: "🏔️",
+    bg: "bg-slate-700 dark:bg-slate-800",
+    text: "text-slate-100",
+  },
+  {
+    name: "Immortal",
+    minReps: 50000,
+    minYears: 25,
+    icon: "🌌",
+    bg: "bg-gray-800 dark:bg-gray-900",
+    text: "text-amber-300",
+  },
+  {
+    name: "Eternal",
+    minReps: 60000,
+    minYears: 30,
+    icon: "🌠",
+    bg: "bg-zinc-900 dark:bg-zinc-950",
+    text: "text-yellow-400",
+  },
 ];
-
 
 function computeTier(totalReps, yearsTraining) {
   let tier = TIERS[0];
@@ -104,7 +238,7 @@ function formatYears(years) {
 function ProgressBar({ pct, color, delay = 0.3 }) {
   const isDone = pct >= 1;
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+    <div className="bg-muted h-1.5 overflow-hidden rounded-full">
       <motion.div
         className="h-full rounded-full"
         style={{
@@ -133,14 +267,15 @@ function TierProgressSection({
 
   if (!nextTier) {
     return (
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-center text-sm">
         👑 You&apos;ve reached the highest tier for {liftType}!
       </p>
     );
   }
 
   const repsPct = nextTier.minReps > 0 ? totalReps / nextTier.minReps : 1;
-  const yearsPct = nextTier.minYears > 0 ? yearsTraining / nextTier.minYears : 1;
+  const yearsPct =
+    nextTier.minYears > 0 ? yearsTraining / nextTier.minYears : 1;
   const repsNeeded = Math.max(0, nextTier.minReps - totalReps);
   const yearsNeeded = Math.max(0, nextTier.minYears - yearsTraining);
 
@@ -163,7 +298,8 @@ function TierProgressSection({
       <div className="space-y-1">
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">
-            Reps &mdash; {totalReps.toLocaleString()} / {nextTier.minReps.toLocaleString()}
+            Reps &mdash; {totalReps.toLocaleString()} /{" "}
+            {nextTier.minReps.toLocaleString()}
           </span>
           {repsPct >= 1 ? (
             <span className="font-medium text-green-600">✓ Done</span>
@@ -181,7 +317,8 @@ function TierProgressSection({
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">
-              Time &mdash; {formatYears(yearsTraining)} / {formatYears(nextTier.minYears)}
+              Time &mdash; {formatYears(yearsTraining)} /{" "}
+              {formatYears(nextTier.minYears)}
             </span>
             {yearsPct >= 1 ? (
               <span className="font-medium text-green-600">✓ Done</span>
@@ -267,8 +404,7 @@ export function LiftJourneyCard({
   // One pass over parsedData for the lifetime and momentum figures the PR
   // tables and tier bars cannot express.
   const journey = useMemo(
-    () =>
-      summarizeLiftJourney({ parsedData, liftType, isMetric, e1rmFormula }),
+    () => summarizeLiftJourney({ parsedData, liftType, isMetric, e1rmFormula }),
     [parsedData, liftType, isMetric, e1rmFormula],
   );
 
@@ -309,7 +445,9 @@ export function LiftJourneyCard({
           isMetric,
         )
       : null;
-  const bestLiftDisplay = bestLift ? getDisplayWeight(bestLift, isMetric) : null;
+  const bestLiftDisplay = bestLift
+    ? getDisplayWeight(bestLift, isMetric)
+    : null;
   // A heavy single needs no formula — estimateE1RM hands back the lifted
   // weight untouched at one rep. Calling that an estimate hedges a number the
   // lifter actually hit, so the label and the credit line both change.
@@ -401,7 +539,12 @@ export function LiftJourneyCard({
             <motion.span
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.15 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 20,
+                delay: 0.15,
+              }}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold shadow-sm",
                 tier.bg,
@@ -420,7 +563,7 @@ export function LiftJourneyCard({
         {hasLoaded && !hasHistory && (
           <p className="text-muted-foreground mt-2 max-w-prose text-sm">
             No {liftType} logged yet.{" "}
-            <span className="font-semibold text-foreground">
+            <span className="text-foreground font-semibold">
               Your first set starts this story.
             </span>
           </p>
@@ -440,7 +583,7 @@ export function LiftJourneyCard({
                   {e1rmDisplay.unit}
                 </span>
               </div>
-              <div className="mt-1.5 text-[11px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+              <div className="text-muted-foreground mt-1.5 text-[11px] font-semibold tracking-[0.16em] uppercase">
                 {isTrueSingle
                   ? usesBodyweightEstimate
                     ? "Actual added-load 1RM"
@@ -450,11 +593,11 @@ export function LiftJourneyCard({
                     : "Estimated 1RM"}
               </div>
             </div>
-            <p className="pb-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground pb-1 text-xs">
               {isTrueSingle ? "lifted " : "based on "}
               <Link
                 href={getLogHref(bestLift.date)}
-                className="font-medium text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-primary"
+                className="text-foreground hover:text-primary font-medium underline decoration-dotted underline-offset-2 transition-colors"
               >
                 {isTrueSingle ? (
                   getReadableDateString(bestLift.date, true)
@@ -466,7 +609,10 @@ export function LiftJourneyCard({
                   </>
                 )}
               </Link>
-              <MeetSetMedal date={bestLift.date} className="ml-1 -translate-y-px" />
+              <MeetSetMedal
+                date={bestLift.date}
+                className="ml-1 -translate-y-px"
+              />
             </p>
             <VideoLinkButton
               url={bestLift.URL}
@@ -479,7 +625,7 @@ export function LiftJourneyCard({
         )}
 
         {dataSource === "demo" && (
-          <p className="mt-3 text-sm text-muted-foreground italic">
+          <p className="text-muted-foreground mt-3 text-sm italic">
             This is sample data. Sign in with Google and connect your sheet to
             see your own numbers.
           </p>
@@ -515,7 +661,6 @@ export function LiftJourneyCard({
               />
             )}
 
-
             {/* Reps over time */}
             <MiniLiftChronologyChart
               liftType={liftType}
@@ -550,7 +695,6 @@ export function LiftJourneyCard({
             <div>
               <LiftColorPicker liftType={liftType} />
             </div>
-
           </>
         )}
       </CardContent>
@@ -875,9 +1019,10 @@ function buildMomentumVital(journey, unit) {
         ? "text-amber-600 dark:text-amber-400"
         : undefined,
     accent: isUp ? "#22c55e" : isDown ? "#f59e0b" : undefined,
-    sub: isUp || isDown
-      ? `${isUp ? "+" : ""}${pct.toFixed(1)}% vs the prior ${MOMENTUM_WINDOW_DAYS} days`
-      : `Holding steady vs the prior ${MOMENTUM_WINDOW_DAYS} days`,
+    sub:
+      isUp || isDown
+        ? `${isUp ? "+" : ""}${pct.toFixed(1)}% vs the prior ${MOMENTUM_WINDOW_DAYS} days`
+        : `Holding steady vs the prior ${MOMENTUM_WINDOW_DAYS} days`,
   };
 }
 

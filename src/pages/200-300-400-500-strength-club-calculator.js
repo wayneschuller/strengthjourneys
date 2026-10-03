@@ -6,7 +6,14 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useId,
+  useCallback,
+  useMemo,
+} from "react";
 import { NextSeo } from "next-seo";
 import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/articles/article-cards";
@@ -18,11 +25,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 import {
   PageContainer,
@@ -101,7 +104,6 @@ const MILESTONES = [
     max: 800,
   },
 ];
-
 
 const COMBINED_TARGET = 1400; // 200 + 300 + 400 + 500 (for display only)
 const BAR_WEIGHT_LB = 45;
@@ -328,7 +330,8 @@ export default function StrengthClubCalculator({ relatedArticles }) {
 const KG_PER_LB = 1 / LB_PER_KG;
 const toKgF = (lbs) => (Number(lbs) * KG_PER_LB).toFixed(1);
 const roundTo5 = (value) => Math.round(value / 5) * 5;
-const clampLbToMax = (value, max) => Math.min(max, Math.max(0, roundTo5(value)));
+const clampLbToMax = (value, max) =>
+  Math.min(max, Math.max(0, roundTo5(value)));
 const formatFullDate = (dateStr) => {
   const d = new Date(dateStr + "T00:00:00Z");
   return d.toLocaleDateString("en-US", {
@@ -370,7 +373,8 @@ function SliderWithMarkers({
   className,
 }) {
   const showPr = prVal != null && prVal > 0 && prVal <= max;
-  const showR90 = r90Val != null && r90Val > 0 && r90Val <= max && r90Val !== prVal;
+  const showR90 =
+    r90Val != null && r90Val > 0 && r90Val <= max && r90Val !== prVal;
   const showTarget = target != null && target > 0 && target <= max;
   const prPercent = showPr ? (prVal / max) * 100 : 0;
   const r90Percent = showR90 ? (r90Val / max) * 100 : 0;
@@ -418,7 +422,7 @@ function SliderWithMarkers({
           className="pointer-events-none absolute bottom-0 flex flex-col items-center"
           style={{ left: `${prPercent}%`, transform: "translateX(-50%)" }}
         >
-          <div className="h-3 w-px bg-primary/40" />
+          <div className="bg-primary/40 h-3 w-px" />
           <span className="text-primary/60 text-[9px] leading-none font-medium">
             PR
           </span>
@@ -472,7 +476,8 @@ function StrengthClubMain({ relatedArticles }) {
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } =
     useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
-  const { topLiftsByTypeAndReps, parsedData, dataSource } = useUserLiftingData();
+  const { topLiftsByTypeAndReps, parsedData, dataSource } =
+    useUserLiftingData();
   const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
     initializeWithValue: false,
   });
@@ -489,34 +494,38 @@ function StrengthClubMain({ relatedArticles }) {
   const [activeLiftKey, setActiveLiftKey] = useState(null);
   const [recent90dCutoffDate] = useState(() => getLocalYmdDaysAgo(90));
 
-  const [press, setPress, pressIsDefault, , pressIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
-    115,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= 400,
-  );
-  const [bench, setBench, benchIsDefault, , benchIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.STRENGTH_CLUB_BENCH,
-    185,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= 500,
-  );
-  const [squat, setSquat, squatIsDefault, , squatIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.STRENGTH_CLUB_SQUAT,
-    255,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= 700,
-  );
-  const [deadlift, setDeadlift, deadliftIsDefault, , deadliftIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.STRENGTH_CLUB_DEADLIFT,
-    315,
-    false,
-    null,
-    (value) => Number.isFinite(value) && value >= 0 && value <= 800,
-  );
+  const [press, setPress, pressIsDefault, , pressIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
+      115,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value >= 0 && value <= 400,
+    );
+  const [bench, setBench, benchIsDefault, , benchIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.STRENGTH_CLUB_BENCH,
+      185,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value >= 0 && value <= 500,
+    );
+  const [squat, setSquat, squatIsDefault, , squatIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.STRENGTH_CLUB_SQUAT,
+      255,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value >= 0 && value <= 700,
+    );
+  const [deadlift, setDeadlift, deadliftIsDefault, , deadliftIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.STRENGTH_CLUB_DEADLIFT,
+      315,
+      false,
+      null,
+      (value) => Number.isFinite(value) && value >= 0 && value <= 800,
+    );
 
   // Detect valid shared values before authenticated PR auto-population can run.
   useEffect(() => {
@@ -539,7 +548,10 @@ function StrengthClubMain({ relatedArticles }) {
     }),
     [setBench, setDeadlift, setPress, setSquat],
   );
-  const values = useMemo(() => ({ press, bench, squat, deadlift }), [press, bench, squat, deadlift]);
+  const values = useMemo(
+    () => ({ press, bench, squat, deadlift }),
+    [press, bench, squat, deadlift],
+  );
   const total = press + bench + squat + deadlift;
   const remaining = MILESTONES.filter((m) => values[m.key] < m.target);
   const allAchieved = remaining.length === 0;
@@ -548,9 +560,10 @@ function StrengthClubMain({ relatedArticles }) {
   const allValuesArePlaceholders =
     pressIsDefault && benchIsDefault && squatIsDefault && deadliftIsDefault;
   const strengthClubQuery = useMemo(
-    () => Object.fromEntries(
-      Object.entries(values).map(([key, value]) => [key, String(value)]),
-    ),
+    () =>
+      Object.fromEntries(
+        Object.entries(values).map(([key, value]) => [key, String(value)]),
+      ),
     [values],
   );
   useCalculatorQuerySync({
@@ -600,7 +613,11 @@ function StrengthClubMain({ relatedArticles }) {
   const showPlaceholderHint = allValuesArePlaceholders && !usingUserData;
 
   useEffect(() => {
-    if (hasExplicitQueryRef.current || hasAutoPopulatedRef.current || !prWeightsLb) {
+    if (
+      hasExplicitQueryRef.current ||
+      hasAutoPopulatedRef.current ||
+      !prWeightsLb
+    ) {
       return;
     }
 
@@ -615,7 +632,8 @@ function StrengthClubMain({ relatedArticles }) {
   }, [prWeightsLb, setters]);
 
   const recent90dData = useMemo(() => {
-    if (!prWeightsLb || !parsedData?.length || dataSource === "demo") return null;
+    if (!prWeightsLb || !parsedData?.length || dataSource === "demo")
+      return null;
 
     const best = {};
     const bestEntry = {};
@@ -843,7 +861,15 @@ function StrengthClubMain({ relatedArticles }) {
         break; // One celebration at a time
       }
     }
-  }, [press, bench, squat, deadlift, prefersReducedMotion, triggerThorCelebration, values]);
+  }, [
+    press,
+    bench,
+    squat,
+    deadlift,
+    prefersReducedMotion,
+    triggerThorCelebration,
+    values,
+  ]);
 
   const handleCopyResult = () => {
     const achieved = MILESTONES.filter((m) => values[m.key] >= m.target);
@@ -882,9 +908,7 @@ function StrengthClubMain({ relatedArticles }) {
 
       <div
         style={
-          isShaking
-            ? { animation: "thor-shake 0.6s ease-in-out" }
-            : undefined
+          isShaking ? { animation: "thor-shake 0.6s ease-in-out" } : undefined
         }
       >
         <PageHeader>
@@ -892,10 +916,10 @@ function StrengthClubMain({ relatedArticles }) {
             200/300/400/500 Strength Club
           </PageHeaderHeading>
           <PageHeaderDescription>
-            The classic barbell milestones — a 200 lb press, 300 lb bench,
-            400 lb squat, and 500 lb deadlift. Also known as the{" "}
-            <strong>2/3/4/5 plate club</strong>. Track your progress toward
-            each target below.
+            The classic barbell milestones — a 200 lb press, 300 lb bench, 400
+            lb squat, and 500 lb deadlift. Also known as the{" "}
+            <strong>2/3/4/5 plate club</strong>. Track your progress toward each
+            target below.
           </PageHeaderDescription>
           <PageHeaderRight>
             <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
@@ -914,9 +938,7 @@ function StrengthClubMain({ relatedArticles }) {
                 href="/strength-levels"
                 className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
               >
-                <h3 className="text-base font-semibold">
-                  Strength Levels
-                </h3>
+                <h3 className="text-base font-semibold">Strength Levels</h3>
                 <p className="text-sm">
                   Beginner-to-elite benchmarks per lift.
                 </p>
@@ -933,8 +955,8 @@ function StrengthClubMain({ relatedArticles }) {
                   These are placeholder numbers, not your lifts.
                 </span>{" "}
                 <span className="text-muted-foreground">
-                  Drag each slider to your best single — or your estimated one-rep
-                  max — for that lift.
+                  Drag each slider to your best single — or your estimated
+                  one-rep max — for that lift.
                 </span>
               </div>
             )}
@@ -960,7 +982,9 @@ function StrengthClubMain({ relatedArticles }) {
 
             {/* Combined total summary */}
             <div className="mt-6 rounded-lg border p-4 text-center">
-              <div className="text-muted-foreground text-sm">Combined Total</div>
+              <div className="text-muted-foreground text-sm">
+                Combined Total
+              </div>
               <div className="text-3xl font-bold tabular-nums">
                 {total} lbs{" "}
                 <span className="text-muted-foreground text-lg font-normal">
@@ -976,7 +1000,10 @@ function StrengthClubMain({ relatedArticles }) {
                 {allAchieved
                   ? "All four milestones achieved! You're in the 200/300/400/500 club!"
                   : `${MILESTONES.length - remaining.length} of 4 milestones achieved — still to go: ${remaining
-                      .map((m) => `${m.liftType} (${m.target - values[m.key]} lbs)`)
+                      .map(
+                        (m) =>
+                          `${m.liftType} (${m.target - values[m.key]} lbs)`,
+                      )
                       .join(", ")}`}
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -1107,7 +1134,8 @@ function StrengthClubMain({ relatedArticles }) {
           <div className="space-y-3 text-sm leading-relaxed">
             <p>
               The <strong>200/300/400/500</strong> targets represent iconic
-              barbell strength milestones: a <strong>200 lb strict press</strong>,{" "}
+              barbell strength milestones: a{" "}
+              <strong>200 lb strict press</strong>,{" "}
               <strong>300 lb bench press</strong>,{" "}
               <strong>400 lb back squat</strong>, and{" "}
               <strong>500 lb deadlift</strong>. Together they total{" "}
@@ -1116,8 +1144,8 @@ function StrengthClubMain({ relatedArticles }) {
             <p>
               These numbers align roughly with the 2/3/4/5 plate-per-side
               loading pattern, making them easy to remember and deeply
-              satisfying to achieve. Use the sliders above to see how close
-              you are, then check your per-lift standards with our{" "}
+              satisfying to achieve. Use the sliders above to see how close you
+              are, then check your per-lift standards with our{" "}
               <Link
                 prefetch={false}
                 href="/strength-levels"
@@ -1194,7 +1222,8 @@ function MilestoneCard({
     if (achieved) {
       return {
         borderColor: "rgb(16 185 129)",
-        boxShadow: "0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.15)",
+        boxShadow:
+          "0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.15)",
       };
     }
     return {};
@@ -1203,7 +1232,7 @@ function MilestoneCard({
   return (
     <motion.div
       className={cn("relative overflow-hidden rounded-lg border-2 p-4", {
-        "border-dashed border-muted-foreground/30": !achieved,
+        "border-muted-foreground/30 border-dashed": !achieved,
       })}
       style={getBorderStyle()}
       initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
@@ -1239,7 +1268,11 @@ function MilestoneCard({
         {/* Header: target number + lift name + SVG */}
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={getLiftDetailUrl(liftType)} className="flex-shrink-0" prefetch={false}>
+            <Link
+              href={getLiftDetailUrl(liftType)}
+              className="flex-shrink-0"
+              prefetch={false}
+            >
               <motion.img
                 src={getLiftArtwork(liftType)}
                 alt={`${liftType} illustration`}
@@ -1352,7 +1385,10 @@ function MilestoneCard({
           {achieved ? (
             <Check className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
           ) : (
-            <CircleDashed className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+            <CircleDashed
+              className="h-4 w-4 flex-shrink-0"
+              aria-hidden="true"
+            />
           )}
           {achieved
             ? `Milestone hit — ${value - target} lbs past`

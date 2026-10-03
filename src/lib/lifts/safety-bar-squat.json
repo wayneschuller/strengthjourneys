@@ -1,10 +1,7 @@
 {
   "liftType": "Safety Bar Squat",
   "slug": "safety-bar-squat",
-  "synonyms": [
-    "SSB Squat",
-    "Safety Squat Bar Squat"
-  ],
+  "synonyms": ["SSB Squat", "Safety Squat Bar Squat"],
   "parentLift": {
     "liftType": "Back Squat",
     "tonnageRatio": 1

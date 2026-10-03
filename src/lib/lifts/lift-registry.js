@@ -266,13 +266,20 @@ export function getBigFourBodyBenefit(liftType) {
 export const STRENGTH_STANDARDS_HUB_URL = `${SITE_URL}/strength-levels`;
 
 // Bench leads the strength levels pages: it is the lift people ask about first.
-const STRENGTH_LEVELS_ORDER = ["Bench Press", "Back Squat", "Deadlift", "Strict Press"];
+const STRENGTH_LEVELS_ORDER = [
+  "Bench Press",
+  "Back Squat",
+  "Deadlift",
+  "Strict Press",
+];
 
 /**
  * Flat page records for /strength-levels/[lift]: the lift's strengthLevels
  * block plus the identity and links those pages need.
  */
-export const STRENGTH_STANDARDS_PAGES = STRENGTH_LEVELS_ORDER.map(getCuratedLift)
+export const STRENGTH_STANDARDS_PAGES = STRENGTH_LEVELS_ORDER.map(
+  getCuratedLift,
+)
   .filter((lift) => lift?.strengthLevels)
   .map((lift) => ({
     slug: lift.slug,

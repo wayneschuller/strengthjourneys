@@ -50,7 +50,9 @@ function parseEntryFile(fileName) {
     fail("file name must start with the entry date, e.g. 2026-09-14.md");
   }
 
-  const match = FRONTMATTER_PATTERN.exec(fs.readFileSync(path.join(CHANGELOG_DIR, fileName), "utf8"));
+  const match = FRONTMATTER_PATTERN.exec(
+    fs.readFileSync(path.join(CHANGELOG_DIR, fileName), "utf8"),
+  );
   if (!match) fail("missing --- frontmatter block");
 
   const data = yaml.load(match[1]) ?? {};

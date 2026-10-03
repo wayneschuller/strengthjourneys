@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
@@ -65,9 +64,7 @@ function buildArticleClipboardText(title, url) {
 export function ArticleShareControls({ title, slug, url }) {
   const { handleShare, isSharing } = useArticleShare({ title, slug, url });
 
-  return (
-    <TopArticleShareButton isSharing={isSharing} onShare={handleShare} />
-  );
+  return <TopArticleShareButton isSharing={isSharing} onShare={handleShare} />;
 }
 
 function useArticleShare({ title, slug, url }) {
@@ -82,7 +79,9 @@ function useArticleShare({ title, slug, url }) {
       method,
       source,
       page:
-        typeof window !== "undefined" ? window.location.pathname : `/articles/${slug}`,
+        typeof window !== "undefined"
+          ? window.location.pathname
+          : `/articles/${slug}`,
     });
   };
 
@@ -98,7 +97,10 @@ function useArticleShare({ title, slug, url }) {
     };
 
     try {
-      if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function"
+      ) {
         try {
           await navigator.share(sharePayload);
           setSuccessLabel("Shared");
@@ -134,7 +136,11 @@ function useArticleShare({ title, slug, url }) {
  * @param {string} [props.url] - Canonical article URL to share or copy.
  */
 export function TopArticleShareButton({ title, slug, url }) {
-  const { handleShare, isSharing, isSuccess, successLabel } = useArticleShare({ title, slug, url });
+  const { handleShare, isSharing, isSuccess, successLabel } = useArticleShare({
+    title,
+    slug,
+    url,
+  });
 
   return (
     <ShareCopyButton
@@ -158,7 +164,11 @@ export function TopArticleShareButton({ title, slug, url }) {
  * @param {string} [props.url] - Canonical article URL to share or copy.
  */
 export function ArticleShareFooterCta({ title, slug, url }) {
-  const { handleShare, isSharing, isSuccess, successLabel } = useArticleShare({ title, slug, url });
+  const { handleShare, isSharing, isSuccess, successLabel } = useArticleShare({
+    title,
+    slug,
+    url,
+  });
   const [nudgeText, setNudgeText] = useState(SHARE_NUDGES[0]);
 
   useEffect(() => {
@@ -168,9 +178,7 @@ export function ArticleShareFooterCta({ title, slug, url }) {
 
   return (
     <div className="w-full text-left sm:max-w-sm sm:text-right">
-      <p className="text-muted-foreground mb-3 text-sm">
-        {nudgeText}
-      </p>
+      <p className="text-muted-foreground mb-3 text-sm">{nudgeText}</p>
       <ShareCopyButton
         label="Share article"
         successLabel={successLabel}
@@ -193,10 +201,14 @@ export function ArticleShareFooterCta({ title, slug, url }) {
  * @param {string} [props.url] - Canonical article URL to share or copy.
  */
 export function MobileFloatingArticleShareButton({ title, slug, url }) {
-  const { handleShare, isSharing, isSuccess, successLabel } = useArticleShare({ title, slug, url });
+  const { handleShare, isSharing, isSuccess, successLabel } = useArticleShare({
+    title,
+    slug,
+    url,
+  });
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 md:hidden">
+    <div className="fixed right-6 bottom-6 z-40 md:hidden">
       <ShareCopyButton
         iconOnly
         variant="default"

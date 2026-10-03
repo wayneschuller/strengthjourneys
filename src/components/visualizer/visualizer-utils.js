@@ -98,7 +98,7 @@ export const ChartTooltipMeetLine = ({ date }) => {
 
 // Shared tooltip UI component
 const TooltipUI = ({ date, dateLabel, tooltipsPerLift }) => (
-  <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+  <div className="border-border/50 bg-background grid max-w-[17rem] min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
     <p className="font-bold">{dateLabel}</p>
     <ChartTooltipMeetLine date={date} />
     {tooltipsPerLift.map(({ liftType, label, color, reps }) => (
@@ -221,7 +221,7 @@ export const SingleLiftTooltipContent = ({
   if (!tooltipContent) return null;
 
   return (
-    <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="border-border/50 bg-background grid max-w-[17rem] min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <ChartTooltipMeetLine date={dateStr} />
       <div className="flex flex-row items-center">
@@ -262,9 +262,7 @@ export function E1RMFormulaSelect({
 }) {
   return (
     <div className="flex flex-row items-center space-x-2">
-      <div
-        className={`text-sm font-light ${compact ? "hidden sm:block" : ""}`}
-      >
+      <div className={`text-sm font-light ${compact ? "hidden sm:block" : ""}`}>
         E1RM Algorithm
       </div>
       <Select value={e1rmFormula} onValueChange={setE1rmFormula}>

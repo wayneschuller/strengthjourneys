@@ -180,10 +180,13 @@ export default async function handler(req, res) {
           record.connectionMethod || "legacy_local_relink";
         nextRecord.provisionedSheetId = record.provisionedSheetId || ssid;
         nextRecord.activationPromptedAt = nowIso;
-        devLog("[sheet-flow] legacy KV backfill after successful local relink", {
-          email: session.user.email,
-          ssid,
-        });
+        devLog(
+          "[sheet-flow] legacy KV backfill after successful local relink",
+          {
+            email: session.user.email,
+            ssid,
+          },
+        );
       }
 
       // Return email (once) if user came back after a meaningful gap and still within

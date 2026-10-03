@@ -45,7 +45,7 @@ export function ArticleFeedback({ slug }) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-muted-foreground">
+      <span className="text-muted-foreground text-sm">
         {vote ? "Thanks for your feedback!" : "Was this article helpful?"}
       </span>
       <ThumbsSentimentControl

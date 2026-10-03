@@ -77,11 +77,21 @@ export function PlaylistReportDialog({ playlist, onOpenChange, onReported }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
-          <RadioGroup value={reason} onValueChange={setReason} className="gap-2">
+          <RadioGroup
+            value={reason}
+            onValueChange={setReason}
+            className="gap-2"
+          >
             {PLAYLIST_REPORT_REASONS.map((option) => (
               <div key={option.value} className="flex items-center space-x-2">
-                <RadioGroupItem value={option.value} id={`reason-${option.value}`} />
-                <Label htmlFor={`reason-${option.value}`} className="font-normal">
+                <RadioGroupItem
+                  value={option.value}
+                  id={`reason-${option.value}`}
+                />
+                <Label
+                  htmlFor={`reason-${option.value}`}
+                  className="font-normal"
+                >
                   {option.label}
                 </Label>
               </div>

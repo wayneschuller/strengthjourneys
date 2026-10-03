@@ -11,7 +11,8 @@ const ALLOWED_EXACT_HOSTS = ["localhost:3000", "127.0.0.1:3000"];
 
 const ALLOWED_HOST_SUFFIXES = ["strengthjourneys.xyz"];
 
-const VERCEL_PREVIEW_HOST = /^strengthjourneys-[a-z0-9-]+-wayneschullers-projects\.vercel\.app$/;
+const VERCEL_PREVIEW_HOST =
+  /^strengthjourneys-[a-z0-9-]+-wayneschullers-projects\.vercel\.app$/;
 
 export function isAllowedOrigin(origin) {
   if (!origin) return true;

@@ -51,7 +51,7 @@ const hashLiftColor = (liftType) => {
   for (let i = 0; i < liftType.length; i++) {
     hash = liftType.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return `#${(hash & 0xFFFFFF).toString(16).padStart(6, "0")}`;
+  return `#${(hash & 0xffffff).toString(16).padStart(6, "0")}`;
 };
 
 // Default context value
@@ -68,7 +68,9 @@ export const LiftColorsProvider = ({ children }) => {
   // Load overrides from localStorage after mount (client-only)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES);
+      const saved = localStorage.getItem(
+        LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES,
+      );
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -106,7 +108,10 @@ export const LiftColorsProvider = ({ children }) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (Object.keys(overrides).length > 0) {
-        localStorage.setItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES, JSON.stringify(overrides));
+        localStorage.setItem(
+          LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES,
+          JSON.stringify(overrides),
+        );
       } else {
         localStorage.removeItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES);
       }
@@ -115,7 +120,9 @@ export const LiftColorsProvider = ({ children }) => {
 
   // Pure read: user pick > default > deterministic hash
   const getActiveColor = (liftType) => {
-    return overrides[liftType] || DEFAULT_COLORS[liftType] || hashLiftColor(liftType);
+    return (
+      overrides[liftType] || DEFAULT_COLORS[liftType] || hashLiftColor(liftType)
+    );
   };
 
   // Set a color override and update localStorage

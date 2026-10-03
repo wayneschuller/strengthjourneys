@@ -14,7 +14,10 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
-import { MessageActions, MessageAction } from "@/components/ai-elements/message";
+import {
+  MessageActions,
+  MessageAction,
+} from "@/components/ai-elements/message";
 import { Button } from "@/components/ui/button";
 import {
   readStoredSentiment,
@@ -30,12 +33,19 @@ const MAX_SHARED_MESSAGES = 20;
  * @param {string} [props.userProvidedMetadata] The lifting summary the coach saw.
  * @param {React.ReactNode} props.children The reply's other actions.
  */
-export function AiReplyFeedback({ message, messages, userProvidedMetadata, children }) {
+export function AiReplyFeedback({
+  message,
+  messages,
+  userProvidedMetadata,
+  children,
+}) {
   const { status: authStatus } = useSession();
   const { edition, model } = message.metadata || {};
   // Session storage keeps the vote highlighted across a reload of the same chat.
   const storageKey = `sj_ai_reply_vote_${message.id}`;
-  const [vote, setVote] = useState(() => toVote(readStoredSentiment(storageKey)));
+  const [vote, setVote] = useState(() =>
+    toVote(readStoredSentiment(storageKey)),
+  );
   const [shareState, setShareState] = useState("idle");
 
   if (!edition || !model) {
@@ -47,9 +57,14 @@ export function AiReplyFeedback({ message, messages, userProvidedMetadata, child
     const previous = vote;
     setVote(sentiment);
     setShareState("idle");
-    writeStoredSentiment(storageKey, sentiment === "up" ? "positive" : "negative");
+    writeStoredSentiment(
+      storageKey,
+      sentiment === "up" ? "positive" : "negative",
+    );
     // Best effort: a lost vote is not worth interrupting the lifter over.
-    postFeedback({ action: "vote", edition, model, sentiment, previous }).catch(() => {});
+    postFeedback({ action: "vote", edition, model, sentiment, previous }).catch(
+      () => {},
+    );
   }
 
   async function handleShare() {
@@ -98,7 +113,9 @@ export function AiReplyFeedback({ message, messages, userProvidedMetadata, child
           tooltip="Could be better"
           className={vote === "down" ? "text-foreground" : ""}
         >
-          <ThumbsDown className={vote === "down" ? "size-3 fill-current" : "size-3"} />
+          <ThumbsDown
+            className={vote === "down" ? "size-3 fill-current" : "size-3"}
+          />
         </MessageAction>
       </MessageActions>
       {vote && shareState !== "sent" && (
@@ -106,7 +123,9 @@ export function AiReplyFeedback({ message, messages, userProvidedMetadata, child
           <span>
             Thanks! Want to share this chat with us? It sends the conversation
             and your lifting summary
-            {authStatus === "authenticated" ? ", plus your email so we can reply." : "."}
+            {authStatus === "authenticated"
+              ? ", plus your email so we can reply."
+              : "."}
           </span>
           <Button
             variant="outline"
@@ -117,11 +136,15 @@ export function AiReplyFeedback({ message, messages, userProvidedMetadata, child
           >
             {shareState === "sending" ? "Sending..." : "Share chat"}
           </Button>
-          {shareState === "failed" && <span>That didn&apos;t send. Try again?</span>}
+          {shareState === "failed" && (
+            <span>That didn&apos;t send. Try again?</span>
+          )}
         </div>
       )}
       {shareState === "sent" && (
-        <p className="text-muted-foreground text-xs">Shared. Thank you for helping the coach improve!</p>
+        <p className="text-muted-foreground text-xs">
+          Shared. Thank you for helping the coach improve!
+        </p>
       )}
     </div>
   );

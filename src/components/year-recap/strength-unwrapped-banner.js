@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { cn } from "@/lib/utils";
@@ -38,7 +37,7 @@ export function StrengthUnwrappedDecemberBanner({ className, hidden }) {
           <AppBannerContent density="card">
             <AppBannerLeading>
               <AppBannerIconBadge>
-                <Sparkles className="h-6 w-6 text-primary" />
+                <Sparkles className="text-primary h-6 w-6" />
               </AppBannerIconBadge>
               <div>
                 <AppBannerTitle>Strength Unwrapped</AppBannerTitle>

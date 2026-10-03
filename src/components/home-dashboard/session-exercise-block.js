@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import {
   Tooltip,
@@ -150,7 +149,7 @@ export function SessionExerciseBlock({
 
   const { dataSource } = useUserLiftingData();
 
-   const canShowStrengthLevel =
+  const canShowStrengthLevel =
     isOwnData(dataSource) &&
     hasBioData &&
     (standards?.[liftType] ||
@@ -179,7 +178,8 @@ export function SessionExerciseBlock({
           >
             <div className="flex items-center gap-2">
               <span className={`tabular-nums ${size.text} ${textClass}`}>
-                {workout.reps}×{getDisplayWeight(workout, isMetric ?? false).value}
+                {workout.reps}×
+                {getDisplayWeight(workout, isMetric ?? false).value}
                 {getDisplayWeight(workout, isMetric ?? false).unit}
               </span>
               <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
@@ -322,9 +322,13 @@ export function SessionExerciseBlock({
         const count = group.length;
 
         const isHighlighted = group.some((i) => highlightedIndices.has(i));
-        const hasLifetimePR = group.some((i) => workouts[i].lifetimeRanking !== -1);
+        const hasLifetimePR = group.some(
+          (i) => workouts[i].lifetimeRanking !== -1,
+        );
         const hasYearlyPR = group.some(
-          (i) => workouts[i].yearlyRanking != null && workouts[i].yearlyRanking !== -1,
+          (i) =>
+            workouts[i].yearlyRanking != null &&
+            workouts[i].yearlyRanking !== -1,
         );
         const lifetimeAnnotation = group
           .map((i) => workouts[i].lifetimeSignificanceAnnotation)
@@ -334,12 +338,16 @@ export function SessionExerciseBlock({
           .find(Boolean);
         const groupNotes = group
           .map((i, groupIdx) =>
-            workouts[i].notes ? { note: workouts[i].notes, setNum: groupIdx + 1 } : null,
+            workouts[i].notes
+              ? { note: workouts[i].notes, setNum: groupIdx + 1 }
+              : null,
           )
           .filter(Boolean);
         const groupURLs = group
           .map((i, groupIdx) =>
-            workouts[i].URL ? { url: workouts[i].URL, setNum: groupIdx + 1 } : null,
+            workouts[i].URL
+              ? { url: workouts[i].URL, setNum: groupIdx + 1 }
+              : null,
           )
           .filter(Boolean);
 
@@ -365,7 +373,9 @@ export function SessionExerciseBlock({
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className={`tabular-nums ${isHighlighted ? "text-lg" : "text-sm"} ${textClass}`}>
+              <span
+                className={`tabular-nums ${isHighlighted ? "text-lg" : "text-sm"} ${textClass}`}
+              >
                 {displayText}
               </span>
               <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
@@ -453,7 +463,8 @@ export function SessionExerciseBlock({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          {count > 1 ? `Set ${setNum}: ` : ""}Click to open video
+                          {count > 1 ? `Set ${setNum}: ` : ""}Click to open
+                          video
                           {url.length > 40 ? ` (${url.slice(0, 37)}…)` : ""}
                         </p>
                       </TooltipContent>
@@ -498,7 +509,7 @@ export function SessionExerciseBlock({
     return (
       <div
         className={`bg-muted/20 flex h-full min-h-0 flex-col gap-2.5 rounded-xl border sm:flex-row sm:items-center sm:gap-3 ${
-          hideSvg ? "px-2 py-1.5 gap-2" : "p-3"
+          hideSvg ? "gap-2 px-2 py-1.5" : "p-3"
         }`}
       >
         {liftTypeArea && (
@@ -513,11 +524,11 @@ export function SessionExerciseBlock({
           {!hideSvg && (
             <LiftTypeIndicator
               liftType={liftType}
-              className="text-base max-w-36 leading-tight"
+              className="max-w-36 text-base leading-tight"
             />
           )}
-          {label && (
-            labelHref ? (
+          {label &&
+            (labelHref ? (
               <Link
                 href={labelHref}
                 className="text-muted-foreground hover:text-foreground shrink-0 text-xs font-medium underline decoration-dotted underline-offset-2"
@@ -528,8 +539,7 @@ export function SessionExerciseBlock({
               <span className="text-muted-foreground shrink-0 text-xs font-medium">
                 {label}
               </span>
-            )
-          )}
+            ))}
           {compactPills}
           {showPerLiftTonnage && perLiftTonnageStats?.[liftType] && (
             <LiftTonnageRow
@@ -564,7 +574,12 @@ export function SessionExerciseBlock({
 }
 
 // One-line tonnage comparison row: current session tonnage vs. 12-month average with a ±% badge.
-export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = false }) {
+export function LiftTonnageRow({
+  liftType,
+  stats,
+  isMetric = false,
+  compact = false,
+}) {
   const {
     currentLiftTonnage,
     avgLiftTonnage,
@@ -614,7 +629,10 @@ export function LiftTonnageRow({ liftType, stats, isMetric = false, compact = fa
     <div className={`flex flex-wrap items-center gap-2 ${textClass}`}>
       <span className="text-muted-foreground">
         {tonnageHref ? (
-          <Link href={tonnageHref} className="underline-offset-2 hover:underline">
+          <Link
+            href={tonnageHref}
+            className="underline-offset-2 hover:underline"
+          >
             {liftType} tonnage
           </Link>
         ) : (
@@ -708,7 +726,7 @@ export function LiftStrengthLevel({
   const LIFT_STRENGTH_SLUGS = {
     "Back Squat": "squat",
     "Bench Press": "bench-press",
-    "Deadlift": "deadlift",
+    Deadlift: "deadlift",
     "Strict Press": "strict-press",
   };
   const strengthSlug = LIFT_STRENGTH_SLUGS[liftType];
@@ -716,8 +734,9 @@ export function LiftStrengthLevel({
     ? `/strength-levels/${strengthSlug}`
     : `/strength-levels`;
   const ratingLabel = isBeyondElite ? "Beyond Elite" : rating;
-  const ratingEmoji =
-    isBeyondElite ? STRENGTH_LEVEL_EMOJI.Elite : STRENGTH_LEVEL_EMOJI[rating] ?? "";
+  const ratingEmoji = isBeyondElite
+    ? STRENGTH_LEVEL_EMOJI.Elite
+    : (STRENGTH_LEVEL_EMOJI[rating] ?? "");
   const ratingContent = (
     <span className="text-foreground font-semibold">
       {ratingEmoji} {ratingLabel}
@@ -733,7 +752,10 @@ export function LiftStrengthLevel({
       >
         <Badge
           variant={getRatingBadgeVariant(rating)}
-          className={cn("inline-flex items-center gap-1 cursor-pointer", badgeClassName)}
+          className={cn(
+            "inline-flex cursor-pointer items-center gap-1",
+            badgeClassName,
+          )}
         >
           {ratingEmoji && <span>{ratingEmoji}</span>}
           <span>{ratingLabel}</span>
@@ -779,7 +801,7 @@ export function LiftStrengthLevel({
       href={href}
       className={
         inline
-          ? "text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-0.5 text-xs font-medium transition-colors hover:bg-muted/40"
+          ? "text-muted-foreground hover:text-foreground hover:bg-muted/40 inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-0.5 text-xs font-medium transition-colors"
           : "text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 text-base font-medium transition-colors hover:underline"
       }
     >

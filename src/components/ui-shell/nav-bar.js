@@ -15,7 +15,16 @@ import {
 } from "@/components/ui-shell/theme-chooser";
 import { MobileNav } from "@/components/ui-shell/mobile-nav";
 import { AvatarDropdown } from "@/components/ui-shell/avatar-menu";
-import { Table2, Loader2, Layers, LineChart, NotebookText, Plus, Disc, Upload } from "lucide-react";
+import {
+  Table2,
+  Loader2,
+  Layers,
+  LineChart,
+  NotebookText,
+  Plus,
+  Disc,
+  Upload,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/components/timer/mini-timer";
@@ -129,7 +138,9 @@ export function NavBar() {
                       <NotebookText className="h-3.5 w-3.5" strokeWidth={2.5} />
                     )}
                     <span className="xl:hidden">
-                      {canOpenLog && dataSource !== "import" ? "Log" : "Sessions"}
+                      {canOpenLog && dataSource !== "import"
+                        ? "Log"
+                        : "Sessions"}
                     </span>
                     <span className="hidden xl:inline">
                       {canOpenLog && dataSource !== "import"
@@ -141,7 +152,8 @@ export function NavBar() {
               </TooltipTrigger>
               {!canOpenLog && (
                 <TooltipContent>
-                  Browse sessions and log your workouts. Sign in to start logging.
+                  Browse sessions and log your workouts. Sign in to start
+                  logging.
                 </TooltipContent>
               )}
             </Tooltip>
@@ -155,7 +167,10 @@ export function NavBar() {
                   size="sm"
                   className="mr-2 hidden h-9 shrink-0 rounded-full px-3 xl:inline-flex"
                 >
-                  <Link href={hasImportRitual ? importHref : "/import"} prefetch={false}>
+                  <Link
+                    href={hasImportRitual ? importHref : "/import"}
+                    prefetch={false}
+                  >
                     <Upload className="h-3.5 w-3.5" strokeWidth={2.5} />
                     Import / Export
                   </Link>
@@ -492,7 +507,12 @@ function NavDropdown({ isActive, shortLabel, fullLabel, fullFrom, children }) {
               isActive ? "text-foreground" : "text-foreground/60",
             )}
           >
-            <span className={cn("hidden md:block", fullFrom === "2xl" && "2xl:hidden")}>
+            <span
+              className={cn(
+                "hidden md:block",
+                fullFrom === "2xl" && "2xl:hidden",
+              )}
+            >
               {shortLabel}
             </span>
             {fullFrom === "2xl" && (
@@ -513,7 +533,10 @@ const MORE_LIFTS_COUNT = 10;
 // after the big four, and they top up an athlete's own list when it is short.
 const OTHER_GUIDED_LIFTS = CURATED_LIFTS.filter(
   (lift) => !lift.bigFour && isLiftGuideIndexable(lift),
-).map((lift) => ({ name: lift.commonName, href: getLiftGuidePath(lift.liftType) }));
+).map((lift) => ({
+  name: lift.commonName,
+  href: getLiftGuidePath(lift.liftType),
+}));
 
 // An athlete's most trained lifts beyond the big four, then curated guides to
 // make up the count. liftTypes arrives sorted by set count, and a synonym
@@ -641,7 +664,8 @@ function StrengthInsightsMenu() {
       icon: <Sparkles className="h-5 w-5" />,
     },
     {
-      title: authStatus === "authenticated" ? "Import / Merge Data" : "Import Data",
+      title:
+        authStatus === "authenticated" ? "Import / Merge Data" : "Import Data",
       href: "/import",
       icon: <Upload className="h-5 w-5" />,
     },
@@ -649,7 +673,10 @@ function StrengthInsightsMenu() {
 
   return (
     <NavDropdown
-      isActive={isOnAnyPage(pathname, insights.map((item) => item.href))}
+      isActive={isOnAnyPage(
+        pathname,
+        insights.map((item) => item.href),
+      )}
       shortLabel="Insights"
       fullLabel="Strength Insights"
       fullFrom="2xl"
@@ -713,7 +740,10 @@ function CalculatorsMenu() {
 
   return (
     <NavDropdown
-      isActive={isOnAnyPage(pathname, CALCULATORS.map((item) => item.href))}
+      isActive={isOnAnyPage(
+        pathname,
+        CALCULATORS.map((item) => item.href),
+      )}
       shortLabel="Calculators"
     >
       <ul className="grid w-[400px] grid-cols-2 gap-3 p-4 lg:w-[500px]">

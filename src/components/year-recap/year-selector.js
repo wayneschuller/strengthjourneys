@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
@@ -30,7 +29,12 @@ export function getYearsWithData(parsedData) {
  * @param {Function} props.onSelect - Callback invoked with the chosen year number when a button is clicked.
  * @param {string} [props.variant] - Layout variant: "default" (flex-wrap row) or "sidebar" (2-column grid).
  */
-export function YearSelector({ years, selectedYear, onSelect, variant = "default" }) {
+export function YearSelector({
+  years,
+  selectedYear,
+  onSelect,
+  variant = "default",
+}) {
   const descendingYears = [...years].sort((a, b) => b - a);
   const isSidebar = variant === "sidebar";
 
@@ -51,7 +55,8 @@ export function YearSelector({ years, selectedYear, onSelect, variant = "default
             className={cn(
               "text-lg font-semibold focus-visible:ring-0",
               !isSidebar && "min-w-[120px]",
-              selectedYear === year && "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
+              selectedYear === year &&
+                "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
             )}
             onClick={() => onSelect(year)}
           >

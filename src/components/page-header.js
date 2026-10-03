@@ -1,4 +1,3 @@
-
 import { Children, isValidElement } from "react";
 import { cn } from "@/lib/utils";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";

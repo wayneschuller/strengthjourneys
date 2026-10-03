@@ -58,8 +58,7 @@ registerHooks({
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseFitbodData } =
   await import("../src/lib/import/parsers/fitbod-parser.js");
-const { detectFormat } =
-  await import("../src/lib/import/import-dispatcher.js");
+const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
 const { getImportSource } = await import("../src/lib/import/import-sources.js");
 
 // Synthetic rows in the column shape corroborated by community Fitbod

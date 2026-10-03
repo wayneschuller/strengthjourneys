@@ -62,6 +62,7 @@ function parseInlineMarkdown(source) {
     }
     last = match.index + match[0].length;
   }
-  if (last < input.length) parts.push({ type: "text", text: input.slice(last) });
+  if (last < input.length)
+    parts.push({ type: "text", text: input.slice(last) });
   return parts;
 }

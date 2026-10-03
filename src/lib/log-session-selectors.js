@@ -60,8 +60,7 @@ export function groupSessionLifts(parsedData, sessionDate, deletedRowIndices) {
   if (!parsedData) return {};
   const entries = parsedData.filter(
     (entry) =>
-      entry.date === sessionDate &&
-      !deletedRowIndices.has(entry.rowIndex),
+      entry.date === sessionDate && !deletedRowIndices.has(entry.rowIndex),
   );
   const grouped = {};
   for (const entry of entries) {
@@ -82,8 +81,7 @@ export function pruneSyncedPendingSets({
     const remaining = sets.filter(
       (set) =>
         !deletedRowIndices.has(set.rowIndex) &&
-        (set._pending ||
-          !hasMatchingRealSetForPendingSet(set, sessionLifts)),
+        (set._pending || !hasMatchingRealSetForPendingSet(set, sessionLifts)),
     );
     if (remaining.length !== sets.length) changed = true;
     if (remaining.length) next[liftType] = remaining;
@@ -101,8 +99,7 @@ export function mergeSessionLiftsWithPending({
     const unique = sets.filter(
       (set) =>
         !deletedRowIndices.has(set.rowIndex) &&
-        (set._pending ||
-          !hasMatchingRealSetForPendingSet(set, sessionLifts)),
+        (set._pending || !hasMatchingRealSetForPendingSet(set, sessionLifts)),
     );
     if (unique.length) {
       merged[liftType] = [...(merged[liftType] ?? []), ...unique];
@@ -153,8 +150,7 @@ export function getPerLiftTonnageStats({
           setCount,
           shouldShowComparison:
             setCount >= 4 ||
-            (avgLiftTonnage > 0 &&
-              currentLiftTonnage >= avgLiftTonnage * 0.4),
+            (avgLiftTonnage > 0 && currentLiftTonnage >= avgLiftTonnage * 0.4),
           pctDiff:
             avgLiftTonnage > 0
               ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100

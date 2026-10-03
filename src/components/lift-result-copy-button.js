@@ -21,7 +21,8 @@ export function LiftResultCopyButton({
   const { isSuccess: localSuccess, triggerSuccess } = useTransientSuccess();
   const isSuccess = controlledSuccess ?? localSuccess;
 
-  const resolvedLabel = label ?? (liftType ? `Copy ${liftType} result` : "Copy result");
+  const resolvedLabel =
+    label ?? (liftType ? `Copy ${liftType} result` : "Copy result");
   const resolvedTooltip =
     tooltip ??
     (liftType
@@ -48,7 +49,10 @@ export function LiftResultCopyButton({
       isLoading={isLoading}
       isSuccess={isSuccess}
       disabled={disabled ?? isLoading}
-      className={cn("h-6 w-6 text-muted-foreground/50 hover:text-foreground", className)}
+      className={cn(
+        "text-muted-foreground/50 hover:text-foreground h-6 w-6",
+        className,
+      )}
       onPressAnalytics={onPressAnalytics}
       onClick={handleClick}
       {...rest}

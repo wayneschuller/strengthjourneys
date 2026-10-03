@@ -113,7 +113,10 @@ export function hashRateLimitIdentity(value) {
 }
 
 function mergeAnonymousQuota(cookieQuota, ipUsed) {
-  const ipRemaining = Math.max(0, AI_CHAT_ANON_IP_LIMIT - (Number(ipUsed) || 0));
+  const ipRemaining = Math.max(
+    0,
+    AI_CHAT_ANON_IP_LIMIT - (Number(ipUsed) || 0),
+  );
   const remaining = Math.min(cookieQuota.remaining, ipRemaining);
   const used = Math.max(cookieQuota.used, AI_CHAT_ANON_LIMIT - remaining);
 

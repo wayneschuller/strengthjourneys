@@ -37,7 +37,7 @@ import {
 
 import dynamic from "next/dynamic";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, PresenceContext, motion } from "motion/react";
 
 import {
   Card,
@@ -49,7 +49,8 @@ import {
 import { FreshPill } from "@/components/ui/fresh-pill";
 
 const Testimonials = dynamic(
-  () => import("@/components/homepage/testimonials").then((m) => m.Testimonials),
+  () =>
+    import("@/components/homepage/testimonials").then((m) => m.Testimonials),
   {
     ssr: false,
     loading: () => (
@@ -62,7 +63,10 @@ const Testimonials = dynamic(
   },
 );
 const GettingStartedCard = dynamic(
-  () => import("@/components/onboarding/instructions-cards").then((m) => m.GettingStartedCard),
+  () =>
+    import("@/components/onboarding/instructions-cards").then(
+      (m) => m.GettingStartedCard,
+    ),
   {
     ssr: false,
     loading: () => (
@@ -389,12 +393,7 @@ export default function Home({ starterArticles = [] }) {
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, workout data import, fitness app export, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
-  const {
-    dataSource,
-    parsedData,
-    rawRows,
-    sheetInfo,
-  } = useUserLiftingData();
+  const { dataSource, parsedData, rawRows, sheetInfo } = useUserLiftingData();
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
   const { dashboardStage } = useMemo(
     () =>
@@ -509,11 +508,17 @@ export default function Home({ starterArticles = [] }) {
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               >
                 {surface === "dashboard" ? (
-                  <HomeDashboard />
+                  // initial={false} above is for this surface wrapper only, but
+                  // framer-motion hands it to every motion element inside and
+                  // never updates it (PresenceChild memoises its context without
+                  // `initial`), so on a returning lifter's first load every
+                  // entrance in the dashboard rendered at its end state. A null
+                  // context lets the dashboard's own animations run.
+                  <PresenceContext.Provider value={null}>
+                    <HomeDashboard />
+                  </PresenceContext.Provider>
                 ) : surface === "welcome" ? (
-                  <HomeWelcome
-                    starterArticles={starterArticles}
-                  />
+                  <HomeWelcome starterArticles={starterArticles} />
                 ) : (
                   <HeroSection />
                 )}
@@ -549,9 +554,7 @@ export default function Home({ starterArticles = [] }) {
         <Separator className="my-8" />
 
         {/* Tier 1: Training insight tools */}
-        <h2 className="mt-8 text-xl font-semibold">
-          📊 Your Training
-        </h2>
+        <h2 className="mt-8 text-xl font-semibold">📊 Your Training</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
           {insightTools.map((card, index) => (
             <FeatureCard key={card.href} index={index} {...card} />
@@ -561,12 +564,14 @@ export default function Home({ starterArticles = [] }) {
         <Separator className="my-8" />
 
         {/* Tier 2: Calculators and strength standards */}
-        <h2 className="text-xl font-semibold">
-          🧮 Calculators & Standards
-        </h2>
+        <h2 className="text-xl font-semibold">🧮 Calculators & Standards</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {calculatorTools.map((card, index) => (
-            <FeatureCard key={card.href} index={index + insightTools.length} {...card} />
+            <FeatureCard
+              key={card.href}
+              index={index + insightTools.length}
+              {...card}
+            />
           ))}
         </div>
 
@@ -578,7 +583,11 @@ export default function Home({ starterArticles = [] }) {
         </h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {milestoneTools.map((card, index) => (
-            <FeatureCard key={card.href} index={index + insightTools.length + calculatorTools.length} {...card} />
+            <FeatureCard
+              key={card.href}
+              index={index + insightTools.length + calculatorTools.length}
+              {...card}
+            />
           ))}
         </div>
 

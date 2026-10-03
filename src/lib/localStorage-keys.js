@@ -152,6 +152,9 @@ export const LOCAL_STORAGE_KEYS = {
   HOME_DASHBOARD_LAST_ROW_COUNT: "SJ_homeDashboardLastRowCount",
   // Which ranked story the dashboard greeting shows next; advances on every visit.
   HOME_DASHBOARD_STORY_CURSOR: "SJ_homeDashboardStoryCursor",
+  // Classic lifts the story of the day has already shown (date|lift ids), so
+  // every memory gets a turn before any repeats. Emptied once all are seen.
+  HOME_DASHBOARD_CLASSICS_SEEN: "SJ_homeDashboardClassicsSeen",
   // Cached copy of the authenticated user's KV-backed recurring-import profile.
   // Contains workflow freshness only, never filenames or lifting data.
   IMPORT_PROFILE: "SJ_importProfile",

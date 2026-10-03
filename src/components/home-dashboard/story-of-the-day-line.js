@@ -9,8 +9,10 @@
  * summary stories. Summaries that would read as a shortfall (a dip in
  * momentum, a zero-week streak) are left out rather than softened.
  *
- * Every visit shows the next story in the ranked list, best first, so a
- * refresh or coming back to the dashboard brings a new one. A story tied to a
+ * Every visit shows the next story in the rotation, so a refresh or coming
+ * back to the dashboard brings a new one. The classic lift's share of turns
+ * grows with the number of memories in the log (up to two visits in three for
+ * a long history), and it never repeats a memory until all have been shown. A story tied to a
  * date links to that day in the log, and any story about a lift with a video
  * gets its own play button beside the line.
  *
@@ -196,6 +198,28 @@ function RotatingStory({ stories, dashboardStage }) {
   const [shownCursor] = useState(() =>
     Number.isInteger(cursor) && cursor >= 0 ? cursor : 0,
   );
+  const [seenClassics, setSeenClassics] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.HOME_DASHBOARD_CLASSICS_SEEN,
+    [],
+    { initializeWithValue: true },
+  );
+  // Built once per visit: the rotation needs the count, the classic story
+  // needs the list.
+  const hasClassicStory = stories.some(isClassicStory);
+  const classicCandidates = useMemo(() => {
+    if (!hasClassicStory) return [];
+    const candidates = buildClassicLiftCandidates({
+      parsedData,
+      isMetric: athleteBio.isMetric,
+      meetDays,
+    });
+    logClassicLiftCandidates(candidates);
+    return candidates;
+  }, [hasClassicStory, parsedData, athleteBio.isMetric, meetDays]);
+  const rotation = useMemo(
+    () => buildRotation(stories, classicCandidates.length),
+    [stories, classicCandidates.length],
+  );
   const [{ line, candidates }] = useState(() => {
     const context = {
       parsedData,
@@ -205,20 +229,22 @@ function RotatingStory({ stories, dashboardStage }) {
       meetDays,
       athleteBio,
       dashboardStage,
+      seenClassicIds: Array.isArray(seenClassics) ? seenClassics : [],
+      classicCandidates,
     };
-    const shownIndex = shownCursor % stories.length;
+    const shownStory = rotation[shownCursor % rotation.length];
     // The classic lift can come up empty on a thin log; the journey line
     // always has something to say.
     const shownLine =
-      buildStoryLine(stories[shownIndex], context) ??
+      buildStoryLine(shownStory, context) ??
       buildStoryLine(
-        { ...stories[shownIndex], kind: "summary", id: "journey" },
+        { ...shownStory, kind: "summary", id: "journey" },
         context,
       );
     return {
       line: shownLine,
       candidates: IS_DEVELOPMENT
-        ? describeCandidates(stories, shownIndex, shownLine, context)
+        ? describeCandidates(stories, shownStory, shownLine, context)
         : null,
     };
   });
@@ -241,8 +267,22 @@ function RotatingStory({ stories, dashboardStage }) {
   // story waiting next time, so a good one is never skipped unseen.
   useEffect(() => {
     const timer = setTimeout(
-      // Absolute, not prev + 1, so a double-run effect still advances by one.
-      () => setCursor((shownCursor + 1) % stories.length),
+      () => {
+        // Absolute, not prev + 1, so a double-run effect still advances by
+        // one.
+        setCursor((shownCursor + 1) % rotation.length);
+        // A classic lift that has been seen leaves the pool until every
+        // other memory has had its turn; then the pool starts over.
+        if (line?.classicId) {
+          setSeenClassics((previous) => {
+            const seen = (Array.isArray(previous) ? previous : []).filter(
+              (id) => id !== line.classicId,
+            );
+            seen.push(line.classicId);
+            return seen.length >= line.classicTotal ? [] : seen;
+          });
+        }
+      },
       // The longest the reveal can take, so the story is always on screen
       // before it counts as seen.
       (STORY_REVEAL_DELAY_SECONDS +
@@ -251,7 +291,7 @@ function RotatingStory({ stories, dashboardStage }) {
         1000,
     );
     return () => clearTimeout(timer);
-  }, [shownCursor, stories.length, setCursor]);
+  }, [shownCursor, rotation.length, setCursor, setSeenClassics, line]);
 
   if (!line) return null;
   return <StoryLine line={line} />;
@@ -260,15 +300,69 @@ function RotatingStory({ stories, dashboardStage }) {
 const IS_DEVELOPMENT =
   process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
+// How many of every N visits go to a classic lift, by how many memories the
+// log holds. A twelve-year log has dozens of classic lifts against one of
+// each other kind of story, so it earns more turns; a short log with a
+// handful keeps the classic lift to one turn per cycle so it does not repeat
+// itself. Each entry: at least `min` candidates -> `classics` classic turns
+// after every `stories` other stories.
+const CLASSIC_SHARE_BY_COUNT = [
+  { min: 60, stories: 1, classics: 2 }, // 2 of every 3 visits
+  { min: 25, stories: 1, classics: 1 }, // every 2nd visit
+  { min: 10, stories: 2, classics: 1 }, // every 3rd visit
+];
+
+function isClassicStory(story) {
+  return story.kind === "summary" && story.id === "classic";
+}
+
+function getClassicShare(classicCount) {
+  return CLASSIC_SHARE_BY_COUNT.find(({ min }) => classicCount >= min) ?? null;
+}
+
+// The visit-by-visit order: the other stories in rank order, with classic
+// lift turns woven in at the share the log has earned.
+function buildRotation(stories, classicCount) {
+  const classic = stories.find(isClassicStory);
+  const others = stories.filter((story) => story !== classic);
+  const share = getClassicShare(classicCount);
+  if (!classic || others.length === 0 || !share) return stories;
+
+  const rotation = [];
+  others.forEach((story, index) => {
+    rotation.push(story);
+    if ((index + 1) % share.stories === 0) {
+      for (let i = 0; i < share.classics; i++) rotation.push(classic);
+    }
+  });
+  // A short list of other stories might never reach a classic turn.
+  if (!rotation.includes(classic)) rotation.push(classic);
+  return rotation;
+}
+
+function describeClassicShare(classicCount) {
+  const share = getClassicShare(classicCount);
+  return share
+    ? `${share.classics} of every ${share.stories + share.classics} visits`
+    : "one turn per cycle";
+}
+
+function getClassicId(classic) {
+  return `${classic.lift.date}|${classic.lift.liftType}`;
+}
+
 // One row per ranked story for the development console table. The story on
 // screen reuses its own line, so a classic lift row matches what is showing
 // rather than a second random pick.
-function describeCandidates(stories, shownIndex, shownLine, context) {
-  return stories.map((story, index) => {
-    const line =
-      index === shownIndex ? shownLine : buildStoryLine(story, context);
+function describeCandidates(stories, shownStory, shownLine, context) {
+  return stories.map((story) => {
+    const isShown = story === shownStory;
+    const line = isShown ? shownLine : buildStoryLine(story, context);
     return {
-      showing: index === shownIndex ? "now" : "",
+      showing: isShown ? "now" : "",
+      turns: isClassicStory(story)
+        ? `${describeClassicShare(context.classicCandidates.length)}, ${context.seenClassicIds.length} of ${context.classicCandidates.length} seen`
+        : "",
       score: story.score,
       type: story.kind === "summary" ? `summary: ${story.id}` : story.kind,
       sentence: line ? toSentence(line) : "(nothing to say)",
@@ -483,13 +577,16 @@ function buildSummaryLine(story, context, setLabel) {
       };
     }
     case "classic": {
-      const candidates = buildClassicLiftCandidates({
-        parsedData,
-        isMetric: athleteBio.isMetric,
-        meetDays: context.meetDays,
-      });
-      logClassicLiftCandidates(candidates);
-      const classic = pickClassicLiftFrom(candidates);
+      const candidates = context.classicCandidates ?? [];
+      // Only memories not yet shown, until all have been; the pick within
+      // them is still weighted by score and spread across the years.
+      const seen = new Set(context.seenClassicIds ?? []);
+      const unseen = candidates.filter(
+        (candidate) => !seen.has(getClassicId(candidate)),
+      );
+      const classic = pickClassicLiftFrom(
+        unseen.length > 0 ? unseen : candidates,
+      );
       if (!classic) return null;
       const note = classic.lift.notes?.trim();
       const when = format(parseISO(classic.lift.date), "MMMM yyyy");
@@ -500,6 +597,8 @@ function buildSummaryLine(story, context, setLabel) {
         commentary: `${classic.label}, ${when}.${note ? ` “${note}”` : ""}`,
         href: logHref(classic.lift.date),
         videoUrl: getVideoUrl(classic.lift),
+        classicId: getClassicId(classic),
+        classicTotal: candidates.length,
       };
     }
     case "momentum": {

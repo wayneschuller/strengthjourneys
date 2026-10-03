@@ -8,8 +8,12 @@
  * never gave — every marked-out block asked a question nothing answered. The bar is
  * a single solid form again; older runs simply fade back so the list reads as a
  * timeline, which the date beside each bar already explains.
+ *
+ * A powerlifting meet that fell inside a run sits on the bar as a gold medal, at
+ * the week it happened. It is a mark laid over the bar, not a property of it.
  */
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import {
   AnimatePresence,
@@ -28,8 +32,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  MeetMedalGlyph,
+  MeetTooltipLine,
+  getMeetLogHref,
+} from "@/components/meet-medal";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useHasCoarsePointer } from "@/hooks/use-has-coarse-pointer";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import {
   MIN_SESSIONS_PER_WEEK,
@@ -89,6 +99,21 @@ function formatStreakRange(startWeek, endWeek) {
   return `${format(s, "MMM yyyy")} → ${format(e, "MMM yyyy")}`;
 }
 
+// The meets that fell inside a streak, oldest first, each with the week of the
+// run it landed in (0 for the first week) so the bar can place its medal.
+function getStreakMeets(streak, meetDays) {
+  const start = parseISO(streak.startWeek);
+  const meets = [];
+  for (const [date, meetDay] of meetDays ?? []) {
+    const weekIndex = Math.floor(
+      differenceInCalendarDays(parseISO(date), start) / 7,
+    );
+    if (weekIndex < 0 || weekIndex >= streak.weeks) continue;
+    meets.push({ date, ...meetDay, weekIndex });
+  }
+  return meets.sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export function StreaksLeaderboard({
   streaks,
   firstSessionDate = null,
@@ -96,6 +121,7 @@ export function StreaksLeaderboard({
   canStart = true,
 }) {
   const { isMetric } = useAthleteBio();
+  const { meetDays } = useUserLiftingData();
   const prefersReducedMotion = useReducedMotion();
   const hasCoarsePointer = useHasCoarsePointer();
   const [showAll, setShowAll] = useState(false);
@@ -168,6 +194,16 @@ export function StreaksLeaderboard({
     };
   }, [ranked, firstSessionDate]);
 
+  const meetsByStreak = useMemo(() => {
+    const byStreak = new Map();
+    if (!meetDays?.size) return byStreak;
+    for (const s of ranked) {
+      const meets = getStreakMeets(s, meetDays);
+      if (meets.length) byStreak.set(s, meets);
+    }
+    return byStreak;
+  }, [ranked, meetDays]);
+
   if (!ranked.length) {
     return (
       <div className="text-muted-foreground py-8 text-center text-xs">
@@ -204,6 +240,7 @@ export function StreaksLeaderboard({
       <StreakBar
         key={key}
         streak={s}
+        meets={meetsByStreak.get(s)}
         lengthPct={lengthPct}
         heightPx={heightPx}
         recency={recency}
@@ -278,7 +315,7 @@ export function StreaksLeaderboard({
           </div>
         )}
 
-        <StreakLegend />
+        <StreakLegend hasMeets={meetsByStreak.size > 0} />
       </div>
     </TooltipProvider>
   );
@@ -369,7 +406,7 @@ function StreakCount({
 // that is not self-evident. Bar length is obviously weeks — it has the number
 // beside it — and the fade is obviously age, because the date is right there.
 // Thickness is the encoding nobody would guess, so it is the one spelled out.
-function StreakLegend() {
+function StreakLegend({ hasMeets }) {
   return (
     <div className="text-muted-foreground/80 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 pt-1 text-[10px] leading-none">
       <span>
@@ -378,12 +415,22 @@ function StreakLegend() {
       </span>
       <span aria-hidden>·</span>
       <span>bar thickness = average weekly tonnage</span>
+      {hasMeets && (
+        <>
+          <span aria-hidden>·</span>
+          <span className="flex items-center gap-1">
+            <MeetMedalGlyph size={11} className="shrink-0" />
+            meet
+          </span>
+        </>
+      )}
     </div>
   );
 }
 
 function StreakBar({
   streak,
+  meets,
   lengthPct,
   heightPx,
   recency,
@@ -444,7 +491,9 @@ function StreakBar({
         type: "button",
         onClick: onToggle,
         "aria-expanded": isExpanded,
-        "aria-label": `${dateLabel}, ${streak.weeks} week streak`,
+        "aria-label": `${dateLabel}, ${streak.weeks} week streak${
+          meets ? `, ${meets.map((m) => m.name ?? "Meet day").join(", ")}` : ""
+        }`,
       };
 
   const row = (
@@ -532,6 +581,37 @@ function StreakBar({
             />
           )}
         </motion.div>
+        {/* Meet medals are siblings of the bar for the same reason as the live
+            dot below: the bar clips, masks and fades, and a medal should do
+            none of those. Each one sits over the week its meet happened and
+            pops in as the growing bar gets there. */}
+        {meets?.map((meet) => {
+          const along = (meet.weekIndex + 0.5) / streak.weeks;
+          return (
+            <motion.span
+              key={meet.date}
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${lengthPct * along}%` }}
+              initial={shouldAnimate ? { scale: 0 } : false}
+              animate={
+                shouldAnimate ? { scale: isRevealed ? 1 : 0 } : undefined
+              }
+              transition={
+                shouldAnimate
+                  ? {
+                      type: "spring",
+                      stiffness: 520,
+                      damping: 16,
+                      delay: timing.delay + timing.duration * along,
+                    }
+                  : undefined
+              }
+            >
+              <MeetMedalGlyph size={14} className="block drop-shadow-sm" />
+            </motion.span>
+          );
+        })}
         {/* A live dot just past where the bar fades out. It is a sibling of the
             bar rather than part of it so the bar's fade mask leaves it alone,
             and it says the thing a short bar cannot: this one is still running.
@@ -592,14 +672,16 @@ function StreakBar({
     return (
       <div className="flex flex-col gap-1">
         {row}
-        <StreakInlineSummary streak={streak} isMetric={isMetric} />
+        <StreakInlineSummary
+          streak={streak}
+          meets={meets}
+          isMetric={isMetric}
+        />
       </div>
     );
   }
 
-  const detail = (
-    <StreakDetail streak={streak} dateLabel={dateLabel} isMetric={isMetric} />
-  );
+  const detailProps = { streak, meets, dateLabel, isMetric };
 
   return (
     <div className="flex flex-col">
@@ -612,7 +694,7 @@ function StreakBar({
         <Tooltip>
           <TooltipTrigger asChild>{row}</TooltipTrigger>
           <TooltipContent side="top" align="start" className="max-w-[18rem]">
-            {detail}
+            <StreakDetail {...detailProps} />
           </TooltipContent>
         </Tooltip>
       )}
@@ -628,7 +710,9 @@ function StreakBar({
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="border-border/50 mt-2 ml-[94px] border-l pb-1 pl-3 sm:ml-[112px]">
-              {detail}
+              {/* Only the pinned-open copy can be clicked, so it is the one
+                  whose meets open the log. */}
+              <StreakDetail {...detailProps} linkMeets />
             </div>
           </motion.div>
         )}
@@ -637,12 +721,21 @@ function StreakBar({
   );
 }
 
-function StreakInlineSummary({ streak, isMetric }) {
+function StreakInlineSummary({ streak, meets, isMetric }) {
   const avgWeekly = Math.round((streak.avgWeeklyTonnage || 0) / 1000);
   const topPrs = (streak.prs || []).slice(0, 3);
   return (
     <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 pl-1 text-[10px] leading-tight">
       <span>~{avgWeekly.toLocaleString()}k/wk</span>
+      {meets?.map((meet) => (
+        <span
+          key={meet.date}
+          className="flex items-center gap-1 font-medium text-amber-600"
+        >
+          <MeetMedalGlyph size={10} className="shrink-0" />
+          {meet.name ?? "Meet day"}
+        </span>
+      ))}
       {topPrs.map((pr, idx) => {
         const w = getDisplayWeight(pr, isMetric);
         const meta = TIER_META[pr.tier] || TIER_META[3];
@@ -668,7 +761,13 @@ function StreakInlineSummary({ streak, isMetric }) {
 }
 
 // Shared by the desktop hover tooltip and the inline tap disclosure.
-function StreakDetail({ streak, dateLabel, isMetric }) {
+function StreakDetail({
+  streak,
+  meets,
+  dateLabel,
+  isMetric,
+  linkMeets = false,
+}) {
   const avgWeekly = Math.round((streak.avgWeeklyTonnage || 0) / 1000);
   const bestWeek = streak.weekCounts?.length
     ? Math.max(...streak.weekCounts)
@@ -686,6 +785,20 @@ function StreakDetail({ streak, dateLabel, isMetric }) {
         Avg weekly tonnage: ~{avgWeekly.toLocaleString()}k
         {bestWeek !== null && ` · best week: ${bestWeek} sessions`}
       </div>
+      {meets?.map((meet) =>
+        linkMeets ? (
+          <Link
+            key={meet.date}
+            href={getMeetLogHref(meet)}
+            className="block rounded hover:underline"
+            aria-label={`${meet.name ?? "Meet day"}, open ${meet.date} in the log`}
+          >
+            <MeetTooltipLine meet={meet} />
+          </Link>
+        ) : (
+          <MeetTooltipLine key={meet.date} meet={meet} />
+        ),
+      )}
       {streak.prs?.length > 0 ? (
         <ul className="space-y-0.5">
           {streak.prs.map((pr, idx) => {

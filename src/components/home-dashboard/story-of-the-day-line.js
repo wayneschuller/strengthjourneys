@@ -196,7 +196,7 @@ function RotatingStory({ stories, dashboardStage }) {
   const [shownCursor] = useState(() =>
     Number.isInteger(cursor) && cursor >= 0 ? cursor : 0,
   );
-  const [line] = useState(() => {
+  const [{ line, candidates }] = useState(() => {
     const context = {
       parsedData,
       liftTypes,
@@ -206,14 +206,35 @@ function RotatingStory({ stories, dashboardStage }) {
       athleteBio,
       dashboardStage,
     };
-    const story = stories[shownCursor % stories.length];
+    const shownIndex = shownCursor % stories.length;
     // The classic lift can come up empty on a thin log; the journey line
     // always has something to say.
-    return (
-      buildStoryLine(story, context) ??
-      buildStoryLine({ ...story, kind: "summary", id: "journey" }, context)
-    );
+    const shownLine =
+      buildStoryLine(stories[shownIndex], context) ??
+      buildStoryLine(
+        { ...stories[shownIndex], kind: "summary", id: "journey" },
+        context,
+      );
+    return {
+      line: shownLine,
+      candidates: IS_DEVELOPMENT
+        ? describeCandidates(stories, shownIndex, shownLine, context)
+        : null,
+    };
   });
+
+  // Development only: every candidate in rank order, as the sentence it would
+  // read, so the whole rotation can be reviewed without clicking through it.
+  useEffect(() => {
+    if (!candidates) return;
+    console.groupCollapsed(
+      `Story of the day candidates (${candidates.length}), showing #${
+        candidates.findIndex((candidate) => candidate.showing) + 1
+      }`,
+    );
+    console.table(candidates);
+    console.groupEnd();
+  }, [candidates]);
 
   // Move on to the next story only once this one has been on screen for a
   // moment. A lifter who leaves before the greeting reveals it finds the same
@@ -234,6 +255,27 @@ function RotatingStory({ stories, dashboardStage }) {
 
   if (!line) return null;
   return <StoryLine line={line} />;
+}
+
+const IS_DEVELOPMENT =
+  process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
+
+// One row per ranked story for the development console table. The story on
+// screen reuses its own line, so a classic lift row matches what is showing
+// rather than a second random pick.
+function describeCandidates(stories, shownIndex, shownLine, context) {
+  return stories.map((story, index) => {
+    const line =
+      index === shownIndex ? shownLine : buildStoryLine(story, context);
+    return {
+      showing: index === shownIndex ? "now" : "",
+      score: story.score,
+      type: story.kind === "summary" ? `summary: ${story.id}` : story.kind,
+      sentence: line ? toSentence(line) : "(nothing to say)",
+      link: line?.href ?? "",
+      video: line?.videoUrl ? "yes" : "",
+    };
+  });
 }
 
 const ACCENT_CLASSES = {
@@ -601,7 +643,7 @@ function getSincePhrase(firstDate) {
 // Development only: the whole classic lift candidate list as a table, so the
 // picks can be reviewed for feel against a real log.
 function logClassicLiftCandidates(candidates) {
-  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development") return;
+  if (!IS_DEVELOPMENT) return;
   console.groupCollapsed(`Classic lift candidates (${candidates.length})`);
   console.table(
     candidates.map(({ lift, label, source, score }) => ({

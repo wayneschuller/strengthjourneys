@@ -52,7 +52,7 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
   return (
     <motion.section
       aria-label="Meet day"
-      className="relative mb-5 overflow-hidden rounded-2xl border px-4 py-4 sm:px-6 sm:py-5"
+      className="relative mb-5 overflow-hidden rounded-2xl border px-4 py-3.5 sm:px-5 sm:py-4"
       style={{
         borderColor: `color-mix(in srgb, ${MEET_GOLD} 55%, transparent)`,
         background: `linear-gradient(135deg, color-mix(in srgb, ${MEET_GOLD} 14%, var(--card)) 0%, var(--card) 60%)`,
@@ -94,7 +94,7 @@ export function MeetDayBanner({ meetDay, sessionDate, todayIso, isMetric }) {
 
       {/* Two by two: squat, bench, deadlift, and the total as the fourth. */}
       {attempts.length > 0 && (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {attempts.map(({ name, liftType, set }, index) => (
             <AttemptTile
               key={name}
@@ -163,7 +163,7 @@ function AttemptTile({ name, liftType, set, isMetric, index, onPlay }) {
   const label = `Watch the ${name.toLowerCase()} attempt`;
 
   const bigButtonClass =
-    "group/play relative flex h-14 w-14 shrink-0 items-center justify-center self-center rounded-full shadow-md transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none";
+    "group/play relative flex h-12 w-12 shrink-0 items-center justify-center self-center rounded-full shadow-md transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none";
   const ping = (
     <span
       aria-hidden="true"
@@ -175,25 +175,25 @@ function AttemptTile({ name, liftType, set, isMetric, index, onPlay }) {
   return (
     <motion.div
       {...tileMotion(index, prefersReducedMotion)}
-      className="bg-background/75 flex min-h-[8.5rem] items-stretch gap-4 rounded-xl border p-4"
+      className="bg-background/75 flex min-h-[6.5rem] items-stretch gap-3 rounded-xl border px-4 py-3"
     >
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2">
           <LiftArtwork liftType={liftType} size="sm" animate={false} />
           <p className="text-muted-foreground text-sm font-medium">{name}</p>
         </div>
-        <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums">
+        <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums">
           {value}
-          <span className="text-xl font-semibold">{unit}</span>
+          <span className="text-lg font-semibold">{unit}</span>
           {set.reps > 1 ? (
-            <span className="text-muted-foreground text-lg font-normal">
+            <span className="text-muted-foreground text-base font-normal">
               {` × ${set.reps}`}
             </span>
           ) : null}
         </p>
         {note && (
           <p
-            className="text-muted-foreground mt-1.5 line-clamp-3 text-sm leading-snug italic"
+            className="text-muted-foreground mt-1 line-clamp-2 text-sm leading-snug italic"
             title={note}
           >
             “{note}”
@@ -210,7 +210,7 @@ function AttemptTile({ name, liftType, set, isMetric, index, onPlay }) {
             style={{ background: MEET_GOLD }}
           >
             {ping}
-            <Play className="relative h-6 w-6 translate-x-px fill-current" />
+            <Play className="relative h-5 w-5 translate-x-px fill-current" />
           </button>
         ) : (
           <a
@@ -223,7 +223,7 @@ function AttemptTile({ name, liftType, set, isMetric, index, onPlay }) {
             style={{ borderColor: MEET_GOLD }}
           >
             {ping}
-            <VideoSourceIcon source={source} className="relative h-7 w-7" />
+            <VideoSourceIcon source={source} className="relative h-6 w-6" />
           </a>
         ))}
     </motion.div>
@@ -236,24 +236,24 @@ function TotalTile({ total, index }) {
   return (
     <motion.div
       {...tileMotion(index, prefersReducedMotion)}
-      className="relative flex min-h-[8.5rem] flex-col justify-center overflow-hidden rounded-xl border-2 p-4"
+      className="relative flex min-h-[6.5rem] flex-col justify-center overflow-hidden rounded-xl border-2 px-4 py-3"
       style={{
         borderColor: MEET_GOLD,
         background: `linear-gradient(140deg, color-mix(in srgb, ${MEET_GOLD} 22%, var(--background)) 0%, var(--background) 75%)`,
       }}
     >
       <MeetMedalGlyph
-        size={96}
-        className="pointer-events-none absolute -right-3 -bottom-4 opacity-15"
+        size={80}
+        className="pointer-events-none absolute -right-2 -bottom-3 opacity-15"
       />
       <p className="text-muted-foreground text-sm font-medium">Meet total</p>
       <p
-        className="mt-1 text-4xl font-extrabold tracking-tight tabular-nums sm:text-5xl"
+        className="mt-0.5 text-3xl font-extrabold tracking-tight tabular-nums sm:text-4xl"
         style={{ color: MEET_GOLD }}
       >
         {total}
       </p>
-      <p className="text-muted-foreground mt-1 text-sm">
+      <p className="text-muted-foreground mt-0.5 text-sm">
         Squat, bench and deadlift
       </p>
     </motion.div>

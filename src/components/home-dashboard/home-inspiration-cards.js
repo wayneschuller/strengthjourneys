@@ -1,8 +1,12 @@
 /**
- * Story of the day: one quiet stat about the lifter in the dashboard header,
- * between the greeting and the sheet status, the best story first and dots to
- * read the rest. It is a small reward on the way in; the three headline cards
- * below are the main event, so keep this to a single card's height.
+ * Story of the day: one quiet stat about the lifter, hung under the greeting
+ * by DashboardGreeting. It is a small reward on the way in; the three headline
+ * cards below are the main event, so keep this to a single card's height.
+ *
+ * On load the stories play through once, each segment bar filling while its
+ * story shows, then settle back on the best one. Any hover, focus or tap hands
+ * control to the lifter and stops the play-through for good, and reduced
+ * motion skips it entirely.
  *
  * Stories come from two places. Event stories (a PR this week, a meet or
  * lifting anniversary, a PR anniversary, the longest streak) are found by
@@ -13,7 +17,7 @@
  * built yet.
  */
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -53,6 +57,9 @@ const EVERGREEN_KEYS_BY_STAGE = {
   ],
 };
 
+// Long enough to read a title and a two-line footer without rushing.
+const STORY_DWELL_SECONDS = 6.5;
+
 /**
  * @param {Object} props
  * @param {boolean} [props.isProgressDone=false] - When false, a skeleton holds
@@ -69,6 +76,8 @@ export function HomeInspirationCards({
     useUserLiftingData();
   const athleteBio = useAthleteBio();
   const [storyIndex, setStoryIndex] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
+  const [isPlaying, setIsPlaying] = useState(true);
 
   const allSessionDates = useMemo(
     () => sessionTonnageLookup?.allSessionDates ?? [],
@@ -99,42 +108,65 @@ export function HomeInspirationCards({
 
   const safeIndex = Math.min(storyIndex, stories.length - 1);
   const story = stories[safeIndex];
-  const showStory = (index) =>
+  const isAutoplaying =
+    isPlaying && !prefersReducedMotion && stories.length > 1;
+  const takeControl = () => setIsPlaying(false);
+  const showStory = (index) => {
+    takeControl();
     setStoryIndex((index + stories.length) % stories.length);
+  };
+  // One lap, then home: the last story hands back to the best one and the
+  // play-through ends there.
+  const advanceStory = () => {
+    if (safeIndex + 1 >= stories.length) {
+      setIsPlaying(false);
+      setStoryIndex(0);
+      return;
+    }
+    setStoryIndex(safeIndex + 1);
+  };
 
   return (
-    <div className="flex min-w-0 items-center gap-4">
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={story.id}
-          className="flex min-w-0 flex-1"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          {story.kind === "evergreen" ? (
-            <EvergreenStory
-              storyKey={story.id}
-              parsedData={parsedData}
-              liftTypes={liftTypes}
-              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-              athleteBio={athleteBio}
-              allSessionDates={allSessionDates}
-              sessionTonnageLookup={sessionTonnageLookup}
-              sessionCount={sessionCount}
-              dashboardStage={dashboardStage}
-            />
-          ) : (
-            <EventStoryCard story={story} />
-          )}
-        </motion.div>
-      </AnimatePresence>
+    <div
+      className="flex min-w-0 flex-col gap-2"
+      onPointerEnter={takeControl}
+      onFocusCapture={takeControl}
+    >
+      <div className="min-h-[5.125rem]">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={story.id}
+            className="flex min-w-0"
+            initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -6, filter: "blur(2px)" }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            {story.kind === "evergreen" ? (
+              <EvergreenStory
+                storyKey={story.id}
+                parsedData={parsedData}
+                liftTypes={liftTypes}
+                topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+                athleteBio={athleteBio}
+                allSessionDates={allSessionDates}
+                sessionTonnageLookup={sessionTonnageLookup}
+                sessionCount={sessionCount}
+                dashboardStage={dashboardStage}
+              />
+            ) : (
+              <EventStoryCard story={story} />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
       {stories.length > 1 && (
-        <StoryPager
+        <StorySegments
           count={stories.length}
           index={safeIndex}
+          isAutoplaying={isAutoplaying}
           onSelect={showStory}
+          onFilled={advanceStory}
         />
       )}
     </div>
@@ -215,29 +247,48 @@ function EvergreenStory({
   }
 }
 
-// Dots only: the header has no room for arrows, and each dot is a button so
-// any story is one tap away.
-function StoryPager({ count, index, onSelect }) {
+// Story segments, like a phone's stories bar: earlier stories full, later
+// ones empty, and the current one filling while it plays. Each segment is a
+// button with a tall hit area, so any story is one tap away.
+function StorySegments({ count, index, isAutoplaying, onSelect, onFilled }) {
   return (
-    <div className="flex shrink-0 items-center gap-1">
-      {Array.from({ length: count }).map((_, dotIndex) => (
-        <button
-          key={dotIndex}
-          type="button"
-          onClick={() => onSelect(dotIndex)}
-          aria-label={`Story ${dotIndex + 1} of ${count}`}
-          aria-current={dotIndex === index ? "true" : undefined}
-          className="group flex h-6 w-3 items-center justify-center"
-        >
-          <span
-            className={`h-1.5 w-1.5 rounded-full transition-colors ${
-              dotIndex === index
-                ? "bg-primary"
-                : "bg-muted-foreground/30 group-hover:bg-muted-foreground/60"
-            }`}
-          />
-        </button>
-      ))}
+    <div className="flex items-center gap-1">
+      {Array.from({ length: count }).map((_, segmentIndex) => {
+        const isCurrent = segmentIndex === index;
+        return (
+          <button
+            key={segmentIndex}
+            type="button"
+            onClick={() => onSelect(segmentIndex)}
+            aria-label={`Story ${segmentIndex + 1} of ${count}`}
+            aria-current={isCurrent ? "true" : undefined}
+            className="group flex h-4 w-7 items-center"
+          >
+            <span className="bg-muted-foreground/20 group-hover:bg-muted-foreground/35 relative h-[3px] w-full overflow-hidden rounded-full transition-colors">
+              {isCurrent && isAutoplaying ? (
+                <motion.span
+                  key={`fill-${index}`}
+                  className="bg-primary absolute inset-0 origin-left rounded-full"
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: STORY_DWELL_SECONDS, ease: "linear" }}
+                  onAnimationComplete={onFilled}
+                />
+              ) : (
+                <span
+                  className={`absolute inset-0 rounded-full transition-colors ${
+                    isCurrent
+                      ? "bg-primary"
+                      : segmentIndex < index && isAutoplaying
+                        ? "bg-primary/40"
+                        : ""
+                  }`}
+                />
+              )}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

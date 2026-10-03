@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "@/components/home-dashboard/home-inspiration-cards";
+import { DashboardGreeting } from "@/components/home-dashboard/dashboard-greeting";
 import {
   DashboardHeaderStatus,
   DataSheetStatus,
@@ -13,7 +14,6 @@ import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iro
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { motion } from "motion/react";
 import {
   gaTrackHomeDashboardFirstView,
   gaTrackHomeDashboardStageEntered,
@@ -241,71 +241,69 @@ export function HomeDashboard() {
     sessionCount,
   ]);
 
+  // The first week is intentionally quieter: no story until the lifter has
+  // enough real data for one to feel earned.
+  const headerStory = dashboardStage !== "starter_sample" &&
+    dashboardStage !== "first_real_week" && (
+      <HomeInspirationCards
+        isProgressDone={hasDataLoaded}
+        dashboardStage={dashboardStage}
+        sessionCount={sessionCount}
+      />
+    );
+
   return (
     <div>
       {isOwnData(dataSource) && (
         <div className="relative mb-4 text-xl 2xl:mb-6">
-          {/* 2xl: welcome left, story of the day in the middle, status right, all in one
-              row; below that they stack. The status slot holds the load indicator first
-              and the synced-sheet line afterwards, so hydration never pushes the
-              dashboard down and back up. */}
-          <div className="flex flex-col items-center gap-2 2xl:flex-row 2xl:items-start 2xl:justify-between 2xl:gap-4">
-            {session?.user?.name && (
-              <motion.div
-                className="text-center 2xl:text-left"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6 }}
-              >
-                <span className="text-muted-foreground">
-                  {welcomeQuip.split("{name}")[0]}
-                </span>
-                <span className="font-bold">
-                  {session.user.name?.split(" ")[0]}
-                </span>
-              </motion.div>
-            )}
-            {/* The first week is intentionally quieter: no story until the lifter has
-                enough real data for one to feel earned. */}
-            {dashboardStage !== "starter_sample" &&
-              dashboardStage !== "first_real_week" && (
-                <div className="flex w-full min-w-0 justify-center 2xl:w-auto 2xl:flex-1">
-                  <div className="max-w-xl min-w-0">
-                    <HomeInspirationCards
-                      isProgressDone={hasDataLoaded}
-                      dashboardStage={dashboardStage}
-                      sessionCount={sessionCount}
-                    />
-                  </div>
-                </div>
+          {/* 2xl: greeting and story of the day share the left half, status sits in the
+              right fifth; below that they stack. The status slot holds the load
+              indicator first and the synced-sheet line afterwards, so hydration never
+              pushes the dashboard down and back up. */}
+          <div className="flex flex-col items-center gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between 2xl:gap-8">
+            <div className="flex w-full justify-center 2xl:w-1/2 2xl:justify-start">
+              {session?.user?.name ? (
+                <DashboardGreeting
+                  quip={welcomeQuip}
+                  firstName={session.user.name.split(" ")[0]}
+                >
+                  {headerStory}
+                </DashboardGreeting>
+              ) : (
+                headerStory
               )}
-            <DashboardHeaderStatus
-              isProgressDone={isProgressDone}
-              indicator={
-                <RowProcessingIndicator
-                  mode={dataSource === "import" ? "preview" : "sheet"}
-                  count={dataSource === "import" ? previewEntryCount : rawRows}
-                  expectedCount={
-                    dataSource === "import" ? null : expectedRowCount
-                  }
-                  isProgressDone={isProgressDone}
-                  setIsProgressDone={setIsProgressDone}
-                />
-              }
-              status={
-                dataSource === "import" ? null : (
-                  <DataSheetStatus
-                    rawRows={rawRows}
-                    parsedData={parsedData}
-                    dataSyncedAt={dataSyncedAt}
-                    isValidating={isValidating}
-                    sheetURL={sheetInfo?.url}
-                    sheetFilename={sheetInfo?.filename}
-                    mutate={mutate}
+            </div>
+            <div className="w-full 2xl:w-1/5 2xl:min-w-fit">
+              <DashboardHeaderStatus
+                isProgressDone={isProgressDone}
+                indicator={
+                  <RowProcessingIndicator
+                    mode={dataSource === "import" ? "preview" : "sheet"}
+                    count={
+                      dataSource === "import" ? previewEntryCount : rawRows
+                    }
+                    expectedCount={
+                      dataSource === "import" ? null : expectedRowCount
+                    }
+                    isProgressDone={isProgressDone}
+                    setIsProgressDone={setIsProgressDone}
                   />
-                )
-              }
-            />
+                }
+                status={
+                  dataSource === "import" ? null : (
+                    <DataSheetStatus
+                      rawRows={rawRows}
+                      parsedData={parsedData}
+                      dataSyncedAt={dataSyncedAt}
+                      isValidating={isValidating}
+                      sheetURL={sheetInfo?.url}
+                      sheetFilename={sheetInfo?.filename}
+                      mutate={mutate}
+                    />
+                  )
+                }
+              />
+            </div>
           </div>
         </div>
       )}

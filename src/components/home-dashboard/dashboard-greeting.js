@@ -1,10 +1,14 @@
 /**
  * The dashboard's opening: the greeting, with the athlete's name underlined by
- * a marker stroke that draws itself in, and the story of the day hanging off
- * it on a thin thread, so the story reads as the next line of the greeting
- * rather than a separate widget.
+ * a marker stroke that draws itself in, and the story of the day joined to it
+ * on a thread, so the story reads as what the greeting goes on to say rather
+ * than a separate widget.
  *
- * Owns layout and entrance only. The story itself (ranking, paging) lives in
+ * Desktop puts the two on one row and the thread runs across from the end of
+ * the underline into the story. Phones stack them and drop the thread, which
+ * has no room to say anything there.
+ *
+ * Owns layout and entrance only. Which story shows lives in
  * HomeInspirationCards, passed in as children.
  */
 import { motion, useReducedMotion } from "motion/react";
@@ -14,9 +18,9 @@ export function DashboardGreeting({ quip, firstName, children }) {
   const [before = "", after = ""] = quip.split("{name}");
 
   return (
-    <div className="flex w-fit max-w-full flex-col">
+    <div className="flex max-w-full flex-col items-center gap-2 lg:flex-row lg:items-center lg:gap-0">
       <motion.p
-        className="text-xl leading-snug sm:text-2xl"
+        className="shrink-0 text-center text-xl leading-snug sm:text-2xl lg:text-left"
         initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -27,30 +31,33 @@ export function DashboardGreeting({ quip, firstName, children }) {
       </motion.p>
 
       {children && (
-        <div className="relative mt-2 pl-5">
-          {/* The thread: a knot under the greeting and a line that grows down
-              into the story. */}
-          <motion.span
+        <>
+          {/* The thread: picks up where the underline ends, a knot, then a
+              line that grows across into the story. */}
+          <div
             aria-hidden
-            className="bg-primary absolute top-1 left-[3px] h-2 w-2 rounded-full"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{
-              delay: 0.5,
-              type: "spring",
-              stiffness: 400,
-              damping: 18,
-            }}
-          />
-          <motion.span
-            aria-hidden
-            className="from-primary/50 absolute top-3 bottom-1 left-[6.5px] w-px origin-top bg-gradient-to-b to-transparent"
-            initial={{ scaleY: 0 }}
-            animate={{ scaleY: 1 }}
-            transition={{ delay: 0.6, duration: 0.7, ease: "easeOut" }}
-          />
-          {children}
-        </div>
+            className="mx-4 hidden w-12 shrink-0 items-center self-center lg:flex xl:w-16"
+          >
+            <motion.span
+              className="bg-primary h-2 w-2 shrink-0 rounded-full"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                delay: 0.55,
+                type: "spring",
+                stiffness: 400,
+                damping: 18,
+              }}
+            />
+            <motion.span
+              className="from-primary/60 to-primary/10 h-px flex-1 origin-left bg-gradient-to-r"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ delay: 0.6, duration: 0.45, ease: "easeOut" }}
+            />
+          </div>
+          <div className="min-w-0 lg:max-w-md">{children}</div>
+        </>
       )}
     </div>
   );

@@ -256,12 +256,12 @@ export function HomeDashboard() {
     <div>
       {isOwnData(dataSource) && (
         <div className="relative mb-4 text-xl 2xl:mb-6">
-          {/* 2xl: greeting and story of the day share the left half, status sits in the
-              right fifth; below that they stack. The status slot holds the load
+          {/* Greeting and story of the day share one row from lg. At 2xl the status
+              joins that row in the right fifth; below that it stacks. The status slot holds the load
               indicator first and the synced-sheet line afterwards, so hydration never
               pushes the dashboard down and back up. */}
-          <div className="flex flex-col items-center gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between 2xl:gap-8">
-            <div className="flex w-full justify-center 2xl:w-1/2 2xl:justify-start">
+          <div className="flex flex-col items-center gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between 2xl:gap-8">
+            <div className="flex w-full min-w-0 justify-center 2xl:w-auto 2xl:flex-1 2xl:justify-start">
               {session?.user?.name ? (
                 <DashboardGreeting
                   quip={welcomeQuip}

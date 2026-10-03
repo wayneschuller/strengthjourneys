@@ -6,17 +6,22 @@
  *
  * Desktop puts the two on one row and the thread runs across from the end of
  * the underline into the story. Both wait until the three headline cards are
- * on screen, then about ten seconds more before fading in, so the cards have
- * the stage first. Phones stack them and drop the thread, which has no room to
+ * on screen, then thirty seconds more before fading in, so the cards have
+ * the stage first. Development builds log the countdown to the console. Phones stack them and drop the thread, which has no room to
  * say anything there.
  *
  * Owns layout and entrance only. Which story shows lives in StoryOfTheDay,
  * passed in as children.
  */
+import { useEffect } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
-// Long enough to take in the three headline cards before anything else moves.
-export const STORY_REVEAL_DELAY_SECONDS = 10;
+import { devLog } from "@/lib/processing-utils";
+
+// Long enough to take in the three headline cards, which spend their first
+// several seconds counting up and revealing rows, before anything else moves.
+// Ten seconds felt like no wait at all once the cards' own entrance had run.
+export const STORY_REVEAL_DELAY_SECONDS = 30;
 
 /**
  * @param {Object} props
@@ -32,6 +37,23 @@ export function DashboardGreeting({
 }) {
   const prefersReducedMotion = useReducedMotion();
   const [before = "", after = ""] = quip.split("{name}");
+  const hasStory = !!children;
+
+  // The wait is hard to judge by eye, so development builds say when it
+  // starts and when the story arrives.
+  useEffect(() => {
+    if (!isStoryReady || !hasStory) return;
+    const startedAt = performance.now();
+    devLog(
+      `Story of the day: cards are on screen, story in ${STORY_REVEAL_DELAY_SECONDS}s`,
+    );
+    const timer = setTimeout(() => {
+      devLog(
+        `Story of the day: revealed after ${((performance.now() - startedAt) / 1000).toFixed(1)}s`,
+      );
+    }, STORY_REVEAL_DELAY_SECONDS * 1000);
+    return () => clearTimeout(timer);
+  }, [isStoryReady, hasStory]);
 
   return (
     <div className="flex max-w-full min-w-0 flex-col items-center gap-2 lg:flex-row lg:items-center lg:gap-0">

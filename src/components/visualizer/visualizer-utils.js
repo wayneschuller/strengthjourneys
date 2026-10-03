@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/select";
 
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { MeetTooltipLine } from "@/components/meet-medal";
 
 /**
  * Renders a compact inline summary of a session's sets as "reps@weight" pairs, optionally
@@ -79,10 +81,26 @@ const createLiftTooltipContent = (liftType, tuple, color) => {
   };
 };
 
+/**
+ * The meet line for a chart tooltip: the medal and the meet's name when the
+ * hovered day was a meet, nothing otherwise. The date is left off because the
+ * tooltip already leads with it.
+ *
+ * @param {Object} props
+ * @param {string} props.date - The hovered day, "YYYY-MM-DD".
+ */
+export const ChartTooltipMeetLine = ({ date }) => {
+  const { meetDays } = useUserLiftingData();
+  const meetDay = date ? meetDays?.get(date) : null;
+  if (!meetDay) return null;
+  return <MeetTooltipLine meet={{ date, ...meetDay }} showDate={false} />;
+};
+
 // Shared tooltip UI component
-const TooltipUI = ({ dateLabel, tooltipsPerLift }) => (
+const TooltipUI = ({ date, dateLabel, tooltipsPerLift }) => (
   <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
     <p className="font-bold">{dateLabel}</p>
+    <ChartTooltipMeetLine date={date} />
     {tooltipsPerLift.map(({ liftType, label, color, reps }) => (
       <div key={liftType}>
         <div className="flex flex-row items-center">
@@ -124,7 +142,13 @@ export const MultiLiftTooltipContent = ({
     )
     .filter(Boolean);
 
-  return <TooltipUI dateLabel={dateLabel} tooltipsPerLift={tooltipsPerLift} />;
+  return (
+    <TooltipUI
+      date={tuple.date}
+      dateLabel={dateLabel}
+      tooltipsPerLift={tooltipsPerLift}
+    />
+  );
 };
 
 // Helper function to get session lifts grouped by lift type (reused from visualizer-tonnage.js)
@@ -198,6 +222,7 @@ export const SingleLiftTooltipContent = ({
   return (
     <div className="grid min-w-[8rem] max-w-[17rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
+      <ChartTooltipMeetLine date={dateStr} />
       <div className="flex flex-row items-center">
         <div
           className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"

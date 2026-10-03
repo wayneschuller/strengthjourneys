@@ -12,7 +12,10 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, logTiming, getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
-import { SessionRow } from "@/components/visualizer/visualizer-utils";
+import {
+  SessionRow,
+  ChartTooltipMeetLine,
+} from "@/components/visualizer/visualizer-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
@@ -723,6 +726,7 @@ const TonnageTooltipMinimal = ({
   return (
     <div className="border-border/50 bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
+      <ChartTooltipMeetLine date={dateStr} />
       <p>{`${tonnage.toFixed(0)}${unitType}`}</p>
     </div>
   );
@@ -790,6 +794,7 @@ const TonnageTooltipContent = ({
   return (
     <div className="border-border/50 bg-background grid max-w-[17rem] min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
+      <ChartTooltipMeetLine date={dateStr} />
       <div className="flex flex-row items-center">
         <div
           className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"

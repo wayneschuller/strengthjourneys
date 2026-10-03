@@ -604,17 +604,11 @@ export function renderYearDividers(yearLabels, showLabels = true) {
 // The same gold as every other meet mark in the app (components/meet-medal.js).
 const MEET_MARKER_COLOR = MEET_GOLD;
 
-const MEET_SHORT_LIFT_NAMES = {
-  "Back Squat": "Squat",
-  "Bench Press": "Bench",
-  "Strict Press": "Press",
-};
-
 /**
  * A gold hairline at each powerlifting meet, topped by a small medal badge.
  * Solid where the year dividers are dashed and grey, so a meet reads as an
- * event on the timeline rather than another gridline. Hovering the badge
- * names the meet and the day's top sets.
+ * event on the timeline rather than another gridline. The chart's own hover
+ * tooltip names the meet (ChartTooltipMeetLine in visualizer-utils.js).
  *
  * Returned as an array for the same reason as renderYearDividers: Recharts
  * only recognises ReferenceLine as a direct child of the chart. Meets outside
@@ -637,30 +631,13 @@ export function renderMeetMarkers(
     : null;
 
   const markers = [];
-  for (const [date, { name, topSets }] of meetDays) {
+  for (const [date, { topSets }] of meetDays) {
     const sets = Object.values(topSets).filter(
       (set) => !wanted || wanted.has(set.liftType),
     );
     if (wanted && sets.length === 0) continue;
 
     const [y, m, d] = date.split("-").map(Number);
-    const title = [
-      name ?? "Meet day",
-      new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined, {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone: "UTC",
-      }),
-      sets
-        .map(
-          (set) =>
-            `${MEET_SHORT_LIFT_NAMES[set.liftType] ?? set.liftType} ${set.reps}@${set.weight}${set.unitType}`,
-        )
-        .join(" · "),
-    ]
-      .filter(Boolean)
-      .join("\n");
 
     markers.push(
       <ReferenceLine
@@ -676,7 +653,6 @@ export function renderMeetMarkers(
               x={viewBox.x}
               y={viewBox.y}
               compact={compact}
-              title={title}
             />
           ),
         }}
@@ -689,7 +665,7 @@ export function renderMeetMarkers(
 // A medal on a ribbon inside a ringed disc, sitting at the top of the meet's
 // hairline. Drawn in SVG so it scales with the chart and takes the theme's
 // background, and fades in after the series has drawn.
-function MeetBadge({ x, y, compact, title }) {
+function MeetBadge({ x, y, compact }) {
   const radius = compact ? 7 : 9;
   const scale = compact ? 0.78 : 1;
   const cy = y + radius + 2;
@@ -703,7 +679,6 @@ function MeetBadge({ x, y, compact, title }) {
         dur="0.5s"
         fill="freeze"
       />
-      <title>{title}</title>
       <circle
         cx={x}
         cy={cy}

@@ -45,6 +45,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { VideoLinkButton } from "@/components/log/video-link-button";
+import { MeetSetMedal } from "@/components/meet-set-medal";
 import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { LiftStrengthLevel } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
@@ -464,6 +465,10 @@ function RepRangeCard({
               )}
             >
               {getReadableDateString(record.date, true, { todayYmd })}
+              <MeetSetMedal
+                date={record.date}
+                className="pointer-events-auto ml-1.5 -translate-y-px"
+              />
               {standingFor && (
                 <span className={hasPoster ? "text-white/70" : ""}>
                   {" · "}
@@ -648,6 +653,7 @@ function RecordHero({
           >
             {getReadableDateString(record.date, true, { todayYmd })}
           </Link>
+          <MeetSetMedal date={record.date} className="ml-1.5 -translate-y-px" />
           {standingFor && ` · ${standingFor}`}
         </div>
         {note && <TruncatedText text={note} className="mt-2 text-sm" />}
@@ -705,6 +711,7 @@ function RecordRow({
             {repCount}@{value}
             {unit}
           </Link>
+          <MeetSetMedal date={lift.date} size={14} />
           {isRecent && (
             <Badge variant="secondary" className="text-xs">
               ⚡ Recent

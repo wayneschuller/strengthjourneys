@@ -41,6 +41,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CountUp } from "@/components/count-up";
 import { cn } from "@/lib/utils";
+import { MeetSetMedal } from "@/components/meet-set-medal";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 function getLogHref(date) {
@@ -465,6 +466,7 @@ export function LiftJourneyCard({
                   </>
                 )}
               </Link>
+              <MeetSetMedal date={bestLift.date} className="ml-1 -translate-y-px" />
             </p>
             <VideoLinkButton
               url={bestLift.URL}
@@ -585,6 +587,7 @@ function HighlightRow({ highlight }) {
         <span className="w-24 shrink-0 font-mono font-medium">
           {reps}@{weight}
           {unit}
+          <MeetSetMedal date={date} className="ml-1 -translate-y-px" />
         </span>
         <span className="text-muted-foreground w-32 shrink-0">
           {getReadableDateString(date, true)}
@@ -668,6 +671,7 @@ function JourneyStats({
         suffix: w.unit,
         sub: getReadableDateString(lift.date),
         href: getLogHref(lift.date),
+        medalDate: lift.date,
       };
     });
 
@@ -737,6 +741,13 @@ function StatTile({ tile, index, accent }) {
       </div>
       <div className="text-muted-foreground mt-1 text-[11px] leading-snug text-balance">
         {tile.sub}
+        {tile.medalDate && (
+          <MeetSetMedal
+            date={tile.medalDate}
+            size={11}
+            className="ml-1 -translate-y-px"
+          />
+        )}
       </div>
     </>
   );

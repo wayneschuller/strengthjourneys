@@ -16,6 +16,7 @@ import { ImportDataOwnershipPromo } from "@/components/import-data-ownership-pro
 import { getLocalYmdDaysAgo, getLongReadableDateString } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
+import { MeetSetMedal } from "@/components/meet-set-medal";
 import { GettingStartedCard } from "@/components/onboarding/instructions-cards";
 import { useReadLocalStorage } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
@@ -889,13 +890,20 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       )}
                     >
                       {visibleE1rmSources?.[key] ? (
-                        <Link
-                          prefetch={false}
-                          href={`/log?date=${visibleE1rmSources[key].date}`}
-                          className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-                        >
-                          {formatE1RMSourceText(visibleE1rmSources[key])}.
-                        </Link>
+                        <>
+                          <Link
+                            prefetch={false}
+                            href={`/log?date=${visibleE1rmSources[key].date}`}
+                            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+                          >
+                            {formatE1RMSourceText(visibleE1rmSources[key])}.
+                          </Link>
+                          <MeetSetMedal
+                            date={visibleE1rmSources[key].date}
+                            size={12}
+                            className="ml-1 -translate-y-px"
+                          />
+                        </>
                       ) : (
                         "Source set reserved"
                       )}

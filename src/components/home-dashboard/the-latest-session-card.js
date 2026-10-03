@@ -59,16 +59,6 @@ import { MeetDayCompactBanner } from "@/components/log/meet-day-banner";
 import { MEET_GOLD } from "@/components/meet-medal";
 
 // "Latest Session" when on the most recent date.
-// One figure in the summary strip under the card header.
-function SummaryStat({ value, label }) {
-  return (
-    <div className="min-w-0 px-2">
-      <dd className="truncate text-sm font-semibold tabular-nums">{value}</dd>
-      <dt className="text-muted-foreground text-xs">{label}</dt>
-    </div>
-  );
-}
-
 // "Feb 6 Session" for an earlier date in the current year.
 // "Feb 6, 2024 Session" for a date in a previous year.
 function getSessionCardTitle(sessionDate, isLastDate) {
@@ -220,29 +210,6 @@ export function TheLatestSessionCard({
   }, [analyzedSessionLifts, sessionDate, sessionTonnageLookup]);
 
   // devLog(analyzedSessionLifts);
-
-  // The session at a glance, shown as a strip under the header.
-  const sessionSummary = useMemo(() => {
-    if (!analyzedSessionLifts) return null;
-    const blocks = Object.values(analyzedSessionLifts);
-    if (blocks.length === 0) return null;
-    const tonnageByUnit =
-      sessionTonnageLookup?.sessionTonnageByDate?.[sessionDate] ?? {};
-    // Tonnage is kept per logged unit; show the lifter's own when the session
-    // has it, otherwise whichever unit the session was logged in.
-    const preferredUnit = isMetric ? "kg" : "lb";
-    const unit =
-      tonnageByUnit[preferredUnit] != null
-        ? preferredUnit
-        : Object.keys(tonnageByUnit)[0];
-    return {
-      liftCount: blocks.length,
-      setCount: blocks.reduce((sum, workouts) => sum + workouts.length, 0),
-      tonnage: unit
-        ? `${Math.round(tonnageByUnit[unit]).toLocaleString()}${unit}`
-        : null,
-    };
-  }, [analyzedSessionLifts, sessionTonnageLookup, sessionDate, isMetric]);
 
   const meetDay = (sessionDate && meetDays?.get(sessionDate)) || null;
 
@@ -426,22 +393,6 @@ export function TheLatestSessionCard({
           </div>
         </CardHeader>
         <CardContent className="flex-1 space-y-4 pt-0">
-          {hasLoggedSessions && sessionSummary && !isStarterSampleStage && (
-            <dl className="bg-muted/30 grid grid-cols-3 divide-x rounded-lg border py-2 text-center">
-              <SummaryStat
-                value={sessionSummary.liftCount}
-                label={sessionSummary.liftCount === 1 ? "Lift" : "Lifts"}
-              />
-              <SummaryStat
-                value={sessionSummary.setCount}
-                label={sessionSummary.setCount === 1 ? "Set" : "Sets"}
-              />
-              <SummaryStat
-                value={sessionSummary.tonnage ?? "0"}
-                label="Tonnage"
-              />
-            </dl>
-          )}
           {meetDay && hasLoggedSessions && (
             <MeetDayCompactBanner
               meetDay={meetDay}

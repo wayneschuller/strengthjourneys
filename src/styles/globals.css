@@ -1379,41 +1379,6 @@ html:not([data-restoring]) [data-returning-visit] {
       no-repeat;
 }
 
-/* Dimension-line tick dividers between the hero stat tiles */
-@media (min-width: 640px) {
-  .blueprint .home-inspiration-strip > * + *,
-  .blueprint-dark .home-inspiration-strip > * + * {
-    position: relative;
-  }
-
-  .blueprint .home-inspiration-strip > * + *::before,
-  .blueprint-dark .home-inspiration-strip > * + *::before {
-    content: "";
-    position: absolute;
-    left: -13px;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    pointer-events: none;
-    background:
-      linear-gradient(
-          color-mix(in srgb, var(--primary) 45%, transparent),
-          color-mix(in srgb, var(--primary) 45%, transparent)
-        )
-        center / 1px 100% no-repeat,
-      linear-gradient(
-          color-mix(in srgb, var(--primary) 55%, transparent),
-          color-mix(in srgb, var(--primary) 55%, transparent)
-        )
-        top / 100% 1px no-repeat,
-      linear-gradient(
-          color-mix(in srgb, var(--primary) 55%, transparent),
-          color-mix(in srgb, var(--primary) 55%, transparent)
-        )
-        bottom / 100% 1px no-repeat;
-  }
-}
-
 /* Center Google Drive picker vertically — Google sets an inline `top` that
    positions the dialog too high, causing it to clip on smaller viewports. */
 .picker-dialog {

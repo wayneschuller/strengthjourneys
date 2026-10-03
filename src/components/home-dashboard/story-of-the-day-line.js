@@ -237,23 +237,26 @@ function StoryLine({ line }) {
   const content = (
     <>
       <span
-        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+        className={`mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
           ACCENT_CLASSES[accent] ?? ACCENT_CLASSES.primary
         }`}
       >
         <Icon className="h-3 w-3" />
       </span>
+      {/* One sentence: "Kicker: lead, commentary." The gaps between the
+          spans are the spaces after the colon and the comma. */}
       {kicker && (
         <span className="text-muted-foreground shrink-0 whitespace-nowrap">
-          {kicker}
+          {kicker}:
         </span>
       )}
       <span className="text-foreground/80 shrink-0 font-medium whitespace-nowrap tabular-nums decoration-1 underline-offset-4 group-hover:underline">
         {lead}
+        {commentary ? "," : "."}
       </span>
       {commentary && (
         <span className="text-muted-foreground min-w-0 truncate">
-          {commentary}
+          {ensureFullStop(continueSentence(commentary))}
         </span>
       )}
       {href && (
@@ -262,8 +265,9 @@ function StoryLine({ line }) {
     </>
   );
   // A step below the greeting's size: an aside, not a second headline.
-  const className = "group flex min-w-0 items-center gap-2 text-xs sm:text-sm";
-  const title = [kicker, lead, commentary].filter(Boolean).join(" ");
+  const className =
+    "group flex min-w-0 items-center gap-x-1 text-xs sm:text-sm";
+  const title = toSentence(line);
 
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -330,7 +334,7 @@ function buildStoryParts(story, context) {
         icon: TrendingUp,
         accent: "emerald",
         lead: `A ${story.milestone}${story.unit} ${story.liftNoun} is in reach`,
-        commentary: `Your ${setLabel(story.lift)} ${getRecentDayPhrase(story.daysAgo, story.date)} estimates ${story.estimate}${story.unit}.`,
+        commentary: `going by your ${setLabel(story.lift)} ${getRecentDayPhrase(story.daysAgo, story.date)}, which estimates ${story.estimate}${story.unit}.`,
         href: logHref(story.date),
         videoUrl: getVideoUrl(story.lift),
       };
@@ -340,16 +344,16 @@ function buildStoryParts(story, context) {
       const shown = [...story.prs]
         .sort((a, b) => a.reps - b.reps)
         .slice(0, 3)
-        .map(
-          (set) =>
-            `${MEET_SHORT_NAMES[set.liftType] ?? set.liftType} ${setLabel(set)}`,
-        );
+        .map((set) => `${getLiftNoun(set.liftType)} ${setLabel(set)}`);
       const count = story.prs.length;
       return {
         icon: Trophy,
         accent: "amber",
         lead: `${count} lifetime best${count === 1 ? "" : "s"} in ${story.year}`,
-        commentary: shown.join(" · ") + (count > 3 ? " and more." : "."),
+        commentary:
+          count > 3
+            ? `including ${shown.join(", ")} and more.`
+            : `${joinList(shown)}.`,
         href: logHref(story.date),
         videoUrl: null,
       };
@@ -368,15 +372,13 @@ function buildStoryParts(story, context) {
         icon: Medal,
         accent: "violet",
         lead: `Meet day, ${yearsAgo(story)}`,
-        commentary:
-          story.bestSingles
-            .map(
-              (set) =>
-                `${MEET_SHORT_NAMES[set.liftType] ?? set.liftType} ${weightLabel(set)}`,
-            )
-            .join(" · ") ||
-          story.meetName ||
-          null,
+        commentary: story.bestSingles.length
+          ? `with ${joinList(
+              story.bestSingles.map(
+                (set) => `${getLiftNoun(set.liftType)} ${weightLabel(set)}`,
+              ),
+            )}.`
+          : story.meetName || null,
         href: logHref(story.date),
         videoUrl: story.bestSingles.map(getVideoUrl).find(Boolean) ?? null,
       };
@@ -385,7 +387,7 @@ function buildStoryParts(story, context) {
         icon: Cake,
         accent: "emerald",
         lead: `${pluralYears(story.yearsAgo)} of lifting ${whenPhrase(story)}`,
-        commentary: `It started with ${story.lift.liftType} ${setLabel(story.lift)}.`,
+        commentary: `starting with ${story.lift.liftType} ${setLabel(story.lift)}.`,
         href: logHref(story.date),
         videoUrl: getVideoUrl(story.lift),
       };
@@ -475,13 +477,9 @@ function buildSummaryLine(story, context, setLabel) {
         icon: Medal,
         accent: "primary",
         lead: `Best of ${story.todayStr.slice(0, 4)} so far`,
-        commentary:
-          sets
-            .map(
-              (set) =>
-                `${MEET_SHORT_NAMES[set.liftType] ?? set.liftType} ${setLabel(set)}`,
-            )
-            .join(" · ") + ".",
+        commentary: `${joinList(
+          sets.map((set) => `${getLiftNoun(set.liftType)} ${setLabel(set)}`),
+        )}.`,
         href: null,
       };
     }
@@ -647,6 +645,39 @@ function logClassicLiftCandidates(candidates) {
     })),
   );
   console.groupEnd();
+}
+
+// The lead and commentary read as one sentence, so the commentary carries on
+// after a comma: its opening word drops to lower case unless it is an
+// acronym or a number ("New PR" becomes "new PR", "PR" stays "PR").
+function continueSentence(text) {
+  if (/^[A-Z][a-z]/.test(text)) {
+    return text.charAt(0).toLowerCase() + text.slice(1);
+  }
+  return text;
+}
+
+function ensureFullStop(text) {
+  return /[.!?”"]$/.test(text) ? text : `${text}.`;
+}
+
+// The whole line as the sentence it reads as, for the hover title.
+function toSentence({ kicker, lead, commentary }) {
+  const body = commentary
+    ? `${lead}, ${ensureFullStop(continueSentence(commentary))}`
+    : `${lead}.`;
+  return kicker ? `${kicker}: ${body}` : body;
+}
+
+// "a", "a and b", "a, b and c".
+function joinList(items) {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+// Lift names as they sit mid-sentence: "squat", "bench", "deadlift", "press".
+function getLiftNoun(liftType) {
+  return (MEET_SHORT_NAMES[liftType] ?? liftType).toLowerCase();
 }
 
 function logHref(dateStr) {

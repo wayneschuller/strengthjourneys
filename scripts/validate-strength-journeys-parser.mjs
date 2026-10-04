@@ -199,6 +199,89 @@ const withDateHeader = recoveryRows.map((row) => [...row]);
 withDateHeader[1][4] = "2026-10-03";
 assert.deepEqual(parseStrengthJourneysData(withDateHeader), expectedRecovery);
 
+// Recover Lift Type in every position, using registry synonyms, importer
+// aliases and sparse anchors. Compare the full result to the labelled sheet.
+const liftRecoveryRows = [
+  ["Date", "Lift Type", "Reps", "Weight"],
+  ["2026-10-02", "Squat (Barbell)", "5", "100kg"],
+  ["", "", "3", "110kg"],
+  ["2026-10-03", "RDL", "5", "70kg"],
+  ["", "Overhead Press", "5", "40kg"],
+  ["", " front squat ", "5", "60kg"],
+];
+const liftGroupCollapsed = console.groupCollapsed;
+const liftGroupEnd = console.groupEnd;
+console.groupCollapsed = () => {};
+console.groupEnd = () => {};
+try {
+  for (const order of permutations([0, 1, 2, 3])) {
+    const rows = liftRecoveryRows.map((row) =>
+      order.map((index) => row[index]),
+    );
+    const expected = parseStrengthJourneysData(rows);
+    const liftColumn = order.indexOf(1);
+    rows[0][liftColumn] = "";
+    // Simulate the Sheets API omitting a trailing empty header cell.
+    if (liftColumn === 3) rows[0].pop();
+    const before = structuredClone(rows);
+    const recoveryLogs = [];
+    console.info = (line) => recoveryLogs.push(line);
+    assert.deepEqual(parseStrengthJourneysData(rows), expected);
+    assert.deepEqual(rows, before);
+    assert.equal(recoveryLogs.length, 1);
+    assert.ok(
+      recoveryLogs[0].includes(
+        `Inferred Lift Type from the registered lift names in column ${liftColumn + 1}`,
+      ),
+    );
+    assert.ok(recoveryLogs[0].includes('Suggestion: Restore "Lift Type"'));
+  }
+} finally {
+  console.info = info;
+  console.groupCollapsed = liftGroupCollapsed;
+  console.groupEnd = liftGroupEnd;
+}
+
+// Empty, unknown, mixed or ambiguous content is insufficient evidence. A
+// registered name in a labelled Notes column must not be mistaken for a lift.
+for (const rows of [
+  [["Date", "", "Reps", "Weight"]],
+  [
+    ["Date", "", "Reps", "Weight"],
+    ["2026-10-02", "", "5", "100kg"],
+  ],
+  [
+    ["Date", "", "Reps", "Weight"],
+    ["2026-10-02", "My custom exercise", "5", "100kg"],
+  ],
+  [
+    ["Date", "", "Reps", "Weight"],
+    ["2026-10-02", "Deadlift", "5", "100kg"],
+    ...Array.from({ length: 100 }, () => ["", "", "3", "110kg"]),
+    ["", "session note", "3", "110kg"],
+  ],
+  [
+    ["Date", "", "Reps", "Weight", ""],
+    ["2026-10-02", "Deadlift", "5", "100kg", "Bench Press"],
+  ],
+  [
+    ["Date", "Notes", "Reps", "Weight"],
+    ["2026-10-02", "Deadlift", "5", "100kg"],
+  ],
+]) {
+  assert.throws(
+    () => parseStrengthJourneysData(rows),
+    /Missing required columns: Lift Type/,
+  );
+}
+assert.equal(
+  parseStrengthJourneysData([
+    ["Date", "Lift Type", "Reps", "Weight", ""],
+    ["2026-10-02", "My custom exercise", "5", "100kg", "Deadlift"],
+  ])[0].liftType,
+  "My custom exercise",
+);
+
 // Browser output separates user text from formatting arguments: literal %c
 // inside a cell stays text, while advice is italic without a repeated heading.
 const windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, "window");
@@ -260,3 +343,13 @@ assert.deepEqual(
 assert.match(groupEvents[0][1], /Strength Journeys parsing.*3 notices/);
 
 console.log("Strength Journeys parser checks passed.");
+
+function permutations(values) {
+  if (values.length === 0) return [[]];
+  return values.flatMap((value, index) =>
+    permutations(values.filter((_, other) => other !== index)).map((rest) => [
+      value,
+      ...rest,
+    ]),
+  );
+}

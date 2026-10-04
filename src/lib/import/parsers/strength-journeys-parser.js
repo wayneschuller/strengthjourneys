@@ -18,6 +18,7 @@
 
 import { recordTiming } from "@/lib/processing-utils";
 import { normalizeDateInput } from "@/lib/date-utils";
+import { getCuratedLift } from "@/lib/lifts/lift-registry";
 import {
   normalizeLiftTypeNames,
   normalizeColumnName,
@@ -59,19 +60,40 @@ export function parseStrengthJourneysData(data) {
   let labelColumnIndex = normalizedColumnNames.indexOf("Label");
   let urlColumnIndex = normalizedColumnNames.indexOf("URL");
 
-  // Opening the sheet selects A1, so accidentally deleting Date is easy.
-  // Only inspect data when Date alone is missing; ordinary parses pay no scan.
+  // Opening the sheet selects A1, so deleting a header is easy even when
+  // columns are reordered. Ordinary parses never scan for missing headers.
   if (
     dateColumnIndex === -1 &&
     liftTypeColumnIndex !== -1 &&
     repsColumnIndex !== -1 &&
     weightColumnIndex !== -1
   ) {
-    dateColumnIndex = inferUnnamedDateColumn(data, localeHint);
+    dateColumnIndex = inferUnnamedColumn(data, (value) =>
+      normalizeDateInput(value, localeHint),
+    );
     if (dateColumnIndex !== -1) {
       repairLog.issue(
         `Inferred Date from the date values in column ${dateColumnIndex + 1} because its header is blank.`,
         `Restore "Date" in the first-row header of column ${dateColumnIndex + 1} in your Google Sheet.`,
+      );
+    }
+  }
+
+  if (
+    liftTypeColumnIndex === -1 &&
+    dateColumnIndex !== -1 &&
+    repsColumnIndex !== -1 &&
+    weightColumnIndex !== -1
+  ) {
+    // Reuse the importer's aliases (including registry synonyms and barbell
+    // qualifiers), then require a registry match rather than guessing at text.
+    liftTypeColumnIndex = inferUnnamedColumn(data, (value) =>
+      getCuratedLift(normalizeLiftTypeNames(String(value))),
+    );
+    if (liftTypeColumnIndex !== -1) {
+      repairLog.issue(
+        `Inferred Lift Type from the registered lift names in column ${liftTypeColumnIndex + 1} because its header is blank.`,
+        `Restore "Lift Type" in the first-row header of column ${liftTypeColumnIndex + 1} in your Google Sheet.`,
       );
     }
   }
@@ -271,28 +293,34 @@ export function parseStrengthJourneysData(data) {
   return objectsArray;
 }
 
-// Require one unambiguous unnamed column with at least one date and no other
+// Require one unambiguous unnamed column with at least one match and no other
 // content. Blank cells are expected in the sheet's sparse anchor encoding.
 // Inspect every populated cell rather than letting an early sample hide text
 // further down the column, and leave the sheet/header array untouched.
-function inferUnnamedDateColumn(data, localeHint) {
+function inferUnnamedColumn(data, matches) {
   let inferredIndex = -1;
-  for (let column = 0; column < data[0].length; column++) {
+  // Sheets omits trailing empty header cells. Include columns found only in
+  // data rows so a deleted header can also be recovered in the last column.
+  const columnCount = data.reduce(
+    (width, row) => Math.max(width, row.length),
+    0,
+  );
+  for (let column = 0; column < columnCount; column++) {
     if (String(data[0][column] ?? "").trim()) continue;
 
-    let hasDate = false;
-    let datesOnly = true;
+    let hasMatch = false;
+    let matchesOnly = true;
     for (let row = 1; row < data.length; row++) {
       const value = data[row][column];
       if (value == null || String(value).trim() === "") continue;
-      if (!normalizeDateInput(value, localeHint)) {
-        datesOnly = false;
+      if (!matches(value)) {
+        matchesOnly = false;
         break;
       }
-      hasDate = true;
+      hasMatch = true;
     }
 
-    if (hasDate && datesOnly) {
+    if (hasMatch && matchesOnly) {
       if (inferredIndex !== -1) return -1;
       inferredIndex = column;
     }

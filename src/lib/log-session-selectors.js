@@ -5,7 +5,6 @@
  */
 
 import { getAverageLiftSessionTonnageFromPrecomputed } from "@/lib/processing-utils";
-import { hasMatchingRealSetForPendingSet } from "@/lib/sheet/sheet-row-identity";
 import { getDaysBetweenYmd } from "@/lib/date-utils";
 
 // A set counts half as much every 60 days, so the add-lift gallery follows a
@@ -54,58 +53,6 @@ export function getSessionDates(parsedData) {
     }
   }
   return dates;
-}
-
-export function groupSessionLifts(parsedData, sessionDate, deletedRowIndices) {
-  if (!parsedData) return {};
-  const entries = parsedData.filter(
-    (entry) =>
-      entry.date === sessionDate && !deletedRowIndices.has(entry.rowIndex),
-  );
-  const grouped = {};
-  for (const entry of entries) {
-    if (!grouped[entry.liftType]) grouped[entry.liftType] = [];
-    grouped[entry.liftType].push(entry);
-  }
-  return grouped;
-}
-
-export function pruneSyncedPendingSets({
-  pendingSets,
-  sessionLifts,
-  deletedRowIndices,
-}) {
-  let changed = false;
-  const next = {};
-  for (const [liftType, sets] of Object.entries(pendingSets ?? {})) {
-    const remaining = sets.filter(
-      (set) =>
-        !deletedRowIndices.has(set.rowIndex) &&
-        (set._pending || !hasMatchingRealSetForPendingSet(set, sessionLifts)),
-    );
-    if (remaining.length !== sets.length) changed = true;
-    if (remaining.length) next[liftType] = remaining;
-  }
-  return changed ? next : pendingSets;
-}
-
-export function mergeSessionLiftsWithPending({
-  sessionLifts,
-  pendingSets,
-  deletedRowIndices,
-}) {
-  const merged = { ...sessionLifts };
-  for (const [liftType, sets] of Object.entries(pendingSets ?? {})) {
-    const unique = sets.filter(
-      (set) =>
-        !deletedRowIndices.has(set.rowIndex) &&
-        (set._pending || !hasMatchingRealSetForPendingSet(set, sessionLifts)),
-    );
-    if (unique.length) {
-      merged[liftType] = [...(merged[liftType] ?? []), ...unique];
-    }
-  }
-  return merged;
 }
 
 export function getUsedSessionUrls(sessionLiftsWithPending) {

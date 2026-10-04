@@ -178,6 +178,7 @@ export default function LogSessionPage({
     sessionTonnageLookup,
     meetDays,
     dataSource,
+    parsedDataReadAt,
   } = useUserLiftingData();
   const { isMetric, sex, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
@@ -235,21 +236,34 @@ export default function LogSessionPage({
       ? latestSessionDate
       : todayIso);
 
+  // Which sheet the sync queue belongs to: undefined until we know, null once
+  // we know there is none. A queue is never carried from one sheet to another.
+  const syncSsid =
+    authStatus === "loading" ||
+    dataSource === "loading" ||
+    dataSource === "restoring"
+      ? undefined
+      : authStatus === "authenticated"
+        ? (sheetInfo?.ssid ?? null)
+        : null;
+
+  // The session as the lifter should see it: the sheet's rows with every
+  // change still on its way there drawn on top.
   const {
     syncState,
-    isStructuralSaving,
-    hasDeferredAdd,
+    isDeletingSession,
     isDeleteCooldownActive,
-    sessionLiftsWithPending,
-    resetOptimisticSessionState,
+    sessionLifts: sessionLiftsWithPending,
     updateSet,
     deleteSet,
     addSet,
     addLift,
     deleteSession,
   } = useLogSheetSync({
-    sheetInfo,
+    ssid: syncSsid,
+    canWrite: hasLinkedSheet,
     parsedData,
+    parsedDataReadAt,
     sessionDate,
     sessionDates,
     todayIso,
@@ -257,7 +271,6 @@ export default function LogSessionPage({
     sex,
     mutate,
     toast,
-    isValidating,
   });
 
   const navigateToDate = useCallback(
@@ -265,14 +278,13 @@ export default function LogSessionPage({
       setRequestedDate(date);
       setShowDeleteConfirm(false);
       setActiveNewLiftType(null);
-      resetOptimisticSessionState();
       router.replace(
         { pathname: "/log", query: date !== todayIso ? { date } : {} },
         undefined,
         { shallow: true },
       );
     },
-    [router, todayIso, resetOptimisticSessionState],
+    [router, todayIso],
   );
 
   const handleDatePickerSelect = useCallback(
@@ -372,28 +384,17 @@ export default function LogSessionPage({
   // The demo painted before auth resolves. A returning lifter's pre-paint
   // mark hides it and shows the skeleton in its place (see _document.js).
   const isPresumedDemo = dataSource === "demo" && authStatus === "loading";
-  // Existing rows are deliberately locked during SWR refresh because editing or
-  // deleting by a stale rowIndex is unsafe. Add-set controls use the narrower
-  // gate below: the sync hook can accept one optimistic add and defer its insert
-  // until revalidation supplies a fresh structural snapshot.
-  const isExistingRowWriteBlocked =
-    showSessionBootstrap ||
-    isStructuralSaving ||
-    isLoading ||
-    isValidating ||
-    isError ||
-    fetchFailed ||
-    !Array.isArray(parsedData);
-  // An add can be accepted optimistically during a background SWR read. The
-  // sync hook defers its structural insert until that read has settled.
-  const isAddBlocked =
-    showSessionBootstrap ||
-    isStructuralSaving ||
-    hasDeferredAdd ||
-    isLoading ||
-    isError ||
-    fetchFailed ||
-    !Array.isArray(parsedData);
+  // A save or a background refresh in progress blocks nothing; the sync
+  // queues whatever the lifter does next. Two narrower gates remain.
+  //
+  // Rows cannot be edited while there is no copy of the sheet to draw the
+  // edit over, or while the session itself is being deleted.
+  const isEditBlocked =
+    showSessionBootstrap || isDeletingSession || !Array.isArray(parsedData);
+  // New sets and deletes also wait while the sheet cannot be reached, so a
+  // lifter is not led to log a whole session into a tab that may close
+  // before any of it is saved. An edit already typed is always taken.
+  const isWriteBlocked = isEditBlocked || isLoading || isError || fetchFailed;
 
   const prevSessionDate = useMemo(
     () => getPrevSessionDate(sessionDates, sessionDate),
@@ -622,7 +623,7 @@ export default function LogSessionPage({
       excludeLiftTypes={sessionLiftTypes}
       sessionDate={sessionDate}
       isToday={isToday}
-      disabled={isAddBlocked}
+      disabled={isWriteBlocked}
       startCollapsed={collapseAddLiftGallery}
     />
   );
@@ -631,7 +632,8 @@ export default function LogSessionPage({
     <SessionFooterActions
       aiReviewLink={aiSessionReviewLink}
       isToday={isToday}
-      isStructuralSaving={isExistingRowWriteBlocked}
+      isDeleting={isDeletingSession}
+      isBlocked={isWriteBlocked}
       onCancel={() => setShowDeleteConfirm(false)}
       onConfirm={handleDeleteSession}
       onRequestConfirm={() => setShowDeleteConfirm(true)}
@@ -729,7 +731,7 @@ export default function LogSessionPage({
                   <EmptySessionState
                     addLiftChips={addLiftChips}
                     nextLiftPlan={nextLiftPlan}
-                    isStructuralSaving={isAddBlocked}
+                    isAddBlocked={isWriteBlocked}
                     isToday={isToday}
                     onAddLift={handleAddLift}
                     previewMode={previewMode}
@@ -787,8 +789,8 @@ export default function LogSessionPage({
                             dashboardStage={dashboardStage}
                             sessionCount={sessionCount}
                             isPastSession={!isToday}
-                            isStructuralSaving={isExistingRowWriteBlocked}
-                            isAddSaving={isAddBlocked}
+                            isWriteBlocked={isWriteBlocked}
+                            isEditBlocked={isEditBlocked}
                             isDeleteCooldownActive={isDeleteCooldownActive}
                             collapseSuggestions={
                               activeNewLiftType !== null &&

@@ -1,31 +1,413 @@
 /**
- * Sheet sync state and Google Sheets write operations for the log page.
- * The hook keeps row-shifting mutations serialized so optimistic rows do not
- * overwrite or disappear while Google Sheets is reindexing rows.
+ * React binding for the log page's Google Sheets sync.
+ *
+ * The sync itself lives outside React: log-sync-engine.js decides, and
+ * log-sync-store.js sends. This file gives that store a browser (fetch, SWR,
+ * timers, toasts), feeds it each snapshot the data provider delivers, and
+ * turns the lifter's taps into queued changes.
+ *
+ * The store is one per tab, not one per page, so a set added a moment before
+ * the lifter changes date or leaves the log still reaches the sheet.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useReadLocalStorage } from "usehooks-ts";
 
+import { getLatestSheetReadAt } from "@/hooks/use-userlift-data";
 import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
+import { parseData } from "@/lib/import/import-dispatcher";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import {
-  groupSessionLifts,
-  mergeSessionLiftsWithPending,
-  pruneSyncedPendingSets,
-} from "@/lib/log-session-selectors";
 import { getDisplayWeight } from "@/lib/processing-utils";
-
 import {
-  buildSheetSnapshotFromFields,
-  buildSheetSnapshotFromSetLike,
-  getAutoTimestampNotes,
-  getCellValueForField,
-  getEditableSetFields,
-  readApiError,
-  snapshotToEditableFields,
-} from "@/components/log/sheet-snapshot-utils";
+  applySnapshot,
+  createEngineState,
+  getSyncSummary,
+  projectSession,
+} from "@/lib/sheet/log-sync-engine";
+import {
+  createLogSyncStore,
+  sendSheetRequest,
+} from "@/lib/sheet/log-sync-store";
+
+import { getAutoTimestampNotes } from "@/components/log/sheet-snapshot-utils";
 import { logSheetTimings } from "@/components/log/timing-log";
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// What the store borrows from whichever page last rendered. SWR's bound
+// mutate stays valid for the life of the app-level data provider, so the
+// queue keeps draining after the log page has unmounted.
+const bridge = { mutate: null, toast: null, failureListeners: new Set() };
+
+const store = createLogSyncStore({
+  now: () => performance.now(),
+  setTimer: (fn, ms) => setTimeout(fn, ms),
+  clearTimer: (handle) => clearTimeout(handle),
+  isReady: () => Boolean(bridge.mutate),
+
+  // Every write goes through SWR's mutate, with the cache left alone. That is
+  // what makes SWR throw away any read that overlapped the write, so a
+  // snapshot it does deliver was read entirely before or entirely after.
+  async send(plan) {
+    const startedAt = performance.now();
+    const request = sendSheetRequest(plan, (url, init) => fetch(url, init));
+    const tracked = Promise.resolve(
+      bridge.mutate?.(request, { populateCache: false, revalidate: false }),
+    ).catch(() => {});
+    const result = await request;
+    // Wait for SWR to close the mutation before anything asks it to read.
+    await tracked;
+    const elapsed = performance.now() - startedAt;
+    logSheetTimings(
+      `${plan.method} ${plan.url} (${result.kind})`,
+      [{ name: plan.url, ms: elapsed }],
+      elapsed,
+    );
+    return result;
+  },
+
+  async refresh(needRows) {
+    const data = await Promise.resolve(bridge.mutate?.()).catch(() => null);
+    const readAt = getLatestSheetReadAt();
+    if (!data?.values || readAt === null) return null;
+    return { readAt, rows: needRows ? parseData(data.values) : null };
+  },
+
+  onFailure(event) {
+    bridge.toast?.(getFailureToast(event));
+    bridge.failureListeners.forEach((listener) => listener(event));
+  },
+});
+
+// How long changes may sit unsent before the lifter is told why.
+const STALL_NOTICE_MS = 8000;
+
+const EMPTY_STATE = createEngineState();
+const getServerState = () => EMPTY_STATE;
+
+let pageListenersInstalled = false;
+
+// Installed once and left in place: they have to outlive the log page for the
+// same reason the store does.
+function installPageListeners() {
+  if (pageListenersInstalled || typeof window === "undefined") return;
+  pageListenersInstalled = true;
+  window.addEventListener("online", () => store.retryNow());
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") store.flush();
+    else store.retryNow();
+  });
+  window.addEventListener("pagehide", () => store.flush());
+  window.addEventListener("beforeunload", (event) => {
+    if (!store.hasUnsentChanges()) return;
+    store.flush();
+    event.preventDefault();
+    event.returnValue = "";
+  });
+}
+
+/**
+ * @param {object} options
+ * @param {string|null|undefined} options.ssid The lifter's linked sheet, null
+ *   once we know there is none, undefined while that is still loading.
+ * @param {boolean} options.canWrite True when `parsedData` is that sheet's
+ *   own rows, not the demo and not an import preview.
+ */
+export function useLogSheetSync({
+  ssid,
+  canWrite,
+  parsedData,
+  parsedDataReadAt,
+  sessionDate,
+  sessionDates,
+  todayIso,
+  isMetric,
+  sex,
+  mutate,
+  toast,
+}) {
+  const storedBarType =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
+      initializeWithValue: false,
+    }) ?? null;
+  const defaultBarWeight = getDefaultBarbellWeight({
+    isMetric,
+    sex,
+    storedBarType,
+  });
+  const storeState = useSyncExternalStore(
+    store.subscribe,
+    store.getState,
+    getServerState,
+  );
+  const isLive = Boolean(canWrite && ssid && Array.isArray(parsedData));
+
+  // Hand each snapshot to the store before paint, so the queue and the rows
+  // it is drawn over never spend a frame out of step.
+  useIsomorphicLayoutEffect(() => {
+    if (ssid === undefined) return;
+    bridge.mutate = mutate;
+    bridge.toast = toast;
+    installPageListeners();
+    store.configure(ssid);
+    if (!isLive) return;
+    store.snapshot({ rows: parsedData, readAt: parsedDataReadAt }, sessionDate);
+  }, [ssid, isLive, parsedData, parsedDataReadAt, sessionDate, mutate, toast]);
+
+  useEffect(() => store.attach(), []);
+
+  // The same step the effect above commits, worked out during render: the
+  // first paint after a snapshot arrives already shows it, and the server
+  // render of the demo log needs no store at all.
+  const viewState = useMemo(() => {
+    const snapshot = { rows: parsedData ?? null, readAt: parsedDataReadAt };
+    if (!isLive || storeState.ssid !== ssid) {
+      return applySnapshot(
+        EMPTY_STATE,
+        { rows: snapshot.rows, readAt: null },
+        sessionDate,
+      );
+    }
+    return applySnapshot(storeState, snapshot, sessionDate);
+  }, [isLive, storeState, ssid, parsedData, parsedDataReadAt, sessionDate]);
+
+  const sessionLifts = useMemo(
+    () => projectSession(viewState, sessionDate),
+    [viewState, sessionDate],
+  );
+
+  const summary = useMemo(() => getSyncSummary(storeState), [storeState]);
+  const isDeletingSession = summary.deletingSessionDates.includes(sessionDate);
+
+  // --- Status for the header indicator ---
+
+  // "saved" and "error" are moments, not states, so they are raised from the
+  // store's own notifications and cleared on a timer.
+  const [flash, setFlash] = useState(null);
+  const flashTimerRef = useRef(null);
+  useEffect(() => {
+    let hadPending = store.hasUnsentChanges();
+    let handedBack = false;
+    let stallTimer = null;
+    let stallToastShown = false;
+    const show = (kind, ms) => {
+      clearTimeout(flashTimerRef.current);
+      setFlash(kind);
+      flashTimerRef.current = setTimeout(() => setFlash(null), ms);
+    };
+    const unsubscribe = store.subscribe(() => {
+      const { pending, stalled } = getSyncSummary(store.getState());
+      if (pending > 0) {
+        hadPending = true;
+        // One dropped request settles itself within seconds and needs no
+        // announcement. Speak up only when the wait goes on.
+        if (stalled && !stallTimer && !stallToastShown) {
+          stallTimer = setTimeout(() => {
+            stallTimer = null;
+            if (!getSyncSummary(store.getState()).stalled) return;
+            stallToastShown = true;
+            bridge.toast?.({
+              title: "Saving is waiting on the connection",
+              description:
+                "Your changes are held here and will reach your sheet as soon as it answers. Keep this tab open until the tick shows.",
+              duration: 8000,
+            });
+          }, STALL_NOTICE_MS);
+        }
+        return;
+      }
+      clearTimeout(stallTimer);
+      stallTimer = null;
+      stallToastShown = false;
+      if (hadPending) {
+        hadPending = false;
+        // A queue that emptied by handing a change back did not save it.
+        if (!handedBack) show("saved", 2000);
+        handedBack = false;
+      }
+    });
+    const onFailure = () => {
+      handedBack = true;
+      show("error", 3000);
+    };
+    bridge.failureListeners.add(onFailure);
+    return () => {
+      unsubscribe();
+      bridge.failureListeners.delete(onFailure);
+      clearTimeout(flashTimerRef.current);
+      clearTimeout(stallTimer);
+    };
+  }, []);
+
+  const syncState =
+    flash === "error"
+      ? "error"
+      : summary.pending > 0
+        ? summary.stalled
+          ? "waiting"
+          : "saving"
+        : (flash ?? "idle");
+
+  // --- Changes ---
+
+  // Deleting a row closes the gap under the pointer, and a fast double-click
+  // would land its second click on the row that moved up. Hold the trash
+  // buttons for a beat after each delete.
+  const [isDeleteCooldownActive, setIsDeleteCooldownActive] = useState(false);
+  const deleteCooldownTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(deleteCooldownTimerRef.current), []);
+
+  const addSet = useCallback(
+    (liftType, prevSet) => {
+      if (!isLive) return;
+      // A set passed with its own notes keeps them (the custom draft row);
+      // otherwise the set is stamped with the time it was logged.
+      const notes =
+        prevSet && Object.prototype.hasOwnProperty.call(prevSet, "notes")
+          ? (prevSet.notes ?? "")
+          : getAutoTimestampNotes();
+      store.addSet({
+        date: sessionDate,
+        liftType,
+        fields: {
+          reps: prevSet?.reps ?? 5,
+          weight: prevSet?.weight ?? defaultBarWeight,
+          unitType: prevSet?.unitType ?? (isMetric ? "kg" : "lb"),
+          notes,
+          url: "",
+        },
+      });
+    },
+    [isLive, sessionDate, defaultBarWeight, isMetric],
+  );
+
+  // Add a lift to the session: another set if the lift is already there,
+  // otherwise its first set, opened at the weight it opened with last time.
+  const addLift = useCallback(
+    async (liftType) => {
+      if (!isLive) return;
+      const existingSets = sessionLifts[liftType] ?? [];
+      if (existingSets.length > 0) {
+        const lastSet =
+          [...existingSets].reverse().find((set) => !set._pending) ??
+          existingSets[existingSets.length - 1];
+        addSet(liftType, lastSet);
+        return;
+      }
+
+      const openingSet = getPriorOpeningSet({
+        parsedData,
+        liftType,
+        sessionDate,
+        isMetric,
+      });
+      store.addSet({
+        date: sessionDate,
+        liftType,
+        fields: {
+          reps: openingSet?.reps ?? 5,
+          weight: openingSet?.weight ?? defaultBarWeight,
+          unitType: openingSet?.unitType ?? (isMetric ? "kg" : "lb"),
+          notes: getAutoTimestampNotes(),
+          url: "",
+        },
+      });
+    },
+    [
+      isLive,
+      sessionLifts,
+      addSet,
+      parsedData,
+      sessionDate,
+      isMetric,
+      defaultBarWeight,
+    ],
+  );
+
+  /** @param {string} key The row's `_key`. @param {object} patch Changed fields. */
+  const updateSet = useCallback(
+    (key, patch) => {
+      if (!isLive) return;
+      store.editSet({ date: sessionDate, key, patch });
+    },
+    [isLive, sessionDate],
+  );
+
+  const deleteSet = useCallback(
+    (key) => {
+      if (!isLive) return;
+      store.deleteSet({ date: sessionDate, key });
+      clearTimeout(deleteCooldownTimerRef.current);
+      setIsDeleteCooldownActive(true);
+      deleteCooldownTimerRef.current = setTimeout(
+        () => setIsDeleteCooldownActive(false),
+        700,
+      );
+    },
+    [isLive, sessionDate],
+  );
+
+  const deleteSession = useCallback(async () => {
+    if (!isLive) return { deleted: false, nextDate: null };
+    const deleted = await store.deleteSession({ date: sessionDate });
+    if (!deleted) return { deleted: false, nextDate: null };
+    const remainingDates = sessionDates.filter((date) => date !== sessionDate);
+    return {
+      deleted: true,
+      nextDate: remainingDates.length
+        ? remainingDates[remainingDates.length - 1]
+        : todayIso,
+    };
+  }, [isLive, sessionDate, sessionDates, todayIso]);
+
+  return {
+    syncState,
+    isDeletingSession,
+    isDeleteCooldownActive,
+    sessionLifts,
+    updateSet,
+    deleteSet,
+    addSet,
+    addLift,
+    deleteSession,
+  };
+}
+
+function getFailureToast({ op, reason }) {
+  if (op.kind === "deleteSession") {
+    return {
+      title: "That session is still in your sheet",
+      description:
+        "Its rows changed before the delete went through. The log shows your sheet as it stands, so the delete is ready to try again.",
+      variant: "destructive",
+      duration: 8000,
+    };
+  }
+  const what =
+    op.kind === "insert"
+      ? `A new ${op.liftType ?? ""} set`.replace("  ", " ")
+      : op.kind === "delete"
+        ? "A deleted set"
+        : "An edit";
+  return {
+    title: `${what} did not reach your sheet`,
+    description:
+      reason === "rejected"
+        ? "Google Sheets turned the change down. The log shows your sheet as it stands."
+        : "Your sheet changed before it could save. The log shows your sheet as it stands, so make the change again and it will go through.",
+    variant: "destructive",
+    duration: 8000,
+  };
+}
 
 function getPriorOpeningSet({ parsedData, liftType, sessionDate, isMetric }) {
   if (!Array.isArray(parsedData)) return null;
@@ -61,1247 +443,5 @@ function getPriorOpeningSet({ parsedData, liftType, sessionDate, isMetric }) {
     reps: openingSet.reps,
     weight: value,
     unitType: unit,
-  };
-}
-
-export function useLogSheetSync({
-  sheetInfo,
-  parsedData,
-  sessionDate,
-  sessionDates,
-  todayIso,
-  isMetric,
-  sex,
-  mutate,
-  toast,
-  isValidating,
-}) {
-  const storedBarType =
-    useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
-      initializeWithValue: false,
-    }) ?? null;
-  const defaultBarWeight = getDefaultBarbellWeight({
-    isMetric,
-    sex,
-    storedBarType,
-  });
-  const [syncState, setSyncState] = useState("idle"); // idle | saving | saved | error
-  const [isStructuralSaving, setIsStructuralSaving] = useState(false);
-  // Row deletes reindex the visible list. A very fast double-click can hit the
-  // intended row first, then hit the next row after the list collapses. Keep
-  // the per-set trash buttons disabled for a short beat after delete completion
-  // so pointer follow-through cannot immediately delete the shifted row.
-  const [isDeleteCooldownActive, setIsDeleteCooldownActive] = useState(false);
-  const [hasDeferredAdd, setHasDeferredAdd] = useState(false);
-
-  // Log sync design strategy:
-  //
-  // 1. Keep SWR's focus/reconnect revalidation defaults. Google Sheets remains
-  //    canonical, and frequent inexpensive reads are useful protection against
-  //    edits made outside this UI.
-  // 2. Existing-row edits and deletes stay conservative. They pause during
-  //    revalidation because a stale rowIndex could target someone else's set;
-  //    the server-side full-row snapshot checks are intentional and must remain.
-  // 3. Additive controls should remain available. One add intent may be accepted
-  //    while SWR is revalidating and deferred until fresh parsedData can determine
-  //    its insertion position. Existing-lift sets render optimistically at once;
-  //    new lift/session intents appear when the fresh sparse anchor is known. A
-  //    single slot matches real workout usage and avoids a general-purpose queue
-  //    whose ordering is hard to prove.
-  // 4. The optimistic row is durable across the post-insert mutate(). Successful
-  //    insertion promotes that exact tempId to a confirmed rowIndex; strict
-  //    rowIndex + content reconciliation removes it only when canonical parsed
-  //    data contains the same row. Never clear it merely because a request or
-  //    revalidation finished, otherwise the row can flicker or disappear.
-  // 5. Row content (including timestamped notes) is reconciliation evidence, not
-  //    a React key. The tempId remains stable throughout the optimistic phase;
-  //    canonical rows continue to use their sheet rowIndex after handoff.
-  //
-  // If this model is expanded, preserve the priority order: never write/delete
-  // the wrong row, never lose an accepted add, then minimize interaction delay.
-  // Optimistic pending sets: { [liftType]: [pendingSetObj, ...] }
-  // _pending: true  -> in-flight (show spinner)
-  // _pending: false -> confirmed (rowIndex known, waiting for parsedData to catch up)
-  const [pendingSets, setPendingSets] = useState({});
-  const pendingSetsRef = useRef({});
-  const queuedEditOpsRef = useRef([]);
-  const queuedStructuralActionRef = useRef(null);
-  const deferredAddRef = useRef(null);
-  const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
-
-  // Structural mutation guard: prevents concurrent row-shifting API calls
-  // (addSet, addLift, deleteSet) that could race on stale row indices.
-  // Non-structural updates (PATCH to edit reps/weight/notes) target a fixed
-  // rowIndex and never shift other rows, so they bypass this guard.
-  // Keep the ref as the source of truth for race protection, and mirror it to
-  // state so structural controls can visibly disable while row indices settle.
-  const structuralSavingRef = useRef(false);
-  const savedTimerRef = useRef(null);
-  const deleteCooldownTimerRef = useRef(null);
-
-  useEffect(() => {
-    return () => {
-      if (deleteCooldownTimerRef.current) {
-        clearTimeout(deleteCooldownTimerRef.current);
-      }
-      if (savedTimerRef.current) {
-        clearTimeout(savedTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Wrapper that keeps pendingSetsRef synchronously in sync. Queue draining reads
-  // the ref immediately after state changes, so update it before scheduling the
-  // React state update.
-  const setPendingSetsSync = useCallback((updater) => {
-    const next =
-      typeof updater === "function" ? updater(pendingSetsRef.current) : updater;
-    pendingSetsRef.current = next;
-    setPendingSets(next);
-    return next;
-  }, []);
-
-  const resetOptimisticSessionState = useCallback(() => {
-    deferredAddRef.current = null;
-    setHasDeferredAdd(false);
-    setPendingSetsSync({});
-    setDeletedRowIndices(new Set());
-  }, [setPendingSetsSync]);
-
-  const queueStructuralAction = useCallback((action) => {
-    queuedStructuralActionRef.current = action;
-  }, []);
-
-  const sessionLifts = useMemo(
-    () => groupSessionLifts(parsedData, sessionDate, deletedRowIndices),
-    [parsedData, sessionDate, deletedRowIndices],
-  );
-
-  // When parsedData catches up, remove confirmed rows from pendingSets.
-  // Match more than rowIndex because stale SWR data can briefly contain the
-  // pre-insert row at the newly assigned rowIndex.
-  useEffect(() => {
-    setPendingSetsSync((prev) =>
-      pruneSyncedPendingSets({
-        pendingSets: prev,
-        sessionLifts,
-        deletedRowIndices,
-      }),
-    );
-  }, [sessionLifts, deletedRowIndices, setPendingSetsSync]);
-
-  const sessionLiftsWithPending = useMemo(
-    () =>
-      mergeSessionLiftsWithPending({
-        sessionLifts,
-        pendingSets,
-        deletedRowIndices,
-      }),
-    [sessionLifts, pendingSets, deletedRowIndices],
-  );
-
-  // Revalidate SWR data when the user leaves the log page so the dashboard
-  // picks up any sets/lifts added during the session. Individual writes
-  // deliberately skip mutate() to avoid mid-session flicker (see addSet).
-  useEffect(() => {
-    return () => {
-      mutate();
-    };
-  }, [mutate]);
-
-  // --- Sync helpers ---
-  // Sync strategy note:
-  // These client calls are intentionally operation-oriented, not pure REST.
-  // The dangerous thing in this UI is not "updating a resource", it is
-  // mutating a sparse Google Sheet where row position is unstable during
-  // insert/delete flows. So the client talks to explicit sheet operations:
-  // - edit-cell
-  // - edit-row
-  // - insert-row
-  // - delete-row
-  //
-  // Structural ops (addSet/addLift/deleteSet) still gate on structuralSavingRef.
-  // Non-structural edits are queued behind that gate when needed so they do not
-  // blindly write against a row index while a local row-shifting operation is
-  // still in flight.
-
-  function markSaving() {
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    setSyncState("saving");
-  }
-
-  function markSaved() {
-    setSyncState("saved");
-    savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
-    flushQueuedSync();
-  }
-
-  function markError() {
-    setSyncState("error");
-    savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
-    flushQueuedSync();
-  }
-
-  function markStructuralSaving() {
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    structuralSavingRef.current = true;
-    setIsStructuralSaving(true);
-    setSyncState("saving");
-  }
-
-  function markStructuralSaved() {
-    structuralSavingRef.current = false;
-    setIsStructuralSaving(false);
-    setSyncState("saved");
-    savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
-    // Flush any queued sync that was waiting for the structural op to finish
-    flushQueuedSync();
-  }
-
-  function markStructuralError() {
-    structuralSavingRef.current = false;
-    setIsStructuralSaving(false);
-    setSyncState("error");
-    savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
-    // Still attempt to flush — the structural op failed but queued edits
-    // to already-confirmed rows are independent and should still land.
-    flushQueuedSync();
-  }
-
-  function startDeleteCooldown() {
-    if (deleteCooldownTimerRef.current)
-      clearTimeout(deleteCooldownTimerRef.current);
-    setIsDeleteCooldownActive(true);
-    deleteCooldownTimerRef.current = setTimeout(() => {
-      setIsDeleteCooldownActive(false);
-      deleteCooldownTimerRef.current = null;
-    }, 700);
-  }
-
-  const updatePendingSet = useCallback(
-    (tempId, fields, queuedSync) => {
-      let updatedSet = null;
-      setPendingSetsSync((prev) => {
-        let changed = false;
-        const next = {};
-        for (const [lt, sets] of Object.entries(prev)) {
-          next[lt] = sets.map((s) => {
-            if (s._tempId !== tempId) return s;
-            changed = true;
-            updatedSet = {
-              ...s,
-              reps: fields.reps,
-              weight: fields.weight,
-              unitType: fields.unitType ?? s.unitType,
-              notes: fields.notes ?? "",
-              URL: fields.url ?? "",
-              _queuedSync: queuedSync,
-            };
-            return updatedSet;
-          });
-        }
-        return changed ? next : prev;
-      });
-      return updatedSet;
-    },
-    [setPendingSetsSync],
-  );
-
-  const clearPendingQueuedSync = useCallback(
-    (tempId, syncedFields = null) => {
-      if (!tempId) return;
-      setPendingSetsSync((prev) => {
-        let changed = false;
-        const next = {};
-        for (const [lt, sets] of Object.entries(prev)) {
-          next[lt] = sets.map((s) => {
-            if (s._tempId !== tempId) return s;
-            if (!s._queuedSync && !syncedFields) return s;
-            changed = true;
-            return {
-              ...s,
-              _queuedSync: false,
-              _serverSnapshot: syncedFields
-                ? buildSheetSnapshotFromFields(syncedFields, s)
-                : s._serverSnapshot,
-            };
-          });
-        }
-        return changed ? next : prev;
-      });
-    },
-    [setPendingSetsSync],
-  );
-
-  const abandonPendingQueuedSync = useCallback(
-    (tempId, fallbackSnapshot = null) => {
-      if (!tempId) return;
-      const fallbackFields = fallbackSnapshot
-        ? snapshotToEditableFields(fallbackSnapshot)
-        : null;
-
-      setPendingSetsSync((prev) => {
-        let changed = false;
-        const next = {};
-        for (const [lt, sets] of Object.entries(prev)) {
-          next[lt] = sets.map((s) => {
-            if (s._tempId !== tempId) return s;
-            if (!s._queuedSync && !fallbackFields) return s;
-            changed = true;
-
-            if (!fallbackFields) {
-              return {
-                ...s,
-                _queuedSync: false,
-              };
-            }
-
-            return {
-              ...s,
-              reps: fallbackFields.reps,
-              weight: fallbackFields.weight,
-              unitType: fallbackFields.unitType ?? s.unitType,
-              notes: fallbackFields.notes ?? "",
-              URL: fallbackFields.url ?? "",
-              _queuedSync: false,
-              _serverSnapshot: fallbackSnapshot,
-            };
-          });
-        }
-        return changed ? next : prev;
-      });
-    },
-    [setPendingSetsSync],
-  );
-
-  // Promote only the row confirmed by this insert response. Matching by tempId
-  // keeps cleanup and reconciliation safe if the sync model grows later.
-  const promotePendingByTempId = useCallback(
-    (liftType, tempId, rowIndex) => {
-      setPendingSetsSync((prev) => {
-        if (!prev[liftType]) return prev;
-        const next = prev[liftType].map((s) => {
-          if (s._tempId === tempId) {
-            return { ...s, _pending: false, rowIndex };
-          }
-          return s;
-        });
-        return { ...prev, [liftType]: next };
-      });
-    },
-    [setPendingSetsSync],
-  );
-
-  const persistSetCellUpdate = useCallback(
-    async (rowIndex, field, beforeSnapshot, value) => {
-      if (!sheetInfo?.ssid) return;
-      markSaving();
-      const t0 = performance.now();
-      try {
-        const res = await fetch("/api/sheet/edit-cell", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ssid: sheetInfo.ssid,
-            rowIndex,
-            field,
-            value,
-            before: beforeSnapshot,
-          }),
-        });
-        if (!res.ok) {
-          const apiError = await readApiError(res, "Update failed");
-          if (apiError.code === "PRECONDITION_FAILED") {
-            console.warn("[sheet/edit-cell] preflight verification failed", {
-              rowIndex,
-              field,
-              beforeSnapshot,
-              actual: apiError.actual,
-              message: apiError.message,
-            });
-            toast({
-              title: "Sheet changed before the edit landed",
-              description:
-                "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
-              variant: "destructive",
-              duration: 8000,
-            });
-            markError();
-            return;
-          }
-          throw new Error(apiError.message || "Update failed");
-        }
-        markSaved();
-      } catch (err) {
-        console.warn("[sheet/edit-cell] updateSet failed:", err);
-        markError();
-      }
-      logSheetTimings(
-        "updateSet",
-        [{ name: "POST /api/sheet/edit-cell", ms: performance.now() - t0 }],
-        performance.now() - t0,
-      );
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
-    [sheetInfo?.ssid, toast],
-  );
-
-  const persistSetRowUpdate = useCallback(
-    async (rowIndex, beforeSnapshot, afterSnapshot, tempId = null) => {
-      if (!sheetInfo?.ssid) return;
-      markSaving();
-      const t0 = performance.now();
-      try {
-        const res = await fetch("/api/sheet/edit-row", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ssid: sheetInfo.ssid,
-            rowIndex,
-            before: beforeSnapshot,
-            after: afterSnapshot,
-          }),
-        });
-        if (!res.ok) {
-          const apiError = await readApiError(res, "Update failed");
-          if (apiError.code === "PRECONDITION_FAILED") {
-            console.warn("[sheet/edit-row] preflight verification failed", {
-              rowIndex,
-              beforeSnapshot,
-              afterSnapshot,
-              actual: apiError.actual,
-              message: apiError.message,
-            });
-            toast({
-              title: "Sheet changed before the edit landed",
-              description:
-                "This edit was blocked to avoid writing to the wrong row. Refresh the log and try again.",
-              variant: "destructive",
-              duration: 8000,
-            });
-            abandonPendingQueuedSync(tempId, beforeSnapshot);
-            if (tempId) void mutate();
-            markError();
-            return;
-          }
-          throw new Error(apiError.message || "Update failed");
-        }
-        clearPendingQueuedSync(tempId, snapshotToEditableFields(afterSnapshot));
-        markSaved();
-      } catch (err) {
-        console.warn("[sheet/edit-row] updateSet failed:", err);
-        abandonPendingQueuedSync(tempId, beforeSnapshot);
-        if (tempId) void mutate();
-        markError();
-      }
-      logSheetTimings(
-        "updateSet",
-        [{ name: "POST /api/sheet/edit-row", ms: performance.now() - t0 }],
-        performance.now() - t0,
-      );
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- markSaved/markError are stable local sync helpers
-    [
-      sheetInfo?.ssid,
-      clearPendingQueuedSync,
-      abandonPendingQueuedSync,
-      toast,
-      mutate,
-    ],
-  );
-
-  const drainQueuedEditOp = useCallback(() => {
-    if (structuralSavingRef.current) return;
-    const queuedOp = queuedEditOpsRef.current.shift();
-    if (!queuedOp) return;
-    if (queuedOp.kind === "cell") {
-      void persistSetCellUpdate(
-        queuedOp.rowIndex,
-        queuedOp.field,
-        queuedOp.beforeSnapshot,
-        queuedOp.value,
-      );
-      return;
-    }
-    void persistSetRowUpdate(
-      queuedOp.rowIndex,
-      queuedOp.beforeSnapshot,
-      queuedOp.afterSnapshot,
-      queuedOp.tempId ?? null,
-    );
-  }, [persistSetCellUpdate, persistSetRowUpdate]);
-
-  // Drain queued sync: find the first pending set that has a real rowIndex
-  // and a queued edit, then fire the verified row update. Called from the
-  // effect below AND
-  // from markStructuralSaved/Error so edits that were blocked during a
-  // structural op are never permanently lost.
-  // The callback participates in the structural-save callback cycle, so its
-  // explicit dependencies are safer than compiler-inferred memoization here.
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const flushQueuedSync = useCallback(() => {
-    if (structuralSavingRef.current) return;
-    const queuedSet = Object.values(pendingSetsRef.current)
-      .flat()
-      .find((s) => !s._pending && s.rowIndex && s._queuedSync);
-    if (queuedSet) {
-      void persistSetRowUpdate(
-        queuedSet.rowIndex,
-        queuedSet._serverSnapshot ??
-          buildSheetSnapshotFromFields(
-            getEditableSetFields(queuedSet),
-            queuedSet,
-          ),
-        buildSheetSnapshotFromFields(
-          getEditableSetFields(queuedSet),
-          queuedSet,
-        ),
-        queuedSet._tempId,
-      );
-      return;
-    }
-    drainQueuedEditOp();
-  }, [drainQueuedEditOp, persistSetRowUpdate]);
-
-  // Also trigger on pendingSets changes (e.g. when a row gets promoted and
-  // its queued edit can now fire).
-  useEffect(() => {
-    flushQueuedSync();
-  }, [pendingSets, flushQueuedSync]);
-
-  // --- API calls ---
-
-  // updateSet: fire-and-forget — no await mutate(), SWR will sync on next focus.
-  // Pending optimistic rows can be edited before the insert call returns; those
-  // edits are queued on the temp row and flushed once it gets a real rowIndex.
-  const updateSet = useCallback(
-    async (setRef, update) => {
-      if (!sheetInfo?.ssid) return;
-
-      const pendingSet = setRef.tempId
-        ? Object.values(pendingSetsRef.current)
-            .flat()
-            .find((s) => s._tempId === setRef.tempId)
-        : null;
-      const rowIndex = pendingSet?.rowIndex ?? setRef.rowIndex;
-      const nextFields = update.nextFields;
-
-      if (pendingSet) {
-        updatePendingSet(
-          setRef.tempId,
-          nextFields,
-          !rowIndex || structuralSavingRef.current,
-        );
-      }
-
-      if (!rowIndex) {
-        return;
-      }
-
-      if (pendingSet) {
-        if (!structuralSavingRef.current) {
-          void persistSetRowUpdate(
-            rowIndex,
-            pendingSet._serverSnapshot ??
-              buildSheetSnapshotFromFields(
-                getEditableSetFields(pendingSet),
-                pendingSet,
-              ),
-            buildSheetSnapshotFromFields(nextFields, pendingSet),
-            setRef.tempId ?? null,
-          );
-        }
-        return;
-      }
-
-      const beforeSnapshot = buildSheetSnapshotFromFields(
-        update.beforeFields,
-        setRef.set,
-      );
-      if (structuralSavingRef.current) {
-        queuedEditOpsRef.current.push({
-          kind: "cell",
-          rowIndex,
-          field: update.field,
-          value: getCellValueForField(update.field, nextFields),
-          beforeSnapshot,
-        });
-        return;
-      }
-
-      void persistSetCellUpdate(
-        rowIndex,
-        update.field,
-        beforeSnapshot,
-        getCellValueForField(update.field, nextFields),
-      );
-    },
-    [
-      sheetInfo?.ssid,
-      updatePendingSet,
-      persistSetCellUpdate,
-      persistSetRowUpdate,
-    ],
-  );
-
-  // deleteSet: removes a single set row from the sheet.
-  // The API now decides promotion from the raw target row + raw next row.
-  // This lets delete stay correct for both sparse sheets and sheets where the
-  // user manually repeats Date / Lift Type more often than the app would.
-  const deleteSet = useCallback(
-    async (set) => {
-      if (!sheetInfo?.ssid || !set.rowIndex) return;
-      if (structuralSavingRef.current) return;
-      markStructuralSaving();
-
-      let removedPendingRows = [];
-
-      // Optimistically hide the row immediately
-      setDeletedRowIndices((prev) => new Set([...prev, set.rowIndex]));
-      setPendingSetsSync((prev) => {
-        let changed = false;
-        const next = {};
-        removedPendingRows = [];
-        for (const [lt, sets] of Object.entries(prev)) {
-          const remaining = sets.filter((pendingSet) => {
-            const shouldRemove = pendingSet.rowIndex === set.rowIndex;
-            if (shouldRemove) {
-              changed = true;
-              removedPendingRows.push(pendingSet);
-            }
-            return !shouldRemove;
-          });
-          if (remaining.length) next[lt] = remaining;
-          if (remaining.length !== sets.length) changed = true;
-        }
-        return changed ? next : prev;
-      });
-      const timings = [];
-      const t0 = performance.now();
-      const beforeSnapshot = buildSheetSnapshotFromFields(
-        getEditableSetFields(set),
-        set,
-      );
-      try {
-        const tApi = performance.now();
-        const res = await fetch("/api/sheet/delete-row", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ssid: sheetInfo.ssid,
-            rowIndex: set.rowIndex,
-            before: beforeSnapshot,
-          }),
-        });
-        timings.push({
-          name: "POST /api/sheet/delete-row",
-          ms: performance.now() - tApi,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          if (data?.code === "PRECONDITION_FAILED") {
-            console.warn("[sheet/delete-row] preflight verification failed", {
-              rowIndex: set.rowIndex,
-              before: buildSheetSnapshotFromFields(
-                getEditableSetFields(set),
-                set,
-              ),
-              actual: data?.actual ?? null,
-              message: data?.error || "Delete failed",
-            });
-            setDeletedRowIndices((prev) => {
-              const next = new Set(prev);
-              next.delete(set.rowIndex);
-              return next;
-            });
-            if (removedPendingRows.length) {
-              setPendingSetsSync((prev) => {
-                const next = { ...prev };
-                removedPendingRows.forEach((pendingSet) => {
-                  const key = pendingSet.liftType;
-                  next[key] = [...(next[key] ?? []), pendingSet];
-                });
-                return next;
-              });
-            }
-            toast({
-              title: "Delete blocked to protect the sheet",
-              description:
-                "The target row no longer matched what the log expected. Refresh the log and try again.",
-              variant: "destructive",
-              duration: 8000,
-            });
-            markStructuralError();
-            return;
-          }
-          throw new Error(data.error || "Delete failed");
-        }
-
-        // The deletedRowIndices filter keeps the row hidden in the UI while the
-        // background revalidation refreshes canonical row indices. Keep the
-        // row-shift guard active until that refresh lands so queued edits/adds
-        // do not resume against stale positions.
-        await mutate();
-        // Clear the hide-flag now that parsedData has settled. If we leave the
-        // rowIndex in deletedRowIndices indefinitely, a future insert that gets
-        // assigned the same rowIndex (sheets renumber after deletion) will be
-        // immediately hidden by the cleanup effect and sessionLiftsWithPending.
-        setDeletedRowIndices((prev) => {
-          const next = new Set(prev);
-          next.delete(set.rowIndex);
-          return next;
-        });
-        startDeleteCooldown();
-        markStructuralSaved();
-      } catch (err) {
-        console.warn("[sheet/delete-row] deleteSet failed:", err);
-        // Restore the row on failure
-        setDeletedRowIndices((prev) => {
-          const next = new Set(prev);
-          next.delete(set.rowIndex);
-          return next;
-        });
-        if (removedPendingRows.length) {
-          setPendingSetsSync((prev) => {
-            const next = { ...prev };
-            removedPendingRows.forEach((pendingSet) => {
-              const key = pendingSet.liftType;
-              next[key] = [...(next[key] ?? []), pendingSet];
-            });
-            return next;
-          });
-        }
-        markStructuralError();
-      }
-      logSheetTimings("deleteSet", timings, performance.now() - t0);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [sheetInfo?.ssid, toast, setPendingSetsSync, mutate],
-  );
-
-  const insertPendingSet = useCallback(
-    async (liftType, tempId) => {
-      if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current)
-        return;
-      const pendingSet = (pendingSetsRef.current[liftType] ?? []).find(
-        (set) => set._tempId === tempId,
-      );
-      if (!pendingSet) return;
-      // Compute insertion position BEFORE adding to pending, so we can include
-      // confirmed-pending rows (promoted on previous successful adds) in the calculation.
-      const confirmedPendingRows = (
-        pendingSetsRef.current[liftType] ?? []
-      ).filter((s) => !s._pending && s.rowIndex);
-      const parsedRows = parsedData.filter(
-        (e) => e.date === sessionDate && e.liftType === liftType && e.rowIndex,
-      );
-      const predecessorRow = [...parsedRows, ...confirmedPendingRows].reduce(
-        (latest, row) =>
-          !latest || row.rowIndex > latest.rowIndex ? row : latest,
-        null,
-      );
-      const insertAfterRowIndex = predecessorRow?.rowIndex ?? null;
-      const beforeSnapshot = buildSheetSnapshotFromSetLike(predecessorRow);
-      const { reps, weight, unitType, notes, URL = "" } = pendingSet;
-      const timings = [];
-      const t0 = performance.now();
-      markStructuralSaving();
-
-      try {
-        const tApi = performance.now();
-        const res = await fetch("/api/sheet/insert-row", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ssid: sheetInfo.ssid,
-            rows: [["", "", String(reps), `${weight}${unitType}`, notes, URL]],
-            insertAfterRowIndex,
-            before: beforeSnapshot,
-          }),
-        });
-        timings.push({
-          name: "POST /api/sheet/insert-row",
-          ms: performance.now() - tApi,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          if (data?.code === "PRECONDITION_FAILED") {
-            console.warn("[sheet/insert-row] preflight verification failed", {
-              rowIndex: insertAfterRowIndex,
-              beforeSnapshot,
-              actual: data?.actual ?? null,
-              message: data?.error || "Add set failed",
-            });
-            toast({
-              title: "Set not added to protect the sheet",
-              description:
-                "The sheet changed since the log last loaded. It is refreshing now, so try adding the set again.",
-              variant: "destructive",
-              duration: 8000,
-            });
-            // If indices drifted, immediately revalidate so a retry can succeed.
-            // Keep this lightweight: we already removed the optimistic in-flight row below.
-            void mutate();
-          }
-          throw new Error(data.error || "Add set failed");
-        }
-        const { firstRowIndex } = data;
-        // Promote pending → confirmed with the real rowIndex so the optimistic
-        // row dedupes cleanly when parsedData catches up.
-        promotePendingByTempId(liftType, tempId, firstRowIndex);
-        // Release the structural guard immediately — the promoted row already has
-        // the correct rowIndex, so queued follow-ups can compute positions safely.
-        // Fire revalidation in the background (no await) to avoid a race where a
-        // concurrent focus-triggered SWR fetch overwrites fresh data with stale
-        // data and removes the confirmed-pending row from both pendingSets and
-        // sessionLifts.
-        markStructuralSaved();
-        void mutate();
-      } catch (err) {
-        console.warn("[sheet/insert-row] addSet failed:", err);
-        // Remove the failed pending row
-        setPendingSetsSync((prev) => {
-          const next = { ...prev };
-          if (next[liftType]) {
-            next[liftType] = next[liftType].filter(
-              (set) => set._tempId !== tempId,
-            );
-          }
-          if (!next[liftType]?.length) delete next[liftType];
-          return next;
-        });
-        markStructuralError();
-      }
-      logSheetTimings("addSet", timings, performance.now() - t0);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [
-      sheetInfo?.ssid,
-      parsedData,
-      sessionDate,
-      setPendingSetsSync,
-      promotePendingByTempId,
-      toast,
-      mutate,
-    ],
-  );
-
-  // Accept one add immediately during SWR revalidation, but wait to calculate
-  // its row position until the fresh canonical snapshot has landed.
-  const addSet = useCallback(
-    async (liftType, prevSet) => {
-      if (!sheetInfo?.ssid || !parsedData) return;
-      if (structuralSavingRef.current || deferredAddRef.current) return;
-
-      const unitType = prevSet?.unitType ?? (isMetric ? "kg" : "lb");
-      const reps = prevSet?.reps ?? 5;
-      const weight = prevSet?.weight ?? defaultBarWeight;
-      const notes =
-        prevSet && Object.prototype.hasOwnProperty.call(prevSet, "notes")
-          ? (prevSet.notes ?? "")
-          : getAutoTimestampNotes();
-      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      // An appended set leaves Lift Type blank, so the sheet gives it the
-      // block's own label, which can be a synonym ("OHP", "Paused Bench").
-      // Carry that label so this set's verified edits, deletes and the next
-      // add match the sheet before the refresh lands.
-      const blockAnchor = parsedData.reduce(
-        (latest, e) =>
-          e.date === sessionDate &&
-          e.liftType === liftType &&
-          e.rowIndex &&
-          (!latest || e.rowIndex > latest.rowIndex)
-            ? e
-            : latest,
-        null,
-      );
-      const rawLiftType = blockAnchor?.rawLiftType ?? liftType;
-
-      setPendingSetsSync((prev) => ({
-        ...prev,
-        [liftType]: [
-          ...(prev[liftType] ?? []),
-          {
-            date: sessionDate,
-            liftType,
-            rawLiftType,
-            reps,
-            weight,
-            unitType,
-            notes,
-            URL: "",
-            rowIndex: null,
-            isHistoricalPR: false,
-            _pending: true,
-            _tempId: tempId,
-            _serverSnapshot: buildSheetSnapshotFromFields(
-              { reps, weight, unitType, notes, url: "" },
-              { date: sessionDate, liftType, rawLiftType },
-            ),
-          },
-        ],
-      }));
-
-      if (isValidating) {
-        deferredAddRef.current = { kind: "addSet", liftType, tempId };
-        setHasDeferredAdd(true);
-        return;
-      }
-
-      await insertPendingSet(liftType, tempId);
-    },
-    [
-      sheetInfo?.ssid,
-      parsedData,
-      isMetric,
-      defaultBarWeight,
-      sessionDate,
-      isValidating,
-      setPendingSetsSync,
-      insertPendingSet,
-    ],
-  );
-
-  // Add a brand-new lift type to the session.
-  // Border is only drawn for the very first row of a brand-new session date.
-  const addLift = useCallback(
-    async (liftType) => {
-      if (!sheetInfo?.ssid || !parsedData) return;
-      if (deferredAddRef.current) return;
-      if (isValidating) {
-        // New lifts and sessions are additive too. Accept one intent during a
-        // background read, then calculate its sparse anchor position from the
-        // fresh snapshot instead of presenting a disabled first-session UI.
-        deferredAddRef.current = { kind: "addLift", liftType };
-        setHasDeferredAdd(true);
-        return;
-      }
-      if (structuralSavingRef.current) {
-        queueStructuralAction({ kind: "addLift", liftType });
-        return;
-      }
-
-      const existingSets = sessionLiftsWithPending[liftType] ?? [];
-      if (existingSets.length > 0) {
-        const lastExistingSet =
-          [...existingSets].reverse().find((set) => !set._pending) ??
-          existingSets[existingSets.length - 1];
-        await addSet(liftType, lastExistingSet ?? null);
-        return;
-      }
-
-      const openingSet =
-        getPriorOpeningSet({ parsedData, liftType, sessionDate, isMetric }) ??
-        null;
-      const unitType = openingSet?.unitType ?? (isMetric ? "kg" : "lb");
-      const weight = openingSet?.weight ?? defaultBarWeight;
-      const reps = openingSet?.reps ?? 5;
-
-      // Read pending state BEFORE updating it, so hasPendingForDate accurately
-      // reflects whether any prior lift has already been added to this session.
-      const currentPending = pendingSetsRef.current;
-      const hasPendingForDate = Object.values(currentPending).some((sets) =>
-        sets.some((s) => s.date === sessionDate),
-      );
-
-      const sessionRows = parsedData.filter(
-        (e) => e.date === sessionDate && e.rowIndex,
-      );
-
-      // Also include confirmed-pending row indices for correct insertion position
-      const confirmedPendingSessionRows = Object.values(currentPending)
-        .flat()
-        .filter((s) => s.date === sessionDate && !s._pending && s.rowIndex)
-        .map((s) => s);
-      const allSessionRows = [...sessionRows, ...confirmedPendingSessionRows];
-
-      const hasExistingSession = allSessionRows.length > 0 || hasPendingForDate;
-
-      let predecessorRow = null;
-      let topExistingRow = null;
-
-      if (hasExistingSession) {
-        // Existing session: insert after the last row of this session
-        predecessorRow = allSessionRows.reduce(
-          (latest, row) =>
-            !latest || row.rowIndex > latest.rowIndex ? row : latest,
-          null,
-        );
-      } else {
-        // New session: find correct chronological insertion point.
-        // Sheet is newest-first (low rowIndex = newer). For a historical
-        // date, insert after the last row whose date is still newer.
-        const allRows = [
-          ...parsedData.filter((e) => e.rowIndex),
-          ...Object.values(currentPending)
-            .flat()
-            .filter((s) => !s._pending && s.rowIndex),
-        ];
-        const newerRows = allRows.filter((e) => e.date > sessionDate);
-        if (newerRows.length > 0) {
-          predecessorRow = newerRows.reduce(
-            (best, row) => (!best || row.rowIndex > best.rowIndex ? row : best),
-            null,
-          );
-        }
-        // Fallback: topExistingRow for beforeSnapshot when inserting at top
-        topExistingRow = allRows.reduce(
-          (top, row) => (!top || row.rowIndex < top.rowIndex ? row : top),
-          null,
-        );
-      }
-
-      const insertAfterRowIndex = predecessorRow?.rowIndex ?? null;
-      const beforeSnapshot = buildSheetSnapshotFromSetLike(
-        predecessorRow ?? topExistingRow,
-      );
-
-      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-      // Auto-timestamp: 24h clock in the notes column (e.g. "14:35 ")
-      const notes = getAutoTimestampNotes();
-
-      // Show optimistic lift block immediately (in-flight)
-      setPendingSetsSync((prev) => ({
-        ...prev,
-        [liftType]: [
-          ...(prev[liftType] ?? []),
-          {
-            date: sessionDate,
-            liftType,
-            reps,
-            weight,
-            unitType,
-            notes,
-            rowIndex: null,
-            isHistoricalPR: false,
-            _pending: true,
-            _tempId: tempId,
-            _serverSnapshot: buildSheetSnapshotFromFields(
-              { reps, weight, unitType, notes, url: "" },
-              { date: sessionDate, liftType },
-            ),
-          },
-        ],
-      }));
-      const timings = [];
-      const t0 = performance.now();
-      markStructuralSaving();
-
-      const row = [
-        hasExistingSession ? "" : sessionDate,
-        liftType,
-        String(reps),
-        `${weight}${unitType}`,
-        notes,
-        "",
-      ];
-
-      try {
-        const tApi = performance.now();
-        const res = await fetch("/api/sheet/insert-row", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ssid: sheetInfo.ssid,
-            rows: [row],
-            insertAfterRowIndex,
-            newSession: !hasExistingSession,
-            before: beforeSnapshot,
-          }),
-        });
-        timings.push({
-          name: "POST /api/sheet/insert-row",
-          ms: performance.now() - tApi,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          if (data?.code === "PRECONDITION_FAILED") {
-            console.warn("[sheet/insert-row] preflight verification failed", {
-              rowIndex: insertAfterRowIndex,
-              beforeSnapshot,
-              actual: data?.actual ?? null,
-              message: data?.error || "Failed",
-            });
-            void mutate();
-          }
-          throw new Error(data.error || "Failed");
-        }
-        const { firstRowIndex } = data;
-        promotePendingByTempId(liftType, tempId, firstRowIndex);
-        markStructuralSaved();
-        void mutate();
-      } catch (err) {
-        console.warn("[sheet/insert-row] addLift failed:", err);
-        setPendingSetsSync((prev) => {
-          const next = { ...prev };
-          if (next[liftType]) {
-            next[liftType] = next[liftType].filter(
-              (set) => set._tempId !== tempId,
-            );
-          }
-          if (!next[liftType]?.length) delete next[liftType];
-          return next;
-        });
-        markStructuralError();
-      }
-      logSheetTimings("addLift", timings, performance.now() - t0);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-    [
-      sheetInfo?.ssid,
-      parsedData,
-      sessionDate,
-      isMetric,
-      defaultBarWeight,
-      setPendingSetsSync,
-      promotePendingByTempId,
-      sessionLiftsWithPending,
-      addSet,
-      queueStructuralAction,
-      mutate,
-      isValidating,
-    ],
-  );
-
-  useEffect(() => {
-    if (isValidating || structuralSavingRef.current) return;
-    const deferredAdd = deferredAddRef.current;
-    if (!deferredAdd) return;
-    deferredAddRef.current = null;
-    setHasDeferredAdd(false);
-
-    if (deferredAdd.kind === "addSet") {
-      void insertPendingSet(deferredAdd.liftType, deferredAdd.tempId);
-      return;
-    }
-
-    void addLift(deferredAdd.liftType);
-  }, [isValidating, parsedData, insertPendingSet, addLift]);
-
-  useEffect(() => {
-    // Brand-new lift blocks cannot safely insert while another structural
-    // operation is shifting row indices. Replay the one guarded call after the
-    // active operation settles.
-    if (structuralSavingRef.current) return;
-    if (syncState !== "saved" && syncState !== "error") return;
-
-    const queuedAction = queuedStructuralActionRef.current;
-    if (!queuedAction) return;
-
-    queuedStructuralActionRef.current = null;
-
-    void addLift(queuedAction.liftType);
-  }, [syncState, addLift]);
-
-  const deleteSession = useCallback(async () => {
-    if (!sheetInfo?.ssid || !parsedData || structuralSavingRef.current) {
-      return { deleted: false, nextDate: null };
-    }
-    markStructuralSaving();
-
-    const sessionRows = parsedData.filter(
-      (entry) => entry.date === sessionDate && entry.rowIndex,
-    );
-
-    if (!sessionRows.length) {
-      markStructuralError();
-      return { deleted: false, nextDate: null };
-    }
-
-    const firstSessionRow = sessionRows.reduce((first, row) =>
-      !first || row.rowIndex < first.rowIndex ? row : first,
-    );
-    const lastSessionRow = sessionRows.reduce((last, row) =>
-      !last || row.rowIndex > last.rowIndex ? row : last,
-    );
-    const minRow = firstSessionRow.rowIndex;
-    const maxRow = lastSessionRow.rowIndex;
-
-    const otherRows = parsedData
-      .filter((e) => e.date !== sessionDate && e.rowIndex)
-      .map((e) => e.rowIndex);
-
-    const rowsAfter = otherRows.filter((r) => r > maxRow);
-    const nearestAfter = rowsAfter.length ? Math.min(...rowsAfter) : null;
-    const endRow = nearestAfter ? nearestAfter - 1 : maxRow;
-
-    const timings = [];
-    const t0 = performance.now();
-    let result = { deleted: false, nextDate: null };
-
-    try {
-      const tApi = performance.now();
-      const res = await fetch("/api/sheet/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ssid: sheetInfo.ssid,
-          startRowIndex: minRow,
-          endRowIndex: endRow,
-          lastDataRowIndex: maxRow,
-          expectedDate: sessionDate,
-          firstBefore: buildSheetSnapshotFromSetLike(firstSessionRow),
-          lastBefore: buildSheetSnapshotFromSetLike(lastSessionRow),
-        }),
-      });
-      timings.push({
-        name: "DELETE /api/sheet/delete",
-        ms: performance.now() - tApi,
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.warning) console.warn("[sheet/delete]", data.warning);
-        if (data?.code === "PRECONDITION_FAILED") {
-          toast({
-            title: "Delete blocked to protect the sheet",
-            description:
-              "The session rows changed before deletion. The log has been refreshed; please try again.",
-            variant: "destructive",
-            duration: 8000,
-          });
-          await mutate();
-        }
-        throw new Error(data.error || "Delete failed");
-      }
-      await mutate();
-      markStructuralSaved();
-      const remainingDates = sessionDates.filter((d) => d !== sessionDate);
-      result = {
-        deleted: true,
-        nextDate: remainingDates.length
-          ? remainingDates[remainingDates.length - 1]
-          : todayIso,
-      };
-    } catch (err) {
-      console.warn("[sheet/delete] deleteSession failed:", err);
-      markStructuralError();
-    }
-    logSheetTimings("deleteSession", timings, performance.now() - t0);
-    return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- markStructural* are stable function declarations
-  }, [
-    sheetInfo?.ssid,
-    parsedData,
-    sessionDate,
-    sessionDates,
-    todayIso,
-    mutate,
-    toast,
-  ]);
-
-  return {
-    syncState,
-    isStructuralSaving,
-    hasDeferredAdd,
-    isDeleteCooldownActive,
-    sessionLifts,
-    sessionLiftsWithPending,
-    resetOptimisticSessionState,
-    updateSet,
-    deleteSet,
-    addSet,
-    addLift,
-    deleteSession,
   };
 }

@@ -33,11 +33,15 @@ npx eslint <paths>     # lint the files you touched
 npx prettier --write <paths>  # format the files you touched
 npm run format         # format the whole repo; format:check only reports
 npm run validate:imports  # importer and lift-name checks on synthetic rows
+node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-log-sync.mjs
+                       # the log's sheet sync against a simulated sheet
 ```
 
 There is **no test framework configured**. Validation is lint, plus
 `validate:imports` whenever you touch import parsing, the lift-name normalizer,
-or a registry synonym.
+or a registry synonym, plus `scripts/validate-log-sync.mjs` whenever you touch
+the log's sheet sync or the row rules its write routes share
+(`src/lib/sheet/log-sync-*.js`, `src/lib/sheet/sheet-row-ops.js`).
 
 Do not run `npm run build` unless the user asks. It disrupts the user's local
 `npm run dev` flow. It runs `next-sitemap` as a postbuild step.
@@ -113,6 +117,15 @@ authenticated users.
 - **Sheet writes** in `api/sheet/*` are *operation-oriented*, not
   REST-over-rows. Each file's header comment explains why it earns its own
   operation — read it before adding a new one.
+- **Log sync:** the log page never writes to the sheet directly. Every add,
+  edit and delete goes into one outbox (`src/lib/sheet/log-sync-engine.js`,
+  pure) that `log-sync-store.js` sends strictly one request at a time; what
+  the lifter sees is the last snapshot with the outbox drawn over it. Rows are
+  identified by a local `_key`, never by `rowIndex`, which moves. Do not add
+  optimistic state to a component, send a sheet write from anywhere else, or
+  gate the UI on `isValidating`. Read the engine's header comment first, and
+  prove a change with `scripts/validate-log-sync.mjs`, which drives the real
+  engine against a simulated sheet with lost requests and stale reads.
 - **KV keys:** `src/lib/user-kv-keys.js` owns the `sj:user:<email>` key
   convention and the read-modify-write helpers. Never interpolate that key
   inline.

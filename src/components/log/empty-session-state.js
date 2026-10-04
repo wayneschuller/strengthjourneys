@@ -11,7 +11,7 @@ import { BigFourNextUp } from "@/components/log/big-four-next-up";
 export function EmptySessionState({
   addLiftChips,
   nextLiftPlan,
-  isStructuralSaving,
+  isAddBlocked,
   isToday,
   onAddLift,
   previewMode,
@@ -45,7 +45,7 @@ export function EmptySessionState({
           <BigFourNextUp
             plan={nextLiftPlan}
             onStart={onAddLift}
-            disabled={isStructuralSaving}
+            disabled={isAddBlocked}
           />
 
           <AddLiftButton
@@ -57,7 +57,7 @@ export function EmptySessionState({
             )}
             sessionDate={sessionDate}
             isToday={isToday}
-            disabled={isStructuralSaving}
+            disabled={isAddBlocked}
           />
         </>
       ) : (
@@ -79,7 +79,7 @@ export function EmptySessionState({
             chips={addLiftChips}
             sessionDate={sessionDate}
             isToday={isToday}
-            disabled={isStructuralSaving}
+            disabled={isAddBlocked}
           />
         </>
       )}

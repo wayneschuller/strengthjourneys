@@ -440,7 +440,7 @@ function SmartAddButtonGrid({
       </div>
       {showHint && disabled && (
         <p className="text-muted-foreground/60 pt-1 pb-2 text-center text-[11px] italic">
-          Row positions are updating. Add controls will re-enable in a moment.
+          Waiting on your sheet. Add controls return as soon as it answers.
         </p>
       )}
     </>

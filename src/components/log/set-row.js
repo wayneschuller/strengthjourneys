@@ -1,9 +1,11 @@
 /**
- * Editable persisted set row for the session log.
- * Keeps local draft and optimistic state while sheet writes settle.
+ * Editable set row for the session log.
+ * Holds only what is being typed. The `set` it is given already carries every
+ * change the lifter has made, saved or still on its way to the sheet, so the
+ * row draws it as it is and reports each committed field through `onUpdate`.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { motion } from "motion/react";
@@ -24,10 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
-import {
-  getEditableSetFields,
-  parseWeightInput,
-} from "@/components/log/sheet-snapshot-utils";
+import { parseWeightInput } from "@/components/log/sheet-snapshot-utils";
 import { CelebrationReveal } from "@/components/log/celebration-reveal";
 import { VideoLinkButton } from "@/components/log/video-link-button";
 import {
@@ -50,7 +49,6 @@ export function SetRow({
   isActiveCelebration,
   shouldPassiveAnimate,
   passiveDelay = 0,
-  onOptimisticFieldsChange,
   onUpdate,
   onDelete,
   isDeleteDisabled = false,
@@ -64,7 +62,6 @@ export function SetRow({
   weightFraction = null,
 }) {
   const { toast } = useToast();
-  const isLocked = Boolean(set._pending);
   const isReadOnly = !onUpdate;
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
@@ -80,50 +77,6 @@ export function SetRow({
   const prefUnit = isMetric ? "kg" : "lb";
   const unitMismatch = set.unitType && set.unitType !== prefUnit;
 
-  // Optimistic display: holds committed value until parsedData catches up
-  const [pendingReps, setPendingReps] = useState(null);
-  const [pendingWeight, setPendingWeight] = useState(null);
-  const [pendingNotes, setPendingNotes] = useState(null);
-  const [pendingUrl, setPendingUrl] = useState(null);
-  const latestFieldsRef = useRef(getEditableSetFields(set));
-
-  // Debounced update: coalesce rapid changes (spinner arrows, keyboard arrows)
-  // into a single API call. Each commit merges into latestFieldsRef so a quick
-  // reps-then-weight edit still sends the final combined snapshot.
-  const updateTimerRef = useRef(null);
-  const scheduleUpdate = useCallback(
-    (update) => {
-      latestFieldsRef.current = update.nextFields;
-      if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
-      updateTimerRef.current = setTimeout(() => {
-        updateTimerRef.current = null;
-        onUpdate(update);
-      }, 800);
-    },
-    [onUpdate],
-  );
-  const flushUpdate = useCallback(
-    (update) => {
-      latestFieldsRef.current = update.nextFields;
-      if (updateTimerRef.current) {
-        clearTimeout(updateTimerRef.current);
-        updateTimerRef.current = null;
-      }
-      onUpdate(update);
-    },
-    [onUpdate],
-  );
-  // Flush any pending debounced update on unmount
-  useEffect(
-    () => () => {
-      if (updateTimerRef.current) {
-        clearTimeout(updateTimerRef.current);
-        updateTimerRef.current = null;
-      }
-    },
-    [],
-  );
-
   // Keep drafts in sync if SWR refreshes parsedData
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- draft state intentionally tracks external SWR refreshes
@@ -138,55 +91,10 @@ export function SetRow({
     setDraftNotes(set.notes ?? "");
   }, [set.notes]);
 
-  // Clear pending once parsedData reflects the committed value
-  useEffect(() => {
-    if (pendingReps !== null && set.reps === pendingReps) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- optimistic local state clears when server data catches up
-      setPendingReps(null);
-    }
-  }, [set.reps, pendingReps]);
-  useEffect(() => {
-    if (pendingWeight !== null && set.weight === pendingWeight) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- optimistic local state clears when server data catches up
-      setPendingWeight(null);
-    }
-  }, [set.weight, pendingWeight]);
-  useEffect(() => {
-    if (pendingNotes !== null && (set.notes ?? "") === pendingNotes) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- optimistic local state clears when server data catches up
-      setPendingNotes(null);
-    }
-  }, [set.notes, pendingNotes]);
-  useEffect(() => {
-    if (pendingUrl !== null && (set.URL ?? "") === pendingUrl) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- optimistic local state clears when server data catches up
-      setPendingUrl(null);
-    }
-  }, [set.URL, pendingUrl]);
-  useEffect(() => {
-    latestFieldsRef.current = {
-      reps: pendingReps ?? set.reps,
-      weight: pendingWeight ?? set.weight,
-      unitType: set.unitType ?? "",
-      notes: pendingNotes ?? set.notes ?? "",
-      url: pendingUrl ?? set.URL ?? "",
-    };
-  }, [
-    set.reps,
-    set.weight,
-    set.unitType,
-    set.notes,
-    set.URL,
-    pendingReps,
-    pendingWeight,
-    pendingNotes,
-    pendingUrl,
-  ]);
-
-  const displayReps = pendingReps !== null ? pendingReps : set.reps;
-  const displayWeight = pendingWeight !== null ? pendingWeight : set.weight;
-  const displayNotes = pendingNotes !== null ? pendingNotes : (set.notes ?? "");
-  const displayUrl = pendingUrl !== null ? pendingUrl : (set.URL ?? "");
+  const displayReps = set.reps;
+  const displayWeight = set.weight;
+  const displayNotes = set.notes ?? "";
+  const displayUrl = set.URL ?? "";
   const rankingSummary = prMeta?.message ?? null;
   const rankingBadges = prMeta?.badges?.length
     ? prMeta.badges
@@ -204,104 +112,33 @@ export function SetRow({
     ...celebration,
     scope: prMeta?.scope ?? null,
   });
-  const rowKey = getSetIdentityKey(set);
-  const optimisticFields = useMemo(() => {
-    const hasOptimisticOverride =
-      pendingReps !== null ||
-      pendingWeight !== null ||
-      pendingNotes !== null ||
-      pendingUrl !== null;
-
-    if (!hasOptimisticOverride) return null;
-
-    return {
-      reps: pendingReps ?? set.reps,
-      weight: pendingWeight ?? set.weight,
-      unitType: set.unitType ?? "",
-      notes: pendingNotes ?? set.notes ?? "",
-      url: pendingUrl ?? set.URL ?? "",
-    };
-  }, [
-    pendingReps,
-    pendingWeight,
-    pendingNotes,
-    pendingUrl,
-    set.reps,
-    set.weight,
-    set.unitType,
-    set.notes,
-    set.URL,
-  ]);
-
-  useEffect(() => {
-    if (!onOptimisticFieldsChange) return undefined;
-    onOptimisticFieldsChange(rowKey, optimisticFields);
-    return () => onOptimisticFieldsChange(rowKey, null);
-  }, [rowKey, optimisticFields, onOptimisticFieldsChange]);
-
+  // Each commit is queued for the sheet the moment it is made. Reps then
+  // weight on one row, or a run of spinner clicks, still go out as a single
+  // write: the sync queue folds changes to a row together while they wait.
   function commitReps() {
-    if (isLocked) return;
     if (cancelledEditRef.current) return;
     setEditingReps(false);
     const parsed = parseInt(draftReps, 10);
-    if (!isNaN(parsed) && parsed !== latestFieldsRef.current.reps) {
-      const beforeFields = latestFieldsRef.current;
-      const nextFields = { ...beforeFields, reps: parsed };
-      setPendingReps(parsed);
-      scheduleUpdate({
-        field: "reps",
-        beforeFields,
-        nextFields,
-      });
-    }
+    if (!isNaN(parsed) && parsed !== set.reps) onUpdate?.({ reps: parsed });
   }
 
   function commitWeight() {
-    if (isLocked) return;
     if (cancelledEditRef.current) return;
     setEditingWeight(false);
     const num = parseWeightInput(draftWeight);
-    if (!isNaN(num) && num !== latestFieldsRef.current.weight) {
-      const beforeFields = latestFieldsRef.current;
-      const nextFields = { ...beforeFields, weight: num };
-      setPendingWeight(num);
-      scheduleUpdate({
-        field: "weight",
-        beforeFields,
-        nextFields,
-      });
-    }
+    if (!isNaN(num) && num !== set.weight) onUpdate?.({ weight: num });
   }
 
   function commitNotes() {
-    if (isLocked) return;
     const trimmed = draftNotes.trim();
-    if (trimmed !== (latestFieldsRef.current.notes ?? "").trim()) {
-      const beforeFields = latestFieldsRef.current;
-      const nextFields = { ...beforeFields, notes: trimmed };
-      setPendingNotes(trimmed);
-      flushUpdate({
-        field: "notes",
-        beforeFields,
-        nextFields,
-      });
-    }
+    if (trimmed !== displayNotes.trim()) onUpdate?.({ notes: trimmed });
   }
 
   function commitUrl(value) {
-    if (isLocked) return;
     const trimmed = value.trim();
-    if (trimmed !== (latestFieldsRef.current.url ?? "").trim()) {
-      const beforeFields = latestFieldsRef.current;
-      const nextFields = { ...beforeFields, url: trimmed };
-      setPendingUrl(trimmed);
-      if (trimmed) onSessionUrlAccepted?.(trimmed);
-      flushUpdate({
-        field: "url",
-        beforeFields,
-        nextFields,
-      });
-    }
+    if (trimmed === displayUrl.trim()) return;
+    if (trimmed) onSessionUrlAccepted?.(trimmed);
+    onUpdate?.({ url: trimmed });
   }
 
   // Tab walks one row as a single form: reps, weight, notes, each field
@@ -387,7 +224,6 @@ export function SetRow({
   // clipboard, a link already used this session, or a browser that keeps the
   // clipboard to itself, and the button then opens a field to paste into.
   async function attachCopiedLink() {
-    if (isLocked) return true;
     let copied = "";
     try {
       copied = (await navigator.clipboard.readText())?.trim() ?? "";
@@ -413,7 +249,7 @@ export function SetRow({
   // keep the link icon.
   async function offerCopiedLinkOnHover() {
     isHoveredRef.current = true;
-    if (isReadOnly || isLocked || displayUrl || editingNotes) return;
+    if (isReadOnly || displayUrl || editingNotes) return;
     // A tap fires mouseenter too, and the offer is drawn for a pointer.
     if (!window.matchMedia("(hover: hover) and (min-width: 768px)").matches)
       return;
@@ -487,7 +323,7 @@ export function SetRow({
     </TooltipProvider>
   ) : null;
   const attachButton =
-    !isReadOnly && !isLocked && !displayUrl ? (
+    !isReadOnly && !displayUrl ? (
       <AttachVideoLinkButton
         onAttachCopied={attachCopiedLink}
         onSave={commitUrl}
@@ -543,7 +379,6 @@ export function SetRow({
                 type="number"
                 className="border-primary w-10 rounded border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
                 value={draftReps}
-                disabled={isLocked}
                 onChange={(e) => setDraftReps(e.target.value)}
                 onBlur={commitReps}
                 onFocus={(e) => {
@@ -563,7 +398,7 @@ export function SetRow({
                 }}
                 autoFocus
               />
-            ) : isLocked || isReadOnly ? (
+            ) : isReadOnly ? (
               <div className="text-foreground/80 w-full py-0.5 text-right text-xl font-semibold tabular-nums">
                 {displayReps}
               </div>
@@ -599,7 +434,6 @@ export function SetRow({
                 inputMode="decimal"
                 className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
                 value={draftWeight}
-                disabled={isLocked}
                 onChange={(e) => setDraftWeight(e.target.value)}
                 onBlur={commitWeight}
                 onFocus={(e) => {
@@ -620,7 +454,7 @@ export function SetRow({
                 }}
                 autoFocus
               />
-            ) : isLocked || isReadOnly ? (
+            ) : isReadOnly ? (
               <div className="text-foreground/80 py-0.5 text-left text-xl font-semibold tabular-nums">
                 {displayWeight}
               </div>
@@ -664,7 +498,7 @@ export function SetRow({
                   }
                   onAnimationEnd={() => setJustAttached(false)}
                 >
-                  {isReadOnly || isLocked || !videoSource ? (
+                  {isReadOnly || !videoSource ? (
                     <VideoLinkButton url={displayUrl} source={videoSource} />
                   ) : (
                     <SetVideoMenu
@@ -693,7 +527,6 @@ export function SetRow({
               type="text"
               className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs focus:outline-none"
               value={draftNotes}
-              disabled={isLocked}
               onChange={(e) => setDraftNotes(e.target.value)}
               onBlur={closeNotesEdit}
               onKeyDown={(e) => {
@@ -721,7 +554,7 @@ export function SetRow({
             />
           ) : (
             <div className="space-y-0.5">
-              {isLocked || isReadOnly ? (
+              {isReadOnly ? (
                 <div className="text-muted-foreground w-full text-left text-[13px]">
                   {displayNotes || (isReadOnly ? "" : "notes...")}
                 </div>
@@ -769,7 +602,7 @@ export function SetRow({
                         key={`${badge.scope}-${badge.message}`}
                         badge={badge}
                         liftType={set.liftType}
-                        animationKey={`desktop-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
+                        animationKey={`desktop-rank-${getSetIdentityKey(set)}-${badge.message}`}
                         className={cn(metaBadgeClassName, rankingBadgeMaxClass)}
                       />
                     ))}
@@ -840,7 +673,7 @@ export function SetRow({
                       key={`${badge.scope}-${badge.message}`}
                       badge={badge}
                       liftType={set.liftType}
-                      animationKey={`mobile-rank-${set.rowIndex ?? set._tempId ?? "pending"}-${badge.message}`}
+                      animationKey={`mobile-rank-${getSetIdentityKey(set)}-${badge.message}`}
                       className={cn(metaBadgeClassName, "max-w-[11rem]")}
                     />
                   ))}

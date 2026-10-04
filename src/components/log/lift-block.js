@@ -15,11 +15,7 @@ import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { getTopLiftStats, useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
-import {
-  getEffectiveSetForRanking,
-  getOptimisticRankingMeta,
-  getSetIdentityKey,
-} from "@/lib/pr-ranking";
+import { getOptimisticRankingMeta, getSetIdentityKey } from "@/lib/pr-ranking";
 import {
   CELEBRATION_TIERS,
   fireSetCelebrationConfetti,
@@ -70,8 +66,8 @@ export function LiftBlock({
   dashboardStage,
   sessionCount = 0,
   isPastSession,
-  isStructuralSaving = false,
-  isAddSaving = false,
+  isWriteBlocked = false,
+  isEditBlocked = false,
   isDeleteCooldownActive = false,
   collapseSuggestions = false,
   onUpdateSet,
@@ -107,7 +103,6 @@ export function LiftBlock({
   const previousCelebrationKeysRef = useRef(new Map());
   const [isCelebrationShaking, setIsCelebrationShaking] = useState(false);
   const [activeCelebrationKey, setActiveCelebrationKey] = useState(null);
-  const [optimisticFieldsByKey, setOptimisticFieldsByKey] = useState({});
   const [customDraftSeed, setCustomDraftSeed] = useState(0);
   const [customDraftConfig, setCustomDraftConfig] = useState(null);
   const [initialPassiveRowKeys] = useState(
@@ -125,43 +120,17 @@ export function LiftBlock({
         ]),
       ),
   );
+  // A save in progress never locks a row; the sync queues what the lifter
+  // does next. See the two gates in pages/log.js for what does.
   const canEditSets =
-    !previewMode && !isStructuralSaving && typeof onUpdateSet === "function";
-  const canDeleteSets = !previewMode && typeof onDeleteSet === "function";
+    !previewMode && !isEditBlocked && typeof onUpdateSet === "function";
+  const canDeleteSets =
+    !previewMode && !isWriteBlocked && typeof onDeleteSet === "function";
   const canAddSets = !previewMode && typeof onAddSet === "function";
   const trainingAgeYears = useMemo(
     () => getTrainingAgeYears(parsedData, sessionDate),
     [parsedData, sessionDate],
   );
-
-  const handleOptimisticFieldsChange = useCallback((rowKey, fields) => {
-    if (!rowKey) return;
-    setOptimisticFieldsByKey((prev) => {
-      if (!fields) {
-        if (!(rowKey in prev)) return prev;
-        const next = { ...prev };
-        delete next[rowKey];
-        return next;
-      }
-
-      const current = prev[rowKey];
-      if (
-        current &&
-        current.reps === fields.reps &&
-        current.weight === fields.weight &&
-        current.unitType === fields.unitType &&
-        current.notes === fields.notes &&
-        current.url === fields.url
-      ) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        [rowKey]: fields,
-      };
-    });
-  }, []);
 
   // Show a one-time hint for new users (first ~20 sessions)
   const showSuggestionHint = useMemo(() => {
@@ -181,25 +150,8 @@ export function LiftBlock({
   // playable link, so the marks line up and the notes column stops jumping
   // between filmed and unfilmed rows.
   const hasAnyVideo = useMemo(
-    () =>
-      sets.some((set) => {
-        // Matches the key SetRow reports its optimistic fields under.
-        const url =
-          optimisticFieldsByKey[getSetIdentityKey(set)]?.url ?? set.URL ?? "";
-        return Boolean(getVideoSourceMeta(url));
-      }),
-    [sets, optimisticFieldsByKey],
-  );
-
-  const optimisticSetsForStrength = useMemo(
-    () =>
-      sets.map((set, index) =>
-        getEffectiveSetForRanking(
-          set,
-          optimisticFieldsByKey[getSetIdentityKey(set, `set-${index}`)],
-        ),
-      ),
-    [sets, optimisticFieldsByKey],
+    () => sets.some((set) => Boolean(getVideoSourceMeta(set.URL ?? ""))),
+    [sets],
   );
 
   // Today's heaviest set. It headlines the card, and rows well under it read
@@ -207,7 +159,7 @@ export function LiftBlock({
   const { sessionTopWeight, topSetLabel } = useMemo(() => {
     let top = null;
     let topValue = 0;
-    for (const s of optimisticSetsForStrength) {
+    for (const s of sets) {
       if (!(s.reps > 0) || !(s.weight > 0)) continue;
       const { value } = getDisplayWeight(s, isMetric);
       if (value > topValue || (value === topValue && s.reps > top.reps)) {
@@ -221,13 +173,13 @@ export function LiftBlock({
       sessionTopWeight: topValue,
       topSetLabel: `${top.reps}@${value}${unit}`,
     };
-  }, [optimisticSetsForStrength, isMetric]);
+  }, [sets, isMetric]);
 
   // Recompute tonnage stats using optimistic reps/weight so the tonnage
   // row updates instantly as the user edits inline.
   const optimisticTonnageStats = useMemo(() => {
     if (!tonnageStats) return null;
-    const optimisticTonnage = optimisticSetsForStrength.reduce(
+    const optimisticTonnage = sets.reduce(
       (sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0),
       0,
     );
@@ -242,10 +194,10 @@ export function LiftBlock({
           ? ((optimisticTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
           : null,
       shouldShowComparison:
-        optimisticSetsForStrength.length >= 4 ||
+        sets.length >= 4 ||
         (avgLiftTonnage > 0 && optimisticTonnage >= avgLiftTonnage * 0.4),
     };
-  }, [tonnageStats, optimisticSetsForStrength]);
+  }, [tonnageStats, sets]);
 
   // The heaviest this lift has ever gone, in the unit a custom set would be
   // entered in. The draft row uses it to catch a slipped extra digit.
@@ -346,7 +298,7 @@ export function LiftBlock({
     if (!canShowStrength) return { bestE1rmIndex: -1, bestE1rmValue: 0 };
     let bestIdx = -1;
     let bestVal = 0;
-    optimisticSetsForStrength.forEach((s, i) => {
+    sets.forEach((s, i) => {
       const reps = s.reps ?? 0;
       const weight = s.weight ?? 0;
       if (reps > 0 && weight > 0) {
@@ -358,18 +310,15 @@ export function LiftBlock({
       }
     });
     return { bestE1rmIndex: bestIdx, bestE1rmValue: bestVal };
-  }, [optimisticSetsForStrength, canShowStrength, e1rmFormula]);
+  }, [sets, canShowStrength, e1rmFormula]);
 
   const prMeta = useMemo(() => {
     return sets.map((s) => {
-      const effectiveSet = getEffectiveSetForRanking(
-        s,
-        optimisticFieldsByKey[getSetIdentityKey(s)],
-      );
+      // The sets arrive with every unsaved change already applied.
+      const effectiveSet = s;
       const rankingMeta = getOptimisticRankingMeta({
         set: effectiveSet,
         sets,
-        optimisticFieldsByKey,
         isMetric,
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
@@ -418,9 +367,10 @@ export function LiftBlock({
       const celebrationKey =
         celebration.tier !== "none"
           ? [
-              s.rowIndex ??
-                s._tempId ??
+              getSetIdentityKey(
+                s,
                 `${liftType}-${effectiveSet.reps}-${effectiveSet.weight}`,
+              ),
               celebration.tier,
               primaryBadge?.scope ?? "lifetime",
               primaryBadge?.rank ?? "na",
@@ -464,7 +414,6 @@ export function LiftBlock({
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     trainingAgeYears,
-    optimisticFieldsByKey,
   ]);
 
   const liftSessionHistory = useMemo(
@@ -477,7 +426,7 @@ export function LiftBlock({
   // so it shows either way.
   const progressionBadges = useMemo(() => {
     const badges = getProgressionBadges({
-      sets: optimisticSetsForStrength,
+      sets: sets,
       history: liftSessionHistory,
       sessionDate,
       liftType,
@@ -489,13 +438,7 @@ export function LiftBlock({
         ? null
         : badge,
     );
-  }, [
-    optimisticSetsForStrength,
-    liftSessionHistory,
-    sessionDate,
-    liftType,
-    prMeta,
-  ]);
+  }, [sets, liftSessionHistory, sessionDate, liftType, prMeta]);
 
   useEffect(() => {
     return () => {
@@ -508,7 +451,7 @@ export function LiftBlock({
   useEffect(() => {
     const currentKeys = new Map(
       sets.map((set, index) => [
-        set.rowIndex ?? set._tempId ?? `pending-${index}`,
+        getSetIdentityKey(set, `pending-${index}`),
         prMeta[index]?.celebrationKey ?? null,
       ]),
     );
@@ -521,7 +464,7 @@ export function LiftBlock({
 
     const newlyQualified = sets
       .map((set, index) => {
-        const rowKey = set.rowIndex ?? set._tempId ?? `pending-${index}`;
+        const rowKey = getSetIdentityKey(set, `pending-${index}`);
         const meta = prMeta[index];
         const previousKey = previousCelebrationKeysRef.current.get(rowKey);
 
@@ -690,7 +633,6 @@ export function LiftBlock({
       <div className="divide-border/40 border-border/40 mx-4 mt-3 divide-y border-t md:mx-5">
         {sets.map((set, idx) => {
           const rowIdentityKey = getSetIdentityKey(set, `pending-${idx}`);
-          const effectiveSet = optimisticSetsForStrength[idx] ?? set;
           const shouldPassiveAnimate =
             !prefersReducedMotion && initialPassiveRowKeys.has(rowIdentityKey);
           const passiveDelay = shouldPassiveAnimate
@@ -702,37 +644,23 @@ export function LiftBlock({
 
           return (
             <SetRow
-              key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
+              key={rowIdentityKey}
               set={set}
               isMetric={isMetric}
               prMeta={prMeta[idx]}
               celebration={prMeta[idx]?.celebration ?? null}
-              isActiveCelebration={
-                activeCelebrationKey ===
-                (set.rowIndex ?? set._tempId ?? `pending-${idx}`)
-              }
+              isActiveCelebration={activeCelebrationKey === rowIdentityKey}
               shouldPassiveAnimate={shouldPassiveAnimate}
               passiveDelay={passiveDelay}
-              onOptimisticFieldsChange={handleOptimisticFieldsChange}
               onUpdate={
                 canEditSets
-                  ? (update) =>
-                      onUpdateSet(
-                        {
-                          rowIndex: set.rowIndex,
-                          tempId: set._tempId ?? null,
-                          set,
-                        },
-                        update,
-                      )
+                  ? (patch) => onUpdateSet(rowIdentityKey, patch)
                   : undefined
               }
               onDelete={
-                canDeleteSets && !set._pending && set.rowIndex
-                  ? () => onDeleteSet(set)
-                  : null
+                canDeleteSets ? () => onDeleteSet(rowIdentityKey) : null
               }
-              isDeleteDisabled={isStructuralSaving || isDeleteCooldownActive}
+              isDeleteDisabled={isDeleteCooldownActive}
               usedSessionUrls={usedSessionUrls}
               onSessionUrlAccepted={onSessionUrlAccepted}
               onSessionUrlReleased={onSessionUrlReleased}
@@ -740,8 +668,7 @@ export function LiftBlock({
               progressionBadge={progressionBadges[idx] ?? null}
               weightFraction={
                 sessionTopWeight > 0
-                  ? getDisplayWeight(effectiveSet, isMetric).value /
-                    sessionTopWeight
+                  ? getDisplayWeight(set, isMetric).value / sessionTopWeight
                   : null
               }
               strengthTooltip={
@@ -759,7 +686,7 @@ export function LiftBlock({
                       isMetric,
                     })}
                     isMetric={isMetric}
-                    reps={effectiveSet.reps}
+                    reps={set.reps}
                     e1rmFormula={e1rmFormula}
                   />
                 ) : null
@@ -768,7 +695,7 @@ export function LiftBlock({
                 idx === bestE1rmIndex ? (
                   <LiftStrengthLevel
                     liftType={liftType}
-                    workouts={optimisticSetsForStrength}
+                    workouts={sets}
                     standards={standards}
                     e1rmFormula={e1rmFormula}
                     sessionDate={sessionDate}
@@ -794,7 +721,7 @@ export function LiftBlock({
             heaviestWeight={heaviestWeight}
             onCommit={handleCustomDraftCommit}
             onCancel={closeCustomSetDraft}
-            disabled={isAddSaving}
+            disabled={isWriteBlocked}
           />
         )}
       </div>
@@ -845,7 +772,7 @@ export function LiftBlock({
           showHint={showSuggestionHint}
           isPastSession={isPastSession}
           collapseSuggestions={collapseSuggestions}
-          disabled={isAddSaving}
+          disabled={isWriteBlocked}
         />
       )}
     </div>

@@ -34,40 +34,18 @@ export function getTop20Rank(topLifts, weight, isMetric) {
 }
 
 /**
- * Stable identity key for a set across persisted and in-flight states.
- * Prefers `rowIndex` (sheet-backed) then `_tempId` (optimistic) so the same
- * set maps to the same key before and after it syncs to Google Sheets.
+ * Stable identity key for a set. The log's sync gives every row it draws a
+ * `_key` that survives the row moving in the sheet and a new set being
+ * confirmed; rows from anywhere else fall back to their sheet row.
  *
- * @param {object} set - Set object (may have `rowIndex` or `_tempId`).
- * @param {string} [fallback="pending"] - Returned when neither id is present.
+ * @param {object} set - Set object.
+ * @param {string} [fallback="pending"] - Returned when the set has no identity.
  * @returns {string} A stable key usable in Maps/Sets/object keys.
  */
 export function getSetIdentityKey(set, fallback = "pending") {
+  if (set?._key) return set._key;
   if (set?.rowIndex != null) return `row:${set.rowIndex}`;
-  if (set?._tempId) return `tmp:${set._tempId}`;
   return fallback;
-}
-
-/**
- * Overlay optimistic in-page field edits on a persisted set for ranking purposes.
- * The log page lets users edit reps/weight/unit before they sync to the sheet —
- * we want ranks to reflect the *displayed* values, not the last-saved ones.
- *
- * @param {object} set - Persisted set.
- * @param {{ reps?: number, weight?: number, unitType?: string, notes?: string, url?: string }} [optimisticFields]
- * @returns {object} The set with optimistic fields shallow-merged in (or the set unchanged).
- */
-export function getEffectiveSetForRanking(set, optimisticFields) {
-  if (!optimisticFields) return set;
-
-  return {
-    ...set,
-    reps: optimisticFields.reps,
-    weight: optimisticFields.weight,
-    unitType: optimisticFields.unitType ?? set.unitType,
-    notes: optimisticFields.notes ?? set.notes,
-    URL: optimisticFields.url ?? set.URL,
-  };
 }
 
 /**
@@ -106,21 +84,19 @@ export function compareRankingEntries(a, b, isMetric) {
   const bDate = b?.date ?? "";
   if (aDate !== bDate) return aDate.localeCompare(bDate);
 
-  return String(a?.rowIndex ?? a?._tempId ?? "").localeCompare(
-    String(b?.rowIndex ?? b?._tempId ?? ""),
-  );
+  return getSetIdentityKey(a, "").localeCompare(getSetIdentityKey(b, ""));
 }
 
 /**
  * The log page treats newly entered/edited sets as "already done" for UX.
  * We therefore rank against the precomputed SWR top-lift arrays as a baseline,
- * then locally replace current-session rows with their optimistic in-page values.
+ * then locally replace current-session rows with the session as the log draws
+ * it, which already carries every change still on its way to the sheet.
  * After a full SWR cycle, parsedData/topLifts* naturally converge to the same result.
  *
  * @param {object} args
  * @param {object} args.set - The set being ranked (needs liftType, reps, weight).
- * @param {Array<object>} args.sets - All sets in the current session (for optimistic overlay).
- * @param {Record<string, object>} args.optimisticFieldsByKey - Keyed by `getSetIdentityKey(set)`.
+ * @param {Array<object>} args.sets - All sets in the current session, as drawn.
  * @param {boolean} args.isMetric
  * @param {Record<string, Array<Array<object>>>} args.topLiftsByTypeAndReps -
  *   SWR-precomputed lifetime tops, indexed `[liftType][reps-1]`.
@@ -133,15 +109,11 @@ export function compareRankingEntries(a, b, isMetric) {
 export function getOptimisticRankingMeta({
   set,
   sets,
-  optimisticFieldsByKey,
   isMetric,
   topLiftsByTypeAndReps,
   topLiftsByTypeAndRepsLast12Months,
 }) {
-  const effectiveSet = getEffectiveSetForRanking(
-    set,
-    optimisticFieldsByKey[getSetIdentityKey(set)],
-  );
+  const effectiveSet = set;
 
   if (
     !effectiveSet?.liftType ||
@@ -153,18 +125,11 @@ export function getOptimisticRankingMeta({
     return null;
   }
 
-  const currentSessionSets = sets
-    .map((sessionSet, index) =>
-      getEffectiveSetForRanking(
-        sessionSet,
-        optimisticFieldsByKey[getSetIdentityKey(sessionSet, `set-${index}`)],
-      ),
-    )
-    .filter(
-      (sessionSet) =>
-        (sessionSet?.reps ?? 0) > 0 &&
-        isValidLiftWeight(sessionSet?.liftType, sessionSet?.weight),
-    );
+  const currentSessionSets = sets.filter(
+    (sessionSet) =>
+      (sessionSet?.reps ?? 0) > 0 &&
+      isValidLiftWeight(sessionSet?.liftType, sessionSet?.weight),
+  );
 
   const currentSessionRowIndices = new Set(
     currentSessionSets

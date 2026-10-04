@@ -127,6 +127,9 @@ const _hadSheetOnLoad = (() => {
  * Throws on non-2xx so SWR sets `error` and the UI can surface real failures.
  */
 const fetcher = async (...args) => {
+  // Stamped before the request leaves: the log's sync uses it to tell which
+  // of its own writes a snapshot was read after (see parsedDataReadAt).
+  const readStartedAt = performance.now();
   const res = await fetch(...args);
   const json = await res.json().catch(() => null);
 
@@ -141,8 +144,28 @@ const fetcher = async (...args) => {
     throw error;
   }
 
+  // Not enumerable, so SWR's deep compare still sees an unchanged sheet as
+  // unchanged and keeps the object it has. A stamp it could see would make
+  // every refocus reparse the whole sheet.
+  if (json && typeof json === "object") {
+    Object.defineProperty(json, "readStartedAt", { value: readStartedAt });
+  }
   return json;
 };
+
+// When the newest read that SWR accepted began. The provider keeps the same
+// value in state for rendering; this copy is for the log sync's background
+// queue, which has to judge a read it asked for after the log page has gone.
+let latestAcceptedReadAt = null;
+
+export function getLatestSheetReadAt() {
+  return latestAcceptedReadAt;
+}
+
+// parsedData array -> the SWR object it was parsed from. Kept beside the
+// array rather than in state, so the pair can never drift apart across
+// renders.
+const parsedDataSource = new WeakMap();
 
 const UserLiftingDataContext = createContext();
 const useIsomorphicLayoutEffect =
@@ -193,6 +216,8 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context hasLinkedSheet {boolean} - Signed in with a sheet linked, even while an import is
  *   previewed on top of it. Import surfaces use it to offer merge vs create.
  * @context sheetParsedData {Array|null} - The linked sheet's rows, kept loaded under an import.
+ * @context parsedDataReadAt {number|null} - performance.now() when the sheet read behind
+ *   `sheetParsedData` began; the log's sync uses it to tell which of its writes a snapshot includes.
  * @context rawRows {number|null} - Row count from the last successful sheet fetch.
  * @context hasCachedSheetData {boolean} - True if SWR holds valid sheet values (even if stale).
  * @context dataSyncedAt {number|null} - Timestamp (Date.now()) of the last successful data load.
@@ -202,6 +227,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   const [parsedData, setParsedData] = useState(null); // see @/lib/import/sample-parsed-data.js for data structure design
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
+  const [latestReadStartedAt, setLatestReadStartedAt] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
 
@@ -499,10 +525,25 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         setFetchFailed(false);
         if (authStatus === "authenticated" && freshData?.values) {
           setLastDataReceivedAt(Date.now());
+          latestAcceptedReadAt = freshData.readStartedAt ?? null;
+          setLatestReadStartedAt(latestAcceptedReadAt);
         }
       },
     },
   );
+
+  // When the read behind `parsedData` began. A later read that came back
+  // identical leaves SWR holding the same object, so rows parsed from that
+  // object are current as of the newest read; rows parsed from an older
+  // object keep that object's own stamp until the new one is parsed.
+  const parsedDataSourceData = parsedData
+    ? (parsedDataSource.get(parsedData) ?? null)
+    : null;
+  const parsedDataReadAt = !parsedDataSourceData
+    ? null
+    : parsedDataSourceData === data && latestReadStartedAt !== null
+      ? Math.max(latestReadStartedAt, parsedDataSourceData.readStartedAt ?? 0)
+      : (parsedDataSourceData.readStartedAt ?? null);
 
   const rawRows = data?.values?.length ?? null;
   const isError = !!error;
@@ -581,6 +622,9 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       clearSheet();
     }
 
+    if (result.parsedData && result.parsedData !== demoParsedData && data) {
+      parsedDataSource.set(result.parsedData, data);
+    }
     setParsedData(result.parsedData);
     setParseError(result.parseError);
   }, [
@@ -788,6 +832,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         importFile,
         clearImportedData,
         sheetParsedData: parsedData,
+        parsedDataReadAt,
       }}
     >
       {children}

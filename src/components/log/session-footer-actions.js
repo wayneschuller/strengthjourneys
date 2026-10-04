@@ -23,7 +23,8 @@ export const logFatActionClass =
 export function SessionFooterActions({
   aiReviewLink,
   isToday,
-  isStructuralSaving,
+  isDeleting,
+  isBlocked,
   onCancel,
   onConfirm,
   onRequestConfirm,
@@ -102,20 +103,20 @@ export function SessionFooterActions({
         )}
       >
         <p className="text-muted-foreground text-sm">
-          {isStructuralSaving
-            ? "Finish the current sheet change, then delete this session."
+          {isDeleting
+            ? "Removing this session from your sheet."
             : `Delete all rows for ${getLongReadableDateString(sessionDate) ?? sessionDate}?`}
         </p>
         <Button
           size="sm"
           variant="destructive"
           onClick={onConfirm}
-          disabled={isStructuralSaving}
+          disabled={isDeleting || isBlocked}
         >
-          {isStructuralSaving ? (
+          {isDeleting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Waiting...
+              Deleting...
             </>
           ) : (
             "Delete"

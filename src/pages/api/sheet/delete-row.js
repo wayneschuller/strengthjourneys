@@ -11,6 +11,7 @@
  * - Server then finds the next set row below and promotes onto it only the
  *   Date / Lift Type it would actually lose after deletion, leaving any cell
  *   that row fills itself untouched.
+ * - Promotion and deletion are sent to Google as one batch.
  * - This keeps delete safe for both sparse sheets and "redundant" sheets where
  *   users manually repeat Date / Lift Type on every row.
  * - If verification fails, deletion is rejected.
@@ -75,8 +76,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Resolve the tab before promotion writes anything, so a failed lookup
-    // cannot leave anchor cells promoted onto a row that never gets deleted.
     const targetSheetId = await sheetIdLookup;
 
     // Deletion safety is based on what the next SET ROW would lose, not on
@@ -97,60 +96,65 @@ export default async function handler(req, res) {
       };
     }
 
-    if (promoteTo?.rowIndex) {
-      const promoteRange = `A${promoteTo.rowIndex}:B${promoteTo.rowIndex}`;
-      const promoteValues = [[promoteTo.date, promoteTo.liftType]];
-      const promoteResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${promoteRange}?valueInputOption=USER_ENTERED`,
-        {
-          method: "PUT",
-          headers,
-          body: JSON.stringify({
-            range: promoteRange,
-            majorDimension: "ROWS",
-            values: promoteValues,
-          }),
-        },
-      );
-
-      if (!promoteResponse.ok) {
-        const body = await promoteResponse.json().catch(() => ({}));
-        const message = body?.error?.message || "Failed to promote anchor data";
-        console.error("[sheet/delete-row] promote failed:", message, {
-          rowIndex,
-          promoteTo,
+    // The heir takes over the deleted row's own Date / Lift Type cells, copied
+    // as they stand so a real date stays a date. Promotion and deletion go in
+    // one batch: Google applies both or neither, so a failure cannot leave an
+    // anchor promoted under a row that is still there.
+    const requests = [];
+    if (promoteTo) {
+      const heirRowIndex0 = promoteTo.rowIndex - 1;
+      for (const [columnIndex, value] of [
+        [0, promoteTo.date],
+        [1, promoteTo.liftType],
+      ]) {
+        if (value === null) continue;
+        requests.push({
+          copyPaste: {
+            source: {
+              sheetId: targetSheetId,
+              startRowIndex: rowIndex - 1,
+              endRowIndex: rowIndex,
+              startColumnIndex: columnIndex,
+              endColumnIndex: columnIndex + 1,
+            },
+            destination: {
+              sheetId: targetSheetId,
+              startRowIndex: heirRowIndex0,
+              endRowIndex: heirRowIndex0 + 1,
+              startColumnIndex: columnIndex,
+              endColumnIndex: columnIndex + 1,
+            },
+            pasteType: "PASTE_NO_BORDERS",
+          },
         });
-        return res.status(promoteResponse.status).json({ error: message });
       }
     }
+    requests.push({
+      deleteDimension: {
+        range: {
+          sheetId: targetSheetId,
+          dimension: "ROWS",
+          startIndex: rowIndex - 1,
+          endIndex: rowIndex,
+        },
+      },
+    });
 
     const deleteResponse = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
       {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          requests: [
-            {
-              deleteDimension: {
-                range: {
-                  sheetId: targetSheetId,
-                  dimension: "ROWS",
-                  startIndex: rowIndex - 1,
-                  endIndex: rowIndex,
-                },
-              },
-            },
-          ],
-        }),
+        body: JSON.stringify({ requests }),
       },
     );
 
     if (!deleteResponse.ok) {
       const body = await deleteResponse.json().catch(() => ({}));
       const message = body?.error?.message || "Failed to delete row";
-      console.error("[sheet/delete-row] deleteDimension failed:", message, {
+      console.error("[sheet/delete-row] batchUpdate failed:", message, {
         rowIndex,
+        promoteTo,
       });
       return res.status(deleteResponse.status).json({ error: message });
     }

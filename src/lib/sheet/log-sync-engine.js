@@ -445,8 +445,8 @@ export function planRequest(state, op) {
     const meta = { start: first.sheetIndex, end };
     return {
       kind: "request",
-      url: "/api/sheet/delete",
-      method: "DELETE",
+      url: "/api/sheet/delete-session",
+      method: "POST",
       body: {
         startRowIndex: first.sheetIndex,
         endRowIndex: end,

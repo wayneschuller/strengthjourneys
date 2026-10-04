@@ -277,7 +277,7 @@ class FakeSheet {
       return ok({ deleted: true });
     }
 
-    if (url === "/api/sheet/delete") {
+    if (url === "/api/sheet/delete-session") {
       const {
         startRowIndex,
         endRowIndex,

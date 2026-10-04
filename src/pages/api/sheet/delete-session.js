@@ -1,5 +1,7 @@
 /**
- * Operation-oriented sheet API: delete a complete training session.
+ * Operation-oriented sheet API: delete-session
+ *
+ * Deletes a complete training session.
  * The server verifies both known data endpoints and the entire date boundary
  * before allowing this destructive row-range mutation.
  */
@@ -12,7 +14,7 @@ import {
 } from "@/lib/sheet/sheet-row-ops";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-// DELETE /api/sheet/delete
+// POST /api/sheet/delete-session
 // Deletes all rows belonging to a session — everything from the session's first
 // row through to (but not including) the next session's first row. This matches
 // the "date umbrella" convention: blank rows, comment rows, and any other content
@@ -29,8 +31,8 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 // }
 
 export default async function handler(req, res) {
-  if (req.method !== "DELETE") {
-    res.setHeader("Allow", "DELETE");
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -122,7 +124,7 @@ export default async function handler(req, res) {
       nextRowBreaksBoundary
     ) {
       const warning = `Session delete preflight failed for rows ${startRowIndex}-${endRowIndex}`;
-      console.warn("[sheet/delete] BLOCKING:", warning, {
+      console.warn("[sheet/delete-session] BLOCKING:", warning, {
         firstDiffs,
         lastDiffs,
         explicitDates,
@@ -165,7 +167,7 @@ export default async function handler(req, res) {
     if (!deleteRes.ok) {
       const body = await deleteRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to delete session rows";
-      console.error("[sheet/delete] deleteRange failed:", msg, {
+      console.error("[sheet/delete-session] deleteRange failed:", msg, {
         startRowIndex,
         endRowIndex,
       });
@@ -177,7 +179,7 @@ export default async function handler(req, res) {
       rowsDeleted: endRowIndex - startRowIndex + 1,
     });
   } catch (err) {
-    console.error("[sheet/delete] unexpected error:", err);
+    console.error("[sheet/delete-session] unexpected error:", err);
     return res
       .status(err.status || 500)
       .json({ error: err.message || "Internal server error" });

@@ -4,10 +4,10 @@
  * This route intentionally does not model rows as REST resources. In this
  * codebase the Google Sheet is a first-class user-visible document, so we keep
  * the API aligned to sheet operations instead:
- * - edit-cell
  * - edit-row
  * - insert-row
  * - delete-row
+ * - delete-session
  *
  * `insert-row` is the structural write used for:
  * - appending a set to an existing lift block
@@ -15,7 +15,7 @@
  * - starting a brand-new session
  *
  * The client sends the exact row values to insert plus the insertion position.
- * This keeps creation row-oriented while edit-cell / edit-row stay focused on
+ * This keeps creation row-oriented while edit-row stays focused on
  * non-structural updates.
  *
  * A request flagged `retry` is checked against the slot first, so resending

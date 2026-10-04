@@ -5,10 +5,10 @@
  * "sets" or "sessions". The sheet is the source of truth and the riskiest
  * failures happen at the sheet-row level, so the APIs are modeled around
  * explicit sheet operations:
- * - edit-cell
  * - edit-row
  * - insert-row
  * - delete-row
+ * - delete-session
  *
  * These helpers implement the verification layer shared by those operations.
  * The verification is deliberately "fail closed": we only verify the row at the

@@ -37,6 +37,8 @@ import { decodeWorkbook } from "@/lib/import/decode-workbook";
  * @property {string} date          ISO date string "YYYY-MM-DD"
  * @property {string} liftType      Normalized lift name ("Back Squat", "Bench Press", etc.)
  * @property {string} [rawLiftType] Original effective lift label from the sheet ("OHP", "Overhead Press", etc.)
+ * @property {string} [rawDate]     The sheet's own date text, only when it differs from `date` ("3/8/2026")
+ * @property {string} [rawReps]     The sheet's own reps text, only when it differs from `reps` (" 5")
  * @property {number} reps          Number of reps for this set
  * @property {number} weight        Weight used for this set
  * @property {"lb"|"kg"} [unitType] Units, if known

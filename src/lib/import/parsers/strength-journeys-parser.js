@@ -37,6 +37,7 @@ export function parseStrengthJourneysData(data) {
   const startTime = performance.now();
   const columnNames = data[0];
   let previousDate = null;
+  let previousRawDate = null;
   let previousLiftType = null;
   let previousRawLiftType = null;
   const localeHint =
@@ -103,6 +104,7 @@ export function parseStrengthJourneysData(data) {
         // Valid date: use it and update previousDate
         obj.date = normalizedDate;
         previousDate = normalizedDate;
+        previousRawDate = row[dateCol];
       } else {
         // Invalid date: warn, skip this row, and reset previousDate to null
         // This ensures that subsequent rows with blank dates will also be skipped
@@ -122,6 +124,10 @@ export function parseStrengthJourneysData(data) {
         continue;
       }
     }
+    // The log's verified writes compare against the sheet's own cell text.
+    // Keep that text wherever reading it changed it ("3/8/2026", " 5"), the
+    // way rawLiftType and rawWeight already do for their cells.
+    if (previousRawDate !== obj.date) obj.rawDate = String(previousRawDate);
     // --- END DATE HANDLING LOGIC ---
 
     // Process lift type next since it's used for previousLiftType
@@ -147,6 +153,9 @@ export function parseStrengthJourneysData(data) {
       continue;
     }
     obj.reps = convertStringToInt(row[repsCol]);
+    if (String(obj.reps) !== String(row[repsCol])) {
+      obj.rawReps = String(row[repsCol]);
+    }
     if (row[weightCol]) obj.rawWeight = row[weightCol]; // Store raw before normalization
     const { value, unitType, _explicitUnit, repairs, skip } =
       convertWeightAndUnitType(row[weightCol]);

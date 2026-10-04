@@ -166,7 +166,9 @@ function shouldShowConfirmation(payload) {
 
 function shouldShowSyncToastOnAutoLink(payload) {
   if (payload?.action !== "link_existing") return false;
-  return ["drive_single", "legacy_drive_relink"].includes(payload?.reason);
+  return ["drive_single", "legacy_drive_relink", "last_linked"].includes(
+    payload?.reason,
+  );
 }
 
 async function writeEntriesToSheet(
@@ -351,6 +353,8 @@ export function SheetSetupDialog() {
     useState(false);
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
+  // The sheet the read-failure recovery last unlinked, to spot a repeat.
+  const lastRecoveredSsidRef = useRef(null);
   const dialogInitialSsidRef = useRef(null);
   const flowStartedAtRef = useRef(null);
   const outcomeReportedRef = useRef(false);
@@ -762,7 +766,11 @@ export function SheetSetupDialog() {
   );
 
   const resolveSheetFlow = useCallback(
-    async ({ intent, hadLocalBefore = false } = {}) => {
+    async ({
+      intent,
+      hadLocalBefore = false,
+      skipAutoLinkSsid = null,
+    } = {}) => {
       dialogInitialSsidRef.current = sheetInfo?.ssid || null;
       flowStartedAtRef.current = Date.now();
       outcomeReportedRef.current = false;
@@ -786,6 +794,7 @@ export function SheetSetupDialog() {
           body: JSON.stringify({
             intent: intent || "bootstrap",
             hadLocalSheetBefore: Boolean(hadLocalBefore),
+            ...(skipAutoLinkSsid ? { skipAutoLinkSsid } : {}),
           }),
         });
         const payload = await response.json().catch(() => ({}));
@@ -1522,10 +1531,21 @@ export function SheetSetupDialog() {
     // Unlinking is destructive, so never do it on a flaky connection.
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
 
+    // Recovery may link the lifter's last sheet straight back, which heals a
+    // one-off failure without a picker. If that same sheet fails again, say
+    // so, and recovery shows the picker instead of linking it a third time.
+    const failedSsid = sheetInfo.ssid;
+    const failedBefore = lastRecoveredSsidRef.current === failedSsid;
+    lastRecoveredSsidRef.current = failedSsid;
+
     clearSheet();
     provisioningStartedRef.current = true;
     launchedFromUserRef.current = false;
-    void resolveSheetFlow({ intent: "recovery", hadLocalBefore: true });
+    void resolveSheetFlow({
+      intent: "recovery",
+      hadLocalBefore: true,
+      skipAutoLinkSsid: failedBefore ? failedSsid : null,
+    });
   }, [apiError, authStatus, clearSheet, resolveSheetFlow, sheetInfo]);
 
   return (

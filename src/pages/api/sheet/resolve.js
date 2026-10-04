@@ -35,13 +35,17 @@ import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 //
 // Intents (req.body.intent):
 //   bootstrap    — first-time setup or returning user without a linked sheet.
-//                  May auto-link if exactly one high-confidence candidate exists.
-//   recovery     — user explicitly clicked "recover previous sheet". Shows picker
-//                  with ranked candidates, never auto-links.
+//   recovery     — the linked sheet stopped loading, or the user asked to
+//                  recover a previous sheet.
 //   switch_sheet — user wants to connect a different sheet. Always shows picker.
+//
+// bootstrap and recovery link without asking when the answer is not in doubt:
+// Drive holds exactly one lifting log, or it holds several and one of them is
+// the sheet this lifter linked last (see "Last linked sheet" below).
 //
 // Body: {
 //   intent: "bootstrap" | "recovery" | "switch_sheet",
+//   skipAutoLinkSsid?: string,  // a sheet that must not be linked unasked
 // }
 //
 // Returns one of:
@@ -66,6 +70,15 @@ import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 // - switch_sheet is a separate user-directed flow. Ranking is allowed, but
 //   auto-linking is not. This matters for cases like a coach with access to
 //   multiple client sheets.
+// - Last linked sheet: KV remembers the sheet a lifter linked most recently
+//   (`provisionedSheetId`, written on every link and removed when they
+//   disconnect). When Drive offers several lifting logs and that sheet is one
+//   of them, it is linked without the picker. That is what carries a lifter's
+//   own choice to a new device or browser, and what spares a lifter with
+//   several logs from choosing again each time the browser forgets. The
+//   client names a sheet in `skipAutoLinkSsid` when that sheet has just
+//   failed to load twice running, so a sheet that cannot be read is never
+//   linked in a loop.
 // - Founder notifications:
 //   1. sign-in notifications may happen on any sign-in
 //   2. activation notifications happen once when a true new user first
@@ -87,6 +100,10 @@ export default async function handler(req, res) {
     ? req.body.intent
     : "bootstrap";
   const hadLocalSheetBefore = Boolean(req.body?.hadLocalSheetBefore);
+  const skipAutoLinkSsid =
+    typeof req.body?.skipAutoLinkSsid === "string"
+      ? req.body.skipAutoLinkSsid
+      : null;
   const debug = createDebug(intent, "discover");
   const sheetName = buildSheetName(base.session.user.name);
   let onboardingFlowToken = null;
@@ -185,6 +202,30 @@ export default async function handler(req, res) {
     }
 
     if (rankedCandidates.length > 1) {
+      // Being a candidate means Drive lists the sheet and its header row was
+      // read a moment ago, so it is there and it is a lifting log. The KV
+      // record already points at it; there is nothing to write.
+      const lastLinkedId = existingRecord?.provisionedSheetId || null;
+      const lastLinked =
+        lastLinkedId && lastLinkedId !== skipAutoLinkSsid
+          ? rankedCandidates.find((candidate) => candidate.id === lastLinkedId)
+          : null;
+      if (lastLinked) {
+        debug.path.push("resolve:multiple_candidates:last_linked");
+        devLog("[sheet/resolve] resolve:action link_existing", {
+          intent,
+          reason: "last_linked",
+          ssid: lastLinked.id,
+          name: lastLinked.name,
+          candidateCount: rankedCandidates.length,
+        });
+        return respondLinkExisting(res, lastLinked, {
+          reason: "last_linked",
+          debug,
+          onboardingFlowToken,
+        });
+      }
+
       debug.path.push("resolve:choose_sheet:multiple");
       devLog("[sheet/resolve] resolve:action choose_sheet", {
         intent,

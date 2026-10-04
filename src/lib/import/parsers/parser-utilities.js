@@ -484,6 +484,7 @@ export function isDistanceOrTimeText(text) {
 
 // Collects notices into one collapsed group per parse, with one line per
 // repair kind and a few examples, so large sheets keep the console readable.
+// Repair advice stays enabled in production on every device, unlike devLog.
 export function createParseRepairLog(source, { examples = 3 } = {}) {
   const kinds = new Map();
   const notices = [];
@@ -508,7 +509,7 @@ export function createParseRepairLog(source, { examples = 3 } = {}) {
       if (typeof window === "undefined") {
         console.groupCollapsed(title);
       } else {
-        console.groupCollapsed("%c%s", "font-weight: bold;", title);
+        console.groupCollapsed("%c%s", "color:#22c55e;font-weight:bold", title);
       }
       try {
         for (const { message, suggestion, level } of notices) {

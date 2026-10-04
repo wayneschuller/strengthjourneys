@@ -67,7 +67,6 @@ export function LiftBlock({
   sessionCount = 0,
   isPastSession,
   isWriteBlocked = false,
-  isEditBlocked = false,
   isDeleteCooldownActive = false,
   collapseSuggestions = false,
   onUpdateSet,
@@ -121,9 +120,9 @@ export function LiftBlock({
       ),
   );
   // A save in progress never locks a row; the sync queues what the lifter
-  // does next. See the two gates in pages/log.js for what does.
+  // does next. See isWriteBlocked in pages/log.js for what does.
   const canEditSets =
-    !previewMode && !isEditBlocked && typeof onUpdateSet === "function";
+    !previewMode && !isWriteBlocked && typeof onUpdateSet === "function";
   const canDeleteSets =
     !previewMode && !isWriteBlocked && typeof onDeleteSet === "function";
   const canAddSets = !previewMode && typeof onAddSet === "function";

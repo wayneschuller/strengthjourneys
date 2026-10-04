@@ -385,16 +385,18 @@ export default function LogSessionPage({
   // mark hides it and shows the skeleton in its place (see _document.js).
   const isPresumedDemo = dataSource === "demo" && authStatus === "loading";
   // A save or a background refresh in progress blocks nothing; the sync
-  // queues whatever the lifter does next. Two narrower gates remain.
-  //
-  // Rows cannot be edited while there is no copy of the sheet to draw the
-  // edit over, or while the session itself is being deleted.
-  const isEditBlocked =
-    showSessionBootstrap || isDeletingSession || !Array.isArray(parsedData);
-  // New sets and deletes also wait while the sheet cannot be reached, so a
-  // lifter is not led to log a whole session into a tab that may close
-  // before any of it is saved. An edit already typed is always taken.
-  const isWriteBlocked = isEditBlocked || isLoading || isError || fetchFailed;
+  // queues whatever the lifter does next. What does block is having no sheet
+  // to save to: it has not loaded, the last read of it failed, or the session
+  // is being deleted. Nothing new is accepted then, by decision: a change
+  // taken while the sheet cannot be reached would sit in this tab's memory
+  // and be lost with it. Changes accepted earlier keep retrying.
+  const isWriteBlocked =
+    showSessionBootstrap ||
+    isDeletingSession ||
+    isLoading ||
+    isError ||
+    fetchFailed ||
+    !Array.isArray(parsedData);
 
   const prevSessionDate = useMemo(
     () => getPrevSessionDate(sessionDates, sessionDate),
@@ -790,7 +792,6 @@ export default function LogSessionPage({
                             sessionCount={sessionCount}
                             isPastSession={!isToday}
                             isWriteBlocked={isWriteBlocked}
-                            isEditBlocked={isEditBlocked}
                             isDeleteCooldownActive={isDeleteCooldownActive}
                             collapseSuggestions={
                               activeNewLiftType !== null &&

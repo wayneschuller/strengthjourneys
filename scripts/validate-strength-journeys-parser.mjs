@@ -242,7 +242,7 @@ try {
   console.groupEnd = liftGroupEnd;
 }
 
-// Empty, unknown, mixed or ambiguous content is insufficient evidence. A
+// Empty, unknown, weak or ambiguous evidence must not recover a header. A
 // registered name in a labelled Notes column must not be mistaken for a lift.
 for (const rows of [
   [["Date", "", "Reps", "Weight"]],
@@ -280,6 +280,27 @@ assert.equal(
     ["2026-10-02", "My custom exercise", "5", "100kg", "Deadlift"],
   ])[0].liftType,
   "My custom exercise",
+);
+
+// A strong registry majority can identify a real log containing custom lifts
+// or cardio, without dropping or renaming those entries. Count populated
+// names only; sparse blanks must not dilute the confidence threshold.
+const mixedLiftRows = [
+  ["Date", "Lift Type", "Reps", "Weight"],
+  ["2026-10-02", "Deadlift", "5", "100kg"],
+  ["", "", "3", "110kg"],
+  ["2026-10-03", "My custom exercise", "5", "40kg"],
+  ["2026-10-04", "Bench Press", "5", "60kg"],
+  ["2026-10-05", "RDL", "5", "70kg"],
+  ["2026-10-06", "Overhead Press", "5", "40kg"],
+];
+const expectedMixedLifts = parseStrengthJourneysData(mixedLiftRows);
+mixedLiftRows[0][1] = "";
+assert.deepEqual(parseStrengthJourneysData(mixedLiftRows), expectedMixedLifts);
+// Below 80%, ask for the header instead of guessing from a weak majority.
+assert.throws(
+  () => parseStrengthJourneysData(mixedLiftRows.slice(0, -1)),
+  /Missing required columns: Lift Type/,
 );
 
 // Browser output separates user text from formatting arguments: literal %c

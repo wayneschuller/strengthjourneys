@@ -85,10 +85,13 @@ export function parseStrengthJourneysData(data) {
     repsColumnIndex !== -1 &&
     weightColumnIndex !== -1
   ) {
-    // Reuse the importer's aliases (including registry synonyms and barbell
-    // qualifiers), then require a registry match rather than guessing at text.
-    liftTypeColumnIndex = inferUnnamedColumn(data, (value) =>
-      getCuratedLift(normalizeLiftTypeNames(String(value))),
+    // Real logs also contain custom lifts and cardio. Require a strong
+    // registry majority, not unanimity; unknown names retain normal parsing.
+    // Reuse the importer's aliases, registry synonyms and barbell qualifiers.
+    liftTypeColumnIndex = inferUnnamedColumn(
+      data,
+      (value) => getCuratedLift(normalizeLiftTypeNames(String(value))),
+      0.8,
     );
     if (liftTypeColumnIndex !== -1) {
       repairLog.issue(
@@ -293,11 +296,12 @@ export function parseStrengthJourneysData(data) {
   return objectsArray;
 }
 
-// Require one unambiguous unnamed column with at least one match and no other
-// content. Blank cells are expected in the sheet's sparse anchor encoding.
+// Require one unambiguous unnamed column meeting the supplied match ratio.
+// Dates require unanimity; lift names allow a minority of custom entries.
+// Blank cells are expected in the sheet's sparse anchor encoding.
 // Inspect every populated cell rather than letting an early sample hide text
 // further down the column, and leave the sheet/header array untouched.
-function inferUnnamedColumn(data, matches) {
+function inferUnnamedColumn(data, matches, minimumMatchRatio = 1) {
   let inferredIndex = -1;
   // Sheets omits trailing empty header cells. Include columns found only in
   // data rows so a deleted header can also be recovered in the last column.
@@ -308,19 +312,23 @@ function inferUnnamedColumn(data, matches) {
   for (let column = 0; column < columnCount; column++) {
     if (String(data[0][column] ?? "").trim()) continue;
 
-    let hasMatch = false;
-    let matchesOnly = true;
+    let matchCount = 0;
+    let populatedCount = 0;
     for (let row = 1; row < data.length; row++) {
       const value = data[row][column];
       if (value == null || String(value).trim() === "") continue;
-      if (!matches(value)) {
-        matchesOnly = false;
+      populatedCount++;
+      if (matches(value)) {
+        matchCount++;
+      } else if (minimumMatchRatio === 1) {
+        // Date inference can reject immediately, but a registry majority
+        // needs the whole column to account for custom names further down.
+        matchCount = 0;
         break;
       }
-      hasMatch = true;
     }
 
-    if (hasMatch && matchesOnly) {
+    if (matchCount > 0 && matchCount / populatedCount >= minimumMatchRatio) {
       if (inferredIndex !== -1) return -1;
       inferredIndex = column;
     }

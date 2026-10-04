@@ -546,7 +546,17 @@ export function SmartAddButtons({
               ? "cursor-not-allowed opacity-50"
               : "hover:bg-accent/50 hover:text-foreground"
           }`}
-          onClick={() => onAddSet(lastRealSet)}
+          // Reps and weight only. Handing over the whole set would carry its
+          // notes along, and a new set gets its own timestamp.
+          onClick={() =>
+            onAddSet(
+              lastRealSet && {
+                reps: lastRealSet.reps,
+                weight: lastRealSet.weight,
+                unitType: lastRealSet.unitType,
+              },
+            )
+          }
         >
           <Plus className="h-4 w-4" />
           Add set

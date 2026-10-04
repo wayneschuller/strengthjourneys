@@ -269,8 +269,9 @@ export function useLogSheetSync({
   const addSet = useCallback(
     (liftType, prevSet) => {
       if (!isLive) return;
-      // A set passed with its own notes keeps them (the custom draft row);
-      // otherwise the set is stamped with the time it was logged.
+      // Notes come only from the custom draft row, where the lifter typed
+      // them. Every other add is stamped with the time it was logged, so
+      // callers repeating an earlier set pass its reps and weight alone.
       const notes =
         prevSet && Object.prototype.hasOwnProperty.call(prevSet, "notes")
           ? (prevSet.notes ?? "")
@@ -300,7 +301,13 @@ export function useLogSheetSync({
         const lastSet =
           [...existingSets].reverse().find((set) => !set._pending) ??
           existingSets[existingSets.length - 1];
-        addSet(liftType, lastSet);
+        // Repeat its reps and weight, not its notes: the new set is stamped
+        // with its own time.
+        addSet(liftType, {
+          reps: lastSet.reps,
+          weight: lastSet.weight,
+          unitType: lastSet.unitType,
+        });
         return;
       }
 

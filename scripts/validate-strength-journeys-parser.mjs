@@ -116,4 +116,84 @@ for (const kind of [
   );
 }
 
+// A deleted Date header must recover the exact same entries, including sparse
+// dates, raw cell text and source row numbers, without modifying the sheet.
+const recoveryRows = [
+  ["Date", "Lift Type", "Reps", "Weight", ""],
+  ["2026-10-02", "Deadlift", "5", "100kg"],
+  ["", "", "3", "110kg"],
+  ["4/10/2026", "Bench Press", "5", "60kg"],
+];
+const expectedRecovery = parseStrengthJourneysData(recoveryRows);
+assert.equal(
+  logged.some((line) => line.includes("Inferred Date")),
+  false,
+);
+for (const blankHeader of ["", "   ", null, undefined]) {
+  const rows = recoveryRows.map((row) => [...row]);
+  rows[0][0] = blankHeader;
+  const before = structuredClone(rows);
+  const recoveryLogs = [];
+  console.info = (line) => recoveryLogs.push(line);
+  try {
+    assert.deepEqual(parseStrengthJourneysData(rows), expectedRecovery);
+  } finally {
+    console.info = info;
+  }
+  assert.deepEqual(rows, before);
+  assert.equal(recoveryLogs.length, 1);
+  assert.match(recoveryLogs[0], /Inferred Date.*column 1.*header is blank/);
+}
+
+// Inference follows content, not the position of A1, and can recover a sheet
+// holding just one dated set.
+assert.equal(
+  parseStrengthJourneysData([
+    ["Lift Type", "Weight", "", "Reps"],
+    ["Deadlift", "100kg", "2026-10-02", "5"],
+  ])[0].date,
+  "2026-10-02",
+);
+
+// Keep the missing-header error for absent, mixed or ambiguous evidence, and
+// never claim an already named column or infer other required fields.
+for (const rows of [
+  [["", "Lift Type", "Reps", "Weight"]],
+  [
+    ["", "Lift Type", "Reps", "Weight"],
+    ["", "Deadlift", "5", "100kg"],
+  ],
+  [
+    ["", "Lift Type", "Reps", "Weight"],
+    ["100", "Deadlift", "5", "100kg"],
+  ],
+  [
+    ["", "Lift Type", "Reps", "Weight"],
+    ["2026-10-02", "Deadlift", "5", "100kg"],
+    ...Array.from({ length: 100 }, () => ["", "", "3", "110kg"]),
+    ["session note", "", "3", "110kg"],
+  ],
+  [
+    ["", "Lift Type", "Reps", "Weight", ""],
+    ["2026-10-02", "Deadlift", "5", "100kg", "2026-10-03"],
+  ],
+  [
+    ["Notes", "Lift Type", "Reps", "Weight"],
+    ["2026-10-02", "Deadlift", "5", "100kg"],
+  ],
+  [
+    ["", "Lift Type", "", "Weight"],
+    ["2026-10-02", "Deadlift", "5", "100kg"],
+  ],
+]) {
+  assert.throws(
+    () => parseStrengthJourneysData(rows),
+    /Missing required columns: Date/,
+  );
+}
+
+const withDateHeader = recoveryRows.map((row) => [...row]);
+withDateHeader[1][4] = "2026-10-03";
+assert.deepEqual(parseStrengthJourneysData(withDateHeader), expectedRecovery);
+
 console.log("Strength Journeys parser checks passed.");

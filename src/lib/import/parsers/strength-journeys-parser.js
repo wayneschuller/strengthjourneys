@@ -45,7 +45,9 @@ export function parseStrengthJourneysData(data) {
       ? navigator.language
       : undefined;
 
-  const normalizedColumnNames = columnNames.map(normalizeColumnName);
+  const normalizedColumnNames = columnNames.map((name) =>
+    normalizeColumnName(String(name ?? "")),
+  );
   const repairLog = createParseRepairLog("Strength Journeys");
 
   // Find indices for all columns
@@ -56,6 +58,22 @@ export function parseStrengthJourneysData(data) {
   let notesColumnIndex = normalizedColumnNames.indexOf("Notes");
   let labelColumnIndex = normalizedColumnNames.indexOf("Label");
   let urlColumnIndex = normalizedColumnNames.indexOf("URL");
+
+  // Opening the sheet selects A1, so accidentally deleting Date is easy.
+  // Only inspect data when Date alone is missing; ordinary parses pay no scan.
+  if (
+    dateColumnIndex === -1 &&
+    liftTypeColumnIndex !== -1 &&
+    repsColumnIndex !== -1 &&
+    weightColumnIndex !== -1
+  ) {
+    dateColumnIndex = inferUnnamedDateColumn(data, localeHint);
+    if (dateColumnIndex !== -1) {
+      console.info(
+        `Strength Journeys (parser): Inferred Date from the date values in column ${dateColumnIndex + 1} because its header is blank.`,
+      );
+    }
+  }
 
   // Check only required columns
   if (
@@ -248,4 +266,33 @@ export function parseStrengthJourneysData(data) {
   );
 
   return objectsArray;
+}
+
+// Require one unambiguous unnamed column with at least one date and no other
+// content. Blank cells are expected in the sheet's sparse anchor encoding.
+// Inspect every populated cell rather than letting an early sample hide text
+// further down the column, and leave the sheet/header array untouched.
+function inferUnnamedDateColumn(data, localeHint) {
+  let inferredIndex = -1;
+  for (let column = 0; column < data[0].length; column++) {
+    if (String(data[0][column] ?? "").trim()) continue;
+
+    let hasDate = false;
+    let datesOnly = true;
+    for (let row = 1; row < data.length; row++) {
+      const value = data[row][column];
+      if (value == null || String(value).trim() === "") continue;
+      if (!normalizeDateInput(value, localeHint)) {
+        datesOnly = false;
+        break;
+      }
+      hasDate = true;
+    }
+
+    if (hasDate && datesOnly) {
+      if (inferredIndex !== -1) return -1;
+      inferredIndex = column;
+    }
+  }
+  return inferredIndex;
 }

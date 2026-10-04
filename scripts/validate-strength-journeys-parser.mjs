@@ -158,8 +158,8 @@ assert.equal(
   "2026-10-02",
 );
 
-// Keep the missing-header error for absent, mixed or ambiguous evidence, and
-// never claim an already named column or infer other required fields.
+// Keep the missing-header error for absent, mixed or ambiguous date evidence,
+// and never claim an already named column.
 for (const rows of [
   [["", "Lift Type", "Reps", "Weight"]],
   [
@@ -182,10 +182,6 @@ for (const rows of [
   ],
   [
     ["Notes", "Lift Type", "Reps", "Weight"],
-    ["2026-10-02", "Deadlift", "5", "100kg"],
-  ],
-  [
-    ["", "Lift Type", "", "Weight"],
     ["2026-10-02", "Deadlift", "5", "100kg"],
   ],
 ]) {
@@ -231,7 +227,7 @@ try {
     assert.equal(recoveryLogs.length, 1);
     assert.ok(
       recoveryLogs[0].includes(
-        `Inferred Lift Type from the registered lift names in column ${liftColumn + 1}`,
+        `Inferred Lift Type from the known lift names in column ${liftColumn + 1}`,
       ),
     );
     assert.ok(recoveryLogs[0].includes('Suggestion: Restore "Lift Type"'));
@@ -257,8 +253,7 @@ for (const rows of [
   [
     ["Date", "", "Reps", "Weight"],
     ["2026-10-02", "Deadlift", "5", "100kg"],
-    ...Array.from({ length: 100 }, () => ["", "", "3", "110kg"]),
-    ["", "session note", "3", "110kg"],
+    ...Array.from({ length: 10 }, () => ["", "session note", "3", "110kg"]),
   ],
   [
     ["Date", "", "Reps", "Weight", ""],
@@ -282,8 +277,8 @@ assert.equal(
   "My custom exercise",
 );
 
-// A strong registry majority can identify a real log containing custom lifts
-// or cardio, without dropping or renaming those entries. Count populated
+// Registry evidence can identify a real log containing custom lifts or cardio,
+// without dropping or renaming those entries. Count populated
 // names only; sparse blanks must not dilute the confidence threshold.
 const mixedLiftRows = [
   ["Date", "Lift Type", "Reps", "Weight"],
@@ -297,11 +292,166 @@ const mixedLiftRows = [
 const expectedMixedLifts = parseStrengthJourneysData(mixedLiftRows);
 mixedLiftRows[0][1] = "";
 assert.deepEqual(parseStrengthJourneysData(mixedLiftRows), expectedMixedLifts);
-// Below 80%, ask for the header instead of guessing from a weak majority.
+assert.deepEqual(
+  parseStrengthJourneysData(mixedLiftRows.slice(0, -1)),
+  expectedMixedLifts.slice(0, -1),
+);
+
+// A machine-heavy column needs only 10% registry matches. The other 90% of
+// names are kept, while a column with less evidence still asks for a header.
+const machineRows = [
+  ["Date", "Lift Type", "Reps", "Weight"],
+  ["2026-10-02", "Deadlift", "5", "100kg"],
+  ...Array.from({ length: 9 }, (_, index) => [
+    "",
+    `Custom machine ${index}`,
+    "10",
+    "20kg",
+  ]),
+];
+const machineExpected = parseStrengthJourneysData(machineRows);
+machineRows[0][1] = "";
+assert.deepEqual(parseStrengthJourneysData(machineRows), machineExpected);
 assert.throws(
-  () => parseStrengthJourneysData(mixedLiftRows.slice(0, -1)),
+  () =>
+    parseStrengthJourneysData([
+      ...machineRows,
+      ["", "Another machine", "10", "20kg"],
+    ]),
   /Missing required columns: Lift Type/,
 );
+
+// Every missing-header combination in every column order, including entirely
+// blank/truncated headers and sheets starting with data in row 1.
+console.groupCollapsed = () => {};
+console.groupEnd = () => {};
+console.info = () => {};
+try {
+  for (const order of permutations([0, 1, 2, 3])) {
+    const labelled = liftRecoveryRows.map((row) =>
+      order.map((index) => row[index]),
+    );
+    const expected = parseStrengthJourneysData(labelled);
+    for (let missing = 1; missing < 16; missing++) {
+      const rows = labelled.map((row) => [...row]);
+      for (let column = 0; column < 4; column++) {
+        if (missing & (1 << column)) rows[0][column] = "";
+      }
+      while (rows[0].at(-1) === "") rows[0].pop();
+      const before = structuredClone(rows);
+      assert.deepEqual(parseStrengthJourneysData(rows), expected);
+      assert.deepEqual(rows, before);
+    }
+    const headerless = labelled.slice(1);
+    const before = structuredClone(headerless);
+    assert.deepEqual(
+      parseStrengthJourneysData(headerless),
+      expected.map((entry) => ({ ...entry, rowIndex: entry.rowIndex - 1 })),
+    );
+    assert.deepEqual(headerless, before);
+    assert.equal(parseStrengthJourneysData(headerless)[0].rowIndex, 1);
+  }
+
+  // Named counterparts make high reps and light unitless weights unambiguous.
+  // When both are unnamed, repeated 45+ loads, decimals, zero loads or units
+  // can separate them without relying on column order.
+  for (const labelled of [
+    [
+      ["Date", "Lift Type", "Reps", "Weight"],
+      ["2026-10-02", "Deadlift", "45", "5"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", "Weight"],
+      ["2026-10-02", "Deadlift", "5", "45"],
+      ["", "", "3", "65"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", "Weight"],
+      ["2026-10-02", "Deadlift", "5", "2.5"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", "Weight"],
+      ["2026-10-02", "Pull-up", "5", "0"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", "Weight"],
+      ["2026-10-02", "Deadlift", "5", "45lb"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", "Weight"],
+      ["2026-10-02", "Deadlift", "5", "12,5kg"],
+      ["", "", "3", "15"],
+    ],
+  ]) {
+    const expected = parseStrengthJourneysData(labelled);
+    for (const missing of [2, 3]) {
+      const rows = labelled.map((row) => [...row]);
+      rows[0][missing] = "";
+      assert.deepEqual(parseStrengthJourneysData(rows), expected);
+    }
+    // A single 45 or 45 reps with a 5 load has too little evidence for both.
+    if (
+      labelled[1][2] !== "45" &&
+      !(labelled.length === 2 && labelled[1][3] === "45")
+    ) {
+      const rows = labelled.map((row) => [...row]);
+      rows[0] = [];
+      assert.deepEqual(parseStrengthJourneysData(rows), expected);
+    }
+  }
+
+  // Respect named Notes, but reject competing numeric columns when their
+  // headers are blank. Never parse dates, timestamps or prose as loads.
+  const withNotes = [
+    ["Date", "Lift Type", "", "", "Notes"],
+    ["2026-10-02", "Deadlift", "5", "45kg", "10"],
+  ];
+  assert.equal(parseStrengthJourneysData(withNotes)[0].notes, "10");
+  for (const rows of [
+    [
+      ["Date", "Lift Type", "", ""],
+      ["2026-10-02", "Deadlift", "5", "10"],
+    ],
+    [
+      ["Date", "Lift Type", "", ""],
+      ["2026-10-02", "Deadlift", "5", "45"],
+    ],
+    [
+      ["Date", "Lift Type", "", "", ""],
+      ["2026-10-02", "Deadlift", "5", "45kg", "10"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", "", ""],
+      ["2026-10-02", "Deadlift", "5", "45kg", "60lb"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", ""],
+      ["2026-10-02", "Deadlift", "5", "08:45"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", ""],
+      ["2026-10-02", "Deadlift", "5", "2026-10-03"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", ""],
+      ["2026-10-02", "Deadlift", "5", "45 minutes of training"],
+    ],
+    [
+      ["Date", "Lift Type", "Reps", ""],
+      ["2026-10-02", "Deadlift", "5", ""],
+      ["", "", "", "45kg"],
+    ],
+  ]) {
+    assert.throws(
+      () => parseStrengthJourneysData(rows),
+      /Missing required columns:/,
+    );
+  }
+} finally {
+  console.info = info;
+  console.groupCollapsed = liftGroupCollapsed;
+  console.groupEnd = liftGroupEnd;
+}
 
 // Browser output separates user text from formatting arguments: literal %c
 // inside a cell stays text, while advice is italic without a repeated heading.

@@ -53,6 +53,8 @@ registerHooks({
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseStrengthJourneysData } =
   await import("../src/lib/import/parsers/strength-journeys-parser.js");
+const { logParseIssue } =
+  await import("../src/lib/import/parsers/parser-utilities.js");
 
 // Synthetic rows in the sheet's sparse shape, not a real sheet. They carry
 // the typos real logs hold: a decimal comma, a stray backtick beside the 1,
@@ -143,6 +145,7 @@ for (const blankHeader of ["", "   ", null, undefined]) {
   assert.deepEqual(rows, before);
   assert.equal(recoveryLogs.length, 1);
   assert.match(recoveryLogs[0], /Inferred Date.*column 1.*header is blank/);
+  assert.match(recoveryLogs[0], /Suggestion: Restore "Date"/);
 }
 
 // Inference follows content, not the position of A1, and can recover a sheet
@@ -195,5 +198,42 @@ for (const rows of [
 const withDateHeader = recoveryRows.map((row) => [...row]);
 withDateHeader[1][4] = "2026-10-03";
 assert.deepEqual(parseStrengthJourneysData(withDateHeader), expectedRecovery);
+
+// Browser output separates user text from formatting arguments: literal %c
+// inside a cell stays text, while the title is bold and advice is italic.
+const windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, "window");
+const styledLogs = [];
+const warn = console.warn;
+Object.defineProperty(globalThis, "window", {
+  configurable: true,
+  value: {},
+});
+console.warn = (...args) => styledLogs.push(args);
+try {
+  logParseIssue(
+    "Strength Journeys",
+    "Invalid date: %c",
+    "Use YYYY-MM-DD.",
+    "warn",
+  );
+} finally {
+  console.warn = warn;
+  if (windowDescriptor) {
+    Object.defineProperty(globalThis, "window", windowDescriptor);
+  } else {
+    delete globalThis.window;
+  }
+}
+assert.deepEqual(styledLogs, [
+  [
+    "%cStrength Journeys (parser)%c: %s\n%cSuggestion: %s",
+    "font-weight: bold;",
+    "font-weight: normal;",
+    "Invalid date: %c",
+    "font-weight: normal; font-style: italic;",
+    "Use YYYY-MM-DD.",
+  ],
+]);
+assert.ok(logged.every((line) => line.includes("\nSuggestion: ")));
 
 console.log("Strength Journeys parser checks passed.");

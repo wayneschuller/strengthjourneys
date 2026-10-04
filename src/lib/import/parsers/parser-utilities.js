@@ -500,10 +500,59 @@ export function createParseRepairLog(source, { examples = 3 } = {}) {
     },
     flush() {
       for (const [kind, { count, examples: shown }] of kinds) {
-        console.info(
-          `${source} (parser): ${kind}: ${count} row${count === 1 ? "" : "s"}, e.g. ${shown.join("; ")}`,
+        logParseIssue(
+          source,
+          `${kind}: ${count} row${count === 1 ? "" : "s"}, e.g. ${shown.join("; ")}`,
+          getParseRepairSuggestion(kind),
         );
       }
     },
   };
+}
+
+// Browser consoles support CSS via %c. Keep server/script output plain, and
+// pass sheet text through %s so a cell containing "%c" cannot consume styles.
+export function logParseIssue(source, message, suggestion, level = "info") {
+  const title = `${source} (parser)`;
+  if (typeof window === "undefined") {
+    console[level](`${title}: ${message}\nSuggestion: ${suggestion}`);
+    return;
+  }
+  console[level](
+    `%c${title}%c: %s\n%cSuggestion: %s`,
+    "font-weight: bold;",
+    "font-weight: normal;",
+    message,
+    "font-weight: normal; font-style: italic;",
+    suggestion,
+  );
+}
+
+function getParseRepairSuggestion(kind) {
+  const suggestions = {
+    "decimal comma":
+      "For unambiguous weights, use a decimal point, for example 112.5kg.",
+    "thousands comma": "Leave out thousands separators, for example 1025lb.",
+    "stray character removed":
+      "Remove stray quotes or backticks from the Weight cells shown above.",
+    "range, kept the lower weight":
+      "Record one weight per set in Weight; put ranges or targets in Notes.",
+    "read the leading number":
+      "Keep Weight to a number with kg or lb, for example 100kg; put extra details in Notes.",
+    "no unit, read as kg like most of the sheet":
+      "Add kg or lb to each weight so its unit is explicit, for example 100kg.",
+    "unreadable weight, row skipped":
+      "Enter a number with kg or lb in Weight, for example 100kg, to include this set.",
+  };
+  if (suggestions[kind]) return suggestions[kind];
+  if (
+    kind.includes("distance or time") ||
+    kind === "time, not a weight, row skipped"
+  ) {
+    return "Keep Reps to a rep count and Weight to a lifting load; put distances, times and measurements in Notes or a separate tab.";
+  }
+  if (kind.startsWith("unit ") || kind.startsWith("unknown unit ")) {
+    return "Use kg or lb for lifting weights; check the unit in the Weight cells shown above.";
+  }
+  return "Check the cells shown above and use a number with kg or lb in Weight.";
 }

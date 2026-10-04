@@ -24,6 +24,7 @@ import {
   convertStringToInt,
   convertWeightAndUnitType,
   createParseRepairLog,
+  logParseIssue,
   isDistanceOrTimeText,
 } from "@/lib/import/parsers/parser-utilities";
 
@@ -69,8 +70,10 @@ export function parseStrengthJourneysData(data) {
   ) {
     dateColumnIndex = inferUnnamedDateColumn(data, localeHint);
     if (dateColumnIndex !== -1) {
-      console.info(
-        `Strength Journeys (parser): Inferred Date from the date values in column ${dateColumnIndex + 1} because its header is blank.`,
+      logParseIssue(
+        "Strength Journeys",
+        `Inferred Date from the date values in column ${dateColumnIndex + 1} because its header is blank.`,
+        `Restore "Date" in the first-row header of column ${dateColumnIndex + 1} in your Google Sheet.`,
       );
     }
   }
@@ -127,8 +130,11 @@ export function parseStrengthJourneysData(data) {
         // Invalid date: warn, skip this row, and reset previousDate to null
         // This ensures that subsequent rows with blank dates will also be skipped
         // until a new valid date is found, enforcing data integrity
-        console.warn(
-          `Strength Journeys (parser): Invalid date encountered at row ${i + 1}: '${row[dateCol]}'. Row skipped.`,
+        logParseIssue(
+          "Strength Journeys",
+          `Invalid date encountered at row ${i + 1}: '${row[dateCol]}'. Row skipped.`,
+          "Use a valid date in YYYY-MM-DD format, for example 2026-10-02. Blank dates inherit the previous date; sets after an invalid date are skipped until the next valid date.",
+          "warn",
         );
         previousDate = null;
         continue;

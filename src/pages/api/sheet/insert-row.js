@@ -17,11 +17,15 @@
  * The client sends the exact row values to insert plus the insertion position.
  * This keeps creation row-oriented while edit-cell / edit-row stay focused on
  * non-structural updates.
+ *
+ * A request flagged `retry` is checked against the slot first, so resending
+ * an insert whose response was lost cannot add the set twice.
  */
 
 import { getServerSession } from "next-auth/next";
 
 import {
+  isInsertedRowPresent,
   readRawRow,
   startFirstSheetIdLookup,
   verifyRowSnapshot,
@@ -93,7 +97,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, rows, insertAfterRowIndex, newSession, before } = req.body;
+  const { ssid, rows, insertAfterRowIndex, newSession, before, retry } =
+    req.body;
 
   if (!ssid || !Array.isArray(rows) || rows.length === 0) {
     return res
@@ -113,6 +118,24 @@ export default async function handler(req, res) {
   };
 
   try {
+    // A retry follows a send the client never heard back from. If the row is
+    // already sitting in its slot, that send landed: answer as inserted
+    // instead of adding it a second time.
+    if (retry === true && rows.length === 1) {
+      const existing = await readRawRow({
+        ssid,
+        rowIndex: insertAfter + 1,
+        headers,
+      });
+      if (isInsertedRowPresent(existing, rows[0])) {
+        return res.status(200).json({
+          insertedRows: 0,
+          firstRowIndex: insertAfter + 1,
+          alreadyApplied: true,
+        });
+      }
+    }
+
     // Unqualified A1 reads target the first visible tab, so every grid
     // mutation must resolve that same tab's current ID rather than assuming
     // it is still 0. The lookup runs alongside verification.

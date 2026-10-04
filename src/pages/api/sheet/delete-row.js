@@ -8,8 +8,9 @@
  * Safety strategy:
  * - Client sends the exact target rowIndex plus a `before` snapshot.
  * - Server verifies that exact row still matches the expected logical row.
- * - Server then inspects the immediate next physical row and promotes only the
- *   values that row would actually lose after deletion.
+ * - Server then finds the next set row below and promotes onto it only the
+ *   Date / Lift Type it would actually lose after deletion, leaving any cell
+ *   that row fills itself untouched.
  * - This keeps delete safe for both sparse sheets and "redundant" sheets where
  *   users manually repeat Date / Lift Type on every row.
  * - If verification fails, deletion is rejected.
@@ -21,8 +22,8 @@
 import { getServerSession } from "next-auth/next";
 
 import {
-  readLogicalRow,
-  readRawRow,
+  planAnchorPromotion,
+  readRowsBelow,
   startFirstSheetIdLookup,
   verifyRowSnapshot,
 } from "@/lib/sheet/sheet-row-ops";
@@ -78,45 +79,27 @@ export default async function handler(req, res) {
     // cannot leave anchor cells promoted onto a row that never gets deleted.
     const targetSheetId = await sheetIdLookup;
 
+    // Deletion safety is based on what the next SET ROW would lose, not on
+    // whether the target row "looks like" an anchor in the UI. Blank and
+    // note-only rows are passed over: the parser never reads Date or Lift Type
+    // from them, so an anchor promoted onto one would leave the sets below it
+    // belonging to the session above.
     let promoteTo = null;
-    const nextRawRow = await readRawRow({
-      ssid,
-      rowIndex: rowIndex + 1,
-      headers,
-    });
-
-    // Deletion safety is based on what the NEXT PHYSICAL ROW would lose, not on
-    // whether the target row "looks like" an anchor in the UI. If the next row
-    // already has its own Date / Lift Type cells filled, we do not promote them.
-    if (nextRawRow) {
-      const nextLogicalRow = await readLogicalRow({
-        ssid,
-        rowIndex: rowIndex + 1,
-        headers,
-      });
-      const staysInSameSession =
-        nextLogicalRow.date === verification.actual.date;
-      const needsDatePromotion =
-        staysInSameSession &&
-        Boolean(verification.actual.rawDate) &&
-        !nextLogicalRow.rawDate;
-      const needsLiftPromotion =
-        staysInSameSession &&
-        Boolean(verification.actual.rawLiftType) &&
-        !nextLogicalRow.rawLiftType;
-
-      if (needsDatePromotion || needsLiftPromotion) {
-        promoteTo = {
-          rowIndex: rowIndex + 1,
-          date: needsDatePromotion ? verification.actual.date : "",
-          liftType: needsLiftPromotion ? verification.actual.liftType : "",
-        };
-      }
+    const promotion = planAnchorPromotion(
+      verification.actual,
+      await readRowsBelow({ ssid, rowIndex, headers }),
+    );
+    if (promotion) {
+      promoteTo = {
+        rowIndex: rowIndex + 1 + promotion.offset,
+        date: promotion.date,
+        liftType: promotion.liftType,
+      };
     }
 
     if (promoteTo?.rowIndex) {
       const promoteRange = `A${promoteTo.rowIndex}:B${promoteTo.rowIndex}`;
-      const promoteValues = [[promoteTo.date ?? "", promoteTo.liftType ?? ""]];
+      const promoteValues = [[promoteTo.date, promoteTo.liftType]];
       const promoteResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${promoteRange}?valueInputOption=USER_ENTERED`,
         {

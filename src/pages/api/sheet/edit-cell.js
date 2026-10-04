@@ -14,6 +14,11 @@
  *
  * This flow is not atomic with Google Sheets. The extra read is a fail-safe and
  * observability layer, not a transactional guarantee.
+ *
+ * Legacy as of October 2026: the log page now sends every edit through
+ * edit-row, which writes only the changed cells and is safe to send twice.
+ * This route stays for tabs that loaded the previous client and can go once
+ * those have aged out.
  */
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";

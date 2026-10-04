@@ -7,16 +7,21 @@
  * Safety strategy:
  * - Client sends rowIndex + before snapshot + after snapshot.
  * - Server verifies the current logical row still matches `before`.
- * - Server writes only the editable cells (C:F) once verification passes.
+ * - Server writes only the cells that differ between the two, in one request,
+ *   so cells the lifter did not touch keep their own text.
  *
- * This is primarily useful when a newly inserted optimistic row picked up a
- * real rowIndex and needs its queued local edits flushed in one go.
+ * It is safe to send twice. A client that never heard back sends the same
+ * edit again; a row that already reads as `after` is answered as done rather
+ * than rejected. The log page sends every field edit through here.
  */
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 import {
+  EDITABLE_COLUMN_CONFIG,
+  diffEditableSnapshot,
   forceNotesPlainText,
+  getChangedEditableFields,
   startFirstSheetIdLookup,
   verifyRowSnapshot,
 } from "@/lib/sheet/sheet-row-ops";
@@ -46,9 +51,14 @@ export default async function handler(req, res) {
   };
 
   try {
+    const changedFields = getChangedEditableFields(before, after);
+    if (!changedFields.length) {
+      return res.status(200).json({ updated: false, rowIndex });
+    }
     // Notes get plain-text formatting after the write, which needs the tab
     // ID. Start that lookup now so it overlaps verification and the write.
-    const needsNotesFormat = (after.notes ?? "").length > 0;
+    const needsNotesFormat =
+      changedFields.includes("notes") && (after.notes ?? "").length > 0;
     const sheetIdLookup = needsNotesFormat
       ? startFirstSheetIdLookup({ ssid, headers })
       : null;
@@ -60,6 +70,13 @@ export default async function handler(req, res) {
     });
 
     if (!verification.ok) {
+      // The row already holds this edit: an earlier send landed and only its
+      // response was lost.
+      if (!diffEditableSnapshot(verification.actual, after).length) {
+        return res
+          .status(200)
+          .json({ updated: true, rowIndex, alreadyApplied: true });
+      }
       console.warn(
         "[sheet/edit-row] verification failed:",
         verification.message,
@@ -71,24 +88,18 @@ export default async function handler(req, res) {
       });
     }
 
-    const range = `C${rowIndex}:F${rowIndex}`;
-    const values = [
-      [
-        after.reps ?? "",
-        after.weight ?? "",
-        after.notes ?? "",
-        after.url ?? "",
-      ],
-    ];
     const writeResponse = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values:batchUpdate`,
       {
-        method: "PUT",
+        method: "POST",
         headers,
         body: JSON.stringify({
-          range,
-          majorDimension: "ROWS",
-          values,
+          valueInputOption: "USER_ENTERED",
+          data: changedFields.map((field) => ({
+            range: `${EDITABLE_COLUMN_CONFIG[field].letter}${rowIndex}`,
+            majorDimension: "ROWS",
+            values: [[after[field] ?? ""]],
+          })),
         }),
       },
     );
@@ -96,9 +107,9 @@ export default async function handler(req, res) {
     if (!writeResponse.ok) {
       const body = await writeResponse.json().catch(() => ({}));
       const message = body?.error?.message || "Failed to update row";
-      console.error("[sheet/edit-row] values.update failed:", message, {
+      console.error("[sheet/edit-row] values.batchUpdate failed:", message, {
         rowIndex,
-        range,
+        changedFields,
       });
       return res.status(writeResponse.status).json({ error: message });
     }

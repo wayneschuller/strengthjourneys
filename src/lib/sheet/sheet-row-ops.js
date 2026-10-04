@@ -161,6 +161,67 @@ export async function readRawRow({ ssid, rowIndex, headers }) {
   };
 }
 
+// A lift block interrupted by more non-set rows than this is not one the log
+// page can have produced or shown.
+const PROMOTION_SCAN_ROWS = 200;
+
+/** The raw rows under a row, as far as an anchor promotion needs to look. */
+export async function readRowsBelow({ ssid, rowIndex, headers }) {
+  const range = `A${rowIndex + 1}:F${rowIndex + PROMOTION_SCAN_ROWS}`;
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?majorDimension=ROWS`,
+    { headers },
+  );
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const message = body?.error?.message || "Failed to read following rows";
+    throw new Error(message);
+  }
+
+  const payload = await response.json();
+  return payload.values ?? [];
+}
+
+/**
+ * Which row takes over the Date / Lift Type of a row about to be deleted, and
+ * which of the two it needs.
+ *
+ * The heir is the next set row, the first row below with both reps and
+ * weight, because that is the next row the parser reads anchors from. It
+ * needs a cell only if it leaves that cell blank and is still in the deleted
+ * row's session. A cell it fills itself is reported as null so the write
+ * skips it; an empty string there would clear it.
+ *
+ * @param {{rawDate: string, rawLiftType: string, date: string, liftType: string}} target
+ *   Logical row being deleted.
+ * @param {string[][]} following Raw rows below it, in sheet order.
+ * @returns {{offset: number, date: string|null, liftType: string|null}|null}
+ *   `offset` 0 is the row directly below.
+ */
+export function planAnchorPromotion(target, following) {
+  for (let offset = 0; offset < following.length; offset += 1) {
+    const row = following[offset] ?? [];
+    const isSetRow = (row[2] ?? "") !== "" && (row[3] ?? "") !== "";
+    if (!isSetRow) continue;
+
+    const rawDate = row[0] ?? "";
+    const rawLiftType = row[1] ?? "";
+    const staysInSameSession = !rawDate || rawDate === target.date;
+    const needsDate = staysInSameSession && Boolean(target.rawDate) && !rawDate;
+    const needsLiftType =
+      staysInSameSession && Boolean(target.rawLiftType) && !rawLiftType;
+    if (!needsDate && !needsLiftType) return null;
+
+    return {
+      offset,
+      date: needsDate ? target.date : null,
+      liftType: needsLiftType ? target.liftType : null,
+    };
+  }
+  return null;
+}
+
 export function getAnchorTypeFromLogicalRow(row) {
   if (row?.rawDate) return "session";
   if (row?.rawLiftType) return "lift";
@@ -180,6 +241,43 @@ export function diffEditableSnapshot(actual, expected) {
   }
 
   return diffs;
+}
+
+/**
+ * The editable cells an edit actually changes. Only these are written, so an
+ * untouched cell keeps its own text: a unitless "225", a "112,5kg", or a link
+ * typed as a formula would otherwise be rewritten as the app reads them.
+ */
+export function getChangedEditableFields(before, after) {
+  return Object.keys(EDITABLE_COLUMN_CONFIG).filter(
+    (field) => (after?.[field] ?? "") !== (before?.[field] ?? ""),
+  );
+}
+
+/**
+ * Has this exact row already been inserted in its slot? A client that lost
+ * the response to an insert sends it again flagged as a retry; answering
+ * "already there" keeps one tap from becoming two rows.
+ *
+ * The comparison is on raw cells, blank Date and Lift Type included. The log
+ * only ever inserts after the last row of a lift block or of a session, so the
+ * row that follows is another lift's or another session's anchor and cannot
+ * pass for a plain set by accident, however many identical sets came before.
+ */
+export function isInsertedRowPresent(rawRow, values) {
+  if (!rawRow || !Array.isArray(values)) return false;
+  const cells = [
+    rawRow.rawDate,
+    rawRow.rawLiftType,
+    rawRow.reps,
+    rawRow.weight,
+    rawRow.notes,
+    rawRow.url,
+  ];
+  return cells.every(
+    (cell, column) =>
+      String(cell ?? "").trim() === String(values[column] ?? "").trim(),
+  );
 }
 
 export async function verifyRowSnapshot({

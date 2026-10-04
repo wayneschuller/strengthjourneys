@@ -53,7 +53,7 @@ registerHooks({
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseStrengthJourneysData } =
   await import("../src/lib/import/parsers/strength-journeys-parser.js");
-const { logParseIssue } =
+const { logParseIssue, createParseRepairLog } =
   await import("../src/lib/import/parsers/parser-utilities.js");
 
 // Synthetic rows in the sheet's sparse shape, not a real sheet. They carry
@@ -235,5 +235,35 @@ assert.deepEqual(styledLogs, [
   ],
 ]);
 assert.ok(logged.every((line) => line.includes("\nSuggestion: ")));
+
+// All notice types share one collapsed group, while a clean parse (or a
+// second flush) opens no group. Warnings keep their console severity.
+const groupEvents = [];
+const groupCollapsed = console.groupCollapsed;
+const groupEnd = console.groupEnd;
+console.groupCollapsed = (...args) => groupEvents.push(["open", ...args]);
+console.groupEnd = () => groupEvents.push(["close"]);
+console.info = (line) => groupEvents.push(["info", line]);
+console.warn = (line) => groupEvents.push(["warn", line]);
+try {
+  const repairs = createParseRepairLog("Strength Journeys");
+  repairs.flush();
+  assert.equal(groupEvents.length, 0);
+  repairs.issue("Inferred Date", 'Restore "Date".');
+  repairs.issue("Invalid date", "Use YYYY-MM-DD.", "warn");
+  repairs.add("decimal comma", 2, "112,5kg", "112.5kg");
+  repairs.flush();
+  repairs.flush();
+} finally {
+  console.groupCollapsed = groupCollapsed;
+  console.groupEnd = groupEnd;
+  console.info = info;
+  console.warn = warn;
+}
+assert.deepEqual(
+  groupEvents.map(([event]) => event),
+  ["open", "info", "warn", "info", "close"],
+);
+assert.match(groupEvents[0][1], /Strength Journeys parsing.*3 notices/);
 
 console.log("Strength Journeys parser checks passed.");

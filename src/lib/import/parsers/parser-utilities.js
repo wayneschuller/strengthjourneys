@@ -482,12 +482,15 @@ export function isDistanceOrTimeText(text) {
   );
 }
 
-// Collects every guess a parse makes and prints one console line per kind,
-// with a count and a few examples, so a sheet full of decimal commas costs
-// one line rather than thousands.
+// Collects notices into one collapsed group per parse, with one line per
+// repair kind and a few examples, so large sheets keep the console readable.
 export function createParseRepairLog(source, { examples = 3 } = {}) {
   const kinds = new Map();
+  const notices = [];
   return {
+    issue(message, suggestion, level = "info") {
+      notices.push({ message, suggestion, level });
+    },
     add(kind, rowNumber, raw, outcome) {
       let entry = kinds.get(kind);
       if (!entry) kinds.set(kind, (entry = { count: 0, examples: [] }));
@@ -499,12 +502,29 @@ export function createParseRepairLog(source, { examples = 3 } = {}) {
       }
     },
     flush() {
-      for (const [kind, { count, examples: shown }] of kinds) {
-        logParseIssue(
-          source,
-          `${kind}: ${count} row${count === 1 ? "" : "s"}, e.g. ${shown.join("; ")}`,
-          getParseRepairSuggestion(kind),
-        );
+      const noticeCount = notices.length + kinds.size;
+      if (noticeCount === 0) return;
+      const title = `📝 ${source} parsing — ${noticeCount} notice${noticeCount === 1 ? "" : "s"}`;
+      if (typeof window === "undefined") {
+        console.groupCollapsed(title);
+      } else {
+        console.groupCollapsed("%c%s", "font-weight: bold;", title);
+      }
+      try {
+        for (const { message, suggestion, level } of notices) {
+          logParseIssue(source, message, suggestion, level);
+        }
+        for (const [kind, { count, examples: shown }] of kinds) {
+          logParseIssue(
+            source,
+            `${kind}: ${count} row${count === 1 ? "" : "s"}, e.g. ${shown.join("; ")}`,
+            getParseRepairSuggestion(kind),
+          );
+        }
+      } finally {
+        console.groupEnd();
+        notices.length = 0;
+        kinds.clear();
       }
     },
   };

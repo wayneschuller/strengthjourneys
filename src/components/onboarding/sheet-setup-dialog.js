@@ -1528,6 +1528,9 @@ export function SheetSetupDialog() {
     if (!sheetInfo?.ssid) return;
     if (!apiError?.status) return;
     if (![400, 403, 404].includes(apiError.status)) return;
+    // Only on Google's own answer about this sheet, which the read route
+    // marks. The same statuses from anything else are not about the sheet.
+    if (apiError.code !== "SHEET_UNAVAILABLE") return;
     // Unlinking is destructive, so never do it on a flaky connection.
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
 

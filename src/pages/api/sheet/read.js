@@ -28,6 +28,14 @@ import { kv } from "@/lib/kv";
 import { getUserKvKey } from "@/lib/user-kv-keys";
 import { devLog } from "@/lib/processing-utils";
 
+// The client unlinks a sheet and starts recovery only when a response carries
+// this code. It marks a status as Google's own answer about this sheet: it is
+// gone, in the trash, not ours to open, or not a spreadsheet the API can
+// read. A bare 400, 403 or 404 can come from anything between the browser and
+// Google, and none of those is a reason to forget a lifter's sheet.
+const SHEET_UNAVAILABLE = "SHEET_UNAVAILABLE";
+const SHEET_UNAVAILABLE_STATUSES = [400, 403, 404];
+
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const RETURN_WINDOW_MS = 7 * ONE_DAY_MS;
 const RETURN_GAP_MS = 12 * 60 * 60 * 1000;
@@ -53,8 +61,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  // 401, not 400: the client reads 400/403/404 as "this sheet is gone" and
-  // unlinks it, but a missing token is an auth problem, not a sheet problem.
+  // 401, not 400: a missing token is an auth problem, not a sheet problem,
+  // and must never read as one.
   if (!session.accessToken) {
     res.status(401).json({ error: "Auth missing accessToken" });
     return;
@@ -110,14 +118,22 @@ export default async function handler(req, res) {
         `[read-sheet] Google Sheets API ${sheetsRes.status}: ${googleMessage}`,
         { ssid },
       );
-      res.status(sheetsRes.status).json({ error: googleMessage });
+      res.status(sheetsRes.status).json({
+        error: googleMessage,
+        ...(SHEET_UNAVAILABLE_STATUSES.includes(sheetsRes.status)
+          ? { code: SHEET_UNAVAILABLE }
+          : {}),
+      });
       return;
     }
 
     if (driveRes.ok) {
       const driveData = await driveRes.json();
       if (driveData?.trashed) {
-        res.status(404).json({ error: "This Google Sheet is in the trash." });
+        res.status(404).json({
+          error: "This Google Sheet is in the trash.",
+          code: SHEET_UNAVAILABLE,
+        });
         return;
       }
       Object.assign(data, {
@@ -228,7 +244,7 @@ export default async function handler(req, res) {
   } catch (error) {
     // Google's own 4xx responses are passed through above. Anything thrown
     // here is a network failure reaching Google (DNS, timeout, offline dev
-    // box), so answer 502: a 4xx would make the client unlink a healthy sheet.
+    // box), so answer 502 and let the client retry.
     console.error("[read-sheet] could not reach Google:", error);
     res.status(502).json({ error: "Could not reach Google Sheets." });
   }

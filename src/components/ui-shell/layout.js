@@ -223,8 +223,9 @@ export function Layout({ children }) {
     parseErrorShown.current = true;
     toast({
       variant: "destructive",
-      title: "Data Parsing Error",
-      description: parseError,
+      title: "Your sheet could not be read",
+      description: `${parseError} Your sheet stays linked and loads again once it reads cleanly.`,
+      duration: 12000,
     });
   }, [parseError, toast]);
 

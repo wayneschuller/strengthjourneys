@@ -208,7 +208,8 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context isError {boolean} - True if the last fetch attempt threw.
  * @context fetchFailed {boolean} - True after retries are exhausted (used by Layout for error toast).
  * @context apiError {{status, statusText, message}|null} - Structured error from the last failed fetch.
- * @context parseError {string|null} - Error message if sheet data failed to parse (sheet is auto-cleared).
+ * @context parseError {string|null} - Error message if sheet data failed to parse. The sheet is
+ *   set aside for now (sheetInfo reads null) but stays linked and is read again on refocus.
  * @context dataSource {"loading"|"restoring"|"demo"|"import"|"sheet"|"none"} - Where the data on
  *   screen comes from. The one way to ask demo, import, sheet or nothing yet; switch on it rather
  *   than combining authStatus and sheetInfo. "sheet" or "import" means the lifter's own data;
@@ -377,11 +378,22 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   }, [authStatus, setImportProfile]);
 
   // Single consolidated sheet state
-  const [sheetInfo, setSheetInfo] = useLocalStorage(
+  const [storedSheetInfo, setSheetInfo] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SHEET_INFO,
     null,
     { initializeWithValue: false },
   );
+  // A linked sheet that cannot be parsed is set aside, not forgotten. For the
+  // rest of the app it is as if no sheet were linked, exactly as when the
+  // link used to be erased, so nothing can be written to a sheet whose layout
+  // we cannot read. But the saved pointer stays and the sheet keeps being
+  // read on refocus: once its header row is fixed in Google Sheets it comes
+  // back on its own, and a reload never asks the lifter to link it again.
+  const [unreadableSsid, setUnreadableSsid] = useState(null);
+  const sheetInfo =
+    storedSheetInfo?.ssid && storedSheetInfo.ssid === unreadableSsid
+      ? null
+      : storedSheetInfo;
   // True while we have localStorage evidence of a linked sheet but auth and/or
   // useLocalStorage haven't hydrated yet. Consumers use this to avoid flashing
   // onboarding UI for returning users during the initial load.
@@ -448,6 +460,8 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     (ssid, metadata = {}) => {
       gaTrackSheetLinked();
       rdtTrackSheetLinked(); // Reddit Ads: the activation conversion campaigns optimise against
+      // Linking is a fresh start, even for a sheet set aside as unreadable.
+      setUnreadableSsid(null);
       setSheetInfo({
         ssid,
         url: metadata.url ?? null,
@@ -460,20 +474,24 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   );
 
   // Every path that removes a sheet routes through here — user disconnect, the setup dialog's
-  // switch flow, and the parse-error recovery — so this is the one place that has to retire the
-  // stale module-load snapshot above.
+  // switch flow, and its recovery from a sheet Google says is gone — so this is the one place
+  // that has to retire the stale module-load snapshot above. A parse error does not come here:
+  // it sets the sheet aside (see unreadableSsid) and retires the snapshot itself.
   const clearSheet = useCallback(() => {
     setSheetClearedInSession(true);
+    setUnreadableSsid(null);
     setSheetInfo(null);
   }, [setSheetInfo]);
 
   // Keep fetching the linked sheet even during imported preview mode.
   // The imported file still powers the visible UI, but import analysis and
   // dedupe need the live linked-sheet data in the background.
+  // The stored pointer, not the active one: a sheet set aside as unreadable
+  // is still read, which is how it is noticed once it parses again.
   const shouldFetch =
     authStatus === "authenticated" &&
     !!session?.accessToken &&
-    !!sheetInfo?.ssid;
+    !!storedSheetInfo?.ssid;
 
   // -----------------------------------------------------------------------------------------------
   // Call gsheets API via our backend api route using useSWR
@@ -496,7 +514,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   const MAX_RETRIES = 3;
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    shouldFetch ? `/api/sheet/read?ssid=${sheetInfo.ssid}` : null,
+    shouldFetch ? `/api/sheet/read?ssid=${storedSheetInfo.ssid}` : null,
     fetcher,
     {
       // Be explicit about mobile resume behavior. Chrome on Android may keep
@@ -553,6 +571,12 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     if (!error) return null;
     return {
       status: typeof error.status === "number" ? error.status : null,
+      // Set by /api/sheet/read when the status is Google's own answer about
+      // this sheet, as opposed to anything else that can return a 4xx.
+      code:
+        typeof error.responseBody?.code === "string"
+          ? error.responseBody.code
+          : null,
       statusText:
         typeof error.statusText === "string" ? error.statusText : null,
       message: error.message || "Unknown API error",
@@ -611,15 +635,21 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       return;
     }
 
+    const storedSsid = storedSheetInfo?.ssid ?? null;
     const result = getParsedDataWithFallback({
       authStatus,
       data,
       dataSource,
       demoParsedData,
+      isKnownUnreadable: storedSsid !== null && storedSsid === unreadableSsid,
     });
 
     if (result.parseError) {
-      clearSheet();
+      setUnreadableSsid(storedSsid);
+      // Same reason clearSheet sets it: the app now shows no linked sheet.
+      setSheetClearedInSession(true);
+    } else if (authStatus === "authenticated" && data?.values) {
+      setUnreadableSsid(null);
     }
 
     if (result.parsedData && result.parsedData !== demoParsedData && data) {
@@ -633,9 +663,10 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     isError,
     error,
     authStatus,
-    clearSheet,
     dataSource,
     demoParsedData,
+    storedSheetInfo?.ssid,
+    unreadableSsid,
   ]);
 
   // -----------------------------------------------------------------------------------------------
@@ -842,7 +873,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
 
 /**
  * Parses raw gsheet values into parsedData. Fires analytics on success/failure.
- * On parse error: returns parseError string (caller handles clearing sheet).
+ * On parse error: returns parseError string (caller sets the sheet aside).
  * Uses demo data only when unauthenticated.
  * When authenticated without usable sheet data, returns empty data so UI can nudge the lifter to start a log.
  * Returns { parsedData, parseError }.
@@ -852,6 +883,7 @@ function getParsedDataWithFallback({
   data,
   dataSource,
   demoParsedData,
+  isKnownUnreadable = false,
 }) {
   let parsedData = null; // A local version for this scope only
   let parseError = null;
@@ -862,17 +894,20 @@ function getParsedDataWithFallback({
       gaEvent(GA_EVENT_TAGS.GSHEET_DATA_UPDATED); // Google Analytics: sheet data loaded successfully
     } catch (error) {
       // Parsing error
-      console.error("Data parsing error:", error.message);
       parseError = error.message;
 
-      console.error(
-        `%c✗ Parse failed%c — clearing saved sheet from localStorage`,
-        "color:#ef4444;font-weight:bold",
-        "color:inherit",
-      );
-      // Don't sign out; clear sheet and return empty data for authenticated users.
-
-      gaEvent(GA_EVENT_TAGS.GSHEET_READ_REJECTED); // Google Analytics: sheet parse rejected
+      // Don't sign out, and don't forget the sheet: return empty data and let
+      // the caller set it aside. A sheet already set aside is parsed again on
+      // every read, so only its first failure is logged and counted.
+      if (!isKnownUnreadable) {
+        console.error("Data parsing error:", error.message);
+        console.error(
+          `%c✗ Parse failed%c — sheet set aside, still linked, read again on refocus`,
+          "color:#ef4444;font-weight:bold",
+          "color:inherit",
+        );
+        gaEvent(GA_EVENT_TAGS.GSHEET_READ_REJECTED); // Google Analytics: sheet parse rejected
+      }
     }
   }
 

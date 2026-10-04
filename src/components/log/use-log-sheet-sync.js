@@ -128,8 +128,6 @@ export function useLogSheetSync({
   parsedData,
   parsedDataReadAt,
   sessionDate,
-  sessionDates,
-  todayIso,
   isMetric,
   sex,
   mutate,
@@ -363,18 +361,13 @@ export function useLogSheetSync({
     [isLive, sessionDate],
   );
 
+  // The log stays on the date it was showing: the emptied day goes back to
+  // its lift suggestions, ready to be logged again.
+  // Resolves once the sheet has answered, whichever way.
   const deleteSession = useCallback(async () => {
-    if (!isLive) return { deleted: false, nextDate: null };
-    const deleted = await store.deleteSession({ date: sessionDate });
-    if (!deleted) return { deleted: false, nextDate: null };
-    const remainingDates = sessionDates.filter((date) => date !== sessionDate);
-    return {
-      deleted: true,
-      nextDate: remainingDates.length
-        ? remainingDates[remainingDates.length - 1]
-        : todayIso,
-    };
-  }, [isLive, sessionDate, sessionDates, todayIso]);
+    if (!isLive) return false;
+    return store.deleteSession({ date: sessionDate });
+  }, [isLive, sessionDate]);
 
   return {
     syncState,

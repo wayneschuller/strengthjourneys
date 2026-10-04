@@ -265,8 +265,6 @@ export default function LogSessionPage({
     parsedData,
     parsedDataReadAt,
     sessionDate,
-    sessionDates,
-    todayIso,
     isMetric,
     sex,
     mutate,
@@ -569,11 +567,9 @@ export default function LogSessionPage({
   }, [router.asPath, sessionLiftsWithPending]);
 
   const handleDeleteSession = useCallback(async () => {
-    const result = await deleteSession();
-    if (result?.deleted) {
-      navigateToDate(result.nextDate);
-    }
-  }, [deleteSession, navigateToDate]);
+    await deleteSession();
+    setShowDeleteConfirm(false);
+  }, [deleteSession]);
 
   // --- Render ---
 

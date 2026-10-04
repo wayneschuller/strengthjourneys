@@ -512,11 +512,10 @@ export function createParseRepairLog(source, { examples = 3 } = {}) {
       }
       try {
         for (const { message, suggestion, level } of notices) {
-          logParseIssue(source, message, suggestion, level);
+          logParseIssue(message, suggestion, level);
         }
         for (const [kind, { count, examples: shown }] of kinds) {
           logParseIssue(
-            source,
             `${kind}: ${count} row${count === 1 ? "" : "s"}, e.g. ${shown.join("; ")}`,
             getParseRepairSuggestion(kind),
           );
@@ -532,16 +531,13 @@ export function createParseRepairLog(source, { examples = 3 } = {}) {
 
 // Browser consoles support CSS via %c. Keep server/script output plain, and
 // pass sheet text through %s so a cell containing "%c" cannot consume styles.
-export function logParseIssue(source, message, suggestion, level = "info") {
-  const title = `${source} (parser)`;
+export function logParseIssue(message, suggestion, level = "info") {
   if (typeof window === "undefined") {
-    console[level](`${title}: ${message}\nSuggestion: ${suggestion}`);
+    console[level](`${message}\nSuggestion: ${suggestion}`);
     return;
   }
   console[level](
-    `%c${title}%c: %s\n%cSuggestion: %s`,
-    "font-weight: bold;",
-    "font-weight: normal;",
+    "%s\n%cSuggestion: %s",
     message,
     "font-weight: normal; font-style: italic;",
     suggestion,

@@ -112,7 +112,7 @@ for (const kind of [
   '"cm" is a distance or time, not a weight, row skipped',
 ]) {
   assert.equal(
-    logged.filter((line) => line.includes(`: ${kind}: `)).length,
+    logged.filter((line) => line.startsWith(`${kind}: `)).length,
     1,
     `expected one log line for ${kind}`,
   );
@@ -200,7 +200,7 @@ withDateHeader[1][4] = "2026-10-03";
 assert.deepEqual(parseStrengthJourneysData(withDateHeader), expectedRecovery);
 
 // Browser output separates user text from formatting arguments: literal %c
-// inside a cell stays text, while the title is bold and advice is italic.
+// inside a cell stays text, while advice is italic without a repeated heading.
 const windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, "window");
 const styledLogs = [];
 const warn = console.warn;
@@ -210,12 +210,7 @@ Object.defineProperty(globalThis, "window", {
 });
 console.warn = (...args) => styledLogs.push(args);
 try {
-  logParseIssue(
-    "Strength Journeys",
-    "Invalid date: %c",
-    "Use YYYY-MM-DD.",
-    "warn",
-  );
+  logParseIssue("Invalid date: %c", "Use YYYY-MM-DD.", "warn");
 } finally {
   console.warn = warn;
   if (windowDescriptor) {
@@ -226,9 +221,7 @@ try {
 }
 assert.deepEqual(styledLogs, [
   [
-    "%cStrength Journeys (parser)%c: %s\n%cSuggestion: %s",
-    "font-weight: bold;",
-    "font-weight: normal;",
+    "%s\n%cSuggestion: %s",
     "Invalid date: %c",
     "font-weight: normal; font-style: italic;",
     "Use YYYY-MM-DD.",

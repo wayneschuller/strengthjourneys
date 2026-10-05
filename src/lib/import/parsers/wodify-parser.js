@@ -1,5 +1,15 @@
+// Wodify performance exports.
+//
+// Supports both:
+// - legacy numeric-column exports, with Sets, Reps and Weight columns
+// - public/help-center documented exports where the set/rep/load data is packed
+//   into `Result` or `Fully Formatted Result`
+//
+// Follows the parser contract in import-dispatcher.js. It does not yet say why
+// it leaves a row out, so its imports carry no skip counts.
+
 import { normalizeDateInput } from "@/lib/date-utils";
-import { recordTiming } from "@/lib/processing-utils";
+import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
   findExactColumn,
@@ -8,6 +18,34 @@ import {
   parseLeadingInteger,
   parseLeadingNumber,
 } from "@/lib/import/parsers/parser-utilities";
+
+export const wodifyFormat = {
+  ...requireImportSource("wodify"),
+  detect: isWodifyExport,
+  parse: parseWodifyData,
+};
+
+function isWodifyExport(headers) {
+  const hasDate = headers.includes("Date");
+  const hasLegacyColumns =
+    headers.includes("Sets") &&
+    headers.includes("Reps") &&
+    headers.includes("Weight") &&
+    headers.includes("UOMLabel");
+  const hasPublicWeightliftingColumns =
+    headers.includes("Component") &&
+    headers.includes("Result") &&
+    (headers.includes("Performance Result Type") ||
+      headers.includes("Result Type Label"));
+  const hasWodifyNameStyle = headers.some((header) =>
+    /^Name\(\d+\)$/.test(header),
+  );
+
+  return (
+    hasDate &&
+    ((hasLegacyColumns && hasWodifyNameStyle) || hasPublicWeightliftingColumns)
+  );
+}
 
 function getMovementColumnIndex(headers) {
   const explicit = findExactColumn(headers, [
@@ -171,14 +209,7 @@ function createSetEntries({
   return entries;
 }
 
-// Parse Wodify performance exports.
-//
-// Supports both:
-// - legacy numeric-column exports like the provided sample
-// - public/help-center documented exports where the set/rep/load data is packed
-//   into `Result` or `Fully Formatted Result`
-export function parseWodifyData(data) {
-  const startTime = performance.now();
+function parseWodifyData(data) {
   const headers = data[0] || [];
   const dateColumnIndex = findExactColumn(headers, ["Date"]);
   const setsColumnIndex = findExactColumn(headers, ["Sets"]);
@@ -298,13 +329,5 @@ export function parseWodifyData(data) {
     );
   }
 
-  parsedData.sort((a, b) => a.date.localeCompare(b.date));
-
-  recordTiming(
-    "Parse Wodify",
-    performance.now() - startTime,
-    `${parsedData.length} lifts`,
-  );
-
-  return parsedData;
+  return { entries: parsedData };
 }

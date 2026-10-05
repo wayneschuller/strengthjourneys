@@ -1,11 +1,19 @@
-import { recordTiming } from "@/lib/processing-utils";
+// Hevy workout CSV exports.
+//
+// Publicly documented and community-observed Hevy exports are one row per set
+// and carry the load in either a metric (`weight_kg`) or an imperial
+// (`weight_lbs`) column. Follows the parser contract in import-dispatcher.js.
+
+import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
+  countSkip,
   findColumn,
+  getSetSkipReason,
   isBodyweightLoadLiftName,
   isValidCalendarDate,
-  isValidLiftWeight,
   normalizeExportLiftType,
+  normalizeHeaderCell,
   parseStrictInteger,
   parseStrictNumber,
 } from "@/lib/import/parsers/parser-utilities";
@@ -13,6 +21,24 @@ import {
   buildHevySetProvenance,
   buildVisibleImportProvenance,
 } from "@/lib/import/provenance";
+
+export const hevyFormat = {
+  ...requireImportSource("hevy"),
+  detect: isHevyExport,
+  parse: parseHevyData,
+};
+
+function isHevyExport(headers) {
+  const normalized = headers.map(normalizeHeaderCell);
+  return (
+    normalized.includes("start_time") &&
+    normalized.includes("exercise_title") &&
+    (normalized.includes("weight_kg") ||
+      normalized.includes("weight_lbs") ||
+      normalized.includes("weight_lb")) &&
+    normalized.includes("reps")
+  );
+}
 
 const HEVY_MONTHS = {
   jan: 1,
@@ -104,16 +130,7 @@ function buildHevyNotes({
   return details ? `${time} ${details}` : time;
 }
 
-function incrementReason(reasons, reason) {
-  reasons[reason] = (reasons[reason] || 0) + 1;
-}
-
-// Parse Hevy workout CSV exports.
-//
-// Publicly documented/community-observed Hevy exports are one row per set and
-// expose either metric (`weight_kg`) or imperial (`weight_lbs`) load columns.
-export function parseHevyData(data, { importedAt = new Date() } = {}) {
-  const startTime = performance.now();
+function parseHevyData(data, { importedAt = new Date() } = {}) {
   const headers = data[0] || [];
   const startTimeColumnIndex = findColumn(headers, "start_time");
   const exerciseTitleColumnIndex = findColumn(headers, "exercise_title");
@@ -141,12 +158,10 @@ export function parseHevyData(data, { importedAt = new Date() } = {}) {
   const skippedByReason = {};
   const acceptedWorkouts = new Set();
   const anchoredWorkouts = new Set();
-  let sourceRows = 0;
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row || row.length === 0 || row.every((cell) => cell === "")) continue;
-    sourceRows++;
 
     const rawStartTime = row[startTimeColumnIndex];
     const date = normalizeHevyDate(rawStartTime);
@@ -159,29 +174,17 @@ export function parseHevyData(data, { importedAt = new Date() } = {}) {
         ? 0
         : parsedWeight;
 
-    if (!date) {
-      incrementReason(skippedByReason, "invalidDate");
-      continue;
-    }
-    if (!liftType) {
-      incrementReason(skippedByReason, "missingExercise");
-      continue;
-    }
-    if (!reps || reps <= 0) {
-      const hasDurationOrDistance =
+    const skipReason = getSetSkipReason({
+      date,
+      liftType,
+      reps,
+      weight,
+      isDurationOrDistance:
         parseStrictNumber(row[durationColumnIndex]) != null ||
-        parseStrictNumber(row[distanceColumnIndex]) != null;
-      incrementReason(
-        skippedByReason,
-        hasDurationOrDistance ? "unsupportedDurationOrDistance" : "missingReps",
-      );
-      continue;
-    }
-    if (!isValidLiftWeight(liftType, weight)) {
-      incrementReason(
-        skippedByReason,
-        parsedWeight == null ? "missingWeight" : "invalidWeight",
-      );
+        parseStrictNumber(row[distanceColumnIndex]) != null,
+    });
+    if (skipReason) {
+      countSkip(skippedByReason, skipReason);
       continue;
     }
 
@@ -191,7 +194,7 @@ export function parseHevyData(data, { importedAt = new Date() } = {}) {
     const workoutKey = `${String(rawStartTime || "").trim()}|${workoutTitle}`;
     const isWorkoutAnchor = !anchoredWorkouts.has(workoutKey);
     const importProvenance = isWorkoutAnchor
-      ? buildVisibleImportProvenance("Hevy", importedAt)
+      ? buildVisibleImportProvenance(hevyFormat.name, importedAt)
       : null;
     anchoredWorkouts.add(workoutKey);
     acceptedWorkouts.add(workoutKey);
@@ -217,25 +220,10 @@ export function parseHevyData(data, { importedAt = new Date() } = {}) {
     });
   }
 
-  parsedData.sort((a, b) => a.date.localeCompare(b.date));
-
-  recordTiming(
-    "Parse Hevy",
-    performance.now() - startTime,
-    `${parsedData.length} lifts`,
-  );
-
-  Object.defineProperty(parsedData, "importDiagnostics", {
-    value: {
-      sourceRows,
-      parsedRows: parsedData.length,
-      skippedRows: sourceRows - parsedData.length,
-      skippedByReason,
-      workoutCount: acceptedWorkouts.size,
-      unitType,
-    },
-    enumerable: false,
-  });
-
-  return parsedData;
+  return {
+    entries: parsedData,
+    skippedByReason,
+    workoutCount: acceptedWorkouts.size,
+    unitType,
+  };
 }

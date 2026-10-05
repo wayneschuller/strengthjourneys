@@ -1,15 +1,30 @@
-import { devLog, recordTiming } from "@/lib/processing-utils";
+// TurnKey coaching platform exports.
+//
+// One row per assigned exercise, with the sets, reps and weight a coach
+// assigned and whatever the lifter recorded doing instead. Each row is
+// expanded into one entry per set. Follows the parser contract in
+// import-dispatcher.js. It does not yet say why it leaves a row out, so its
+// imports carry no skip counts.
+
+import { requireImportSource } from "@/lib/import/import-sources";
+import { devLog } from "@/lib/processing-utils";
 import {
   isValidLiftWeight,
   normalizeDecimalComma,
   normalizeLiftTypeNames,
 } from "@/lib/import/parsers/parser-utilities";
 
-// Parse Turnkey data format
-//
-export function parseTurnKeyData(data) {
-  const startTime = performance.now(); // We measure critical processing steps
+export const turnKeyFormat = {
+  ...requireImportSource("turnkey"),
+  detect: isTurnKeyExport,
+  parse: parseTurnKeyData,
+};
 
+function isTurnKeyExport(headers) {
+  return headers.includes("user_name") && headers.includes("workout_id");
+}
+
+function parseTurnKeyData(data) {
   // Dynamically find where all our needed columns are
   const columnNames = data[0];
   const workout_date_COL = columnNames.indexOf("workout_date");
@@ -97,18 +112,5 @@ export function parseTurnKeyData(data) {
     }
   });
 
-  parsedData.sort((a, b) => {
-    // Compare 'date' strings directly
-    if (a.date > b.date) return 1;
-    if (a.date < b.date) return -1;
-    return 0;
-  });
-
-  recordTiming(
-    "Parse TurnKey",
-    performance.now() - startTime,
-    `${parsedData.length} lifts`,
-  );
-
-  return parsedData;
+  return { entries: parsedData };
 }

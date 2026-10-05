@@ -9,20 +9,29 @@
 // has no place on a barbell timeline and is counted as skipped. Unweighted
 // bodyweight work is written as a literal 0, so it imports only where the
 // registry already knows the lift carries no load.
+//
+// Follows the parser contract in import-dispatcher.js.
 
-import { recordTiming } from "@/lib/processing-utils";
+import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
+  countSkip,
   findColumn,
+  getSetSkipReason,
   isBodyweightLoadLiftName,
   isValidCalendarDate,
-  isValidLiftWeight,
   normalizeExportLiftType,
   normalizeHeaderCell,
   parseStrictInteger,
   parseStrictNumber,
 } from "@/lib/import/parsers/parser-utilities";
 import { buildVisibleImportProvenance } from "@/lib/import/provenance";
+
+export const fitNotesFormat = {
+  ...requireImportSource("fitnotes"),
+  detect: isFitNotesExport,
+  parse: parseFitNotesData,
+};
 
 // FitNotes writes an unambiguous yyyy-MM-dd, so there is no day/month order to
 // settle here as there is for a StrongLifts export.
@@ -51,11 +60,7 @@ function findWeightColumn(headers) {
   return { index, unitType: /\blbs?\b|pounds?/.test(header) ? "lb" : "kg" };
 }
 
-function incrementReason(reasons, reason) {
-  reasons[reason] = (reasons[reason] || 0) + 1;
-}
-
-export function isFitNotesExport(headers) {
+function isFitNotesExport(headers) {
   const normalized = headers.map(normalizeHeaderCell);
   return (
     normalized.includes("date") &&
@@ -66,9 +71,7 @@ export function isFitNotesExport(headers) {
   );
 }
 
-// Parse FitNotes workout CSV exports.
-export function parseFitNotesData(data, { importedAt = new Date() } = {}) {
-  const startTime = performance.now();
+function parseFitNotesData(data, { importedAt = new Date() } = {}) {
   const headers = data[0] || [];
   const dateColumnIndex = findColumn(headers, "date");
   const exerciseColumnIndex = findColumn(headers, "exercise");
@@ -82,12 +85,10 @@ export function parseFitNotesData(data, { importedAt = new Date() } = {}) {
   const skippedByReason = {};
   const acceptedWorkouts = new Set();
   const anchoredWorkouts = new Set();
-  let sourceRows = 0;
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row || row.length === 0 || row.every((cell) => cell === "")) continue;
-    sourceRows++;
 
     const date = normalizeFitNotesDate(row[dateColumnIndex]);
     const liftType = normalizeExportLiftType(row[exerciseColumnIndex]);
@@ -98,31 +99,19 @@ export function parseFitNotesData(data, { importedAt = new Date() } = {}) {
         ? 0
         : parsedWeight;
 
-    if (!date) {
-      incrementReason(skippedByReason, "invalidDate");
-      continue;
-    }
-    if (!liftType) {
-      incrementReason(skippedByReason, "missingExercise");
-      continue;
-    }
-    if (!reps || reps <= 0) {
+    const skipReason = getSetSkipReason({
+      date,
+      liftType,
+      reps,
+      weight,
       // A cardio row states a distance or a clock time rather than a number of
       // reps, and the clock time is not numeric, so both are read as text.
-      const hasDurationOrDistance =
+      isDurationOrDistance:
         String(row[distanceColumnIndex] ?? "").trim() !== "" ||
-        String(row[timeColumnIndex] ?? "").trim() !== "";
-      incrementReason(
-        skippedByReason,
-        hasDurationOrDistance ? "unsupportedDurationOrDistance" : "missingReps",
-      );
-      continue;
-    }
-    if (!isValidLiftWeight(liftType, weight)) {
-      incrementReason(
-        skippedByReason,
-        parsedWeight == null ? "missingWeight" : "invalidWeight",
-      );
+        String(row[timeColumnIndex] ?? "").trim() !== "",
+    });
+    if (skipReason) {
+      countSkip(skippedByReason, skipReason);
       continue;
     }
 
@@ -130,7 +119,7 @@ export function parseFitNotesData(data, { importedAt = new Date() } = {}) {
     // provenance is tagged once per calendar day rather than once per set.
     const isWorkoutAnchor = !anchoredWorkouts.has(date);
     const importProvenance = isWorkoutAnchor
-      ? buildVisibleImportProvenance("FitNotes", importedAt)
+      ? buildVisibleImportProvenance(fitNotesFormat.name, importedAt)
       : null;
     anchoredWorkouts.add(date);
     acceptedWorkouts.add(date);
@@ -146,25 +135,10 @@ export function parseFitNotesData(data, { importedAt = new Date() } = {}) {
     });
   }
 
-  parsedData.sort((a, b) => a.date.localeCompare(b.date));
-
-  recordTiming(
-    "Parse FitNotes",
-    performance.now() - startTime,
-    `${parsedData.length} lifts`,
-  );
-
-  Object.defineProperty(parsedData, "importDiagnostics", {
-    value: {
-      sourceRows,
-      parsedRows: parsedData.length,
-      skippedRows: sourceRows - parsedData.length,
-      skippedByReason,
-      workoutCount: acceptedWorkouts.size,
-      unitType,
-    },
-    enumerable: false,
-  });
-
-  return parsedData;
+  return {
+    entries: parsedData,
+    skippedByReason,
+    workoutCount: acceptedWorkouts.size,
+    unitType,
+  };
 }

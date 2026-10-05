@@ -6,22 +6,30 @@
 // regardless of the user's display unit, and cardio/timed rows (duration or
 // distance based, no reps/weight) are not strength sets and are skipped.
 //
-// Not documented in any public app guide — this parser only activates when a
-// matching file is dropped in.
+// A quiet format: it has no app guide and no mention in the unrecognized-format
+// message, so nothing in the app offers it. It activates when someone drops a
+// Fitbod export in. Follows the parser contract in import-dispatcher.js.
 
-import { recordTiming } from "@/lib/processing-utils";
+import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
+  countSkip,
   findColumn,
+  getSetSkipReason,
   isBodyweightLoadLiftName,
   isValidCalendarDate,
-  isValidLiftWeight,
   normalizeExportLiftType,
   normalizeHeaderCell,
   parseStrictInteger,
   parseStrictNumber,
 } from "@/lib/import/parsers/parser-utilities";
 import { buildVisibleImportProvenance } from "@/lib/import/provenance";
+
+export const fitbodFormat = {
+  ...requireImportSource("fitbod"),
+  detect: isFitbodExport,
+  parse: parseFitbodData,
+};
 
 // Fitbod's exact date/time string format isn't publicly documented, so this
 // accepts both common shapes rather than assuming one: ISO-like
@@ -72,11 +80,7 @@ function isTruthyFlag(value) {
   return normalized === "true" || normalized === "1" || normalized === "yes";
 }
 
-function incrementReason(reasons, reason) {
-  reasons[reason] = (reasons[reason] || 0) + 1;
-}
-
-export function isFitbodExport(headers) {
+function isFitbodExport(headers) {
   const normalized = headers.map(normalizeHeaderCell);
   return (
     normalized.includes("date") &&
@@ -95,9 +99,7 @@ function roundImportedWeight(weight) {
   return typeof weight === "number" ? Math.round(weight * 100) / 100 : weight;
 }
 
-// Parse Fitbod workout CSV exports.
-export function parseFitbodData(data, { importedAt = new Date() } = {}) {
-  const startTime = performance.now();
+function parseFitbodData(data, { importedAt = new Date() } = {}) {
   const headers = data[0] || [];
   const dateColumnIndex = findColumn(headers, "date");
   const exerciseColumnIndex = findColumn(headers, "exercise");
@@ -114,12 +116,10 @@ export function parseFitbodData(data, { importedAt = new Date() } = {}) {
   const skippedByReason = {};
   const acceptedWorkouts = new Set();
   const anchoredWorkouts = new Set();
-  let sourceRows = 0;
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row || row.length === 0 || row.every((cell) => cell === "")) continue;
-    sourceRows++;
 
     const rawDate = row[dateColumnIndex];
     const date = normalizeFitbodDate(rawDate);
@@ -132,29 +132,17 @@ export function parseFitbodData(data, { importedAt = new Date() } = {}) {
         ? 0
         : parsedWeight;
 
-    if (!date) {
-      incrementReason(skippedByReason, "invalidDate");
-      continue;
-    }
-    if (!liftType) {
-      incrementReason(skippedByReason, "missingExercise");
-      continue;
-    }
-    if (!reps || reps <= 0) {
-      const hasDurationOrDistance =
+    const skipReason = getSetSkipReason({
+      date,
+      liftType,
+      reps,
+      weight,
+      isDurationOrDistance:
         parseStrictNumber(row[durationColumnIndex]) != null ||
-        parseStrictNumber(row[distanceColumnIndex]) != null;
-      incrementReason(
-        skippedByReason,
-        hasDurationOrDistance ? "unsupportedDurationOrDistance" : "missingReps",
-      );
-      continue;
-    }
-    if (!isValidLiftWeight(liftType, weight)) {
-      incrementReason(
-        skippedByReason,
-        parsedWeight == null ? "missingWeight" : "invalidWeight",
-      );
+        parseStrictNumber(row[distanceColumnIndex]) != null,
+    });
+    if (skipReason) {
+      countSkip(skippedByReason, skipReason);
       continue;
     }
 
@@ -165,7 +153,7 @@ export function parseFitbodData(data, { importedAt = new Date() } = {}) {
     const workoutKey = date;
     const isWorkoutAnchor = !anchoredWorkouts.has(workoutKey);
     const importProvenance = isWorkoutAnchor
-      ? buildVisibleImportProvenance("Fitbod", importedAt)
+      ? buildVisibleImportProvenance(fitbodFormat.name, importedAt)
       : null;
     anchoredWorkouts.add(workoutKey);
     acceptedWorkouts.add(workoutKey);
@@ -188,25 +176,10 @@ export function parseFitbodData(data, { importedAt = new Date() } = {}) {
     });
   }
 
-  parsedData.sort((a, b) => a.date.localeCompare(b.date));
-
-  recordTiming(
-    "Parse Fitbod",
-    performance.now() - startTime,
-    `${parsedData.length} lifts`,
-  );
-
-  Object.defineProperty(parsedData, "importDiagnostics", {
-    value: {
-      sourceRows,
-      parsedRows: parsedData.length,
-      skippedRows: sourceRows - parsedData.length,
-      skippedByReason,
-      workoutCount: acceptedWorkouts.size,
-      unitType: "kg",
-    },
-    enumerable: false,
-  });
-
-  return parsedData;
+  return {
+    entries: parsedData,
+    skippedByReason,
+    workoutCount: acceptedWorkouts.size,
+    unitType: "kg",
+  };
 }

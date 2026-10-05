@@ -587,6 +587,46 @@ function getParseRepairSuggestion(kind) {
   return "Check the cells shown above and use a number with kg or lb in Weight.";
 }
 
+// -- What counts as a set ----------------------------------------------------
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+// Why a candidate set cannot become a lift entry, or null when it can. This is
+// the one statement of what an imported set must have: a real ISO date, a
+// lift name, whole reps above zero, and a load isValidLiftWeight accepts.
+//
+// It is asked twice. A parser asks while it walks its rows, so the import
+// preview can say what was left out and why. The dispatcher asks again of
+// every finished entry, so no format can hand the app a set the rest of the
+// code would trip over. See the parser contract in import-dispatcher.js.
+//
+// `isDurationOrDistance` is the parser's word that a row with no reps is
+// cardio or timed work rather than a set someone forgot to fill in.
+export function getSetSkipReason({
+  date,
+  liftType,
+  reps,
+  weight,
+  isDurationOrDistance = false,
+}) {
+  if (typeof date !== "string" || !ISO_DATE.test(date)) return "invalidDate";
+  if (!liftType) return "missingExercise";
+  if (!Number.isInteger(reps) || reps <= 0) {
+    return isDurationOrDistance
+      ? "unsupportedDurationOrDistance"
+      : "missingReps";
+  }
+  if (!isValidLiftWeight(liftType, weight)) {
+    return weight == null ? "missingWeight" : "invalidWeight";
+  }
+  return null;
+}
+
+// Adds one to a parser's count of sets left out for `reason`.
+export function countSkip(skippedByReason, reason) {
+  skippedByReason[reason] = (skippedByReason[reason] || 0) + 1;
+}
+
 // -- Reading an app's export -------------------------------------------------
 //
 // Helpers shared by the app-export parsers (Hevy, Strong and the rest). Each

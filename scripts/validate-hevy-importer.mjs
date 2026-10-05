@@ -51,9 +51,8 @@ registerHooks({
 });
 
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
-const { parseHevyData } =
-  await import("../src/lib/import/parsers/hevy-parser.js");
-const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
+const { detectFormat, parseImportedRows } =
+  await import("../src/lib/import/import-dispatcher.js");
 const { deduplicateImportedEntries } =
   await import("../src/lib/import/dedupe.js");
 const { buildNextImportProfile } =
@@ -84,8 +83,10 @@ const kgRows = decodeCSV(HEVY_KG_CSV);
 const lbRows = decodeCSV(HEVY_LB_CSV);
 
 const importedAt = new Date(2026, 7, 14, 12, 0, 0);
-const kg = parseHevyData(kgRows, { importedAt });
-const lb = parseHevyData(lbRows, { importedAt });
+const { data: kg, diagnostics: kgDiagnostics } = parseImportedRows(kgRows, {
+  importedAt,
+});
+const { data: lb } = parseImportedRows(lbRows, { importedAt });
 
 assert.equal(detectFormat(kgRows[0])?.name, "Hevy");
 assert.equal(detectFormat(kgRows[0])?.id, "hevy");
@@ -102,15 +103,12 @@ assert.equal(
 );
 
 assert.equal(kg.length, 5);
-assert.equal(kg.importDiagnostics.sourceRows, 7);
-assert.equal(kg.importDiagnostics.skippedRows, 2);
-assert.equal(kg.importDiagnostics.workoutCount, 2);
-assert.equal(kg.importDiagnostics.unitType, "kg");
-assert.equal(
-  kg.importDiagnostics.skippedByReason.unsupportedDurationOrDistance,
-  1,
-);
-assert.equal(kg.importDiagnostics.skippedByReason.invalidDate, 1);
+assert.equal(kgDiagnostics.sourceRows, 7);
+assert.equal(kgDiagnostics.skippedRows, 2);
+assert.equal(kgDiagnostics.workoutCount, 2);
+assert.equal(kgDiagnostics.unitType, "kg");
+assert.equal(kgDiagnostics.skippedByReason.unsupportedDurationOrDistance, 1);
+assert.equal(kgDiagnostics.skippedByReason.invalidDate, 1);
 
 assert.equal(lb.length, 3);
 assert.ok(lb.every((entry) => entry.unitType === "lb"));
@@ -213,7 +211,7 @@ assert.deepEqual(Object.keys(switchedSheetImport.profile.sources), ["wodify"]);
 
 // An app that follows the phone's number format writes "117,5". Number()
 // reads that as NaN, which used to drop the set.
-const decimalCommaEntries = parseHevyData(
+const { data: decimalCommaEntries } = parseImportedRows(
   decodeCSV(`title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,set_index,set_type,weight_kg,reps,distance_km,duration_seconds,rpe
 Upper A,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Bench Press (Barbell),,,0,normal,"117,5",5,,,8
 `),

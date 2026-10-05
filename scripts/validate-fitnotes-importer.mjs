@@ -51,9 +51,8 @@ registerHooks({
 });
 
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
-const { parseFitNotesData } =
-  await import("../src/lib/import/parsers/fitnotes-parser.js");
-const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
+const { detectFormat, parseImportedRows } =
+  await import("../src/lib/import/import-dispatcher.js");
 
 // Synthetic rows in the FitNotes export shape, not a real export. It covers
 // barbell sets, a bodyweight lift the registry knows carries no load, one it
@@ -84,24 +83,23 @@ assert.equal(detected?.name, "FitNotes");
 assert.equal(detectFormat(lbRows[0])?.id, "fitnotes");
 
 const importedAt = new Date(2026, 7, 14, 12, 0, 0);
-const kg = parseFitNotesData(kgRows, { importedAt });
-const lb = parseFitNotesData(lbRows, { importedAt });
+const { data: kg, diagnostics: kgDiagnostics } = parseImportedRows(kgRows, {
+  importedAt,
+});
+const { data: lb } = parseImportedRows(lbRows, { importedAt });
 
 assert.equal(kg.length, 4);
-assert.equal(kg.importDiagnostics.sourceRows, 7);
-assert.equal(kg.importDiagnostics.skippedRows, 3);
-assert.equal(kg.importDiagnostics.workoutCount, 2);
-assert.equal(kg.importDiagnostics.unitType, "kg");
-assert.equal(kg.importDiagnostics.skippedByReason.invalidDate, 1);
-assert.equal(
-  kg.importDiagnostics.skippedByReason.unsupportedDurationOrDistance,
-  1,
-);
+assert.equal(kgDiagnostics.sourceRows, 7);
+assert.equal(kgDiagnostics.skippedRows, 3);
+assert.equal(kgDiagnostics.workoutCount, 2);
+assert.equal(kgDiagnostics.unitType, "kg");
+assert.equal(kgDiagnostics.skippedByReason.invalidDate, 1);
+assert.equal(kgDiagnostics.skippedByReason.unsupportedDurationOrDistance, 1);
 
 // An unweighted lift the registry does not know as a bodyweight load has no
 // number to plot, so it is counted rather than imported at zero. Widening that
 // is a registry decision, not a parser one.
-assert.equal(kg.importDiagnostics.skippedByReason.invalidWeight, 1);
+assert.equal(kgDiagnostics.skippedByReason.invalidWeight, 1);
 assert.ok(!kg.some((entry) => entry.liftType === "Plank"));
 
 // A lift the registry does know as a bodyweight load imports at zero.

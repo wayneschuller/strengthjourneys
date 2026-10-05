@@ -54,9 +54,8 @@ registerHooks({
 });
 
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
-const { parseStrongliftsData } =
-  await import("../src/lib/import/parsers/stronglifts-parser.js");
-const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
+const { detectFormat, parseImportedRows } =
+  await import("../src/lib/import/import-dispatcher.js");
 
 // Synthetic rows in the legacy wide shape, not real exports. This variant
 // carries a bare "Body Weight" column with the unit inside the cell, which is
@@ -98,10 +97,10 @@ assert.equal(detectFormat(dayFirstRows[0])?.id, "stronglifts");
 assert.equal(detectFormat(monthFirstRows[0])?.id, "stronglifts");
 assert.equal(detectFormat(currentRows[0])?.id, "stronglifts");
 
-const dayFirst = parseStrongliftsData(dayFirstRows);
-const monthFirst = parseStrongliftsData(monthFirstRows);
-const ambiguous = parseStrongliftsData(ambiguousRows);
-const current = parseStrongliftsData(currentRows);
+const { data: dayFirst } = parseImportedRows(dayFirstRows);
+const { data: monthFirst } = parseImportedRows(monthFirstRows);
+const { data: ambiguous } = parseImportedRows(ambiguousRows);
+const { data: current } = parseImportedRows(currentRows);
 
 // Three workouts, two exercises each, five sets each.
 assert.equal(dayFirst.length, 30);

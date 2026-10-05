@@ -114,6 +114,15 @@ authenticated users.
   point, with two functions — `parseData(rows)` for Google Sheets (Strength
   Journeys format only, read/write) and `parseImportedFile(file)` for
   drag-and-drop CSV/XLSX (any format, view-only).
+- **The parser contract:** each app export is one module in
+  `import/parsers/` whose whole interface is one exported descriptor
+  (`id`, `name`, `detect`, `parse`). The contract is written at the top of
+  `import-dispatcher.js`; read it before adding or changing a parser. The
+  dispatcher owns detection order, the validity check, date sorting, timing
+  and the diagnostics the preview shows, so a parser does none of those. A
+  format's id and name are written once, in `import/import-sources.js`.
+  `scripts/validate-import-contract.mjs` holds every listed format to it and
+  fails when a format has no fixture.
 - **One reader of a sheet's header:** `detectSheetLayout` in
   `import/parsers/strength-journeys-parser.js` decides where a sheet keeps its
   columns: headings in any order, by any known name, and a missing required
@@ -123,7 +132,8 @@ authenticated users.
   second header check; extend this one. When required headings are missing,
   the app puts them back itself (`api/sheet/restore-header.js`, called once
   from the layout) and then tells the lifter in a toast. App exports (Hevy and the rest) are
-  matched by exact signature in `import-dispatcher.js` and stay strict.
+  matched by the exact signature each parser declares, in the order
+  `import-dispatcher.js` lists them, and stay strict.
 - **Sheet writes** in `api/sheet/*` are *operation-oriented*, not
   REST-over-rows. Each file's header comment explains why it earns its own
   operation — read it before adding a new one.

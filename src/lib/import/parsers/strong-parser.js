@@ -1,4 +1,12 @@
-import { recordTiming } from "@/lib/processing-utils";
+// Strong CSV exports.
+//
+// Public samples show one row per set with `Date`, `Exercise Name`, `Weight`,
+// and `Reps`. Strong exports do not expose units in the CSV, so we infer the
+// most likely unit from common barbell warm-up/loading patterns and default to
+// pounds if the file is ambiguous. Not the StrongLifts 5x5 app, which has its
+// own parser. Follows the parser contract in import-dispatcher.js.
+
+import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
   findExactColumn,
@@ -7,6 +15,27 @@ import {
   parseLeadingInteger,
   parseLeadingNumber,
 } from "@/lib/import/parsers/parser-utilities";
+
+export const strongFormat = {
+  ...requireImportSource("strong"),
+  detect: isStrongExport,
+  parse: parseStrongData,
+};
+
+function isStrongExport(headers) {
+  const lower = headers.map((header) =>
+    String(header || "")
+      .toLowerCase()
+      .trim(),
+  );
+  return (
+    lower.includes("date") &&
+    lower.includes("workout name") &&
+    lower.includes("exercise name") &&
+    lower.some((header) => header.startsWith("weight")) &&
+    lower.includes("reps")
+  );
+}
 
 function findHeaderByPrefix(headers, prefixes) {
   return headers.find((header) => {
@@ -65,14 +94,7 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
   return kgScore > lbScore ? "kg" : "lb";
 }
 
-// Parse Strong CSV exports.
-//
-// Public samples show one row per set with `Date`, `Exercise Name`, `Weight`,
-// and `Reps`. Strong exports do not expose units in the CSV, so we infer the
-// most likely unit from common barbell warm-up/loading patterns and default to
-// pounds if the file is ambiguous.
-export function parseStrongData(data) {
-  const startTime = performance.now();
+function parseStrongData(data) {
   const headers = data[0] || [];
   const dateColumnIndex = findExactColumn(headers, ["Date"]);
   const exerciseNameColumnIndex = findExactColumn(headers, ["Exercise Name"]);
@@ -116,13 +138,5 @@ export function parseStrongData(data) {
     });
   }
 
-  parsedData.sort((a, b) => a.date.localeCompare(b.date));
-
-  recordTiming(
-    "Parse Strong",
-    performance.now() - startTime,
-    `${parsedData.length} lifts`,
-  );
-
-  return parsedData;
+  return { entries: parsedData };
 }

@@ -4,28 +4,69 @@
 //   parseData(rows)         — for Google Sheets (SJ format only, read/write)
 //   parseImportedFile(file) — for drag-and-drop CSV/file import (any format, view-only)
 //
-// All parsers take string[][] (rows with header) and return ParsedData[].
+// THE PARSER CONTRACT
+//
+// Each app's export is read by one module in parsers/, and that module's whole
+// interface is one exported descriptor:
+//
+//   export const hevyFormat = {
+//     ...requireImportSource("hevy"),   // id and name, from import-sources.js
+//     detect: isHevyExport,
+//     parse: parseHevyData,
+//   };
+//
+//   detect(headers) → boolean
+//     True only for this app's header row. Keep it exact: an export's headings
+//     are fixed, and a loose match here takes another app's file.
+//
+//   parse(rows, { importedAt }) → { entries, skippedByReason?, workoutCount?, unitType? }
+//     entries          One LiftEntry per set, in any order. Each needs an ISO
+//                      date, a liftType from normalizeExportLiftType (or
+//                      normalizeLiftTypeNames), whole reps above zero, a
+//                      weight isValidLiftWeight accepts, and a unitType. Set
+//                      rawLiftType to the export's own exercise text when the
+//                      row has one.
+//     skippedByReason  Counts of the sets left out, keyed by the reasons
+//                      getSetSkipReason returns, added up with countSkip.
+//                      Return it only when every skip is counted; a parser
+//                      that cannot yet say why leaves it out altogether.
+//     workoutCount     When the export marks where one workout ends.
+//     unitType         When one unit holds for the whole file.
+//
+// The dispatcher does the rest for every format, so no parser has to:
+//   - tries each detect in the order of APP_EXPORT_FORMATS, first match wins
+//   - drops any entry getSetSkipReason turns away, and counts it
+//   - sorts by date, keeping the file's own order within a day
+//   - times the parse
+//   - builds the diagnostics the import preview shows
+//
+// Adding an app is one line in import-sources.js, one parser file, and one
+// line in APP_EXPORT_FORMATS. `npm run validate:imports` then holds it to all
+// of the above.
+//
+// The lifter's own spreadsheet is the exception. parseStrengthJourneysData is
+// the sheet reader, with callers well beyond this file and rules of its own:
+// it takes a lifter's sheet at its word where an app export is held to the
+// contract. So it is wrapped here, not converted, and its rows pass through
+// untouched.
 
+import { requireImportSource } from "@/lib/import/import-sources";
+import { btwbFormat } from "@/lib/import/parsers/btwb-parser";
+import { fitbodFormat } from "@/lib/import/parsers/fitbod-parser";
+import { fitNotesFormat } from "@/lib/import/parsers/fitnotes-parser";
+import { hevyFormat } from "@/lib/import/parsers/hevy-parser";
+import {
+  countSkip,
+  getSetSkipReason,
+} from "@/lib/import/parsers/parser-utilities";
 import { parseStrengthJourneysData } from "@/lib/import/parsers/strength-journeys-parser";
-import { parseBtwbData } from "@/lib/import/parsers/btwb-parser";
-import {
-  isFitbodExport,
-  parseFitbodData,
-} from "@/lib/import/parsers/fitbod-parser";
-import {
-  isFitNotesExport,
-  parseFitNotesData,
-} from "@/lib/import/parsers/fitnotes-parser";
-import { parseHevyData } from "@/lib/import/parsers/hevy-parser";
-import { parseStrongData } from "@/lib/import/parsers/strong-parser";
-import {
-  isStrongliftsExport,
-  parseStrongliftsData,
-} from "@/lib/import/parsers/stronglifts-parser";
-import { parseTurnKeyData } from "@/lib/import/parsers/turnkey-parser";
-import { parseWodifyData } from "@/lib/import/parsers/wodify-parser";
+import { strongFormat } from "@/lib/import/parsers/strong-parser";
+import { strongliftsFormat } from "@/lib/import/parsers/stronglifts-parser";
+import { turnKeyFormat } from "@/lib/import/parsers/turnkey-parser";
+import { wodifyFormat } from "@/lib/import/parsers/wodify-parser";
 import { decodeCSV } from "@/lib/import/decode-csv";
 import { decodeWorkbook } from "@/lib/import/decode-workbook";
+import { devLog, recordTiming } from "@/lib/processing-utils";
 
 /**
  * A single logged lift after parsing and normalization.
@@ -55,6 +96,34 @@ import { decodeWorkbook } from "@/lib/import/decode-workbook";
  */
 
 /**
+ * One app's export format, as its parser module declares it. See the parser
+ * contract at the top of this file.
+ *
+ * @typedef {Object} ImportFormat
+ * @property {string} id   Durable id, persisted in import profiles
+ * @property {string} name Display name, also written into provenance notes
+ * @property {(headers: string[]) => boolean} detect
+ * @property {(rows: string[][], context: { importedAt: Date }) => {
+ *   entries: LiftEntry[],
+ *   skippedByReason?: Object<string, number>,
+ *   workoutCount?: number,
+ *   unitType?: "lb"|"kg",
+ * }} parse
+ */
+
+/**
+ * What an import left out, for the preview to show.
+ *
+ * @typedef {Object} ImportDiagnostics
+ * @property {number} sourceRows   Sets the file offered: parsed plus skipped
+ * @property {number} parsedRows
+ * @property {number} skippedRows
+ * @property {Object<string, number>} skippedByReason
+ * @property {number} [workoutCount]
+ * @property {"lb"|"kg"} [unitType]
+ */
+
+/**
  * Parse Google Sheets data in Strength Journeys format.
  * This is the only format supported for the live read/write sheet connection.
  *
@@ -67,154 +136,61 @@ export function parseData(data) {
 
 // -- Drag-and-drop file import (view-only, multi-format) ---------------------
 
-/**
- * Known import formats and their header signatures.
- * Order matters — first match wins.
- */
-const FORMAT_SIGNATURES = [
-  {
-    id: "hevy",
-    name: "Hevy",
-    detect: (headers) => {
-      const normalized = headers.map((header) =>
-        String(header || "")
-          .replace(/^\uFEFF/, "")
-          .trim()
-          .toLowerCase(),
-      );
-      return (
-        normalized.includes("start_time") &&
-        normalized.includes("exercise_title") &&
-        (normalized.includes("weight_kg") ||
-          normalized.includes("weight_lbs") ||
-          normalized.includes("weight_lb")) &&
-        normalized.includes("reps")
-      );
-    },
-    parse: parseHevyData,
-  },
-  {
-    id: "fitbod",
-    // A quiet format: it holds a durable id in the import source list, but
-    // has no app guide and no mention in the unrecognized-format message
-    // below, so nothing in the app offers it. It activates when someone drops
-    // a Fitbod export in. Ordered ahead of StrongLifts, whose current layout
-    // also accepts a bare date and exercise pair.
-    name: "Fitbod",
-    detect: isFitbodExport,
-    parse: parseFitbodData,
-  },
-  {
-    id: "stronglifts",
-    // StrongLifts 5x5 app (NOT the Strong app — different format). Supports
-    // legacy workout-wide rows and current exercise rows with per-set weights.
-    name: "StrongLifts",
-    detect: isStrongliftsExport,
-    parse: parseStrongliftsData,
-  },
-  {
-    id: "strong",
-    name: "Strong",
-    detect: (headers) => {
-      const lower = headers.map((header) =>
-        String(header || "")
-          .toLowerCase()
-          .trim(),
-      );
-      return (
-        lower.includes("date") &&
-        lower.includes("workout name") &&
-        lower.includes("exercise name") &&
-        lower.some((header) => header.startsWith("weight")) &&
-        lower.includes("reps")
-      );
-    },
-    parse: parseStrongData,
-  },
-  {
-    id: "wodify",
-    name: "Wodify",
-    detect: (headers) => {
-      const hasDate = headers.includes("Date");
-      const hasLegacyColumns =
-        headers.includes("Sets") &&
-        headers.includes("Reps") &&
-        headers.includes("Weight") &&
-        headers.includes("UOMLabel");
-      const hasPublicWeightliftingColumns =
-        headers.includes("Component") &&
-        headers.includes("Result") &&
-        (headers.includes("Performance Result Type") ||
-          headers.includes("Result Type Label"));
-      const hasWodifyNameStyle = headers.some((header) =>
-        /^Name\(\d+\)$/.test(header),
-      );
-
-      return (
-        hasDate &&
-        ((hasLegacyColumns && hasWodifyNameStyle) ||
-          hasPublicWeightliftingColumns)
-      );
-    },
-    parse: parseWodifyData,
-  },
-  {
-    id: "btwb",
-    name: "BTWB",
-    detect: (headers) =>
-      headers.includes("Date") &&
-      headers.includes("Description") &&
-      headers.includes("Workout") &&
-      headers.includes("Formatted Result"),
-    parse: parseBtwbData,
-  },
-  {
-    id: "turnkey",
-    name: "TurnKey",
-    detect: (headers) =>
-      headers.includes("user_name") && headers.includes("workout_id"),
-    parse: parseTurnKeyData,
-  },
-  {
-    id: "fitnotes",
-    // One flat row per set, with the lifter's unit stated in the weight
-    // header. Ordered ahead of the Strength Journeys signature below, which
-    // would otherwise claim any date/exercise/reps/weight table.
-    name: "FitNotes",
-    detect: isFitNotesExport,
-    parse: parseFitNotesData,
-  },
-  {
-    id: "strength-journeys",
-    // Strength Journeys CSV export or compatible sheet
-    // Detected by having the 4 required columns (after normalization happens inside the parser)
-    name: "Strength Journeys",
-    detect: (headers) => {
-      const lower = headers.map((h) =>
-        h.toLowerCase().replace(/[_-]/g, " ").trim(),
-      );
-      return (
-        lower.some((h) => h === "date" || h === "workout date") &&
-        lower.some((h) =>
-          ["lift type", "lifttype", "exercise", "movement"].includes(h),
-        ) &&
-        lower.some((h) => ["reps", "rep", "repetitions"].includes(h)) &&
-        lower.some((h) => ["weight", "load", "weight used"].includes(h))
-      );
-    },
-    parse: parseStrengthJourneysData,
-  },
+// The app exports, in the order their signatures are tried. Order matters:
+// the first match wins.
+/** @type {ImportFormat[]} */
+const APP_EXPORT_FORMATS = [
+  hevyFormat,
+  // Ahead of StrongLifts, whose current layout also accepts a bare date and
+  // exercise pair.
+  fitbodFormat,
+  strongliftsFormat,
+  strongFormat,
+  wodifyFormat,
+  btwbFormat,
+  turnKeyFormat,
+  // One flat row per set, with the lifter's unit stated in the weight header.
+  // Last of the apps, and ahead of the Strength Journeys signature below,
+  // which would otherwise claim any date/exercise/reps/weight table.
+  fitNotesFormat,
 ];
+
+// A Strength Journeys CSV export or a compatible sheet, tried after every app
+// export. Recognised by the four required columns under names we know; a file
+// with headings of the lifter's own gets a second chance in parseImportedRows.
+const strengthJourneysFormat = {
+  ...requireImportSource("strength-journeys"),
+  detect: (headers) => {
+    const lower = headers.map((h) =>
+      h.toLowerCase().replace(/[_-]/g, " ").trim(),
+    );
+    return (
+      lower.some((h) => h === "date" || h === "workout date") &&
+      lower.some((h) =>
+        ["lift type", "lifttype", "exercise", "movement"].includes(h),
+      ) &&
+      lower.some((h) => ["reps", "rep", "repetitions"].includes(h)) &&
+      lower.some((h) => ["weight", "load", "weight used"].includes(h))
+    );
+  },
+  parse: (rows) => ({ entries: parseStrengthJourneysData(rows) }),
+};
+
+/**
+ * Every format a dropped file can be recognised as, in detection order.
+ * @type {ImportFormat[]}
+ */
+export const IMPORT_FORMATS = [...APP_EXPORT_FORMATS, strengthJourneysFormat];
 
 /**
  * Detect the format of a header row.
  *
  * @param {string[]} headers First row of the imported data
- * @returns {{ id: string, name: string, parse: Function } | null}
+ * @returns {ImportFormat | null}
  */
 export function detectFormat(headers) {
-  for (const sig of FORMAT_SIGNATURES) {
-    if (sig.detect(headers)) return sig;
+  for (const format of IMPORT_FORMATS) {
+    if (format.detect(headers)) return format;
   }
   return null;
 }
@@ -224,7 +200,7 @@ export function detectFormat(headers) {
  * Handles container decoding (CSV → rows) and format detection.
  *
  * @param {File} file The dropped/selected file
- * @returns {Promise<{ data: ParsedData, formatId: string, formatName: string, diagnostics?: object }>}
+ * @returns {Promise<{ data: ParsedData, formatId: string, formatName: string, diagnostics: ImportDiagnostics | null }>}
  * @throws {Error} If the file can't be parsed or format is unrecognized
  */
 export async function parseImportedFile(file) {
@@ -238,13 +214,28 @@ export async function parseImportedFile(file) {
     rows = decodeCSV(text);
   }
 
+  return parseImportedRows(rows);
+}
+
+/**
+ * Parse decoded rows (header first) in whichever format their header row
+ * matches. The part of parseImportedFile that needs no File, so the
+ * validation scripts can hold every format to the contract.
+ *
+ * @param {string[][]} rows
+ * @param {{ importedAt?: Date }} [context] `importedAt` dates the provenance
+ *   note some formats write into the first set of each workout.
+ * @returns {{ data: ParsedData, formatId: string, formatName: string, diagnostics: ImportDiagnostics | null }}
+ * @throws {Error} If the format is unrecognized or holds no valid entries
+ */
+export function parseImportedRows(rows, { importedAt = new Date() } = {}) {
   if (rows.length < 2) {
     throw new Error("File appears to be empty or has no data rows.");
   }
 
   const headers = rows[0];
   let format = detectFormat(headers);
-  let data = null;
+  let parsed = null;
 
   // No app's export has these headings. It may still be a lifter's own
   // spreadsheet: one set per row, with a date, a lift, reps and a weight
@@ -253,9 +244,10 @@ export async function parseImportedFile(file) {
   // turning the file away. App exports never reach this: their headings are
   // fixed, and matching them exactly above is what keeps them reliable.
   if (!format) {
-    data = parseOwnSpreadsheet(rows);
+    const data = parseOwnSpreadsheet(rows);
     if (data) {
-      format = FORMAT_SIGNATURES.find((sig) => sig.id === "strength-journeys");
+      format = strengthJourneysFormat;
+      parsed = { data, diagnostics: null };
     }
   }
 
@@ -265,10 +257,14 @@ export async function parseImportedFile(file) {
     );
   }
 
-  data ??= format.parse(rows);
-  const diagnostics = data?.importDiagnostics || null;
+  if (!parsed) {
+    parsed =
+      format === strengthJourneysFormat
+        ? { data: format.parse(rows).entries, diagnostics: null }
+        : parseAppExport(format, rows, { importedAt });
+  }
 
-  if (!data || data.length === 0) {
+  if (!parsed.data || parsed.data.length === 0) {
     throw new Error(
       `File was recognized as ${format.name} format but no valid entries were found. ` +
         "Check that the file contains workout data with dates, exercises, reps, and weights.",
@@ -276,10 +272,66 @@ export async function parseImportedFile(file) {
   }
 
   return {
-    data,
+    data: parsed.data,
     formatId: format.id,
     formatName: format.name,
-    diagnostics,
+    diagnostics: parsed.diagnostics,
+  };
+}
+
+// Runs one app's parser and holds what comes back to the contract: only valid
+// sets, in date order, with the skips added up.
+function parseAppExport(format, rows, context) {
+  const startTime = performance.now();
+  const result = format.parse(rows, context);
+
+  const skippedByReason = { ...result.skippedByReason };
+  const turnedAway = {};
+  const data = result.entries.filter((entry) => {
+    const reason = getSetSkipReason(entry);
+    if (!reason) return true;
+    countSkip(skippedByReason, reason);
+    countSkip(turnedAway, reason);
+    return false;
+  });
+
+  // Dates are ISO strings, so text order is date order, and the sort is
+  // stable, so sets within a day stay in the order the file had them.
+  data.sort((a, b) => a.date.localeCompare(b.date));
+
+  recordTiming(
+    `Parse ${format.name}`,
+    performance.now() - startTime,
+    `${data.length} lifts`,
+  );
+
+  // A parser should never hand over a set this turns away. When one does it
+  // is a parser fault, not something in the lifter's file, so say so here.
+  if (Object.keys(turnedAway).length > 0) {
+    devLog(
+      `${format.name} parser returned entries that are not valid sets:`,
+      turnedAway,
+    );
+  }
+
+  // Counts are shown only for a parser that counts every skip. For the rest,
+  // "imported X of Y" would be a guess at Y.
+  if (!result.skippedByReason) return { data, diagnostics: null };
+
+  const skippedRows = Object.values(skippedByReason).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
+  return {
+    data,
+    diagnostics: {
+      sourceRows: data.length + skippedRows,
+      parsedRows: data.length,
+      skippedRows,
+      skippedByReason,
+      workoutCount: result.workoutCount,
+      unitType: result.unitType,
+    },
   };
 }
 

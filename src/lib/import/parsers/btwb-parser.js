@@ -1,9 +1,39 @@
+// Beyond the Whiteboard (BTWB) CSV exports.
+//
+// Supports two known BTWB export column layouts:
+//   Legacy (pre-2026): Date, Workout, Result, Prescribed, Pukie, Work performed, Work time, Formatted Result, Notes, Description
+//   Current (2026+):   Date, Formatted Result, Result, Performed, Workout, Description, Notes
+//
+// Both share the same Description cell format (multi-line set data).
+// Column positions are resolved by name, so either layout works.
+//
+// For WOD entries ("N rounds of: ..."), weighted exercises are extracted
+// and multiplied by the round count to produce individual sets.
+//
+// Follows the parser contract in import-dispatcher.js. It does not yet say why
+// it leaves a line out, so its imports carry no skip counts.
+
 import { normalizeDateInput } from "@/lib/date-utils";
-import { recordTiming } from "@/lib/processing-utils";
+import { requireImportSource } from "@/lib/import/import-sources";
 import {
   isValidLiftWeight,
   normalizeLiftTypeNames,
 } from "@/lib/import/parsers/parser-utilities";
+
+export const btwbFormat = {
+  ...requireImportSource("btwb"),
+  detect: isBtwbExport,
+  parse: parseBtwbData,
+};
+
+function isBtwbExport(headers) {
+  return (
+    headers.includes("Date") &&
+    headers.includes("Description") &&
+    headers.includes("Workout") &&
+    headers.includes("Formatted Result")
+  );
+}
 
 const TITLE_COLUMN_CANDIDATES = [
   "Workout",
@@ -253,19 +283,7 @@ function isSetsBlock(descriptionText) {
   return /^Sets\s*$/m.test(String(descriptionText));
 }
 
-// Parse Beyond the Whiteboard CSV format.
-//
-// Supports two known BTWB export column layouts:
-//   Legacy (pre-2026): Date, Workout, Result, Prescribed, Pukie, Work performed, Work time, Formatted Result, Notes, Description
-//   Current (2026+):   Date, Formatted Result, Result, Performed, Workout, Description, Notes
-//
-// Both share the same Description cell format (multi-line set data).
-// Column positions are resolved by name, so either layout works.
-//
-// For WOD entries ("N rounds of: ..."), weighted exercises are extracted
-// and multiplied by the round count to produce individual sets.
-export function parseBtwbData(data) {
-  const startTime = performance.now();
+function parseBtwbData(data) {
   const columnNames = data[0] || [];
 
   const col = (name) => columnNames.indexOf(name);
@@ -363,13 +381,5 @@ export function parseBtwbData(data) {
     });
   }
 
-  parsedData.sort((a, b) => a.date.localeCompare(b.date));
-
-  recordTiming(
-    "Parse BTWB",
-    performance.now() - startTime,
-    `${parsedData.length} lifts`,
-  );
-
-  return parsedData;
+  return { entries: parsedData };
 }

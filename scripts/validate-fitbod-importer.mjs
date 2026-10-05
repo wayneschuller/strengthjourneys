@@ -56,9 +56,8 @@ registerHooks({
 });
 
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
-const { parseFitbodData } =
-  await import("../src/lib/import/parsers/fitbod-parser.js");
-const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
+const { detectFormat, parseImportedRows } =
+  await import("../src/lib/import/import-dispatcher.js");
 const { getImportSource } = await import("../src/lib/import/import-sources.js");
 
 // Synthetic rows in the column shape corroborated by community Fitbod
@@ -78,23 +77,20 @@ const FITBOD_CSV = `Date,Exercise,Reps,Weight(kg),Duration(s),Distance(m),Inclin
 
 const rows = decodeCSV(FITBOD_CSV);
 const importedAt = new Date(2026, 7, 14, 12, 0, 0);
-const parsed = parseFitbodData(rows, { importedAt });
+const { data: parsed, diagnostics } = parseImportedRows(rows, { importedAt });
 
 const detected = detectFormat(rows[0]);
 assert.equal(detected?.id, "fitbod");
 assert.equal(detected?.name, "Fitbod");
 
 assert.equal(parsed.length, 5);
-assert.equal(parsed.importDiagnostics.sourceRows, 8);
-assert.equal(parsed.importDiagnostics.skippedRows, 3);
-assert.equal(
-  parsed.importDiagnostics.skippedByReason.unsupportedDurationOrDistance,
-  1,
-);
-assert.equal(parsed.importDiagnostics.skippedByReason.missingReps, 1);
-assert.equal(parsed.importDiagnostics.skippedByReason.invalidDate, 1);
-assert.equal(parsed.importDiagnostics.workoutCount, 2);
-assert.equal(parsed.importDiagnostics.unitType, "kg");
+assert.equal(diagnostics.sourceRows, 8);
+assert.equal(diagnostics.skippedRows, 3);
+assert.equal(diagnostics.skippedByReason.unsupportedDurationOrDistance, 1);
+assert.equal(diagnostics.skippedByReason.missingReps, 1);
+assert.equal(diagnostics.skippedByReason.invalidDate, 1);
+assert.equal(diagnostics.workoutCount, 2);
+assert.equal(diagnostics.unitType, "kg");
 
 // Fitbod exports kilograms whatever the user's display unit is set to.
 assert.ok(parsed.every((entry) => entry.unitType === "kg"));

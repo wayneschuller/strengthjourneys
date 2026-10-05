@@ -55,9 +55,8 @@ const { normalizeLiftTypeNames } =
   await import("../src/lib/import/parsers/parser-utilities.js");
 const { CURATED_LIFTS } = await import("../src/lib/lifts/lift-registry.js");
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
-const { detectFormat } = await import("../src/lib/import/import-dispatcher.js");
-const { parseStrongData } =
-  await import("../src/lib/import/parsers/strong-parser.js");
+const { detectFormat, parseImportedRows } =
+  await import("../src/lib/import/import-dispatcher.js");
 
 // Every registry name and synonym must come back as its own lift, and no
 // spelling may belong to two lifts.
@@ -147,7 +146,7 @@ const STRONG_SAMPLE_CSV = `Date,Workout Name,Duration,Exercise Name,Set Order,We
 const strongRows = decodeCSV(STRONG_SAMPLE_CSV);
 assert.equal(detectFormat(strongRows[0])?.id, "strong");
 
-const strong = parseStrongData(strongRows);
+const { data: strong } = parseImportedRows(strongRows);
 const strongNames = Object.fromEntries(
   strong.map((entry) => [entry.rawLiftType, entry.liftType]),
 );

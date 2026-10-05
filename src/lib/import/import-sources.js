@@ -2,6 +2,12 @@
  * Stable identities and presentation helpers for every supported import source.
  * Parser display names may evolve, but persisted ritual metadata must keep using
  * durable IDs so returning users can switch formats without losing continuity.
+ *
+ * This is the one place a format's id and display name are written. Each
+ * parser takes its own from requireImportSource(), and the dispatcher takes
+ * them from the parser. Keep this file free of parser imports: the import
+ * profile API reads it on a best-effort path and should not load nine parsers
+ * to look up a name.
  */
 
 const IMPORT_SOURCES = [
@@ -26,6 +32,16 @@ const SOURCE_ALIASES = new Map([
   ["external", "external"],
   ["unknown", "external"],
 ]);
+
+// A parser's own identity. Unlike getImportSource below, which forgives
+// whatever an old profile stored, this throws on an id not listed above, so a
+// typo in a parser fails when the module loads instead of importing a
+// lifter's file as "External".
+export function requireImportSource(id) {
+  const source = SOURCES_BY_ID.get(id);
+  if (!source) throw new Error(`No import source is declared for "${id}".`);
+  return source;
+}
 
 export function getImportSource({ formatId, formatName } = {}) {
   const requestedId = String(formatId || "")

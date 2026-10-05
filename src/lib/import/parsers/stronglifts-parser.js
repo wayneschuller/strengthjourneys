@@ -1,8 +1,10 @@
-// Parse legacy and current StrongLifts workout-history CSV exports.
+// Legacy and current StrongLifts 5x5 workout-history CSV exports. Not the
+// Strong app, which has its own parser.
 // StrongLifts changed from workout-wide rows to one exercise per row, so both
 // layouts remain supported to avoid stranding older training histories.
+// Follows the parser contract in import-dispatcher.js.
 
-import { recordTiming } from "@/lib/processing-utils";
+import { requireImportSource } from "@/lib/import/import-sources";
 import {
   findColumn,
   isValidLiftWeight,
@@ -26,6 +28,12 @@ import {
 //
 // Current exports use one row per exercise and pair columns such as
 // `Set 1 (Reps)` with `Set 1 (KG)`. Both layouts are pivoted into LiftEntry rows.
+
+export const strongliftsFormat = {
+  ...requireImportSource("stronglifts"),
+  detect: isStrongliftsExport,
+  parse: parseStrongliftsData,
+};
 
 // Accept the MM/DD/YY legacy date, the same legacy shape written DD/MM/YYYY
 // outside the US, and the yyyy/MM/dd current date. The caller settles the
@@ -160,7 +168,7 @@ function buildCurrentSetBlocks(headers) {
     );
 }
 
-export function isStrongliftsExport(headers) {
+function isStrongliftsExport(headers) {
   const normalized = headers.map(normalizeHeaderCell);
   const hasLegacyLayout =
     normalized.includes("date") &&
@@ -313,8 +321,7 @@ function parseLegacyStrongliftsData(data, headers) {
   return parsedData;
 }
 
-export function parseStrongliftsData(data) {
-  const startTime = performance.now();
+function parseStrongliftsData(data) {
   const headers = data[0] || [];
   const hasCurrentLayout =
     findColumn(headers, "Exercise") >= 0 &&
@@ -323,13 +330,5 @@ export function parseStrongliftsData(data) {
     ? parseCurrentStrongliftsData(data, headers)
     : parseLegacyStrongliftsData(data, headers);
 
-  parsedData.sort((a, b) => a.date.localeCompare(b.date));
-
-  recordTiming(
-    "Parse StrongLifts",
-    performance.now() - startTime,
-    `${parsedData.length} lifts`,
-  );
-
-  return parsedData;
+  return { entries: parsedData };
 }

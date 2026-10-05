@@ -620,6 +620,67 @@ assert.deepEqual(
   ],
 );
 
+// A unit written in the Weight header covers the bare numbers beneath it.
+assert.deepEqual(
+  quietly(() =>
+    parseStrengthJourneysData([
+      ["Date", "Lift Type", "Reps", "Weight (kg)"],
+      ["2026-03-02", "Deadlift", "5", "140"],
+      ["", "", "3", "160"],
+    ]),
+  ).map((entry) => `${entry.weight}${entry.unitType}`),
+  ["140kg", "160kg"],
+);
+
+// A lifter's own headings. A linked sheet takes a labelled column at its
+// word and asks for the header; a one-off file import may work it out.
+const ownHeadingRows = [
+  ["Day", "Movement", "Count", "Kg", "Comments"],
+  ["2026-03-02", "Back Squat", "5", "100", "felt good"],
+  ["", "", "5", "102.5", ""],
+  ["2026-03-04", "Bench Press", "5", "60", ""],
+  ["", "", "3", "65", ""],
+];
+assert.throws(
+  () => quietly(() => parseStrengthJourneysData(ownHeadingRows)),
+  /Missing required columns: Date, Reps, Weight/,
+);
+const { parseImportedFile } =
+  await import("../src/lib/import/import-dispatcher.js");
+const ownFile = new File(
+  [ownHeadingRows.map((row) => row.join(",")).join("\n")],
+  "my-training.csv",
+);
+const ownImport = await quietly(() => parseImportedFile(ownFile));
+assert.equal(ownImport.formatId, "strength-journeys");
+assert.deepEqual(
+  ownImport.data.map((entry) => [
+    entry.date,
+    entry.liftType,
+    entry.reps,
+    `${entry.weight}${entry.unitType}`,
+    entry.notes ?? "",
+  ]),
+  [
+    ["2026-03-02", "Back Squat", 5, "100kg", "felt good"],
+    ["2026-03-02", "Back Squat", 5, "102.5kg", ""],
+    ["2026-03-04", "Bench Press", 5, "60kg", ""],
+    ["2026-03-04", "Bench Press", 3, "65kg", ""],
+  ],
+);
+// A file that is not a lifting log is still turned away.
+await assert.rejects(
+  quietly(() =>
+    parseImportedFile(
+      new File(
+        ["Date,Payee,Amount\n2026-03-02,Grocer,54.20\n2026-03-03,Rent,900"],
+        "bank.csv",
+      ),
+    ),
+  ),
+  /Unrecognized file format/,
+);
+
 console.log("Strength Journeys parser checks passed.");
 
 function permutations(values) {

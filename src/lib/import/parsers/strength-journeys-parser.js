@@ -29,6 +29,16 @@ import {
   STANDARD_BODYWEIGHT_LOAD_LIFT_TYPE_SET,
 } from "@/lib/import/parsers/parser-utilities";
 
+// "Weight (kg)", "Load in lbs": the unit a header declares for its column, or
+// null when it names none or both.
+function getHeaderUnitHint(header) {
+  const text = String(header ?? "").toLowerCase();
+  const kg = /\b(kgs?|kilos?|kilograms?)\b/.test(text);
+  const lb = /\b(lbs?|pounds?)\b/.test(text);
+  if (kg === lb) return null;
+  return kg ? "kg" : "lb";
+}
+
 // How each parse found its columns, kept beside the array it returned so the
 // rows themselves stay plain lift objects.
 const sheetLayouts = new WeakMap();
@@ -48,6 +58,16 @@ const sheetLayouts = new WeakMap();
 export function getSheetLayout(parsedData) {
   return (parsedData && sheetLayouts.get(parsedData)) ?? null;
 }
+
+const KNOWN_HEADERS = [
+  "Date",
+  "Lift Type",
+  "Reps",
+  "Weight",
+  "Notes",
+  "Label",
+  "URL",
+];
 
 const STANDARD_COLUMN_ORDER = [
   "Date",
@@ -89,9 +109,19 @@ export function isStandardSheetLayout(layout) {
  * Parse the Strength Journeys Google Sheet format into `ParsedData`.
  *
  * @param {any[][]} data Raw Google Sheets `values` array (rows x columns)
+ * @param {object} [options]
+ * @param {boolean} [options.claimLabelledColumns=false] Also consider columns
+ *   whose header is filled in but not a name we know ("When", "Count") when
+ *   working out a missing column. Off for a linked sheet, where a labelled
+ *   column is taken at its word. On for a one-off file import, where the
+ *   lifter's own headings are the norm and they see a preview before anything
+ *   is saved.
  * @returns {import("./index").ParsedData}
  */
-export function parseStrengthJourneysData(data) {
+export function parseStrengthJourneysData(
+  data,
+  { claimLabelledColumns = false } = {},
+) {
   const startTime = performance.now();
   let previousDate = null;
   let previousRawDate = null;
@@ -108,11 +138,7 @@ export function parseStrengthJourneysData(data) {
   // A date in the first row, with no recognized headers, identifies a sheet
   // that starts directly with data. An empty first row is still a header row.
   const hasHeaderRow =
-    firstRowNames.some((name) =>
-      ["Date", "Lift Type", "Reps", "Weight", "Notes", "Label", "URL"].includes(
-        name,
-      ),
-    ) ||
+    firstRowNames.some((name) => KNOWN_HEADERS.includes(name)) ||
     !(data[0] ?? []).some((value) => normalizeDateInput(value, localeHint));
   const normalizedColumnNames = hasHeaderRow ? firstRowNames : [];
   const firstDataRow = hasHeaderRow ? 1 : 0;
@@ -140,6 +166,7 @@ export function parseStrengthJourneysData(data) {
     localeHint,
     normalizedColumnNames,
     firstDataRow,
+    claimLabelledColumns,
   );
   const inferredColumns = [];
   for (const [name, index] of Object.entries(columns)) {
@@ -151,11 +178,19 @@ export function parseStrengthJourneysData(data) {
         Reps: "whole-number values paired with weights",
         Weight: "load values paired with rep counts",
       };
+      const ownHeader = String(normalizedColumnNames[index] ?? "").trim();
+      const reason = !hasHeaderRow
+        ? "the sheet starts with data instead of a header row"
+        : ownHeader
+          ? `its header "${ownHeader}" is not one we know`
+          : "its header is blank";
       repairLog.issue(
-        `Inferred ${name} from the ${evidence[name]} in column ${index + 1} because ${hasHeaderRow ? "its header is blank" : "the sheet starts with data instead of a header row"}.`,
-        hasHeaderRow
-          ? `Restore "${name}" in the first-row header of column ${index + 1} in your Google Sheet.`
-          : `Insert a header row above your first set and put "${name}" in column ${index + 1}.`,
+        `Inferred ${name} from the ${evidence[name]} in column ${index + 1} because ${reason}.`,
+        !hasHeaderRow
+          ? `Insert a header row above your first set and put "${name}" in column ${index + 1}.`
+          : ownHeader
+            ? `Rename the first-row header of column ${index + 1} to "${name}".`
+            : `Restore "${name}" in the first-row header of column ${index + 1} in your Google Sheet.`,
       );
     }
   }
@@ -324,9 +359,17 @@ export function parseStrengthJourneysData(data) {
     }
     delete obj._explicitUnit; // Clean up temp field
   });
-  // If majority of explicit entries are kg, treat ambiguous entries as kg too (tie → lb).
+  // A unit written in the Weight header ("Weight (kg)") settles it for every
+  // bare number beneath, with nothing to report: the lifter said so.
+  // Otherwise, if majority of explicit entries are kg, treat ambiguous
+  // entries as kg too (tie → lb).
   // Unitless rows arrive as "lb", so test the list, not a missing unitType.
-  if (explicitKg > explicitLb) {
+  const headerUnit = hasHeaderRow
+    ? getHeaderUnitHint(data[0]?.[weightColumnIndex])
+    : null;
+  if (headerUnit) {
+    for (const obj of unitless) obj.unitType = headerUnit;
+  } else if (explicitKg > explicitLb) {
     for (const obj of unitless) {
       obj.unitType = "kg";
       repairLog.add(
@@ -383,6 +426,7 @@ function inferRequiredColumns(
   localeHint,
   headers,
   firstDataRow,
+  claimLabelledColumns,
 ) {
   if (Object.values(namedColumns).every((index) => index !== -1)) {
     return { ...namedColumns };
@@ -395,6 +439,7 @@ function inferRequiredColumns(
       localeHint,
       headers,
       firstDataRow,
+      claimLabelledColumns,
     ),
     namedColumns,
     firstDataRow,
@@ -453,6 +498,7 @@ function inferFromColumnProfiles(
   localeHint,
   headers,
   firstDataRow,
+  claimLabelledColumns,
 ) {
   const columns = { ...namedColumns };
 
@@ -463,7 +509,11 @@ function inferFromColumnProfiles(
   );
   const profiles = [];
   for (let column = 0; column < columnCount; column++) {
-    if (String(headers[column] ?? "").trim()) continue;
+    // A column named in words we know is never up for grabs. One labelled in
+    // the lifter's own words is, but only when the caller asks.
+    const header = String(headers[column] ?? "").trim();
+    if (KNOWN_HEADERS.includes(header)) continue;
+    if (header && !claimLabelledColumns) continue;
     profiles.push(profileUnnamedColumn(data, column, localeHint, firstDataRow));
   }
 

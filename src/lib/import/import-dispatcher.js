@@ -243,16 +243,29 @@ export async function parseImportedFile(file) {
   }
 
   const headers = rows[0];
-  const format = detectFormat(headers);
+  let format = detectFormat(headers);
+  let data = null;
+
+  // No app's export has these headings. It may still be a lifter's own
+  // spreadsheet: one set per row, with a date, a lift, reps and a weight
+  // under whatever headings they chose, or none. The sheet parser can work
+  // those columns out from their contents, so give it the chance before
+  // turning the file away. App exports never reach this: their headings are
+  // fixed, and matching them exactly above is what keeps them reliable.
+  if (!format) {
+    data = parseOwnSpreadsheet(rows);
+    if (data) {
+      format = FORMAT_SIGNATURES.find((sig) => sig.id === "strength-journeys");
+    }
+  }
 
   if (!format) {
     throw new Error(
-      "Unrecognized file format. Supported formats: Hevy export, Strong export, StrongLifts 5x5 export, Wodify export, BTWB export, Strength Journeys CSV export, TurnKey export, FitNotes export. " +
-        "Make sure your file has column headers in the first row.",
+      "Unrecognized file format. Supported formats: Hevy export, Strong export, StrongLifts 5x5 export, Wodify export, BTWB export, Strength Journeys CSV export, TurnKey export, FitNotes export, or your own spreadsheet with one set per row: a date, a lift name, reps and a weight.",
     );
   }
 
-  const data = format.parse(rows);
+  data ??= format.parse(rows);
   const diagnostics = data?.importDiagnostics || null;
 
   if (!data || data.length === 0) {
@@ -268,6 +281,19 @@ export async function parseImportedFile(file) {
     formatName: format.name,
     diagnostics,
   };
+}
+
+// The sheet parser throws when it cannot place the four required columns, and
+// here that just means "not a lifting log we can read".
+function parseOwnSpreadsheet(rows) {
+  try {
+    const parsed = parseStrengthJourneysData(rows, {
+      claimLabelledColumns: true,
+    });
+    return parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 // Re-export normalization utilities for use by other modules
